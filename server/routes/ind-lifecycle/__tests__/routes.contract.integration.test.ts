@@ -579,3 +579,43 @@ describe('persisted IND annual reports (21 CFR 312.33)', () => {
     expect(after.body.map((r: any) => r.id)).not.toContain(draftId);
   });
 });
+
+describe('persisted IND amendments (21 CFR 312.30/.31)', () => {
+  let draftId: string;
+  const amendment = () => ({
+    indNumber: '123456',
+    projectId: 'proj-1',
+    changedDocuments: [
+      { documentId: 'doc-1', title: 'Revised Protocol v2', category: 'protocol_amendment_summary', changeKind: 'revised', replacesLeafGuid: 'guid-1' },
+    ],
+  });
+
+  it('POST /submission/:id/amendments → 201 drafts a tracked amendment', async () => {
+    const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`).send(amendment());
+    expect(res.status).toBe(201);
+    expect(res.body.status).toBe('draft');
+    expect(res.body.indNumber).toBe('123456');
+    expect(res.body.leafCount).toBeGreaterThanOrEqual(1);
+    draftId = res.body.id;
+  });
+
+  it('POST /amendments → 400 without indNumber/changedDocuments', async () => {
+    const res = await request(app).post(`/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`).send({ indNumber: '1' });
+    expect(res.status).toBe(400);
+  });
+
+  it('GET /amendments → 200 lists the draft', async () => {
+    const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`);
+    expect(res.status).toBe(200);
+    expect(res.body.map((r: any) => r.id)).toContain(draftId);
+  });
+
+  it('filing with draftId marks the amendment filed + links its sequence', async () => {
+    const filed = await request(app)
+      .post('/api/ind-lifecycle/amendment/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0013', ...amendment(), draftId });
+    expect(filed.status).toBe(201);
+    expect(filed.body.draft.status).toBe('filed');
+    expect(filed.body.draft.sequenceId).toBe(filed.body.sequence.id);
+  });
+});

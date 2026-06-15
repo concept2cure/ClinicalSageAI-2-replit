@@ -11,6 +11,7 @@ import { assembleIndSafetyReport } from '../../services/ind-lifecycle/ind-safety
 import { composeE2bR3Icsr } from '../../services/ind-lifecycle/e2b-icsr-composer';
 import { markSafetyReportFiled, SafetyReportError } from '../../services/ind-lifecycle/ind-safety-report-persistence';
 import { markAnnualReportFiled, AnnualReportError } from '../../services/ind-lifecycle/ind-annual-report-persistence';
+import { markAmendmentFiled, AmendmentError } from '../../services/ind-lifecycle/ind-amendment-persistence';
 import { assembleIndAnnualReport } from '../../services/ind-lifecycle/ind-annual-report-service';
 import { planIndAmendment } from '../../services/ind-lifecycle/ind-amendment-service';
 import {
@@ -133,7 +134,17 @@ router.post('/amendment/file', limiter, requireRole(AUTHOR), async (req, res) =>
   }
   try {
     const plan = planIndAmendment(b);
-    res.status(201).json(await persistAmendmentPlan(Number(b.submissionId), plan, String(b.sequenceNumber), ctx));
+    const filed = await persistAmendmentPlan(Number(b.submissionId), plan, String(b.sequenceNumber), ctx);
+    // When filing a tracked draft, mark it filed + link the sequence.
+    let draft;
+    if (b.draftId) {
+      try {
+        draft = await markAmendmentFiled(String(b.draftId), filed.sequence.id, ctx);
+      } catch (e) {
+        if (!(e instanceof AmendmentError)) throw e; // unknown/foreign draft id is non-fatal
+      }
+    }
+    res.status(201).json({ ...filed, ...(draft ? { draft } : {}) });
   } catch (err) {
     fail(res, err);
   }

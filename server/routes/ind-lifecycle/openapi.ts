@@ -95,6 +95,8 @@ const SUMMARIES: Record<string, string> = {
   'POST /api/ind-lifecycle/submission/{id}/annual-reports': 'Draft + persist a 312.33 IND Annual Report / DSUR',
   'GET /api/ind-lifecycle/submission/{id}/annual-reports': "List a submission's IND Annual Reports",
   'GET /api/ind-lifecycle/submission/{id}/annual-reports/overdue': 'Overdue (unfiled, past 60-day-deadline) IND Annual Reports',
+  'POST /api/ind-lifecycle/submission/{id}/amendments': 'Draft + persist a 312.30/.31 amendment plan',
+  'GET /api/ind-lifecycle/submission/{id}/amendments': "List a submission's IND amendments",
   'POST /api/ind-lifecycle/submission/{id}/cross-references': 'Record an external file dependency (m1.4)',
   'GET /api/ind-lifecycle/submission/{id}/cross-references': "List a submission's cross-references",
   'GET /api/ind-lifecycle/submission/{id}/cross-reference-register': 'Live cross-reference register + LOA-coverage QC',
