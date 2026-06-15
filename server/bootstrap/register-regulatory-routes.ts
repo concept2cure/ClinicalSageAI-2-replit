@@ -257,7 +257,6 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   try {
     const horizonModule = await import('../routes/learning-horizon.js');
     app.use('/api/learning/horizon', authenticateToken, horizonModule.default);
-    console.log('✅ Regulatory Horizon API routes mounted (continuous-learning sources, cards, digest, ICH currency)');
   } catch (error) {
     console.error('❌ Failed to mount Regulatory Horizon routes:', error);
   }
