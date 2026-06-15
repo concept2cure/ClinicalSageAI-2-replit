@@ -1,8 +1,8 @@
 # Repo Health Scan
 
-Generated: 2026-06-15T04:48:24.897Z
-Branch: claude/medical-device-audit-spec-9w994x
-SHA: 30aa3842bd672fa7df673632fbeacbd9c0c536df
+Generated: 2026-06-15T04:49:49.303Z
+Branch: concept2cure-v2
+SHA: 58fec5c755951dfeed713aaf25ad16a6e2901f9f
 
 ## Summary
 

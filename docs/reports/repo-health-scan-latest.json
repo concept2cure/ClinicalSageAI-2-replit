@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-15T04:48:24.897Z",
+  "generatedAt": "2026-06-15T04:49:49.303Z",
   "git": {
-    "sha": "30aa3842bd672fa7df673632fbeacbd9c0c536df",
-    "branch": "claude/medical-device-audit-spec-9w994x"
+    "sha": "58fec5c755951dfeed713aaf25ad16a6e2901f9f",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
