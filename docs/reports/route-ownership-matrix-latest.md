@@ -13,6 +13,7 @@
 | `/api/concept2cure` | Platform Kernel | `server/routes/concept2cure.ts` | multi-use-prefix |
 | `/api/device-cockpit` | Device & Diagnostics | `server/routes/device-cockpit.ts` | none |
 | `/api/documents` | Authoring Governance | `server/routes/documents-unified.ts` | none |
+| `/api/global-markets` | Device & Diagnostics | `server/routes/global-markets.ts` | none |
 | `/api/ind` | Submission Workflows | `server/routes/ind*.ts` | none |
 | `/api/projects` | Workspace Core | `server/routes/projects-management.ts` | none |
 | `/api/regulatory` | Regulatory Intelligence | `server/routes/regulatory*.ts` | none |
