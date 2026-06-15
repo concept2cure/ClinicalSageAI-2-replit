@@ -39,6 +39,22 @@ jobs:
         run: |
           pytest -q services/tests/test_generator.py -q
 
+      - name: Prepare shared data volume (host path aligned with container mount)
+        run: |
+          # The compose file binds /shared_data:/shared_data so the worker's
+          # sibling generator containers resolve mount paths correctly on the
+          # host daemon. Create it world-writable: the api, worker, and generator
+          # all run as distinct non-root uids and must write here.
+          sudo mkdir -p /shared_data
+          sudo chmod 777 /shared_data
+
+      - name: Build sandboxed generator image
+        run: |
+          # secure_runner runs `docker run concept2cure/ectd-generator:latest`
+          # against the host daemon (via the mounted socket) but never builds it,
+          # so pre-build it here into the host image store.
+          docker build -t concept2cure/ectd-generator:latest -f services/Dockerfile services
+
       - name: Start E2E docker-compose
         run: |
           docker compose -f docker-compose.e2e.yml up -d --build
