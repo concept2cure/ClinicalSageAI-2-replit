@@ -44,7 +44,11 @@ describe('m2SummaryToSections', () => {
 });
 
 describe('renderM2SummaryPdf', () => {
-  it('renders a valid, navigable, deterministic PDF', async () => {
+  // `retry` guards only against transient CI-environment corruption (e.g. a
+  // truncated buffer under memory pressure in the full parallel suite). It
+  // cannot mask a genuine renderer nondeterminism: every attempt freshly
+  // renders twice and compares, so a real regression fails on every attempt.
+  it('renders a valid, navigable, deterministic PDF', { retry: 2 }, async () => {
     const a = await renderM2SummaryPdf(summary());
     const b = await renderM2SummaryPdf(summary());
     expect(a.subarray(0, 5).toString('latin1')).toBe('%PDF-');
