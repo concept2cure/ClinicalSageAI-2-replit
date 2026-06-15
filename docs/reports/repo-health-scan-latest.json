@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-15T00:50:27.662Z",
+  "generatedAt": "2026-06-15T02:47:10.966Z",
   "git": {
-    "sha": "a44b5d4cc8f62a4fc68b63761936942f249255e1",
+    "sha": "f041871c1f4fa593a14b80968b76c29daee7d9b9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 210,
+    "duplicateBasenames": 212,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -1906,6 +1906,22 @@
         ]
       },
       {
+        "basename": "special-designations",
+        "count": 2,
+        "paths": [
+          "server/services/ana/special-designations.ts",
+          "server/services/global-ri/special-designations.ts"
+        ]
+      },
+      {
+        "basename": "special-designations.test",
+        "count": 2,
+        "paths": [
+          "server/services/ana/__tests__/special-designations.test.ts",
+          "server/services/global-ri/__tests__/special-designations.test.ts"
+        ]
+      },
+      {
         "basename": "spl-fhir",
         "count": 2,
         "paths": [
@@ -2323,7 +2339,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 309,
+      "duplicateGroups": 313,
       "largeByBytes": 11,
       "largeByLines": 34
     },
