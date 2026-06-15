@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-15T02:47:10.966Z",
+  "generatedAt": "2026-06-15T04:42:00.131Z",
   "git": {
-    "sha": "f041871c1f4fa593a14b80968b76c29daee7d9b9",
+    "sha": "bb87d615576e880543b24d5ddc9771d1636b2343",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 212,
+    "duplicateBasenames": 215,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 85,
+        "count": 87,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -34,6 +34,8 @@
           "client/src/concept2cure/components/concept2cure-home/index.ts",
           "client/src/concept2cure/components/concept2cure-projects/data/index.ts",
           "client/src/concept2cure/components/concept2cure-projects/index.ts",
+          "client/src/concept2cure/insights/charts/index.ts",
+          "client/src/concept2cure/insights/surface/index.ts",
           "client/src/concept2cure/types/index.ts",
           "client/src/i18n/index.ts",
           "server/api/cmc/index.js",
@@ -153,6 +155,48 @@
         ]
       },
       {
+        "basename": "types",
+        "count": 36,
+        "paths": [
+          ".claude/skills/gstack/scripts/resolvers/types.ts",
+          "client/src/concept2cure/components/concept2cure-projects/types.ts",
+          "client/src/concept2cure/components/intelligentDocs/types.ts",
+          "client/src/concept2cure/insights/data/types.ts",
+          "client/src/concept2cure/mdx/types.ts",
+          "client/src/concept2cure/pdev/data/types.ts",
+          "server/api/cmc/types.js",
+          "server/bootstrap/types.ts",
+          "server/config/types.ts",
+          "server/services/ai-gateway/types.ts",
+          "server/services/ai-governance/classification/types.ts",
+          "server/services/ana-biostats/types.ts",
+          "server/services/ana/therapeutic-area-profiles/types.ts",
+          "server/services/biostatistics-judgment/types.ts",
+          "server/services/biostats-signal-engine/types.ts",
+          "server/services/cognitive-ecosystem/types.ts",
+          "server/services/compute/types.ts",
+          "server/services/conversation-os/types.ts",
+          "server/services/grdhe/types.ts",
+          "server/services/intelligence-engine/types.ts",
+          "server/services/ivd-knowledge/types.ts",
+          "server/services/reasoning-engine/types.ts",
+          "server/services/report-os/portfolio/types.ts",
+          "server/services/report-os/prediction/types.ts",
+          "server/services/report-os/providers/types.ts",
+          "server/services/report-os/quality/types.ts",
+          "server/services/report-os/regional/types.ts",
+          "server/services/report-os/render/types.ts",
+          "server/services/report-os/scheduling/types.ts",
+          "server/services/report-os/sealing/types.ts",
+          "server/services/rules-engine/types.ts",
+          "server/services/sentinel/types.ts",
+          "server/services/submission-gateways/types.ts",
+          "server/startup/types.ts",
+          "services/proof/types.ts",
+          "shared/ivd/types.ts"
+        ]
+      },
+      {
         "basename": "icons",
         "count": 31,
         "paths": [
@@ -187,39 +231,6 @@
           "ui_kits/home/Icons.jsx",
           "ui_kits/mdx/icons.jsx",
           "ui_kits/pdev/Icons.jsx"
-        ]
-      },
-      {
-        "basename": "types",
-        "count": 27,
-        "paths": [
-          ".claude/skills/gstack/scripts/resolvers/types.ts",
-          "client/src/concept2cure/components/concept2cure-projects/types.ts",
-          "client/src/concept2cure/components/intelligentDocs/types.ts",
-          "client/src/concept2cure/mdx/types.ts",
-          "client/src/concept2cure/pdev/data/types.ts",
-          "server/api/cmc/types.js",
-          "server/bootstrap/types.ts",
-          "server/config/types.ts",
-          "server/services/ai-gateway/types.ts",
-          "server/services/ai-governance/classification/types.ts",
-          "server/services/ana-biostats/types.ts",
-          "server/services/ana/therapeutic-area-profiles/types.ts",
-          "server/services/biostatistics-judgment/types.ts",
-          "server/services/biostats-signal-engine/types.ts",
-          "server/services/cognitive-ecosystem/types.ts",
-          "server/services/compute/types.ts",
-          "server/services/conversation-os/types.ts",
-          "server/services/grdhe/types.ts",
-          "server/services/intelligence-engine/types.ts",
-          "server/services/ivd-knowledge/types.ts",
-          "server/services/reasoning-engine/types.ts",
-          "server/services/rules-engine/types.ts",
-          "server/services/sentinel/types.ts",
-          "server/services/submission-gateways/types.ts",
-          "server/startup/types.ts",
-          "services/proof/types.ts",
-          "shared/ivd/types.ts"
         ]
       },
       {
@@ -802,6 +813,15 @@
         ]
       },
       {
+        "basename": "calibration",
+        "count": 3,
+        "paths": [
+          "server/services/intelligence/calibration.ts",
+          "server/services/regulatory/calibration.ts",
+          "server/services/report-os/quality/calibration.ts"
+        ]
+      },
+      {
         "basename": "config",
         "count": 3,
         "paths": [
@@ -1082,6 +1102,14 @@
         ]
       },
       {
+        "basename": "api",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/insights/data/api.ts",
+          "client/src/services/api.js"
+        ]
+      },
+      {
         "basename": "api-keys",
         "count": 2,
         "paths": [
@@ -1151,14 +1179,6 @@
         "paths": [
           "client/src/components/ui/calendar.tsx",
           "server/src/services/calendar.ts"
-        ]
-      },
-      {
-        "basename": "calibration",
-        "count": 2,
-        "paths": [
-          "server/services/intelligence/calibration.ts",
-          "server/services/regulatory/calibration.ts"
         ]
       },
       {
@@ -1554,6 +1574,14 @@
         ]
       },
       {
+        "basename": "helpers",
+        "count": 2,
+        "paths": [
+          "server/services/report-os/providers/helpers.ts",
+          "tests/e2e/helpers.ts"
+        ]
+      },
+      {
         "basename": "huggingface-service",
         "count": 2,
         "paths": [
@@ -1775,6 +1803,14 @@
         "paths": [
           "server/routes/q-sub.ts",
           "shared/schema/q-sub.ts"
+        ]
+      },
+      {
+        "basename": "querykeys",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/hooks/queryKeys.ts",
+          "client/src/concept2cure/insights/hooks/queryKeys.ts"
         ]
       },
       {
@@ -2105,7 +2141,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 682929
+        "bytes": 683289
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2121,11 +2157,11 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "bytes": 179955
+        "bytes": 179637
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 175378
+        "bytes": 175783
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2163,7 +2199,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 18364
+        "lines": 18370
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2179,11 +2215,11 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5558
+        "lines": 5431
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5394
+        "lines": 5404
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2246,6 +2282,10 @@
         "lines": 1937
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 1852
+      },
+      {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
         "lines": 1849
       },
@@ -2266,16 +2306,16 @@
         "lines": 1824
       },
       {
+        "file": "server/routes/report-os.ts",
+        "lines": 1816
+      },
+      {
         "file": "design-system/ui_kits/home/Projects.jsx",
         "lines": 1796
       },
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1785
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 1779
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
@@ -2287,7 +2327,7 @@
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1712
+        "lines": 1715
       },
       {
         "file": "server/routes/fda510k-routes.ts",
@@ -2304,10 +2344,6 @@
       {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
-      },
-      {
-        "file": "server/routes/report-os.ts",
-        "lines": 1627
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
@@ -2339,19 +2375,19 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 313,
+      "duplicateGroups": 323,
       "largeByBytes": 11,
       "largeByLines": 34
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 269,
+      "duplicateGroups": 270,
       "largeByBytes": 2,
       "largeByLines": 7
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 141,
+      "duplicateGroups": 147,
       "largeByBytes": 0,
       "largeByLines": 1
     },
@@ -2363,7 +2399,7 @@
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",
-      "duplicateGroups": 38,
+      "duplicateGroups": 39,
       "largeByBytes": 0,
       "largeByLines": 0
     },
