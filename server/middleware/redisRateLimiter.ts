@@ -316,6 +316,21 @@ const DEFAULT_RULES: Record<string, RateLimitRule> = {
   },
 };
 
+/**
+ * Categories that must FAIL CLOSED when the limiter itself errors (e.g. Redis
+ * unreachable AND the in-memory fallback throws). For these sensitive buckets,
+ * allowing requests through unthrottled is a worse outcome than a brief denial:
+ *
+ *  - `auth`: login/register/auth — brute-force and credential-stuffing surface.
+ *  - `documents`: governed document/export/pdf generation — data-exfiltration
+ *    surface for a multi-tenant regulated SaaS.
+ *
+ * Non-sensitive categories (api, ai, upload, etc.) keep failing OPEN to favour
+ * availability. This only affects the error path; normal Redis-up and
+ * in-memory-fallback limiting behaviour is unchanged.
+ */
+const FAIL_CLOSED_CATEGORIES = new Set<string>(['auth', 'documents']);
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MIDDLEWARE FACTORY
 // ─────────────────────────────────────────────────────────────────────────────
@@ -452,10 +467,32 @@ export function createRedisRateLimiter(config: Partial<RateLimitConfig> = {}) {
 
       next();
     } catch (error) {
-      // On error, allow the request but log the issue
-      logger.error('Rate limiter error', {
-        error: error instanceof Error ? error.message : 'Unknown error',
+      const message = error instanceof Error ? error.message : 'Unknown error';
+
+      // Sensitive categories fail CLOSED: when the limiter cannot evaluate the
+      // request we deny rather than admit it unthrottled (brute-force /
+      // exfiltration surfaces). Non-sensitive categories fail OPEN for
+      // availability.
+      if (FAIL_CLOSED_CATEGORIES.has(category)) {
+        logger.error('Rate limiter error on sensitive category - failing CLOSED', {
+          error: message,
+          path: req.path,
+          category,
+        });
+        res.setHeader('Retry-After', 60);
+        res.status(503).json({
+          error: 'Service temporarily unavailable',
+          message: 'Rate limiting is temporarily degraded. Please retry shortly.',
+          retryAfter: 60,
+        });
+        return;
+      }
+
+      // Non-sensitive: allow the request but log the degradation.
+      logger.error('Rate limiter error - failing open (non-sensitive category)', {
+        error: message,
         path: req.path,
+        category,
       });
       next();
     }

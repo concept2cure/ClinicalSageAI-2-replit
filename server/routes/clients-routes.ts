@@ -16,7 +16,14 @@ import { authMiddleware } from '../auth';
 const router = Router();
 
 import { createScopedLogger } from '../utils/logger.js';
+import { mapWithConcurrency } from '../services/ana/agentic-loop';
 const log = createScopedLogger('clients-routes');
+
+// Bound per-row metric fan-out so listing a tenant with many workspaces
+// can't issue one concurrent DB round-trip per row and exhaust the
+// connection pool. mapWithConcurrency preserves input order, so the
+// transformed result array stays 1:1 with `clients`.
+const WORKSPACE_METRICS_CONCURRENCY = 8;
 
 // SECURITY: All client endpoints require authentication
 router.use(authMiddleware);
@@ -158,8 +165,10 @@ router.get('/all', async (req, res) => {
 
     log.debug(`Found ${clients.length} total client workspaces across all organizations`);
 
-    // Transform data to match frontend expectations — compute real metrics
-    const transformedClients = await Promise.all(clients.map(async client => {
+    // Transform data to match frontend expectations — compute real metrics.
+    // Bounded concurrency (order-preserving) instead of an unbounded
+    // Promise.all, which would open one DB round-trip per workspace at once.
+    const transformedClients = await mapWithConcurrency(clients, async client => {
       const metrics = await getWorkspaceMetrics(client.id);
       return {
         id: String(client.id),
@@ -177,7 +186,7 @@ router.get('/all', async (req, res) => {
         teamMembers: metrics.teamMembers,
         status: client.status || 'active',
       };
-    }));
+    }, WORKSPACE_METRICS_CONCURRENCY);
 
     return res.json({
       success: true,
@@ -237,8 +246,9 @@ router.get('/', async (req, res) => {
 
     log.debug(`Found ${clients.length} client workspaces for organization ${organizationId}`);
 
-    // Transform data with real metrics
-    const transformedClients = await Promise.all(clients.map(async client => {
+    // Transform data with real metrics. Bounded concurrency
+    // (order-preserving) instead of an unbounded Promise.all.
+    const transformedClients = await mapWithConcurrency(clients, async client => {
       const metrics = await getWorkspaceMetrics(client.id);
       return {
         id: String(client.id),
@@ -255,7 +265,7 @@ router.get('/', async (req, res) => {
         teamMembers: metrics.teamMembers,
         status: client.status || 'active',
       };
-    }));
+    }, WORKSPACE_METRICS_CONCURRENCY);
 
     return res.json({
       success: true,

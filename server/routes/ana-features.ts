@@ -21,6 +21,9 @@ import {
   notifications,
   auditTrail,
 } from '../../shared/schema';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('ana-features');
 
 const router = Router();
 const ANA_FEATURES_MOCK_ROUTES_ENABLED =
@@ -225,10 +228,9 @@ router.get(
           });
         }
       } catch (memErr) {
-        console.warn(
-          'Intelligence feed: projectMemoryEntries query failed (table may not exist):',
-          memErr instanceof Error ? memErr.message : memErr
-        );
+        logger.warn('Intelligence feed: projectMemoryEntries query failed (table may not exist)', {
+          error: memErr instanceof Error ? memErr.message : memErr,
+        });
       }
 
       // Source 2: notifications — regulatory activity for the user's organization
@@ -264,10 +266,9 @@ router.get(
           });
         }
       } catch (notifErr) {
-        console.warn(
-          'Intelligence feed: notifications query failed (table may not exist):',
-          notifErr instanceof Error ? notifErr.message : notifErr
-        );
+        logger.warn('Intelligence feed: notifications query failed (table may not exist)', {
+          error: notifErr instanceof Error ? notifErr.message : notifErr,
+        });
       }
 
       // Source 3: audit_trail — recent regulatory audit events
@@ -298,10 +299,9 @@ router.get(
           });
         }
       } catch (auditErr) {
-        console.warn(
-          'Intelligence feed: audit_trail query failed (table may not exist):',
-          auditErr instanceof Error ? auditErr.message : auditErr
-        );
+        logger.warn('Intelligence feed: audit_trail query failed (table may not exist)', {
+          error: auditErr instanceof Error ? auditErr.message : auditErr,
+        });
       }
 
       // Sort all items by date descending
@@ -1528,10 +1528,9 @@ router.post(
         }
       } catch (dbError) {
         // Log but don't fail the response — persistence is best-effort until migration runs
-        console.warn(
-          'Gap analysis DB persistence failed (table may not exist yet):',
-          dbError instanceof Error ? dbError.message : dbError
-        );
+        logger.warn('Gap analysis DB persistence failed (table may not exist yet)', {
+          error: dbError instanceof Error ? dbError.message : dbError,
+        });
       }
 
       res.json(result);
@@ -2203,10 +2202,9 @@ router.post(
       if (code === 'INVALID_REQUEST') {
         return res.status(400).json({ error: error.message, code });
       }
-      console.error(
-        '[AnA submission-chat preview-rewrite] failed:',
-        error?.message || error
-      );
+      logger.error('[AnA submission-chat preview-rewrite] failed', {
+        error: error?.message || error,
+      });
       return res.status(500).json({
         error: 'Failed to preview rewrite',
         code: 'PREVIEW_REWRITE_ERROR',
@@ -2302,10 +2300,9 @@ router.post(
       if (code === 'INVALID_REQUEST') {
         return res.status(400).json({ error: error.message, code });
       }
-      console.error(
-        '[AnA submission-chat apply-rewrite] failed:',
-        error?.message || error
-      );
+      logger.error('[AnA submission-chat apply-rewrite] failed', {
+        error: error?.message || error,
+      });
       return res.status(500).json({
         error: 'Failed to apply rewrite',
         code: 'APPLY_REWRITE_ERROR',
@@ -2379,10 +2376,7 @@ router.post(
       if (code === 'ARTIFACT_NOT_FOUND') {
         return res.status(404).json({ error: err.message, code });
       }
-      console.error(
-        '[AnA citations run] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations run] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to run citation engine',
         code: 'CITATIONS_RUN_ERROR',
@@ -2456,7 +2450,7 @@ router.get(
       }
       return res.json(result);
     } catch (err: any) {
-      console.error('[AnA citations get] failed:', err?.message || err);
+      logger.error('[AnA citations get] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load citations',
         code: 'CITATIONS_GET_ERROR',
@@ -2501,10 +2495,7 @@ router.get(
       const result = await getProjectCitationsRollup(parsed.data, organizationId);
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations project-rollup] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations project-rollup] failed', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to load project rollup', code: 'PROJECT_ROLLUP_ERROR' });
@@ -2545,10 +2536,7 @@ router.get(
         artifacts: stale,
       });
     } catch (err: any) {
-      console.error(
-        '[AnA citations project-stale] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations project-stale] failed', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to load stale list', code: 'PROJECT_STALE_ERROR' });
@@ -2622,10 +2610,7 @@ router.post(
       );
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations project-batch-run] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations project-batch-run] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to run batch citations',
         code: 'PROJECT_BATCH_ERROR',
@@ -2669,10 +2654,7 @@ router.get(
       }
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations get-run] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations get-run] failed', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to load run', code: 'GET_RUN_ERROR' });
@@ -2724,10 +2706,7 @@ router.get(
       );
       return res.json({ artifactId, total, runs: rows });
     } catch (err: any) {
-      console.error(
-        '[AnA citations list-runs] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations list-runs] failed', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to list runs', code: 'LIST_RUNS_ERROR' });
@@ -2789,10 +2768,7 @@ router.get(
       });
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA org readiness-overview] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA org readiness-overview] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to compute org readiness overview',
         code: 'ORG_READINESS_OVERVIEW_ERROR',
@@ -2851,10 +2827,7 @@ router.get(
       );
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA project readiness-aggregate] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA project readiness-aggregate] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to compute readiness aggregate',
         code: 'READINESS_AGGREGATE_ERROR',
@@ -2895,10 +2868,7 @@ router.get(
         acceptedSlugs: listAcceptedSlugs(),
       });
     } catch (err: any) {
-      console.error(
-        '[AnA therapeutic-areas list] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA therapeutic-areas list] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to list therapeutic areas',
         code: 'THERAPEUTIC_AREAS_LIST_ERROR',
@@ -2928,10 +2898,7 @@ router.get(
         retrievalBoost: profileRetrievalBoost(profile),
       });
     } catch (err: any) {
-      console.error(
-        '[AnA therapeutic-areas get] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA therapeutic-areas get] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load therapeutic area profile',
         code: 'THERAPEUTIC_AREA_GET_ERROR',
@@ -2999,10 +2966,7 @@ router.get(
       );
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA project therapeutic-context] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA project therapeutic-context] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load therapeutic context',
         code: 'THERAPEUTIC_CONTEXT_ERROR',
@@ -3070,10 +3034,7 @@ router.patch(
           code,
         });
       }
-      console.error(
-        '[AnA project set therapeutic-area] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA project set therapeutic-area] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to set therapeutic area',
         code: 'SET_THERAPEUTIC_AREA_ERROR',
@@ -3129,7 +3090,7 @@ router.post(
       );
       return res.json(result);
     } catch (err: any) {
-      console.error('[AnA consistency scan] failed:', err?.message || err);
+      logger.error('[AnA consistency scan] failed', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to scan project consistency', code: 'CONSISTENCY_SCAN_ERROR' });
@@ -3183,10 +3144,7 @@ router.get(
       });
       return res.json({ organizationId, total, alerts: rows });
     } catch (err: any) {
-      console.error(
-        '[AnA consistency alerts list] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA consistency alerts list] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to list consistency alerts',
         code: 'CONSISTENCY_ALERTS_ERROR',
@@ -3216,10 +3174,7 @@ router.get(
       const result = await getConsistencyAlertsSummary(organizationId);
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA consistency summary] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA consistency summary] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load consistency summary',
         code: 'CONSISTENCY_SUMMARY_ERROR',
@@ -3267,10 +3222,7 @@ router.post(
       }
       return res.json({ ok: true, alert: result.row });
     } catch (err: any) {
-      console.error(
-        '[AnA consistency ack] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA consistency ack] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to acknowledge alert',
         code: 'CONSISTENCY_ALERT_ACK_ERROR',
@@ -3318,10 +3270,7 @@ router.post(
       }
       return res.json({ ok: true, alert: result.row });
     } catch (err: any) {
-      console.error(
-        '[AnA consistency resolve] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA consistency resolve] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to resolve alert',
         code: 'CONSISTENCY_ALERT_RESOLVE_ERROR',
@@ -3418,10 +3367,7 @@ router.post(
       if (code === 'INVALID_REQUEST') {
         return res.status(400).json({ error: err.message, code });
       }
-      console.error(
-        '[AnA guidance upsert-version] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA guidance upsert-version] failed', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to upsert guidance version', code: 'GUIDANCE_UPSERT_ERROR' });
@@ -3472,7 +3418,7 @@ router.post(
       });
       return res.json(result);
     } catch (err: any) {
-      console.error('[AnA guidance scan] failed:', err?.message || err);
+      logger.error('[AnA guidance scan] failed', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to scan guidance change', code: 'GUIDANCE_SCAN_ERROR' });
@@ -3532,10 +3478,7 @@ router.get(
         alerts: rows,
       });
     } catch (err: any) {
-      console.error(
-        '[AnA guidance alerts list] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA guidance alerts list] failed', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to list guidance alerts', code: 'GUIDANCE_ALERTS_ERROR' });
@@ -3578,7 +3521,7 @@ router.post(
       }
       return res.json({ ok: true, alert: result.row });
     } catch (err: any) {
-      console.error('[AnA guidance ack] failed:', err?.message || err);
+      logger.error('[AnA guidance ack] failed', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to acknowledge alert',
         code: 'GUIDANCE_ALERT_ACK_ERROR',
@@ -3622,7 +3565,7 @@ router.post(
       }
       return res.json({ ok: true, alert: result.row });
     } catch (err: any) {
-      console.error('[AnA guidance resolve] failed:', err?.message || err);
+      logger.error('[AnA guidance resolve] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to resolve alert',
         code: 'GUIDANCE_ALERT_RESOLVE_ERROR',
@@ -3652,10 +3595,7 @@ router.get(
       const result = await getGuidanceAlertsSummary(organizationId);
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA guidance alerts summary] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA guidance alerts summary] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load guidance alerts summary',
         code: 'GUIDANCE_ALERTS_SUMMARY_ERROR',
@@ -3675,10 +3615,7 @@ router.get(
       const result = await getMonitoredGuidanceCatalog();
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA guidance catalog] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA guidance catalog] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load monitored guidance catalog',
         code: 'GUIDANCE_CATALOG_ERROR',
@@ -3725,10 +3662,7 @@ router.post(
       );
       return res.json({ ok: true, ...result });
     } catch (err: any) {
-      console.error(
-        '[AnA guidance bulk-acknowledge] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA guidance bulk-acknowledge] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to bulk acknowledge alerts',
         code: 'GUIDANCE_BULK_ACK_ERROR',
@@ -3771,10 +3705,7 @@ router.post(
       );
       return res.json({ ok: true, ...result });
     } catch (err: any) {
-      console.error(
-        '[AnA guidance bulk-resolve] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA guidance bulk-resolve] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to bulk resolve alerts',
         code: 'GUIDANCE_BULK_RESOLVE_ERROR',
@@ -3862,11 +3793,10 @@ router.post(
             artifactsAffected: scan?.artifactsAffected ?? null,
           });
         } catch (innerErr: any) {
-          console.warn(
-            '[AnA guidance webhook] update failed:',
-            update.guidanceCode,
-            innerErr?.message || innerErr
-          );
+          logger.warn('[AnA guidance webhook] update failed', {
+            guidanceCode: update.guidanceCode,
+            error: innerErr?.message || innerErr,
+          });
           ingested.push({
             guidanceCode: update.guidanceCode,
             changed: false,
@@ -3885,10 +3815,7 @@ router.post(
         ingested,
       });
     } catch (err: any) {
-      console.error(
-        '[AnA guidance webhook] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA guidance webhook] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to ingest webhook',
         code: 'GUIDANCE_WEBHOOK_ERROR',
@@ -3971,10 +3898,7 @@ router.post(
       );
       return res.send(result.buffer);
     } catch (err: any) {
-      console.error(
-        '[AnA citations export.docx] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations export.docx] failed:', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to export docx', code: 'DOCX_LEDGER_EXPORT_ERROR' });
@@ -4004,7 +3928,7 @@ router.get(
       const result = await getCitationHealth(organizationId);
       return res.json(result);
     } catch (err: any) {
-      console.error('[AnA citations health] failed:', err?.message || err);
+      logger.error('[AnA citations health] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load citation health',
         code: 'CITATION_HEALTH_ERROR',
@@ -4061,7 +3985,7 @@ router.get(
       );
       return res.json(result);
     } catch (err: any) {
-      console.error('[AnA citations trends] failed:', err?.message || err);
+      logger.error('[AnA citations trends] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load trends',
         code: 'CITATION_TRENDS_ERROR',
@@ -4114,10 +4038,7 @@ router.get(
       );
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations section-coverage] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations section-coverage] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load section coverage',
         code: 'SECTION_COVERAGE_ERROR',
@@ -4154,10 +4075,7 @@ router.get(
       const result = await getProjectCitationGraph(parsed.data, organizationId);
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations graph] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations graph] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to build citation graph',
         code: 'CITATION_GRAPH_ERROR',
@@ -4204,10 +4122,7 @@ router.get(
       }
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations expectations] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations expectations] failed:', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to load expectations', code: 'EXPECTATIONS_ERROR' });
@@ -4278,10 +4193,7 @@ router.get(
       });
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations search] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations search] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to search citations',
         code: 'CITATION_SEARCH_ERROR',
@@ -4336,10 +4248,7 @@ router.post(
       });
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations prune] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations prune] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to prune runs',
         code: 'CITATION_PRUNE_ERROR',
@@ -4378,10 +4287,7 @@ router.get(
       const result = await getProjectGapsByRule(parsed.data, organizationId);
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations gaps-by-rule] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations gaps-by-rule] failed:', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to load gaps-by-rule', code: 'GAPS_BY_RULE_ERROR' });
@@ -4436,10 +4342,7 @@ router.get(
         ...formatCitationsJsonExport(rows),
       });
     } catch (err: any) {
-      console.error(
-        '[AnA citations project-export] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations project-export] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to export project citations',
         code: 'PROJECT_EXPORT_ERROR',
@@ -4498,10 +4401,7 @@ router.get(
         ...formatCitationsJsonExport(rows),
       });
     } catch (err: any) {
-      console.error(
-        '[AnA citations artifact-export] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations artifact-export] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to export artifact citations',
         code: 'ARTIFACT_EXPORT_ERROR',
@@ -4561,10 +4461,7 @@ router.get(
       );
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations project-snapshot] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations project-snapshot] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load snapshot',
         code: 'PROJECT_SNAPSHOT_ERROR',
@@ -4627,10 +4524,7 @@ router.get(
       );
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations project-diff] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations project-diff] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to diff project',
         code: 'PROJECT_DIFF_ERROR',
@@ -4674,10 +4568,7 @@ router.get(
       }
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations diff] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations diff] failed:', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to diff runs', code: 'CITATION_DIFF_ERROR' });
@@ -4713,10 +4604,7 @@ router.get(
       const result = await getCitationReadinessImpact(parsed.data, organizationId);
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA citations readiness-impact] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA citations readiness-impact] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to derive readiness impact',
         code: 'READINESS_IMPACT_ERROR',
@@ -4758,7 +4646,7 @@ router.get(
       }
       return res.json(result);
     } catch (err: any) {
-      console.error('[AnA citations gaps] failed:', err?.message || err);
+      logger.error('[AnA citations gaps] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load gaps',
         code: 'CITATIONS_GAPS_ERROR',
@@ -4818,10 +4706,7 @@ router.get(
       });
       return res.json({ total, proposals: rows });
     } catch (err: any) {
-      console.error(
-        '[AnA submission-chat list-proposals] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA submission-chat list-proposals] failed:', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Failed to list proposals', code: 'LIST_PROPOSALS_ERROR' });
@@ -4862,10 +4747,7 @@ router.get(
       }
       return res.json(linkage);
     } catch (err: any) {
-      console.error(
-        '[AnA submission-chat get-proposal] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA submission-chat get-proposal] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load proposal',
         code: 'GET_PROPOSAL_ERROR',
@@ -4907,10 +4789,7 @@ router.post(
       const result = await sweepExpiredProposals({ organizationId });
       return res.json({ ok: true, ...result });
     } catch (err: any) {
-      console.error(
-        '[AnA submission-chat sweep] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA submission-chat sweep] failed:', { error: err?.message || err });
       return res
         .status(500)
         .json({ error: 'Sweep failed', code: 'SWEEP_PROPOSALS_ERROR' });
@@ -4946,10 +4825,7 @@ router.get(
       const result = await getThreadTimeline(threadId, organizationId);
       return res.json(result);
     } catch (err: any) {
-      console.error(
-        '[AnA submission-chat thread-timeline] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA submission-chat thread-timeline] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load thread timeline',
         code: 'TIMELINE_ERROR',
@@ -5026,10 +4902,7 @@ router.post(
         code: 'SUBMISSION_CHAT_STREAM_ERROR',
         message: err?.message || 'Streaming submission-chat failed',
       });
-      console.error(
-        '[AnA submission-chat stream] failed:',
-        err?.message || err
-      );
+      logger.error('[AnA submission-chat stream] failed:', { error: err?.message || err });
     } finally {
       if (!clientClosed) res.end();
     }
@@ -5087,7 +4960,7 @@ router.post(
       if (code === 'AI_PROVIDER_UNAVAILABLE') {
         return res.status(503).json({ error: error.message, code });
       }
-      console.error('[AnA submission-chat] failed:', error?.message || error);
+      logger.error('[AnA submission-chat] failed:', { error: error?.message || error });
       return res.status(500).json({
         error: 'Failed to process submission-chat request',
         code: 'SUBMISSION_CHAT_ERROR',
@@ -5177,7 +5050,7 @@ router.post(
           code,
         });
       }
-      console.error('[AnA authoring-plan generate] failed:', err?.message || err);
+      logger.error('[AnA authoring-plan generate] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to generate authoring plan',
         code: 'AUTHORING_PLAN_ERROR',
@@ -5235,7 +5108,7 @@ router.get(
       });
       return res.json(result);
     } catch (err: any) {
-      console.error('[AnA authoring-plan list] failed:', err?.message || err);
+      logger.error('[AnA authoring-plan list] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to list authoring plans',
         code: 'AUTHORING_PLAN_LIST_ERROR',
@@ -5281,7 +5154,7 @@ router.get(
       }
       return res.json(plan);
     } catch (err: any) {
-      console.error('[AnA authoring-plan get] failed:', err?.message || err);
+      logger.error('[AnA authoring-plan get] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load authoring plan',
         code: 'AUTHORING_PLAN_GET_ERROR',
@@ -5324,7 +5197,7 @@ router.patch(
       }
       return res.json(plan);
     } catch (err: any) {
-      console.error('[AnA authoring-plan submit] failed:', err?.message || err);
+      logger.error('[AnA authoring-plan submit] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to submit authoring plan',
         code: 'AUTHORING_PLAN_SUBMIT_ERROR',
@@ -5372,7 +5245,7 @@ router.patch(
       }
       return res.json(plan);
     } catch (err: any) {
-      console.error('[AnA authoring-plan approve] failed:', err?.message || err);
+      logger.error('[AnA authoring-plan approve] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to approve authoring plan',
         code: 'AUTHORING_PLAN_APPROVE_ERROR',
@@ -5433,7 +5306,7 @@ router.patch(
       }
       return res.json(plan);
     } catch (err: any) {
-      console.error('[AnA authoring-plan reject] failed:', err?.message || err);
+      logger.error('[AnA authoring-plan reject] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to reject authoring plan',
         code: 'AUTHORING_PLAN_REJECT_ERROR',
@@ -5492,7 +5365,7 @@ router.patch(
       }
       return res.json(plan);
     } catch (err: any) {
-      console.error('[AnA authoring-plan execute] failed:', err?.message || err);
+      logger.error('[AnA authoring-plan execute] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to mark authoring plan executed',
         code: 'AUTHORING_PLAN_EXECUTE_ERROR',
@@ -5545,7 +5418,7 @@ router.get(
       }
       return res.json(plan);
     } catch (err: any) {
-      console.error('[AnA authoring-plan active] failed:', err?.message || err);
+      logger.error('[AnA authoring-plan active] failed:', { error: err?.message || err });
       return res.status(500).json({
         error: 'Failed to load active authoring plan',
         code: 'AUTHORING_PLAN_ACTIVE_ERROR',
