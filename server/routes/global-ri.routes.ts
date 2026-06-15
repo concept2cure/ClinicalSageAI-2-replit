@@ -37,6 +37,7 @@ import { getNonclinicalRequirements, recommendToxDuration, NONCLINICAL_PHASES, t
 import { getSubmissionFormat, assessSubmissionReadiness, SUBMISSION_MARKETS, type SubmissionMarket } from '../services/global-ri/electronic-submission-format';
 import { getInspectionProfile, getReadinessDomains, assessInspectionReadiness, INSPECTION_MARKETS, type InspectionMarket } from '../services/global-ri/inspection-readiness';
 import { getGuidanceFor, listGuidanceTopics } from '../services/global-ri/regulatory-guidance-map';
+import { projectSubmissionEconomics } from '../services/global-ri/submission-economics';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('global-ri-routes');
@@ -518,6 +519,25 @@ router.get('/guidance/:topic', limiter, requireRole(AUTHOR), (req: Request, res:
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No guidance modeled for topic "${topic}".` } });
   }
   res.json(guidance);
+});
+
+// ── Submission economics (fees + review timeline) ─────────────────────────────
+
+/**
+ * Project the combined fee + review-timeline economics for a submission.
+ * Body: { market, procedure, startDate, requiresClinicalData?, orphan?, smallBusiness?, programYears? }.
+ */
+router.post('/submission-economics', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market || !b.procedure || !b.startDate) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market, procedure and startDate are required.' } });
+  }
+  try {
+    res.json(projectSubmissionEconomics(b));
+  } catch (err) {
+    // Unknown market/procedure → 400 validation (propagated from the timeline projector).
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid submission-economics request.' } });
+  }
 });
 
 export default router;

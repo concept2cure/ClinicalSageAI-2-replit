@@ -301,3 +301,23 @@ describe('regulatory guidance map', () => {
     expect((await request(app).get('/api/global-ri/guidance/not_a_topic')).status).toBe(404);
   });
 });
+
+describe('submission economics', () => {
+  it('POST /submission-economics → 200 with fees + timeline + summary', async () => {
+    const res = await request(app).post('/api/global-ri/submission-economics').send({ market: 'FDA', procedure: 'NDA_STANDARD', startDate: '2026-01-01' });
+    expect(res.status).toBe(200);
+    expect(res.body.summary.totalFee).toBeGreaterThan(0);
+    expect(res.body.summary.reviewDays).toBeGreaterThan(0);
+    expect(res.body.summary.targetDecisionDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('POST /submission-economics → 400 for an unknown procedure', async () => {
+    const res = await request(app).post('/api/global-ri/submission-economics').send({ market: 'FDA', procedure: 'NOPE', startDate: '2026-01-01' });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /submission-economics → 400 without required fields', async () => {
+    const res = await request(app).post('/api/global-ri/submission-economics').send({ market: 'FDA' });
+    expect(res.status).toBe(400);
+  });
+});
