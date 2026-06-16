@@ -368,7 +368,7 @@ router.post(
       documentId,
       documentVersion,
       documentContent,
-      signerId,
+      signerId: bodySignerId,
       signerName,
       signerTitle,
       signerOrganization,
@@ -377,15 +377,42 @@ router.post(
       password,
     } = req.body;
 
-    if (!documentId || !signerId || !meaning || !password) {
-      return res.status(400).json({
+    // §11.200(a)(2): an electronic signature may be "used only by [its] genuine
+    // owner." The signer identity is therefore BOUND to the authenticated session
+    // user — never taken from the request body. A client-supplied `signerId` is
+    // only accepted as a redundant assertion that must match the authenticated
+    // user; any mismatch is rejected so a logged-in user cannot record a
+    // signature attributed to (and password-verified against) a different account.
+    const authUser = (req as any).user || {};
+    const authSignerId = authUser.userId ?? authUser.id;
+    if (authSignerId === undefined || authSignerId === null || authSignerId === '') {
+      return res.status(401).json({
+        error: 'Authenticated session required to sign per 21 CFR Part 11 §11.200',
+      });
+    }
+    const signerId = String(authSignerId);
+    if (
+      bodySignerId !== undefined &&
+      bodySignerId !== null &&
+      String(bodySignerId) !== signerId &&
+      String(bodySignerId) !== String(authUser.email ?? '')
+    ) {
+      return res.status(403).json({
         error:
-          'documentId, signerId, meaning, and password are required per 21 CFR Part 11 §11.100',
+          'signerId does not match the authenticated user; an e-signature may be used only by its genuine owner (§11.200(a)(2))',
       });
     }
 
-    // §11.100(a): Verify identity before signing against stored credential hash
-    const passwordVerified = await verifySignerPassword(pool, String(signerId), password);
+    if (!documentId || !meaning || !password) {
+      return res.status(400).json({
+        error:
+          'documentId, meaning, and password are required per 21 CFR Part 11 §11.100',
+      });
+    }
+
+    // §11.100(a): Verify identity before signing against stored credential hash.
+    // The credential checked is ALWAYS the authenticated user's, not a body value.
+    const passwordVerified = await verifySignerPassword(pool, signerId, password);
     if (!passwordVerified) {
       appendAuditEntry({
         entityType: 'signature',
