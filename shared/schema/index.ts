@@ -11,7 +11,7 @@
  * - clinical.ts: csr_*, trials, protocols, biomarkers (PLANNED — not yet extracted)
  * - ai.ts: rag_*, embeddings, knowledge_graph (PLANNED — not yet extracted)
  * - compliance.ts: audit_*, compliance_*, validation (PLANNED — not yet extracted)
- * - cdisc-reference.ts: 37 CDISC standard tables (DEFINED — no routes/services use these yet)
+ * - cdisc-reference.ts: 5 CDISC PRM tables (ACTIVE — study-design spine; ~32 unused dropped in #846)
  * - qc-schemas.ts: 6 QC tables (DEFINED — no routes/services use these yet)
  * - vault.ts: vaultDocumentChunks, vaultEvidenceCitations (DEFINED — not wired to services)
  *

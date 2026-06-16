@@ -14,15 +14,18 @@ The monolithic `shared/schema.ts` (11,571 lines, 239 tables) is being migrated t
 | Clinical | ~20 | 🔴 Pending | clinical.ts |
 | AI | ~15 | 🔴 Pending | ai.ts |
 | Compliance | ~12 | 🔴 Pending | compliance.ts |
-| **Reference (CDISC)** | **37** | **✅ Done** | **cdisc-reference.ts** |
+| **Reference (CDISC PRM)** | **5** | **✅ Active** | **cdisc-reference.ts** |
 | Supply Chain | ~6 | 🔴 Pending | supply-chain.ts |
 | Tasks/Workflow | ~10 | 🔴 Pending | tasks.ts |
 
-## CDISC Reference Tables (Completed)
+## CDISC Reference Tables (PRM subset)
 
-The 37 CDISC standards tables have been documented in `cdisc-reference.ts`:
-- **Usage:** 0 active imports (reference/future use)
-- **Location:** Lines 8696-9720 in schema.ts
+The active CDISC PRM (Protocol Representation Model) subset — 5 tables — is
+re-exported from `cdisc-reference.ts`. The ~32 unused CDISC reference tables
+(CDASH, CSR, ADaM, eCTD, IND, Compliance, Docs, PQ, Device, Task) were removed
+in GitHub issue #846; see the dated drop migration under `migrations/`.
+- **Usage:** PRM subset backs `server/services/study-design/study-design-repository.ts`
+- **Location:** Defined in schema.ts (`cdiscPrm*`)
 - **Import path:** `import { CDISC_TABLES } from '@shared/schema/cdisc-reference'`
 
 Tables include:
