@@ -21,12 +21,15 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
-import { createHash } from 'crypto';
 import { eq, and, isNull } from 'drizzle-orm';
 import { db } from '../../../db';
-import { submissionLeaves, coauthorDocuments } from '../../../../shared/schema';
-import { renderLeafPdf } from '../../ectd/leaf-pdf-renderer';
-import type { LeafFileResolver, ResolvedFile, CoreLeaf } from '../../ectd/core-to-packager';
+import { submissionLeaves } from '../../../../shared/schema';
+import {
+  materializeLeafSources,
+  leafSourceKey,
+  type UnresolvedLeaf,
+} from '../../ectd/leaf-source-resolver';
+import type { LeafFileResolver, CoreLeaf } from '../../ectd/core-to-packager';
 import { assembleTechDoc, type EuRegulation } from './tech-doc-assembler';
 import { buildTechnicalFileManifest } from '../technical-file-manifest';
 import {
@@ -38,10 +41,6 @@ import auditService from '../../auditService';
 import { createScopedLogger } from '../../../utils/logger';
 
 const logger = createScopedLogger('assemble-technical-file');
-
-function safeName(s: string): string {
-  return (s || 'leaf').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'leaf';
-}
 
 export interface AssembleTechnicalFileParams {
   sequenceId: number;
@@ -56,8 +55,15 @@ export interface AssembleTechnicalFileParams {
 export interface AssembleTechnicalFileResult {
   bundle: TechnicalFileBundle;
   skipped: Array<{ sectionId: string; source: string; reason: string }>;
-  /** Number of coauthor leaves materialized to disk. */
+  /** Number of leaves materialized to disk (all locally-renderable tables). */
   materialized: number;
+  /**
+   * Leaves whose source document could NOT be materialized into the package —
+   * external/binary tables (e.g. vault_documents, ctd_onboarding_documents),
+   * cross-tenant/missing rows, or an unknown document_table. Surfaced so an
+   * incomplete technical file is VISIBLE, never silently dropped.
+   */
+  unresolvedLeaves: UnresolvedLeaf[];
   ready: boolean;
 }
 
@@ -82,39 +88,24 @@ export async function assembleTechnicalFileFromCore(
       )
     );
 
-  // 2. Materialize each coauthor document to a deterministic PDF, keyed by id.
+  // 2. Materialize every leaf's source document to a deterministic PDF, keyed by
+  //    table:id. Every locally-renderable table (coauthor_documents,
+  //    unified_documents) is rendered via the same `renderLeafPdf` path;
+  //    external/binary tables are collected as `unresolvedLeaves` rather than
+  //    being silently dropped.
   const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), `techfile-assemble-${sequenceId}-`));
   const stageDir = path.join(outputDir, 'stage');
   await fs.mkdir(stageDir, { recursive: true });
-  const byDocId = new Map<number, ResolvedFile>();
-  let materialized = 0;
 
-  const docIds = [
-    ...new Set(
-      leaves.filter((l) => l.documentTable === 'coauthor_documents' && l.documentId).map((l) => l.documentId as number)
-    ),
-  ];
-  for (const docId of docIds) {
-    const [doc] = await db
-      .select()
-      .from(coauthorDocuments)
-      .where(and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId)))
-      .limit(1);
-    if (!doc) continue; // cross-tenant / missing → reported as a gap by the packager
-    const pdfBytes = await renderLeafPdf(doc.content ?? doc.title ?? '', {
-      title: doc.title ?? undefined,
-      sectionCode: doc.moduleNumber ?? undefined,
-    });
-    const fileName = `${safeName(doc.moduleNumber || doc.title)}-${docId}.pdf`;
-    const sourcePath = path.join(stageDir, fileName);
-    await fs.writeFile(sourcePath, pdfBytes);
-    byDocId.set(docId, { fileName, sourcePath, md5: createHash('md5').update(pdfBytes).digest('hex') });
-    materialized++;
-  }
+  const { byKey, unresolved: unresolvedLeaves, materialized } = await materializeLeafSources({
+    leaves: leaves.map((l) => ({ documentTable: l.documentTable, documentId: l.documentId })),
+    organizationId,
+    stageDir,
+  });
 
   const resolveFile: LeafFileResolver = (leaf) => {
-    if (leaf.documentTable !== 'coauthor_documents' || !leaf.documentId) return null;
-    return byDocId.get(leaf.documentId) ?? null;
+    if (!leaf.documentTable || !leaf.documentId) return null;
+    return byKey.get(leafSourceKey(leaf.documentTable, leaf.documentId)) ?? null;
   };
 
   // 3. Project onto the MDR/IVDR structure → manifest.
@@ -140,6 +131,15 @@ export async function assembleTechnicalFileFromCore(
   const plan = buildTechnicalFilePlan({ manifest, leaves: coreLeaves, resolveFile });
   const bundle = await materializeTechnicalFile(plan, { outputDir, applicationId: params.applicationId });
 
+  if (unresolvedLeaves.length > 0) {
+    logger.warn('Technical-file assemble could not materialize some leaf sources (not dropped silently)', {
+      sequenceId,
+      organizationId,
+      regulation,
+      unresolved: unresolvedLeaves,
+    });
+  }
+
   await auditService.logAction({
     organizationId,
     userId,
@@ -152,6 +152,7 @@ export async function assembleTechnicalFileFromCore(
       materialized,
       fileCount: bundle.fileCount,
       skipped: plan.skipped.length,
+      unresolved: unresolvedLeaves.length,
       outputDir,
     },
   });
@@ -161,9 +162,10 @@ export async function assembleTechnicalFileFromCore(
     regulation,
     materialized,
     skipped: plan.skipped.length,
+    unresolved: unresolvedLeaves.length,
   });
 
-  return { bundle, skipped: plan.skipped, materialized, ready: manifest.ready };
+  return { bundle, skipped: plan.skipped, materialized, unresolvedLeaves, ready: manifest.ready };
 }
 
 export default { assembleTechnicalFileFromCore };

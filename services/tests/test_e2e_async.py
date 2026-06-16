@@ -89,11 +89,14 @@ def test_smoke_task_writes_shared_file():
 
     assert status is not None and status.get("status") == "COMPLETED", f"Smoke job not completed: {status}"
 
-    # Check the file exists on the host-shared path (worker writes to /shared_data)
+    # The worker records the container path (OUTPUT_DIR_BASE=/shared_data). On the
+    # host runner the same file lives under ./test_shared, because the compose
+    # mounts ./test_shared:/shared_data. Resolve the host-visible path by name
+    # before asserting existence.
     output = status.get("output")
     assert output, "No output path recorded by smoke task"
-    p = Path(output)
-    assert p.exists(), f"Smoke file not found at {p}"
+    p = Path("test_shared") / Path(output).name
+    assert p.exists(), f"Smoke file not found at {p} (worker recorded {output})"
 
     # Save for artifact upload
     (Path("services/test_outputs") / f"smoke_{job_id}.txt").write_text(p.read_text(), encoding="utf-8")

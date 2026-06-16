@@ -46,6 +46,7 @@ import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, describe
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
+import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
@@ -193,6 +194,9 @@ router.post('/stream', async (req: Request, res: Response) => {
       projectId: streamProjectId,
       organizationId: orgId,
       authoringContext: streamAuthoringContext,
+      userId: typeof userId === 'number' ? userId : Number(userId) || null,
+      targetAgency:
+        typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
     });
     const streamDecisionContext = prefetchedStreamContext.decisionContext;
     const streamFeedbackContext = prefetchedStreamContext.feedbackContext;
@@ -219,6 +223,8 @@ router.post('/stream', async (req: Request, res: Response) => {
       authoringContext: streamOrchestratorAuthoringContext,
       _feedbackContext: streamFeedbackContext,
       _projectIntelligenceProfile: streamProjectProfile,
+      _relationalOverlay: prefetchedStreamContext.relationalOverlay,
+      _externalIntelBlock: prefetchedStreamContext.externalIntelBlock,
     });
     streamOrchestrationMs = Date.now() - streamPhaseStart;
 
@@ -789,6 +795,16 @@ router.post('/stream', async (req: Request, res: Response) => {
         telemetry: streamTelemetry,
       })}\n\n`
     );
+
+    // AnA's relational self-development: reflect on this turn and update her
+    // notes about the user + project (throttled inside; background only).
+    void reflectAfterTurn({
+      organizationId: orgId ? Number(orgId) : null,
+      userId: typeof userId === 'number' ? userId : Number(userId) || null,
+      projectId: streamProjectId != null ? Number(streamProjectId) : null,
+      userMessage: message,
+      assistantMessage: fullContent,
+    }).catch(() => {});
 
     // Background post-processing. We intentionally do NOT await this at the
     // top level — the client already has `done`. When the executors finish

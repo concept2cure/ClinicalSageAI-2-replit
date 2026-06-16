@@ -253,6 +253,14 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
     console.error('❌ Failed to mount Knowledge Base routes:', error);
   }
 
+  // ── Learning Horizon (continuous self-study loop, read-only window) ──
+  try {
+    const horizonModule = await import('../routes/learning-horizon.js');
+    app.use('/api/learning/horizon', authenticateToken, horizonModule.default);
+  } catch (error) {
+    console.error('❌ Failed to mount Regulatory Horizon routes:', error);
+  }
+
   // ── Preclinical (Module 4) ingestion ──
   // Mounted unconditionally; the router itself returns 503 when
   // PRECLINICAL_INGEST_ENABLED is unset so the deny is uniform per env.

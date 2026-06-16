@@ -88,4 +88,20 @@ describe('validateEvidence — itemized flagged claims', () => {
     const texts = (v.flagged_claims ?? []).map(c => c.text);
     expect(new Set(texts).size).toBe(texts.length);
   });
+
+  it('does NOT validate a self-contradictory response even when claims are grounded', () => {
+    // One grounded claim (nearby [KNOWN]) plus an internal contradiction. The
+    // ungrounded ratio is 0, but a contradiction is a categorical failure and
+    // must not pass validation — guards against the ratio-fallback fail-open.
+    const answer = pad(
+      'The submission is required to include a risk analysis [KNOWN: per 21 CFR 814]. ' +
+        'The data is sufficient to support the indication. However, there is a clear data gap ' +
+        'and the data is insufficient for review.'
+    );
+    const v = validateEvidence(answer, 'ana-ri');
+
+    expect(v.flagged_claims!.some(c => c.kind === 'contradiction')).toBe(true);
+    expect(v.weak_or_ungrounded_claim_count).toBe(0); // ratio fallback would have passed
+    expect(v.validated).toBe(false);
+  });
 });

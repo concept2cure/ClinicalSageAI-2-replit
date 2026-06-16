@@ -40,11 +40,13 @@ import {
   adviseGlobalSubmissionPlan,
   advisePmaReadiness,
   adviseEuTechnicalFileReadiness,
+  lookupIvdKnowledge,
   type DeviceReadinessAdviceInput,
   type GlobalMarketAdviceInput,
   type SubmissionPlanAdviceInput,
   type PmaReadinessAdviceInput,
   type EuTechDocAdviceInput,
+  type IvdKnowledgeLookupInput,
 } from '../ana-advisory';
 import {
   recordToolOutcome,
@@ -100,6 +102,14 @@ import type {
   StreamCallback,
 } from '../ai-gateway/types';
 import { ragRouter } from '../ragRouter';
+import {
+  runAgenticToolLoop,
+  capToolResultForModel,
+  mapWithConcurrency,
+  type ToolCall,
+  type ModelTurn,
+  type ToolResultEntry,
+} from './agentic-loop.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool Handler Registry
@@ -661,6 +671,14 @@ registerToolHandler('advise_global_market_strategy', async (input) => {
   return JSON.stringify({
     source: 'AnA Global-Market Strategy Advisor',
     ...adviseGlobalMarketStrategy({ profile, candidateMarkets } as unknown as GlobalMarketAdviceInput),
+  });
+});
+
+// IVD knowledge grounded lookup (curated, citation-backed corpus; no fabrication).
+registerToolHandler('ivd_knowledge_lookup', async (input) => {
+  return JSON.stringify({
+    source: 'AnA IVD Knowledge Base',
+    ...lookupIvdKnowledge(input as unknown as IvdKnowledgeLookupInput),
   });
 });
 
@@ -9139,8 +9157,19 @@ export interface AgenticOptions {
 /**
  * Execute a multi-turn agentic loop with AnA.
  *
- * AnA can call tools, get results, reason further, call more tools,
- * and eventually produce a final text answer.
+ * AnA can call tools, get results, reason further, call more tools, and
+ * eventually produce a final text answer.
+ *
+ * This is a thin adapter over the single canonical loop core in
+ * {@link runAgenticToolLoop} (server/services/ana/agentic-loop.ts) — the same
+ * orchestrator the SSE streaming route uses — so both of AnA's chat surfaces
+ * share one bounded, thrash-resistant, context-budgeted loop instead of two
+ * subtly different hand-rolled ones. This adapter owns only what is specific to
+ * the non-SSE callers: issuing the gateway calls, dispatching local tool
+ * handlers (in parallel, with results capped before they re-enter the model
+ * context), forwarding the per-tool execution hook, honouring barge-in via the
+ * abort signal, and returning the final {@link AnaGatewayResponse} the callers
+ * expect.
  */
 export async function executeAgenticLoop(
   request: GatewayRequest,
@@ -9148,90 +9177,108 @@ export async function executeAgenticLoop(
 ): Promise<AnaGatewayResponse> {
   const gateway = getGateway();
   const maxRounds = options?.maxRounds || 5;
+  const signal = options?.signal;
 
-  let currentRequest = { ...request };
-  let finalResponse: AnaGatewayResponse | null = null;
+  const toToolCall = (c: AnaToolUse): ToolCall => ({
+    id: c.id,
+    name: c.name,
+    input: (c.input ?? {}) as Record<string, unknown>,
+  });
 
-  for (let round = 0; round < maxRounds; round++) {
-    // Barge-in: stop before issuing the next generation/tool round when cancelled.
-    if (options?.signal?.aborted) break;
-    const response = (await gateway.route(currentRequest)) as AnaGatewayResponse;
+  // First model turn. Streaming (when the request carries onStream) and tool
+  // selection happen inside the gateway exactly as before.
+  let finalResponse = (await gateway.route(request)) as AnaGatewayResponse;
 
-    // If no tool uses, we're done
-    if (!response.toolUses || response.toolUses.length === 0) {
-      finalResponse = response;
-      break;
-    }
+  // Fast path: the model answered without asking for any tool.
+  if (!finalResponse.toolUses || finalResponse.toolUses.length === 0) {
+    return finalResponse;
+  }
 
-    // Execute each tool
-    const toolResults: Array<{
-      type: 'tool_result';
-      tool_use_id: string;
-      content: string;
-    }> = [];
+  // Conversation grows across rounds: each round appends the assistant's
+  // narration + the tool results, mirroring the streaming route's loopMessages.
+  const loopMessages: GatewayMessage[] = [...request.messages];
 
-    for (const toolUse of response.toolUses) {
-      const handler = toolHandlers.get(toolUse.name);
-      let result: string;
-
-      if (handler) {
-        try {
-          result = await handler(toolUse.input, options?.toolContext);
-          options?.onToolExecution?.(toolUse.name, toolUse.input, result);
-        } catch (error: any) {
-          result = JSON.stringify({
-            error: `Tool execution failed: ${error.message}`,
-            tool: toolUse.name,
-          });
+  // Run one round's tool calls in parallel (network-bound tools like PubMed /
+  // ClinicalTrials no longer block each other), firing the per-tool hook in the
+  // original call order so callers' telemetry/event streams stay deterministic.
+  const executeTools = async (calls: ToolCall[]): Promise<ToolResultEntry[]> => {
+    // Barge-in: don't spend work running this round's tools once cancelled;
+    // callModel sees the abort next and ends the loop.
+    if (signal?.aborted) return [];
+    const ran = await mapWithConcurrency(
+      calls,
+      async (call): Promise<{ call: ToolCall; result: string }> => {
+        const handler = toolHandlers.get(call.name);
+        if (!handler) {
+          return {
+            call,
+            result: JSON.stringify({
+              error: `No handler registered for tool: ${call.name}`,
+              availableTools: Array.from(toolHandlers.keys()),
+            }),
+          };
         }
-      } else {
-        result = JSON.stringify({
-          error: `No handler registered for tool: ${toolUse.name}`,
-          availableTools: Array.from(toolHandlers.keys()),
-        });
-      }
+        try {
+          const result = await handler(call.input, options?.toolContext);
+          return { call, result };
+        } catch (error: any) {
+          return {
+            call,
+            result: JSON.stringify({
+              error: `Tool execution failed: ${error?.message ?? 'unknown error'}`,
+              tool: call.name,
+            }),
+          };
+        }
+      },
+      4,
+    );
 
-      toolResults.push({
-        type: 'tool_result',
-        tool_use_id: toolUse.id,
-        content: result,
-      });
+    const entries: ToolResultEntry[] = [];
+    for (const { call, result } of ran) {
+      options?.onToolExecution?.(call.name, call.input, result);
+      entries.push({ tool_use_id: call.id, name: call.name, content: result });
+    }
+    return entries;
+  };
+
+  // Feed the latest tool results back and get the model's next turn. On the
+  // terminal/thrash round the loop passes includeTools=false, so we withdraw the
+  // tools to force a grounded text answer.
+  const callModel = async (
+    results: ToolResultEntry[],
+    priorText: string,
+    _round: number,
+    includeTools: boolean,
+  ): Promise<ModelTurn> => {
+    // Barge-in: when cancelled, stop before issuing the next round. Returning no
+    // tool calls ends the loop and preserves the last real response.
+    if (signal?.aborted) return { text: '', toolCalls: [] };
+
+    loopMessages.push({ role: 'assistant', content: priorText || '' });
+    loopMessages.push({
+      role: 'user',
+      content: results
+        .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
+        .join('\n\n'),
+    });
+
+    const roundRequest: GatewayRequest = { ...request, messages: loopMessages };
+    if (!includeTools) {
+      delete roundRequest.tools;
+      delete roundRequest.toolChoice;
     }
 
-    // Build follow-up request with tool results
-    // Append assistant message (with tool uses) and user message (with tool results)
-    const updatedMessages: GatewayMessage[] = [
-      ...currentRequest.messages,
-      {
-        role: 'assistant',
-        content: response.content || '',
-      },
-      {
-        role: 'user',
-        content: toolResults.map(tr =>
-          `[Tool Result for ${tr.tool_use_id}]: ${tr.content}`
-        ).join('\n\n'),
-      },
-    ];
+    finalResponse = (await gateway.route(roundRequest)) as AnaGatewayResponse;
+    const nextUses = finalResponse.toolUses ?? [];
+    return { text: finalResponse.content || '', toolCalls: nextUses.map(toToolCall) };
+  };
 
-    currentRequest = {
-      ...currentRequest,
-      messages: updatedMessages,
-    };
-
-    // If this is the last round, remove tools to force a text response
-    if (round === maxRounds - 2) {
-      delete currentRequest.tools;
-      delete currentRequest.toolChoice;
-    }
-  }
-
-  if (!finalResponse) {
-    // Force a final response without tools
-    delete currentRequest.tools;
-    delete currentRequest.toolChoice;
-    finalResponse = (await gateway.route(currentRequest)) as AnaGatewayResponse;
-  }
+  await runAgenticToolLoop(
+    { text: finalResponse.content || '', toolCalls: finalResponse.toolUses.map(toToolCall) },
+    { executeTools, callModel },
+    { maxRounds },
+  );
 
   return finalResponse;
 }

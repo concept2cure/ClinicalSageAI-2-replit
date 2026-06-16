@@ -1,8 +1,18 @@
 # services/worker.Dockerfile
 FROM python:3.10-slim
 
-# Install docker CLI so the worker can talk to host daemon via /var/run/docker.sock
-RUN apt-get update && apt-get install -y --no-install-recommends docker.io curl ca-certificates && rm -rf /var/lib/apt/lists/*
+# Install the Docker CLI so the worker can drive the host daemon via the mounted
+# /var/run/docker.sock. Use the official static client tarball rather than the
+# distro's `docker.io` package, which on newer Debian bases no longer reliably
+# ships the `docker` client binary (so shutil.which("docker") would be None).
+# `docker --version` at the end fails the build if the binary is missing.
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends curl ca-certificates \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-27.5.1.tgz -o /tmp/docker.tgz \
+	&& tar -xzf /tmp/docker.tgz -C /usr/local/bin --strip-components=1 docker/docker \
+	&& rm /tmp/docker.tgz \
+	&& docker --version
 
 WORKDIR /app
 

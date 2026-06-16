@@ -78,6 +78,8 @@ const SUMMARIES: Record<string, string> = {
   'POST /api/ind-lifecycle/briefing-book/pdf': 'Render the briefing book to PDF',
   'POST /api/ind-lifecycle/envelope': 'Build the us-regional eCTD envelope XML',
   'POST /api/ind-lifecycle/sequence/validate': 'Validate leaves vs the section map (pure)',
+  'POST /api/ind-lifecycle/sequence/lifecycle-validate': 'Validate a proposed sequence type vs the submission history (pure)',
+  'POST /api/ind-lifecycle/sequence/history-audit': 'Audit a submission\'s entire sequence-type history for legal transitions (pure)',
   'GET /api/ind-lifecycle/sequence/{seqId}/validate': "Validate a sequence's leaves vs the section map",
   'GET /api/ind-lifecycle/sequence/{seqId}/manifest': 'Package manifest (QC review)',
   'GET /api/ind-lifecycle/sequence/{seqId}/manifest/pdf': 'Package manifest PDF',

@@ -94,7 +94,6 @@ export function extractEffectObservation(
   detail: { results?: unknown; metadata?: unknown; sampleSize?: number | null } | null | undefined,
   opts: ExtractOptions = {},
 ): EvidenceObservation | null {
-  const benefitSign = opts.direction === 'decrease' ? -1 : 1;
   const sources = [
     asObject(detail?.results),
     asObject(report.content),
@@ -127,7 +126,11 @@ export function extractEffectObservation(
       const lo = num(src.ci[0]);
       const hi = num(src.ci[1]);
       if (lo !== undefined && hi !== undefined && lo > 0 && hi > lo) {
-        const logEffect = benefitSign * Math.log(ratio);
+        // A hazard/odds ratio is intrinsically "lower = benefit" (it ratios the
+        // bad-event rate), so a beneficial ratio (< 1) has a negative log. Negate
+        // it to put the observation on the same benefit-positive scale that the
+        // continuous shapes above and `buildEffectPrior`'s plannedEffect use.
+        const logEffect = -Math.log(ratio);
         const se = (Math.log(hi) - Math.log(lo)) / (2 * Z_975);
         if (se > 0) return observation(report, detail, logEffect, se, undefined, opts);
       }

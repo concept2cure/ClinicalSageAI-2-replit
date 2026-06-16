@@ -115,10 +115,14 @@ export class PowerSampleSizeService {
     // Pooled proportion
     const p = (p1 + ratio * p2) / (1 + ratio);
 
-    // Sample size calculation using arcsin transformation (variance stabilizing)
+    // Sample size calculation using arcsin transformation (variance stabilizing).
+    // The variance of arcsin(sqrt(p_hat)) is 1/(4n), so per-group n =
+    //   (1 + 1/ratio) * (z_alpha + z_beta)^2 / (4 * (arcsin√p1 - arcsin√p2)^2).
+    // The factor of 4 in the denominator must not be dropped — omitting it
+    // overstates the required sample size four-fold.
     const n1 = Math.ceil(
       ((1 + 1 / ratio) * Math.pow(z_alpha + z_beta, 2)) /
-        Math.pow(Math.asin(Math.sqrt(p1)) - Math.asin(Math.sqrt(p2)), 2)
+        (4 * Math.pow(Math.asin(Math.sqrt(p1)) - Math.asin(Math.sqrt(p2)), 2))
     );
 
     const n2 = Math.ceil(n1 * ratio);

@@ -30,6 +30,8 @@ import { getThreadMessages } from '../chat-thread-helpers.js';
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
 import { decisionLifecycleService } from '../decision-lifecycle-service.js';
 import { buildMdxContextBlock } from './mdx-context-resolver.js';
+import { loadRelationalOverlay } from './relational-profile-service.js';
+import { buildExternalIntelBlock } from '../external-intelligence/index.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -56,6 +58,10 @@ export interface PrefetchedRouteIntelligenceContext {
   rimContext: string;
   decisionContext: Array<{ decision: unknown; receipt?: unknown }>;
   orchestratorAuthoringContext?: OrchestratorInput['authoringContext'];
+  /** AnA's self-developed RELATIONAL CONTEXT block ('' when nothing learned yet). */
+  relationalOverlay: string;
+  /** Fresh nightly-sweep findings block ('' when nothing fresh). */
+  externalIntelBlock: string;
 }
 
 // ─── Authoring context builder ───────────────────────────────────────────────
@@ -136,14 +142,33 @@ export async function prefetchRouteIntelligenceContext(params: {
   projectId?: string | number | null;
   organizationId?: number | null;
   authoringContext?: Record<string, unknown>;
+  /** Numeric user id — enables AnA's per-user relational personality overlay. */
+  userId?: number | null;
+  /** Target agency of the active program — scopes the external intel block. */
+  targetAgency?: string | null;
 }): Promise<PrefetchedRouteIntelligenceContext> {
-  const { projectId, organizationId, authoringContext } = params;
+  const { projectId, organizationId, authoringContext, userId, targetAgency } = params;
   const projectIdNumber = projectId != null ? Number(projectId) : null;
 
   let feedbackContext: OrchestratorInput['_feedbackContext'] = null;
   let projectProfile: OrchestratorInput['_projectIntelligenceProfile'] = null;
   let rimContext = '';
   let decisionContext: Array<{ decision: unknown; receipt?: unknown }> = [];
+
+  // Independent of the project gate below: the relational overlay needs only
+  // org + user, and the external-intel block is global (and process-cached).
+  const [relationalResult, externalIntelResult] = await Promise.allSettled([
+    loadRelationalOverlay({
+      organizationId: organizationId ?? null,
+      userId: userId ?? null,
+      projectId: projectIdNumber,
+    }),
+    buildExternalIntelBlock(targetAgency ?? null),
+  ]);
+  const relationalOverlay =
+    relationalResult.status === 'fulfilled' ? relationalResult.value : '';
+  const externalIntelBlock =
+    externalIntelResult.status === 'fulfilled' ? externalIntelResult.value : '';
 
   if (
     projectIdNumber &&
@@ -212,6 +237,8 @@ export async function prefetchRouteIntelligenceContext(params: {
     rimContext,
     decisionContext,
     orchestratorAuthoringContext,
+    relationalOverlay,
+    externalIntelBlock,
   };
 }
 
@@ -289,6 +316,9 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     projectId,
     organizationId: numericOrgId,
     authoringContext: normalizedAuthoringContext,
+    userId: typeof userId === 'number' ? userId : Number(userId) || null,
+    targetAgency:
+      typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
   });
 
   // Orchestrate
@@ -303,6 +333,8 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     authoringContext: prefetchedContext.orchestratorAuthoringContext,
     _feedbackContext: prefetchedContext.feedbackContext,
     _projectIntelligenceProfile: prefetchedContext.projectProfile,
+    _relationalOverlay: prefetchedContext.relationalOverlay,
+    _externalIntelBlock: prefetchedContext.externalIntelBlock,
   };
   const orchestration = orchestrate(orchestratorInput);
 

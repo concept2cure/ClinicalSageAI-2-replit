@@ -616,10 +616,18 @@ class CerGenerationService {
   private calculateBenefitRiskRatio(data: any): string {
     const benefits = data.benefits?.length || 0;
     const risks = data.risks?.length || 0;
-    
+
+    // An empty benefit-risk analysis is INDETERMINATE, not favorable. Under MDR
+    // Annex I §1/§8 and MEDDEV 2.7/1 rev 4 the benefit-risk conclusion must be
+    // supported by documented clinical benefits; with no benefits AND no risks
+    // recorded there is no evidentiary basis for any favorable verdict, so this
+    // must fail closed to review rather than auto-certify "Highly favorable".
+    if (benefits === 0) return 'Needs review';
+
+    // Documented benefits with no documented risks is genuinely the best case.
     if (risks === 0) return 'Highly favorable';
     const ratio = benefits / risks;
-    
+
     if (ratio > 2) return 'Highly favorable';
     if (ratio > 1) return 'Favorable';
     if (ratio === 1) return 'Balanced';
