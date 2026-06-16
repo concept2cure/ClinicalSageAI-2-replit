@@ -23,7 +23,15 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET)
+        # that otherwise fail the whole pipeline (every other job needs: lint).
+        run: |
+          for attempt in 1 2 3; do
+            npm install && exit 0
+            echo "::warning::npm install failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm install failed after 3 attempts"; exit 1
 
       - name: Guardrails — eCTD migration headers (reg audit)
         run: ./scripts/ci/require-migration-headers.sh
@@ -138,7 +146,14 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
 
       - name: Install Postgres client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
@@ -251,7 +266,14 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
 
       # Tenant-isolation + prompt-injection contract tests. These mock the data
       # layer (no DB), so they run fast and gate every PR independently of the
@@ -274,7 +296,14 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
 
       - name: Run AnA readiness suite
         run: npm run test:ana
@@ -311,7 +340,14 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
 
       - name: Install Postgres client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
@@ -397,7 +433,14 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm install && exit 0
+            echo "::warning::npm install failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm install failed after 3 attempts"; exit 1
 
       - name: Build
         run: npm run build
@@ -421,7 +464,14 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm install && exit 0
+            echo "::warning::npm install failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm install failed after 3 attempts"; exit 1
 
       - name: Generate SBOM (CycloneDX)
         # Software Bill of Materials (production tree) for vendor security
@@ -484,7 +534,14 @@ jobs:
         with:
           node-version: '20'
       - name: Install dependencies
-        run: npm install
+        # Retry to absorb transient registry/network failures (e.g. ECONNRESET).
+        run: |
+          for attempt in 1 2 3; do
+            npm install && exit 0
+            echo "::warning::npm install failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm install failed after 3 attempts"; exit 1
       - name: Route mount audit (strict debt gate)
         run: npm run ci:audit-route-mounts:full-strict
       - name: Repo health audit (strict debt gate)
