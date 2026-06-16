@@ -30,7 +30,7 @@ import * as schema from '../../shared/schema';
 import { getSslConfig } from './ssl';
 import { getDatabaseUrl } from './getDatabaseUrl';
 import { instrumentPool } from './poolInstrumentation';
-import { installRlsEnforcement } from './rlsEnforcement';
+import { installRlsEnforcement, assertRlsEnforcementForProduction } from './rlsEnforcement';
 
 const logger = createScopedLogger('database');
 
@@ -65,6 +65,13 @@ try {
     // `current_setting('app.rls_enforce') IS DISTINCT FROM 'on'` clause,
     // so unless RLS_ENFORCE=on is explicitly set, every row passes.
     installRlsEnforcement(pool);
+
+    // Boot-time visibility for the RLS rollout (issue #843). Loudly warns when
+    // production is running with RLS off (defense-in-depth disabled), and
+    // hard-fails the boot when the operator opts into fail-closed via
+    // RLS_REQUIRE_ENFORCE=true. Default behaviour is unchanged (warn only).
+    const rlsMode = assertRlsEnforcementForProduction();
+    logger.info('RLS enforcement mode resolved', { mode: rlsMode });
 
     const testConnection = (retries = 3, delay = 3000) => {
       pool!.query('SELECT NOW()', (err, res) => {
