@@ -285,7 +285,10 @@ for (const rule of REGIONAL_RULES) {
 // ── Pattern validators ──────────────────────────────────────────────────────
 
 const FDA_APPLICATION_PREFIX = /^(IND|NDA|BLA|ANDA|DMF|DDT)-?\d{4,6}$/i;
-const EU_APPLICATION_PREFIX = /^(EMEA\/H\/C\/\d{5}|[A-Z]{2}\/H\/\d{5}\/\d{4})/;
+// Centralised procedure: EMEA/H/C/NNNNNN (canonically 6 digits, e.g. EMEA/H/C/005012);
+// older/short fixtures use 4–5. National (MRP/DCP): [country]/H/[number]/[year].
+// Anchored at both ends so trailing characters do not slip through as conformant.
+const EU_APPLICATION_PREFIX = /^(EMEA\/H\/C\/\d{4,6}|[A-Z]{2}\/H\/\d{4,6}\/\d{4})$/;
 const PMDA_APPLICATION_PREFIX = /^\d{8}$/;
 const HC_APPLICATION_PREFIX = /^(SNDS|NDS|ANDS|DIN)-?\d+/i;
 const SEQUENCE_PATTERN = /^\d{4}$/;
