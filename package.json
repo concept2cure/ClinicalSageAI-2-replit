@@ -298,7 +298,7 @@
     "marked": "17.0.5",
     "mathjs": "^15.2.0",
     "memorystore": "^1.6.7",
-    "multer": "^1.4.5-lts.2",
+    "multer": "^2.2.0",
     "nanoid": "^5.1.5",
     "node-cron": "^3.0.3",
     "node-fetch": "^2.7.0",
@@ -426,7 +426,7 @@
     "ts-jest": "^29.2.5",
     "tsx": "^4.19.1",
     "typescript": "5.6.3",
-    "vite": "6.4.3",
+    "vite": "^6.4.3",
     "vitest": "4.1.7"
   },
   "overrides": {

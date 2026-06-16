@@ -31,6 +31,7 @@ import { createServer, type Server as HttpServer } from 'http';
 import { startDriftSentinelSchedule } from './jobs/driftSentinelSweep';
 import { startAuditChainIntegritySchedule } from './jobs/auditChainIntegritySweep';
 import { startCorpusIngestionSchedule } from './jobs/corpusIngestionSweep';
+import { startRegulatoryHorizonSchedule } from './jobs/regulatoryHorizonScan';
 import { startExternalIntelligenceSchedule } from './jobs/externalIntelligenceSweep';
 import { errorHandler } from './src/mw/observability.js';
 
@@ -215,6 +216,10 @@ async function startServer() {
     // RIM precedent flywheel: periodic CT.gov ingestion into the corpus.
     // Self-guards to a no-op unless ENABLE_CORPUS_INGESTION=true.
     startCorpusIngestionSchedule();
+    // Continuous learning: weekly regulatory/harmonisation horizon scan that
+    // keeps AnA current across global markets. Self-guards to a no-op unless
+    // ENABLE_REGULATORY_HORIZON_SCAN=true, so default boot is unchanged.
+    startRegulatoryHorizonSchedule();
     // AnA's nightly external scan: regulatory agencies across all served
     // markets + study-methodology sources (SCDM, PubMed, medRxiv). Default
     // ON — disable with ENABLE_EXTERNAL_INTELLIGENCE=false.
