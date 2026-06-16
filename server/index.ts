@@ -31,6 +31,7 @@ import { createServer, type Server as HttpServer } from 'http';
 import { startDriftSentinelSchedule } from './jobs/driftSentinelSweep';
 import { startAuditChainIntegritySchedule } from './jobs/auditChainIntegritySweep';
 import { startCorpusIngestionSchedule } from './jobs/corpusIngestionSweep';
+import { startExternalIntelligenceSchedule } from './jobs/externalIntelligenceSweep';
 import { errorHandler } from './src/mw/observability.js';
 
 // Audit + RBAC side-effect imports (initialize tables + cache on require).
@@ -214,6 +215,10 @@ async function startServer() {
     // RIM precedent flywheel: periodic CT.gov ingestion into the corpus.
     // Self-guards to a no-op unless ENABLE_CORPUS_INGESTION=true.
     startCorpusIngestionSchedule();
+    // AnA's nightly external scan: regulatory agencies across all served
+    // markets + study-methodology sources (SCDM, PubMed, medRxiv). Default
+    // ON — disable with ENABLE_EXTERNAL_INTELLIGENCE=false.
+    startExternalIntelligenceSchedule();
   });
 }
 

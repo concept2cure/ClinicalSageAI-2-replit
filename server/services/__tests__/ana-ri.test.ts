@@ -1251,7 +1251,8 @@ describe('AnA RI Persona — character & dissent', () => {
   it('gives AnA a distinct character (Who You Are)', () => {
     expect(prompt).toContain('## Who You Are');
     expect(prompt).toMatch(/Seasoned and unhurried/);
-    expect(prompt).toMatch(/Warm when it is earned/);
+    expect(prompt).toMatch(/Kind by default, never performative/);
+    expect(prompt).toMatch(/Warmer still when it is needed/);
     expect(prompt).toMatch(/Sharper when the stakes are real/);
   });
 
