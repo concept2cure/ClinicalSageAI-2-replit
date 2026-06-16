@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-16T03:17:30.793Z",
+  "generatedAt": "2026-06-16T04:10:59.763Z",
   "git": {
-    "sha": "b412e9bc044eaf9fe4588465cb02c6758ddee775",
+    "sha": "5ddaf392dbdc03d799aebfd1f05a67fd44f20d6a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -870,6 +870,24 @@
         ]
       },
       {
+        "basename": "device-classification",
+        "count": 3,
+        "paths": [
+          "server/routes/device-classification.ts",
+          "server/services/global-ri/device-classification.ts",
+          "server/services/market-specs/device-classification.ts"
+        ]
+      },
+      {
+        "basename": "device-classification.test",
+        "count": 3,
+        "paths": [
+          "server/routes/__tests__/device-classification.test.ts",
+          "server/services/global-ri/__tests__/device-classification.test.ts",
+          "server/services/market-specs/__tests__/device-classification.test.ts"
+        ]
+      },
+      {
         "basename": "documents",
         "count": 3,
         "paths": [
@@ -1343,22 +1361,6 @@
         "paths": [
           "server/db/database.js",
           "server/utils/database.js"
-        ]
-      },
-      {
-        "basename": "device-classification",
-        "count": 2,
-        "paths": [
-          "server/routes/device-classification.ts",
-          "server/services/market-specs/device-classification.ts"
-        ]
-      },
-      {
-        "basename": "device-classification.test",
-        "count": 2,
-        "paths": [
-          "server/routes/__tests__/device-classification.test.ts",
-          "server/services/market-specs/__tests__/device-classification.test.ts"
         ]
       },
       {
@@ -2395,7 +2397,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 337,
+      "duplicateGroups": 339,
       "largeByBytes": 11,
       "largeByLines": 34
     },
