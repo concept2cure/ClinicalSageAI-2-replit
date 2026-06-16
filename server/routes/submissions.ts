@@ -1198,6 +1198,7 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       fileCount: result.bundle.fileCount,
       materialized: result.materialized,
       skipped: result.skipped,
+      unresolvedLeaves: result.unresolvedLeaves,
     });
   } catch (err) {
     fail(res, err);
@@ -1238,6 +1239,7 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
       sizeBytes: result.bundle.sizeBytes,
       materialized: result.materialized,
       skipped: result.skipped,
+      unresolvedLeaves: result.unresolvedLeaves,
     });
   } catch (err) {
     fail(res, err);

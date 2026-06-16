@@ -292,6 +292,53 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 );
 `;
 
+/**
+ * Document-source tables a leaf can point at (the polymorphic targets of
+ * `submission_leaves.document_table`). Used by the assembler tests to prove
+ * multi-source leaf resolution. Appended here (END of the DDL set) to minimize
+ * merge friction. Mirrors the renderable columns of:
+ *   - coauthor_documents          (shared/schema.ts)
+ *   - unified_documents +
+ *     workflow_document_versions  (shared/schema/unified_workflow.ts)
+ * Only the columns the resolver reads are included.
+ */
+export const LEAF_SOURCE_PGLITE_DDL = `
+CREATE TABLE IF NOT EXISTS coauthor_documents (
+  id              SERIAL PRIMARY KEY,
+  organization_id INTEGER NOT NULL,
+  title           TEXT NOT NULL,
+  content         TEXT,
+  status          TEXT NOT NULL DEFAULT 'draft',
+  module_number   TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS unified_documents (
+  id              SERIAL PRIMARY KEY,
+  title           TEXT NOT NULL,
+  document_type   TEXT NOT NULL,
+  status          TEXT NOT NULL DEFAULT 'draft',
+  created_by      TEXT NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_by      TEXT,
+  updated_at      TIMESTAMPTZ DEFAULT now(),
+  organization_id INTEGER NOT NULL,
+  latest_version  INTEGER NOT NULL DEFAULT 1,
+  metadata        JSON DEFAULT '{}'::json
+);
+
+CREATE TABLE IF NOT EXISTS workflow_document_versions (
+  id          SERIAL PRIMARY KEY,
+  document_id INTEGER NOT NULL,
+  version     INTEGER NOT NULL,
+  content     JSON,
+  created_by  TEXT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  comments    TEXT
+);
+`;
+
 export interface IndPgliteDb {
   pglite: PGlite;
   /** Drizzle instance over PGlite (insert/select against the pg-core schema). */
@@ -304,10 +351,13 @@ export interface IndPgliteDb {
  * `{ submissionCore: true }` to also create submissions / ectd_sequences /
  * submission_leaves (for the full filing → sequence → leaf flow).
  */
-export async function createIndPgliteDb(opts: { submissionCore?: boolean } = {}): Promise<IndPgliteDb> {
+export async function createIndPgliteDb(
+  opts: { submissionCore?: boolean; leafSources?: boolean } = {}
+): Promise<IndPgliteDb> {
   const pglite = new PGlite();
   await pglite.exec(IND_PGLITE_DDL);
   if (opts.submissionCore) await pglite.exec(SUBMISSION_CORE_PGLITE_DDL);
+  if (opts.leafSources) await pglite.exec(LEAF_SOURCE_PGLITE_DDL);
   const db = drizzle(pglite);
   return { pglite, db, close: () => pglite.close() };
 }
