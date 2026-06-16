@@ -47,6 +47,10 @@ jobs:
           # all run as distinct non-root uids and must write here.
           sudo mkdir -p /shared_data
           sudo chmod 777 /shared_data
+          # The worker runs as the non-root `app` user and drives the host Docker
+          # daemon through the mounted socket; its in-container docker group GID
+          # won't match the host's, so widen the socket to allow access.
+          sudo chmod 666 /var/run/docker.sock
 
       - name: Build sandboxed generator image
         run: |
