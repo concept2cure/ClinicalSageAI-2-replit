@@ -418,8 +418,8 @@ The sweep surfaced these **capabilities not separately named in Sections A/B** (
 |---|---|
 | `client/src/concept2cure/{authoring,mdx,pdev,cmc,risk,biopharma,labeling,submission,intelligence,quality,tasking,projects}/` | A.1–A.13 client surfaces |
 | `client/src/concept2cure/components/{ana,editor,intelligentDocs,knowledge,concept2cure-projects,concept2cure-home}/` | A.14, A.1, A.7, A.12 |
-| `server/routes/` (~200 modules) | Section A & B route families |
-| `server/services/` (~389 modules) | Section A feature logic + Section B central services |
+| `server/routes/` (307 top-level + nested modules) | Section A & B route families (full sweep in Section D) |
+| `server/services/` (138 directories / ~1,758 files) | Section A feature logic + Section B central services (directory index below) |
 | `server/services/{ai-gateway,rag*,corpus,search}/` | B.1, B.2 |
 | `server/{auth,middleware,db}/` | B.3 |
 | `server/services/{audit,observability,telemetry}/`, `utils/sentry.ts` | B.4 |
@@ -428,3 +428,43 @@ The sweep surfaced these **capabilities not separately named in Sections A/B** (
 | `shared/schema*`, `database/`, `migrations/`, `sql/` | B.7 |
 | `shadow_service/` | A.2 predicate intelligence (external Python scoring service) |
 | `ectd/`, `ectd-stubs/`, `templates/`, `schemas/`, `policy/`, `regulatory_data/`, `csrs/` | A.9 eCTD assets, A.1 templates, A.15 regulatory data, A.6/A.13 CSR corpus |
+
+## Appendix 1 · `server/services/` directory index (all 138 directories → owning area)
+
+- **A.1 Authoring/Docs:** authoring, documents, docx, cover-letter, forms, reviewDiffs, templates
+- **A.2 510k / A.3 Device-IVD:** device, device-ivd-cockpit, design-risk, ivd-knowledge, gspr-postmarket, postmarket, mdx-submission-planner, shadow-review, pathway-engines
+- **A.4 Biopharma/IND:** ind, ind-common, ind-forms, ind-lifecycle, ind-master-data, biologics, nonclinical, preclinical, chem, q-sub
+- **A.5 CMC:** cmc
+- **A.6 Biostatistics:** ana-biostats, biostatistics-judgment, biostats-signal-engine, study-design, cdisc, analytical, clinical-pharmacology, stats
+- **A.7 PDEV/Evidence/Knowledge:** pdev, evidence, evidence-sufficiency, intelligence, intelligence-engine, literature, research-intelligence, reasoning-engine, truth-engine
+- **A.8 Risk/Quality/QMS/CAPA:** qms, capa-mdr, inspection, maintenance, rules-engine
+- **A.9 Submission/eCTD:** ectd, submission-ai, submission-gateways, submission-service, cer, global-markets, market-specs, region-profiles
+- **A.10 Vault/Docs:** documentIntelligence, documentQuality, ocr, storage, provenance, citations
+- **A.11 Governance/Audit:** governance, audit, resolution, commitments
+- **A.12 Tasking/Projects:** tasking, projects, workflow, orchestration, automation
+- **A.13 Reporting:** report-os, csr, evals
+- **A.14 ANA/AI/Cortex/Foresight:** ai, ai-actions, ana, ana-advisory, ana-ri, cortex, cognitive-ecosystem, conversation-os, foresight, innovation, grdhe, lumen-context, tools
+- **A.15 PV/RegIntel/Research-Compliance:** sentinel, regulatory, regulatory-assessments, regulatory-correspondence, regulatory-graph, regulatory-precedent-intelligence, global-ri, ha-interactions, lifecycle, lifecycle-obligations, ptrs, iacuc, ibc, irb, financial-disclosures, grants, research-compliance, research-security, effort-certification, controlled-substances, rim
+- **A.16 Admin/Tenant:** tenant, tenant-export, entitlements, compute, concept2cure
+- **B.1 AI Gateway/Memory:** ai-gateway
+- **B.2 RAG/Corpus/Search:** corpus, search
+- **B.4 Observability:** observability, telemetry
+- **B.5 Integrations:** integrations, export
+- **B.6 Workers/Ingestion:** ingestion, python, legacy-importer
+- **B.7/cross-cutting:** policy, living-file, living-record, ai-governance, ai-ml-pccp, compliance, connectors, notifications, qc(via qms), services, etmf, design-system
+
+## Appendix 2 · `shared/schema/` module index (60 modules → B.7 data domain)
+
+- **Submissions/regulatory:** submissions, programs, ctd-projects, project-charter, q-sub, regulatory-atoms, regulatory-assessments, regulatory-graph, regulatory-standards.seed, defense-packets, reviewer-simulation
+- **IND lifecycle:** ind-amendments, ind-annual-reports, ind-cross-references, ind-dispatch-snapshots, ind-icsr-transmissions, ind-master-data, ind-safety-reports
+- **Device/IVD:** gspr-postmarket, gspr.seed, capa-mdr, inspection, shadow-review
+- **CMC:** cmc-os
+- **CSR/clinical/biostat:** csr-knowledge-db, nonclinical, evidence, evidence-sufficiency
+- **Research compliance:** iacuc, ibc, irb, financial-disclosures, research-compliance, research-security, grants, effort-certification, ha-interactions
+- **Documents/eTMF/vault:** etmf, tmf-artifacts, vault, unified_workflow, resolution
+- **Governance/orchestration/OS:** operating-system, orchestration, org-lifecycle, living-record-spine, pdev-workflow
+- **Reporting/intelligence:** report-os, external-intelligence, ana-intelligence, ana-relational
+- **Lifecycle/RIM/controlled subs:** lifecycle, rim, controlled-substances, support-admin
+- **AI/ML & API:** ai-ml-pccp, api-keys
+- **⚪ Stub/unused:** cdisc-reference (PRM subset active), qc-schemas (reachable via /api/qc, writes stubbed)
+- *(plus the monolithic `shared/schema.ts` — core tenancy/users/documents/submissions/audit/e-sign/device/CSR/feature-flags/billing tables.)*
