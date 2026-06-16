@@ -39,6 +39,9 @@ import stabilityRouter from './global-ri/stability.routes';
 import lifecycleRouter from './global-ri/lifecycle.routes';
 import impuritiesRouter from './global-ri/impurities.routes';
 import deviceRouter from './global-ri/device.routes';
+import safetyReportingRouter from './global-ri/safety-reporting.routes';
+import gcpRouter from './global-ri/gcp.routes';
+import gdpRouter from './global-ri/gdp.routes';
 
 const router = Router();
 
@@ -65,5 +68,8 @@ router.use(stabilityRouter);
 router.use(lifecycleRouter);
 router.use(impuritiesRouter);
 router.use(deviceRouter);
+router.use(safetyReportingRouter);
+router.use(gcpRouter);
+router.use(gdpRouter);
 
 export default router;
