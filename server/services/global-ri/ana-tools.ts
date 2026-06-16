@@ -41,6 +41,10 @@ import { assessPediatricPlan, type PediatricPlanInput } from './pediatric-requir
 import { recommendReliancePathways, type ReliancePathwayInput } from './reliance-pathways';
 import { getSpecificationTests, type SpecificationTestsInput } from './cmc-specifications';
 import { getBioequivalenceCriteria, getBcsBiowaiverEligibility, type BeRegion, type BcsClass } from './bioequivalence-requirements';
+import { recommendExpandedAccessMechanism, type RecommendMechanismInput } from './expanded-access';
+import { classifyAdvancedTherapy, type AdvancedTherapyClassificationInput } from './advanced-therapies';
+import { getCompanionDiagnosticFramework, type CdxRegion } from './companion-diagnostics';
+import { getPromotionalRules, type PromoRegion } from './promotional-compliance';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool specs — one per curated global-RI capability. Each input_schema mirrors the
@@ -438,6 +442,64 @@ const BCS_BIOWAIVER_TOOL: AnaAdvisoryToolSpec = {
   },
 };
 
+const EXPANDED_ACCESS_TOOL: AnaAdvisoryToolSpec = {
+  name: 'global_ri_expanded_access',
+  description:
+    'Deterministic, registry-grounded lookup (no LLM, no fabrication) of the pre-approval access mechanism ' +
+    '(expanded access / compassionate use / named patient) for a region and patient-population size. Returns the ' +
+    'recommended mechanism, its scope, and the governing citation.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      region: { type: 'string', enum: ['FDA', 'EU', 'JP'], description: 'Regulatory region.' },
+      populationSize: { type: 'string', enum: ['individual', 'intermediate', 'widespread'], description: 'Intended patient-population size.' },
+    },
+    required: ['region', 'populationSize'],
+  },
+};
+
+const ADVANCED_THERAPY_TOOL: AnaAdvisoryToolSpec = {
+  name: 'global_ri_advanced_therapy',
+  description:
+    'Deterministic, registry-grounded lookup (no LLM, no fabrication) classifying an advanced therapy (ATMP / cell & ' +
+    'gene / regenerative) for a region. Returns the classification (e.g. EU GTMP/sCTMP/TEP), regulatory route, oversight ' +
+    'body, and citation.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      region: { type: 'string', enum: ['EU', 'FDA', 'JP'], description: 'Regulatory region.' },
+      modality: { type: 'string', enum: ['gene_therapy', 'cell_therapy', 'tissue_engineered', 'combined'], description: 'Therapy modality.' },
+    },
+    required: ['region', 'modality'],
+  },
+};
+
+const COMPANION_DIAGNOSTIC_TOOL: AnaAdvisoryToolSpec = {
+  name: 'global_ri_companion_diagnostic',
+  description:
+    'Deterministic, registry-grounded lookup (no LLM, no fabrication) of the companion-diagnostic (CDx) regulatory ' +
+    'framework for a region (FDA Class III/PMA contemporaneous approval; EU IVDR Class C + Notified Body medicines ' +
+    'consultation). Returns classification, route, consultation requirement, and citation.',
+  input_schema: {
+    type: 'object',
+    properties: { region: { type: 'string', enum: ['FDA', 'EU'], description: 'Regulatory region.' } },
+    required: ['region'],
+  },
+};
+
+const PROMOTIONAL_COMPLIANCE_TOOL: AnaAdvisoryToolSpec = {
+  name: 'global_ri_promotional_compliance',
+  description:
+    'Deterministic, registry-grounded lookup (no LLM, no fabrication) of prescription-medicine promotion/advertising ' +
+    'rules for a region (FDA OPDP fair-balance/off-label/Form 2253; EU Title VIII POM-advertising controls). Returns the ' +
+    'rule set with citations.',
+  input_schema: {
+    type: 'object',
+    properties: { region: { type: 'string', enum: ['FDA', 'EU'], description: 'Regulatory region.' } },
+    required: ['region'],
+  },
+};
+
 /**
  * All global-RI tool specs AnA can register. The order is stable and the names
  * are unique.
@@ -460,6 +522,10 @@ export const GLOBAL_RI_TOOL_SPECS: AnaAdvisoryToolSpec[] = [
   CMC_SPECIFICATIONS_TOOL,
   BIOEQUIVALENCE_CRITERIA_TOOL,
   BCS_BIOWAIVER_TOOL,
+  EXPANDED_ACCESS_TOOL,
+  ADVANCED_THERAPY_TOOL,
+  COMPANION_DIAGNOSTIC_TOOL,
+  PROMOTIONAL_COMPLIANCE_TOOL,
 ];
 
 /** The 14 global-RI tool names, derived from {@link GLOBAL_RI_TOOL_SPECS}. */
@@ -514,6 +580,14 @@ export function dispatchGlobalRiTool(name: string, input: Record<string, unknown
       return getBioequivalenceCriteria((input as unknown as { region: BeRegion }).region);
     case 'global_ri_bcs_biowaiver':
       return getBcsBiowaiverEligibility((input as unknown as { bcsClass: BcsClass }).bcsClass);
+    case 'global_ri_expanded_access':
+      return recommendExpandedAccessMechanism(input as unknown as RecommendMechanismInput);
+    case 'global_ri_advanced_therapy':
+      return classifyAdvancedTherapy(input as unknown as AdvancedTherapyClassificationInput);
+    case 'global_ri_companion_diagnostic':
+      return getCompanionDiagnosticFramework((input as unknown as { region: CdxRegion }).region);
+    case 'global_ri_promotional_compliance':
+      return getPromotionalRules((input as unknown as { region: PromoRegion }).region);
     default:
       throw new Error(`Unknown global-RI tool "${name}"`);
   }

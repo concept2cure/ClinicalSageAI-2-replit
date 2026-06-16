@@ -44,6 +44,10 @@ import gcpRouter from './global-ri/gcp.routes';
 import gdpRouter from './global-ri/gdp.routes';
 import cmcRouter from './global-ri/cmc.routes';
 import bioequivalenceRouter from './global-ri/bioequivalence.routes';
+import expandedAccessRouter from './global-ri/expanded-access.routes';
+import advancedTherapiesRouter from './global-ri/advanced-therapies.routes';
+import companionDiagnosticsRouter from './global-ri/companion-diagnostics.routes';
+import promotionalComplianceRouter from './global-ri/promotional-compliance.routes';
 
 const router = Router();
 
@@ -75,5 +79,9 @@ router.use(gcpRouter);
 router.use(gdpRouter);
 router.use(cmcRouter);
 router.use(bioequivalenceRouter);
+router.use(expandedAccessRouter);
+router.use(advancedTherapiesRouter);
+router.use(companionDiagnosticsRouter);
+router.use(promotionalComplianceRouter);
 
 export default router;
