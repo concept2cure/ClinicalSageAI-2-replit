@@ -6,7 +6,7 @@
 
 ## Methodology
 
-This catalog was produced as a **fresh, unbiased, code-derived inventory**. It was built by a swarm of **24 inventory agents** (16 client feature-area + 8 central-service), each deriving findings **only from source code** and explicitly **excluding** all prior inventory/audit/spec documents (`FEATURE_INVENTORY.md`, `*_AUDIT_*`, `*_SPEC_*`, `MDX_*`, `HANDOFF*`, etc.). Findings were independently re-verified by an **audit swarm** and reconciled by a **chief-investigator** pass that cross-checked the catalog against the authoritative `LayoutMode` enum (`client/src/concept2cure/zen-app-constants.ts`), the route-registration spine (`server/startup/routes.ts`, `server/bootstrap/register-*-routes.ts`), the Drizzle schema (`shared/schema.ts` + `shared/schema/`), and top-level directories.
+This catalog was produced as a **fresh, unbiased, code-derived inventory**. It was built by a swarm of **24 inventory agents** (16 client feature-area + 8 central-service), each deriving findings **only from source code** and explicitly **excluding** all prior inventory/audit/spec documents (`FEATURE_INVENTORY.md`, `*_AUDIT_*`, `*_SPEC_*`, `MDX_*`, `HANDOFF*`, etc.). Findings were independently re-verified by an **audit swarm** and reconciled by a **chief-investigator** pass that cross-checked the catalog against the authoritative `LayoutMode` enum (`client/src/concept2cure/zen-app-constants.ts`), the route-registration spine (`server/startup/routes.ts`, `server/bootstrap/register-*-routes.ts`), the Drizzle schema (`shared/schema.ts` + `shared/schema/`), and top-level directories. A second **deep route-surface sweep** then classified all 307 distinct top-level route basenames so no route file is left uncatalogued — see **Section D**.
 
 **Maturity legend** (assessed from code evidence, not aspiration):
 - ✅ **Built** — wired end-to-end: real routes/UI + real logic + real data/schema (+ tests where present).
@@ -364,6 +364,51 @@ Paths: `server/services/{featureToggleService,entitlements/,atomicQuotaService,q
 - **Unused/schema-only (⚪):** ~34 CDISC reference tables (eCTD/PQ/device/CDASH/ADaM — the `cdisc_prm_*` subset is active), intelligent-docs Compliance Guardian/Document Sherpa/Data Bridge (types only), legacy `LayoutMode` modes with no renderer. *Inventory-management recommendation: activate or prune.* (Note: vault chunks/citations, GraphRAG, and QC lab schemas were re-classified up from ⚪ during the audit reconciliation — see A.8/A.10/B.2.)
 
 **Self-consistency:** Features that are both client-facing and shared infra (e-signature, audit query, RAG, document processing) are described once in Section A and cross-referenced (not re-described) in Section B.
+
+---
+
+# Section D — Complete route-surface sweep (deep pass)
+
+A second swarm classified **all 307 distinct top-level route basenames** in `server/routes/` (plus the nested routers under `ind-lifecycle/`, `ana-ri/`, `cmc/`, `enterprise/`, `admin/`, `c2c/`). Every file resolves to a Section-A/B area, an infra/security utility, or test-only scaffolding — none are orphaned. Counts by home area (top-level files): A.14 ANA/AI ~30 · A.9 Submission ~26 · A.3 Device/IVD ~24 · A.16 Admin/Tenant ~22 · A.15 PV/RegIntel/Research ~22 · A.4 Biopharma/IND ~21 · A.8 Risk/Quality ~14 · A.7/A.10/A.13 ~12 each · A.2/A.11/A.12 ~10 each · A.6 ~6 · Infra/Test ~8.
+
+The sweep surfaced these **capabilities not separately named in Sections A/B** (all code-verified; maturity in the standard legend):
+
+**Device / IVD (A.2/A.3/A.8)** — all ✅ unless noted:
+- `cybersecurity-524b` — FDA §524B SBOM completeness + cybersecurity readiness scoring.
+- `human-factors` — IEC 62366-1 HFE/UE file completeness + use-related risk.
+- `design-risk` — 21 CFR 820.30 design controls + ISO 14971 RMF.
+- `mdx-software` — IEC 62304 software-lifecycle deliverable tracking (SRS/SDS/threat-model/SBOM/pentest); `mdx-engineering` — DHF/ECR/BOM aggregator.
+- `diagnostics-performance` / `mdx-ivd-performance` — CLSI EP05/06/07/09/12/17/25/28 analytical + clinical (ROC/κ) IVD computations.
+- `mdx-clia` (CLIA categorization/waiver), `mdx-ldt` (LDT inventory + FDA LDT-rule phase milestones), `mdx-cdx` + `companion-diagnostics` (CDx pairings/concordance), `ivd-assessments` (lifecycle-calc persistence), `ivdr-binder` (IVDR evidence binder + pack builder), `device-cockpit` (cross-pathway readiness rollup), `device-projects` (device project CRUD).
+- `se-matrix` 🟡 — safety/efficacy matrix render orchestration (Shadow Service + DOCX factory + audit).
+
+**Submission / market access (A.9)** — all ✅ unless noted:
+- `market-access` — CPT/HCPCS coding classification + coverage-dossier completeness.
+- `haq-manager` — Health-Authority-Question response workflow (extract→assign→AI-draft→review→approve; FDA IR / EMA D120 / PMDA / HC).
+- `harmonize` — cross-module terminology/structure consistency; `validate-completeness` — rule-based completeness + RTF-risk + Go/No-Go.
+- `universal-packager` — single endpoint for all packaging (PDF/DOCX/ZIP/eCTD-ZIP/HTML/JSON/CSV/XLSX/XML); `fda-forms` — FDA form registry/orchestration.
+- `regulatorySubmissions` — hierarchical projects→sequences(gates)→modules(tasks)→granules; `regulatory-registry`, `global-markets`, `region-profiles` — global market/region reference + planner.
+- `spl-fhir` — LOINC/SPL/FHIR interoperability validation; `rtm-export` — Requirements Traceability Matrix export (CSV/JSON from evidence claims/links).
+
+**Evidence & RWE (A.7/A.15)** — all ✅:
+- `evidence-fabric` (Shadow-Service evidence health/contradiction/defense-packet proxy), `evidence-search` (hybrid OpenSearch+DB), `evidence-ask` (Data-Room grounded Q&A), `external-evidence` (Firecrawl web evidence).
+- `real-world-evidence` — RWE integration: FHIR, claims, registries, FAERS, signal detection, propensity scoring.
+- `global-compliance` — regional config + GDPR (RoPA/DPIA/DSR) + PV/AE/RMP; `precedent-engine` + `saved-precedent-queries` — precedent search/compare/strategy.
+
+**Quality / tenant governance (A.8/A.16)** — all ✅:
+- `tenant-ctq-factors` (Critical-to-Quality CRUD), `tenant-quality-validation` (section validation vs CTQ controls), `tenant-section-gating` (eCTD section access gating), `tenant-traceability` (requirement→evidence matrix), `quality-management-api` (CTQ aggregator); `tenant-stats`, `tenant-export` (org export + Part-11 attestation).
+
+**ANA / Cortex / Foresight / Innovation (A.14)**:
+- `cortex-unified` ✅ (consolidated Cortex gateway), `cortexAdvisory` ✅ (IND-pyramid risk / 510k sections / rejection patterns), `cortexRoutes`/`cortexManagement`/`cortexQuery` 🟡 (atoms/graph/epistemic — service-delegated), `conversation-os` ✅ (artifact-proposal/scout/plan-execute/quality-lint), `biotech-artifacts` ✅ (eCTD/ICSR/PSUR generation), `learning-horizon` ✅ (self-learning loop read API).
+- `foresight-api`/`foresight-ai-advanced`/`foresight-feedback` 🟡 (clinical-trial success prediction, biomarker/PKPD, feedback loop), `ana-cortex-ft` 🟡 (fine-tuned model registry/eval), `ana-mdx-context` 🟡, `conversation-health` 🟡, `chat-actions` 🟡.
+- `innovation` 🟡 — 8-feature suite (Regulatory Delta Radar, Evidence Confidence Heatmap, Submission Readiness Twin, Auto-traceability, Adaptive Reviewer Workspace, Outcome-based Template Learning, Negotiation Logbook, Compliance Guardrails SDK).
+- `nanoBanana` 🟡 (Gemini image/slide generation, dev-gated), `smart-blocks` 🟡 (auto-populated content blocks, unregistered), `cognitive-ecosystem` ⚪ (LangGraph agents / manufacturing digital-twins / federated-learning — routes real, most logic mock).
+
+**Other**: `ind-autodraft` ✅ (IND auto-draft from source docs, A.4), `clinical-operations` ✅ (full trial lifecycle: sites/enrollment/milestones/deviations, A.12), `field-sync` ✅ (SSE SmartFieldLinking, A.10), `predictive-sections` ✅ + `audit-services` ✅ (A.13/A.11), `document_qc_routes` ✅ (A.10), `escalate` 🟡 (issue-escalation framework, A.11), `controlled-substances` ✅ (DEA registrations/ledger, A.15), `public-api` ✅ (external `/api/v1` via X-API-Key, A.16).
+
+**Infrastructure / security utilities** (not client features): `well-known` ✅ (RFC 9116 security.txt), `csp-report` ✅ (CSP violation logging), `_ops-predicate-shadow` ✅ (K8s liveness/readiness probes), `beta-telemetry` 🟡 (beta-workspace telemetry).
+
+**Test-only scaffolding** (⚪, production-blocked): `test-assembly`, `integration-test` (E2E pipeline smoke test), `seed-demo` (510(k) demo seeding), `misc-inline` (fallback templates).
 
 ---
 
