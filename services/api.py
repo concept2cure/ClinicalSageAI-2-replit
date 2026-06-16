@@ -95,10 +95,22 @@ def generate(req: GenerateRequest, _: None = Depends(require_service_token)):
     safe_template_path = validate_template_path(req.template_path)
 
     job_id = uuid4().hex
-    # write input json to temp file
-    tmp_dir = Path(tempfile.mkdtemp(prefix=f"ectd_{job_id}_"))
+    # Write the request input JSON to a temp file. When OUTPUT_DIR_BASE is set
+    # (docker-compose E2E) place it under that shared volume so the worker — and
+    # the sandboxed generator container the worker spawns — can read it across
+    # containers. Widen the dir/file perms so those other (non-root,
+    # different-uid) processes can traverse to and read the file.
+    shared_base = os.environ.get("OUTPUT_DIR_BASE")
+    parent_dir = shared_base if shared_base and os.path.isdir(shared_base) else None
+    tmp_dir = Path(tempfile.mkdtemp(prefix=f"ectd_{job_id}_", dir=parent_dir))
     data_path = tmp_dir / "input.json"
     data_path.write_text(json.dumps(req.data), encoding="utf-8")
+    if parent_dir:
+        try:
+            os.chmod(tmp_dir, 0o777)
+            os.chmod(data_path, 0o644)
+        except OSError:
+            pass
 
     # pre-seed job store
     store.set(job_id, {"status": "PENDING", "input": str(data_path)})

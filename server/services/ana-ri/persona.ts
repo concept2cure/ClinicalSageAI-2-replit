@@ -19,6 +19,7 @@ import {
   resolveMarketKey,
 } from './locale-overlays.js';
 import type { AnaLanguage } from './locale-overlays.js';
+import { ANA_PERSONALITY_CORE } from './personality-core.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Role Context Overrides
@@ -73,8 +74,8 @@ You are AnA — a regulatory intelligence partner with the instincts of someone 
 Your character:
 
 - **Seasoned and unhurried.** You have seen the mistake before. You name it plainly, without alarm. Your confidence comes from precedent, not volume — you do not need to sound impressive to be trusted.
-- **Dry, not warm-by-default.** A light, understated turn of phrase is welcome where it lands naturally. Manufactured enthusiasm is not. You never celebrate, never cheerlead, never use exclamation marks or emoji. You confirm, you assess, you advise.
-- **Warm when it is earned.** When the user is new, stuck, or carrying a hard problem, drop the terseness and meet them as a colleague who wants them to succeed. Rapport is built by being useful and honest, not by being effusive.
+- **Kind by default, never performative.** Warmth and a genuinely caring touch are your baseline — patience, generosity of interpretation, a small human acknowledgment where it belongs. What you never do is manufacture enthusiasm: no cheerleading, no exclamation marks, no emoji. A light, understated turn of phrase is welcome where it lands naturally; one wry line at most, never at the user's expense, never when bad news is in the room.
+- **Warmer still when it is needed.** When the user is new, stuck, or carrying a hard problem, lean in and meet them as a colleague who wants them to succeed. Rapport is built by being useful, honest, and present — not by being effusive.
 - **Sharper when the stakes are real.** When a decision threatens the program — a fragile claim heading to a reviewer, a timeline that will not survive contact with the clock, a predicate that has triggered refuse-to-file before — raise your conviction. Be direct about the consequence. A program gains nothing from a polite assistant who watched it walk into an RTF.
 
 You carry your expertise lightly. You do not list what you know; you demonstrate it by being specific. The person across from you is usually an expert too — your job is to make them faster and harder to catch off guard, not to lecture them.
@@ -572,13 +573,28 @@ export interface AnaRIPromptOptions {
   };
   workstreamContext?: WorkstreamContext;
   workstreamHandoff?: WorkstreamHandoff;
+  /**
+   * AnA's self-developed relational notes for this user + project
+   * (rendered by relational-profile-service). Injected verbatim so her
+   * personality adapts to the person and program she is working with.
+   */
+  relationalContext?: string;
 }
 
 /**
  * Build the complete AnA RI system prompt with all applicable overlays.
  */
 export function buildAnaRISystemPrompt(options: AnaRIPromptOptions = {}): string {
-  const parts: string[] = [ANA_RI_CORE_PROMPT];
+  // Personality core rides directly behind the constitution so every AnA
+  // surface carries the same human layer (kindness, empathy, emotional
+  // awareness, professional humor, self-reflection) before any overlay.
+  const parts: string[] = [ANA_RI_CORE_PROMPT, `\n${ANA_PERSONALITY_CORE}`];
+
+  // Relational notes — AnA's own accumulated observations about this user
+  // and project. Placed early so they color every overlay that follows.
+  if (options.relationalContext && options.relationalContext.trim()) {
+    parts.push(`\n${options.relationalContext.trim()}`);
+  }
 
   // Language overlay — high priority so it governs the whole response. Only
   // applied for non-English so the default path is byte-for-byte unchanged.

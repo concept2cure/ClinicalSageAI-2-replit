@@ -6,7 +6,7 @@
  * unacknowledged Shadow Review critical.
  */
 import { describe, it, expect } from 'vitest';
-import { evaluateDispatchGate } from '../dispatch-gate';
+import { evaluateDispatchGate, mergeDispatchGates } from '../dispatch-gate';
 
 describe('evaluateDispatchGate', () => {
   it('clears when there are zero validation errors and zero shadow criticals', () => {
@@ -47,5 +47,34 @@ describe('evaluateDispatchGate', () => {
   it('is pure — the same input yields the same result', () => {
     const input = { validationErrors: 5, unacknowledgedShadowCriticals: 4 };
     expect(evaluateDispatchGate(input)).toEqual(evaluateDispatchGate(input));
+  });
+});
+
+describe('mergeDispatchGates', () => {
+  it('clears only when every composed gate clears', () => {
+    const a = { cleared: true, blockers: [] };
+    const b = { cleared: true, blockers: [] };
+    expect(mergeDispatchGates(a, b)).toEqual({ cleared: true, blockers: [] });
+  });
+
+  it('blocks (and unions blockers, order-preserved) when any gate blocks', () => {
+    const structural = { cleared: false, blockers: ['structural-1'] };
+    const external = { cleared: false, blockers: ['external-1', 'external-2'] };
+    const merged = mergeDispatchGates(structural, external);
+    expect(merged.cleared).toBe(false);
+    expect(merged.blockers).toEqual(['structural-1', 'external-1', 'external-2']);
+  });
+
+  it('a clean structural gate is blocked by a failing external gate (P0-4 fail-closed)', () => {
+    const merged = mergeDispatchGates(
+      { cleared: true, blockers: [] },
+      { cleared: false, blockers: ['external eValidator did not run'] },
+    );
+    expect(merged.cleared).toBe(false);
+    expect(merged.blockers).toEqual(['external eValidator did not run']);
+  });
+
+  it('handles a single gate', () => {
+    expect(mergeDispatchGates({ cleared: true, blockers: [] })).toEqual({ cleared: true, blockers: [] });
   });
 });

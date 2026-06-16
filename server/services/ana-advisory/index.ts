@@ -14,6 +14,7 @@ export * from './device-market-advisor';
 export * from './submission-plan-advisor';
 export * from './pma-advisor';
 export * from './eu-techdoc-advisor';
+export * from './ivd-knowledge-advisor';
 
 import advisor from './device-market-advisor';
 

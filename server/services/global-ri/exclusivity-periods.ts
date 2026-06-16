@@ -245,7 +245,7 @@ export function computeExclusivity(input: ExclusivityInput): ExclusivityResult {
   }
 
   // The binding base/orphan exclusivity is the longest of the components so far.
-  let binding = components.reduce((a, b) => (b.months > a.months ? b : a));
+  const binding = components.reduce((a, b) => (b.months > a.months ? b : a));
   let bindingMonths = binding.months;
   let bindingType = binding.type;
 
@@ -263,6 +263,12 @@ export function computeExclusivity(input: ExclusivityInput): ExclusivityResult {
       (ped.appliesTo === 'orphan' && orphanBinding) ||
       (ped.appliesTo === 'standard' && !orphanBinding);
     if (applies && ped.months > 0) {
+      // When the orphan period ties (or exceeds) the base, reduce() keeps the
+      // earlier base component, but the binding is actually governed by orphan
+      // exclusivity — and the orphan-only extension (e.g. EU Art 37 PIP) can
+      // only attach to it. Relabel the binding as orphan so the reported type
+      // matches the months (avoids an impossible "8+2 + pediatric = 144 months").
+      if (orphanBinding) bindingType = ORPHAN_RULE[input.market].type;
       bindingMonths += ped.months;
       components.push({ type: 'Pediatric extension', months: ped.months, description: ped.description, citation: ped.citation });
       bindingType = `${bindingType} + pediatric extension`;

@@ -7,8 +7,8 @@
  * literal.
  */
 
-import { describe, it, expect } from 'vitest';
-import { buildOpenFdaDrugSearch } from '../fda-drugs';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { buildOpenFdaDrugSearch, FDADrugsConnector } from '../fda-drugs';
 
 describe('buildOpenFdaDrugSearch', () => {
   it('percent-encodes spaces in a value (no raw space in the URL)', () => {
@@ -44,5 +44,40 @@ describe('buildOpenFdaDrugSearch', () => {
   it('returns match-all when no terms are supplied', () => {
     expect(buildOpenFdaDrugSearch({})).toBe('*');
     expect(buildOpenFdaDrugSearch({ indication: '   ' })).toBe('*');
+  });
+});
+
+describe('FDADrugsConnector.fetch — application_number encoding', () => {
+  const realFetch = globalThis.fetch;
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+    vi.restoreAllMocks();
+  });
+
+  function captureUrl(): { url: () => string } {
+    let captured = '';
+    globalThis.fetch = vi.fn(async (u: any) => {
+      captured = String(u);
+      return { ok: true, json: async () => ({ results: [{}] }) } as any;
+    }) as any;
+    return { url: () => captured };
+  }
+
+  it('percent-encodes a space/&/# in the resource id (no raw chars that break or inject the query)', async () => {
+    const cap = captureUrl();
+    await new FDADrugsConnector().fetch('fda:NDA 021368&x#y');
+    const url = cap.url();
+    expect(url).toContain('application_number:"NDA%20021368%26x%23y"');
+    // The raw value must not appear unencoded in the search clause.
+    expect(url).not.toContain('application_number:"NDA 021368');
+    // A raw & would split the query string and inject params.
+    expect(url.split('&limit=1')[0]).not.toContain('&x');
+  });
+
+  it('strips an embedded double quote so the phrase cannot be broken out of', async () => {
+    const cap = captureUrl();
+    await new FDADrugsConnector().fetch('fda:A"B');
+    // encodeOpenFdaValue replaces the inner quote with a space → encoded.
+    expect(cap.url()).toContain('application_number:"A%20B"');
   });
 });

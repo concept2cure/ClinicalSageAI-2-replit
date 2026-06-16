@@ -127,6 +127,34 @@ describe('pure compute routes', () => {
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('safe_to_proceed');
   });
+
+  it('POST /sequence/lifecycle-validate → 200 allows original first; blocks amendment-first', async () => {
+    const ok = await request(app).post('/api/ind-lifecycle/sequence/lifecycle-validate').send({ existingSequenceTypes: [], proposedType: 'original' });
+    expect(ok.status).toBe(200);
+    expect(ok.body.allowed).toBe(true);
+    const bad = await request(app).post('/api/ind-lifecycle/sequence/lifecycle-validate').send({ existingSequenceTypes: [], proposedType: 'amendment' });
+    expect(bad.body.allowed).toBe(false);
+    expect(bad.body.reasons.map((r: any) => r.code)).toContain('NO_ORIGINAL_FIRST');
+  });
+
+  it('POST /sequence/lifecycle-validate → 400 without required fields', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/sequence/lifecycle-validate').send({ proposedType: 'amendment' });
+    expect(res.status).toBe(400);
+  });
+
+  it('POST /sequence/history-audit → 200 valid history vs flagged amendment-first', async () => {
+    const ok = await request(app).post('/api/ind-lifecycle/sequence/history-audit').send({ sequenceTypes: ['original', 'amendment', 'annual'] });
+    expect(ok.status).toBe(200);
+    expect(ok.body.valid).toBe(true);
+    const bad = await request(app).post('/api/ind-lifecycle/sequence/history-audit').send({ sequenceTypes: ['amendment', 'original'] });
+    expect(bad.body.valid).toBe(false);
+    expect(bad.body.violations[0].index).toBe(0);
+  });
+
+  it('POST /sequence/history-audit → 400 without sequenceTypes', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/sequence/history-audit').send({});
+    expect(res.status).toBe(400);
+  });
 });
 
 describe('DB-backed routes', () => {

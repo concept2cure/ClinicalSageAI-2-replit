@@ -79,7 +79,8 @@ export class PubMedConnector implements DataConnector {
 
   async fetch(resourceId: string): Promise<ConnectorDocument> {
     const pmid = resourceId.replace('PMID:', '');
-    const res = await fetch(`${this.baseUrl}/efetch.fcgi?db=pubmed&id=${pmid}&retmode=xml`);
+    // Encode the caller-supplied id so a raw '&'/space can't inject query params.
+    const res = await fetch(`${this.baseUrl}/efetch.fcgi?db=pubmed&id=${encodeURIComponent(pmid)}&retmode=xml`);
     if (!res.ok) throw new Error(`PubMed fetch error: ${res.status}`);
 
     const content = await res.text();

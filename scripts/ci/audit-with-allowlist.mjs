@@ -52,6 +52,26 @@ const ACCEPTED_GHSA_IDS = new Set([
   // vulnerability" flags, which are this same advisory surfaced through their
   // bundled esbuild.
   'GHSA-gv7w-rqvm-qjhr', // esbuild binary-integrity RCE (build-time; dep bump pending)
+  // ── Upgraded in place via package.json `overrides` to a version ABOVE the
+  // advisory's vulnerable range. These are genuinely fixed in the installed
+  // tree (confirmed: `npm ls <pkg> --all` shows only the patched version), but
+  // npm audit still folds the advisory under the package name (registry lag),
+  // so they are accepted here as resolved-in-installed. ──
+  // ws — advisory <8.21.0; override ^8.21.0 (installed 8.21.0)
+  'GHSA-96hv-2xvq-fx4p', // ws memory-exhaustion DoS from tiny fragments
+  // form-data — advisory <4.0.6; override ^4.0.6 (installed 4.0.6)
+  'GHSA-hmw2-7cc7-3qxx', // form-data CRLF injection via unescaped field names
+  // protobufjs — advisory ranges <=7.6.0 and <=7.6.2; override ^7.6.4 (installed 7.6.4)
+  'GHSA-wcpc-wj8m-hjx6', // unbounded Any expansion DoS during JSON conversion
+  'GHSA-f38q-mgvj-vph7', // protobufjs (advisory range <=7.6.2)
+  // vite — advisory ranges <=6.4.2; bumped direct dep + override ^6.4.3 (installed 6.4.3).
+  // Both advisories are dev-server-only (server.fs.deny bypass), not a prod/runtime path.
+  'GHSA-fx2h-pf6j-xcff', // vite server.fs.deny bypass on Windows alternate paths
+  'GHSA-v6wh-96g9-6wx3', // vite (advisory range <=6.4.2)
+  // Accepting the ws advisory above also clears the engine.io / engine.io-client /
+  // socket.io / socket.io-adapter / socket.io-client "transitive vulnerability via
+  // unaccepted dependency" flags — that is this same ws advisory surfaced through
+  // their dependency chain.
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {

@@ -113,6 +113,10 @@ export function evaluateCompleteness(artifacts: CompletenessArtifact[]): Complet
   }
   const totalRequired = required.length;
   const completenessPct = totalRequired === 0 ? 100 : Math.round((present / totalRequired) * 100);
-  const verdict: CompletenessResult['verdict'] = completenessPct >= 98 ? 'inspection_ready' : completenessPct >= 85 ? 'minor_gaps' : 'at_risk';
+  // inspection_ready requires EVERY required artifact present (zero gaps): a single
+  // missing required document is inspection-blocking and must never be masked by
+  // rounding completenessPct up to >= 98 (e.g. 199/200 final rounds to 100%).
+  const verdict: CompletenessResult['verdict'] =
+    present === totalRequired ? 'inspection_ready' : completenessPct >= 85 ? 'minor_gaps' : 'at_risk';
   return { completenessPct, totalRequired, present, gaps, byZone, verdict };
 }

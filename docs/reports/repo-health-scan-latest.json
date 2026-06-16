@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-15T04:49:49.303Z",
+  "generatedAt": "2026-06-16T04:10:59.763Z",
   "git": {
-    "sha": "58fec5c755951dfeed713aaf25ad16a6e2901f9f",
+    "sha": "5ddaf392dbdc03d799aebfd1f05a67fd44f20d6a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 215,
+    "duplicateBasenames": 216,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 91,
+        "count": 93,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -67,7 +67,9 @@
           "server/services/cortex/index.ts",
           "server/services/csr/index.ts",
           "server/services/documents/index.ts",
+          "server/services/ectd/external-validator/index.ts",
           "server/services/entitlements/index.ts",
+          "server/services/external-intelligence/index.ts",
           "server/services/fda/index.ts",
           "server/services/foresight/index.ts",
           "server/services/global-markets/index.ts",
@@ -110,6 +112,53 @@
           "shared/schema/index.ts",
           "shared/types/generated/index.ts",
           "tests/resolution/drivers/index.ts"
+        ]
+      },
+      {
+        "basename": "types",
+        "count": 41,
+        "paths": [
+          ".claude/skills/gstack/scripts/resolvers/types.ts",
+          "client/src/concept2cure/components/concept2cure-projects/types.ts",
+          "client/src/concept2cure/components/intelligentDocs/types.ts",
+          "client/src/concept2cure/insights/data/types.ts",
+          "client/src/concept2cure/mdx/types.ts",
+          "client/src/concept2cure/pdev/data/types.ts",
+          "server/api/cmc/types.js",
+          "server/bootstrap/types.ts",
+          "server/config/types.ts",
+          "server/services/ai-gateway/types.ts",
+          "server/services/ai-governance/classification/types.ts",
+          "server/services/ana-advisory/types.ts",
+          "server/services/ana-biostats/types.ts",
+          "server/services/ana/therapeutic-area-profiles/types.ts",
+          "server/services/biostatistics-judgment/types.ts",
+          "server/services/biostats-signal-engine/types.ts",
+          "server/services/cognitive-ecosystem/types.ts",
+          "server/services/compute/types.ts",
+          "server/services/conversation-os/types.ts",
+          "server/services/ectd/external-validator/types.ts",
+          "server/services/entitlements/types.ts",
+          "server/services/global-markets/types.ts",
+          "server/services/grdhe/types.ts",
+          "server/services/intelligence-engine/types.ts",
+          "server/services/ivd-knowledge/types.ts",
+          "server/services/mdx-submission-planner/types.ts",
+          "server/services/reasoning-engine/types.ts",
+          "server/services/report-os/portfolio/types.ts",
+          "server/services/report-os/prediction/types.ts",
+          "server/services/report-os/providers/types.ts",
+          "server/services/report-os/quality/types.ts",
+          "server/services/report-os/regional/types.ts",
+          "server/services/report-os/render/types.ts",
+          "server/services/report-os/scheduling/types.ts",
+          "server/services/report-os/sealing/types.ts",
+          "server/services/rules-engine/types.ts",
+          "server/services/sentinel/types.ts",
+          "server/services/submission-gateways/types.ts",
+          "server/startup/types.ts",
+          "services/proof/types.ts",
+          "shared/ivd/types.ts"
         ]
       },
       {
@@ -156,52 +205,6 @@
           "ui_kits/submission/app.jsx",
           "ui_kits/task-tray/app.jsx",
           "ui_kits/tasking/app.jsx"
-        ]
-      },
-      {
-        "basename": "types",
-        "count": 40,
-        "paths": [
-          ".claude/skills/gstack/scripts/resolvers/types.ts",
-          "client/src/concept2cure/components/concept2cure-projects/types.ts",
-          "client/src/concept2cure/components/intelligentDocs/types.ts",
-          "client/src/concept2cure/insights/data/types.ts",
-          "client/src/concept2cure/mdx/types.ts",
-          "client/src/concept2cure/pdev/data/types.ts",
-          "server/api/cmc/types.js",
-          "server/bootstrap/types.ts",
-          "server/config/types.ts",
-          "server/services/ai-gateway/types.ts",
-          "server/services/ai-governance/classification/types.ts",
-          "server/services/ana-advisory/types.ts",
-          "server/services/ana-biostats/types.ts",
-          "server/services/ana/therapeutic-area-profiles/types.ts",
-          "server/services/biostatistics-judgment/types.ts",
-          "server/services/biostats-signal-engine/types.ts",
-          "server/services/cognitive-ecosystem/types.ts",
-          "server/services/compute/types.ts",
-          "server/services/conversation-os/types.ts",
-          "server/services/entitlements/types.ts",
-          "server/services/global-markets/types.ts",
-          "server/services/grdhe/types.ts",
-          "server/services/intelligence-engine/types.ts",
-          "server/services/ivd-knowledge/types.ts",
-          "server/services/mdx-submission-planner/types.ts",
-          "server/services/reasoning-engine/types.ts",
-          "server/services/report-os/portfolio/types.ts",
-          "server/services/report-os/prediction/types.ts",
-          "server/services/report-os/providers/types.ts",
-          "server/services/report-os/quality/types.ts",
-          "server/services/report-os/regional/types.ts",
-          "server/services/report-os/render/types.ts",
-          "server/services/report-os/scheduling/types.ts",
-          "server/services/report-os/sealing/types.ts",
-          "server/services/rules-engine/types.ts",
-          "server/services/sentinel/types.ts",
-          "server/services/submission-gateways/types.ts",
-          "server/startup/types.ts",
-          "services/proof/types.ts",
-          "shared/ivd/types.ts"
         ]
       },
       {
@@ -628,6 +631,16 @@
         ]
       },
       {
+        "basename": "config",
+        "count": 4,
+        "paths": [
+          ".claude/skills/gstack/browse/src/config.ts",
+          "client/src/concept2cure/components/concept2cure-projects/data/config.ts",
+          "server/export/stylePacks/config.ts",
+          "server/services/ectd/external-validator/config.ts"
+        ]
+      },
+      {
         "basename": "conversations",
         "count": 4,
         "paths": [
@@ -830,15 +843,6 @@
         ]
       },
       {
-        "basename": "config",
-        "count": 3,
-        "paths": [
-          ".claude/skills/gstack/browse/src/config.ts",
-          "client/src/concept2cure/components/concept2cure-projects/data/config.ts",
-          "server/export/stylePacks/config.ts"
-        ]
-      },
-      {
         "basename": "data-correspondence-detail",
         "count": 3,
         "paths": [
@@ -863,6 +867,24 @@
           "design-system/_sync/reconciliation-2026-06-02/files/data-submissions.jsx",
           "design-system/ui_kits/mdx/data-submissions.jsx",
           "design-system/ui_kits/mdx_phase2/data-submissions.jsx"
+        ]
+      },
+      {
+        "basename": "device-classification",
+        "count": 3,
+        "paths": [
+          "server/routes/device-classification.ts",
+          "server/services/global-ri/device-classification.ts",
+          "server/services/market-specs/device-classification.ts"
+        ]
+      },
+      {
+        "basename": "device-classification.test",
+        "count": 3,
+        "paths": [
+          "server/routes/__tests__/device-classification.test.ts",
+          "server/services/global-ri/__tests__/device-classification.test.ts",
+          "server/services/market-specs/__tests__/device-classification.test.ts"
         ]
       },
       {
@@ -1339,22 +1361,6 @@
         "paths": [
           "server/db/database.js",
           "server/utils/database.js"
-        ]
-      },
-      {
-        "basename": "device-classification",
-        "count": 2,
-        "paths": [
-          "server/routes/device-classification.ts",
-          "server/services/market-specs/device-classification.ts"
-        ]
-      },
-      {
-        "basename": "device-classification.test",
-        "count": 2,
-        "paths": [
-          "server/routes/__tests__/device-classification.test.ts",
-          "server/services/market-specs/__tests__/device-classification.test.ts"
         ]
       },
       {
@@ -2046,6 +2052,14 @@
         ]
       },
       {
+        "basename": "technical-file-packager.test",
+        "count": 2,
+        "paths": [
+          "server/services/pathway-engines/__tests__/technical-file-packager.test.ts",
+          "server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-packager.test.ts"
+        ]
+      },
+      {
         "basename": "templateregistry",
         "count": 2,
         "paths": [
@@ -2153,11 +2167,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 457674
+        "bytes": 460276
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 331520
+        "bytes": 331594
       },
       {
         "file": "server/statistics-service.ts",
@@ -2189,7 +2203,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 117396
+        "bytes": 117471
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2211,7 +2225,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 9268
+        "lines": 9315
       },
       {
         "file": "server/statistics-service.ts",
@@ -2219,7 +2233,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 6163
+        "lines": 6164
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2251,7 +2265,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2758
+        "lines": 2759
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2322,12 +2336,12 @@
         "lines": 1796
       },
       {
-        "file": "server/routes/ana-cortex-ft.ts",
-        "lines": 1785
+        "file": "server/services/ana-ri/orchestrator.ts",
+        "lines": 1786
       },
       {
-        "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1764
+        "file": "server/routes/ana-cortex-ft.ts",
+        "lines": 1785
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2383,7 +2397,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 331,
+      "duplicateGroups": 339,
       "largeByBytes": 11,
       "largeByLines": 34
     },

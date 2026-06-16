@@ -88,6 +88,13 @@ def generate_docx_task(self, job_id: str, data_path: str, template_path: str = N
         base_path = Path(base)
         base_path.mkdir(parents=True, exist_ok=True)
         out_dir = Path(tempfile.mkdtemp(prefix=f"docgen_{job_id}_", dir=str(base_path)))
+        # generated.docx is written by the sandboxed generator container, which
+        # runs as a different (non-root) uid than this worker. mkdtemp creates
+        # the dir 0700, so widen it to allow that cross-uid write.
+        try:
+            os.chmod(out_dir, 0o777)
+        except OSError:
+            pass
     else:
         out_dir = Path(shutil.mkdtemp(prefix=f"docgen_{job_id}_"))
 

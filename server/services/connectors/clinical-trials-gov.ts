@@ -80,7 +80,9 @@ export class ClinicalTrialsGovConnector implements DataConnector {
   }
 
   async fetch(resourceId: string): Promise<ConnectorDocument> {
-    const res = await fetch(`${this.baseUrl}/studies/${resourceId}`);
+    // Encode the caller-supplied id — a raw '/', '?', '#' or space would escape
+    // the path segment or break the URL.
+    const res = await fetch(`${this.baseUrl}/studies/${encodeURIComponent(resourceId)}`);
     if (!res.ok) throw new Error(`Study ${resourceId} not found`);
 
     const data = await res.json();

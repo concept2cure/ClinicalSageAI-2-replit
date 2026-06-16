@@ -21,6 +21,7 @@ export default {
     '/concept2cure/components/projects/__tests__/',
     '/concept2cure/components/workspace/__tests__/',
     '/concept2cure/router/__tests__/',
+    '/concept2cure/insights/',
     '/i18n/__tests__/',
     '/portal-v2/',
     // Individual vitest-flavored test files outside the listed dirs.

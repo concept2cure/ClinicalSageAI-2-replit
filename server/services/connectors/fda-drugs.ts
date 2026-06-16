@@ -100,7 +100,12 @@ export class FDADrugsConnector implements DataConnector {
 
   async fetch(resourceId: string): Promise<ConnectorDocument> {
     const appNo = resourceId.replace('fda:', '');
-    const res = await fetch(`${this.baseUrl}/drug/drugsfda.json?search=application_number:"${appNo}"&limit=1`);
+    // Encode the application number the same way search() does — a raw
+    // space/&/#/quote in the resource id would otherwise break the URL or inject
+    // openFDA query params (the bug class fixed in search()).
+    const res = await fetch(
+      `${this.baseUrl}/drug/drugsfda.json?search=application_number:"${encodeOpenFdaValue(appNo)}"&limit=1`,
+    );
     if (!res.ok) throw new Error(`FDA drug ${appNo} not found`);
 
     const data = await res.json();
