@@ -39,6 +39,8 @@ import { getStabilityConditions, type StorageCondition } from './stability-requi
 import { computeObligationSchedule, type ObligationScheduleInput } from './lifecycle-obligations-calendar';
 import { assessPediatricPlan, type PediatricPlanInput } from './pediatric-requirements';
 import { recommendReliancePathways, type ReliancePathwayInput } from './reliance-pathways';
+import { getSpecificationTests, type SpecificationTestsInput } from './cmc-specifications';
+import { getBioequivalenceCriteria, getBcsBiowaiverEligibility, type BeRegion, type BcsClass } from './bioequivalence-requirements';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool specs — one per curated global-RI capability. Each input_schema mirrors the
@@ -395,8 +397,49 @@ const RELIANCE_PATHWAYS_TOOL: AnaAdvisoryToolSpec = {
   },
 };
 
+const CMC_SPECIFICATIONS_TOOL: AnaAdvisoryToolSpec = {
+  name: 'global_ri_cmc_specifications',
+  description:
+    'Deterministic, registry-grounded lookup (no LLM, no fabrication) of the ICH Q6A/Q6B specification TEST set ' +
+    'for a drug substance/product. Returns the universal tests plus the dosage-form-specific tests (e.g. solid-oral ' +
+    'dissolution + uniformity of dosage units; parenteral sterility + endotoxins). Lists the expected tests, not numeric limits.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      productType: { type: 'string', enum: ['small_molecule', 'biologic'], description: 'Chemical (Q6A) or biological (Q6B) product.' },
+      dosageForm: { type: 'string', enum: ['solid_oral', 'oral_liquid', 'parenteral'], description: 'Optional dosage form for form-specific tests.' },
+    },
+    required: ['productType'],
+  },
+};
+
+const BIOEQUIVALENCE_CRITERIA_TOOL: AnaAdvisoryToolSpec = {
+  name: 'global_ri_bioequivalence_criteria',
+  description:
+    'Deterministic, registry-grounded lookup (no LLM, no fabrication) of the bioequivalence acceptance criteria for ' +
+    'a region (FDA/EMA): the PK parameters, the 90% confidence interval acceptance range (80.00–125.00%), the typical ' +
+    'crossover design, and the highly-variable-drug approach (RSABE/ABEL).',
+  input_schema: {
+    type: 'object',
+    properties: { region: { type: 'string', enum: ['FDA', 'EMA'], description: 'Regulatory region.' } },
+    required: ['region'],
+  },
+};
+
+const BCS_BIOWAIVER_TOOL: AnaAdvisoryToolSpec = {
+  name: 'global_ri_bcs_biowaiver',
+  description:
+    'Deterministic, registry-grounded lookup (no LLM, no fabrication) of ICH M9 BCS biowaiver eligibility for a BCS ' +
+    'class (I/II/III/IV): whether an in-vivo BE study can be waived, with the solubility/permeability profile and conditions.',
+  input_schema: {
+    type: 'object',
+    properties: { bcsClass: { type: 'string', enum: ['I', 'II', 'III', 'IV'], description: 'Biopharmaceutics Classification System class.' } },
+    required: ['bcsClass'],
+  },
+};
+
 /**
- * All 14 global-RI tool specs AnA can register. The order is stable and the names
+ * All global-RI tool specs AnA can register. The order is stable and the names
  * are unique.
  */
 export const GLOBAL_RI_TOOL_SPECS: AnaAdvisoryToolSpec[] = [
@@ -414,6 +457,9 @@ export const GLOBAL_RI_TOOL_SPECS: AnaAdvisoryToolSpec[] = [
   LIFECYCLE_SCHEDULE_TOOL,
   PEDIATRIC_PLAN_TOOL,
   RELIANCE_PATHWAYS_TOOL,
+  CMC_SPECIFICATIONS_TOOL,
+  BIOEQUIVALENCE_CRITERIA_TOOL,
+  BCS_BIOWAIVER_TOOL,
 ];
 
 /** The 14 global-RI tool names, derived from {@link GLOBAL_RI_TOOL_SPECS}. */
@@ -462,6 +508,12 @@ export function dispatchGlobalRiTool(name: string, input: Record<string, unknown
       return assessPediatricPlan(input as unknown as PediatricPlanInput);
     case 'global_ri_reliance_pathways':
       return recommendReliancePathways(input as unknown as ReliancePathwayInput);
+    case 'global_ri_cmc_specifications':
+      return getSpecificationTests(input as unknown as SpecificationTestsInput);
+    case 'global_ri_bioequivalence_criteria':
+      return getBioequivalenceCriteria((input as unknown as { region: BeRegion }).region);
+    case 'global_ri_bcs_biowaiver':
+      return getBcsBiowaiverEligibility((input as unknown as { bcsClass: BcsClass }).bcsClass);
     default:
       throw new Error(`Unknown global-RI tool "${name}"`);
   }

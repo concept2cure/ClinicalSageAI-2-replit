@@ -49,6 +49,7 @@ import {
   type IvdKnowledgeLookupInput,
 } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_NAMES, dispatchGlobalRiTool } from '../global-ri/ana-tools';
+import { getToolPedigree, listDeterministicTools, PEDIGREE_LEVELS } from './tool-pedigree';
 import {
   recordToolOutcome,
   recordContractViolation,
@@ -715,6 +716,20 @@ registerToolHandler('advise_global_submission_plan', async (input) => {
   return JSON.stringify({
     source: 'AnA Global-Submission-Plan Advisor',
     ...adviseGlobalSubmissionPlan({ profile, targetMarkets } as unknown as SubmissionPlanAdviceInput),
+  });
+});
+
+// Tool determinism pedigree — AnA introspects how trustworthy a tool's output is.
+registerToolHandler('ana_tool_pedigree', async (input) => {
+  const tool = typeof input.tool === 'string' ? input.tool : undefined;
+  if (tool) {
+    return JSON.stringify({ source: 'AnA Tool-Pedigree', ...getToolPedigree(tool) });
+  }
+  return JSON.stringify({
+    source: 'AnA Tool-Pedigree',
+    levels: PEDIGREE_LEVELS,
+    deterministicTools: listDeterministicTools(),
+    hint: 'Pass a tool name to classify a specific tool.',
   });
 });
 

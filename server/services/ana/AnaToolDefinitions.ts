@@ -6079,6 +6079,24 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // fabrication). Specs authored in services/global-ri/ana-tools; handlers
   // loop-registered in AnaToolExecutor.
   ...(GLOBAL_RI_TOOL_SPECS as unknown as AnaTool[]),
+  // Inference self-awareness: classify a tool's output by determinism pedigree
+  // (deterministic_registry / deterministic_query / external_api_live /
+  // model_assisted) so AnA can weight bulletproof registry facts above
+  // model-assisted narrative. Handler registered in AnaToolExecutor.
+  {
+    name: 'ana_tool_pedigree',
+    description:
+      'Determinism pedigree of AnA tools: how trustworthy a tool\'s output is. Pass a tool name to classify it ' +
+      '(deterministic_registry = bulletproof registry lookup; external_api_live = authoritative but time-varying; ' +
+      'model_assisted = verify before relying), or omit it to list the pedigree levels and the known deterministic tools. ' +
+      'Use this to decide whether a claim can be stated as fact or must be flagged for verification.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        tool: { type: 'string', description: 'Optional tool name to classify. Omit to list levels + deterministic tools.' },
+      },
+    },
+  } as unknown as AnaTool,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

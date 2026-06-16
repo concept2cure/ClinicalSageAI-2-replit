@@ -42,6 +42,8 @@ import deviceRouter from './global-ri/device.routes';
 import safetyReportingRouter from './global-ri/safety-reporting.routes';
 import gcpRouter from './global-ri/gcp.routes';
 import gdpRouter from './global-ri/gdp.routes';
+import cmcRouter from './global-ri/cmc.routes';
+import bioequivalenceRouter from './global-ri/bioequivalence.routes';
 
 const router = Router();
 
@@ -71,5 +73,7 @@ router.use(deviceRouter);
 router.use(safetyReportingRouter);
 router.use(gcpRouter);
 router.use(gdpRouter);
+router.use(cmcRouter);
+router.use(bioequivalenceRouter);
 
 export default router;
