@@ -48,6 +48,7 @@ import {
   type EuTechDocAdviceInput,
   type IvdKnowledgeLookupInput,
 } from '../ana-advisory';
+import { GLOBAL_RI_TOOL_NAMES, dispatchGlobalRiTool } from '../global-ri/ana-tools';
 import {
   recordToolOutcome,
   recordContractViolation,
@@ -716,6 +717,24 @@ registerToolHandler('advise_global_submission_plan', async (input) => {
     ...adviseGlobalSubmissionPlan({ profile, targetMarkets } as unknown as SubmissionPlanAdviceInput),
   });
 });
+
+// Global-RI deterministic expert tools — registry-grounded cross-market regulatory
+// intelligence (pathway, exclusivity/LOE, dossier legal basis, expedited programs,
+// designations, fees, post-approval changes, device classification, safety
+// reporting, stability, lifecycle obligations, pediatric plans, reliance pathways).
+// No LLM, no fabrication: each result is computed by a pure global-ri service.
+// Invalid input is returned as a structured error rather than thrown, so the model
+// can correct and retry.
+for (const globalRiToolName of GLOBAL_RI_TOOL_NAMES) {
+  registerToolHandler(globalRiToolName, async (input) => {
+    try {
+      const result = dispatchGlobalRiTool(globalRiToolName, (input ?? {}) as Record<string, unknown>);
+      return JSON.stringify({ source: 'AnA Global-RI Expert', tool: globalRiToolName, deterministic: true, result });
+    } catch (e) {
+      return JSON.stringify({ source: 'AnA Global-RI Expert', tool: globalRiToolName, error: e instanceof Error ? e.message : String(e) });
+    }
+  });
+}
 
 // Real-world-evidence study-design advisor.
 registerToolHandler('advise_rwe_design', async (input) => {
