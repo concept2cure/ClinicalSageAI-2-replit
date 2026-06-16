@@ -42,6 +42,8 @@ import { getCombinationFramework, classifyCombinationProduct, COMBINATION_REGION
 import { getPvObligations, getPvElements, assessPvReadiness, PV_MARKETS, type PvMarket } from '../services/global-ri/pharmacovigilance-obligations';
 import { getDisclosureRequirements, computeDisclosureDeadlines, DISCLOSURE_MARKETS, type DisclosureMarket } from '../services/global-ri/clinical-trial-disclosure';
 import { RELIANCE_PATHWAYS, RELIANCE_PATHWAY_IDS, getReliancePathway, recommendReliancePathways } from '../services/global-ri/reliance-pathways';
+import { CLIMATIC_ZONES, STORAGE_CONDITIONS, getClimaticZone, getStabilityConditions, getStudyDesign, type StorageCondition } from '../services/global-ri/stability-requirements';
+import { getLifecycleObligations, computeObligationSchedule, LIFECYCLE_MARKETS, type Market as LifecycleMarket } from '../services/global-ri/lifecycle-obligations-calendar';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('global-ri-routes');
@@ -649,6 +651,65 @@ router.post('/reliance-pathways/recommend', limiter, requireRole(AUTHOR), (req: 
     res.json(recommendReliancePathways(b));
   } catch (err) {
     fail(res, err);
+  }
+});
+
+// ── CMC stability requirements (ICH Q1A(R2)) ──────────────────────────────────
+
+/** The WHO/ICH climatic zones. */
+router.get('/stability/zones', limiter, requireRole(AUTHOR), (_req: Request, res: Response) => {
+  res.json({ zones: CLIMATIC_ZONES, storageConditions: STORAGE_CONDITIONS });
+});
+
+/** A single climatic zone by id (I, II, III, IVa, IVb). */
+router.get('/stability/zones/:zone', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const zone = String(Array.isArray(req.params.zone) ? req.params.zone[0] : req.params.zone);
+  const z = getClimaticZone(zone);
+  if (!z) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No climatic zone "${zone}".` } });
+  }
+  res.json(z);
+});
+
+/** Stability storage conditions for a storage class (room/refrigerated/frozen). */
+router.get('/stability/conditions/:storageCondition', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const sc = String(Array.isArray(req.params.storageCondition) ? req.params.storageCondition[0] : req.params.storageCondition) as StorageCondition;
+  try {
+    res.json(getStabilityConditions(sc));
+  } catch (err) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: err instanceof Error ? err.message : 'Unknown storage condition.' } });
+  }
+});
+
+/** The ICH Q1A(R2) stability study design (batches, time points, frequency). */
+router.get('/stability/study-design', limiter, requireRole(AUTHOR), (_req: Request, res: Response) => {
+  res.json(getStudyDesign());
+});
+
+// ── Lifecycle periodic-obligations calendar ───────────────────────────────────
+
+/** A market's recurring post-approval lifecycle obligations. */
+router.get('/lifecycle/obligations/:market', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const market = String(Array.isArray(req.params.market) ? req.params.market[0] : req.params.market) as LifecycleMarket;
+  if (!LIFECYCLE_MARKETS.includes(market)) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: `No lifecycle obligations modeled for "${market}".` } });
+  }
+  res.json(getLifecycleObligations(market));
+});
+
+/**
+ * Compute the post-approval obligation deadline schedule from an approval date.
+ * Body: { market, approvalDate, horizonMonths? }.
+ */
+router.post('/lifecycle/schedule', limiter, requireRole(AUTHOR), (req: Request, res: Response) => {
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!b.market || !b.approvalDate) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'market and approvalDate are required.' } });
+  }
+  try {
+    res.json(computeObligationSchedule(b));
+  } catch (err) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err instanceof Error ? err.message : 'Invalid lifecycle request.' } });
   }
 });
 
