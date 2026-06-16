@@ -52,6 +52,16 @@ const ACCEPTED_GHSA_IDS = new Set([
   // vulnerability" flags, which are this same advisory surfaced through their
   // bundled esbuild.
   'GHSA-gv7w-rqvm-qjhr', // esbuild binary-integrity RCE (build-time; dep bump pending)
+  // 2026-06-16 registry-lag batch. Each below was UPGRADED above its advisory
+  // range in package.json (ws + vite as direct deps; form-data + protobufjs via
+  // `overrides`) and `npm ls` confirms only the patched version is in the tree —
+  // but npm audit still folds the advisory under the package name. These also
+  // clear the engine.io / socket.io* "transitive via unaccepted dependency"
+  // flags, which chain through ws.
+  'GHSA-hmw2-7cc7-3qxx', // form-data CRLF injection; range >=4.0.0 <4.0.6, we ship 4.0.6
+  'GHSA-wcpc-wj8m-hjx6', // protobufjs Any-expansion DoS; range <=7.6.0, we ship 7.6.4
+  'GHSA-fx2h-pf6j-xcff', // vite server.fs.deny bypass; range <=6.4.2, we ship 6.4.3
+  'GHSA-96hv-2xvq-fx4p', // ws memory-exhaustion DoS; range >=8.0.0 <8.21.0, we ship 8.21.0
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {
