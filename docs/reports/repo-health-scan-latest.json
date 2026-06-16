@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-16T04:10:59.763Z",
+  "generatedAt": "2026-06-16T14:32:10.492Z",
   "git": {
-    "sha": "5ddaf392dbdc03d799aebfd1f05a67fd44f20d6a",
+    "sha": "7d56715c0f97158f486b283efb1aedfe85151ac4",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 216,
+    "duplicateBasenames": 217,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -1116,6 +1116,14 @@
         ]
       },
       {
+        "basename": "ana-tools.test",
+        "count": 2,
+        "paths": [
+          "server/services/global-ri/__tests__/ana-tools.test.ts",
+          "tests/services/biologics/ana-tools.test.ts"
+        ]
+      },
+      {
         "basename": "analytical-performance",
         "count": 2,
         "paths": [
@@ -2167,11 +2175,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 460276
+        "bytes": 461400
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 331594
+        "bytes": 331900
       },
       {
         "file": "server/statistics-service.ts",
@@ -2225,7 +2233,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 9315
+        "lines": 9334
       },
       {
         "file": "server/statistics-service.ts",
@@ -2233,7 +2241,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 6164
+        "lines": 6169
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2397,13 +2405,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 339,
+      "duplicateGroups": 340,
       "largeByBytes": 11,
       "largeByLines": 34
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 270,
+      "duplicateGroups": 271,
       "largeByBytes": 2,
       "largeByLines": 7
     },
