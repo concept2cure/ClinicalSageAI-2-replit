@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-15T20:07:09.501Z",
+  "generatedAt": "2026-06-16T03:17:30.793Z",
   "git": {
-    "sha": "a2bace3384d63ce39cbf657b52bb94639be800f8",
+    "sha": "b412e9bc044eaf9fe4588465cb02c6758ddee775",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 92,
+        "count": 93,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -69,6 +69,7 @@
           "server/services/documents/index.ts",
           "server/services/ectd/external-validator/index.ts",
           "server/services/entitlements/index.ts",
+          "server/services/external-intelligence/index.ts",
           "server/services/fda/index.ts",
           "server/services/foresight/index.ts",
           "server/services/global-markets/index.ts",
@@ -2164,7 +2165,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 458022
+        "bytes": 460276
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2200,7 +2201,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 117396
+        "bytes": 117471
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2222,7 +2223,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 9278
+        "lines": 9315
       },
       {
         "file": "server/statistics-service.ts",
@@ -2262,7 +2263,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2758
+        "lines": 2759
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2333,12 +2334,12 @@
         "lines": 1796
       },
       {
-        "file": "server/routes/ana-cortex-ft.ts",
-        "lines": 1785
+        "file": "server/services/ana-ri/orchestrator.ts",
+        "lines": 1786
       },
       {
-        "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1764
+        "file": "server/routes/ana-cortex-ft.ts",
+        "lines": 1785
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2394,7 +2395,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 336,
+      "duplicateGroups": 337,
       "largeByBytes": 11,
       "largeByLines": 34
     },
