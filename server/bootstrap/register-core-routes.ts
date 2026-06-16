@@ -16,6 +16,7 @@ import cmcWorkflowRoutes from '../api/cmc/workflowRoutes';
 import cmcModule3OperatingSystemRoutes from '../api/cmc/module3OperatingSystemRoutes';
 import cmcModule3BuildStateRoutes from '../api/cmc/module3BuildStateRoutes';
 import cmcModule3ConvergenceRoutes from '../api/cmc/module3ConvergenceRoutes';
+import cmcModule3AutoDraftRoutes from '../api/cmc/module3AutoDraftRoutes';
 import cmcCollaborationRoutes from '../api/cmc/collaborationRoutes';
 import cmcDocumentRoutes from '../api/cmc/documentRoutes';
 import aiAssistanceRoutes, { setAIService } from '../routes/ai-assistance';
@@ -46,6 +47,7 @@ export function registerCoreRoutes({ app, pool, aiCircuitBreaker }: RouteBootstr
     app.use('/api/cmc/module3-os', cmcModule3OperatingSystemRoutes);
     app.use('/api/cmc/module3-os', cmcModule3BuildStateRoutes);
     app.use('/api/cmc/module3-os', cmcModule3ConvergenceRoutes);
+    app.use('/api/cmc/module3', cmcModule3AutoDraftRoutes);
     app.use('/api/cmc/collaboration', cmcCollaborationRoutes);
     app.use('/api/cmc/documents', cmcDocumentRoutes);
     // /api/cmc/dashboard removed — backed by Prisma which was excised in

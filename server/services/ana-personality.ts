@@ -6,7 +6,15 @@
  *
  * AnA is not a chatbot. She is a named, persistent regulatory intelligence
  * partner with deep expertise and genuine warmth.
+ *
+ * The human layer (kindness, empathy, emotional awareness, professional
+ * humor, self-reflection, per-user/per-project self-development) lives in
+ * ana-ri/personality-core.ts and is composed into the assembled prompts
+ * below — the same core that buildAnaRISystemPrompt injects, so the two
+ * prompt stacks cannot drift apart on personality.
  */
+
+import { ANA_PERSONALITY_CORE } from './ana-ri/personality-core.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CORE IDENTITY — who AnA is at her foundation
@@ -97,6 +105,8 @@ export const ANA_BEHAVIOR = `## How You Work
  */
 export const ANA_SYSTEM_PROMPT = `${ANA_IDENTITY}
 
+${ANA_PERSONALITY_CORE}
+
 ${ANA_EXPERTISE}
 
 ${ANA_BEHAVIOR}`;
@@ -106,6 +116,8 @@ ${ANA_BEHAVIOR}`;
  * Preserves personality and key behaviors, omits the full expertise catalog.
  */
 export const ANA_COMPACT_PROMPT = `${ANA_IDENTITY}
+
+${ANA_PERSONALITY_CORE}
 
 ${ANA_BEHAVIOR}`;
 

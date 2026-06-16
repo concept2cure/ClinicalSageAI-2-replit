@@ -125,6 +125,24 @@ describe('EU (EMA) exclusivity', () => {
     expect(r.components.some((c) => c.type === 'Pediatric extension' && c.months === 24)).toBe(true);
   });
 
+  it('orphan + pediatric extension binding TYPE reflects orphan exclusivity, not the 8+2 base (regression)', () => {
+    // On a tie (orphan 120 == base 120) reduce() keeps the earlier base
+    // component, but the binding is governed by orphan exclusivity — and the
+    // +24mo PIP extension (Art 37) can only attach to the orphan period. The
+    // reported bindingType must therefore name the orphan regime, never the
+    // 8+2 data/market regime (which caps at 11 years and can never reach 144mo).
+    const r = computeExclusivity({
+      market: 'EMA',
+      productClass: 'new_chemical_entity',
+      orphan: true,
+      pediatricExtension: true,
+    });
+    expect(r.bindingMonths).toBe(144);
+    expect(r.bindingType).toContain('Orphan');
+    expect(r.bindingType).toContain('pediatric extension');
+    expect(r.bindingType).not.toContain('8+2');
+  });
+
   it('non-orphan + pediatric extension does NOT add to the binding (orphan-only in EU) but notes it', () => {
     const r = computeExclusivity({
       market: 'EMA',

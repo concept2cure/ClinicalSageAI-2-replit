@@ -25,21 +25,16 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
-import { createHash } from 'crypto';
 import { eq, and, isNull } from 'drizzle-orm';
 import { db } from '../../db';
-import { submissionLeaves, coauthorDocuments } from '../../../shared/schema';
+import { submissionLeaves } from '../../../shared/schema';
 import { packageSequenceFromCore, type PackageFromCoreResult } from './package-from-core';
-import { renderLeafPdf } from './leaf-pdf-renderer';
-import type { LeafFileResolver, ResolvedFile } from './core-to-packager';
+import { materializeLeafSources, leafSourceKey, type UnresolvedLeaf } from './leaf-source-resolver';
+import type { LeafFileResolver } from './core-to-packager';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('assemble-from-core');
-
-function safeName(s: string): string {
-  return (s || 'leaf').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'leaf';
-}
 
 export interface AssembleSequenceParams {
   sequenceId: number;
@@ -52,8 +47,15 @@ export interface AssembleSequenceParams {
 }
 
 export interface AssembleSequenceResult extends PackageFromCoreResult {
-  /** Number of coauthor leaves materialized to disk. */
+  /** Number of leaves materialized to disk (all locally-renderable tables). */
   materialized: number;
+  /**
+   * Leaves whose source document could NOT be materialized into the package —
+   * external/binary tables (e.g. vault_documents, ctd_onboarding_documents),
+   * cross-tenant/missing rows, or an unknown document_table. Surfaced so an
+   * incomplete package is VISIBLE, never silently dropped.
+   */
+  unresolvedLeaves: UnresolvedLeaf[];
 }
 
 /**
@@ -75,39 +77,25 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
       )
     );
 
-  // 2. Materialize each coauthor document's content to a temp file, keyed by id.
+  // 2. Materialize every leaf's source document to a deterministic PDF, keyed by
+  //    table:id. Every locally-renderable table (coauthor_documents,
+  //    unified_documents) is rendered via the same `renderLeafPdf` path (so the
+  //    md5/checksum contract is unchanged); external/binary tables are collected
+  //    as `unresolvedLeaves` rather than being silently dropped.
   const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), `ectd-assemble-${sequenceId}-`));
   const stageDir = path.join(outputDir, 'stage');
   await fs.mkdir(stageDir, { recursive: true });
-  const byDocId = new Map<number, ResolvedFile>();
-  let materialized = 0;
 
-  const docIds = [...new Set(leaves.filter((l) => l.documentTable === 'coauthor_documents' && l.documentId).map((l) => l.documentId as number))];
-  for (const docId of docIds) {
-    const [doc] = await db
-      .select()
-      .from(coauthorDocuments)
-      .where(and(eq(coauthorDocuments.id, docId), eq(coauthorDocuments.organizationId, organizationId)))
-      .limit(1);
-    if (!doc) continue; // cross-tenant / missing → skipped (the packager reports the gap)
-    // Render a genuine, valid PDF leaf (deterministic → stable md5). Faithful
-    // text rendering, not PDF/A — see module header.
-    const pdfBytes = await renderLeafPdf(doc.content ?? doc.title ?? '', {
-      title: doc.title ?? undefined,
-      sectionCode: doc.moduleNumber ?? undefined,
-    });
-    const fileName = `${safeName(doc.moduleNumber || doc.title)}-${docId}.pdf`;
-    const sourcePath = path.join(stageDir, fileName);
-    await fs.writeFile(sourcePath, pdfBytes);
-    const md5 = createHash('md5').update(pdfBytes).digest('hex');
-    byDocId.set(docId, { fileName, sourcePath, md5 });
-    materialized++;
-  }
+  const { byKey, unresolved: unresolvedLeaves, materialized } = await materializeLeafSources({
+    leaves: leaves.map((l) => ({ documentTable: l.documentTable, documentId: l.documentId })),
+    organizationId,
+    stageDir,
+  });
 
   // 3. Sync resolver over the materialized map (package-from-core needs sync).
   const resolveFile: LeafFileResolver = (leaf) => {
-    if (leaf.documentTable !== 'coauthor_documents' || !leaf.documentId) return null;
-    return byDocId.get(leaf.documentId) ?? null;
+    if (!leaf.documentTable || !leaf.documentId) return null;
+    return byKey.get(leafSourceKey(leaf.documentTable, leaf.documentId)) ?? null;
   };
 
   // 4. Drive the real publisher off the canonical core.
@@ -123,17 +111,31 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     emitUnzipped: params.emitUnzipped,
   });
 
+  if (unresolvedLeaves.length > 0) {
+    logger.warn('Assemble dropped no leaf silently, but some sources could not be materialized', {
+      sequenceId,
+      organizationId,
+      unresolved: unresolvedLeaves,
+    });
+  }
+
   await auditService.logAction({
     organizationId,
     userId,
     action: 'ECTD_ASSEMBLED',
     resourceType: 'ectd_sequence',
     resourceId: sequenceId,
-    details: { materialized, skipped: result.skipped.length, outputDir },
+    details: { materialized, skipped: result.skipped.length, unresolved: unresolvedLeaves.length, outputDir },
   });
-  logger.info('Assembled sequence from core', { sequenceId, organizationId, materialized, skipped: result.skipped.length });
+  logger.info('Assembled sequence from core', {
+    sequenceId,
+    organizationId,
+    materialized,
+    skipped: result.skipped.length,
+    unresolved: unresolvedLeaves.length,
+  });
 
-  return { ...result, materialized };
+  return { ...result, materialized, unresolvedLeaves };
 }
 
 export default { assembleSequence };

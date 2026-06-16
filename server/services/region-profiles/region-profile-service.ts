@@ -25,6 +25,19 @@ import { REGIONAL_RULES } from '../ectd/ectd-regional-rules';
 
 export type SubmissionRegion = 'fda' | 'eu' | 'jp' | 'cn' | 'kr';
 
+/**
+ * UI-facing projection of a single regional validation rule. The full
+ * RegionalRule carries an internal `region` token that the profile already
+ * conveys, so it is dropped here; everything else the UI needs to render the
+ * rule list is exposed.
+ */
+export interface RegionalRuleSummary {
+  id: string;
+  severity: string;
+  citation: string;
+  description: string;
+}
+
 export interface SubmissionRegionProfile {
   region: SubmissionRegion;
   agency: string; // FDA | EMA | PMDA | NMPA | MFDS
@@ -35,7 +48,9 @@ export interface SubmissionRegionProfile {
   module1Sections: CTDSection[];
   forms: FormTemplate[];
   specificRequirements: string[];
-  /** Count of codified validation rules in this region's rule pack. */
+  /** The codified validation rules for this region's rule pack. */
+  validationRules: RegionalRuleSummary[];
+  /** Count of codified validation rules (== validationRules.length). */
   validationRuleCount: number;
 }
 
@@ -48,9 +63,14 @@ const REGION_MAP: Record<SubmissionRegion, { agency: string; ruleTokens: string[
   kr: { agency: 'MFDS', ruleTokens: ['KR', 'MFDS'], pathways: ['ectd_v322'] },
 };
 
-function ruleCountFor(tokens: string[]): number {
+function rulesFor(tokens: string[]): RegionalRuleSummary[] {
   const set = new Set(tokens.map((t) => t.toUpperCase()));
-  return REGIONAL_RULES.filter((r) => set.has(String(r.region).toUpperCase())).length;
+  return REGIONAL_RULES.filter((r) => set.has(String(r.region).toUpperCase())).map((r) => ({
+    id: r.id,
+    severity: r.severity,
+    citation: r.citation,
+    description: r.description,
+  }));
 }
 
 /** Build the unified profile for one submission region, or null if unknown. */
@@ -59,6 +79,7 @@ export function getSubmissionRegionProfile(region: string): SubmissionRegionProf
   if (!map) return null;
   const template = getRegionalTemplate(map.agency);
   if (!template) return null;
+  const validationRules = rulesFor(map.ruleTokens);
   return {
     region: region.toLowerCase() as SubmissionRegion,
     agency: template.agency,
@@ -68,7 +89,8 @@ export function getSubmissionRegionProfile(region: string): SubmissionRegionProf
     module1Sections: template.module1Sections,
     forms: template.forms,
     specificRequirements: template.specificRequirements,
-    validationRuleCount: ruleCountFor(map.ruleTokens),
+    validationRules,
+    validationRuleCount: validationRules.length,
   };
 }
 

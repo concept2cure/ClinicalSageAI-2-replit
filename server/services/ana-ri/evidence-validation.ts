@@ -355,11 +355,22 @@ export function validateEvidence(
   }
   const boundedFlaggedClaims = flaggedClaims.slice(0, MAX_FLAGGED_CLAIMS);
 
-  // Step 8: Build verdict
+  // Step 8: Build verdict.
+  //
+  // Overclaims (strong absolute language without [KNOWN] backing) and internal
+  // contradictions are categorical failures — they cannot be "averaged away" by
+  // a low ungrounded ratio. Only the *ungrounded-claim* count is tolerated up to
+  // a small fraction; if any overclaim or contradiction is present, the response
+  // does not pass validation. (Previously the ratio fallback ignored overclaims
+  // and contradictions entirely, so a self-contradictory or overclaiming answer
+  // with few ungrounded claims was reported as validated — a fail-open.)
   const totalIssues =
     ungroundedCount + overclaims.length + contradictionResult.contradictions.length;
+  const hasCategoricalIssue =
+    overclaims.length > 0 || contradictionResult.contradictions.length > 0;
   const validated =
-    totalIssues === 0 || (claims.length > 0 && ungroundedCount / claims.length < 0.3);
+    totalIssues === 0 ||
+    (!hasCategoricalIssue && claims.length > 0 && ungroundedCount / claims.length < 0.3);
 
   return {
     attempted: true,

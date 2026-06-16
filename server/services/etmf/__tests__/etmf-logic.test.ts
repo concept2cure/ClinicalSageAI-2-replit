@@ -69,4 +69,21 @@ describe('evaluateCompleteness', () => {
   it('returns 100 when nothing is required', () => {
     expect(evaluateCompleteness([]).completenessPct).toBe(100);
   });
+
+  it('never reports inspection_ready while a required artifact is missing, even when the percentage rounds to 100', () => {
+    // 200 required artifacts, exactly one missing -> 199/200 = 99.5% -> rounds to 100%.
+    // A missing REQUIRED essential document is inspection-blocking and must not be
+    // masked by rounding the percentage up to the readiness threshold (fail-open).
+    const arts: CompletenessArtifact[] = Array.from({ length: 200 }, (_, i) => ({
+      zone: 2,
+      artifactName: `doc${i}`,
+      expected: true,
+      completenessRequired: true,
+      status: i === 0 ? 'missing' : 'final',
+    }));
+    const r = evaluateCompleteness(arts);
+    expect(r.completenessPct).toBe(100); // rounding artifact
+    expect(r.gaps).toHaveLength(1);
+    expect(r.verdict).not.toBe('inspection_ready');
+  });
 });

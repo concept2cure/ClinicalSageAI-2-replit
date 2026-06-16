@@ -11,7 +11,7 @@ import { evaluateRegulatoryClock } from '../../services/ind-lifecycle/ind-regula
 import { buildIndTimeline } from '../../services/ind-lifecycle/ind-timeline-service';
 import { validateSequenceLeaves } from '../../services/ind-lifecycle/ind-sequence-validation';
 import { deriveIndActionItems } from '../../services/ind-lifecycle/ind-action-items';
-import { validateSequenceTypeTransition } from '../../services/ind-lifecycle/ind-sequence-lifecycle-validator';
+import { validateSequenceTypeTransition, auditSequenceHistory } from '../../services/ind-lifecycle/ind-sequence-lifecycle-validator';
 import { AUTHOR, limiter, body, fail, readinessFrom, validationFrom } from './shared';
 
 const router = Router();
@@ -124,6 +124,24 @@ router.post('/sequence/lifecycle-validate', limiter, requireRole(AUTHOR), (req, 
   }
   try {
     res.json(validateSequenceTypeTransition({ existingSequenceTypes: b.existingSequenceTypes, proposedType: b.proposedType }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Audit a submission's entire sequence-type history (pure): replay it in order
+ * and flag any sequence that was an illegal transition (amendment before an
+ * original, a second original, anything after a withdrawal).
+ * Body: { sequenceTypes: string[] }.
+ */
+router.post('/sequence/history-audit', limiter, requireRole(AUTHOR), (req, res) => {
+  const b = body(req);
+  if (!Array.isArray(b.sequenceTypes)) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'sequenceTypes[] is required.' } });
+  }
+  try {
+    res.json(auditSequenceHistory(b.sequenceTypes));
   } catch (err) {
     fail(res, err);
   }

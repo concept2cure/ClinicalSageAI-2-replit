@@ -601,11 +601,33 @@ async function loadProjectSources(
       [projectId, organizationId]
     );
 
-    return [...evidenceResult.rows, ...artifactResult.rows];
+    // The pg driver returns columns by their SQL alias, which is snake_case
+    // (document_path, page_number). Map them onto the camelCase ProjectSource
+    // shape the rest of this service reads — otherwise documentPath/pageNumber
+    // are silently undefined on every mapped source.
+    return [...evidenceResult.rows, ...artifactResult.rows].map(mapProjectSourceRow);
   } catch (error) {
     console.warn('[SentenceTraceability] Failed to load sources:', error);
     return [];
   }
+}
+
+/** Normalize a raw DB row (snake_case aliases) into a ProjectSource. Exported for tests. */
+export function mapProjectSourceRow(r: any): ProjectSource {
+  // page_number is sourced from a page range (e.g. "12-15"); take the leading
+  // page so the optional numeric field is meaningful, else leave it undefined.
+  const rawPage = r.page_number ?? r.pageNumber;
+  const parsedPage =
+    rawPage != null ? parseInt(String(rawPage), 10) : NaN;
+
+  return {
+    id: String(r.id),
+    title: r.title,
+    type: r.type,
+    excerpt: r.excerpt ?? '',
+    documentPath: r.document_path ?? r.documentPath ?? undefined,
+    pageNumber: Number.isFinite(parsedPage) ? parsedPage : undefined,
+  };
 }
 
 async function loadExistingTraceLinks(
