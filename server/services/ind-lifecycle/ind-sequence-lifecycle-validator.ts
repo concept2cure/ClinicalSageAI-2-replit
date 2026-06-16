@@ -86,3 +86,37 @@ export function validateSequenceTypeTransition(input: SequenceLifecycleInput): S
 
   return { allowed: reasons.length === 0, proposedType: proposed, terminal: false, reasons };
 }
+
+export interface SequenceHistoryViolation {
+  /** 0-based index of the offending sequence in the history. */
+  index: number;
+  type: string;
+  reasons: SequenceLifecycleFinding[];
+}
+
+export interface SequenceHistoryAudit {
+  /** True ⇔ every sequence was a legal transition at the time it was filed. */
+  valid: boolean;
+  sequenceCount: number;
+  violations: SequenceHistoryViolation[];
+}
+
+/**
+ * Audit a submission's entire sequence-type history: replay it in order and
+ * check that each sequence was a legal next transition given everything filed
+ * before it. Surfaces violations like an amendment before any original, a second
+ * original, or any sequence after a withdrawal. Pure / deterministic.
+ */
+export function auditSequenceHistory(sequenceTypes: string[]): SequenceHistoryAudit {
+  const types = (sequenceTypes ?? []).map((t) => String(t));
+  const violations: SequenceHistoryViolation[] = [];
+
+  for (let i = 0; i < types.length; i++) {
+    const verdict = validateSequenceTypeTransition({ existingSequenceTypes: types.slice(0, i), proposedType: types[i] });
+    if (!verdict.allowed) {
+      violations.push({ index: i, type: types[i], reasons: verdict.reasons });
+    }
+  }
+
+  return { valid: violations.length === 0, sequenceCount: types.length, violations };
+}

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { validateSequenceTypeTransition } from '../ind-sequence-lifecycle-validator';
+import { validateSequenceTypeTransition, auditSequenceHistory } from '../ind-sequence-lifecycle-validator';
 
 describe('validateSequenceTypeTransition', () => {
   it('allows an original as the first sequence', () => {
@@ -48,5 +48,34 @@ describe('validateSequenceTypeTransition', () => {
     const a = validateSequenceTypeTransition({ existingSequenceTypes: ['original'], proposedType: 'annual' });
     const b = validateSequenceTypeTransition({ existingSequenceTypes: ['original'], proposedType: 'annual' });
     expect(a).toEqual(b);
+  });
+});
+
+describe('auditSequenceHistory', () => {
+  it('valid for a well-formed history', () => {
+    const r = auditSequenceHistory(['original', 'amendment', 'annual', 'amendment']);
+    expect(r.valid).toBe(true);
+    expect(r.sequenceCount).toBe(4);
+    expect(r.violations).toEqual([]);
+  });
+
+  it('flags an amendment-first history', () => {
+    const r = auditSequenceHistory(['amendment', 'original']);
+    expect(r.valid).toBe(false);
+    expect(r.violations[0]).toMatchObject({ index: 0, type: 'amendment' });
+    expect(r.violations[0].reasons.map((x) => x.code)).toContain('NO_ORIGINAL_FIRST');
+  });
+
+  it('flags a duplicate original and any sequence after a withdrawal', () => {
+    const dup = auditSequenceHistory(['original', 'original']);
+    expect(dup.violations.some((v) => v.reasons.some((r) => r.code === 'DUPLICATE_ORIGINAL'))).toBe(true);
+
+    const afterWithdrawal = auditSequenceHistory(['original', 'withdrawal', 'amendment']);
+    expect(afterWithdrawal.valid).toBe(false);
+    expect(afterWithdrawal.violations.some((v) => v.index === 2 && v.reasons.some((r) => r.code === 'SUBMISSION_WITHDRAWN'))).toBe(true);
+  });
+
+  it('an empty history is valid', () => {
+    expect(auditSequenceHistory([]).valid).toBe(true);
   });
 });

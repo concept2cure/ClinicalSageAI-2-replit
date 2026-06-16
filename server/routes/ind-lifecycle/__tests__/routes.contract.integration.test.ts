@@ -141,6 +141,20 @@ describe('pure compute routes', () => {
     const res = await request(app).post('/api/ind-lifecycle/sequence/lifecycle-validate').send({ proposedType: 'amendment' });
     expect(res.status).toBe(400);
   });
+
+  it('POST /sequence/history-audit → 200 valid history vs flagged amendment-first', async () => {
+    const ok = await request(app).post('/api/ind-lifecycle/sequence/history-audit').send({ sequenceTypes: ['original', 'amendment', 'annual'] });
+    expect(ok.status).toBe(200);
+    expect(ok.body.valid).toBe(true);
+    const bad = await request(app).post('/api/ind-lifecycle/sequence/history-audit').send({ sequenceTypes: ['amendment', 'original'] });
+    expect(bad.body.valid).toBe(false);
+    expect(bad.body.violations[0].index).toBe(0);
+  });
+
+  it('POST /sequence/history-audit → 400 without sequenceTypes', async () => {
+    const res = await request(app).post('/api/ind-lifecycle/sequence/history-audit').send({});
+    expect(res.status).toBe(400);
+  });
 });
 
 describe('DB-backed routes', () => {
