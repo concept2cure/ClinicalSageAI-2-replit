@@ -13,7 +13,7 @@ This catalog was produced as a **fresh, unbiased, code-derived inventory**. It w
 - 🟡 **Partial** — exists but incomplete: UI-only with fixtures, backend-only with no UI, legacy/superseded, or framework-with-stubbed-logic.
 - ⚪ **Stub** — placeholder/scaffold/unused (schema or types defined, no active code path).
 
-**Platform shape:** Single-page React 18 + Vite client driven by a `layoutMode` state machine (`ZenApp.tsx` → `ZenRouter.tsx`); Express/TypeScript server (~2,545 files, ~200 route modules, ~389 services) over PostgreSQL + pgvector (Drizzle ORM, 122 migrations); plus Python microservices (Celery), background workers, and a `shadow_service` for predicate intelligence. Cross-cutting compliance posture: **21 CFR Part 11** (audit hash-chain, e-signatures, immutability), **multi-tenant** (org + client-workspace isolation, RLS), **WCAG 2.x AA**.
+**Platform shape:** Single-page React 18 + Vite client driven by a `layoutMode` state machine (`ZenApp.tsx` → `ZenRouter.tsx`); Express/TypeScript server (~418 route files, ~1,758 service files across 138 service directories) over PostgreSQL + pgvector (Drizzle ORM, 122 migrations); plus Python microservices (Celery), background workers, and a `shadow_service` for predicate intelligence. Cross-cutting compliance posture: **21 CFR Part 11** (audit hash-chain, e-signatures, immutability), **multi-tenant** (org + client-workspace isolation, RLS), **WCAG 2.x AA**.
 
 ---
 
@@ -51,7 +51,7 @@ Paths: `client/src/concept2cure/authoring/`, `components/editor/`, `components/i
 - **PDF QC & CTD readiness** ✅ — M2 summary renderer + QC, M4 nonclinical QC, M5 clinical QC, cross-module IND assembly-readiness aggregator.
 - **Citation engine** ✅ — sentence-level RAG citation, supports/contradicts/gap classification, PubMed/CrossRef verification (PMID→DOI→title), retraction detection, immutable run row.
 - **Inline annotations & co-author** ✅ — approval/review/comment/question/suggestion threads; collaborative sessions (pgvector-embedded coauthor docs).
-- **Intelligent docs (Phase 5)** ✅ Smart Claim Highlighter (TipTap), Compliance Guardian, Document Sherpa, Data Bridge; 🟡 Source Suggestion Panel; 🟡 Document Understanding (LayoutLMv3 types/framework).
+- **Intelligent docs (Phase 5)** ✅ Smart Claim Highlighter (TipTap component); 🟡 Source Suggestion Panel; ⚪ Compliance Guardian / Document Sherpa / Data Bridge (type definitions in `types.ts` only — no wired component); 🟡 Document Understanding (LayoutLMv3 types/framework).
 - **Section builders** ✅ — IB builder, nonclinical study report builder, body-aware authoring (regional CTD + deficiency taxonomy).
 
 ## A.2 · Medical Device — 510(k) / De Novo / eSTAR / Substantial Equivalence  ✅ (eSTAR PDF fill 🟡)
@@ -122,7 +122,7 @@ Paths: `client/src/concept2cure/pdev/`, `components/knowledge/`, `server/routes/
 - **Deep research orchestrator** 🟡 — multi-connector fan-out + LLM synthesis + job lifecycle (connector registry integration pending).
 - **Custom instructions** ✅ — per-project AI behavior (510K/IND/NDA templates).
 
-## A.8 · Risk (ISO 14971) · Quality / QMS / SOP · Inspection · CAPA  ✅ (QC schemas ⚪)
+## A.8 · Risk (ISO 14971) · Quality / QMS / SOP · Inspection · CAPA  ✅ (QC lab schemas 🟡)
 Paths: `client/src/concept2cure/risk/`, `quality/`, `server/routes/{mdx-risk-management,qms,mdx-qms,qc.routes,inspections,capa-mdr,part11-compliance}.ts`, `server/services/{qms/,inspection/,capa-mdr/,part11ComplianceService}`, `shared/schema/{inspection,capa-mdr,qc-schemas}.ts`.
 
 - **Risk management (ISO 14971)** ✅ — hazard register (severity×probability), 5×5 risk matrix (pre/post-control, ALARP bands), control hierarchy + traceability + evidence, overview/needs-attention queue, WCAG-AA color-agnostic chips.
@@ -130,7 +130,7 @@ Paths: `client/src/concept2cure/risk/`, `quality/`, `server/routes/{mdx-risk-man
 - **Inspection readiness (BIMO/PAI/483)** ✅ — inspection lifecycle, Form 483 findings, 15-business-day response clock, readiness assessment/scoring; 🟡 full pre-inspection report (no dedicated endpoint).
 - **CAPA / MDR / Complaint** ✅ — complaint intake + triage engine, MDR/vigilance reportability clocks (FDA 5/30, EU 2/10/15-day), CAPA records + actions + effectiveness, append-only vigilance timeline, unified triage queue.
 - **21 CFR Part 11 (module-level)** ✅ e-signature meaning/manifestation, server-authoritative timestamps; 🟡 audit-integrity integration, access-control wiring, version lineage; ⚪ IQ/OQ/PQ tracking.
-- ⚪ **QC schemas** — 6 quality-control tables defined, no routes/services.
+- 🟡 **QC lab schemas** — 6 quality-control tables (`qc-schemas.ts`) exposed via registered `/api/qc` route (`qc.routes.ts`, mounted in `register-clinical-intel-routes`), but the `storage.ts` write operations are fail-closed `NOT_IMPLEMENTED` stubs. (Distinct from the ✅ document-QC routes used elsewhere.)
 
 ## A.9 · Submission Center · eCTD Publishing · Regional Gateways  ✅
 Paths: `client/src/concept2cure/submission/`, `server/routes/{submissions,submission-ops,submission-readiness,submission-twin,regulatory-submissions.routes,ectd*,esgSubmissionRoutes,dossier_routes}.ts`, `server/services/{submission-service/,submission-gateways/,submission-bundle-storage,submission-package-orchestrator,submission-twin-service,ectd/}`, `services/ectd_generator.py`, `services/cerRenderer.js`.
@@ -152,7 +152,8 @@ Paths: `client/src/concept2cure/submission/`, `server/routes/{submissions,submis
 Paths: `server/routes/{documents-unified,document-routes,document-data-center,documentOrchestrationRoutes,folder-management,mdx-vault,etmf*,ectd-documents}.ts`, `server/services/{DocumentOrchestrationService,DocumentDataCenterService,etmf/,documentReconstruction,documentExportService}`, `shared/schema/vault.ts`.
 
 - **Document routing/orchestration** ✅ — unified routes (rate-limited), core CRUD + upload + version history, orchestration (template apply + cross-ref + lock), authoring routes.
-- **Vault aggregator** ✅ — artifact list grouped by eTMF family, versions, program↔project bridge, status + eSig flag; vault storage service (deterministic versioning + content hash); ⚪ vault document chunks + evidence citations (schema only, unwired).
+- **Vault aggregator** ✅ — artifact list grouped by eTMF family, versions, program↔project bridge, status + eSig flag; vault storage service (deterministic versioning + content hash).
+- **Vault chunks & evidence citations** ✅ — `vault.document_chunks` written by `vectorization-worker.ts` + `layout-aware-ingestion.ts` and read by `advancedRAGPipeline.ts` (semantic retrieval corpus); `vault.evidence_citations` written by the RAG pipeline. *(Corrected from an earlier "schema-only" reading after chief-investigator verification of the INSERT/SELECT sites.)*
 - **eTMF** ✅ — governed TMF file/artifact CRUD with DIA-RM auto-classification (11 zones), completeness gap-check (inspection verdict), TMF completeness reference (ICH E6(R2) §8), alternate trial-scoped persistence.
 - **eCTD documents** ✅ — CTD artifact CRUD (coauthor_documents backed), AI ingestion, submission-agent readiness.
 - **Document Data Center (510k)** ✅ — 3-axis tagging (12 categories × 16 standards × component tree), deep semantic search (pgvector), AI tagging, citations, audit.
@@ -204,7 +205,7 @@ Paths: `client/src/concept2cure/components/ana/`, `services/cortexService.ts`, `
 - **ANA chat shell (UI)** ✅ — Ana core (thread hydration, suggested actions, project-intelligence card), ChatView (streaming, scroll-follow, tool-call transparency, evidence chips, extended-thinking), Composer + ToolPicker (drag-drop upload→OCR→memory, tool pinning, stop button), Message (metadata chips, action chips, edit-regenerate), EmptyState, Sidebar/TopBar/Recents (export-as-markdown).
 - **Client streaming** ✅ — `useAnaChat` SSE (status/orchestration/text/grounding/tool/artifact/done/post_done), 90s idle timeout, evidence summary, detected lens, suggested actions; 🟡 legacy cortexService/useCortex.
 - **Server streaming** ✅ — `/api/ana-ri/stream` (orchestration, context assembly, agentic tool loop, gateway failover, keepalive ping), non-streaming `/chat`, post-processing (guidance/command executor, evidence validation, persistence), thread helpers.
-- **Orchestration** ✅ — orchestrator (intent/submission-type detection, section guidance, role-adaptive), multi-agent council (Drafter→Statistician→Critic→Synthesizer), kernel router (task type/strategy/risk tier/temperature/token clamp/tool policy).
+- **Orchestration** ✅ — orchestrator (intent/submission-type detection, section guidance, role-adaptive), multi-agent council (Drafter→Statistician→Critic→Synthesizer), kernel router (task type/strategy/risk tier/temperature/token clamp/tool policy), **agent-swarm** (`/api/agent-swarm`, LangGraph multi-agent submission-automation orchestrator).
 - **AI Actions** ✅ — registry + dispatcher (idempotency, permission, timeout, distributed lock, concurrency, circuit breaker, audit), handlers (promote_artifact, run_validation, refine_with_validation, export/route/save-version, attach_sources, register_inline_ai, extract_template, render_with_template, ocr_extract), queue + SSE status stream, REST route.
 - **Context & guidance** ✅ — Lumen context builder, guidance executor (confidence-gated auto-execute), ANA personality, context enrichment (governance/precedent/safety/clinical/signals), enforcement (structure/evidence-discipline/quality gates), evidence validation, data-integrity advisor (ALCOA+).
 - **Tool system** ✅ — tool definitions + policy, tool picker, policy route, executor + agentic loop (concurrency, max-chain depth).
@@ -229,13 +230,14 @@ Paths: `server/routes/{pharmacovigilance-routes,sentinel-routes,regulatory-corre
 ## A.16 · Admin · Setup · Billing · Entitlements · Client Portal · Branding  ✅ (admin UI 🟡 fixtures)
 Paths: `client/src/concept2cure/mdx/surfaces/AdminSurface.tsx`, `server/routes/{tenant-users,mdx-admin,admin/scim-tenants,admin-security,admin/audit-siem,billing,billing-dashboard,module-subscriptions,license-routes,api-keys,client-branding,tenant-config,clients-routes,operating-system}.ts`, `server/routes/enterprise/`, `server/services/{billing,entitlements/,api-key-service,license-manager,tenant/}`.
 
-- **Admin** 🟡 AdminSurface (members/roles/SSO/API-keys/settings/compliance — fixture-backed UI); ✅ SCIM tenant management, admin security-health, audit SIEM feed; 🟡 tenant-users CRUD, mdx-admin endpoint (partial live).
+- **Admin** 🟡 AdminSurface UI (fixture fallback on `useAdmin`); ✅ `mdx-admin` endpoint returns **live** members/roles (queries `organization_users` + roles); ✅ SCIM tenant management, admin security-health, audit SIEM feed; 🟡 tenant-users CRUD, compliance-docs facet empty.
+- **Account intelligence** ✅ — `/api/account-intelligence` (account-level canon, skill bundles, template registry; registered in `register-governance-routes`).
 - **Billing** ✅ — Stripe checkout/portal/status/pricing, DTC self-serve, webhooks; dashboard (usage/summary/invoices/budgets/alerts/rate-limits/activity); billing service.
 - **Entitlements** ✅ — MDX feature gating (tier→feature, 8 features × 4 tiers), license manager + module catalog, capabilities/entitlements endpoints.
 - **API keys** ✅ — generation (csai_ prefix, SHA-256, returned once), validate (timing-safe), revoke, usage, rate limit per key.
 - **White-label branding** ✅ — settings, logo/letterhead upload, template CRUD + render, tenant-scoped serving.
 - **Tenant configuration** ✅ — settings (branding/security/notifications/workflow/cer/qmp/integration), tier-aware defaults, reset, per-section update.
-- **Client portal** 🟡 — client workspaces (list/get/metrics built; create/update/delete partial), license routes (fetch/usage partial).
+- **Client portal** ✅/🟡 — client workspaces list/get/metrics + create/delete wired (`clients-routes.ts`); 🟡 license routes (fetch/usage).
 - **Operating system** ✅ — assumption/decision record endpoints (org-scoped).
 
 ---
@@ -273,7 +275,7 @@ Paths: `server/services/{ragRouter,advancedRAGPipeline,rag-query-transforms,rag-
 - **Runtime metrics** ✅ — Prometheus histograms (latency, candidates, top-score, outcome).
 - **Embeddings** ✅ — enhanced embedding service (auto-embed, batch, cache, multi-model, retry), embedding-corpus-policy (8 corpora, model-per-corpus, CI canonicality gate), provider abstraction (OpenAI ↔ self-hosted, air-gap ready).
 - **Corpus ingestion** ✅ — CT.gov v2 fetch → CSR/E3 normalizer → Drizzle writer (idempotent on NCT id), precedent benchmark reader.
-- 🟡 OpenSearch keyword search (feature-flagged), deep-research orchestrator (connector fan-out partial); ⚪ GraphRAG (entities/relationships/Leiden communities schema, Neo4j integration stubbed).
+- 🟡 OpenSearch keyword search (feature-flagged), deep-research orchestrator (connector fan-out partial), GraphRAG (`/api/graphrag` registered in `register-advanced-platform-routes` + exposed as agent-swarm `graphrag_query` tool, delegates to a Neo4j Python connector; graph tables not yet in schema — graceful fail, so 🟡 not ⚪).
 
 ## B.3 · Auth / RBAC / SSO / SCIM / MFA / Multi-tenancy / RLS  ✅
 Paths: `server/auth/`, `server/auth.ts`, `server/middleware/{authAdapter,auth.js,tenantContext,tenantIsolation,tenantAuth,lazyRequestDbClient}`, `server/db/{tenantStore,tenantRls,rlsEnforcement,requestDb,withTenantConnection}`, `server/routes/{auth,authEnterprise,sso,scim,tenants,tenant-users,users,enterprise/rbac-routes}`, `server/services/{mfaService,emailOtpService,auth-security-service,saml-provider,roleBasedAccess,token-revocation}`.
@@ -327,8 +329,9 @@ Paths: `shared/schema.ts` + `shared/schema/` (40+ domain modules), `shared/cmc-s
 
 - **ORM & infra** ✅ — Drizzle (primary, drizzle-zod validation) over PostgreSQL + pgvector; Prisma deprecated (stub); 122 migrations; RLS policies in `database/policies/`; ~60 pgEnums.
 - **Data domains (180+ Built tables)** ✅ — tenancy/auth (organizations, clientWorkspaces, users, organizationUsers, billing), submissions (submissions, submissionLeaves, ectdSequences, fda510k*, ind*, qSub*, deviceSubmissions), documents (sharepoint_*, unifiedDocuments, coauthor*, ctd*, documents/versions/folders), evidence/provenance (submissionEvidenceLinks, evidenceObjects, evidenceClaims), regulatory (regulatoryPrograms, lifecycleObligations, standardsApplicability, regulatoryAtoms, regulatoryAssessments), CMC (cmcProjects, drugSubstances/Products, stabilityStudies, cmc-os tables), CSR knowledge DB (csr* — design/population/endpoints/safety/PK/analytics/intelligence), clinical governance (protocols, investigators, irb*/iacuc*/ibc*, clinicalStudies, nonclinical/sendDatasets), financial disclosures + HA interactions, eTMF + inspection, device/IVD (medicalDevices, deviceTestStandards, ivdr*, gspr*, capa-mdr), workflow orchestration (workflowRuns, approvalCheckpoints, unified_workflow), reporting/intelligence (report-os, external-intelligence, ana-intelligence/relational, living-record-spine), AI/ML (aiMlPccp, aiAuditLog), templates/feature-flags, integrations (connectorCredentials, apiKeys, scim*), audit/compliance (auditLogs, electronicSignatures, provenance events), grants/effort, RIM (products/registrations/labels), controlled substances, UDI, support/admin.
-- 🟡 lightly-used: vault chunks/citations, pkpdCompartments, pvSignalAssessments, biomarkerOntology/meddraTermReference.
-- ⚪ stubs (defined, no active routes): 37 CDISC reference tables (`cdisc-reference.ts`), 6 QC tables (`qc-schemas.ts`).
+- ✅ vault chunks/citations (`vault.document_chunks`/`evidence_citations`) — actively written by vectorization/layout workers + RAG pipeline (see A.10).
+- 🟡 `cdisc_prm_*` subset (studies/arms/endpoints) — activated by `study-design-repository.ts` (INSERT/SELECT); `qc-schemas.ts` — reachable via `/api/qc` but storage writes stubbed; lightly-used: pkpdCompartments, pvSignalAssessments, biomarkerOntology/meddraTermReference.
+- ⚪ stubs (defined, no active code path): the remaining ~34 CDISC reference tables (eCTD/PQ/device/CDASH/ADaM in `cdisc-reference.ts`).
 
 ## B.8 · Feature Flags / Entitlements / Quota / Rate-limiting / Notifications / Control Plane  ✅ (SoD & QA-notify 🟡)
 Paths: `server/services/{featureToggleService,entitlements/,atomicQuotaService,quotaEnforcementService,emailService,notify,api-key-service,ana-platform-controller,governance/permissions,governance/separation-of-duties,governance-observability}`, `server/middleware/{rateLimiter,redisRateLimiter,circuitBreaker}`, `server/routes/{operating-system,ana-platform-control}`, `server/src/routes/control-plane.router.ts`, `server/src/control-plane/kernel.ts`.
@@ -338,7 +341,7 @@ Paths: `server/services/{featureToggleService,entitlements/,atomicQuotaService,q
 - **Quota enforcement** ✅ — atomic quota service (SELECT…FOR UPDATE: projects/users/submissions), quota-enforcement service + Express middleware (submissions monthly / projects / users / storage), usage statistics.
 - **Rate limiting** ✅ — in-memory limiter (10k IP cap) + Redis sliding-window (fail-closed auth/docs, fail-open others, memory fallback).
 - **Circuit breaker** ✅ — state machine (CLOSED/OPEN/HALF_OPEN) + request queuing.
-- **Notifications / email** ✅ — Nodemailer SMTP (password-reset/OTP/welcome/invitation/report-delivery/generic, branded HTML, console fallback); 🟡 QA override notify (email + Slack).
+- **Notifications / email** ✅ — Nodemailer SMTP (password-reset/OTP/welcome/invitation/report-delivery/generic, branded HTML, console fallback); QA override notify (`notify.ts`) — both email (Nodemailer) and Slack webhook implemented.
 - **API key management** ✅ (see A.16; central seam).
 - **Platform control plane** ✅ — Ana platform controller (paid-only, audit-logged, HITL breakpoints), control-plane kernel (policy bundle, decision logging, hash-chain verify, self-tests), governed-document fabric routes.
 - **Governance permissions** ✅ — 8-role default policy, grant matching, org overrides; 🟡 separation-of-duties.
@@ -349,7 +352,7 @@ Paths: `server/services/{featureToggleService,entitlements/,atomicQuotaService,q
 
 **Chief-investigator cross-checks performed:**
 1. **`LayoutMode` enum** (`zen-app-constants.ts`) — every *live* surface maps to a Section-A area. The enum also contains **compatibility-redirect** (`workspace`, `assistant`, `ctd`, `medtech-dashboard`, `dossier`), **demoted** (`mission-control`, `snowglobe`, `sherpa`, `platform-admin`, `collaboration-hub`, …), **legacy batch-1**, and **no-renderer MissionControl sub-modes** — these have **no active renderer** (redirect on mount or kept for type safety only) and are intentionally **not** catalogued as live features.
-2. **Route registration spine** (`server/startup/routes.ts`, `server/bootstrap/register-*-routes.ts`) — all 14 families covered: Platform, Core, AI, Admin, Governance, IndLifecycle, Regulatory, Document, Tenant, Project, ClinicalIntel, AdvancedPlatform, Integrations, plus inline families (EarlyRoutes, AnaIntelligence, LitCommerce, PlatformFacades, AiWorkflow, SubmissionWorkflow). Note: a **beta route fence** blocks mock/scaffold families in production.
+2. **Route registration spine** (`server/startup/routes.ts`, `server/bootstrap/register-*-routes.ts`) — all ~20 registration families covered: 13 primary (Platform, Core, AI, Admin, Governance, IndLifecycle, Regulatory, Document, Tenant, Project, ClinicalIntel, AdvancedPlatform, Integrations) + 6 inline (EarlyRoutes, AnaIntelligence, LitCommerce, PlatformFacades, AiWorkflow, SubmissionWorkflow). A handful of individually-mounted routes surfaced by the coverage audit are now catalogued: `/api/agent-swarm` (A.14), `/api/account-intelligence` (A.16), `/api/ai/claims` (A.2/A.3 IVDR binder promotion). Note: `register-document-routes` applies a **beta route fence** (`EXPERIMENTAL_ROUTES_ENABLED`/`DEMO_ROUTES_ENABLED`) to its experimental/demo families; other families mount without an equivalent guard.
 3. **Schema** (`shared/schema.ts` + `shared/schema/`) — 21 data domains mapped to feature-areas (B.7); 180+ Built, ~15 Partial, 43 Stub tables.
 4. **Top-level directories** — `client/`, `server/`, `services/`, `workers/`, `ingestion/`, `shadow_service/`, `shared/`, `database/`, `ectd/`, `templates/`, `schemas/`, `policy/`, `regulatory_data/`, `csrs/` all represented.
 
@@ -358,7 +361,7 @@ Paths: `server/services/{featureToggleService,entitlements/,atomicQuotaService,q
 - **Backend-ahead-of-UI (🟡):** QMS/Inspection/CAPA (services built, limited client UI), reporting prediction layer, biopharma client Pathway/Meetings/Pediatric/Orphan/PV surfaces (fixtures over partial live data), Intelligence client surfaces (Phase 11 endpoints pending), Admin surface (fixture-backed UI).
 - **Honest fail-closed gaps (🟡):** eSTAR official PDF fill (templates not vendored), CER full-narrative auto-assembly, CDx workflow engine, regulatory correspondence issue parser/operating-layer/response-assembly, Sentinel analyzers 2–5, deep-research connector fan-out.
 - **Honesty-labeled (not validated):** Regulatory Digital Twin (Monte Carlo illustration, explicit disclosure attached).
-- **Unused/schema-only (⚪):** 37 CDISC reference tables, 6 QC tables, vault document chunks + evidence citations, GraphRAG (Neo4j integration stubbed), legacy `LayoutMode` modes with no renderer. *Inventory-management recommendation: activate or prune.*
+- **Unused/schema-only (⚪):** ~34 CDISC reference tables (eCTD/PQ/device/CDASH/ADaM — the `cdisc_prm_*` subset is active), intelligent-docs Compliance Guardian/Document Sherpa/Data Bridge (types only), legacy `LayoutMode` modes with no renderer. *Inventory-management recommendation: activate or prune.* (Note: vault chunks/citations, GraphRAG, and QC lab schemas were re-classified up from ⚪ during the audit reconciliation — see A.8/A.10/B.2.)
 
 **Self-consistency:** Features that are both client-facing and shared infra (e-signature, audit query, RAG, document processing) are described once in Section A and cross-referenced (not re-described) in Section B.
 
