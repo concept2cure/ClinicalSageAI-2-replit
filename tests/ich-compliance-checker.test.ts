@@ -131,6 +131,20 @@ describe('ICH Q2(R1) — analytical method validation', () => {
     const f = checkQ2(inp);
     expect(f.some(x => x.ruleId === 'Q2_INCOMPLETE_VALIDATION')).toBe(false);
   });
+
+  it('flags missing linearity for a quantitative impurity method (ICH Q2(R1) — impurities/quantitation requires linearity)', () => {
+    const inp = emptyInputs();
+    inp.methods = [
+      // Validated impurity method with accuracy + precision + specificity but NO linearity.
+      { methodName: 'HPLC Impurities', methodType: 'HPLC', purpose: 'impurities', validationStatus: 'validated',
+        specificityData: {}, accuracyData: {}, precisionData: {} /* linearityData intentionally absent */ },
+    ];
+    const f = checkQ2(inp);
+    const inc = f.find(x => x.ruleId === 'Q2_INCOMPLETE_VALIDATION');
+    expect(inc).toBeDefined();
+    expect(inc?.status).toBe('warning');
+    expect(inc?.message).toMatch(/linearity/);
+  });
 });
 
 describe('ICH Q3A(R2) / Q3B(R2) — impurities', () => {

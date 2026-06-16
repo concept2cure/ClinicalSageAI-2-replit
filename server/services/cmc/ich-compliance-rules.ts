@@ -168,7 +168,7 @@ export function checkQ2(inp: ProjectInputs): IchCheckFinding[] {
 
     const missing: string[] = [];
     if (m.specificityData == null) missing.push('specificity');
-    if (m.linearityData == null && (purpose.includes('assay') || purpose.includes('quant'))) missing.push('linearity');
+    if (m.linearityData == null && (purpose.includes('assay') || purpose.includes('quant') || purpose.includes('impur'))) missing.push('linearity');
     if (m.accuracyData == null && (purpose.includes('assay') || purpose.includes('impur'))) missing.push('accuracy');
     if (m.precisionData == null) missing.push('precision');
     if (missing.length > 0) {
