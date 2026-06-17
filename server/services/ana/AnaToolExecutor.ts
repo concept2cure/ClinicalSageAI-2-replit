@@ -421,6 +421,47 @@ registerToolHandler('project_knowledge_search_multi', async (input, ctx) => {
   }
 });
 
+// Session bootstrap — rehydrate prior context so a conversation never starts
+// cold: latest thread working-memory summary + most important project/client
+// atoms (query-independent) + AnA's own recent lessons for this org/project.
+registerToolHandler('recall_session_context', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'recall_session_context requires tenant context (organizationId).' });
+  }
+  const threadId = typeof input.thread_id === 'string' && input.thread_id.trim() ? input.thread_id.trim() : undefined;
+  const atomLimit =
+    typeof input.atom_limit === 'number' && input.atom_limit > 0 ? Math.min(Math.floor(input.atom_limit), 15) : 6;
+
+  try {
+    const { buildSessionBootstrapContext } = await import('../ana-session-bootstrap.js');
+    const context = await buildSessionBootstrapContext({
+      organizationId: ctx.organizationId,
+      projectId: ctx.projectId ?? undefined,
+      threadId,
+      atomLimit,
+    });
+
+    if (!context) {
+      return JSON.stringify({
+        ok: true,
+        hasContext: false,
+        message:
+          'No prior session memory was found for this org/project yet — this appears to be a fresh start. Proceed normally; memory will accumulate as we work.',
+      });
+    }
+    return JSON.stringify({
+      ok: true,
+      hasContext: true,
+      context,
+      message: 'Loaded prior session memory (working summary, project/client knowledge, and past lessons). Ground your response in it.',
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `recall_session_context failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // Search Clinical Evidence — queries internal DB and ClinicalTrials.gov
 registerToolHandler('search_clinical_evidence', async (input) => {
   const query = typeof input.query === 'string' ? input.query : '';

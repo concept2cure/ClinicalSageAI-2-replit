@@ -309,6 +309,17 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
   {
+    capabilityKey: 'recall-session-context',
+    category: 'knowledge',
+    name: 'Recall Session Context',
+    description:
+      "Rehydrate prior context at the start of a conversation so a session never starts cold — load where we left off (latest thread summary), the most important project and client knowledge atoms (query-independent), and recent lessons from AnA's own past work on this org/project.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: [],
+  },
+  {
     capabilityKey: 'cortex-thread-management',
     category: 'knowledge',
     name: 'CORTEX Thread Management',

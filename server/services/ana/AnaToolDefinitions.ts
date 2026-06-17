@@ -955,6 +955,26 @@ export const PROJECT_KNOWLEDGE_SEARCH_MULTI: AnaTool = {
   },
 };
 
+export const RECALL_SESSION_CONTEXT: AnaTool = {
+  name: 'recall_session_context',
+  description:
+    "Rehydrate prior context so the session doesn't start cold: load where we left off (the latest thread working-memory summary), the most important project and client knowledge atoms (by importance/verification/recency — no query needed), and recent lessons from your own past work on this org/project. Call this at the start of a conversation, or whenever you need to ground yourself in what has already been established, before answering. The org and project come from the active context.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      thread_id: {
+        type: 'string',
+        description: 'Optional conversation/thread id to load the latest working-memory summary for. Omit if unknown — project/client memory and past lessons still load.',
+      },
+      atom_limit: {
+        type: 'number',
+        description: 'Maximum project knowledge atoms to surface (default 6).',
+      },
+    },
+    required: [],
+  },
+};
+
 export const SIMULATE_STUDY_DESIGN: AnaTool = {
   name: 'simulate_study_design',
   description:
@@ -6084,6 +6104,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   DESCRIBE_CAPABILITIES,
   PROJECT_KNOWLEDGE_SEARCH,
   PROJECT_KNOWLEDGE_SEARCH_MULTI,
+  RECALL_SESSION_CONTEXT,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
   SEARCH_DRUG_ADVERSE_EVENTS,
