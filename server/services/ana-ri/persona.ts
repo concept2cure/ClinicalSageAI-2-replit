@@ -31,6 +31,9 @@ export type UserRole =
   | 'medical_writer'
   | 'clinical_lead'
   | 'cmc_lead'
+  | 'biostatistician'
+  | 'pharmacovigilance'
+  | 'quality'
   | 'investor'
   | 'general';
 
@@ -46,6 +49,12 @@ const ROLE_OVERLAYS: Record<UserRole, string> = {
   cmc_lead: `The user is a CMC Lead. Emphasize: control strategy coherence, manufacturing process validation, analytical method justification, specification rationale, comparability arguments, and supply chain risk. Focus on Module 3 defensibility.`,
 
   investor: `The user is an investor or due-diligence analyst. Emphasize: regulatory risk profile, probability of approval, timeline realism, competitive regulatory landscape, hidden risks, and de-risking milestones. Be honest about what is strong and what is fragile.`,
+
+  biostatistician: `The user is a Biostatistician. Emphasize: estimand and intercurrent-event strategy (ICH E9(R1)), endpoint–method fit, power and sample-size defensibility, multiplicity control, missing-data strategy, and SAP/CSR statistical consistency. Be quantitatively precise; never hand-wave a number — when a figure is needed, compute it with the deterministic tools and report it verbatim.`,
+
+  pharmacovigilance: `The user works in Pharmacovigilance / drug safety. Emphasize: signal detection and causality assessment, ICSR/E2B(R3) quality, expedited-reporting clocks (FDA 15-day, EU 15/90-day) and what starts them, aggregate reports (DSUR/PSUR/PBRER), and benefit-risk framing. Be exact about reporting deadlines; flag anything that risks a late or missed report.`,
+
+  quality: `The user works in Quality / QA (GMP). Emphasize: deviation and CAPA rigor, OOS investigation discipline, batch-release readiness, change control and comparability, specification justification, and inspection-readiness. Tie every gap to its 21 CFR 210/211 or ICH Q consequence and the audit/inspection exposure it creates.`,
 
   general: `Adapt your output to be comprehensive and accessible, covering both strategic overview and specific technical details.`,
 };
@@ -806,6 +815,36 @@ const ROLE_INTELLIGENCE_PRIORITIES: Record<UserRole, RoleIntelligencePriorities>
     includeReadiness: true,
     includeSignalTrends: false,
     intelligenceHeader: 'INVESTMENT INTELLIGENCE SNAPSHOT',
+  },
+  biostatistician: {
+    riskFocus: ['critical', 'high', 'medium', 'low'],
+    maxRisks: 4,
+    maxDecisions: 4,
+    maxInsights: 4,
+    maxQuestions: 4,
+    includeReadiness: false,
+    includeSignalTrends: false,
+    intelligenceHeader: 'BIOSTATISTICS INTELLIGENCE CONTEXT',
+  },
+  pharmacovigilance: {
+    riskFocus: ['critical', 'high', 'medium', 'low'],
+    maxRisks: 5,
+    maxDecisions: 4,
+    maxInsights: 4,
+    maxQuestions: 4,
+    includeReadiness: false,
+    includeSignalTrends: true,
+    intelligenceHeader: 'PHARMACOVIGILANCE INTELLIGENCE SUMMARY',
+  },
+  quality: {
+    riskFocus: ['critical', 'high', 'medium', 'low'],
+    maxRisks: 5,
+    maxDecisions: 3,
+    maxInsights: 4,
+    maxQuestions: 3,
+    includeReadiness: false,
+    includeSignalTrends: false,
+    intelligenceHeader: 'QUALITY INTELLIGENCE CONTEXT',
   },
   general: {
     riskFocus: ['critical', 'high', 'medium', 'low'],

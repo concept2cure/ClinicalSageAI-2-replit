@@ -67,6 +67,24 @@ const ROLE_LENSES: Record<Exclude<UserRole, 'general'>, RoleLens> = {
       'probability of approval, timeline realism, the fragility of each claim, and the de-risking milestones with dates — be honest about what is strong and what is weak',
     compress: 'operational and authoring detail that does not move the risk profile',
   },
+  biostatistician: {
+    audience: 'a biostatistician',
+    emphasize:
+      'the estimand and intercurrent-event strategy, endpoint-method fit, power and multiplicity, and statistical defensibility — report computed figures verbatim and name the assumptions',
+    compress: 'business framing and prose style that does not change the statistical substance',
+  },
+  pharmacovigilance: {
+    audience: 'a pharmacovigilance / drug-safety lead',
+    emphasize:
+      'the signal and causality read, the expedited-reporting clock and what starts it, aggregate-report timeliness, and benefit-risk — be exact about deadlines and late-report risk',
+    compress: 'CMC and manufacturing detail that is not safety-relevant',
+  },
+  quality: {
+    audience: 'a quality / QA (GMP) lead',
+    emphasize:
+      'deviation and CAPA rigor, batch-release readiness, change control and specifications, and inspection-readiness — tie each gap to its 21 CFR 210/211 or ICH Q reference',
+    compress: 'clinical narrative and strategy that does not bear on the quality question',
+  },
 };
 
 /**
