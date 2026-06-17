@@ -197,6 +197,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       userId: typeof userId === 'number' ? userId : Number(userId) || null,
       targetAgency:
         typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
+      sessionStart: !Array.isArray(conversation_history) || conversation_history.length === 0,
     });
     const streamDecisionContext = prefetchedStreamContext.decisionContext;
     const streamFeedbackContext = prefetchedStreamContext.feedbackContext;
@@ -226,6 +227,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       _relationalOverlay: prefetchedStreamContext.relationalOverlay,
       _externalIntelBlock: prefetchedStreamContext.externalIntelBlock,
       _deadlineRadarBlock: prefetchedStreamContext.deadlineRadarBlock,
+      _sessionBriefingBlock: prefetchedStreamContext.sessionBriefingBlock,
     });
     streamOrchestrationMs = Date.now() - streamPhaseStart;
 

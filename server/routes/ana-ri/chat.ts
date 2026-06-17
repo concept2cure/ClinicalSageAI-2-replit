@@ -297,6 +297,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       userId: typeof userId === 'number' ? userId : Number(userId) || null,
       targetAgency:
         typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
+      sessionStart: !Array.isArray(conversation_history) || conversation_history.length === 0,
     });
     const chatDecisionContext = prefetchedChatContext.decisionContext;
     const chatFeedbackContext = prefetchedChatContext.feedbackContext;
@@ -326,6 +327,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       _relationalOverlay: prefetchedChatContext.relationalOverlay,
       _externalIntelBlock: prefetchedChatContext.externalIntelBlock,
       _deadlineRadarBlock: prefetchedChatContext.deadlineRadarBlock,
+      _sessionBriefingBlock: prefetchedChatContext.sessionBriefingBlock,
     };
 
     const orchestration = orchestrate(orchestratorInput);

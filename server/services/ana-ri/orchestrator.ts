@@ -257,6 +257,11 @@ export interface OrchestratorInput {
    * radar). Lets AnA proactively lead with time-critical risk.
    */
   _deadlineRadarBlock?: string | null;
+  /**
+   * Pre-rendered SESSION BRIEFING block — first-turn situational reconciliation
+   * (deadlines + recent decisions) so AnA can open with where the program stands.
+   */
+  _sessionBriefingBlock?: string | null;
   /** Pre-fetched user feedback patterns from the learning loop (async, injected by chat-context-builder) */
   _feedbackContext?: {
     totalFeedback: number;
@@ -362,6 +367,13 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   //     OVERDUE / DUE-SOON tracked obligations AnA should surface up front.
   if (input._deadlineRadarBlock && input._deadlineRadarBlock.trim()) {
     systemPrompt += '\n\n' + input._deadlineRadarBlock.trim();
+  }
+
+  // 4a-ter. Inject the session-start briefing (pre-fetched by route layer):
+  //     a first-turn reconciliation of deadlines + recent decisions. Supersedes
+  //     the standalone deadline block on that turn (the prefetch emits only one).
+  if (input._sessionBriefingBlock && input._sessionBriefingBlock.trim()) {
+    systemPrompt += '\n\n' + input._sessionBriefingBlock.trim();
   }
 
   // 4b. Inject project intelligence profile (pre-fetched by route layer)
