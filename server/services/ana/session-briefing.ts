@@ -12,6 +12,7 @@
 
 import { getDeadlineRadar, type RadarResult } from './deadline-radar.js';
 import { decisionLifecycleService } from '../decision-lifecycle-service.js';
+import { getOpenBlockers, summarizeBlockers, type OpenBlocker } from './risk-watch.js';
 
 export interface BriefDecision {
   id: string;
@@ -24,6 +25,8 @@ export interface BriefDecision {
 export interface SessionBriefingData {
   deadlines: RadarResult;
   decisions: BriefDecision[];
+  /** Open project blockers (optional; empty/absent when none or no project). */
+  blockers?: OpenBlocker[];
 }
 
 export interface BriefingRenderOptions {
@@ -45,10 +48,12 @@ export function buildSessionBriefingBlock(
 
   const overdue = data.deadlines.items.filter(i => i.bucket === 'overdue');
   const dueSoon = data.deadlines.items.filter(i => i.bucket === 'due_soon');
+  const blockers = data.blockers ?? [];
   const hasDeadlines = overdue.length > 0 || dueSoon.length > 0;
   const hasDecisions = data.decisions.length > 0;
+  const hasBlockers = blockers.length > 0;
 
-  if (!hasDeadlines && !hasDecisions) return '';
+  if (!hasDeadlines && !hasDecisions && !hasBlockers) return '';
 
   const lines: string[] = [
     '<session_briefing note="Open with a brief, calm reconciliation of where the program stands — deadlines first, then recent decisions — then ask what they want to tackle. Surface only what is listed here; never invent items or dates. For detail, call regulatory_deadline_radar or get_session_briefing.">',
@@ -63,6 +68,23 @@ export function buildSessionBriefingBlock(
       const agency = i.agency ? `[${i.agency}] ` : '';
       const when = i.daysUntilDue < 0 ? `${Math.abs(i.daysUntilDue)}d overdue` : `due in ${i.daysUntilDue}d`;
       lines.push(`- ${agency}${i.title ?? 'Untitled obligation'} (${when})`);
+    }
+  }
+
+  if (hasBlockers) {
+    const s = summarizeBlockers(blockers);
+    const counts = [
+      s.critical ? `${s.critical} critical` : '',
+      s.high ? `${s.high} high` : '',
+      s.medium ? `${s.medium} medium` : '',
+      s.low ? `${s.low} low` : '',
+    ]
+      .filter(Boolean)
+      .join(', ');
+    lines.push(`Open risks/blockers: ${counts}.`);
+    for (const b of blockers.slice(0, maxDeadlines)) {
+      const sev = (b.severity ?? 'medium').toLowerCase();
+      lines.push(`- [${sev}] ${b.title}`);
     }
   }
 
@@ -116,6 +138,20 @@ export async function getSessionBriefing(opts: {
     }
   }
 
-  const data: SessionBriefingData = { deadlines, decisions };
+  let blockers: OpenBlocker[] = [];
+  const projectIdNum = opts.projectId != null ? Number(opts.projectId) : NaN;
+  if (Number.isFinite(projectIdNum)) {
+    try {
+      blockers = await getOpenBlockers({
+        organizationId: opts.organizationId,
+        projectId: projectIdNum,
+        limit: 10,
+      });
+    } catch {
+      // Fail-soft: blocker lookup failure must not break the briefing.
+    }
+  }
+
+  const data: SessionBriefingData = { deadlines, decisions, blockers };
   return { data, block: buildSessionBriefingBlock(data) };
 }
