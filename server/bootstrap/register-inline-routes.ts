@@ -397,6 +397,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Global RI routes:', error);
   }
 
+  // Platform capabilities — one cross-surface discovery call for the UI shell.
+  try {
+    const platformCapabilitiesModule = await import('../routes/platform-capabilities.routes');
+    app.use('/api/platform', authMiddleware, platformCapabilitiesModule.default);
+    console.info('✅ Platform capabilities route mounted (/api/platform)');
+  } catch (error) {
+    console.error('❌ Failed to mount Platform capabilities route:', error);
+  }
+
   // eTMF — Trial Master File completeness / inspection-readiness (DIA TMF RM).
   try {
     const etmfModule = await import('../routes/etmf.routes');

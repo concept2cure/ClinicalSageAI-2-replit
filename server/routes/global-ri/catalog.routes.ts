@@ -4,8 +4,14 @@ import { Router, Request, Response } from 'express';
 import { requireRole } from '../../middleware/auth';
 import { limiter, AUTHOR } from './_shared';
 import { getGlobalRiCatalog, capabilitiesByGroup } from '../../services/global-ri/global-ri-capabilities';
+import { buildGlobalRiOpenApi } from '../../services/global-ri/openapi-builder';
 
 const router = Router();
+
+/** Machine-readable OpenAPI 3.0 contract for the global-RI surface (codegen / Swagger). */
+router.get('/openapi.json', limiter, requireRole(AUTHOR), (_req: Request, res: Response) => {
+  res.json(buildGlobalRiOpenApi());
+});
 
 /**
  * The full global-RI capability catalog: navigation groups, every capability with

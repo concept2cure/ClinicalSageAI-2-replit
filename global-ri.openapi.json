@@ -1,0 +1,4398 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Concept2Cure — Global Regulatory Intelligence API",
+    "version": "1.0.0",
+    "description": "Deterministic, citation-backed cross-market regulatory-intelligence services. Generated from the capability catalog (GET /api/global-ri/catalog); do not hand-edit. 41 capabilities across 9 groups; 26 AnA tools."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Same-origin API host"
+    }
+  ],
+  "tags": [
+    {
+      "name": "strategy",
+      "description": "Strategy & Pathway — Pathway selection, cross-market strategy brief, dossier legal basis, fees, reliance, and guidance."
+    },
+    {
+      "name": "designations_access",
+      "description": "Designations & Access — Orphan/pediatric designations, expedited programs, and pre-approval (expanded) access."
+    },
+    {
+      "name": "clinical",
+      "description": "Clinical & Nonclinical — Trial-application requirements, HA meetings, nonclinical (ICH M3), bioequivalence, and evidence standards."
+    },
+    {
+      "name": "quality_cmc",
+      "description": "Quality & CMC — Specifications, stability, impurities, and process validation."
+    },
+    {
+      "name": "safety_pv",
+      "description": "Safety & Pharmacovigilance — Investigational safety reporting, post-approval pharmacovigilance, and GCP records."
+    },
+    {
+      "name": "submissions",
+      "description": "Submissions & Format — Module 1, electronic submission format, labeling, post-approval changes, and inspection readiness."
+    },
+    {
+      "name": "devices_dx",
+      "description": "Devices & Diagnostics — Device/IVD classification, combination products, companion diagnostics, and advanced therapies."
+    },
+    {
+      "name": "lifecycle",
+      "description": "Lifecycle & Post-market — Exclusivity/LOE, recurring lifecycle obligations, and clinical-trial disclosure."
+    },
+    {
+      "name": "commercial_supply",
+      "description": "Commercial & Supply Chain — Promotion, controlled substances, establishment registration, import/export, and distribution (GDP)."
+    }
+  ],
+  "paths": {
+    "/api/global-ri/pathway": {
+      "post": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Regulatory pathway advisor",
+        "description": "Per-market clinical-trial + marketing-application pathway for a product type.",
+        "operationId": "post_regulatory_pathway_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "productType": {
+                    "type": "string",
+                    "enum": [
+                      "small_molecule_nce",
+                      "biologic",
+                      "biosimilar",
+                      "generic",
+                      "vaccine",
+                      "cell_gene_therapy"
+                    ],
+                    "description": "Product archetype whose pathway differs materially."
+                  },
+                  "targetMarkets": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "US",
+                        "EU",
+                        "JP",
+                        "CA",
+                        "UK",
+                        "AU"
+                      ]
+                    },
+                    "description": "Target markets/jurisdictions; recommendations preserve this order."
+                  },
+                  "developmentPhase": {
+                    "type": "string",
+                    "enum": [
+                      "preclinical",
+                      "phase1",
+                      "phase2",
+                      "phase3",
+                      "filed"
+                    ],
+                    "description": "Optional development phase context (refines the general notes only)."
+                  }
+                },
+                "required": [
+                  "productType",
+                  "targetMarkets"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/strategy-brief": {
+      "post": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Cross-market strategy brief",
+        "description": "One-call cross-market brief: pathway, designations, expedited, meetings, checklists, fees, exclusivity, pediatric + PV obligations.",
+        "operationId": "post_strategy_brief_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "productType": {
+                    "type": "string",
+                    "enum": [
+                      "small_molecule_nce",
+                      "biologic",
+                      "biosimilar",
+                      "generic",
+                      "vaccine",
+                      "cell_gene_therapy"
+                    ],
+                    "description": "Product archetype."
+                  },
+                  "targetMarkets": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "US",
+                        "EU",
+                        "JP",
+                        "CA",
+                        "UK",
+                        "AU"
+                      ]
+                    },
+                    "description": "Target markets; market sections follow this order."
+                  },
+                  "developmentPhase": {
+                    "type": "string",
+                    "enum": [
+                      "preclinical",
+                      "phase1",
+                      "phase2",
+                      "phase3",
+                      "filed"
+                    ],
+                    "description": "Optional development phase context."
+                  },
+                  "nextMilestone": {
+                    "type": "string",
+                    "description": "The next development milestone to plan a health-authority meeting for."
+                  },
+                  "disease": {
+                    "type": "object",
+                    "description": "Optional disease profile used for orphan/expedited eligibility.",
+                    "properties": {
+                      "usPrevalence": {
+                        "type": "number",
+                        "description": "Estimated US prevalence (persons)."
+                      },
+                      "euPrevalencePer10k": {
+                        "type": "number",
+                        "description": "Estimated EU prevalence per 10,000."
+                      },
+                      "jpPrevalence": {
+                        "type": "number",
+                        "description": "Estimated Japan prevalence (patients)."
+                      },
+                      "seriousOrLifeThreatening": {
+                        "type": "boolean",
+                        "description": "Serious / life-threatening condition."
+                      },
+                      "noSatisfactoryTreatment": {
+                        "type": "boolean",
+                        "description": "No satisfactory authorised treatment exists."
+                      },
+                      "significantBenefit": {
+                        "type": "boolean",
+                        "description": "Significant benefit over existing methods."
+                      },
+                      "unmetMedicalNeed": {
+                        "type": "boolean",
+                        "description": "Addresses an unmet medical need."
+                      }
+                    }
+                  },
+                  "pediatricDevelopment": {
+                    "type": "boolean",
+                    "description": "Whether the program includes pediatric development."
+                  }
+                },
+                "required": [
+                  "productType",
+                  "targetMarkets"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/dossier/legal-bases/{region}": {
+      "get": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Dossier legal-basis classifier",
+        "description": "FDA 505(b)(1)/(b)(2)/ANDA/351(a)/(k) and EU Article 8(3)/10(x) marketing-application legal basis.",
+        "operationId": "get_dossier_classifier_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/dossier/classify": {
+      "post": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Dossier legal-basis classifier",
+        "description": "FDA 505(b)(1)/(b)(2)/ANDA/351(a)/(k) and EU Article 8(3)/10(x) marketing-application legal basis.",
+        "operationId": "post_dossier_classifier_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EU"
+                    ],
+                    "description": "Region whose legal-basis framework to apply."
+                  },
+                  "isBiologic": {
+                    "type": "boolean",
+                    "description": "True for a biological product (drives BLA / biosimilar routes)."
+                  },
+                  "referencesApprovedProduct": {
+                    "type": "boolean",
+                    "description": "True if the product is a copy of an approved reference product."
+                  },
+                  "reliesOnOthersData": {
+                    "type": "boolean",
+                    "description": "True if relying (in part) on data the applicant does not own."
+                  },
+                  "differsFromReference": {
+                    "type": "boolean",
+                    "description": "True if the copy differs from the reference (drives hybrid vs generic)."
+                  },
+                  "wellEstablishedUse": {
+                    "type": "boolean",
+                    "description": "True if relying solely on bibliographic well-established use."
+                  },
+                  "fixedCombination": {
+                    "type": "boolean",
+                    "description": "True for a fixed-dose combination of known actives."
+                  },
+                  "informedConsent": {
+                    "type": "boolean",
+                    "description": "True if filing with the existing MAH's consent to their dossier."
+                  }
+                },
+                "required": [
+                  "region"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/fees/schedule/{market}": {
+      "get": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Regulatory fee estimator",
+        "description": "Indicative agency fees per market with orphan / small-business waivers.",
+        "operationId": "get_fee_estimator_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/fees/estimate": {
+      "post": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Regulatory fee estimator",
+        "description": "Indicative agency fees per market with orphan / small-business waivers.",
+        "operationId": "post_fee_estimator_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "market": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EMA",
+                      "PMDA",
+                      "HEALTH_CANADA"
+                    ],
+                    "description": "Market whose fee schedule to apply."
+                  },
+                  "requiresClinicalData": {
+                    "type": "boolean",
+                    "description": "Whether the application requires clinical data (drives the application fee)."
+                  },
+                  "orphan": {
+                    "type": "boolean",
+                    "description": "Orphan designation — exempts the marketing-application fee."
+                  },
+                  "smallBusiness": {
+                    "type": "boolean",
+                    "description": "Small-business / SME status — FDA waiver / EMA reductions."
+                  },
+                  "programYears": {
+                    "type": "number",
+                    "description": "Years of the annual program/maintenance fee to include (default 1)."
+                  },
+                  "feeScheduleOverride": {
+                    "type": "object",
+                    "description": "Optional override of the indicative schedule for this market.",
+                    "properties": {
+                      "currency": {
+                        "type": "string"
+                      },
+                      "applicationWithClinicalData": {
+                        "type": "number"
+                      },
+                      "applicationNoClinicalData": {
+                        "type": "number"
+                      },
+                      "annualProgramFee": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "market"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/reliance-pathways": {
+      "get": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Reliance & work-sharing pathways",
+        "description": "Project Orbis, Access Consortium, EU-M4all, WHO CRP, ASEAN Joint Assessment, Swissmedic MAGHP.",
+        "operationId": "get_reliance_pathways_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/reliance-pathways/{id}": {
+      "get": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Reliance & work-sharing pathways",
+        "description": "Project Orbis, Access Consortium, EU-M4all, WHO CRP, ASEAN Joint Assessment, Swissmedic MAGHP.",
+        "operationId": "get_reliance_pathways_id",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/reliance-pathways/recommend": {
+      "post": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Reliance & work-sharing pathways",
+        "description": "Project Orbis, Access Consortium, EU-M4all, WHO CRP, ASEAN Joint Assessment, Swissmedic MAGHP.",
+        "operationId": "post_reliance_pathways_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "isOncology": {
+                    "type": "boolean",
+                    "description": "Product is an oncology product (Project Orbis)."
+                  },
+                  "targetMarkets": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Target markets/markers (e.g. AU, CA, SG, CH, UK, BR, global-health, ASEAN, LMIC)."
+                  },
+                  "globalHealth": {
+                    "type": "boolean",
+                    "description": "Product is a global-health product (priority disease / LMIC focus)."
+                  }
+                },
+                "required": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/ich-guidelines": {
+      "get": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "ICH guideline catalog",
+        "description": "Searchable ICH guideline reference catalog.",
+        "operationId": "get_ich_guidelines_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/ich-guidelines/{code}": {
+      "get": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "ICH guideline catalog",
+        "description": "Searchable ICH guideline reference catalog.",
+        "operationId": "get_ich_guidelines_code",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/guidance/topics": {
+      "get": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Regulatory guidance map",
+        "description": "Governing ICH guidelines + regulations for a topic (grounding).",
+        "operationId": "get_guidance_map_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/guidance/{topic}": {
+      "get": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Regulatory guidance map",
+        "description": "Governing ICH guidelines + regulations for a topic (grounding).",
+        "operationId": "get_guidance_map_topic",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "topic",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/submission-economics": {
+      "post": {
+        "tags": [
+          "strategy"
+        ],
+        "summary": "Submission economics",
+        "description": "Combined fee + review-timeline projection for a submission.",
+        "operationId": "post_submission_economics_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/expedited-programs": {
+      "get": {
+        "tags": [
+          "designations_access"
+        ],
+        "summary": "Expedited / accelerated programs",
+        "description": "Match a development context to FDA/EMA/PMDA expedited programs.",
+        "operationId": "get_expedited_programs_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/expedited-programs/match": {
+      "post": {
+        "tags": [
+          "designations_access"
+        ],
+        "summary": "Expedited / accelerated programs",
+        "description": "Match a development context to FDA/EMA/PMDA expedited programs.",
+        "operationId": "post_expedited_programs_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EMA",
+                      "PMDA"
+                    ],
+                    "description": "Agency whose expedited programs to screen."
+                  },
+                  "seriousOrLifeThreatening": {
+                    "type": "boolean",
+                    "description": "Serious or life-threatening condition."
+                  },
+                  "unmetMedicalNeed": {
+                    "type": "boolean",
+                    "description": "Addresses an unmet medical need."
+                  },
+                  "substantialImprovementOverExisting": {
+                    "type": "boolean",
+                    "description": "Substantial improvement over existing therapy."
+                  },
+                  "preliminaryClinicalEvidence": {
+                    "type": "boolean",
+                    "description": "Preliminary clinical evidence is available."
+                  },
+                  "surrogateEndpointReasonablyLikely": {
+                    "type": "boolean",
+                    "description": "Surrogate endpoint reasonably likely to predict benefit."
+                  },
+                  "regenerativeMedicine": {
+                    "type": "boolean",
+                    "description": "Product is a regenerative medicine therapy."
+                  },
+                  "orphan": {
+                    "type": "boolean",
+                    "description": "Product would qualify as an orphan drug."
+                  },
+                  "majorPublicHealthInterest": {
+                    "type": "boolean",
+                    "description": "Of major public-health interest (EMA Accelerated Assessment)."
+                  },
+                  "comprehensiveDataUnobtainable": {
+                    "type": "boolean",
+                    "description": "Comprehensive data cannot be obtained (EMA Exceptional Circ.)."
+                  },
+                  "intendedForEarlyJapanDevelopment": {
+                    "type": "boolean",
+                    "description": "Intended for early/world-first Japan development (Sakigake)."
+                  }
+                },
+                "required": [
+                  "region"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/designations/criteria/{market}": {
+      "get": {
+        "tags": [
+          "designations_access"
+        ],
+        "summary": "Orphan & pediatric designations",
+        "description": "Orphan + pediatric designation eligibility per market.",
+        "operationId": "get_special_designations_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/designations/assess": {
+      "post": {
+        "tags": [
+          "designations_access"
+        ],
+        "summary": "Orphan & pediatric designations",
+        "description": "Orphan + pediatric designation eligibility per market.",
+        "operationId": "post_special_designations_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "market": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EMA",
+                      "PMDA"
+                    ],
+                    "description": "Market whose designation criteria to apply."
+                  },
+                  "usPrevalence": {
+                    "type": "number",
+                    "description": "Estimated US prevalence (persons)."
+                  },
+                  "euPrevalencePer10k": {
+                    "type": "number",
+                    "description": "Estimated EU prevalence per 10,000."
+                  },
+                  "jpPrevalence": {
+                    "type": "number",
+                    "description": "Estimated Japan prevalence (patients)."
+                  },
+                  "seriousOrLifeThreatening": {
+                    "type": "boolean",
+                    "description": "Life-threatening / seriously debilitating condition."
+                  },
+                  "noSatisfactoryTreatment": {
+                    "type": "boolean",
+                    "description": "No satisfactory authorised treatment exists."
+                  },
+                  "significantBenefit": {
+                    "type": "boolean",
+                    "description": "Significant benefit over existing methods."
+                  },
+                  "pediatricDevelopment": {
+                    "type": "boolean",
+                    "description": "Whether the program includes pediatric development."
+                  }
+                },
+                "required": [
+                  "market"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/expanded-access/framework/{region}": {
+      "get": {
+        "tags": [
+          "designations_access"
+        ],
+        "summary": "Expanded access / compassionate use",
+        "description": "Pre-approval access mechanism by region and population size.",
+        "operationId": "get_expanded_access_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/expanded-access/recommend": {
+      "post": {
+        "tags": [
+          "designations_access"
+        ],
+        "summary": "Expanded access / compassionate use",
+        "description": "Pre-approval access mechanism by region and population size.",
+        "operationId": "post_expanded_access_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EU",
+                      "JP"
+                    ],
+                    "description": "Regulatory region."
+                  },
+                  "populationSize": {
+                    "type": "string",
+                    "enum": [
+                      "individual",
+                      "intermediate",
+                      "widespread"
+                    ],
+                    "description": "Intended patient-population size."
+                  }
+                },
+                "required": [
+                  "region",
+                  "populationSize"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/cta/requirements/{market}": {
+      "get": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Clinical-trial-application requirements",
+        "description": "IND/CTA/CTN component checklist + readiness per market.",
+        "operationId": "get_cta_requirements_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/cta/assess": {
+      "post": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Clinical-trial-application requirements",
+        "description": "IND/CTA/CTN component checklist + readiness per market.",
+        "operationId": "post_cta_requirements_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/meetings": {
+      "get": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Health-authority meetings",
+        "description": "Recommended HA meeting(s) per market + development milestone.",
+        "operationId": "get_ha_meetings_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/meetings/recommend": {
+      "post": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Health-authority meetings",
+        "description": "Recommended HA meeting(s) per market + development milestone.",
+        "operationId": "post_ha_meetings_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/review-timeline": {
+      "post": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Global review-timeline projection",
+        "description": "Review timeline + milestones per region/procedure.",
+        "operationId": "post_review_timeline_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/nonclinical/requirements/{phase}": {
+      "get": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Nonclinical requirements (ICH M3(R2))",
+        "description": "Nonclinical-to-clinical phasing + repeat-dose tox duration.",
+        "operationId": "get_nonclinical_phase",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "phase",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/nonclinical/tox-duration": {
+      "post": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Nonclinical requirements (ICH M3(R2))",
+        "description": "Nonclinical-to-clinical phasing + repeat-dose tox duration.",
+        "operationId": "post_nonclinical_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/bioequivalence/criteria/{region}": {
+      "get": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Bioequivalence & BCS biowaivers",
+        "description": "BE acceptance criteria (FDA/EMA) + ICH M9 BCS biowaiver eligibility.",
+        "operationId": "get_bioequivalence_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/bioequivalence/biowaiver/{bcsClass}": {
+      "get": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Bioequivalence & BCS biowaivers",
+        "description": "BE acceptance criteria (FDA/EMA) + ICH M9 BCS biowaiver eligibility.",
+        "operationId": "get_bioequivalence_bcsClass",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "bcsClass",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/pediatric/obligation/{market}": {
+      "get": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Pediatric study-plan obligations",
+        "description": "PREA iPSP / EMA PIP plan obligation, timing, waiver/deferral status.",
+        "operationId": "get_pediatric_plan_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/pediatric/assess": {
+      "post": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Pediatric study-plan obligations",
+        "description": "PREA iPSP / EMA PIP plan obligation, timing, waiver/deferral status.",
+        "operationId": "post_pediatric_plan_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "market": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EMA",
+                      "PMDA"
+                    ],
+                    "description": "Market whose pediatric-plan obligation to assess."
+                  },
+                  "triggersRequirement": {
+                    "type": "boolean",
+                    "description": "Whether the application triggers the pediatric-plan requirement (default true for FDA/EMA)."
+                  },
+                  "planSubmitted": {
+                    "type": "boolean",
+                    "description": "Whether the pediatric plan (iPSP/PIP) has been submitted/agreed."
+                  },
+                  "waiverRequested": {
+                    "type": "boolean",
+                    "description": "Whether a waiver of pediatric studies has been requested."
+                  },
+                  "deferralRequested": {
+                    "type": "boolean",
+                    "description": "Whether a deferral of pediatric studies has been requested."
+                  }
+                },
+                "required": [
+                  "market"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/clinical-evidence/standard/{region}": {
+      "get": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Clinical evidence standards",
+        "description": "FDA substantial evidence / EU pivotal-trial standard + control types.",
+        "operationId": "get_clinical_evidence_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/clinical-evidence/control-types": {
+      "get": {
+        "tags": [
+          "clinical"
+        ],
+        "summary": "Clinical evidence standards",
+        "description": "FDA substantial evidence / EU pivotal-trial standard + control types.",
+        "operationId": "get_clinical_evidence_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/cmc/specifications/{productType}": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "CMC specifications (ICH Q6A/Q6B)",
+        "description": "Universal + dosage-form-specific specification test sets.",
+        "operationId": "get_cmc_specifications_productType",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "productType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/cmc/universal-tests/{productType}": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "CMC specifications (ICH Q6A/Q6B)",
+        "description": "Universal + dosage-form-specific specification test sets.",
+        "operationId": "get_cmc_specifications_productType",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "productType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/stability/zones": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "Stability requirements (ICH Q1A(R2))",
+        "description": "Climatic zones + storage conditions + study design.",
+        "operationId": "get_stability_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/stability/zones/{zone}": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "Stability requirements (ICH Q1A(R2))",
+        "description": "Climatic zones + storage conditions + study design.",
+        "operationId": "get_stability_zone",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "zone",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/stability/conditions/{storageCondition}": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "Stability requirements (ICH Q1A(R2))",
+        "description": "Climatic zones + storage conditions + study design.",
+        "operationId": "get_stability_storageCondition",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "storageCondition",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/stability/study-design": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "Stability requirements (ICH Q1A(R2))",
+        "description": "Climatic zones + storage conditions + study design.",
+        "operationId": "get_stability_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/impurities/drug-substance": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "Impurities & limits (ICH Q3A/B/C/D)",
+        "description": "Impurity thresholds, residual-solvent classes, elemental-impurity PDEs.",
+        "operationId": "get_impurities_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/impurities/drug-product": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "Impurities & limits (ICH Q3A/B/C/D)",
+        "description": "Impurity thresholds, residual-solvent classes, elemental-impurity PDEs.",
+        "operationId": "get_impurities_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/impurities/residual-solvents": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "Impurities & limits (ICH Q3A/B/C/D)",
+        "description": "Impurity thresholds, residual-solvent classes, elemental-impurity PDEs.",
+        "operationId": "get_impurities_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/impurities/residual-solvents/{name}": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "Impurities & limits (ICH Q3A/B/C/D)",
+        "description": "Impurity thresholds, residual-solvent classes, elemental-impurity PDEs.",
+        "operationId": "get_impurities_name",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/impurities/elemental": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "Impurities & limits (ICH Q3A/B/C/D)",
+        "description": "Impurity thresholds, residual-solvent classes, elemental-impurity PDEs.",
+        "operationId": "get_impurities_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/impurities/elemental/{element}": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "Impurities & limits (ICH Q3A/B/C/D)",
+        "description": "Impurity thresholds, residual-solvent classes, elemental-impurity PDEs.",
+        "operationId": "get_impurities_element",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "element",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/process-validation/framework/{region}": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "Process validation",
+        "description": "FDA 3-stage lifecycle + EU GMP Annex 15 qualification stages.",
+        "operationId": "get_process_validation_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/process-validation/stage/{region}/{stageId}": {
+      "get": {
+        "tags": [
+          "quality_cmc"
+        ],
+        "summary": "Process validation",
+        "description": "FDA 3-stage lifecycle + EU GMP Annex 15 qualification stages.",
+        "operationId": "get_process_validation_region_stageId",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/safety-reporting/timelines/{region}": {
+      "get": {
+        "tags": [
+          "safety_pv"
+        ],
+        "summary": "Investigational safety reporting (ICH E2)",
+        "description": "Expedited reporting classification + timelines (FDA IND / EU SUSAR).",
+        "operationId": "get_safety_reporting_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/safety-reporting/classify": {
+      "post": {
+        "tags": [
+          "safety_pv"
+        ],
+        "summary": "Investigational safety reporting (ICH E2)",
+        "description": "Expedited reporting classification + timelines (FDA IND / EU SUSAR).",
+        "operationId": "post_safety_reporting_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EU"
+                    ],
+                    "description": "Investigational safety-reporting region."
+                  },
+                  "serious": {
+                    "type": "boolean",
+                    "description": "Whether the case is serious."
+                  },
+                  "unexpected": {
+                    "type": "boolean",
+                    "description": "Whether the reaction is unexpected."
+                  },
+                  "suspectedCausality": {
+                    "type": "boolean",
+                    "description": "Whether a suspected (reasonably possible) causal relationship exists."
+                  },
+                  "fatalOrLifeThreatening": {
+                    "type": "boolean",
+                    "description": "Whether the event was fatal or life-threatening (sets the 7-day clock)."
+                  }
+                },
+                "required": [
+                  "region"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/pharmacovigilance/obligations/{market}": {
+      "get": {
+        "tags": [
+          "safety_pv"
+        ],
+        "summary": "Pharmacovigilance obligations",
+        "description": "Post-approval PV duties per market + readiness assessment.",
+        "operationId": "get_pharmacovigilance_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/pharmacovigilance/assess": {
+      "post": {
+        "tags": [
+          "safety_pv"
+        ],
+        "summary": "Pharmacovigilance obligations",
+        "description": "Post-approval PV duties per market + readiness assessment.",
+        "operationId": "post_pharmacovigilance_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/gcp/principles": {
+      "get": {
+        "tags": [
+          "safety_pv"
+        ],
+        "summary": "GCP essential records (ICH E6)",
+        "description": "GCP principles, essential records by trial stage, responsibility split.",
+        "operationId": "get_gcp_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/gcp/essential-documents/{stage}": {
+      "get": {
+        "tags": [
+          "safety_pv"
+        ],
+        "summary": "GCP essential records (ICH E6)",
+        "description": "GCP principles, essential records by trial stage, responsibility split.",
+        "operationId": "get_gcp_stage",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "stage",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/gcp/responsibilities/{party}": {
+      "get": {
+        "tags": [
+          "safety_pv"
+        ],
+        "summary": "GCP essential records (ICH E6)",
+        "description": "GCP principles, essential records by trial stage, responsibility split.",
+        "operationId": "get_gcp_party",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "party",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/module1/requirements/{market}": {
+      "get": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Regional Module 1 requirements",
+        "description": "Per-market Module 1 component checklist + readiness.",
+        "operationId": "get_module1_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/module1/assess": {
+      "post": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Regional Module 1 requirements",
+        "description": "Per-market Module 1 component checklist + readiness.",
+        "operationId": "post_module1_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/submission-format/{market}": {
+      "get": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Electronic submission format",
+        "description": "eCTD / gateway / validation profile + readiness per market.",
+        "operationId": "get_submission_format_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/submission-format/assess": {
+      "post": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Electronic submission format",
+        "description": "eCTD / gateway / validation profile + readiness per market.",
+        "operationId": "post_submission_format_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/labeling/requirements/{market}": {
+      "get": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Cross-market labeling",
+        "description": "Required labeling sections (PI / SmPC / package insert) + readiness.",
+        "operationId": "get_labeling_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/labeling/assess": {
+      "post": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Cross-market labeling",
+        "description": "Required labeling sections (PI / SmPC / package insert) + readiness.",
+        "operationId": "post_labeling_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/changes/vehicles/{market}": {
+      "get": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Post-approval changes / variations",
+        "description": "Classify a change into the correct filing vehicle per market.",
+        "operationId": "get_post_approval_changes_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/changes/classify": {
+      "post": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Post-approval changes / variations",
+        "description": "Classify a change into the correct filing vehicle per market.",
+        "operationId": "post_post_approval_changes_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "market": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EMA",
+                      "PMDA",
+                      "HEALTH_CANADA"
+                    ],
+                    "description": "Market whose variation framework to apply."
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "manufacturing_site",
+                      "manufacturing_process_major",
+                      "manufacturing_process_minor",
+                      "specification_tightening",
+                      "specification_relaxation",
+                      "analytical_method",
+                      "shelf_life_extension",
+                      "labeling_safety",
+                      "labeling_administrative",
+                      "new_indication",
+                      "formulation_change",
+                      "container_closure"
+                    ],
+                    "description": "The post-approval change category to classify."
+                  }
+                },
+                "required": [
+                  "market",
+                  "category"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/inspection/profile/{market}": {
+      "get": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Inspection readiness (PAI/GMP/BIMO)",
+        "description": "Inspection profile + readiness-domain assessment per market.",
+        "operationId": "get_inspection_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/inspection/assess": {
+      "post": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Inspection readiness (PAI/GMP/BIMO)",
+        "description": "Inspection profile + readiness-domain assessment per market.",
+        "operationId": "post_inspection_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/device/framework/{region}": {
+      "get": {
+        "tags": [
+          "devices_dx"
+        ],
+        "summary": "Device & IVD classification",
+        "description": "FDA / EU MDR / EU IVDR risk class + conformity pathway.",
+        "operationId": "get_device_classification_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/device/classify": {
+      "post": {
+        "tags": [
+          "devices_dx"
+        ],
+        "summary": "Device & IVD classification",
+        "description": "FDA / EU MDR / EU IVDR risk class + conformity pathway.",
+        "operationId": "post_device_classification_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EU_MDR",
+                      "EU_IVDR"
+                    ],
+                    "description": "Device region / framework."
+                  },
+                  "deviceClass": {
+                    "type": "string",
+                    "description": "Declared risk class. FDA: I|II|III; EU_MDR: I|IIa|IIb|III; EU_IVDR: A|B|C|D."
+                  }
+                },
+                "required": [
+                  "region",
+                  "deviceClass"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/combination/framework/{region}": {
+      "get": {
+        "tags": [
+          "devices_dx"
+        ],
+        "summary": "Combination-product classification",
+        "description": "FDA PMOA lead center + EU MDR Article 117 routing.",
+        "operationId": "get_combination_product_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/combination/classify": {
+      "post": {
+        "tags": [
+          "devices_dx"
+        ],
+        "summary": "Combination-product classification",
+        "description": "FDA PMOA lead center + EU MDR Article 117 routing.",
+        "operationId": "post_combination_product_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/companion-diagnostics/framework/{region}": {
+      "get": {
+        "tags": [
+          "devices_dx"
+        ],
+        "summary": "Companion diagnostics (CDx)",
+        "description": "CDx regulatory framework + co-development checklist.",
+        "operationId": "get_companion_diagnostics_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/companion-diagnostics/codevelopment": {
+      "get": {
+        "tags": [
+          "devices_dx"
+        ],
+        "summary": "Companion diagnostics (CDx)",
+        "description": "CDx regulatory framework + co-development checklist.",
+        "operationId": "get_companion_diagnostics_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/advanced-therapies/framework/{region}": {
+      "get": {
+        "tags": [
+          "devices_dx"
+        ],
+        "summary": "Advanced therapies (ATMP/cell-gene)",
+        "description": "ATMP / cell & gene / regenerative classification + route.",
+        "operationId": "get_advanced_therapies_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/advanced-therapies/classify": {
+      "post": {
+        "tags": [
+          "devices_dx"
+        ],
+        "summary": "Advanced therapies (ATMP/cell-gene)",
+        "description": "ATMP / cell & gene / regenerative classification + route.",
+        "operationId": "post_advanced_therapies_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "EU",
+                      "FDA",
+                      "JP"
+                    ],
+                    "description": "Regulatory region."
+                  },
+                  "modality": {
+                    "type": "string",
+                    "enum": [
+                      "gene_therapy",
+                      "cell_therapy",
+                      "tissue_engineered",
+                      "combined"
+                    ],
+                    "description": "Therapy modality."
+                  }
+                },
+                "required": [
+                  "region",
+                  "modality"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/exclusivity/rules/{market}": {
+      "get": {
+        "tags": [
+          "lifecycle"
+        ],
+        "summary": "Exclusivity & LOE",
+        "description": "Data/market/orphan/pediatric exclusivity + projected loss-of-exclusivity date.",
+        "operationId": "get_exclusivity_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/exclusivity/compute": {
+      "post": {
+        "tags": [
+          "lifecycle"
+        ],
+        "summary": "Exclusivity & LOE",
+        "description": "Data/market/orphan/pediatric exclusivity + projected loss-of-exclusivity date.",
+        "operationId": "post_exclusivity_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "market": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EMA",
+                      "PMDA"
+                    ],
+                    "description": "Exclusivity market."
+                  },
+                  "productClass": {
+                    "type": "string",
+                    "enum": [
+                      "new_chemical_entity",
+                      "biologic",
+                      "new_indication",
+                      "generic_or_biosimilar"
+                    ],
+                    "description": "Product class driving the exclusivity regime."
+                  },
+                  "orphan": {
+                    "type": "boolean",
+                    "description": "Whether the product holds orphan designation in this market."
+                  },
+                  "pediatricExtension": {
+                    "type": "boolean",
+                    "description": "Whether a qualifying pediatric study/PIP earns the extension."
+                  },
+                  "approvalDate": {
+                    "type": "string",
+                    "description": "Approval date (ISO yyyy-mm-dd) to project the LOE date from."
+                  }
+                },
+                "required": [
+                  "market",
+                  "productClass"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/lifecycle/obligations/{market}": {
+      "get": {
+        "tags": [
+          "lifecycle"
+        ],
+        "summary": "Lifecycle obligations calendar",
+        "description": "Recurring post-approval obligations projected into a due-date calendar.",
+        "operationId": "get_lifecycle_obligations_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/lifecycle/schedule": {
+      "post": {
+        "tags": [
+          "lifecycle"
+        ],
+        "summary": "Lifecycle obligations calendar",
+        "description": "Recurring post-approval obligations projected into a due-date calendar.",
+        "operationId": "post_lifecycle_obligations_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "market": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EMA",
+                      "PMDA"
+                    ],
+                    "description": "Market whose lifecycle obligations to project."
+                  },
+                  "approvalDate": {
+                    "type": "string",
+                    "description": "Approval/launch date in ISO yyyy-mm-dd; the calendar anchor."
+                  },
+                  "horizonMonths": {
+                    "type": "number",
+                    "description": "Project obligations due within this many months (default 60)."
+                  }
+                },
+                "required": [
+                  "market",
+                  "approvalDate"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/disclosure/requirements/{market}": {
+      "get": {
+        "tags": [
+          "lifecycle"
+        ],
+        "summary": "Clinical-trial disclosure",
+        "description": "Registration + results-posting obligations & deadlines (CT.gov / CTIS / WHO).",
+        "operationId": "get_disclosure_market",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "market",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/disclosure/deadlines": {
+      "post": {
+        "tags": [
+          "lifecycle"
+        ],
+        "summary": "Clinical-trial disclosure",
+        "description": "Registration + results-posting obligations & deadlines (CT.gov / CTIS / WHO).",
+        "operationId": "post_disclosure_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/promotional-compliance/rules/{region}": {
+      "get": {
+        "tags": [
+          "commercial_supply"
+        ],
+        "summary": "Promotional compliance",
+        "description": "Prescription-medicine promotion rules + readiness (FDA OPDP / EU Title VIII).",
+        "operationId": "get_promotional_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/promotional-compliance/assess": {
+      "post": {
+        "tags": [
+          "commercial_supply"
+        ],
+        "summary": "Promotional compliance",
+        "description": "Prescription-medicine promotion rules + readiness (FDA OPDP / EU Title VIII).",
+        "operationId": "post_promotional_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EU"
+                    ],
+                    "description": "Regulatory region."
+                  }
+                },
+                "required": [
+                  "region"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/controlled-substances/schedules": {
+      "get": {
+        "tags": [
+          "commercial_supply"
+        ],
+        "summary": "Controlled substances (DEA)",
+        "description": "US DEA schedules I–V + handling/prescription/quota controls.",
+        "operationId": "get_controlled_substances_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/api/global-ri/controlled-substances/schedules/{schedule}": {
+      "get": {
+        "tags": [
+          "commercial_supply"
+        ],
+        "summary": "Controlled substances (DEA)",
+        "description": "US DEA schedules I–V + handling/prescription/quota controls.",
+        "operationId": "get_controlled_substances_schedule",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "schedule",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/controlled-substances/handling/{schedule}": {
+      "get": {
+        "tags": [
+          "commercial_supply"
+        ],
+        "summary": "Controlled substances (DEA)",
+        "description": "US DEA schedules I–V + handling/prescription/quota controls.",
+        "operationId": "get_controlled_substances_schedule",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "schedule",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/establishment/framework/{region}": {
+      "get": {
+        "tags": [
+          "commercial_supply"
+        ],
+        "summary": "Establishment registration",
+        "description": "Manufacturer/establishment registration & drug listing + readiness.",
+        "operationId": "get_establishment_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/establishment/assess": {
+      "post": {
+        "tags": [
+          "commercial_supply"
+        ],
+        "summary": "Establishment registration",
+        "description": "Manufacturer/establishment registration & drug listing + readiness.",
+        "operationId": "post_establishment_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "FDA",
+                      "EU"
+                    ],
+                    "description": "Regulatory region."
+                  }
+                },
+                "required": [
+                  "region"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/global-ri/import-export/matrix/{region}": {
+      "get": {
+        "tags": [
+          "commercial_supply"
+        ],
+        "summary": "Import / export licensing",
+        "description": "Import/export authorisation by region + product category.",
+        "operationId": "get_import_export_region",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "region",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/api/global-ri/import-export/requirements": {
+      "post": {
+        "tags": [
+          "commercial_supply"
+        ],
+        "summary": "Import / export licensing",
+        "description": "Import/export authorisation by region + product category.",
+        "operationId": "post_import_export_root",
+        "responses": {
+          "200": {
+            "description": "Success — structured, registry-grounded result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "enum": [
+                      "US",
+                      "EU"
+                    ],
+                    "description": "Regulatory region."
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "finished_drug",
+                      "controlled_substance",
+                      "investigational",
+                      "biological"
+                    ],
+                    "description": "Product category."
+                  },
+                  "direction": {
+                    "type": "string",
+                    "enum": [
+                      "import",
+                      "export"
+                    ],
+                    "description": "Optional trade direction (default import)."
+                  }
+                },
+                "required": [
+                  "region",
+                  "category"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Uniform error envelope.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  },
+                  "required": [
+                    "code"
+                  ]
+                }
+              },
+              "required": [
+                "error"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

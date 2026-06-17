@@ -47,6 +47,7 @@
     "verify:submission:bootstrap": "node scripts/bootstrap-and-verify-submission.mjs",
     "ci:ban-new-pool": "bash scripts/ci/ban-new-pool.sh",
     "ci:gateway-bypass": "node scripts/ci/check-gateway-bypass.mjs",
+    "ri:openapi": "tsx scripts/global-ri/generate-openapi.ts",
     "ai:model-cards": "tsx scripts/ai-governance/generate-model-cards.ts",
     "ai:evidence-pack": "tsx scripts/ai-governance/generate-evidence-pack.ts",
     "ai:eval-doc-quality": "tsx server/eval/doc-quality/run-eval.ts",
