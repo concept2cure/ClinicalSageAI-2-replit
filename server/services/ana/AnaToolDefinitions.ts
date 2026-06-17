@@ -6173,6 +6173,33 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
       required: ['query', 'evidence'],
     },
   } as unknown as AnaTool,
+  // Submission deficiency taxonomy lookup: surface likely reviewer deficiencies,
+  // their reviewer language, mitigations, and references for a submission type.
+  // Handler wraps the deterministic deficiency-taxonomy (no LLM, no fabrication).
+  {
+    name: 'lookup_submission_deficiencies',
+    description:
+      'Look up the curated taxonomy of likely reviewer deficiencies for a submission type ' +
+      '(ind, nda, bla, 510k, pma, de_novo, cer, ectd, general). Returns each deficiency with severity, ' +
+      'likelihood, common reviewer language, concrete mitigations, and regulatory references. Use ' +
+      'proactively to pre-empt agency findings and to ground "what could go wrong / how to prevent it" ' +
+      'advice for the user\'s pathway. Set critical_only to focus on the highest-severity items.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        submission_type: {
+          type: 'string',
+          enum: ['ind', 'nda', 'bla', '510k', 'pma', 'de_novo', 'cer', 'ectd', 'general'],
+          description: 'The regulatory submission type to look up deficiencies for.',
+        },
+        critical_only: {
+          type: 'boolean',
+          description: 'When true, return only CRITICAL-severity deficiencies.',
+        },
+      },
+      required: ['submission_type'],
+    },
+  } as unknown as AnaTool,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
