@@ -496,6 +496,17 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
   {
+    capabilityKey: 'run-in-container',
+    category: 'compute',
+    name: 'Run in Hardened Container',
+    description:
+      'Run a bash script inside a real, hardened Linux container (bash + Python + file tools) — dropped capabilities, no privilege escalation, read-only root fs, resource limits, non-root user, wall-clock timeout, and network off unless explicitly enabled. The native computer-use path for multi-step shell/file workflows. Gated by deployment configuration.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: [],
+  },
+  {
     capabilityKey: 'validate-docx',
     category: 'compute',
     name: 'Validate Document Integrity',

@@ -4958,6 +4958,41 @@ export const SURGICAL_DOCX_XML_EDIT: AnaTool = {
 // received from a client. Tenant-scoped via ToolContext.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Container execution — a real Linux container with bash, Python, and file
+// manipulation (the native equivalent of Anthropic computer-use), run via a
+// hardened `docker run`: dropped capabilities, no-new-privileges, read-only
+// root fs, resource limits, non-root user, wall-clock timeout. GATED OFF by
+// default; outbound network is a separate explicit opt-in. Use for
+// multi-step shell/file workflows that the python sandbox can't express; for
+// document surgery prefer surgical_docx_xml_edit / run_python_script.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const RUN_IN_CONTAINER: AnaTool = {
+  name: 'run_in_container',
+  description:
+    "Run a bash script inside a real, hardened Linux container (bash + Python + file tools) — the native computer-use path for multi-step shell/file workflows. The container has dropped Linux capabilities, no privilege escalation, a read-only root filesystem, a size-bounded writable /work directory (the cwd), CPU/memory/PID limits, a non-root user, and a wall-clock timeout. Outbound network is OFF unless the deployment explicitly enables it. Provide optional input_files (filename → base64) written into /work; files the script leaves in /work are returned (base64, size-capped). Returns stdout, stderr, and exit code. This capability is gated by deployment configuration and may be disabled. Prefer run_python_script for pure-Python work and surgical_docx_xml_edit for document edits.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      script: {
+        type: 'string',
+        description: 'The bash script to run inside the container (cwd is /work).',
+      },
+      input_files: {
+        type: 'object',
+        description: 'Optional map of filename → base64 bytes, written into /work before the script runs.',
+        additionalProperties: { type: 'string' },
+      },
+      timeout_ms: {
+        type: 'number',
+        description: 'Wall-clock timeout in milliseconds. Default 60000, max 300000.',
+      },
+    },
+    required: ['script'],
+  },
+};
+
 export const VALIDATE_DOCX: AnaTool = {
   name: 'validate_docx',
   description:
@@ -6125,6 +6160,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   INSERT_DOCUMENT_CONTENT,
   SURGICAL_DOCX_XML_EDIT,
   VALIDATE_DOCX,
+  RUN_IN_CONTAINER,
   WRITE_KIT_SECTION,
   CREATE_Q_SUB,
   UPDATE_Q_SUB_COMMITMENT_ROLLED_IN,

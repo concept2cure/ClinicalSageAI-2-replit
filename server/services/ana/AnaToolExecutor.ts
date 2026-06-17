@@ -4304,6 +4304,81 @@ registerToolHandler('validate_docx', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Container execution handler — run a bash script in a hardened Docker
+// container (the native computer-use path). Gated off by default; returns a
+// friendly "not enabled" message rather than an error when disabled. Persists
+// any produced files to a session tempdir and returns truncated diagnostics.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('run_in_container', async (input, ctx) => {
+  const script = typeof input.script === 'string' ? input.script : '';
+  if (!script.trim()) {
+    return JSON.stringify({ error: 'run_in_container requires script (non-empty string).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'run_in_container requires tenant context (organizationId).' });
+  }
+
+  const inputFiles =
+    input.input_files && typeof input.input_files === 'object'
+      ? (input.input_files as Record<string, string>)
+      : undefined;
+  const timeoutMs = typeof input.timeout_ms === 'number' ? input.timeout_ms : undefined;
+
+  try {
+    const { runInContainer, getContainerExecConfig } = await import('../compute/containerExec.js');
+    const cfg = getContainerExecConfig();
+    if (!cfg.enabled) {
+      return JSON.stringify({
+        ok: false,
+        enabled: false,
+        message:
+          'The container-execution capability is not enabled in this deployment. Use run_python_script (sandboxed Python) or surgical_docx_xml_edit instead, or ask an administrator to enable ANA_ENABLE_CONTAINER_EXEC.',
+      });
+    }
+
+    const result = await runInContainer({ script, inputFiles, timeoutMs });
+
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { randomUUID } = await import('crypto');
+    const outputFilePaths: Array<{ name: string; path: string; bytes: number }> = [];
+    const entries = Object.entries(result.outputFiles ?? {});
+    if (entries.length > 0) {
+      const outDir = path.resolve(process.cwd(), 'tmp', 'ana-container', randomUUID().slice(0, 8));
+      await fs.mkdir(outDir, { recursive: true });
+      for (const [name, b64] of entries) {
+        const dest = path.join(outDir, path.basename(name));
+        const buf = Buffer.from(b64, 'base64');
+        await fs.writeFile(dest, buf);
+        outputFilePaths.push({ name, path: dest, bytes: buf.length });
+      }
+    }
+
+    return JSON.stringify({
+      ok: result.ok,
+      engine: `docker (${result.network} network)`,
+      exitCode: result.exitCode,
+      timedOut: result.timedOut,
+      stdout: truncateForModel(result.stdout),
+      stderr: truncateForModel(result.stderr),
+      outputFiles: outputFilePaths,
+      message: result.timedOut
+        ? 'Container run exceeded the timeout and was killed.'
+        : result.ok
+          ? `Container ran successfully${outputFilePaths.length ? ` and produced ${outputFilePaths.length} file(s)` : ''}.`
+          : `Container exited with code ${result.exitCode} — see stderr.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `run_in_container failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify Docker is available on the host and the capability is enabled.`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX mutation handlers — Q-Sub creation, commitment rollover, program
 // metadata binding. Each routes through the existing service layer so the
 // tenant-scoping + audit + business rules stay in one place; the handler
