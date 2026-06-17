@@ -679,12 +679,21 @@ export async function placeInDossier(
   }
 ): Promise<CommandResult> {
   try {
-    await pool.query(
+    const placeResult = await pool.query(
       `UPDATE concept2cure_artifacts
        SET ctd_section = $4, updated_at = NOW()
        WHERE artifact_id = $1 AND project_id = $2 AND organization_id = $3`,
       [params.artifactId, params.projectId, ctx.organizationId, params.ctdSection]
     );
+    // Fail closed: don't report a placement that didn't happen (artifact not in
+    // this project/org). AnA must never confirm work it didn't perform.
+    if (!placeResult.rowCount) {
+      return {
+        success: false,
+        action: 'place_in_dossier',
+        message: `Artifact ${params.artifactId} was not found in this project, so nothing was placed.`,
+      };
+    }
     // Fetch title for human-readable message
     const artInfo = await pool
       .query(
@@ -2253,10 +2262,18 @@ export async function updateMilestone(
     }
 
     setClauses.push('updated_at = NOW()');
-    await pool.query(
+    const milestoneResult = await pool.query(
       `UPDATE c2c_milestones SET ${setClauses.join(', ')} WHERE id = $1 AND org_id = $2`,
       values
     );
+    // Fail closed: don't claim an update that matched no row (bad/foreign id).
+    if (!milestoneResult.rowCount) {
+      return {
+        success: false,
+        action: 'update_milestone',
+        message: `Milestone ${params.milestoneId} was not found, so nothing was updated.`,
+      };
+    }
     return {
       success: true,
       action: 'update_milestone',
@@ -2331,7 +2348,7 @@ export async function revertToVersion(
   try {
     // Verify artifact exists and is not locked
     const artifactResult = await pool.query(
-      `SELECT id, artifact_id, version, status FROM concept2cure_artifacts
+      `SELECT id, artifact_id, version, status, ctd_section, title FROM concept2cure_artifacts
        WHERE artifact_id = $1 AND organization_id = $2`,
       [params.artifactId, ctx.organizationId]
     );
