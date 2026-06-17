@@ -236,6 +236,17 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
 
   // ── Intelligence (4) ──────────────────────────────────────
   {
+    capabilityKey: 'check-grounding',
+    category: 'analysis',
+    name: 'Grounding Guarantee Check',
+    description:
+      "Detect quantitative claims (percentages, p-values, sample sizes, CIs, doses, durations) in drafted text that lack a citation/source marker, with a grounding score — so every number is traced to a source or hedged before it reaches a regulatory reader. Deterministic, no LLM; makes the 'never state a number without a cited source' rule structural.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
     capabilityKey: 'scan-regulatory-deficiencies',
     category: 'intelligence',
     name: 'Deterministic Deficiency Scan',

@@ -462,6 +462,39 @@ registerToolHandler('recall_session_context', async (input, ctx) => {
   }
 });
 
+// Grounding guarantee — flags quantitative claims in a draft that lack a
+// citation/source marker, so AnA grounds or hedges every number before it
+// reaches a regulatory reader. Deterministic (no LLM); the trust moat made
+// structural.
+registerToolHandler('check_grounding', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ error: 'check_grounding requires text (non-empty string).' });
+  }
+  try {
+    const { assessGrounding } = await import('./grounding-core.js');
+    const report = assessGrounding(text);
+    return JSON.stringify({
+      engine: 'deterministic grounding check (no LLM)',
+      ok: report.ok,
+      groundingScore: report.groundingScore,
+      totalClaims: report.totalClaims,
+      groundedClaims: report.groundedClaims,
+      ungroundedClaims: report.ungroundedClaims.map(c => ({ sentence: c.sentence, numbers: c.numbers })),
+      message:
+        report.totalClaims === 0
+          ? 'No quantitative claims detected — nothing to ground.'
+          : report.ok
+            ? `All ${report.totalClaims} quantitative claim(s) carry a citation/source marker.`
+            : `${report.ungroundedClaims.length} of ${report.totalClaims} quantitative claim(s) are UNGROUNDED — add a cited source for each figure, or hedge it explicitly, before presenting to a regulatory reader.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `check_grounding failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // Submission pre-mortem (RTF/CRL) — composes the deterministic deficiency scan
 // (pure, no LLM) with the precedent engine (real, fault-tolerant) into one
 // grounded, honest-by-construction readiness verdict. The risk read always

@@ -949,6 +949,30 @@ export const PROJECT_KNOWLEDGE_SEARCH: AnaTool = {
 // "insufficient data, confidence: low" rather than a fabricated probability.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Grounding guarantee — make the product's "never invent figures" rule
+// checkable. Detects quantitative claims (percentages, p-values, n=, CIs,
+// fold-changes, counts, doses, durations) in drafted text and flags any not
+// accompanied by a citation/source marker, so AnA grounds or hedges every
+// number before it reaches a regulatory reader. Deterministic, no LLM.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const CHECK_GROUNDING: AnaTool = {
+  name: 'check_grounding',
+  description:
+    "Check drafted regulatory text for UNGROUNDED quantitative claims — numbers, percentages, p-values, sample sizes, confidence intervals, fold-changes, doses, durations — that are not backed by a nearby citation or source marker. Returns each ungrounded claim, a grounding score (0–1), and whether the text passes. Run this on your own draft BEFORE presenting numbers to a regulatory reader: every figure must trace to a source or be explicitly hedged. Deterministic (no LLM). Use it to enforce 'never state a number without a cited source'.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: {
+        type: 'string',
+        description: 'The drafted text to check for ungrounded quantitative claims.',
+      },
+    },
+    required: ['text'],
+  },
+};
+
 export const RUN_SUBMISSION_PREMORTEM: AnaTool = {
   name: 'run_submission_premortem',
   description:
@@ -6292,6 +6316,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_LARGE_DOCUMENT,
   REMEMBER_DOCUMENT_IN_PROJECT,
   RUN_SUBMISSION_PREMORTEM,
+  CHECK_GROUNDING,
   SCAN_REGULATORY_DEFICIENCIES,
   RECALL_SESSION_CONTEXT,
   SIMULATE_STUDY_DESIGN,
