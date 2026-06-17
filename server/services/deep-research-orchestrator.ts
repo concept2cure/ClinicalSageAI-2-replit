@@ -291,9 +291,11 @@ async function generateSynthesis(
 function buildEvidenceDigest(results: AggregatedResults): string {
   const sections: string[] = [];
 
+  // Rank each category by source authority before truncating, so the cap drops
+  // the LEAST credible sources (not arbitrary connector order) from the prompt.
   if (results.csrMatches.length > 0) {
     sections.push(`### Clinical Trials (${results.csrMatches.length} total)`);
-    results.csrMatches.slice(0, 15).forEach(r => {
+    rankResultsByProvenance(results.csrMatches).slice(0, 15).forEach(r => {
       sections.push(`- [${r.id}] ${r.title} — ${r.summary}`);
     });
     if (results.csrMatches.length > 15) {
@@ -303,7 +305,7 @@ function buildEvidenceDigest(results: AggregatedResults): string {
 
   if (results.regulatoryIntelligence.length > 0) {
     sections.push(`### Regulatory Records (${results.regulatoryIntelligence.length} total)`);
-    results.regulatoryIntelligence.slice(0, 10).forEach(r => {
+    rankResultsByProvenance(results.regulatoryIntelligence).slice(0, 10).forEach(r => {
       sections.push(`- [${r.sourceConnector}] ${r.title} — ${r.summary}`);
     });
     if (results.regulatoryIntelligence.length > 10) {
@@ -313,7 +315,7 @@ function buildEvidenceDigest(results: AggregatedResults): string {
 
   if (results.literatureResults.length > 0) {
     sections.push(`### Literature (${results.literatureResults.length} total)`);
-    results.literatureResults.slice(0, 10).forEach(r => {
+    rankResultsByProvenance(results.literatureResults).slice(0, 10).forEach(r => {
       sections.push(`- [${r.id}] ${r.title} — ${r.summary}`);
     });
     if (results.literatureResults.length > 10) {
