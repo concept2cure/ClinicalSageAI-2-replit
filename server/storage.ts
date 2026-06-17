@@ -607,54 +607,9 @@ export interface IStorage {
   ): Promise<schema.CdiscPrmStudy | undefined>;
   deleteCdiscPrmStudy(studyId: string): Promise<boolean>;
 
-  // CDISC CDASH (Clinical Data Acquisition Standards Harmonization) methods
-  getCdiscCdashForm(formId: string): Promise<schema.CdiscCdashForm | undefined>;
-  getCdiscCdashForms(options?: {
-    tenantId: number;
-    domain?: string;
-    formType?: string;
-    isStandard?: boolean;
-    limit?: number;
-    offset?: number;
-  }): Promise<schema.CdiscCdashForm[]>;
-  createCdiscCdashForm(form: schema.InsertCdiscCdashForm): Promise<schema.CdiscCdashForm>;
-  updateCdiscCdashForm(
-    formId: string,
-    formData: Partial<schema.InsertCdiscCdashForm>
-  ): Promise<schema.CdiscCdashForm | undefined>;
-  deleteCdiscCdashForm(formId: string): Promise<boolean>;
-
-  // CDISC CSR (Clinical Study Report) methods
-  getCdiscCsrTemplate(templateId: string): Promise<schema.CdiscCsrTemplate | undefined>;
-  getCdiscCsrTemplates(options?: {
-    tenantId: number;
-    templateType?: string;
-    isActive?: boolean;
-    limit?: number;
-    offset?: number;
-  }): Promise<schema.CdiscCsrTemplate[]>;
-  createCdiscCsrTemplate(template: schema.InsertCdiscCsrTemplate): Promise<schema.CdiscCsrTemplate>;
-  updateCdiscCsrTemplate(
-    templateId: string,
-    templateData: Partial<schema.InsertCdiscCsrTemplate>
-  ): Promise<schema.CdiscCsrTemplate | undefined>;
-  deleteCdiscCsrTemplate(templateId: string): Promise<boolean>;
-
-  // CDISC ADaM (Analysis Data Model) methods
-  getCdiscAdamSpec(datasetName: string, studyId: string): Promise<schema.CdiscAdamSpec | undefined>;
-  getCdiscAdamSpecs(options?: {
-    tenantId: number;
-    studyId?: string;
-    datasetClass?: string;
-    limit?: number;
-    offset?: number;
-  }): Promise<schema.CdiscAdamSpec[]>;
-  createCdiscAdamSpec(spec: schema.InsertCdiscAdamSpec): Promise<schema.CdiscAdamSpec>;
-  updateCdiscAdamSpec(
-    id: number,
-    specData: Partial<schema.InsertCdiscAdamSpec>
-  ): Promise<schema.CdiscAdamSpec | undefined>;
-  deleteCdiscAdamSpec(id: number): Promise<boolean>;
+  // NOTE: CDISC CDASH / CSR / ADaM storage methods were removed alongside the
+  // unused cdisc_* reference tables (GitHub issue #846). They were declared on
+  // this interface but never implemented or called.
 
   // ============================================================================
   // 510(k) Workflow Methods
