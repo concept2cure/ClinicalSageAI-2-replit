@@ -68,6 +68,13 @@ import {
 } from './pdev-command-handlers';
 import { loadAnaToolPolicy } from './mdx-tool-policy';
 import {
+  requiresPart11Signoff,
+  validateSignoff,
+  buildSignatureRequiredResult,
+  loadPart11Enforce,
+  type Part11Signoff,
+} from './part11-governance';
+import {
   explainAuditRow,
   EXPLAIN_AUDIT_ROW_METADATA,
 } from './mdx-explain-audit-row';
@@ -111,6 +118,18 @@ export interface CommandContext {
     allow?: string[];
     deny?: string[];
   };
+  /**
+   * Whether Part 11 sign-off is enforced for this tenant. Stamped once per
+   * dispatch from organizations.settings.anaPart11Enforce. When true, governed
+   * record-altering commands fail closed unless `signoff` is present + valid.
+   */
+  part11Enforce?: boolean;
+  /**
+   * The verified Part 11 sign-off for THIS dispatch (reason-for-change +
+   * server-verified electronic signature). Stamped by the route after it
+   * verifies the user's re-authentication via the e-signature service.
+   */
+  signoff?: Part11Signoff;
 }
 
 export interface CommandResult {
@@ -4526,6 +4545,21 @@ export async function executeCommands(
     }
   }
 
+  // ── Load per-tenant Part 11 enforcement flag once per dispatch ──
+  // Stamps ctx.part11Enforce from organizations.settings.anaPart11Enforce.
+  // Fail-soft: any DB error → not enforced (existing behavior preserved).
+  if (
+    ctx.part11Enforce === undefined &&
+    ctx.organizationId !== undefined &&
+    Number.isFinite(ctx.organizationId)
+  ) {
+    try {
+      ctx.part11Enforce = pool ? await loadPart11Enforce(pool, ctx.organizationId) : false;
+    } catch {
+      ctx.part11Enforce = false;
+    }
+  }
+
   const commandMap: Record<string, any> = {
     create_project: createProject,
     list_projects: listProjects,
@@ -4641,6 +4675,17 @@ export async function executeCommands(
   for (const cmd of commands) {
     const handler = commandMap[cmd.command];
     if (handler) {
+      // ── Part 11 gate: governed record-altering commands fail closed unless
+      // this dispatch carries a verified reason-for-change + e-signature. ──
+      if (ctx.part11Enforce && requiresPart11Signoff(cmd.command)) {
+        const v = validateSignoff(ctx.signoff);
+        if (!v.ok) {
+          const blocked = buildSignatureRequiredResult(cmd.command, v);
+          results.push(blocked);
+          console.log(`[AnA Command] Blocked ${cmd.command}: PART11_SIGNATURE_REQUIRED (${v.code})`);
+          continue;
+        }
+      }
       try {
         const result = await handler(ctx, cmd.params);
         results.push(result);
