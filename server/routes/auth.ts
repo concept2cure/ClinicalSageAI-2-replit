@@ -87,11 +87,11 @@ const JWT_EXPIRES_IN = '24h';
 const REFRESH_TOKEN_EXPIRES_IN = '7d';
 
 function getRefreshTokenSecret(): string {
-  const refreshSecret = process.env.REFRESH_TOKEN_SECRET;
-  if (!refreshSecret && process.env.NODE_ENV === 'production') {
-    throw new Error('REFRESH_TOKEN_SECRET must be configured in production');
-  }
-  return refreshSecret || config.jwt.secret;
+  // Resolution + fail-closed enforcement now lives in config/environment.ts
+  // (getRefreshTokenSecret): a dedicated, distinct REFRESH_TOKEN_SECRET is
+  // required in staging/production, with the JWT-secret fallback preserved
+  // only in development/test. Read the already-validated value here.
+  return config.jwt.refreshSecret;
 }
 
 // ─── Rate Limiters ──────────────────────────────────────────────────────────
@@ -702,7 +702,7 @@ router.post('/dev-login', async (req: Request, res: Response) => {
 
     const refreshToken = jwt.sign(
       { userId: userData.id.toString(), email: userData.email, type: 'refresh' },
-      process.env.REFRESH_TOKEN_SECRET || config.jwt.secret,
+      getRefreshTokenSecret(),
       { expiresIn: REFRESH_TOKEN_EXPIRES_IN }
     );
 

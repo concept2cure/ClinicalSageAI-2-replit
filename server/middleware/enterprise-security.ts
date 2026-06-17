@@ -731,6 +731,59 @@ export async function validateApiKey(req: Request, res: Response, next: NextFunc
 }
 
 // ============================================================================
+// API KEY SCOPE ENFORCEMENT
+// ============================================================================
+
+/**
+ * Enforce API-key scopes on a route.
+ *
+ * validateApiKey (above) authenticates an X-API-Key header and stashes the
+ * key's granted scopes on `req.apiScopes` plus `req.authMethod = 'api_key'`,
+ * but until now nothing CHECKED those scopes — a key minted for `csr:read`
+ * could call any /api/v1 endpoint. This guard closes that gap.
+ *
+ * Semantics:
+ *   - If the request was NOT authenticated via an API key
+ *     (`req.authMethod !== 'api_key'`), this guard PASSES THROUGH. Normal
+ *     JWT/session requests are governed by session RBAC, not by API-key
+ *     scopes; applying scope checks to them would block every browser user.
+ *   - If the request WAS authenticated via an API key, the key must carry
+ *     ALL of the required scopes (logical AND). A key missing any one of
+ *     them gets 403. ALL (not ANY) is the conservative choice: a route that
+ *     declares `requireScope('a','b')` is asserting it needs both
+ *     capabilities, so partial grants must not slip through.
+ *
+ * A 403 lists the missing scopes (not the full granted set) so callers can
+ * see what to add without us echoing the key's entire authorization surface.
+ */
+export function requireScope(...scopes: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // Non-API-key callers (browser sessions, JWT) are out of scope here —
+    // session RBAC owns them. Pass through.
+    if ((req as any).authMethod !== 'api_key') {
+      return next();
+    }
+
+    const granted = Array.isArray((req as any).apiScopes)
+      ? ((req as any).apiScopes as string[])
+      : [];
+
+    // ALL required scopes must be present.
+    const missing = scopes.filter(s => !granted.includes(s));
+    if (missing.length > 0) {
+      return res.status(403).json({
+        error: 'Insufficient API key scope',
+        code: 'INSUFFICIENT_SCOPE',
+        required: scopes,
+        missing,
+      });
+    }
+
+    next();
+  };
+}
+
+// ============================================================================
 // REQUEST ID MIDDLEWARE
 // ============================================================================
 
@@ -949,6 +1002,7 @@ export default {
   validateTenantContext,
   auditLog,
   validateApiKey,
+  requireScope,
   requestId,
   requireJwtSecret,
   applySecurityMiddleware,

@@ -79,6 +79,19 @@ declare global {
       tenantId?: number | string;
       userRole?: string;
       userEmail?: string;
+      /**
+       * How the request was authenticated. Set to 'api_key' by
+       * validateApiKey (enterprise-security.ts) when an X-API-Key header
+       * validates. Absent for normal JWT/session requests. Read by
+       * requireScope to decide whether to apply API-key scope enforcement.
+       */
+      authMethod?: 'api_key';
+      /** Scopes granted to the validated API key (validateApiKey). */
+      apiScopes?: string[];
+      /** Numeric id of the validated API key row (validateApiKey). */
+      apiKeyId?: number;
+      /** Per-key rate limit pulled from the api_keys row (validateApiKey). */
+      apiRateLimit?: number;
     }
   }
 }

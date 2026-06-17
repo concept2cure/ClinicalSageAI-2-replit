@@ -16,6 +16,11 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { validateApiKey } from '../services/api-key-service.js';
+// Centralized, fleet-wide scope guard (server/middleware/enterprise-security.ts).
+// Imported as requireApiScope to avoid colliding with the legacy single-scope
+// helper below. Demonstrates the shared mechanism on the two most sensitive
+// endpoints; see usage at /precedent/search and /trial-design/suggest.
+import { requireScope as requireApiScope } from '../middleware/enterprise-security.js';
 import { recordUsage, checkQuota } from '../services/usage-metering.js';
 import { csrSearchService } from '../services/csr-search-service.js';
 import { getRegulatoryPathwayIntelligence } from '../services/regulatory-pathway-intelligence.js';
@@ -100,6 +105,11 @@ async function requireApiKey(req: ApiRequest, res: Response, next: NextFunction)
   req.apiOrganizationId = result.organizationId;
   req.apiScopes = result.scopes;
   req.apiKeyId = result.keyId;
+  // Mark the request as API-key authenticated so the shared requireApiScope
+  // guard (server/middleware/enterprise-security.ts) engages. Every route on
+  // this router reaches handlers only via this middleware, so the flag is
+  // always set before any requireApiScope check runs.
+  (req as Request).authMethod = 'api_key';
   next();
 }
 
@@ -400,7 +410,10 @@ router.get('/endpoints/recommend', requireScope('endpoints:read'), requireQuota(
 // GET /api/v1/precedent/search — Regulatory Precedent Search
 // ============================================================================
 
-router.get('/precedent/search', requireScope('precedent:read'), requireQuota('api_precedent_search'), async (req: ApiRequest, res: Response) => {
+// Sensitive: exposes historical regulatory submission outcomes / deficiency
+// patterns. Guarded by the shared fleet-wide requireApiScope in addition to
+// the legacy local requireScope (defense in depth — both must pass).
+router.get('/precedent/search', requireApiScope('precedent:read'), requireScope('precedent:read'), requireQuota('api_precedent_search'), async (req: ApiRequest, res: Response) => {
   try {
     const indication = sanitizeQueryParam(req.query.indication);
     const agency = sanitizeQueryParam(req.query.agency);
@@ -450,7 +463,10 @@ router.get('/precedent/search', requireScope('precedent:read'), requireQuota('ap
 // GET /api/v1/trial-design/suggest — Trial Design Suggestions
 // ============================================================================
 
-router.get('/trial-design/suggest', requireScope('trial-design:read'), requireQuota('api_trial_design'), async (req: ApiRequest, res: Response) => {
+// Sensitive: synthesizes precedent strategy + endpoint analytics into trial
+// design guidance. Guarded by the shared fleet-wide requireApiScope plus the
+// legacy local requireScope (both must pass).
+router.get('/trial-design/suggest', requireApiScope('trial-design:read'), requireScope('trial-design:read'), requireQuota('api_trial_design'), async (req: ApiRequest, res: Response) => {
   try {
     const { indication, phase, primaryEndpoint, submissionType } = req.query;
     const resolvedSubmissionType = sanitizeQueryParam(submissionType) || 'NDA';
