@@ -20,7 +20,19 @@
 import {
   contradictionEngineService,
   type Severity,
+  type ReviewState,
 } from '../contradiction-engine-service.js';
+
+/**
+ * Review states that mean a finding is no longer live. Mirrors the engine's own
+ * "still open" definition (review_state NOT IN these); anything else —
+ * unresolved, under_review, reviewed — is surfaced, since a finding someone is
+ * actively reviewing is still a live contradiction.
+ */
+const CLOSED_REVIEW_STATES: ReadonlySet<ReviewState> = new Set<ReviewState>([
+  'approved_resolution',
+  'superseded',
+]);
 
 export interface OpenContradiction {
   id: string;
@@ -105,8 +117,14 @@ export function buildContradictionWatchBlock(
 }
 
 /**
- * DB-scoped: fetch the org's UNRESOLVED contradiction findings, severity-sorted.
- * Always org-scoped via {@link contradictionEngineService.searchFindings}.
+ * DB-scoped: fetch the org's OPEN contradiction findings (everything except
+ * approved_resolution / superseded), severity-sorted, capped to `limit`. Always
+ * org-scoped via {@link contradictionEngineService.searchFindings}.
+ *
+ * searchFindings only supports single-value review-state equality, so we fetch a
+ * generous window (severity-ordered) and exclude closed states in-process. The
+ * window is several times the requested cap so closed findings can't crowd out
+ * live ones before the cap is applied.
  *
  * Resilient by design: this is an additive proactive signal, so a missing table
  * or query error yields [] rather than breaking the digest / chat prefetch.
@@ -115,23 +133,25 @@ export async function getOpenContradictionsForOrg(
   organizationId: number,
   limit?: number
 ): Promise<OpenContradiction[]> {
+  const cap = limit && limit > 0 ? limit : 20;
   try {
     const findings = await contradictionEngineService.searchFindings({
       organizationId,
-      reviewState: 'unresolved',
-      limit: limit && limit > 0 ? limit : 20,
+      limit: Math.min(cap * 4, 200),
     });
-    const mapped: OpenContradiction[] = findings.map(f => ({
-      id: f.id,
-      title: f.title,
-      severity: f.severity,
-      contradictionType: f.contradictionType,
-      authorityState: f.authorityState,
-      projectId: f.projectId,
-      createdAt: f.createdAt,
-      blocksPromotion: f.authorityState === 'blocks_promotion',
-    }));
-    return sortContradictionsBySeverity(mapped);
+    const mapped: OpenContradiction[] = findings
+      .filter(f => !CLOSED_REVIEW_STATES.has(f.reviewState))
+      .map(f => ({
+        id: f.id,
+        title: f.title,
+        severity: f.severity,
+        contradictionType: f.contradictionType,
+        authorityState: f.authorityState,
+        projectId: f.projectId,
+        createdAt: f.createdAt,
+        blocksPromotion: f.authorityState === 'blocks_promotion',
+      }));
+    return sortContradictionsBySeverity(mapped).slice(0, cap);
   } catch {
     return [];
   }
