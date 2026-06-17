@@ -15,7 +15,7 @@
 
 import { db } from '../db';
 import { deviceAuditTrail, electronicSignatures, users, organizations } from '../../shared/schema';
-import { documentVersions } from '../../shared/schema';
+import { documentVersions, documents, submissions } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import crypto from 'crypto';
 import auditService from './auditService';
@@ -700,29 +700,111 @@ class Part11ComplianceService {
   }
 
   /**
+   * Produce a deterministic, order-independent serialization of the
+   * integrity-relevant fields of a record. Keys are sorted and Date values
+   * are normalized to ISO strings so the hash is stable across reads and
+   * driver representations, while still detecting any substantive change.
+   */
+  private canonicalize(fields: Record<string, unknown>): string {
+    const normalize = (v: unknown): unknown => {
+      if (v instanceof Date) return v.toISOString();
+      return v ?? null;
+    };
+    const ordered: Record<string, unknown> = {};
+    for (const key of Object.keys(fields).sort()) {
+      ordered[key] = normalize(fields[key]);
+    }
+    return JSON.stringify(ordered);
+  }
+
+  /**
    * Get submission data for integrity check.
    *
-   * Fails closed: an integrity check computed over fabricated data would
-   * produce a meaningless (and potentially falsely reassuring) Part 11
-   * verification result. Implement a real fetch before wiring callers.
+   * Fails closed: if the submission does not exist we throw, so
+   * verifyDataIntegrity reports `valid: false` rather than computing a hash
+   * over fabricated (and falsely reassuring) data. The hashed payload covers
+   * the substantive fields only — volatile bookkeeping (updatedAt/deletedAt)
+   * is excluded so a meaningful tamper check is not defeated by routine touches.
    */
-  async getSubmissionData(submissionId: number): Promise<{ id: number; organizationId: number; data: string }> {
-    throw new Error(
-      `Part 11 integrity check for submission ${submissionId} is not implemented: ` +
-      `real submission data retrieval is required before integrity can be verified.`
-    );
+  async getSubmissionData(
+    submissionId: number
+  ): Promise<{ id: number; organizationId: number; data: string }> {
+    const [row] = await this.getDb()
+      .select()
+      .from(submissions)
+      .where(eq(submissions.id, submissionId))
+      .limit(1);
+
+    if (!row) {
+      throw new Error(`Part 11 integrity check: submission ${submissionId} not found`);
+    }
+
+    return {
+      id: row.id,
+      organizationId: row.organizationId,
+      data: this.canonicalize({
+        id: row.id,
+        organizationId: row.organizationId,
+        title: row.title,
+        productName: row.productName,
+        applicationType: row.applicationType,
+        clientType: row.clientType,
+        primaryRegion: row.primaryRegion,
+        status: row.status,
+        lifecycleStage: row.lifecycleStage,
+        createdBy: row.createdBy,
+        createdAt: row.createdAt,
+      }),
+    };
   }
 
   /**
    * Get document data for integrity check.
    *
-   * Fails closed for the same reason as getSubmissionData above.
+   * Hashes the content of the document's latest version (the integrity
+   * target). Fails closed if the document does not exist or has no stored
+   * version content, for the same reason as getSubmissionData above.
    */
-  async getDocumentData(documentId: number): Promise<{ id: number; organizationId: number; data: string }> {
-    throw new Error(
-      `Part 11 integrity check for document ${documentId} is not implemented: ` +
-      `real document data retrieval is required before integrity can be verified.`
-    );
+  async getDocumentData(
+    documentId: number
+  ): Promise<{ id: number; organizationId: number; data: string }> {
+    const [doc] = await this.getDb()
+      .select({ id: documents.id, organizationId: documents.organizationId })
+      .from(documents)
+      .where(eq(documents.id, documentId))
+      .limit(1);
+
+    if (!doc) {
+      throw new Error(`Part 11 integrity check: document ${documentId} not found`);
+    }
+
+    const [version] = await this.getDb()
+      .select({
+        id: documentVersions.id,
+        versionNumber: documentVersions.versionNumber,
+        content: documentVersions.content,
+      })
+      .from(documentVersions)
+      .where(eq(documentVersions.documentId, documentId))
+      .orderBy(desc(documentVersions.createdAt))
+      .limit(1);
+
+    if (!version) {
+      throw new Error(
+        `Part 11 integrity check: document ${documentId} has no stored version content`
+      );
+    }
+
+    return {
+      id: doc.id,
+      organizationId: doc.organizationId,
+      data: this.canonicalize({
+        documentId: doc.id,
+        versionId: version.id,
+        versionNumber: version.versionNumber,
+        content: version.content,
+      }),
+    };
   }
 }
 
