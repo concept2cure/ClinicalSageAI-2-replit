@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-17T04:52:20.181Z",
+  "generatedAt": "2026-06-17T05:02:51.154Z",
   "git": {
-    "sha": "a7256a50c2ef524991363c332fc8242178123ff6",
+    "sha": "8e5fd3edb9dbb45ae0eace739a212791fad5f5c5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2360,7 +2360,7 @@
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1798
+        "lines": 1810
       },
       {
         "file": "design-system/ui_kits/home/Projects.jsx",
