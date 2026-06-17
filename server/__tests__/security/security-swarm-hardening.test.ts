@@ -21,7 +21,7 @@ vi.hoisted(() => {
   process.env.SKIP_DB_STARTUP_TEST = 'true';
 });
 
-import { nonAccessTokenReason } from '../../middleware/auth';
+import { nonAccessTokenReason } from '../../middleware/tokenType';
 import {
   buildRegionArray,
   buildEncryptionFieldArray,

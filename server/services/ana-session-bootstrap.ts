@@ -120,7 +120,9 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
     (async () => {
       const profile = await getClientProfile(organizationId);
       if (!profile?.id) return [] as BootstrapAtom[];
-      const { entries } = await getMemoryEntries(profile.id, { limit: 40 });
+      // organizationId is required for tenant-isolated memory reads (the same
+      // org used to resolve the profile above).
+      const { entries } = await getMemoryEntries(profile.id, organizationId, { limit: 40 });
       return entries as unknown as BootstrapAtom[];
     })(),
     [] as BootstrapAtom[]

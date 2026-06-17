@@ -9,6 +9,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
+import { nonAccessTokenReason } from './tokenType';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
 
@@ -46,26 +47,10 @@ interface JWTPayload {
   mfaPending?: boolean;
 }
 
-/**
- * SECURITY: reject any token that is not a full access token.
- *
- * Refresh tokens (`type: 'refresh'`), MFA challenge tokens
- * (`type: 'mfa_challenge'`) and MFA-partial tokens (`mfaPending: true` /
- * `role: 'pending_mfa'`) are all signed with the same JWT secret as access
- * tokens. Without this guard a user who has only completed the password step
- * could present a 5-minute partial/challenge token as a Bearer access token
- * and bypass MFA entirely. Returns a reason string when the token must be
- * rejected, or null when it is an acceptable access token.
- */
-export function nonAccessTokenReason(decoded: JWTPayload): string | null {
-  if (decoded.mfaPending === true) return 'mfa_partial_token';
-  if (decoded.role === 'pending_mfa') return 'mfa_pending_role';
-  const type = typeof decoded.type === 'string' ? decoded.type.toLowerCase() : null;
-  if (type === 'refresh' || type === 'mfa_challenge' || type === 'mfa_partial') {
-    return type;
-  }
-  return null;
-}
+// Re-exported for callers that import the guard from the auth middleware.
+// The implementation lives in ./tokenType (a module with no `.js` twin) so
+// that TypeScript and the test/runtime resolvers agree on the same file.
+export { nonAccessTokenReason };
 
 // Extend Request type to include user
 declare global {
