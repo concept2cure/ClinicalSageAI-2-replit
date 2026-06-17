@@ -6200,6 +6200,31 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
       required: ['submission_type'],
     },
   } as unknown as AnaTool,
+  // Regulatory deadline radar: aggregate the org's regulatory obligations /
+  // commitments into overdue / due-soon / upcoming buckets. Handler is tenant-
+  // scoped from context; deterministic (no LLM, no fabrication).
+  {
+    name: 'regulatory_deadline_radar',
+    description:
+      'Surface the active organization\'s regulatory deadlines (from tracked regulatory ' +
+      'obligations & agency commitments): what is OVERDUE, DUE SOON, and UPCOMING, sorted by ' +
+      'urgency, each with agency, obligation type, priority, days-until-due, legal basis, and the ' +
+      'consequence of non-compliance. Use proactively to open a session, answer "what\'s due?", or ' +
+      'flag time-critical risk. Scoped to the user\'s organization automatically.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        window_days: {
+          type: 'number',
+          description: 'Days ahead that count as "due soon" (default 30, max 365).',
+        },
+        include_completed: {
+          type: 'boolean',
+          description: 'When true, also include completed/cancelled obligations (default false).',
+        },
+      },
+    },
+  } as unknown as AnaTool,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
