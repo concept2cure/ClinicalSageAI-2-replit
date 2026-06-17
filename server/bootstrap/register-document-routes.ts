@@ -161,7 +161,10 @@ export async function registerDocumentRoutes({
       { path: '/api/evidence-search', mod: '../routes/evidence-search.js', name: 'Evidence Search' },
       { path: '/api/content-plan', mod: '../routes/content-plan.js', name: 'Content Plan' },
       { path: '/api/smart-blocks', mod: '../routes/smart-blocks.js', name: 'Smart Blocks' },
-      { path: '/api/cognitive', mod: '../routes/cognitive-ecosystem.js', name: 'Cognitive Ecosystem' },
+      // Retired (#844, Phase 0.2): cognitive-ecosystem was a placeholder — every
+      // endpoint returned hardcoded mock data and its services were never
+      // implemented (no client/server dependents). Unregistered to shrink the AI
+      // route surface; the real AI spine is `/api/ana-ri`. See docs/AI_CONSOLIDATION_PLAN.md.
       {
         path: '/api/evidence-management',
         mod: '../routes/evidence-management.routes.js',
