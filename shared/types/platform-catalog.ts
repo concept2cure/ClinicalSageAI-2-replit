@@ -47,6 +47,14 @@ export interface PlatformDomain {
   capabilities: PlatformCapability[];
 }
 
+/** A compact AI-provider summary embedded in the platform catalog. */
+export interface PlatformAiProviders {
+  /** The platform default provider — always Claude (anthropic). */
+  defaultProvider: string;
+  /** Selectable provider ids the UI may offer. */
+  selectable: string[];
+}
+
 /** Response of `GET /api/platform/capabilities` — cross-surface discovery in one call. */
 export interface PlatformCatalog {
   /** Total capabilities across all domains. */
@@ -55,4 +63,6 @@ export interface PlatformCatalog {
   deterministicTotal: number;
   /** The platform surfaces. */
   domains: PlatformDomain[];
+  /** Client AI-provider choice summary (Claude-first). Full catalog at /api/platform/ai-providers. */
+  aiProviders: PlatformAiProviders;
 }

@@ -18,6 +18,7 @@
 import type { PlatformCapability, PlatformDomain, PlatformCatalog } from '@shared/types/platform-catalog';
 import { getGlobalRiCatalog } from '../global-ri/global-ri-capabilities';
 import { regulatoryCapabilitiesIndex } from '../market-specs/regulatory-capabilities-index';
+import { PROVIDER_CATALOG, PLATFORM_DEFAULT_PROVIDER } from '../ai-gateway/providers/provider-preference';
 
 export type { PlatformCapability, PlatformDomain, PlatformCatalog } from '@shared/types/platform-catalog';
 
@@ -84,7 +85,15 @@ export function getPlatformCatalog(): PlatformCatalog {
   const domains = DOMAIN_BUILDERS.map((b) => b());
   const total = domains.reduce((n, d) => n + d.capabilityCount, 0);
   const deterministicTotal = domains.reduce((n, d) => n + d.capabilities.filter((c) => c.deterministic).length, 0);
-  return { total, deterministicTotal, domains };
+  return {
+    total,
+    deterministicTotal,
+    domains,
+    aiProviders: {
+      defaultProvider: PLATFORM_DEFAULT_PROVIDER,
+      selectable: PROVIDER_CATALOG.filter((p) => p.clientSelectable).map((p) => p.id),
+    },
+  };
 }
 
 export default { getPlatformCatalog };

@@ -22,6 +22,12 @@ describe('getPlatformCatalog', () => {
     expect(cat.deterministicTotal).toBeLessThanOrEqual(cat.total);
   });
 
+  it('surfaces the Claude-first AI provider summary', () => {
+    expect(cat.aiProviders.defaultProvider).toBe('anthropic');
+    expect(cat.aiProviders.selectable).toContain('anthropic');
+    expect(cat.aiProviders.selectable).toContain('openai');
+  });
+
   it('global-RI domain mirrors the global-RI catalog and uses absolute routes', () => {
     const gri = cat.domains.find((d) => d.id === 'global_ri')!;
     expect(gri.capabilityCount).toBe(getGlobalRiCatalog().total);
