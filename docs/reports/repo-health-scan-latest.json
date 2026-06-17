@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-17T00:12:34.231Z",
+  "generatedAt": "2026-06-17T00:20:00.209Z",
   "git": {
-    "sha": "3d6bda2237b1093a0442de8f41892701251a62f2",
+    "sha": "be64a631ec74d106f405c6ec9add093725933583",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 217,
+    "duplicateBasenames": 219,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -861,6 +861,15 @@
         ]
       },
       {
+        "basename": "controlled-substances",
+        "count": 3,
+        "paths": [
+          "server/routes/controlled-substances.ts",
+          "server/services/global-ri/controlled-substances.ts",
+          "shared/schema/controlled-substances.ts"
+        ]
+      },
+      {
         "basename": "data-correspondence-detail",
         "count": 3,
         "paths": [
@@ -1299,14 +1308,6 @@
         "paths": [
           "design-system/ui_kits/pdev/Confirm.jsx",
           "ui_kits/pdev/Confirm.jsx"
-        ]
-      },
-      {
-        "basename": "controlled-substances",
-        "count": 2,
-        "paths": [
-          "server/routes/controlled-substances.ts",
-          "shared/schema/controlled-substances.ts"
         ]
       },
       {
@@ -1779,6 +1780,22 @@
         "paths": [
           "client/src/concept2cure/mdx/data/presub.ts",
           "design-system/ui_kits/mdx_phase2/PreSub.jsx"
+        ]
+      },
+      {
+        "basename": "process-validation",
+        "count": 2,
+        "paths": [
+          "server/services/global-ri/process-validation.ts",
+          "server/services/regulatory/process-validation.ts"
+        ]
+      },
+      {
+        "basename": "process-validation.test",
+        "count": 2,
+        "paths": [
+          "server/services/global-ri/__tests__/process-validation.test.ts",
+          "server/services/regulatory/__tests__/process-validation.test.ts"
         ]
       },
       {
@@ -2407,7 +2424,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 342,
+      "duplicateGroups": 347,
       "largeByBytes": 11,
       "largeByLines": 34
     },
