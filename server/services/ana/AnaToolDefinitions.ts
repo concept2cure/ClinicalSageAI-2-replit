@@ -6225,6 +6225,59 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
       },
     },
   } as unknown as AnaTool,
+  // Governed correspondence response package: deterministic assembly of an
+  // issue matrix, evidence checklist, and readiness state from structured,
+  // already-parsed agency-correspondence issues. Complements draft_fda_ir_response
+  // (which scaffolds from raw IR text); this works on tracked/structured issues
+  // and gates readiness on evidence gaps. Handler wraps the deterministic
+  // response-package compiler — no LLM, no fabrication.
+  {
+    name: 'compile_correspondence_response_package',
+    description:
+      'Assemble a GOVERNED response package for a health-authority correspondence (FDA IR, EMA LoQ/RSI, ' +
+      'PMDA inquiry) from already-structured issues: returns a per-issue matrix (category, severity, ' +
+      'blocker, impacted CTD sections, artifacts), an evidence checklist (each item missing/satisfied), ' +
+      'unresolved gaps, and a readiness_state (evidence_gap until all evidence is satisfied, else ' +
+      'review_ready). Use after issues have been identified/parsed to plan the response and see what ' +
+      'still blocks sending. Deterministic — never invents evidence or marks a gap satisfied on its own.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        correspondence_id: {
+          type: 'string',
+          description: 'Identifier for the correspondence being responded to.',
+        },
+        issues: {
+          type: 'array',
+          description: 'Structured issues extracted from the correspondence.',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'Issue identifier.' },
+              category: { type: 'string', description: 'Issue category (e.g. cmc_quality, clinical, safety).' },
+              severity: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
+              blocker: { type: 'boolean', description: 'Whether the issue blocks the submission.' },
+              mappedCtdSections: { type: 'array', items: { type: 'string' }, description: 'Impacted CTD section keys.' },
+              mappedArtifactIds: { type: 'array', items: { type: 'string' }, description: 'Related artifact IDs.' },
+              evidenceNeeds: { type: 'array', items: { type: 'string' }, description: 'Evidence required to resolve the issue.' },
+            },
+            required: ['id', 'category', 'severity'],
+          },
+        },
+        selected_issue_ids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional subset of issue IDs to include (default: all).',
+        },
+        revised_artifact_ids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Optional artifact IDs already revised in response.',
+        },
+      },
+      required: ['correspondence_id', 'issues'],
+    },
+  } as unknown as AnaTool,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
