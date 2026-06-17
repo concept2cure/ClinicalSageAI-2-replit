@@ -957,6 +957,33 @@ export const PROJECT_KNOWLEDGE_SEARCH: AnaTool = {
 // number before it reaches a regulatory reader. Deterministic, no LLM.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 21 CFR Part 11 §11.50 signature manifestation — produce the human-readable
+// signature block (printed name, date/time of signing, meaning) to embed in the
+// rendered record. The platform captures e-signatures but had no formatted
+// manifestation to surface; this closes that inspection-readiness gap.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const RENDER_SIGNATURE_MANIFESTATION: AnaTool = {
+  name: 'render_signature_manifestation',
+  description:
+    "Produce the human-readable 21 CFR Part 11 §11.50 signature manifestation block for an executed electronic signature — the printed name of the signer, the date and time of signing (UTC), and the meaning of the signature (review / approval / authorship), plus the supporting authentication and signature-id/hash controls. Embed the returned block in any rendered (PDF/Word) form of a signed record so it is inspection-ready. Provide the signature_id; the signature is loaded tenant-scoped from the governed signature store.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      signature_id: {
+        type: 'string',
+        description: 'The signatureId of the executed electronic signature to manifest.',
+      },
+      record_title: {
+        type: 'string',
+        description: 'Optional title of the record the signature applies to, included in the block.',
+      },
+    },
+    required: ['signature_id'],
+  },
+};
+
 export const CHECK_GROUNDING: AnaTool = {
   name: 'check_grounding',
   description:
@@ -6317,6 +6344,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REMEMBER_DOCUMENT_IN_PROJECT,
   RUN_SUBMISSION_PREMORTEM,
   CHECK_GROUNDING,
+  RENDER_SIGNATURE_MANIFESTATION,
   SCAN_REGULATORY_DEFICIENCIES,
   RECALL_SESSION_CONTEXT,
   SIMULATE_STUDY_DESIGN,

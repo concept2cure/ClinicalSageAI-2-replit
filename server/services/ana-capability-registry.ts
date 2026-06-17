@@ -234,6 +234,17 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['510k', 'predicate-comparison'],
   },
 
+  {
+    capabilityKey: 'render-signature-manifestation',
+    category: 'compliance',
+    name: 'Render Signature Manifestation (§11.50)',
+    description:
+      'Produce the human-readable 21 CFR Part 11 §11.50 signature manifestation block — printed name, date/time of signing (UTC), and meaning — plus supporting authentication and signature-id/hash controls, to embed in any rendered (PDF/Word) form of a signed record for inspection readiness.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
   // ── Intelligence (4) ──────────────────────────────────────
   {
     capabilityKey: 'check-grounding',

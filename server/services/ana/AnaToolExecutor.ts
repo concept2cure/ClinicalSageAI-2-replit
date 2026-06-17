@@ -462,6 +462,77 @@ registerToolHandler('recall_session_context', async (input, ctx) => {
   }
 });
 
+// 21 CFR Part 11 §11.50 signature manifestation — load an executed signature
+// (tenant-scoped) and render the human-readable block (printed name, date/time,
+// meaning + supporting controls) to embed in the rendered record.
+registerToolHandler('render_signature_manifestation', async (input, ctx) => {
+  const signatureId = typeof input.signature_id === 'string' ? input.signature_id.trim() : '';
+  if (!signatureId) {
+    return JSON.stringify({ error: 'render_signature_manifestation requires signature_id (string).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'render_signature_manifestation requires tenant context (organizationId).' });
+  }
+  const recordTitle = typeof input.record_title === 'string' && input.record_title.trim() ? input.record_title.trim() : undefined;
+
+  try {
+    const { db } = await import('../../db.js');
+    const { concept2cureSignatures } = await import('shared/schema');
+    const { eq, and } = await import('drizzle-orm');
+    const { renderSignatureManifestation, requiredManifestFields } = await import(
+      '../compliance/signature-manifestation.js'
+    );
+
+    const rows = await db
+      .select()
+      .from(concept2cureSignatures)
+      .where(
+        and(
+          eq(concept2cureSignatures.signatureId, signatureId),
+          eq(concept2cureSignatures.organizationId, ctx.organizationId)
+        )
+      )
+      .limit(1);
+
+    const sig = rows[0];
+    if (!sig) {
+      return JSON.stringify({
+        ok: false,
+        message: `No signature found with id ${signatureId} for this organization.`,
+      });
+    }
+
+    const manifestInput = {
+      signatureId: sig.signatureId,
+      signerName: sig.signerName,
+      signerEmail: sig.signerEmail,
+      signerRole: sig.signerRole,
+      signatureType: sig.signatureType,
+      signaturePurpose: sig.signaturePurpose,
+      signatureMeaning: sig.signatureMeaning,
+      signedAt: sig.signedAt,
+      authenticationMethod: sig.authenticationMethod,
+      secondFactorVerified: sig.secondFactorVerified,
+      signatureHash: sig.signatureHash,
+      ipAddress: sig.ipAddress,
+      recordTitle,
+    };
+
+    return JSON.stringify({
+      ok: true,
+      basis: '21 CFR Part 11 §11.50',
+      manifestation: renderSignatureManifestation(manifestInput),
+      requiredFields: requiredManifestFields(manifestInput),
+      status: sig.status,
+      message: 'Signature manifestation rendered. Embed the block in any human-readable (PDF/Word) form of the signed record.',
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `render_signature_manifestation failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // Grounding guarantee — flags quantitative claims in a draft that lack a
 // citation/source marker, so AnA grounds or hedges every number before it
 // reaches a regulatory reader. Deterministic (no LLM); the trust moat made
