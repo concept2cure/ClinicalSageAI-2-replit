@@ -90,21 +90,15 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
 
   const [
     { getClientProfile, getMemoryEntries, getProjectIntelligence, getProjectMemoryEntries },
-    { getLatestWorkingMemoryByThread, formatWorkingMemoryForPrompt },
+    { getLatestWorkingMemoryByThread },
   ] = await Promise.all([
     import('./client-intelligence-memory.js'),
     import('./working-memory.js'),
   ]);
 
-  // 1. Working memory — latest thread summary.
+  // 1. Working memory — latest thread summary (returned as the summary string).
   const workingMemorySummary = threadId
-    ? await safe(
-        (async () => {
-          const wm = await getLatestWorkingMemoryByThread(threadId);
-          return wm ? formatWorkingMemoryForPrompt(wm) : null;
-        })(),
-        null
-      )
+    ? await safe(getLatestWorkingMemoryByThread(threadId), null)
     : null;
 
   // 2. Project atoms (query-independent, by profile).
