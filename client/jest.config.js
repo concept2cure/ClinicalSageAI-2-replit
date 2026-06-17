@@ -31,6 +31,7 @@ export default {
     'schemaValidator\\.test\\.ts$',
     'cspNonce\\.test\\.ts$',
     'reportOsClient\\.test\\.ts$',
+    'query-options\\.test\\.ts$',
   ],
   transformIgnorePatterns: ['/node_modules/(?!wouter)'],
   transform: {
