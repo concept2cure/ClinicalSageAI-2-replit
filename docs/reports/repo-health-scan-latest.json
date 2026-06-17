@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-17T03:20:19.320Z",
+  "generatedAt": "2026-06-17T03:30:57.743Z",
   "git": {
-    "sha": "25cc565ad07acd64f281565b023e52364f33ac31",
+    "sha": "5e6999850786fc8806307c8ec6bbdb93640babc6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2217,16 +2217,16 @@
         "bytes": 174924
       },
       {
+        "file": "server/storage.ts",
+        "bytes": 137224
+      },
+      {
         "file": "server/routes/authoring-actions.ts",
         "bytes": 134906
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "bytes": 134822
-      },
-      {
-        "file": "server/storage.ts",
-        "bytes": 124724
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2276,7 +2276,7 @@
       },
       {
         "file": "server/storage.ts",
-        "lines": 3965
+        "lines": 4342
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
