@@ -144,6 +144,24 @@ export function resolveProjectIdFromBody(body: any): string | number | undefined
   return body?.project_id || body?.context?.projectId || body?.project_context?.projectId;
 }
 
+/**
+ * Race a promise against a timeout, resolving to `fallback` if it doesn't settle
+ * in time. Used to bound OPTIONAL context enrichment so a slow DB can never stall
+ * AnA's time-to-first-token — the worst case is a turn without that one block.
+ */
+export function withTimeout<T>(p: Promise<T>, ms: number, fallback: T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<T>(resolve => {
+    timer = setTimeout(() => resolve(fallback), ms);
+  });
+  return Promise.race([p.finally(() => clearTimeout(timer)), timeout]);
+}
+
+/** Max wait for the optional proactive block (deadline radar / session briefing). */
+const PROACTIVE_PREFETCH_TIMEOUT_MS = 1500;
+
+type ProactiveBlock = { kind: 'briefing' | 'deadline' | 'none'; block: string };
+
 export async function prefetchRouteIntelligenceContext(params: {
   projectId?: string | number | null;
   organizationId?: number | null;
@@ -177,15 +195,19 @@ export async function prefetchRouteIntelligenceContext(params: {
     // decisions); on later turns, just the deadline block (overdue + due-soon).
     // Only one is non-empty per turn, so deadlines are never duplicated.
     organizationId && Number.isFinite(organizationId)
-      ? sessionStart
-        ? getSessionBriefing({ organizationId, projectId: projectIdNumber }).then(r => ({
-            kind: 'briefing' as const,
-            block: r.block,
-          }))
-        : getDeadlineRadar({ organizationId }).then(r => ({
-            kind: 'deadline' as const,
-            block: buildDeadlineRadarBlock(r),
-          }))
+      ? withTimeout<ProactiveBlock>(
+          sessionStart
+            ? getSessionBriefing({ organizationId, projectId: projectIdNumber }).then(r => ({
+                kind: 'briefing' as const,
+                block: r.block,
+              }))
+            : getDeadlineRadar({ organizationId }).then(r => ({
+                kind: 'deadline' as const,
+                block: buildDeadlineRadarBlock(r),
+              })),
+          PROACTIVE_PREFETCH_TIMEOUT_MS,
+          { kind: 'none' as const, block: '' }
+        )
       : Promise.resolve({ kind: 'none' as const, block: '' }),
   ]);
   const relationalOverlay =
