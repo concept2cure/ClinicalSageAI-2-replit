@@ -15,8 +15,8 @@ import {
 } from '../ana-tools';
 
 describe('GLOBAL_RI_TOOL_SPECS catalog', () => {
-  it('has exactly 17 entries', () => {
-    expect(GLOBAL_RI_TOOL_SPECS).toHaveLength(17);
+  it('has exactly 21 entries', () => {
+    expect(GLOBAL_RI_TOOL_SPECS).toHaveLength(21);
   });
 
   it('every spec has a non-empty name, description, and object input_schema', () => {
