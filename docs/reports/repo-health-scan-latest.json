@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-16T15:08:23.242Z",
+  "generatedAt": "2026-06-16T20:25:46.866Z",
   "git": {
-    "sha": "b7187a6058a0cbe1dab7630f762163f44a18b5cf",
+    "sha": "70a6c8c5dc5a5ea53f3d2792935a7de9d186a0b9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -843,6 +843,24 @@
         ]
       },
       {
+        "basename": "companion-diagnostics",
+        "count": 3,
+        "paths": [
+          "server/routes/companion-diagnostics.ts",
+          "server/services/global-ri/companion-diagnostics.ts",
+          "server/services/regulatory/companion-diagnostics.ts"
+        ]
+      },
+      {
+        "basename": "companion-diagnostics.test",
+        "count": 3,
+        "paths": [
+          "server/routes/__tests__/companion-diagnostics.test.ts",
+          "server/services/global-ri/__tests__/companion-diagnostics.test.ts",
+          "server/services/regulatory/__tests__/companion-diagnostics.test.ts"
+        ]
+      },
+      {
         "basename": "data-correspondence-detail",
         "count": 3,
         "paths": [
@@ -1265,22 +1283,6 @@
         "paths": [
           "client/src/components/ui/collapsible.jsx",
           "client/src/components/ui/collapsible.tsx"
-        ]
-      },
-      {
-        "basename": "companion-diagnostics",
-        "count": 2,
-        "paths": [
-          "server/routes/companion-diagnostics.ts",
-          "server/services/regulatory/companion-diagnostics.ts"
-        ]
-      },
-      {
-        "basename": "companion-diagnostics.test",
-        "count": 2,
-        "paths": [
-          "server/routes/__tests__/companion-diagnostics.test.ts",
-          "server/services/regulatory/__tests__/companion-diagnostics.test.ts"
         ]
       },
       {
@@ -2405,7 +2407,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 340,
+      "duplicateGroups": 342,
       "largeByBytes": 11,
       "largeByLines": 34
     },
