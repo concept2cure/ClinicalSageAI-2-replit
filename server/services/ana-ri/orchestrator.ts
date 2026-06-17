@@ -251,6 +251,12 @@ export interface OrchestratorInput {
    * route layer via external-intelligence-service).
    */
   _externalIntelBlock?: string | null;
+  /**
+   * Pre-rendered REGULATORY DEADLINES block — OVERDUE / DUE-SOON tracked
+   * obligations for the org (loaded async by the route layer via the deadline
+   * radar). Lets AnA proactively lead with time-critical risk.
+   */
+  _deadlineRadarBlock?: string | null;
   /** Pre-fetched user feedback patterns from the learning loop (async, injected by chat-context-builder) */
   _feedbackContext?: {
     totalFeedback: number;
@@ -350,6 +356,12 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
   //     when relevant to the user's program.
   if (input._externalIntelBlock && input._externalIntelBlock.trim()) {
     systemPrompt += '\n\n' + input._externalIntelBlock.trim();
+  }
+
+  // 4a-bis. Inject proactive regulatory deadlines (pre-fetched by route layer):
+  //     OVERDUE / DUE-SOON tracked obligations AnA should surface up front.
+  if (input._deadlineRadarBlock && input._deadlineRadarBlock.trim()) {
+    systemPrompt += '\n\n' + input._deadlineRadarBlock.trim();
   }
 
   // 4b. Inject project intelligence profile (pre-fetched by route layer)

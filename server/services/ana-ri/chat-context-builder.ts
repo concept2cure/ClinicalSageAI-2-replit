@@ -32,6 +32,7 @@ import { decisionLifecycleService } from '../decision-lifecycle-service.js';
 import { buildMdxContextBlock } from './mdx-context-resolver.js';
 import { loadRelationalOverlay } from './relational-profile-service.js';
 import { buildExternalIntelBlock } from '../external-intelligence/index.js';
+import { getDeadlineRadar, buildDeadlineRadarBlock } from '../ana/deadline-radar.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -62,6 +63,8 @@ export interface PrefetchedRouteIntelligenceContext {
   relationalOverlay: string;
   /** Fresh nightly-sweep findings block ('' when nothing fresh). */
   externalIntelBlock: string;
+  /** Proactive OVERDUE/DUE-SOON regulatory-deadline block ('' when nothing pressing). */
+  deadlineRadarBlock: string;
 }
 
 // ─── Authoring context builder ───────────────────────────────────────────────
@@ -157,18 +160,25 @@ export async function prefetchRouteIntelligenceContext(params: {
 
   // Independent of the project gate below: the relational overlay needs only
   // org + user, and the external-intel block is global (and process-cached).
-  const [relationalResult, externalIntelResult] = await Promise.allSettled([
+  const [relationalResult, externalIntelResult, deadlineResult] = await Promise.allSettled([
     loadRelationalOverlay({
       organizationId: organizationId ?? null,
       userId: userId ?? null,
       projectId: projectIdNumber,
     }),
     buildExternalIntelBlock(targetAgency ?? null),
+    // Proactive deadline radar — org-scoped, fail-soft. Only the block (overdue +
+    // due-soon) is injected so AnA can lead with time-critical risk at turn start.
+    organizationId && Number.isFinite(organizationId)
+      ? getDeadlineRadar({ organizationId }).then(buildDeadlineRadarBlock)
+      : Promise.resolve(''),
   ]);
   const relationalOverlay =
     relationalResult.status === 'fulfilled' ? relationalResult.value : '';
   const externalIntelBlock =
     externalIntelResult.status === 'fulfilled' ? externalIntelResult.value : '';
+  const deadlineRadarBlock =
+    deadlineResult.status === 'fulfilled' ? deadlineResult.value : '';
 
   if (
     projectIdNumber &&
@@ -239,6 +249,7 @@ export async function prefetchRouteIntelligenceContext(params: {
     orchestratorAuthoringContext,
     relationalOverlay,
     externalIntelBlock,
+    deadlineRadarBlock,
   };
 }
 
@@ -335,6 +346,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     _projectIntelligenceProfile: prefetchedContext.projectProfile,
     _relationalOverlay: prefetchedContext.relationalOverlay,
     _externalIntelBlock: prefetchedContext.externalIntelBlock,
+    _deadlineRadarBlock: prefetchedContext.deadlineRadarBlock,
   };
   const orchestration = orchestrate(orchestratorInput);
 
