@@ -71,6 +71,29 @@ export async function getOrCreateThread(
 }
 
 /**
+ * Ensure a thread exists with a caller-supplied ID, creating it if absent.
+ *
+ * Unlike {@link getOrCreateThread} (which generates a fresh ID when the given
+ * thread is missing), this preserves the caller's exact ID — useful for
+ * services that derive a stable conversation ID externally and expect the same
+ * value back. Returns the (unchanged) thread ID.
+ */
+export async function ensureThread(
+  threadId: string,
+  userId?: number | null,
+  organizationId?: number | null
+): Promise<string> {
+  await ensureChatTables();
+  await pool.query(
+    `INSERT INTO chat_threads (id, user_id, organization_id, created_at, updated_at)
+       VALUES ($1, $2, $3, NOW(), NOW())
+     ON CONFLICT (id) DO NOTHING`,
+    [threadId, userId ?? null, organizationId ?? null]
+  );
+  return threadId;
+}
+
+/**
  * Estimate token count from text (≈4 chars per token for English).
  * Uses the stored tokens_used column when available, falls back to heuristic.
  */

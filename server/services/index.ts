@@ -36,7 +36,6 @@ export {
   ForesightKnowledgeGraph,
   knowledgeGraph as foresightKnowledgeGraph,
 } from './foresight-knowledge-graph';
-export { MemoryService, memoryService } from './memory-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // FDA / REGULATORY SERVICES
@@ -143,7 +142,7 @@ export const SERVICE_REGISTRY = {
   // Cortex
   'cortex.prime': 'cortexPrimeService',
   'cortex.knowledge': 'foresight-knowledge-graph',
-  'cortex.memory': 'memory-service',
+  'cortex.memory': 'memory-orchestrator',
 
   // FDA
   'fda.service': 'fdaService',

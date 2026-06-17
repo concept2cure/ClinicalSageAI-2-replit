@@ -1,7 +1,7 @@
 import { db } from '../db';
 import { csrReports } from 'shared/schema';
 import { huggingFaceService, HFModel } from '../huggingface-service';
-import { memoryService, type ChatMessage } from './memory-service';
+import { ensureThread, getThreadMessages, saveChatMessage } from './chat-thread-helpers';
 import { clinicalIntelligenceService } from './clinical-intelligence-service';
 import { academicKnowledgeService } from './academic-knowledge-service';
 import { RegulatoryIntelligenceService } from './regulatory-intelligence-service';
@@ -17,6 +17,16 @@ interface StudyDesignQuery {
   query: string;
   indication?: string;
   phase?: string;
+}
+
+/**
+ * A single conversation message. Shape preserved for callers that previously
+ * relied on the in-memory MemoryService `ChatMessage` type.
+ */
+interface ChatMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
 }
 
 interface AgentResponse {
@@ -98,29 +108,31 @@ export class StudyDesignAgentService {
     }
 
     try {
-      // Create the conversation if it doesn't exist
-      let conversation = memoryService.getConversation(conversationId);
-      if (!conversation) {
+      // Ensure a persistent conversation thread exists for this conversationId.
+      // ensureThread keeps the caller-supplied ID stable (it is returned to
+      // callers unchanged) and is a no-op if the thread already exists.
+      await ensureThread(conversationId);
+
+      // On a brand-new thread, seed the system message once so the persisted
+      // history matches the prior in-memory behavior.
+      const existingMessages = await getThreadMessages(conversationId);
+      if (existingMessages.length === 0) {
         // Inject client/project intelligence so study design agent reads SKILL/.MD context
         const intelligencePrefix = await getIntelligencePrefix().catch(() => '');
-        conversationId = memoryService.createConversation(
+        await saveChatMessage(
           conversationId,
-          `${intelligencePrefix}You are Concept2Cure's Study Design Agent, a specialized clinical trial advisor with deep expertise in protocol design and optimization.`,
-          {
-            indication: queryData.indication,
-            phase: queryData.phase,
-          }
+          'system',
+          `${intelligencePrefix}You are Concept2Cure's Study Design Agent, a specialized clinical trial advisor with deep expertise in protocol design and optimization.`
         );
-        conversation = memoryService.getConversation(conversationId);
       }
 
-      // Add user message to conversation memory
+      // Add user message to the persistent conversation history
       const userMessage: ChatMessage = {
         role: 'user',
         content: queryData.query,
         timestamp: new Date(),
       };
-      memoryService.addMessage(conversationId, userMessage);
+      await saveChatMessage(conversationId, userMessage.role, userMessage.content);
 
       // Get relevant reports through basic search
       log.debug('Getting relevant CSR reports...');
@@ -196,13 +208,13 @@ export class StudyDesignAgentService {
         },
       };
 
-      // Add assistant message to conversation memory
+      // Add assistant message to the persistent conversation history
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: responseContent,
         timestamp: new Date(),
       };
-      memoryService.addMessage(conversationId, assistantMessage);
+      await saveChatMessage(conversationId, assistantMessage.role, assistantMessage.content);
 
       return response;
     } catch (error) {
