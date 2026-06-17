@@ -109,17 +109,29 @@ export function bucketObligations(rows: ObligationLike[], opts: BucketOptions = 
   return { windowDays, summary, items };
 }
 
-/**
- * DB-scoped: fetch an organization's regulatory obligations and bucket them.
- * Always tenant-scoped by organizationId (and clientWorkspaceId when provided).
- */
-export async function getDeadlineRadar(opts: {
-  organizationId: number;
-  clientWorkspaceId?: number;
-  windowDays?: number;
-  includeCompleted?: boolean;
-}): Promise<RadarResult> {
-  const rows = await db
+// Short-TTL cache of the raw obligation rows per org/workspace. The radar runs
+// on AnA's time-to-first-token path on (nearly) every chat turn; obligations
+// change slowly, so caching the rows for a few seconds removes a DB round-trip
+// from the hot path on back-to-back turns. Bucketing stays per-call, so callers
+// with different windowDays/includeCompleted still get correct results.
+const RADAR_ROW_CACHE_TTL_MS = 30_000;
+const radarRowCache = new Map<string, { rows: ObligationLike[]; ts: number }>();
+
+/** Test/maintenance hook: clear the radar row cache. */
+export function __clearDeadlineRadarCache(): void {
+  radarRowCache.clear();
+}
+
+async function fetchObligationRows(
+  organizationId: number,
+  clientWorkspaceId?: number
+): Promise<ObligationLike[]> {
+  const key = `${organizationId}:${clientWorkspaceId ?? ''}`;
+  const cached = radarRowCache.get(key);
+  if (cached && Date.now() - cached.ts < RADAR_ROW_CACHE_TTL_MS) {
+    return cached.rows;
+  }
+  const rows = (await db
     .select({
       id: regulatoryObligations.id,
       title: regulatoryObligations.title,
@@ -136,14 +148,28 @@ export async function getDeadlineRadar(opts: {
     .from(regulatoryObligations)
     .where(
       and(
-        eq(regulatoryObligations.organizationId, opts.organizationId),
-        opts.clientWorkspaceId
-          ? eq(regulatoryObligations.clientWorkspaceId, opts.clientWorkspaceId)
-          : undefined
+        eq(regulatoryObligations.organizationId, organizationId),
+        clientWorkspaceId ? eq(regulatoryObligations.clientWorkspaceId, clientWorkspaceId) : undefined
       )
-    );
+    )) as ObligationLike[];
+  radarRowCache.set(key, { rows, ts: Date.now() });
+  return rows;
+}
 
-  return bucketObligations(rows as ObligationLike[], {
+/**
+ * DB-scoped: fetch an organization's regulatory obligations and bucket them.
+ * Always tenant-scoped by organizationId (and clientWorkspaceId when provided).
+ * Rows are cached briefly (see RADAR_ROW_CACHE_TTL_MS) to keep AnA's first-token
+ * latency low on back-to-back turns; bucketing is always recomputed per call.
+ */
+export async function getDeadlineRadar(opts: {
+  organizationId: number;
+  clientWorkspaceId?: number;
+  windowDays?: number;
+  includeCompleted?: boolean;
+}): Promise<RadarResult> {
+  const rows = await fetchObligationRows(opts.organizationId, opts.clientWorkspaceId);
+  return bucketObligations(rows, {
     windowDays: opts.windowDays,
     includeCompleted: opts.includeCompleted,
   });
