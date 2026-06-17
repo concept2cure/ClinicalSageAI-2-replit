@@ -610,9 +610,14 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 );
               }
             } else if (event.type === 'tool_use') {
-              // AnA invoked a tool — show a calm "running" status row.
+              // AnA invoked a tool — show a calm "running" status row. Prefer the
+              // server-provided label (single source of truth, and input-aware —
+              // e.g. "Searching the document for \"X\""); fall back to the local
+              // map only when the server didn't send one.
               const name: string = event.name || '';
               if (name) {
+                const label: string =
+                  typeof event.label === 'string' && event.label ? event.label : toolLabel(name);
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
@@ -621,7 +626,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                           statusPhase: undefined,
                           toolCalls: [
                             ...(m.toolCalls || []),
-                            { name, label: toolLabel(name), status: 'running' as const },
+                            { name, label, status: 'running' as const },
                           ],
                         }
                       : m
@@ -629,10 +634,14 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 );
               }
             } else if (event.type === 'tool_result') {
-              // Resolve the most recent running call for this tool name.
+              // Resolve the most recent running call for this tool name. Prefer
+              // the server's authoritative status; fall back to parsing the
+              // result for an error envelope when status wasn't sent.
               const name: string = event.name || '';
               let failed = false;
-              if (typeof event.result === 'string') {
+              if (typeof event.status === 'string') {
+                failed = event.status !== 'success';
+              } else if (typeof event.result === 'string') {
                 try {
                   const parsed = JSON.parse(event.result);
                   failed = Boolean(parsed?.error);

@@ -589,7 +589,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         // the client UI stays deterministic.
         for (const toolUse of calls) {
           res.write(
-            `data: ${JSON.stringify({ type: 'tool_use', name: toolUse.name, input: toolUse.input })}\n\n`
+            `data: ${JSON.stringify({ type: 'tool_use', name: toolUse.name, label: describeToolPlan([toolUse])[0].label, input: toolUse.input })}\n\n`
           );
         }
         const ran = await mapWithConcurrency(calls, async (toolUse) => {
@@ -637,9 +637,10 @@ router.post('/stream', async (req: Request, res: Response) => {
         const entries: ToolResultEntry[] = [];
         for (const { toolUse, resultStr, toolStatus } of ran) {
           entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
+          const stepLabel = describeToolPlan([toolUse])[0].label;
           // Record this call in the turn's tool-trace memory + evidence corpus.
           toolTrace.push(
-            buildTraceEntry(toolUse.name, describeToolPlan([toolUse])[0].label, toolStatus, resultStr),
+            buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr),
           );
           // Ground against what the MODEL saw, not the raw result. Oversized tool
           // output is capped (head+tail) before it reaches the model (line below,
@@ -651,7 +652,7 @@ router.post('/stream', async (req: Request, res: Response) => {
           // sees exactly the evidence the model had.
           toolEvidenceCorpus.push(capToolResultForModel(resultStr));
           res.write(
-            `data: ${JSON.stringify({ type: 'tool_result', name: toolUse.name, result: resultStr })}\n\n`
+            `data: ${JSON.stringify({ type: 'tool_result', name: toolUse.name, label: stepLabel, status: toolStatus, result: resultStr })}\n\n`
           );
           if (toolStatus === 'success') {
             try {

@@ -239,6 +239,24 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   draft_clinical_summary_m2_7: () => 'Drafting the Module 2.7 clinical summary',
   check_numerical_integrity: () => 'Checking numerical integrity',
   check_dossier_consistency: () => 'Checking consistency across the dossier',
+  check_consistency: () => 'Checking consistency across the dossier',
+  // Proactive / situational-awareness tools
+  regulatory_deadline_radar: () => 'Scanning regulatory deadlines',
+  scan_project_risks: () => 'Scanning open project risks',
+  get_session_briefing: () => 'Reconciling where your program stands',
+  // Evidence-discipline self-checks
+  detect_evidence_contradictions: () => 'Checking the evidence for contradictions',
+  detect_evidence_gaps: () => 'Checking the evidence for coverage gaps',
+  assess_claim_evidence_integrity: () => 'Checking that claims are backed by evidence',
+  assess_output_confidence: () => 'Assessing how confident this answer can be',
+  ana_tool_pedigree: () => 'Checking how reliable a tool’s output is',
+  // Submission diligence
+  lookup_submission_deficiencies: i =>
+    `Looking up likely submission deficiencies${i.submission_type ? ` for ${humanizeToolName(String(i.submission_type))}` : ''}`,
+  scan_regulatory_deficiencies: () => 'Scanning for likely reviewer deficiencies',
+  compare_submission_against_precedent: () => 'Comparing the submission against precedent',
+  lookup_regulatory_precedents: i => `Looking up regulatory precedents${i.topic ? ` on ${quoteArg(i.topic)}` : ''}`,
+  compile_correspondence_response_package: () => 'Compiling the correspondence response package',
 };
 
 /**
