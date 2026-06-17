@@ -16,6 +16,7 @@ import { randomUUID } from 'crypto';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger.js';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 
 const logger = createScopedLogger('document-routes');
 
@@ -183,6 +184,26 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     const file = req.file;
     if (!file) {
       return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // SECURITY: magic-byte signature verification + AV scan on the
+    // persisted bytes. multer's fileFilter only checks the declared
+    // MIME/extension (attacker-controlled); this confirms the bytes
+    // match and screens for malware. Fail-closed in production when no
+    // scanner is reachable. On rejection, unlink the temp file so a
+    // rejected upload doesn't linger on disk.
+    try {
+      await assertUploadSafe(file.path, file.mimetype, file.originalname);
+    } catch (safetyErr) {
+      try {
+        await fs.promises.unlink(file.path);
+      } catch {
+        /* best-effort cleanup */
+      }
+      if (safetyErr instanceof UploadSafetyError) {
+        return res.status(safetyErr.status).json(safetyErr.body);
+      }
+      throw safetyErr;
     }
 
     // Get document data from request
