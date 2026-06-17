@@ -909,7 +909,7 @@ async function enrichWithDiagnostics(projectId: string | number): Promise<string
   );
 }
 
-async function enrichWithBiostatContext(projectId: string | number, submissionType?: string): Promise<string> {
+async function enrichWithBiostatContext(projectId: string | number, submissionType?: string, organizationId?: number): Promise<string> {
   // Inject biostatistics knowledge + project-specific signals
   const parts: string[] = [];
 
@@ -918,10 +918,10 @@ async function enrichWithBiostatContext(projectId: string | number, submissionTy
     const result = await pool.query(
       `SELECT signal_type, severity, description, status
        FROM biostat_signals
-       WHERE project_id = $1 AND status != 'resolved'
+       WHERE project_id = $1 AND organization_id = $2 AND status != 'resolved'
        ORDER BY severity DESC, created_at DESC
-       LIMIT $2`,
-      [projectId, 8]
+       LIMIT $3`,
+      [projectId, organizationId ?? null, 8]
     );
     if (result.rows.length > 0) {
       const signalLines = result.rows.map((r: { severity?: string; signal_type?: string; description?: string }) =>
@@ -936,10 +936,10 @@ async function enrichWithBiostatContext(projectId: string | number, submissionTy
     const assumptions = await pool.query(
       `SELECT finding_type, parameter_name, status, description
        FROM biostat_assumption_findings
-       WHERE project_id = $1
+       WHERE project_id = $1 AND organization_id = $2
        ORDER BY created_at DESC
-       LIMIT $2`,
-      [projectId, 5]
+       LIMIT $3`,
+      [projectId, organizationId ?? null, 5]
     );
     if (assumptions.rows.length > 0) {
       const assLines = assumptions.rows.map((r: { parameter_name?: string; finding_type?: string; description?: string; status?: string }) =>
@@ -1219,11 +1219,11 @@ export async function enrichContextForChat(params: {
       deficiencies: () => enrichWithDeficiencies(submissionType),
       knowledge: () => enrichWithKnowledgeSearch(slash.args || message, projectId, organizationId),
       decisions: () => enrichWithDecisions(projectId),
-      sap: () => enrichWithBiostatContext(projectId, submissionType),
-      power: () => enrichWithBiostatContext(projectId, submissionType),
-      dose: () => enrichWithBiostatContext(projectId, submissionType),
-      defensibility: () => enrichWithBiostatContext(projectId, submissionType),
-      design: () => enrichWithBiostatContext(projectId, submissionType),
+      sap: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
+      power: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
+      dose: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
+      defensibility: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
+      design: () => enrichWithBiostatContext(projectId, submissionType, organizationId),
       safety: () => enrichWithSafety(projectId),
       cmc: () => enrichWithCMC(projectId),
       csr: () => enrichWithCSR(projectId),
@@ -1438,7 +1438,7 @@ export async function enrichContextForChat(params: {
       'readiness': () => enrichWithReadiness(projectId, organizationId),
       'safety': () => enrichWithSafety(projectId),
       'claims': () => enrichWithClaims(projectId, organizationId),
-      'biostatistics': () => enrichWithBiostatContext(projectId, submissionType),
+      'biostatistics': () => enrichWithBiostatContext(projectId, submissionType, organizationId),
       'ectd': () => enrichWithECTD(projectId),
     };
 
@@ -1484,7 +1484,7 @@ export async function enrichContextForChat(params: {
       { test: RECOMMENDATION_TRIGGERS, fn: () => enrichWithRecommendations(projectId, organizationId), name: 'recommendations' },
       { test: CLAIMS_TRIGGERS, fn: () => enrichWithClaims(projectId, organizationId), name: 'claims' },
       { test: SIMULATION_TRIGGERS, fn: () => enrichWithCRLRTF(projectId, organizationId), name: 'simulation' },
-      { test: BIOSTAT_TRIGGERS, fn: () => enrichWithBiostatContext(projectId, submissionType), name: 'biostatistics' },
+      { test: BIOSTAT_TRIGGERS, fn: () => enrichWithBiostatContext(projectId, submissionType, organizationId), name: 'biostatistics' },
       { test: SAFETY_TRIGGERS, fn: () => enrichWithSafety(projectId), name: 'safety' },
       { test: CMC_TRIGGERS, fn: () => enrichWithCMC(projectId), name: 'cmc' },
       { test: CSR_TRIGGERS, fn: () => enrichWithCSR(projectId), name: 'csr' },
@@ -1563,17 +1563,6 @@ export async function enrichContextForChat(params: {
       if (compBlock) {
         blocks.push(compBlock);
         sources.push('competitive-strategy');
-        if (triggerType === 'none') triggerType = 'natural_language';
-      }
-    }
-
-    // ── Proactive stakeholder alignment — internal / partner tensions ──
-    if (detectRelevantAlignment(message, { segment: challengeSegment }).length > 0) {
-      sourcesAttempted++;
-      const alignBlock = buildAlignmentBlock({ message, segment: challengeSegment });
-      if (alignBlock) {
-        blocks.push(alignBlock);
-        sources.push('stakeholder-alignment');
         if (triggerType === 'none') triggerType = 'natural_language';
       }
     }

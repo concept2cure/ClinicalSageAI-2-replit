@@ -348,8 +348,8 @@ export function inferRole(signals: {
   if (screenName) {
     const s = screenName.toLowerCase();
     if (s.includes('biostat') || s.includes('statistic')) return 'biostatistician';
-    if (s.includes('pharmacovig') || s.includes('safety') || s.includes('signal')) return 'pharmacovigilance';
-    if (s.includes('quality') || s.includes('qms') || s.includes('capa') || s.includes('deviation')) return 'quality';
+    if (s.includes('pharmacovig') || s.includes('vigilance') || s.includes('signal')) return 'pharmacovigilance';
+    if (/\bquality\b/.test(s) || s.includes('qms') || s.includes('capa') || s.includes('deviation')) return 'quality';
     if (s.includes('cmc')) return 'cmc_lead';
     if (s.includes('clinical')) return 'clinical_lead';
     if (s.includes('author') || s.includes('document-builder')) return 'medical_writer';
@@ -362,7 +362,7 @@ export function inferRole(signals: {
     if (t.includes('ceo') || t.includes('chief') || t.includes('president') || t.includes('founder')) return 'ceo';
     if (t.includes('biostat') || t.includes('statistician')) return 'biostatistician';
     if (t.includes('pharmacovig') || t.includes('drug safety')) return 'pharmacovigilance';
-    if (t.includes('quality') || t.includes('qa') || t.includes('gmp')) return 'quality';
+    if (/\bquality\b/.test(t) || /\bqa\b/.test(t) || t.includes('gmp')) return 'quality';
     if (t.includes('regulatory') || t.includes('ra ')) return 'ra_lead';
     if (t.includes('writer') || t.includes('writing')) return 'medical_writer';
     if (t.includes('clinical')) return 'clinical_lead';
@@ -374,8 +374,8 @@ export function inferRole(signals: {
   if (department) {
     const d = department.toLowerCase();
     if (d.includes('biostat') || d.includes('statistics')) return 'biostatistician';
-    if (d.includes('pharmacovig') || d.includes('safety') || d.includes('vigilance')) return 'pharmacovigilance';
-    if (d.includes('quality')) return 'quality';
+    if (d.includes('pharmacovig') || d.includes('drug safety') || d.includes('vigilance')) return 'pharmacovigilance';
+    if (/\bquality\b/.test(d)) return 'quality';
     if (d.includes('regulatory')) return 'ra_lead';
     if (d.includes('clinical')) return 'clinical_lead';
     if (d.includes('cmc') || d.includes('manufacturing')) return 'cmc_lead';

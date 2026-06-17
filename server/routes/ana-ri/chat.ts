@@ -139,14 +139,6 @@ router.post('/chat', async (req: Request, res: Response) => {
       `ana-ri-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     res.setHeader('x-correlation-id', correlationId);
 
-    // Check idempotency cache — return cached response on client retry
-    if (idempotency_key && typeof idempotency_key === 'string') {
-      const cached = idempotencyCache.get(idempotency_key);
-      if (cached && Date.now() - cached.timestamp < IDEMPOTENCY_TTL_MS) {
-        return sendSuccess(res, { ...cached.response, _cached: true });
-      }
-    }
-
     if (!message || typeof message !== 'string') {
       return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
     }
@@ -166,6 +158,20 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     // Resolve org/user context
     const { orgId, userId } = extractRequestContext(req);
+
+    // Idempotency replay — return the prior response on a client retry, but
+    // SCOPE the key to tenant + user so a client-supplied idempotency_key can
+    // never replay another org's/user's cached response.
+    const idempotencyCacheKey =
+      idempotency_key && typeof idempotency_key === 'string'
+        ? `${orgId ?? 'noorg'}:${userId ?? 'nouser'}:${idempotency_key}`
+        : null;
+    if (idempotencyCacheKey) {
+      const cached = idempotencyCache.get(idempotencyCacheKey);
+      if (cached && Date.now() - cached.timestamp < IDEMPOTENCY_TTL_MS) {
+        return sendSuccess(res, { ...cached.response, _cached: true });
+      }
+    }
 
     // Infer role if not provided
     const effectiveRole: UserRole =
@@ -777,9 +783,9 @@ router.post('/chat', async (req: Request, res: Response) => {
       evidenceUsage,
     };
 
-    // Cache response for idempotency on client retry
-    if (idempotency_key && typeof idempotency_key === 'string') {
-      idempotencyCache.set(idempotency_key, { response: responsePayload, timestamp: Date.now() });
+    // Cache response for idempotency on client retry (tenant+user-scoped key)
+    if (idempotencyCacheKey) {
+      idempotencyCache.set(idempotencyCacheKey, { response: responsePayload, timestamp: Date.now() });
     }
 
     // AnA's relational self-development: reflect on this turn and update her
