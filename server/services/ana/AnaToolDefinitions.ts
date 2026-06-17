@@ -977,6 +977,43 @@ export const SCAN_REGULATORY_DEFICIENCIES: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Large-document working set — extract a single uploaded document's FULL text
+// server-side and run query-targeted search over it, returning only the
+// relevant windows (with char offsets) plus a heading outline. Lets AnA work
+// with documents far larger than the per-turn result cap without dumping the
+// whole file into context. Stateless and tenant-scoped via ToolContext.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SEARCH_LARGE_DOCUMENT: AnaTool = {
+  name: 'search_large_document',
+  description:
+    "Search WITHIN a single uploaded document that is too large to hold in context at once. AnA extracts the document's full text server-side and returns only the passages relevant to your queries — the matching windows with surrounding context and their character offsets — plus a heading outline of the document. Use this instead of paging blindly through a big file: give the questions/terms you care about and get back the exact excerpts to read and cite. Tenant-scoped; the file must belong to the active organization.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: {
+        type: 'string',
+        description: 'The uploaded file id (e.g. "file_1712…" from a chat upload).',
+      },
+      queries: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'One or more terms/phrases/questions to locate within the document.',
+      },
+      window_chars: {
+        type: 'number',
+        description: 'Characters of context kept around each match. Default 320.',
+      },
+      max_windows_per_query: {
+        type: 'number',
+        description: 'Maximum excerpt windows returned per query. Default 4.',
+      },
+    },
+    required: ['file_id', 'queries'],
+  },
+};
+
 export const PROJECT_KNOWLEDGE_SEARCH_MULTI: AnaTool = {
   name: 'project_knowledge_search_multi',
   description:
@@ -6186,6 +6223,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   DESCRIBE_CAPABILITIES,
   PROJECT_KNOWLEDGE_SEARCH,
   PROJECT_KNOWLEDGE_SEARCH_MULTI,
+  SEARCH_LARGE_DOCUMENT,
   SCAN_REGULATORY_DEFICIENCIES,
   RECALL_SESSION_CONTEXT,
   SIMULATE_STUDY_DESIGN,

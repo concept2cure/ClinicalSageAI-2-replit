@@ -525,6 +525,67 @@ registerToolHandler('scan_regulatory_deficiencies', async (input) => {
   }
 });
 
+// Large-document working set — extract a single file's full text server-side
+// and return only the query-relevant windows, so AnA can work with documents
+// far larger than the per-turn result cap. Stateless; reuses the real file
+// loader + extraction. Disableable via ANA_LARGE_DOC_SEARCH=false.
+registerToolHandler('search_large_document', async (input, ctx) => {
+  if (process.env.ANA_LARGE_DOC_SEARCH === 'false') {
+    return JSON.stringify({ error: 'search_large_document is disabled in this deployment.' });
+  }
+  const fileId = typeof input.file_id === 'string' ? input.file_id : '';
+  if (!fileId) {
+    return JSON.stringify({ error: 'search_large_document requires file_id (string).' });
+  }
+  const queries = (Array.isArray(input.queries) ? input.queries : [])
+    .filter((q): q is string => typeof q === 'string' && q.trim().length > 0)
+    .map(q => q.trim())
+    .slice(0, 8);
+  if (queries.length === 0) {
+    return JSON.stringify({ error: 'search_large_document requires queries (non-empty array of strings).' });
+  }
+  const windowChars = typeof input.window_chars === 'number' ? input.window_chars : undefined;
+  const maxWindows = typeof input.max_windows_per_query === 'number' ? input.max_windows_per_query : undefined;
+
+  try {
+    const { loadUploadedFile } = await import('./uploaded-file-access.js');
+    const { extractDocumentText } = await import('../ocr/extractDocumentText.js');
+    const { searchWithinText, extractHeadingOutline } = await import('./document-search-core.js');
+
+    const file = await loadUploadedFile(fileId, ctx?.organizationId);
+    const extracted = await extractDocumentText(file.buffer, file.mimeType, file.fileName);
+    const text = extracted.text ?? '';
+    if (!text.trim()) {
+      return JSON.stringify({
+        ok: true,
+        fileName: file.fileName,
+        totalChars: 0,
+        message: 'The document produced no extractable text (it may be empty, image-only, or unsupported). Try read_uploaded_document with force_ocr.',
+      });
+    }
+
+    const results = searchWithinText(text, queries, {
+      windowChars,
+      maxWindowsPerQuery: maxWindows,
+    });
+    const outline = extractHeadingOutline(text);
+
+    return JSON.stringify({
+      ok: true,
+      fileName: file.fileName,
+      totalChars: text.length,
+      extractionMethod: (extracted as any).method ?? null,
+      outline,
+      results,
+      message: `Searched ${text.length.toLocaleString()} chars of ${file.fileName}. Returned only the relevant windows per query — read and cite these excerpts rather than the whole document.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `search_large_document failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // Search Clinical Evidence — queries internal DB and ClinicalTrials.gov
 registerToolHandler('search_clinical_evidence', async (input) => {
   const query = typeof input.query === 'string' ? input.query : '';

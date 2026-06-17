@@ -309,6 +309,17 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
   {
+    capabilityKey: 'search-large-document',
+    category: 'knowledge',
+    name: 'Search Within a Large Document',
+    description:
+      "Extract a single uploaded document's full text server-side and return only the query-relevant windows (with offsets) plus a heading outline — so AnA can work with documents far larger than the per-turn context cap without dumping the whole file.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
     capabilityKey: 'project-knowledge-search-multi',
     category: 'knowledge',
     name: 'Multi-Query Project Knowledge Search',
