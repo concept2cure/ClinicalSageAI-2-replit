@@ -207,3 +207,109 @@ export async function runDocxInsertIsolated(
     applied: Array.isArray(payload.applied) ? payload.applied : [],
   };
 }
+
+export interface DocxValidationReport {
+  ok: boolean;
+  partsChecked: number;
+  malformedParts: Array<{ part: string; error: string }>;
+  missingParts: string[];
+  danglingRels: Array<{ rels: string; target: string }>;
+  reopened: boolean;
+  paragraphCount: number | null;
+  errors: string[];
+}
+
+function normalizeValidation(v: any): DocxValidationReport {
+  return {
+    ok: v?.ok === true,
+    partsChecked: v?.parts_checked ?? 0,
+    malformedParts: Array.isArray(v?.malformed_parts) ? v.malformed_parts : [],
+    missingParts: Array.isArray(v?.missing_parts) ? v.missing_parts : [],
+    danglingRels: Array.isArray(v?.dangling_rels) ? v.dangling_rels : [],
+    reopened: v?.reopened === true,
+    paragraphCount: typeof v?.paragraph_count === 'number' ? v.paragraph_count : null,
+    errors: Array.isArray(v?.errors) ? v.errors : [],
+  };
+}
+
+export interface DocxXmlOperation {
+  op: 'insert_paragraphs' | 'replace_text';
+  // insert_paragraphs
+  anchorText?: string;
+  match?: 'exact' | 'contains';
+  position?: 'before' | 'after';
+  paragraphs?: string[];
+  inheritFormat?: boolean;
+  // replace_text
+  find?: string;
+  replace?: string;
+}
+
+export interface DocxXmlResult {
+  buffer: Buffer;
+  fileName: string;
+  applied: Array<{ op: string; status: string; count: number; anchor?: string; find?: string }>;
+  validation: DocxValidationReport;
+}
+
+/**
+ * Raw-OOXML surgery on an existing .docx: locate text anchors inside
+ * word/document.xml and insert <w:p> blocks (inheriting the anchor's
+ * formatting) or replace placeholder text, then repack and validate. Operates
+ * at the XML tree level (lxml), so it preserves fonts/bold/italic/spacing/
+ * justification that the python-docx object API can't address positionally.
+ */
+export async function runDocxXmlSurgeryIsolated(
+  sourceDocx: Buffer,
+  operations: DocxXmlOperation[],
+  fileName = 'edited.docx',
+  timeoutMs = DEFAULT_TIMEOUT_MS
+): Promise<DocxXmlResult> {
+  const { payload } = await runPythonRuntime(
+    'docx-xml',
+    'workers/artifact-compute/docx-xml-runtime.py',
+    {
+      source_docx_base64: sourceDocx.toString('base64'),
+      file_name: fileName,
+      operations: operations.map(o => ({
+        op: o.op,
+        anchor_text: o.anchorText,
+        match: o.match ?? 'contains',
+        position: o.position ?? 'after',
+        paragraphs: o.paragraphs,
+        inherit_format: o.inheritFormat ?? true,
+        find: o.find,
+        replace: o.replace,
+      })),
+    },
+    Math.min(timeoutMs, MAX_TIMEOUT_MS)
+  );
+
+  if (payload.output_type !== 'docx' || typeof payload.content_base64 !== 'string') {
+    throw new Error('docx-xml worker returned no docx output');
+  }
+
+  return {
+    buffer: Buffer.from(payload.content_base64, 'base64'),
+    fileName: payload.file_name ?? fileName,
+    applied: Array.isArray(payload.applied) ? payload.applied : [],
+    validation: normalizeValidation(payload.validation),
+  };
+}
+
+/**
+ * Validate a .docx (OOXML/ZIP integrity, well-formedness, rels resolution,
+ * python-docx round-trip) without modifying it.
+ */
+export async function runDocxValidateIsolated(
+  sourceDocx: Buffer,
+  timeoutMs = DEFAULT_TIMEOUT_MS
+): Promise<DocxValidationReport> {
+  const { payload } = await runPythonRuntime(
+    'docx-validate',
+    'workers/artifact-compute/docx-validate-runtime.py',
+    { source_docx_base64: sourceDocx.toString('base64') },
+    Math.min(timeoutMs, MAX_TIMEOUT_MS)
+  );
+  return normalizeValidation(payload);
+}

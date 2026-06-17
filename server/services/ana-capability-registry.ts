@@ -462,6 +462,29 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
 
+  {
+    capabilityKey: 'surgical-docx-xml-edit',
+    category: 'compute',
+    name: 'Surgical OOXML Document Edit',
+    description:
+      'Edit an existing Word (.docx) at the raw OOXML/XML level — unpack the archive, locate text anchors in word/document.xml, insert new paragraph blocks inheriting the anchor formatting (fonts, bold/italic, spacing, justification) or replace placeholders preserving run formatting, then repack and validate. The deepest, formatting-faithful document-surgery path.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'validate-docx',
+    category: 'compute',
+    name: 'Validate Document Integrity',
+    description:
+      'Validate a Word (.docx) OOXML/ZIP integrity without modifying it — required parts present, every XML part well-formed, relationship targets resolve, python-docx round-trip — to catch silent corruption before a document ships.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+
   // ── Commitments (2) ───────────────────────────────────────
   {
     capabilityKey: 'extract-commitments',

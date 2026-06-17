@@ -4846,6 +4846,90 @@ export const INSERT_DOCUMENT_CONTENT: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Raw-OOXML document surgery — the deepest file-engineering path. Unpacks a
+// .docx (a ZIP of XML parts), parses word/document.xml as an XML tree (lxml),
+// locates text anchors at the paragraph/run level, and surgically inserts new
+// <w:p> paragraph blocks (inheriting the anchor's exact formatting) or replaces
+// placeholder text — preserving fonts, bold/italic, spacing, and justification
+// — then repacks every original ZIP entry and VALIDATES the result. Use when
+// edits must land at precise XML locations and inherit the document's existing
+// character formatting, beyond what insert_document_content (python-docx object
+// level) can address. Tenant-scoped via ToolContext.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SURGICAL_DOCX_XML_EDIT: AnaTool = {
+  name: 'surgical_docx_xml_edit',
+  description:
+    "Surgically edit an existing Word (.docx) at the raw OOXML/XML level: unpack the archive, parse word/document.xml, locate text anchors, insert new paragraph blocks that inherit the anchor's formatting (fonts, bold/italic, spacing, justification), or replace placeholder tokens preserving the run's formatting, then repack and validate (well-formedness + python-docx round-trip). Deeper than insert_document_content (which works at the python-docx object level) — use this when you need exact XML placement and faithful inheritance of existing character/paragraph formatting. Returns the edited .docx path, a per-operation report, and a validation report. Tenant-scoped via ToolContext.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      input_docx_path: {
+        type: 'string',
+        description: 'Absolute path to the source .docx to edit (e.g. a docxPath from author_docx_native or an uploaded document).',
+      },
+      operations: {
+        type: 'array',
+        description: 'Ordered list of XML-level operations.',
+        items: {
+          type: 'object',
+          properties: {
+            op: {
+              type: 'string',
+              enum: ['insert_paragraphs', 'replace_text'],
+              description: "'insert_paragraphs' inserts new <w:p> blocks near a text anchor; 'replace_text' swaps a placeholder token in place.",
+            },
+            anchor_text: { type: 'string', description: 'For insert_paragraphs: the paragraph text to anchor on.' },
+            match: { type: 'string', enum: ['exact', 'contains'], description: "Anchor match mode. Default 'contains'." },
+            position: { type: 'string', enum: ['before', 'after'], description: "Insert before or after the anchor. Default 'after'." },
+            paragraphs: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'For insert_paragraphs: the new paragraph texts, in order. Each inherits the anchor paragraph/run formatting when inherit_format is true.',
+            },
+            inherit_format: { type: 'boolean', description: "Clone the anchor's paragraph (w:pPr) and run (w:rPr) properties onto the inserted paragraphs. Default true." },
+            find: { type: 'string', description: 'For replace_text: the placeholder/token to find.' },
+            replace: { type: 'string', description: 'For replace_text: the replacement text (the run formatting around the token is preserved).' },
+          },
+          required: ['op'],
+        },
+      },
+      output_format: {
+        type: 'string',
+        enum: ['docx', 'pdf'],
+        description: "Output format. 'docx' (default) returns the edited Word document; 'pdf' additionally converts via headless LibreOffice.",
+      },
+    },
+    required: ['input_docx_path', 'operations'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DOCX validation — open a .docx and confirm it is structurally sound before
+// shipping: required parts present ([Content_Types].xml, _rels/.rels,
+// word/document.xml), every XML/rels part well-formed, relationship targets
+// resolve, and python-docx can re-open it. Closes the "repack-and-validate"
+// loop for any document AnA produced (via surgical edits or scripts) or
+// received from a client. Tenant-scoped via ToolContext.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VALIDATE_DOCX: AnaTool = {
+  name: 'validate_docx',
+  description:
+    "Validate a Word (.docx) document's OOXML/ZIP integrity without modifying it: confirms required parts are present, every XML/rels part is well-formed, relationship targets resolve to real parts, and python-docx can re-open the file. Use after any raw-XML or scripted edit, or on a client-supplied document, to catch silent corruption before it ships. Returns a structured report (ok, parts checked, malformed/missing parts, dangling relationships, paragraph count).",
+  input_schema: {
+    type: 'object',
+    properties: {
+      input_docx_path: {
+        type: 'string',
+        description: 'Absolute path to the .docx to validate.',
+      },
+    },
+    required: ['input_docx_path'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX kit-section write-back — closes the loop between AnA's drafting and the
 // kit's section editors (K510Surface, PmaSurface, CerSurface). When the model
 // has produced a draft section (cover letter, SE discussion, device
@@ -5992,6 +6076,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   CONVERT_DOCX_TO_PDF,
   RUN_PYTHON_SCRIPT,
   INSERT_DOCUMENT_CONTENT,
+  SURGICAL_DOCX_XML_EDIT,
+  VALIDATE_DOCX,
   WRITE_KIT_SECTION,
   CREATE_Q_SUB,
   UPDATE_Q_SUB_COMMITMENT_ROLLED_IN,

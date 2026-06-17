@@ -4050,6 +4050,141 @@ registerToolHandler('insert_document_content', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Raw-OOXML surgery handler — unpack a .docx, edit word/document.xml at the
+// XML-tree level (insert paragraph blocks inheriting formatting, replace
+// placeholders preserving run formatting), repack, and validate. Persists the
+// edited .docx (and optional PDF) and returns per-operation + validation
+// reports. The source is preserved as the editable record.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('surgical_docx_xml_edit', async (input, ctx) => {
+  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
+  if (!inputDocxPath) {
+    return JSON.stringify({ error: 'surgical_docx_xml_edit requires input_docx_path (string).' });
+  }
+  if (!Array.isArray(input.operations) || input.operations.length === 0) {
+    return JSON.stringify({ error: 'surgical_docx_xml_edit requires operations (non-empty array).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'surgical_docx_xml_edit requires tenant context (organizationId).' });
+  }
+
+  const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
+  const operations = (input.operations as Array<Record<string, unknown>>).map(o => ({
+    op: o.op as 'insert_paragraphs' | 'replace_text',
+    anchorText: typeof o.anchor_text === 'string' ? o.anchor_text : undefined,
+    match: (o.match as 'exact' | 'contains' | undefined) ?? 'contains',
+    position: (o.position as 'before' | 'after' | undefined) ?? 'after',
+    paragraphs: Array.isArray(o.paragraphs) ? (o.paragraphs as string[]) : undefined,
+    inheritFormat: o.inherit_format !== false,
+    find: typeof o.find === 'string' ? o.find : undefined,
+    replace: typeof o.replace === 'string' ? o.replace : undefined,
+  }));
+
+  try {
+    const { runDocxXmlSurgeryIsolated } = await import('../compute/scriptWorker.js');
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { randomUUID } = await import('crypto');
+
+    const sourceBuf = await fs.readFile(inputDocxPath);
+    const baseName = path.basename(inputDocxPath, path.extname(inputDocxPath));
+    const result = await runDocxXmlSurgeryIsolated(sourceBuf, operations, `${baseName}.xml-edited.docx`);
+
+    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    await fs.mkdir(outDir, { recursive: true });
+    const docxPath = path.join(outDir, result.fileName);
+    await fs.writeFile(docxPath, result.buffer);
+
+    const notApplied = result.applied.filter(a => a.status !== 'applied');
+    const base = {
+      ok: result.validation.ok && notApplied.length === 0,
+      engine: 'lxml OOXML surgery',
+      sourceDocxPath: inputDocxPath,
+      docxPath,
+      applied: result.applied,
+      validation: result.validation,
+    };
+
+    if (!result.validation.ok) {
+      // Surface corruption explicitly — the edited file is kept for inspection
+      // but flagged so AnA does not ship a broken document.
+      return JSON.stringify({
+        ...base,
+        message: `Edit applied but validation FAILED — document may be corrupt. Malformed parts: ${
+          result.validation.malformedParts.length
+        }, errors: ${result.validation.errors.join('; ') || 'none'}. Do not ship without review.`,
+      });
+    }
+
+    if (fmt === 'pdf') {
+      const { runDocxPdfPipeline } = await import('../docx-pdf-pipeline.js');
+      const pipeline = await runDocxPdfPipeline({ inputDocxPath: docxPath });
+      return JSON.stringify({
+        ...base,
+        pdfPath: pipeline.finalPdf,
+        message: `Applied ${result.applied.length - notApplied.length}/${result.applied.length} XML operation(s), validated, and rendered PDF.`,
+      });
+    }
+
+    return JSON.stringify({
+      ...base,
+      sizeBytes: result.buffer.length,
+      message: `Applied ${result.applied.length - notApplied.length}/${result.applied.length} XML operation(s) to ${baseName} and validated (${result.validation.partsChecked} parts, ${result.validation.paragraphCount} paragraphs).${
+        notApplied.length ? ` ${notApplied.length} operation(s) did not match — review the applied report.` : ''
+      }`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `surgical_docx_xml_edit failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify the source .docx path exists and python3 + lxml + python-docx are available on the host.`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DOCX validation handler — open a .docx and confirm OOXML/ZIP integrity
+// without modifying it. AnA's pre-ship gate for any document she produced or
+// received.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('validate_docx', async (input, ctx) => {
+  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
+  if (!inputDocxPath) {
+    return JSON.stringify({ error: 'validate_docx requires input_docx_path (string).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'validate_docx requires tenant context (organizationId).' });
+  }
+
+  try {
+    const { runDocxValidateIsolated } = await import('../compute/scriptWorker.js');
+    const { promises: fs } = await import('fs');
+
+    const buf = await fs.readFile(inputDocxPath);
+    const report = await runDocxValidateIsolated(buf);
+
+    return JSON.stringify({
+      ok: report.ok,
+      docxPath: inputDocxPath,
+      validation: report,
+      message: report.ok
+        ? `Valid .docx — ${report.partsChecked} XML parts well-formed, ${report.paragraphCount} paragraphs, reopened cleanly.`
+        : `INVALID .docx — missing: ${report.missingParts.join(', ') || 'none'}; malformed: ${
+            report.malformedParts.length
+          }; dangling rels: ${report.danglingRels.length}; errors: ${report.errors.join('; ') || 'none'}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `validate_docx failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify the source .docx path exists and python3 + lxml + python-docx are available on the host.`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX mutation handlers — Q-Sub creation, commitment rollover, program
 // metadata binding. Each routes through the existing service layer so the
 // tenant-scoping + audit + business rules stay in one place; the handler
