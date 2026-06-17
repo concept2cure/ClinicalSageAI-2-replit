@@ -590,21 +590,21 @@ export function Message({
 
         <div className={styles.aiActions}>
           {onCopy && (
-            <button title="Copy" onClick={onCopy} type="button">
+            <button title="Copy" aria-label="Copy response" onClick={onCopy} type="button">
               <CopyIco size={14} />
             </button>
           )}
           {onRetry && (
-            <button title="Retry" onClick={onRetry} type="button">
+            <button title="Retry" aria-label="Retry response" onClick={onRetry} type="button">
               <RedoIco size={14} />
             </button>
           )}
           {onFeedback && (
             <>
-              <button title="Good" onClick={() => onFeedback(true)} type="button">
+              <button title="Good" aria-label="Good response" onClick={() => onFeedback(true)} type="button">
                 <ThumbUpIco size={14} />
               </button>
-              <button title="Bad" onClick={() => onFeedback(false)} type="button">
+              <button title="Bad" aria-label="Bad response" onClick={() => onFeedback(false)} type="button">
                 <ThumbDownIco size={14} />
               </button>
             </>

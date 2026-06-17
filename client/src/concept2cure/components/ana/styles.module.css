@@ -62,7 +62,7 @@
   background: transparent; border: 0; cursor: pointer;
 }
 .sbItem:hover { background: var(--bg-200); }
-.sbItem[aria-selected="true"] {
+.sbItem[aria-current="page"] {
   background: var(--bg-200);
   color: var(--ink, var(--text-100));
   font-weight: 500;
