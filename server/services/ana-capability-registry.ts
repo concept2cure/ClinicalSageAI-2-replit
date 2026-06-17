@@ -236,6 +236,17 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
 
   // ── Intelligence (4) ──────────────────────────────────────
   {
+    capabilityKey: 'scan-regulatory-deficiencies',
+    category: 'intelligence',
+    name: 'Deterministic Deficiency Scan',
+    description:
+      "Scan regulatory text against the codified pattern registry (95+ FDA/EMA deficiency and reviewer-trigger patterns) with NO language-model call — pure heuristic matching. Returns each match with severity, the reviewer question it provokes, the regulatory basis, and a concrete remediation. AnA's fast, reproducible reasoning-without-the-LLM surface.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
     capabilityKey: 'rim-pattern-detection',
     category: 'intelligence',
     name: 'RIM Pattern Detection',

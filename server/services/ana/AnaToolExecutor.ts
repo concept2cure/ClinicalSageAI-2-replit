@@ -462,6 +462,69 @@ registerToolHandler('recall_session_context', async (input, ctx) => {
   }
 });
 
+// Deterministic regulatory deficiency scan — runs the codified pattern registry
+// (quickPatternScan) with NO language-model call. AnA's reasoning-without-the-LLM
+// surface: fast, reproducible, citable pattern matching over regulatory text.
+registerToolHandler('scan_regulatory_deficiencies', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ error: 'scan_regulatory_deficiencies requires text (non-empty string).' });
+  }
+  const location = typeof input.location === 'string' && input.location.trim() ? input.location.trim() : 'document';
+
+  // Build the optional criteria from provided filters (all optional).
+  const criteria: Record<string, unknown> = {};
+  if (typeof input.agency === 'string' && input.agency.trim()) criteria.agency = input.agency.trim();
+  if (typeof input.submission_type === 'string' && input.submission_type.trim())
+    criteria.submissionType = input.submission_type.trim();
+  if (typeof input.category === 'string' && input.category.trim()) criteria.category = input.category.trim();
+  if (typeof input.min_severity === 'string' && input.min_severity.trim())
+    criteria.minSeverity = input.min_severity.trim();
+
+  try {
+    const { quickPatternScan } = await import('../intelligence/rim.js');
+    const matches = quickPatternScan(
+      text,
+      location,
+      Object.keys(criteria).length > 0 ? (criteria as any) : undefined
+    );
+
+    const findings = matches.map(m => ({
+      patternId: m.patternId,
+      name: m.pattern.name,
+      category: m.pattern.category,
+      severity: m.pattern.severity,
+      matchedText: m.matchedText,
+      matchConfidence: m.matchConfidence,
+      reviewerQuestion: m.pattern.reviewerQuestion,
+      regulatoryBasis: m.pattern.regulatoryBasis,
+      remediation: m.pattern.remediation,
+      strongerAlternatives: m.pattern.strongAlternatives,
+    }));
+
+    const bySeverity = findings.reduce<Record<string, number>>((acc, f) => {
+      acc[f.severity] = (acc[f.severity] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    return JSON.stringify({
+      engine: 'deterministic pattern registry (no LLM)',
+      location,
+      findingsCount: findings.length,
+      severityCounts: bySeverity,
+      findings,
+      message:
+        findings.length === 0
+          ? 'No codified deficiency or reviewer-trigger patterns matched this text. (Absence of a pattern match is not proof of soundness — it means no KNOWN pattern fired.)'
+          : `${findings.length} pattern match(es) found deterministically. Each includes the likely reviewer question, regulatory basis, and a concrete remediation.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `scan_regulatory_deficiencies failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // Search Clinical Evidence — queries internal DB and ClinicalTrials.gov
 registerToolHandler('search_clinical_evidence', async (input) => {
   const query = typeof input.query === 'string' ? input.query : '';

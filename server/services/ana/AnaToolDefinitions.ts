@@ -930,6 +930,53 @@ export const PROJECT_KNOWLEDGE_SEARCH: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Deterministic regulatory deficiency scan — runs the codified pattern registry
+// (95+ FDA/EMA deficiency and reviewer-trigger patterns) against text with NO
+// language-model call: pure regex/heuristic matching. Surfaces likely reviewer
+// triggers, the question each would provoke, the regulatory basis, and concrete
+// remediations / stronger phrasings. This is AnA's reasoning-without-the-LLM
+// surface — fast, stable, citable, and runnable on its own.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SCAN_REGULATORY_DEFICIENCIES: AnaTool = {
+  name: 'scan_regulatory_deficiencies',
+  description:
+    "Deterministically scan regulatory text for known deficiency and reviewer-trigger patterns using AnA's codified pattern registry — NO language-model call, pure heuristic/regex matching, fast and reproducible. Returns each match with the pattern name, category (deficiency / reviewer_trigger), severity, the matched text, a confidence score, the reviewer question it is likely to provoke, the regulatory basis, and concrete remediation plus stronger alternative phrasings. Use it as a quick, defensible first pass over a draft section, or whenever you want pattern-level analysis without invoking the full model. Optional filters narrow to an agency, submission type, category, or minimum severity.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: {
+        type: 'string',
+        description: 'The regulatory text to scan (a section, paragraph, or claim).',
+      },
+      location: {
+        type: 'string',
+        description: "A section or field reference for provenance (e.g. '2.5 Clinical Overview'). Default 'document'.",
+      },
+      agency: {
+        type: 'string',
+        description: 'Optional agency filter (e.g. FDA, EMA, PMDA).',
+      },
+      submission_type: {
+        type: 'string',
+        description: 'Optional submission-type filter (e.g. IND, NDA, BLA, 510(k)).',
+      },
+      category: {
+        type: 'string',
+        enum: ['deficiency', 'reviewer_trigger', 'rejection', 'strength', 'any'],
+        description: 'Optional pattern category filter.',
+      },
+      min_severity: {
+        type: 'string',
+        enum: ['critical', 'high', 'medium', 'low'],
+        description: 'Optional minimum severity to report.',
+      },
+    },
+    required: ['text'],
+  },
+};
+
 export const PROJECT_KNOWLEDGE_SEARCH_MULTI: AnaTool = {
   name: 'project_knowledge_search_multi',
   description:
@@ -6139,6 +6186,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   DESCRIBE_CAPABILITIES,
   PROJECT_KNOWLEDGE_SEARCH,
   PROJECT_KNOWLEDGE_SEARCH_MULTI,
+  SCAN_REGULATORY_DEFICIENCIES,
   RECALL_SESSION_CONTEXT,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
