@@ -586,6 +586,73 @@ registerToolHandler('search_large_document', async (input, ctx) => {
   }
 });
 
+// Remember a read document into durable project memory — promotes a document
+// AnA read into project_memory_entries (embedded) via the real project
+// ingestion pipeline, so it is surfaced automatically in future sessions.
+// Disableable via ANA_REMEMBER_DOCUMENT=false.
+registerToolHandler('remember_document_in_project', async (input, ctx) => {
+  if (process.env.ANA_REMEMBER_DOCUMENT === 'false') {
+    return JSON.stringify({ error: 'remember_document_in_project is disabled in this deployment.' });
+  }
+  const fileId = typeof input.file_id === 'string' ? input.file_id : '';
+  if (!fileId) {
+    return JSON.stringify({ error: 'remember_document_in_project requires file_id (string).' });
+  }
+  if (!ctx?.organizationId || !ctx?.projectId) {
+    return JSON.stringify({
+      error: 'remember_document_in_project requires an active project and organization in context.',
+    });
+  }
+  const userId = ctx.userId ?? 0;
+
+  try {
+    const { loadUploadedFile } = await import('./uploaded-file-access.js');
+    const { getProjectIntelligence, ingestProjectDocument } = await import(
+      '../client-intelligence-memory.js'
+    );
+
+    const profile = await getProjectIntelligence(ctx.projectId);
+    if (!profile?.id) {
+      return JSON.stringify({
+        ok: false,
+        message:
+          'This project has no intelligence profile yet, so there is nowhere to store durable project memory. Set up the project profile first, then try again.',
+      });
+    }
+
+    const file = await loadUploadedFile(fileId, ctx.organizationId);
+    const result = await ingestProjectDocument(
+      profile.id,
+      ctx.projectId,
+      ctx.organizationId,
+      {
+        buffer: file.buffer,
+        originalname: file.fileName,
+        mimetype: file.mimeType,
+        size: file.fileSize,
+      },
+      userId
+    );
+
+    return JSON.stringify({
+      ok: result.status === 'completed',
+      fileName: result.fileName,
+      memoryEntriesCreated: result.memoryEntriesCreated,
+      tokenCount: result.tokenCount,
+      message:
+        result.status === 'completed'
+          ? `Remembered ${result.fileName} into project memory (${result.memoryEntriesCreated} entr${
+              result.memoryEntriesCreated === 1 ? 'y' : 'ies'
+            } embedded). It will be surfaced automatically in future sessions.`
+          : `Could not remember ${result.fileName}: ${result.error ?? 'ingestion failed'}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `remember_document_in_project failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // Search Clinical Evidence — queries internal DB and ClinicalTrials.gov
 registerToolHandler('search_clinical_evidence', async (input) => {
   const query = typeof input.query === 'string' ? input.query : '';

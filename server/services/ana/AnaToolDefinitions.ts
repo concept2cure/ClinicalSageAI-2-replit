@@ -1014,6 +1014,30 @@ export const SEARCH_LARGE_DOCUMENT: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Remember a read document into durable project memory — promote a document AnA
+// has read into the project's persistent memory (project_memory_entries,
+// embedded) so it is surfaced automatically in future sessions via the memory
+// assembler and session bootstrap. Reuses the real project-ingestion pipeline.
+// Tenant- and project-scoped via ToolContext.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const REMEMBER_DOCUMENT_IN_PROJECT: AnaTool = {
+  name: 'remember_document_in_project',
+  description:
+    "Persist a document AnA has read into the active project's durable memory so it is automatically recalled in future sessions (not just this turn). The document's text is extracted and its key facts are embedded into project memory, where the memory assembler and session bootstrap will surface them later. Use this when a read document contains material the project should remember going forward. Requires an active project; the file must belong to the active organization.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: {
+        type: 'string',
+        description: 'The uploaded file id to remember (e.g. "file_1712…").',
+      },
+    },
+    required: ['file_id'],
+  },
+};
+
 export const PROJECT_KNOWLEDGE_SEARCH_MULTI: AnaTool = {
   name: 'project_knowledge_search_multi',
   description:
@@ -6224,6 +6248,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   PROJECT_KNOWLEDGE_SEARCH,
   PROJECT_KNOWLEDGE_SEARCH_MULTI,
   SEARCH_LARGE_DOCUMENT,
+  REMEMBER_DOCUMENT_IN_PROJECT,
   SCAN_REGULATORY_DEFICIENCIES,
   RECALL_SESSION_CONTEXT,
   SIMULATE_STUDY_DESIGN,

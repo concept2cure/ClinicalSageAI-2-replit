@@ -309,6 +309,17 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
   {
+    capabilityKey: 'remember-document-in-project',
+    category: 'knowledge',
+    name: 'Remember Document in Project',
+    description:
+      "Promote a document AnA has read into the project's durable memory (embedded project_memory_entries) so it is automatically recalled in future sessions via the memory assembler and session bootstrap — reusing the real project-ingestion pipeline.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
     capabilityKey: 'search-large-document',
     category: 'knowledge',
     name: 'Search Within a Large Document',
