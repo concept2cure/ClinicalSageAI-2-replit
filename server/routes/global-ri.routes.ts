@@ -48,6 +48,9 @@ import expandedAccessRouter from './global-ri/expanded-access.routes';
 import advancedTherapiesRouter from './global-ri/advanced-therapies.routes';
 import companionDiagnosticsRouter from './global-ri/companion-diagnostics.routes';
 import promotionalComplianceRouter from './global-ri/promotional-compliance.routes';
+import controlledSubstancesRouter from './global-ri/controlled-substances.routes';
+import processValidationRouter from './global-ri/process-validation.routes';
+import clinicalEvidenceRouter from './global-ri/clinical-evidence-standards.routes';
 
 const router = Router();
 
@@ -83,5 +86,8 @@ router.use(expandedAccessRouter);
 router.use(advancedTherapiesRouter);
 router.use(companionDiagnosticsRouter);
 router.use(promotionalComplianceRouter);
+router.use(controlledSubstancesRouter);
+router.use(processValidationRouter);
+router.use(clinicalEvidenceRouter);
 
 export default router;
