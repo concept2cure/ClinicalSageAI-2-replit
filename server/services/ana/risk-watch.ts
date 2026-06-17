@@ -124,3 +124,30 @@ export async function getOpenBlockers(opts: {
   const sorted = sortBlockersBySeverity(rows as OpenBlocker[]);
   return opts.limit && opts.limit > 0 ? sorted.slice(0, opts.limit) : sorted;
 }
+
+/**
+ * Org-wide variant of {@link getOpenBlockers}: all OPEN blockers for the
+ * organization across projects, severity-sorted. Powers the proactive digest.
+ */
+export async function getOpenBlockersForOrg(
+  organizationId: number,
+  limit?: number
+): Promise<OpenBlocker[]> {
+  const rows = await db
+    .select({
+      blockerId: c2cBlockers.blockerId,
+      blockerType: c2cBlockers.blockerType,
+      severity: c2cBlockers.severity,
+      title: c2cBlockers.title,
+      description: c2cBlockers.description,
+      nextAction: c2cBlockers.nextAction,
+      ownerFunction: c2cBlockers.ownerFunction,
+      createdAt: c2cBlockers.createdAt,
+    })
+    .from(c2cBlockers)
+    .where(and(eq(c2cBlockers.orgId, organizationId), eq(c2cBlockers.status, 'open')))
+    .orderBy(desc(c2cBlockers.createdAt));
+
+  const sorted = sortBlockersBySeverity(rows as OpenBlocker[]);
+  return limit && limit > 0 ? sorted.slice(0, limit) : sorted;
+}
