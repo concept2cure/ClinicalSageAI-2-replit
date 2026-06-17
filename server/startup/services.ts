@@ -143,6 +143,19 @@ export async function initializeEarlyServices(): Promise<void> {
       console.warn('⚠️ Org placement resolver not activated (explicit-only):', e?.message);
     }
 
+    // Activate the DB-backed per-tenant AI provider-preference resolver so a
+    // client's chosen default provider (Claude-first) persists across restarts.
+    // Non-fatal: if it can't load, the platform default (anthropic / Claude) applies.
+    try {
+      const [{ setTenantProviderResolver }, { DbTenantProviderResolver }] = await Promise.all([
+        import('../services/ai-gateway/providers/provider-preference.js'),
+        import('../services/ai-gateway/providers/provider-preference-db.js'),
+      ]);
+      setTenantProviderResolver(new DbTenantProviderResolver());
+    } catch (e: any) {
+      console.warn('⚠️ Tenant provider-preference resolver not activated (platform default):', e?.message);
+    }
+
     const providers = gw.getEnabledProviders();
     console.log(
       `✅ AI Gateway pre-warmed (${providers.length} provider${providers.length === 1 ? '' : 's'} ready)`

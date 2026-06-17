@@ -18762,6 +18762,9 @@ export const aiPlacementPolicies = pgTable('ai_placement_policies', {
   requiredDataResidency: text('required_data_residency'), // 'us' | 'eu' | 'apac' | 'on_prem' | null
   zeroDataRetention: boolean('zero_data_retention').default(false).notNull(),
   allowedSubstrates: text('allowed_substrates').array(),
+  // Tenant's preferred AI provider (Claude-first; NULL = platform default 'anthropic').
+  // One of the client-selectable provider ids; validated in application code.
+  preferredAiProvider: text('preferred_ai_provider'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
