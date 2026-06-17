@@ -68,10 +68,6 @@ def test_e2e_async_flow():
 
 
 def test_smoke_task_writes_shared_file():
-    # Ensure the shared directory exists locally for the test runner
-    shared = Path("test_shared")
-    shared.mkdir(parents=True, exist_ok=True)
-
     body = {"content": "smoke-check"}
     r = requests.post(f"{BASE}/api/ectd/smoke", json=body, headers=_auth_headers(), timeout=5)
     assert r.status_code == 202
@@ -89,14 +85,20 @@ def test_smoke_task_writes_shared_file():
 
     assert status is not None and status.get("status") == "COMPLETED", f"Smoke job not completed: {status}"
 
-    # The worker records the container path (OUTPUT_DIR_BASE=/shared_data). On the
-    # host runner the same file lives under ./test_shared, because the compose
-    # mounts ./test_shared:/shared_data. Resolve the host-visible path by name
-    # before asserting existence.
+    # The worker writes to OUTPUT_DIR_BASE/smoke_<job_id>.txt and records that
+    # absolute path in `output`. docker-compose.e2e.yml mounts the SAME absolute
+    # path inside the container and on the host (/shared_data:/shared_data), so
+    # the worker-recorded path is directly visible to this host-side runner.
+    # Resolve by checking the recorded path first, then OUTPUT_DIR_BASE/<name>,
+    # then the legacy ./test_shared/<name> location, for robustness across
+    # harness variants.
     output = status.get("output")
     assert output, "No output path recorded by smoke task"
-    p = Path("test_shared") / Path(output).name
-    assert p.exists(), f"Smoke file not found at {p} (worker recorded {output})"
+    name = Path(output).name
+    base = os.getenv("OUTPUT_DIR_BASE", "/shared_data")
+    candidates = [Path(output), Path(base) / name, Path("test_shared") / name]
+    p = next((c for c in candidates if c.exists()), None)
+    assert p is not None, f"Smoke file not found in any of {candidates} (worker recorded {output})"
 
     # Save for artifact upload
     (Path("services/test_outputs") / f"smoke_{job_id}.txt").write_text(p.read_text(), encoding="utf-8")
