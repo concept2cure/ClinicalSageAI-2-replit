@@ -127,6 +127,7 @@ const routeCtx = {
   pool,
   experimentalRoutesEnabled: flags.experimentalRoutesEnabled,
   demoRoutesEnabled: flags.demoRoutesEnabled,
+  testRoutesEnabled: flags.testRoutesEnabled,
 };
 
 await registerPreStartRoutes(routeCtx, aiCircuitBreaker);

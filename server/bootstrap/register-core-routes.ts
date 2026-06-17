@@ -27,10 +27,20 @@ import { getAIRouter } from '../services/aiProviderRouter.js';
 import taskManagementRoutes from '../routes/taskManagement.routes';
 import unifiedTaskRoutes from '../routes/unifiedTasks.routes';
 
-export function registerCoreRoutes({ app, pool, aiCircuitBreaker }: RouteBootstrapContext) {
+export function registerCoreRoutes({
+  app,
+  pool,
+  aiCircuitBreaker,
+  testRoutesEnabled,
+}: RouteBootstrapContext) {
   app.use('/api/templates', templateRoutes);
   app.use('/api/ai', aiCircuitBreaker, aiRoutes);
-  app.use('/api/test-assembly', testAssemblyRoutes(pool));
+  // Test-only assembly harness — fenced out of production (issue #848).
+  if (testRoutesEnabled) {
+    app.use('/api/test-assembly', testAssemblyRoutes(pool));
+  } else {
+    console.log('⛔ /api/test-assembly not mounted (test routes fenced in this environment)');
+  }
   app.use('/api', phase3Routes);
   app.use('/api/enterprise', enterpriseRoutes);
   app.use('/api/enterprise/rbac', rbacRoutes);
