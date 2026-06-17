@@ -33,6 +33,7 @@ import { buildMdxContextBlock } from './mdx-context-resolver.js';
 import { loadRelationalOverlay } from './relational-profile-service.js';
 import { buildExternalIntelBlock } from '../external-intelligence/index.js';
 import { getDeadlineRadar, buildDeadlineRadarBlock } from '../ana/deadline-radar.js';
+import { getSessionBriefing } from '../ana/session-briefing.js';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -65,6 +66,8 @@ export interface PrefetchedRouteIntelligenceContext {
   externalIntelBlock: string;
   /** Proactive OVERDUE/DUE-SOON regulatory-deadline block ('' when nothing pressing). */
   deadlineRadarBlock: string;
+  /** Session-start situational briefing block ('' except on the first turn). */
+  sessionBriefingBlock: string;
 }
 
 // ─── Authoring context builder ───────────────────────────────────────────────
@@ -149,8 +152,10 @@ export async function prefetchRouteIntelligenceContext(params: {
   userId?: number | null;
   /** Target agency of the active program — scopes the external intel block. */
   targetAgency?: string | null;
+  /** First turn of a session — surface the full situational briefing instead of just deadlines. */
+  sessionStart?: boolean;
 }): Promise<PrefetchedRouteIntelligenceContext> {
-  const { projectId, organizationId, authoringContext, userId, targetAgency } = params;
+  const { projectId, organizationId, authoringContext, userId, targetAgency, sessionStart } = params;
   const projectIdNumber = projectId != null ? Number(projectId) : null;
 
   let feedbackContext: OrchestratorInput['_feedbackContext'] = null;
@@ -167,18 +172,32 @@ export async function prefetchRouteIntelligenceContext(params: {
       projectId: projectIdNumber,
     }),
     buildExternalIntelBlock(targetAgency ?? null),
-    // Proactive deadline radar — org-scoped, fail-soft. Only the block (overdue +
-    // due-soon) is injected so AnA can lead with time-critical risk at turn start.
+    // Proactive risk surfacing — org-scoped, fail-soft. On the FIRST turn of a
+    // session, surface the full situational briefing (deadlines + recent
+    // decisions); on later turns, just the deadline block (overdue + due-soon).
+    // Only one is non-empty per turn, so deadlines are never duplicated.
     organizationId && Number.isFinite(organizationId)
-      ? getDeadlineRadar({ organizationId }).then(buildDeadlineRadarBlock)
-      : Promise.resolve(''),
+      ? sessionStart
+        ? getSessionBriefing({ organizationId, projectId: projectIdNumber }).then(r => ({
+            kind: 'briefing' as const,
+            block: r.block,
+          }))
+        : getDeadlineRadar({ organizationId }).then(r => ({
+            kind: 'deadline' as const,
+            block: buildDeadlineRadarBlock(r),
+          }))
+      : Promise.resolve({ kind: 'none' as const, block: '' }),
   ]);
   const relationalOverlay =
     relationalResult.status === 'fulfilled' ? relationalResult.value : '';
   const externalIntelBlock =
     externalIntelResult.status === 'fulfilled' ? externalIntelResult.value : '';
-  const deadlineRadarBlock =
-    deadlineResult.status === 'fulfilled' ? deadlineResult.value : '';
+  const proactive =
+    deadlineResult.status === 'fulfilled'
+      ? deadlineResult.value
+      : { kind: 'none' as const, block: '' };
+  const deadlineRadarBlock = proactive.kind === 'deadline' ? proactive.block : '';
+  const sessionBriefingBlock = proactive.kind === 'briefing' ? proactive.block : '';
 
   if (
     projectIdNumber &&
@@ -250,6 +269,7 @@ export async function prefetchRouteIntelligenceContext(params: {
     relationalOverlay,
     externalIntelBlock,
     deadlineRadarBlock,
+    sessionBriefingBlock,
   };
 }
 
@@ -330,6 +350,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     userId: typeof userId === 'number' ? userId : Number(userId) || null,
     targetAgency:
       typeof project_context?.targetAgency === 'string' ? project_context.targetAgency : null,
+    sessionStart: !Array.isArray(conversation_history) || conversation_history.length === 0,
   });
 
   // Orchestrate
@@ -347,6 +368,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     _relationalOverlay: prefetchedContext.relationalOverlay,
     _externalIntelBlock: prefetchedContext.externalIntelBlock,
     _deadlineRadarBlock: prefetchedContext.deadlineRadarBlock,
+    _sessionBriefingBlock: prefetchedContext.sessionBriefingBlock,
   };
   const orchestration = orchestrate(orchestratorInput);
 
