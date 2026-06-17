@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-17T05:09:33.443Z",
+  "generatedAt": "2026-06-17T16:05:04.280Z",
   "git": {
-    "sha": "c9294ffba2de6107b7e9e9127b45c1e7fa1cd4c9",
+    "sha": "4eb59a97c16440a97c2da5ebd0603a59c08afa05",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2376,7 +2376,7 @@
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1715
+        "lines": 1704
       },
       {
         "file": "server/routes/fda510k-routes.ts",
