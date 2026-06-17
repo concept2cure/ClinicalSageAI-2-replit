@@ -23,6 +23,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 import { getAuthHeaders } from '../../../utils/authToken';
+import { extractPendingSignoffs, type PendingSignoff } from './useGovernedAction';
 import i18n from '@/i18n';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 
@@ -106,6 +107,8 @@ export interface AnaChatMessage {
   statusPhase?: string;
   /** Action chips produced by the server's guidance / command executors. */
   executedActions?: AnaChatAction[];
+  /** Governed actions blocked pending a Part 11 sign-off (reason + e-signature). */
+  pendingSignoffs?: PendingSignoff[];
   /** Round-trip latency from the server's `done` event. */
   latencyMs?: number;
   /** True if the response came from a fallback provider (non-Anthropic). */
@@ -529,6 +532,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               const actions: AnaChatAction[] | undefined = Array.isArray(event.executedActions)
                 ? (event.executedActions as AnaChatAction[])
                 : undefined;
+              // Governed actions the server blocked pending a Part 11 sign-off.
+              const pendingSignoffs = extractPendingSignoffs(event.executedCommands);
               // Context layers ANA drew on (names only), shown in the evidence panel.
               const groundingSources: string[] | undefined = Array.isArray(event.enrichmentSources)
                 ? event.enrichmentSources.filter((s: unknown): s is string => typeof s === 'string')
@@ -545,6 +550,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     streaming: false,
                     statusPhase: undefined,
                     executedActions: actions,
+                    pendingSignoffs: pendingSignoffs.length > 0 ? pendingSignoffs : undefined,
                     groundingSources:
                       groundingSources && groundingSources.length > 0
                         ? groundingSources

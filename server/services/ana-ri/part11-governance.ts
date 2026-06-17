@@ -19,7 +19,7 @@
  */
 
 /** AnA command names whose effect alters the regulatory record and therefore
- * requires a Part 11 reason-for-change + e-signature. Scoped deliberately to
+ * require, at minimum, a Part 11 reason-for-change. Scoped deliberately to
  * record-altering mutations — drafting/search/list commands are not gated. */
 export const PART11_GOVERNED_COMMANDS: ReadonlySet<string> = new Set<string>([
   'place_in_dossier',
@@ -27,6 +27,23 @@ export const PART11_GOVERNED_COMMANDS: ReadonlySet<string> = new Set<string>([
   'create_milestone',
   'update_milestone',
   'update_artifact_status',
+  'freeze_document',
+  'sign_document',
+  'submit_document',
+  'create_submission_package',
+]);
+
+/**
+ * High-impact subset: actions that alter the official record irreversibly or
+ * change submission state. These require a manifested ELECTRONIC SIGNATURE
+ * (re-authentication) in addition to a reason-for-change. The remaining governed
+ * commands (milestone/status transitions) require a reason-for-change only.
+ *
+ * Tiered policy: reason-for-change always; e-signature for high-impact.
+ */
+export const PART11_ESIGN_COMMANDS: ReadonlySet<string> = new Set<string>([
+  'place_in_dossier',
+  'revert_to_version',
   'freeze_document',
   'sign_document',
   'submit_document',
@@ -52,9 +69,15 @@ export interface Part11Signoff {
   signaturePurpose?: string;
 }
 
-/** Does this command require a Part 11 sign-off before it may execute? */
+/** Does this command require a Part 11 sign-off (at least a reason-for-change)? */
 export function requiresPart11Signoff(command: string): boolean {
   return PART11_GOVERNED_COMMANDS.has(command);
+}
+
+/** Does this command additionally require a manifested electronic signature
+ * (re-authentication), not just a reason-for-change? */
+export function requiresEsignature(command: string): boolean {
+  return PART11_ESIGN_COMMANDS.has(command);
 }
 
 export interface SignoffValidation {
@@ -65,11 +88,16 @@ export interface SignoffValidation {
 }
 
 /**
- * Pure: validate a sign-off. Fail-closed — anything missing or unverified is a
- * rejection. Requires a non-trivial reason-for-change AND a server-verified
- * signature.
+ * Pure: validate a sign-off, fail-closed. A non-trivial reason-for-change is
+ * ALWAYS required. A server-verified electronic signature is required only when
+ * `opts.requireSignature` is true (the high-impact tier). Defaults to requiring
+ * the signature, so callers that don't opt out get the strictest behavior.
  */
-export function validateSignoff(signoff: Part11Signoff | undefined): SignoffValidation {
+export function validateSignoff(
+  signoff: Part11Signoff | undefined,
+  opts: { requireSignature?: boolean } = {}
+): SignoffValidation {
+  const requireSignature = opts.requireSignature !== false;
   if (!signoff) {
     return { ok: false, code: 'MISSING_SIGNOFF', error: 'A Part 11 sign-off is required for this action.' };
   }
@@ -84,7 +112,7 @@ export function validateSignoff(signoff: Part11Signoff | undefined): SignoffVali
       error: `The reason for change must be at least ${MIN_REASON_FOR_CHANGE_LEN} characters.`,
     };
   }
-  if (signoff.signatureVerified !== true) {
+  if (requireSignature && signoff.signatureVerified !== true) {
     return {
       ok: false,
       code: 'SIGNATURE_NOT_VERIFIED',
@@ -96,7 +124,8 @@ export function validateSignoff(signoff: Part11Signoff | undefined): SignoffVali
 
 /** The structured fail-closed result returned when a governed command is
  * attempted without a valid sign-off. `openModal: 'esign'` cues the client to
- * collect the reason-for-change + signature, then retry with the sign-off. */
+ * collect the reason-for-change (+ signature when `signatureRequired`), then
+ * retry via POST /governed-action with the sign-off. */
 export function buildSignatureRequiredResult(
   command: string,
   validation: SignoffValidation,
@@ -109,20 +138,30 @@ export function buildSignatureRequiredResult(
   openModal: 'esign';
   data: {
     reasonRequired: true;
+    /** True for the high-impact tier (e-signature also required). */
+    signatureRequired: boolean;
     code: SignoffValidation['code'];
     /** Everything the client needs to re-submit via POST /governed-action. */
     retry: { command: string; params: Record<string, unknown> };
   };
 } {
+  const signatureRequired = requiresEsignature(command);
   return {
     success: false,
     action: command,
     error: 'PART11_SIGNATURE_REQUIRED',
     message:
       validation.error ??
-      'This action alters a governed record and requires a reason for change and an electronic signature.',
+      (signatureRequired
+        ? 'This action alters a governed record and requires a reason for change and an electronic signature.'
+        : 'This action requires a reason for change.'),
     openModal: 'esign',
-    data: { reasonRequired: true, code: validation.code, retry: { command, params: params ?? {} } },
+    data: {
+      reasonRequired: true,
+      signatureRequired,
+      code: validation.code,
+      retry: { command, params: params ?? {} },
+    },
   };
 }
 

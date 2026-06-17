@@ -20,6 +20,7 @@ import { getSinceLastVisit } from '../../services/ana/since-last-visit.js';
 import { executeCommands, type CommandContext } from '../../services/ana-ri/command-executor.js';
 import {
   requiresPart11Signoff,
+  requiresEsignature,
   MIN_REASON_FOR_CHANGE_LEN,
 } from '../../services/ana-ri/part11-governance.js';
 import {
@@ -245,10 +246,17 @@ export function mountUtilityRoutes(router: Router): void {
       );
     }
 
-    // §11.200: re-verify the signer's identity server-side (never a client flag).
-    const verification = await verifySignerCredentials(defaultSignoffDeps, { userId, password, mfaToken });
-    if (!verification.verified) {
-      return sendError(res, 401, verification.error || 'Signature verification failed', { code: verification.code }, 'SIGNATURE_REJECTED');
+    // Tiered policy: high-impact actions additionally require a manifested
+    // e-signature; the rest require only the reason-for-change. §11.200:
+    // re-verify the signer server-side for the e-sign tier (never a client flag).
+    const eSignRequired = requiresEsignature(command);
+    let secondFactorVerified = false;
+    if (eSignRequired) {
+      const verification = await verifySignerCredentials(defaultSignoffDeps, { userId, password, mfaToken });
+      if (!verification.verified) {
+        return sendError(res, 401, verification.error || 'Signature verification failed', { code: verification.code }, 'SIGNATURE_REJECTED');
+      }
+      secondFactorVerified = verification.secondFactorVerified;
     }
 
     // §11.10(e): record the sign-off to the audit trail before executing.
@@ -256,12 +264,12 @@ export function mountUtilityRoutes(router: Router): void {
       await auditService.logAction({
         tenantId: numericOrgId,
         userId,
-        action: 'ana.governed_action.signoff',
+        action: eSignRequired ? 'ana.governed_action.esign' : 'ana.governed_action.reason',
         resourceType: 'ana_command',
         resourceId: command,
         ipAddress: (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() || req.socket?.remoteAddress || undefined,
         userAgent: req.headers['user-agent'] as string | undefined,
-        details: { command, reasonForChange, secondFactorVerified: verification.secondFactorVerified },
+        details: { command, reasonForChange, eSignRequired, secondFactorVerified },
       });
     } catch (auditErr: any) {
       // No governed mutation without a durable audit record.
@@ -274,7 +282,9 @@ export function mountUtilityRoutes(router: Router): void {
       part11Enforce: true,
       signoff: {
         reasonForChange,
-        signatureVerified: true,
+        // For the reason-only tier there is no e-signature; the gate does not
+        // require one for these commands (validateSignoff requireSignature=false).
+        signatureVerified: eSignRequired,
         signaturePurpose: 'approval',
       },
     };
