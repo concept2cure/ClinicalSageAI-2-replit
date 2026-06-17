@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-17T04:26:00.937Z",
+  "generatedAt": "2026-06-17T04:38:21.237Z",
   "git": {
-    "sha": "3d3267e2b109d073542b8ff9fa516ce04159eab1",
+    "sha": "7306229d588456ebefb0485d6c1e13664c60e896",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2359,12 +2359,12 @@
         "lines": 1816
       },
       {
-        "file": "design-system/ui_kits/home/Projects.jsx",
-        "lines": 1796
+        "file": "server/services/ana-ri/orchestrator.ts",
+        "lines": 1798
       },
       {
-        "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1786
+        "file": "design-system/ui_kits/home/Projects.jsx",
+        "lines": 1796
       },
       {
         "file": "server/routes/ana-cortex-ft.ts",
