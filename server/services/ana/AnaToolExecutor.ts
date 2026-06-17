@@ -40,6 +40,7 @@ import {
   type SubmissionType,
 } from '../ana-ri/deficiency-taxonomy.js';
 import { getDeadlineRadar } from './deadline-radar.js';
+import { getSessionBriefing } from './session-briefing.js';
 import { compileGovernedResponseAssembly } from '../regulatory-correspondence/response-package-compiler.js';
 import type { CorrespondenceIssue } from '../../../shared/types/regulatory-correspondence.js';
 import {
@@ -869,6 +870,45 @@ registerToolHandler('compile_correspondence_response_package', async (input) => 
     revisedArtifactIds,
   });
   return JSON.stringify({ source: 'AnA Correspondence Response Package', ...assembly });
+});
+
+// Session briefing — tenant-scoped reconciliation of overdue/due-soon deadlines
+// + recent decisions, for opening a session or re-orienting. Fails closed when
+// no organization is in context. Deterministic.
+registerToolHandler('get_session_briefing', async (input, ctx) => {
+  const organizationId = ctx?.organizationId ? Number(ctx.organizationId) : null;
+  if (!organizationId || Number.isNaN(organizationId)) {
+    return JSON.stringify({
+      source: 'AnA Session Briefing',
+      error: 'No organization is in context, so a session briefing cannot be scoped.',
+    });
+  }
+  const decisionLimit =
+    typeof input.decision_limit === 'number' && input.decision_limit > 0
+      ? Math.min(Math.floor(input.decision_limit), 25)
+      : 5;
+  const windowDays =
+    typeof input.window_days === 'number' && input.window_days > 0
+      ? Math.min(Math.floor(input.window_days), 365)
+      : 30;
+  try {
+    const { data } = await getSessionBriefing({
+      organizationId,
+      projectId: ctx?.projectId ?? null,
+      decisionLimit,
+      windowDays,
+    });
+    return JSON.stringify({
+      source: 'AnA Session Briefing',
+      deadlines: { summary: data.deadlines.summary, items: data.deadlines.items },
+      decisions: data.decisions,
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'AnA Session Briefing',
+      error: `Session briefing failed: ${e instanceof Error ? e.message : String(e)}`,
+    });
+  }
 });
 
 // Global-RI deterministic expert tools — registry-grounded cross-market regulatory
