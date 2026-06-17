@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-17T16:29:03.584Z",
+  "generatedAt": "2026-06-17T18:01:17.576Z",
   "git": {
-    "sha": "41a430f8b3dc57943aab05b867b892077f212ce0",
+    "sha": "82fc3c6dbc418bc10449bb4878bd43e24117124e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 93,
+        "count": 94,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -88,6 +88,7 @@
           "server/services/ocr/index.ts",
           "server/services/orchestration/index.ts",
           "server/services/pathway-engines/index.ts",
+          "server/services/projects/schedule-of-events/index.ts",
           "server/services/ptrs/index.ts",
           "server/services/reasoning-engine/index.ts",
           "server/services/regulatory-precedent-intelligence/index.ts",
@@ -407,6 +408,20 @@
         ]
       },
       {
+        "basename": "templates",
+        "count": 8,
+        "paths": [
+          "client/src/concept2cure/components/concept2cure-projects/data/templates.ts",
+          "design-system/ui_kits/mdx/data/templates.js",
+          "design-system/ui_kits/mdx/surfaces/Templates.jsx",
+          "server/routes/c2c/templates.ts",
+          "server/routes/templates.ts",
+          "server/services/projects/schedule-of-events/templates.ts",
+          "ui_kits/mdx/data/templates.js",
+          "ui_kits/mdx/surfaces/Templates.jsx"
+        ]
+      },
+      {
         "basename": "programs",
         "count": 7,
         "paths": [
@@ -430,19 +445,6 @@
           "client/src/concept2cure/risk/shell/TabBar.tsx",
           "client/src/concept2cure/submission/shell/TabBar.tsx",
           "client/src/concept2cure/tasking/shell/TabBar.tsx"
-        ]
-      },
-      {
-        "basename": "templates",
-        "count": 7,
-        "paths": [
-          "client/src/concept2cure/components/concept2cure-projects/data/templates.ts",
-          "design-system/ui_kits/mdx/data/templates.js",
-          "design-system/ui_kits/mdx/surfaces/Templates.jsx",
-          "server/routes/c2c/templates.ts",
-          "server/routes/templates.ts",
-          "ui_kits/mdx/data/templates.js",
-          "ui_kits/mdx/surfaces/Templates.jsx"
         ]
       },
       {
@@ -957,6 +959,15 @@
           "client/src/concept2cure/mdx/surfaces/pathway/FilesTreePane.tsx",
           "design-system/_sync/reconciliation-2026-06-02/files/FilesTreePane.jsx",
           "design-system/ui_kits/mdx/FilesTreePane.jsx"
+        ]
+      },
+      {
+        "basename": "health",
+        "count": 3,
+        "paths": [
+          "server/routes/chat/health.ts",
+          "server/routes/health.ts",
+          "server/services/projects/schedule-of-events/health.ts"
         ]
       },
       {
@@ -1591,14 +1602,6 @@
         ]
       },
       {
-        "basename": "health",
-        "count": 2,
-        "paths": [
-          "server/routes/chat/health.ts",
-          "server/routes/health.ts"
-        ]
-      },
-      {
         "basename": "helpers",
         "count": 2,
         "paths": [
@@ -2186,7 +2189,7 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 777042
+        "bytes": 783643
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2194,11 +2197,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 512553
+        "bytes": 519054
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 378170
+        "bytes": 384340
       },
       {
         "file": "server/statistics-service.ts",
@@ -2244,7 +2247,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 18772
+        "lines": 18915
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2252,11 +2255,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 10476
+        "lines": 10633
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 6957
+        "lines": 7097
       },
       {
         "file": "server/statistics-service.ts",
@@ -2424,7 +2427,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 347,
+      "duplicateGroups": 350,
       "largeByBytes": 11,
       "largeByLines": 34
     },
