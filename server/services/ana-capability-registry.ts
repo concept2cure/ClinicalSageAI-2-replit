@@ -438,6 +438,30 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
 
+  // ── Compute (2) ───────────────────────────────────────────
+  {
+    capabilityKey: 'run-python-script',
+    category: 'compute',
+    name: 'Run Python Script (Sandboxed)',
+    description:
+      'Write and run Python 3 in an isolated sandbox (no network, bounded CPU/memory, wall-clock timeout) to do something precisely — data transforms, parsing, numerical/biostat checks, generating intermediate artifacts, or bespoke manipulation no structured tool covers. Returns stdout, stderr, and any files the script produced.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: [],
+  },
+  {
+    capabilityKey: 'insert-document-content',
+    category: 'compute',
+    name: 'Targeted Document Insertion',
+    description:
+      'Make precise, surgical insertions into an existing Word (.docx) document at exact anchors — heading text, placeholder token, paragraph index, or document start/end — inserting before/after or replacing. The governed equivalent of scripting exact edits; preserves the source and returns a per-insertion outcome report.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+
   // ── Commitments (2) ───────────────────────────────────────
   {
     capabilityKey: 'extract-commitments',
@@ -614,6 +638,7 @@ export async function buildAnaCapabilityContext(
   const categoryOrder = [
     'drafting', 'compliance', 'analysis', 'intelligence',
     'knowledge', 'prediction', 'submission', 'workflow',
+    'formatting', 'compute', 'commitments',
   ];
 
   for (const cat of categoryOrder) {

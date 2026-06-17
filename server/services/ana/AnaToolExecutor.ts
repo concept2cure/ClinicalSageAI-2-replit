@@ -3876,6 +3876,180 @@ registerToolHandler('convert_docx_to_pdf', async (input) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// General-purpose scripting sandbox handler — runs AnA-authored Python in the
+// isolated compute worker (no network, bounded CPU/memory, wall-clock SIGKILL).
+// Persists any files the script produced to a session tempdir and returns
+// truncated stdout/stderr plus the output file paths. This is AnA's "write a
+// Python script to do X precisely" capability, governed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SCRIPT_OUTPUT_CAP = 4000; // chars of stdout/stderr returned to the model
+
+function truncateForModel(s: string, cap = SCRIPT_OUTPUT_CAP): string {
+  if (typeof s !== 'string') return '';
+  if (s.length <= cap) return s;
+  return `${s.slice(0, cap)}\n…[truncated ${s.length - cap} chars]`;
+}
+
+registerToolHandler('run_python_script', async (input, ctx) => {
+  const code = typeof input.code === 'string' ? input.code : '';
+  if (!code.trim()) {
+    return JSON.stringify({ error: 'run_python_script requires code (non-empty string).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'run_python_script requires tenant context (organizationId).' });
+  }
+
+  const inputFiles =
+    input.input_files && typeof input.input_files === 'object'
+      ? (input.input_files as Record<string, string>)
+      : undefined;
+  const cpuSeconds = typeof input.cpu_seconds === 'number' ? input.cpu_seconds : undefined;
+  const timeoutMs = typeof input.timeout_ms === 'number' ? input.timeout_ms : undefined;
+
+  try {
+    const { runPythonScriptIsolated } = await import('../compute/scriptWorker.js');
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { randomUUID } = await import('crypto');
+
+    const result = await runPythonScriptIsolated({
+      code,
+      inputFiles,
+      cpuSeconds,
+      timeoutMs,
+    });
+
+    // Persist produced files so downstream tools / the user have stable paths.
+    const outputFilePaths: Array<{ name: string; path: string; bytes: number } | { name: string; tooLarge: true }> = [];
+    const entries = Object.entries(result.outputFiles ?? {});
+    if (entries.length > 0) {
+      const outDir = path.resolve(process.cwd(), 'tmp', 'ana-scripts', randomUUID().slice(0, 8));
+      await fs.mkdir(outDir, { recursive: true });
+      for (const [name, b64] of entries) {
+        if (b64 == null) {
+          outputFilePaths.push({ name, tooLarge: true });
+          continue;
+        }
+        const safe = path.basename(name);
+        const dest = path.join(outDir, safe);
+        const buf = Buffer.from(b64, 'base64');
+        await fs.writeFile(dest, buf);
+        outputFilePaths.push({ name, path: dest, bytes: buf.length });
+      }
+    }
+
+    return JSON.stringify({
+      ok: result.ok,
+      engine: 'python-script (isolated, no-network)',
+      stdout: truncateForModel(result.stdout),
+      stderr: truncateForModel(result.stderr),
+      error: result.error ? truncateForModel(result.error) : null,
+      outputFiles: outputFilePaths,
+      network: result.network,
+      message: result.ok
+        ? `Script ran successfully${outputFilePaths.length ? ` and produced ${outputFilePaths.length} file(s)` : ''}.`
+        : 'Script raised an error — see error/stderr.',
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `run_python_script failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify python3 is available on the host (see services/Dockerfile).`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Targeted document insertion handler — surgical edits to an existing .docx via
+// python-docx in the isolated worker. Reads the source document, applies the
+// requested insertions at exact anchors, persists the edited .docx (and an
+// optional PDF), and returns the per-insertion outcome report. The source is
+// preserved as the editable record.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('insert_document_content', async (input, ctx) => {
+  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
+  if (!inputDocxPath) {
+    return JSON.stringify({ error: 'insert_document_content requires input_docx_path (string).' });
+  }
+  if (!Array.isArray(input.insertions) || input.insertions.length === 0) {
+    return JSON.stringify({ error: 'insert_document_content requires insertions (non-empty array).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'insert_document_content requires tenant context (organizationId).' });
+  }
+
+  const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
+
+  // Normalize the model's snake_case insertion shape into the worker's camelCase.
+  const insertions = (input.insertions as Array<Record<string, unknown>>).map(ins => ({
+    anchorType: ins.anchor_type as
+      | 'heading_text'
+      | 'placeholder'
+      | 'paragraph_index'
+      | 'start'
+      | 'end',
+    anchorValue: ins.anchor_value as string | number | undefined,
+    position: (ins.position as 'before' | 'after' | 'replace' | undefined) ?? 'after',
+    match: (ins.match as 'exact' | 'contains' | undefined) ?? 'contains',
+    content: typeof ins.content === 'string' ? ins.content : '',
+  }));
+
+  try {
+    const { runDocxInsertIsolated } = await import('../compute/scriptWorker.js');
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { randomUUID } = await import('crypto');
+
+    const sourceBuf = await fs.readFile(inputDocxPath);
+    const baseName = path.basename(inputDocxPath, path.extname(inputDocxPath));
+    const result = await runDocxInsertIsolated(sourceBuf, insertions, `${baseName}.edited.docx`);
+
+    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    await fs.mkdir(outDir, { recursive: true });
+    const docxPath = path.join(outDir, result.fileName);
+    await fs.writeFile(docxPath, result.buffer);
+
+    const notFound = result.applied.filter(a => a.status !== 'applied');
+
+    if (fmt === 'pdf') {
+      const { runDocxPdfPipeline } = await import('../docx-pdf-pipeline.js');
+      const pipeline = await runDocxPdfPipeline({ inputDocxPath: docxPath });
+      return JSON.stringify({
+        ok: notFound.length === 0,
+        engine: 'python-docx (targeted insert) + libreoffice',
+        sourceDocxPath: inputDocxPath,
+        docxPath,
+        pdfPath: pipeline.finalPdf,
+        applied: result.applied,
+        message: `Applied ${result.applied.length - notFound.length}/${result.applied.length} insertion(s) and rendered PDF.${
+          notFound.length ? ` ${notFound.length} anchor(s) not found.` : ''
+        }`,
+      });
+    }
+
+    return JSON.stringify({
+      ok: notFound.length === 0,
+      engine: 'python-docx (targeted insert)',
+      sourceDocxPath: inputDocxPath,
+      docxPath,
+      sizeBytes: result.buffer.length,
+      applied: result.applied,
+      message: `Applied ${result.applied.length - notFound.length}/${result.applied.length} insertion(s) to ${baseName}.${
+        notFound.length ? ` ${notFound.length} anchor(s) not found — review the applied report.` : ''
+      }`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `insert_document_content failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify the source .docx path exists and python3 + python-docx are available on the host.`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX mutation handlers — Q-Sub creation, commitment rollover, program
 // metadata binding. Each routes through the existing service layer so the
 // tenant-scoping + audit + business rules stay in one place; the handler

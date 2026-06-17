@@ -4726,6 +4726,126 @@ export const CONVERT_DOCX_TO_PDF: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// General-purpose scripting sandbox — AnA's "write a Python script to do X
+// precisely" capability, governed. Runs AnA-authored Python inside the
+// isolated compute worker (workers/artifact-compute/python-script-runtime.py):
+// ephemeral tempdir, NO network egress, bounded CPU time + address space, and
+// a wall-clock SIGKILL. Optional input files are written into the script's
+// working directory; any files the script produces are captured and returned.
+//
+// Use for data transforms, parsing, numerical checks, building intermediate
+// artifacts, and bespoke manipulation that no structured tool covers. This is
+// NOT a path to the host filesystem or shell — the sandbox cwd is a throwaway
+// tempdir with no network and no access to the application's files.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const RUN_PYTHON_SCRIPT: AnaTool = {
+  name: 'run_python_script',
+  description:
+    "Write and run a Python 3 script in AnA's isolated sandbox to do something precisely — data transforms, parsing, numerical/biostat checks, generating intermediate files, bespoke manipulation no other tool covers. The script runs in an ephemeral tempdir with NO network access, bounded CPU time, bounded memory, and a wall-clock timeout. Provide optional input_files (filename → base64) which are written into the script's working directory; the script reads/writes files relative to its cwd. Returns captured stdout, stderr, any error traceback, and any files the script created (base64, size-capped). The standard library plus python-docx, openpyxl, and common scientific packages available on the host can be imported. This is a sandbox: it cannot reach the network, the host filesystem outside its tempdir, or a shell. Tenant-scoped via ToolContext.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      code: {
+        type: 'string',
+        description:
+          "The Python 3 source to execute. Runs with __name__ == '__main__' and cwd set to the sandbox tempdir. Print results to stdout and/or write output files relative to cwd — both are returned to you.",
+      },
+      input_files: {
+        type: 'object',
+        description:
+          'Optional map of filename → base64-encoded bytes, written into the script working directory before execution (e.g. a CSV to parse, a .docx to transform). Filenames must be relative; path traversal is rejected.',
+        additionalProperties: { type: 'string' },
+      },
+      cpu_seconds: {
+        type: 'number',
+        description: 'Best-effort CPU-time cap in seconds (POSIX). Default 20.',
+      },
+      timeout_ms: {
+        type: 'number',
+        description: 'Wall-clock timeout in milliseconds before SIGKILL. Default 30000, max 120000.',
+      },
+    },
+    required: ['code'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Targeted document insertion — the governed, document-aware equivalent of
+// "write a Python script to make the targeted insertions precisely". Surgically
+// inserts content into an existing .docx at exact anchors (heading text,
+// placeholder token, paragraph index, start/end) using python-docx inside the
+// isolated worker (workers/artifact-compute/docx-insert-runtime.py). The source
+// document is preserved; a new edited .docx is produced with a per-insertion
+// outcome report.
+//
+// Prefer this over author_docx_native when the document already exists and you
+// need precise edits rather than full re-authoring (e.g. drop a new subsection
+// after "10.3 Statistical Methods", fill a {{SPONSOR}} placeholder, append a
+// paragraph at the end). Tenant-scoped via ToolContext.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const INSERT_DOCUMENT_CONTENT: AnaTool = {
+  name: 'insert_document_content',
+  description:
+    "Make precise, targeted insertions into an existing Word (.docx) document using python-docx in the isolated worker — the governed equivalent of scripting exact edits. Locate anchors by heading text, placeholder token (e.g. {{SPONSOR}}), paragraph index, or document start/end, then insert content before/after the anchor or replace it. Content uses markdown-style paragraph syntax ('#'/'##'/'###' headings, '- '/'* ' bullets, '1. ' numbered, plain lines as body paragraphs). The original .docx is preserved as the source; a new edited .docx is written and its path returned, along with a per-insertion report (applied / anchor_not_found). Use when a document already exists and needs surgical edits rather than full re-authoring. For full document authoring use author_docx_native; for tables/images use that path. Tenant-scoped via ToolContext.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      input_docx_path: {
+        type: 'string',
+        description:
+          'Absolute path to the source .docx to edit (typically the docxPath returned by author_docx_native, generate_document, or fetch_template_and_fill).',
+      },
+      insertions: {
+        type: 'array',
+        description: 'Ordered list of targeted insertions to apply.',
+        items: {
+          type: 'object',
+          properties: {
+            anchor_type: {
+              type: 'string',
+              enum: ['heading_text', 'placeholder', 'paragraph_index', 'start', 'end'],
+              description:
+                "How to locate the insertion point. 'heading_text'/'placeholder' match paragraph text, 'paragraph_index' is a 0-based index, 'start'/'end' target the document boundaries (no anchor_value needed).",
+            },
+            anchor_value: {
+              type: 'string',
+              description:
+                "The heading text, placeholder token, or paragraph index (as a string) to match. Omit for 'start'/'end'.",
+            },
+            position: {
+              type: 'string',
+              enum: ['before', 'after', 'replace'],
+              description:
+                "Where to place content relative to the anchor. Default 'after'. 'replace' with a placeholder substitutes the token inline; 'replace' with another anchor type removes the matched paragraph and inserts in its place.",
+            },
+            match: {
+              type: 'string',
+              enum: ['exact', 'contains'],
+              description: "For text anchors: 'exact' matches the trimmed paragraph, 'contains' (default) matches a substring.",
+            },
+            content: {
+              type: 'string',
+              description:
+                "Markdown-style content to insert. Supported: '#'/'##'/'###' headings, '- '/'* ' bullets, '1. ' numbered lists, plain lines as body paragraphs.",
+            },
+          },
+          required: ['anchor_type', 'content'],
+        },
+      },
+      output_format: {
+        type: 'string',
+        enum: ['docx', 'pdf'],
+        description:
+          "Output format. 'docx' (default) returns the edited Word document; 'pdf' additionally converts via headless LibreOffice.",
+      },
+    },
+    required: ['input_docx_path', 'insertions'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX kit-section write-back — closes the loop between AnA's drafting and the
 // kit's section editors (K510Surface, PmaSurface, CerSurface). When the model
 // has produced a draft section (cover letter, SE discussion, device
@@ -5870,6 +5990,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   FETCH_TEMPLATE_AND_FILL,
   AUTHOR_DOCX_NATIVE,
   CONVERT_DOCX_TO_PDF,
+  RUN_PYTHON_SCRIPT,
+  INSERT_DOCUMENT_CONTENT,
   WRITE_KIT_SECTION,
   CREATE_Q_SUB,
   UPDATE_Q_SUB_COMMITMENT_ROLLED_IN,
