@@ -38,7 +38,7 @@ import { getSessionBriefing } from '../ana/session-briefing.js';
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const VALID_LENSES: IntentLens[] = ['auto', 'audit', 'improve', 'risk', 'strategy', 'compare'];
-const VALID_ROLES: UserRole[] = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'investor', 'general'];
+const VALID_ROLES: UserRole[] = ['ceo', 'ra_lead', 'medical_writer', 'clinical_lead', 'cmc_lead', 'biostatistician', 'pharmacovigilance', 'quality', 'investor', 'general'];
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

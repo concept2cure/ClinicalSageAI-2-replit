@@ -111,6 +111,9 @@ export const VALID_ROLES: Set<UserRole> = new Set<UserRole>([
   'medical_writer',
   'clinical_lead',
   'cmc_lead',
+  'biostatistician',
+  'pharmacovigilance',
+  'quality',
   'investor',
   'general',
 ]);
