@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-17T19:26:18.606Z",
+  "generatedAt": "2026-06-17T19:40:36.615Z",
   "git": {
-    "sha": "653d589ab44f3b9a54e0037073834cccfc4ffaf4",
+    "sha": "31e23cf05bcc4ba297b06faee349e5b18d3cf6ea",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 219,
+    "duplicateBasenames": 220,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -1578,6 +1578,14 @@
         ]
       },
       {
+        "basename": "governed-action-signoff.test",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx",
+          "server/services/ana-ri/__tests__/governed-action-signoff.test.ts"
+        ]
+      },
+      {
         "basename": "grants",
         "count": 2,
         "paths": [
@@ -2213,7 +2221,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 177468
+        "bytes": 177622
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2275,7 +2283,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4726
+        "lines": 4728
       },
       {
         "file": "server/storage.ts",
@@ -2427,7 +2435,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 350,
+      "duplicateGroups": 351,
       "largeByBytes": 11,
       "largeByLines": 34
     },
@@ -2439,7 +2447,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 147,
+      "duplicateGroups": 148,
       "largeByBytes": 0,
       "largeByLines": 1
     },
