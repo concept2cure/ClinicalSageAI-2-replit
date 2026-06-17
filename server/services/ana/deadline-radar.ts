@@ -148,3 +148,42 @@ export async function getDeadlineRadar(opts: {
     includeCompleted: opts.includeCompleted,
   });
 }
+
+/**
+ * Pure: render a compact system-prompt context block from a radar result,
+ * limited to OVERDUE + DUE_SOON items (the ones worth proactively surfacing).
+ * Returns '' when there is nothing pressing, so callers can append unconditionally.
+ */
+export function buildDeadlineRadarBlock(radar: RadarResult, opts: { maxItems?: number } = {}): string {
+  const maxItems = opts.maxItems && opts.maxItems > 0 ? opts.maxItems : 8;
+  const overdue = radar.items.filter(i => i.bucket === 'overdue');
+  const dueSoon = radar.items.filter(i => i.bucket === 'due_soon');
+  if (overdue.length === 0 && dueSoon.length === 0) return '';
+
+  const fmt = (i: RadarItem): string => {
+    const agency = i.agency ? `[${i.agency}] ` : '';
+    const when =
+      i.daysUntilDue < 0
+        ? `${Math.abs(i.daysUntilDue)}d overdue`
+        : `due in ${i.daysUntilDue}d`;
+    const prio = i.priority ? `, priority: ${i.priority}` : '';
+    const consequence = i.consequenceOfNonCompliance
+      ? ` — consequence: ${i.consequenceOfNonCompliance}`
+      : '';
+    return `- ${agency}${i.title ?? 'Untitled obligation'} (${when}${prio})${consequence}`;
+  };
+
+  const lines: string[] = [
+    '<regulatory_deadlines note="Proactively surface OVERDUE and CRITICAL DUE-SOON items in one calm line before the rest of your answer. These are tracked obligations — do not invent dates; if the user asks for more, call regulatory_deadline_radar.">',
+  ];
+  if (overdue.length > 0) {
+    lines.push(`OVERDUE (${overdue.length}):`);
+    lines.push(...overdue.slice(0, maxItems).map(fmt));
+  }
+  if (dueSoon.length > 0) {
+    lines.push(`DUE SOON within ${radar.windowDays}d (${dueSoon.length}):`);
+    lines.push(...dueSoon.slice(0, maxItems).map(fmt));
+  }
+  lines.push('</regulatory_deadlines>');
+  return lines.join('\n');
+}

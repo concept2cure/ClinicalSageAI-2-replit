@@ -225,6 +225,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       _projectIntelligenceProfile: streamProjectProfile,
       _relationalOverlay: prefetchedStreamContext.relationalOverlay,
       _externalIntelBlock: prefetchedStreamContext.externalIntelBlock,
+      _deadlineRadarBlock: prefetchedStreamContext.deadlineRadarBlock,
     });
     streamOrchestrationMs = Date.now() - streamPhaseStart;
 
