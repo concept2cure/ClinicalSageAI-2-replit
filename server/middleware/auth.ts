@@ -39,6 +39,32 @@ interface JWTPayload {
   organizationId?: string;
   orgId?: string;
   permissions?: string[];
+  // Token-class discriminators. Non-access tokens (refresh, MFA challenge,
+  // MFA-partial) are signed with the same secret as access tokens, so the
+  // access path MUST reject them explicitly.
+  type?: string;
+  mfaPending?: boolean;
+}
+
+/**
+ * SECURITY: reject any token that is not a full access token.
+ *
+ * Refresh tokens (`type: 'refresh'`), MFA challenge tokens
+ * (`type: 'mfa_challenge'`) and MFA-partial tokens (`mfaPending: true` /
+ * `role: 'pending_mfa'`) are all signed with the same JWT secret as access
+ * tokens. Without this guard a user who has only completed the password step
+ * could present a 5-minute partial/challenge token as a Bearer access token
+ * and bypass MFA entirely. Returns a reason string when the token must be
+ * rejected, or null when it is an acceptable access token.
+ */
+export function nonAccessTokenReason(decoded: JWTPayload): string | null {
+  if (decoded.mfaPending === true) return 'mfa_partial_token';
+  if (decoded.role === 'pending_mfa') return 'mfa_pending_role';
+  const type = typeof decoded.type === 'string' ? decoded.type.toLowerCase() : null;
+  if (type === 'refresh' || type === 'mfa_challenge' || type === 'mfa_partial') {
+    return type;
+  }
+  return null;
 }
 
 // Extend Request type to include user
@@ -89,6 +115,16 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 
   try {
     const decoded = verifyJwtWithRotation(token) as JWTPayload;
+
+    // SECURITY: a non-access token (refresh / MFA challenge / MFA partial) must
+    // never authenticate a normal request, otherwise MFA can be bypassed.
+    const nonAccess = nonAccessTokenReason(decoded);
+    if (nonAccess) {
+      return res.status(401).json({
+        error: { code: 'AUTH_008', message: 'Token is not valid for this operation' },
+      });
+    }
+
     const subject = decoded.userId ?? decoded.id ?? decoded.sub;
     if (subject === undefined || subject === null || subject === '' || subject === 0) {
       // A signed token with no usable subject claim must not authenticate.
@@ -242,9 +278,13 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   try {
     const decoded = verifyJwtWithRotation(token) as JWTPayload;
     const subject = decoded.userId ?? decoded.id ?? decoded.sub;
-    // Silently ignore tokens without a usable subject — optional auth
-    // continues unauthenticated rather than attaching a phantom user.
-    if (subject !== undefined && subject !== null && subject !== '' && subject !== 0) {
+    // Silently ignore tokens without a usable subject, and never attach a user
+    // from a non-access (refresh / MFA challenge / partial) token — optional
+    // auth continues unauthenticated rather than attaching a phantom user.
+    if (
+      !nonAccessTokenReason(decoded) &&
+      subject !== undefined && subject !== null && subject !== '' && subject !== 0
+    ) {
       req.user = {
         id: subject,
         userId: subject,

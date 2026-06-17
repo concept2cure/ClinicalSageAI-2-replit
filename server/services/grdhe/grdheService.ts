@@ -75,6 +75,58 @@ function getCurrentUserId(): string {
 }
 
 /**
+ * SECURITY: Allow-list of valid data-residency regions. The data_region enum
+ * is defined in the regulatory_harmonization schema; we mirror it here so that
+ * client-supplied region values are validated before they reach SQL. Any value
+ * not in this set is rejected (defense against SQL injection + bad enum casts).
+ */
+const VALID_DATA_REGIONS: ReadonlySet<string> = new Set([
+  'US_EAST', 'US_WEST', 'EU_WEST', 'EU_CENTRAL', 'UK_SOUTH',
+  'JP_EAST', 'CA_CENTRAL', 'AU_EAST', 'GLOBAL',
+]);
+
+/**
+ * SECURITY: Field names eligible for field-level encryption must be simple
+ * snake_case identifiers. This both validates intent and forecloses injection
+ * via the field-name array.
+ */
+const FIELD_NAME_PATTERN = /^[a-z][a-z0-9_]{0,62}$/;
+
+/**
+ * Build a fully parameterized Postgres array of data_region enum values.
+ * Each element is bound as a parameter (never string-interpolated) and the
+ * whole array is cast to the enum array type. Invalid regions throw.
+ */
+function buildRegionArray(regions: readonly string[] | undefined) {
+  const values = (regions && regions.length > 0 ? regions : ['US_EAST']);
+  for (const r of values) {
+    if (!VALID_DATA_REGIONS.has(r)) {
+      throw new Error(`Invalid data region: ${JSON.stringify(r)}`);
+    }
+  }
+  const elements = sql.join(values.map((r) => sql`${r}`), sql`, `);
+  return sql`ARRAY[${elements}]::regulatory_harmonization.data_region[]`;
+}
+
+/**
+ * Build a fully parameterized Postgres text[] of field-level-encryption field
+ * names. Each element is bound as a parameter and validated against a strict
+ * identifier pattern. Invalid names throw.
+ */
+function buildEncryptionFieldArray(fields: readonly string[] | undefined) {
+  const values = (fields && fields.length > 0
+    ? fields
+    : ['ssn', 'dob', 'medical_record_number', 'patient_name']);
+  for (const f of values) {
+    if (typeof f !== 'string' || !FIELD_NAME_PATTERN.test(f)) {
+      throw new Error(`Invalid field-level encryption field name: ${JSON.stringify(f)}`);
+    }
+  }
+  const elements = sql.join(values.map((f) => sql`${f}`), sql`, `);
+  return sql`ARRAY[${elements}]::text[]`;
+}
+
+/**
  * Format date according to specified format
  */
 function formatDate(date: Date | string, format: string): string {
@@ -228,7 +280,7 @@ export class GRDHEService {
       ) VALUES (
         ${config.tenantId}::uuid,
         ${config.primaryRegion || 'US_EAST'}::regulatory_harmonization.data_region,
-        ${sql.raw(`ARRAY[${(config.allowedProcessingRegions || ['US_EAST']).map(r => `'${r}'::regulatory_harmonization.data_region`).join(',')}]`)},
+        ${buildRegionArray(config.allowedProcessingRegions)},
         ${config.backupRegion || null}::regulatory_harmonization.data_region,
         ${config.gdprSubject ?? false},
         ${config.gdprLawfulBasis || null},
@@ -238,7 +290,7 @@ export class GRDHEService {
         ${config.crossBorderDocumentationUrl || null},
         ${config.encryptionAtRestRequired ?? true},
         ${config.encryptionInTransitRequired ?? true},
-        ${sql.raw(`ARRAY[${(config.fieldLevelEncryptionFields || ['ssn', 'dob', 'medical_record_number', 'patient_name']).map(f => `'${f}'`).join(',')}]`)},
+        ${buildEncryptionFieldArray(config.fieldLevelEncryptionFields)},
         ${config.encryptionAlgorithm || 'AES-256-GCM'},
         ${config.keyRotationDays ?? 90},
         ${config.clinicalTrialRetentionDays ?? 5475},
