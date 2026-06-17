@@ -51,6 +51,8 @@ import promotionalComplianceRouter from './global-ri/promotional-compliance.rout
 import controlledSubstancesRouter from './global-ri/controlled-substances.routes';
 import processValidationRouter from './global-ri/process-validation.routes';
 import clinicalEvidenceRouter from './global-ri/clinical-evidence-standards.routes';
+import establishmentRouter from './global-ri/establishment-registration.routes';
+import importExportRouter from './global-ri/import-export-licensing.routes';
 
 const router = Router();
 
@@ -89,5 +91,7 @@ router.use(promotionalComplianceRouter);
 router.use(controlledSubstancesRouter);
 router.use(processValidationRouter);
 router.use(clinicalEvidenceRouter);
+router.use(establishmentRouter);
+router.use(importExportRouter);
 
 export default router;

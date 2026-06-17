@@ -145,6 +145,36 @@ const EVIDENCE_STANDARD_TOOL: AnaAdvisoryToolSpec = {
   },
 };
 
+const ESTABLISHMENT_TOOL: AnaAdvisoryToolSpec = {
+  name: 'global_ri_establishment_registration',
+  description:
+    'Deterministic, registry-grounded lookup (no LLM, no fabrication) of manufacturer/establishment registration & ' +
+    'drug-listing obligations for a region (FDA 21 CFR 207 registration/listing/US-agent; EU MIA + Qualified Person). ' +
+    'Returns the scheme and its required elements with citations.',
+  input_schema: {
+    type: 'object',
+    properties: { region: { type: 'string', enum: ['FDA', 'EU'], description: 'Regulatory region.' } },
+    required: ['region'],
+  },
+};
+
+const IMPORT_EXPORT_TOOL: AnaAdvisoryToolSpec = {
+  name: 'global_ri_import_export',
+  description:
+    'Deterministic, registry-grounded lookup (no LLM, no fabrication) of import/export licensing for a medicinal product ' +
+    'by region (US FDA+DEA / EU) and category (finished_drug / controlled_substance / investigational / biological). ' +
+    'Returns the required authorisation, requirements, and citation.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      region: { type: 'string', enum: ['US', 'EU'], description: 'Regulatory region.' },
+      category: { type: 'string', enum: ['finished_drug', 'controlled_substance', 'investigational', 'biological'], description: 'Product category.' },
+      direction: { type: 'string', enum: ['import', 'export'], description: 'Optional trade direction (default import).' },
+    },
+    required: ['region', 'category'],
+  },
+};
+
 /** Extended global-RI tool specs (CMC, access, evidence & supply chain). */
 export const GLOBAL_RI_EXT_TOOL_SPECS: AnaAdvisoryToolSpec[] = [
   CMC_SPECIFICATIONS_TOOL,
@@ -157,4 +187,6 @@ export const GLOBAL_RI_EXT_TOOL_SPECS: AnaAdvisoryToolSpec[] = [
   CONTROLLED_SUBSTANCE_TOOL,
   PROCESS_VALIDATION_TOOL,
   EVIDENCE_STANDARD_TOOL,
+  ESTABLISHMENT_TOOL,
+  IMPORT_EXPORT_TOOL,
 ];

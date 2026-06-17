@@ -6097,6 +6097,82 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
       },
     },
   } as unknown as AnaTool,
+  // Evidence self-check: deterministically flag contradictions across gathered
+  // evidence claims (numeric mismatch / opposing polarity) BEFORE synthesis.
+  // Handler registered in AnaToolExecutor.
+  {
+    name: 'detect_evidence_contradictions',
+    description:
+      'Deterministically flag contradictions across gathered evidence (no LLM): same-subject numeric mismatches and ' +
+      'opposing positive/negative assertions. Pass structured claims (subject required; optional metric/value/polarity/date). ' +
+      'Use before stating a synthesized conclusion to catch self-contradicting sources.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        claims: {
+          type: 'array',
+          description: 'Structured evidence claims to cross-check.',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              source: { type: 'string' },
+              subject: { type: 'string', description: 'Entity the claim is about (required to pair claims).' },
+              metric: { type: 'string' },
+              value: { type: 'number' },
+              unit: { type: 'string' },
+              polarity: { type: 'string', enum: ['positive', 'negative', 'neutral'] },
+              date: { type: 'string' },
+              text: { type: 'string' },
+            },
+            required: ['subject'],
+          },
+        },
+        relativeTolerance: { type: 'number', description: 'Optional relative tolerance for numeric-mismatch detection (default 0.1).' },
+      },
+      required: ['claims'],
+    },
+  } as unknown as AnaTool,
+  // Evidence sufficiency: deterministically detect coverage gaps (geographic /
+  // population / outcome / temporal) so AnA offers to search further rather than
+  // answer on partial data. Handler registered in AnaToolExecutor.
+  {
+    name: 'detect_evidence_gaps',
+    description:
+      'Deterministically detect what the gathered evidence is MISSING relative to the question (no LLM): geographic, ' +
+      'population, outcome, and temporal/recency gaps. Returns gaps with suggested follow-up queries. Use to decide whether ' +
+      'to answer now or first offer to broaden the search.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'object',
+          description: 'What the answer should cover.',
+          properties: {
+            regions: { type: 'array', items: { type: 'string' }, description: 'Regions the answer should cover.' },
+            population: { type: 'string', description: 'Population the answer should cover (e.g. pediatric).' },
+            outcomeTypes: { type: 'array', items: { type: 'string', enum: ['efficacy', 'safety'] }, description: 'Outcome types required.' },
+            recencyYears: { type: 'number', description: 'Evidence should include something within this many years of asOfYear.' },
+            asOfYear: { type: 'number', description: 'Reference year for recency (required if recencyYears is set).' },
+          },
+        },
+        evidence: {
+          type: 'array',
+          description: 'The gathered evidence items.',
+          items: {
+            type: 'object',
+            properties: {
+              region: { type: 'string' },
+              population: { type: 'string' },
+              outcomeType: { type: 'string', enum: ['efficacy', 'safety', 'other'] },
+              year: { type: 'number' },
+            },
+          },
+        },
+      },
+      required: ['query', 'evidence'],
+    },
+  } as unknown as AnaTool,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

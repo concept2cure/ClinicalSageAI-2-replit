@@ -33,6 +33,8 @@ import { getPromotionalRules, type PromoRegion } from './promotional-compliance'
 import { getSchedule, type Schedule } from './controlled-substances';
 import { getProcessValidationFramework, type PvRegion } from './process-validation';
 import { getEvidenceStandard, type EvidenceRegion } from './clinical-evidence-standards';
+import { getEstablishmentFramework, type EstablishmentRegion } from './establishment-registration';
+import { getImportExportRequirements, type ImportExportRequirementsInput } from './import-export-licensing';
 
 /**
  * Route a global-RI tool call to its deterministic service. Throws for an unknown
@@ -88,6 +90,10 @@ export function dispatchGlobalRiTool(name: string, input: Record<string, unknown
       return getProcessValidationFramework((input as unknown as { region: PvRegion }).region);
     case 'global_ri_evidence_standard':
       return getEvidenceStandard((input as unknown as { region: EvidenceRegion }).region);
+    case 'global_ri_establishment_registration':
+      return getEstablishmentFramework((input as unknown as { region: EstablishmentRegion }).region);
+    case 'global_ri_import_export':
+      return getImportExportRequirements(input as unknown as ImportExportRequirementsInput);
     default:
       throw new Error(`Unknown global-RI tool "${name}"`);
   }
