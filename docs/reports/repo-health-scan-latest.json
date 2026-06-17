@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-17T18:01:17.576Z",
+  "generatedAt": "2026-06-17T19:16:31.789Z",
   "git": {
-    "sha": "82fc3c6dbc418bc10449bb4878bd43e24117124e",
+    "sha": "50e638dd16b7527e1d93285391a555d6a01884c7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2212,12 +2212,12 @@
         "bytes": 179637
       },
       {
-        "file": "server/routes/authoring.router.ts",
-        "bytes": 175783
+        "file": "server/services/ana-ri/command-executor.ts",
+        "bytes": 177429
       },
       {
-        "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 175667
+        "file": "server/routes/authoring.router.ts",
+        "bytes": 175783
       },
       {
         "file": "server/storage.ts",
@@ -2275,7 +2275,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4681
+        "lines": 4726
       },
       {
         "file": "server/storage.ts",
