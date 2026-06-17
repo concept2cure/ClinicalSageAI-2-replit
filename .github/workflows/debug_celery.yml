@@ -5,6 +5,9 @@ on:
   push:
     branches: [ main, chore/logging-apply-worker ]
 
+permissions:
+  contents: read
+
 jobs:
   debug-celery:
     name: Debug Celery
