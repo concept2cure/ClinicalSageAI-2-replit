@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-17T16:18:24.582Z",
+  "generatedAt": "2026-06-17T16:29:03.584Z",
   "git": {
-    "sha": "cd106220baa2063620b9ae8b1eafd84263b71855",
+    "sha": "41a430f8b3dc57943aab05b867b892077f212ce0",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2194,11 +2194,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 471214
+        "bytes": 512553
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 344038
+        "bytes": 378170
       },
       {
         "file": "server/statistics-service.ts",
@@ -2252,15 +2252,15 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 9556
+        "lines": 10476
+      },
+      {
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 6957
       },
       {
         "file": "server/statistics-service.ts",
         "lines": 6893
-      },
-      {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 6414
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2372,7 +2372,7 @@
       },
       {
         "file": "server/services/precedent-engine.ts",
-        "lines": 1749
+        "lines": 1763
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",

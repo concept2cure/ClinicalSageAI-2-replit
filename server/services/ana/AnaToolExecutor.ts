@@ -353,6 +353,542 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
   }
 });
 
+// Multi-query project knowledge search — fan out several sub-queries against
+// the active project's corpus in parallel, then merge + de-duplicate into one
+// relevance-ranked passage list. Lets AnA gather evidence across angles in a
+// single call instead of looping one search at a time.
+registerToolHandler('project_knowledge_search_multi', async (input, ctx) => {
+  const rawQueries = Array.isArray(input.queries) ? input.queries : [];
+  const queries = rawQueries
+    .filter((q): q is string => typeof q === 'string' && q.trim().length > 0)
+    .map(q => q.trim())
+    .slice(0, 8);
+  if (queries.length === 0) {
+    return 'No queries provided for project_knowledge_search_multi.';
+  }
+  const projectId = ctx?.projectId;
+  const organizationUuid = ctx?.organizationUuid;
+  if (!projectId || !organizationUuid) {
+    return 'No active project is in context, so project knowledge cannot be searched. Ask the user to open a project first.';
+  }
+
+  const perQuery =
+    typeof input.max_results_per_query === 'number' && input.max_results_per_query > 0
+      ? Math.min(Math.floor(input.max_results_per_query), 10)
+      : 5;
+  const mergedCap =
+    typeof input.max_merged_results === 'number' && input.max_merged_results > 0
+      ? Math.min(Math.floor(input.max_merged_results), 25)
+      : 12;
+
+  try {
+    const { mergeMultiQueryResults } = await import('./knowledge-search-merge.js');
+
+    // Fan out the searches concurrently.
+    const settled = await Promise.allSettled(
+      queries.map(query =>
+        ragRouter.retrieve({
+          query,
+          intent: 'project_scoped',
+          organizationUuid,
+          artifactScope: { projectId, organizationUuid },
+          useReranking: true,
+          limit: perQuery,
+        })
+      )
+    );
+
+    const perQueryBreakdown: Array<{ query: string; resultCount: number; error?: string }> = [];
+    const resultsByQuery = settled.map((res, i) => {
+      const query = queries[i];
+      if (res.status !== 'fulfilled') {
+        perQueryBreakdown.push({ query, resultCount: 0, error: 'retrieval failed' });
+        return { query, docs: [] };
+      }
+      const docs = (res.value?.documents ?? []).slice(0, perQuery);
+      perQueryBreakdown.push({ query, resultCount: docs.length });
+      return { query, docs };
+    });
+
+    const merged = mergeMultiQueryResults(resultsByQuery, mergedCap);
+
+    if (merged.length === 0) {
+      return `No matching passages were found in this project's knowledge across ${queries.length} sub-queries.`;
+    }
+
+    return JSON.stringify({
+      source: 'Project knowledge corpus (RAG, multi-query)',
+      queries,
+      perQuery: perQueryBreakdown,
+      resultCount: merged.length,
+      passages: merged,
+      citation_hint:
+        "Ground statements in these passages and cite each by its document title and locator (page/section). " +
+        "`matched_queries` shows which sub-queries surfaced each passage — passages matched by several sub-queries are usually the strongest evidence.",
+    });
+  } catch (err: any) {
+    return `Multi-query project knowledge search failed: ${err?.message ?? 'unknown error'}.`;
+  }
+});
+
+// Session bootstrap — rehydrate prior context so a conversation never starts
+// cold: latest thread working-memory summary + most important project/client
+// atoms (query-independent) + AnA's own recent lessons for this org/project.
+registerToolHandler('recall_session_context', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'recall_session_context requires tenant context (organizationId).' });
+  }
+  const threadId = typeof input.thread_id === 'string' && input.thread_id.trim() ? input.thread_id.trim() : undefined;
+  const atomLimit =
+    typeof input.atom_limit === 'number' && input.atom_limit > 0 ? Math.min(Math.floor(input.atom_limit), 15) : 6;
+
+  try {
+    const { buildSessionBootstrapContext } = await import('../ana-session-bootstrap.js');
+    const context = await buildSessionBootstrapContext({
+      organizationId: ctx.organizationId,
+      projectId: ctx.projectId ?? undefined,
+      threadId,
+      atomLimit,
+    });
+
+    if (!context) {
+      return JSON.stringify({
+        ok: true,
+        hasContext: false,
+        message:
+          'No prior session memory was found for this org/project yet — this appears to be a fresh start. Proceed normally; memory will accumulate as we work.',
+      });
+    }
+    return JSON.stringify({
+      ok: true,
+      hasContext: true,
+      context,
+      message: 'Loaded prior session memory (working summary, project/client knowledge, and past lessons). Ground your response in it.',
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `recall_session_context failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// 21 CFR Part 11 §11.50 signature manifestation — load an executed signature
+// (tenant-scoped) and render the human-readable block (printed name, date/time,
+// meaning + supporting controls) to embed in the rendered record.
+registerToolHandler('render_signature_manifestation', async (input, ctx) => {
+  const signatureId = typeof input.signature_id === 'string' ? input.signature_id.trim() : '';
+  if (!signatureId) {
+    return JSON.stringify({ error: 'render_signature_manifestation requires signature_id (string).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'render_signature_manifestation requires tenant context (organizationId).' });
+  }
+  const recordTitle = typeof input.record_title === 'string' && input.record_title.trim() ? input.record_title.trim() : undefined;
+
+  try {
+    const { db } = await import('../../db.js');
+    const { concept2cureSignatures } = await import('shared/schema');
+    const { eq, and } = await import('drizzle-orm');
+    const { renderSignatureManifestation, requiredManifestFields } = await import(
+      '../compliance/signature-manifestation.js'
+    );
+
+    const rows = await db
+      .select()
+      .from(concept2cureSignatures)
+      .where(
+        and(
+          eq(concept2cureSignatures.signatureId, signatureId),
+          eq(concept2cureSignatures.organizationId, ctx.organizationId)
+        )
+      )
+      .limit(1);
+
+    const sig = rows[0];
+    if (!sig) {
+      return JSON.stringify({
+        ok: false,
+        message: `No signature found with id ${signatureId} for this organization.`,
+      });
+    }
+
+    const manifestInput = {
+      signatureId: sig.signatureId,
+      signerName: sig.signerName,
+      signerEmail: sig.signerEmail,
+      signerRole: sig.signerRole,
+      signatureType: sig.signatureType,
+      signaturePurpose: sig.signaturePurpose,
+      signatureMeaning: sig.signatureMeaning,
+      signedAt: sig.signedAt,
+      authenticationMethod: sig.authenticationMethod,
+      secondFactorVerified: sig.secondFactorVerified,
+      signatureHash: sig.signatureHash,
+      ipAddress: sig.ipAddress,
+      recordTitle,
+    };
+
+    return JSON.stringify({
+      ok: true,
+      basis: '21 CFR Part 11 §11.50',
+      manifestation: renderSignatureManifestation(manifestInput),
+      requiredFields: requiredManifestFields(manifestInput),
+      status: sig.status,
+      message: 'Signature manifestation rendered. Embed the block in any human-readable (PDF/Word) form of the signed record.',
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `render_signature_manifestation failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// Honesty envelope — stamp a quantitative output with confidence + denominator
+// + freshness, and gate "final-ready" on missing/stale dependencies. The
+// platform's confidence moat as a reusable primitive. Deterministic, no LLM.
+registerToolHandler('assess_output_confidence', async (input) => {
+  if (typeof input.n !== 'number' || !Number.isFinite(input.n)) {
+    return JSON.stringify({ error: 'assess_output_confidence requires n (number of supporting data points).' });
+  }
+  const freshnessDays = typeof input.freshness_days === 'number' ? input.freshness_days : undefined;
+  const maxFreshnessDays = typeof input.max_freshness_days === 'number' ? input.max_freshness_days : 180;
+
+  try {
+    const { buildHonestyEnvelope, finalReadyGate } = await import('./honesty-envelope.js');
+    const envelope = buildHonestyEnvelope({ n: input.n, freshnessDays, maxFreshnessDays });
+
+    let finalReady: { ready: boolean; blockers: string[] } | null = null;
+    if (Array.isArray(input.dependencies)) {
+      const deps = (input.dependencies as Array<Record<string, unknown>>).map(d => ({
+        name: typeof d.name === 'string' ? d.name : 'dependency',
+        present: d.present === true,
+        freshnessDays: typeof d.freshness_days === 'number' ? d.freshness_days : undefined,
+      }));
+      finalReady = finalReadyGate(deps, maxFreshnessDays);
+    }
+
+    return JSON.stringify({
+      engine: 'honesty envelope (deterministic, no LLM)',
+      confidence: envelope.confidence,
+      n: envelope.n,
+      freshnessDays: envelope.freshnessDays,
+      stale: envelope.stale,
+      label: envelope.label,
+      finalReady,
+      message: finalReady && !finalReady.ready
+        ? `Output is NOT final-ready — blockers: ${finalReady.blockers.join('; ')}. Show these to the user; do not present as final.`
+        : `Stamp this number with "${envelope.label}". Never present it as more certain than its denominator supports.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `assess_output_confidence failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// Grounding guarantee — flags quantitative claims in a draft that lack a
+// citation/source marker, so AnA grounds or hedges every number before it
+// reaches a regulatory reader. Deterministic (no LLM); the trust moat made
+// structural.
+registerToolHandler('check_grounding', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ error: 'check_grounding requires text (non-empty string).' });
+  }
+  try {
+    const { assessGrounding } = await import('./grounding-core.js');
+    const report = assessGrounding(text);
+    return JSON.stringify({
+      engine: 'deterministic grounding check (no LLM)',
+      ok: report.ok,
+      groundingScore: report.groundingScore,
+      totalClaims: report.totalClaims,
+      groundedClaims: report.groundedClaims,
+      ungroundedClaims: report.ungroundedClaims.map(c => ({ sentence: c.sentence, numbers: c.numbers })),
+      message:
+        report.totalClaims === 0
+          ? 'No quantitative claims detected — nothing to ground.'
+          : report.ok
+            ? `All ${report.totalClaims} quantitative claim(s) carry a citation/source marker.`
+            : `${report.ungroundedClaims.length} of ${report.totalClaims} quantitative claim(s) are UNGROUNDED — add a cited source for each figure, or hedge it explicitly, before presenting to a regulatory reader.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `check_grounding failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// Submission pre-mortem (RTF/CRL) — composes the deterministic deficiency scan
+// (pure, no LLM) with the precedent engine (real, fault-tolerant) into one
+// grounded, honest-by-construction readiness verdict. The risk read always
+// carries confidence + denominator and degrades to an explicit pattern-only /
+// insufficient-data note rather than a fabricated probability.
+registerToolHandler('run_submission_premortem', async (input, ctx) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ error: 'run_submission_premortem requires text (non-empty string).' });
+  }
+  const location = typeof input.location === 'string' && input.location.trim() ? input.location.trim() : 'document';
+  const submissionType = typeof input.submission_type === 'string' ? input.submission_type.trim() : undefined;
+  const agency = typeof input.agency === 'string' ? input.agency.trim() : undefined;
+  const indication = typeof input.indication === 'string' ? input.indication.trim() : undefined;
+
+  try {
+    const { quickPatternScan } = await import('../intelligence/rim.js');
+    const { composePremortem } = await import('./submission-premortem-core.js');
+
+    // 1. Deterministic deficiency/reviewer-trigger findings (no LLM).
+    const criteria: Record<string, unknown> = {};
+    if (agency) criteria.agency = agency;
+    if (submissionType) criteria.submissionType = submissionType;
+    const matches = quickPatternScan(text, location, Object.keys(criteria).length ? (criteria as any) : undefined);
+    const findings = matches.map(m => ({
+      patternId: m.patternId,
+      title: m.pattern.name,
+      category: m.pattern.category,
+      severity: m.pattern.severity,
+      matchedText: m.matchedText,
+      matchConfidence: m.matchConfidence,
+      reviewerQuestion: m.pattern.reviewerQuestion,
+      regulatoryBasis: m.pattern.regulatoryBasis,
+      remediation: m.pattern.remediation,
+    }));
+
+    // 2. Precedent calibration (the denominator + citations). Fault-tolerant:
+    //    an unavailable corpus degrades to n=0 honest output, never an error.
+    let precedentCount = 0;
+    let precedentCitations: Array<{ id: string; label: string; outcome: string }> = [];
+    if (submissionType) {
+      try {
+        const { precedentEngine } = await import('../precedent-engine.js');
+        const records = await precedentEngine.search(
+          { submissionType, indication, limit: 25 },
+          ctx?.organizationId ?? undefined
+        );
+        precedentCount = records.length;
+        precedentCitations = records.slice(0, 5).map(r => ({
+          id: r.id,
+          label: r.clearanceNumber || r.deviceName || r.applicant || r.id,
+          outcome: r.decisionOutcome,
+        }));
+      } catch {
+        /* corpus unavailable — honest n=0 read */
+      }
+    }
+
+    const verdict = composePremortem({
+      findings,
+      precedentCount,
+      precedentCitations,
+      submissionType,
+      agency,
+    });
+
+    return JSON.stringify({
+      engine: 'deterministic deficiency scan + precedent engine (honest-by-construction)',
+      location,
+      ...verdict,
+      message: verdict.summary,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `run_submission_premortem failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// Deterministic regulatory deficiency scan — runs the codified pattern registry
+// (quickPatternScan) with NO language-model call. AnA's reasoning-without-the-LLM
+// surface: fast, reproducible, citable pattern matching over regulatory text.
+registerToolHandler('scan_regulatory_deficiencies', async (input) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ error: 'scan_regulatory_deficiencies requires text (non-empty string).' });
+  }
+  const location = typeof input.location === 'string' && input.location.trim() ? input.location.trim() : 'document';
+
+  // Build the optional criteria from provided filters (all optional).
+  const criteria: Record<string, unknown> = {};
+  if (typeof input.agency === 'string' && input.agency.trim()) criteria.agency = input.agency.trim();
+  if (typeof input.submission_type === 'string' && input.submission_type.trim())
+    criteria.submissionType = input.submission_type.trim();
+  if (typeof input.category === 'string' && input.category.trim()) criteria.category = input.category.trim();
+  if (typeof input.min_severity === 'string' && input.min_severity.trim())
+    criteria.minSeverity = input.min_severity.trim();
+
+  try {
+    const { quickPatternScan } = await import('../intelligence/rim.js');
+    const matches = quickPatternScan(
+      text,
+      location,
+      Object.keys(criteria).length > 0 ? (criteria as any) : undefined
+    );
+
+    const findings = matches.map(m => ({
+      patternId: m.patternId,
+      name: m.pattern.name,
+      category: m.pattern.category,
+      severity: m.pattern.severity,
+      matchedText: m.matchedText,
+      matchConfidence: m.matchConfidence,
+      reviewerQuestion: m.pattern.reviewerQuestion,
+      regulatoryBasis: m.pattern.regulatoryBasis,
+      remediation: m.pattern.remediation,
+      strongerAlternatives: m.pattern.strongAlternatives,
+    }));
+
+    const bySeverity = findings.reduce<Record<string, number>>((acc, f) => {
+      acc[f.severity] = (acc[f.severity] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    return JSON.stringify({
+      engine: 'deterministic pattern registry (no LLM)',
+      location,
+      findingsCount: findings.length,
+      severityCounts: bySeverity,
+      findings,
+      message:
+        findings.length === 0
+          ? 'No codified deficiency or reviewer-trigger patterns matched this text. (Absence of a pattern match is not proof of soundness — it means no KNOWN pattern fired.)'
+          : `${findings.length} pattern match(es) found deterministically. Each includes the likely reviewer question, regulatory basis, and a concrete remediation.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `scan_regulatory_deficiencies failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// Large-document working set — extract a single file's full text server-side
+// and return only the query-relevant windows, so AnA can work with documents
+// far larger than the per-turn result cap. Stateless; reuses the real file
+// loader + extraction. Disableable via ANA_LARGE_DOC_SEARCH=false.
+registerToolHandler('search_large_document', async (input, ctx) => {
+  if (process.env.ANA_LARGE_DOC_SEARCH === 'false') {
+    return JSON.stringify({ error: 'search_large_document is disabled in this deployment.' });
+  }
+  const fileId = typeof input.file_id === 'string' ? input.file_id : '';
+  if (!fileId) {
+    return JSON.stringify({ error: 'search_large_document requires file_id (string).' });
+  }
+  const queries = (Array.isArray(input.queries) ? input.queries : [])
+    .filter((q): q is string => typeof q === 'string' && q.trim().length > 0)
+    .map(q => q.trim())
+    .slice(0, 8);
+  if (queries.length === 0) {
+    return JSON.stringify({ error: 'search_large_document requires queries (non-empty array of strings).' });
+  }
+  const windowChars = typeof input.window_chars === 'number' ? input.window_chars : undefined;
+  const maxWindows = typeof input.max_windows_per_query === 'number' ? input.max_windows_per_query : undefined;
+
+  try {
+    const { loadUploadedFile } = await import('./uploaded-file-access.js');
+    const { extractDocumentText } = await import('../ocr/extractDocumentText.js');
+    const { searchWithinText, extractHeadingOutline } = await import('./document-search-core.js');
+
+    const file = await loadUploadedFile(fileId, ctx?.organizationId);
+    const extracted = await extractDocumentText(file.buffer, file.mimeType, file.fileName);
+    const text = extracted.text ?? '';
+    if (!text.trim()) {
+      return JSON.stringify({
+        ok: true,
+        fileName: file.fileName,
+        totalChars: 0,
+        message: 'The document produced no extractable text (it may be empty, image-only, or unsupported). Try read_uploaded_document with force_ocr.',
+      });
+    }
+
+    const results = searchWithinText(text, queries, {
+      windowChars,
+      maxWindowsPerQuery: maxWindows,
+    });
+    const outline = extractHeadingOutline(text);
+
+    return JSON.stringify({
+      ok: true,
+      fileName: file.fileName,
+      totalChars: text.length,
+      extractionMethod: (extracted as any).method ?? null,
+      outline,
+      results,
+      message: `Searched ${text.length.toLocaleString()} chars of ${file.fileName}. Returned only the relevant windows per query — read and cite these excerpts rather than the whole document.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `search_large_document failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// Remember a read document into durable project memory — promotes a document
+// AnA read into project_memory_entries (embedded) via the real project
+// ingestion pipeline, so it is surfaced automatically in future sessions.
+// Disableable via ANA_REMEMBER_DOCUMENT=false.
+registerToolHandler('remember_document_in_project', async (input, ctx) => {
+  if (process.env.ANA_REMEMBER_DOCUMENT === 'false') {
+    return JSON.stringify({ error: 'remember_document_in_project is disabled in this deployment.' });
+  }
+  const fileId = typeof input.file_id === 'string' ? input.file_id : '';
+  if (!fileId) {
+    return JSON.stringify({ error: 'remember_document_in_project requires file_id (string).' });
+  }
+  if (!ctx?.organizationId || !ctx?.projectId) {
+    return JSON.stringify({
+      error: 'remember_document_in_project requires an active project and organization in context.',
+    });
+  }
+  const userId = ctx.userId ?? 0;
+
+  try {
+    const { loadUploadedFile } = await import('./uploaded-file-access.js');
+    const { getProjectIntelligence, ingestProjectDocument } = await import(
+      '../client-intelligence-memory.js'
+    );
+
+    const profile = await getProjectIntelligence(ctx.projectId);
+    if (!profile?.id) {
+      return JSON.stringify({
+        ok: false,
+        message:
+          'This project has no intelligence profile yet, so there is nowhere to store durable project memory. Set up the project profile first, then try again.',
+      });
+    }
+
+    const file = await loadUploadedFile(fileId, ctx.organizationId);
+    const result = await ingestProjectDocument(
+      profile.id,
+      ctx.projectId,
+      ctx.organizationId,
+      {
+        buffer: file.buffer,
+        originalname: file.fileName,
+        mimetype: file.mimeType,
+        size: file.fileSize,
+      },
+      userId
+    );
+
+    return JSON.stringify({
+      ok: result.status === 'completed',
+      fileName: result.fileName,
+      memoryEntriesCreated: result.memoryEntriesCreated,
+      tokenCount: result.tokenCount,
+      message:
+        result.status === 'completed'
+          ? `Remembered ${result.fileName} into project memory (${result.memoryEntriesCreated} entr${
+              result.memoryEntriesCreated === 1 ? 'y' : 'ies'
+            } embedded). It will be surfaced automatically in future sessions.`
+          : `Could not remember ${result.fileName}: ${result.error ?? 'ingestion failed'}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `remember_document_in_project failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // Search Clinical Evidence — queries internal DB and ClinicalTrials.gov
 registerToolHandler('search_clinical_evidence', async (input) => {
   const query = typeof input.query === 'string' ? input.query : '';
@@ -4062,6 +4598,390 @@ registerToolHandler('convert_docx_to_pdf', async (input) => {
       error: `convert_docx_to_pdf failed: ${
         err instanceof Error ? err.message : String(err)
       }. Verify that python3 and libreoffice (soffice) are available on the host.`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// General-purpose scripting sandbox handler — runs AnA-authored Python in the
+// isolated compute worker (no network, bounded CPU/memory, wall-clock SIGKILL).
+// Persists any files the script produced to a session tempdir and returns
+// truncated stdout/stderr plus the output file paths. This is AnA's "write a
+// Python script to do X precisely" capability, governed.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SCRIPT_OUTPUT_CAP = 4000; // chars of stdout/stderr returned to the model
+
+function truncateForModel(s: string, cap = SCRIPT_OUTPUT_CAP): string {
+  if (typeof s !== 'string') return '';
+  if (s.length <= cap) return s;
+  return `${s.slice(0, cap)}\n…[truncated ${s.length - cap} chars]`;
+}
+
+registerToolHandler('run_python_script', async (input, ctx) => {
+  const code = typeof input.code === 'string' ? input.code : '';
+  if (!code.trim()) {
+    return JSON.stringify({ error: 'run_python_script requires code (non-empty string).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'run_python_script requires tenant context (organizationId).' });
+  }
+
+  const inputFiles =
+    input.input_files && typeof input.input_files === 'object'
+      ? (input.input_files as Record<string, string>)
+      : undefined;
+  const cpuSeconds = typeof input.cpu_seconds === 'number' ? input.cpu_seconds : undefined;
+  const timeoutMs = typeof input.timeout_ms === 'number' ? input.timeout_ms : undefined;
+
+  try {
+    const { runPythonScriptIsolated } = await import('../compute/scriptWorker.js');
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { randomUUID } = await import('crypto');
+
+    const result = await runPythonScriptIsolated({
+      code,
+      inputFiles,
+      cpuSeconds,
+      timeoutMs,
+    });
+
+    // Persist produced files so downstream tools / the user have stable paths.
+    const outputFilePaths: Array<{ name: string; path: string; bytes: number } | { name: string; tooLarge: true }> = [];
+    const entries = Object.entries(result.outputFiles ?? {});
+    if (entries.length > 0) {
+      const outDir = path.resolve(process.cwd(), 'tmp', 'ana-scripts', randomUUID().slice(0, 8));
+      await fs.mkdir(outDir, { recursive: true });
+      for (const [name, b64] of entries) {
+        if (b64 == null) {
+          outputFilePaths.push({ name, tooLarge: true });
+          continue;
+        }
+        const safe = path.basename(name);
+        const dest = path.join(outDir, safe);
+        const buf = Buffer.from(b64, 'base64');
+        await fs.writeFile(dest, buf);
+        outputFilePaths.push({ name, path: dest, bytes: buf.length });
+      }
+    }
+
+    return JSON.stringify({
+      ok: result.ok,
+      engine: 'python-script (isolated, no-network)',
+      stdout: truncateForModel(result.stdout),
+      stderr: truncateForModel(result.stderr),
+      error: result.error ? truncateForModel(result.error) : null,
+      outputFiles: outputFilePaths,
+      network: result.network,
+      message: result.ok
+        ? `Script ran successfully${outputFilePaths.length ? ` and produced ${outputFilePaths.length} file(s)` : ''}.`
+        : 'Script raised an error — see error/stderr.',
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `run_python_script failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify python3 is available on the host (see services/Dockerfile).`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Targeted document insertion handler — surgical edits to an existing .docx via
+// python-docx in the isolated worker. Reads the source document, applies the
+// requested insertions at exact anchors, persists the edited .docx (and an
+// optional PDF), and returns the per-insertion outcome report. The source is
+// preserved as the editable record.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('insert_document_content', async (input, ctx) => {
+  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
+  if (!inputDocxPath) {
+    return JSON.stringify({ error: 'insert_document_content requires input_docx_path (string).' });
+  }
+  if (!Array.isArray(input.insertions) || input.insertions.length === 0) {
+    return JSON.stringify({ error: 'insert_document_content requires insertions (non-empty array).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'insert_document_content requires tenant context (organizationId).' });
+  }
+
+  const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
+
+  // Normalize the model's snake_case insertion shape into the worker's camelCase.
+  const insertions = (input.insertions as Array<Record<string, unknown>>).map(ins => ({
+    anchorType: ins.anchor_type as
+      | 'heading_text'
+      | 'placeholder'
+      | 'paragraph_index'
+      | 'start'
+      | 'end',
+    anchorValue: ins.anchor_value as string | number | undefined,
+    position: (ins.position as 'before' | 'after' | 'replace' | undefined) ?? 'after',
+    match: (ins.match as 'exact' | 'contains' | undefined) ?? 'contains',
+    content: typeof ins.content === 'string' ? ins.content : '',
+  }));
+
+  try {
+    const { runDocxInsertIsolated } = await import('../compute/scriptWorker.js');
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { randomUUID } = await import('crypto');
+
+    const sourceBuf = await fs.readFile(inputDocxPath);
+    const baseName = path.basename(inputDocxPath, path.extname(inputDocxPath));
+    const result = await runDocxInsertIsolated(sourceBuf, insertions, `${baseName}.edited.docx`);
+
+    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    await fs.mkdir(outDir, { recursive: true });
+    const docxPath = path.join(outDir, result.fileName);
+    await fs.writeFile(docxPath, result.buffer);
+
+    const notFound = result.applied.filter(a => a.status !== 'applied');
+
+    if (fmt === 'pdf') {
+      const { runDocxPdfPipeline } = await import('../docx-pdf-pipeline.js');
+      const pipeline = await runDocxPdfPipeline({ inputDocxPath: docxPath });
+      return JSON.stringify({
+        ok: notFound.length === 0,
+        engine: 'python-docx (targeted insert) + libreoffice',
+        sourceDocxPath: inputDocxPath,
+        docxPath,
+        pdfPath: pipeline.finalPdf,
+        applied: result.applied,
+        message: `Applied ${result.applied.length - notFound.length}/${result.applied.length} insertion(s) and rendered PDF.${
+          notFound.length ? ` ${notFound.length} anchor(s) not found.` : ''
+        }`,
+      });
+    }
+
+    return JSON.stringify({
+      ok: notFound.length === 0,
+      engine: 'python-docx (targeted insert)',
+      sourceDocxPath: inputDocxPath,
+      docxPath,
+      sizeBytes: result.buffer.length,
+      applied: result.applied,
+      message: `Applied ${result.applied.length - notFound.length}/${result.applied.length} insertion(s) to ${baseName}.${
+        notFound.length ? ` ${notFound.length} anchor(s) not found — review the applied report.` : ''
+      }`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `insert_document_content failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify the source .docx path exists and python3 + python-docx are available on the host.`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Raw-OOXML surgery handler — unpack a .docx, edit word/document.xml at the
+// XML-tree level (insert paragraph blocks inheriting formatting, replace
+// placeholders preserving run formatting), repack, and validate. Persists the
+// edited .docx (and optional PDF) and returns per-operation + validation
+// reports. The source is preserved as the editable record.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('surgical_docx_xml_edit', async (input, ctx) => {
+  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
+  if (!inputDocxPath) {
+    return JSON.stringify({ error: 'surgical_docx_xml_edit requires input_docx_path (string).' });
+  }
+  if (!Array.isArray(input.operations) || input.operations.length === 0) {
+    return JSON.stringify({ error: 'surgical_docx_xml_edit requires operations (non-empty array).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'surgical_docx_xml_edit requires tenant context (organizationId).' });
+  }
+
+  const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
+  const operations = (input.operations as Array<Record<string, unknown>>).map(o => ({
+    op: o.op as 'insert_paragraphs' | 'replace_text',
+    anchorText: typeof o.anchor_text === 'string' ? o.anchor_text : undefined,
+    match: (o.match as 'exact' | 'contains' | undefined) ?? 'contains',
+    position: (o.position as 'before' | 'after' | undefined) ?? 'after',
+    paragraphs: Array.isArray(o.paragraphs) ? (o.paragraphs as string[]) : undefined,
+    inheritFormat: o.inherit_format !== false,
+    find: typeof o.find === 'string' ? o.find : undefined,
+    replace: typeof o.replace === 'string' ? o.replace : undefined,
+  }));
+
+  try {
+    const { runDocxXmlSurgeryIsolated } = await import('../compute/scriptWorker.js');
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { randomUUID } = await import('crypto');
+
+    const sourceBuf = await fs.readFile(inputDocxPath);
+    const baseName = path.basename(inputDocxPath, path.extname(inputDocxPath));
+    const result = await runDocxXmlSurgeryIsolated(sourceBuf, operations, `${baseName}.xml-edited.docx`);
+
+    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    await fs.mkdir(outDir, { recursive: true });
+    const docxPath = path.join(outDir, result.fileName);
+    await fs.writeFile(docxPath, result.buffer);
+
+    const notApplied = result.applied.filter(a => a.status !== 'applied');
+    const base = {
+      ok: result.validation.ok && notApplied.length === 0,
+      engine: 'lxml OOXML surgery',
+      sourceDocxPath: inputDocxPath,
+      docxPath,
+      applied: result.applied,
+      validation: result.validation,
+    };
+
+    if (!result.validation.ok) {
+      // Surface corruption explicitly — the edited file is kept for inspection
+      // but flagged so AnA does not ship a broken document.
+      return JSON.stringify({
+        ...base,
+        message: `Edit applied but validation FAILED — document may be corrupt. Malformed parts: ${
+          result.validation.malformedParts.length
+        }, errors: ${result.validation.errors.join('; ') || 'none'}. Do not ship without review.`,
+      });
+    }
+
+    if (fmt === 'pdf') {
+      const { runDocxPdfPipeline } = await import('../docx-pdf-pipeline.js');
+      const pipeline = await runDocxPdfPipeline({ inputDocxPath: docxPath });
+      return JSON.stringify({
+        ...base,
+        pdfPath: pipeline.finalPdf,
+        message: `Applied ${result.applied.length - notApplied.length}/${result.applied.length} XML operation(s), validated, and rendered PDF.`,
+      });
+    }
+
+    return JSON.stringify({
+      ...base,
+      sizeBytes: result.buffer.length,
+      message: `Applied ${result.applied.length - notApplied.length}/${result.applied.length} XML operation(s) to ${baseName} and validated (${result.validation.partsChecked} parts, ${result.validation.paragraphCount} paragraphs).${
+        notApplied.length ? ` ${notApplied.length} operation(s) did not match — review the applied report.` : ''
+      }`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `surgical_docx_xml_edit failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify the source .docx path exists and python3 + lxml + python-docx are available on the host.`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DOCX validation handler — open a .docx and confirm OOXML/ZIP integrity
+// without modifying it. AnA's pre-ship gate for any document she produced or
+// received.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('validate_docx', async (input, ctx) => {
+  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
+  if (!inputDocxPath) {
+    return JSON.stringify({ error: 'validate_docx requires input_docx_path (string).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'validate_docx requires tenant context (organizationId).' });
+  }
+
+  try {
+    const { runDocxValidateIsolated } = await import('../compute/scriptWorker.js');
+    const { promises: fs } = await import('fs');
+
+    const buf = await fs.readFile(inputDocxPath);
+    const report = await runDocxValidateIsolated(buf);
+
+    return JSON.stringify({
+      ok: report.ok,
+      docxPath: inputDocxPath,
+      validation: report,
+      message: report.ok
+        ? `Valid .docx — ${report.partsChecked} XML parts well-formed, ${report.paragraphCount} paragraphs, reopened cleanly.`
+        : `INVALID .docx — missing: ${report.missingParts.join(', ') || 'none'}; malformed: ${
+            report.malformedParts.length
+          }; dangling rels: ${report.danglingRels.length}; errors: ${report.errors.join('; ') || 'none'}.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `validate_docx failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify the source .docx path exists and python3 + lxml + python-docx are available on the host.`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Container execution handler — run a bash script in a hardened Docker
+// container (the native computer-use path). Gated off by default; returns a
+// friendly "not enabled" message rather than an error when disabled. Persists
+// any produced files to a session tempdir and returns truncated diagnostics.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('run_in_container', async (input, ctx) => {
+  const script = typeof input.script === 'string' ? input.script : '';
+  if (!script.trim()) {
+    return JSON.stringify({ error: 'run_in_container requires script (non-empty string).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'run_in_container requires tenant context (organizationId).' });
+  }
+
+  const inputFiles =
+    input.input_files && typeof input.input_files === 'object'
+      ? (input.input_files as Record<string, string>)
+      : undefined;
+  const timeoutMs = typeof input.timeout_ms === 'number' ? input.timeout_ms : undefined;
+
+  try {
+    const { runInContainer, getContainerExecConfig } = await import('../compute/containerExec.js');
+    const cfg = getContainerExecConfig();
+    if (!cfg.enabled) {
+      return JSON.stringify({
+        ok: false,
+        enabled: false,
+        message:
+          'The container-execution capability is not enabled in this deployment. Use run_python_script (sandboxed Python) or surgical_docx_xml_edit instead, or ask an administrator to enable ANA_ENABLE_CONTAINER_EXEC.',
+      });
+    }
+
+    const result = await runInContainer({ script, inputFiles, timeoutMs });
+
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { randomUUID } = await import('crypto');
+    const outputFilePaths: Array<{ name: string; path: string; bytes: number }> = [];
+    const entries = Object.entries(result.outputFiles ?? {});
+    if (entries.length > 0) {
+      const outDir = path.resolve(process.cwd(), 'tmp', 'ana-container', randomUUID().slice(0, 8));
+      await fs.mkdir(outDir, { recursive: true });
+      for (const [name, b64] of entries) {
+        const dest = path.join(outDir, path.basename(name));
+        const buf = Buffer.from(b64, 'base64');
+        await fs.writeFile(dest, buf);
+        outputFilePaths.push({ name, path: dest, bytes: buf.length });
+      }
+    }
+
+    return JSON.stringify({
+      ok: result.ok,
+      engine: `docker (${result.network} network)`,
+      exitCode: result.exitCode,
+      timedOut: result.timedOut,
+      stdout: truncateForModel(result.stdout),
+      stderr: truncateForModel(result.stderr),
+      outputFiles: outputFilePaths,
+      message: result.timedOut
+        ? 'Container run exceeded the timeout and was killed.'
+        : result.ok
+          ? `Container ran successfully${outputFilePaths.length ? ` and produced ${outputFilePaths.length} file(s)` : ''}.`
+          : `Container exited with code ${result.exitCode} — see stderr.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `run_in_container failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify Docker is available on the host and the capability is enabled.`,
     });
   }
 });

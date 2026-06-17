@@ -487,6 +487,40 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       memoryBlockChars = memoryBlock.length;
       memoryDiagnostics = diagnostics;
 
+      // Session bootstrap — so a conversation never starts cold. At session
+      // start (no prior messages in this thread) rehydrate query-independently:
+      // the latest working summary, the most important project/client atoms,
+      // and AnA's own past lessons (which the query-driven memory assembler
+      // never loads). Gated to session start to avoid re-injecting every turn,
+      // fault-tolerant, and disableable via ANA_SESSION_BOOTSTRAP_AUTO=false.
+      let sessionBootstrapBlock = '';
+      try {
+        const { shouldAutoBootstrap, buildSessionBootstrapContext } = await import(
+          '../../services/ana-session-bootstrap.js'
+        );
+        if (
+          shouldAutoBootstrap({
+            priorMessageCount: previousMessages.length,
+            organizationId: numericOrgId ?? null,
+            disabled: process.env.ANA_SESSION_BOOTSTRAP_AUTO === 'false',
+          })
+        ) {
+          const pid =
+            typeof project_id === 'string'
+              ? parseInt(project_id.replace(/^proj_/, ''), 10)
+              : project_id;
+          const block = await buildSessionBootstrapContext({
+            organizationId: numericOrgId as number,
+            projectId: Number.isFinite(pid) && (pid as number) > 0 ? (pid as number) : undefined,
+            threadId,
+            atomLimit: 6,
+          });
+          if (block) sessionBootstrapBlock = `\n\n${block}\n`;
+        }
+      } catch (err) {
+        console.warn('[AnA] session bootstrap failed (continuing without):', (err as any)?.message);
+      }
+
       // ── IND Context Injection ──────────────────────────────────────────────────
       // When the project is an IND submission, inject the complete CTD structure
       // so AnA knows every section needed and can guide the user through it.
@@ -602,6 +636,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         indContextBlock +
         deviceContextBlock +
         projectKnowledgeCorpusBlock +
+        sessionBootstrapBlock +
         memoryBlock +
         evidenceBlock;
 

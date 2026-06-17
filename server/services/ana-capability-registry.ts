@@ -234,7 +234,51 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['510k', 'predicate-comparison'],
   },
 
+  {
+    capabilityKey: 'render-signature-manifestation',
+    category: 'compliance',
+    name: 'Render Signature Manifestation (§11.50)',
+    description:
+      'Produce the human-readable 21 CFR Part 11 §11.50 signature manifestation block — printed name, date/time of signing (UTC), and meaning — plus supporting authentication and signature-id/hash controls, to embed in any rendered (PDF/Word) form of a signed record for inspection readiness.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
   // ── Intelligence (4) ──────────────────────────────────────
+  {
+    capabilityKey: 'assess-output-confidence',
+    category: 'intelligence',
+    name: 'Honest Confidence Envelope',
+    description:
+      "Attach honest confidence to any quantitative output — a confidence level + label ('confidence: medium (n=28, freshness: 6 days ago)') from the evidence basis, downgraded when stale and always 'low (insufficient data)' at n=0 — and gate 'final-ready' on missing/stale dependencies with explicit blockers. The platform's 'confidence with its denominator attached' moat as a reusable primitive.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: [],
+  },
+  {
+    capabilityKey: 'check-grounding',
+    category: 'analysis',
+    name: 'Grounding Guarantee Check',
+    description:
+      "Detect quantitative claims (percentages, p-values, sample sizes, CIs, doses, durations) in drafted text that lack a citation/source marker, with a grounding score — so every number is traced to a source or hedged before it reaches a regulatory reader. Deterministic, no LLM; makes the 'never state a number without a cited source' rule structural.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'scan-regulatory-deficiencies',
+    category: 'intelligence',
+    name: 'Deterministic Deficiency Scan',
+    description:
+      "Scan regulatory text against the codified pattern registry (95+ FDA/EMA deficiency and reviewer-trigger patterns) with NO language-model call — pure heuristic matching. Returns each match with severity, the reviewer question it provokes, the regulatory basis, and a concrete remediation. AnA's fast, reproducible reasoning-without-the-LLM surface.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
   {
     capabilityKey: 'rim-pattern-detection',
     category: 'intelligence',
@@ -298,6 +342,50 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
   {
+    capabilityKey: 'remember-document-in-project',
+    category: 'knowledge',
+    name: 'Remember Document in Project',
+    description:
+      "Promote a document AnA has read into the project's durable memory (embedded project_memory_entries) so it is automatically recalled in future sessions via the memory assembler and session bootstrap — reusing the real project-ingestion pipeline.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'search-large-document',
+    category: 'knowledge',
+    name: 'Search Within a Large Document',
+    description:
+      "Extract a single uploaded document's full text server-side and return only the query-relevant windows (with offsets) plus a heading outline — so AnA can work with documents far larger than the per-turn context cap without dumping the whole file.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'project-knowledge-search-multi',
+    category: 'knowledge',
+    name: 'Multi-Query Project Knowledge Search',
+    description:
+      'Run several knowledge-base searches against the active project corpus simultaneously, then merge and de-duplicate into one relevance-ranked passage list — decompose a complex question into sub-queries and gather all the evidence at once instead of searching one angle at a time.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'recall-session-context',
+    category: 'knowledge',
+    name: 'Recall Session Context',
+    description:
+      "Rehydrate prior context at the start of a conversation so a session never starts cold — load where we left off (latest thread summary), the most important project and client knowledge atoms (query-independent), and recent lessons from AnA's own past work on this org/project.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: [],
+  },
+  {
     capabilityKey: 'cortex-thread-management',
     category: 'knowledge',
     name: 'CORTEX Thread Management',
@@ -309,6 +397,17 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
   },
 
   // ── Prediction (3) ────────────────────────────────────────
+  {
+    capabilityKey: 'run-submission-premortem',
+    category: 'prediction',
+    name: 'Submission Pre-Mortem (RTF/CRL)',
+    description:
+      'Predict what a reviewer is likely to flag BEFORE filing — composing deterministic deficiency/reviewer-trigger detection with the precedent engine into a ranked, remediated, citation-backed readiness verdict. Honest by construction: the risk read always carries its confidence and denominator and degrades to an explicit pattern-only / insufficient-data note rather than a fabricated probability. Helps clients avoid a refuse-to-file or complete-response cycle.',
+    slashCommand: '/premortem',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
   {
     capabilityKey: 'foresight-timeline',
     category: 'prediction',
@@ -433,6 +532,64 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     description:
       'Render a document as a Microsoft Word (.docx) file and a PDF that match a saved client template exactly — same fonts, margins, logo, header and footer.',
     slashCommand: '/produce',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+
+  // ── Compute (2) ───────────────────────────────────────────
+  {
+    capabilityKey: 'run-python-script',
+    category: 'compute',
+    name: 'Run Python Script (Sandboxed)',
+    description:
+      'Write and run Python 3 in an isolated sandbox (no network, bounded CPU/memory, wall-clock timeout) to do something precisely — data transforms, parsing, numerical/biostat checks, generating intermediate artifacts, or bespoke manipulation no structured tool covers. Returns stdout, stderr, and any files the script produced.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: [],
+  },
+  {
+    capabilityKey: 'insert-document-content',
+    category: 'compute',
+    name: 'Targeted Document Insertion',
+    description:
+      'Make precise, surgical insertions into an existing Word (.docx) document at exact anchors — heading text, placeholder token, paragraph index, or document start/end — inserting before/after or replacing. The governed equivalent of scripting exact edits; preserves the source and returns a per-insertion outcome report.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+
+  {
+    capabilityKey: 'surgical-docx-xml-edit',
+    category: 'compute',
+    name: 'Surgical OOXML Document Edit',
+    description:
+      'Edit an existing Word (.docx) at the raw OOXML/XML level — unpack the archive, locate text anchors in word/document.xml, insert new paragraph blocks inheriting the anchor formatting (fonts, bold/italic, spacing, justification) or replace placeholders preserving run formatting, then repack and validate. The deepest, formatting-faithful document-surgery path.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
+    capabilityKey: 'run-in-container',
+    category: 'compute',
+    name: 'Run in Hardened Container',
+    description:
+      'Run a bash script inside a real, hardened Linux container (bash + Python + file tools) — dropped capabilities, no privilege escalation, read-only root fs, resource limits, non-root user, wall-clock timeout, and network off unless explicitly enabled. The native computer-use path for multi-step shell/file workflows. Gated by deployment configuration.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: [],
+  },
+  {
+    capabilityKey: 'validate-docx',
+    category: 'compute',
+    name: 'Validate Document Integrity',
+    description:
+      'Validate a Word (.docx) OOXML/ZIP integrity without modifying it — required parts present, every XML part well-formed, relationship targets resolve, python-docx round-trip — to catch silent corruption before a document ships.',
+    slashCommand: null,
     regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
     projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
@@ -614,6 +771,7 @@ export async function buildAnaCapabilityContext(
   const categoryOrder = [
     'drafting', 'compliance', 'analysis', 'intelligence',
     'knowledge', 'prediction', 'submission', 'workflow',
+    'formatting', 'compute', 'commitments',
   ];
 
   for (const cat of categoryOrder) {
