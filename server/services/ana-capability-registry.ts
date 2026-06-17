@@ -247,6 +247,17 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
   },
   // ── Intelligence (4) ──────────────────────────────────────
   {
+    capabilityKey: 'assess-output-confidence',
+    category: 'intelligence',
+    name: 'Honest Confidence Envelope',
+    description:
+      "Attach honest confidence to any quantitative output — a confidence level + label ('confidence: medium (n=28, freshness: 6 days ago)') from the evidence basis, downgraded when stale and always 'low (insufficient data)' at n=0 — and gate 'final-ready' on missing/stale dependencies with explicit blockers. The platform's 'confidence with its denominator attached' moat as a reusable primitive.",
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: [],
+  },
+  {
     capabilityKey: 'check-grounding',
     category: 'analysis',
     name: 'Grounding Guarantee Check',

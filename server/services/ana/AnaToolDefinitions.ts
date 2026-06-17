@@ -984,6 +984,50 @@ export const RENDER_SIGNATURE_MANIFESTATION: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Honesty envelope — the platform's "confidence with its denominator attached"
+// moat as a reusable primitive. Turns an evidence basis (n + freshness) into a
+// confidence level + human-readable label, and gates "final-ready" claims when
+// a dependency is missing or stale. Deterministic, no LLM.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ASSESS_OUTPUT_CONFIDENCE: AnaTool = {
+  name: 'assess_output_confidence',
+  description:
+    "Attach honest confidence to a quantitative output: given the number of supporting data points (n) and how fresh the evidence is, returns a confidence level (low/medium/high) and a ready-to-show label like 'confidence: medium (n=28, freshness: 6 days ago)'. Confidence is downgraded when evidence is stale and is always 'low (insufficient data)' at n=0 — never overstated. Optionally gate a 'final-ready' claim: provide dependencies and it returns whether the output is final-ready plus the explicit blockers (missing/stale) to show. Use this to stamp any number AnA presents so the platform's 'decision confidence with its denominator attached' rule holds everywhere. Deterministic, no LLM.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      n: {
+        type: 'number',
+        description: 'Number of supporting data points / precedents (the denominator).',
+      },
+      freshness_days: {
+        type: 'number',
+        description: 'Age in days of the freshest supporting evidence. Omit if unknown.',
+      },
+      max_freshness_days: {
+        type: 'number',
+        description: 'Age (days) beyond which evidence is stale. Default 180.',
+      },
+      dependencies: {
+        type: 'array',
+        description: 'Optional dependencies to gate a final-ready claim.',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            present: { type: 'boolean' },
+            freshness_days: { type: 'number' },
+          },
+          required: ['name', 'present'],
+        },
+      },
+    },
+    required: ['n'],
+  },
+};
+
 export const CHECK_GROUNDING: AnaTool = {
   name: 'check_grounding',
   description:
@@ -6343,6 +6387,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_LARGE_DOCUMENT,
   REMEMBER_DOCUMENT_IN_PROJECT,
   RUN_SUBMISSION_PREMORTEM,
+  ASSESS_OUTPUT_CONFIDENCE,
   CHECK_GROUNDING,
   RENDER_SIGNATURE_MANIFESTATION,
   SCAN_REGULATORY_DEFICIENCIES,

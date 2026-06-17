@@ -533,6 +533,49 @@ registerToolHandler('render_signature_manifestation', async (input, ctx) => {
   }
 });
 
+// Honesty envelope — stamp a quantitative output with confidence + denominator
+// + freshness, and gate "final-ready" on missing/stale dependencies. The
+// platform's confidence moat as a reusable primitive. Deterministic, no LLM.
+registerToolHandler('assess_output_confidence', async (input) => {
+  if (typeof input.n !== 'number' || !Number.isFinite(input.n)) {
+    return JSON.stringify({ error: 'assess_output_confidence requires n (number of supporting data points).' });
+  }
+  const freshnessDays = typeof input.freshness_days === 'number' ? input.freshness_days : undefined;
+  const maxFreshnessDays = typeof input.max_freshness_days === 'number' ? input.max_freshness_days : 180;
+
+  try {
+    const { buildHonestyEnvelope, finalReadyGate } = await import('./honesty-envelope.js');
+    const envelope = buildHonestyEnvelope({ n: input.n, freshnessDays, maxFreshnessDays });
+
+    let finalReady: { ready: boolean; blockers: string[] } | null = null;
+    if (Array.isArray(input.dependencies)) {
+      const deps = (input.dependencies as Array<Record<string, unknown>>).map(d => ({
+        name: typeof d.name === 'string' ? d.name : 'dependency',
+        present: d.present === true,
+        freshnessDays: typeof d.freshness_days === 'number' ? d.freshness_days : undefined,
+      }));
+      finalReady = finalReadyGate(deps, maxFreshnessDays);
+    }
+
+    return JSON.stringify({
+      engine: 'honesty envelope (deterministic, no LLM)',
+      confidence: envelope.confidence,
+      n: envelope.n,
+      freshnessDays: envelope.freshnessDays,
+      stale: envelope.stale,
+      label: envelope.label,
+      finalReady,
+      message: finalReady && !finalReady.ready
+        ? `Output is NOT final-ready — blockers: ${finalReady.blockers.join('; ')}. Show these to the user; do not present as final.`
+        : `Stamp this number with "${envelope.label}". Never present it as more certain than its denominator supports.`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `assess_output_confidence failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // Grounding guarantee — flags quantitative claims in a draft that lack a
 // citation/source marker, so AnA grounds or hedges every number before it
 // reaches a regulatory reader. Deterministic (no LLM); the trust moat made
