@@ -9,6 +9,7 @@
 
 import { pool } from '../db.js';
 import { searchConnectors } from './connectors/connector-registry.js';
+import { rankResultsByProvenance } from './search/provenance-ranking.js';
 import { recordUsage, checkQuota } from './usage-metering.js';
 import { getAnthropicClient, CLAUDE_MODELS } from './anthropic-client.js';
 import type { ConnectorQuery, ConnectorResult } from './connectors/connector-interface.js';
@@ -166,11 +167,11 @@ async function executeResearchJob(jobId: number, request: DeepResearchRequest): 
 
   await updateJobProgress(jobId, 60, 'running', request.organizationId);
 
-  // Aggregate and rank results
+  // Aggregate and rank results — by source AUTHORITY tier first (regulatory /
+  // registry / peer-reviewed lead over preprints), then relevance within a tier.
+  // Each result is annotated with its provenanceTier for credibility badging.
   const allResults = connectorResults.flatMap(cr => cr.results);
-  const topResults = allResults
-    .sort((a, b) => b.relevanceScore - a.relevanceScore)
-    .slice(0, 30);
+  const topResults = rankResultsByProvenance(allResults).slice(0, 30);
 
   // Categorize
   const csrMatches = allResults.filter(r =>
