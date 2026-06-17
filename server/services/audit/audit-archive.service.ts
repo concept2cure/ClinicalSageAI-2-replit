@@ -119,8 +119,50 @@ export async function runAuditArchive(
     }
 
     // Only after the sink confirms the bytes landed do we delete from hot.
+    //
+    // audit_logs has a BEFORE DELETE immutability trigger
+    // (db/migrations/20260617_audit_logs_immutability.sql) that aborts every
+    // DELETE UNLESS this session GUC is set. We opt in with `SET LOCAL
+    // app.audit_archive_bypass = 'on'` so the bypass is scoped to THIS
+    // transaction only and reverts automatically at COMMIT/ROLLBACK — it cannot
+    // leak to any other statement or connection.
+    //
+    // SET LOCAL only affects the connection it runs on, so BEGIN / SET LOCAL /
+    // DELETE / COMMIT MUST all run on the SAME connection. When the caller hands
+    // us a Pool, each `pool.query` may use a different pooled connection, which
+    // would silently break both the transaction and the GUC scope. So we check
+    // out a single dedicated client for the transactional delete and release it
+    // afterwards. When the caller already passed a PoolClient (single
+    // connection), we use it directly.
     const ids = rows.map(r => (r as any).id);
-    await client.query(`DELETE FROM audit_logs WHERE id = ANY($1::int[])`, [ids]);
+    const poolConnect = (client as Pool).connect;
+    const txClient: PoolClient = typeof poolConnect === 'function'
+      ? await (client as Pool).connect()
+      : (client as PoolClient);
+    try {
+      await txClient.query('BEGIN');
+      await txClient.query(`SET LOCAL app.audit_archive_bypass = 'on'`);
+      await txClient.query(`DELETE FROM audit_logs WHERE id = ANY($1::int[])`, [ids]);
+      await txClient.query('COMMIT');
+    } catch (err) {
+      try {
+        await txClient.query('ROLLBACK');
+      } catch {
+        /* ignore rollback failure */
+      }
+      result.errors.push(
+        `Delete-from-hot failed (batch ${batchId}): ${
+          err instanceof Error ? err.message : 'unknown'
+        }. Rows remain in hot table (already safely archived to cold).`,
+      );
+      break;
+    } finally {
+      // Release only a client we checked out ourselves; never release a
+      // caller-owned PoolClient.
+      if (txClient !== (client as unknown as PoolClient)) {
+        (txClient as PoolClient).release();
+      }
+    }
 
     result.rowsArchived += rows.length;
     result.batches += 1;
