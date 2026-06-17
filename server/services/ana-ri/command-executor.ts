@@ -4680,7 +4680,7 @@ export async function executeCommands(
       if (ctx.part11Enforce && requiresPart11Signoff(cmd.command)) {
         const v = validateSignoff(ctx.signoff);
         if (!v.ok) {
-          const blocked = buildSignatureRequiredResult(cmd.command, v);
+          const blocked = buildSignatureRequiredResult(cmd.command, v, cmd.params as Record<string, unknown>);
           results.push(blocked);
           console.log(`[AnA Command] Blocked ${cmd.command}: PART11_SIGNATURE_REQUIRED (${v.code})`);
           continue;

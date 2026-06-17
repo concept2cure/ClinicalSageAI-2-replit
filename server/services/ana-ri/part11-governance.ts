@@ -99,14 +99,20 @@ export function validateSignoff(signoff: Part11Signoff | undefined): SignoffVali
  * collect the reason-for-change + signature, then retry with the sign-off. */
 export function buildSignatureRequiredResult(
   command: string,
-  validation: SignoffValidation
+  validation: SignoffValidation,
+  params?: Record<string, unknown>
 ): {
   success: false;
   action: string;
   error: string;
   message: string;
   openModal: 'esign';
-  data: { reasonRequired: true; code: SignoffValidation['code'] };
+  data: {
+    reasonRequired: true;
+    code: SignoffValidation['code'];
+    /** Everything the client needs to re-submit via POST /governed-action. */
+    retry: { command: string; params: Record<string, unknown> };
+  };
 } {
   return {
     success: false,
@@ -116,7 +122,7 @@ export function buildSignatureRequiredResult(
       validation.error ??
       'This action alters a governed record and requires a reason for change and an electronic signature.',
     openModal: 'esign',
-    data: { reasonRequired: true, code: validation.code },
+    data: { reasonRequired: true, code: validation.code, retry: { command, params: params ?? {} } },
   };
 }
 
