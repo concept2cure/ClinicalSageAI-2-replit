@@ -930,6 +930,31 @@ export const PROJECT_KNOWLEDGE_SEARCH: AnaTool = {
   },
 };
 
+export const PROJECT_KNOWLEDGE_SEARCH_MULTI: AnaTool = {
+  name: 'project_knowledge_search_multi',
+  description:
+    "Run SEVERAL knowledge-base searches against the active project's corpus in one call, then merge and de-duplicate the results. Use this to gather evidence across multiple angles at once — e.g. decompose a complex question into sub-queries (primary endpoint, safety signal, statistical method) and retrieve all of them simultaneously instead of one search at a time. Returns a merged, de-duplicated, relevance-ranked passage list plus a per-query breakdown, each passage cited by source document title and locator. The project and tenant come from the active context.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      queries: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Two to eight distinct sub-queries to search simultaneously (different angles on the question).',
+      },
+      max_results_per_query: {
+        type: 'number',
+        description: 'Maximum passages to retrieve per sub-query before merging (default: 5, max: 10).',
+      },
+      max_merged_results: {
+        type: 'number',
+        description: 'Maximum passages in the merged, de-duplicated result set (default: 12, max: 25).',
+      },
+    },
+    required: ['queries'],
+  },
+};
+
 export const SIMULATE_STUDY_DESIGN: AnaTool = {
   name: 'simulate_study_design',
   description:
@@ -6058,6 +6083,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   BUILD_ABBREVIATION_LIST,
   DESCRIBE_CAPABILITIES,
   PROJECT_KNOWLEDGE_SEARCH,
+  PROJECT_KNOWLEDGE_SEARCH_MULTI,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
   SEARCH_DRUG_ADVERSE_EVENTS,

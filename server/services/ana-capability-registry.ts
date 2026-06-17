@@ -298,6 +298,17 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
   {
+    capabilityKey: 'project-knowledge-search-multi',
+    category: 'knowledge',
+    name: 'Multi-Query Project Knowledge Search',
+    description:
+      'Run several knowledge-base searches against the active project corpus simultaneously, then merge and de-duplicate into one relevance-ranked passage list — decompose a complex question into sub-queries and gather all the evidence at once instead of searching one angle at a time.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
     capabilityKey: 'cortex-thread-management',
     category: 'knowledge',
     name: 'CORTEX Thread Management',

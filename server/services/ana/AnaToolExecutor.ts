@@ -343,6 +343,84 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
   }
 });
 
+// Multi-query project knowledge search — fan out several sub-queries against
+// the active project's corpus in parallel, then merge + de-duplicate into one
+// relevance-ranked passage list. Lets AnA gather evidence across angles in a
+// single call instead of looping one search at a time.
+registerToolHandler('project_knowledge_search_multi', async (input, ctx) => {
+  const rawQueries = Array.isArray(input.queries) ? input.queries : [];
+  const queries = rawQueries
+    .filter((q): q is string => typeof q === 'string' && q.trim().length > 0)
+    .map(q => q.trim())
+    .slice(0, 8);
+  if (queries.length === 0) {
+    return 'No queries provided for project_knowledge_search_multi.';
+  }
+  const projectId = ctx?.projectId;
+  const organizationUuid = ctx?.organizationUuid;
+  if (!projectId || !organizationUuid) {
+    return 'No active project is in context, so project knowledge cannot be searched. Ask the user to open a project first.';
+  }
+
+  const perQuery =
+    typeof input.max_results_per_query === 'number' && input.max_results_per_query > 0
+      ? Math.min(Math.floor(input.max_results_per_query), 10)
+      : 5;
+  const mergedCap =
+    typeof input.max_merged_results === 'number' && input.max_merged_results > 0
+      ? Math.min(Math.floor(input.max_merged_results), 25)
+      : 12;
+
+  try {
+    const { mergeMultiQueryResults } = await import('./knowledge-search-merge.js');
+
+    // Fan out the searches concurrently.
+    const settled = await Promise.allSettled(
+      queries.map(query =>
+        ragRouter.retrieve({
+          query,
+          intent: 'project_scoped',
+          organizationUuid,
+          artifactScope: { projectId, organizationUuid },
+          useReranking: true,
+          limit: perQuery,
+        })
+      )
+    );
+
+    const perQueryBreakdown: Array<{ query: string; resultCount: number; error?: string }> = [];
+    const resultsByQuery = settled.map((res, i) => {
+      const query = queries[i];
+      if (res.status !== 'fulfilled') {
+        perQueryBreakdown.push({ query, resultCount: 0, error: 'retrieval failed' });
+        return { query, docs: [] };
+      }
+      const docs = (res.value?.documents ?? []).slice(0, perQuery);
+      perQueryBreakdown.push({ query, resultCount: docs.length });
+      return { query, docs };
+    });
+
+    const merged = mergeMultiQueryResults(resultsByQuery, mergedCap);
+
+    if (merged.length === 0) {
+      return `No matching passages were found in this project's knowledge across ${queries.length} sub-queries.`;
+    }
+
+    return JSON.stringify({
+      source: 'Project knowledge corpus (RAG, multi-query)',
+      queries,
+      perQuery: perQueryBreakdown,
+      resultCount: merged.length,
+      passages: merged,
+      citation_hint:
+        "Ground statements in these passages and cite each by its document title and locator (page/section). " +
+        "`matched_queries` shows which sub-queries surfaced each passage — passages matched by several sub-queries are usually the strongest evidence.",
+    });
+  } catch (err: any) {
+    return `Multi-query project knowledge search failed: ${err?.message ?? 'unknown error'}.`;
+  }
+});
+
 // Search Clinical Evidence — queries internal DB and ClinicalTrials.gov
 registerToolHandler('search_clinical_evidence', async (input) => {
   const query = typeof input.query === 'string' ? input.query : '';
