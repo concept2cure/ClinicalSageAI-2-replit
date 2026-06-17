@@ -98,12 +98,20 @@ const upload = multer({
   },
 });
 
-// Get all documents with optional filtering
+// Get all documents with optional filtering.
+//
+// SECURITY: this list endpoint was the exploitable cross-tenant
+// enumeration — it called storage.getDocuments() with no org id and
+// returned every tenant's documents. It is now gated by the JWT-bound
+// org id (403 if no tenant context) and that org id is the mandatory
+// scope passed into storage.getDocuments().
 router.get('/', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { type, status, search, folderId, limit, offset } = req.query;
 
-    const options: any = {};
+    const options: any = { organizationId: guard.orgId };
     if (limit) options.limit = Number(limit);
     if (offset) options.offset = Number(offset);
     if (type) options.type = String(type);
@@ -232,7 +240,7 @@ router.patch('/:id', async (req, res) => {
     }
 
     // Update document in storage
-    const updatedDocument = await storage.updateDocument(id, req.body);
+    const updatedDocument = await storage.updateDocument(id, guard.orgId, req.body);
 
     res.json(updatedDocument);
   } catch (error) {
@@ -254,7 +262,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     // Delete document from storage
-    const result = await storage.deleteDocument(id);
+    const result = await storage.deleteDocument(id, guard.orgId);
 
     res.json({ success: result });
   } catch (error) {

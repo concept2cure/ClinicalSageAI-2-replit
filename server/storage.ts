@@ -82,8 +82,18 @@ export interface IStorage {
   // caller to source the org id from the JWT (req.user.organizationId)
   // rather than letting it default away silently.
   getDocument(id: string, organizationId: number | string): Promise<schema.Document | undefined>;
-  getDocumentByName(name: string): Promise<schema.Document | undefined>;
-  getDocuments(options?: {
+  // SECURITY: every document accessor is tenant-scoped. getDocumentByName,
+  // getDocuments, updateDocument and deleteDocument now REQUIRE an
+  // organizationId and apply it in the WHERE clause. A missing/non-finite
+  // org id fails closed (empty result / undefined / false) — mirroring
+  // getDocument — so a forgotten scope can never silently widen a query
+  // across tenants.
+  getDocumentByName(
+    name: string,
+    organizationId: number | string,
+  ): Promise<schema.Document | undefined>;
+  getDocuments(options: {
+    organizationId: number | string;
     limit?: number;
     offset?: number;
     folderId?: string;
@@ -94,9 +104,10 @@ export interface IStorage {
   createDocument(document: schema.InsertDocument): Promise<schema.Document>;
   updateDocument(
     id: string,
+    organizationId: number | string,
     documentData: Partial<schema.InsertDocument>
   ): Promise<schema.Document | undefined>;
-  deleteDocument(id: string): Promise<boolean>;
+  deleteDocument(id: string, organizationId: number | string): Promise<boolean>;
 
   // Document folder methods
   // Document folder methods.
@@ -767,24 +778,39 @@ export class MemStorage {
     ) as schema.Document | undefined;
   }
 
-  async getDocumentByName(name: string): Promise<schema.Document | undefined> {
-    return this.documents.find(d => d.title === name) as schema.Document | undefined;
+  async getDocumentByName(
+    name: string,
+    organizationId: number | string,
+  ): Promise<schema.Document | undefined> {
+    const orgId = Number(organizationId);
+    if (!Number.isFinite(orgId)) return undefined;
+    return this.documents.find(
+      d => d.title === name && Number((d as any).organizationId) === orgId,
+    ) as schema.Document | undefined;
   }
 
   async getDocuments(
     options: {
+      organizationId: number | string;
       limit?: number;
       offset?: number;
       folderId?: string;
       status?: string;
       type?: string;
       search?: string;
-    } = {}
+    }
   ): Promise<schema.Document[]> {
-    const { limit = 20, offset = 0, folderId, status, type, search } = options;
+    const { organizationId, limit = 20, offset = 0, folderId, status, type, search } = options;
 
-    // Filter documents based on provided criteria
-    let result = this.documents as schema.Document[];
+    const orgId = Number(organizationId);
+    // Tenant filter is mandatory and fails closed: a missing/non-finite
+    // org id yields no rows rather than the whole table.
+    if (!Number.isFinite(orgId)) return [];
+
+    // Filter documents based on provided criteria, tenant-scoped first.
+    let result = (this.documents as schema.Document[]).filter(
+      d => Number((d as any).organizationId) === orgId,
+    );
 
     if (folderId) {
       // Note: Document schema doesn't have folderId, filtering by metadata if available
@@ -837,9 +863,14 @@ export class MemStorage {
 
   async updateDocument(
     id: string,
+    organizationId: number | string,
     documentData: Partial<schema.InsertDocument>
   ): Promise<schema.Document | undefined> {
-    const index = this.documents.findIndex(d => d.id === id);
+    const orgId = Number(organizationId);
+    if (!Number.isFinite(orgId)) return undefined;
+    const index = this.documents.findIndex(
+      d => d.id === id && Number((d as any).organizationId) === orgId,
+    );
     if (index === -1) return undefined;
 
     // Update modified timestamp
@@ -853,9 +884,13 @@ export class MemStorage {
     return this.documents[index] as schema.Document;
   }
 
-  async deleteDocument(id: string): Promise<boolean> {
+  async deleteDocument(id: string, organizationId: number | string): Promise<boolean> {
+    const orgId = Number(organizationId);
+    if (!Number.isFinite(orgId)) return false;
     const initialLength = this.documents.length;
-    this.documents = this.documents.filter(d => d.id !== id);
+    this.documents = this.documents.filter(
+      d => !(d.id === id && Number((d as any).organizationId) === orgId),
+    );
     return initialLength > this.documents.length;
   }
 
@@ -2355,14 +2390,25 @@ export class DatabaseStorage {
     }
   }
 
-  async getDocumentByName(name: string): Promise<schema.Document | undefined> {
+  async getDocumentByName(
+    name: string,
+    organizationId: number | string,
+  ): Promise<schema.Document | undefined> {
     if (!db) return undefined;
 
     try {
+      const orgId = Number(organizationId);
+      // Mandatory tenant filter — fail closed on a missing/non-finite org id.
+      if (!Number.isFinite(orgId)) return undefined;
       const documents = await db
         .select()
         .from(schema.documents)
-        .where(eq(schema.documents.title, name));
+        .where(
+          and(
+            eq(schema.documents.title, name),
+            eq(schema.documents.organizationId, orgId),
+          ),
+        );
       return documents[0];
     } catch (error) {
       logger.error('Failed to get document by name', { name, error });
@@ -2372,20 +2418,29 @@ export class DatabaseStorage {
 
   async getDocuments(
     options: {
+      organizationId: number | string;
       limit?: number;
       offset?: number;
       folderId?: string;
       status?: string;
       type?: string;
       search?: string;
-    } = {}
+    }
   ): Promise<schema.Document[]> {
     if (!db) return [];
 
-    const { limit = 20, offset = 0, status, type, search } = options;
+    const { organizationId, limit = 20, offset = 0, status, type, search } = options;
 
     try {
-      const conditions = [] as any[];
+      const orgId = Number(organizationId);
+      // Tenant scope is mandatory and fails closed: without a finite org
+      // id this returns no rows rather than enumerating every tenant's
+      // documents (the cross-tenant list IDOR this fix closes).
+      if (!Number.isFinite(orgId)) return [];
+
+      const conditions = [
+        eq(schema.documents.organizationId, orgId),
+      ] as any[];
 
       if (status) {
         conditions.push(eq(schema.documents.status, status));
@@ -2449,18 +2504,28 @@ export class DatabaseStorage {
 
   async updateDocument(
     id: string,
+    organizationId: number | string,
     documentData: Partial<schema.InsertDocument>
   ): Promise<schema.Document | undefined> {
     if (!db) return undefined;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      // Tenant-scoped update — a non-finite org id matches no rows, so a
+      // cross-tenant id can never be mutated.
+      if (!Number.isFinite(orgId)) return undefined;
       const data = { ...(documentData as any), updatedAt: new Date() } as any;
 
       const results = await db
         .update(schema.documents)
         .set(data)
-        .where(eq(schema.documents.id, numericId))
+        .where(
+          and(
+            eq(schema.documents.id, numericId),
+            eq(schema.documents.organizationId, orgId),
+          ),
+        )
         .returning();
 
       return results[0];
@@ -2470,14 +2535,22 @@ export class DatabaseStorage {
     }
   }
 
-  async deleteDocument(id: string): Promise<boolean> {
+  async deleteDocument(id: string, organizationId: number | string): Promise<boolean> {
     if (!db) return false;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      // Tenant-scoped delete — fail closed on a missing/non-finite org id.
+      if (!Number.isFinite(orgId)) return false;
       const results = await db
         .delete(schema.documents)
-        .where(eq(schema.documents.id, numericId))
+        .where(
+          and(
+            eq(schema.documents.id, numericId),
+            eq(schema.documents.organizationId, orgId),
+          ),
+        )
         .returning({ id: schema.documents.id });
 
       return results.length > 0;
