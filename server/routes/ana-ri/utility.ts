@@ -16,11 +16,13 @@ import {
   getGenerationStats,
 } from '../../services/ana-ri/enforcement.js';
 import { decisionLifecycleService } from '../../services/decision-lifecycle-service.js';
+import { getSinceLastVisit } from '../../services/ana/since-last-visit.js';
 import {
   sendSuccess,
   sendError,
   ensureGateway,
   isDatabaseAvailable,
+  extractRequestContext,
 } from './shared.js';
 
 /** Register utility endpoints on the given router. */
@@ -165,6 +167,34 @@ export function mountUtilityRoutes(router: Router): void {
         error?.message || 'Failed to load decision audit trail',
         null,
         'DECISIONS_FETCH_FAILED'
+      );
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET /api/ana-ri/since-last-visit?since=<ISO> — "what changed while you were
+  // away": newly-overdue deadlines + newly-opened blockers / contradictions,
+  // computed against the client-supplied last-visit timestamp. Org-scoped.
+  // ─────────────────────────────────────────────────────────────────────────
+  router.get('/since-last-visit', async (req: Request, res: Response) => {
+    const { numericOrgId } = extractRequestContext(req);
+    if (!numericOrgId) {
+      return sendError(res, 401, 'Organization context required', null, 'NO_ORG_CONTEXT');
+    }
+    const since = req.query.since;
+    if (typeof since !== 'string' || since.trim() === '') {
+      return sendError(res, 400, 'since (ISO timestamp) query parameter is required', null, 'MISSING_SINCE');
+    }
+    try {
+      const result = await getSinceLastVisit({ organizationId: numericOrgId, since });
+      return sendSuccess(res, result);
+    } catch (error: any) {
+      return sendError(
+        res,
+        500,
+        error?.message || 'Failed to compute since-last-visit delta',
+        null,
+        'SINCE_LAST_VISIT_FAILED'
       );
     }
   });
