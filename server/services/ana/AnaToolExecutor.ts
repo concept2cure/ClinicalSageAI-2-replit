@@ -40,6 +40,8 @@ import {
   type SubmissionType,
 } from '../ana-ri/deficiency-taxonomy.js';
 import { getDeadlineRadar } from './deadline-radar.js';
+import { compileGovernedResponseAssembly } from '../regulatory-correspondence/response-package-compiler.js';
+import type { CorrespondenceIssue } from '../../../shared/types/regulatory-correspondence.js';
 import {
   adviseDeviceReadiness,
   adviseGlobalMarketStrategy,
@@ -825,6 +827,48 @@ registerToolHandler('regulatory_deadline_radar', async (input, ctx) => {
       error: `Deadline radar failed: ${e instanceof Error ? e.message : String(e)}`,
     });
   }
+});
+
+// Governed correspondence response package — deterministic assembly (issue
+// matrix, evidence checklist, readiness gating) from structured agency-issue
+// input. Complements draft_fda_ir_response. No LLM, no fabrication.
+registerToolHandler('compile_correspondence_response_package', async (input) => {
+  const correspondenceId = typeof input.correspondence_id === 'string' ? input.correspondence_id : '';
+  const rawIssues = Array.isArray(input.issues) ? input.issues : [];
+  if (!correspondenceId || rawIssues.length === 0) {
+    return JSON.stringify({
+      source: 'AnA Correspondence Response Package',
+      error: 'correspondence_id and a non-empty issues array are required.',
+    });
+  }
+  // Adapter: the compiler reads only a subset of CorrespondenceIssue fields, so
+  // build those from the model-supplied issues and cast to the compiler's type.
+  const issues = rawIssues.map(raw => {
+    const r = (raw ?? {}) as Record<string, unknown>;
+    const evidenceNeeds = Array.isArray(r.evidenceNeeds) ? (r.evidenceNeeds as string[]) : [];
+    return {
+      id: String(r.id ?? ''),
+      category: String(r.category ?? 'general'),
+      severity: String(r.severity ?? 'medium'),
+      blocker: r.blocker === true,
+      mappedCtdSections: Array.isArray(r.mappedCtdSections) ? (r.mappedCtdSections as string[]) : [],
+      mappedArtifactIds: Array.isArray(r.mappedArtifactIds) ? (r.mappedArtifactIds as string[]) : [],
+      structuredExtraction: evidenceNeeds.length ? { evidenceNeeds } : undefined,
+    };
+  }) as unknown as CorrespondenceIssue[];
+  const selectedIssueIds = Array.isArray(input.selected_issue_ids)
+    ? (input.selected_issue_ids as string[])
+    : undefined;
+  const revisedArtifactIds = Array.isArray(input.revised_artifact_ids)
+    ? (input.revised_artifact_ids as string[])
+    : undefined;
+  const assembly = compileGovernedResponseAssembly({
+    correspondenceId,
+    issues,
+    selectedIssueIds,
+    revisedArtifactIds,
+  });
+  return JSON.stringify({ source: 'AnA Correspondence Response Package', ...assembly });
 });
 
 // Global-RI deterministic expert tools — registry-grounded cross-market regulatory
