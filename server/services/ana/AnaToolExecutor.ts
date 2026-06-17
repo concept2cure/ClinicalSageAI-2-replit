@@ -41,6 +41,7 @@ import {
 } from '../ana-ri/deficiency-taxonomy.js';
 import { getDeadlineRadar } from './deadline-radar.js';
 import { getSessionBriefing } from './session-briefing.js';
+import { getOpenBlockers, summarizeBlockers } from './risk-watch.js';
 import { compileGovernedResponseAssembly } from '../regulatory-correspondence/response-package-compiler.js';
 import type { CorrespondenceIssue } from '../../../shared/types/regulatory-correspondence.js';
 import {
@@ -870,6 +871,34 @@ registerToolHandler('compile_correspondence_response_package', async (input) => 
     revisedArtifactIds,
   });
   return JSON.stringify({ source: 'AnA Correspondence Response Package', ...assembly });
+});
+
+// Risk watch — tenant+project-scoped list of OPEN blockers, severity-first.
+// Fails closed when no org/project is in context. Deterministic.
+registerToolHandler('scan_project_risks', async (input, ctx) => {
+  const organizationId = ctx?.organizationId ? Number(ctx.organizationId) : null;
+  const projectId = ctx?.projectId ? Number(ctx.projectId) : null;
+  if (!organizationId || Number.isNaN(organizationId) || !projectId || Number.isNaN(projectId)) {
+    return JSON.stringify({
+      source: 'AnA Risk Watch',
+      error: 'An organization and project must be in context to scan project risks.',
+    });
+  }
+  const limit =
+    typeof input.limit === 'number' && input.limit > 0 ? Math.min(Math.floor(input.limit), 100) : 20;
+  try {
+    const blockers = await getOpenBlockers({ organizationId, projectId, limit });
+    return JSON.stringify({
+      source: 'AnA Risk Watch',
+      summary: summarizeBlockers(blockers),
+      blockers,
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'AnA Risk Watch',
+      error: `Risk scan failed: ${e instanceof Error ? e.message : String(e)}`,
+    });
+  }
 });
 
 // Session briefing — tenant-scoped reconciliation of overdue/due-soon deadlines

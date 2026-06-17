@@ -6303,6 +6303,27 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
       },
     },
   } as unknown as AnaTool,
+  // Risk watch: surface a project's OPEN blockers (contradiction/dispatch/
+  // correspondence findings) severity-first. Handler is tenant+project scoped
+  // from context; deterministic (no LLM, no fabrication).
+  {
+    name: 'scan_project_risks',
+    description:
+      'List the active project\'s OPEN blockers — the live risks tracked by the platform (contradiction ' +
+      'findings, dispatch-gate failures, correspondence-driven blockers) — ordered by severity ' +
+      '(critical → low), each with type, owner, and next action. Use to answer "what\'s blocking us?", ' +
+      'before committing to a plan, or to proactively flag risk. Scoped to the user\'s org/project ' +
+      'automatically; deterministic — surfaces only tracked, open blockers, never invented ones.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Max blockers to return (default 20).',
+        },
+      },
+    },
+  } as unknown as AnaTool,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
