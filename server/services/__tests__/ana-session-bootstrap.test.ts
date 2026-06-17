@@ -6,6 +6,7 @@ import {
   bootstrapAtomScore,
   rankBootstrapAtoms,
   formatSessionBootstrap,
+  shouldAutoBootstrap,
   type BootstrapAtom,
 } from '../ana-session-bootstrap-format';
 
@@ -51,6 +52,21 @@ describe('rankBootstrapAtoms', () => {
     const newer = atom({ title: 'newer', createdAt: '2025-01-01T00:00:00Z' });
     const ranked = rankBootstrapAtoms([older, newer], 2);
     expect(ranked[0].title).toBe('newer');
+  });
+});
+
+describe('shouldAutoBootstrap', () => {
+  it('fires only at session start with an org', () => {
+    expect(shouldAutoBootstrap({ priorMessageCount: 0, organizationId: 1 })).toBe(true);
+  });
+  it('does not fire mid-conversation', () => {
+    expect(shouldAutoBootstrap({ priorMessageCount: 3, organizationId: 1 })).toBe(false);
+  });
+  it('does not fire without an org', () => {
+    expect(shouldAutoBootstrap({ priorMessageCount: 0, organizationId: null })).toBe(false);
+  });
+  it('respects the disable flag', () => {
+    expect(shouldAutoBootstrap({ priorMessageCount: 0, organizationId: 1, disabled: true })).toBe(false);
   });
 });
 

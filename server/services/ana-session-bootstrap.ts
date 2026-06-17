@@ -32,6 +32,7 @@ export {
   bootstrapAtomScore,
   rankBootstrapAtoms,
   formatSessionBootstrap,
+  shouldAutoBootstrap,
 } from './ana-session-bootstrap-format.js';
 
 /**

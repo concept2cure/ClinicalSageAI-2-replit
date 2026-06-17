@@ -23,6 +23,23 @@ export interface OutcomeLesson {
   lessonsLearned?: string | null;
 }
 
+/**
+ * Decide whether to auto-rehydrate session context for a chat turn. Pure so the
+ * gating is testable without the route. Fires only at session start (no prior
+ * messages in the thread), when an org is present, and unless explicitly
+ * disabled — so prior context loads once per session without re-injecting every
+ * turn.
+ */
+export function shouldAutoBootstrap(opts: {
+  priorMessageCount: number;
+  organizationId?: number | null;
+  disabled?: boolean;
+}): boolean {
+  if (opts.disabled) return false;
+  if (!opts.organizationId) return false;
+  return opts.priorMessageCount === 0;
+}
+
 const IMPORTANCE_WEIGHT: Record<string, number> = {
   critical: 4,
   high: 3,
