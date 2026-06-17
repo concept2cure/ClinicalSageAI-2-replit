@@ -35,6 +35,11 @@ import { assessRegulatoryLandscape } from '../integrations/landscape.js';
 import { getIntegrationStatuses, summarizeStatuses } from '../integrations/integration-status.js';
 import { getAllEnabledTools } from './AnaToolDefinitions.js';
 import {
+  getDeficienciesBySubmissionType,
+  getCriticalDeficiencies,
+  type SubmissionType,
+} from '../ana-ri/deficiency-taxonomy.js';
+import {
   adviseDeviceReadiness,
   adviseGlobalMarketStrategy,
   adviseGlobalSubmissionPlan,
@@ -747,6 +752,47 @@ registerToolHandler('detect_evidence_gaps', async (input) => {
   const query = (input.query && typeof input.query === 'object' ? input.query : {}) as GapQuery;
   const evidence = Array.isArray(input.evidence) ? (input.evidence as EvidenceItem[]) : [];
   return JSON.stringify({ source: 'AnA Evidence-Gap Detector', ...detectEvidenceGaps(query, evidence) });
+});
+
+// Submission deficiency taxonomy — deterministically surface likely reviewer
+// deficiencies (severity, reviewer language, mitigations, references) for a
+// submission type, so AnA can pre-empt agency findings. No LLM, no fabrication;
+// invalid submission_type is returned as a structured error for model retry.
+registerToolHandler('lookup_submission_deficiencies', async (input) => {
+  const raw = typeof input.submission_type === 'string' ? input.submission_type.toLowerCase().trim() : '';
+  const valid: SubmissionType[] = ['ind', 'nda', 'bla', '510k', 'pma', 'de_novo', 'cer', 'ectd', 'general'];
+  if (!valid.includes(raw as SubmissionType)) {
+    return JSON.stringify({
+      source: 'AnA Deficiency Taxonomy',
+      error: `submission_type must be one of: ${valid.join(', ')}`,
+    });
+  }
+  const submissionType = raw as SubmissionType;
+  const criticalOnly = input.critical_only === true;
+  const patterns = criticalOnly
+    ? getCriticalDeficiencies(submissionType)
+    : getDeficienciesBySubmissionType(submissionType);
+  const deficiencies = patterns.map(p => ({
+    id: p.id,
+    category: p.category,
+    subcategory: p.subcategory,
+    title: p.title,
+    description: p.description,
+    severity: p.severity,
+    likelihood: p.likelihood,
+    agencies: p.agencies,
+    reviewerLanguage: p.reviewerLanguage,
+    mitigations: p.mitigations,
+    references: p.references,
+  }));
+  return JSON.stringify({
+    source: 'AnA Deficiency Taxonomy',
+    submission_type: submissionType,
+    critical_only: criticalOnly,
+    count: deficiencies.length,
+    deficiencies,
+    citation_hint: 'Cite each mitigation against its listed regulatory references.',
+  });
 });
 
 // Global-RI deterministic expert tools — registry-grounded cross-market regulatory
