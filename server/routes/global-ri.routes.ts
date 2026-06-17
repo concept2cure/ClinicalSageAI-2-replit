@@ -53,6 +53,7 @@ import processValidationRouter from './global-ri/process-validation.routes';
 import clinicalEvidenceRouter from './global-ri/clinical-evidence-standards.routes';
 import establishmentRouter from './global-ri/establishment-registration.routes';
 import importExportRouter from './global-ri/import-export-licensing.routes';
+import catalogRouter from './global-ri/catalog.routes';
 
 const router = Router();
 
@@ -93,5 +94,6 @@ router.use(processValidationRouter);
 router.use(clinicalEvidenceRouter);
 router.use(establishmentRouter);
 router.use(importExportRouter);
+router.use(catalogRouter);
 
 export default router;
