@@ -14,6 +14,11 @@ export interface AdvancedPlatformBootstrapContext {
   pool: Pool;
   isStaticDataEnabled: (flag: string) => boolean;
   mountStaticBusinessDataGuard: (path: string, routeName: string, requiredFlag: string) => void;
+  /**
+   * Test/QA-only routes allowed to mount. Optional; when omitted the loop
+   * fails closed (integration-test is not mounted).
+   */
+  testRoutesEnabled?: boolean;
 }
 
 export async function registerAdvancedPlatformRoutes({
@@ -21,6 +26,7 @@ export async function registerAdvancedPlatformRoutes({
   pool,
   isStaticDataEnabled,
   mountStaticBusinessDataGuard,
+  testRoutesEnabled,
 }: AdvancedPlatformBootstrapContext) {
   // ── Innovation + Notifications ──
   try {
@@ -151,6 +157,11 @@ export async function registerAdvancedPlatformRoutes({
     ] as const;
     const auditIntegResults = await Promise.allSettled(auditIntegConfig.map(c => import(c.mod)));
     auditIntegResults.forEach((r, i) => {
+      // Fence the test/QA-only integration-test harness out of production (#848).
+      if (auditIntegConfig[i].path === '/api/integration-test' && !testRoutesEnabled) {
+        console.log('⛔ /api/integration-test not mounted (test routes fenced in this environment)');
+        return;
+      }
       if (r.status === 'fulfilled') {
         app.use(auditIntegConfig[i].path, authenticateToken, r.value.default);
         console.log(`✅ ${auditIntegConfig[i].name} routes mounted`);

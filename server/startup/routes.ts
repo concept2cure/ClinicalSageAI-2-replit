@@ -60,6 +60,7 @@ export interface RouteRegistrationContext {
   pool: Pool;
   experimentalRoutesEnabled: boolean;
   demoRoutesEnabled: boolean;
+  testRoutesEnabled: boolean;
 }
 
 /**
@@ -81,7 +82,7 @@ export async function registerPreStartRoutes(
   ctx: RouteRegistrationContext,
   aiCircuitBreaker: CircuitBreakerMiddleware
 ): Promise<void> {
-  const { app, pool, experimentalRoutesEnabled, demoRoutesEnabled } = ctx;
+  const { app, pool, experimentalRoutesEnabled, demoRoutesEnabled, testRoutesEnabled } = ctx;
   const inlineCtx = { app, pool };
 
   // Platform: /api/auth, /api/v1/auth, /api/users, /api/user, legacy auth
@@ -93,7 +94,7 @@ export async function registerPreStartRoutes(
 
   // Core bootstrap family (templates, AI, CMC, AI assistance, intelligent
   // docs, PM settings, control plane) + Integrations family.
-  registerCoreRoutes({ app, pool, aiCircuitBreaker });
+  registerCoreRoutes({ app, pool, aiCircuitBreaker, testRoutesEnabled });
   registerIntegrationRoutes(app);
 
   // Slot 2 — AnA Cortex / Nano Banana / Predictive / Foresight alias / Biotech RAG.
@@ -146,7 +147,7 @@ export async function registerPreStartRoutes(
  * Proof System being ready.
  */
 export async function registerPostStartRoutes(ctx: RouteRegistrationContext): Promise<void> {
-  const { app, pool } = ctx;
+  const { app, pool, testRoutesEnabled } = ctx;
 
   await registerTenantRoutes({ app, pool });
   await registerProjectRoutes({ app, pool });
@@ -156,5 +157,6 @@ export async function registerPostStartRoutes(ctx: RouteRegistrationContext): Pr
     pool,
     isStaticDataEnabled,
     mountStaticBusinessDataGuard: buildStaticBusinessDataGuard(app),
+    testRoutesEnabled,
   });
 }

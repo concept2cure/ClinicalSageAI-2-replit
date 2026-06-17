@@ -17,6 +17,12 @@ export interface StartupFlags {
   experimentalRoutesEnabled: boolean;
   /** Demo route families allowed to mount (non-prod only). */
   demoRoutesEnabled: boolean;
+  /**
+   * Test/QA-only route families (test-assembly, integration-test) allowed to
+   * mount. Fenced OFF in production by default; set ENABLE_TEST_ROUTES=true to
+   * force-enable even in production (escape hatch for prod smoke tests).
+   */
+  testRoutesEnabled: boolean;
 }
 
 export function validateEnvironment(): void {
@@ -101,6 +107,8 @@ export function resolveStartupFlags(): StartupFlags {
       process.env.ENABLE_EXPERIMENTAL_ROUTES === 'true' && process.env.NODE_ENV !== 'production',
     demoRoutesEnabled:
       process.env.ENABLE_DEMO_ROUTES === 'true' && process.env.NODE_ENV !== 'production',
+    testRoutesEnabled:
+      process.env.NODE_ENV !== 'production' || process.env.ENABLE_TEST_ROUTES === 'true',
   };
 }
 

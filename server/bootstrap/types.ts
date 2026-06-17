@@ -9,6 +9,11 @@ export interface RouteBootstrapContext {
   app: Express;
   pool: Pool;
   aiCircuitBreaker: CircuitBreakerMiddleware;
+  /**
+   * Test/QA-only routes allowed to mount. Optional; when omitted the consumer
+   * fails closed (does not mount test routes).
+   */
+  testRoutesEnabled?: boolean;
 }
 
 export interface PlatformBootstrapContext {
