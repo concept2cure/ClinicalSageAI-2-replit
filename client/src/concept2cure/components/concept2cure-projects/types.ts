@@ -140,4 +140,4 @@ export type ConfigPanelTab = 'general' | 'instructions' | 'team' | 'compliance' 
 
 export type ArchiveMode = 'archive' | 'restore' | 'delete';
 
-export type DetailTab = 'chats' | 'memory' | 'instructions' | 'files' | 'linked' | 'activity';
+export type DetailTab = 'chats' | 'schedule' | 'memory' | 'instructions' | 'files' | 'linked' | 'activity';

@@ -1437,6 +1437,163 @@ registerToolHandler('scan_project_risks', async (input, ctx) => {
   }
 });
 
+// Schedule of Events — AnA owns a regulatory-aware milestone schedule per
+// project, generated from the project type + goals + regulatory framework,
+// kept current with amendments/health reviews, and re-baselined via goals.
+// Milestones reuse project_workflow_stages; proactive tasks reuse project_tasks;
+// alerts reuse the notification service. All operations are org+project scoped.
+function scheduleToolContext(ctx?: ToolContext): { organizationId: number; projectId: number } | null {
+  const organizationId = ctx?.organizationId ? Number(ctx.organizationId) : null;
+  const projectId = ctx?.projectId ? Number(ctx.projectId) : null;
+  if (!organizationId || Number.isNaN(organizationId) || !projectId || Number.isNaN(projectId)) {
+    return null;
+  }
+  return { organizationId, projectId };
+}
+
+function parseScheduleDate(value: unknown): Date | null {
+  if (typeof value !== 'string' || !value.trim()) return null;
+  const d = new Date(value.trim());
+  return Number.isFinite(d.getTime()) ? d : null;
+}
+
+registerToolHandler('generate_schedule_of_events', async (input, ctx) => {
+  const scope = scheduleToolContext(ctx);
+  if (!scope) {
+    return JSON.stringify({
+      source: 'AnA Schedule of Events',
+      error: 'An active organization and project are required to generate a schedule.',
+    });
+  }
+  try {
+    const { generateProjectSchedule } = await import('../projects/schedule-of-events');
+    const projectType =
+      (typeof input.project_type === 'string' && input.project_type.trim()) || ctx?.projectType || null;
+    const goals = Array.isArray(input.goals)
+      ? (input.goals as Array<Record<string, unknown>>).map((g) => ({
+          title: String(g.title ?? '').trim(),
+          description: typeof g.description === 'string' ? g.description : null,
+          targetDate: typeof g.target_date === 'string' ? g.target_date : null,
+          priority: typeof g.priority === 'string' ? g.priority : null,
+          metric: typeof g.metric === 'string' ? g.metric : null,
+        })).filter((g) => g.title)
+      : undefined;
+    const view = await generateProjectSchedule({
+      orgId: scope.organizationId,
+      projectId: scope.projectId,
+      projectType,
+      baselineDate: parseScheduleDate(input.baseline_date),
+      targetDate: parseScheduleDate(input.target_date),
+      goals,
+      triggeredBy: 'ana_user',
+      createdByAna: true,
+    });
+    return JSON.stringify({
+      source: 'AnA Schedule of Events',
+      plan: view.plan,
+      milestones: view.milestones,
+      goals: view.goals,
+      health: view.health,
+    });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'AnA Schedule of Events',
+      error: `Schedule generation failed: ${e instanceof Error ? e.message : String(e)}`,
+    });
+  }
+});
+
+registerToolHandler('amend_schedule_of_events', async (input, ctx) => {
+  const scope = scheduleToolContext(ctx);
+  if (!scope) {
+    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required.' });
+  }
+  const milestoneKey = typeof input.milestone_key === 'string' ? input.milestone_key.trim() : '';
+  if (!milestoneKey) {
+    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'milestone_key is required.' });
+  }
+  try {
+    const { amendMilestone } = await import('../projects/schedule-of-events');
+    const result = await amendMilestone({
+      orgId: scope.organizationId,
+      projectId: scope.projectId,
+      milestoneKey,
+      newTargetDate: parseScheduleDate(input.new_target_date),
+      status: typeof input.status === 'string' ? (input.status as any) : undefined,
+      progress: typeof input.progress === 'number' ? input.progress : undefined,
+      note: typeof input.note === 'string' ? input.note : undefined,
+      triggeredBy: 'ana_user',
+      createdByAna: true,
+    });
+    return JSON.stringify({ source: 'AnA Schedule of Events', ...result });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'AnA Schedule of Events',
+      error: `Amendment failed: ${e instanceof Error ? e.message : String(e)}`,
+    });
+  }
+});
+
+registerToolHandler('review_schedule_of_events_health', async (input, ctx) => {
+  const scope = scheduleToolContext(ctx);
+  if (!scope) {
+    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required.' });
+  }
+  try {
+    const { reviewScheduleHealth } = await import('../projects/schedule-of-events');
+    const apply = input.apply === undefined ? true : !!input.apply;
+    const result = await reviewScheduleHealth({
+      orgId: scope.organizationId,
+      projectId: scope.projectId,
+      apply,
+      triggeredBy: 'ana_user',
+    });
+    return JSON.stringify({ source: 'AnA Schedule of Events', ...result });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'AnA Schedule of Events',
+      error: `Health review failed: ${e instanceof Error ? e.message : String(e)}`,
+    });
+  }
+});
+
+registerToolHandler('reset_project_goals', async (input, ctx) => {
+  const scope = scheduleToolContext(ctx);
+  if (!scope) {
+    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'An active organization and project are required.' });
+  }
+  const rationale = typeof input.rationale === 'string' ? input.rationale.trim() : '';
+  const goals = Array.isArray(input.goals)
+    ? (input.goals as Array<Record<string, unknown>>).map((g) => ({
+        title: String(g.title ?? '').trim(),
+        description: typeof g.description === 'string' ? g.description : null,
+        targetDate: typeof g.target_date === 'string' ? g.target_date : null,
+        priority: typeof g.priority === 'string' ? g.priority : null,
+        metric: typeof g.metric === 'string' ? g.metric : null,
+      })).filter((g) => g.title)
+    : [];
+  if (goals.length === 0 || !rationale) {
+    return JSON.stringify({ source: 'AnA Schedule of Events', error: 'At least one goal and a rationale are required.' });
+  }
+  try {
+    const { resetProjectGoals } = await import('../projects/schedule-of-events');
+    const result = await resetProjectGoals({
+      orgId: scope.organizationId,
+      projectId: scope.projectId,
+      goals,
+      rationale,
+      triggeredBy: 'ana_user',
+      createdByAna: true,
+    });
+    return JSON.stringify({ source: 'AnA Schedule of Events', ...result });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'AnA Schedule of Events',
+      error: `Goal reset failed: ${e instanceof Error ? e.message : String(e)}`,
+    });
+  }
+});
+
 // Session briefing — tenant-scoped reconciliation of overdue/due-soon deadlines
 // + recent decisions, for opening a session or re-orienting. Fails closed when
 // no organization is in context. Deterministic.

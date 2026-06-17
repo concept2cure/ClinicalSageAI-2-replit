@@ -6772,6 +6772,149 @@ export type ProjectTask = InferSelectModel<typeof projectTasks>;
 export type InsertProjectTask = z.infer<typeof insertProjectTaskSchema>;
 
 /**
+ * Project Schedule of Events — AnA-managed visual milestone schedule.
+ *
+ * One header row per project. AnA generates the schedule from the project
+ * type, its goals, and the applicable regulatory framework, then keeps it
+ * current: amending milestone dates, re-baselining goals, and recording every
+ * revision. Surfaced visually in the project manager and proactively monitored
+ * by the schedule-of-events sweep.
+ */
+export const projectScheduleOfEvents = pgTable(
+  'project_schedule_of_events',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id),
+    status: text('status').default('active').notNull(), // draft, active, superseded
+    projectType: text('project_type'), // submission type basis (IND, 510K, NDA, ...)
+    regulatoryFramework: text('regulatory_framework'), // FDA, EMA, MDR, IVDR, ...
+    goals: json('goals'), // snapshot of the goals the schedule was generated from
+    basisSummary: text('basis_summary'), // AnA's narrative of what this schedule is based on
+    anaSummary: text('ana_summary'), // latest AnA information update / status narrative
+    confidence: text('confidence').default('moderate'), // low, moderate, high
+    version: integer('version').default(1).notNull(),
+    baselineDate: timestamp('baseline_date'), // anchor / project start
+    targetDate: timestamp('target_date'), // overall submission / completion target
+    generatedByAna: boolean('generated_by_ana').default(true).notNull(),
+    lastReviewedByAnaAt: timestamp('last_reviewed_by_ana_at'),
+    lastAmendedAt: timestamp('last_amended_at'),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    uniqueProjectSchedule: unique('unique_project_schedule').on(table.projectId),
+    idx_project_schedule_org: index('idx_project_schedule_org').on(table.organizationId),
+    idx_project_schedule_project: index('idx_project_schedule_project').on(table.projectId),
+  })
+);
+
+export const insertProjectScheduleOfEventsSchema = createInsertSchemaOmit(projectScheduleOfEvents, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type ProjectScheduleOfEvents = InferSelectModel<typeof projectScheduleOfEvents>;
+export type InsertProjectScheduleOfEvents = z.infer<typeof insertProjectScheduleOfEventsSchema>;
+
+// NOTE: The schedule's visual milestones are NOT stored in a dedicated table —
+// they reuse the existing `projectWorkflowStages` table, tagged via
+// metadata.source = 'ana_schedule_of_events' and linked back to the plan via
+// metadata.scheduleId. This keeps a single source of truth for milestones and
+// lets the existing timeline/rollup logic see them too. The richer
+// schedule-of-events status (at_risk / slipped) is carried in
+// metadata.scheduleStatus alongside the platform-standard `status` column.
+
+/**
+ * Project Schedule Goals — the program goals AnA tracks and re-baselines.
+ *
+ * Goals are the "why" behind the schedule. AnA resets them as context changes
+ * (new regulatory requirement, slipped milestone, changed scope) and records
+ * the rationale on each reset.
+ */
+export const projectScheduleGoals = pgTable(
+  'project_schedule_goals',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id),
+    scheduleId: integer('schedule_id').references(() => projectScheduleOfEvents.id),
+    title: text('title').notNull(),
+    description: text('description'),
+    targetDate: timestamp('target_date'),
+    status: text('status').default('active').notNull(), // active, at_risk, achieved, revised, dropped
+    priority: text('priority').default('medium').notNull(), // low, medium, high, critical
+    metric: text('metric'), // success measure
+    currentContext: text('current_context'), // latest contextual note from AnA
+    lastResetByAnaAt: timestamp('last_reset_by_ana_at'),
+    anaRationale: text('ana_rationale'),
+    metadata: json('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_schedule_goal_org: index('idx_schedule_goal_org').on(table.organizationId),
+    idx_schedule_goal_project: index('idx_schedule_goal_project').on(table.projectId),
+  })
+);
+
+export const insertProjectScheduleGoalSchema = createInsertSchemaOmit(projectScheduleGoals, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type ProjectScheduleGoal = InferSelectModel<typeof projectScheduleGoals>;
+export type InsertProjectScheduleGoal = z.infer<typeof insertProjectScheduleGoalSchema>;
+
+/**
+ * Project Schedule Revisions — append-only audit of how AnA changed the plan.
+ *
+ * Every generation, amendment, goal reset, or proactive health review writes a
+ * row here so the user can see exactly what AnA did, when, and why.
+ */
+export const projectScheduleRevisions = pgTable(
+  'project_schedule_revisions',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id')
+      .notNull()
+      .references(() => projects.id),
+    scheduleId: integer('schedule_id')
+      .notNull()
+      .references(() => projectScheduleOfEvents.id),
+    revisionType: text('revision_type').notNull(), // generated, amended, milestone_slip, goal_reset, health_review
+    summary: text('summary').notNull(),
+    detail: json('detail'), // structured diff / context
+    triggeredBy: text('triggered_by').default('ana_proactive'), // ana_proactive, ana_user, scheduler, user
+    createdByAna: boolean('created_by_ana').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_schedule_revision_schedule: index('idx_schedule_revision_schedule').on(table.scheduleId),
+    idx_schedule_revision_project: index('idx_schedule_revision_project').on(table.projectId),
+  })
+);
+
+export const insertProjectScheduleRevisionSchema = createInsertSchemaOmit(
+  projectScheduleRevisions,
+  { id: true, createdAt: true }
+);
+export type ProjectScheduleRevision = InferSelectModel<typeof projectScheduleRevisions>;
+export type InsertProjectScheduleRevision = z.infer<typeof insertProjectScheduleRevisionSchema>;
+
+/**
  * Unified Tasks Table
  *
  * Central table for managing tasks across ALL modules in the ecosystem.
