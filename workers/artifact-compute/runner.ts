@@ -4,15 +4,31 @@
  * (no egress by default, bounded CPU/memory, strict timeout).
  */
 
+/**
+ * Runtime profiles allowed in the locked-down artifact-compute worker. All
+ * share the same policy: no network egress, bounded CPU/memory, strict
+ * timeout. New profiles must be added here so the policy gate covers them.
+ *   - docx-python   → native Word authoring (docx-python-runtime.py)
+ *   - python-script → AnA-authored general scripting sandbox (python-script-runtime.py)
+ *   - docx-insert   → surgical insertions into an existing .docx (docx-insert-runtime.py)
+ */
+export type RuntimeProfile = 'docx-python' | 'python-script' | 'docx-insert';
+
+const ALLOWED_PROFILES: ReadonlySet<RuntimeProfile> = new Set<RuntimeProfile>([
+  'docx-python',
+  'python-script',
+  'docx-insert',
+]);
+
 export interface WorkerEnvelope {
-  runtimeProfile: 'docx-python';
+  runtimeProfile: RuntimeProfile;
   networkEnabled: boolean;
   timeoutSeconds: number;
 }
 
 export function validateEnvelope(envelope: WorkerEnvelope): void {
-  if (envelope.runtimeProfile !== 'docx-python') {
-    throw new Error('Only docx-python profile is currently allowed');
+  if (!ALLOWED_PROFILES.has(envelope.runtimeProfile)) {
+    throw new Error(`Runtime profile not allowed: ${envelope.runtimeProfile}`);
   }
   if (envelope.networkEnabled) {
     throw new Error('Network egress is disabled for compute jobs by policy');
