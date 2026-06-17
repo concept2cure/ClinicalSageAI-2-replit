@@ -60,6 +60,11 @@ describe('buildSignatureRequiredResult', () => {
     expect(r.data.reasonRequired).toBe(true);
     expect(r.data.code).toBe('MISSING_SIGNOFF');
   });
+
+  it('echoes the command + params so the client can re-submit with a sign-off', () => {
+    const r = buildSignatureRequiredResult('revert_to_version', validateSignoff(undefined), { artifactId: 7, versionId: 3 });
+    expect(r.data.retry).toEqual({ command: 'revert_to_version', params: { artifactId: 7, versionId: 3 } });
+  });
 });
 
 describe('governed set hygiene', () => {
