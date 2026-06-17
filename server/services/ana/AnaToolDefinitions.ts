@@ -6278,6 +6278,31 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
       required: ['correspondence_id', 'issues'],
     },
   } as unknown as AnaTool,
+  // Session briefing: reconcile where the program stands right now — overdue/
+  // due-soon regulatory deadlines + recent formal decisions — so AnA can open
+  // with a calm situational brief. Handler is tenant-scoped from context;
+  // deterministic (no LLM, no fabrication).
+  {
+    name: 'get_session_briefing',
+    description:
+      'Produce a short situational briefing for the active organization/project: overdue and due-soon ' +
+      'regulatory deadlines plus the most recent formal decisions. Use to open a session ("where do things ' +
+      'stand?") or whenever the user wants to re-orient. Scoped to the user\'s org/project automatically; ' +
+      'deterministic — surfaces only tracked items, never invents deadlines or decisions.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        decision_limit: {
+          type: 'number',
+          description: 'Max recent decisions to include (default 5).',
+        },
+        window_days: {
+          type: 'number',
+          description: 'Days ahead that count as "due soon" for deadlines (default 30).',
+        },
+      },
+    },
+  } as unknown as AnaTool,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
