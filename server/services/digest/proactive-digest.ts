@@ -17,6 +17,13 @@ import {
   type OpenContradiction,
 } from '../ana/contradiction-watch.js';
 import { createNotification, type NotificationSeverity } from '../notifications/notification-service.js';
+import {
+  applyMutedSignals,
+  isWithinQuietHours,
+  severityMeetsFloor,
+  DEFAULT_DIGEST_PREFERENCES,
+  type DigestPreferences,
+} from './digest-preferences.js';
 
 export const PROACTIVE_DIGEST_CATEGORY = 'proactive_digest';
 
@@ -124,22 +131,58 @@ export function buildProactiveDigest(
   };
 }
 
+/** Why a digest run did not deliver a notification (for job telemetry). */
+export type DigestSkipReason = 'nothing_material' | 'below_severity_floor' | 'quiet_hours';
+
+export interface RunProactiveDigestResult {
+  created: boolean;
+  notificationId?: number;
+  skipped?: DigestSkipReason;
+}
+
 /**
- * Org-scoped runner: compute the digest and, if material, fire one in-app
- * notification. Returns whether a notification was created. Tenant-scoped via
- * the org id passed to the signal sources and the notification.
+ * Org-scoped runner: compute the digest and, if material AND allowed by the
+ * org's preferences, fire one in-app notification. Tenant-scoped via the org id
+ * passed to the signal sources and the notification.
+ *
+ * Preferences (optional; permissive default = prior behavior) let an org mute
+ * signal types, set a severity floor, and define quiet hours. `now` is injectable
+ * for deterministic quiet-hours testing.
  */
 export async function runProactiveDigest(
-  organizationId: number
-): Promise<{ created: boolean; notificationId?: number }> {
+  organizationId: number,
+  preferences: DigestPreferences = DEFAULT_DIGEST_PREFERENCES,
+  now: Date = new Date()
+): Promise<RunProactiveDigestResult> {
+  // Quiet hours gate first — cheap, and avoids needless signal queries.
+  if (isWithinQuietHours(now, preferences.quietHours)) {
+    return { created: false, skipped: 'quiet_hours' };
+  }
+
   const [radar, blockers, contradictions] = await Promise.all([
     getDeadlineRadar({ organizationId }),
     getOpenBlockersForOrg(organizationId, 10),
     getOpenContradictionsForOrg(organizationId, 10),
   ]);
 
-  const digest = buildProactiveDigest(radar, blockers, contradictions);
-  if (!digest) return { created: false };
+  // Drop muted signal types before assembling the digest.
+  const emptyRadar: RadarResult = {
+    windowDays: radar.windowDays,
+    summary: { overdue: 0, due_soon: 0, upcoming: 0, total: 0 },
+    items: [],
+  };
+  const filtered = applyMutedSignals(
+    { radar, blockers, contradictions },
+    preferences.mutedSignals,
+    emptyRadar
+  );
+
+  const digest = buildProactiveDigest(filtered.radar, filtered.blockers, filtered.contradictions);
+  if (!digest) return { created: false, skipped: 'nothing_material' };
+
+  if (!severityMeetsFloor(digest.severity, preferences.minSeverity)) {
+    return { created: false, skipped: 'below_severity_floor' };
+  }
 
   const notificationId = await createNotification({
     organizationId,

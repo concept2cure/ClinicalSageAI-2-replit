@@ -16,6 +16,7 @@
 import Queue from 'bull';
 import { createScopedLogger } from '../../utils/logger.js';
 import { runProactiveDigest } from '../digest/proactive-digest.js';
+import { parseDigestPreferences } from '../digest/digest-preferences.js';
 
 const log = createScopedLogger('scheduled-jobs');
 
@@ -199,7 +200,8 @@ async function handleProactiveDigest(config: ScheduledJobConfig): Promise<Schedu
   const startedAt = new Date().toISOString();
   const start = Date.now();
   try {
-    const result = await runProactiveDigest(config.organizationId);
+    const preferences = parseDigestPreferences(config.parameters);
+    const result = await runProactiveDigest(config.organizationId, preferences);
     const created = result.created ? 1 : 0;
     return {
       jobType: config.type,
@@ -400,6 +402,10 @@ export async function registerDefaultSchedules(organizationId: number): Promise<
       cron: '0 7 * * 1-5',  // 7 AM weekdays — start the day with what needs attention
       enabled: true,
       organizationId,
+      // Tunable via digest preferences (parseDigestPreferences):
+      //   minSeverity: 'info' | 'warning' | 'critical'  (only fire at/above floor)
+      //   mutedSignals: csv of 'deadlines','risks','contradictions'
+      //   quietHoursStart / quietHoursEnd: 0–23 (suppress delivery in-window)
       parameters: {},
     },
     {
