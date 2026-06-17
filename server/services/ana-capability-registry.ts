@@ -365,6 +365,17 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
 
   // ── Prediction (3) ────────────────────────────────────────
   {
+    capabilityKey: 'run-submission-premortem',
+    category: 'prediction',
+    name: 'Submission Pre-Mortem (RTF/CRL)',
+    description:
+      'Predict what a reviewer is likely to flag BEFORE filing — composing deterministic deficiency/reviewer-trigger detection with the precedent engine into a ranked, remediated, citation-backed readiness verdict. Honest by construction: the risk read always carries its confidence and denominator and degrades to an explicit pattern-only / insufficient-data note rather than a fabricated probability. Helps clients avoid a refuse-to-file or complete-response cycle.',
+    slashCommand: '/premortem',
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
     capabilityKey: 'foresight-timeline',
     category: 'prediction',
     name: 'Foresight Timeline Prediction',

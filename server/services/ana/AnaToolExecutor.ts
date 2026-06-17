@@ -462,6 +462,85 @@ registerToolHandler('recall_session_context', async (input, ctx) => {
   }
 });
 
+// Submission pre-mortem (RTF/CRL) — composes the deterministic deficiency scan
+// (pure, no LLM) with the precedent engine (real, fault-tolerant) into one
+// grounded, honest-by-construction readiness verdict. The risk read always
+// carries confidence + denominator and degrades to an explicit pattern-only /
+// insufficient-data note rather than a fabricated probability.
+registerToolHandler('run_submission_premortem', async (input, ctx) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ error: 'run_submission_premortem requires text (non-empty string).' });
+  }
+  const location = typeof input.location === 'string' && input.location.trim() ? input.location.trim() : 'document';
+  const submissionType = typeof input.submission_type === 'string' ? input.submission_type.trim() : undefined;
+  const agency = typeof input.agency === 'string' ? input.agency.trim() : undefined;
+  const indication = typeof input.indication === 'string' ? input.indication.trim() : undefined;
+
+  try {
+    const { quickPatternScan } = await import('../intelligence/rim.js');
+    const { composePremortem } = await import('./submission-premortem-core.js');
+
+    // 1. Deterministic deficiency/reviewer-trigger findings (no LLM).
+    const criteria: Record<string, unknown> = {};
+    if (agency) criteria.agency = agency;
+    if (submissionType) criteria.submissionType = submissionType;
+    const matches = quickPatternScan(text, location, Object.keys(criteria).length ? (criteria as any) : undefined);
+    const findings = matches.map(m => ({
+      patternId: m.patternId,
+      title: m.pattern.name,
+      category: m.pattern.category,
+      severity: m.pattern.severity,
+      matchedText: m.matchedText,
+      matchConfidence: m.matchConfidence,
+      reviewerQuestion: m.pattern.reviewerQuestion,
+      regulatoryBasis: m.pattern.regulatoryBasis,
+      remediation: m.pattern.remediation,
+    }));
+
+    // 2. Precedent calibration (the denominator + citations). Fault-tolerant:
+    //    an unavailable corpus degrades to n=0 honest output, never an error.
+    let precedentCount = 0;
+    let precedentCitations: Array<{ id: string; label: string; outcome: string }> = [];
+    if (submissionType) {
+      try {
+        const { precedentEngine } = await import('../precedent-engine.js');
+        const records = await precedentEngine.search(
+          { submissionType, indication, limit: 25 },
+          ctx?.organizationId ?? undefined
+        );
+        precedentCount = records.length;
+        precedentCitations = records.slice(0, 5).map(r => ({
+          id: r.id,
+          label: r.clearanceNumber || r.deviceName || r.applicant || r.id,
+          outcome: r.decisionOutcome,
+        }));
+      } catch {
+        /* corpus unavailable — honest n=0 read */
+      }
+    }
+
+    const verdict = composePremortem({
+      findings,
+      precedentCount,
+      precedentCitations,
+      submissionType,
+      agency,
+    });
+
+    return JSON.stringify({
+      engine: 'deterministic deficiency scan + precedent engine (honest-by-construction)',
+      location,
+      ...verdict,
+      message: verdict.summary,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `run_submission_premortem failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // Deterministic regulatory deficiency scan — runs the codified pattern registry
 // (quickPatternScan) with NO language-model call. AnA's reasoning-without-the-LLM
 // surface: fast, reproducible, citable pattern matching over regulatory text.

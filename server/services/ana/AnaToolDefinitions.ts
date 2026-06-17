@@ -939,6 +939,48 @@ export const PROJECT_KNOWLEDGE_SEARCH: AnaTool = {
 // surface — fast, stable, citable, and runnable on its own.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Submission pre-mortem (RTF/CRL) — the economic-moat capability. Composes the
+// deterministic deficiency scan with the precedent engine into one grounded,
+// honest-by-construction readiness verdict: what a reviewer will likely flag,
+// ranked, each with the reviewer question, regulatory basis, remediation, and
+// precedent citations — and an overall risk level that ALWAYS carries its
+// confidence and denominator (n of precedents), degrading to an explicit
+// "insufficient data, confidence: low" rather than a fabricated probability.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const RUN_SUBMISSION_PREMORTEM: AnaTool = {
+  name: 'run_submission_premortem',
+  description:
+    "Run an RTF/CRL pre-mortem on draft submission text BEFORE filing: predict what a reviewer is likely to flag and how to fix it, so the client avoids a refuse-to-file or complete-response cycle. Combines deterministic deficiency/reviewer-trigger detection (no LLM) with the precedent engine, and returns a ranked finding list — each with the reviewer question, regulatory basis, and concrete remediation — plus an overall risk level. Honest by construction: the risk read ALWAYS carries its confidence and denominator (number of precedents), and returns an explicit 'pattern-only / insufficient data, confidence: low' when the precedent corpus is thin, never a fabricated probability. Provide the draft text and, ideally, the agency and submission type.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: {
+        type: 'string',
+        description: 'The draft submission text to assess (a section, module, or claim set).',
+      },
+      submission_type: {
+        type: 'string',
+        description: 'Submission type for precedent calibration (e.g. IND, NDA, BLA, 510(k), PMA, MAA).',
+      },
+      agency: {
+        type: 'string',
+        description: 'Target agency (e.g. FDA, EMA, PMDA). Used for scope and precedent filtering.',
+      },
+      indication: {
+        type: 'string',
+        description: 'Optional indication / therapeutic area to sharpen precedent matching.',
+      },
+      location: {
+        type: 'string',
+        description: "Section/field reference for provenance (e.g. '2.5 Clinical Overview'). Default 'document'.",
+      },
+    },
+    required: ['text'],
+  },
+};
+
 export const SCAN_REGULATORY_DEFICIENCIES: AnaTool = {
   name: 'scan_regulatory_deficiencies',
   description:
@@ -6249,6 +6291,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   PROJECT_KNOWLEDGE_SEARCH_MULTI,
   SEARCH_LARGE_DOCUMENT,
   REMEMBER_DOCUMENT_IN_PROJECT,
+  RUN_SUBMISSION_PREMORTEM,
   SCAN_REGULATORY_DEFICIENCIES,
   RECALL_SESSION_CONTEXT,
   SIMULATE_STUDY_DESIGN,
