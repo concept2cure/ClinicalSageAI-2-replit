@@ -34,6 +34,7 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
+import { buildPrecedentOrgIsolation } from './precedent-isolation.js';
 
 const log = createScopedLogger('precedent-engine');
 
@@ -189,8 +190,10 @@ export class PrecedentEngine {
 
     const precedents: PrecedentRecord[] = [];
 
-    // Strategy 1: Search unified precedent table with filters
-    const unifiedResults = await this.searchUnifiedPrecedents(input, limit);
+    // Strategy 1: Search unified precedent table with filters. Tenant-scoped:
+    // returns public precedents (organization_id IS NULL) plus this org's own
+    // private precedents, never another tenant's.
+    const unifiedResults = await this.searchUnifiedPrecedents(input, limit, organizationId);
     precedents.push(...unifiedResults);
 
     // Strategy 2: Search 510(k) clearance universe (for device submissions)
@@ -222,11 +225,22 @@ export class PrecedentEngine {
 
   private async searchUnifiedPrecedents(
     input: PrecedentSearchInput,
-    limit: number
+    limit: number,
+    organizationId?: number
   ): Promise<PrecedentRecord[]> {
     const conditions: string[] = [];
     const params: any[] = [];
     let paramIdx = 1;
+
+    // Tenant isolation by construction: a caller sees public precedents
+    // (organization_id IS NULL) plus its own org's private precedents, and
+    // never another tenant's. With no org in context, only public precedents
+    // are returned. Existing rows are all NULL (public), so this is a no-op for
+    // today's corpus and a hard boundary the moment private precedents exist.
+    const isolation = buildPrecedentOrgIsolation(organizationId, paramIdx);
+    conditions.push(isolation.condition);
+    params.push(...isolation.params);
+    paramIdx = isolation.nextParamIdx;
 
     // Always filter by submission type
     conditions.push(`submission_type = $${paramIdx++}`);
