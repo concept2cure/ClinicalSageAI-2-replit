@@ -19,6 +19,9 @@
  */
 
 import { listActiveSchedulePlans, reviewScheduleHealth } from '../services/projects/schedule-of-events';
+import { createScopedLogger } from '../utils/logger.js';
+
+const logger = createScopedLogger('schedule-of-events-sweep');
 
 export interface ScheduleSweepSummary {
   schedules: number;
@@ -84,13 +87,15 @@ async function tick(): Promise<void> {
     const summary = await runScheduleOfEventsSweep();
     lastSweep = { at: new Date(), summary };
     if (summary.tasksCreated > 0 || summary.alertsCreated > 0) {
-      console.log(
-        `[schedule-of-events-sweep] reviewed ${summary.reviewed}/${summary.schedules} schedule(s): ` +
-          `${summary.tasksCreated} task(s), ${summary.alertsCreated} alert(s)`,
-      );
+      logger.info('sweep reviewed schedules', {
+        reviewed: summary.reviewed,
+        schedules: summary.schedules,
+        tasksCreated: summary.tasksCreated,
+        alertsCreated: summary.alertsCreated,
+      });
     }
   } catch (err: any) {
-    console.warn('[schedule-of-events-sweep] tick failed (will retry next interval):', err?.message || err);
+    logger.warn('tick failed (will retry next interval)', { error: err?.message || String(err) });
   }
 }
 
@@ -111,9 +116,7 @@ export function startScheduleOfEventsSweep(): boolean {
   }, Math.min(STARTUP_DELAY_MS, intervalMs));
   if (typeof startupTimer.unref === 'function') startupTimer.unref();
 
-  console.log(
-    `[schedule-of-events-sweep] scheduled (interval=${intervalMs}ms, first=${Math.min(STARTUP_DELAY_MS, intervalMs)}ms)`,
-  );
+  logger.info('scheduled', { intervalMs, firstRunMs: Math.min(STARTUP_DELAY_MS, intervalMs) });
   return true;
 }
 

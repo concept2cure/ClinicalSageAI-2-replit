@@ -225,10 +225,17 @@ const TEMPLATES: Record<string, ScheduleTemplate> = {
 /** Resolve a blueprint for a (possibly messy) submission/project type. */
 export function getScheduleTemplate(projectType: string | null | undefined): ScheduleTemplate {
   if (!projectType) return GENERIC;
-  const key = projectType.trim().toUpperCase().replace(/[\s-]+/g, '_');
+  // Normalize any punctuation/spacing to underscores so real-world inputs like
+  // "510(k)", "510-K", or "de novo" resolve. The collapsed (underscore-free)
+  // variant catches "510_K" → "510K".
+  const cleaned = projectType
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
   return (
-    TEMPLATES[key] ??
-    TEMPLATES[key.replace(/_/g, '')] ??
+    TEMPLATES[cleaned] ??
+    TEMPLATES[cleaned.replace(/_/g, '')] ??
     GENERIC
   );
 }
