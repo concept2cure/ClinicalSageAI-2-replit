@@ -56,12 +56,21 @@ export async function runAuditChainIntegrityCheck(): Promise<AuditChainCheckResu
 }
 
 /**
- * Schedule the daily integrity sweep. No-op unless ENABLE_AUDIT_CHAIN_CHECK is
- * set, so default boot is unchanged. Default schedule: 02:00 daily (override
- * with AUDIT_CHAIN_CHECK_CRON).
+ * Schedule the daily integrity sweep.
+ *
+ * On by default whenever the audit trail is active (AUDIT_TRAIL_ENABLED=true) —
+ * if a chain is being written it should also be verified, mirroring the gating
+ * of the continuous chainIntegrityMonitor. Explicit overrides:
+ *   - ENABLE_AUDIT_CHAIN_CHECK=false → never schedule (opt-out)
+ *   - ENABLE_AUDIT_CHAIN_CHECK=true  → always schedule, even if the trail flag
+ *     is unset (e.g. to verify a pre-existing chain)
+ * Default schedule: 02:00 daily (override with AUDIT_CHAIN_CHECK_CRON).
  */
 export function startAuditChainIntegritySchedule(): void {
-  if (process.env.ENABLE_AUDIT_CHAIN_CHECK !== 'true') return;
+  const explicit = process.env.ENABLE_AUDIT_CHAIN_CHECK;
+  if (explicit === 'false') return;
+  const auditTrailOn = process.env.AUDIT_TRAIL_ENABLED === 'true';
+  if (explicit !== 'true' && !auditTrailOn) return;
   const expr = process.env.AUDIT_CHAIN_CHECK_CRON || '0 2 * * *';
   try {
     cron.schedule(expr, () => {

@@ -212,7 +212,8 @@ async function startServer() {
     // to a no-op unless ENABLE_DRIFT_SENTINEL=true, so default boot is unchanged.
     startDriftSentinelSchedule();
     // 21 CFR Part 11 / ISO 14971: daily audit-chain tamper-evidence sweep.
-    // Self-guards to a no-op unless ENABLE_AUDIT_CHAIN_CHECK=true.
+    // On by default when AUDIT_TRAIL_ENABLED=true; opt out with
+    // ENABLE_AUDIT_CHAIN_CHECK=false, force on with =true.
     startAuditChainIntegritySchedule();
     // RIM precedent flywheel: periodic CT.gov ingestion into the corpus.
     // Self-guards to a no-op unless ENABLE_CORPUS_INGESTION=true.
