@@ -39,6 +39,7 @@ import {
   getCriticalDeficiencies,
   type SubmissionType,
 } from '../ana-ri/deficiency-taxonomy.js';
+import { getDeadlineRadar } from './deadline-radar.js';
 import {
   adviseDeviceReadiness,
   adviseGlobalMarketStrategy,
@@ -793,6 +794,37 @@ registerToolHandler('lookup_submission_deficiencies', async (input) => {
     deficiencies,
     citation_hint: 'Cite each mitigation against its listed regulatory references.',
   });
+});
+
+// Regulatory deadline radar — tenant-scoped aggregation of the org's regulatory
+// obligations/commitments into overdue / due-soon / upcoming buckets. Fails
+// closed when no organization is in context (cannot scope). Deterministic.
+registerToolHandler('regulatory_deadline_radar', async (input, ctx) => {
+  const organizationId = ctx?.organizationId ? Number(ctx.organizationId) : null;
+  if (!organizationId || Number.isNaN(organizationId)) {
+    return JSON.stringify({
+      source: 'AnA Regulatory Deadline Radar',
+      error: 'No organization is in context, so regulatory deadlines cannot be scoped.',
+    });
+  }
+  const windowDays =
+    typeof input.window_days === 'number' && input.window_days > 0
+      ? Math.min(Math.floor(input.window_days), 365)
+      : 30;
+  const includeCompleted = input.include_completed === true;
+  try {
+    const radar = await getDeadlineRadar({
+      organizationId,
+      windowDays,
+      includeCompleted,
+    });
+    return JSON.stringify({ source: 'AnA Regulatory Deadline Radar', ...radar });
+  } catch (e) {
+    return JSON.stringify({
+      source: 'AnA Regulatory Deadline Radar',
+      error: `Deadline radar failed: ${e instanceof Error ? e.message : String(e)}`,
+    });
+  }
 });
 
 // Global-RI deterministic expert tools — registry-grounded cross-market regulatory
