@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import { randomUUID } from 'crypto';
 import { protocolAnalyzerService, type ProtocolData } from '../protocol-analyzer-service';
 import { protocolOptimizerService } from '../protocol-optimizer-service';
@@ -701,6 +702,17 @@ router.post('/analyze-file', upload.single('file'), async (req, res) => {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
+    // SECURITY: magic-byte signature + AV scan (fail-closed in prod) before use.
+    try {
+      await assertUploadSafe(req.file.path, req.file.mimetype, req.file.originalname);
+    } catch (err) {
+      if (err instanceof UploadSafetyError) {
+        try { fs.unlinkSync(req.file.path); } catch { /* best-effort cleanup */ }
+        return res.status(err.status).json({ success: false, ...err.body });
+      }
+      throw err;
+    }
+
     const filePath = req.file.path;
     const fileExtension = path.extname(req.file.originalname).toLowerCase();
 
@@ -747,6 +759,17 @@ router.post('/parse-file', upload.single('file'), async (req, res) => {
         success: false,
         message: 'No file uploaded',
       });
+    }
+
+    // SECURITY: magic-byte signature + AV scan (fail-closed in prod) before use.
+    try {
+      await assertUploadSafe(req.file.path, req.file.mimetype, req.file.originalname);
+    } catch (err) {
+      if (err instanceof UploadSafetyError) {
+        try { fs.unlinkSync(req.file.path); } catch { /* best-effort cleanup */ }
+        return res.status(err.status).json({ success: false, ...err.body });
+      }
+      throw err;
     }
 
     // Since we're using disk storage, read the file from disk
