@@ -20,7 +20,9 @@ import { setOptions } from 'marked';
 
 import { I } from './icons';
 import { Composer } from './Composer';
+import { GovernedActionSignoff } from './GovernedActionSignoff';
 import type { MessageAttachment } from './useAnaChat';
+import type { PendingSignoff } from './useGovernedAction';
 import { attachmentReadLabel } from '../../hooks/useChatUpload';
 import styles from './styles.module.css';
 import {
@@ -96,6 +98,8 @@ export interface MessageProps {
   warnings?: string[];
   /** Tools AnA invoked this turn — shown as transparency/audit status rows. */
   toolCalls?: ToolCallView[];
+  /** Governed actions blocked pending a Part 11 sign-off (reason + e-signature). */
+  pendingSignoffs?: PendingSignoff[];
   /** When this turn was sent (ms epoch) — for relative timestamp chip. */
   sentAt?: number;
 
@@ -145,6 +149,7 @@ export function Message({
   groundingSources,
   warnings,
   toolCalls,
+  pendingSignoffs,
   sentAt,
   onCopy,
   onRetry,
@@ -159,6 +164,9 @@ export function Message({
   // auto-collapses once the answer starts flowing.
   const [thinkingOpen, setThinkingOpen] = useState(true);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
+  // Per-signoff resolution: 'done' (ran), 'dismissed', or an outcome message.
+  const [signoffOutcomes, setSignoffOutcomes] = useState<Record<number, string>>({});
+  const [dismissedSignoffs, setDismissedSignoffs] = useState<Record<number, boolean>>({});
   const hasText = text.length > 0;
   useEffect(() => {
     if (hasText) setThinkingOpen(false);
@@ -585,6 +593,31 @@ export function Message({
                 {w}
               </div>
             ))}
+          </div>
+        )}
+
+        {pendingSignoffs && pendingSignoffs.length > 0 && (
+          <div className={styles.signoffs}>
+            {pendingSignoffs.map((s, i) => {
+              if (dismissedSignoffs[i]) return null;
+              const outcome = signoffOutcomes[i];
+              if (outcome) {
+                return (
+                  <div key={`${s.command}-${i}`} className={styles.signoffResolved} role="status">
+                    <span className={styles.ico}><CheckIco size={12} /></span>
+                    {outcome}
+                  </div>
+                );
+              }
+              return (
+                <GovernedActionSignoff
+                  key={`${s.command}-${i}`}
+                  signoff={s}
+                  onResolved={o => setSignoffOutcomes(prev => ({ ...prev, [i]: o.message }))}
+                  onCancel={() => setDismissedSignoffs(prev => ({ ...prev, [i]: true }))}
+                />
+              );
+            })}
           </div>
         )}
 

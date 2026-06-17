@@ -69,6 +69,7 @@ import {
 import { loadAnaToolPolicy } from './mdx-tool-policy';
 import {
   requiresPart11Signoff,
+  requiresEsignature,
   validateSignoff,
   buildSignatureRequiredResult,
   loadPart11Enforce,
@@ -4676,9 +4677,10 @@ export async function executeCommands(
     const handler = commandMap[cmd.command];
     if (handler) {
       // ── Part 11 gate: governed record-altering commands fail closed unless
-      // this dispatch carries a verified reason-for-change + e-signature. ──
+      // this dispatch carries a valid sign-off. Tiered — reason-for-change
+      // always; high-impact actions additionally require an e-signature. ──
       if (ctx.part11Enforce && requiresPart11Signoff(cmd.command)) {
-        const v = validateSignoff(ctx.signoff);
+        const v = validateSignoff(ctx.signoff, { requireSignature: requiresEsignature(cmd.command) });
         if (!v.ok) {
           const blocked = buildSignatureRequiredResult(cmd.command, v, cmd.params as Record<string, unknown>);
           results.push(blocked);

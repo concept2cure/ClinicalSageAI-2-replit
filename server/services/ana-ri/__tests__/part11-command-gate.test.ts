@@ -46,6 +46,17 @@ describe('executeCommands — Part 11 gate', () => {
     expect(res[0].error).toBe('PART11_SIGNATURE_REQUIRED');
   });
 
+  it('reason-only tier: a governed reason-only command is still blocked with no sign-off', async () => {
+    // update_milestone needs no e-signature, but a reason-for-change is still
+    // required — with no sign-off at all it fails closed before the handler.
+    const res = await executeCommands(
+      [{ command: 'update_milestone', params: {} }] as any,
+      ctx({ part11Enforce: true })
+    );
+    expect(res[0].error).toBe('PART11_SIGNATURE_REQUIRED');
+    expect((res[0] as any).data.signatureRequired).toBe(false);
+  });
+
   it('does NOT block when enforcement is off (existing behavior preserved)', async () => {
     // Unknown command name → no handler → loop is a no-op; the key assertion is
     // that the Part 11 gate did not fire (no PART11 result was produced).
