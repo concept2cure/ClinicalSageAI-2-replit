@@ -930,6 +930,296 @@ export const PROJECT_KNOWLEDGE_SEARCH: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Deterministic regulatory deficiency scan — runs the codified pattern registry
+// (95+ FDA/EMA deficiency and reviewer-trigger patterns) against text with NO
+// language-model call: pure regex/heuristic matching. Surfaces likely reviewer
+// triggers, the question each would provoke, the regulatory basis, and concrete
+// remediations / stronger phrasings. This is AnA's reasoning-without-the-LLM
+// surface — fast, stable, citable, and runnable on its own.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Submission pre-mortem (RTF/CRL) — the economic-moat capability. Composes the
+// deterministic deficiency scan with the precedent engine into one grounded,
+// honest-by-construction readiness verdict: what a reviewer will likely flag,
+// ranked, each with the reviewer question, regulatory basis, remediation, and
+// precedent citations — and an overall risk level that ALWAYS carries its
+// confidence and denominator (n of precedents), degrading to an explicit
+// "insufficient data, confidence: low" rather than a fabricated probability.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Grounding guarantee — make the product's "never invent figures" rule
+// checkable. Detects quantitative claims (percentages, p-values, n=, CIs,
+// fold-changes, counts, doses, durations) in drafted text and flags any not
+// accompanied by a citation/source marker, so AnA grounds or hedges every
+// number before it reaches a regulatory reader. Deterministic, no LLM.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 21 CFR Part 11 §11.50 signature manifestation — produce the human-readable
+// signature block (printed name, date/time of signing, meaning) to embed in the
+// rendered record. The platform captures e-signatures but had no formatted
+// manifestation to surface; this closes that inspection-readiness gap.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const RENDER_SIGNATURE_MANIFESTATION: AnaTool = {
+  name: 'render_signature_manifestation',
+  description:
+    "Produce the human-readable 21 CFR Part 11 §11.50 signature manifestation block for an executed electronic signature — the printed name of the signer, the date and time of signing (UTC), and the meaning of the signature (review / approval / authorship), plus the supporting authentication and signature-id/hash controls. Embed the returned block in any rendered (PDF/Word) form of a signed record so it is inspection-ready. Provide the signature_id; the signature is loaded tenant-scoped from the governed signature store.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      signature_id: {
+        type: 'string',
+        description: 'The signatureId of the executed electronic signature to manifest.',
+      },
+      record_title: {
+        type: 'string',
+        description: 'Optional title of the record the signature applies to, included in the block.',
+      },
+    },
+    required: ['signature_id'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Honesty envelope — the platform's "confidence with its denominator attached"
+// moat as a reusable primitive. Turns an evidence basis (n + freshness) into a
+// confidence level + human-readable label, and gates "final-ready" claims when
+// a dependency is missing or stale. Deterministic, no LLM.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ASSESS_OUTPUT_CONFIDENCE: AnaTool = {
+  name: 'assess_output_confidence',
+  description:
+    "Attach honest confidence to a quantitative output: given the number of supporting data points (n) and how fresh the evidence is, returns a confidence level (low/medium/high) and a ready-to-show label like 'confidence: medium (n=28, freshness: 6 days ago)'. Confidence is downgraded when evidence is stale and is always 'low (insufficient data)' at n=0 — never overstated. Optionally gate a 'final-ready' claim: provide dependencies and it returns whether the output is final-ready plus the explicit blockers (missing/stale) to show. Use this to stamp any number AnA presents so the platform's 'decision confidence with its denominator attached' rule holds everywhere. Deterministic, no LLM.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      n: {
+        type: 'number',
+        description: 'Number of supporting data points / precedents (the denominator).',
+      },
+      freshness_days: {
+        type: 'number',
+        description: 'Age in days of the freshest supporting evidence. Omit if unknown.',
+      },
+      max_freshness_days: {
+        type: 'number',
+        description: 'Age (days) beyond which evidence is stale. Default 180.',
+      },
+      dependencies: {
+        type: 'array',
+        description: 'Optional dependencies to gate a final-ready claim.',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            present: { type: 'boolean' },
+            freshness_days: { type: 'number' },
+          },
+          required: ['name', 'present'],
+        },
+      },
+    },
+    required: ['n'],
+  },
+};
+
+export const CHECK_GROUNDING: AnaTool = {
+  name: 'check_grounding',
+  description:
+    "Check drafted regulatory text for UNGROUNDED quantitative claims — numbers, percentages, p-values, sample sizes, confidence intervals, fold-changes, doses, durations — that are not backed by a nearby citation or source marker. Returns each ungrounded claim, a grounding score (0–1), and whether the text passes. Run this on your own draft BEFORE presenting numbers to a regulatory reader: every figure must trace to a source or be explicitly hedged. Deterministic (no LLM). Use it to enforce 'never state a number without a cited source'.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: {
+        type: 'string',
+        description: 'The drafted text to check for ungrounded quantitative claims.',
+      },
+    },
+    required: ['text'],
+  },
+};
+
+export const RUN_SUBMISSION_PREMORTEM: AnaTool = {
+  name: 'run_submission_premortem',
+  description:
+    "Run an RTF/CRL pre-mortem on draft submission text BEFORE filing: predict what a reviewer is likely to flag and how to fix it, so the client avoids a refuse-to-file or complete-response cycle. Combines deterministic deficiency/reviewer-trigger detection (no LLM) with the precedent engine, and returns a ranked finding list — each with the reviewer question, regulatory basis, and concrete remediation — plus an overall risk level. Honest by construction: the risk read ALWAYS carries its confidence and denominator (number of precedents), and returns an explicit 'pattern-only / insufficient data, confidence: low' when the precedent corpus is thin, never a fabricated probability. Provide the draft text and, ideally, the agency and submission type.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: {
+        type: 'string',
+        description: 'The draft submission text to assess (a section, module, or claim set).',
+      },
+      submission_type: {
+        type: 'string',
+        description: 'Submission type for precedent calibration (e.g. IND, NDA, BLA, 510(k), PMA, MAA).',
+      },
+      agency: {
+        type: 'string',
+        description: 'Target agency (e.g. FDA, EMA, PMDA). Used for scope and precedent filtering.',
+      },
+      indication: {
+        type: 'string',
+        description: 'Optional indication / therapeutic area to sharpen precedent matching.',
+      },
+      location: {
+        type: 'string',
+        description: "Section/field reference for provenance (e.g. '2.5 Clinical Overview'). Default 'document'.",
+      },
+    },
+    required: ['text'],
+  },
+};
+
+export const SCAN_REGULATORY_DEFICIENCIES: AnaTool = {
+  name: 'scan_regulatory_deficiencies',
+  description:
+    "Deterministically scan regulatory text for known deficiency and reviewer-trigger patterns using AnA's codified pattern registry — NO language-model call, pure heuristic/regex matching, fast and reproducible. Returns each match with the pattern name, category (deficiency / reviewer_trigger), severity, the matched text, a confidence score, the reviewer question it is likely to provoke, the regulatory basis, and concrete remediation plus stronger alternative phrasings. Use it as a quick, defensible first pass over a draft section, or whenever you want pattern-level analysis without invoking the full model. Optional filters narrow to an agency, submission type, category, or minimum severity.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: {
+        type: 'string',
+        description: 'The regulatory text to scan (a section, paragraph, or claim).',
+      },
+      location: {
+        type: 'string',
+        description: "A section or field reference for provenance (e.g. '2.5 Clinical Overview'). Default 'document'.",
+      },
+      agency: {
+        type: 'string',
+        description: 'Optional agency filter (e.g. FDA, EMA, PMDA).',
+      },
+      submission_type: {
+        type: 'string',
+        description: 'Optional submission-type filter (e.g. IND, NDA, BLA, 510(k)).',
+      },
+      category: {
+        type: 'string',
+        enum: ['deficiency', 'reviewer_trigger', 'rejection', 'strength', 'any'],
+        description: 'Optional pattern category filter.',
+      },
+      min_severity: {
+        type: 'string',
+        enum: ['critical', 'high', 'medium', 'low'],
+        description: 'Optional minimum severity to report.',
+      },
+    },
+    required: ['text'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Large-document working set — extract a single uploaded document's FULL text
+// server-side and run query-targeted search over it, returning only the
+// relevant windows (with char offsets) plus a heading outline. Lets AnA work
+// with documents far larger than the per-turn result cap without dumping the
+// whole file into context. Stateless and tenant-scoped via ToolContext.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SEARCH_LARGE_DOCUMENT: AnaTool = {
+  name: 'search_large_document',
+  description:
+    "Search WITHIN a single uploaded document that is too large to hold in context at once. AnA extracts the document's full text server-side and returns only the passages relevant to your queries — the matching windows with surrounding context and their character offsets — plus a heading outline of the document. Use this instead of paging blindly through a big file: give the questions/terms you care about and get back the exact excerpts to read and cite. Tenant-scoped; the file must belong to the active organization.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: {
+        type: 'string',
+        description: 'The uploaded file id (e.g. "file_1712…" from a chat upload).',
+      },
+      queries: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'One or more terms/phrases/questions to locate within the document.',
+      },
+      window_chars: {
+        type: 'number',
+        description: 'Characters of context kept around each match. Default 320.',
+      },
+      max_windows_per_query: {
+        type: 'number',
+        description: 'Maximum excerpt windows returned per query. Default 4.',
+      },
+    },
+    required: ['file_id', 'queries'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Remember a read document into durable project memory — promote a document AnA
+// has read into the project's persistent memory (project_memory_entries,
+// embedded) so it is surfaced automatically in future sessions via the memory
+// assembler and session bootstrap. Reuses the real project-ingestion pipeline.
+// Tenant- and project-scoped via ToolContext.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const REMEMBER_DOCUMENT_IN_PROJECT: AnaTool = {
+  name: 'remember_document_in_project',
+  description:
+    "Persist a document AnA has read into the active project's durable memory so it is automatically recalled in future sessions (not just this turn). The document's text is extracted and its key facts are embedded into project memory, where the memory assembler and session bootstrap will surface them later. Use this when a read document contains material the project should remember going forward. Requires an active project; the file must belong to the active organization.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: {
+        type: 'string',
+        description: 'The uploaded file id to remember (e.g. "file_1712…").',
+      },
+    },
+    required: ['file_id'],
+  },
+};
+
+export const PROJECT_KNOWLEDGE_SEARCH_MULTI: AnaTool = {
+  name: 'project_knowledge_search_multi',
+  description:
+    "Run SEVERAL knowledge-base searches against the active project's corpus in one call, then merge and de-duplicate the results. Use this to gather evidence across multiple angles at once — e.g. decompose a complex question into sub-queries (primary endpoint, safety signal, statistical method) and retrieve all of them simultaneously instead of one search at a time. Returns a merged, de-duplicated, relevance-ranked passage list plus a per-query breakdown, each passage cited by source document title and locator. The project and tenant come from the active context.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      queries: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Two to eight distinct sub-queries to search simultaneously (different angles on the question).',
+      },
+      max_results_per_query: {
+        type: 'number',
+        description: 'Maximum passages to retrieve per sub-query before merging (default: 5, max: 10).',
+      },
+      max_merged_results: {
+        type: 'number',
+        description: 'Maximum passages in the merged, de-duplicated result set (default: 12, max: 25).',
+      },
+    },
+    required: ['queries'],
+  },
+};
+
+export const RECALL_SESSION_CONTEXT: AnaTool = {
+  name: 'recall_session_context',
+  description:
+    "Rehydrate prior context so the session doesn't start cold: load where we left off (the latest thread working-memory summary), the most important project and client knowledge atoms (by importance/verification/recency — no query needed), and recent lessons from your own past work on this org/project. Call this at the start of a conversation, or whenever you need to ground yourself in what has already been established, before answering. The org and project come from the active context.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      thread_id: {
+        type: 'string',
+        description: 'Optional conversation/thread id to load the latest working-memory summary for. Omit if unknown — project/client memory and past lessons still load.',
+      },
+      atom_limit: {
+        type: 'number',
+        description: 'Maximum project knowledge atoms to surface (default 6).',
+      },
+    },
+    required: [],
+  },
+};
+
 export const SIMULATE_STUDY_DESIGN: AnaTool = {
   name: 'simulate_study_design',
   description:
@@ -4726,6 +5016,245 @@ export const CONVERT_DOCX_TO_PDF: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// General-purpose scripting sandbox — AnA's "write a Python script to do X
+// precisely" capability, governed. Runs AnA-authored Python inside the
+// isolated compute worker (workers/artifact-compute/python-script-runtime.py):
+// ephemeral tempdir, NO network egress, bounded CPU time + address space, and
+// a wall-clock SIGKILL. Optional input files are written into the script's
+// working directory; any files the script produces are captured and returned.
+//
+// Use for data transforms, parsing, numerical checks, building intermediate
+// artifacts, and bespoke manipulation that no structured tool covers. This is
+// NOT a path to the host filesystem or shell — the sandbox cwd is a throwaway
+// tempdir with no network and no access to the application's files.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const RUN_PYTHON_SCRIPT: AnaTool = {
+  name: 'run_python_script',
+  description:
+    "Write and run a Python 3 script in AnA's isolated sandbox to do something precisely — data transforms, parsing, numerical/biostat checks, generating intermediate files, bespoke manipulation no other tool covers. The script runs in an ephemeral tempdir with NO network access, bounded CPU time, bounded memory, and a wall-clock timeout. Provide optional input_files (filename → base64) which are written into the script's working directory; the script reads/writes files relative to its cwd. Returns captured stdout, stderr, any error traceback, and any files the script created (base64, size-capped). The standard library plus python-docx, openpyxl, and common scientific packages available on the host can be imported. This is a sandbox: it cannot reach the network, the host filesystem outside its tempdir, or a shell. Tenant-scoped via ToolContext.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      code: {
+        type: 'string',
+        description:
+          "The Python 3 source to execute. Runs with __name__ == '__main__' and cwd set to the sandbox tempdir. Print results to stdout and/or write output files relative to cwd — both are returned to you.",
+      },
+      input_files: {
+        type: 'object',
+        description:
+          'Optional map of filename → base64-encoded bytes, written into the script working directory before execution (e.g. a CSV to parse, a .docx to transform). Filenames must be relative; path traversal is rejected.',
+        additionalProperties: { type: 'string' },
+      },
+      cpu_seconds: {
+        type: 'number',
+        description: 'Best-effort CPU-time cap in seconds (POSIX). Default 20.',
+      },
+      timeout_ms: {
+        type: 'number',
+        description: 'Wall-clock timeout in milliseconds before SIGKILL. Default 30000, max 120000.',
+      },
+    },
+    required: ['code'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Targeted document insertion — the governed, document-aware equivalent of
+// "write a Python script to make the targeted insertions precisely". Surgically
+// inserts content into an existing .docx at exact anchors (heading text,
+// placeholder token, paragraph index, start/end) using python-docx inside the
+// isolated worker (workers/artifact-compute/docx-insert-runtime.py). The source
+// document is preserved; a new edited .docx is produced with a per-insertion
+// outcome report.
+//
+// Prefer this over author_docx_native when the document already exists and you
+// need precise edits rather than full re-authoring (e.g. drop a new subsection
+// after "10.3 Statistical Methods", fill a {{SPONSOR}} placeholder, append a
+// paragraph at the end). Tenant-scoped via ToolContext.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const INSERT_DOCUMENT_CONTENT: AnaTool = {
+  name: 'insert_document_content',
+  description:
+    "Make precise, targeted insertions into an existing Word (.docx) document using python-docx in the isolated worker — the governed equivalent of scripting exact edits. Locate anchors by heading text, placeholder token (e.g. {{SPONSOR}}), paragraph index, or document start/end, then insert content before/after the anchor or replace it. Content uses markdown-style paragraph syntax ('#'/'##'/'###' headings, '- '/'* ' bullets, '1. ' numbered, plain lines as body paragraphs). The original .docx is preserved as the source; a new edited .docx is written and its path returned, along with a per-insertion report (applied / anchor_not_found). Use when a document already exists and needs surgical edits rather than full re-authoring. For full document authoring use author_docx_native; for tables/images use that path. Tenant-scoped via ToolContext.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      input_docx_path: {
+        type: 'string',
+        description:
+          'Absolute path to the source .docx to edit (typically the docxPath returned by author_docx_native, generate_document, or fetch_template_and_fill).',
+      },
+      insertions: {
+        type: 'array',
+        description: 'Ordered list of targeted insertions to apply.',
+        items: {
+          type: 'object',
+          properties: {
+            anchor_type: {
+              type: 'string',
+              enum: ['heading_text', 'placeholder', 'paragraph_index', 'start', 'end'],
+              description:
+                "How to locate the insertion point. 'heading_text'/'placeholder' match paragraph text, 'paragraph_index' is a 0-based index, 'start'/'end' target the document boundaries (no anchor_value needed).",
+            },
+            anchor_value: {
+              type: 'string',
+              description:
+                "The heading text, placeholder token, or paragraph index (as a string) to match. Omit for 'start'/'end'.",
+            },
+            position: {
+              type: 'string',
+              enum: ['before', 'after', 'replace'],
+              description:
+                "Where to place content relative to the anchor. Default 'after'. 'replace' with a placeholder substitutes the token inline; 'replace' with another anchor type removes the matched paragraph and inserts in its place.",
+            },
+            match: {
+              type: 'string',
+              enum: ['exact', 'contains'],
+              description: "For text anchors: 'exact' matches the trimmed paragraph, 'contains' (default) matches a substring.",
+            },
+            content: {
+              type: 'string',
+              description:
+                "Markdown-style content to insert. Supported: '#'/'##'/'###' headings, '- '/'* ' bullets, '1. ' numbered lists, plain lines as body paragraphs.",
+            },
+          },
+          required: ['anchor_type', 'content'],
+        },
+      },
+      output_format: {
+        type: 'string',
+        enum: ['docx', 'pdf'],
+        description:
+          "Output format. 'docx' (default) returns the edited Word document; 'pdf' additionally converts via headless LibreOffice.",
+      },
+    },
+    required: ['input_docx_path', 'insertions'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Raw-OOXML document surgery — the deepest file-engineering path. Unpacks a
+// .docx (a ZIP of XML parts), parses word/document.xml as an XML tree (lxml),
+// locates text anchors at the paragraph/run level, and surgically inserts new
+// <w:p> paragraph blocks (inheriting the anchor's exact formatting) or replaces
+// placeholder text — preserving fonts, bold/italic, spacing, and justification
+// — then repacks every original ZIP entry and VALIDATES the result. Use when
+// edits must land at precise XML locations and inherit the document's existing
+// character formatting, beyond what insert_document_content (python-docx object
+// level) can address. Tenant-scoped via ToolContext.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SURGICAL_DOCX_XML_EDIT: AnaTool = {
+  name: 'surgical_docx_xml_edit',
+  description:
+    "Surgically edit an existing Word (.docx) at the raw OOXML/XML level: unpack the archive, parse word/document.xml, locate text anchors, insert new paragraph blocks that inherit the anchor's formatting (fonts, bold/italic, spacing, justification), or replace placeholder tokens preserving the run's formatting, then repack and validate (well-formedness + python-docx round-trip). Deeper than insert_document_content (which works at the python-docx object level) — use this when you need exact XML placement and faithful inheritance of existing character/paragraph formatting. Returns the edited .docx path, a per-operation report, and a validation report. Tenant-scoped via ToolContext.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      input_docx_path: {
+        type: 'string',
+        description: 'Absolute path to the source .docx to edit (e.g. a docxPath from author_docx_native or an uploaded document).',
+      },
+      operations: {
+        type: 'array',
+        description: 'Ordered list of XML-level operations.',
+        items: {
+          type: 'object',
+          properties: {
+            op: {
+              type: 'string',
+              enum: ['insert_paragraphs', 'replace_text'],
+              description: "'insert_paragraphs' inserts new <w:p> blocks near a text anchor; 'replace_text' swaps a placeholder token in place.",
+            },
+            anchor_text: { type: 'string', description: 'For insert_paragraphs: the paragraph text to anchor on.' },
+            match: { type: 'string', enum: ['exact', 'contains'], description: "Anchor match mode. Default 'contains'." },
+            position: { type: 'string', enum: ['before', 'after'], description: "Insert before or after the anchor. Default 'after'." },
+            paragraphs: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'For insert_paragraphs: the new paragraph texts, in order. Each inherits the anchor paragraph/run formatting when inherit_format is true.',
+            },
+            inherit_format: { type: 'boolean', description: "Clone the anchor's paragraph (w:pPr) and run (w:rPr) properties onto the inserted paragraphs. Default true." },
+            find: { type: 'string', description: 'For replace_text: the placeholder/token to find.' },
+            replace: { type: 'string', description: 'For replace_text: the replacement text (the run formatting around the token is preserved).' },
+          },
+          required: ['op'],
+        },
+      },
+      output_format: {
+        type: 'string',
+        enum: ['docx', 'pdf'],
+        description: "Output format. 'docx' (default) returns the edited Word document; 'pdf' additionally converts via headless LibreOffice.",
+      },
+    },
+    required: ['input_docx_path', 'operations'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DOCX validation — open a .docx and confirm it is structurally sound before
+// shipping: required parts present ([Content_Types].xml, _rels/.rels,
+// word/document.xml), every XML/rels part well-formed, relationship targets
+// resolve, and python-docx can re-open it. Closes the "repack-and-validate"
+// loop for any document AnA produced (via surgical edits or scripts) or
+// received from a client. Tenant-scoped via ToolContext.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Container execution — a real Linux container with bash, Python, and file
+// manipulation (the native equivalent of Anthropic computer-use), run via a
+// hardened `docker run`: dropped capabilities, no-new-privileges, read-only
+// root fs, resource limits, non-root user, wall-clock timeout. GATED OFF by
+// default; outbound network is a separate explicit opt-in. Use for
+// multi-step shell/file workflows that the python sandbox can't express; for
+// document surgery prefer surgical_docx_xml_edit / run_python_script.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const RUN_IN_CONTAINER: AnaTool = {
+  name: 'run_in_container',
+  description:
+    "Run a bash script inside a real, hardened Linux container (bash + Python + file tools) — the native computer-use path for multi-step shell/file workflows. The container has dropped Linux capabilities, no privilege escalation, a read-only root filesystem, a size-bounded writable /work directory (the cwd), CPU/memory/PID limits, a non-root user, and a wall-clock timeout. Outbound network is OFF unless the deployment explicitly enables it. Provide optional input_files (filename → base64) written into /work; files the script leaves in /work are returned (base64, size-capped). Returns stdout, stderr, and exit code. This capability is gated by deployment configuration and may be disabled. Prefer run_python_script for pure-Python work and surgical_docx_xml_edit for document edits.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      script: {
+        type: 'string',
+        description: 'The bash script to run inside the container (cwd is /work).',
+      },
+      input_files: {
+        type: 'object',
+        description: 'Optional map of filename → base64 bytes, written into /work before the script runs.',
+        additionalProperties: { type: 'string' },
+      },
+      timeout_ms: {
+        type: 'number',
+        description: 'Wall-clock timeout in milliseconds. Default 60000, max 300000.',
+      },
+    },
+    required: ['script'],
+  },
+};
+
+export const VALIDATE_DOCX: AnaTool = {
+  name: 'validate_docx',
+  description:
+    "Validate a Word (.docx) document's OOXML/ZIP integrity without modifying it: confirms required parts are present, every XML/rels part is well-formed, relationship targets resolve to real parts, and python-docx can re-open the file. Use after any raw-XML or scripted edit, or on a client-supplied document, to catch silent corruption before it ships. Returns a structured report (ok, parts checked, malformed/missing parts, dangling relationships, paragraph count).",
+  input_schema: {
+    type: 'object',
+    properties: {
+      input_docx_path: {
+        type: 'string',
+        description: 'Absolute path to the .docx to validate.',
+      },
+    },
+    required: ['input_docx_path'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX kit-section write-back — closes the loop between AnA's drafting and the
 // kit's section editors (K510Surface, PmaSurface, CerSurface). When the model
 // has produced a draft section (cover letter, SE discussion, device
@@ -5854,6 +6383,15 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   BUILD_ABBREVIATION_LIST,
   DESCRIBE_CAPABILITIES,
   PROJECT_KNOWLEDGE_SEARCH,
+  PROJECT_KNOWLEDGE_SEARCH_MULTI,
+  SEARCH_LARGE_DOCUMENT,
+  REMEMBER_DOCUMENT_IN_PROJECT,
+  RUN_SUBMISSION_PREMORTEM,
+  ASSESS_OUTPUT_CONFIDENCE,
+  CHECK_GROUNDING,
+  RENDER_SIGNATURE_MANIFESTATION,
+  SCAN_REGULATORY_DEFICIENCIES,
+  RECALL_SESSION_CONTEXT,
   SIMULATE_STUDY_DESIGN,
   SEARCH_DEVICE_ADVERSE_EVENTS,
   SEARCH_DRUG_ADVERSE_EVENTS,
@@ -5870,6 +6408,11 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   FETCH_TEMPLATE_AND_FILL,
   AUTHOR_DOCX_NATIVE,
   CONVERT_DOCX_TO_PDF,
+  RUN_PYTHON_SCRIPT,
+  INSERT_DOCUMENT_CONTENT,
+  SURGICAL_DOCX_XML_EDIT,
+  VALIDATE_DOCX,
+  RUN_IN_CONTAINER,
   WRITE_KIT_SECTION,
   CREATE_Q_SUB,
   UPDATE_Q_SUB_COMMITMENT_ROLLED_IN,

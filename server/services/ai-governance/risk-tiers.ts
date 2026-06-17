@@ -58,6 +58,10 @@ const CATEGORY_POLICY: Record<string, CategoryPolicy> = {
   workflow: { riskTier: 'low', humanOversight: 'requires_approval', groundednessThreshold: 0.6, gxpApplicable: true },
   knowledge: { riskTier: 'low', humanOversight: 'suggest_only', groundednessThreshold: 0.5, gxpApplicable: false },
   formatting: { riskTier: 'low', humanOversight: 'suggest_only', groundednessThreshold: 0.5, gxpApplicable: false },
+  // Sandboxed code execution + targeted document edits. The sandbox is isolated
+  // (no network, bounded CPU/memory), but the outputs can land in regulated
+  // documents, so a qualified user must review before the result is used.
+  compute: { riskTier: 'moderate', humanOversight: 'requires_review', groundednessThreshold: 0.6, gxpApplicable: true },
 };
 
 const DEFAULT_POLICY: CategoryPolicy = {
