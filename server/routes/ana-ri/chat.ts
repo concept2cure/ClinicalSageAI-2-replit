@@ -28,7 +28,7 @@ import {
   validateResponseStructure,
 } from '../../services/ana-ri/enforcement.js';
 import { validateEvidence } from '../../services/ana-ri/evidence-validation.js';
-import { buildQueueMeta } from '../../services/ana-ri/response-contract.js';
+import { buildQueueMeta, buildTrustSummary } from '../../services/ana-ri/response-contract.js';
 import { recordAnaTurn } from '../../services/ana-ri-metrics.js';
 import {
   getOrCreateThread,
@@ -747,6 +747,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         compliant: evidenceCheck.compliant,
         labels: evidenceCheck.totalLabels,
         verdict: evidenceVerdict,
+        trust_summary: buildTrustSummary(evidenceVerdict),
       },
       structure: {
         valid: structureCheck.valid,

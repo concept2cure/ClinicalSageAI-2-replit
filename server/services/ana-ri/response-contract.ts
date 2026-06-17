@@ -115,6 +115,8 @@ export interface AnaCanonicalResponse {
     compliant: boolean;
     labels: number;
     verdict?: EvidenceVerdict;
+    /** Human-readable one-line reliability summary derived from the verdict. */
+    trust_summary?: string;
   };
   /** Structure validation */
   structure: {
@@ -216,4 +218,34 @@ export function buildEmptyEvidenceVerdict(): EvidenceVerdict {
     missing_support_count: 0,
     provider: 'none',
   };
+}
+
+/**
+ * Pure: render a compact, human-readable trust summary from an evidence verdict
+ * so the end user can gauge an answer's reliability at a glance (21 CFR Part 11
+ * verifiability). Honest by construction — it only restates the verdict's own
+ * counts; it never upgrades confidence. Returns a short single line.
+ */
+export function buildTrustSummary(verdict?: EvidenceVerdict): string {
+  if (!verdict || !verdict.attempted) {
+    return 'Evidence check not run for this response — verify any regulatory claims before relying on them.';
+  }
+  const grounded = verdict.grounded_claim_count;
+  const weak = verdict.weak_or_ungrounded_claim_count;
+  const missing = verdict.missing_support_count;
+  const sources = verdict.source_count;
+  const clean = verdict.validated && weak === 0 && missing === 0;
+  const label = clean
+    ? 'Verified'
+    : verdict.validated
+      ? '⚠ Verified with caveats'
+      : '⚠ Unverified — reviewer check recommended';
+  const counts = `${grounded} grounded · ${weak} inferred/weak · ${missing} missing · ${sources} source${sources === 1 ? '' : 's'}`;
+  let line = `${label} · ${counts}`;
+  if (verdict.reviewer_risk_summary && verdict.reviewer_risk_summary.trim()) {
+    line += `. ${verdict.reviewer_risk_summary.trim()}`;
+  } else if (weak > 0) {
+    line += `. ${weak} claim${weak === 1 ? '' : 's'} need${weak === 1 ? 's' : ''} verification before reviewer-facing use.`;
+  }
+  return line;
 }

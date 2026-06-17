@@ -19,6 +19,7 @@ import {
   validateResponseStructure,
 } from '../../services/ana-ri/enforcement.js';
 import { validateEvidence } from '../../services/ana-ri/evidence-validation.js';
+import { buildTrustSummary } from '../../services/ana-ri/response-contract.js';
 import { buildQueueMeta } from '../../services/ana-ri/response-contract.js';
 import { saveChatMessage as saveMessage } from '../../services/chat-thread-helpers.js';
 import { persistProvenance } from '../../services/evidence/persist-provenance.js';
@@ -256,12 +257,14 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       persistenceFailed,
     });
 
-    // Send grounding strip (evidence verdict summary for client UI)
+    // Send grounding strip (evidence verdict summary for client UI), with a
+    // human-readable one-line trust summary so the user can gauge reliability.
     if (streamEvidenceVerdict) {
       res.write(
         `data: ${JSON.stringify({
           type: 'grounding_strip',
           evidence: streamEvidenceVerdict,
+          trust_summary: buildTrustSummary(streamEvidenceVerdict),
         })}\n\n`
       );
     }
