@@ -29,28 +29,28 @@ import {
 
 describe('MFA-bypass guard: nonAccessTokenReason', () => {
   it('accepts a normal access token (returns null)', () => {
-    expect(nonAccessTokenReason({ userId: '42', role: 'user' })).toBeNull();
-    expect(nonAccessTokenReason({ userId: '42', type: 'access' })).toBeNull();
+    expect(nonAccessTokenReason({ role: 'user' })).toBeNull();
+    expect(nonAccessTokenReason({ type: 'access' })).toBeNull();
   });
 
   it('rejects an MFA-partial token (mfaPending claim)', () => {
-    expect(nonAccessTokenReason({ userId: '42', mfaPending: true })).toBe('mfa_partial_token');
+    expect(nonAccessTokenReason({ mfaPending: true })).toBe('mfa_partial_token');
   });
 
   it('rejects an MFA-partial token (pending_mfa role)', () => {
-    expect(nonAccessTokenReason({ userId: '42', role: 'pending_mfa' })).toBe('mfa_pending_role');
+    expect(nonAccessTokenReason({ role: 'pending_mfa' })).toBe('mfa_pending_role');
   });
 
   it('rejects a refresh token', () => {
-    expect(nonAccessTokenReason({ userId: '42', type: 'refresh' })).toBe('refresh');
+    expect(nonAccessTokenReason({ type: 'refresh' })).toBe('refresh');
   });
 
   it('rejects an MFA challenge token', () => {
-    expect(nonAccessTokenReason({ userId: '42', type: 'mfa_challenge' })).toBe('mfa_challenge');
+    expect(nonAccessTokenReason({ type: 'mfa_challenge' })).toBe('mfa_challenge');
   });
 
   it('is case-insensitive on the type claim', () => {
-    expect(nonAccessTokenReason({ userId: '42', type: 'REFRESH' })).toBe('refresh');
+    expect(nonAccessTokenReason({ type: 'REFRESH' })).toBe('refresh');
   });
 });
 

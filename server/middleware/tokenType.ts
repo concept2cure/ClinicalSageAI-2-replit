@@ -13,7 +13,12 @@
  * makes `../middleware/auth` ambiguous at runtime.
  */
 
-/** The subset of JWT claims relevant to token-class discrimination. */
+/**
+ * The subset of JWT claims relevant to token-class discrimination. A decoded
+ * JWT payload carries many other claims (userId, email, organizationId, …) and
+ * remains assignable here via structural typing — only these three fields are
+ * read.
+ */
 export interface TokenClassClaims {
   type?: string;
   role?: string | null;
