@@ -58,7 +58,7 @@ export function TopBar({ view, canExport, onExport }: TopBarProps) {
             <ShareIco size={16} />
           </button>
         )}
-        <button className={styles.iconBtn} title="More" type="button">
+        <button className={styles.iconBtn} title="More" aria-label="More options" type="button">
           <DotsIco size={16} />
         </button>
       </div>

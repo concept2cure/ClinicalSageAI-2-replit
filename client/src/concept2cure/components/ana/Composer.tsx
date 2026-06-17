@@ -178,6 +178,7 @@ export function Composer({
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
+        aria-label="Message AnA"
         onKeyDown={e => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -206,6 +207,7 @@ export function Composer({
           <button
             className={styles.composerIcon}
             title="Attach files"
+            aria-label="Attach files"
             type="button"
             onClick={() => fileRef.current?.click()}
           >
@@ -217,7 +219,7 @@ export function Composer({
               onChange={onSelectedToolsChange}
             />
           ) : (
-            <button className={styles.composerIcon} title="Tools" type="button" disabled>
+            <button className={styles.composerIcon} title="Tools" aria-label="Tools" type="button" disabled>
               <I.tools size={16} />
             </button>
           )}
