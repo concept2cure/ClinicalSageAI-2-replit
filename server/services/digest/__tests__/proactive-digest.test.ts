@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { buildProactiveDigest } from '../proactive-digest.js';
 import { bucketObligations, type ObligationLike } from '../../ana/deadline-radar.js';
 import type { OpenBlocker } from '../../ana/risk-watch.js';
+import type { OpenContradiction } from '../../ana/contradiction-watch.js';
 
 const NOW = new Date('2026-06-17T00:00:00.000Z');
 
@@ -41,11 +42,48 @@ function blocker(severity: string, title = `Blocker ${severity}`): OpenBlocker {
   };
 }
 
+function contradiction(
+  severity: OpenContradiction['severity'],
+  over: Partial<OpenContradiction> = {}
+): OpenContradiction {
+  return {
+    id: over.id ?? `f-${severity}`,
+    title: over.title ?? `Contradiction ${severity}`,
+    severity,
+    contradictionType: over.contradictionType ?? 'assumption_drift',
+    authorityState: over.authorityState ?? 'requires_review',
+    projectId: over.projectId ?? 1,
+    createdAt: over.createdAt ?? '2026-06-01T00:00:00.000Z',
+    blocksPromotion: over.blocksPromotion ?? false,
+  };
+}
+
 describe('buildProactiveDigest', () => {
   it('returns null when there is nothing material', () => {
     expect(buildProactiveDigest(radar([]), [])).toBeNull();
-    // upcoming-only (not overdue/due-soon) and no risks is also non-material
-    expect(buildProactiveDigest(radar([{ id: 1, dueDate: '2026-12-01T00:00:00.000Z' }]), [])).toBeNull();
+    // upcoming-only (not overdue/due-soon), no risks, no contradictions is non-material
+    expect(buildProactiveDigest(radar([{ id: 1, dueDate: '2026-12-01T00:00:00.000Z' }]), [], [])).toBeNull();
+  });
+
+  it('surfaces an open contradiction and escalates to critical when it blocks promotion', () => {
+    const d = buildProactiveDigest(radar([]), [], [
+      contradiction('high', {
+        title: 'M2.5 ORR vs M5 ORR',
+        authorityState: 'blocks_promotion',
+        blocksPromotion: true,
+      }),
+    ])!;
+    expect(d.severity).toBe('critical');
+    expect(d.title).toMatch(/1 contradiction/);
+    expect(d.body).toContain('Open contradictions:');
+    expect(d.body).toContain('blocks promotion');
+    expect(d.metadata.contradictions.blocksPromotion).toBe(1);
+  });
+
+  it('is warning when only a high (non-blocking) contradiction is open', () => {
+    const d = buildProactiveDigest(radar([]), [], [contradiction('high')])!;
+    expect(d.severity).toBe('warning');
+    expect(d.metadata.contradictions.high).toBe(1);
   });
 
   it('is critical when something is overdue', () => {

@@ -11,6 +11,11 @@
 
 import { getDeadlineRadar, type RadarResult, type RadarItem } from '../ana/deadline-radar.js';
 import { getOpenBlockersForOrg, summarizeBlockers, type OpenBlocker } from '../ana/risk-watch.js';
+import {
+  getOpenContradictionsForOrg,
+  summarizeContradictions,
+  type OpenContradiction,
+} from '../ana/contradiction-watch.js';
 import { createNotification, type NotificationSeverity } from '../notifications/notification-service.js';
 
 export const PROACTIVE_DIGEST_CATEGORY = 'proactive_digest';
@@ -23,34 +28,45 @@ export interface ProactiveDigest {
     overdue: number;
     dueSoon: number;
     risks: { critical: number; high: number; medium: number; low: number; total: number };
+    contradictions: { critical: number; high: number; medium: number; low: number; blocksPromotion: number; total: number };
     topDeadlines: Array<{ title: string; agency: string | null; daysUntilDue: number; bucket: string }>;
     topRisks: Array<{ title: string; severity: string }>;
+    topContradictions: Array<{ title: string; severity: string; blocksPromotion: boolean }>;
     generatedAt: string;
   };
 }
 
 /**
- * Pure: assemble the digest from a deadline radar result + open blockers.
- * Returns null when there is nothing material to surface (no overdue/due-soon
- * deadlines and no open risks), so the caller skips sending an empty digest.
+ * Pure: assemble the digest from a deadline radar result + open blockers + open
+ * contradiction-engine findings. Returns null when there is nothing material to
+ * surface (no overdue/due-soon deadlines, no open risks, no open contradictions),
+ * so the caller skips sending an empty digest.
  */
 export function buildProactiveDigest(
   radar: RadarResult,
-  blockers: OpenBlocker[]
+  blockers: OpenBlocker[],
+  contradictions: OpenContradiction[] = []
 ): ProactiveDigest | null {
   const overdue = radar.summary.overdue;
   const dueSoon = radar.summary.due_soon;
   const risks = summarizeBlockers(blockers);
+  const cons = summarizeContradictions(contradictions);
 
-  if (overdue === 0 && dueSoon === 0 && risks.total === 0) return null;
+  if (overdue === 0 && dueSoon === 0 && risks.total === 0 && cons.total === 0) return null;
 
   const severity: NotificationSeverity =
-    overdue > 0 || risks.critical > 0 ? 'critical' : dueSoon > 0 || risks.high > 0 ? 'warning' : 'info';
+    overdue > 0 || risks.critical > 0 || cons.critical > 0 || cons.blocksPromotion > 0
+      ? 'critical'
+      : dueSoon > 0 || risks.high > 0 || cons.high > 0
+        ? 'warning'
+        : 'info';
 
   const titleParts: string[] = [];
   if (overdue > 0) titleParts.push(`${overdue} overdue`);
   if (dueSoon > 0) titleParts.push(`${dueSoon} due soon`);
   if (risks.total > 0) titleParts.push(`${risks.total} open risk${risks.total === 1 ? '' : 's'}`);
+  if (cons.total > 0)
+    titleParts.push(`${cons.total} contradiction${cons.total === 1 ? '' : 's'}`);
   const title = `Regulatory attention needed: ${titleParts.join(', ')}`;
 
   const topDeadlines = radar.items
@@ -66,6 +82,11 @@ export function buildProactiveDigest(
     title: b.title,
     severity: (b.severity ?? 'medium').toLowerCase(),
   }));
+  const topContradictions = contradictions.slice(0, 5).map(c => ({
+    title: c.title,
+    severity: (c.severity ?? 'medium').toLowerCase(),
+    blocksPromotion: c.blocksPromotion,
+  }));
 
   const bodyLines: string[] = [];
   if (topDeadlines.length) {
@@ -79,6 +100,12 @@ export function buildProactiveDigest(
     bodyLines.push('Open risks:');
     for (const r of topRisks) bodyLines.push(`• [${r.severity}] ${r.title}`);
   }
+  if (topContradictions.length) {
+    bodyLines.push('Open contradictions:');
+    for (const c of topContradictions) {
+      bodyLines.push(`• [${c.severity}] ${c.title}${c.blocksPromotion ? ' — blocks promotion' : ''}`);
+    }
+  }
 
   return {
     severity,
@@ -88,8 +115,10 @@ export function buildProactiveDigest(
       overdue,
       dueSoon,
       risks,
+      contradictions: cons,
       topDeadlines,
       topRisks,
+      topContradictions,
       generatedAt: new Date().toISOString(),
     },
   };
@@ -103,12 +132,13 @@ export function buildProactiveDigest(
 export async function runProactiveDigest(
   organizationId: number
 ): Promise<{ created: boolean; notificationId?: number }> {
-  const [radar, blockers] = await Promise.all([
+  const [radar, blockers, contradictions] = await Promise.all([
     getDeadlineRadar({ organizationId }),
     getOpenBlockersForOrg(organizationId, 10),
+    getOpenContradictionsForOrg(organizationId, 10),
   ]);
 
-  const digest = buildProactiveDigest(radar, blockers);
+  const digest = buildProactiveDigest(radar, blockers, contradictions);
   if (!digest) return { created: false };
 
   const notificationId = await createNotification({
