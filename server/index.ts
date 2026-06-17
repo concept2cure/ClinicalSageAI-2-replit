@@ -33,6 +33,7 @@ import { startAuditChainIntegritySchedule } from './jobs/auditChainIntegritySwee
 import { startCorpusIngestionSchedule } from './jobs/corpusIngestionSweep';
 import { startRegulatoryHorizonSchedule } from './jobs/regulatoryHorizonScan';
 import { startExternalIntelligenceSchedule } from './jobs/externalIntelligenceSweep';
+import { startScheduleOfEventsSweep } from './jobs/scheduleOfEventsSweep';
 import { errorHandler } from './src/mw/observability.js';
 
 // Audit + RBAC side-effect imports (initialize tables + cache on require).
@@ -226,6 +227,11 @@ async function startServer() {
     // markets + study-methodology sources (SCDM, PubMed, medRxiv). Default
     // ON — disable with ENABLE_EXTERNAL_INTELLIGENCE=false.
     startExternalIntelligenceSchedule();
+    // Project manager: AnA proactively reviews every active schedule of events,
+    // marking slips/at-risk milestones, opening recovery tasks, firing alerts,
+    // and flagging goals. Self-guards in tests; disable with
+    // SCHEDULE_OF_EVENTS_SWEEP_DISABLED=true.
+    startScheduleOfEventsSweep();
   });
 }
 

@@ -6338,7 +6338,147 @@ export const SCREEN_COMPOUND_LIABILITIES: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Project Schedule of Events — AnA-owned, regulatory-aware milestone schedule
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const GENERATE_SCHEDULE_OF_EVENTS: AnaTool = {
+  name: 'generate_schedule_of_events',
+  description:
+    "Generate (or regenerate) the active project's Schedule of Events: a regulatory-aware " +
+    'set of dated, visual milestones for the program. AnA grounds the schedule in the project ' +
+    'type (IND, 510K, NDA, BLA, PMA, De Novo, CER, IVDR, MAA, EUA), the applicable regulatory ' +
+    'framework, and the program goals, compressing or stretching the milestone offsets to hit ' +
+    'the requested target date. Milestones are stored as project workflow stages and surfaced ' +
+    'on the Schedule tab. Requires an active project in context. Use when the user asks to plan, ' +
+    'lay out, or build a project timeline / schedule / milestones, or when no schedule exists yet.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      project_type: {
+        type: 'string',
+        description:
+          'Submission/project type to base the schedule on (IND, NDA, BLA, 510K, PMA, DE_NOVO, ' +
+          'CER, IVDR, MAA, EUA). Defaults to the project type in context.',
+      },
+      target_date: {
+        type: 'string',
+        description: 'Desired overall completion/submission date (ISO YYYY-MM-DD). The schedule compresses to fit.',
+      },
+      baseline_date: {
+        type: 'string',
+        description: 'Anchor/start date for the schedule (ISO YYYY-MM-DD). Defaults to today.',
+      },
+      goals: {
+        type: 'array',
+        description: 'Program goals to align the schedule to; the earliest goal target also pulls the program forward.',
+        items: {
+          type: 'object',
+          properties: {
+            title: { type: 'string' },
+            description: { type: 'string' },
+            target_date: { type: 'string', description: 'ISO YYYY-MM-DD' },
+            priority: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
+            metric: { type: 'string', description: 'How success is measured' },
+          },
+          required: ['title'],
+        },
+      },
+    },
+    required: [],
+  },
+};
+
+export const AMEND_SCHEDULE_OF_EVENTS: AnaTool = {
+  name: 'amend_schedule_of_events',
+  description:
+    "Amend a single milestone on the active project's Schedule of Events — move its target date, " +
+    'change its status, or update progress. Use when a milestone is completed, delayed, blocked, ' +
+    'or needs re-dating based on new information. Records an auditable revision. Requires an ' +
+    'active project in context.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      milestone_key: {
+        type: 'string',
+        description: 'Stable key of the milestone to amend (e.g. "pre_ind_meeting"). Read it from the schedule first.',
+      },
+      new_target_date: { type: 'string', description: 'New target date (ISO YYYY-MM-DD).' },
+      status: {
+        type: 'string',
+        enum: ['not_started', 'in_progress', 'at_risk', 'completed', 'slipped', 'blocked'],
+        description: 'New milestone status.',
+      },
+      progress: { type: 'number', description: 'Completion percentage 0-100.' },
+      note: { type: 'string', description: 'Short rationale for the amendment (kept in the audit trail).' },
+    },
+    required: ['milestone_key'],
+  },
+};
+
+export const REVIEW_SCHEDULE_OF_EVENTS_HEALTH: AnaTool = {
+  name: 'review_schedule_of_events_health',
+  description:
+    "Proactively review the active project's Schedule of Events: assess every milestone for " +
+    'slippage and at-risk status, open recovery/mitigation tasks, raise alerts, flag goals whose ' +
+    'target dates have passed, and refresh AnA\'s status narrative. Returns the current health ' +
+    'verdict (on_track / at_risk / off_track) with per-milestone detail. Requires an active ' +
+    'project in context. Use to answer "where does my schedule stand?" or to take corrective ' +
+    'action across the program.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      apply: {
+        type: 'boolean',
+        description:
+          'When true (default), AnA acts on findings (updates statuses, opens tasks, raises alerts). ' +
+          'When false, only returns the assessment.',
+      },
+    },
+    required: [],
+  },
+};
+
+export const RESET_PROJECT_GOALS: AnaTool = {
+  name: 'reset_project_goals',
+  description:
+    "Reset the active project's program goals based on changed context (new regulatory " +
+    'requirement, slipped critical milestone, changed scope/strategy). Replaces the current goal ' +
+    'set, retains the old goals as history, records the rationale, and raises an info alert. Use ' +
+    'when goals must be re-baselined, not for one-off milestone edits. Requires an active project ' +
+    'in context.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      goals: {
+        type: 'array',
+        description: 'The new goal set.',
+        items: {
+          type: 'object',
+          properties: {
+            title: { type: 'string' },
+            description: { type: 'string' },
+            target_date: { type: 'string', description: 'ISO YYYY-MM-DD' },
+            priority: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
+            metric: { type: 'string' },
+          },
+          required: ['title'],
+        },
+      },
+      rationale: {
+        type: 'string',
+        description: 'Why the goals are being reset — recorded in the audit trail and shown to the user.',
+      },
+    },
+    required: ['goals', 'rationale'],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
+  GENERATE_SCHEDULE_OF_EVENTS,
+  AMEND_SCHEDULE_OF_EVENTS,
+  REVIEW_SCHEDULE_OF_EVENTS_HEALTH,
+  RESET_PROJECT_GOALS,
   LIST_PLATFORM_COMMANDS,
   EXECUTE_PLATFORM_COMMAND,
   SEARCH_CHEMBL_COMPOUND,

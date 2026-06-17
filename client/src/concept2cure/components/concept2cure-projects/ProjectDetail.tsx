@@ -16,6 +16,7 @@ import { downloadJsonSnapshot } from './data/useProjectsMutations';
 import { useClaim, useTransition, useSign, useLock } from '../../_shared/hooks/useC2cAction';
 import { ProjectMoreMenu } from './ProjectMoreMenu';
 import { ChatsTab } from './tabs/ChatsTab';
+import { ScheduleTab } from './tabs/ScheduleTab';
 import { MemoryTab } from './tabs/MemoryTab';
 import { InstructionsTab } from './tabs/InstructionsTab';
 import { FilesTab } from './tabs/FilesTab';
@@ -133,6 +134,7 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
 
   const TABS: Array<{ id: DetailTab; label: string; count: number | null }> = [
     { id: 'chats',        label: 'Chats',        count: project.chats.length },
+    { id: 'schedule',     label: 'Schedule',     count: null },
     { id: 'memory',       label: 'Memory',       count: null },
     { id: 'instructions', label: 'Instructions', count: null },
     { id: 'files',        label: 'Files',        count: null },
@@ -262,6 +264,7 @@ export function ProjectDetail({ project, onBack, onProjectMutated, onOpenPdev }:
           prefillText={chatPrefill}
         />
       )}
+      {tab === 'schedule' && <ScheduleTab project={project} />}
       {tab === 'memory' && <MemoryTab project={project} onSwitchTab={setTab} />}
       {tab === 'instructions' && (
         <InstructionsTab
