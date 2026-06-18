@@ -1432,6 +1432,24 @@ export class RegulatoryDigitalTwin {
 // DB Persistence Helpers
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// SECURITY: agencies are written into a TEXT[] column. Validate against the
+// known reviewer-agency allow-list and bind each element as a parameter rather
+// than string-interpolating into SQL (prevents SQL injection via request body).
+const VALID_AGENCIES: ReadonlySet<string> = new Set([
+  'FDA', 'EMA', 'PMDA', 'Health_Canada', 'TGA',
+]);
+
+function buildAgencyArray(agencies: readonly string[]) {
+  const values = (agencies && agencies.length > 0 ? agencies : ['FDA']);
+  for (const a of values) {
+    if (!VALID_AGENCIES.has(a)) {
+      throw new Error(`Invalid agency: ${JSON.stringify(a)}`);
+    }
+  }
+  const elements = sql.join(values.map((a) => sql`${a}`), sql`, `);
+  return sql`ARRAY[${elements}]::text[]`;
+}
+
 async function dbInsertSimulation(
   simulationId: string,
   submission: SubmissionProfile,
@@ -1446,7 +1464,7 @@ async function dbInsertSimulation(
       ${simulationId},
       ${submission.type},
       ${submission.therapeuticArea},
-      ${sql.raw(`ARRAY[${agencies.map(a => `'${a}'`).join(',')}]::text[]`)},
+      ${buildAgencyArray(agencies)},
       ${JSON.stringify(submission)}::jsonb,
       ${JSON.stringify(results)}::jsonb,
       ${JSON.stringify(summary)}::jsonb,

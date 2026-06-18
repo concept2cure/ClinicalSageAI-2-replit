@@ -39,12 +39,19 @@ const router = Router();
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function extractOrgId(req: Request): number {
-  return (
-    parseInt((req as any).tenantContext?.organizationId, 10) ||
-    Number((req as any).user?.organizationId || (req as any).tenantId) ||
-    1
-  );
+// SECURITY: tenant context must come from the verified request, never
+// default to a hard-coded org. The previous `|| 1` fallback meant a
+// request with no tenant context silently acted as organization 1 — a
+// cross-tenant IDOR. This now fails closed by returning null; every
+// caller must reject with 403 (mirrors requireAuthedOrgId).
+function extractOrgId(req: Request): number | null {
+  const raw =
+    (req as any).tenantContext?.organizationId ??
+    (req as any).user?.organizationId ??
+    (req as any).tenantId;
+  if (raw == null) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 function extractUserId(req: Request): number | null {
@@ -109,6 +116,9 @@ router.post('/initialize', async (req: Request, res: Response) => {
   try {
     const { project_id } = req.body;
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     if (!project_id) {
       return res.status(400).json({ error: 'project_id is required' });
@@ -191,6 +201,9 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.query.project_id as string, 10);
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     const module = req.query.module as string;
     const status = req.query.status as string;
     const assignedTo = req.query.assigned_to as string;
@@ -252,6 +265,9 @@ router.get('/:code', async (req: Request, res: Response) => {
     const code = String(req.params.code);
     const projectId = parseInt(req.query.project_id as string, 10);
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     if (!projectId) {
       return res.status(400).json({ error: 'project_id is required' });
@@ -317,6 +333,9 @@ router.patch('/:code/status', async (req: Request, res: Response) => {
     const code = String(req.params.code);
     const { project_id, new_status, reason } = req.body;
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     const userId = extractUserId(req);
 
     if (!project_id || !new_status) {
@@ -445,6 +464,9 @@ router.patch('/:code/assign', async (req: Request, res: Response) => {
     const code = String(req.params.code);
     const { project_id, assigned_to, reviewer_id } = req.body;
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     if (!project_id) {
       return res.status(400).json({ error: 'project_id is required' });
@@ -510,6 +532,9 @@ router.patch('/:code/deadline', async (req: Request, res: Response) => {
     const code = String(req.params.code);
     const { project_id, deadline, priority } = req.body;
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     if (!project_id) {
       return res.status(400).json({ error: 'project_id is required' });
@@ -570,6 +595,9 @@ router.patch('/:code', async (req: Request, res: Response) => {
     const code = String(req.params.code);
     const { project_id, notes, actual_hours, estimated_hours, priority, metadata } = req.body;
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     if (!project_id) {
       return res.status(400).json({ error: 'project_id is required' });
@@ -631,6 +659,9 @@ router.get('/summary', async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.query.project_id as string, 10);
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     if (!projectId) {
       return res.status(400).json({ error: 'project_id is required' });
@@ -738,6 +769,9 @@ router.post('/:code/comments', async (req: Request, res: Response) => {
     const code = String(req.params.code);
     const { project_id, content, parent_id } = req.body;
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     const userId = extractUserId(req);
 
     if (!project_id || !content) {
@@ -786,6 +820,9 @@ router.get('/:code/comments', async (req: Request, res: Response) => {
     const code = String(req.params.code);
     const projectId = parseInt(req.query.project_id as string, 10);
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     if (!projectId) {
       return res.status(400).json({ error: 'project_id is required' });
@@ -816,6 +853,9 @@ router.get('/:code/history', async (req: Request, res: Response) => {
     const code = String(req.params.code);
     const projectId = parseInt(req.query.project_id as string, 10);
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     if (!projectId) {
       return res.status(400).json({ error: 'project_id is required' });
@@ -845,6 +885,9 @@ router.post('/dependencies', async (req: Request, res: Response) => {
   try {
     const { project_id, section_code, depends_on_code, dependency_type } = req.body;
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     if (!project_id || !section_code || !depends_on_code) {
       return res
@@ -879,6 +922,9 @@ router.get('/dependencies', async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.query.project_id as string, 10);
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     if (!projectId) {
       return res.status(400).json({ error: 'project_id is required' });
@@ -912,6 +958,9 @@ router.get('/dependencies', async (req: Request, res: Response) => {
 router.get('/notifications', async (req: Request, res: Response) => {
   try {
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     const userId = extractUserId(req);
     const unreadOnly = req.query.unread === 'true';
 
@@ -964,6 +1013,9 @@ router.patch('/notifications/:id/read', async (req: Request, res: Response) => {
 router.post('/notifications/read-all', async (req: Request, res: Response) => {
   try {
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     const userId = extractUserId(req);
 
     await pool.query(
@@ -985,6 +1037,9 @@ router.post('/milestones', async (req: Request, res: Response) => {
   try {
     const { project_id, name, description, target_date, linked_sections } = req.body;
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
     const userId = extractUserId(req);
 
     if (!project_id || !name || !target_date) {
@@ -1020,6 +1075,9 @@ router.get('/milestones', async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.query.project_id as string, 10);
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     if (!projectId) {
       return res.status(400).json({ error: 'project_id is required' });
@@ -1053,6 +1111,9 @@ router.patch('/milestones/:id', async (req: Request, res: Response) => {
     const milestoneId = parseInt(String(req.params.id), 10);
     const { name, description, target_date, status, linked_sections } = req.body;
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     const updates: string[] = ['updated_at = NOW()'];
     const params: any[] = [milestoneId, orgId];
@@ -1100,6 +1161,9 @@ router.delete('/milestones/:id', async (req: Request, res: Response) => {
   try {
     const milestoneId = parseInt(String(req.params.id), 10);
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     await pool.query('DELETE FROM project_milestones WHERE id = $1 AND organization_id = $2', [
       milestoneId,
@@ -1117,6 +1181,9 @@ router.get('/timeline', async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.query.project_id as string, 10);
     const orgId = extractOrgId(req);
+    if (orgId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     if (!projectId) {
       return res.status(400).json({ error: 'project_id is required' });

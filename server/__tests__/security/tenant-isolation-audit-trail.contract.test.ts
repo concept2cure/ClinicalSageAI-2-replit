@@ -51,7 +51,13 @@ beforeEach(async () => {
   app = express();
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    if (authState.orgId != null) (req as any).user = { id: 1, organizationId: authState.orgId };
+    if (authState.orgId != null)
+      (req as any).user = {
+        id: 1,
+        organizationId: authState.orgId,
+        email: 'principal@example.com',
+        role: 'reviewer',
+      };
     next();
   });
   app.use('/api', createAuditTrailRoutes(mockPool));
@@ -119,6 +125,82 @@ describe('Tenant isolation — Audit writes', () => {
       .send({ organizationId: ATTACKER_TARGET_ORG, entityType: 'document', entityId: 1 });
     expect(res.status).toBe(201);
     expect(auditInserts()[0].params[0]).toBe(ORG_A);
+  });
+
+  it('F3: POST /audit/events attributes to the JWT principal, never the body', async () => {
+    const res = await request(app)
+      .post('/api/audit/events')
+      .send({
+        eventType: 'x',
+        userId: 4242,
+        user_name: 'Mallory',
+        user_role: 'admin',
+      });
+    expect(res.status).toBe(201);
+    const ins = auditInserts();
+    // INSERT param order: org, event_type, entity_type, entity_id,
+    //                     user_id, user_name, user_role, ...
+    expect(ins[0].params[4]).toBe(1); // principal id, not 4242
+    expect(ins[0].params[5]).toBe('principal@example.com'); // principal email
+    expect(ins[0].params[6]).toBe('reviewer'); // principal role, not 'admin'
+    expect(ins[0].params).not.toContain(4242);
+    expect(ins[0].params).not.toContain('Mallory');
+  });
+
+  it('F10: POST /audit/events requires a reason when regulatory/GxP significant', async () => {
+    const res = await request(app)
+      .post('/api/audit/events')
+      .send({ eventType: 'x', regulatorySignificant: true });
+    expect(res.status).toBe(400);
+    expect(auditInserts()).toHaveLength(0);
+
+    const ok = await request(app)
+      .post('/api/audit/events')
+      .send({ eventType: 'x', gxpRelevant: true, reason: 'Corrected dosage typo' });
+    expect(ok.status).toBe(201);
+    expect(auditInserts()).toHaveLength(1);
+  });
+
+  it('F10: batch skips regulatory/GxP events missing a reason', async () => {
+    const res = await request(app)
+      .post('/api/audit/events/batch')
+      .send({
+        events: [
+          { eventType: 'a' }, // gxp defaults true, no reason -> skipped
+          { eventType: 'b', reason: 'ok' }, // inserted
+          { eventType: 'c', gxpRelevant: false, regulatorySignificant: false }, // inserted
+        ],
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.inserted).toBe(2);
+    expect(res.body.skipped).toBe(1);
+    expect(auditInserts()).toHaveLength(2);
+  });
+
+  it('F4: POST /audit/signatures rejects an attempt to forge a signed status', async () => {
+    const res = await request(app)
+      .post('/api/audit/signatures')
+      .send({ entityType: 'document', entityId: 1, signatureStatus: 'signed' });
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('FORGERY_REJECTED');
+    expect(auditInserts()).toHaveLength(0);
+  });
+
+  it('F4: POST /audit/signatures writes a non-authoritative marker attributed to the principal', async () => {
+    const res = await request(app)
+      .post('/api/audit/signatures')
+      .send({ entityType: 'document', entityId: 1, signedBy: 'Mallory', userId: 4242 });
+    expect(res.status).toBe(201);
+    expect(res.body.authoritative).toBe(false);
+    const ins = auditInserts();
+    expect(ins).toHaveLength(1);
+    // signed_by is the principal email, not body-supplied 'Mallory'
+    expect(ins[0].params).toContain('principal@example.com');
+    expect(ins[0].params).not.toContain('Mallory');
+    expect(ins[0].params).not.toContain(4242);
+    // signature_status literal in SQL is 'unverified', never 'signed'
+    expect(ins[0].sql).toMatch(/'unverified'/);
+    expect(ins[0].sql).not.toMatch(/'signed'/);
   });
 
   it('write endpoints 403 without an authenticated org', async () => {

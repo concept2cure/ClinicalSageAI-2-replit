@@ -6,6 +6,7 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import fs from 'fs/promises';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import path from 'path';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
@@ -156,6 +157,20 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
 
     if (!files || files.length === 0) {
       return res.status(400).json({ error: 'No files provided' });
+    }
+
+    // SECURITY: magic-byte signature + AV scan (fail-closed in prod) on every
+    // file before any is persisted/processed. Reject the whole batch on failure.
+    for (const file of files) {
+      try {
+        await assertUploadSafe(file.path, file.mimetype, file.originalname);
+      } catch (err) {
+        if (err instanceof UploadSafetyError) {
+          await Promise.all(files.map(f => fs.unlink(f.path).catch(() => {})));
+          return res.status(err.status).json(err.body);
+        }
+        throw err;
+      }
     }
 
     const uploadedFiles = [];

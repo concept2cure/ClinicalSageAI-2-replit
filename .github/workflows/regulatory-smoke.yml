@@ -9,6 +9,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   ectd4-compliance:
     name: eCTD 4.0 Compliance Validation

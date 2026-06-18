@@ -11,6 +11,7 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import { authMiddleware } from '../auth.js';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -170,6 +171,18 @@ router.post('/projects/:id/upload', upload.single('file'), async (req: Request, 
 
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    // SECURITY: magic-byte signature + AV scan (fail-closed in prod) before the
+    // file is persisted/processed. Cleans up the temp file on rejection.
+    try {
+      await assertUploadSafe(req.file.path, req.file.mimetype, req.file.originalname);
+    } catch (err) {
+      if (err instanceof UploadSafetyError) {
+        try { fs.unlinkSync(req.file.path); } catch { /* best-effort cleanup */ }
+        return res.status(err.status).json(err.body);
+      }
+      throw err;
     }
 
     const { ctdModule, ctdSection, sectionTitle, documentType } = req.body;

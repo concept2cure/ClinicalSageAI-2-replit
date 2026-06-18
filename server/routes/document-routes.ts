@@ -16,6 +16,7 @@ import { randomUUID } from 'crypto';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger.js';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 
 const logger = createScopedLogger('document-routes');
 
@@ -98,12 +99,20 @@ const upload = multer({
   },
 });
 
-// Get all documents with optional filtering
+// Get all documents with optional filtering.
+//
+// SECURITY: this list endpoint was the exploitable cross-tenant
+// enumeration — it called storage.getDocuments() with no org id and
+// returned every tenant's documents. It is now gated by the JWT-bound
+// org id (403 if no tenant context) and that org id is the mandatory
+// scope passed into storage.getDocuments().
 router.get('/', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { type, status, search, folderId, limit, offset } = req.query;
 
-    const options: any = {};
+    const options: any = { organizationId: guard.orgId };
     if (limit) options.limit = Number(limit);
     if (offset) options.offset = Number(offset);
     if (type) options.type = String(type);
@@ -177,6 +186,26 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    // SECURITY: magic-byte signature verification + AV scan on the
+    // persisted bytes. multer's fileFilter only checks the declared
+    // MIME/extension (attacker-controlled); this confirms the bytes
+    // match and screens for malware. Fail-closed in production when no
+    // scanner is reachable. On rejection, unlink the temp file so a
+    // rejected upload doesn't linger on disk.
+    try {
+      await assertUploadSafe(file.path, file.mimetype, file.originalname);
+    } catch (safetyErr) {
+      try {
+        await fs.promises.unlink(file.path);
+      } catch {
+        /* best-effort cleanup */
+      }
+      if (safetyErr instanceof UploadSafetyError) {
+        return res.status(safetyErr.status).json(safetyErr.body);
+      }
+      throw safetyErr;
+    }
+
     // Get document data from request
     const documentDataStr = req.body.data;
     if (!documentDataStr) {
@@ -232,7 +261,7 @@ router.patch('/:id', async (req, res) => {
     }
 
     // Update document in storage
-    const updatedDocument = await storage.updateDocument(id, req.body);
+    const updatedDocument = await storage.updateDocument(id, guard.orgId, req.body);
 
     res.json(updatedDocument);
   } catch (error) {
@@ -254,7 +283,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     // Delete document from storage
-    const result = await storage.deleteDocument(id);
+    const result = await storage.deleteDocument(id, guard.orgId);
 
     res.json({ success: result });
   } catch (error) {

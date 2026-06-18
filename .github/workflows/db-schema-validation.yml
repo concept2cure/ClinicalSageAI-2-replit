@@ -18,6 +18,9 @@ on:
       - 'drizzle.config.*'
       - '.github/workflows/db-schema-validation.yml'
 
+permissions:
+  contents: read
+
 jobs:
   schema-push:
     name: Schema applies to fresh Postgres

@@ -1,8 +1,29 @@
 node_modules/
-.env
 dist/
 .cache/
 .cerv2_program_id
+
+# Secrets & environment files — never commit real values.
+# Ignore all .env variants but keep the *.example templates tracked.
+.env
+.env.*
+!.env.example
+!.env*.example
+!.env.beta.example
+
+# Private keys, certificates, and credential bundles
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+secrets.json
+secrets.*.json
+*.secret
 
 # Stray runtime artifacts (not part of source)
 tmp/

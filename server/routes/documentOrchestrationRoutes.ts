@@ -2,7 +2,7 @@ import { Router, Response } from 'express';
 import DocumentOrchestrationService from '../services/DocumentOrchestrationService.js';
 import { db } from '../db';
 import { fda510kDocuments, fda510kProjects } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import PDFDocument from 'pdfkit';
 import { getSecureOrgId } from '../utils/tenantContext';
 
@@ -112,11 +112,22 @@ router.post('/api/510k/documents/:documentId/version', async (req, res) => {
 router.get('/api/510k/:projectId/documents', async (req, res) => {
   try {
     const { projectId } = req.params;
+    const actor = resolveActorContext(req, res);
+    if (!actor) {
+      return;
+    }
 
+    // SECURITY: tenant isolation — scope to the caller's organization so a user
+    // cannot enumerate another tenant's 510(k) documents by guessing projectId.
     const documents = await db!
       .select()
       .from(fda510kDocuments)
-      .where(eq(fda510kDocuments.projectId, parseInt(projectId)));
+      .where(
+        and(
+          eq(fda510kDocuments.projectId, parseInt(projectId)),
+          eq(fda510kDocuments.organizationId, Number(actor.organizationId)),
+        ),
+      );
 
     res.json({
       success: true,
@@ -137,11 +148,22 @@ router.get('/api/510k/:projectId/documents', async (req, res) => {
 router.get('/api/510k/documents/:documentId', async (req, res) => {
   try {
     const { documentId } = req.params;
+    const actor = resolveActorContext(req, res);
+    if (!actor) {
+      return;
+    }
 
+    // SECURITY: tenant isolation — scope by organization; return 404 (not 403)
+    // on a cross-tenant id so document existence is not enumerable.
     const [document] = await db!
       .select()
       .from(fda510kDocuments)
-      .where(eq(fda510kDocuments.documentId, documentId));
+      .where(
+        and(
+          eq(fda510kDocuments.documentId, documentId),
+          eq(fda510kDocuments.organizationId, Number(actor.organizationId)),
+        ),
+      );
 
     if (!document) {
       return res.status(404).json({
@@ -169,11 +191,21 @@ router.get('/api/510k/documents/:documentId', async (req, res) => {
 router.get('/api/510k/documents/:documentId/pdf/3601', async (req, res) => {
   try {
     const { documentId } = req.params;
+    const actor = resolveActorContext(req, res);
+    if (!actor) {
+      return;
+    }
 
+    // SECURITY: tenant isolation — never render another tenant's FDA form PDF.
     const [document] = await db!
       .select()
       .from(fda510kDocuments)
-      .where(eq(fda510kDocuments.documentId, documentId));
+      .where(
+        and(
+          eq(fda510kDocuments.documentId, documentId),
+          eq(fda510kDocuments.organizationId, Number(actor.organizationId)),
+        ),
+      );
 
     if (!document || document.documentType !== 'fda-form') {
       return res.status(404).json({
@@ -199,11 +231,21 @@ router.get('/api/510k/documents/:documentId/pdf/3601', async (req, res) => {
 router.get('/api/510k/documents/:documentId/pdf/3514', async (req, res) => {
   try {
     const { documentId } = req.params;
+    const actor = resolveActorContext(req, res);
+    if (!actor) {
+      return;
+    }
 
+    // SECURITY: tenant isolation — never render another tenant's FDA form PDF.
     const [document] = await db!
       .select()
       .from(fda510kDocuments)
-      .where(eq(fda510kDocuments.documentId, documentId));
+      .where(
+        and(
+          eq(fda510kDocuments.documentId, documentId),
+          eq(fda510kDocuments.organizationId, Number(actor.organizationId)),
+        ),
+      );
 
     if (!document || document.documentType !== 'fda-form') {
       return res.status(404).json({
@@ -229,11 +271,21 @@ router.get('/api/510k/documents/:documentId/pdf/3514', async (req, res) => {
 router.get('/api/510k/documents/:documentId/pdf/3881', async (req, res) => {
   try {
     const { documentId } = req.params;
+    const actor = resolveActorContext(req, res);
+    if (!actor) {
+      return;
+    }
 
+    // SECURITY: tenant isolation — never render another tenant's FDA form PDF.
     const [document] = await db!
       .select()
       .from(fda510kDocuments)
-      .where(eq(fda510kDocuments.documentId, documentId));
+      .where(
+        and(
+          eq(fda510kDocuments.documentId, documentId),
+          eq(fda510kDocuments.organizationId, Number(actor.organizationId)),
+        ),
+      );
 
     if (!document || document.documentType !== 'fda-form') {
       return res.status(404).json({
