@@ -25,6 +25,7 @@ this table — enforced by `scripts/ci/check-baseline-justifications.mjs`.**
 | `server/services/atomicQuotaService.js:172, 202` | provisioning | Same dedupe pattern inside the org-quota transaction. |
 | `server/routes/part11-compliance.ts:263` | self-lookup | bcrypt verify against the session user behind a policy guard; only `{valid}` is returned. |
 | `server/services/ana-ri/command-executor.ts:1000` | self-lookup | Reads the authenticated `ctx.userId`'s own row. |
+| `server/services/ana-ri/governed-action-signoff.ts:106` | self-lookup | Part 11 §11.200 e-signature re-auth: reads the signing user's own `password_hash` by `userId` for bcrypt compare; identical query to the justified `esignature.ts` re-auth. `users` has no org column by design (tenancy lives in `organization_users`); fails closed on schema drift. |
 | `server/services/securityHealth.ts:337` | diagnostics | System security-health counters (24h event-type counts, no row data). |
 | `server/storage.ts:2177, 2189, 2205, 2240, 2255` | users CRUD | `users` carries no tenant column (`shared/schema.ts` — only `default_organization_id`); tenancy is enforced through `organization_users` at the route layer. |
 | `server/services/advancedRAGPipeline.ts` (vault arms) | RLS | Vault retrieval arms (dense + lexical) **and the small-to-big neighbour-window fetch** on `vault.document_chunks` run inside `withTenantContext(pool, organizationUuid, …)` — isolation is enforced by Postgres RLS session context, not a WHERE clause the static scanner can see. |
