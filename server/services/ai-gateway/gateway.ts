@@ -1453,7 +1453,14 @@ export class AIGateway {
         policy,
       );
       return { ...request, ...merged };
-    } catch {
+    } catch (err) {
+      // Deliberate fail-soft: a policy-store failure must not break the request.
+      // But surface it — silently skipping a tenant's residency / zero-retention
+      // default is a compliance-visibility gap, not a no-op.
+      log.warn(
+        `[AI Gateway] Org placement policy lookup failed for org ${request.organizationId}; ` +
+          `proceeding without org defaults: ${err instanceof Error ? err.message : String(err)}`
+      );
       return request; // never let policy resolution break a request
     }
   }
