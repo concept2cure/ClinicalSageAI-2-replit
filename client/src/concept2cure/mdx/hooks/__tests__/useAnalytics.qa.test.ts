@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+// Uses describe/it/expect globals (Jest and Vitest both provide them — this file
+// is globbed by the client Jest project AND Vitest, so it must not import 'vitest').
 import { selectAnalytics } from '../useAnalytics';
 
 describe('selectAnalytics (double-deref null-safety)', () => {
