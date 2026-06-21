@@ -24,6 +24,7 @@ import { ZenSignup, ZenAuthLayout } from '../auth';
 import { Concept2CureLogin } from '../components/concept2cure-auth';
 import { ZenApp } from '../ZenApp';
 import MdxRoute from '../mdx/MdxRoute';
+import MasterAdminRoute from '../master-admin/MasterAdminRoute';
 import { InsightsSurface } from '../insights/surface';
 import { ProjectProvider } from '../context/ProjectContext';
 import {
@@ -195,6 +196,20 @@ export const ZenRouter: React.FC = () => {
               <ProtectedRoute>
                 <PageTransition>
                   <MdxRoute />
+                </PageTransition>
+              </ProtectedRoute>
+            )}
+          </Route>
+
+          {/* Master Administration — platform-owner + support console. Non
+              client-facing; cross-tenant monitoring + support. Gated client-side
+              by platform role (and server-side on every endpoint). Mounted
+              before the ZenApp catch-all so it owns its own URL. */}
+          <Route path="/concept2cure/master-admin">
+            {() => (
+              <ProtectedRoute>
+                <PageTransition>
+                  <MasterAdminRoute />
                 </PageTransition>
               </ProtectedRoute>
             )}
