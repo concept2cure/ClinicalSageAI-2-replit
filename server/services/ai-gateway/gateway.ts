@@ -12,6 +12,7 @@
  */
 
 import { randomUUID, createHash } from 'crypto';
+import { gatewayRetryAttempts } from './retry-policy.js';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import type {
@@ -481,10 +482,13 @@ export class AIGateway {
     let lastError: Error | null = null;
     const triedModels: string[] = [];
 
-    // Try primary model (with per-request retry: 2 attempts, 1s base delay)
+    // Try primary model (per-request retry: 2 attempts, 1s base delay for
+    // non-streaming). Streaming is not retried — replaying would re-emit tokens
+    // already delivered to request.onStream.
+    const primaryRetries = gatewayRetryAttempts(Boolean(request.stream && request.onStream));
     try {
       const response = await this.retryWithBackoff(
-        () => this.executeProvider(selectedModel, request, requestId, startTime), 1, 1000
+        () => this.executeProvider(selectedModel, request, requestId, startTime), primaryRetries, 1000
       );
       this.recordSuccess(selectedModel.provider, response.latencyMs);
       await this.logAudit(request, response, strategy, true, undefined, triedModels);
@@ -1449,7 +1453,14 @@ export class AIGateway {
         policy,
       );
       return { ...request, ...merged };
-    } catch {
+    } catch (err) {
+      // Deliberate fail-soft: a policy-store failure must not break the request.
+      // But surface it — silently skipping a tenant's residency / zero-retention
+      // default is a compliance-visibility gap, not a no-op.
+      log.warn(
+        `[AI Gateway] Org placement policy lookup failed for org ${request.organizationId}; ` +
+          `proceeding without org defaults: ${err instanceof Error ? err.message : String(err)}`
+      );
       return request; // never let policy resolution break a request
     }
   }

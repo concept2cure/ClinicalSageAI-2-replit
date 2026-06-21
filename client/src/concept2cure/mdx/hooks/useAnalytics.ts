@@ -47,16 +47,30 @@ export interface UseAnalyticsResult {
   refresh: () => void;
 }
 
+/**
+ * Map the analytics payload to the surface fields. Pure + null-safe: a payload
+ * shaped `{ data: null }` or `{}` (or undefined) yields all-null rather than
+ * throwing on the second-level property access.
+ */
+export function selectAnalytics(
+  payload: AnalyticsPayload | null | undefined
+): Pick<UseAnalyticsResult, 'kpis' | 'phases' | 'blockers' | 'reviewers' | 'anaUsage' | 'pace24m'> {
+  const d = payload?.data ?? null;
+  return {
+    kpis: d?.kpis ?? null,
+    phases: d?.phases ?? null,
+    blockers: d?.blockers ?? null,
+    reviewers: d?.reviewers ?? null,
+    anaUsage: d?.anaUsage ?? null,
+    pace24m: d?.pace24m ?? null,
+  };
+}
+
 export function useAnalytics(pathway: AnalyticsPathway = 'all'): UseAnalyticsResult {
   const url = `/api/mdx/analytics?pathway=${encodeURIComponent(pathway)}`;
   const { data, loading, error, refresh } = useFetchJson<AnalyticsPayload>(url);
   return {
-    kpis: data?.data.kpis ?? null,
-    phases: data?.data.phases ?? null,
-    blockers: data?.data.blockers ?? null,
-    reviewers: data?.data.reviewers ?? null,
-    anaUsage: data?.data.anaUsage ?? null,
-    pace24m: data?.data.pace24m ?? null,
+    ...selectAnalytics(data),
     loading,
     error,
     refresh,

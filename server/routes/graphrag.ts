@@ -23,6 +23,7 @@
 import { Router, Request, Response } from 'express';
 import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
+import { clampGraphRagBounds } from './graphrag-util.js';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -554,8 +555,7 @@ router.post('/query', async (req: Request, res: Response) => {
     graphTraversal: 0.4,
     keywordBM25: 0.2,
   };
-  const maxHops = body.maxHops ?? 2;
-  const topK = body.topK ?? 10;
+  const { maxHops, topK } = clampGraphRagBounds(body.maxHops, body.topK);
 
   try {
     // Step 1: Extract entities from query

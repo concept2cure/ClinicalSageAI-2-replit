@@ -141,7 +141,9 @@ export function startCorpusIngestionSchedule(): void {
   const expr = process.env.CORPUS_INGESTION_CRON || '30 3 * * 0';
   try {
     cron.schedule(expr, () => {
-      void runCorpusIngestionSweep();
+      void runCorpusIngestionSweep().catch(err =>
+        logger.error(`Corpus ingestion sweep failed: ${err?.message ?? String(err)}`)
+      );
     });
     logger.info(`Corpus ingestion sweep scheduled (${expr})`);
   } catch (err: any) {
