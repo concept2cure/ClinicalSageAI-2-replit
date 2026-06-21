@@ -17,6 +17,7 @@ export class SentinelScheduler {
   private intervals = new Map<number, NodeJS.Timeout>();
   private sentinel: AISentinel;
   private running = false;
+  private readonly scanning = new Set<number>();
 
   constructor(private pool: Pool) {
     this.sentinel = new AISentinel(pool);
@@ -89,6 +90,24 @@ export class SentinelScheduler {
    * Run a full scan and feed findings into the rules engine.
    */
   private async runScan(organizationId: number): Promise<void> {
+    // Skip if a scan for this org is already in progress. setInterval fires on a
+    // fixed cadence regardless of how long the previous scan took; overlapping
+    // scans would double-emit rule events and pile load onto the analyzers.
+    if (this.scanning.has(organizationId)) {
+      log.debug(
+        `[SentinelScheduler] Scan already in progress for org ${organizationId}; skipping overlap`
+      );
+      return;
+    }
+    this.scanning.add(organizationId);
+    try {
+      await this.runScanInner(organizationId);
+    } finally {
+      this.scanning.delete(organizationId);
+    }
+  }
+
+  private async runScanInner(organizationId: number): Promise<void> {
     log.debug(`[SentinelScheduler] Running scan for org ${organizationId}`);
     const results = await this.sentinel.scan(organizationId);
 
