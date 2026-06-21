@@ -10630,3 +10630,146 @@ export function getAvailableTools(): Array<{ name: string; registered: boolean }
     registered: toolHandlers.has(name),
   }));
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Deterministic statistical design & analysis engines (server/services/stats/*).
+// Thin wrappers exposing previously-stranded engines as AnA tools. Each dynamic-
+// imports its engine, calls the exact closed-form/recursive computation, and
+// returns the result verbatim. Validation errors (invalid/missing params) are
+// relayed as needs_parameters so the model asks the user rather than guessing.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STATS_VERBATIM =
+  'Report these numbers verbatim. Do NOT recompute, round differently, or estimate. Surface any provenance/method and warnings.';
+
+/** Heuristic: is this a parameter-validation error (ask the user) vs a real fault? */
+function isStatsParamError(message: string): boolean {
+  return /must be|required|at least|in \(|in \[|non-?negative|positive|satisfy|length|strictly|monotone|each arm|every subject|unknown procedure|requires/i.test(
+    message
+  );
+}
+
+/** Wrap a deterministic stats computation in the standard tool envelope. */
+async function runStatsTool(
+  label: string,
+  compute: () => unknown | Promise<unknown>
+): Promise<string> {
+  try {
+    const result = await compute();
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction: STATS_VERBATIM,
+    });
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (isStatsParamError(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `${label} failed: ${message}` });
+  }
+}
+
+registerToolHandler('design_mmrm', async (input: Record<string, unknown>) =>
+  runStatsTool('design_mmrm', async () => {
+    const { mmrmSampleSize } = await import('../stats/mmrm-design.js');
+    return mmrmSampleSize(input as any);
+  })
+);
+
+registerToolHandler('design_group_sequential', async (input: Record<string, unknown>) =>
+  runStatsTool('design_group_sequential', async () => {
+    const { solveSpendingBoundaries, operatingCharacteristics } = await import(
+      '../stats/group-sequential-oc.js'
+    );
+    const boundaries = solveSpendingBoundaries(
+      input.informationFractions as number[],
+      input.alpha as number,
+      input.spendingFunction as any
+    );
+    const driftGrid = input.driftGrid as number[] | undefined;
+    const oc =
+      Array.isArray(driftGrid) && driftGrid.length > 0
+        ? operatingCharacteristics(boundaries, driftGrid)
+        : undefined;
+    return { boundaries, operatingCharacteristics: oc };
+  })
+);
+
+registerToolHandler('design_dose_finding', async (input: Record<string, unknown>) =>
+  runStatsTool('design_dose_finding', async () => {
+    const { boinBoundaries, boinDecisionTable, selectMtd } = await import(
+      '../stats/dose-finding-boin.js'
+    );
+    const target = input.target as number;
+    const phi1 = input.phi1 as number | undefined;
+    const phi2 = input.phi2 as number | undefined;
+    const cohortSizes = (input.cohortSizes as number[] | undefined) ?? [3, 6, 9, 12];
+    const boundaries = boinBoundaries(target, phi1, phi2);
+    const decisionTable = boinDecisionTable(target, cohortSizes, phi1, phi2);
+    const observed = input.observedDoses as any[] | undefined;
+    const mtdSelection =
+      Array.isArray(observed) && observed.length > 0 ? selectMtd(observed, target) : undefined;
+    return { boundaries, decisionTable, mtdSelection };
+  })
+);
+
+registerToolHandler('analyze_win_ratio', async (input: Record<string, unknown>) =>
+  runStatsTool('analyze_win_ratio', async () => {
+    const { winRatioAnalysis } = await import('../stats/win-ratio.js');
+    return winRatioAnalysis(
+      input.treatment as any,
+      input.control as any,
+      input.hierarchy as any,
+      (input.confLevel as number | undefined) ?? 0.95
+    );
+  })
+);
+
+registerToolHandler('analyze_rmst', async (input: Record<string, unknown>) =>
+  runStatsTool('analyze_rmst', async () => {
+    const { rmstDifference } = await import('../stats/rmst.js');
+    return rmstDifference(
+      input.treatment as any,
+      input.control as any,
+      input.tau as number,
+      (input.confLevel as number | undefined) ?? 0.95
+    );
+  })
+);
+
+registerToolHandler('design_mrmc_reader_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_mrmc_reader_study', async () => {
+    const { mrmcPower, mrmcReadersForPower } = await import('../stats/mrmc.js');
+    return input.targetPower != null
+      ? mrmcReadersForPower(input as any)
+      : mrmcPower(input as any);
+  })
+);
+
+registerToolHandler('analyze_external_control_borrow', async (input: Record<string, unknown>) =>
+  runStatsTool('analyze_external_control_borrow', async () => {
+    const { powerPriorBorrow } = await import('../stats/external-control.js');
+    return powerPriorBorrow(input as any);
+  })
+);
+
+registerToolHandler('analyze_safety_signal', async (input: Record<string, unknown>) =>
+  runStatsTool('analyze_safety_signal', async () => {
+    const { computeDisproportionality } = await import('../stats/signal-disproportionality.js');
+    return computeDisproportionality({
+      a: input.a as number,
+      b: input.b as number,
+      c: input.c as number,
+      d: input.d as number,
+    });
+  })
+);
+
+registerToolHandler('adjust_multiplicity', async (input: Record<string, unknown>) =>
+  runStatsTool('adjust_multiplicity', async () => {
+    const { testMultiplicity } = await import('../stats/multiplicity.js');
+    return testMultiplicity(input as any);
+  })
+);
