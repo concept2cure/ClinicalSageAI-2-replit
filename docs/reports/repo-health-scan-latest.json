@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-21T18:16:37.325Z",
+  "generatedAt": "2026-06-21T18:38:15.143Z",
   "git": {
-    "sha": "e56711c2979eaf53c05ffc22aa4bd3a705c7f2d3",
+    "sha": "94a7b87fafd42d4e81a4fb1c6e8519e056c0504f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 94,
+        "count": 95,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -109,6 +109,7 @@
           "services/compliance/index.ts",
           "services/documents/index.ts",
           "services/proof/index.ts",
+          "shared/navigation/index.ts",
           "shared/regulatory/index.ts",
           "shared/schema/index.ts",
           "shared/types/generated/index.ts",
@@ -2205,11 +2206,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 544363
+        "bytes": 547038
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 391192
+        "bytes": 391416
       },
       {
         "file": "server/statistics-service.ts",
@@ -2263,11 +2264,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 11194
+        "lines": 11252
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7196
+        "lines": 7200
       },
       {
         "file": "server/statistics-service.ts",
@@ -2453,7 +2454,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 46,
+      "duplicateGroups": 47,
       "largeByBytes": 1,
       "largeByLines": 2
     },
