@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-21T18:16:37.325Z",
+  "generatedAt": "2026-06-21T19:06:18.548Z",
   "git": {
-    "sha": "e56711c2979eaf53c05ffc22aa4bd3a705c7f2d3",
-    "branch": "concept2cure-v2"
+    "sha": "313287bd9cc2cd4241aed9d25c20f5868dff231f",
+    "branch": "claude/master-admin-module-kf128i"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -117,12 +117,13 @@
       },
       {
         "basename": "types",
-        "count": 41,
+        "count": 42,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
           "client/src/concept2cure/components/intelligentDocs/types.ts",
           "client/src/concept2cure/insights/data/types.ts",
+          "client/src/concept2cure/master-admin/types.ts",
           "client/src/concept2cure/mdx/types.ts",
           "client/src/concept2cure/pdev/data/types.ts",
           "server/api/cmc/types.js",
@@ -164,7 +165,7 @@
       },
       {
         "basename": "app",
-        "count": 40,
+        "count": 41,
         "paths": [
           "client/public/design-system/ui_kits/ana_ri/App.jsx",
           "client/public/design-system/ui_kits/ectd_coauthor/App.jsx",
@@ -176,6 +177,7 @@
           "client/src/concept2cure/cmc/App.tsx",
           "client/src/concept2cure/intelligence/App.tsx",
           "client/src/concept2cure/labeling/App.tsx",
+          "client/src/concept2cure/master-admin/App.tsx",
           "client/src/concept2cure/mdx/App.tsx",
           "client/src/concept2cure/pdev/App.tsx",
           "client/src/concept2cure/quality/App.tsx",
@@ -317,7 +319,7 @@
       },
       {
         "basename": "topbar",
-        "count": 12,
+        "count": 13,
         "paths": [
           "client/src/concept2cure/authoring/shell/TopBar.tsx",
           "client/src/concept2cure/biopharma/shell/TopBar.tsx",
@@ -326,6 +328,7 @@
           "client/src/concept2cure/components/claude-ectd-coauthor/TopBar.tsx",
           "client/src/concept2cure/intelligence/shell/TopBar.tsx",
           "client/src/concept2cure/labeling/shell/TopBar.tsx",
+          "client/src/concept2cure/master-admin/shell/TopBar.tsx",
           "client/src/concept2cure/mdx/shell/TopBar.tsx",
           "client/src/concept2cure/pdev/shell/TopBar.tsx",
           "client/src/concept2cure/risk/shell/TopBar.tsx",
@@ -335,11 +338,12 @@
       },
       {
         "basename": "nav",
-        "count": 10,
+        "count": 11,
         "paths": [
           "client/src/concept2cure/biopharma/data/nav.ts",
           "client/src/concept2cure/cmc/data/nav.ts",
           "client/src/concept2cure/labeling/data/nav.ts",
+          "client/src/concept2cure/master-admin/data/nav.ts",
           "client/src/concept2cure/mdx/data/nav.ts",
           "client/src/concept2cure/pdev/data/nav.ts",
           "client/src/concept2cure/risk/data/nav.ts",
@@ -351,12 +355,13 @@
       },
       {
         "basename": "rail",
-        "count": 10,
+        "count": 11,
         "paths": [
           "client/src/concept2cure/biopharma/shell/Rail.tsx",
           "client/src/concept2cure/cmc/shell/Rail.tsx",
           "client/src/concept2cure/intelligence/shell/Rail.tsx",
           "client/src/concept2cure/labeling/shell/Rail.tsx",
+          "client/src/concept2cure/master-admin/shell/Rail.tsx",
           "client/src/concept2cure/mdx/shell/Rail.tsx",
           "client/src/concept2cure/pdev/shell/Rail.tsx",
           "client/src/concept2cure/risk/shell/Rail.tsx",
@@ -367,11 +372,12 @@
       },
       {
         "basename": "overview",
-        "count": 8,
+        "count": 9,
         "paths": [
           "client/src/concept2cure/biopharma/surfaces/Overview.tsx",
           "client/src/concept2cure/cmc/surfaces/Overview.tsx",
           "client/src/concept2cure/labeling/surfaces/Overview.tsx",
+          "client/src/concept2cure/master-admin/surfaces/Overview.tsx",
           "client/src/concept2cure/mdx/surfaces/Overview.tsx",
           "client/src/concept2cure/pdev/surfaces/Overview.tsx",
           "client/src/concept2cure/risk/surfaces/Overview.tsx",
@@ -2431,7 +2437,14 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
@@ -2447,7 +2460,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 148,
+      "duplicateGroups": 154,
       "largeByBytes": 0,
       "largeByLines": 1
     },
