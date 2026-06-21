@@ -5196,6 +5196,64 @@ export const SURGICAL_DOCX_XML_EDIT: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Clause-template library — insert a named regulatory building block
+// (signature/approval block, cover-letter header, section heading, sponsor
+// placeholder swap) into an existing .docx. A curated, field-validated content
+// layer over insert_document_content's governed docx-insert worker — the
+// productized equivalent of hand-scripting per-document clause helpers. Prefer
+// this over insert_document_content when the content is a standard regulatory
+// block; drop to insert_document_content for free-form content and to
+// surgical_docx_xml_edit for raw-XML formatting inheritance. Tenant-scoped.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const INSERT_CLAUSE_TEMPLATE: AnaTool = {
+  name: 'insert_clause_template',
+  description:
+    "Insert a named regulatory clause/building block into an existing Word (.docx) — signature/approval block, cover-letter header, section heading, or sponsor placeholder swap — via the governed docx-insert worker. Each clause is a curated, field-validated template: supply the clause key and its fields and it renders the block (required-field checks included) and inserts it at the given anchor. clause='signature_block' (fields: signatory_name, signatory_title, organization?, closing?, signature_date?); 'cover_letter_header' (sponsor_name, letter_date, re_line, sponsor_address?, recipient?, submission_type?; defaults to document start); 'section_heading' (heading_text, heading_number?, heading_level? 1–3, intro?); 'sponsor_placeholder_swap' (sponsor_name + optional sponsor_address/submission_date/contact_name/contact_email; replaces {{SPONSOR}}-style tokens already in the document, no anchor needed). Returns the edited .docx path, an applied report, and any field/anchor warnings. Prefer this for standard blocks; use insert_document_content for free-form content. Tenant-scoped via ToolContext.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      input_docx_path: {
+        type: 'string',
+        description:
+          'Absolute path to the source .docx to edit (e.g. a docxPath from author_docx_native, generate_document, fetch_template_and_fill, or an uploaded template).',
+      },
+      clause: {
+        type: 'string',
+        enum: ['signature_block', 'cover_letter_header', 'section_heading', 'sponsor_placeholder_swap'],
+        description: 'Which named regulatory clause/building block to render and insert.',
+      },
+      fields: {
+        type: 'object',
+        description:
+          'Clause-specific fields (see the tool description for required/optional fields per clause). Values are plain text; multi-line fields (e.g. sponsor_address) are newline-separated.',
+      },
+      anchor: {
+        type: 'object',
+        description:
+          "Where to place the rendered block. Not used for 'sponsor_placeholder_swap' (it locates its own {{TOKEN}}s).",
+        properties: {
+          anchor_type: {
+            type: 'string',
+            enum: ['heading_text', 'placeholder', 'paragraph_index', 'start', 'end'],
+            description: "How to locate the insertion point. Defaults: 'end' (most clauses) or 'start' (cover_letter_header).",
+          },
+          anchor_value: { type: 'string', description: "Heading text, placeholder token, or paragraph index (as a string). Omit for 'start'/'end'." },
+          position: { type: 'string', enum: ['before', 'after', 'replace'], description: "Placement relative to the anchor. Default 'after'." },
+          match: { type: 'string', enum: ['exact', 'contains'], description: "Text-anchor match mode. Default 'contains'." },
+        },
+      },
+      output_format: {
+        type: 'string',
+        enum: ['docx', 'pdf'],
+        description: "Output format. 'docx' (default) returns the edited Word document; 'pdf' additionally converts via headless LibreOffice.",
+      },
+    },
+    required: ['input_docx_path', 'clause'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DOCX validation — open a .docx and confirm it is structurally sound before
 // shipping: required parts present ([Content_Types].xml, _rels/.rels,
 // word/document.xml), every XML/rels part well-formed, relationship targets
@@ -6578,6 +6636,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   RUN_PYTHON_SCRIPT,
   INSERT_DOCUMENT_CONTENT,
   SURGICAL_DOCX_XML_EDIT,
+  INSERT_CLAUSE_TEMPLATE,
   VALIDATE_DOCX,
   RUN_IN_CONTAINER,
   WRITE_KIT_SECTION,

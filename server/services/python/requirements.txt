@@ -22,7 +22,7 @@ seaborn==0.13.2
 
 # Document processing
 PyPDF2==3.0.1
-python-docx==0.8.11
+python-docx==1.2.0           # Aligned with root requirements.txt; 0.8.11 fails to build on Python 3.11 and conflicts with docxtpl 0.20.2 (needs python-docx 1.x)
 docxtpl==0.20.2
 openpyxl==3.1.5
 
