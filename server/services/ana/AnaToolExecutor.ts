@@ -10773,3 +10773,63 @@ registerToolHandler('adjust_multiplicity', async (input: Record<string, unknown>
     return testMultiplicity(input as any);
   })
 );
+
+registerToolHandler('compute_diagnostic_accuracy', async (input: Record<string, unknown>) =>
+  runStatsTool('compute_diagnostic_accuracy', async () => {
+    const { computeDiagnosticAccuracy } = await import('../stats/clinical-performance.js');
+    return computeDiagnosticAccuracy(
+      { tp: input.tp as number, fp: input.fp as number, fn: input.fn as number, tn: input.tn as number },
+      { conf: input.conf as number | undefined, prevalence: input.prevalence as number | undefined }
+    );
+  })
+);
+
+registerToolHandler('size_diagnostic_study', async (input: Record<string, unknown>) =>
+  runStatsTool('size_diagnostic_study', async () => {
+    const mod = await import('../stats/diagnostic-design.js');
+    const mode = input.mode as string;
+    if (mode === 'single_proportion') {
+      return mod.sizeSingleProportion(input as any);
+    }
+    if (mode === 'co_primary') {
+      return mod.sizeCoPrimarySensSpec(input as any);
+    }
+    throw new Error("mode must be 'single_proportion' or 'co_primary'");
+  })
+);
+
+registerToolHandler('design_bayesian_device', async (input: Record<string, unknown>) =>
+  runStatsTool('design_bayesian_device', async () => {
+    const { deviceSampleSize } = await import('../stats/bayesian-device.js');
+    const prior =
+      input.priorAlpha != null || input.priorBeta != null
+        ? { alpha: (input.priorAlpha as number) ?? 1, beta: (input.priorBeta as number) ?? 1 }
+        : undefined;
+    return deviceSampleSize({ ...(input as any), prior });
+  })
+);
+
+registerToolHandler('compute_analytical_performance', async (input: Record<string, unknown>) =>
+  runStatsTool('compute_analytical_performance', async () => {
+    const mod = await import('../stats/analytical-performance.js');
+    const mode = input.mode as string;
+    if (mode === 'imprecision') {
+      return mod.estimateImprecision({ runs: input.runs as number[][] });
+    }
+    if (mode === 'detection_capability') {
+      return mod.estimateDetectionCapability({
+        blankReplicates: input.blankReplicates as number[],
+        lowSamples: input.lowSamples as number[][],
+        falsePositiveRate: input.falsePositiveRate as number | undefined,
+      } as any);
+    }
+    if (mode === 'method_comparison') {
+      return mod.compareMethods({
+        reference: input.reference as number[],
+        test: input.test as number[],
+        decisionLevel: input.decisionLevel as number | undefined,
+      });
+    }
+    throw new Error("mode must be 'imprecision', 'detection_capability', or 'method_comparison'");
+  })
+);

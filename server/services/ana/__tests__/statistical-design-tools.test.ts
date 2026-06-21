@@ -24,7 +24,56 @@ describe('statistical-design tools — registration', () => {
     for (const tool of STATISTICAL_DESIGN_TOOLS) {
       expect(getToolHandler(tool.name), `${tool.name} handler`).toBeTruthy();
     }
-    expect(STATISTICAL_DESIGN_TOOLS).toHaveLength(9);
+    expect(STATISTICAL_DESIGN_TOOLS).toHaveLength(13);
+  });
+});
+
+describe('statistical-design tools — IVD/diagnostics batch', () => {
+  it('compute_diagnostic_accuracy returns sensitivity/specificity from a 2x2', async () => {
+    const out = await call('compute_diagnostic_accuracy', { tp: 90, fp: 10, fn: 10, tn: 90 });
+    expect(out.status).toBe('computed');
+    expect(out.result.sensitivity).toBeCloseTo(0.9, 6);
+    expect(out.result.specificity).toBeCloseTo(0.9, 6);
+    expect(out.result.sensitivityCi).toBeTruthy();
+  });
+
+  it('size_diagnostic_study (single_proportion) returns an exact N', async () => {
+    const out = await call('size_diagnostic_study', {
+      mode: 'single_proportion',
+      goal: 0.8,
+      expected: 0.9,
+    });
+    expect(out.status).toBe('computed');
+    expect(out.result.nExact).toBeGreaterThan(0);
+  });
+
+  it('design_bayesian_device sizes a single-arm device study', async () => {
+    const out = await call('design_bayesian_device', {
+      goal: 0.8,
+      expected: 0.92,
+      successThreshold: 0.95,
+      targetPower: 0.9,
+    });
+    expect(out.status).toBe('computed');
+    expect(out.result.n).toBeGreaterThan(0);
+  });
+
+  it('compute_analytical_performance (imprecision) returns SD/CV', async () => {
+    const out = await call('compute_analytical_performance', {
+      mode: 'imprecision',
+      runs: [
+        [10.1, 10.2, 9.9],
+        [10.0, 10.3, 10.1],
+        [9.8, 10.0, 10.2],
+      ],
+    });
+    expect(out.status).toBe('computed');
+    expect(out.result).toBeTruthy();
+  });
+
+  it('size_diagnostic_study relays an invalid mode as needs_parameters', async () => {
+    const out = await call('size_diagnostic_study', { mode: 'nonsense' });
+    expect(out.status).toBe('needs_parameters');
   });
 });
 

@@ -249,7 +249,96 @@ export const ADJUST_MULTIPLICITY: AnaTool = {
   },
 };
 
-/** All nine statistical-design tools, spread into ALL_ANA_TOOLS. */
+// ── IVD / diagnostics / device batch (clinical-performance, diagnostic-design,
+//    bayesian-device, analytical-performance engines) ─────────────────────────
+
+export const COMPUTE_DIAGNOSTIC_ACCURACY: AnaTool = {
+  name: 'compute_diagnostic_accuracy',
+  description:
+    "Compute diagnostic-test accuracy from a 2×2 confusion matrix (tp/fp/fn/tn vs the reference/comparator): sensitivity & specificity with exact Clopper-Pearson CIs, PPA/NPA, sample and prevalence-adjusted PPV/NPV, accuracy, Youden's J, positive/negative likelihood ratios, and Cohen's kappa. DETERMINISTIC. Use for IVD/companion-diagnostic clinical performance reporting. " +
+    DETERMINISTIC_NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      tp: { type: 'number', description: 'Test-positive AND reference-positive (true positives).' },
+      fp: { type: 'number', description: 'Test-positive AND reference-negative (false positives).' },
+      fn: { type: 'number', description: 'Test-negative AND reference-positive (false negatives).' },
+      tn: { type: 'number', description: 'Test-negative AND reference-negative (true negatives).' },
+      conf: { type: 'number', description: 'Confidence level for intervals. Default 0.95.' },
+      prevalence: { type: 'number', description: 'Population prevalence (0–1) for prevalence-adjusted PPV/NPV. Omit to report only sample-based predictive values.' },
+    },
+    required: ['tp', 'fp', 'fn', 'tn'],
+  },
+};
+
+export const SIZE_DIAGNOSTIC_STUDY: AnaTool = {
+  name: 'size_diagnostic_study',
+  description:
+    "Sample-size a diagnostic study with EXACT binomial power. mode='single_proportion' sizes one performance metric (e.g. sensitivity) against a goal; mode='co_primary' sizes co-primary sensitivity AND specificity jointly given prevalence. DETERMINISTIC. Use for IVD/device performance study design. " +
+    DETERMINISTIC_NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      mode: { type: 'string', enum: ['single_proportion', 'co_primary'], description: 'Which sizing to run.' },
+      goal: { type: 'number', description: '[single_proportion] Null/threshold performance to exceed (0–1).' },
+      expected: { type: 'number', description: '[single_proportion] Expected true performance under the alternative; must exceed goal.' },
+      sensitivityGoal: { type: 'number', description: '[co_primary] Sensitivity threshold.' },
+      sensitivityExpected: { type: 'number', description: '[co_primary] Expected sensitivity.' },
+      specificityGoal: { type: 'number', description: '[co_primary] Specificity threshold.' },
+      specificityExpected: { type: 'number', description: '[co_primary] Expected specificity.' },
+      prevalence: { type: 'number', description: '[co_primary] Disease prevalence (0–1) to convert per-class N to total N.' },
+      alpha: { type: 'number', description: 'One-sided type I error. Default 0.025.' },
+      power: { type: 'number', description: 'Target power. Default 0.9.' },
+      jointPowerTarget: { type: 'number', description: '[co_primary] Optional joint-power target across both endpoints.' },
+      maxN: { type: 'number', description: 'Cap on the exact search. Default 5000.' },
+    },
+    required: ['mode'],
+  },
+};
+
+export const DESIGN_BAYESIAN_DEVICE: AnaTool = {
+  name: 'design_bayesian_device',
+  description:
+    "Size a single-arm device performance study with a Bayesian success rule (Beta prior): find the smallest n whose posterior-exceedance rule attains the target power at the expected rate while holding type I error at the goal. DETERMINISTIC (exact binomial). Use for device/diagnostic single-arm pivotal designs (e.g. 'P(performance > goal | data) ≥ successThreshold'). " +
+    DETERMINISTIC_NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      goal: { type: 'number', description: 'Performance goal to exceed (0–1); type I error is held here.' },
+      expected: { type: 'number', description: 'Expected (alternative) true rate; must exceed goal.' },
+      successThreshold: { type: 'number', description: 'Posterior-probability threshold for declaring success (e.g. 0.95).' },
+      targetPower: { type: 'number', description: 'Target power in (0,1).' },
+      priorAlpha: { type: 'number', description: 'Beta prior alpha. Default uniform (1).' },
+      priorBeta: { type: 'number', description: 'Beta prior beta. Default uniform (1).' },
+      maxTypeI: { type: 'number', description: 'Optional cap on the one-sided type I error.' },
+      maxN: { type: 'number', description: 'Upper search bound. Default 5000.' },
+    },
+    required: ['goal', 'expected', 'successThreshold', 'targetPower'],
+  },
+};
+
+export const COMPUTE_ANALYTICAL_PERFORMANCE: AnaTool = {
+  name: 'compute_analytical_performance',
+  description:
+    "IVD analytical method validation (CLSI-style), DETERMINISTIC. mode='imprecision': repeatability/within-lab SD & CV from a balanced runs×replicates design (EP05). mode='detection_capability': LoB/LoD (and LoQ) from blank + low-concentration replicates (EP17). mode='method_comparison': bias/regression of a candidate vs comparator method, optionally at a medical-decision level (EP09). Use for IVD analytical performance sections. " +
+    DETERMINISTIC_NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      mode: { type: 'string', enum: ['imprecision', 'detection_capability', 'method_comparison'], description: 'Which analytical computation to run.' },
+      runs: { type: 'array', items: { type: 'array', items: { type: 'number' } }, description: '[imprecision] One inner array of replicate measurements per run; all runs share the same replicate count.' },
+      blankReplicates: { type: 'array', items: { type: 'number' }, description: '[detection_capability] Replicate measurements of analyte-free (blank) samples.' },
+      lowSamples: { type: 'array', items: { type: 'array', items: { type: 'number' } }, description: '[detection_capability] One inner array of replicates per low-concentration sample near the LoD.' },
+      falsePositiveRate: { type: 'number', description: '[detection_capability] False-positive rate governing LoB. Default 0.05.' },
+      reference: { type: 'array', items: { type: 'number' }, description: '[method_comparison] Comparator measurements.' },
+      test: { type: 'array', items: { type: 'number' }, description: '[method_comparison] Candidate measurements, paired with reference.' },
+      decisionLevel: { type: 'number', description: '[method_comparison] Optional medical-decision level at which to report systematic bias.' },
+    },
+    required: ['mode'],
+  },
+};
+
+/** All statistical-design & analysis tools, spread into ALL_ANA_TOOLS. */
 export const STATISTICAL_DESIGN_TOOLS: AnaTool[] = [
   DESIGN_MMRM,
   DESIGN_GROUP_SEQUENTIAL,
@@ -260,4 +349,8 @@ export const STATISTICAL_DESIGN_TOOLS: AnaTool[] = [
   ANALYZE_EXTERNAL_CONTROL_BORROW,
   ANALYZE_SAFETY_SIGNAL,
   ADJUST_MULTIPLICITY,
+  COMPUTE_DIAGNOSTIC_ACCURACY,
+  SIZE_DIAGNOSTIC_STUDY,
+  DESIGN_BAYESIAN_DEVICE,
+  COMPUTE_ANALYTICAL_PERFORMANCE,
 ];
