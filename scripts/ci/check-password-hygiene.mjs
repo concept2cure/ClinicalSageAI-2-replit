@@ -165,6 +165,17 @@ for (const file of walk(serverRoot)) {
       }
       // Allow process.env.* references.
       if (/process\.env\./.test(line)) continue;
+      // Skip `typeof x.password === 'string'` runtime type guards. These read
+      // the word "password" immediately before `=== '<type-name>'`, so the
+      // regex flags them, but a typeof check is never a plaintext compare.
+      // Precise: the compare must be against a JS type-name literal AND the
+      // matched "password" must be the operand of a preceding `typeof`.
+      const before = text.slice(Math.max(0, m.index - 24), m.index);
+      const comparesTypeName =
+        /(?:===|==)\s*['"`](?:string|number|boolean|undefined|object|function|symbol|bigint)['"`]/.test(
+          matched
+        );
+      if (comparesTypeName && /typeof\s+[\w.$]*$/.test(before)) continue;
 
       findings.push({
         file: rel,

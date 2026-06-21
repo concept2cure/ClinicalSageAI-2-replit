@@ -11,7 +11,8 @@ Pillow==12.2.0                # Image handling for OCR
 pdf2image==1.17.0             # Strategy 6: pdf->image via poppler (OCR fallback)
 
 # === Document Extraction - DOCX / XLSX / TXT ===
-python-docx==0.8.11           # Read/write DOCX (extraction + generation)
+python-docx==1.2.0            # Read/write DOCX (extraction + generation; 0.8.11 fails to build on Python 3.11)
+lxml==6.1.1                  # OOXML/XML surgery: artifact-compute docx-xml/docx-validate runtimes import it directly
 openpyxl==3.1.5               # Read XLSX spreadsheets
 mammoth==1.12.0                # DOCX plain-text extraction
 docx2txt==0.9                 # DOCX fallback extractor
