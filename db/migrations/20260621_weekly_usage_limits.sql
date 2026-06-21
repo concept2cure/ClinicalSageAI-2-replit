@@ -68,11 +68,21 @@ CREATE INDEX IF NOT EXISTS weekly_usage_limits_org_idx
 -- 'weekly_blocked'). A dedup_key makes each (metric, window_start, kind) alert
 -- fire AT MOST ONCE per weekly window. Pre-existing alerts keep dedup_key NULL;
 -- the unique index is partial so multiple NULLs are allowed.
+--
+-- GUARDED: billing_alerts is created by the 20260319 billing migration, which is
+-- not guaranteed to be present in every environment (e.g. an isolated preview DB
+-- that applies only this PR's migrations). Extend it only when it exists;
+-- recordWeeklyAlerts() degrades gracefully (best-effort, try/catch) when the
+-- table or column is absent.
 -- ============================================================
-ALTER TABLE billing_alerts ADD COLUMN IF NOT EXISTS dedup_key TEXT;
-
-CREATE UNIQUE INDEX IF NOT EXISTS billing_alerts_dedup_key_uq
-  ON billing_alerts (dedup_key) WHERE dedup_key IS NOT NULL;
+DO $$
+BEGIN
+  IF to_regclass('public.billing_alerts') IS NOT NULL THEN
+    ALTER TABLE billing_alerts ADD COLUMN IF NOT EXISTS dedup_key TEXT;
+    CREATE UNIQUE INDEX IF NOT EXISTS billing_alerts_dedup_key_uq
+      ON billing_alerts (dedup_key) WHERE dedup_key IS NOT NULL;
+  END IF;
+END $$;
 
 -- ============================================================
 -- WEEKLY OVERAGE LEDGER (billable overage accrual)
