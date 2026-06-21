@@ -10652,13 +10652,14 @@ function isStatsParamError(message: string): boolean {
 /** Wrap a deterministic stats computation in the standard tool envelope. */
 async function runStatsTool(
   label: string,
-  compute: () => unknown | Promise<unknown>
+  compute: () => unknown | Promise<unknown>,
+  engine: 'deterministic' | 'seeded-monte-carlo' = 'deterministic'
 ): Promise<string> {
   try {
     const result = await compute();
     return JSON.stringify({
       status: 'computed',
-      engine: 'deterministic',
+      engine,
       result,
       instruction: STATS_VERBATIM,
     });
@@ -10832,4 +10833,26 @@ registerToolHandler('compute_analytical_performance', async (input: Record<strin
     }
     throw new Error("mode must be 'imprecision', 'detection_capability', or 'method_comparison'");
   })
+);
+
+registerToolHandler('forecast_enrollment', async (input: Record<string, unknown>) =>
+  runStatsTool(
+    'forecast_enrollment',
+    async () => {
+      const { forecastCompletion } = await import('../stats/enrollment-forecast.js');
+      return forecastCompletion(input as any);
+    },
+    'seeded-monte-carlo'
+  )
+);
+
+registerToolHandler('project_events', async (input: Record<string, unknown>) =>
+  runStatsTool(
+    'project_events',
+    async () => {
+      const { projectEventTime } = await import('../stats/event-projection.js');
+      return projectEventTime(input as any);
+    },
+    'seeded-monte-carlo'
+  )
 );

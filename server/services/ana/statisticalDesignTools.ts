@@ -338,6 +338,60 @@ export const COMPUTE_ANALYTICAL_PERFORMANCE: AnaTool = {
   },
 };
 
+// ── Operational forecasting (seeded Monte-Carlo, reproducible by seed) ────────
+
+export const FORECAST_ENROLLMENT: AnaTool = {
+  name: 'forecast_enrollment',
+  description:
+    "Forecast trial enrollment completion under a Poisson-Gamma multi-site accrual model: given per-site mean rates (with optional over-dispersion and activation times) and a target N, return the expected/median time to reach N, the 10th/90th-percentile times, and the probability of reaching N. Seeded Monte-Carlo — REPRODUCIBLE for a given seed. Use for accrual feasibility and timeline planning. " +
+    DETERMINISTIC_NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      sites: {
+        type: 'array',
+        description: 'Per-site accrual configuration.',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Optional site id.' },
+            meanRate: { type: 'number', description: 'Mean recruitment rate (patients per unit time) once active.' },
+            rateCv: { type: 'number', description: 'Coefficient of variation of the site rate (0 = pure Poisson, no over-dispersion).' },
+            activationTime: { type: 'number', description: 'Calendar time the site begins recruiting. Default 0.' },
+          },
+          required: ['meanRate'],
+        },
+      },
+      targetN: { type: 'number', description: 'Target enrollment (positive integer).' },
+      nSim: { type: 'number', description: 'Monte-Carlo replications. Default 4000.' },
+      seed: { type: 'number', description: 'Optional seed for reproducibility (otherwise derived from inputs).' },
+    },
+    required: ['sites', 'targetN'],
+  },
+};
+
+export const PROJECT_EVENTS: AnaTool = {
+  name: 'project_events',
+  description:
+    "Project the calendar time to accrue a target number of events in a time-to-event trial: uniform accrual (rate × period), exponential event times per arm (from control median + hazard ratio), optional exponential dropout. Returns the expected/median and 10th/90th-percentile times to reach the target events. Seeded Monte-Carlo — REPRODUCIBLE for a given seed. Use for event-driven analysis timing (interim/final). " +
+    DETERMINISTIC_NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      accrualRate: { type: 'number', description: 'Patients accrued per unit time (uniform accrual).' },
+      accrualPeriod: { type: 'number', description: 'Duration of accrual.' },
+      medianControl: { type: 'number', description: 'Median time-to-event in the control arm (> 0).' },
+      hazardRatio: { type: 'number', description: 'Hazard ratio (treatment vs control).' },
+      targetEvents: { type: 'number', description: 'Target number of events (positive integer).' },
+      allocationRatio: { type: 'number', description: 'Treatment:control allocation ratio. Default 1.' },
+      dropoutHazard: { type: 'number', description: 'Exponential dropout hazard per unit time. Default 0.' },
+      nSim: { type: 'number', description: 'Monte-Carlo replications. Default 2000.' },
+      seed: { type: 'number', description: 'Optional seed for reproducibility.' },
+    },
+    required: ['accrualRate', 'accrualPeriod', 'medianControl', 'hazardRatio', 'targetEvents'],
+  },
+};
+
 /** All statistical-design & analysis tools, spread into ALL_ANA_TOOLS. */
 export const STATISTICAL_DESIGN_TOOLS: AnaTool[] = [
   DESIGN_MMRM,
@@ -353,4 +407,6 @@ export const STATISTICAL_DESIGN_TOOLS: AnaTool[] = [
   SIZE_DIAGNOSTIC_STUDY,
   DESIGN_BAYESIAN_DEVICE,
   COMPUTE_ANALYTICAL_PERFORMANCE,
+  FORECAST_ENROLLMENT,
+  PROJECT_EVENTS,
 ];

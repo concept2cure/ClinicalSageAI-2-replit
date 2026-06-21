@@ -24,7 +24,35 @@ describe('statistical-design tools — registration', () => {
     for (const tool of STATISTICAL_DESIGN_TOOLS) {
       expect(getToolHandler(tool.name), `${tool.name} handler`).toBeTruthy();
     }
-    expect(STATISTICAL_DESIGN_TOOLS).toHaveLength(13);
+    expect(STATISTICAL_DESIGN_TOOLS).toHaveLength(15);
+  });
+});
+
+describe('statistical-design tools — operational forecasting', () => {
+  it('forecast_enrollment returns a reproducible completion forecast', async () => {
+    const out = await call('forecast_enrollment', {
+      sites: [{ meanRate: 1.5 }, { meanRate: 2.0, activationTime: 1 }],
+      targetN: 60,
+      seed: 42,
+    });
+    expect(out.status).toBe('computed');
+    expect(out.engine).toBe('seeded-monte-carlo');
+    expect(out.result.probReached).toBeGreaterThan(0);
+    expect(out.result.medianTime).toBeGreaterThan(0);
+  });
+
+  it('project_events returns a target-event time projection', async () => {
+    const out = await call('project_events', {
+      accrualRate: 10,
+      accrualPeriod: 12,
+      medianControl: 8,
+      hazardRatio: 0.7,
+      targetEvents: 40,
+      seed: 7,
+    });
+    expect(out.status).toBe('computed');
+    expect(out.engine).toBe('seeded-monte-carlo');
+    expect(out.result).toBeTruthy();
   });
 });
 
