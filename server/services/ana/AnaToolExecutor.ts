@@ -5028,6 +5028,121 @@ registerToolHandler('surgical_docx_xml_edit', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Clause-template handler — render a named regulatory building block
+// (signature block, cover-letter header, section heading, sponsor placeholder
+// swap) with field validation, then insert it through the SAME governed
+// docx-insert worker as insert_document_content. No new execution surface — a
+// curated content layer over the isolated, no-network insertion path.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('insert_clause_template', async (input, ctx) => {
+  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
+  if (!inputDocxPath) {
+    return JSON.stringify({ error: 'insert_clause_template requires input_docx_path (string).' });
+  }
+  const clause = typeof input.clause === 'string' ? input.clause : '';
+  if (!clause) {
+    return JSON.stringify({ error: 'insert_clause_template requires clause (string).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'insert_clause_template requires tenant context (organizationId).' });
+  }
+
+  const fmt = input.output_format === 'pdf' ? 'pdf' : 'docx';
+  const fields = (input.fields && typeof input.fields === 'object'
+    ? (input.fields as Record<string, string>)
+    : {}) as Record<string, string>;
+
+  // Normalize the model's snake_case anchor into the catalog's camelCase shape.
+  let anchor: import('./clause-templates.js').ClauseAnchor | undefined;
+  if (input.anchor && typeof input.anchor === 'object') {
+    const a = input.anchor as Record<string, unknown>;
+    anchor = {
+      anchorType: (a.anchor_type as 'heading_text' | 'placeholder' | 'paragraph_index' | 'start' | 'end') ?? 'end',
+      anchorValue: a.anchor_value as string | number | undefined,
+      position: (a.position as 'before' | 'after' | 'replace' | undefined) ?? 'after',
+      match: (a.match as 'exact' | 'contains' | undefined) ?? 'contains',
+    };
+  }
+
+  try {
+    const { renderClauseTemplate } = await import('./clause-templates.js');
+    const rendered = renderClauseTemplate(clause, fields, anchor);
+
+    if (rendered.unknownClause) {
+      return JSON.stringify({
+        error: `Unknown clause "${clause}". Supported: signature_block, cover_letter_header, section_heading, sponsor_placeholder_swap.`,
+      });
+    }
+    if (rendered.missingFields.length > 0) {
+      return JSON.stringify({
+        error: `insert_clause_template: clause "${clause}" is missing required field(s): ${rendered.missingFields.join(', ')}.`,
+        missingFields: rendered.missingFields,
+      });
+    }
+    if (rendered.insertions.length === 0) {
+      return JSON.stringify({
+        ok: false,
+        clause,
+        warnings: rendered.warnings,
+        message: `Clause "${clause}" produced no insertions — ${rendered.warnings.join('; ') || 'no content to insert'}.`,
+      });
+    }
+
+    const { runDocxInsertIsolated } = await import('../compute/scriptWorker.js');
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { randomUUID } = await import('crypto');
+
+    const sourceBuf = await fs.readFile(inputDocxPath);
+    const baseName = path.basename(inputDocxPath, path.extname(inputDocxPath));
+    const result = await runDocxInsertIsolated(sourceBuf, rendered.insertions, `${baseName}.clause.docx`);
+
+    const outDir = path.resolve(process.cwd(), 'tmp', 'docbuilder', randomUUID().slice(0, 8));
+    await fs.mkdir(outDir, { recursive: true });
+    const docxPath = path.join(outDir, result.fileName);
+    await fs.writeFile(docxPath, result.buffer);
+
+    const notApplied = result.applied.filter(a => a.status !== 'applied');
+    const base = {
+      ok: notApplied.length === 0,
+      engine: 'clause-template → python-docx (targeted insert)',
+      clause,
+      sourceDocxPath: inputDocxPath,
+      docxPath,
+      applied: result.applied,
+      warnings: rendered.warnings,
+    };
+
+    if (fmt === 'pdf') {
+      const { runDocxPdfPipeline } = await import('../docx-pdf-pipeline.js');
+      const pipeline = await runDocxPdfPipeline({ inputDocxPath: docxPath });
+      return JSON.stringify({
+        ...base,
+        pdfPath: pipeline.finalPdf,
+        message: `Inserted "${clause}" (${result.applied.length - notApplied.length}/${result.applied.length} placement(s)) and rendered PDF.${
+          notApplied.length ? ` ${notApplied.length} anchor(s) not found.` : ''
+        }`,
+      });
+    }
+
+    return JSON.stringify({
+      ...base,
+      sizeBytes: result.buffer.length,
+      message: `Inserted clause "${clause}" into ${baseName} (${result.applied.length - notApplied.length}/${result.applied.length} placement(s)).${
+        notApplied.length ? ` ${notApplied.length} anchor(s) not found — review the applied report.` : ''
+      }`,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `insert_clause_template failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify the source .docx path exists and python3 + python-docx are available on the host.`,
+    });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DOCX validation handler — open a .docx and confirm OOXML/ZIP integrity
 // without modifying it. AnA's pre-ship gate for any document she produced or
 // received.
