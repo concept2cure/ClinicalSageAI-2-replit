@@ -11044,6 +11044,130 @@ registerToolHandler('assess_submission_package', async (input: Record<string, un
   }
 });
 
+// Device/IVD eSTAR assembly state (510(k) / De Novo) — wires the deterministic
+// device-assembly engine that previously had no AnA tool surface. No render/
+// transmit; computes the producible artifact kind + every blocker, honestly.
+registerToolHandler('assemble_device_submission', async (input: Record<string, unknown>) => {
+  try {
+    const pathway = input.pathway;
+    const variant = input.variant;
+    if (pathway !== '510k' && pathway !== 'de_novo') {
+      return JSON.stringify({ status: 'needs_parameters', message: "pathway must be '510k' or 'de_novo'." });
+    }
+    if (variant !== 'device' && variant !== 'ivd') {
+      return JSON.stringify({ status: 'needs_parameters', message: "variant must be 'device' or 'ivd'." });
+    }
+    if (!Array.isArray(input.leaves)) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'leaves[] is required (each: { sectionCode, title, documentType? }).' });
+    }
+    const leaves = (input.leaves as Array<Record<string, unknown>>).map(l => ({
+      sectionCode: String(l.sectionCode ?? ''),
+      title: String(l.title ?? ''),
+      documentType: typeof l.documentType === 'string' ? l.documentType : undefined,
+    }));
+    const { assembleDeviceSubmission } = await import('../pathway-engines/device-assembly/assemble-device-submission.js');
+    const result = assembleDeviceSubmission({
+      pathway,
+      variant,
+      leaves,
+      presentTemplates: Array.isArray(input.presentTemplates) ? (input.presentTemplates as unknown[]).map(String) : undefined,
+      market: typeof input.market === 'string' ? (input.market as any) : undefined,
+      availableArtifacts: Array.isArray(input.availableArtifacts) ? (input.availableArtifacts as unknown[]).map(String) : undefined,
+      environment: input.environment === 'production' ? 'production' : input.environment === 'staging' ? 'staging' : undefined,
+    });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction:
+        'Lead with artifactKind and canProduceOfficialEstar, then list every blocker verbatim. Do NOT claim a submittable eSTAR unless canProduceOfficialEstar is true.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `assemble_device_submission failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// Predicate substantial-equivalence adequacy scoring (Tier 1.4) — deterministic,
+// inspectable rubric over caller-supplied comparison signals. Screening aid.
+registerToolHandler('score_predicate_adequacy', async (input: Record<string, unknown>) => {
+  try {
+    if (!Array.isArray(input.candidates) || input.candidates.length === 0) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'candidates[] is required and must be non-empty (each needs an identifier).' });
+    }
+    const { scorePredicateAdequacy } = await import('../regulatory/predicate-adequacy.js');
+    const result = scorePredicateAdequacy({
+      candidates: input.candidates as any[],
+      options: typeof input.currentYear === 'number' ? { currentYear: input.currentYear } : undefined,
+    });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction:
+        'Present the ranked candidates with score + band, lead with the recommended predicate, surface each candidate\'s concerns and unknownFactors, and report the disclaimer. This is a screening aid, not a determination of substantial equivalence.',
+    });
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (/required|non-empty|identifier/i.test(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `score_predicate_adequacy failed: ${message}` });
+  }
+});
+
+// Drug coding via NLM RxNorm/RxNav (open, public-domain terminology) — the open
+// alternative for drug coding. Honest: returns no_match / network errors rather
+// than fabricating an RxCUI.
+registerToolHandler('code_drug', async (input: Record<string, unknown>) => {
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!name) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'name is required (the drug/substance free text to code).' });
+  }
+  const maxResults = Math.min(Math.max(Number(input.max_results) || 8, 1), 20);
+  try {
+    const url = `https://rxnav.nlm.nih.gov/REST/approximateTerm.json?term=${encodeURIComponent(name)}&maxEntries=${maxResults}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000), headers: { Accept: 'application/json' } });
+    if (!res.ok) {
+      return JSON.stringify({ status: 'lookup_failed', source: 'RxNorm/RxNav (NLM)', message: `RxNav returned HTTP ${res.status}. Do not fabricate a code; retry or code manually.` });
+    }
+    const data = await res.json();
+    const candidates = (data?.approximateGroup?.candidate ?? []) as Array<Record<string, unknown>>;
+    // Dedupe by rxcui, preserving RxNav's rank order (best score first).
+    const seen = new Set<string>();
+    const matches = candidates
+      .filter(c => {
+        const id = String(c.rxcui ?? '');
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .slice(0, maxResults)
+      .map(c => ({
+        rxcui: String(c.rxcui ?? ''),
+        name: typeof c.name === 'string' ? c.name : undefined,
+        termType: typeof c.tty === 'string' ? c.tty : undefined,
+        score: c.score != null ? Number(c.score) : undefined,
+      }));
+    if (matches.length === 0) {
+      return JSON.stringify({ status: 'no_match', source: 'RxNorm/RxNav (NLM)', query: name, message: 'No RxNorm concept matched. Refine the name or code manually; do not invent an RxCUI.' });
+    }
+    return JSON.stringify({
+      status: 'coded',
+      source: 'RxNorm/RxNav (NLM, open)',
+      query: name,
+      matches,
+      instruction: 'Use the best match (first) unless a lower one is clearly more specific. Report the RxCUI and name verbatim; never fabricate a code not in this list.',
+    });
+  } catch (err: any) {
+    const aborted = err?.name === 'TimeoutError' || /abort|timeout/i.test(err?.message || '');
+    return JSON.stringify({
+      status: 'lookup_failed',
+      source: 'RxNorm/RxNav (NLM)',
+      message: aborted ? 'RxNav request timed out. Do not fabricate a code; retry or code manually.' : `RxNav lookup failed: ${err?.message || 'unknown error'}.`,
+    });
+  }
+});
+
 // Cross-document numerical reconciliation (Tier 1.2) — flags a labeled figure
 // disagreeing across submission modules. Deterministic; no DB/network.
 registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, unknown>) => {

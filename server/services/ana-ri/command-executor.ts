@@ -4519,6 +4519,134 @@ export function parseCommandBlocks(responseText: string): ParsedCommand[] {
 }
 
 /**
+ * Single source of truth for dispatchable platform commands.
+ *
+ * Lifted to module scope (it used to live inside executeCommands) so the
+ * registry↔handler parity guard can assert, on every build, that every
+ * COMMAND_REGISTRY entry is dispatchable and every dispatchable command is
+ * advertised. Without that guard a command added to the registry with no
+ * handler silently dead-ends (executeCommands skips it, execute_platform_command
+ * then returns {status:'failed', result:undefined} with no message), and a
+ * handler added without a registry entry is undiscoverable AND rejected by the
+ * execute_platform_command catalog gate — both are broken pathways for AnA's
+ * platform control surface.
+ */
+export const COMMAND_HANDLERS: Record<string, any> = {
+  create_project: createProject,
+  list_projects: listProjects,
+  // updateProject's declared signature is (ctx, projectId, updates); dispatch
+  // calls every handler as (ctx, params). Cast through the map signature to
+  // preserve the existing dispatch behaviour without altering the call site.
+  update_project: updateProject as unknown as (ctx: CommandContext, params: any) => Promise<CommandResult>,
+  create_artifact: createArtifact,
+  update_artifact: updateArtifact,
+  update_artifact_status: updateArtifactStatus,
+  list_artifacts: listArtifacts,
+  place_in_dossier: placeInDossier,
+  create_task: createTask,
+  update_task: updateTask,
+  list_tasks: listTasks,
+  check_dossier_readiness: checkDossierReadiness,
+  load_user_context: loadUserContext,
+  load_conversation_history: loadConversationHistory,
+  export_personal_data: exportPersonalData,
+  erase_personal_data: erasePersonalData,
+  create_submission_package: createSubmissionPackage,
+  create_review_thread: createReviewThread,
+  add_review_comment: addReviewComment,
+  search_artifacts: searchArtifacts,
+  list_team_members: listTeamMembers,
+  list_artifact_versions: listArtifactVersions,
+  run_compliance_scan: runComplianceScan,
+  export_artifact: exportArtifact,
+  compare_versions: compareVersions,
+  review_version_impact: reviewVersionImpact,
+  create_milestone: createMilestone,
+  update_milestone: updateMilestone,
+  list_milestones: listMilestones,
+  revert_to_version: revertToVersion,
+  generate_sap: generateSAP,
+  compute_sample_size: computeSampleSize,
+  compute_dose_escalation: computeDoseEscalation,
+  assess_defensibility: assessDefensibility,
+  design_trial: designTrial,
+  draft_section: draftSection,
+  scan_deficiencies: scanDeficiencies,
+  freeze_document: freezeDocument,
+  sign_document: signDocument,
+  export_document: exportDocument,
+  generate_checklist: generateChecklist,
+  submit_document: submitDocument,
+  // Precedent Engine
+  search_precedents: searchPrecedents,
+  analyze_crl_triggers: analyzeCRLTriggers,
+  analyze_rtf_triggers: analyzeRTFTriggers,
+  recommend_strategy: recommendStrategy,
+  check_claim: checkClaim,
+  // Submission Twin
+  run_submission_assessment: runSubmissionAssessment,
+  simulate_challenges: simulateChallenges,
+  detect_drift: detectDrift,
+  predict_next_artifact: predictNextArtifact,
+  compute_readiness: computeReadiness,
+  // Contradiction Engine
+  scan_contradictions: scanContradictions,
+  check_promotion_blockers: checkPromotionBlockers,
+  // Cross-Jurisdictional
+  analyze_jurisdictions: analyzeJurisdictions,
+  // Endpoint Recommender
+  recommend_endpoints: recommendEndpoints,
+  evaluate_endpoint: evaluateEndpoint,
+  // RIM Intelligence
+  run_rim_scan: runRIMScan,
+  // Report Engine
+  generate_report: generateReport,
+  // Clinical Intelligence
+  generate_clinical_insights: generateClinicalInsights,
+  analyze_cross_document: analyzeCrossDocument,
+  // CMS + Diagnostics
+  analyze_cms_strategy: analyzeCMSStrategy,
+  assess_diagnostic_validation: assessDiagnosticsValidation,
+  // Module 3 Workflow Convergence (Phase 7)
+  module3_build_all: module3BuildAll as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_build_section: module3BuildSection as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_missing_inputs: module3MissingInputs as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_stale_sections: module3StaleSections as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_refresh_stale: module3RefreshStale as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_readiness: module3Readiness as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_contradictions: module3Contradictions as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_lineage: module3Lineage as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  module3_classify_source: module3ClassifySource as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  // Top-level CMC status — what `/cmc` dispatches with no args. The
+  // underlying handler lives in module3-command-handlers, which defines
+  // CommandContext / CommandResult locally; cast through to match the
+  // same pattern used by the other module3_* entries above.
+  cmc_status: cmcStatus as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  ich_compliance: ichCompliance as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  control_strategy: controlStrategy as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  variations_classify: variationsClassify as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
+  // MDX governed mutations — phase 1 (Q-Sub, eSTAR, pre-flight, ESG transmit).
+  ...MDX_COMMAND_HANDLERS,
+  // MDX governed mutations — phase 2 (GSPR, post-market, evidence-sufficiency,
+  // reviewer-simulation). Same governance contract as phase 1.
+  ...MDX_COMMAND_HANDLERS_PHASE2,
+  // MDX governed mutations — phase 3 (predicate.candidate.set_status,
+  // se_matrix.patch). Proxy through BFF to the Python shadow service.
+  ...MDX_COMMAND_HANDLERS_PHASE3,
+  // PDEV → IND workflow handlers (16 commands). Same governance contract:
+  // mutations require confirm + reason; reads are open. Audit prefix
+  // agent.ana.pdev.*. See server/services/ana-ri/pdev-command-handlers.ts.
+  ...PDEV_COMMAND_HANDLERS,
+  // Audit-row explainer — read-only auditor capability.
+  'audit.explain': explainAuditRow,
+  // Live 510(k) document preview — read-only canvas access from chat.
+  'k510_workflow.document_preview': documentPreview,
+};
+
+/** Names of every dispatchable platform command (the parity guard's source of truth). */
+export const COMMAND_HANDLER_NAMES: string[] = Object.keys(COMMAND_HANDLERS);
+
+/**
  * Execute parsed commands and return results.
  */
 export async function executeCommands(
@@ -4561,117 +4689,7 @@ export async function executeCommands(
     }
   }
 
-  const commandMap: Record<string, any> = {
-    create_project: createProject,
-    list_projects: listProjects,
-    // updateProject's declared signature is (ctx, projectId, updates); dispatch
-    // calls every handler as (ctx, params). Cast through the map signature to
-    // preserve the existing dispatch behaviour without altering the call site.
-    update_project: updateProject as unknown as (ctx: CommandContext, params: any) => Promise<CommandResult>,
-    create_artifact: createArtifact,
-    update_artifact: updateArtifact,
-    update_artifact_status: updateArtifactStatus,
-    list_artifacts: listArtifacts,
-    place_in_dossier: placeInDossier,
-    create_task: createTask,
-    update_task: updateTask,
-    list_tasks: listTasks,
-    check_dossier_readiness: checkDossierReadiness,
-    load_user_context: loadUserContext,
-    load_conversation_history: loadConversationHistory,
-    export_personal_data: exportPersonalData,
-    erase_personal_data: erasePersonalData,
-    create_submission_package: createSubmissionPackage,
-    create_review_thread: createReviewThread,
-    add_review_comment: addReviewComment,
-    search_artifacts: searchArtifacts,
-    list_team_members: listTeamMembers,
-    list_artifact_versions: listArtifactVersions,
-    run_compliance_scan: runComplianceScan,
-    export_artifact: exportArtifact,
-    compare_versions: compareVersions,
-    review_version_impact: reviewVersionImpact,
-    create_milestone: createMilestone,
-    update_milestone: updateMilestone,
-    list_milestones: listMilestones,
-    revert_to_version: revertToVersion,
-    generate_sap: generateSAP,
-    compute_sample_size: computeSampleSize,
-    compute_dose_escalation: computeDoseEscalation,
-    assess_defensibility: assessDefensibility,
-    design_trial: designTrial,
-    draft_section: draftSection,
-    scan_deficiencies: scanDeficiencies,
-    freeze_document: freezeDocument,
-    sign_document: signDocument,
-    export_document: exportDocument,
-    generate_checklist: generateChecklist,
-    submit_document: submitDocument,
-    // Precedent Engine
-    search_precedents: searchPrecedents,
-    analyze_crl_triggers: analyzeCRLTriggers,
-    analyze_rtf_triggers: analyzeRTFTriggers,
-    recommend_strategy: recommendStrategy,
-    check_claim: checkClaim,
-    // Submission Twin
-    run_submission_assessment: runSubmissionAssessment,
-    simulate_challenges: simulateChallenges,
-    detect_drift: detectDrift,
-    predict_next_artifact: predictNextArtifact,
-    compute_readiness: computeReadiness,
-    // Contradiction Engine
-    scan_contradictions: scanContradictions,
-    check_promotion_blockers: checkPromotionBlockers,
-    // Cross-Jurisdictional
-    analyze_jurisdictions: analyzeJurisdictions,
-    // Endpoint Recommender
-    recommend_endpoints: recommendEndpoints,
-    evaluate_endpoint: evaluateEndpoint,
-    // RIM Intelligence
-    run_rim_scan: runRIMScan,
-    // Report Engine
-    generate_report: generateReport,
-    // Clinical Intelligence
-    generate_clinical_insights: generateClinicalInsights,
-    analyze_cross_document: analyzeCrossDocument,
-    // CMS + Diagnostics
-    analyze_cms_strategy: analyzeCMSStrategy,
-    assess_diagnostic_validation: assessDiagnosticsValidation,
-    // Module 3 Workflow Convergence (Phase 7)
-    module3_build_all: module3BuildAll as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    module3_build_section: module3BuildSection as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    module3_missing_inputs: module3MissingInputs as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    module3_stale_sections: module3StaleSections as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    module3_refresh_stale: module3RefreshStale as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    module3_readiness: module3Readiness as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    module3_contradictions: module3Contradictions as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    module3_lineage: module3Lineage as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    module3_classify_source: module3ClassifySource as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    // Top-level CMC status — what `/cmc` dispatches with no args. The
-    // underlying handler lives in module3-command-handlers, which defines
-    // CommandContext / CommandResult locally; cast through to match the
-    // same pattern used by the other module3_* entries above.
-    cmc_status: cmcStatus as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    ich_compliance: ichCompliance as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    control_strategy: controlStrategy as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    variations_classify: variationsClassify as (ctx: CommandContext, params: Record<string, unknown>) => Promise<CommandResult>,
-    // MDX governed mutations — phase 1 (Q-Sub, eSTAR, pre-flight, ESG transmit).
-    ...MDX_COMMAND_HANDLERS,
-    // MDX governed mutations — phase 2 (GSPR, post-market, evidence-sufficiency,
-    // reviewer-simulation). Same governance contract as phase 1.
-    ...MDX_COMMAND_HANDLERS_PHASE2,
-    // MDX governed mutations — phase 3 (predicate.candidate.set_status,
-    // se_matrix.patch). Proxy through BFF to the Python shadow service.
-    ...MDX_COMMAND_HANDLERS_PHASE3,
-    // PDEV → IND workflow handlers (16 commands). Same governance contract:
-    // mutations require confirm + reason; reads are open. Audit prefix
-    // agent.ana.pdev.*. See server/services/ana-ri/pdev-command-handlers.ts.
-    ...PDEV_COMMAND_HANDLERS,
-    // Audit-row explainer — read-only auditor capability.
-    'audit.explain': explainAuditRow,
-    // Live 510(k) document preview — read-only canvas access from chat.
-    'k510_workflow.document_preview': documentPreview,
-  };
+  const commandMap: Record<string, any> = COMMAND_HANDLERS;
 
   for (const cmd of commands) {
     const handler = commandMap[cmd.command];
