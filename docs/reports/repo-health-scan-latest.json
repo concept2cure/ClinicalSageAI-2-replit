@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-21T18:38:15.143Z",
+  "generatedAt": "2026-06-21T18:46:34.623Z",
   "git": {
-    "sha": "94a7b87fafd42d4e81a4fb1c6e8519e056c0504f",
+    "sha": "195aaf4893c1e00920330f6a25166587e89f46a7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2230,7 +2230,7 @@
       },
       {
         "file": "server/storage.ts",
-        "bytes": 140118
+        "bytes": 142122
       },
       {
         "file": "server/routes/authoring-actions.ts",
