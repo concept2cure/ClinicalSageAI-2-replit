@@ -28,6 +28,7 @@ export default defineConfig({
       'server/**/__tests__/**/*.spec.ts',
       'client/**/__tests__/**/*.test.ts',
       'client/**/__tests__/**/*.test.tsx',
+      'shared/**/__tests__/**/*.test.ts',
     ],
     exclude: ['node_modules', 'dist', '_archive', '_deprecated', 'tests/e2e/**'],
     coverage: {

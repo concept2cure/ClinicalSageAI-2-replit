@@ -16,6 +16,7 @@ import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
 import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
 import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
 import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
+import { NAVIGATION_TOOLS } from './navigationTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7106,6 +7107,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ...DEVICE_SUBMISSION_TOOLS,
   // Read-only window into enterprise usage controls (weekly limits, overage, seats).
   ...LICENSE_STATUS_TOOLS,
+  // Self-navigation: discover + navigate to any app screen via the governed
+  // navigation registry (shared/navigation). See navigationTools.ts.
+  ...NAVIGATION_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

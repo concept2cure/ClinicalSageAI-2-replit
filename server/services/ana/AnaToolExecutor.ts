@@ -11168,6 +11168,64 @@ registerToolHandler('code_drug', async (input: Record<string, unknown>) => {
   }
 });
 
+// AnA self-navigation — discover navigable screens from the governed registry.
+registerToolHandler('list_app_screens', async (input: Record<string, unknown>) => {
+  try {
+    const { NAVIGATION_TARGETS } = await import('../../../shared/navigation/index.js');
+    const group = typeof input.group === 'string' ? input.group : undefined;
+    const scope = input.scope === 'global' || input.scope === 'project' ? input.scope : undefined;
+    const screens = NAVIGATION_TARGETS
+      .filter(t => (group ? t.group === group : true) && (scope ? t.scope === scope : true))
+      .map(t => ({
+        id: t.id,
+        label: t.label,
+        description: t.description,
+        scope: t.scope,
+        group: t.group,
+        params: t.params,
+      }));
+    return JSON.stringify({
+      status: 'ok',
+      count: screens.length,
+      screens,
+      instruction:
+        "Navigate with navigate_to using a screen id verbatim. 'project'-scope screens require an active project in context. Pass any listed params (e.g. intelligenceTab).",
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `list_app_screens failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// AnA self-navigation — validate a target against the governed registry and
+// produce the navigation directive the chat client applies. Refuses unknown
+// targets / invalid params rather than emitting a broken jump.
+registerToolHandler('navigate_to', async (input: Record<string, unknown>) => {
+  try {
+    const target = typeof input.target === 'string' ? input.target.trim() : '';
+    if (!target) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'target is required — call list_app_screens to discover screen ids.' });
+    }
+    const params = input.params && typeof input.params === 'object' ? (input.params as Record<string, unknown>) : {};
+    const { resolveNavigation } = await import('../../../shared/navigation/index.js');
+    const res = resolveNavigation(target, params);
+    if (!res.ok) {
+      return JSON.stringify({
+        status: res.code === 'unknown_target' ? 'unknown_target' : 'needs_parameters',
+        message: res.error,
+        ...(res.code === 'unknown_target' ? { validTargets: res.validTargets } : {}),
+      });
+    }
+    return JSON.stringify({
+      status: 'navigation_ready',
+      directive: res.directive,
+      instruction:
+        'A navigation directive was produced; the UI will move to this screen. Tell the user where you are taking them. Project-scoped screens require an active project.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `navigate_to failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Cross-document numerical reconciliation (Tier 1.2) — flags a labeled figure
 // disagreeing across submission modules. Deterministic; no DB/network.
 registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, unknown>) => {
