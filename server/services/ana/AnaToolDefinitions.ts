@@ -14,6 +14,7 @@ import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_S
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
 import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
+import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7097,6 +7098,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // Deterministic statistical design & analysis engines (server/services/stats/*),
   // previously implemented but unreachable by AnA. See statisticalDesignTools.ts.
   ...STATISTICAL_DESIGN_TOOLS,
+  // Submission intelligence: precedent benchmarking + package completeness.
+  ...SUBMISSION_INTELLIGENCE_TOOLS,
   // Read-only window into enterprise usage controls (weekly limits, overage, seats).
   ...LICENSE_STATUS_TOOLS,
 ];

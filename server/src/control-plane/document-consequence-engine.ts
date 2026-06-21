@@ -226,9 +226,10 @@ function derivePublishConsequences(
       autoExecutable: true,
       executed: false,
     });
-  }
-
-  if (!publishGate.dispatchReady) {
+  } else if (!publishGate.dispatchReady) {
+    // Not blocked outright, but still not dispatch-ready — emit once.
+    // (When outcome === 'blocked', dispatchReady is already false and the
+    // branch above has emitted this consequence; avoid duplicating it.)
     consequences.push({
       consequenceType: 'mark_submission_item_not_dispatch_ready',
       description: 'Submission item is not dispatch-ready',

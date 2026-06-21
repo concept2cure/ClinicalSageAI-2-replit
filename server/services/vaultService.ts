@@ -96,9 +96,23 @@ function writeMetadata(metaPath: string, meta: VaultVersionMeta): void {
   fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf8');
 }
 
+/** Parse vault metadata JSON, returning null on malformed content (never throws). */
+export function parseVaultMetadata(raw: string): VaultVersionMeta | null {
+  try {
+    return JSON.parse(raw) as VaultVersionMeta;
+  } catch {
+    return null;
+  }
+}
+
 function readMetadata(metaPath: string): VaultVersionMeta | null {
   if (!fs.existsSync(metaPath)) return null;
-  return JSON.parse(fs.readFileSync(metaPath, 'utf8'));
+  try {
+    return parseVaultMetadata(fs.readFileSync(metaPath, 'utf8'));
+  } catch {
+    // I/O error (e.g., file removed mid-read) — degrade gracefully.
+    return null;
+  }
 }
 
 // ── Public API ──────────────────────────────────────────────────────────────

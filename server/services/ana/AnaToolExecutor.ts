@@ -11002,6 +11002,48 @@ registerToolHandler('project_events', async (input: Record<string, unknown>) =>
   )
 );
 
+// Submission intelligence (Tier 1.3/1.4) — precedent benchmarking + package
+// completeness. Both engines are pure/structured-input; thin pass-throughs.
+registerToolHandler('benchmark_precedent_trials', async (input: Record<string, unknown>) =>
+  runStatsTool('benchmark_precedent_trials', async () => {
+    const { computeBenchmark } = await import('../corpus/precedent-benchmark.js');
+    return computeBenchmark(
+      input.indication as string,
+      input.phase as string,
+      (input.trials as any[]) ?? [],
+      { topN: input.topN as number | undefined }
+    );
+  })
+);
+
+registerToolHandler('assess_submission_package', async (input: Record<string, unknown>) => {
+  try {
+    const { buildPackageManifest } = await import('../regulatory/submissionPackageBuilder.js');
+    const manifest = buildPackageManifest(
+      input.submissionType as string,
+      input.projectId as string,
+      (input.sections as any[]) ?? [],
+      (input.artifacts as any[]) ?? []
+    );
+    if (manifest === null) {
+      return JSON.stringify({
+        status: 'needs_parameters',
+        message:
+          "Unrecognized submissionType. Provide a known application type/registry id (e.g. '510k', 'ind', 'nda', 'bla', 'cer').",
+      });
+    }
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result: manifest,
+      instruction:
+        'List the MISSING required sections/artifacts first, then present/approved ones, and state packageComplete. Do not claim readiness the manifest does not show.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `assess_submission_package failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Cross-document numerical reconciliation (Tier 1.2) — flags a labeled figure
 // disagreeing across submission modules. Deterministic; no DB/network.
 registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, unknown>) => {

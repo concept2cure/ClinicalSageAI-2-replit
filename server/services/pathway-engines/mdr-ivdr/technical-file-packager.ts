@@ -137,8 +137,11 @@ export async function materializeTechnicalFile(
   // identical sha256. JSZip otherwise stamps each entry with `new Date()`,
   // which makes the ZIP non-deterministic across runs (and defeats the
   // content-addressing guarantee this packager promises for regulated,
-  // reproducible submissions). Use the ZIP epoch (1980-01-01 UTC).
-  const ZIP_EPOCH = new Date(Date.UTC(1980, 0, 1, 0, 0, 0));
+  // reproducible submissions). JSZip derives the DOS date/time from this Date in
+  // LOCAL time, so use NOON UTC on 1980-01-01: it stays on 1980-01-01 in every
+  // timezone (a midnight-UTC epoch underflows below the 1980 DOS floor at
+  // negative UTC offsets).
+  const ZIP_EPOCH = new Date(Date.UTC(1980, 0, 1, 12, 0, 0));
 
   const manifestJson = JSON.stringify(plan.manifest, null, 2);
   zip.file('manifest.json', manifestJson, { date: ZIP_EPOCH });

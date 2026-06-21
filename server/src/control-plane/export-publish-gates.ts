@@ -288,9 +288,6 @@ export function evaluatePublishGate(input: PublishGateInput): PublishGateDecisio
     }
   }
 
-  // Determine dispatch readiness
-  const dispatchReady = blockingReasons.length === 0 && dispatchBlockers.length === 0;
-
   // Determine outcome
   const requiredFailed = checks.filter(c => c.required && !c.passed);
   let outcome: GateOutcome;
@@ -301,6 +298,12 @@ export function evaluatePublishGate(input: PublishGateInput): PublishGateDecisio
   } else {
     outcome = 'eligible';
   }
+
+  // Dispatch readiness must be consistent with the outcome: a blocked or
+  // insufficient-context gate is never dispatch-ready, even if (due to a
+  // required check without a paired blocking reason) blockingReasons is empty.
+  const dispatchReady =
+    outcome === 'eligible' && blockingReasons.length === 0 && dispatchBlockers.length === 0;
 
   return {
     outcome,
