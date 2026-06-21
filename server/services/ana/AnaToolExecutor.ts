@@ -221,6 +221,36 @@ export function getRegisteredToolNames(): string[] {
 // predicts outcomes across any therapeutic area / phase, grounded on the org's
 // uploaded history when available. The disclaimer + (when no history) the upload
 // request are enforced by the service and returned in the result string, so AnA
+// Read-only window into enterprise usage controls. Org comes from ToolContext,
+// never from model input. Each service fails open, so this is safe to call.
+registerToolHandler('get_usage_and_license_status', async (_input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to report usage and license status.';
+  try {
+    const [{ getWeeklyMonitor, getOverageLedger }, { checkSeatAvailability, isSeatEnforcementOn }] = await Promise.all([
+      import('../weekly-usage-limits.js'),
+      import('../seat-licensing.js'),
+    ]);
+    const [weeklyLimits, overage, seats] = await Promise.all([
+      getWeeklyMonitor(orgId),
+      getOverageLedger(orgId),
+      checkSeatAvailability(orgId, 0),
+    ]);
+    return JSON.stringify({
+      status: 'ok',
+      organizationId: orgId,
+      weeklyLimits,
+      billableOverage: overage,
+      seats,
+      seatEnforcement: isSeatEnforcementOn() ? 'enforce' : 'report-only',
+      instruction:
+        'Report the standing plainly. Call out any metric in warn/overage/blocked state and any seat state of full/over. If weeklyLimits is empty and seats are unlimited, say no limits are configured — do not invent any.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `get_usage_and_license_status failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // always surfaces them. Org/project come from the active ToolContext.
 registerToolHandler('simulate_study_design', async (input, ctx) => {
   const orgId = ctx?.organizationId;
