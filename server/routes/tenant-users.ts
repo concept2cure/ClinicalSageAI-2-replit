@@ -309,6 +309,24 @@ router.post('/', async (req, res) => {
 
     if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
 
+    // Seat-licensing gate: a new member/invitation consumes a purchased seat.
+    // Report-only by default; blocks only when SEAT_LIMIT_ENFORCEMENT=enforce.
+    {
+      const { checkSeatAvailability, isSeatEnforcementOn } = await import('../services/seat-licensing.js');
+      const seat = await checkSeatAvailability(organizationId, 1);
+      res.setHeader('X-Seat-State', seat.state);
+      res.setHeader('X-Seats-Purchased', String(seat.seatsPurchased));
+      res.setHeader('X-Seats-Consumed', String(seat.seatsConsumed));
+      if (!seat.allowed && isSeatEnforcementOn()) {
+        return res.status(403).json({
+          success: false,
+          error: 'SEAT_LIMIT_EXCEEDED',
+          message: `This organization has consumed all ${seat.seatsPurchased} purchased seats (${seat.seatsConsumed} in use, incl. pending invitations). Purchase more seats to add members.`,
+          seats: seat,
+        });
+      }
+    }
+
     // Use atomic user creation with quota enforcement
     // atomicQuotaService is an untyped JS module; the global '*.js' shim only
     // surfaces a default export, so read the named function off the namespace.
