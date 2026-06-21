@@ -10856,3 +10856,27 @@ registerToolHandler('project_events', async (input: Record<string, unknown>) =>
     'seeded-monte-carlo'
   )
 );
+
+// Cross-document numerical reconciliation (Tier 1.2) — flags a labeled figure
+// disagreeing across submission modules. Deterministic; no DB/network.
+registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, unknown>) => {
+  try {
+    const { reconcileDossierNumbers } = await import('./dossierReconciliation.js');
+    const result = reconcileDossierNumbers((input.documents as any) ?? []);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction:
+        result.discrepancies.length > 0
+          ? 'Surface each discrepancy with its label, the conflicting values, and the snippet from each document so the user can resolve the source of truth. Do not guess which value is correct.'
+          : 'No cross-document numerical conflicts were found among the labeled figures scanned. State which labels were checked and found consistent.',
+    });
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (/must be|must have|each document/.test(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `reconcile_dossier_numbers failed: ${message}` });
+  }
+});

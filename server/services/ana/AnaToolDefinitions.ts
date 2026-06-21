@@ -6475,7 +6475,33 @@ export const RESET_PROJECT_GOALS: AnaTool = {
   },
 };
 
+export const RECONCILE_DOSSIER_NUMBERS: AnaTool = {
+  name: 'reconcile_dossier_numbers',
+  description:
+    "Scan several documents/modules of a submission together and flag the SAME labeled figure disagreeing across them — the classic reviewer finding (e.g. enrolled N in the protocol vs the CSR vs Module 2.7.3, or alpha/power/hazard-ratio drift between the SAP and the results). DETERMINISTIC and conservative: it extracts only figures sitting next to an unambiguous regulatory label (enrolled/randomized N, sample size, sites, events/deaths, alpha, power, hazard ratio, primary p-value) and reports any label that resolves to more than one distinct value, with the exact snippet from each document. Use this for cross-document numerical consistency — per-document checks cannot see these. Returns discrepancies (label + distinct values + per-document occurrences) and the labels found consistent.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      documents: {
+        type: 'array',
+        description: 'The documents/modules to reconcile against each other.',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Stable identifier (artifact id, module code, or file name).' },
+            title: { type: 'string', description: 'Optional human-readable title for reporting.' },
+            text: { type: 'string', description: 'Plain-text content of the document to scan.' },
+          },
+          required: ['id', 'text'],
+        },
+      },
+    },
+    required: ['documents'],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
+  RECONCILE_DOSSIER_NUMBERS,
   GENERATE_SCHEDULE_OF_EVENTS,
   AMEND_SCHEDULE_OF_EVENTS,
   REVIEW_SCHEDULE_OF_EVENTS_HEALTH,
