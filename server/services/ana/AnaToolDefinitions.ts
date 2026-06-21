@@ -17,6 +17,7 @@ import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
 import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
 import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
 import { NAVIGATION_TOOLS } from './navigationTools';
+import { EXTENDED_REGULATORY_TOOLS } from './extendedRegulatoryTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7110,6 +7111,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // Self-navigation: discover + navigate to any app screen via the governed
   // navigation registry (shared/navigation). See navigationTools.ts.
   ...NAVIGATION_TOOLS,
+  // HEOR modeling, SPL labeling XML, CDISC define.xml/conformance, and reference
+  // formatting — deterministic engines newly reachable by AnA. See
+  // extendedRegulatoryTools.ts.
+  ...EXTENDED_REGULATORY_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

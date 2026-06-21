@@ -11226,6 +11226,117 @@ registerToolHandler('navigate_to', async (input: Record<string, unknown>) => {
   }
 });
 
+// ── HEOR modeling (server/services/heor) — deterministic, no DB/network. ──
+registerToolHandler('model_budget_impact', async (input: Record<string, unknown>) => {
+  try {
+    const { computeBudgetImpact } = await import('../heor/heor-models.js');
+    const result = computeBudgetImpact(input as any);
+    return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction: 'Report the per-year and total budget impact and PMPM verbatim. Costs are in the caller-supplied currency unit.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `model_budget_impact failed: ${m}` });
+  }
+});
+
+registerToolHandler('model_cost_effectiveness', async (input: Record<string, unknown>) => {
+  try {
+    const { computeCostEffectiveness } = await import('../heor/heor-models.js');
+    const result = computeCostEffectiveness(input as any);
+    return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction: 'Report the ICER, dominance, and (if given) net monetary benefit verbatim. A null ICER means effects are equal.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|finite|non-?negative/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `model_cost_effectiveness failed: ${m}` });
+  }
+});
+
+// ── SPL labeling (server/services/labeling/spl-generator) — deterministic. ──
+registerToolHandler('generate_spl', async (input: Record<string, unknown>) => {
+  try {
+    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the SPL document spec).' });
+    const { generateSpl } = await import('../labeling/spl-generator.js');
+    const result = generateSpl(input.spec as any);
+    return JSON.stringify({ status: result.structurallyValid ? 'generated' : 'generated_with_errors', engine: 'deterministic', xml: result.xml, warnings: result.warnings, structurallyValid: result.structurallyValid, instruction: 'If structurallyValid is false, surface the warnings/errors; the XML is structural SPL, not FDA full-schematron acceptance.' });
+  } catch (err: any) {
+    return JSON.stringify({ error: `generate_spl failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('validate_spl', async (input: Record<string, unknown>) => {
+  try {
+    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the SPL document spec).' });
+    const { validateSplSpec } = await import('../labeling/spl-generator.js');
+    const result = validateSplSpec(input.spec as any);
+    return JSON.stringify({ status: 'validated', engine: 'deterministic', result, instruction: 'List errors first, then warnings. Structural validation only — not FDA full-schematron.' });
+  } catch (err: any) {
+    return JSON.stringify({ error: `validate_spl failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// ── CDISC define.xml / conformance (server/services/cdisc) — deterministic. ──
+registerToolHandler('generate_define_xml', async (input: Record<string, unknown>) => {
+  try {
+    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
+    const { generateDefineXml } = await import('../cdisc/define-xml.js');
+    const result = generateDefineXml(input.spec as any);
+    return JSON.stringify({ status: 'generated', engine: 'deterministic', xml: result.xml, conformance: result.conformance, instruction: 'Surface conformance errors before treating the define.xml as final. Structural subset, not the full validator of record.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `generate_define_xml failed: ${m}` });
+  }
+});
+
+registerToolHandler('check_dataset_conformance', async (input: Record<string, unknown>) => {
+  try {
+    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
+    const { checkDatasetConformance } = await import('../cdisc/define-xml.js');
+    const result = checkDatasetConformance(input.spec as any);
+    return JSON.stringify({ status: 'checked', engine: 'deterministic', result, instruction: 'Report errors (blocking) before warnings. Structural subset, not the full validator of record.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `check_dataset_conformance failed: ${m}` });
+  }
+});
+
+// ── Reference management (server/services/references) — deterministic. ──
+registerToolHandler('import_ris_references', async (input: Record<string, unknown>) => {
+  try {
+    const ris = typeof input.ris === 'string' ? input.ris : '';
+    if (!ris.trim()) return JSON.stringify({ status: 'needs_parameters', message: 'ris is required (RIS-format text).' });
+    const { parseRis } = await import('../references/reference-manager.js');
+    const references = parseRis(ris);
+    return JSON.stringify({ status: 'parsed', engine: 'deterministic', count: references.length, references, instruction: 'Use these structured references with format_references / lint_references.' });
+  } catch (err: any) {
+    return JSON.stringify({ error: `import_ris_references failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('format_references', async (input: Record<string, unknown>) => {
+  try {
+    if (!Array.isArray(input.references) || input.references.length === 0) return JSON.stringify({ status: 'needs_parameters', message: 'references[] is required and must be non-empty.' });
+    const style = input.style === 'ama' ? 'ama' : 'vancouver';
+    const { formatBibliography } = await import('../references/reference-manager.js');
+    const bibliography = formatBibliography(input.references as any[], style);
+    return JSON.stringify({ status: 'formatted', engine: 'deterministic', style, bibliography, instruction: 'Use the formatted bibliography verbatim.' });
+  } catch (err: any) {
+    return JSON.stringify({ error: `format_references failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('lint_references', async (input: Record<string, unknown>) => {
+  try {
+    if (!Array.isArray(input.references) || input.references.length === 0) return JSON.stringify({ status: 'needs_parameters', message: 'references[] is required and must be non-empty.' });
+    const { lintReferences } = await import('../references/reference-manager.js');
+    const result = lintReferences(input.references as any[]);
+    return JSON.stringify({ status: 'checked', engine: 'deterministic', result, instruction: 'Report errors and duplicate groups first; fix before finalizing the bibliography.' });
+  } catch (err: any) {
+    return JSON.stringify({ error: `lint_references failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Cross-document numerical reconciliation (Tier 1.2) — flags a labeled figure
 // disagreeing across submission modules. Deterministic; no DB/network.
 registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, unknown>) => {
