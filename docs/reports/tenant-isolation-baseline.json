@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-20T22:32:39.955Z",
+  "generatedAt": "2026-06-21T03:27:52.431Z",
   "fingerprints": [
     "server/db/bootstrap/seed-default-org.ts#a183c3cd998e:users",
     "server/db/bootstrap/seed-default-org.ts#cfff34e67cec:users",
