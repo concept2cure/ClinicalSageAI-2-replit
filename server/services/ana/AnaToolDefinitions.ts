@@ -5319,6 +5319,40 @@ export const VALIDATE_DOCX: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Content-fidelity verification — proves a freshly built/edited .docx actually
+// reproduces the supplied source text (and any required caption/boilerplate
+// strings) verbatim, beyond what validate_docx (structural OOXML integrity)
+// checks. Extracts the .docx text via the same extraction path AnA reads
+// uploads with, diffs it against the source, and asserts each required string
+// is present exactly. This is the audited "verify it against your text" step.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VERIFY_DOCX_AGAINST_SOURCE: AnaTool = {
+  name: 'verify_docx_against_source',
+  description:
+    "Verify that a built or edited Word (.docx) faithfully reproduces a known source text — the audited \"verify it against your text\" step after rebuilding from a template, applying corrections, or appending paragraphs. Unlike validate_docx (which checks OOXML/ZIP structural integrity only), this extracts the document's text and (1) diffs it against expected_text to surface any content divergence, and (2) confirms each entry in required_strings (e.g. caption block, case/sponsor identifiers, sworn-paragraph or boilerplate anchors) appears verbatim. Returns { ok, missingRequiredStrings, divergenceSummary, additions, deletions } — a pass/fail the user and the Part 11 audit trail can cite. Pair with validate_docx for full (structural + content) verification. Tenant-scoped via ToolContext.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      input_docx_path: {
+        type: 'string',
+        description: 'Absolute path to the built/edited .docx to verify (e.g. a docxPath returned by author_docx_native, build_from_template, or surgical_docx_xml_edit).',
+      },
+      expected_text: {
+        type: 'string',
+        description: 'The verbatim source text the document is supposed to contain (e.g. the complete text the user provided). The extracted document text is diffed against this. Optional when only required_strings is supplied.',
+      },
+      required_strings: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Strings that MUST appear verbatim in the document (e.g. caption strings, case/sponsor numbers, sworn-paragraph anchors). Each is checked for an exact substring match; any missing entry fails verification.',
+      },
+    },
+    required: ['input_docx_path'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX kit-section write-back — closes the loop between AnA's drafting and the
 // kit's section editors (K510Surface, PmaSurface, CerSurface). When the model
 // has produced a draft section (cover letter, SE discussion, device
@@ -6641,6 +6675,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   RUN_PYTHON_SCRIPT,
   INSERT_DOCUMENT_CONTENT,
   SURGICAL_DOCX_XML_EDIT,
+  VERIFY_DOCX_AGAINST_SOURCE,
   INSERT_CLAUSE_TEMPLATE,
   VALIDATE_DOCX,
   RUN_IN_CONTAINER,
