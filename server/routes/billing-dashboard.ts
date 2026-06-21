@@ -34,6 +34,7 @@ import {
   getWeeklyMonitor,
   getOverageLedger,
 } from '../services/weekly-usage-limits.js';
+import { checkSeatAvailability, setSeatsPurchased, isSeatEnforcementOn } from '../services/seat-licensing.js';
 import Stripe from 'stripe';
 
 import { createScopedLogger } from '../utils/logger.js';
@@ -733,6 +734,42 @@ router.get('/weekly-usage', authenticateToken, async (req: Request, res: Respons
   } catch (error) {
     logger.error('Get weekly usage error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to load weekly usage' });
+  }
+});
+
+// GET /seats — seat-license utilization (purchased vs active members + pending).
+router.get('/seats', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const seats = await checkSeatAvailability(orgId, 0);
+    res.json({ seats, enforcement: isSeatEnforcementOn() ? 'enforce' : 'report-only' });
+  } catch (error) {
+    logger.error('Get seats error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load seat usage' });
+  }
+});
+
+// PUT /seats — set purchased seats. GOVERNED: admin/owner only, reason required, audited.
+router.put('/seats', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ error: 'User context required' });
+
+    const { seats, reason } = req.body ?? {};
+    if (!reason || typeof reason !== 'string' || !reason.trim()) {
+      return res.status(400).json({ error: 'A reason-for-change is required to change purchased seats' });
+    }
+    const decision = await setSeatsPurchased(orgId, Number(seats), { userId }, reason);
+    res.json({ seats: decision });
+  } catch (error) {
+    const validation = (error as any)?.validation;
+    if (Array.isArray(validation)) return res.status(400).json({ error: (error as Error).message, validation });
+    if ((error as any)?.conflict) return res.status(409).json({ error: (error as Error).message });
+    logger.error('Set seats error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to set purchased seats' });
   }
 });
 
