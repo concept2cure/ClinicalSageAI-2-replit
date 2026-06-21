@@ -14,6 +14,7 @@ import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_S
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
 import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
+import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7099,6 +7100,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ...STATISTICAL_DESIGN_TOOLS,
   // Submission intelligence: precedent benchmarking + package completeness.
   ...SUBMISSION_INTELLIGENCE_TOOLS,
+  // Device/IVD submission assembly, predicate-adequacy scoring, drug coding —
+  // engines/data sources previously unreachable by AnA. See deviceSubmissionTools.ts.
+  ...DEVICE_SUBMISSION_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
