@@ -161,6 +161,11 @@ export async function registerInlineLitCommerceRoutes({
       mod: '../routes/module-subscriptions.js',
       name: 'Module Subscriptions',
     },
+    {
+      path: '/api/licensing',
+      mod: '../routes/licensing.js',
+      name: 'Intelligent Licensing & EULA',
+    },
     { path: '/api/billing', mod: '../routes/billing.js', name: 'Billing' },
     { path: '/api/deep-research', mod: '../routes/deep-research.js', name: 'Deep Research' },
     {

@@ -505,7 +505,8 @@
     "20260611_organization_invitations.sql",
     "20260612_org_client_type_user_preferences.sql",
     "20260617_precedent_org_isolation.sql",
-    "20260617_project_schedule_of_events.sql"
+    "20260617_project_schedule_of_events.sql",
+    "20260621_intelligent_licensing_eula.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"
