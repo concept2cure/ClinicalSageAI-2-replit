@@ -193,7 +193,8 @@ router.post('/oos-investigations', async (req: Request, res: Response) => {
 // Update OOS investigation
 router.put('/oos-investigations/:id', async (req: Request, res: Response) => {
   try {
-    const investigation = await storage.updateOosInvestigation(Number(req.params.id), req.body);
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const investigation = await storage.updateOosInvestigation(Number(req.params.id), guard.orgId, req.body);
     res.json(investigation);
   } catch (error) {
     sendQcError(res, error, 'Failed to update OOS investigation');
@@ -204,7 +205,8 @@ router.put('/oos-investigations/:id', async (req: Request, res: Response) => {
 router.post('/oos-investigations/:id/timeline', async (req: Request, res: Response) => {
   try {
     const { event, performedBy, description, attachments } = req.body;
-    const investigation = await storage.addOosTimelineEvent(Number(req.params.id), {
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const investigation = await storage.addOosTimelineEvent(Number(req.params.id), guard.orgId, {
       date: new Date(),
       event,
       performedBy,
@@ -221,7 +223,8 @@ router.post('/oos-investigations/:id/timeline', async (req: Request, res: Respon
 router.post('/oos-investigations/:id/root-cause', async (req: Request, res: Response) => {
   try {
     const { method, category, description, details } = req.body;
-    const investigation = await storage.performRootCauseAnalysis(Number(req.params.id), {
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const investigation = await storage.performRootCauseAnalysis(Number(req.params.id), guard.orgId, {
       method,
       category,
       description,
@@ -237,7 +240,8 @@ router.post('/oos-investigations/:id/root-cause', async (req: Request, res: Resp
 router.post('/oos-investigations/:id/capa', async (req: Request, res: Response) => {
   try {
     const { capaNumber, correctiveActions, preventiveActions } = req.body;
-    const investigation = await storage.linkCapaToOos(Number(req.params.id), {
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const investigation = await storage.linkCapaToOos(Number(req.params.id), guard.orgId, {
       capaNumber,
       correctiveActions,
       preventiveActions,
@@ -299,7 +303,8 @@ router.post('/batch-releases', async (req: Request, res: Response) => {
 // Update batch release
 router.put('/batch-releases/:id', async (req: Request, res: Response) => {
   try {
-    const release = await storage.updateBatchRelease(Number(req.params.id), req.body);
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const release = await storage.updateBatchRelease(Number(req.params.id), guard.orgId, req.body);
     res.json(release);
   } catch (error) {
     sendQcError(res, error, 'Failed to update batch release');
@@ -418,7 +423,8 @@ router.post('/deviations', async (req: Request, res: Response) => {
 // Update deviation
 router.put('/deviations/:id', async (req: Request, res: Response) => {
   try {
-    const deviation = await storage.updateQcDeviation(Number(req.params.id), req.body);
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const deviation = await storage.updateQcDeviation(Number(req.params.id), guard.orgId, req.body);
     res.json(deviation);
   } catch (error) {
     sendQcError(res, error, 'Failed to update deviation');
@@ -429,7 +435,8 @@ router.put('/deviations/:id', async (req: Request, res: Response) => {
 router.post('/deviations/:id/impact-assessment', async (req: Request, res: Response) => {
   try {
     const assessment = req.body;
-    const deviation = await storage.performImpactAssessment(Number(req.params.id), assessment);
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const deviation = await storage.performImpactAssessment(Number(req.params.id), guard.orgId, assessment);
     res.json(deviation);
   } catch (error) {
     sendQcError(res, error, 'Failed to perform impact assessment');
@@ -440,7 +447,8 @@ router.post('/deviations/:id/impact-assessment', async (req: Request, res: Respo
 router.post('/deviations/:id/capa', async (req: Request, res: Response) => {
   try {
     const { capaNumber, correctiveActions, preventiveActions } = req.body;
-    const deviation = await storage.linkCapaToDeviation(Number(req.params.id), {
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const deviation = await storage.linkCapaToDeviation(Number(req.params.id), guard.orgId, {
       capaNumber,
       correctiveActions,
       preventiveActions,
@@ -519,7 +527,8 @@ router.post('/microbiological-tests', async (req: Request, res: Response) => {
 // Update microbiological test
 router.put('/microbiological-tests/:id', async (req: Request, res: Response) => {
   try {
-    const test = await storage.updateMicrobiologicalTest(Number(req.params.id), req.body);
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const test = await storage.updateMicrobiologicalTest(Number(req.params.id), guard.orgId, req.body);
     res.json(test);
   } catch (error) {
     sendQcError(res, error, 'Failed to update microbiological test');
@@ -560,7 +569,8 @@ router.post('/microbiological-tests/environmental-monitoring/schedule', async (r
 router.post('/microbiological-tests/:id/results', async (req: Request, res: Response) => {
   try {
     const { result, rawData, calculatedResults, performedBy } = req.body;
-    const test = await storage.recordMicrobiologicalResults(Number(req.params.id), {
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const test = await storage.recordMicrobiologicalResults(Number(req.params.id), guard.orgId, {
       result,
       rawData,
       calculatedResults,
@@ -624,7 +634,8 @@ router.post('/reference-standards', async (req: Request, res: Response) => {
 // Update reference standard
 router.put('/reference-standards/:id', async (req: Request, res: Response) => {
   try {
-    const standard = await storage.updateReferenceStandard(Number(req.params.id), req.body);
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const standard = await storage.updateReferenceStandard(Number(req.params.id), guard.orgId, req.body);
     res.json(standard);
   } catch (error) {
     sendQcError(res, error, 'Failed to update reference standard');
@@ -635,7 +646,8 @@ router.put('/reference-standards/:id', async (req: Request, res: Response) => {
 router.post('/reference-standards/:id/usage', async (req: Request, res: Response) => {
   try {
     const { usedBy, quantity, purpose, testReference } = req.body;
-    const standard = await storage.recordStandardUsage(Number(req.params.id), {
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const standard = await storage.recordStandardUsage(Number(req.params.id), guard.orgId, {
       date: new Date(),
       usedBy,
       quantity,
