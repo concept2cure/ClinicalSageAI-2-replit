@@ -22,6 +22,7 @@ import { validateApiKey } from '../services/api-key-service.js';
 // endpoints; see usage at /precedent/search and /trial-design/suggest.
 import { requireScope as requireApiScope } from '../middleware/enterprise-security.js';
 import { recordUsage, checkQuota } from '../services/usage-metering.js';
+import { checkWeeklyLimit } from '../services/weekly-usage-limits.js';
 import { csrSearchService } from '../services/csr-search-service.js';
 import { getRegulatoryPathwayIntelligence } from '../services/regulatory-pathway-intelligence.js';
 import { getEndpointRecommenderService } from '../services/endpoint-recommender-service.js';
@@ -276,6 +277,47 @@ router.use((req: ApiRequest, _res: Response, next: NextFunction) => {
     `[public-api] ${req.method} ${req.path} org=${req.apiOrganizationId} key=${req.apiKeyId}`,
   );
   next();
+});
+
+// Enforce the per-org WEEKLY request limit + overage cap (opt-in; orgs with no
+// configured limit pass straight through). Fails open on a metering error so a
+// monitoring outage never blocks the API. Per-feature monthly quotas are still
+// enforced separately by requireQuota() on each route.
+router.use((req: ApiRequest, res: Response, next: NextFunction) => {
+  const orgId = req.apiOrganizationId;
+  if (orgId == null) {
+    next();
+    return;
+  }
+  checkWeeklyLimit(orgId, 'requests', 1)
+    .then((decision) => {
+      res.setHeader('X-Weekly-State', decision.state);
+      if (Number.isFinite(decision.weeklyLimit)) res.setHeader('X-Weekly-Limit', String(decision.weeklyLimit));
+      res.setHeader('X-Weekly-Used', String(decision.used));
+      res.setHeader('X-Weekly-Reset', decision.resetAt.toISOString());
+      if (!decision.allowed) {
+        const retrySecs = Math.max(1, Math.ceil((decision.resetAt.getTime() - Date.now()) / 1000));
+        res.setHeader('Retry-After', String(retrySecs));
+        res.status(429).json({
+          error: 'Weekly usage limit reached',
+          code: 'WEEKLY_LIMIT_EXCEEDED',
+          metric: 'requests',
+          used: decision.used,
+          limit: decision.weeklyLimit,
+          cap: decision.effectiveCap,
+          resetAt: decision.resetAt.toISOString(),
+        });
+        return;
+      }
+      if (decision.state === 'overage') req.weeklyOverage = decision;
+      next();
+    })
+    .catch((err: unknown) => {
+      log.error('[public-api] weekly limit check failed (fail-open)', {
+        err: err instanceof Error ? err.message : String(err),
+      });
+      next();
+    });
 });
 
 // ============================================================================

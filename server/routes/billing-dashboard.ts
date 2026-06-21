@@ -24,8 +24,15 @@
 import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { pool } from '../db.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, requireRole } from '../middleware/auth.js';
 import { getSecureOrgId } from '../utils/tenantContext.js';
+import {
+  WEEKLY_METRICS,
+  type WeeklyMetric,
+  listLimits,
+  setWeeklyLimit,
+  getWeeklyMonitor,
+} from '../services/weekly-usage-limits.js';
 import Stripe from 'stripe';
 
 import { createScopedLogger } from '../utils/logger.js';
@@ -691,5 +698,85 @@ function formatStripeEventMessage(eventType: string, _data?: any): string {
 
   return messages[eventType] || `Billing event: ${eventType.replace(/\./g, ' ')}`;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Weekly usage limits & overage caps (Anthropic-style usage controls)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function getUserId(req: Request): number | null {
+  const raw = (req as any).userId ?? req.user?.id;
+  if (raw == null) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+// GET /weekly-limits — configured weekly limits + a live monitoring snapshot.
+router.get('/weekly-limits', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const [limits, monitor] = await Promise.all([listLimits(orgId), getWeeklyMonitor(orgId)]);
+    res.json({ metrics: WEEKLY_METRICS, limits, monitor });
+  } catch (error) {
+    logger.error('Get weekly limits error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load weekly usage limits' });
+  }
+});
+
+// GET /weekly-usage — live monitoring snapshot only (used vs limit/cap per metric).
+router.get('/weekly-usage', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    res.json({ monitor: await getWeeklyMonitor(orgId) });
+  } catch (error) {
+    logger.error('Get weekly usage error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load weekly usage' });
+  }
+});
+
+// PUT /weekly-limits/:metric — set/raise a weekly limit + overage cap.
+// GOVERNED: org admins only, reason-for-change required, audited (21 CFR Part 11).
+router.put('/weekly-limits/:metric', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ error: 'User context required' });
+
+    const metric = req.params.metric as WeeklyMetric;
+    if (!WEEKLY_METRICS.includes(metric)) {
+      return res.status(400).json({ error: `metric must be one of: ${WEEKLY_METRICS.join(', ')}` });
+    }
+
+    const { weeklyLimit, overageCapPct, overageHardCap, warnThresholdPct, weekStartDow, enabled, reason } = req.body ?? {};
+    if (!reason || typeof reason !== 'string' || !reason.trim()) {
+      return res.status(400).json({ error: 'A reason-for-change is required to set a weekly usage limit' });
+    }
+
+    const saved = await setWeeklyLimit(
+      orgId,
+      {
+        metric,
+        weeklyLimit: Number(weeklyLimit),
+        overageCapPct: overageCapPct == null ? 0 : Number(overageCapPct),
+        overageHardCap: overageHardCap == null ? null : Number(overageHardCap),
+        warnThresholdPct: warnThresholdPct == null ? 80 : Number(warnThresholdPct),
+        weekStartDow: weekStartDow == null ? 1 : Number(weekStartDow),
+        enabled: enabled == null ? true : Boolean(enabled),
+      },
+      { userId },
+      reason,
+    );
+    res.json({ limit: saved });
+  } catch (error) {
+    const validation = (error as any)?.validation;
+    if (Array.isArray(validation)) {
+      return res.status(400).json({ error: (error as Error).message, validation });
+    }
+    logger.error('Set weekly limit error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to set weekly usage limit' });
+  }
+});
 
 export default router;
