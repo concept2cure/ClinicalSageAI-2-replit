@@ -22,7 +22,7 @@ import { validateApiKey } from '../services/api-key-service.js';
 // endpoints; see usage at /precedent/search and /trial-design/suggest.
 import { requireScope as requireApiScope } from '../middleware/enterprise-security.js';
 import { recordUsage, checkQuota } from '../services/usage-metering.js';
-import { checkWeeklyLimit, recordWeeklyAlerts } from '../services/weekly-usage-limits.js';
+import { checkWeeklyLimit, recordWeeklyAlerts, recordOverageUnits } from '../services/weekly-usage-limits.js';
 import { csrSearchService } from '../services/csr-search-service.js';
 import { getRegulatoryPathwayIntelligence } from '../services/regulatory-pathway-intelligence.js';
 import { getEndpointRecommenderService } from '../services/endpoint-recommender-service.js';
@@ -312,7 +312,10 @@ router.use((req: ApiRequest, res: Response, next: NextFunction) => {
         });
         return;
       }
-      if (decision.state === 'overage') req.weeklyOverage = decision;
+      if (decision.state === 'overage') {
+        req.weeklyOverage = decision;
+        void recordOverageUnits(orgId, decision);
+      }
       next();
     })
     .catch((err: unknown) => {

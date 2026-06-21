@@ -11,6 +11,7 @@ import {
   evaluateLimit,
   validateLimitConfig,
   alertsForDecision,
+  overageUnitsForRequest,
   WEEKLY_METRICS,
   type WeeklyLimitConfig,
 } from '../weekly-usage-limits';
@@ -143,6 +144,24 @@ describe('alertsForDecision', () => {
 
   it('emits nothing when no real limit is set', () => {
     expect(alertsForDecision(decide(5, { weeklyLimit: 0 }))).toEqual([]);
+  });
+});
+
+describe('overageUnitsForRequest', () => {
+  it('counts nothing while fully under the limit', () => {
+    expect(overageUnitsForRequest(90, 5, 100)).toBe(0); // 95 <= 100
+  });
+  it('counts only the portion that crosses the limit', () => {
+    expect(overageUnitsForRequest(98, 5, 100)).toBe(3); // 101,102,103
+  });
+  it('counts the whole increment once already over the limit', () => {
+    expect(overageUnitsForRequest(105, 2, 100)).toBe(2);
+  });
+  it('lands exactly on the limit with no overage', () => {
+    expect(overageUnitsForRequest(95, 5, 100)).toBe(0); // projected 100 == limit
+  });
+  it('returns 0 for a non-positive increment', () => {
+    expect(overageUnitsForRequest(105, 0, 100)).toBe(0);
   });
 });
 

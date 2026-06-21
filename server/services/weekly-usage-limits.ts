@@ -426,6 +426,75 @@ export async function recordWeeklyAlerts(
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// BILLABLE OVERAGE LEDGER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface OverageAccrual {
+  metric: WeeklyMetric;
+  windowStart: Date;
+  overageUnits: number;
+  lastEventAt: Date;
+}
+
+/**
+ * PURE: how many of this request's `increment` units fall ABOVE the weekly limit
+ * (i.e. are billable overage). Only the portion newly crossing the limit counts —
+ * units already over the limit before this request are not re-counted here.
+ */
+export function overageUnitsForRequest(usedBefore: number, increment: number, weeklyLimit: number): number {
+  if (increment <= 0 || !Number.isFinite(weeklyLimit)) return 0;
+  const projected = usedBefore + increment;
+  return Math.max(0, projected - Math.max(weeklyLimit, usedBefore));
+}
+
+/**
+ * Accrue the billable overage implied by an overage-permitted decision into the
+ * ledger (one accumulator row per org+metric+window). Best-effort: never throws
+ * into the caller. Returns the units accrued by this call (0 if none).
+ */
+export async function recordOverageUnits(organizationId: number, decision: LimitDecision): Promise<number> {
+  try {
+    const units = overageUnitsForRequest(decision.used, decision.increment, decision.weeklyLimit);
+    if (units <= 0) return 0;
+    const windowStart = new Date(decision.resetAt);
+    windowStart.setUTCDate(windowStart.getUTCDate() - 7);
+    await pool.query(
+      `INSERT INTO weekly_overage_ledger (organization_id, metric, window_start, overage_units, last_event_at, created_at)
+       VALUES ($1, $2, $3, $4, NOW(), NOW())
+       ON CONFLICT (organization_id, metric, window_start) DO UPDATE SET
+         overage_units = weekly_overage_ledger.overage_units + EXCLUDED.overage_units,
+         last_event_at = NOW()`,
+      [organizationId, decision.metric, windowStart.toISOString(), units],
+    );
+    return units;
+  } catch (e) {
+    logger.error('recordOverageUnits failed', { err: e instanceof Error ? e.message : String(e) });
+    return 0;
+  }
+}
+
+/** Accrued billable overage for the current weekly window (per metric). */
+export async function getOverageLedger(organizationId: number): Promise<OverageAccrual[]> {
+  const limits = await listLimits(organizationId);
+  const out: OverageAccrual[] = [];
+  for (const limit of limits) {
+    const { start } = currentWeekWindow(limit.weekStartDow);
+    const res = await pool.query(
+      `SELECT overage_units, last_event_at FROM weekly_overage_ledger
+       WHERE organization_id = $1 AND metric = $2 AND window_start = $3`,
+      [organizationId, limit.metric, start.toISOString()],
+    );
+    out.push({
+      metric: limit.metric,
+      windowStart: start,
+      overageUnits: res.rows.length ? Number(res.rows[0].overage_units) : 0,
+      lastEventAt: res.rows.length ? res.rows[0].last_event_at : start,
+    });
+  }
+  return out;
+}
+
 /** A point-in-time snapshot of every configured limit for monitoring/dashboards. */
 export async function getWeeklyMonitor(organizationId: number): Promise<LimitDecision[]> {
   const limits = await listLimits(organizationId);

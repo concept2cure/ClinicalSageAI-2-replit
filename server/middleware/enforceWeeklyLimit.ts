@@ -20,7 +20,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { getSecureOrgId } from '../utils/tenantContext.js';
-import { checkWeeklyLimit, recordWeeklyAlerts, type WeeklyMetric, type LimitDecision } from '../services/weekly-usage-limits.js';
+import { checkWeeklyLimit, recordWeeklyAlerts, recordOverageUnits, type WeeklyMetric, type LimitDecision } from '../services/weekly-usage-limits.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('enforceWeeklyLimit');
@@ -89,8 +89,10 @@ export function enforceWeeklyLimit(metric: WeeklyMetric, options: EnforceWeeklyL
       }
 
       if (decision.state === 'overage') {
-        // Permitted into billable overage — expose to the handler for metering.
+        // Permitted into billable overage — expose to the handler and accrue it
+        // to the ledger for invoicing.
         req.weeklyOverage = decision;
+        void recordOverageUnits(orgId, decision);
       }
       next();
     } catch (err) {

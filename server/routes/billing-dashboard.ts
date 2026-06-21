@@ -32,6 +32,7 @@ import {
   listLimits,
   setWeeklyLimit,
   getWeeklyMonitor,
+  getOverageLedger,
 } from '../services/weekly-usage-limits.js';
 import Stripe from 'stripe';
 
@@ -732,6 +733,18 @@ router.get('/weekly-usage', authenticateToken, async (req: Request, res: Respons
   } catch (error) {
     logger.error('Get weekly usage error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to load weekly usage' });
+  }
+});
+
+// GET /weekly-overage — accrued billable overage for the current weekly window.
+router.get('/weekly-overage', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    res.json({ overage: await getOverageLedger(orgId) });
+  } catch (error) {
+    logger.error('Get weekly overage error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load weekly overage' });
   }
 });
 

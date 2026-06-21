@@ -74,3 +74,29 @@ ALTER TABLE billing_alerts ADD COLUMN IF NOT EXISTS dedup_key TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS billing_alerts_dedup_key_uq
   ON billing_alerts (dedup_key) WHERE dedup_key IS NOT NULL;
 
+-- ============================================================
+-- WEEKLY OVERAGE LEDGER (billable overage accrual)
+-- When usage is ALLOWED past the weekly limit (limit < usage <= cap), the units
+-- above the limit are billable overage. One accumulator row per
+-- (organization, metric, window_start); overage_units is incremented per
+-- overage-incurring request. This is the recordable source for invoicing the
+-- overage span (e.g. reporting metered usage to Stripe out of band).
+-- ============================================================
+CREATE TABLE IF NOT EXISTS weekly_overage_ledger (
+  id              SERIAL PRIMARY KEY,
+  organization_id INTEGER NOT NULL REFERENCES organizations(id),
+  metric          TEXT    NOT NULL,
+  window_start    TIMESTAMPTZ NOT NULL,
+  overage_units   BIGINT  NOT NULL DEFAULT 0,
+  last_event_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT weekly_overage_ledger_metric_chk
+    CHECK (metric IN ('cost_cents', 'requests', 'tokens', 'documents', 'seats')),
+  CONSTRAINT weekly_overage_ledger_window_uq
+    UNIQUE (organization_id, metric, window_start)
+);
+
+CREATE INDEX IF NOT EXISTS weekly_overage_ledger_org_idx
+  ON weekly_overage_ledger (organization_id, window_start);
+
