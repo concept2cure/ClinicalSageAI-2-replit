@@ -20,7 +20,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { getSecureOrgId } from '../utils/tenantContext.js';
-import { checkWeeklyLimit, type WeeklyMetric, type LimitDecision } from '../services/weekly-usage-limits.js';
+import { checkWeeklyLimit, recordWeeklyAlerts, type WeeklyMetric, type LimitDecision } from '../services/weekly-usage-limits.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('enforceWeeklyLimit');
@@ -64,6 +64,11 @@ export function enforceWeeklyLimit(metric: WeeklyMetric, options: EnforceWeeklyL
       const increment = metric === 'seats' ? 1 : Math.max(0, options.getIncrement?.(req) ?? 1);
       const decision = await checkWeeklyLimit(orgId, metric, increment);
       setHeaders(res, metric, decision);
+
+      // Fire-and-forget threshold alerts (idempotent per window) on meaningful states.
+      if (decision.state === 'warn' || decision.state === 'overage' || decision.state === 'blocked') {
+        void recordWeeklyAlerts(orgId, decision);
+      }
 
       if (!decision.allowed) {
         const retrySecs = Math.max(1, Math.ceil((decision.resetAt.getTime() - Date.now()) / 1000));

@@ -22,7 +22,7 @@ import { validateApiKey } from '../services/api-key-service.js';
 // endpoints; see usage at /precedent/search and /trial-design/suggest.
 import { requireScope as requireApiScope } from '../middleware/enterprise-security.js';
 import { recordUsage, checkQuota } from '../services/usage-metering.js';
-import { checkWeeklyLimit } from '../services/weekly-usage-limits.js';
+import { checkWeeklyLimit, recordWeeklyAlerts } from '../services/weekly-usage-limits.js';
 import { csrSearchService } from '../services/csr-search-service.js';
 import { getRegulatoryPathwayIntelligence } from '../services/regulatory-pathway-intelligence.js';
 import { getEndpointRecommenderService } from '../services/endpoint-recommender-service.js';
@@ -295,6 +295,9 @@ router.use((req: ApiRequest, res: Response, next: NextFunction) => {
       if (Number.isFinite(decision.weeklyLimit)) res.setHeader('X-Weekly-Limit', String(decision.weeklyLimit));
       res.setHeader('X-Weekly-Used', String(decision.used));
       res.setHeader('X-Weekly-Reset', decision.resetAt.toISOString());
+      if (decision.state === 'warn' || decision.state === 'overage' || decision.state === 'blocked') {
+        void recordWeeklyAlerts(orgId, decision);
+      }
       if (!decision.allowed) {
         const retrySecs = Math.max(1, Math.ceil((decision.resetAt.getTime() - Date.now()) / 1000));
         res.setHeader('Retry-After', String(retrySecs));

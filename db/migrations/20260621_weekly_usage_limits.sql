@@ -60,3 +60,17 @@ CREATE TABLE IF NOT EXISTS weekly_usage_limits (
 
 CREATE INDEX IF NOT EXISTS weekly_usage_limits_org_idx
   ON weekly_usage_limits (organization_id);
+
+-- ============================================================
+-- WEEKLY USAGE ALERTS (idempotent threshold notifications)
+-- Reuses the existing billing_alerts table (read by GET /alerts/history) for
+-- weekly threshold alerts (types: 'weekly_warning' | 'weekly_overage' |
+-- 'weekly_blocked'). A dedup_key makes each (metric, window_start, kind) alert
+-- fire AT MOST ONCE per weekly window. Pre-existing alerts keep dedup_key NULL;
+-- the unique index is partial so multiple NULLs are allowed.
+-- ============================================================
+ALTER TABLE billing_alerts ADD COLUMN IF NOT EXISTS dedup_key TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS billing_alerts_dedup_key_uq
+  ON billing_alerts (dedup_key) WHERE dedup_key IS NOT NULL;
+

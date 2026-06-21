@@ -10,6 +10,7 @@ import {
   effectiveCap,
   evaluateLimit,
   validateLimitConfig,
+  alertsForDecision,
   WEEKLY_METRICS,
   type WeeklyLimitConfig,
 } from '../weekly-usage-limits';
@@ -113,6 +114,35 @@ describe('evaluateLimit — states', () => {
     expect(d.state).toBe('overage');
     expect(d.pct).toBe(105);
     expect(d.overageUsed).toBe(5);
+  });
+});
+
+describe('alertsForDecision', () => {
+  const resetAt = new Date('2026-06-22T00:00:00Z');
+  const decide = (used: number, over: Partial<WeeklyLimitConfig> = {}) =>
+    evaluateLimit({ metric: 'cost_cents', used, increment: 0, config: cfg(over), resetAt });
+
+  it('emits nothing below the warn threshold', () => {
+    expect(alertsForDecision(decide(50))).toEqual([]); // 50% < 80%
+  });
+
+  it('emits a warning at/after the warn threshold', () => {
+    const kinds = alertsForDecision(decide(85)).map((a) => a.kind);
+    expect(kinds).toEqual(['weekly_warning']);
+  });
+
+  it('escalates to warning + overage once the limit is reached', () => {
+    const kinds = alertsForDecision(decide(110)).map((a) => a.kind); // limit 100, cap 120
+    expect(kinds).toEqual(['weekly_warning', 'weekly_overage']);
+  });
+
+  it('emits the full trail (warning + overage + blocked) at the cap', () => {
+    const kinds = alertsForDecision(decide(120)).map((a) => a.kind);
+    expect(kinds).toEqual(['weekly_warning', 'weekly_overage', 'weekly_blocked']);
+  });
+
+  it('emits nothing when no real limit is set', () => {
+    expect(alertsForDecision(decide(5, { weeklyLimit: 0 }))).toEqual([]);
   });
 });
 

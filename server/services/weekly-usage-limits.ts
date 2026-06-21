@@ -79,6 +79,8 @@ export interface LimitDecision {
   overageUsed: number;
   /** Usage as a percentage of the weekly limit (0 when limit is 0). */
   pct: number;
+  /** The configured warn threshold (% of limit) carried for alerting. */
+  warnThresholdPct: number;
   /** When the current weekly window resets. */
   resetAt: Date;
 }
@@ -134,6 +136,7 @@ export function evaluateLimit(args: {
     remaining: Math.max(0, cap - used),
     overageUsed,
     pct,
+    warnThresholdPct: config.warnThresholdPct,
     resetAt,
   };
 
@@ -259,7 +262,7 @@ export async function checkWeeklyLimit(
     return {
       metric, state: 'disabled', allowed: true, used: 0, increment,
       weeklyLimit: limit?.weeklyLimit ?? 0, effectiveCap: Infinity, remaining: Infinity,
-      overageUsed: 0, pct: 0, resetAt: end,
+      overageUsed: 0, pct: 0, warnThresholdPct: limit?.warnThresholdPct ?? 80, resetAt: end,
     };
   }
   const { start, end } = currentWeekWindow(limit.weekStartDow);
@@ -337,6 +340,90 @@ export async function setWeeklyLimit(
   }
 
   return saved;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// THRESHOLD ALERTS (usage monitoring)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type WeeklyAlertKind = 'weekly_warning' | 'weekly_overage' | 'weekly_blocked';
+
+export interface WeeklyAlert {
+  kind: WeeklyAlertKind;
+  /** Percent-of-limit threshold this alert represents (warn% / 100 / cap%). */
+  threshold: number;
+  message: string;
+}
+
+/**
+ * PURE: which threshold alerts the current standing qualifies for. Escalating —
+ * once usage reaches the cap, all three (warning/overage/blocked) qualify and
+ * form a complete trail; the recorder dedups each to once-per-window. A decision
+ * with increment 0 (a monitor snapshot) describes the standing precisely.
+ */
+export function alertsForDecision(d: LimitDecision): WeeklyAlert[] {
+  if (!Number.isFinite(d.weeklyLimit) || d.weeklyLimit <= 0) return [];
+  const alerts: WeeklyAlert[] = [];
+  const warnAt = d.weeklyLimit * (d.warnThresholdPct / 100);
+  if (d.used >= warnAt) {
+    alerts.push({
+      kind: 'weekly_warning',
+      threshold: Math.round((warnAt / d.weeklyLimit) * 100),
+      message: `Weekly ${d.metric} usage reached ${d.used} of ${d.weeklyLimit} (${Math.round(d.pct)}%).`,
+    });
+  }
+  if (d.used >= d.weeklyLimit) {
+    alerts.push({
+      kind: 'weekly_overage',
+      threshold: 100,
+      message: `Weekly ${d.metric} limit (${d.weeklyLimit}) reached — now in billable overage up to ${d.effectiveCap}.`,
+    });
+  }
+  if (d.used >= d.effectiveCap) {
+    alerts.push({
+      kind: 'weekly_blocked',
+      threshold: d.weeklyLimit > 0 ? Math.round((d.effectiveCap / d.weeklyLimit) * 100) : 100,
+      message: `Weekly ${d.metric} overage cap (${d.effectiveCap}) reached — further usage is blocked until reset.`,
+    });
+  }
+  return alerts;
+}
+
+/**
+ * Idempotently record the threshold alerts implied by a decision into
+ * billing_alerts (dedup_key = metric:windowStart:kind). Returns the kinds newly
+ * recorded this window. Best-effort: never throws into the caller.
+ */
+export async function recordWeeklyAlerts(
+  organizationId: number,
+  decision: LimitDecision,
+): Promise<WeeklyAlertKind[]> {
+  try {
+    // Window start = resetAt - 7d (the decision already carries the window end).
+    const windowStart = new Date(decision.resetAt);
+    windowStart.setUTCDate(windowStart.getUTCDate() - 7);
+    const alerts = alertsForDecision(decision);
+    const recorded: WeeklyAlertKind[] = [];
+    for (const a of alerts) {
+      const dedupKey = `${decision.metric}:${windowStart.toISOString()}:${a.kind}`;
+      const res = await pool.query(
+        `INSERT INTO billing_alerts (organization_id, type, threshold, message, metadata, dedup_key, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW())
+         ON CONFLICT (dedup_key) WHERE dedup_key IS NOT NULL DO NOTHING
+         RETURNING id`,
+        [
+          organizationId, a.kind, a.threshold, a.message,
+          JSON.stringify({ metric: decision.metric, used: decision.used, limit: decision.weeklyLimit, cap: decision.effectiveCap, windowStart: windowStart.toISOString() }),
+          dedupKey,
+        ],
+      );
+      if (res.rows.length) recorded.push(a.kind);
+    }
+    return recorded;
+  } catch (e) {
+    logger.error('recordWeeklyAlerts failed', { err: e instanceof Error ? e.message : String(e) });
+    return [];
+  }
 }
 
 /** A point-in-time snapshot of every configured limit for monitoring/dashboards. */
