@@ -1,5 +1,8 @@
 import type { Express } from 'express';
 import masterAdminRoutes from '../routes/admin/master-admin';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('register-admin-routes');
 
 /**
  * Admin-only route manifests.
@@ -11,5 +14,5 @@ import masterAdminRoutes from '../routes/admin/master-admin';
  */
 export function registerAdminRoutes(app: Express) {
   app.use('/api/admin/master', masterAdminRoutes);
-  console.log('✅ Master Administration routes mounted (platform-admin gated)');
+  logger.info('Master Administration routes mounted (platform-admin gated)');
 }

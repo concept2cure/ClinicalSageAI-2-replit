@@ -426,10 +426,14 @@ router.get('/system-health', async (_req: Request, res: Response) => {
 
 router.get('/audit', async (req: Request, res: Response) => {
   try {
-    const tenantRaw = req.query.tenantId;
+    // `client` is a platform-admin display filter (which tenant's events to
+    // show), NOT the caller's own tenant — this route is platform-admin gated
+    // and never uses it for authorization. Named `client` (not `tenantId`) to
+    // make that explicit and avoid the tenant-trust-query foot-gun.
+    const clientRaw = req.query.client;
     const tenantId =
-      typeof tenantRaw === 'string' && tenantRaw.trim() !== '' && Number.isFinite(Number(tenantRaw))
-        ? Number(tenantRaw)
+      typeof clientRaw === 'string' && clientRaw.trim() !== '' && Number.isFinite(Number(clientRaw))
+        ? Number(clientRaw)
         : null;
     const action = likeTerm(req.query.action);
     const limit = clampLimit(req.query.limit, 50, 200);
@@ -466,6 +470,262 @@ router.get('/audit', async (req: Request, res: Response) => {
   } catch (err) {
     logger.error('Audit explorer query failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to load audit log.' });
+  }
+});
+
+// ─── Billing & subscription monitoring ───────────────────────────────────────
+
+router.get('/billing', async (_req: Request, res: Response) => {
+  try {
+    const [byStatus, trials, pastDue, alerts] = await Promise.all([
+      query(
+        `SELECT COALESCE(payment_status, 'unknown') AS payment_status, COUNT(*)::int AS count
+           FROM organizations
+          GROUP BY payment_status
+          ORDER BY count DESC`
+      ),
+      query(
+        `SELECT id, name, slug, tier, trial_ends_at
+           FROM organizations
+          WHERE trial_ends_at IS NOT NULL
+            AND trial_ends_at > now()
+            AND trial_ends_at < now() + interval '14 days'
+          ORDER BY trial_ends_at ASC
+          LIMIT 50`
+      ),
+      query(
+        `SELECT id, name, slug, tier, payment_status, next_billing_date
+           FROM organizations
+          WHERE payment_status IN ('past_due', 'incomplete')
+          ORDER BY next_billing_date ASC NULLS LAST
+          LIMIT 50`
+      ),
+      query(
+        `SELECT a.id, a.organization_id, a.type, a.threshold, a.message, a.created_at,
+                o.name AS organization_name
+           FROM billing_alerts a
+           LEFT JOIN organizations o ON o.id = a.organization_id
+          WHERE a.acknowledged = false
+          ORDER BY a.created_at DESC
+          LIMIT 50`
+      ),
+    ]);
+    return res.json({
+      byPaymentStatus: byStatus.rows,
+      trialsEndingSoon: trials.rows,
+      pastDue: pastDue.rows,
+      unacknowledgedAlerts: alerts.rows,
+    });
+  } catch (err) {
+    logger.error('Billing query failed', err as Record<string, unknown>);
+    return res.status(500).json({ error: 'Failed to load billing overview.' });
+  }
+});
+
+// ─── Acknowledge a billing alert (governed) ──────────────────────────────────
+
+router.patch('/billing/alerts/:id/acknowledge', async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(404).json({ error: 'Not found.' });
+
+    const actorId = Number.isFinite(Number(req.userId)) ? Number(req.userId) : null;
+    const result = await query(
+      `UPDATE billing_alerts
+          SET acknowledged = true, acknowledged_at = now(), acknowledged_by = $1
+        WHERE id = $2 AND acknowledged = false
+       RETURNING id, organization_id, type, acknowledged_at`,
+      [actorId, id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Not found or already acknowledged.' });
+
+    await auditService.logAction({
+      tenantId: result.rows[0].organization_id ?? 0,
+      userId: req.userId,
+      action: 'data_modify',
+      resourceType: 'billing_alert',
+      resourceId: id,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string,
+      details: { masterAdminAction: 'billing_alert.acknowledge' },
+    });
+    return res.json(result.rows[0]);
+  } catch (err) {
+    logger.error('Billing alert acknowledge failed', err as Record<string, unknown>);
+    return res.status(500).json({ error: 'Failed to acknowledge alert.' });
+  }
+});
+
+// ─── Entitlements — toggle a module for one client (governed) ─────────────────
+
+router.patch('/tenants/:id/modules', async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(404).json({ error: 'Not found.' });
+
+    const moduleId = (req.body as { moduleId?: unknown })?.moduleId;
+    const enabled = (req.body as { enabled?: unknown })?.enabled;
+    const reason = (req.body as { reason?: unknown })?.reason;
+    if (typeof moduleId !== 'string' || !moduleId.trim()) {
+      return res.status(400).json({ error: 'moduleId is required.' });
+    }
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({ error: 'enabled (boolean) is required.' });
+    }
+    if (typeof reason !== 'string' || reason.trim().length < 3) {
+      return res.status(400).json({ error: 'A reason (min 3 chars) is required for this action.' });
+    }
+
+    const org = await query('SELECT id FROM organizations WHERE id = $1', [id]);
+    if (!org.rows.length) return res.status(404).json({ error: 'Tenant not found.' });
+    const mod = await query('SELECT module_id FROM available_modules WHERE module_id = $1', [moduleId]);
+    if (!mod.rows.length) return res.status(404).json({ error: 'Unknown module.' });
+
+    const actorEmail = req.userEmail ?? null;
+    const result = await query(
+      `INSERT INTO module_subscriptions
+         (organization_id, module_id, enabled, enabled_at, disabled_at, enabled_by, disabled_by, updated_at)
+       VALUES ($1, $2, $3, CASE WHEN $3 THEN now() END, CASE WHEN $3 THEN NULL ELSE now() END,
+               CASE WHEN $3 THEN $4 END, CASE WHEN $3 THEN NULL ELSE $4 END, now())
+       ON CONFLICT (organization_id, module_id) DO UPDATE
+         SET enabled = EXCLUDED.enabled,
+             enabled_at = CASE WHEN EXCLUDED.enabled THEN now() ELSE module_subscriptions.enabled_at END,
+             disabled_at = CASE WHEN EXCLUDED.enabled THEN NULL ELSE now() END,
+             enabled_by = CASE WHEN EXCLUDED.enabled THEN $4 ELSE module_subscriptions.enabled_by END,
+             disabled_by = CASE WHEN EXCLUDED.enabled THEN NULL ELSE $4 END,
+             updated_at = now()
+       RETURNING organization_id, module_id, enabled, updated_at`,
+      [id, moduleId, enabled, actorEmail]
+    );
+
+    await auditService.logAction({
+      tenantId: id,
+      userId: req.userId,
+      action: 'data_modify',
+      resourceType: 'module_subscription',
+      resourceId: `${id}:${moduleId}`,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string,
+      details: { masterAdminAction: 'tenant.module_toggle', moduleId, enabled, reason: reason.trim() },
+    });
+    return res.json(result.rows[0]);
+  } catch (err) {
+    logger.error('Module toggle failed', err as Record<string, unknown>);
+    return res.status(500).json({ error: 'Failed to update module entitlement.' });
+  }
+});
+
+// ─── Feature flags ───────────────────────────────────────────────────────────
+
+router.get('/feature-flags', async (_req: Request, res: Response) => {
+  try {
+    const result = await query(
+      `SELECT id, feature_key, description, enabled,
+              enabled_for_organization_ids, enabled_for_client_workspace_ids,
+              updated_at
+         FROM feature_toggles
+        ORDER BY feature_key`
+    );
+    return res.json({ flags: result.rows });
+  } catch (err) {
+    logger.error('Feature flag list failed', err as Record<string, unknown>);
+    return res.status(500).json({ error: 'Failed to load feature flags.' });
+  }
+});
+
+router.patch('/feature-flags/:key', async (req: Request, res: Response) => {
+  try {
+    const key = String(req.params.key || '').trim();
+    if (!key) return res.status(404).json({ error: 'Not found.' });
+    const enabled = (req.body as { enabled?: unknown })?.enabled;
+    const reason = (req.body as { reason?: unknown })?.reason;
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({ error: 'enabled (boolean) is required.' });
+    }
+    if (typeof reason !== 'string' || reason.trim().length < 3) {
+      return res.status(400).json({ error: 'A reason (min 3 chars) is required for this action.' });
+    }
+
+    const before = await query('SELECT enabled FROM feature_toggles WHERE feature_key = $1', [key]);
+    if (!before.rows.length) return res.status(404).json({ error: 'Unknown feature flag.' });
+
+    const result = await query(
+      `UPDATE feature_toggles SET enabled = $1, updated_at = now() WHERE feature_key = $2
+       RETURNING id, feature_key, enabled, updated_at`,
+      [enabled, key]
+    );
+
+    await auditService.logAction({
+      tenantId: 0,
+      userId: req.userId,
+      action: 'data_modify',
+      resourceType: 'feature_toggle',
+      resourceId: key,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string,
+      details: {
+        masterAdminAction: 'feature_flag.toggle',
+        from: before.rows[0].enabled,
+        to: enabled,
+        reason: reason.trim(),
+      },
+    });
+    return res.json(result.rows[0]);
+  } catch (err) {
+    logger.error('Feature flag toggle failed', err as Record<string, unknown>);
+    return res.status(500).json({ error: 'Failed to update feature flag.' });
+  }
+});
+
+// ─── Integrations — connector health across clients ──────────────────────────
+// NB: credentials column (AES-256-GCM ciphertext) is deliberately never selected.
+
+router.get('/connectors', async (_req: Request, res: Response) => {
+  try {
+    const result = await query(
+      `SELECT c.id, c.organization_id, c.connector_id, c.is_valid, c.last_validated_at, c.created_at,
+              o.name AS organization_name
+         FROM connector_credentials c
+         LEFT JOIN organizations o ON o.id = c.organization_id
+        ORDER BY c.is_valid ASC, c.last_validated_at ASC NULLS FIRST
+        LIMIT 500`
+    );
+    return res.json({ connectors: result.rows });
+  } catch (err) {
+    logger.error('Connector health query failed', err as Record<string, unknown>);
+    return res.status(500).json({ error: 'Failed to load connector health.' });
+  }
+});
+
+// ─── Operations — recent deep-research jobs across clients ────────────────────
+
+router.get('/jobs', async (req: Request, res: Response) => {
+  try {
+    const statusRaw = typeof req.query.status === 'string' ? req.query.status.trim() : '';
+    const status = statusRaw || null;
+    const limit = clampLimit(req.query.limit, 50, 200);
+    const [jobs, summary] = await Promise.all([
+      query(
+        `SELECT j.id, j.organization_id, j.status, j.progress, j.credits_used,
+                j.created_at, j.completed_at, o.name AS organization_name
+           FROM deep_research_jobs j
+           LEFT JOIN organizations o ON o.id = j.organization_id
+          WHERE ($1::text IS NULL OR j.status = $1)
+          ORDER BY j.created_at DESC
+          LIMIT ${limit}`,
+        [status]
+      ),
+      query(
+        `SELECT status, COUNT(*)::int AS count
+           FROM deep_research_jobs
+          WHERE created_at > now() - interval '7 days'
+          GROUP BY status`
+      ),
+    ]);
+    return res.json({ jobs: jobs.rows, summary7d: summary.rows });
+  } catch (err) {
+    logger.error('Jobs query failed', err as Record<string, unknown>);
+    return res.status(500).json({ error: 'Failed to load jobs.' });
   }
 });
 

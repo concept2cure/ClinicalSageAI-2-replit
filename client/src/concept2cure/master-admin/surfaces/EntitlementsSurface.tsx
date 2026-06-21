@@ -4,24 +4,27 @@ import * as React from 'react';
 import { useEntitlements } from '../hooks/useMasterAdmin';
 import { Badge, SectionHeader, Loading, ErrorState, Empty } from '../components/ui';
 import { fmtNumber } from '../util';
+import type { ModuleEntitlement } from '../types';
 
 export function EntitlementsSurface() {
   const { data, loading, error, refresh } = useEntitlements();
 
-  if (loading && !data) return <Loading label="Loading entitlements…" />;
-  if (error && !data) return <ErrorState error={error} onRetry={refresh} />;
-  const modules = data?.modules ?? [];
-
-  // Group by category for readability.
+  // Group by category for readability. Keep this hook above any early return
+  // so hook order stays stable across renders (rules-of-hooks).
   const byCategory = React.useMemo(() => {
-    const map = new Map<string, typeof modules>();
-    for (const m of modules) {
+    const mods = data?.modules ?? [];
+    const map = new Map<string, ModuleEntitlement[]>();
+    for (const m of mods) {
       const cat = m.category || 'Other';
       if (!map.has(cat)) map.set(cat, []);
       map.get(cat)!.push(m);
     }
     return Array.from(map.entries());
-  }, [modules]);
+  }, [data]);
+
+  if (loading && !data) return <Loading label="Loading entitlements…" />;
+  if (error && !data) return <ErrorState error={error} onRetry={refresh} />;
+  const modules = data?.modules ?? [];
 
   return (
     <div className="ma-stack">

@@ -5,7 +5,13 @@
  */
 
 import * as React from 'react';
-import { useTenants, useTenantDetail, useTenantStatusMutation } from '../hooks/useMasterAdmin';
+import {
+  useTenants,
+  useTenantDetail,
+  useTenantStatusMutation,
+  useEntitlements,
+  useModuleToggleMutation,
+} from '../hooks/useMasterAdmin';
 import { Badge, SectionHeader, Loading, ErrorState, Empty } from '../components/ui';
 import { GovernedActionDialog } from '../components/GovernedActionDialog';
 import { fmtDate, fmtRelative, fmtNumber, statusTone } from '../util';
@@ -126,10 +132,35 @@ function TenantDrawer({
   onChanged: () => void;
 }) {
   const { data, loading, error, refresh } = useTenantDetail(id);
+  const catalog = useEntitlements();
   const mutate = useTenantStatusMutation();
+  const toggleModule = useModuleToggleMutation();
   const [dialog, setDialog] = React.useState<StatusValue | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [mutErr, setMutErr] = React.useState<string | null>(null);
+  const [moduleDialog, setModuleDialog] = React.useState<{ moduleId: string; name: string; next: boolean } | null>(null);
+  const [modBusy, setModBusy] = React.useState(false);
+  const [modErr, setModErr] = React.useState<string | null>(null);
+
+  const enabledMap = React.useMemo(
+    () => new Map((data?.modules ?? []).map(m => [m.module_id, m.enabled])),
+    [data?.modules]
+  );
+
+  const runModuleMutation = async (reason: string) => {
+    if (!moduleDialog) return;
+    setModBusy(true);
+    setModErr(null);
+    const r = await toggleModule(id, moduleDialog.moduleId, moduleDialog.next, reason);
+    setModBusy(false);
+    if (r.ok) {
+      setModuleDialog(null);
+      refresh();
+      onChanged();
+    } else {
+      setModErr(r.error || 'Action failed.');
+    }
+  };
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !dialog) onClose(); };
@@ -216,17 +247,38 @@ function TenantDrawer({
               )}
             </Subsection>
 
-            <Subsection title={`Modules (${data!.modules.length})`}>
-              {data!.modules.length === 0 ? (
-                <Empty label="No module subscriptions." />
+            <Subsection title="Modules and entitlements">
+              {(catalog.data?.modules.length ?? 0) === 0 ? (
+                <Empty label="No modules in the catalog." />
               ) : (
-                <div className="ma-tag-list">
-                  {data!.modules.map(m => (
-                    <Badge key={m.module_id} tone={m.enabled ? 'ok' : 'muted'}>
-                      {m.name ?? m.module_id}
-                    </Badge>
-                  ))}
-                </div>
+                <table className="ma-table ma-table-compact">
+                  <thead><tr><th>Module</th><th>State</th><th className="ma-num">Action</th></tr></thead>
+                  <tbody>
+                    {catalog.data!.modules.map(m => {
+                      const enabled = enabledMap.get(m.module_id) ?? false;
+                      return (
+                        <tr key={m.module_id}>
+                          <td>
+                            <div className="ma-cell-primary">{m.name ?? m.module_id}</div>
+                            {m.category && <div className="ma-cell-sub">{m.category}</div>}
+                          </td>
+                          <td><Badge tone={enabled ? 'ok' : 'muted'}>{enabled ? 'enabled' : 'disabled'}</Badge></td>
+                          <td className="ma-num">
+                            <button
+                              className={`ma-btn ma-btn-sm ${enabled ? 'ma-btn-danger' : 'ma-btn-primary'}`}
+                              onClick={() => {
+                                setModErr(null);
+                                setModuleDialog({ moduleId: m.module_id, name: m.name ?? m.module_id, next: !enabled });
+                              }}
+                            >
+                              {enabled ? 'Disable' : 'Enable'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               )}
             </Subsection>
 
@@ -281,6 +333,22 @@ function TenantDrawer({
           error={mutErr}
           onConfirm={runMutation}
           onCancel={() => setDialog(null)}
+        />
+
+        <GovernedActionDialog
+          open={moduleDialog != null}
+          title={moduleDialog?.next ? 'Enable module' : 'Disable module'}
+          description={
+            moduleDialog?.next
+              ? `Enable "${moduleDialog?.name}" for ${tenant?.name ?? 'this client'}. Recorded to the audit trail.`
+              : `Disable "${moduleDialog?.name}" for ${tenant?.name ?? 'this client'}. Recorded to the audit trail.`
+          }
+          confirmLabel={moduleDialog?.next ? 'Enable module' : 'Disable module'}
+          destructive={moduleDialog ? !moduleDialog.next : false}
+          busy={modBusy}
+          error={modErr}
+          onConfirm={runModuleMutation}
+          onCancel={() => setModuleDialog(null)}
         />
       </aside>
     </div>

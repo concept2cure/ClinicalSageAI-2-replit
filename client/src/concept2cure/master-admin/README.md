@@ -29,18 +29,32 @@ Enforcement is in two layers:
 | Nav            | What it shows                                                        |
 | -------------- | ------------------------------------------------------------------- |
 | Overview       | Estate-wide KPIs — clients, users, usage, modules, audit volume.    |
-| Clients        | Every organization; detail drawer with members/modules/usage/audit. |
+| Clients        | Every organization; detail drawer with members/modules/usage/audit + per-client module toggles. |
 | Users          | Every platform user with memberships, MFA, last login.              |
-| Entitlements   | Module catalog and per-module enablement across clients.            |
+| Billing        | Payment-status mix, trials ending soon, past-due clients, open billing alerts. |
+| Entitlements   | Module catalog and per-module enablement counts across clients.     |
+| Feature Flags  | Global rollout toggles with per-client override visibility.         |
 | Audit Trail    | Platform-wide, paginated explorer over the tamper-evident log.      |
-| System Health  | Live process / DB-pool / uptime snapshot of the running service.    |
+| Operations     | Live service health, integration-connector validity, deep-research job throughput. |
 
 ## Governed actions
 
-The two mutations — suspend/reactivate a **client** and suspend/reactivate a
-**user** — require a reason-for-change (captured by `GovernedActionDialog`,
-re-enforced server-side) and are written through `auditService`, so they land
-in the 21 CFR Part 11 tamper-evident audit chain.
+These mutations require a reason-for-change (captured by `GovernedActionDialog`,
+re-enforced server-side) and are written through `auditService`, so they land in
+the 21 CFR Part 11 tamper-evident audit chain:
+
+- suspend / reactivate a **client**
+- suspend / reactivate a **user**
+- enable / disable a **module entitlement** for a client
+- enable / disable a global **feature flag**
+- acknowledge a **billing alert**
+
+## Tests
+
+- `server/middleware/__tests__/requirePlatformAdmin.test.ts` — the access
+  boundary (platform roles pass, org roles rejected, allowlist honoured).
+- `server/routes/admin/__tests__/master-admin.test.ts` — route gating,
+  validation, status codes, and audit-on-mutation (DB/auth/audit mocked).
 
 ## Conventions reused
 

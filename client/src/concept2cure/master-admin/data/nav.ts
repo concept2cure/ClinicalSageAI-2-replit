@@ -28,20 +28,24 @@ export const MA_NAV: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: 'grid', group: 'monitor' },
   { id: 'tenants', label: 'Clients', icon: 'database', group: 'monitor' },
   { id: 'users', label: 'Users', icon: 'users', group: 'monitor' },
+  { id: 'billing', label: 'Billing', icon: 'trendingUp', group: 'monitor' },
 
-  // Support — entitlements + cross-tenant audit for the support team.
+  // Support — entitlements, feature flags + cross-tenant audit.
   { id: 'entitlements', label: 'Entitlements', icon: 'shieldCheck', group: 'support' },
+  { id: 'flags', label: 'Feature Flags', icon: 'sliders', group: 'support' },
   { id: 'audit', label: 'Audit Trail', icon: 'scroll', group: 'support' },
 
   // Platform — operational health of the running service.
-  { id: 'health', label: 'System Health', icon: 'zap', group: 'platform' },
+  { id: 'operations', label: 'Operations', icon: 'zap', group: 'platform' },
 ];
 
 export const MA_LABELS: Record<string, string> = {
   overview: 'Overview',
   tenants: 'Clients',
   users: 'Users',
+  billing: 'Billing',
   entitlements: 'Entitlements',
+  flags: 'Feature Flags',
   audit: 'Audit Trail',
-  health: 'System Health',
+  operations: 'Operations',
 };

@@ -135,3 +135,67 @@ export interface AuditPayload {
 }
 
 export type StatusValue = 'active' | 'suspended' | 'inactive';
+
+export interface BillingPayload {
+  byPaymentStatus: Array<{ payment_status: string; count: number }>;
+  trialsEndingSoon: Array<{ id: number; name: string; slug: string; tier: string; trial_ends_at: string }>;
+  pastDue: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    tier: string;
+    payment_status: string | null;
+    next_billing_date: string | null;
+  }>;
+  unacknowledgedAlerts: Array<{
+    id: number;
+    organization_id: number;
+    type: string;
+    threshold: number | null;
+    message: string;
+    created_at: string;
+    organization_name: string | null;
+  }>;
+}
+
+export interface FeatureFlag {
+  id: number;
+  feature_key: string;
+  description: string | null;
+  enabled: boolean;
+  enabled_for_organization_ids: number[] | null;
+  enabled_for_client_workspace_ids: number[] | null;
+  updated_at: string;
+}
+
+export interface ConnectorHealth {
+  id: number;
+  organization_id: number;
+  connector_id: string;
+  is_valid: boolean | null;
+  last_validated_at: string | null;
+  created_at: string;
+  organization_name: string | null;
+}
+
+export interface ResearchJob {
+  id: number;
+  organization_id: number | null;
+  status: string;
+  progress: number | null;
+  credits_used: number | null;
+  created_at: string;
+  completed_at: string | null;
+  organization_name: string | null;
+}
+
+export interface JobsPayload {
+  jobs: ResearchJob[];
+  summary7d: Array<{ status: string; count: number }>;
+}
+
+export interface CatalogModule {
+  module_id: string;
+  name: string | null;
+  category: string | null;
+}

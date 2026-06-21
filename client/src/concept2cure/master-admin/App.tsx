@@ -15,8 +15,10 @@ import { TopBar } from './shell/TopBar';
 import { Overview } from './surfaces/Overview';
 import { TenantsSurface } from './surfaces/TenantsSurface';
 import { UsersSurface } from './surfaces/UsersSurface';
+import { BillingSurface } from './surfaces/BillingSurface';
 import { EntitlementsSurface } from './surfaces/EntitlementsSurface';
-import { SystemHealthSurface } from './surfaces/SystemHealthSurface';
+import { FeatureFlagsSurface } from './surfaces/FeatureFlagsSurface';
+import { OperationsSurface } from './surfaces/OperationsSurface';
 import { AuditSurface } from './surfaces/AuditSurface';
 import { MA_LABELS } from './data/nav';
 
@@ -101,14 +103,20 @@ export function App() {
     case 'users':
       surface = <UsersSurface />;
       break;
+    case 'billing':
+      surface = <BillingSurface />;
+      break;
     case 'entitlements':
       surface = <EntitlementsSurface />;
+      break;
+    case 'flags':
+      surface = <FeatureFlagsSurface />;
       break;
     case 'audit':
       surface = <AuditSurface />;
       break;
-    case 'health':
-      surface = <SystemHealthSurface />;
+    case 'operations':
+      surface = <OperationsSurface />;
       break;
     default:
       surface = <Overview onJump={setActiveNav} />;

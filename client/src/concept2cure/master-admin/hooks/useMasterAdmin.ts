@@ -19,6 +19,10 @@ import type {
   SystemHealthPayload,
   AuditPayload,
   StatusValue,
+  BillingPayload,
+  FeatureFlag,
+  ConnectorHealth,
+  JobsPayload,
 } from '../types';
 
 const BASE = '/api/admin/master';
@@ -51,13 +55,32 @@ export function useEntitlements() {
   return useFetchJson<{ modules: ModuleEntitlement[] }>(`${BASE}/entitlements`);
 }
 
+export function useBilling() {
+  return useFetchJson<BillingPayload>(`${BASE}/billing`);
+}
+
+export function useFeatureFlags() {
+  return useFetchJson<{ flags: FeatureFlag[] }>(`${BASE}/feature-flags`);
+}
+
+export function useConnectors() {
+  return useFetchJson<{ connectors: ConnectorHealth[] }>(`${BASE}/connectors`);
+}
+
+export function useJobs(params: { status?: string } = {}) {
+  const qs = new URLSearchParams();
+  if (params.status) qs.set('status', params.status);
+  const suffix = qs.toString() ? `?${qs.toString()}` : '';
+  return useFetchJson<JobsPayload>(`${BASE}/jobs${suffix}`);
+}
+
 export function useSystemHealth() {
   return useFetchJson<SystemHealthPayload>(`${BASE}/system-health`);
 }
 
 export function useAudit(params: { tenantId?: number; action?: string; limit?: number; offset?: number } = {}) {
   const qs = new URLSearchParams();
-  if (params.tenantId != null) qs.set('tenantId', String(params.tenantId));
+  if (params.tenantId != null) qs.set('client', String(params.tenantId));
   if (params.action) qs.set('action', params.action);
   if (params.limit != null) qs.set('limit', String(params.limit));
   if (params.offset != null) qs.set('offset', String(params.offset));
@@ -106,4 +129,40 @@ export function useUserStatusMutation() {
     },
     []
   );
+}
+
+async function patch(url: string, body: unknown): Promise<MutationResult> {
+  try {
+    const res = await apiRequest('PATCH', url, body);
+    if (!res.ok) {
+      const b = await res.json().catch(() => ({}));
+      return { ok: false, error: b.error || `HTTP ${res.status}` };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Request failed' };
+  }
+}
+
+/** Enable / disable a module for a single client. */
+export function useModuleToggleMutation() {
+  return useCallback(
+    (tenantId: number, moduleId: string, enabled: boolean, reason: string) =>
+      patch(`${BASE}/tenants/${tenantId}/modules`, { moduleId, enabled, reason }),
+    []
+  );
+}
+
+/** Toggle a global feature flag. */
+export function useFeatureFlagMutation() {
+  return useCallback(
+    (key: string, enabled: boolean, reason: string) =>
+      patch(`${BASE}/feature-flags/${encodeURIComponent(key)}`, { enabled, reason }),
+    []
+  );
+}
+
+/** Acknowledge a billing alert. */
+export function useAlertAckMutation() {
+  return useCallback((id: number) => patch(`${BASE}/billing/alerts/${id}/acknowledge`, {}), []);
 }
