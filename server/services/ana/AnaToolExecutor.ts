@@ -5213,6 +5213,83 @@ registerToolHandler('validate_docx', async (input, ctx) => {
   }
 });
 
+// Verify Docx Against Source — content-fidelity check (not just structure).
+// Extracts the built .docx text and (1) diffs it against the supplied source
+// text and (2) asserts each required string appears verbatim. This is the
+// audited "verify it against your text / confirm the base caption strings" step.
+registerToolHandler('verify_docx_against_source', async (input, ctx) => {
+  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
+  if (!inputDocxPath) {
+    return JSON.stringify({ error: 'verify_docx_against_source requires input_docx_path (string).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'verify_docx_against_source requires tenant context (organizationId).' });
+  }
+
+  const expectedText = typeof input.expected_text === 'string' ? input.expected_text : '';
+  const requiredStrings = Array.isArray(input.required_strings)
+    ? input.required_strings.filter((s): s is string => typeof s === 'string' && s.length > 0)
+    : [];
+
+  if (!expectedText && requiredStrings.length === 0) {
+    return JSON.stringify({
+      error: 'verify_docx_against_source requires expected_text and/or a non-empty required_strings array.',
+    });
+  }
+
+  try {
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { extractDocumentText } = await import('../ocr/index.js');
+
+    const buf = await fs.readFile(inputDocxPath);
+    const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const extracted = await extractDocumentText(buf, DOCX_MIME, path.basename(inputDocxPath));
+    const docText = extracted.text ?? '';
+
+    // (1) Required-string verbatim check (exact substring match).
+    const missingRequiredStrings = requiredStrings.filter((s) => !docText.includes(s));
+
+    // (2) Structural text diff against the supplied source, when provided.
+    let divergenceSummary: { added: number; removed: number; modified: number; unchanged: number } | undefined;
+    let additions = 0;
+    let deletions = 0;
+    if (expectedText) {
+      const { diffDocumentStructure } = await import('../document-analysis');
+      const d = diffDocumentStructure(expectedText, docText);
+      divergenceSummary = d.summary;
+      additions = d.flat.additions;
+      deletions = d.flat.deletions;
+    }
+
+    const ok = missingRequiredStrings.length === 0 && additions === 0 && deletions === 0;
+
+    return JSON.stringify({
+      ok,
+      docxPath: inputDocxPath,
+      extractionMethod: extracted.method,
+      docCharCount: docText.length,
+      requiredStringsChecked: requiredStrings.length,
+      missingRequiredStrings,
+      // additions = lines in the document not in the source; deletions = source lines absent from the document.
+      divergence: expectedText ? { summary: divergenceSummary, additions, deletions } : undefined,
+      message: ok
+        ? `Verified — document reproduces the source${
+            requiredStrings.length ? ` and all ${requiredStrings.length} required string(s)` : ''
+          }; no content divergence.`
+        : `NOT verified — ${
+            missingRequiredStrings.length ? `${missingRequiredStrings.length} required string(s) missing; ` : ''
+          }${expectedText ? `${additions} added / ${deletions} dropped line(s) vs. source.` : ''}`.trim(),
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `verify_docx_against_source failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify the .docx path exists and is a readable Word document.`,
+    });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Container execution handler — run a bash script in a hardened Docker
 // container (the native computer-use path). Gated off by default; returns a
