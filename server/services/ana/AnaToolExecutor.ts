@@ -11168,6 +11168,26 @@ registerToolHandler('code_drug', async (input: Record<string, unknown>) => {
   }
 });
 
+// ICH Q2 analytical method validation — deterministic, no DB/network.
+registerToolHandler('assess_analytical_method_validation', async (input: Record<string, unknown>) => {
+  try {
+    const { assessMethodValidation } = await import('../analytical/method-validation.js');
+    const result = assessMethodValidation(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction: 'Report the linearity/precision/accuracy numbers and pass/fail verbatim. No lack-of-fit p-value is computed (out of scope).',
+    });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|at least|requires|LOW\/MID\/HIGH|r2Min|finite/i.test(m)) {
+      return JSON.stringify({ status: 'needs_parameters', message: m });
+    }
+    return JSON.stringify({ error: `assess_analytical_method_validation failed: ${m}` });
+  }
+});
+
 // AnA self-navigation — discover navigable screens from the governed registry.
 registerToolHandler('list_app_screens', async (input: Record<string, unknown>) => {
   try {
