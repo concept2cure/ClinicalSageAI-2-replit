@@ -11245,6 +11245,98 @@ registerToolHandler('code_drug', async (input: Record<string, unknown>) => {
   }
 });
 
+// ── Advanced HEOR + CDISC pipeline — deterministic, no DB/network. ──
+registerToolHandler('model_markov_cohort', async (input: Record<string, unknown>) => {
+  try {
+    const { runMarkovModel } = await import('../heor/markov-model.js');
+    const result = runMarkovModel(input as any);
+    return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction: 'Report total discounted cost and QALYs verbatim; note the start-of-cycle / first-cycle-undiscounted conventions.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must|sum to 1|index-aligned|at least|cycles|discount|cycleLength|cohortSize/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `model_markov_cohort failed: ${m}` });
+  }
+});
+
+registerToolHandler('run_probabilistic_sensitivity', async (input: Record<string, unknown>) => {
+  try {
+    const { runProbabilisticSensitivity } = await import('../heor/psa.js');
+    const result = runProbabilisticSensitivity(input as any);
+    return JSON.stringify({ status: 'computed', engine: 'seeded-monte-carlo', result, instruction: 'Report the ICER, probabilityDominant, and CEAC verbatim. Results are reproducible for the given seed.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/finite|non-negative|willingnessToPay|requires/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `run_probabilistic_sensitivity failed: ${m}` });
+  }
+});
+
+registerToolHandler('run_cdisc_pipeline', async (input: Record<string, unknown>) => {
+  try {
+    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
+    const { runCdiscPipeline } = await import('../cdisc/pipeline.js');
+    const result = runCdiscPipeline(input.spec as any);
+    return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction: 'Lead with readiness.submissionReady and error count; list errors before warnings. Structural subset, not the full validator of record.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `run_cdisc_pipeline failed: ${m}` });
+  }
+});
+
+// ── 510(k) cover-letter + summary composition — tenant-scoped (org-scoped
+// section pull); fail closed without organization context. ──
+registerToolHandler('compose_correspondence_cover_letter', async (input: Record<string, unknown>, ctx) => {
+  try {
+    if (!ctx?.organizationId) return JSON.stringify({ status: 'needs_context', message: 'compose_correspondence_cover_letter requires an active organization context.' });
+    const documentId = typeof input.documentId === 'number' ? input.documentId : Number(input.documentId);
+    if (!Number.isFinite(documentId)) return JSON.stringify({ status: 'needs_parameters', message: 'documentId (number) is required.' });
+    if (!Array.isArray(input.issues) || input.issues.length === 0) return JSON.stringify({ status: 'needs_parameters', message: 'issues[] is required and must be non-empty.' });
+    const { composeCoverLetterDraft } = await import('../cover-letter/cover-letter-composer.js');
+    const draft = await composeCoverLetterDraft({
+      organizationId: Number(ctx.organizationId),
+      documentId,
+      submissionTrackingNumber: typeof input.submissionTrackingNumber === 'string' ? input.submissionTrackingNumber : null,
+      sponsorName: typeof input.sponsorName === 'string' ? input.sponsorName : '',
+      issues: input.issues as any[],
+    });
+    return JSON.stringify({ status: 'composed', engine: 'deterministic', body: draft.body, missingSections: draft.missingSections, provenance: draft.provenance, instruction: 'Surface missingSections before sending; the body is deterministic.' });
+  } catch (err: any) {
+    return JSON.stringify({ error: `compose_correspondence_cover_letter failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('compose_510k_summary', async (input: Record<string, unknown>, ctx) => {
+  try {
+    if (!ctx?.organizationId) return JSON.stringify({ status: 'needs_context', message: 'compose_510k_summary requires an active organization context.' });
+    const documentId = typeof input.documentId === 'number' ? input.documentId : Number(input.documentId);
+    if (!Number.isFinite(documentId)) return JSON.stringify({ status: 'needs_parameters', message: 'documentId (number) is required.' });
+    if (!Array.isArray(input.predicates) || input.predicates.length === 0) return JSON.stringify({ status: 'needs_parameters', message: 'predicates[] is required and must be non-empty.' });
+    const dc = input.deviceClass;
+    if (dc !== 'I' && dc !== 'II' && dc !== 'III') return JSON.stringify({ status: 'needs_parameters', message: "deviceClass must be 'I', 'II', or 'III'." });
+    const { compose510kSummary } = await import('../cover-letter/k510-summary-composer.js');
+    const draft = await compose510kSummary({
+      organizationId: Number(ctx.organizationId),
+      documentId,
+      submissionTrackingNumber: typeof input.submissionTrackingNumber === 'string' ? input.submissionTrackingNumber : null,
+      sponsorName: typeof input.sponsorName === 'string' ? input.sponsorName : '',
+      deviceTradeName: typeof input.deviceTradeName === 'string' ? input.deviceTradeName : '',
+      commonName: typeof input.commonName === 'string' ? input.commonName : null,
+      productCode: typeof input.productCode === 'string' ? input.productCode : null,
+      regulationNumber: typeof input.regulationNumber === 'string' ? input.regulationNumber : null,
+      deviceClass: dc,
+      contactName: typeof input.contactName === 'string' ? input.contactName : null,
+      contactEmail: typeof input.contactEmail === 'string' ? input.contactEmail : null,
+      preparedDate: new Date(),
+      predicates: input.predicates as any[],
+    });
+    return JSON.stringify({ status: 'composed', engine: 'deterministic', body: draft.body, missingSections: draft.missingSections, provenance: draft.provenance, instruction: 'Report missingSections; do not present the summary as complete while required sections are missing.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/predicate|primary|required/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `compose_510k_summary failed: ${m}` });
+  }
+});
+
 // ICH Q2 analytical method validation — deterministic, no DB/network.
 registerToolHandler('assess_analytical_method_validation', async (input: Record<string, unknown>) => {
   try {
