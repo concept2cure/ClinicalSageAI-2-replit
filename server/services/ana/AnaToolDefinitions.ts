@@ -18,6 +18,7 @@ import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
 import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
 import { NAVIGATION_TOOLS } from './navigationTools';
 import { EXTENDED_REGULATORY_TOOLS } from './extendedRegulatoryTools';
+import { PHARMACOVIGILANCE_REPORTING_TOOLS } from './pharmacovigilanceReportingTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7115,6 +7116,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // formatting — deterministic engines newly reachable by AnA. See
   // extendedRegulatoryTools.ts.
   ...EXTENDED_REGULATORY_TOOLS,
+  // Pharmacovigilance reporting: SAE line listing + E2B(R3) ICSR composition
+  // over the org's recorded adverse events. See pharmacovigilanceReportingTools.ts.
+  ...PHARMACOVIGILANCE_REPORTING_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
