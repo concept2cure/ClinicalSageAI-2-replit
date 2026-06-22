@@ -100,8 +100,11 @@ rather than achievable-by-composition.
 
 ## 4. Bottom line
 
-- **Parity is essentially already there.** 11 of the 12 actions in the screenshot are
-  delivered by wired, tested AnA tools, and AnA chains them autonomously.
-- **One narrow gap:** a single audited *content-fidelity* verification
-  (`verify_docx_against_source`). Recommended as the next small build.
-- **No new architecture, no DB migration** required to close it.
+- **Parity is complete — 12/12.** Every move in the screenshot is delivered by a
+  wired, tested AnA tool, and AnA chains them autonomously.
+- The one former gap — an audited *content-fidelity* verification — is closed by
+  **`verify_docx_against_source`**.
+- **Proven, not asserted.** `server/services/ana/__tests__/ana-document-surgery-loop.e2e.test.ts`
+  drives the full loop (author → clone validated base → inject → correct → append →
+  validate → verify) end to end through the real python-docx/lxml runtime.
+- **No new architecture, no DB migration** were required to close it.
