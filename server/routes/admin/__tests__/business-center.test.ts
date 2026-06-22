@@ -252,3 +252,51 @@ describe('access roster (designated personnel)', () => {
     delete process.env.BUSINESS_CENTER_EMAILS;
   });
 });
+
+describe('executive summary', () => {
+  it('403s a support user', async () => {
+    const res = await request(makeApp())
+      .get('/api/admin/business/executive-summary')
+      .set('x-test-user', SUPPORT);
+    expect(res.status).toBe(403);
+  });
+
+  it('rolls up portfolio MRR, margin, and concentration', async () => {
+    const res = await request(makeApp())
+      .get('/api/admin/business/executive-summary')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+    // 1 client, standard tier (49900c), 100 deep_research credits × 25c = 2500c
+    expect(res.body.portfolio).toMatchObject({
+      clients: 1,
+      activeClients: 1,
+      mrrCents: 49900,
+      monthlyCostRunRateCents: 2500,
+      grossMarginCents: 47400,
+    });
+    expect(res.body.risk.lossMakingClients).toBe(0);
+    expect(res.body.risk.revenueConcentrationTop5Pct).toBe(100);
+    expect(res.body.topClients[0]).toMatchObject({ name: 'Acme', sharePct: 100 });
+  });
+
+  it('flags a loss-making client (cost > revenue)', async () => {
+    queryMock.mockImplementation((sql: string) => {
+      if (/FROM platform_cost_rates/.test(sql)) return Promise.resolve({ rows: [] });
+      if (/FROM tier_pricing/.test(sql)) return Promise.resolve({ rows: [] });
+      if (/FROM organizations/.test(sql))
+        return Promise.resolve({
+          rows: [{ id: 1, name: 'Acme', slug: 'acme', tier: 'standard', status: 'active', seats: 0 }],
+        });
+      if (/FROM usage_records/.test(sql))
+        // 3000 deep_research credits × 25c = 75000c cost > 49900c revenue
+        return Promise.resolve({ rows: [{ organization_id: 1, feature_id: 'deep_research', credits: 3000 }] });
+      return Promise.resolve({ rows: [{}] });
+    });
+    const res = await request(makeApp())
+      .get('/api/admin/business/executive-summary')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+    expect(res.body.risk.lossMakingClients).toBe(1);
+    expect(res.body.risk.lossMakers[0]).toMatchObject({ organizationId: 1, marginCents: -25100 });
+  });
+});

@@ -456,6 +456,98 @@ router.patch('/tier-pricing/:tier', async (req: Request, res: Response) => {
   }
 });
 
+// ─── Executive summary — portfolio view for the owner ────────────────────────
+// One call that answers "how is the business doing?": recognized MRR, monthly
+// cost run-rate, blended gross margin, loss-making clients (cost > revenue), and
+// revenue concentration (dependence on the largest accounts). All derived from
+// the SAME per-client cost accounting, so the numbers reconcile exactly.
+
+router.get('/executive-summary', async (_req: Request, res: Response) => {
+  try {
+    const rows = await buildCostAccounting();
+    const totals = rows.reduce(
+      (t, r) => {
+        t.revenueCents += r.revenueCents;
+        t.costCents += r.costCents;
+        return t;
+      },
+      { revenueCents: 0, costCents: 0 }
+    );
+    const marginCents = totals.revenueCents - totals.costCents;
+    const marginPct =
+      totals.revenueCents > 0 ? Math.round((marginCents / totals.revenueCents) * 1000) / 10 : null;
+
+    const activeClients = rows.filter(r => r.status === 'active').length;
+
+    // Loss-makers: a client costs more to serve than it pays. rows are already
+    // sorted lowest-margin-first by buildCostAccounting().
+    const lossMakers = rows
+      .filter(r => r.marginCents < 0)
+      .map(r => ({
+        organizationId: r.organizationId,
+        name: r.name,
+        revenueCents: r.revenueCents,
+        costCents: r.costCents,
+        marginCents: r.marginCents,
+      }));
+
+    // Revenue concentration — exposure to the largest accounts.
+    const byRevenue = [...rows].sort((a, b) => b.revenueCents - a.revenueCents);
+    const topClients = byRevenue.slice(0, 5).map(r => ({
+      organizationId: r.organizationId,
+      name: r.name,
+      revenueCents: r.revenueCents,
+      sharePct:
+        totals.revenueCents > 0
+          ? Math.round((r.revenueCents / totals.revenueCents) * 1000) / 10
+          : 0,
+    }));
+    const top5SharePct =
+      totals.revenueCents > 0
+        ? Math.round(
+            (byRevenue.slice(0, 5).reduce((s, r) => s + r.revenueCents, 0) /
+              totals.revenueCents) *
+              1000
+          ) / 10
+        : 0;
+
+    // Tier mix.
+    const tierMap = new Map<string, { clients: number; revenueCents: number }>();
+    for (const r of rows) {
+      const t = tierMap.get(r.tier) ?? { clients: 0, revenueCents: 0 };
+      t.clients += 1;
+      t.revenueCents += r.revenueCents;
+      tierMap.set(r.tier, t);
+    }
+    const tierMix = [...tierMap.entries()]
+      .map(([tier, v]) => ({ tier, ...v }))
+      .sort((a, b) => b.revenueCents - a.revenueCents);
+
+    return res.json({
+      portfolio: {
+        clients: rows.length,
+        activeClients,
+        mrrCents: totals.revenueCents,
+        monthlyCostRunRateCents: totals.costCents,
+        grossMarginCents: marginCents,
+        grossMarginPct: marginPct,
+      },
+      risk: {
+        lossMakingClients: lossMakers.length,
+        lossMakers,
+        revenueConcentrationTop5Pct: top5SharePct,
+      },
+      topClients,
+      tierMix,
+      note: 'Revenue is modeled from the tier price card; cost is metered usage × owner rates.',
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    logger.error('Executive summary query failed', err as Record<string, unknown>);
+    return res.status(500).json({ error: 'Failed to build executive summary.' });
+  }
+});
+
 // ─── Metering coverage — accuracy audit for the cost accounting ──────────────
 // Cost is attributed only from features that emit usage_records. This diagnostic
 // surfaces the accuracy boundary so the owner can trust the margins:
