@@ -49,12 +49,39 @@ the 21 CFR Part 11 tamper-evident audit chain:
 - enable / disable a global **feature flag**
 - acknowledge a **billing alert**
 
+## Business Center (owner / finance tier — API only)
+
+A **separate, stricter** access tier for cost-based accounting and business
+operations, mounted at `/api/admin/business`. The support team can reach Master
+Admin but **not** the Business Center.
+
+- **Guard:** `server/middleware/requireBusinessAdmin.ts` — business roles
+  (`owner` / `business_admin` / `super_admin`) or the `BUSINESS_CENTER_EMAILS`
+  allowlist. `support` / `platform_admin` are rejected.
+- **Endpoints** (`server/routes/admin/business-center.ts`):
+  - `GET /cost-accounting` — per-client revenue, attributed cost, gross margin
+    (trailing 30d), sorted lowest-margin first.
+  - `GET /cost-accounting.csv` — CSV export (audited).
+  - `GET /pnl` — platform revenue/cost/margin roll-up, with a by-tier breakdown.
+  - `GET /cost-rates`, `PATCH /cost-rates/:costKey` — unit cost rate card.
+  - `GET /tier-pricing`, `PATCH /tier-pricing/:tier` — per-tier price card.
+- **Cost model:** revenue = tier price card × seats; cost = metered
+  `usage_records` credits × owner-set unit rates. Rate cards live in
+  `platform_cost_rates` / `tier_pricing` (owner-managed, non-tenant config) and
+  fall back to code-level defaults so reports work before any override. All
+  rate-card edits are governed (reason-for-change) and audited.
+- UI intentionally not built (per product direction) — consume via API / CSV.
+
 ## Tests
 
 - `server/middleware/__tests__/requirePlatformAdmin.test.ts` — the access
   boundary (platform roles pass, org roles rejected, allowlist honoured).
 - `server/routes/admin/__tests__/master-admin.test.ts` — route gating,
   validation, status codes, and audit-on-mutation (DB/auth/audit mocked).
+- `server/middleware/__tests__/requireBusinessAdmin.test.ts` — the stricter
+  finance boundary (support is rejected).
+- `server/routes/admin/__tests__/business-center.test.ts` — cost-accounting
+  math, P&L, CSV export, and governed rate-card edits.
 
 ## Conventions reused
 

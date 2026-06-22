@@ -17434,6 +17434,50 @@ export const featureToggles = pgTable(
 export type FeatureToggle = InferSelectModel<typeof featureToggles>;
 
 // ============================================================
+// BUSINESS CENTER — cost accounting config (platform-global)
+// ============================================================
+// Platform-wide, NON-tenant configuration the Business Center uses to compute
+// cost-based accounting per client. No tenant column (owner-managed rate
+// cards), so out of scope for RLS / tenant-isolation.
+
+/** Unit cost rates the platform owner attributes to metered usage. */
+export const platformCostRates = pgTable('platform_cost_rates', {
+  id: serial('id').primaryKey(),
+  costKey: text('cost_key').notNull().unique(), // usage feature_id, or 'default'
+  label: text('label'),
+  unitCostCents: integer('unit_cost_cents').default(0).notNull(),
+  unit: text('unit').default('credit').notNull(), // credit | seat | gb_month | month
+  updatedBy: text('updated_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertPlatformCostRateSchema = createInsertSchemaOmit(platformCostRates, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type PlatformCostRate = InferSelectModel<typeof platformCostRates>;
+
+/** Per-tier price card used to derive recognized revenue per client. */
+export const tierPricing = pgTable('tier_pricing', {
+  id: serial('id').primaryKey(),
+  tier: text('tier').notNull().unique(), // free | standard | professional | enterprise
+  monthlyPriceCents: integer('monthly_price_cents').default(0).notNull(),
+  perSeatCents: integer('per_seat_cents').default(0).notNull(),
+  updatedBy: text('updated_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertTierPricingSchema = createInsertSchemaOmit(tierPricing, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type TierPricing = InferSelectModel<typeof tierPricing>;
+
+// ============================================================
 // DATA LINEAGE TRACKING (Regulatory-Grade)
 // ============================================================
 

@@ -1,0 +1,170 @@
+/**
+ * Route-level tests for the Business Center API.
+ *
+ * DB / audit / auth are mocked so these exercise the real router + the real
+ * requireBusinessAdmin guard: the finance access boundary, the cost-accounting
+ * math (revenue from the tier card, cost from usage × rate), CSV export, and
+ * governed rate-card edits.
+ */
+
+import express from 'express';
+import request from 'supertest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const queryMock = vi.fn();
+const logActionMock = vi.fn();
+
+vi.mock('../../../db', () => ({
+  query: (...args: unknown[]) => queryMock(...args),
+}));
+vi.mock('../../../services/auditService', () => ({
+  default: { logAction: (...args: unknown[]) => logActionMock(...args) },
+}));
+vi.mock('../../../auth', () => ({
+  authMiddleware: (req: any, _res: any, next: any) => {
+    const hdr = req.headers['x-test-user'];
+    if (hdr) {
+      const u = JSON.parse(hdr);
+      req.user = u;
+      req.userRole = u.role;
+      req.userEmail = u.email;
+      req.userId = u.id;
+    }
+    next();
+  },
+}));
+
+import router from '../business-center';
+
+function makeApp() {
+  const app = express();
+  app.use(express.json());
+  app.use('/api/admin/business', router);
+  return app;
+}
+
+const BIZ = JSON.stringify({ id: 1, role: 'business_admin', email: 'owner@x.io' });
+const SUPPORT = JSON.stringify({ id: 2, role: 'support', email: 's@x.io' });
+
+beforeEach(() => {
+  queryMock.mockReset();
+  logActionMock.mockReset();
+  queryMock.mockImplementation((sql: string) => {
+    if (/FROM platform_cost_rates/.test(sql)) return Promise.resolve({ rows: [] }); // use defaults
+    if (/FROM tier_pricing/.test(sql)) return Promise.resolve({ rows: [] }); // use defaults
+    if (/INSERT INTO platform_cost_rates/.test(sql))
+      return Promise.resolve({ rows: [{ cost_key: 'deep_research', unit_cost_cents: 30, unit: 'credit', updated_at: 'now' }] });
+    if (/INSERT INTO tier_pricing/.test(sql))
+      return Promise.resolve({ rows: [{ tier: 'standard', monthly_price_cents: 60000, per_seat_cents: 0, updated_at: 'now' }] });
+    if (/FROM organizations/.test(sql))
+      return Promise.resolve({ rows: [{ id: 1, name: 'Acme', slug: 'acme', tier: 'standard', status: 'active', seats: 0 }] });
+    if (/FROM usage_records/.test(sql))
+      return Promise.resolve({ rows: [{ organization_id: 1, feature_id: 'deep_research', credits: 100 }] });
+    return Promise.resolve({ rows: [{}] });
+  });
+});
+
+describe('access boundary (stricter than Master Admin)', () => {
+  it('401s an unauthenticated request', async () => {
+    const res = await request(makeApp()).get('/api/admin/business/cost-accounting');
+    expect(res.status).toBe(401);
+  });
+
+  it('403s a support user', async () => {
+    const res = await request(makeApp())
+      .get('/api/admin/business/cost-accounting')
+      .set('x-test-user', SUPPORT);
+    expect(res.status).toBe(403);
+  });
+
+  it('200s a business admin', async () => {
+    const res = await request(makeApp())
+      .get('/api/admin/business/cost-accounting')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('cost accounting math', () => {
+  it('computes revenue from the tier card and cost from usage × rate', async () => {
+    const res = await request(makeApp())
+      .get('/api/admin/business/cost-accounting')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+    const acme = res.body.clients.find((c: any) => c.organizationId === 1);
+    // standard default monthly = 49900c; 100 deep_research credits × 25c = 2500c
+    expect(acme.revenueCents).toBe(49900);
+    expect(acme.costCents).toBe(2500);
+    expect(acme.marginCents).toBe(47400);
+    expect(res.body.totals.revenueCents).toBe(49900);
+    expect(res.body.totals.costCents).toBe(2500);
+  });
+
+  it('rolls up a platform P&L', async () => {
+    const res = await request(makeApp())
+      .get('/api/admin/business/pnl')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+    expect(res.body.revenueCents).toBe(49900);
+    expect(res.body.marginCents).toBe(47400);
+    expect(res.body.byTier[0]).toMatchObject({ tier: 'standard', clients: 1 });
+  });
+
+  it('exports CSV and audits the export', async () => {
+    const res = await request(makeApp())
+      .get('/api/admin/business/cost-accounting.csv')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('text/csv');
+    expect(res.text.split('\n')[0]).toContain('revenue_usd,cost_usd,margin_usd');
+    expect(logActionMock).toHaveBeenCalledOnce();
+  });
+});
+
+describe('rate cards', () => {
+  it('lists cost rates merged over defaults', async () => {
+    const res = await request(makeApp())
+      .get('/api/admin/business/cost-rates')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+    const dr = res.body.rates.find((r: any) => r.costKey === 'deep_research');
+    expect(dr).toMatchObject({ unitCostCents: 25, source: 'default' });
+  });
+
+  it('rejects a cost-rate update without a reason', async () => {
+    const res = await request(makeApp())
+      .patch('/api/admin/business/cost-rates/deep_research')
+      .set('x-test-user', BIZ)
+      .send({ unitCostCents: 30 });
+    expect(res.status).toBe(400);
+    expect(logActionMock).not.toHaveBeenCalled();
+  });
+
+  it('updates a cost rate and audits it', async () => {
+    const res = await request(makeApp())
+      .patch('/api/admin/business/cost-rates/deep_research')
+      .set('x-test-user', BIZ)
+      .send({ unitCostCents: 30, reason: 'vendor price increase' });
+    expect(res.status).toBe(200);
+    expect(logActionMock).toHaveBeenCalledOnce();
+    expect(logActionMock.mock.calls[0][0]).toMatchObject({ resourceType: 'platform_cost_rate' });
+  });
+
+  it('404s a tier-pricing update for an unknown tier', async () => {
+    const res = await request(makeApp())
+      .patch('/api/admin/business/tier-pricing/platinum')
+      .set('x-test-user', BIZ)
+      .send({ monthlyPriceCents: 100000, reason: 'new tier' });
+    expect(res.status).toBe(404);
+  });
+
+  it('updates tier pricing and audits it', async () => {
+    const res = await request(makeApp())
+      .patch('/api/admin/business/tier-pricing/standard')
+      .set('x-test-user', BIZ)
+      .send({ monthlyPriceCents: 60000, reason: 'annual price review' });
+    expect(res.status).toBe(200);
+    expect(logActionMock).toHaveBeenCalledOnce();
+    expect(logActionMock.mock.calls[0][0]).toMatchObject({ resourceType: 'tier_pricing' });
+  });
+});
