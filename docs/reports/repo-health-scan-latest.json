@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-22T00:13:32.096Z",
+  "generatedAt": "2026-06-22T01:22:26.219Z",
   "git": {
-    "sha": "5b1dec8a6e2b51e5567173c6c34abed6bcf3dd2e",
+    "sha": "4826d257a4a185ea3b7dc1c23d9f3f302b43105c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2344,7 +2344,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 1863
+        "lines": 1876
       },
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
