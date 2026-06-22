@@ -12,7 +12,7 @@
  */
 
 import { randomUUID, createHash } from 'crypto';
-import { gatewayRetryAttempts } from './retry-policy.js';
+import { gatewayRetryAttempts, extractErrorStatus, isTransientStatus } from './retry-policy.js';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import type {
@@ -1537,10 +1537,20 @@ export class AIGateway {
     const health = this.providerHealth.get(provider);
     if (!health) return;
 
-    health.consecutiveFailures++;
     health.lastFailure = new Date();
     health.requestCount++;
     health.errorRate = Math.min(1, health.errorRate + 0.1);
+
+    // A transient capacity signal (429 rate-limit, 5xx, or 529 "Overloaded") is
+    // not a provider-health failure: the per-request retry + fallback already
+    // handle it, and benching the provider for a brief overload would needlessly
+    // route every subsequent request away from the primary model. Record it as a
+    // soft error (errorRate above) but don't advance the circuit breaker.
+    if (isTransientStatus(extractErrorStatus(error))) {
+      return;
+    }
+
+    health.consecutiveFailures++;
 
     // Mark unhealthy after 3 consecutive failures
     if (health.consecutiveFailures >= 3) {

@@ -39,6 +39,11 @@ export function classifyGatewayError(err: unknown): ClassifiedGatewayError {
   }
   if (err instanceof GatewayAllProvidersFailedError) {
     const msg = err.message || '';
+    // 529 = Anthropic "Overloaded". Same client guidance as a rate limit (retry
+    // shortly), so it shares the RATE_LIMITED code but gets an accurate message.
+    if (/\b529\b|overload/i.test(msg)) {
+      return { code: 'RATE_LIMITED', message: 'The AI provider is overloaded. Try again shortly.' };
+    }
     if (/429|rate.?limit/i.test(msg)) {
       return { code: 'RATE_LIMITED', message: 'The AI provider is rate limiting requests. Try again shortly.' };
     }

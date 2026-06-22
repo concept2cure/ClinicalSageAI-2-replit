@@ -279,6 +279,27 @@ describe('AIGateway', () => {
       expect(openaiHealth!.healthy).toBe(true);
       expect(openaiHealth!.consecutiveFailures).toBe(0);
     });
+
+    it('does NOT bench a provider on repeated 529 Overloaded errors', () => {
+      const overloaded = Object.assign(new Error('529 overloaded_error'), { status: 529 });
+      for (let i = 0; i < 5; i++) {
+        (gateway as any).recordFailure('openai', overloaded);
+      }
+      const health = gateway.getProviderHealth().find(h => h.provider === 'openai')!;
+      // Transient capacity signal: circuit breaker must not advance or trip.
+      expect(health.consecutiveFailures).toBe(0);
+      expect(health.healthy).toBe(true);
+    });
+
+    it('still trips the circuit breaker on hard (non-transient) failures', () => {
+      const hardError = Object.assign(new Error('invalid request'), { status: 400 });
+      for (let i = 0; i < 3; i++) {
+        (gateway as any).recordFailure('openai', hardError);
+      }
+      const health = gateway.getProviderHealth().find(h => h.provider === 'openai')!;
+      expect(health.consecutiveFailures).toBeGreaterThanOrEqual(3);
+      expect(health.healthy).toBe(false);
+    });
   });
 
   // ─── Request Context ────────────────────────────────────────────────────
