@@ -20,6 +20,8 @@ import { NAVIGATION_TOOLS } from './navigationTools';
 import { EXTENDED_REGULATORY_TOOLS } from './extendedRegulatoryTools';
 import { PHARMACOVIGILANCE_REPORTING_TOOLS } from './pharmacovigilanceReportingTools';
 import { ANALYTICAL_METHOD_TOOLS } from './analyticalMethodTools';
+import { ADVANCED_MODELING_TOOLS } from './advancedModelingTools';
+import { COVER_LETTER_TOOLS } from './coverLetterTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7158,6 +7160,12 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // ICH Q2 analytical method-validation assessment (linearity/precision/accuracy).
   // See analyticalMethodTools.ts.
   ...ANALYTICAL_METHOD_TOOLS,
+  // Advanced HEOR (Markov cohort + probabilistic sensitivity) and the full CDISC
+  // pipeline. See advancedModelingTools.ts.
+  ...ADVANCED_MODELING_TOOLS,
+  // 510(k) cover-letter + 510(k) summary composition (tenant-scoped). See
+  // coverLetterTools.ts.
+  ...COVER_LETTER_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
