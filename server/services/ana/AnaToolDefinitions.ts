@@ -19,6 +19,7 @@ import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
 import { NAVIGATION_TOOLS } from './navigationTools';
 import { EXTENDED_REGULATORY_TOOLS } from './extendedRegulatoryTools';
 import { PHARMACOVIGILANCE_REPORTING_TOOLS } from './pharmacovigilanceReportingTools';
+import { ANALYTICAL_METHOD_TOOLS } from './analyticalMethodTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7119,6 +7120,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // Pharmacovigilance reporting: SAE line listing + E2B(R3) ICSR composition
   // over the org's recorded adverse events. See pharmacovigilanceReportingTools.ts.
   ...PHARMACOVIGILANCE_REPORTING_TOOLS,
+  // ICH Q2 analytical method-validation assessment (linearity/precision/accuracy).
+  // See analyticalMethodTools.ts.
+  ...ANALYTICAL_METHOD_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
