@@ -25,15 +25,21 @@ import { createScopedLogger } from '../utils/logger';
 const logger = createScopedLogger('business-center-guard');
 
 /** Roles permitted into the Business Center. Deliberately excludes support. */
-const BUSINESS_ROLES = new Set(['owner', 'business_admin', 'super_admin']);
+export const BUSINESS_ROLES = new Set(['owner', 'business_admin', 'super_admin']);
 
-function allowlistedEmails(): Set<string> {
+/** Emails on the BUSINESS_CENTER_EMAILS allowlist (lower-cased). Exported so
+ *  the access-roster endpoint reports the same source of truth this gate uses. */
+export function businessAllowlistedEmails(): Set<string> {
   return new Set(
     (process.env.BUSINESS_CENTER_EMAILS || '')
       .split(',')
       .map(e => e.trim().toLowerCase())
       .filter(Boolean)
   );
+}
+
+function allowlistedEmails(): Set<string> {
+  return businessAllowlistedEmails();
 }
 
 /** True when the authenticated request may access Business Center data. */

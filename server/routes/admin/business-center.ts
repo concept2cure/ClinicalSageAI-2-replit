@@ -23,7 +23,11 @@
 
 import { Router, Request, Response } from 'express';
 import { authMiddleware } from '../../auth';
-import { requireBusinessAdmin } from '../../middleware/requireBusinessAdmin';
+import {
+  requireBusinessAdmin,
+  BUSINESS_ROLES,
+  businessAllowlistedEmails,
+} from '../../middleware/requireBusinessAdmin';
 import { query } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import auditService from '../../services/auditService';
@@ -517,6 +521,36 @@ router.get('/metering-coverage', async (req: Request, res: Response) => {
   } catch (err) {
     logger.error('Metering coverage query failed', err as Record<string, unknown>);
     return res.status(500).json({ error: 'Failed to compute metering coverage.' });
+  }
+});
+
+// ─── Access roster — "who are my designated personnel?" ──────────────────────
+// Read-only audit of who can reach the Business Center, from the SAME source of
+// truth requireBusinessAdmin enforces: the BUSINESS_CENTER_EMAILS allowlist plus
+// any user holding a business role. Lets the owner verify access without DB/env
+// spelunking. Does NOT grant/revoke — role changes stay an explicit, separate op.
+
+router.get('/access', async (_req: Request, res: Response) => {
+  try {
+    const roles = [...BUSINESS_ROLES];
+    const roleHolders = await query(
+      `SELECT u.id, u.email, u.name, u.status, ou.role, o.name AS organization_name
+         FROM organization_users ou
+         JOIN users u ON u.id = ou.user_id
+         LEFT JOIN organizations o ON o.id = ou.organization_id
+        WHERE LOWER(ou.role) = ANY($1)
+        ORDER BY u.email`,
+      [roles]
+    );
+    return res.json({
+      roles,
+      allowlistEmails: [...businessAllowlistedEmails()].sort(),
+      roleHolders: roleHolders.rows,
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    logger.error('Access roster query failed', err as Record<string, unknown>);
+    return res.status(500).json({ error: 'Failed to load access roster.' });
   }
 });
 

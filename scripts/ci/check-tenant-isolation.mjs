@@ -159,6 +159,10 @@ const ALLOWLIST_FILES = new Set([
   // mutations carry their own row-id targeting and are written through the
   // Part-11 audit chain. See server/routes/admin/master-admin.ts.
   'server/routes/admin/master-admin.ts',
+  // Business Center — owner/finance tier. Cross-tenant by design (cost
+  // accounting + the access roster span every client), gated by
+  // requireBusinessAdmin. Same rationale as master-admin.ts above.
+  'server/routes/admin/business-center.ts',
   'server/services/audit/audit-archive.service.ts',
   'server/services/audit/chainIntegrityMonitor.ts',
   // The audit_logs SHA-256 hash chain is a single append-only chain ACROSS

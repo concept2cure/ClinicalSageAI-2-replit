@@ -224,3 +224,31 @@ describe('metering coverage (cost-accuracy audit)', () => {
     expect(res.body.healthy).toBe(true);
   });
 });
+
+describe('access roster (designated personnel)', () => {
+  it('403s a support user', async () => {
+    const res = await request(makeApp())
+      .get('/api/admin/business/access')
+      .set('x-test-user', SUPPORT);
+    expect(res.status).toBe(403);
+  });
+
+  it('reports role holders + allowlist from the guard source of truth', async () => {
+    process.env.BUSINESS_CENTER_EMAILS = 'owner@x.io, finance@x.io';
+    queryMock.mockImplementation((sql: string) => {
+      if (/FROM organization_users/.test(sql))
+        return Promise.resolve({
+          rows: [{ id: 1, email: 'owner@x.io', name: 'Owner', status: 'active', role: 'business_admin', organization_name: 'Acme' }],
+        });
+      return Promise.resolve({ rows: [{}] });
+    });
+    const res = await request(makeApp())
+      .get('/api/admin/business/access')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+    expect(res.body.roles).toEqual(expect.arrayContaining(['owner', 'business_admin', 'super_admin']));
+    expect(res.body.allowlistEmails).toEqual(['finance@x.io', 'owner@x.io']);
+    expect(res.body.roleHolders[0]).toMatchObject({ email: 'owner@x.io', role: 'business_admin' });
+    delete process.env.BUSINESS_CENTER_EMAILS;
+  });
+});
