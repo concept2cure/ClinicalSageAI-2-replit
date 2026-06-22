@@ -452,4 +452,72 @@ router.patch('/tier-pricing/:tier', async (req: Request, res: Response) => {
   }
 });
 
+// ─── Metering coverage — accuracy audit for the cost accounting ──────────────
+// Cost is attributed only from features that emit usage_records. This diagnostic
+// surfaces the accuracy boundary so the owner can trust the margins:
+//   • usageWithoutExplicitRate — a feature is billing usage but has no explicit
+//     rate, so it is priced at the catch-all 'default' rate (mispricing risk).
+//   • ratedButNoUsage — a configured rate sees no usage in the window (a stale
+//     rate, or a feature that stopped/never started metering).
+
+router.get('/metering-coverage', async (req: Request, res: Response) => {
+  try {
+    const daysRaw = Number(req.query.days);
+    const days = Number.isFinite(daysRaw) && daysRaw > 0 ? Math.min(Math.trunc(daysRaw), 365) : 90;
+
+    const [usageRes, rateRows] = await Promise.all([
+      query(
+        `SELECT feature_id,
+                SUM(credits_used)::int AS credits,
+                COUNT(*)::int AS events,
+                MAX(created_at) AS last_seen
+           FROM usage_records
+          WHERE created_at > now() - ($1 || ' days')::interval
+          GROUP BY feature_id
+          ORDER BY credits DESC`,
+        [days]
+      ),
+      query('SELECT cost_key FROM platform_cost_rates'),
+    ]);
+
+    // Explicit (non-fallback) rate keys = built-in defaults + owner overrides.
+    const explicitKeys = new Set(
+      Object.keys(DEFAULT_COST_RATES).filter(k => k !== 'default')
+    );
+    for (const r of rateRows.rows as Array<{ cost_key: string }>) {
+      if (r.cost_key !== 'default') explicitKeys.add(r.cost_key);
+    }
+
+    const meteredFeatures = (usageRes.rows as Array<{
+      feature_id: string;
+      credits: number;
+      events: number;
+      last_seen: string;
+    }>).map(r => ({
+      featureId: r.feature_id,
+      credits: r.credits,
+      events: r.events,
+      lastSeen: r.last_seen,
+      hasExplicitRate: explicitKeys.has(r.feature_id),
+    }));
+
+    const usageFeatureIds = new Set(meteredFeatures.map(f => f.featureId));
+    const usageWithoutExplicitRate = meteredFeatures
+      .filter(f => !f.hasExplicitRate)
+      .map(f => ({ featureId: f.featureId, credits: f.credits, pricedAt: 'default' as const }));
+    const ratedButNoUsage = [...explicitKeys].filter(k => !usageFeatureIds.has(k)).sort();
+
+    return res.json({
+      windowDays: days,
+      meteredFeatures,
+      gaps: { usageWithoutExplicitRate, ratedButNoUsage },
+      healthy: usageWithoutExplicitRate.length === 0 && ratedButNoUsage.length === 0,
+      generatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    logger.error('Metering coverage query failed', err as Record<string, unknown>);
+    return res.status(500).json({ error: 'Failed to compute metering coverage.' });
+  }
+});
+
 export default router;

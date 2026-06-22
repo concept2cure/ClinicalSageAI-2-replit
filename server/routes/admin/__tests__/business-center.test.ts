@@ -168,3 +168,59 @@ describe('rate cards', () => {
     expect(logActionMock.mock.calls[0][0]).toMatchObject({ resourceType: 'tier_pricing' });
   });
 });
+
+describe('metering coverage (cost-accuracy audit)', () => {
+  it('403s a support user', async () => {
+    const res = await request(makeApp())
+      .get('/api/admin/business/metering-coverage')
+      .set('x-test-user', SUPPORT);
+    expect(res.status).toBe(403);
+  });
+
+  it('flags usage with no explicit rate and rates with no usage', async () => {
+    queryMock.mockImplementation((sql: string) => {
+      if (/FROM usage_records/.test(sql))
+        return Promise.resolve({
+          rows: [
+            { feature_id: 'deep_research', credits: 100, events: 10, last_seen: 'now' },
+            { feature_id: 'mystery_feature', credits: 40, events: 4, last_seen: 'now' },
+          ],
+        });
+      if (/FROM platform_cost_rates/.test(sql)) return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [{}] });
+    });
+    const res = await request(makeApp())
+      .get('/api/admin/business/metering-coverage')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+    const leaked = res.body.gaps.usageWithoutExplicitRate.map((g: any) => g.featureId);
+    expect(leaked).toContain('mystery_feature'); // priced at 'default' → mispricing risk
+    expect(leaked).not.toContain('deep_research'); // has an explicit rate
+    expect(res.body.gaps.ratedButNoUsage).toEqual(
+      expect.arrayContaining(['csr_builder', 'ctd_builder'])
+    );
+    expect(res.body.healthy).toBe(false);
+  });
+
+  it('reports healthy when every metered feature is explicitly rated and used', async () => {
+    queryMock.mockImplementation((sql: string) => {
+      if (/FROM usage_records/.test(sql))
+        return Promise.resolve({
+          rows: [
+            { feature_id: 'deep_research', credits: 1, events: 1, last_seen: 'now' },
+            { feature_id: 'csr_builder', credits: 1, events: 1, last_seen: 'now' },
+            { feature_id: 'ctd_builder', credits: 1, events: 1, last_seen: 'now' },
+          ],
+        });
+      if (/FROM platform_cost_rates/.test(sql)) return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [{}] });
+    });
+    const res = await request(makeApp())
+      .get('/api/admin/business/metering-coverage')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+    expect(res.body.gaps.usageWithoutExplicitRate).toEqual([]);
+    expect(res.body.gaps.ratedButNoUsage).toEqual([]);
+    expect(res.body.healthy).toBe(true);
+  });
+});
