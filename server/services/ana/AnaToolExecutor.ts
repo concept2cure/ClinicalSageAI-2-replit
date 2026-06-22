@@ -11414,6 +11414,81 @@ registerToolHandler('lint_references', async (input: Record<string, unknown>) =>
   }
 });
 
+// ── Pharmacovigilance reporting — SAE line listing + E2B(R3) ICSR over the
+// org's recorded adverse events. Tenant-scoped (fail closed without org ctx);
+// the fetch is organization-scoped so no cross-tenant safety data is exposed. ──
+registerToolHandler('build_sae_line_listing', async (input: Record<string, unknown>, ctx) => {
+  try {
+    if (!ctx?.organizationId) {
+      return JSON.stringify({ status: 'needs_context', message: 'build_sae_line_listing requires an active organization context.' });
+    }
+    const fromDate = typeof input.from_date === 'string' ? input.from_date : '';
+    const toDate = typeof input.to_date === 'string' ? input.to_date : '';
+    if (!fromDate || !toDate) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'from_date and to_date (ISO dates) are required.' });
+    }
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'from_date / to_date must be valid ISO dates.' });
+    }
+    const { getAdverseEvents } = await import('../compliance/pharmacovigilanceService.js');
+    let events = await getAdverseEvents(String(ctx.organizationId), { fromDate: from, toDate: to });
+    if (typeof input.project_id === 'string' && input.project_id) {
+      events = events.filter(e => String(e.projectId) === input.project_id);
+    }
+    const { buildSaeLineListing, saeLineListingToCsv } = await import('../ind-lifecycle/ind-sae-line-listing.js');
+    const listing = buildSaeLineListing({ events, periodStart: from, periodEnd: to });
+    const csv = saeLineListingToCsv(listing);
+    return JSON.stringify({
+      status: 'built',
+      engine: 'deterministic',
+      caseCount: listing.rows.length,
+      listing,
+      csv,
+      instruction: 'Report the listing and summary as recorded; if caseCount is 0, say no qualifying cases were found in the period rather than implying none exist.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `build_sae_line_listing failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('compose_e2b_icsr', async (input: Record<string, unknown>, ctx) => {
+  try {
+    if (!ctx?.organizationId) {
+      return JSON.stringify({ status: 'needs_context', message: 'compose_e2b_icsr requires an active organization context.' });
+    }
+    const aeId = typeof input.adverse_event_id === 'string' ? input.adverse_event_id : '';
+    if (!aeId) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'adverse_event_id is required.' });
+    }
+    const { getAdverseEvents } = await import('../compliance/pharmacovigilanceService.js');
+    // Fetch via the org-scoped service and select by id — guarantees the case
+    // belongs to this tenant (no raw cross-tenant id lookup).
+    const events = await getAdverseEvents(String(ctx.organizationId));
+    const event = events.find(e => String(e.id) === aeId);
+    if (!event) {
+      return JSON.stringify({ status: 'not_found', message: `No adverse event "${aeId}" found in this organization.` });
+    }
+    const { composeE2bR3Icsr } = await import('../ind-lifecycle/e2b-icsr-composer.js');
+    const result = composeE2bR3Icsr(event, {
+      expedited: typeof input.expedited === 'boolean' ? input.expedited : undefined,
+      nullificationReason: typeof input.nullification_reason === 'string' ? input.nullification_reason : undefined,
+    });
+    return JSON.stringify({
+      status: 'composed',
+      engine: 'deterministic',
+      completeness: result.completeness,
+      gaps: result.gaps,
+      icsr: result.icsr,
+      xml: result.xml,
+      instruction: 'List the mandatory gaps first — they must be resolved before transmit. Report completeness honestly; do not claim a submittable ICSR while gaps remain.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `compose_e2b_icsr failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 // Cross-document numerical reconciliation (Tier 1.2) — flags a labeled figure
 // disagreeing across submission modules. Deterministic; no DB/network.
 registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, unknown>) => {

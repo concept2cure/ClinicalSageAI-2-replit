@@ -17,6 +17,7 @@ import {
 
 export type GatewayErrorCode =
   | 'RATE_LIMITED'
+  | 'OVERLOADED'
   | 'TOKEN_LIMIT_EXCEEDED'
   | 'PROVIDER_UNAVAILABLE'
   | 'INVALID_AI_RESPONSE';
@@ -39,10 +40,11 @@ export function classifyGatewayError(err: unknown): ClassifiedGatewayError {
   }
   if (err instanceof GatewayAllProvidersFailedError) {
     const msg = err.message || '';
-    // 529 = Anthropic "Overloaded". Same client guidance as a rate limit (retry
-    // shortly), so it shares the RATE_LIMITED code but gets an accurate message.
-    if (/\b529\b|overload/i.test(msg)) {
-      return { code: 'RATE_LIMITED', message: 'The AI provider is overloaded. Try again shortly.' };
+    // 529 = Anthropic "Overloaded" (and generic provider overload/503). Distinct
+    // from a 429 rate-limit: it is transient back-pressure, retried with backoff
+    // in the gateway, and surfaced as a clean "retry shortly" rather than a fault.
+    if (/\b529\b|overloaded/i.test(msg)) {
+      return { code: 'OVERLOADED', message: 'The AI provider is overloaded right now. Please retry in a moment.' };
     }
     if (/429|rate.?limit/i.test(msg)) {
       return { code: 'RATE_LIMITED', message: 'The AI provider is rate limiting requests. Try again shortly.' };

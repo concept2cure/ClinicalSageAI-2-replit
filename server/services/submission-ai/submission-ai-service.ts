@@ -31,7 +31,7 @@ const PROMPTS_DIR = path.join(__dirname, '..', 'ai-gateway', 'prompts');
 
 export class SubmissionAiError extends Error {
   constructor(
-    public code: 'INVALID_AI_RESPONSE' | 'PROVIDER_UNAVAILABLE' | 'RATE_LIMITED' | 'TOKEN_LIMIT_EXCEEDED',
+    public code: 'INVALID_AI_RESPONSE' | 'PROVIDER_UNAVAILABLE' | 'RATE_LIMITED' | 'OVERLOADED' | 'TOKEN_LIMIT_EXCEEDED',
     message: string
   ) {
     super(message);

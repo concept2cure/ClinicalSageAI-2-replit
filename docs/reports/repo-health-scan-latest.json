@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-21T19:01:26.968Z",
+  "generatedAt": "2026-06-22T01:22:26.219Z",
   "git": {
-    "sha": "b05ddce183bc51ccd5280e12d69b62adcc57e2a5",
+    "sha": "4826d257a4a185ea3b7dc1c23d9f3f302b43105c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2206,11 +2206,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 554458
+        "bytes": 558461
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 391704
+        "bytes": 391994
       },
       {
         "file": "server/statistics-service.ts",
@@ -2264,11 +2264,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 11363
+        "lines": 11438
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7205
+        "lines": 7209
       },
       {
         "file": "server/statistics-service.ts",
@@ -2344,7 +2344,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 1863
+        "lines": 1876
       },
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
