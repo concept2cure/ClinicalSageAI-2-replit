@@ -19,7 +19,7 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 
-export type DtdRegion = 'fda' | 'ema' | 'pmda';
+export type DtdRegion = 'fda' | 'ema' | 'pmda' | 'ca';
 
 /** A vendored DTD read from the drop-point directory. */
 export interface VendoredDtd {
@@ -35,6 +35,7 @@ const REGIONAL_DTD: Record<DtdRegion, string> = {
   fda: 'us-regional-v2-01.dtd',
   ema: 'eu-regional.dtd',
   pmda: 'jp-regional.dtd',
+  ca: 'ca-regional.dtd',
 };
 
 /** Resolve the DTD drop-point directory (ECTD_DTD_DIR or assets/ectd-dtd). */

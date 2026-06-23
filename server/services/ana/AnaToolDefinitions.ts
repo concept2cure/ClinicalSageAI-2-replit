@@ -2797,12 +2797,12 @@ export const REGISTER_LDT: AnaTool = {
 export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
   name: 'package_ectd_for_region',
   description:
-    "Assemble a regional eCTD zip (FDA us-regional.xml / EMA eu-regional.xml / PMDA jp-regional.xml) from a set of CTD leaves. Produces the correct Module 1 folder structure per region, computes SHA-256, and returns the bundle metadata for downstream transmit. Use after AnA has gathered the leaf manifest for a submission.",
+    "Assemble a regional eCTD zip (FDA us-regional.xml / EMA eu-regional.xml / PMDA jp-regional.xml / Health Canada ca-regional.xml) from a set of CTD leaves. Produces the correct Module 1 folder structure per region, computes SHA-256, and returns the bundle metadata for downstream transmit. Use after AnA has gathered the leaf manifest for a submission.",
   input_schema: {
     type: 'object',
     properties: {
-      region:          { type: 'string', enum: ['fda', 'ema', 'pmda'] },
-      application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA).' },
+      region:          { type: 'string', enum: ['fda', 'ema', 'pmda', 'ca'] },
+      application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA), dossier id (Health Canada).' },
       sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
       submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
       sponsor_id:      { type: 'string', description: 'DUNS / EMA org id / PMDA applicant id.' },
@@ -2832,12 +2832,12 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
 export const TRANSMIT_SUBMISSION: AnaTool = {
   name: 'transmit_submission',
   description:
-    "Transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, or PMDA Gateway). Returns the transmittal id and gateway-issued tracking number. Throws when credentials are not configured for the org × environment. Use after package_ectd_for_region or after assembling a region-specific deliverable like an eSTAR or a EUDAMED device-registration JSON.",
+    "Transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, or Health Canada CESG). Returns the transmittal id and gateway-issued tracking number. Throws when credentials are not configured for the org × environment. Use after package_ectd_for_region or after assembling a region-specific deliverable like an eSTAR or a EUDAMED device-registration JSON.",
   input_schema: {
     type: 'object',
     properties: {
-      region:      { type: 'string', enum: ['fda', 'ema', 'pmda'] },
-      gateway:     { type: 'string', enum: ['esg', 'cesp', 'eudamed', 'pmda_gateway'] },
+      region:      { type: 'string', enum: ['fda', 'ema', 'pmda', 'ca'] },
+      gateway:     { type: 'string', enum: ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] },
       environment: { type: 'string', enum: ['staging', 'production'], description: "Default 'production'." },
       bundle_path: { type: 'string', description: 'Absolute path to the package on disk.' },
       bundle_sha256: { type: 'string', description: '64-char hex SHA-256.' },

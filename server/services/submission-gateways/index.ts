@@ -11,6 +11,7 @@
 import { FdaEsgGateway } from './fda-esg';
 import { EmaCespGateway, EudamedGateway } from './ema-cesp';
 import { PmdaGateway } from './pmda-gateway';
+import { HealthCanadaGateway } from './health-canada-gateway';
 import type { GatewayName, Region, SubmissionGateway } from './types';
 
 export * from './types';
@@ -23,6 +24,7 @@ const REGISTRY: Record<string, SubmissionGateway> = {
   'ema:cesp':          new EmaCespGateway(),
   'ema:eudamed':       new EudamedGateway(),
   'pmda:pmda_gateway': new PmdaGateway(),
+  'ca:hc_cesg':        new HealthCanadaGateway(),
 };
 
 /** Resolve the gateway implementation for (region, gateway). */

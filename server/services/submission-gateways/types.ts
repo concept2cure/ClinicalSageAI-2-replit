@@ -11,16 +11,17 @@
  * as a "gateway not configured" state.
  */
 
-export type Region = 'fda' | 'ema' | 'pmda';
+export type Region = 'fda' | 'ema' | 'pmda' | 'ca';
 
 export type GatewayName =
   | 'esg'              // FDA Electronic Submissions Gateway (AS2 + SFTP)
   | 'cesp'             // EMA Common European Submission Portal
   | 'eudamed'          // EU EUDAMED (device registration + vigilance)
-  | 'pmda_gateway';    // PMDA Gateway secure file transfer
+  | 'pmda_gateway'     // PMDA Gateway secure file transfer
+  | 'hc_cesg';         // Health Canada Common Electronic Submissions Gateway
 
 export type SubmissionFormat =
-  | 'ectd'             // ICH eCTD (all three regions accept; backbone differs)
+  | 'ectd'             // ICH eCTD (all regions accept; backbone differs — incl. CA Module 1)
   | 'estar'            // FDA 510(k) eSTAR
   | 'eudamed_register' // EUDAMED device / UDI / certificate registration
   | 'pmda_ectd';       // PMDA-specific eCTD-JP

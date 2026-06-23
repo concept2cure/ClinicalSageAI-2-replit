@@ -279,6 +279,45 @@ ${m1Leaves}
 </jp-regional>`;
 }
 
+/**
+ * Health Canada ca-regional.xml backbone. Per the Health Canada "Guidance
+ * Document: Preparation of Regulatory Activities in the eCTD Format" and the
+ * CA Module 1 specification. Module 1 sits under m1/ca/ with the regional
+ * backbone at m1/ca/ca-regional.xml. Transmission is via the Common
+ * Electronic Submissions Gateway (CESG).
+ */
+function buildHcBackbone(input: PackagerInput): string {
+  const assignId = createLeafIdAssigner();
+  const m1Leaves = input.leaves
+    .filter((l) => l.ctdSection.startsWith('1'))
+    .map((l) => leafElement(l, `m1/ca/${l.ctdSection.replace(/\./g, '-')}`, assignId(l)))
+    .join('\n');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ca-regional SYSTEM "../util/dtd/ca-regional.dtd">
+<ca-regional xmlns:xlink="http://www.w3.org/1999/xlink"
+             dtd-version="3.0">
+  <admin>
+    <application>
+      <dossier-id>${escapeXml(input.applicationId)}</dossier-id>
+      <regulatory-activity-type>${escapeXml(input.submissionType)}</regulatory-activity-type>
+    </application>
+    <applicant>
+      <company-name>${escapeXml(input.sponsorName)}</company-name>
+      <company-id>${escapeXml(input.sponsorId)}</company-id>
+    </applicant>
+    <submission>
+      <sequence-number>${escapeXml(input.sequence)}</sequence-number>
+      <submission-type>${escapeXml(input.submissionType)}</submission-type>
+      <product-name>${escapeXml(input.productName)}</product-name>
+    </submission>
+  </admin>
+  <m1-ca>
+${m1Leaves}
+  </m1-ca>
+</ca-regional>`;
+}
+
 /* ─── M2-M5 common backbone (ICH M8) ──────────────────────────────── */
 
 function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[]): string {
@@ -326,16 +365,19 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     fda:  () => buildFdaBackbone(input),
     ema:  () => buildEmaBackbone(input),
     pmda: () => buildPmdaBackbone(input),
+    ca:   () => buildHcBackbone(input),
   };
   const m1FolderByRegion: Record<Region, string> = {
     fda:  'm1/us',
     ema:  'm1/eu',
     pmda: 'm1/jp',
+    ca:   'm1/ca',
   };
   const backboneFileByRegion: Record<Region, string> = {
     fda:  `${m1FolderByRegion.fda}/us-regional.xml`,
     ema:  `${m1FolderByRegion.ema}/eu-regional.xml`,
     pmda: `${m1FolderByRegion.pmda}/jp-regional.xml`,
+    ca:   `${m1FolderByRegion.ca}/ca-regional.xml`,
   };
 
   const zip = new JSZip();

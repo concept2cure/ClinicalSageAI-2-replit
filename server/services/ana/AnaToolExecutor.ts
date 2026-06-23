@@ -5995,8 +5995,8 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
     return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
   }
   const region = typeof input.region === 'string' ? input.region : '';
-  if (!['fda', 'ema', 'pmda'].includes(region)) {
-    return JSON.stringify({ error: 'region must be fda / ema / pmda.' });
+  if (!['fda', 'ema', 'pmda', 'ca'].includes(region)) {
+    return JSON.stringify({ error: 'region must be fda / ema / pmda / ca.' });
   }
   const leaves = Array.isArray(input.leaves) ? (input.leaves as Array<Record<string, unknown>>) : [];
   if (leaves.length === 0) {
@@ -6010,7 +6010,7 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
         ? input.output_dir
         : path.resolve(process.cwd(), 'tmp', 'submissions', String(ctx.organizationId));
     const bundle = await packageEctdSubmission({
-      region: region as 'fda' | 'ema' | 'pmda',
+      region: region as 'fda' | 'ema' | 'pmda' | 'ca',
       applicationId: String(input.application_id),
       sequence:      String(input.sequence),
       submissionType: String(input.submission_type),
@@ -6048,15 +6048,15 @@ registerToolHandler('transmit_submission', async (input, ctx) => {
   }
   const region  = typeof input.region === 'string' ? input.region : '';
   const gateway = typeof input.gateway === 'string' ? input.gateway : '';
-  if (!['fda', 'ema', 'pmda'].includes(region)) {
-    return JSON.stringify({ error: 'region must be fda / ema / pmda.' });
+  if (!['fda', 'ema', 'pmda', 'ca'].includes(region)) {
+    return JSON.stringify({ error: 'region must be fda / ema / pmda / ca.' });
   }
-  if (!['esg', 'cesp', 'eudamed', 'pmda_gateway'].includes(gateway)) {
-    return JSON.stringify({ error: 'gateway must be esg / cesp / eudamed / pmda_gateway.' });
+  if (!['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'].includes(gateway)) {
+    return JSON.stringify({ error: 'gateway must be esg / cesp / eudamed / pmda_gateway / hc_cesg.' });
   }
   try {
     const { getGateway, CredentialError, GatewayError, TransportError } = await import('../submission-gateways/index.js');
-    const gw = getGateway(region as 'fda' | 'ema' | 'pmda', gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway');
+    const gw = getGateway(region as 'fda' | 'ema' | 'pmda' | 'ca', gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway' | 'hc_cesg');
     const environment = input.environment === 'staging' ? 'staging' : 'production';
     const result = await gw.transmit({
       organizationId: ctx.organizationId,
@@ -6115,7 +6115,7 @@ registerToolHandler('check_submission_status', async (input, ctx) => {
       return JSON.stringify({ error: `Transmittal ${id} not found in this organization.` });
     }
     const { getGateway } = await import('../submission-gateways/index.js');
-    const gw = getGateway(own.rows[0].region as 'fda' | 'ema' | 'pmda', own.rows[0].gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway');
+    const gw = getGateway(own.rows[0].region as 'fda' | 'ema' | 'pmda' | 'ca', own.rows[0].gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway' | 'hc_cesg');
     const result = await gw.checkStatus(id);
     return JSON.stringify({ ok: true, ...result });
   } catch (err) {
@@ -6143,7 +6143,7 @@ registerToolHandler('get_submission_ack', async (input, ctx) => {
       return JSON.stringify({ error: `Transmittal ${id} not found in this organization.` });
     }
     const { getGateway } = await import('../submission-gateways/index.js');
-    const gw = getGateway(own.rows[0].region as 'fda' | 'ema' | 'pmda', own.rows[0].gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway');
+    const gw = getGateway(own.rows[0].region as 'fda' | 'ema' | 'pmda' | 'ca', own.rows[0].gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway' | 'hc_cesg');
     const ack = await gw.downloadAcknowledgment(id);
     return JSON.stringify({
       ok: true,
