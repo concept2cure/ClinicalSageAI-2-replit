@@ -32,6 +32,7 @@ export const MDX_NAV_V2: NavItem[] = [
   { id: 'k510',         label: '510(k) Submissions',    icon: 'file',         group: 'workstream' },
   { id: 'pma',          label: 'PMA Submissions',       icon: 'shieldCheck',  group: 'workstream' },
   { id: 'cer',          label: 'CER Generator',         icon: 'microscope',   group: 'workstream' },
+  { id: 'device-diagnostics-workbench', label: 'IVD Diagnostics', icon: 'flask', group: 'workstream' },
   { id: 'predicate',    label: 'Precedent Intelligence',icon: 'scale',        group: 'workstream' },
 
   // Workbench — cross-program work surfaces.
@@ -102,6 +103,7 @@ export const MDX_SUGGESTIONS: Record<string, string[]> = {
   k510:       ['Find more CGM predicates', 'Draft SE discussion', 'Check eSTAR validation'],
   pma:        ['Summarize enrollment gap', 'Draft DSMB charter', 'Pull pivotal precedents'],
   cer:        ['Run FAERS signal scan', 'Adjudicate lead dislodgement', 'Draft Article 61 section'],
+  'device-diagnostics-workbench': ['Classify under Annex VIII', 'Summarize analytical performance', 'Close open GSPR requirements'],
   predicate:  ['Compare K221847 vs subject', 'Find predicates for CGM', 'Cluster by product code'],
   engineering:['ISO 14971 risk review', 'Cybersecurity premarket', 'Biocompatibility for 14-day'],
   udi:        ['Generate UDI for BX-204', 'Labeling MRI statements', 'Multi-language harmonization'],

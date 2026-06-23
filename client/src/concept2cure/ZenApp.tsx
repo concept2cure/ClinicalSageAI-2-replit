@@ -1180,6 +1180,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       const BUNDLE_MDX_HASH: Record<string, string> = {
         mdx: '', // bundle home — Overview tab
         biopharma: '', // routes through MDX shell scope tabs
+        // IVD diagnostics workbench — a surface inside the Medical Device
+        // bundle (App.tsx activeNav). hashToMdxNav maps the hash 1:1 to the
+        // activeNav id, so this opens the bundle directly on the IVD surface.
+        'device-diagnostics-workbench': '#device-diagnostics-workbench',
         vault: '#vault',
         // 'tasking' now resolves to the live TaskingRoute above (handled before
         // this map), so it is intentionally not a bundle deep-link key here.
