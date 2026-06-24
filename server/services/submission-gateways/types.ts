@@ -11,6 +11,24 @@
  * as a "gateway not configured" state.
  */
 
+import {
+  resolveToRegistryEntry,
+  resolveToDeficiencyType,
+  getSubmissionTypeContext,
+  getSubmissionTypeLabel,
+  isKnownSubmissionType,
+  type SubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
+
+export {
+  resolveToRegistryEntry,
+  resolveToDeficiencyType,
+  getSubmissionTypeContext,
+  getSubmissionTypeLabel,
+  isKnownSubmissionType,
+  type SubmissionTypeContext,
+};
+
 export type Region = 'fda' | 'ema' | 'pmda' | 'ca';
 
 export type GatewayName =

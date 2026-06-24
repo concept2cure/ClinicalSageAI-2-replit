@@ -13,6 +13,10 @@
 import type { Sponsor } from '@shared/schema/ind-master-data';
 import type { CoverLetterInput, IndSubmissionType } from './ind-cover-letter-service';
 import { composeAddress } from '../ind-common/format';
+import {
+  getSubmissionTypeContext,
+  type SubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 
 /** The submission fields the cover letter reads (a structural subset of the
  *  submissions row, so this stays decoupled from the full Drizzle select type). */
@@ -42,16 +46,33 @@ export interface CoverLetterRecords {
   submission?: CoverLetterSubmission | null;
   /** Fields not held in master data / the submission row (indNumber, indication, fdaDivision, …). */
   overrides?: Partial<CoverLetterInput>;
+  /** Optional top-level regulatory submission type (e.g. 'IND', 'US_IND') for
+   *  bridge normalization. When provided, the bridge resolves it to canonical
+   *  metadata that callers can use for context enrichment. */
+  regulatoryType?: string;
+}
+
+export interface CoverLetterContextResult {
+  input: CoverLetterInput;
+  /** Canonical bridge context for the top-level regulatory type, if resolvable. */
+  bridgeContext: SubmissionTypeContext | null;
 }
 
 /**
  * Assemble CoverLetterInput from a sponsor + submission record plus overrides.
  * Overrides win, so a route can supply the IND number, indication, FDA division
  * and letter date that are not stored on those records.
+ *
+ * When `regulatoryType` is supplied (e.g. 'IND', 'US_IND'), the bridge resolves
+ * it and returns canonical context alongside the input for downstream enrichment.
  */
-export function assembleCoverLetterContext(records: CoverLetterRecords): CoverLetterInput {
+export function assembleCoverLetterContext(records: CoverLetterRecords): CoverLetterContextResult {
   const s = records.sponsor;
   const sub = records.submission;
+
+  // Resolve the top-level regulatory type through the bridge (defaults to 'IND'
+  // for IND lifecycle submissions) so callers get canonical metadata.
+  const bridgeContext = getSubmissionTypeContext(records.regulatoryType ?? 'IND');
 
   const base: CoverLetterInput = {
     sponsorName: s?.name ?? '',
@@ -67,5 +88,8 @@ export function assembleCoverLetterContext(records: CoverLetterRecords): CoverLe
     signatoryTitle: s?.signatoryTitle ?? undefined,
   };
 
-  return { ...base, ...(records.overrides ?? {}) };
+  return {
+    input: { ...base, ...(records.overrides ?? {}) },
+    bridgeContext,
+  };
 }

@@ -16,6 +16,9 @@
  */
 
 import { renderStructuredLeafPdf, renderLeafPdf, type LeafSection } from '../ectd/leaf-pdf-renderer';
+import {
+  getSubmissionTypeLabel,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 import type {
   IndSafetyReportDocument,
   IndSafetyReportSection,
@@ -132,10 +135,16 @@ export async function renderSequenceDiffPdf(diff: SequenceDiff): Promise<Buffer>
 
 /** Render an IND submission package manifest (QC review artifact) to a PDF. */
 export async function renderPackageManifestPdf(manifest: PackageManifest): Promise<Buffer> {
+  // Resolve the submission type through the canonical bridge for display; the
+  // manifest may already carry a normalized label, but the bridge is idempotent.
+  const displaySubType = manifest.submissionType
+    ? getSubmissionTypeLabel(manifest.submissionType)
+    : null;
+
   const header = [
     manifest.applicationNumber ? `Application: ${manifest.applicationNumber}` : null,
     `Sequence: ${manifest.sequenceNumber}`,
-    manifest.submissionType ? `Submission type: ${manifest.submissionType}` : null,
+    displaySubType ? `Submission type: ${displaySubType}` : null,
     `Total leaves: ${manifest.totalLeaves}  |  Missing checksums: ${manifest.missingChecksums}`,
   ]
     .filter(Boolean)

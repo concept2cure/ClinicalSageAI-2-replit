@@ -31,7 +31,7 @@ import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import type { Region, SubmissionFormat, SubmissionBundle } from './types';
-import { ValidationError } from './types';
+import { ValidationError, resolveToRegistryEntry, getSubmissionTypeLabel } from './types';
 import { finalizePdfA } from '../ectd/pdfa-pipeline';
 import {
   evaluateSubmissionGrade,
@@ -360,12 +360,30 @@ export function buildMd5Index(entries: ChecksumEntry[]): string {
 /* ─── Top-level packager ──────────────────────────────────────────── */
 
 export async function packageEctdSubmission(input: PackagerInput): Promise<SubmissionBundle> {
+  /* Resolve the caller-supplied submission type through the canonical bridge.
+     This normalizes any alias/legacy string (e.g. '510k', 'SNDA', 'ind') to
+     the registry entry so that backbone XML, display names, and audit rows
+     all use the same canonical identifier. The bridge returns null for
+     unrecognized strings — in that case we fall through to the raw value,
+     preserving backward compatibility for ad-hoc or org-specific types. */
+  const registryEntry = resolveToRegistryEntry(input.submissionType);
+  const canonicalSubmissionType = registryEntry?.applicationType ?? input.submissionType;
+  const submissionTypeLabel = getSubmissionTypeLabel(input.submissionType);
+
+  /* Build a normalized copy of the input for the backbone builders so they
+     emit the canonical type into XML elements. The original PackagerInput
+     is not mutated. */
+  const normalizedInput: PackagerInput = {
+    ...input,
+    submissionType: canonicalSubmissionType,
+  };
+
   const region = input.region;
   const backboneByRegion: Record<Region, () => string> = {
-    fda:  () => buildFdaBackbone(input),
-    ema:  () => buildEmaBackbone(input),
-    pmda: () => buildPmdaBackbone(input),
-    ca:   () => buildHcBackbone(input),
+    fda:  () => buildFdaBackbone(normalizedInput),
+    ema:  () => buildEmaBackbone(normalizedInput),
+    pmda: () => buildPmdaBackbone(normalizedInput),
+    ca:   () => buildHcBackbone(normalizedInput),
   };
   const m1FolderByRegion: Record<Region, string> = {
     fda:  'm1/us',
@@ -505,7 +523,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     sha256:    createHash('sha256').update(buffer).digest('hex'),
     sizeBytes: buffer.length,
     format,
-    displayName: `${input.productName} · ${region.toUpperCase()} ${input.submissionType} #${input.sequence}`,
+    displayName: `${input.productName} · ${region.toUpperCase()} ${submissionTypeLabel} #${input.sequence}`,
     submissionGrade,
     dtdStatus: {
       required: dtdGate.required,

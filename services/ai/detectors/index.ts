@@ -1,9 +1,11 @@
 /**
  * Automated Risk Detectors - Index
  * Phase 3.2 - Predictive Intelligence Engine
- * 
+ *
  * Central export for all automated risk detectors.
  */
+
+import { resolveToDeficiencyType } from '../../../shared/regulatory/submission-type-bridge.js';
 
 // 510(k) Detectors
 export { IFUConsistencyDetector, type IFUAnalysisInput, type IFUConsistencyResult } from './IFUConsistencyDetector';
@@ -56,12 +58,15 @@ export function createDetector(type: DetectorType): Detector {
 }
 
 /**
- * Get applicable detectors for a submission type
+ * Get applicable detectors for a submission type.
+ * Accepts any string — resolves international types via the bridge.
  */
 export function getDetectorsForSubmissionType(
-  submissionType: '510k' | 'IND' | 'NDA' | 'BLA' | 'PMA' | 'MAA' | 'DE_NOVO'
+  submissionType: string
 ): DetectorType[] {
-  switch (submissionType) {
+  const resolved = resolveToDeficiencyType(submissionType)?.toUpperCase() ?? submissionType.toUpperCase();
+  const key = resolved === '510K' ? '510k' : resolved === 'DE_NOVO' ? 'DE_NOVO' : resolved;
+  switch (key) {
     case '510k':
     case 'DE_NOVO':
       return [

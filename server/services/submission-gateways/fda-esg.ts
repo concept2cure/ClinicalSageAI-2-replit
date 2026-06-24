@@ -40,6 +40,7 @@ import { pool } from '../../db';
 import { readVerifiedBundle } from './bundle-integrity';
 import {
   CredentialError, GatewayError, TransportError,
+  resolveToRegistryEntry, getSubmissionTypeLabel,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
 } from './types';
@@ -332,11 +333,19 @@ export class FdaEsgGateway implements SubmissionGateway {
   }
 
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
+    /* Resolve the caller-supplied submission type through the canonical bridge
+       so the transmittal row and wire metadata use the canonical identifier.
+       Falls back to the raw string for unrecognized types. */
+    const resolvedEntry = req.submissionType ? resolveToRegistryEntry(req.submissionType) : null;
+    const normalizedReq: GatewayTransmitRequest = resolvedEntry
+      ? { ...req, submissionType: resolvedEntry.applicationType }
+      : req;
+
     /* Bundles larger than 1 GB go via SFTP; smaller can use AS2. The
        FDA ESG AS2 path has a documented 1 GB message limit. */
-    const useSftp = req.bundle.sizeBytes > 1_073_741_824;
+    const useSftp = normalizedReq.bundle.sizeBytes > 1_073_741_824;
     const transport: 'as2' | 'sftp' = useSftp ? 'sftp' : 'as2';
-    const transmittalId = await createTransmittalRow(req, transport);
+    const transmittalId = await createTransmittalRow(normalizedReq, transport);
 
     try {
       const creds = await loadFdaCredentials(req.organizationId, req.environment);

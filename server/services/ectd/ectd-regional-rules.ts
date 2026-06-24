@@ -14,6 +14,8 @@
  *  - Health Canada Regulatory Enrolment Process (REP)
  */
 
+import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge.js';
+
 export type RegulatoryRegion = 'US' | 'EU' | 'JP' | 'CA' | 'CN' | 'KR';
 export type RegionalSeverity = 'error' | 'warning' | 'info';
 
@@ -534,8 +536,10 @@ function validatePMDAPackage(
   requireBackbone(leaves, 'JP', 'PMDA-001', 'Generate and include the JP regional XML at /m1/jp/jp-regional.xml', findings);
 
   const hasJpClinical = leaves.some(l => l.sectionCode.startsWith('m1.13'));
-  const submissionRequiresJpClinical = context.submissionType.toLowerCase().includes('nda') ||
-    context.submissionType.toLowerCase().includes('jnda');
+  const bridgeEntry = resolveToRegistryEntry(context.submissionType);
+  const resolvedType = bridgeEntry?.applicationType?.toLowerCase() ?? context.submissionType.toLowerCase();
+  const submissionRequiresJpClinical = resolvedType.includes('nda') ||
+    resolvedType.includes('jnda') || resolvedType.includes('marketing approval');
   if (submissionRequiresJpClinical && !hasJpClinical) {
     findings.push({
       ruleId: 'PMDA-004',

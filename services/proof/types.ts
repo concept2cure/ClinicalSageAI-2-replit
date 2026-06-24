@@ -73,7 +73,7 @@ export interface ZKProof {
 export interface RegulatorySubmissionCertificate {
   certificateId: string;
   workflowRunId: string;
-  submissionType: 'IND' | '510K' | 'NDA' | 'BLA' | 'PMA' | 'MAA';
+  submissionType: string;
   generatedAt: string;
   proof: {
     pathProof: SNARKProof | null;
