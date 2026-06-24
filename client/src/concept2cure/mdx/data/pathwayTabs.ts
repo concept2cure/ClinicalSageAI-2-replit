@@ -54,6 +54,7 @@ function chain(seed: number, n: number): Array<{ hash: string; prev: string }> {
 const K510_AUDIT_HASHES = chain(0x4f3a91c2, 14);
 const PMA_AUDIT_HASHES = chain(0x7b1d2e88, 12);
 const CER_AUDIT_HASHES = chain(0x39c87a05, 11);
+const IVD_AUDIT_HASHES = chain(0x2c64b8d1, 9);
 
 type AuditSeed = Omit<AuditEvent, 'hash' | 'prev'>;
 
@@ -103,7 +104,20 @@ const CER_AUDIT_BASE: AuditSeed[] = [
   { id: 'ca-001', when: '2026-04-26T09:00:00Z', kind: 'access',          actor: 'External — TÜV SÜD reviewer', role: 'Notified body', target: 'CER · IV-415', ip: 'eurev.tuv-sud.com' },
 ];
 
+const IVD_AUDIT_BASE: AuditSeed[] = [
+  { id: 'iv-009', when: '2026-04-29T15:02:44Z', kind: 'sign',            actor: 'Dr. Lee Hartman', role: 'Med Affairs', target: 'IVDR clinical performance — EGFR CDx', target_id: 'CP1', ip: '10.0.4.62', sig: 'WP-8801', signed: true },
+  { id: 'iv-008', when: '2026-04-29T13:20:10Z', kind: 'review.complete', actor: 'Priya Shah',      role: 'QA',          target: 'Analytical validation — SARS-CoV-2 Ag', target_id: 'AV2', ip: '10.0.4.88' },
+  { id: 'iv-007', when: '2026-04-29T10:48:33Z', kind: 'section.edit',    actor: 'Marcus Wei',      role: 'Biostat',     target: 'Clinical 2×2 — EGFR bridging', target_id: 'CP1', diff: '+212 / −18', ip: '10.0.4.51' },
+  { id: 'iv-006', when: '2026-04-28T17:11:02Z', kind: 'comment',         actor: 'Jordan Chen',     role: 'Reg Lead',    target: 'GSPR §II — analytical performance', target_id: 'GSPR-II', body: 'GSPR 10.1 needs interference study before NB submission.', ip: '10.0.4.21' },
+  { id: 'iv-005', when: '2026-04-28T14:30:55Z', kind: 'attach',          actor: 'Priya Shah',      role: 'QA',          target: 'Analytical validation — HbA1c', file: 'precision-cv-study.xlsx · 88 KB', ip: '10.0.4.88' },
+  { id: 'iv-004', when: '2026-04-28T11:05:18Z', kind: 'review.start',    actor: 'Priya Shah',      role: 'QA',          target: 'Analytical validation — SARS-CoV-2 Ag', target_id: 'AV2', ip: '10.0.4.88' },
+  { id: 'iv-003', when: '2026-04-27T16:22:40Z', kind: 'section.edit',    actor: 'Jordan Chen',     role: 'Reg Lead',    target: 'Annex VIII classification — EGFR CDx', target_id: 'CL3', diff: '+64 / −5', ip: '10.0.4.21' },
+  { id: 'iv-002', when: '2026-04-27T10:14:08Z', kind: 'export',          actor: 'Jordan Chen',     role: 'Reg Lead',    target: 'GSPR compliance matrix', file: 'gspr-annex-i.pdf · signed export', ip: '10.0.4.21' },
+  { id: 'iv-001', when: '2026-04-26T09:00:00Z', kind: 'access',          actor: 'External — TÜV SÜD reviewer', role: 'Notified body', target: 'IVDR technical file · IVD-318', ip: 'eurev.tuv-sud.com' },
+];
+
 const K510_AUDIT: AuditEvent[] = K510_AUDIT_BASE.map((r, i) => ({ ...r, ...K510_AUDIT_HASHES[i] }));
+const IVD_AUDIT: AuditEvent[] = IVD_AUDIT_BASE.map((r, i) => ({ ...r, ...IVD_AUDIT_HASHES[i] }));
 const PMA_AUDIT: AuditEvent[] = PMA_AUDIT_BASE.map((r, i) => ({ ...r, ...PMA_AUDIT_HASHES[i] }));
 const CER_AUDIT: AuditEvent[] = CER_AUDIT_BASE.map((r, i) => ({ ...r, ...CER_AUDIT_HASHES[i] }));
 
@@ -175,9 +189,34 @@ const CER_APPROVALS: Approval[] = [
   { id: 'ap-c-01', stage: 'qa', target: 'CER §3 — State of the art', target_id: 3, target_kind: 'Section', requested: '2026-04-27T15:02:00Z', requested_by: 'Dr. Lee Hartman', signer: 'Priya Shah', role: 'QA', status: 'signed', signed_at: '2026-04-27T16:50:00Z', meaning: 'QA review complete' },
 ];
 
+const IVD_CORRESP: Correspondence[] = [
+  { id: 'ivq-3', kind: 'NB Major NC', channel: 'TEAM-NB portal', from: 'TÜV SÜD', received: '2026-04-29T07:45:00Z', due: '2026-05-29', status: 'open', ai: true,
+    subject: 'Major NC · Analytical performance — interference study missing',
+    summary: 'NC raised against GSPR 10.1: SARS-CoV-2 Ag interference study not provided for endogenous substances. Supply study report or justification per CLSI EP07.',
+    refs: [{ section: 'AV2', label: 'Analytical validation — SARS-CoV-2 Ag' }],
+    triage: { ana: 'Pull CLSI EP07 dataset', priority: 'high', owner: 'Priya Shah', tasks: 1 } },
+  { id: 'ivq-2', kind: 'NB Q&A', channel: 'TEAM-NB portal', from: 'TÜV SÜD', received: '2026-04-25T10:30:00Z', due: '2026-05-09', status: 'in_review', ai: false,
+    subject: 'NB Q&A · EGFR CDx clinical bridging — comparator method',
+    summary: 'Reviewer requests clarification of the comparator assay used in the EGFR companion-diagnostic bridging study and its regulatory status.',
+    refs: [{ section: 'CP1', label: 'Clinical performance — EGFR CDx' }],
+    triage: { ana: 'Cross-check study design', priority: 'med', owner: 'Marcus Wei', tasks: 1 } },
+  { id: 'ivq-1', kind: 'NB Minor NC', channel: 'TEAM-NB portal', from: 'TÜV SÜD', received: '2026-04-19T09:10:00Z', due: '2026-04-26', status: 'closed', ai: false,
+    subject: 'Minor NC · IFU symbols — ISO 15223-1 conformity',
+    summary: 'Closed. Labelling updated to current ISO 15223-1:2021 symbol set with the self-test pictogram added.',
+    refs: [{ section: 'GSPR-III', label: 'GSPR §III — Information supplied' }],
+    triage: { ana: 'Closed', priority: 'low', owner: 'Jordan Chen', tasks: 0 } },
+];
+
+const IVD_APPROVALS: Approval[] = [
+  { id: 'ap-i-03', stage: 'regulatory', target: 'IVDR technical file · IVD-318', target_kind: 'Submission', requested: '2026-04-29T15:02:00Z', requested_by: 'Jordan Chen', signer: 'You', role: 'Reg Lead', status: 'pending', due: '2026-05-06', meaning: 'Approve technical file for NB submission' },
+  { id: 'ap-i-02', stage: 'medical', target: 'Clinical performance — EGFR CDx', target_id: 'CP1', target_kind: 'Section', requested: '2026-04-29T13:20:00Z', requested_by: 'Marcus Wei', signer: 'Dr. Lee Hartman', role: 'Med Affairs', status: 'pending', due: '2026-05-04', meaning: 'Endorse clinical performance claims' },
+  { id: 'ap-i-01', stage: 'qa', target: 'Analytical validation — SARS-CoV-2 Ag', target_id: 'AV2', target_kind: 'Section', requested: '2026-04-28T17:00:00Z', requested_by: 'Priya Shah', signer: 'Priya Shah', role: 'QA', status: 'signed', signed_at: '2026-04-29T13:20:00Z', meaning: 'QA review complete' },
+];
+
 /** Per-pathway bundle so surfaces can index by pathway. */
 export const PATHWAY_TABS_DATA: PathwayTabsData = {
   k510: { audit: K510_AUDIT, correspondence: K510_CORRESP, approvals: K510_APPROVALS, corrLabel: 'RTA / AI-Hold' },
   pma:  { audit: PMA_AUDIT,  correspondence: PMA_CORRESP,  approvals: PMA_APPROVALS,  corrLabel: 'Day-100' },
   cer:  { audit: CER_AUDIT,  correspondence: CER_CORRESP,  approvals: CER_APPROVALS,  corrLabel: 'NB Q&A' },
+  ivd:  { audit: IVD_AUDIT,  correspondence: IVD_CORRESP,  approvals: IVD_APPROVALS,  corrLabel: 'NB / GSPR' },
 };

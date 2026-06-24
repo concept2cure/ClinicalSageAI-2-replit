@@ -437,7 +437,9 @@
     "tmp": "^0.2.6",
     "undici": "^7.28.0",
     "vite": "$vite",
-    "ws": "$ws"
+    "ws": "$ws",
+    "http-proxy-middleware": "^3.0.7",
+    "nodemailer": "^9.0.1"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8",

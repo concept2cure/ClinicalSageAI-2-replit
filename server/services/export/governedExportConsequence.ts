@@ -1,6 +1,14 @@
 import { registerArtifactWithGovernance } from '../compute/artifactWriteback';
 
-export type ExportSourceType = 'export_pdf' | 'export_docx' | 'export_zip' | 'export_estar_zip';
+export type ExportSourceType =
+  | 'export_pdf'
+  | 'export_docx'
+  | 'export_zip'
+  | 'export_estar_zip'
+  // The official FDA eSTAR interactive PDF (the artifact CDRH ingests), as
+  // opposed to `export_estar_zip` which is a draft ZIP of section PDFs. Only
+  // ever emitted when a real filled official eSTAR PDF was produced.
+  | 'export_estar_pdf';
 
 export interface GovernedExportInput {
   organizationId: number;

@@ -151,7 +151,7 @@ export interface AuditKindMeta {
  * the in-memory dossier store synthesises live rows of the same shape. */
 
 /** Pathway keys that carry a full sub-tab bundle. */
-export type PathwayKey = 'k510' | 'pma' | 'cer';
+export type PathwayKey = 'k510' | 'pma' | 'cer' | 'ivd';
 
 /** A single audit-trail row. Seed rows carry a hash/prev chain; live rows
  *  synthesised by the dossier store carry `live: true`. */

@@ -17,6 +17,7 @@ import { Overview } from './surfaces/Overview';
 import { K510Surface } from './surfaces/K510Surface';
 import { PmaSurface } from './surfaces/PmaSurface';
 import { CerSurface } from './surfaces/CerSurface';
+import { IvdSurface } from './surfaces/IvdSurface';
 import { PrecedentSurface } from './surfaces/PrecedentSurface';
 import { EngineeringSurface } from './surfaces/EngineeringSurface';
 import { UdiSurface } from './surfaces/UdiSurface';
@@ -44,6 +45,7 @@ const HERE_LABEL: Record<string, string> = {
   k510:           '510(k) Submissions',
   pma:            'PMA Submissions',
   cer:            'CER Generator',
+  'device-diagnostics-workbench': 'IVD diagnostics workbench',
   predicate:      'Precedent intelligence',
   engineering:    'Device engineering',
   udi:            'UDI and labeling',
@@ -165,6 +167,9 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
     if (activeNav === 'k510')         return programs.find(p => p.pathway === 'k510') ?? null;
     if (activeNav === 'pma')          return programs.find(p => p.pathway === 'pma')  ?? null;
     if (activeNav === 'cer')          return programs.find(p => p.pathway === 'cer')  ?? null;
+    // IVD workbench is org-scoped (IVDR lists), but anchor to a device program
+    // for the GSPR matrix + dossier scope when one exists.
+    if (activeNav === 'device-diagnostics-workbench') return programs.find(p => p.pathway === 'k510') ?? null;
     if (activeNav === 'project-home') return programs[0] ?? null;
     return null;
   }, [activeNav, selectedProgram, programs]);
@@ -246,6 +251,9 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
         break;
       case 'cer':
         surface = <CerSurface program={programForContext} onAskAna={askAna} />;
+        break;
+      case 'device-diagnostics-workbench':
+        surface = <IvdSurface program={programForContext} onAskAna={askAna} onOpenEditor={() => openAuthoring('device-diagnostics-workbench')} />;
         break;
       case 'predicate':
         surface = <PrecedentSurface onAskAna={askAna} />;
