@@ -16,7 +16,9 @@ export type Region =
 export type Agency =
   | 'FDA' | 'EMA' | 'MHRA' | 'Health_Canada' | 'PMDA' | 'NMPA' | 'TGA'
   | 'Swissmedic' | 'ANVISA' | 'CDSCO' | 'MFDS' | 'HSA'
-  | 'ICH';
+  | 'ICH'
+  // Global standards / harmonization bodies (cross-cutting documents).
+  | 'ISO' | 'IEC' | 'IMDRF';
 
 export type ApplicationFamily =
   | 'clinical_trial' | 'marketing_authorization' | 'variation' | 'renewal'
@@ -24,7 +26,8 @@ export type ApplicationFamily =
   | 'pre_submission' | 'device_clearance' | 'device_approval'
   // Extended families introduced with the segment/category taxonomy buildout.
   | 'designation' | 'quality_cmc' | 'quality_system' | 'post_market'
-  | 'software_documentation' | 'companion_diagnostic' | 'clinical_document';
+  | 'software_documentation' | 'companion_diagnostic' | 'clinical_document'
+  | 'dossier_module';
 
 export type ProductClass =
   | 'small_molecule' | 'biologic' | 'biosimilar' | 'generic' | 'otc'
