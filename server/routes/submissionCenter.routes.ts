@@ -2,14 +2,18 @@ import { Router, Request, Response } from 'express';
 import { pool, query } from '../db';
 import { z } from 'zod';
 import { asyncHandler } from '../middleware/errorHandler';
+import {
+  resolveToRegistryEntry,
+  getSubmissionTypeContext,
+} from '../../shared/regulatory/submission-type-bridge.js';
 
 const router = Router();
 
-// Project creation schema for unified IND + eCTD workflow
+// Project creation schema — accepts any registry type or legacy string
 const createProjectSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
-  submissionType: z.enum(['NDA', 'ANDA', 'BLA', '510k', 'IND', 'PMR', 'PMC', 'IVDR']),
+  submissionType: z.string().min(1),
   targetAgency: z.string().optional(),
   targetDate: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
@@ -93,6 +97,12 @@ router.get('/projects', asyncHandler(async (req: Request, res: Response) => {
 router.post('/projects', asyncHandler(async (req: Request, res: Response) => {
     const validatedData = createProjectSchema.parse(req.body);
 
+    // Normalize submission type through the registry bridge; fall back to raw string
+    const registryEntry = resolveToRegistryEntry(validatedData.submissionType);
+    const canonicalType = registryEntry?.applicationType ?? validatedData.submissionType;
+    const ctx = getSubmissionTypeContext(canonicalType);
+    const derivedAgency = ctx?.agency ?? validatedData.targetAgency ?? 'FDA';
+
     const result = await query(
       `INSERT INTO submission_projects (name, description, submission_type, status, stage, target_agency, target_date, priority, created_by)
        VALUES ($1, $2, $3, 'planning', 'planning', $4, $5, $6, 'User')
@@ -100,8 +110,8 @@ router.post('/projects', asyncHandler(async (req: Request, res: Response) => {
       [
         validatedData.name,
         validatedData.description || '',
-        validatedData.submissionType,
-        validatedData.targetAgency || 'FDA',
+        canonicalType,
+        derivedAgency,
         validatedData.targetDate || null,
         validatedData.priority,
       ]
@@ -329,8 +339,15 @@ router.post('/workflow/transition', asyncHandler(async (req: Request, res: Respo
     });
 }));
 
-// Helper function to generate initial tasks based on submission type
+/**
+ * Generate initial tasks for a project.
+ *
+ * For legacy types (IND, NDA, BLA, 510k, IVDR) the existing deep templates are
+ * used. For any of the other 150+ registry types, the bridge resolves the
+ * segment/category to pick a fit-for-purpose generic template.
+ */
 function getInitialTasksForProject(submissionType: string) {
+  const ctx = getSubmissionTypeContext(submissionType);
   const taskTemplates: { [key: string]: any[] } = {
     IND: [
       {
@@ -533,7 +550,49 @@ function getInitialTasksForProject(submissionType: string) {
     ],
   };
 
-  return taskTemplates[submissionType] || [];
+  // Exact key match (legacy types)
+  if (taskTemplates[submissionType]) return taskTemplates[submissionType];
+
+  // Registry-driven fallback: derive tasks from segment/category
+  if (!ctx) return [];
+  const { segment, category, displayName } = ctx;
+
+  if (segment === 'medical_devices' || segment === 'diagnostics_ivd') {
+    return [
+      { title: `Device Description — ${displayName}`, description: 'Full device description, intended use, and indications', module: 'Device', category: 'authoring', priority: 'high' },
+      { title: 'Risk Management File', description: 'ISO 14971 risk analysis, evaluation, and control', module: 'Quality', category: 'authoring', priority: 'critical' },
+      { title: 'Technical Documentation', description: 'Assemble full technical dossier per applicable regulatory standard', module: 'Device', category: 'submission', priority: 'high' },
+      { title: 'Performance / Testing Data', description: 'Bench testing, verification, and validation reports', module: 'Quality', category: 'validation', priority: 'high' },
+      { title: 'Labeling Review', description: 'Instructions for use and labeling review', module: 'Device', category: 'review', priority: 'medium' },
+    ];
+  }
+
+  if (category === 'post_approval_lifecycle' || category === 'post_market_safety') {
+    return [
+      { title: `${displayName} — Administrative Module`, description: 'Cover letter, application forms, and regulatory fees', module: 'eCTD', category: 'authoring', priority: 'high' },
+      { title: 'Change Description and Rationale', description: 'Detailed description of proposed change with scientific justification', module: 'CMC', category: 'authoring', priority: 'critical' },
+      { title: 'Comparative Data Package', description: 'Pre- and post-change comparability data', module: 'CMC', category: 'authoring', priority: 'high' },
+      { title: 'eCTD Package Assembly', description: 'Format and validate eCTD package for submission', module: 'eCTD', category: 'submission', priority: 'medium' },
+    ];
+  }
+
+  if (segment === 'cross_cutting') {
+    return [
+      { title: `${displayName} — Cover Letter`, description: 'Regulatory cover letter with application summary', module: 'eCTD', category: 'authoring', priority: 'high' },
+      { title: 'Quality Documentation', description: 'Module 3 / quality dossier compilation', module: 'CMC', category: 'authoring', priority: 'high' },
+      { title: 'Submission Package Validation', description: 'Validate submission format and completeness', module: 'eCTD', category: 'review', priority: 'medium' },
+    ];
+  }
+
+  // Pharma/biotech default: full CTD
+  return [
+    { title: `${displayName} — Module 1 Administrative`, description: 'Application forms, cover letter, administrative information', module: 'eCTD', category: 'authoring', priority: 'high' },
+    { title: 'Module 2 CTD Summaries', description: 'Quality, nonclinical, and clinical overviews and summaries', module: 'eCTD', category: 'authoring', priority: 'high' },
+    { title: 'Module 3 Quality (CMC)', description: 'Complete drug substance and drug product quality documentation', module: 'CMC', category: 'authoring', priority: 'critical' },
+    { title: 'Module 4 Nonclinical', description: 'Nonclinical pharmacology, toxicology, and pharmacokinetics', module: 'eCTD', category: 'authoring', priority: 'high' },
+    { title: 'Module 5 Clinical', description: 'Clinical study reports and integrated summary of efficacy/safety', module: 'Clinical', category: 'authoring', priority: 'critical' },
+    { title: 'eCTD Technical Validation', description: 'Validate eCTD package structure and completeness before submission', module: 'eCTD', category: 'review', priority: 'high' },
+  ];
 }
 
 // Mock regulatory intelligence removed — returns real DB data or empty array.

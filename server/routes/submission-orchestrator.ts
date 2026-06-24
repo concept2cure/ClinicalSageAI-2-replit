@@ -38,8 +38,8 @@ const router = Router();
 
 // ── Validation schemas ──────────────────────────────────────────────────────
 
-const RegionSchema = z.enum(['US', 'EU', 'JP', 'CA']);
-const SubmissionTypeSchema = z.enum(['IND', 'NDA', 'BLA', '510k', 'PMA', 'JNDA', 'MAA']);
+const RegionSchema = z.enum(['US', 'EU', 'JP', 'CA', 'UK', 'CN', 'AU', 'CH', 'BR', 'IN', 'KR', 'SG', 'GLOBAL']);
+const SubmissionTypeSchema = z.string().min(1);
 
 const CanonicalSourceSchema = z.object({
   id: z.string(),
