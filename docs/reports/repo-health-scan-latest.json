@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-24T18:17:58.211Z",
+  "generatedAt": "2026-06-24T19:29:35.487Z",
   "git": {
-    "sha": "379cf9a0bcb5343db8be8154bcbbcfcb60cba889",
+    "sha": "831d696db45b10b7d367f76409b3ff61bbfa8e81",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2205,7 +2205,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 683289
+        "bytes": 680498
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2263,7 +2263,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 18370
+        "lines": 18348
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2350,6 +2350,10 @@
         "lines": 1876
       },
       {
+        "file": "server/services/ana-ri/orchestrator.ts",
+        "lines": 1862
+      },
+      {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
         "lines": 1849
       },
@@ -2374,10 +2378,6 @@
         "lines": 1816
       },
       {
-        "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1810
-      },
-      {
         "file": "design-system/ui_kits/home/Projects.jsx",
         "lines": 1796
       },
@@ -2391,7 +2391,7 @@
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1704
+        "lines": 1712
       },
       {
         "file": "server/services/client-intelligence-memory.ts",
