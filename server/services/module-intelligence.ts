@@ -26,10 +26,7 @@
  */
 
 import type { UserIntelligence, ProjectSummary } from './user-intelligence.js';
-import {
-  resolveToDeficiencyType,
-  getSubmissionTypeContext,
-} from '../../shared/regulatory/submission-type-bridge.js';
+import { resolveToDeficiencyType, getSubmissionTypeContext } from '../../shared/regulatory/submission-type-bridge.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -86,12 +83,8 @@ export interface EvidenceRequirement {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function getMedicalDeviceIntelligence(project: ProjectSummary | null): ModuleIntelligence {
-  const rawType = project?.submissionType || '510k';
-  const defType = resolveToDeficiencyType(rawType);
-  const typeCtx = getSubmissionTypeContext(rawType);
-  const is510k = defType === '510k';
-  const isPMA = defType === 'pma';
-  const isDeNovo = defType === 'de_novo';
+  const defType = resolveToDeficiencyType(project?.submissionType || '510k');
+  const is510k = defType === '510k', isPMA = defType === 'pma', isDeNovo = defType === 'de_novo';
 
   const basePrompt = `
 ## Medical Device & Diagnostics Intelligence — Active Module
@@ -381,9 +374,7 @@ When the user asks me to analyze or draft, I will:
 function getEctdCoauthorIntelligence(project: ProjectSummary | null): ModuleIntelligence {
   const rawType = project?.submissionType || 'ind';
   const defType = resolveToDeficiencyType(rawType);
-  const typeCtx = getSubmissionTypeContext(rawType);
-  const submissionType = typeCtx?.displayName ?? rawType.toUpperCase();
-  const phase = project?.phase || 'Phase 1';
+  const submissionType = getSubmissionTypeContext(rawType)?.displayName ?? rawType.toUpperCase(), phase = project?.phase || 'Phase 1';
 
   return {
     moduleId: 'ectd-coauthor',
@@ -1494,14 +1485,9 @@ export function detectActiveModule(intelligence: UserIntelligence): string | nul
   // Infer from submission type via the canonical bridge
   const rawSubType = intelligence.activeProject?.submissionType;
   if (rawSubType) {
-    const defType = resolveToDeficiencyType(rawSubType);
-    if (defType === '510k' || defType === 'pma' || defType === 'de_novo') {
-      return '510k-submission';
-    }
-    if (defType === 'ind') return 'ind-filing';
-    if (defType === 'nda' || defType === 'bla') return 'nda-bla';
-    if (defType === 'cer') return 'ce-marking';
-    if (defType === 'ectd') return 'ectd-coauthor';
+    const moduleByType: Record<string, string> = { '510k': '510k-submission', pma: '510k-submission', de_novo: '510k-submission', ind: 'ind-filing', nda: 'nda-bla', bla: 'nda-bla', cer: 'ce-marking', ectd: 'ectd-coauthor' };
+    const hit = moduleByType[resolveToDeficiencyType(rawSubType)];
+    if (hit) return hit;
   }
 
   // Infer from industry mode
