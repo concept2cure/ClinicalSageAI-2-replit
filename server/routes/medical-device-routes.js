@@ -11,6 +11,7 @@ import multer from 'multer';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { authenticateJWT } from '../middleware/auth.js';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 
 const router = express.Router();
 
@@ -343,6 +344,23 @@ router.post(
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // SECURITY: magic-byte signature verification + AV scan on the
+      // persisted bytes (fail-closed in production). Unlink the temp
+      // file on rejection so a rejected upload doesn't linger on disk.
+      try {
+        await assertUploadSafe(req.file.path, req.file.mimetype, req.file.originalname);
+      } catch (safetyErr) {
+        try {
+          await fs.unlink(req.file.path);
+        } catch {
+          /* best-effort cleanup */
+        }
+        if (safetyErr instanceof UploadSafetyError) {
+          return res.status(safetyErr.status).json(safetyErr.body);
+        }
+        throw safetyErr;
       }
 
       const documentData = {

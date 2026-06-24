@@ -9,6 +9,7 @@
 
 import type { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
+import { nonAccessTokenReason } from './tokenType';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
 
@@ -39,7 +40,17 @@ interface JWTPayload {
   organizationId?: string;
   orgId?: string;
   permissions?: string[];
+  // Token-class discriminators. Non-access tokens (refresh, MFA challenge,
+  // MFA-partial) are signed with the same secret as access tokens, so the
+  // access path MUST reject them explicitly.
+  type?: string;
+  mfaPending?: boolean;
 }
+
+// Re-exported for callers that import the guard from the auth middleware.
+// The implementation lives in ./tokenType (a module with no `.js` twin) so
+// that TypeScript and the test/runtime resolvers agree on the same file.
+export { nonAccessTokenReason };
 
 // Extend Request type to include user
 declare global {
@@ -68,6 +79,19 @@ declare global {
       tenantId?: number | string;
       userRole?: string;
       userEmail?: string;
+      /**
+       * How the request was authenticated. Set to 'api_key' by
+       * validateApiKey (enterprise-security.ts) when an X-API-Key header
+       * validates. Absent for normal JWT/session requests. Read by
+       * requireScope to decide whether to apply API-key scope enforcement.
+       */
+      authMethod?: 'api_key';
+      /** Scopes granted to the validated API key (validateApiKey). */
+      apiScopes?: string[];
+      /** Numeric id of the validated API key row (validateApiKey). */
+      apiKeyId?: number;
+      /** Per-key rate limit pulled from the api_keys row (validateApiKey). */
+      apiRateLimit?: number;
     }
   }
 }
@@ -89,6 +113,16 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 
   try {
     const decoded = verifyJwtWithRotation(token) as JWTPayload;
+
+    // SECURITY: a non-access token (refresh / MFA challenge / MFA partial) must
+    // never authenticate a normal request, otherwise MFA can be bypassed.
+    const nonAccess = nonAccessTokenReason(decoded);
+    if (nonAccess) {
+      return res.status(401).json({
+        error: { code: 'AUTH_008', message: 'Token is not valid for this operation' },
+      });
+    }
+
     const subject = decoded.userId ?? decoded.id ?? decoded.sub;
     if (subject === undefined || subject === null || subject === '' || subject === 0) {
       // A signed token with no usable subject claim must not authenticate.
@@ -242,9 +276,13 @@ export const optionalAuth = (req: Request, res: Response, next: NextFunction) =>
   try {
     const decoded = verifyJwtWithRotation(token) as JWTPayload;
     const subject = decoded.userId ?? decoded.id ?? decoded.sub;
-    // Silently ignore tokens without a usable subject — optional auth
-    // continues unauthenticated rather than attaching a phantom user.
-    if (subject !== undefined && subject !== null && subject !== '' && subject !== 0) {
+    // Silently ignore tokens without a usable subject, and never attach a user
+    // from a non-access (refresh / MFA challenge / partial) token — optional
+    // auth continues unauthenticated rather than attaching a phantom user.
+    if (
+      !nonAccessTokenReason(decoded) &&
+      subject !== undefined && subject !== null && subject !== '' && subject !== 0
+    ) {
       req.user = {
         id: subject,
         userId: subject,

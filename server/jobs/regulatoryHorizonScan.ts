@@ -122,7 +122,9 @@ export function startRegulatoryHorizonSchedule(): void {
   const expr = process.env.REGULATORY_HORIZON_SCAN_CRON || '0 6 * * 1';
   try {
     cron.schedule(expr, () => {
-      void runRegulatoryHorizonScan();
+      void runRegulatoryHorizonScan().catch(err =>
+        logger.error(`Regulatory horizon scan failed: ${err?.message ?? String(err)}`)
+      );
     });
     logger.info(`Regulatory horizon scan scheduled (${expr})`);
   } catch (err: any) {

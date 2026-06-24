@@ -18,6 +18,7 @@
 import { db as dbInstance } from '../../db';
 import { sql } from 'drizzle-orm';
 import crypto from 'crypto';
+import { buildRegionArray, buildEncryptionFieldArray } from './sql-array-helpers';
 
 // Assert db is available (throws error at runtime if not)
 const db = dbInstance!;
@@ -228,7 +229,7 @@ export class GRDHEService {
       ) VALUES (
         ${config.tenantId}::uuid,
         ${config.primaryRegion || 'US_EAST'}::regulatory_harmonization.data_region,
-        ${sql.raw(`ARRAY[${(config.allowedProcessingRegions || ['US_EAST']).map(r => `'${r}'::regulatory_harmonization.data_region`).join(',')}]`)},
+        ${buildRegionArray(config.allowedProcessingRegions)},
         ${config.backupRegion || null}::regulatory_harmonization.data_region,
         ${config.gdprSubject ?? false},
         ${config.gdprLawfulBasis || null},
@@ -238,7 +239,7 @@ export class GRDHEService {
         ${config.crossBorderDocumentationUrl || null},
         ${config.encryptionAtRestRequired ?? true},
         ${config.encryptionInTransitRequired ?? true},
-        ${sql.raw(`ARRAY[${(config.fieldLevelEncryptionFields || ['ssn', 'dob', 'medical_record_number', 'patient_name']).map(f => `'${f}'`).join(',')}]`)},
+        ${buildEncryptionFieldArray(config.fieldLevelEncryptionFields)},
         ${config.encryptionAlgorithm || 'AES-256-GCM'},
         ${config.keyRotationDays ?? 90},
         ${config.clinicalTrialRetentionDays ?? 5475},

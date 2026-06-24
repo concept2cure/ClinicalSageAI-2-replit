@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-17T18:01:17.576Z",
+  "generatedAt": "2026-06-22T05:32:04.581Z",
   "git": {
-    "sha": "82fc3c6dbc418bc10449bb4878bd43e24117124e",
+    "sha": "d4f112558f57dc2893d5639dae578dc48dae83c2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 219,
+    "duplicateBasenames": 220,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 94,
+        "count": 95,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -109,6 +109,7 @@
           "services/compliance/index.ts",
           "services/documents/index.ts",
           "services/proof/index.ts",
+          "shared/navigation/index.ts",
           "shared/regulatory/index.ts",
           "shared/schema/index.ts",
           "shared/types/generated/index.ts",
@@ -1578,6 +1579,14 @@
         ]
       },
       {
+        "basename": "governed-action-signoff.test",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/components/ana/__tests__/governed-action-signoff.test.tsx",
+          "server/services/ana-ri/__tests__/governed-action-signoff.test.ts"
+        ]
+      },
+      {
         "basename": "grants",
         "count": 2,
         "paths": [
@@ -2197,11 +2206,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 519054
+        "bytes": 569634
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 384340
+        "bytes": 395441
       },
       {
         "file": "server/statistics-service.ts",
@@ -2212,16 +2221,16 @@
         "bytes": 179637
       },
       {
+        "file": "server/services/ana-ri/command-executor.ts",
+        "bytes": 178361
+      },
+      {
         "file": "server/routes/authoring.router.ts",
         "bytes": 175783
       },
       {
-        "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 175667
-      },
-      {
         "file": "server/storage.ts",
-        "bytes": 137224
+        "bytes": 142122
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2255,11 +2264,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 10633
+        "lines": 11627
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7097
+        "lines": 7256
       },
       {
         "file": "server/statistics-service.ts",
@@ -2275,11 +2284,11 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4681
+        "lines": 4746
       },
       {
         "file": "server/storage.ts",
-        "lines": 4342
+        "lines": 4415
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2335,11 +2344,15 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 1852
+        "lines": 1876
       },
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
         "lines": 1849
+      },
+      {
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "lines": 1843
       },
       {
         "file": "server/services/dataHarvester.js",
@@ -2348,10 +2361,6 @@
       {
         "file": "server/services/ana/citation-engine.ts",
         "lines": 1828
-      },
-      {
-        "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1825
       },
       {
         "file": "server/services/compliance/globalComplianceEngine.ts",
@@ -2382,16 +2391,16 @@
         "lines": 1704
       },
       {
+        "file": "server/services/client-intelligence-memory.ts",
+        "lines": 1699
+      },
+      {
         "file": "server/routes/fda510k-routes.ts",
         "lines": 1691
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
         "lines": 1687
-      },
-      {
-        "file": "server/services/client-intelligence-memory.ts",
-        "lines": 1680
       },
       {
         "file": "server/services/unifiedDocumentIngestion.js",
@@ -2427,7 +2436,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 350,
+      "duplicateGroups": 351,
       "largeByBytes": 11,
       "largeByLines": 34
     },
@@ -2439,13 +2448,13 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 147,
+      "duplicateGroups": 148,
       "largeByBytes": 0,
       "largeByLines": 1
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 46,
+      "duplicateGroups": 47,
       "largeByBytes": 1,
       "largeByLines": 2
     },

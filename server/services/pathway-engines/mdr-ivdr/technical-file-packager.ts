@@ -132,17 +132,28 @@ export async function materializeTechnicalFile(
   const zip = new JSZip();
   const checksums: Array<{ relPath: string; md5: string }> = [];
 
+  // INTEGRITY: pin every entry's timestamp so the archive is genuinely
+  // content-addressed — identical input must yield identical bytes and thus an
+  // identical sha256. JSZip otherwise stamps each entry with `new Date()`,
+  // which makes the ZIP non-deterministic across runs (and defeats the
+  // content-addressing guarantee this packager promises for regulated,
+  // reproducible submissions). JSZip derives the DOS date/time from this Date in
+  // LOCAL time, so use NOON UTC on 1980-01-01: it stays on 1980-01-01 in every
+  // timezone (a midnight-UTC epoch underflows below the 1980 DOS floor at
+  // negative UTC offsets).
+  const ZIP_EPOCH = new Date(Date.UTC(1980, 0, 1, 12, 0, 0));
+
   const manifestJson = JSON.stringify(plan.manifest, null, 2);
-  zip.file('manifest.json', manifestJson);
+  zip.file('manifest.json', manifestJson, { date: ZIP_EPOCH });
   checksums.push({ relPath: 'manifest.json', md5: createHash('md5').update(manifestJson).digest('hex') });
 
   for (const f of plan.files) {
     const buf = await fs.readFile(f.sourcePath);
-    zip.file(f.targetPath, buf);
+    zip.file(f.targetPath, buf, { date: ZIP_EPOCH });
     checksums.push({ relPath: f.targetPath, md5: f.md5 ?? createHash('md5').update(buf).digest('hex') });
   }
 
-  zip.file('checksums.md5.txt', buildMd5Index(checksums));
+  zip.file('checksums.md5.txt', buildMd5Index(checksums), { date: ZIP_EPOCH });
 
   await fs.mkdir(opts.outputDir, { recursive: true });
   const buffer = await zip.generateAsync({

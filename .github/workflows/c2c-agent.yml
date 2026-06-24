@@ -21,6 +21,9 @@ on:
           - compliance_check
           - ai_prompt_eval
 
+permissions:
+  contents: read
+
 env:
   NODE_VERSION: '22'
 
@@ -93,6 +96,10 @@ jobs:
   # ═══════════════════════════════════════════════════════════════════════════
   regulatory_validation:
     runs-on: ubuntu-latest
+    # Posts the regulatory-validation report as a PR comment (github-script).
+    permissions:
+      contents: read
+      pull-requests: write
     if: >
       github.event.inputs.agent_task == 'regulatory_validation' ||
       github.event.inputs.agent_task == 'full_audit' ||

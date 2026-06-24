@@ -74,7 +74,9 @@ export function startAuditChainIntegritySchedule(): void {
   const expr = process.env.AUDIT_CHAIN_CHECK_CRON || '0 2 * * *';
   try {
     cron.schedule(expr, () => {
-      void runAuditChainIntegrityCheck();
+      void runAuditChainIntegrityCheck().catch(err =>
+        logger.error(`Audit chain integrity check failed: ${err?.message ?? String(err)}`)
+      );
     });
     logger.info(`Audit chain integrity sweep scheduled (${expr})`);
   } catch (err: any) {

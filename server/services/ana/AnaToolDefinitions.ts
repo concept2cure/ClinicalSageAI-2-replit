@@ -12,6 +12,16 @@
 import type { AnaTool, AnthropicServerTool, AnyAnaTool } from '../ai-gateway/types';
 import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC, IVD_KNOWLEDGE_TOOL_SPEC } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
+import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
+import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
+import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
+import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
+import { NAVIGATION_TOOLS } from './navigationTools';
+import { EXTENDED_REGULATORY_TOOLS } from './extendedRegulatoryTools';
+import { PHARMACOVIGILANCE_REPORTING_TOOLS } from './pharmacovigilanceReportingTools';
+import { ANALYTICAL_METHOD_TOOLS } from './analyticalMethodTools';
+import { ADVANCED_MODELING_TOOLS } from './advancedModelingTools';
+import { COVER_LETTER_TOOLS } from './coverLetterTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -5195,6 +5205,64 @@ export const SURGICAL_DOCX_XML_EDIT: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Clause-template library — insert a named regulatory building block
+// (signature/approval block, cover-letter header, section heading, sponsor
+// placeholder swap) into an existing .docx. A curated, field-validated content
+// layer over insert_document_content's governed docx-insert worker — the
+// productized equivalent of hand-scripting per-document clause helpers. Prefer
+// this over insert_document_content when the content is a standard regulatory
+// block; drop to insert_document_content for free-form content and to
+// surgical_docx_xml_edit for raw-XML formatting inheritance. Tenant-scoped.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const INSERT_CLAUSE_TEMPLATE: AnaTool = {
+  name: 'insert_clause_template',
+  description:
+    "Insert a named regulatory clause/building block into an existing Word (.docx) — signature/approval block, cover-letter header, section heading, or sponsor placeholder swap — via the governed docx-insert worker. Each clause is a curated, field-validated template: supply the clause key and its fields and it renders the block (required-field checks included) and inserts it at the given anchor. clause='signature_block' (fields: signatory_name, signatory_title, organization?, closing?, signature_date?); 'cover_letter_header' (sponsor_name, letter_date, re_line, sponsor_address?, recipient?, submission_type?; defaults to document start); 'section_heading' (heading_text, heading_number?, heading_level? 1–3, intro?); 'sponsor_placeholder_swap' (sponsor_name + optional sponsor_address/submission_date/contact_name/contact_email; replaces {{SPONSOR}}-style tokens already in the document, no anchor needed). Returns the edited .docx path, an applied report, and any field/anchor warnings. Prefer this for standard blocks; use insert_document_content for free-form content. Tenant-scoped via ToolContext.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      input_docx_path: {
+        type: 'string',
+        description:
+          'Absolute path to the source .docx to edit (e.g. a docxPath from author_docx_native, generate_document, fetch_template_and_fill, or an uploaded template).',
+      },
+      clause: {
+        type: 'string',
+        enum: ['signature_block', 'cover_letter_header', 'section_heading', 'sponsor_placeholder_swap'],
+        description: 'Which named regulatory clause/building block to render and insert.',
+      },
+      fields: {
+        type: 'object',
+        description:
+          'Clause-specific fields (see the tool description for required/optional fields per clause). Values are plain text; multi-line fields (e.g. sponsor_address) are newline-separated.',
+      },
+      anchor: {
+        type: 'object',
+        description:
+          "Where to place the rendered block. Not used for 'sponsor_placeholder_swap' (it locates its own {{TOKEN}}s).",
+        properties: {
+          anchor_type: {
+            type: 'string',
+            enum: ['heading_text', 'placeholder', 'paragraph_index', 'start', 'end'],
+            description: "How to locate the insertion point. Defaults: 'end' (most clauses) or 'start' (cover_letter_header).",
+          },
+          anchor_value: { type: 'string', description: "Heading text, placeholder token, or paragraph index (as a string). Omit for 'start'/'end'." },
+          position: { type: 'string', enum: ['before', 'after', 'replace'], description: "Placement relative to the anchor. Default 'after'." },
+          match: { type: 'string', enum: ['exact', 'contains'], description: "Text-anchor match mode. Default 'contains'." },
+        },
+      },
+      output_format: {
+        type: 'string',
+        enum: ['docx', 'pdf'],
+        description: "Output format. 'docx' (default) returns the edited Word document; 'pdf' additionally converts via headless LibreOffice.",
+      },
+    },
+    required: ['input_docx_path', 'clause'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // DOCX validation — open a .docx and confirm it is structurally sound before
 // shipping: required parts present ([Content_Types].xml, _rels/.rels,
 // word/document.xml), every XML/rels part well-formed, relationship targets
@@ -5248,6 +5316,40 @@ export const VALIDATE_DOCX: AnaTool = {
       input_docx_path: {
         type: 'string',
         description: 'Absolute path to the .docx to validate.',
+      },
+    },
+    required: ['input_docx_path'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Content-fidelity verification — proves a freshly built/edited .docx actually
+// reproduces the supplied source text (and any required caption/boilerplate
+// strings) verbatim, beyond what validate_docx (structural OOXML integrity)
+// checks. Extracts the .docx text via the same extraction path AnA reads
+// uploads with, diffs it against the source, and asserts each required string
+// is present exactly. This is the audited "verify it against your text" step.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VERIFY_DOCX_AGAINST_SOURCE: AnaTool = {
+  name: 'verify_docx_against_source',
+  description:
+    "Verify that a built or edited Word (.docx) faithfully reproduces a known source text — the audited \"verify it against your text\" step after rebuilding from a template, applying corrections, or appending paragraphs. Unlike validate_docx (which checks OOXML/ZIP structural integrity only), this extracts the document's text and (1) diffs it against expected_text to surface any content divergence, and (2) confirms each entry in required_strings (e.g. caption block, case/sponsor identifiers, sworn-paragraph or boilerplate anchors) appears verbatim. Returns { ok, missingRequiredStrings, divergenceSummary, additions, deletions } — a pass/fail the user and the Part 11 audit trail can cite. Pair with validate_docx for full (structural + content) verification. Tenant-scoped via ToolContext.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      input_docx_path: {
+        type: 'string',
+        description: 'Absolute path to the built/edited .docx to verify (e.g. a docxPath returned by author_docx_native, build_from_template, or surgical_docx_xml_edit).',
+      },
+      expected_text: {
+        type: 'string',
+        description: 'The verbatim source text the document is supposed to contain (e.g. the complete text the user provided). The extracted document text is diffed against this. Optional when only required_strings is supplied.',
+      },
+      required_strings: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Strings that MUST appear verbatim in the document (e.g. caption strings, case/sponsor numbers, sworn-paragraph anchors). Each is checked for an exact substring match; any missing entry fails verification.',
       },
     },
     required: ['input_docx_path'],
@@ -6474,7 +6576,33 @@ export const RESET_PROJECT_GOALS: AnaTool = {
   },
 };
 
+export const RECONCILE_DOSSIER_NUMBERS: AnaTool = {
+  name: 'reconcile_dossier_numbers',
+  description:
+    "Scan several documents/modules of a submission together and flag the SAME labeled figure disagreeing across them — the classic reviewer finding (e.g. enrolled N in the protocol vs the CSR vs Module 2.7.3, or alpha/power/hazard-ratio drift between the SAP and the results). DETERMINISTIC and conservative: it extracts only figures sitting next to an unambiguous regulatory label (enrolled/randomized N, sample size, sites, events/deaths, alpha, power, hazard ratio, primary p-value) and reports any label that resolves to more than one distinct value, with the exact snippet from each document. Use this for cross-document numerical consistency — per-document checks cannot see these. Returns discrepancies (label + distinct values + per-document occurrences) and the labels found consistent.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      documents: {
+        type: 'array',
+        description: 'The documents/modules to reconcile against each other.',
+        items: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', description: 'Stable identifier (artifact id, module code, or file name).' },
+            title: { type: 'string', description: 'Optional human-readable title for reporting.' },
+            text: { type: 'string', description: 'Plain-text content of the document to scan.' },
+          },
+          required: ['id', 'text'],
+        },
+      },
+    },
+    required: ['documents'],
+  },
+};
+
 export const ALL_ANA_TOOLS: AnaTool[] = [
+  RECONCILE_DOSSIER_NUMBERS,
   GENERATE_SCHEDULE_OF_EVENTS,
   AMEND_SCHEDULE_OF_EVENTS,
   REVIEW_SCHEDULE_OF_EVENTS_HEALTH,
@@ -6551,6 +6679,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   RUN_PYTHON_SCRIPT,
   INSERT_DOCUMENT_CONTENT,
   SURGICAL_DOCX_XML_EDIT,
+  VERIFY_DOCX_AGAINST_SOURCE,
+  INSERT_CLAUSE_TEMPLATE,
   VALIDATE_DOCX,
   RUN_IN_CONTAINER,
   WRITE_KIT_SECTION,
@@ -7007,6 +7137,35 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
       },
     },
   } as unknown as AnaTool,
+  // Deterministic statistical design & analysis engines (server/services/stats/*),
+  // previously implemented but unreachable by AnA. See statisticalDesignTools.ts.
+  ...STATISTICAL_DESIGN_TOOLS,
+  // Submission intelligence: precedent benchmarking + package completeness.
+  ...SUBMISSION_INTELLIGENCE_TOOLS,
+  // Device/IVD submission assembly, predicate-adequacy scoring, drug coding —
+  // engines/data sources previously unreachable by AnA. See deviceSubmissionTools.ts.
+  ...DEVICE_SUBMISSION_TOOLS,
+  // Read-only window into enterprise usage controls (weekly limits, overage, seats).
+  ...LICENSE_STATUS_TOOLS,
+  // Self-navigation: discover + navigate to any app screen via the governed
+  // navigation registry (shared/navigation). See navigationTools.ts.
+  ...NAVIGATION_TOOLS,
+  // HEOR modeling, SPL labeling XML, CDISC define.xml/conformance, and reference
+  // formatting — deterministic engines newly reachable by AnA. See
+  // extendedRegulatoryTools.ts.
+  ...EXTENDED_REGULATORY_TOOLS,
+  // Pharmacovigilance reporting: SAE line listing + E2B(R3) ICSR composition
+  // over the org's recorded adverse events. See pharmacovigilanceReportingTools.ts.
+  ...PHARMACOVIGILANCE_REPORTING_TOOLS,
+  // ICH Q2 analytical method-validation assessment (linearity/precision/accuracy).
+  // See analyticalMethodTools.ts.
+  ...ANALYTICAL_METHOD_TOOLS,
+  // Advanced HEOR (Markov cohort + probabilistic sensitivity) and the full CDISC
+  // pipeline. See advancedModelingTools.ts.
+  ...ADVANCED_MODELING_TOOLS,
+  // 510(k) cover-letter + 510(k) summary composition (tenant-scoped). See
+  // coverLetterTools.ts.
+  ...COVER_LETTER_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

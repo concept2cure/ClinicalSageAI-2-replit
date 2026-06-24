@@ -194,12 +194,13 @@ router.post(
  */
 router.get('/documents', async (req: Request, res: Response) => {
   try {
+    const { organizationId } = getRequestContext(req);
     const profileId = parseInt(req.query.profileId as string, 10);
     if (!profileId) {
       return sendError(res, 400, 'profileId is required');
     }
 
-    const documents = await getIngestedDocuments(profileId);
+    const documents = await getIngestedDocuments(profileId, organizationId);
     return sendSuccess(res, { documents });
   } catch (err: any) {
     console.error('[ClientIntelligence] GET /documents error:', err);
@@ -213,12 +214,13 @@ router.get('/documents', async (req: Request, res: Response) => {
  */
 router.get('/checklist', async (req: Request, res: Response) => {
   try {
+    const { organizationId } = getRequestContext(req);
     const profileId = parseInt(req.query.profileId as string, 10);
     if (!profileId) {
       return sendError(res, 400, 'profileId is required');
     }
 
-    const checklist = await getDocumentChecklist(profileId);
+    const checklist = await getDocumentChecklist(profileId, organizationId);
     return sendSuccess(res, { checklist });
   } catch (err: any) {
     console.error('[ClientIntelligence] GET /checklist error:', err);
@@ -236,6 +238,7 @@ router.get('/checklist', async (req: Request, res: Response) => {
  */
 router.get('/memory', async (req: Request, res: Response) => {
   try {
+    const { organizationId } = getRequestContext(req);
     const profileId = parseInt(req.query.profileId as string, 10);
     if (!profileId) {
       return sendError(res, 400, 'profileId is required');
@@ -245,7 +248,7 @@ router.get('/memory', async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string, 10) || 100;
     const offset = parseInt(req.query.offset as string, 10) || 0;
 
-    const result = await getMemoryEntries(profileId, { category, limit, offset });
+    const result = await getMemoryEntries(profileId, organizationId, { category, limit, offset });
     return sendSuccess(res, { ...result });
   } catch (err: any) {
     console.error('[ClientIntelligence] GET /memory error:', err);

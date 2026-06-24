@@ -178,6 +178,98 @@ const getJwtPreviousSecret = (): string | undefined => {
   return candidate;
 };
 
+/**
+ * Resolve the secret used to sign/verify refresh tokens.
+ *
+ * Fail-closed posture (mirrors getJwtSecret):
+ *   - In staging AND production a DEDICATED REFRESH_TOKEN_SECRET is REQUIRED.
+ *     Previously the code fell back to the access-token (JWT) secret in those
+ *     environments, so a refresh token and an access token were signed with
+ *     the same key — defeating the point of a separate, longer-lived refresh
+ *     credential and meaning a JWT_SECRET disclosure also forges refresh
+ *     tokens. We now fail loud at config load instead.
+ *   - It must DIFFER from the JWT secret (same key-reuse problem as above).
+ *   - It must meet the same minimum length as the JWT secret.
+ *   - In development AND test the JWT-secret fallback is preserved so local
+ *     dev / CI (which set only JWT_SECRET) keep booting. A short or reused
+ *     value is tolerated there because no real refresh tokens are at risk.
+ *
+ * Supports an env-specific override (REFRESH_TOKEN_SECRET_<SUFFIX>) ahead of
+ * the generic REFRESH_TOKEN_SECRET, matching the JWT lookup convention.
+ */
+const getRefreshTokenSecret = (): string => {
+  const suffix = ENV_MAP[ENV];
+  const envVar = `REFRESH_TOKEN_SECRET_${suffix}`;
+  const candidate = process.env[envVar] ?? process.env.REFRESH_TOKEN_SECRET;
+
+  // Non-dev/test (staging, production) — dedicated secret is mandatory and
+  // must be distinct from the JWT secret. Fail closed at boot otherwise.
+  const enforceDedicated = ENV === 'production' || ENV === 'staging';
+
+  if (!candidate) {
+    if (enforceDedicated) {
+      throw new Error(
+        `[FATAL] Missing required REFRESH_TOKEN_SECRET. ` +
+          `Set ${envVar} or REFRESH_TOKEN_SECRET to a secure random string of ` +
+          `at least ${JWT_SECRET_MIN_LENGTH} characters, distinct from JWT_SECRET.`,
+      );
+    }
+    // development / test: fall back to the JWT secret for convenience.
+    return getJwtSecret();
+  }
+
+  if (enforceDedicated) {
+    if (candidate.length < JWT_SECRET_MIN_LENGTH) {
+      throw new Error(
+        `[FATAL] REFRESH_TOKEN_SECRET too short: ${candidate.length} characters. ` +
+          `Minimum is ${JWT_SECRET_MIN_LENGTH}. Use a cryptographically random value.`,
+      );
+    }
+    if (candidate === getJwtSecret()) {
+      throw new Error(
+        `[FATAL] REFRESH_TOKEN_SECRET must differ from the JWT secret. ` +
+          `Reusing one key across access and refresh tokens means a single ` +
+          `disclosure forges both; provision a distinct ${envVar}.`,
+      );
+    }
+  }
+
+  return candidate;
+};
+
+/**
+ * Enforce that a DEDICATED MFA encryption key backs MFA-secret confidentiality
+ * in production. mfaService can fall back to a JWT_SECRET-derived key, but that
+ * reuses one key across trust domains (a JWT_SECRET leak would decrypt every
+ * stored MFA secret). The operator sets MFA_REQUIRE_DEDICATED_KEY=true once the
+ * dedicated key is provisioned and existing secrets re-encrypted.
+ *
+ * Fail-closed posture (mirrors getJwtSecret):
+ *   - In production, a MFA_ENCRYPTION_KEY (>= JWT_SECRET_MIN_LENGTH) is REQUIRED
+ *     and MFA_REQUIRE_DEDICATED_KEY is forced effectively on — we fail at boot
+ *     if the dedicated key is missing or too short, rather than silently
+ *     deriving from JWT_SECRET.
+ *   - In development, staging and test the dedicated key is optional (the
+ *     mfaService JWT-derived fallback applies), so local dev / CI keep booting.
+ */
+const assertMfaKeyPosture = (): void => {
+  if (ENV !== 'production') return;
+
+  const mfaKey = process.env.MFA_ENCRYPTION_KEY;
+  if (!mfaKey || mfaKey.length < JWT_SECRET_MIN_LENGTH) {
+    throw new Error(
+      `[FATAL] Missing or weak MFA_ENCRYPTION_KEY. ` +
+        `Production requires a dedicated MFA_ENCRYPTION_KEY of at least ` +
+        `${JWT_SECRET_MIN_LENGTH} characters (MFA secrets must not be ` +
+        `encrypted under a JWT_SECRET-derived key in production).`,
+    );
+  }
+};
+
+// Run the MFA posture check at config load so a misconfigured production
+// deployment fails fast — same fire-on-import contract as getJwtSecret.
+assertMfaKeyPosture();
+
 // Export configuration for the current environment
 export const config = {
   env: ENV,
@@ -193,6 +285,12 @@ export const config = {
     /** Active during zero-downtime rotation only — see getJwtPreviousSecret. */
     previousSecret: getJwtPreviousSecret(),
     expiresIn: '1d', // Default JWT expiration
+    /**
+     * Dedicated refresh-token signing secret. Required and distinct from
+     * `secret` in staging/production; falls back to the JWT secret in
+     * development/test only. See getRefreshTokenSecret.
+     */
+    refreshSecret: getRefreshTokenSecret(),
   },
   api: {
     openai: {

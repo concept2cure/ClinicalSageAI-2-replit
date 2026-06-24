@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import fs from 'fs';
+import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
 import path from 'path';
 import { execFile } from 'child_process';
 import util from 'util';
@@ -66,6 +67,17 @@ router.post('/upload-protocol', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    // SECURITY: magic-byte signature + AV scan (fail-closed in prod) before use.
+    try {
+      await assertUploadSafe(req.file.path, req.file.mimetype, req.file.originalname);
+    } catch (err) {
+      if (err instanceof UploadSafetyError) {
+        try { fs.unlinkSync(req.file.path); } catch { /* best-effort cleanup */ }
+        return res.status(err.status).json({ success: false, ...err.body });
+      }
+      throw err;
     }
 
     // Log file information for troubleshooting

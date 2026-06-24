@@ -749,3 +749,37 @@
   font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase;
   padding: 3px 10px; border: 1px solid var(--border); border-radius: 9999px;
 }
+
+/* ── Part 11 governed-action sign-off (inline in an assistant message) ─────── */
+.signoffs { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.signoff {
+  border: 1px solid var(--border-strong, var(--border));
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--bg-100, var(--background));
+  display: flex; flex-direction: column; gap: 6px;
+}
+.signoffMsg { font-size: 13px; color: var(--text-100, var(--ink)); margin: 0 0 2px; }
+.signoffLabel { font-size: 12px; font-weight: 600; color: var(--text-200, var(--ink)); margin-top: 4px; }
+.signoffInput {
+  font: inherit; font-size: 13px;
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 8px; background: var(--bg-000, var(--background)); color: var(--text-100, var(--ink));
+}
+.signoffInput:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-main-100, #78716c); }
+.signoffHint { font-size: 11px; color: var(--text-400, var(--ink-subtle)); }
+.signoffError { font-size: 12px; color: var(--danger, #b91c1c); margin: 2px 0 0; }
+.signoffActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.signoffConfirm {
+  font: inherit; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--accent-main-200, var(--border-strong));
+  background: var(--accent-main-100, var(--bg-300)); color: var(--bg-000, #fff);
+  border-radius: 9999px; padding: 5px 14px; cursor: pointer;
+}
+.signoffConfirm:disabled { opacity: 0.5; cursor: not-allowed; }
+.signoffConfirm:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-main-100, #78716c); }
+.signoffResolved {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text-200, var(--ink));
+  border: 1px solid var(--border); border-radius: 9999px; padding: 4px 12px;
+}

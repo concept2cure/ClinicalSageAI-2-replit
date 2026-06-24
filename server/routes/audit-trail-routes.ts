@@ -12,6 +12,44 @@ import type { Request, Response } from 'express';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
 
 // ---------------------------------------------------------------------------
+// Helper: derive the acting principal from the AUTHENTICATED request only.
+//
+// SECURITY (audit findings F3/F4): user_id, user_name, user_role and signed_by
+// must come from the verified JWT principal (req.user), never from the request
+// body. Accepting them from the body let any caller forge attribution on
+// immutable 21 CFR Part 11 audit records (write an event "as" another user) and
+// forge the signer of a signature. Identity is now sourced here and the body is
+// ignored for these fields. If the body supplies a conflicting user id we log a
+// security warning (mirroring getSecureOrgId) and keep the principal value.
+// ---------------------------------------------------------------------------
+function getActingPrincipal(req: Request) {
+  const user = (req as any).user || {};
+  const principalId = user.id ?? user.userId ?? null;
+
+  // Telemetry only: never trust a body-supplied identity. Warn if it disagrees
+  // with the authenticated principal so spoofing attempts are visible.
+  const body = (req as any).body || {};
+  const claimedId = body.userId ?? body.user_id ?? body.user?.id;
+  if (
+    claimedId != null &&
+    principalId != null &&
+    String(claimedId) !== String(principalId)
+  ) {
+    console.warn(
+      `[SECURITY] audit-trail: body user id (${claimedId}) differs from ` +
+        `authenticated principal (${principalId}). Body value ignored. path=${req.path}`
+    );
+  }
+
+  return {
+    // user_id column is integer; coerce, fall back to 0 only when truly absent.
+    userId: principalId != null ? Number(principalId) || 0 : 0,
+    userName: user.email || (req as any).userEmail || user.name || 'system',
+    userRole: user.role || (req as any).userRole || 'user',
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Helper: build WHERE clause + run query against audit_events
 // ---------------------------------------------------------------------------
 async function queryAuditEvents(
@@ -204,6 +242,19 @@ export function createAuditTrailRoutes(pool: Pool): Router {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
       const body = req.body || {};
+      // F3: identity is sourced from the authenticated principal, never the body.
+      const principal = getActingPrincipal(req);
+
+      // F10: a regulatory/GxP-significant event must carry a reason-for-change.
+      const regulatorySignificant = body.regulatorySignificant || false;
+      const gxpRelevant = body.gxpRelevant || false;
+      const reason = body.reason || body.details || null;
+      if ((regulatorySignificant || gxpRelevant) && (!reason || String(reason).trim() === '')) {
+        return res.status(400).json({
+          error: 'reason is required for regulatory_significant or gxp_relevant audit events',
+        });
+      }
+
       const result = await pool.query(
         `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, $11, $12, NOW()) RETURNING id`,
@@ -212,14 +263,14 @@ export function createAuditTrailRoutes(pool: Pool): Router {
           body.eventType || body.event_type || 'general',
           body.entityType || body.entity_type || 'system',
           body.entityId || body.entity_id || 0,
-          body.userId || body.user_id || 0,
-          body.userName || body.user_name || 'System',
-          body.userRole || body.user_role || 'user',
+          principal.userId,
+          principal.userName,
+          principal.userRole,
           body.ipAddress || body.ip_address || req.ip || '',
-          body.reason || body.details || null,
+          reason,
           JSON.stringify(body.metadata || body.payload || {}),
-          body.regulatorySignificant || false,
-          body.gxpRelevant || false,
+          regulatorySignificant,
+          gxpRelevant,
         ]
       );
       return res.status(201).json({
@@ -245,9 +296,24 @@ export function createAuditTrailRoutes(pool: Pool): Router {
 
       // Limit batch size to prevent abuse
       const batch = events.slice(0, 50);
+      // F3: every event in the batch is attributed to the authenticated
+      // principal — per-event userId/userName/userRole from the body are ignored.
+      const principal = getActingPrincipal(req);
       const results: { eventId: number; action: string }[] = [];
+      const skipped: { index: number; reason: string }[] = [];
 
-      for (const evt of batch) {
+      for (let i = 0; i < batch.length; i++) {
+        const evt = batch[i];
+        // F10: regulatory/GxP-significant events must carry a reason-for-change.
+        // Batch defaults gxp_relevant to true, so this is enforced unless the
+        // event explicitly opts out of both flags.
+        const regulatorySignificant = evt.regulatorySignificant || false;
+        const gxpRelevant = evt.gxpRelevant !== undefined ? evt.gxpRelevant : true;
+        const reason = evt.reason || null;
+        if ((regulatorySignificant || gxpRelevant) && (!reason || String(reason).trim() === '')) {
+          skipped.push({ index: i, reason: 'reason required for regulatory/GxP-significant event' });
+          continue;
+        }
         try {
           const result = await pool.query(
             `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant, created_at)
@@ -257,14 +323,14 @@ export function createAuditTrailRoutes(pool: Pool): Router {
               evt.eventType || evt.action || 'general',
               evt.entityType || 'document',
               evt.entityId || 0,
-              evt.userId || evt.user?.id || 0,
-              evt.userName || evt.user?.name || 'System',
-              evt.userRole || evt.user?.role || 'user',
+              principal.userId,
+              principal.userName,
+              principal.userRole,
               req.ip || '',
-              evt.reason || null,
+              reason,
               JSON.stringify(evt.metadata || evt.details || {}),
-              evt.regulatorySignificant || false,
-              evt.gxpRelevant !== undefined ? evt.gxpRelevant : true,
+              regulatorySignificant,
+              gxpRelevant,
             ]
           );
           results.push({ eventId: result.rows[0].id, action: evt.eventType || evt.action || '' });
@@ -277,6 +343,8 @@ export function createAuditTrailRoutes(pool: Pool): Router {
       return res.status(201).json({
         success: true,
         inserted: results.length,
+        skipped: skipped.length,
+        skippedDetails: skipped,
         total: batch.length,
         receivedAt: new Date().toISOString(),
       });
@@ -286,41 +354,91 @@ export function createAuditTrailRoutes(pool: Pool): Router {
     }
   });
 
-  // POST /api/audit/signatures — create signature (21 CFR Part 11)
+  // POST /api/audit/signatures — record a NON-AUTHORITATIVE signature marker
+  //
+  // F4 remediation — choice (b): this endpoint is made NON-AUTHORITATIVE rather
+  // than routed through the real e-signature flow.
+  //
+  // Why (b) and not (a): the compliant signing logic lives in the
+  // POST /api/esignature/sign *route handler* (server/routes/esignature.ts),
+  // not in a reusable exported function — it re-verifies password + MFA, binds a
+  // SHA-256 hash over document/version/meaning, and persists to
+  // `electronic_signatures`, failing closed. There is no importable function to
+  // call here without copying that logic (and its password/MFA inputs, which
+  // this endpoint's body shape and callers do not supply). Re-implementing
+  // re-auth here would duplicate the trust-critical path and risk drift.
+  //
+  // So this endpoint NO LONGER mints an authoritative "signed" 21 CFR Part 11
+  // signature. It:
+  //   * rejects any attempt to claim signature_status 'signed' (forgery) — the
+  //     only way to obtain a 'signed' status is the real flow at
+  //     POST /api/esignature/sign;
+  //   * sources signed_by/user_id from the authenticated principal, never the
+  //     body (F3);
+  //   * writes the event with signature_status 'unverified' so it is clearly a
+  //     non-binding marker, not a legal signature.
   router.post('/audit/signatures', async (req: Request, res: Response) => {
     try {
       const guard = requireAuthedOrgId(req, res);
       if (!guard.ok) return;
       const body = req.body || {};
-      // Store signature as an audit event with signature metadata
+      const principal = getActingPrincipal(req);
+
+      // Forgery guard: a caller may not assert a binding 'signed' status here.
+      const claimedStatus = body.signatureStatus || body.signature_status;
+      if (claimedStatus && String(claimedStatus).toLowerCase() === 'signed') {
+        return res.status(403).json({
+          success: false,
+          error: 'FORGERY_REJECTED',
+          message:
+            'This endpoint cannot mint an authoritative 21 CFR Part 11 signature. ' +
+            'Use POST /api/esignature/sign, which re-verifies password + MFA and ' +
+            'binds a content hash. Records created here are non-authoritative markers.',
+        });
+      }
+
+      // Non-authoritative marker. signed_by is the authenticated principal's
+      // identity, never a body-supplied value (F3). Status is 'unverified'.
+      const signerLabel = principal.userName;
       const result = await pool.query(
         `INSERT INTO audit_events (organization_id, event_type, entity_type, entity_id, user_id, user_name, ip_address, timestamp,
          signature_status, signed_by, signed_date, signature_meaning, reason, metadata, regulatory_significant, gxp_relevant, created_at)
-         VALUES ($1, 'signature.create', $2, $3, $4, $5, $6, NOW(), 'signed', $5, NOW(), $7, $8, $9, true, true, NOW()) RETURNING id`,
+         VALUES ($1, 'signature.create', $2, $3, $4, $5, $6, NOW(), 'unverified', $7, NOW(), $8, $9, $10, true, true, NOW()) RETURNING id`,
         [
           guard.orgId,
           body.entityType || 'document',
           body.entityId || 0,
-          body.userId || 0,
-          body.signedBy || body.userId || 'system',
+          principal.userId,
+          principal.userName,
           req.ip || '',
-          body.meaning || 'Electronically signed',
+          signerLabel,
+          body.meaning || 'Signature marker (non-authoritative)',
           body.reason || null,
-          JSON.stringify({ signatureType: '21CFR11', ...body.metadata }),
+          JSON.stringify({
+            signatureType: 'non-authoritative-marker',
+            authoritative: false,
+            note: 'Created via /api/audit/signatures; not a verified 21 CFR Part 11 e-signature.',
+            ...body.metadata,
+          }),
         ]
       );
 
       return res.status(201).json({
         success: true,
+        authoritative: false,
         signatureId: `SIG_${result.rows[0].id}`,
         record: {
           signatureId: `SIG_${result.rows[0].id}`,
           entityType: body.entityType || 'document',
           entityId: body.entityId || 0,
-          signedBy: body.signedBy || body.userId || 'system',
+          signedBy: signerLabel,
+          signatureStatus: 'unverified',
           reason: body.reason,
           timestamp: new Date().toISOString(),
         },
+        message:
+          'Recorded a non-authoritative signature marker. For a binding 21 CFR Part 11 ' +
+          'signature use POST /api/esignature/sign.',
       });
     } catch (error) {
       console.error('Failed to record audit signature:', error);

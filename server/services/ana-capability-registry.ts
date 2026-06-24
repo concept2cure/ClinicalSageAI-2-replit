@@ -573,6 +573,17 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
     documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
   },
   {
+    capabilityKey: 'insert-clause-template',
+    category: 'compute',
+    name: 'Insert Regulatory Clause Template',
+    description:
+      'Insert a named, field-validated regulatory building block into an existing Word (.docx) — signature/approval block, cover-letter header, section heading, or sponsor placeholder swap ({{SPONSOR}}-style tokens). A curated content layer over the governed docx-insert worker: supply the clause key and fields and it renders the block (required-field checks included) and inserts it at the chosen anchor. The productized equivalent of hand-scripting per-document clause helpers.',
+    slashCommand: null,
+    regulatoryBodiesApplicable: ['FDA', 'EMA', 'PMDA', 'Health Canada'],
+    projectTypesApplicable: ['IND', 'NDA', 'BLA', 'MAA', '510k'],
+    documentTypesApplicable: ['csr', 'protocol', 'ib', 'nda-section', '510k', 'cmc'],
+  },
+  {
     capabilityKey: 'run-in-container',
     category: 'compute',
     name: 'Run in Hardened Container',

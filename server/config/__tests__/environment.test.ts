@@ -85,6 +85,148 @@ describe('getJwtSecret', () => {
   });
 });
 
+describe('getRefreshTokenSecret', () => {
+  let originalEnv: NodeJS.ProcessEnv;
+  const OTHER_SECRET = 'b'.repeat(40);
+
+  beforeEach(() => {
+    originalEnv = { ...process.env };
+    vi.resetModules();
+    delete process.env.JWT_SECRET;
+    delete process.env.JWT_SECRET_DEV;
+    delete process.env.JWT_SECRET_STAGING;
+    delete process.env.JWT_SECRET_PROD;
+    delete process.env.REFRESH_TOKEN_SECRET;
+    delete process.env.REFRESH_TOKEN_SECRET_DEV;
+    delete process.env.REFRESH_TOKEN_SECRET_STAGING;
+    delete process.env.REFRESH_TOKEN_SECRET_PROD;
+    // Satisfy the production MFA posture gate so these tests isolate the
+    // refresh-secret contract.
+    process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.DATABASE_URL = 'postgres://test';
+    process.env.DATABASE_URL_DEV = 'postgres://test';
+    process.env.DATABASE_URL_STAGING = 'postgres://test';
+    process.env.DATABASE_URL_PROD = 'postgres://test';
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    vi.resetModules();
+  });
+
+  it('falls back to the JWT secret in development (no enforcement)', async () => {
+    process.env.NODE_ENV = 'development';
+    process.env.JWT_SECRET_DEV = VALID_SECRET;
+    const { config } = await import('../environment');
+    expect(config.jwt.refreshSecret).toBe(VALID_SECRET);
+  });
+
+  it('falls back to the JWT secret in test (no enforcement)', async () => {
+    process.env.NODE_ENV = 'test';
+    process.env.JWT_SECRET = VALID_SECRET;
+    const { config } = await import('../environment');
+    expect(config.jwt.refreshSecret).toBe(VALID_SECRET);
+  });
+
+  it('requires a dedicated refresh secret in production', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET_PROD = VALID_SECRET;
+    // No REFRESH_TOKEN_SECRET set.
+    await expect(import('../environment')).rejects.toThrow(
+      /Missing required REFRESH_TOKEN_SECRET/,
+    );
+  });
+
+  it('requires a dedicated refresh secret in staging', async () => {
+    process.env.NODE_ENV = 'staging';
+    process.env.JWT_SECRET_STAGING = VALID_SECRET;
+    await expect(import('../environment')).rejects.toThrow(
+      /Missing required REFRESH_TOKEN_SECRET/,
+    );
+  });
+
+  it('rejects a refresh secret identical to the JWT secret in production', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET_PROD = VALID_SECRET;
+    process.env.REFRESH_TOKEN_SECRET = VALID_SECRET; // same value
+    await expect(import('../environment')).rejects.toThrow(
+      /must differ from the JWT secret/,
+    );
+  });
+
+  it('rejects a too-short refresh secret in production', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET_PROD = VALID_SECRET;
+    process.env.REFRESH_TOKEN_SECRET = SHORT_SECRET;
+    await expect(import('../environment')).rejects.toThrow(
+      /REFRESH_TOKEN_SECRET too short/,
+    );
+  });
+
+  it('loads in production with a distinct, sufficiently long refresh secret', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET_PROD = VALID_SECRET;
+    process.env.REFRESH_TOKEN_SECRET = OTHER_SECRET;
+    const { config } = await import('../environment');
+    expect(config.jwt.refreshSecret).toBe(OTHER_SECRET);
+  });
+});
+
+describe('assertMfaKeyPosture', () => {
+  let originalEnv: NodeJS.ProcessEnv;
+
+  beforeEach(() => {
+    originalEnv = { ...process.env };
+    vi.resetModules();
+    delete process.env.MFA_ENCRYPTION_KEY;
+    process.env.JWT_SECRET = VALID_SECRET;
+    process.env.JWT_SECRET_PROD = VALID_SECRET;
+    process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
+    process.env.DATABASE_URL = 'postgres://test';
+    process.env.DATABASE_URL_DEV = 'postgres://test';
+    process.env.DATABASE_URL_PROD = 'postgres://test';
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    vi.resetModules();
+  });
+
+  it('requires a dedicated MFA key in production', async () => {
+    process.env.NODE_ENV = 'production';
+    await expect(import('../environment')).rejects.toThrow(
+      /Missing or weak MFA_ENCRYPTION_KEY/,
+    );
+  });
+
+  it('rejects a too-short MFA key in production', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.MFA_ENCRYPTION_KEY = 'short';
+    await expect(import('../environment')).rejects.toThrow(
+      /Missing or weak MFA_ENCRYPTION_KEY/,
+    );
+  });
+
+  it('does not require an MFA key in development', async () => {
+    process.env.NODE_ENV = 'development';
+    const { config } = await import('../environment');
+    expect(config.isDevelopment).toBe(true);
+  });
+
+  it('does not require an MFA key in test', async () => {
+    process.env.NODE_ENV = 'test';
+    const { config } = await import('../environment');
+    expect(config.isTest).toBe(true);
+  });
+
+  it('loads in production when a dedicated MFA key is present', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    const { config } = await import('../environment');
+    expect(config.isProduction).toBe(true);
+  });
+});
+
 describe('getCurrentEnvironment', () => {
   let originalEnv: NodeJS.ProcessEnv;
 
@@ -95,6 +237,12 @@ describe('getCurrentEnvironment', () => {
     process.env.DATABASE_URL = 'postgres://test';
     process.env.DATABASE_URL_DEV = 'postgres://test';
     process.env.DATABASE_URL_PROD = 'postgres://test';
+    // Production-path enforcement added alongside JWT: provide a dedicated,
+    // distinct refresh secret and a dedicated MFA key so the 'recognizes
+    // production' case below exercises env selection, not the new fail-closed
+    // gates (which have their own dedicated suites above).
+    process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
+    process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
   });
 
   afterEach(() => {

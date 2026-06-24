@@ -12,6 +12,13 @@
  */
 
 import { randomUUID, createHash } from 'crypto';
+import {
+  gatewayRetryAttempts,
+  overloadRetryAttempts,
+  isHardClientError,
+  isOverloadStatus,
+  OVERLOAD_BASE_DELAY_MS,
+} from './retry-policy.js';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import type {
@@ -401,26 +408,31 @@ export class AIGateway {
   private async retryWithBackoff<T>(
     fn: () => Promise<T>,
     maxRetries: number = 1,
-    baseDelayMs: number = 1000
+    baseDelayMs: number = 1000,
+    overload: { maxRetries: number; baseDelayMs: number } = { maxRetries, baseDelayMs }
   ): Promise<T> {
-    let lastError: Error | undefined;
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    let attempt = 0;
+    for (;;) {
       try {
         return await fn();
       } catch (err: any) {
-        lastError = err;
-        // Don't retry on non-transient errors
         const status = err?.status || err?.statusCode;
-        if (status === 400 || status === 401 || status === 403) throw err;
+        // Hard client errors (400/401/403/404/422, …) never succeed on retry.
+        if (isHardClientError(status)) throw err;
 
-        if (attempt < maxRetries) {
-          const delay = baseDelayMs * Math.pow(2, attempt);
-          const jitter = delay * 0.3 * Math.random(); // 0-30% jitter
-          await new Promise(r => setTimeout(r, delay + jitter));
-        }
+        // Overload (429/503/529 — incl. Anthropic "Overloaded") self-heals, so
+        // it earns a larger budget and longer backoff than a generic transient.
+        const overloaded = isOverloadStatus(status);
+        const budget = overloaded ? overload.maxRetries : maxRetries;
+        const base = overloaded ? overload.baseDelayMs : baseDelayMs;
+
+        if (attempt >= budget) throw err;
+        const delay = base * Math.pow(2, attempt);
+        const jitter = delay * 0.3 * Math.random(); // 0-30% jitter
+        await new Promise(r => setTimeout(r, delay + jitter));
+        attempt++;
       }
     }
-    throw lastError;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -481,10 +493,15 @@ export class AIGateway {
     let lastError: Error | null = null;
     const triedModels: string[] = [];
 
-    // Try primary model (with per-request retry: 2 attempts, 1s base delay)
+    // Try primary model (per-request retry: 2 attempts, 1s base delay for
+    // non-streaming). Streaming is not retried — replaying would re-emit tokens
+    // already delivered to request.onStream.
+    const isStreaming = Boolean(request.stream && request.onStream);
+    const primaryRetries = gatewayRetryAttempts(isStreaming);
+    const overloadPolicy = { maxRetries: overloadRetryAttempts(isStreaming), baseDelayMs: OVERLOAD_BASE_DELAY_MS };
     try {
       const response = await this.retryWithBackoff(
-        () => this.executeProvider(selectedModel, request, requestId, startTime), 1, 1000
+        () => this.executeProvider(selectedModel, request, requestId, startTime), primaryRetries, 1000, overloadPolicy
       );
       this.recordSuccess(selectedModel.provider, response.latencyMs);
       await this.logAudit(request, response, strategy, true, undefined, triedModels);
@@ -508,7 +525,7 @@ export class AIGateway {
       try {
         log.debug(`[AI Gateway] Falling back to ${fallback.provider}/${fallback.model}`);
         const response = await this.retryWithBackoff(
-          () => this.executeProvider(fallback, request, requestId, startTime), 1, 1000
+          () => this.executeProvider(fallback, request, requestId, startTime), 1, 1000, overloadPolicy
         );
         this.recordSuccess(fallback.provider, response.latencyMs);
         await this.logAudit(request, response, strategy, true, undefined, triedModels);
@@ -1449,7 +1466,14 @@ export class AIGateway {
         policy,
       );
       return { ...request, ...merged };
-    } catch {
+    } catch (err) {
+      // Deliberate fail-soft: a policy-store failure must not break the request.
+      // But surface it — silently skipping a tenant's residency / zero-retention
+      // default is a compliance-visibility gap, not a no-op.
+      log.warn(
+        `[AI Gateway] Org placement policy lookup failed for org ${request.organizationId}; ` +
+          `proceeding without org defaults: ${err instanceof Error ? err.message : String(err)}`
+      );
       return request; // never let policy resolution break a request
     }
   }

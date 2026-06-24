@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-15T04:15:05.990Z",
+  "generatedAt": "2026-06-20T23:09:48.512Z",
   "fingerprints": [
     "server/db/bootstrap/seed-default-org.ts#a183c3cd998e:users",
     "server/db/bootstrap/seed-default-org.ts#cfff34e67cec:users",
@@ -14,6 +14,7 @@
     "server/services/advancedRAGPipeline.ts#c0199184a690:document_chunks,documents",
     "server/services/advancedRAGPipeline.ts#daa93e8e029b:rag_chunks,rag_documents",
     "server/services/ana-ri/command-executor.ts#80a2e306dfaf:users",
+    "server/services/ana-ri/governed-action-signoff.ts#bdd651a1d4c8:users",
     "server/services/atomicQuotaService.js#845353960b91:users",
     "server/services/atomicQuotaService.js#ee1737b4931d:users",
     "server/services/billing.ts#d154d148af68:stripe_events",

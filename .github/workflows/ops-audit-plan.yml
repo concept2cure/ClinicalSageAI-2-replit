@@ -9,6 +9,9 @@ on:
       - '.github/workflows/ops-audit-plan.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   ops-audit:
     runs-on: ubuntu-latest

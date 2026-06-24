@@ -82,8 +82,18 @@ export interface IStorage {
   // caller to source the org id from the JWT (req.user.organizationId)
   // rather than letting it default away silently.
   getDocument(id: string, organizationId: number | string): Promise<schema.Document | undefined>;
-  getDocumentByName(name: string): Promise<schema.Document | undefined>;
-  getDocuments(options?: {
+  // SECURITY: every document accessor is tenant-scoped. getDocumentByName,
+  // getDocuments, updateDocument and deleteDocument now REQUIRE an
+  // organizationId and apply it in the WHERE clause. A missing/non-finite
+  // org id fails closed (empty result / undefined / false) — mirroring
+  // getDocument — so a forgotten scope can never silently widen a query
+  // across tenants.
+  getDocumentByName(
+    name: string,
+    organizationId: number | string,
+  ): Promise<schema.Document | undefined>;
+  getDocuments(options: {
+    organizationId: number | string;
     limit?: number;
     offset?: number;
     folderId?: string;
@@ -94,9 +104,10 @@ export interface IStorage {
   createDocument(document: schema.InsertDocument): Promise<schema.Document>;
   updateDocument(
     id: string,
+    organizationId: number | string,
     documentData: Partial<schema.InsertDocument>
   ): Promise<schema.Document | undefined>;
-  deleteDocument(id: string): Promise<boolean>;
+  deleteDocument(id: string, organizationId: number | string): Promise<boolean>;
 
   // Document folder methods
   // Document folder methods.
@@ -348,10 +359,10 @@ export interface IStorage {
   }): Promise<any[]>;
   getOosInvestigation(id: number, organizationId: number | string): Promise<any | undefined>;
   createOosInvestigation(investigation: any): Promise<any>;
-  updateOosInvestigation(id: number, investigation: any): Promise<any>;
-  addOosTimelineEvent(id: number, event: any): Promise<any>;
-  performRootCauseAnalysis(id: number, analysis: any): Promise<any>;
-  linkCapaToOos(id: number, capa: any): Promise<any>;
+  updateOosInvestigation(id: number, organizationId: number | string, investigation: any): Promise<any>;
+  addOosTimelineEvent(id: number, organizationId: number | string, event: any): Promise<any>;
+  performRootCauseAnalysis(id: number, organizationId: number | string, analysis: any): Promise<any>;
+  linkCapaToOos(id: number, organizationId: number | string, capa: any): Promise<any>;
 
   // Batch Release methods
   getBatchReleases(params: {
@@ -361,12 +372,12 @@ export interface IStorage {
   }): Promise<any[]>;
   getBatchRelease(id: number, organizationId: number | string): Promise<any | undefined>;
   createBatchRelease(release: any): Promise<any>;
-  updateBatchRelease(id: number, release: any): Promise<any>;
-  reviewBatchRecord(id: number, review: any): Promise<any>;
+  updateBatchRelease(id: number, organizationId: number | string, release: any): Promise<any>;
+  reviewBatchRecord(id: number, organizationId: number | string, review: any): Promise<any>;
   generateCertificateOfAnalysis(id: number): Promise<any>;
   getBatchGenealogy(id: number, organizationId: number | string): Promise<any>;
   validateReleaseCriteria(id: number): Promise<any>;
-  releaseBatch(id: number, params: any): Promise<any>;
+  releaseBatch(id: number, organizationId: number | string, params: any): Promise<any>;
 
   // QC Deviation methods
   getQcDeviations(params: {
@@ -377,9 +388,9 @@ export interface IStorage {
   }): Promise<any[]>;
   getQcDeviation(id: number, organizationId: number | string): Promise<any | undefined>;
   createQcDeviation(deviation: any): Promise<any>;
-  updateQcDeviation(id: number, deviation: any): Promise<any>;
-  performImpactAssessment(id: number, assessment: any): Promise<any>;
-  linkCapaToDeviation(id: number, capa: any): Promise<any>;
+  updateQcDeviation(id: number, organizationId: number | string, deviation: any): Promise<any>;
+  performImpactAssessment(id: number, organizationId: number | string, assessment: any): Promise<any>;
+  linkCapaToDeviation(id: number, organizationId: number | string, capa: any): Promise<any>;
   getDeviationTrending(params: any): Promise<any>;
 
   // Microbiological Test methods
@@ -391,10 +402,10 @@ export interface IStorage {
   }): Promise<any[]>;
   getMicrobiologicalTest(id: number, organizationId: number | string): Promise<any | undefined>;
   createMicrobiologicalTest(test: any): Promise<any>;
-  updateMicrobiologicalTest(id: number, test: any): Promise<any>;
+  updateMicrobiologicalTest(id: number, organizationId: number | string, test: any): Promise<any>;
   getEnvironmentalMonitoringSchedule(params: any): Promise<any>;
   createEnvironmentalMonitoringSchedule(schedule: any): Promise<any>;
-  recordMicrobiologicalResults(id: number, results: any): Promise<any>;
+  recordMicrobiologicalResults(id: number, organizationId: number | string, results: any): Promise<any>;
 
   // Reference Standard methods
   getReferenceStandards(params: {
@@ -405,8 +416,8 @@ export interface IStorage {
   }): Promise<any[]>;
   getReferenceStandard(id: number, organizationId: number | string): Promise<any | undefined>;
   createReferenceStandard(standard: any): Promise<any>;
-  updateReferenceStandard(id: number, standard: any): Promise<any>;
-  recordStandardUsage(id: number, usage: any): Promise<any>;
+  updateReferenceStandard(id: number, organizationId: number | string, standard: any): Promise<any>;
+  recordStandardUsage(id: number, organizationId: number | string, usage: any): Promise<any>;
   getExpiringStandards(params: any): Promise<any[]>;
   qualifyReferenceStandard(id: number, qualification: any): Promise<any>;
   disposeReferenceStandard(id: number, disposal: any): Promise<any>;
@@ -767,24 +778,39 @@ export class MemStorage {
     ) as schema.Document | undefined;
   }
 
-  async getDocumentByName(name: string): Promise<schema.Document | undefined> {
-    return this.documents.find(d => d.title === name) as schema.Document | undefined;
+  async getDocumentByName(
+    name: string,
+    organizationId: number | string,
+  ): Promise<schema.Document | undefined> {
+    const orgId = Number(organizationId);
+    if (!Number.isFinite(orgId)) return undefined;
+    return this.documents.find(
+      d => d.title === name && Number((d as any).organizationId) === orgId,
+    ) as schema.Document | undefined;
   }
 
   async getDocuments(
     options: {
+      organizationId: number | string;
       limit?: number;
       offset?: number;
       folderId?: string;
       status?: string;
       type?: string;
       search?: string;
-    } = {}
+    }
   ): Promise<schema.Document[]> {
-    const { limit = 20, offset = 0, folderId, status, type, search } = options;
+    const { organizationId, limit = 20, offset = 0, folderId, status, type, search } = options;
 
-    // Filter documents based on provided criteria
-    let result = this.documents as schema.Document[];
+    const orgId = Number(organizationId);
+    // Tenant filter is mandatory and fails closed: a missing/non-finite
+    // org id yields no rows rather than the whole table.
+    if (!Number.isFinite(orgId)) return [];
+
+    // Filter documents based on provided criteria, tenant-scoped first.
+    let result = (this.documents as schema.Document[]).filter(
+      d => Number((d as any).organizationId) === orgId,
+    );
 
     if (folderId) {
       // Note: Document schema doesn't have folderId, filtering by metadata if available
@@ -837,9 +863,14 @@ export class MemStorage {
 
   async updateDocument(
     id: string,
+    organizationId: number | string,
     documentData: Partial<schema.InsertDocument>
   ): Promise<schema.Document | undefined> {
-    const index = this.documents.findIndex(d => d.id === id);
+    const orgId = Number(organizationId);
+    if (!Number.isFinite(orgId)) return undefined;
+    const index = this.documents.findIndex(
+      d => d.id === id && Number((d as any).organizationId) === orgId,
+    );
     if (index === -1) return undefined;
 
     // Update modified timestamp
@@ -853,9 +884,13 @@ export class MemStorage {
     return this.documents[index] as schema.Document;
   }
 
-  async deleteDocument(id: string): Promise<boolean> {
+  async deleteDocument(id: string, organizationId: number | string): Promise<boolean> {
+    const orgId = Number(organizationId);
+    if (!Number.isFinite(orgId)) return false;
     const initialLength = this.documents.length;
-    this.documents = this.documents.filter(d => d.id !== id);
+    this.documents = this.documents.filter(
+      d => !(d.id === id && Number((d as any).organizationId) === orgId),
+    );
     return initialLength > this.documents.length;
   }
 
@@ -2355,14 +2390,25 @@ export class DatabaseStorage {
     }
   }
 
-  async getDocumentByName(name: string): Promise<schema.Document | undefined> {
+  async getDocumentByName(
+    name: string,
+    organizationId: number | string,
+  ): Promise<schema.Document | undefined> {
     if (!db) return undefined;
 
     try {
+      const orgId = Number(organizationId);
+      // Mandatory tenant filter — fail closed on a missing/non-finite org id.
+      if (!Number.isFinite(orgId)) return undefined;
       const documents = await db
         .select()
         .from(schema.documents)
-        .where(eq(schema.documents.title, name));
+        .where(
+          and(
+            eq(schema.documents.title, name),
+            eq(schema.documents.organizationId, orgId),
+          ),
+        );
       return documents[0];
     } catch (error) {
       logger.error('Failed to get document by name', { name, error });
@@ -2372,20 +2418,29 @@ export class DatabaseStorage {
 
   async getDocuments(
     options: {
+      organizationId: number | string;
       limit?: number;
       offset?: number;
       folderId?: string;
       status?: string;
       type?: string;
       search?: string;
-    } = {}
+    }
   ): Promise<schema.Document[]> {
     if (!db) return [];
 
-    const { limit = 20, offset = 0, status, type, search } = options;
+    const { organizationId, limit = 20, offset = 0, status, type, search } = options;
 
     try {
-      const conditions = [] as any[];
+      const orgId = Number(organizationId);
+      // Tenant scope is mandatory and fails closed: without a finite org
+      // id this returns no rows rather than enumerating every tenant's
+      // documents (the cross-tenant list IDOR this fix closes).
+      if (!Number.isFinite(orgId)) return [];
+
+      const conditions = [
+        eq(schema.documents.organizationId, orgId),
+      ] as any[];
 
       if (status) {
         conditions.push(eq(schema.documents.status, status));
@@ -2449,18 +2504,28 @@ export class DatabaseStorage {
 
   async updateDocument(
     id: string,
+    organizationId: number | string,
     documentData: Partial<schema.InsertDocument>
   ): Promise<schema.Document | undefined> {
     if (!db) return undefined;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      // Tenant-scoped update — a non-finite org id matches no rows, so a
+      // cross-tenant id can never be mutated.
+      if (!Number.isFinite(orgId)) return undefined;
       const data = { ...(documentData as any), updatedAt: new Date() } as any;
 
       const results = await db
         .update(schema.documents)
         .set(data)
-        .where(eq(schema.documents.id, numericId))
+        .where(
+          and(
+            eq(schema.documents.id, numericId),
+            eq(schema.documents.organizationId, orgId),
+          ),
+        )
         .returning();
 
       return results[0];
@@ -2470,14 +2535,22 @@ export class DatabaseStorage {
     }
   }
 
-  async deleteDocument(id: string): Promise<boolean> {
+  async deleteDocument(id: string, organizationId: number | string): Promise<boolean> {
     if (!db) return false;
 
     try {
       const numericId = Number(id);
+      const orgId = Number(organizationId);
+      // Tenant-scoped delete — fail closed on a missing/non-finite org id.
+      if (!Number.isFinite(orgId)) return false;
       const results = await db
         .delete(schema.documents)
-        .where(eq(schema.documents.id, numericId))
+        .where(
+          and(
+            eq(schema.documents.id, numericId),
+            eq(schema.documents.organizationId, orgId),
+          ),
+        )
         .returning({ id: schema.documents.id });
 
       return results.length > 0;
@@ -3674,21 +3747,21 @@ export class DatabaseStorage {
     return row;
   }
 
-  async updateOosInvestigation(id: number, investigation: any): Promise<any> {
+  async updateOosInvestigation(id: number, organizationId: number | string, investigation: any): Promise<any> {
     const [row] = await db
       .update(qcOosInvestigations)
       .set({ ...investigation, updatedAt: new Date() })
-      .where(eq(qcOosInvestigations.id, id))
+      .where(and(eq(qcOosInvestigations.id, id), eq(qcOosInvestigations.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`OOS investigation ${id} not found`);
     return row;
   }
 
-  async addOosTimelineEvent(id: number, event: any): Promise<any> {
+  async addOosTimelineEvent(id: number, organizationId: number | string, event: any): Promise<any> {
     const [current] = await db
       .select()
       .from(qcOosInvestigations)
-      .where(eq(qcOosInvestigations.id, id))
+      .where(and(eq(qcOosInvestigations.id, id), eq(qcOosInvestigations.organizationId, Number(organizationId))))
       .limit(1);
     if (!current) throw new Error(`OOS investigation ${id} not found`);
     const timeline = Array.isArray((current as any).timeline) ? (current as any).timeline : [];
@@ -3696,12 +3769,12 @@ export class DatabaseStorage {
     const [row] = await db
       .update(qcOosInvestigations)
       .set({ timeline, updatedAt: new Date() })
-      .where(eq(qcOosInvestigations.id, id))
+      .where(and(eq(qcOosInvestigations.id, id), eq(qcOosInvestigations.organizationId, Number(organizationId))))
       .returning();
     return row;
   }
 
-  async performRootCauseAnalysis(id: number, analysis: any): Promise<any> {
+  async performRootCauseAnalysis(id: number, organizationId: number | string, analysis: any): Promise<any> {
     const [row] = await db
       .update(qcOosInvestigations)
       .set({
@@ -3712,13 +3785,13 @@ export class DatabaseStorage {
         rootCauseDetails: analysis?.details,
         updatedAt: new Date(),
       })
-      .where(eq(qcOosInvestigations.id, id))
+      .where(and(eq(qcOosInvestigations.id, id), eq(qcOosInvestigations.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`OOS investigation ${id} not found`);
     return row;
   }
 
-  async linkCapaToOos(id: number, capa: any): Promise<any> {
+  async linkCapaToOos(id: number, organizationId: number | string, capa: any): Promise<any> {
     const [row] = await db
       .update(qcOosInvestigations)
       .set({
@@ -3728,7 +3801,7 @@ export class DatabaseStorage {
         preventiveActions: capa?.preventiveActions,
         updatedAt: new Date(),
       })
-      .where(eq(qcOosInvestigations.id, id))
+      .where(and(eq(qcOosInvestigations.id, id), eq(qcOosInvestigations.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`OOS investigation ${id} not found`);
     return row;
@@ -3769,21 +3842,21 @@ export class DatabaseStorage {
     return row;
   }
 
-  async updateBatchRelease(id: number, release: any): Promise<any> {
+  async updateBatchRelease(id: number, organizationId: number | string, release: any): Promise<any> {
     const [row] = await db
       .update(qcBatchReleases)
       .set({ ...release, updatedAt: new Date() })
-      .where(eq(qcBatchReleases.id, id))
+      .where(and(eq(qcBatchReleases.id, id), eq(qcBatchReleases.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`Batch release ${id} not found`);
     return row;
   }
 
-  async reviewBatchRecord(id: number, review: any): Promise<any> {
+  async reviewBatchRecord(id: number, organizationId: number | string, review: any): Promise<any> {
     const [row] = await db
       .update(qcBatchReleases)
       .set({ batchRecordReview: review, batchRecordStatus: 'reviewed', updatedAt: new Date() })
-      .where(eq(qcBatchReleases.id, id))
+      .where(and(eq(qcBatchReleases.id, id), eq(qcBatchReleases.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`Batch release ${id} not found`);
     return row;
@@ -3812,7 +3885,7 @@ export class DatabaseStorage {
     throw new Error('NOT_IMPLEMENTED: validateReleaseCriteria');
   }
 
-  async releaseBatch(id: number, params: any): Promise<any> {
+  async releaseBatch(id: number, organizationId: number | string, params: any): Promise<any> {
     const [row] = await db
       .update(qcBatchReleases)
       .set({
@@ -3823,7 +3896,7 @@ export class DatabaseStorage {
         releasedDate: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(qcBatchReleases.id, id))
+      .where(and(eq(qcBatchReleases.id, id), eq(qcBatchReleases.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`Batch release ${id} not found`);
     return row;
@@ -3864,17 +3937,17 @@ export class DatabaseStorage {
     return row;
   }
 
-  async updateQcDeviation(id: number, deviation: any): Promise<any> {
+  async updateQcDeviation(id: number, organizationId: number | string, deviation: any): Promise<any> {
     const [row] = await db
       .update(qcDeviations)
       .set({ ...deviation, updatedAt: new Date() })
-      .where(eq(qcDeviations.id, id))
+      .where(and(eq(qcDeviations.id, id), eq(qcDeviations.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`QC deviation ${id} not found`);
     return row;
   }
 
-  async performImpactAssessment(id: number, assessment: any): Promise<any> {
+  async performImpactAssessment(id: number, organizationId: number | string, assessment: any): Promise<any> {
     const [row] = await db
       .update(qcDeviations)
       .set({
@@ -3882,13 +3955,13 @@ export class DatabaseStorage {
         impactLevel: assessment?.impactLevel ?? assessment?.riskLevel,
         updatedAt: new Date(),
       })
-      .where(eq(qcDeviations.id, id))
+      .where(and(eq(qcDeviations.id, id), eq(qcDeviations.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`QC deviation ${id} not found`);
     return row;
   }
 
-  async linkCapaToDeviation(id: number, capa: any): Promise<any> {
+  async linkCapaToDeviation(id: number, organizationId: number | string, capa: any): Promise<any> {
     const [row] = await db
       .update(qcDeviations)
       .set({
@@ -3898,7 +3971,7 @@ export class DatabaseStorage {
         preventiveActions: capa?.preventiveActions,
         updatedAt: new Date(),
       })
-      .where(eq(qcDeviations.id, id))
+      .where(and(eq(qcDeviations.id, id), eq(qcDeviations.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`QC deviation ${id} not found`);
     return row;
@@ -3962,11 +4035,11 @@ export class DatabaseStorage {
     return row;
   }
 
-  async updateMicrobiologicalTest(id: number, test: any): Promise<any> {
+  async updateMicrobiologicalTest(id: number, organizationId: number | string, test: any): Promise<any> {
     const [row] = await db
       .update(qcMicrobiologicalTests)
       .set({ ...test, updatedAt: new Date() })
-      .where(eq(qcMicrobiologicalTests.id, id))
+      .where(and(eq(qcMicrobiologicalTests.id, id), eq(qcMicrobiologicalTests.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`Microbiological test ${id} not found`);
     return row;
@@ -3993,7 +4066,7 @@ export class DatabaseStorage {
     throw new Error('NOT_IMPLEMENTED: createEnvironmentalMonitoringSchedule');
   }
 
-  async recordMicrobiologicalResults(id: number, results: any): Promise<any> {
+  async recordMicrobiologicalResults(id: number, organizationId: number | string, results: any): Promise<any> {
     const [row] = await db
       .update(qcMicrobiologicalTests)
       .set({
@@ -4004,7 +4077,7 @@ export class DatabaseStorage {
         testEndDate: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(qcMicrobiologicalTests.id, id))
+      .where(and(eq(qcMicrobiologicalTests.id, id), eq(qcMicrobiologicalTests.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`Microbiological test ${id} not found`);
     return row;
@@ -4050,21 +4123,21 @@ export class DatabaseStorage {
     return row;
   }
 
-  async updateReferenceStandard(id: number, standard: any): Promise<any> {
+  async updateReferenceStandard(id: number, organizationId: number | string, standard: any): Promise<any> {
     const [row] = await db
       .update(qcReferenceStandards)
       .set({ ...standard, updatedAt: new Date() })
-      .where(eq(qcReferenceStandards.id, id))
+      .where(and(eq(qcReferenceStandards.id, id), eq(qcReferenceStandards.organizationId, Number(organizationId))))
       .returning();
     if (!row) throw new Error(`Reference standard ${id} not found`);
     return row;
   }
 
-  async recordStandardUsage(id: number, usage: any): Promise<any> {
+  async recordStandardUsage(id: number, organizationId: number | string, usage: any): Promise<any> {
     const [current] = await db
       .select()
       .from(qcReferenceStandards)
-      .where(eq(qcReferenceStandards.id, id))
+      .where(and(eq(qcReferenceStandards.id, id), eq(qcReferenceStandards.organizationId, Number(organizationId))))
       .limit(1);
     if (!current) throw new Error(`Reference standard ${id} not found`);
     const cur = current as any;
@@ -4082,7 +4155,7 @@ export class DatabaseStorage {
         currentQuantity: remaining != null ? String(remaining) : cur.currentQuantity,
         updatedAt: new Date(),
       })
-      .where(eq(qcReferenceStandards.id, id))
+      .where(and(eq(qcReferenceStandards.id, id), eq(qcReferenceStandards.organizationId, Number(organizationId))))
       .returning();
     return row;
   }

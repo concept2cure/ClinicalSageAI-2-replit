@@ -16,6 +16,7 @@ import { I } from './icons';
 import { Composer, type ComposerReadyAttachment } from './Composer';
 import { Message, type ExecutedActionChip, type ToolCallView } from './Message';
 import type { MessageAttachment } from './useAnaChat';
+import type { PendingSignoff } from './useGovernedAction';
 import styles from './styles.module.css';
 
 export interface ChatMessageView {
@@ -54,6 +55,8 @@ export interface ChatMessageView {
   warnings?: string[];
   /** Tools AnA invoked this turn, shown as transparency/audit status rows. */
   toolCalls?: ToolCallView[];
+  /** Governed actions blocked pending a Part 11 sign-off. */
+  pendingSignoffs?: PendingSignoff[];
   /** When this turn was sent (ms epoch) — relative timestamp source. */
   sentAt?: number;
 }
@@ -166,6 +169,7 @@ export function ChatView({
               groundingSources={m.groundingSources}
               warnings={m.warnings}
               toolCalls={m.toolCalls}
+              pendingSignoffs={m.pendingSignoffs}
               sentAt={m.sentAt}
               onSuggestedAction={onSuggestedAction}
               onCopy={onCopy ? () => onCopy(m.id, m.text) : undefined}

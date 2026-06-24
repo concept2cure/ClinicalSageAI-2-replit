@@ -639,10 +639,17 @@ export async function ingestDocument(
  */
 export async function getMemoryEntries(
   profileId: number,
+  organizationId: number,
   options?: { category?: string; limit?: number; offset?: number }
 ): Promise<MemorySearchResult> {
+  // SECURITY: tenant isolation — organizationId is required and always applied
+  // so a client-supplied profileId can never read another tenant's memory.
+  if (!Number.isInteger(organizationId) || organizationId <= 0) {
+    throw new Error('getMemoryEntries: valid organizationId is required');
+  }
   const conditions = [
     eq(clientMemoryEntries.profileId, profileId as number),
+    eq(clientMemoryEntries.organizationId, organizationId),
     eq(clientMemoryEntries.status, 'active'),
   ];
 
@@ -674,12 +681,23 @@ export async function getMemoryEntries(
  * Get all ingested documents for a profile.
  */
 export async function getIngestedDocuments(
-  profileId: number
+  profileId: number,
+  organizationId: number
 ): Promise<ClientIngestedDocument[]> {
+  // SECURITY: tenant isolation — organizationId is required and always applied
+  // so a client-supplied profileId can never read another tenant's documents.
+  if (!Number.isInteger(organizationId) || organizationId <= 0) {
+    throw new Error('getIngestedDocuments: valid organizationId is required');
+  }
   return db
     .select()
     .from(clientIngestedDocuments)
-    .where(eq(clientIngestedDocuments.profileId, profileId))
+    .where(
+      and(
+        eq(clientIngestedDocuments.profileId, profileId),
+        eq(clientIngestedDocuments.organizationId, organizationId),
+      ),
+    )
     .orderBy(desc(clientIngestedDocuments.uploadedAt));
 }
 
@@ -687,9 +705,10 @@ export async function getIngestedDocuments(
  * Get the document checklist with upload status for a profile.
  */
 export async function getDocumentChecklist(
-  profileId: number
+  profileId: number,
+  organizationId: number
 ): Promise<DocumentChecklist[]> {
-  const docs = await getIngestedDocuments(profileId);
+  const docs = await getIngestedDocuments(profileId, organizationId);
   const uploadedNames = new Set(docs.map(d => d.fileName.toLowerCase()));
 
   return DOCUMENT_CHECKLIST.map(cat => ({
@@ -720,7 +739,7 @@ export async function buildClientIntelligenceContext(
   const profile = await getClientProfile(organizationId, clientWorkspaceId);
   if (!profile || profile.profileStatus !== 'active') return null;
 
-  const { entries } = await getMemoryEntries(profile.id, { limit: 50 });
+  const { entries } = await getMemoryEntries(profile.id, organizationId, { limit: 50 });
 
   // Group entries by category
   const grouped: Record<string, ClientMemoryEntry[]> = {};
