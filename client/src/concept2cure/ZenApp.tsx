@@ -149,6 +149,7 @@ import type { IntTab } from './intelligence/data';
 import LabelingRoute from './labeling/LabelingRoute';
 import RiskRoute from './risk/RiskRoute';
 import TaskingRoute from './tasking/TaskingRoute';
+import CommunicationRoute from './communication/CommunicationRoute';
 import SubmissionRoute from './submission/SubmissionRoute';
 import ProjectDetailRoute from './projects/ProjectDetailRoute';
 
@@ -1157,6 +1158,7 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     'report-engine',
     'safety-narrative',
     'device-diagnostics-workbench',
+    'communication',
     'vault',
     'vault-workspace',
   ]);
@@ -1242,6 +1244,14 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
            /api/regulatory/tasks/*. Must precede the BUNDLE_MDX_HASH check so the
            deep link resolves to the new shell rather than the MDX #tasks tab. */
         setLayoutMode('tasking');
+        return;
+      }
+      if (normalizedPath === 'communication') {
+        /* Communication Center — the regulated-handoff hub (review queue,
+           pending e-sign approvals, 21 CFR Part 11 audit trail). Live domain
+           shell mirroring tasking. Org-scoped; reuses /api/approval-workflows/*,
+           /api/regulatory/tasks/*, and /api/mdx/audit. */
+        setLayoutMode('communication');
         return;
       }
       if (normalizedPath === 'submission-gateway') {
@@ -1994,6 +2004,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   if (layoutMode === 'tasking' && !embeddedModule) {
     return <TaskingRoute activeProjectId={activeProjectId} />;
+  }
+
+  if (layoutMode === 'communication' && !embeddedModule) {
+    return <CommunicationRoute activeProjectId={activeProjectId} />;
   }
 
   if (layoutMode === 'submission-gateway' && !embeddedModule) {
