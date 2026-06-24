@@ -52,16 +52,9 @@ export type RegulatoryAgency =
   | 'ICH'
   | 'any';
 
-export type SubmissionType =
-  | 'NDA'
-  | 'BLA'
-  | '510k'
-  | 'PMA'
-  | 'ANDA'
-  | 'IND'
-  | 'MAA'
-  | 'CTD'
-  | 'any';
+import type { PatternSubmissionType } from '../../../shared/regulatory/submission-type-bridge.js';
+import { resolveToDeficiencyType } from '../../../shared/regulatory/submission-type-bridge.js';
+export type SubmissionType = PatternSubmissionType;
 
 export type CTDModule =
   | '1' // Administrative
@@ -460,8 +453,13 @@ class PatternRegistryImpl {
       results = results.filter(p => p.agency === criteria.agency || p.agency === 'any');
     }
     if (criteria?.submissionType) {
+      // Resolve through bridge so international types (EU_MAA, CA_NDS, etc.)
+      // match patterns for their equivalent deficiency category (nda, ind, etc.)
+      const resolved = resolveToDeficiencyType(criteria.submissionType);
       results = results.filter(
-        p => p.submissionType === criteria.submissionType || p.submissionType === 'any'
+        p => p.submissionType === criteria.submissionType
+          || p.submissionType === resolved
+          || p.submissionType === 'any'
       );
     }
     if (criteria?.ctdModule) {

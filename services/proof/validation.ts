@@ -6,6 +6,10 @@
  */
 
 import { z } from 'zod';
+// Bridge: canonical submission types from the Global Document Registry.
+// The Zod enum below lists the subset this service validates; the bridge
+// provides full resolution to registry entries when needed.
+import type { LegacyUpperType } from '../../shared/regulatory/submission-type-bridge.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Base Types
@@ -27,7 +31,7 @@ export const submissionTypeSchema = z.enum([
   'BLA',
   'PMA',
   'MAA',
-]);
+] as const satisfies readonly LegacyUpperType[]);
 
 export const proofEventTypeSchema = z.enum([
   'GRAPH_COMPILE',

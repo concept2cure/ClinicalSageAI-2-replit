@@ -30,6 +30,10 @@ import {
   COMPLIANCE_REVIEW_TOOLS,
   GAP_ANALYSIS_TOOLS,
 } from './AnaToolDefinitions';
+import {
+  resolveToRegistryEntry,
+  getSubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Regulatory System Prompts (cached for cost efficiency)
@@ -126,6 +130,73 @@ DOCUMENT STRUCTURE:
 
   general_regulatory: `You are AnA, a senior regulatory intelligence operator for the Concept2Cure platform. You write with the precision, judgment, and authority of a 30-year regulatory veteran. Every document you produce reflects deep regulatory expertise — proper citations, evidence-grounded content, and the quality of judgment that distinguishes a senior operator from a competent generalist. Issue clear verdicts on defensibility, prioritize issues by regulatory impact, and never present all findings as equal.`,
 };
+
+// ─── Dynamic Framework Resolution ─────────────────────────────────────────────
+// Maps ANY submission type (including the 158+ registry entries) to the best
+// available system prompt, using hardcoded prompts for known frameworks and
+// generating registry-driven prompts for everything else.
+
+const SUBMISSION_TYPE_TO_FRAMEWORK: Record<string, string> = {
+  US_510K: 'fda_510k', '510k': 'fda_510k', '510K': 'fda_510k',
+  US_PMA: 'fda_pma', pma: 'fda_pma', PMA: 'fda_pma',
+  EU_MDR_TECHDOC: 'eu_mdr', EU_IVDR_TECHDOC: 'eu_mdr',
+  EU_CER: 'cer_clinical_evaluation', cer: 'cer_clinical_evaluation',
+  US_IND: 'ich_clinical', US_NDA: 'ich_clinical', US_BLA: 'ich_clinical',
+  EU_MAA: 'ich_clinical', EU_CTA: 'ich_clinical',
+  ind: 'ich_clinical', nda: 'ich_clinical', bla: 'ich_clinical',
+  maa: 'ich_clinical', cta: 'ich_clinical',
+};
+
+function buildDynamicSystemPrompt(submissionType: string): string {
+  const ctx = getSubmissionTypeContext(submissionType);
+  if (!ctx) return REGULATORY_SYSTEM_PROMPTS.general_regulatory;
+
+  return `You are AnA, a senior regulatory intelligence operator with deep expertise in ${ctx.displayName} submissions for ${ctx.agency}. You write with the precision and judgment authority of someone who has prepared dozens of ${ctx.displayName} filings and understands ${ctx.agency} reviewer expectations.
+
+KEY REGULATORY CONTEXT:
+- Filing Type: ${ctx.displayName} (${ctx.registryId})
+- Region: ${ctx.region} — Agency: ${ctx.agency}
+- Dossier Standard: ${ctx.dossierStandard}
+${ctx.segment ? `- Segment: ${ctx.segment}` : ''}
+${ctx.category ? `- Category: ${ctx.category}` : ''}
+${ctx.submissionFormat ? `- Submission Format: ${ctx.submissionFormat}` : ''}
+${ctx.ctdModule ? `- Primary CTD Module: ${ctx.ctdModule}` : ''}
+${ctx.description ? `\nSCOPE: ${ctx.description}` : ''}
+
+DOCUMENT STANDARDS:
+- Use formal regulatory language appropriate for ${ctx.agency} submissions
+- Follow the ${ctx.dossierStandard} dossier structure
+- Cite applicable regulations and guidance documents for the ${ctx.region} region
+- Ensure consistency with ${ctx.agency} formatting expectations
+${ctx.submissionFormat ? `- Use ${ctx.submissionFormat} formatting requirements` : ''}
+
+QUALITY REQUIREMENTS:
+- Every claim must be supported by evidence or regulatory reference
+- Use structured tables for comparisons and data summaries
+- Include cross-references to supporting data sections
+- Flag any gaps or areas needing additional data
+- Issue clear verdicts on defensibility and prioritize by regulatory impact`;
+}
+
+/**
+ * Resolve any submission type string to the best system prompt.
+ * Checks hardcoded frameworks first, then builds a dynamic prompt from registry data.
+ */
+export function resolveSystemPrompt(submissionType: string): string {
+  const frameworkKey = SUBMISSION_TYPE_TO_FRAMEWORK[submissionType];
+  if (frameworkKey && REGULATORY_SYSTEM_PROMPTS[frameworkKey]) {
+    return REGULATORY_SYSTEM_PROMPTS[frameworkKey];
+  }
+  const entry = resolveToRegistryEntry(submissionType);
+  if (entry) {
+    const idKey = SUBMISSION_TYPE_TO_FRAMEWORK[entry.id];
+    if (idKey && REGULATORY_SYSTEM_PROMPTS[idKey]) {
+      return REGULATORY_SYSTEM_PROMPTS[idKey];
+    }
+    return buildDynamicSystemPrompt(entry.id);
+  }
+  return REGULATORY_SYSTEM_PROMPTS.general_regulatory;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Types
