@@ -17,6 +17,7 @@
 import { pool } from '../../db/runtime.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import type { FeatureMap } from './risk-model.js';
+import { resolveToDeficiencyType } from '../../../shared/regulatory/submission-type-bridge.js';
 
 const log = createScopedLogger('outcome-feature-extraction');
 
@@ -48,6 +49,7 @@ export type CompletenessBin = 'low' | 'medium' | 'high';
 export function binSubmissionType(raw: string | null | undefined): SubmissionTypeBin {
   if (!raw) return 'other';
   const s = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
+  // Direct matches first (fast path)
   if (s === 'nda') return 'nda';
   if (s === 'bla') return 'bla';
   if (s === 'ind') return 'ind';
@@ -58,7 +60,13 @@ export function binSubmissionType(raw: string | null | undefined): SubmissionTyp
   if (s === 'denovo' || s === 'fdadenovo') return 'denovo';
   if (s === 'cer' || s === 'eumdrcer' || s === 'mdrcer') return 'cer';
   if (s === 'maa') return 'maa';
-  return 'other';
+  // Fall through to bridge resolution for international types (e.g. CA_NDS → nda, EU_CTA → ind)
+  const resolved = resolveToDeficiencyType(raw);
+  const BIN_MAP: Record<string, SubmissionTypeBin> = {
+    ind: 'ind', nda: 'nda', bla: 'bla', '510k': '510k', pma: 'pma',
+    de_novo: 'denovo', cer: 'cer', ectd: 'other', general: 'other',
+  };
+  return BIN_MAP[resolved] ?? 'other';
 }
 
 export function binAgency(raw: string | null | undefined): AgencyBin {
@@ -70,6 +78,12 @@ export function binAgency(raw: string | null | undefined): AgencyBin {
   if (s === 'mhra') return 'mhra';
   if (s === 'hc' || s === 'healthcanada') return 'hc';
   if (s === 'swissmedic') return 'swissmedic';
+  if (s === 'nmpa') return 'fda';    // China NMPA → nearest major agency
+  if (s === 'tga') return 'fda';     // Australia TGA → nearest major agency
+  if (s === 'anvisa') return 'fda';  // Brazil ANVISA → nearest major agency
+  if (s === 'cdsco') return 'fda';   // India CDSCO → nearest major agency
+  if (s === 'mfds') return 'fda';    // Korea MFDS → nearest major agency
+  if (s === 'hsa') return 'fda';     // Singapore HSA → nearest major agency
   return 'other';
 }
 

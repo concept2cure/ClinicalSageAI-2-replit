@@ -14,15 +14,8 @@
 
 export type Region = 'fda' | 'eu' | 'jp';
 
-export type ApplicationType =
-  | 'ind'
-  | 'nda'
-  | 'bla'
-  | 'maa'
-  | 'cta'
-  | 'anda'
-  | '510k'
-  | 'pma';
+import type { ReasoningApplicationType } from '../../../shared/regulatory/submission-type-bridge.js';
+export type ApplicationType = ReasoningApplicationType;
 
 export type ReasoningTaskType =
   | 'required-sections' // region + applicationType → required CTD sections

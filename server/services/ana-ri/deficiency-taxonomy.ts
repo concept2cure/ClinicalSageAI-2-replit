@@ -13,7 +13,8 @@
 
 export type Severity = 'critical' | 'major' | 'minor';
 export type Likelihood = 'very_likely' | 'likely' | 'possible' | 'unlikely';
-export type SubmissionType = 'ind' | 'nda' | 'bla' | '510k' | 'pma' | 'de_novo' | 'cer' | 'ectd' | 'general';
+import type { LegacyLowerType } from '../../../shared/regulatory/submission-type-bridge.js';
+export type SubmissionType = Extract<LegacyLowerType, 'ind' | 'nda' | 'bla' | '510k' | 'pma' | 'de_novo' | 'cer' | 'ectd' | 'general'>;
 export type ReviewPhase = 'filing' | 'substantive' | 'advisory_committee' | 'labeling' | 'post_market';
 export type Agency =
   | 'fda'

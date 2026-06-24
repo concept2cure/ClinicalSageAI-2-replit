@@ -26,13 +26,18 @@ async function getRegionProfiles() {
   return mod;
 }
 
+async function getFilingTaxonomy() {
+  const mod = await import('../../shared/regulatory/filing-taxonomy.js');
+  return mod;
+}
+
 // ─── GET /api/regulatory/registry ─────────────────────────────────────────────
 
 router.get('/registry', async (req: Request, res: Response) => {
   try {
     const { getByRegion, getByAgency, getByFamily, getByProductClass, GLOBAL_REGISTRY } = await getRegistry();
 
-    const { region, agency, family, productClass } = req.query;
+    const { region, agency, family, productClass, segment, category } = req.query;
 
     let results = GLOBAL_REGISTRY.filter((e: { active: boolean }) => e.active);
 
@@ -40,6 +45,8 @@ router.get('/registry', async (req: Request, res: Response) => {
     if (agency) results = results.filter((e: { agency: string }) => e.agency === agency);
     if (family) results = results.filter((e: { applicationFamily: string }) => e.applicationFamily === family);
     if (productClass) results = results.filter((e: { productClass: string[] }) => e.productClass.includes(productClass as string));
+    if (segment) results = results.filter((e: { segment?: string }) => e.segment === segment);
+    if (category) results = results.filter((e: { category?: string }) => e.category === category);
 
     res.json({
       success: true,
@@ -62,6 +69,57 @@ router.get('/registry/:id', async (req: Request, res: Response) => {
     const entry = getApplicationType(String(req.params.id));
     if (!entry) return res.status(404).json({ success: false, error: 'Application type not found' });
     res.json({ success: true, data: entry });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ─── GET /api/regulatory/taxonomy ─────────────────────────────────────────────
+// Segment → category → filings tree (axis 2), in document order.
+
+router.get('/taxonomy', async (_req: Request, res: Response) => {
+  try {
+    const { getTaxonomyTree, getCountBySegment } = await getFilingTaxonomy();
+    const { GLOBAL_REGISTRY } = await getRegistry();
+    const active = GLOBAL_REGISTRY.filter((e: { active: boolean }) => e.active);
+    const tree = getTaxonomyTree(active);
+    res.json({
+      success: true,
+      data: {
+        segments: tree,
+        totalFilings: tree.reduce((sum, s) => sum + s.filingCount, 0),
+        countBySegment: getCountBySegment(active),
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ─── GET /api/regulatory/segments ─────────────────────────────────────────────
+// The 4 segments + 18 categories metadata (titles/descriptions) for nav.
+
+router.get('/segments', async (_req: Request, res: Response) => {
+  try {
+    const {
+      getSegmentsSorted,
+      getCategoriesForSegment,
+      getCountBySegment,
+    } = await getFilingTaxonomy();
+    const { GLOBAL_REGISTRY } = await getRegistry();
+    const active = GLOBAL_REGISTRY.filter((e: { active: boolean }) => e.active);
+    const counts = getCountBySegment(active);
+
+    const segments = getSegmentsSorted().map(s => ({
+      ...s,
+      filingCount: counts[s.id] || 0,
+      categories: getCategoriesForSegment(s.id).map(c => ({
+        ...c,
+        filingCount: active.filter((e: { category?: string }) => e.category === c.id).length,
+      })),
+    }));
+
+    res.json({ success: true, data: segments });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }

@@ -24,6 +24,7 @@ import { getProjectIntelligence } from '../intelligence/project-intelligence-ser
 import { analyzeCrossModuleRelationships } from '../intelligence/cross-module-intelligence.js';
 import { buildEvidenceChain, computeConfidence, analyzeFactors, type EvidenceSource } from '../intelligence/evidence-confidence-model.js';
 import { getDeficienciesBySubmissionType, getCriticalDeficiencies, type SubmissionType } from './deficiency-taxonomy.js';
+import { resolveToDeficiencyType, getSubmissionTypeContext } from '../../../shared/regulatory/submission-type-bridge.js';
 import { buildIndustryWisdomBlock, inferSegmentFromSubmissionType, inferSegmentFromMessage } from './industry-wisdom-pack.js';
 import { buildTourGuideBlock } from './use-case-playbooks.js';
 import { buildChallengeBlock, detectChallengeableClaims } from './challenge-library.js';
@@ -737,11 +738,18 @@ async function enrichWithSignals(projectId: string | number, orgId?: number): Pr
 
 async function enrichWithDeficiencies(submissionType?: string): Promise<string> {
   try {
-    const type = (submissionType || 'IND') as SubmissionType;
+    // Resolve ANY submission type (legacy, registry ID, international) to a
+    // deficiency-taxonomy-compatible type via the canonical bridge.
+    const type = resolveToDeficiencyType(submissionType || 'IND');
     const deficiencies = getDeficienciesBySubmissionType(type);
     const critical = getCriticalDeficiencies(type);
 
     if (deficiencies.length === 0) return '';
+
+    // When the original type differs from the resolved one (e.g. EU_MAA → nda),
+    // include the registry context for specificity.
+    const regCtx = submissionType ? getSubmissionTypeContext(submissionType) : null;
+    const label = regCtx ? `${regCtx.displayName} (${regCtx.agency})` : type.toUpperCase();
 
     const criticalLines = critical.slice(0, 5).map(d =>
       `- **[CRITICAL]** ${d.title}: ${d.description} _(${d.category})_`
@@ -753,7 +761,7 @@ async function enrichWithDeficiencies(submissionType?: string): Promise<string> 
       .map(d => `- **[${d.severity?.toUpperCase() || 'MEDIUM'}]** ${d.title}: ${d.description}`)
       .join('\n');
 
-    return `\n\n## Deficiency Taxonomy for ${type.toUpperCase()}\n**${critical.length} critical** out of ${deficiencies.length} known deficiency patterns.\n\n**Critical Deficiencies:**\n${criticalLines}\n\n**Other Patterns:**\n${otherLines}\n\nUse these to preempt reviewer deficiency findings. Be specific about which patterns apply to the user's current work.`;
+    return `\n\n## Deficiency Taxonomy for ${label}\n**${critical.length} critical** out of ${deficiencies.length} known deficiency patterns.\n\n**Critical Deficiencies:**\n${criticalLines}\n\n**Other Patterns:**\n${otherLines}\n\nUse these to preempt reviewer deficiency findings. Be specific about which patterns apply to the user's current work.`;
   } catch (e: unknown) { logger.warn("Query failed", { error: e instanceof Error ? e.message : String(e) });
     return '';
   }

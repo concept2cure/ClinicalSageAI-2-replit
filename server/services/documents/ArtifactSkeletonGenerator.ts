@@ -10,16 +10,9 @@
 
 import { logger } from '../../utils/logger';
 import { AuditLogger } from '../audit/auditLogger';
+import type { LegacyUpperType } from '../../../shared/regulatory/submission-type-bridge.js';
 
-export type SubmissionType = 
-  | '510K' 
-  | 'IND' 
-  | 'NDA' 
-  | 'BLA' 
-  | 'PMA' 
-  | 'MAA' 
-  | 'DE_NOVO' 
-  | 'EUA';
+export type SubmissionType = LegacyUpperType;
 
 export type DocumentType =
   | 'CLINICAL_OVERVIEW'

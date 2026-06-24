@@ -85,7 +85,8 @@ export interface UDILookupResult {
 // Submission Types
 // ============================================================================
 
-export type SubmissionType = '510k' | 'pma' | 'denovo' | 'ide';
+import type { FdaDeviceType } from '../../shared/regulatory/submission-type-bridge.js';
+export type SubmissionType = FdaDeviceType;
 
 export interface ApplicantInfo {
   name?: string;
