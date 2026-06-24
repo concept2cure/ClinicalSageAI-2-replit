@@ -50,9 +50,10 @@ describe('Filing Taxonomy — segment/category axis', () => {
     expect(getCategoriesForSegment('cross_cutting')).toHaveLength(3);
   });
 
-  it('classifies at least 99 active filings on the segment axis', () => {
-    const classified = GLOBAL_REGISTRY.filter(e => e.active && e.segment && e.category);
-    expect(classified.length).toBeGreaterThanOrEqual(99);
+  it('classifies ALL active filings on the segment axis', () => {
+    const active = GLOBAL_REGISTRY.filter(e => e.active);
+    const classified = active.filter(e => e.segment && e.category);
+    expect(classified.length).toBe(active.length);
   });
 
   it('every classified entry has BOTH a segment and a category', () => {

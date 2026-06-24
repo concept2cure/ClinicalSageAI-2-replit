@@ -68,7 +68,7 @@ const US_ENTRIES: RegulatoryApplicationType[] = [
   // Clinical Trial
   entry('US_PRE_IND', 'US', 'United States', 'FDA', 'pre_submission', 'Pre-IND Meeting', 'Pre-IND Meeting Request', { stage: 'pre_submission', synonyms: ['Type B meeting', 'pre-IND'], lifecycleActions: ['submit'], segment: 'pharma_biotech', category: 'preclinical_pre_ind', submissionFormat: 'eCTD', description: 'Type B meeting request to FDA before IND filing; outlines development plan and seeks feedback on nonclinical package, CMC, and clinical trial design' }),
   entry('US_IND', 'US', 'United States', 'FDA', 'clinical_trial', 'IND', 'Investigational New Drug Application', { synonyms: ['IND', 'Investigational New Drug'], productClass: ['small_molecule', 'biologic', 'biosimilar', 'vaccine', 'atmp'], requiredArtifacts: ['form_1571', 'form_1572', 'form_3674', 'cover_letter', 'toc', 'clinical_overview', 'quality_overall_summary', 'nonclinical_overview'], lifecycleActions: ['submit', 'amend', 'supplement', 'annual_report', 'withdraw'], segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'Application to begin clinical trials; includes CMC (Module 3), nonclinical data (Module 4), clinical protocol and IB (Module 5). Submit 30 days before trial start.' }),
-  entry('US_IND_AMENDMENT', 'US', 'United States', 'FDA', 'clinical_trial', 'IND Amendment', 'IND Amendment', { stage: 'amendment', parentApplicationType: 'US_IND', synonyms: ['IND amendment', 'protocol amendment'], segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'eCTD', ctdModule: 'M5' }),
+  entry('US_IND_AMENDMENT', 'US', 'United States', 'FDA', 'clinical_trial', 'IND Amendment', 'IND Amendment', { stage: 'amendment', parentApplicationType: 'US_IND', synonyms: ['IND amendment', 'protocol amendment'], segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'eCTD', ctdModule: 'M5', description: 'Amendment to an active IND; protocol amendments, new investigator additions, chemistry changes, response to clinical hold' }),
 
   // Marketing Authorization
   entry('US_NDA', 'US', 'United States', 'FDA', 'marketing_authorization', 'NDA', 'New Drug Application', { synonyms: ['NDA', '505(b)(1)'], productClass: ['small_molecule'], requiredArtifacts: ['form_356h', 'clinical_overview', 'quality_overall_summary', 'nonclinical_overview', 'csr'], lifecycleActions: ['submit', 'amend', 'supplement', 'annual_report'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'Full CTD dossier for new small molecule drugs; Standard review (10 mo) or Priority Review (6 mo). Triggers PDUFA user fee.' }),
@@ -115,10 +115,10 @@ const EU_ENTRIES: RegulatoryApplicationType[] = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const UK_ENTRIES: RegulatoryApplicationType[] = [
-  entry('UK_CTA', 'UK', 'United Kingdom', 'MHRA', 'clinical_trial', 'CTA', 'Clinical Trial Authorisation (UK)', { synonyms: ['UK CTA'] }),
-  entry('UK_MA', 'UK', 'United Kingdom', 'MHRA', 'marketing_authorization', 'UK MA', 'UK Marketing Authorisation', { synonyms: ['UK MA', 'UK marketing authorization'] }),
-  entry('UK_IRP', 'UK', 'United Kingdom', 'MHRA', 'marketing_authorization', 'IRP', 'International Recognition Procedure', { synonyms: ['IRP'] }),
-  entry('UK_VARIATION', 'UK', 'United Kingdom', 'MHRA', 'variation', 'UK Variation', 'UK Marketing Authorisation Variation', { stage: 'amendment' }),
+  entry('UK_CTA', 'UK', 'United Kingdom', 'MHRA', 'clinical_trial', 'CTA', 'Clinical Trial Authorisation (UK)', { synonyms: ['UK CTA'], segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'eCTD', description: 'UK post-Brexit clinical trial authorisation submitted to MHRA; parallels EU CTR but under UK-specific regulations' }),
+  entry('UK_MA', 'UK', 'United Kingdom', 'MHRA', 'marketing_authorization', 'UK MA', 'UK Marketing Authorisation', { synonyms: ['UK MA', 'UK marketing authorization'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'National marketing authorisation application to MHRA; UK-specific Module 1 with CTD Modules 2–5' }),
+  entry('UK_IRP', 'UK', 'United Kingdom', 'MHRA', 'marketing_authorization', 'IRP', 'International Recognition Procedure', { synonyms: ['IRP'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'MHRA pathway recognising approvals from trusted reference agencies (FDA, EMA, TGA, Health Canada, Swissmedic, etc.)' }),
+  entry('UK_VARIATION', 'UK', 'United Kingdom', 'MHRA', 'variation', 'UK Variation', 'UK Marketing Authorisation Variation', { stage: 'amendment', segment: 'pharma_biotech', category: 'post_approval_lifecycle', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'Post-authorisation change to a UK MA; classified as Type IA, IB, or II mirroring the EU variation system' }),
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -126,13 +126,13 @@ const UK_ENTRIES: RegulatoryApplicationType[] = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const CA_ENTRIES: RegulatoryApplicationType[] = [
-  entry('CA_CTA', 'CA', 'Canada', 'Health_Canada', 'clinical_trial', 'CTA', 'Clinical Trial Application (Canada)', { synonyms: ['Canadian CTA'] }),
-  entry('CA_CTA_A', 'CA', 'Canada', 'Health_Canada', 'clinical_trial', 'CTA-A', 'Clinical Trial Application Amendment', { stage: 'amendment', parentApplicationType: 'CA_CTA' }),
+  entry('CA_CTA', 'CA', 'Canada', 'Health_Canada', 'clinical_trial', 'CTA', 'Clinical Trial Application (Canada)', { synonyms: ['Canadian CTA'], segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'Health Canada clinical trial application; CTD format with Canadian Module 1 requirements' }),
+  entry('CA_CTA_A', 'CA', 'Canada', 'Health_Canada', 'clinical_trial', 'CTA-A', 'Clinical Trial Application Amendment', { stage: 'amendment', parentApplicationType: 'CA_CTA', segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'eCTD', description: 'Amendment to an approved Canadian CTA; protocol amendments, IB updates, safety information' }),
   entry('CA_NDS', 'CA', 'Canada', 'Health_Canada', 'marketing_authorization', 'NDS', 'New Drug Submission (NDS)', { synonyms: ['NDS'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'Canadian marketing authorization application; CTD format with Canada-specific Module 1' }),
-  entry('CA_SNDS', 'CA', 'Canada', 'Health_Canada', 'supplement', 'SNDS', 'Supplemental New Drug Submission', { stage: 'supplement', parentApplicationType: 'CA_NDS' }),
-  entry('CA_ANDS', 'CA', 'Canada', 'Health_Canada', 'marketing_authorization', 'ANDS', 'Abbreviated New Drug Submission', { synonyms: ['ANDS', 'Canadian generic'], productClass: ['generic'] }),
-  entry('CA_SANDS', 'CA', 'Canada', 'Health_Canada', 'supplement', 'SANDS', 'Supplemental Abbreviated New Drug Submission', { stage: 'supplement', parentApplicationType: 'CA_ANDS' }),
-  entry('CA_MF', 'CA', 'Canada', 'Health_Canada', 'master_file', 'MF', 'Master File (Canada)', { synonyms: ['Canadian MF'] }),
+  entry('CA_SNDS', 'CA', 'Canada', 'Health_Canada', 'supplement', 'SNDS', 'Supplemental New Drug Submission', { stage: 'supplement', parentApplicationType: 'CA_NDS', segment: 'pharma_biotech', category: 'post_approval_lifecycle', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'Supplement to an approved NDS for new indications, formulation changes, or manufacturing site changes' }),
+  entry('CA_ANDS', 'CA', 'Canada', 'Health_Canada', 'marketing_authorization', 'ANDS', 'Abbreviated New Drug Submission', { synonyms: ['ANDS', 'Canadian generic'], productClass: ['generic'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'eCTD', ctdModule: 'M1–M3', description: 'Canadian generic drug submission demonstrating bioequivalence to a Canadian Reference Product' }),
+  entry('CA_SANDS', 'CA', 'Canada', 'Health_Canada', 'supplement', 'SANDS', 'Supplemental Abbreviated New Drug Submission', { stage: 'supplement', parentApplicationType: 'CA_ANDS', segment: 'pharma_biotech', category: 'post_approval_lifecycle', submissionFormat: 'eCTD', description: 'Supplement to an approved ANDS for post-approval changes to generic products' }),
+  entry('CA_MF', 'CA', 'Canada', 'Health_Canada', 'master_file', 'MF', 'Master File (Canada)', { synonyms: ['Canadian MF'], segment: 'pharma_biotech', category: 'cmc_quality', submissionFormat: 'eCTD', ctdModule: '3.2.S', description: 'Confidential manufacturing and quality data for APIs or excipients; referenced by NDS/ANDS applicants' }),
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -140,11 +140,11 @@ const CA_ENTRIES: RegulatoryApplicationType[] = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const JP_ENTRIES: RegulatoryApplicationType[] = [
-  entry('JP_CTN', 'JP', 'Japan', 'PMDA', 'clinical_trial', 'CTN', 'Clinical Trial Notification', { synonyms: ['CTN', '治験届'] }),
-  entry('JP_MKT_APPROVAL', 'JP', 'Japan', 'PMDA', 'marketing_authorization', 'Marketing Approval', 'Marketing Approval Application (Japan)', { synonyms: ['承認申請', 'JNDA'] }),
-  entry('JP_MF', 'JP', 'Japan', 'PMDA', 'master_file', 'MF', 'Master File (Japan)', { synonyms: ['Japanese MF', 'MF登録'] }),
-  entry('JP_PARTIAL_CHANGE', 'JP', 'Japan', 'PMDA', 'variation', 'Partial Change', 'Partial Change Application', { stage: 'amendment', synonyms: ['一部変更承認申請'] }),
-  entry('JP_MINOR_CHANGE', 'JP', 'Japan', 'PMDA', 'variation', 'Minor Change', 'Minor Change Notification', { stage: 'amendment', synonyms: ['軽微変更届'] }),
+  entry('JP_CTN', 'JP', 'Japan', 'PMDA', 'clinical_trial', 'CTN', 'Clinical Trial Notification', { synonyms: ['CTN', '治験届'], segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'Notification to PMDA 30 days before commencing a clinical trial in Japan; Japanese-language Module 1 requirements' }),
+  entry('JP_MKT_APPROVAL', 'JP', 'Japan', 'PMDA', 'marketing_authorization', 'Marketing Approval', 'Marketing Approval Application (Japan)', { synonyms: ['承認申請', 'JNDA'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'Japanese marketing approval application submitted to PMDA; CTD format with Japan-specific Module 1 and potentially Japanese clinical data' }),
+  entry('JP_MF', 'JP', 'Japan', 'PMDA', 'master_file', 'MF', 'Master File (Japan)', { synonyms: ['Japanese MF', 'MF登録'], segment: 'pharma_biotech', category: 'cmc_quality', submissionFormat: 'eCTD', ctdModule: '3.2.S', description: 'PMDA Master File for APIs and excipients; confidential quality data referenced by marketing approval applicants' }),
+  entry('JP_PARTIAL_CHANGE', 'JP', 'Japan', 'PMDA', 'variation', 'Partial Change', 'Partial Change Application', { stage: 'amendment', synonyms: ['一部変更承認申請'], segment: 'pharma_biotech', category: 'post_approval_lifecycle', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'Major post-approval change requiring PMDA approval before implementation; new indications, formulations, manufacturing changes' }),
+  entry('JP_MINOR_CHANGE', 'JP', 'Japan', 'PMDA', 'variation', 'Minor Change', 'Minor Change Notification', { stage: 'amendment', synonyms: ['軽微変更届'], segment: 'pharma_biotech', category: 'post_approval_lifecycle', submissionFormat: 'eCTD', description: 'Minor post-approval change notification to PMDA; no prior approval required' }),
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -152,10 +152,10 @@ const JP_ENTRIES: RegulatoryApplicationType[] = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const CN_ENTRIES: RegulatoryApplicationType[] = [
-  entry('CN_CTA', 'CN', 'China', 'NMPA', 'clinical_trial', 'CTA', 'Clinical Trial Application (China)', { synonyms: ['Chinese CTA', '药物临床试验申请'], dossierStandard: 'CTD' }),
-  entry('CN_MAA', 'CN', 'China', 'NMPA', 'marketing_authorization', 'MAA', 'Marketing Authorization Application (China)', { synonyms: ['Chinese MAA', '药品注册申请'], dossierStandard: 'CTD' }),
-  entry('CN_SUPPLEMENT', 'CN', 'China', 'NMPA', 'supplement', 'Supplementary Application', 'Supplementary Application (China)', { stage: 'supplement', dossierStandard: 'CTD' }),
-  entry('CN_RENEWAL', 'CN', 'China', 'NMPA', 'renewal', 'Renewal', 'Registration Renewal (China)', { stage: 'renewal', dossierStandard: 'CTD' }),
+  entry('CN_CTA', 'CN', 'China', 'NMPA', 'clinical_trial', 'CTA', 'Clinical Trial Application (China)', { synonyms: ['Chinese CTA', '药物临床试验申请'], dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'CTD', ctdModule: 'M1–M5', description: 'NMPA clinical trial application; 60-day tacit approval. CTD format with China-specific Module 1 requirements.' }),
+  entry('CN_MAA', 'CN', 'China', 'NMPA', 'marketing_authorization', 'MAA', 'Marketing Authorization Application (China)', { synonyms: ['Chinese MAA', '药品注册申请'], dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'CTD', ctdModule: 'M1–M5', description: 'NMPA marketing authorization; CTD format with China-specific Module 1, ethnic sensitivity bridging data may be required' }),
+  entry('CN_SUPPLEMENT', 'CN', 'China', 'NMPA', 'supplement', 'Supplementary Application', 'Supplementary Application (China)', { stage: 'supplement', dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'post_approval_lifecycle', submissionFormat: 'CTD', ctdModule: 'M1–M5', description: 'Post-approval change application to NMPA for new indications, formulations, or manufacturing changes' }),
+  entry('CN_RENEWAL', 'CN', 'China', 'NMPA', 'renewal', 'Renewal', 'Registration Renewal (China)', { stage: 'renewal', dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'post_approval_lifecycle', submissionFormat: 'CTD', ctdModule: 'M1', description: 'Five-year registration renewal application to NMPA; includes pharmacovigilance summary and benefit-risk reassessment' }),
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -164,9 +164,9 @@ const CN_ENTRIES: RegulatoryApplicationType[] = [
 
 const AU_ENTRIES: RegulatoryApplicationType[] = [
   entry('AU_CTN', 'AU', 'Australia', 'TGA', 'clinical_trial', 'CTN', 'Clinical Trial Notification (CTN)', { synonyms: ['CTN', 'TGA notification'], segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'eCTD', description: 'Notification to Australia’s TGA before commencing a clinical trial' }),
-  entry('AU_CTA', 'AU', 'Australia', 'TGA', 'clinical_trial', 'CTA', 'Clinical Trial Approval (Australia)', { synonyms: ['TGA CTA'] }),
-  entry('AU_CAT1', 'AU', 'Australia', 'TGA', 'marketing_authorization', 'Category 1', 'Category 1 Registration', { synonyms: ['Cat 1'] }),
-  entry('AU_CAT2', 'AU', 'Australia', 'TGA', 'marketing_authorization', 'Category 2', 'Category 2 Registration', { synonyms: ['Cat 2'] }),
+  entry('AU_CTA', 'AU', 'Australia', 'TGA', 'clinical_trial', 'CTA', 'Clinical Trial Approval (Australia)', { synonyms: ['TGA CTA'], segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'TGA Clinical Trial Approval scheme for higher-risk trials; TGA reviews the trial before it can proceed' }),
+  entry('AU_CAT1', 'AU', 'Australia', 'TGA', 'marketing_authorization', 'Category 1', 'Category 1 Registration', { synonyms: ['Cat 1'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'TGA Category 1 application for new chemical entities and biologics; full evaluation with CTD dossier' }),
+  entry('AU_CAT2', 'AU', 'Australia', 'TGA', 'marketing_authorization', 'Category 2', 'Category 2 Registration', { synonyms: ['Cat 2'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'TGA Category 2 (abridged) for products approved by a comparable overseas regulator; relies on foreign assessment reports' }),
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -174,8 +174,8 @@ const AU_ENTRIES: RegulatoryApplicationType[] = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const CH_ENTRIES: RegulatoryApplicationType[] = [
-  entry('CH_CTA', 'CH', 'Switzerland', 'Swissmedic', 'clinical_trial', 'CTA', 'Clinical Trial Application (Switzerland)', { synonyms: ['Swiss CTA'] }),
-  entry('CH_MA', 'CH', 'Switzerland', 'Swissmedic', 'marketing_authorization', 'MA', 'Marketing Authorisation (Switzerland)', { synonyms: ['Swiss MA'] }),
+  entry('CH_CTA', 'CH', 'Switzerland', 'Swissmedic', 'clinical_trial', 'CTA', 'Clinical Trial Application (Switzerland)', { synonyms: ['Swiss CTA'], segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'Swissmedic clinical trial authorisation; dual submission to Swissmedic and cantonal ethics committee' }),
+  entry('CH_MA', 'CH', 'Switzerland', 'Swissmedic', 'marketing_authorization', 'MA', 'Marketing Authorisation (Switzerland)', { synonyms: ['Swiss MA'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'Swissmedic marketing authorisation; CTD dossier with Swiss-specific Module 1. Fast-track and prior-notification pathways available.' }),
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -183,9 +183,9 @@ const CH_ENTRIES: RegulatoryApplicationType[] = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const BR_ENTRIES: RegulatoryApplicationType[] = [
-  entry('BR_DDCM', 'BR', 'Brazil', 'ANVISA', 'clinical_trial', 'DDCM', 'Dossiê de Desenvolvimento Clínico de Medicamento', { synonyms: ['DDCM', 'Brazilian clinical trial'], dossierStandard: 'CTD' }),
-  entry('BR_DEEC', 'BR', 'Brazil', 'ANVISA', 'clinical_trial', 'DEEC', 'Dossiê Específico de Ensaio Clínico', { synonyms: ['DEEC'], dossierStandard: 'CTD' }),
-  entry('BR_MA', 'BR', 'Brazil', 'ANVISA', 'marketing_authorization', 'MA', 'Marketing Authorization (Brazil)', { synonyms: ['Brazilian MA', 'registro'], dossierStandard: 'CTD' }),
+  entry('BR_DDCM', 'BR', 'Brazil', 'ANVISA', 'clinical_trial', 'DDCM', 'Dossiê de Desenvolvimento Clínico de Medicamento', { synonyms: ['DDCM', 'Brazilian clinical trial'], dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'CTD', ctdModule: 'M1–M5', description: 'ANVISA clinical development dossier for new drugs; CTD format with Brazil-specific requirements and CEP ethics approval' }),
+  entry('BR_DEEC', 'BR', 'Brazil', 'ANVISA', 'clinical_trial', 'DEEC', 'Dossiê Específico de Ensaio Clínico', { synonyms: ['DEEC'], dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'CTD', description: 'ANVISA study-specific clinical trial dossier submitted alongside DDCM for each individual study protocol' }),
+  entry('BR_MA', 'BR', 'Brazil', 'ANVISA', 'marketing_authorization', 'MA', 'Marketing Authorization (Brazil)', { synonyms: ['Brazilian MA', 'registro'], dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'CTD', ctdModule: 'M1–M5', description: 'ANVISA registration (registro) for new drugs; CTD format with Brazilian Module 1 requirements. MDSAP accepted for devices.' }),
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -193,13 +193,13 @@ const BR_ENTRIES: RegulatoryApplicationType[] = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const IN_ENTRIES: RegulatoryApplicationType[] = [
-  entry('IN_CT04', 'IN', 'India', 'CDSCO', 'clinical_trial', 'CT-04', 'Form CT-04 (New Drug Clinical Trial)', { synonyms: ['CT-04', 'Indian CT application'], dossierStandard: 'CTD' }),
-  entry('IN_CT06', 'IN', 'India', 'CDSCO', 'clinical_trial', 'CT-06', 'Form CT-06 (Bioequivalence/Bioavailability)', { synonyms: ['CT-06'], dossierStandard: 'CTD' }),
-  entry('IN_CT07', 'IN', 'India', 'CDSCO', 'clinical_trial', 'CT-07', 'Form CT-07 (Post-Marketing Study)', { synonyms: ['CT-07'], dossierStandard: 'CTD' }),
-  entry('IN_CT11', 'IN', 'India', 'CDSCO', 'clinical_trial', 'CT-11', 'Form CT-11 (Clinical Trial Report)', { synonyms: ['CT-11'], dossierStandard: 'CTD' }),
-  entry('IN_CT18', 'IN', 'India', 'CDSCO', 'marketing_authorization', 'CT-18', 'Form CT-18 (New Drug Marketing)', { synonyms: ['CT-18'], dossierStandard: 'CTD' }),
-  entry('IN_CT19', 'IN', 'India', 'CDSCO', 'marketing_authorization', 'CT-19', 'Form CT-19 (Import Registration)', { synonyms: ['CT-19'], dossierStandard: 'CTD' }),
-  entry('IN_CT21', 'IN', 'India', 'CDSCO', 'marketing_authorization', 'CT-21', 'Form CT-21 (Generic Drug Marketing)', { synonyms: ['CT-21'], dossierStandard: 'CTD', productClass: ['generic'] }),
+  entry('IN_CT04', 'IN', 'India', 'CDSCO', 'clinical_trial', 'CT-04', 'Form CT-04 (New Drug Clinical Trial)', { synonyms: ['CT-04', 'Indian CT application'], dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'CTD', ctdModule: 'M1–M5', description: 'CDSCO Form CT-04 for new drug clinical trial permission under New Drugs & Clinical Trials Rules 2019; via SUGAM portal' }),
+  entry('IN_CT06', 'IN', 'India', 'CDSCO', 'clinical_trial', 'CT-06', 'Form CT-06 (Bioequivalence/Bioavailability)', { synonyms: ['CT-06'], dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'CTD', description: 'CDSCO Form CT-06 for bioequivalence and bioavailability studies; required for generic drug development in India' }),
+  entry('IN_CT07', 'IN', 'India', 'CDSCO', 'clinical_trial', 'CT-07', 'Form CT-07 (Post-Marketing Study)', { synonyms: ['CT-07'], dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'post_approval_lifecycle', submissionFormat: 'CTD', description: 'CDSCO Form CT-07 for post-marketing surveillance studies; Phase IV commitments and safety monitoring' }),
+  entry('IN_CT11', 'IN', 'India', 'CDSCO', 'clinical_trial', 'CT-11', 'Form CT-11 (Clinical Trial Report)', { synonyms: ['CT-11'], dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'CTD', ctdModule: 'M5', description: 'CDSCO Form CT-11 for clinical trial completion reports; submitted within specified timelines after study completion' }),
+  entry('IN_CT18', 'IN', 'India', 'CDSCO', 'marketing_authorization', 'CT-18', 'Form CT-18 (New Drug Marketing)', { synonyms: ['CT-18'], dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'CTD', ctdModule: 'M1–M5', description: 'CDSCO Form CT-18 for marketing approval of new drugs; full CTD dossier submission via SUGAM portal' }),
+  entry('IN_CT19', 'IN', 'India', 'CDSCO', 'marketing_authorization', 'CT-19', 'Form CT-19 (Import Registration)', { synonyms: ['CT-19'], dossierStandard: 'CTD', segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'CTD', ctdModule: 'M1–M5', description: 'CDSCO Form CT-19 for import registration of new drugs manufactured outside India; requires GMP certificate from country of origin' }),
+  entry('IN_CT21', 'IN', 'India', 'CDSCO', 'marketing_authorization', 'CT-21', 'Form CT-21 (Generic Drug Marketing)', { synonyms: ['CT-21'], dossierStandard: 'CTD', productClass: ['generic'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'CTD', ctdModule: 'M1–M3', description: 'CDSCO Form CT-21 for marketing approval of generic drugs; bioequivalence data and abbreviated CMC package' }),
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -207,9 +207,9 @@ const IN_ENTRIES: RegulatoryApplicationType[] = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const KR_ENTRIES: RegulatoryApplicationType[] = [
-  entry('KR_IND', 'KR', 'South Korea', 'MFDS', 'clinical_trial', 'IND', 'IND Application (South Korea)', { synonyms: ['Korean IND', '임상시험계획승인'] }),
-  entry('KR_MA_NEW', 'KR', 'South Korea', 'MFDS', 'marketing_authorization', 'New Drug MA', 'Marketing Application — New Drug (Korea)', { synonyms: ['Korean MA', '품목허가'] }),
-  entry('KR_MA_GENERIC', 'KR', 'South Korea', 'MFDS', 'marketing_authorization', 'Generic MA', 'Marketing Application — Generic (Korea)', { productClass: ['generic'] }),
+  entry('KR_IND', 'KR', 'South Korea', 'MFDS', 'clinical_trial', 'IND', 'IND Application (South Korea)', { synonyms: ['Korean IND', '임상시험계획승인'], segment: 'pharma_biotech', category: 'investigational', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'MFDS clinical trial plan approval application; 30-day review with Korean-language Module 1' }),
+  entry('KR_MA_NEW', 'KR', 'South Korea', 'MFDS', 'marketing_authorization', 'New Drug MA', 'Marketing Application — New Drug (Korea)', { synonyms: ['Korean MA', '품목허가'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'eCTD', ctdModule: 'M1–M5', description: 'MFDS marketing approval for new drugs; CTD format with Korean-specific requirements. Korean bridging data may be required.' }),
+  entry('KR_MA_GENERIC', 'KR', 'South Korea', 'MFDS', 'marketing_authorization', 'Generic MA', 'Marketing Application — Generic (Korea)', { productClass: ['generic'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'eCTD', ctdModule: 'M1–M3', description: 'MFDS generic drug marketing approval; bioequivalence data and abbreviated CMC package' }),
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -217,8 +217,8 @@ const KR_ENTRIES: RegulatoryApplicationType[] = [
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const SG_ENTRIES: RegulatoryApplicationType[] = [
-  entry('SG_NDA', 'SG', 'Singapore', 'HSA', 'marketing_authorization', 'NDA', 'New Drug Application (Singapore)', { synonyms: ['Singapore NDA'], dossierStandard: 'ACTD' }),
-  entry('SG_GDA', 'SG', 'Singapore', 'HSA', 'marketing_authorization', 'GDA', 'Generic Drug Application (Singapore)', { synonyms: ['Singapore GDA', 'ACTD generic'], dossierStandard: 'ACTD', productClass: ['generic'] }),
+  entry('SG_NDA', 'SG', 'Singapore', 'HSA', 'marketing_authorization', 'NDA', 'New Drug Application (Singapore)', { synonyms: ['Singapore NDA'], dossierStandard: 'ACTD', segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'ACTD', ctdModule: 'M1–M5', description: 'HSA new drug application using ASEAN CTD format; full evaluation route for new chemical entities and biologics' }),
+  entry('SG_GDA', 'SG', 'Singapore', 'HSA', 'marketing_authorization', 'GDA', 'Generic Drug Application (Singapore)', { synonyms: ['Singapore GDA', 'ACTD generic'], dossierStandard: 'ACTD', productClass: ['generic'], segment: 'pharma_biotech', category: 'marketing_authorization', submissionFormat: 'ACTD', ctdModule: 'M1–M3', description: 'HSA generic drug application with bioequivalence data; abbreviated ACTD dossier' }),
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
