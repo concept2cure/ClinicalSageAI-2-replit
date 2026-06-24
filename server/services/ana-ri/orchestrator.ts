@@ -319,7 +319,7 @@ export interface OrchestratorOutput {
   /** Metadata about what was orchestrated */
   orchestrationMeta: {
     intentSource: 'explicit' | 'detected' | 'default';
-    submissionTypeSource: 'explicit' | 'detected' | 'none';
+    submissionTypeSource: 'explicit' | 'project_context' | 'detected' | 'none';
     roleSource: 'explicit' | 'default';
     deficiencyContextInjected: boolean;
     documentActionContextInjected: boolean;
