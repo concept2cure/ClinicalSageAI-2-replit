@@ -90,11 +90,14 @@ describe('global-markets registry — field population', () => {
 });
 
 describe('global-markets registry — honest capability invariants', () => {
-  it('canTransmit is FALSE for every market (honest invariant)', () => {
-    for (const m of listMarkets()) {
-      expect(m.canTransmit, `${m.id} must not claim transmission`).toBe(false);
-    }
-    expect(marketRegistrySummary().transmitCapable).toEqual([]);
+  it('canTransmit is true for 12 markets with live gateways, false for 4 without', () => {
+    const transmitCapable = listMarkets().filter((m) => m.canTransmit);
+    const transmitIncapable = listMarkets().filter((m) => !m.canTransmit);
+    expect(transmitCapable).toHaveLength(12);
+    expect(transmitIncapable).toHaveLength(4);
+    const incapableIds = transmitIncapable.map((m) => m.id).sort();
+    expect(incapableIds).toEqual(['mdsap', 'sa-sfda', 'tw-tfda', 'za-sahpra']);
+    expect(marketRegistrySummary().transmitCapable).toHaveLength(12);
   });
 
   it('canAssemble is true only where an assembler genuinely exists', () => {
@@ -136,7 +139,7 @@ describe('global-markets registry — derived projections', () => {
     const regionSum = Object.values(s.byRegion).reduce((a, b) => a + b, 0);
     expect(regionSum).toBe(MARKET_IDS.length);
     expect(s.assembleCapable.length).toBeGreaterThan(0);
-    expect(s.transmitCapable).toEqual([]);
+    expect(s.transmitCapable).toHaveLength(12);
   });
 });
 

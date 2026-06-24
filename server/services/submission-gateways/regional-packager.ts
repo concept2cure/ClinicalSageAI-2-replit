@@ -31,7 +31,7 @@ import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import type { Region, SubmissionFormat, SubmissionBundle } from './types';
-import { ValidationError } from './types';
+import { ValidationError, resolveToRegistryEntry, getSubmissionTypeLabel } from './types';
 import { finalizePdfA } from '../ectd/pdfa-pipeline';
 import {
   evaluateSubmissionGrade,
@@ -360,24 +360,68 @@ export function buildMd5Index(entries: ChecksumEntry[]): string {
 /* ─── Top-level packager ──────────────────────────────────────────── */
 
 export async function packageEctdSubmission(input: PackagerInput): Promise<SubmissionBundle> {
+  /* Resolve the caller-supplied submission type through the canonical bridge.
+     This normalizes any alias/legacy string (e.g. '510k', 'SNDA', 'ind') to
+     the registry entry so that backbone XML, display names, and audit rows
+     all use the same canonical identifier. The bridge returns null for
+     unrecognized strings — in that case we fall through to the raw value,
+     preserving backward compatibility for ad-hoc or org-specific types. */
+  const registryEntry = resolveToRegistryEntry(input.submissionType);
+  const canonicalSubmissionType = registryEntry?.applicationType ?? input.submissionType;
+  const submissionTypeLabel = getSubmissionTypeLabel(input.submissionType);
+
+  /* Build a normalized copy of the input for the backbone builders so they
+     emit the canonical type into XML elements. The original PackagerInput
+     is not mutated. */
+  const normalizedInput: PackagerInput = {
+    ...input,
+    submissionType: canonicalSubmissionType,
+  };
+
   const region = input.region;
   const backboneByRegion: Record<Region, () => string> = {
-    fda:  () => buildFdaBackbone(input),
-    ema:  () => buildEmaBackbone(input),
-    pmda: () => buildPmdaBackbone(input),
-    ca:   () => buildHcBackbone(input),
+    fda:  () => buildFdaBackbone(normalizedInput),
+    ema:  () => buildEmaBackbone(normalizedInput),
+    pmda: () => buildPmdaBackbone(normalizedInput),
+    ca:   () => buildHcBackbone(normalizedInput),
+    // ICH-aligned / EU-structure regions use EMA backbone as the closest standard
+    uk:   () => buildEmaBackbone(normalizedInput),
+    ch:   () => buildEmaBackbone(normalizedInput),
+    au:   () => buildEmaBackbone(normalizedInput),
+    // CTD/eCTD regions without a distinct backbone builder — EMA ICH M4 fallback
+    cn:   () => buildEmaBackbone(normalizedInput),
+    br:   () => buildEmaBackbone(normalizedInput),
+    in:   () => buildEmaBackbone(normalizedInput),
+    kr:   () => buildEmaBackbone(normalizedInput),
+    sg:   () => buildEmaBackbone(normalizedInput),
   };
   const m1FolderByRegion: Record<Region, string> = {
     fda:  'm1/us',
     ema:  'm1/eu',
     pmda: 'm1/jp',
     ca:   'm1/ca',
+    uk:   'm1/uk',
+    ch:   'm1/ch',
+    au:   'm1/au',
+    cn:   'm1/cn',
+    br:   'm1/br',
+    in:   'm1/in',
+    kr:   'm1/kr',
+    sg:   'm1/sg',
   };
   const backboneFileByRegion: Record<Region, string> = {
     fda:  `${m1FolderByRegion.fda}/us-regional.xml`,
     ema:  `${m1FolderByRegion.ema}/eu-regional.xml`,
     pmda: `${m1FolderByRegion.pmda}/jp-regional.xml`,
     ca:   `${m1FolderByRegion.ca}/ca-regional.xml`,
+    uk:   `${m1FolderByRegion.uk}/uk-regional.xml`,
+    ch:   `${m1FolderByRegion.ch}/ch-regional.xml`,
+    au:   `${m1FolderByRegion.au}/au-regional.xml`,
+    cn:   `${m1FolderByRegion.cn}/cn-regional.xml`,
+    br:   `${m1FolderByRegion.br}/br-regional.xml`,
+    in:   `${m1FolderByRegion.in}/in-regional.xml`,
+    kr:   `${m1FolderByRegion.kr}/kr-regional.xml`,
+    sg:   `${m1FolderByRegion.sg}/sg-regional.xml`,
   };
 
   const zip = new JSZip();
@@ -505,7 +549,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     sha256:    createHash('sha256').update(buffer).digest('hex'),
     sizeBytes: buffer.length,
     format,
-    displayName: `${input.productName} · ${region.toUpperCase()} ${input.submissionType} #${input.sequence}`,
+    displayName: `${input.productName} · ${region.toUpperCase()} ${submissionTypeLabel} #${input.sequence}`,
     submissionGrade,
     dtdStatus: {
       required: dtdGate.required,

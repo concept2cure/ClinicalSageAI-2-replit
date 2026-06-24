@@ -77,13 +77,17 @@ describe('assessMarketReadiness — full / partial / empty', () => {
 });
 
 describe('assessMarketReadiness — honest blockers', () => {
-  it('always includes a cannot-transmit blocker for every market', () => {
+  it('includes a cannot-transmit blocker only for markets without a live gateway', () => {
     for (const m of listMarkets()) {
       const result = assessMarketReadiness(m.id, m.requiredDossierElements);
       const hasTransmitBlocker = result.blockers.some((b) =>
         b.includes('cannot transmit') && b.includes(m.authorityShort),
       );
-      expect(hasTransmitBlocker, `${m.id} must report a cannot-transmit blocker`).toBe(true);
+      if (m.canTransmit) {
+        expect(hasTransmitBlocker, `${m.id} has a gateway — no cannot-transmit blocker`).toBe(false);
+      } else {
+        expect(hasTransmitBlocker, `${m.id} has no gateway — must report cannot-transmit`).toBe(true);
+      }
     }
   });
 

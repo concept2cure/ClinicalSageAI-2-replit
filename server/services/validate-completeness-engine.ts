@@ -11,6 +11,7 @@
  */
 
 import { createScopedLogger } from '../utils/logger';
+import { resolveToRegistryEntry, resolveToDeficiencyType, getSubmissionTypeContext } from '../../shared/regulatory/submission-type-bridge.js';
 
 const log = createScopedLogger('validate-completeness');
 
@@ -80,7 +81,11 @@ export class ValidateCompletenessEngine {
     log.info(`VALIDATE-COMPLETENESS: ${input.submissionType}, ${input.presentSections.length} sections`);
 
     const targetAgency = input.targetAgency || 'FDA';
-    const requirements = this.getRequirements(input.submissionType, targetAgency);
+    // Resolve international types to nearest compatible type for requirements lookup
+    const registryCtx = getSubmissionTypeContext(input.submissionType);
+    const resolvedType = this.normalizeForRequirements(input.submissionType);
+    const resolvedAgency = registryCtx?.agency ?? targetAgency;
+    const requirements = this.getRequirements(resolvedType, targetAgency);
     const checklist = this.buildChecklist(requirements, input);
     const rtfRisk = this.assessRTFRisk(checklist, input);
     const goNoGo = this.buildGoNoGo(checklist, rtfRisk, input);
@@ -294,6 +299,19 @@ export class ValidateCompletenessEngine {
     }
 
     return { decision, readinessScore, rationale, conditions, blockers, risks };
+  }
+
+  private normalizeForRequirements(submissionType: string): string {
+    // Map registry entries to the requirement set they match
+    const entry = resolveToRegistryEntry(submissionType);
+    if (!entry) return submissionType;
+    // Use the applicationType from the registry as the requirements key
+    const appType = entry.applicationType.toUpperCase();
+    const TYPE_MAP: Record<string, string> = {
+      IND: 'IND', NDA: 'NDA', BLA: 'BLA', ANDA: 'ANDA', PMA: 'PMA',
+      '510K': '510(k)', 'DE_NOVO': 'De Novo', MAA: 'NDA', CTA: 'IND',
+    };
+    return TYPE_MAP[appType] ?? submissionType;
   }
 }
 

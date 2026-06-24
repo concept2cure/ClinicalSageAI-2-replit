@@ -8,9 +8,8 @@
  *                                 registry + readiness scorer into entry advice.
  *
  * NO LLM, NO fabrication. Every finding, blocker and action is derived from the
- * underlying registries/readiness logic. Transmission is NEVER claimed — the
- * registry invariant (`canTransmit === false` everywhere) is carried straight
- * through, and `transmitCapableMarkets` is always empty by construction.
+ * underlying registries/readiness logic. `canTransmit` is carried straight from
+ * the registry — true for the 12 markets with live gateways, false otherwise.
  *
  * PURE + DETERMINISTIC: static composition + pure shaping. No DB, no network.
  *
@@ -197,8 +196,8 @@ export function adviseDeviceReadiness(
  * Produce a ranked market-entry advisory for a device / IVD profile against a set
  * of candidate markets. Ranking reflects readiness score (descending), with
  * platform-assemble capability and fewer hard blockers breaking ties. Honest:
- * `transmitCapableMarkets` is always empty and every market carries its standing
- * transmit/assemble/local-rep blockers.
+ * `transmitCapableMarkets` lists markets with live gateways; markets without
+ * gateways carry the standing cannot-transmit blocker.
  */
 export function adviseGlobalMarketStrategy(
   input: GlobalMarketAdviceInput,
@@ -227,7 +226,7 @@ export function adviseGlobalMarketStrategy(
       band: readiness.band,
       complete: readiness.complete,
       canAssemble: market.canAssemble,
-      canTransmit: market.canTransmit, // honest: always false in the registry
+      canTransmit: market.canTransmit,
       localRepresentativeRequired: market.localRepresentativeRequired,
       missingElements: readiness.missingElements,
       blockers: readiness.blockers,
@@ -244,7 +243,7 @@ export function adviseGlobalMarketStrategy(
 
   const assembleCapableMarkets = ranked.filter((m) => m.canAssemble).map((m) => m.marketId);
   const marketsNeedingLocalRep = ranked.filter((m) => m.localRepresentativeRequired).map((m) => m.marketId);
-  const transmitCapableMarkets: MarketId[] = []; // honest invariant: never anything
+  const transmitCapableMarkets = ranked.filter((m) => m.canTransmit).map((m) => m.marketId);
 
   // ── Findings ────────────────────────────────────────────────────────────────
   const findings: AdvisoryFinding[] = [];

@@ -17,6 +17,11 @@
 import { Pool } from 'pg';
 import crypto from 'crypto';
 import { ai } from '../../lib/unified-ai-client';
+import {
+  resolveToRegistryEntry,
+  getSubmissionTypeContext,
+  type SubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 
 // Types
 export interface ReadinessCriterion {
@@ -467,6 +472,11 @@ export class SubmissionReadinessTwinService {
     try {
       await client.query("SET app.bypass_rls = 'true'");
       await client.query("SET app.is_admin = 'true'");
+      // Resolve submission type through the canonical bridge
+      const subTypeCtx = getSubmissionTypeContext('NDA');
+      const resolvedSubType = subTypeCtx?.registryId ?? 'US_NDA';
+      const resolvedAgency = subTypeCtx?.agency ?? 'FDA';
+
       const result = await client.query(
         `
         INSERT INTO innovation.readiness_criteria (
@@ -477,8 +487,8 @@ export class SubmissionReadinessTwinService {
         RETURNING *
       `,
         [
-          'NDA',
-          'FDA',
+          resolvedSubType,
+          resolvedAgency,
           input.category,
           criterionCode,
           input.name,
@@ -492,8 +502,8 @@ export class SubmissionReadinessTwinService {
       if (!row) {
         const fallback: ReadinessCriterion = {
           id: crypto.randomUUID(),
-          submissionType: 'NDA',
-          agency: 'FDA',
+          submissionType: resolvedSubType,
+          agency: resolvedAgency,
           modulePath: input.category,
           criterionCode,
           criterionName: input.name,
@@ -522,6 +532,10 @@ export class SubmissionReadinessTwinService {
     agency?: string
   ): Promise<ReadinessCriterion[]> {
     if (agency) {
+      // Resolve submission type through the canonical bridge
+      const entry = resolveToRegistryEntry(submissionTypeOrProgramId);
+      const resolvedSubType = entry?.id ?? submissionTypeOrProgramId;
+
       const result = await this.pool.query(
         `
         SELECT * FROM innovation.readiness_criteria
@@ -531,7 +545,7 @@ export class SubmissionReadinessTwinService {
           AND (effective_date IS NULL OR effective_date <= CURRENT_DATE)
         ORDER BY module_path, criterion_code
       `,
-        [submissionTypeOrProgramId, agency]
+        [resolvedSubType, agency]
       );
 
       return result.rows.map(this.mapCriterion);
@@ -602,6 +616,14 @@ export class SubmissionReadinessTwinService {
     targetAgency: string,
     documentData?: Map<string, any>
   ): Promise<ReadinessTwinAssessment> {
+    // Resolve submission type through the canonical bridge
+    const entry = resolveToRegistryEntry(submissionType);
+    const resolvedSubType = entry?.id ?? submissionType;
+    if (entry && !targetAgency) {
+      const ctx = getSubmissionTypeContext(resolvedSubType);
+      if (ctx) targetAgency = ctx.agency;
+    }
+
     const client = await this.pool.connect();
 
     try {
@@ -610,7 +632,7 @@ export class SubmissionReadinessTwinService {
       await client.query('BEGIN');
 
       // Get applicable criteria
-      const criteria = await this.getCriteria(submissionType, targetAgency);
+      const criteria = await this.getCriteria(resolvedSubType, targetAgency);
 
       // Evaluate each criterion
       const evaluations: CriterionEvaluation[] = [];
@@ -890,15 +912,20 @@ export class SubmissionReadinessTwinService {
     approvalProbability -= criticalGaps * 0.05;
     approvalProbability = Math.max(0.1, Math.min(0.95, approvalProbability));
 
-    // Review time increases with complexity and gaps
+    // Review time increases with complexity and gaps.
+    // Keyed by both legacy and registry IDs so any resolved form matches.
     const baseReviewDays: Record<string, number> = {
-      IND: 30,
-      NDA: 300,
-      BLA: 300,
-      '510k': 90,
-      PMA: 180,
+      IND: 30,   US_IND: 30,
+      NDA: 300,  US_NDA: 300,
+      BLA: 300,  US_BLA: 300,
+      '510k': 90, US_510K: 90,
+      PMA: 180,  US_PMA: 180,
     };
-    let reviewTimeDays = baseReviewDays[submissionType] || 180;
+    // Try resolved type first, then original string
+    const entryForReview = resolveToRegistryEntry(submissionType);
+    let reviewTimeDays = baseReviewDays[entryForReview?.id ?? submissionType]
+      ?? baseReviewDays[submissionType]
+      ?? 180;
     reviewTimeDays += criticalGaps * 30; // Each gap adds ~30 days
 
     // Deficiency count based on gaps
@@ -1052,6 +1079,10 @@ export class SubmissionReadinessTwinService {
     submissionType: string,
     agency: string
   ): Promise<ReadinessDashboard> {
+    // Resolve submission type through the canonical bridge
+    const entry = resolveToRegistryEntry(submissionType);
+    const resolvedSubType = entry?.id ?? submissionType;
+
     // Get latest assessment
     const assessmentResult = await this.pool.query(
       `
@@ -1060,7 +1091,7 @@ export class SubmissionReadinessTwinService {
       ORDER BY assessed_at DESC
       LIMIT 1
     `,
-      [programId, submissionType, agency]
+      [programId, resolvedSubType, agency]
     );
 
     if (assessmentResult.rows.length === 0) {

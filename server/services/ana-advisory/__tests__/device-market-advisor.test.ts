@@ -153,21 +153,20 @@ describe('adviseGlobalMarketStrategy', () => {
     expect(advice.headline).toContain('FDA');
   });
 
-  it('is honest that the platform never transmits to any authority', () => {
+  it('reports transmission capability honestly — true for markets with live gateways', () => {
     const advice = adviseGlobalMarketStrategy({
       profile: { isIvd: true, availableArtifacts: [] },
       candidateMarkets: ['us-fda', 'jp-pmda'],
     });
 
-    // Invariant: transmitCapableMarkets is always empty.
-    expect(advice.transmitCapableMarkets).toEqual([]);
-    // Every ranked market reports canTransmit === false.
-    expect(advice.rankedMarkets.every((m) => m.canTransmit === false)).toBe(true);
-    // A standing cross-market blocker about transmission is present.
-    expect(advice.blockers.some((b) => /cannot transmit/i.test(b))).toBe(true);
-    // Each market's per-market blockers carry the transmit blocker too.
+    // Both markets now have real gateways — transmitCapableMarkets is non-empty.
+    expect(advice.transmitCapableMarkets).toContain('us-fda');
+    expect(advice.transmitCapableMarkets).toContain('jp-pmda');
+    // Ranked markets report canTransmit from the registry.
+    expect(advice.rankedMarkets.every((m) => m.canTransmit === true)).toBe(true);
+    // No cannot-transmit blocker for gateway-capable markets.
     for (const m of advice.rankedMarkets) {
-      expect(m.blockers.some((b) => /cannot transmit/i.test(b))).toBe(true);
+      expect(m.blockers.every((b) => !/cannot transmit/i.test(b))).toBe(true);
     }
   });
 

@@ -17,6 +17,10 @@ import { Pool } from 'pg';
 import { ai } from '../../lib/unified-ai-client';
 import { getOpenAIClient } from '../openai-client';
 import crypto from 'crypto';
+import {
+  resolveToRegistryEntry,
+  getSubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 
 // Types
 export interface GuidanceDocument {
@@ -115,7 +119,7 @@ export class RegulatoryDeltaRadarService {
         'refuse to file',
       ],
       agencies: ['FDA', 'EMA', 'ICH', 'PMDA', 'Health Canada'],
-      submissionTypes: ['IND', 'NDA', 'BLA', '510k', 'PMA'],
+      submissionTypes: ['US_IND', 'US_NDA', 'US_BLA', 'US_510K', 'US_PMA'],
     };
   }
 
@@ -457,11 +461,16 @@ export class RegulatoryDeltaRadarService {
     if ('organizationId' in context || 'documentId' in context || 'scanScope' in context) {
       const orgId = context.organizationId || context.orgId;
       const programId = context.programId || (await this.resolveProgramId(orgId));
+      // Resolve submission type through the canonical bridge
+      const rawSubType = context.submissionType;
+      const resolvedSubType = rawSubType
+        ? (resolveToRegistryEntry(rawSubType)?.id ?? rawSubType)
+        : undefined;
       const scan = await this.runDeltaScanInternal(
         {
           programId: programId || '',
           orgId: orgId || '',
-          submissionType: context.submissionType,
+          submissionType: resolvedSubType,
           therapeuticArea: context.therapeuticArea,
         },
         config
@@ -477,6 +486,14 @@ export class RegulatoryDeltaRadarService {
     context: ScanContext,
     config?: Partial<DeltaRadarConfig>
   ): Promise<DeltaRadarScan> {
+    // Resolve submission type through the canonical bridge
+    if (context.submissionType) {
+      const entry = resolveToRegistryEntry(context.submissionType);
+      if (entry) {
+        context = { ...context, submissionType: entry.id };
+      }
+    }
+
     const scanConfig = { ...this.defaultConfig, ...config };
     const client = await this.pool.connect();
 

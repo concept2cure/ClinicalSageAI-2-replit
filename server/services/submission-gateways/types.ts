@@ -11,14 +11,52 @@
  * as a "gateway not configured" state.
  */
 
-export type Region = 'fda' | 'ema' | 'pmda' | 'ca';
+import {
+  resolveToRegistryEntry,
+  resolveToDeficiencyType,
+  getSubmissionTypeContext,
+  getSubmissionTypeLabel,
+  isKnownSubmissionType,
+  type SubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
+
+export {
+  resolveToRegistryEntry,
+  resolveToDeficiencyType,
+  getSubmissionTypeContext,
+  getSubmissionTypeLabel,
+  isKnownSubmissionType,
+  type SubmissionTypeContext,
+};
+
+export type Region =
+  | 'fda'   // US — FDA
+  | 'ema'   // EU — EMA / EUDAMED
+  | 'pmda'  // JP — PMDA
+  | 'ca'    // Canada — Health Canada
+  | 'uk'    // UK — MHRA
+  | 'cn'    // China — NMPA / CDE
+  | 'au'    // Australia — TGA
+  | 'ch'    // Switzerland — Swissmedic
+  | 'br'    // Brazil — ANVISA
+  | 'in'    // India — CDSCO / SUGAM
+  | 'kr'    // South Korea — MFDS / dBio
+  | 'sg';   // Singapore — HSA / PRISM
 
 export type GatewayName =
-  | 'esg'              // FDA Electronic Submissions Gateway (AS2 + SFTP)
-  | 'cesp'             // EMA Common European Submission Portal
-  | 'eudamed'          // EU EUDAMED (device registration + vigilance)
-  | 'pmda_gateway'     // PMDA Gateway secure file transfer
-  | 'hc_cesg';         // Health Canada Common Electronic Submissions Gateway
+  | 'esg'                   // FDA Electronic Submissions Gateway (AS2 + SFTP)
+  | 'cesp'                  // EMA Common European Submission Portal
+  | 'eudamed'               // EU EUDAMED (device registration + vigilance)
+  | 'pmda_gateway'          // PMDA Gateway secure file transfer
+  | 'hc_cesg'               // Health Canada Common Electronic Submissions Gateway
+  | 'mhra_gateway'          // MHRA Product Submissions REST API (post-Brexit)
+  | 'nmpa_gateway'          // NMPA / CDE electronic submission portal (China)
+  | 'tga_ebs'               // TGA eBusiness Services REST API (Australia)
+  | 'swissmedic_egateway'   // Swissmedic eGateway REST API (Switzerland)
+  | 'anvisa_gateway'        // ANVISA SOLICITA electronic submissions (Brazil)
+  | 'cdsco_sugam'           // CDSCO SUGAM portal REST API (India)
+  | 'mfds_dbio'             // MFDS dBio system REST + mTLS (South Korea)
+  | 'hsa_prism';            // HSA PRISM / MEDICS REST API (Singapore)
 
 export type SubmissionFormat =
   | 'ectd'             // ICH eCTD (all regions accept; backbone differs — incl. CA Module 1)

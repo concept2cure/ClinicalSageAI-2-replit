@@ -271,7 +271,7 @@ router.post('/cover-letter/pdf-from-records', limiter, requireRole(AUTHOR), asyn
       b.sponsorId ? getSponsor(String(b.sponsorId), ctx) : Promise.resolve(null),
       b.submissionId ? getSubmission(Number(b.submissionId), ctx) : Promise.resolve(null),
     ]);
-    const input = assembleCoverLetterContext({ sponsor, submission, overrides: b.overrides });
+    const { input } = assembleCoverLetterContext({ sponsor, submission, overrides: b.overrides });
     sendPdf(res, 'ind-cover-letter.pdf', await renderCoverLetterPdf(assembleCoverLetter(input)));
   } catch (err) {
     const code = (err as { code?: string } | null)?.code;

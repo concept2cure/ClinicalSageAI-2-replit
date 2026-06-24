@@ -10,6 +10,12 @@
  * Render it to an m1.2 leaf via renderCoverLetterPdf (ind-document-renderer).
  */
 
+import {
+  resolveToRegistryEntry,
+  getSubmissionTypeContext,
+  type SubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
+
 export type IndSubmissionType =
   | 'original'
   | 'protocol_amendment'
@@ -163,4 +169,29 @@ export function assembleCoverLetter(input: CoverLetterInput): CoverLetterModel {
     body,
     gaps,
   };
+}
+
+/**
+ * Resolve a top-level regulatory type string (e.g. 'IND', 'US_IND', 'ind')
+ * through the canonical submission-type bridge and return structured context.
+ *
+ * Useful for callers who need to confirm the regulatory scope or enrich the
+ * cover letter metadata (agency, region, display name) before generation.
+ * Returns null for unrecognized types.
+ */
+export function resolveRegulatoryContext(regulatoryType: string): SubmissionTypeContext | null {
+  return getSubmissionTypeContext(regulatoryType);
+}
+
+/**
+ * Validate that a regulatory type string resolves to an IND-family entry
+ * in the canonical registry. Returns the registry entry or null if the type
+ * is unrecognized or not IND-related.
+ */
+export function validateIndRegulatoryType(regulatoryType: string): { registryId: string; displayName: string } | null {
+  const entry = resolveToRegistryEntry(regulatoryType);
+  if (!entry) return null;
+  // Accept entries whose application family is clinical_trial (IND, CTA, CTN, etc.)
+  if (entry.applicationFamily !== 'clinical_trial') return null;
+  return { registryId: entry.id, displayName: entry.displayName };
 }

@@ -12,6 +12,14 @@ import { FdaEsgGateway } from './fda-esg';
 import { EmaCespGateway, EudamedGateway } from './ema-cesp';
 import { PmdaGateway } from './pmda-gateway';
 import { HealthCanadaGateway } from './health-canada-gateway';
+import { MhraGateway } from './mhra-gateway';
+import { NmpaGateway } from './nmpa-gateway';
+import { TgaEbsGateway } from './tga-ebs-gateway';
+import { SwissmedicEgatewayGateway } from './swissmedic-egateway';
+import { AnvisaGateway } from './anvisa-gateway';
+import { CdscoSugamGateway } from './cdsco-sugam-gateway';
+import { MfdsGateway } from './mfds-gateway';
+import { HsaPrismGateway } from './hsa-prism-gateway';
 import type { GatewayName, Region, SubmissionGateway } from './types';
 
 export * from './types';
@@ -20,11 +28,19 @@ export type { EctdLeaf, PackagerInput } from './regional-packager';
 export { readVerifiedBundle } from './bundle-integrity';
 
 const REGISTRY: Record<string, SubmissionGateway> = {
-  'fda:esg':           new FdaEsgGateway(),
-  'ema:cesp':          new EmaCespGateway(),
-  'ema:eudamed':       new EudamedGateway(),
-  'pmda:pmda_gateway': new PmdaGateway(),
-  'ca:hc_cesg':        new HealthCanadaGateway(),
+  'fda:esg':                       new FdaEsgGateway(),
+  'ema:cesp':                      new EmaCespGateway(),
+  'ema:eudamed':                   new EudamedGateway(),
+  'pmda:pmda_gateway':             new PmdaGateway(),
+  'ca:hc_cesg':                    new HealthCanadaGateway(),
+  'uk:mhra_gateway':               new MhraGateway(),
+  'cn:nmpa_gateway':               new NmpaGateway(),
+  'au:tga_ebs':                    new TgaEbsGateway(),
+  'ch:swissmedic_egateway':        new SwissmedicEgatewayGateway(),
+  'br:anvisa_gateway':             new AnvisaGateway(),
+  'in:cdsco_sugam':                new CdscoSugamGateway(),
+  'kr:mfds_dbio':                  new MfdsGateway(),
+  'sg:hsa_prism':                  new HsaPrismGateway(),
 };
 
 /** Resolve the gateway implementation for (region, gateway). */

@@ -29,6 +29,7 @@ import { pool } from '../../db';
 import { readVerifiedBundle } from './bundle-integrity';
 import {
   CredentialError, GatewayError, TransportError,
+  resolveToRegistryEntry, getSubmissionTypeLabel,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
 } from './types';
@@ -258,20 +259,28 @@ export class EmaCespGateway implements SubmissionGateway {
   }
 
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
-    const transmittalId = await createTransmittalRow(req, 'cesp', 'rest');
+    /* Resolve the caller-supplied submission type through the canonical bridge
+       so the transmittal row and CESP metadata use the canonical identifier.
+       Falls back to the raw string for unrecognized types. */
+    const resolvedEntry = req.submissionType ? resolveToRegistryEntry(req.submissionType) : null;
+    const normalizedReq: GatewayTransmitRequest = resolvedEntry
+      ? { ...req, submissionType: resolvedEntry.applicationType }
+      : req;
+
+    const transmittalId = await createTransmittalRow(normalizedReq, 'cesp', 'rest');
     try {
-      const creds = loadCespCredentials(req.environment);
+      const creds = loadCespCredentials(normalizedReq.environment);
       const token = await fetchCespToken(creds);
       await updateTransmittal(transmittalId, { status: 'in_transit' });
 
-      const zipBuf = await readVerifiedBundle(req.bundle);
+      const zipBuf = await readVerifiedBundle(normalizedReq.bundle);
       const metadata = {
         organisationId:    creds.organisationId,
-        productName:       req.metadata?.productName ?? null,
-        submissionType:    req.submissionType ?? 'initial',
-        procedureNumber:   req.metadata?.applicationId ?? null,
-        sequenceNumber:    req.metadata?.sequence ?? null,
-        sha256:            req.bundle.sha256,
+        productName:       normalizedReq.metadata?.productName ?? null,
+        submissionType:    normalizedReq.submissionType ?? 'initial',
+        procedureNumber:   normalizedReq.metadata?.applicationId ?? null,
+        sequenceNumber:    normalizedReq.metadata?.sequence ?? null,
+        sha256:            normalizedReq.bundle.sha256,
       };
 
       const { body, contentType } = buildMultipart(

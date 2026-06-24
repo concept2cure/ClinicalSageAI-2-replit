@@ -76,6 +76,7 @@ router.post('/draft', async (req: Request, res: Response) => {
   try {
     const {
       framework,
+      submissionType,
       sectionType,
       instructions,
       existingContent,
@@ -85,15 +86,17 @@ router.post('/draft', async (req: Request, res: Response) => {
       enableTools,
     } = req.body;
 
-    if (!framework || !sectionType || !instructions) {
+    // Either a hardcoded framework OR a registry submission type unlocks authoring.
+    if ((!framework && !submissionType) || !sectionType || !instructions) {
       return res.status(400).json({
-        error: 'Missing required fields: framework, sectionType, instructions',
+        error: 'Missing required fields: (framework or submissionType), sectionType, instructions',
       });
     }
 
     const service = getAnaDraftingService();
     const result = await service.draftDocument({
-      framework,
+      framework: framework ?? 'general_regulatory',
+      submissionType,
       sectionType,
       instructions,
       existingContent,
@@ -134,6 +137,7 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
   try {
     const {
       framework,
+      submissionType,
       sectionType,
       instructions,
       existingContent,
@@ -143,9 +147,9 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
       enableTools,
     } = req.body;
 
-    if (!framework || !sectionType || !instructions) {
+    if ((!framework && !submissionType) || !sectionType || !instructions) {
       return res.status(400).json({
-        error: 'Missing required fields: framework, sectionType, instructions',
+        error: 'Missing required fields: (framework or submissionType), sectionType, instructions',
       });
     }
 
@@ -160,7 +164,8 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
     const service = getAnaDraftingService();
 
     const result = await service.draftDocument({
-      framework,
+      framework: framework ?? 'general_regulatory',
+      submissionType,
       sectionType,
       instructions,
       existingContent,
@@ -220,16 +225,16 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
  */
 router.post('/review', async (req: Request, res: Response) => {
   try {
-    const { content, framework, enableThinking } = req.body;
+    const { content, framework, submissionType, enableThinking } = req.body;
 
-    if (!content || !framework) {
+    if (!content || (!framework && !submissionType)) {
       return res.status(400).json({
-        error: 'Missing required fields: content, framework',
+        error: 'Missing required fields: content, (framework or submissionType)',
       });
     }
 
     const service = getAnaDraftingService();
-    const result = await service.reviewCompliance(content, framework, {
+    const result = await service.reviewCompliance(content, submissionType ?? framework, {
       enableThinking: enableThinking ?? true,
       organizationId: (req as any).organizationId,
       userId: (req as any).userId,
@@ -260,18 +265,18 @@ router.post('/review', async (req: Request, res: Response) => {
  */
 router.post('/gap-analysis', async (req: Request, res: Response) => {
   try {
-    const { documentContent, framework, targetSections, enableThinking } = req.body;
+    const { documentContent, framework, submissionType, targetSections, enableThinking } = req.body;
 
-    if (!documentContent || !framework || !targetSections) {
+    if (!documentContent || (!framework && !submissionType) || !targetSections) {
       return res.status(400).json({
-        error: 'Missing required fields: documentContent, framework, targetSections',
+        error: 'Missing required fields: documentContent, (framework or submissionType), targetSections',
       });
     }
 
     const service = getAnaDraftingService();
     const result = await service.analyzeGaps(
       documentContent,
-      framework,
+      submissionType ?? framework,
       targetSections,
       {
         enableThinking: enableThinking ?? true,

@@ -9,7 +9,11 @@
  */
 
 import type { UserRole } from './persona.js';
-import type { SubmissionType } from './deficiency-taxonomy.js';
+import {
+  resolveToDeficiencyType,
+  getSubmissionTypeContext,
+  type DeficiencySubmissionType,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Role-Specific Response Templates
@@ -229,9 +233,17 @@ export const ROLE_TEMPLATES: Record<UserRole, RoleResponseTemplate> = {
  */
 export function buildRoleAdaptiveContext(
   role: UserRole,
-  submissionType: SubmissionType | null
+  submissionType: DeficiencySubmissionType | string | null
 ): string {
   const template = ROLE_TEMPLATES[role];
+
+  // Resolve submission type through the canonical bridge
+  const resolvedDeficiencyType: DeficiencySubmissionType | null = submissionType
+    ? resolveToDeficiencyType(submissionType)
+    : null;
+  const submissionContext = submissionType
+    ? getSubmissionTypeContext(submissionType)
+    : null;
 
   const lines: string[] = [
     `## ROLE-ADAPTIVE OUTPUT GUIDANCE`,
@@ -240,10 +252,26 @@ export function buildRoleAdaptiveContext(
     `**Lead with:** ${template.leadWith}`,
     `**Tone:** ${template.tone}`,
     '',
+  ];
+
+  // Inject submission-type context when available
+  if (submissionContext) {
+    lines.push(`**Submission Type:** ${submissionContext.displayName} (${submissionContext.registryId})`);
+    lines.push(`**Agency:** ${submissionContext.agency} — ${submissionContext.region}`);
+    if (submissionContext.segment) {
+      lines.push(`**Segment:** ${submissionContext.segment}`);
+    }
+    lines.push('');
+  } else if (resolvedDeficiencyType) {
+    lines.push(`**Submission Type:** ${resolvedDeficiencyType.toUpperCase()}`);
+    lines.push('');
+  }
+
+  lines.push(
     '**Emphasize:**',
     ...template.emphasize.map(e => `- ${e}`),
     '',
-  ];
+  );
 
   if (template.deemphasize.length > 0) {
     lines.push('**De-emphasize:**');

@@ -7,6 +7,10 @@
  * with renderPackageManifestPdf (ind-document-renderer).
  */
 
+import {
+  resolveToRegistryEntry,
+} from '../../../shared/regulatory/submission-type-bridge.js';
+
 export interface ManifestLeafLike {
   sectionCode: string;
   title: string;
@@ -88,10 +92,18 @@ export function buildPackageManifest(input: {
     leaves: (byModule.get(m) as ManifestLeaf[]).slice().sort((a, b) => (a.sectionCode < b.sectionCode ? -1 : a.sectionCode > b.sectionCode ? 1 : 0)),
   }));
 
+  // Normalize the submission type through the canonical bridge so that variant
+  // strings (e.g. 'IND', 'US_IND', 'ind') resolve to the same registry label.
+  // Falls back to the raw value for unrecognized or null types.
+  const rawSubType = input.submissionType ?? null;
+  const normalizedSubType = rawSubType
+    ? (resolveToRegistryEntry(rawSubType)?.displayName ?? rawSubType)
+    : null;
+
   return {
     sequenceNumber: input.sequenceNumber,
     applicationNumber: input.applicationNumber ?? null,
-    submissionType: input.submissionType ?? null,
+    submissionType: normalizedSubType,
     modules,
     totalLeaves: input.leaves.length,
     missingChecksums,

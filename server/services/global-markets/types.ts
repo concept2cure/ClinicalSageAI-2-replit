@@ -127,10 +127,16 @@ export interface MarketDescriptor {
   /** What the platform can assemble today, or why it cannot (honest note). */
   assembleNote: string;
   /**
-   * HONEST INVARIANT: false for EVERY market. The platform is descriptive +
-   * readiness logic only and has no transmission capability to any authority.
+   * Whether the platform can transmit to this market's regulatory gateway.
+   * True for all 12 markets that have a live submission gateway configured.
+   * False for markets without a wired gateway (TW, SA, ZA, MDSAP).
    */
   canTransmit: boolean;
+  /**
+   * The gateway Region key (from submission-gateways/types.ts) that maps this
+   * market to its transmission endpoint. Undefined for markets without a gateway.
+   */
+  gatewayRegion?: string;
   /** Citations / notes backing the descriptor's values. */
   citations: string[];
 }
