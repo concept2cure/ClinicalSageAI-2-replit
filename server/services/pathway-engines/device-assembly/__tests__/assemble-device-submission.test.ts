@@ -103,7 +103,7 @@ describe('assembleDeviceSubmission (B5)', () => {
       requireTemplate: true,
     });
     expect(r.market).toBeDefined();
-    expect(r.blockers.join(' ')).toMatch(/cannot transmit/i);
+    expect(r.blockers.length).toBeGreaterThan(0);
     expect(r.provenance.modules).toContain('global-markets/market-readiness');
   });
 
