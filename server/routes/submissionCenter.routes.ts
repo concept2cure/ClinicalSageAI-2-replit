@@ -567,7 +567,7 @@ function getInitialTasksForProject(submissionType: string) {
     ];
   }
 
-  if (category === 'post_approval_lifecycle' || category === 'post_market_safety') {
+  if (category === 'post_approval_lifecycle' || category === 'safety_pv') {
     return [
       { title: `${displayName} — Administrative Module`, description: 'Cover letter, application forms, and regulatory fees', module: 'eCTD', category: 'authoring', priority: 'high' },
       { title: 'Change Description and Rationale', description: 'Detailed description of proposed change with scientific justification', module: 'CMC', category: 'authoring', priority: 'critical' },

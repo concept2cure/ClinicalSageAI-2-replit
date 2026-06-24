@@ -16,7 +16,7 @@
 
 import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge.js';
 
-export type RegulatoryRegion = 'US' | 'EU' | 'JP' | 'CA' | 'CN' | 'KR';
+export type RegulatoryRegion = 'US' | 'EU' | 'JP' | 'CA' | 'CN' | 'KR' | 'UK' | 'AU' | 'CH' | 'BR' | 'IN' | 'SG';
 export type RegionalSeverity = 'error' | 'warning' | 'info';
 
 export interface RegionalRule {
@@ -316,6 +316,12 @@ const REGIONAL_BACKBONE: Record<RegulatoryRegion, string> = {
   CA: 'm1/ca/ca-regional.xml',
   CN: 'm1/cn/cn-regional.xml',
   KR: 'm1/kr/kr-regional.xml',
+  UK: 'm1/uk/uk-regional.xml',
+  AU: 'm1/au/au-regional.xml',
+  CH: 'm1/ch/ch-regional.xml',
+  BR: 'm1/br/br-regional.xml',
+  IN: 'm1/in/in-regional.xml',
+  SG: 'm1/sg/sg-regional.xml',
 };
 
 /**
@@ -627,5 +633,7 @@ export function getGatewaySizeLimit(region: RegulatoryRegion): number {
     case 'CA': return FDA_GATEWAY_LIMIT_BYTES;
     case 'CN': return NMPA_LIMIT_BYTES;
     case 'KR': return MFDS_LIMIT_BYTES;
+    // ICH-aligned agencies: conservative 1 GB default pending published specs
+    default: return PMDA_LIMIT_BYTES;
   }
 }

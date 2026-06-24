@@ -6216,9 +6216,10 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
   }
-  const region = typeof input.region === 'string' ? input.region : '';
-  if (!['fda', 'ema', 'pmda', 'ca'].includes(region)) {
-    return JSON.stringify({ error: 'region must be fda / ema / pmda / ca.' });
+  const region = typeof input.region === 'string' ? input.region.toLowerCase() : '';
+  const VALID_REGIONS = ['fda', 'ema', 'pmda', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'];
+  if (!VALID_REGIONS.includes(region)) {
+    return JSON.stringify({ error: `region must be one of: ${VALID_REGIONS.join(' / ')}.` });
   }
   const leaves = Array.isArray(input.leaves) ? (input.leaves as Array<Record<string, unknown>>) : [];
   if (leaves.length === 0) {
@@ -6232,7 +6233,7 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
         ? input.output_dir
         : path.resolve(process.cwd(), 'tmp', 'submissions', String(ctx.organizationId));
     const bundle = await packageEctdSubmission({
-      region: region as 'fda' | 'ema' | 'pmda' | 'ca',
+      region: region as any,
       applicationId: String(input.application_id),
       sequence:      String(input.sequence),
       submissionType: String(input.submission_type),
@@ -6268,17 +6269,21 @@ registerToolHandler('transmit_submission', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'transmit_submission requires tenant context.' });
   }
-  const region  = typeof input.region === 'string' ? input.region : '';
-  const gateway = typeof input.gateway === 'string' ? input.gateway : '';
-  if (!['fda', 'ema', 'pmda', 'ca'].includes(region)) {
-    return JSON.stringify({ error: 'region must be fda / ema / pmda / ca.' });
+  const region  = typeof input.region === 'string' ? input.region.toLowerCase() : '';
+  const gateway = typeof input.gateway === 'string' ? input.gateway.toLowerCase() : '';
+  const VALID_REGIONS_TX = ['fda', 'ema', 'pmda', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'];
+  const VALID_GATEWAYS   = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg',
+                             'mhra_gateway', 'nmpa_gateway', 'tga_ebs', 'swissmedic_egateway',
+                             'anvisa_gateway', 'cdsco_sugam', 'mfds_dbio', 'hsa_prism'];
+  if (!VALID_REGIONS_TX.includes(region)) {
+    return JSON.stringify({ error: `region must be one of: ${VALID_REGIONS_TX.join(' / ')}.` });
   }
-  if (!['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'].includes(gateway)) {
-    return JSON.stringify({ error: 'gateway must be esg / cesp / eudamed / pmda_gateway / hc_cesg.' });
+  if (!VALID_GATEWAYS.includes(gateway)) {
+    return JSON.stringify({ error: `gateway must be one of: ${VALID_GATEWAYS.join(' / ')}.` });
   }
   try {
     const { getGateway, CredentialError, GatewayError, TransportError } = await import('../submission-gateways/index.js');
-    const gw = getGateway(region as 'fda' | 'ema' | 'pmda' | 'ca', gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway' | 'hc_cesg');
+    const gw = getGateway(region as any, gateway as any);
     const environment = input.environment === 'staging' ? 'staging' : 'production';
     const result = await gw.transmit({
       organizationId: ctx.organizationId,
@@ -6337,7 +6342,7 @@ registerToolHandler('check_submission_status', async (input, ctx) => {
       return JSON.stringify({ error: `Transmittal ${id} not found in this organization.` });
     }
     const { getGateway } = await import('../submission-gateways/index.js');
-    const gw = getGateway(own.rows[0].region as 'fda' | 'ema' | 'pmda' | 'ca', own.rows[0].gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway' | 'hc_cesg');
+    const gw = getGateway(own.rows[0].region as any, own.rows[0].gateway as any);
     const result = await gw.checkStatus(id);
     return JSON.stringify({ ok: true, ...result });
   } catch (err) {
@@ -6365,7 +6370,7 @@ registerToolHandler('get_submission_ack', async (input, ctx) => {
       return JSON.stringify({ error: `Transmittal ${id} not found in this organization.` });
     }
     const { getGateway } = await import('../submission-gateways/index.js');
-    const gw = getGateway(own.rows[0].region as 'fda' | 'ema' | 'pmda' | 'ca', own.rows[0].gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway' | 'hc_cesg');
+    const gw = getGateway(own.rows[0].region as any, own.rows[0].gateway as any);
     const ack = await gw.downloadAcknowledgment(id);
     return JSON.stringify({
       ok: true,

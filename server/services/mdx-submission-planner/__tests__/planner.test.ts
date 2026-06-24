@@ -204,15 +204,21 @@ describe('planGlobalSubmission — readiness reflects availableArtifacts', () =>
 });
 
 describe('planGlobalSubmission — honest capability flags & blockers', () => {
-  it('reports a cannot-transmit blocker for EVERY planned market', () => {
+  it('reports canTransmit matching the registry and cannot-transmit blocker only for gateway-less markets', () => {
     const plan = planGlobalSubmission(emptyProfile(), [...MARKET_IDS]);
     expect(plan.marketPlans).toHaveLength(MARKET_IDS.length);
-    for (const mp of plan.marketPlans) {
-      expect(mp.canTransmit).toBe(false);
-      const hasTransmitBlocker = mp.blockers.some((b) =>
-        b.includes('cannot transmit'),
-      );
+    const transmitCapable = plan.marketPlans.filter((mp) => mp.canTransmit);
+    const transmitIncapable = plan.marketPlans.filter((mp) => !mp.canTransmit);
+    // 12 markets have live gateways; 4 (TW/SA/ZA/MDSAP) do not.
+    expect(transmitCapable.length).toBe(12);
+    expect(transmitIncapable.length).toBe(4);
+    for (const mp of transmitIncapable) {
+      const hasTransmitBlocker = mp.blockers.some((b) => b.includes('cannot transmit'));
       expect(hasTransmitBlocker).toBe(true);
+    }
+    for (const mp of transmitCapable) {
+      const hasTransmitBlocker = mp.blockers.some((b) => b.includes('cannot transmit'));
+      expect(hasTransmitBlocker).toBe(false);
     }
   });
 

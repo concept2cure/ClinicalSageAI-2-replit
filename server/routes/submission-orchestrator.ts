@@ -339,6 +339,9 @@ router.post('/validate/hardened', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
   }
   const { leaves, backboneXml, ...context } = parsed.data;
+  if (context.region === 'GLOBAL') {
+    return res.status(400).json({ error: 'invalid_request', message: 'GLOBAL is not a valid target region for eCTD validation; specify a concrete regulatory region.' });
+  }
   try {
     const result = await validateEctdPackageHardened(leaves, context, backboneXml);
     return res.json({

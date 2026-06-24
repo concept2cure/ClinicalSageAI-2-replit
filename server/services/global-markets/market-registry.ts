@@ -9,7 +9,8 @@
  * descriptor per market that spans BOTH devices and IVDs with honest platform
  * capability flags. This registry is that single comparable view.
  *
- * HONEST BY CONSTRUCTION: `canTransmit` is false for every market; `canAssemble`
+ * HONEST BY CONSTRUCTION: `canTransmit` is true for the 12 markets that have a live
+ * gateway; false for TW/SA/ZA and the cross-market MDSAP entry. `canAssemble`
  * is true only where the platform already produces the artifact (eCTD backbone,
  * FDA eSTAR mapper, EU CE technical documentation / CER packager).
  *
@@ -69,7 +70,8 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: true,
     assembleNote:
       'Platform assembles FDA eSTAR (device 510(k)/De Novo) and eCTD (drug-led) packages; this descriptor is assembly-aware.',
-    canTransmit: false,
+    canTransmit: true,
+    gatewayRegion: 'fda',
     citations: [
       '21 CFR 807 (510(k)); 21 CFR 814 (PMA); 21 CFR 860 (classification)',
       'FDA eSTAR program & guidance "Electronic Submission Template for Medical Device 510(k)"',
@@ -114,7 +116,8 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: true,
     assembleNote:
       'Platform assembles EU MDR/IVDR technical documentation and CER/PER packages (technical-file packager); this descriptor is assembly-aware.',
-    canTransmit: false,
+    canTransmit: true,
+    gatewayRegion: 'ema',
     citations: [
       'Regulation (EU) 2017/745 (MDR) Annex I/II/III',
       'Regulation (EU) 2017/746 (IVDR) Annex I/II/III',
@@ -158,7 +161,8 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: true,
     assembleNote:
       'Platform reuses the EU CE technical-documentation/CER assembler for the UKCA file; UK Module 1 + registration layered separately.',
-    canTransmit: false,
+    canTransmit: true,
+    gatewayRegion: 'uk',
     citations: [
       'UK Medical Devices Regulations 2002 (as amended); MHRA guidance',
       'MHRA roadmap / PMS Regulations 2024; Windsor Framework',
@@ -200,7 +204,8 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No PMDA STED assembler in the platform; descriptive + readiness only.',
-    canTransmit: false,
+    canTransmit: true,
+    gatewayRegion: 'pmda',
     citations: [
       'Pharmaceuticals and Medical Devices Act (PMD Act)',
       'MHLW Ordinance No. 169 (QMS, ISO 13485-aligned); MDSAP acceptance in Japan',
@@ -242,7 +247,8 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No NMPA dossier assembler; in-country type testing/clinical data are out of platform scope. Descriptive + readiness only.',
-    canTransmit: false,
+    canTransmit: true,
+    gatewayRegion: 'cn',
     citations: [
       'RSAMD (State Council Decree No. 739)',
       'Measures for the Administration of Medical Device Registration; GB/YY standards',
@@ -283,7 +289,8 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No Health Canada MDL/IMDRF-ToC assembler; descriptive + readiness only. MDSAP certificate is a prerequisite.',
-    canTransmit: false,
+    canTransmit: true,
+    gatewayRegion: 'ca',
     citations: [
       'Medical Devices Regulations (SOR/98-282)',
       'Health Canada IMDRF ToC acceptance; mandatory MDSAP for Class II–IV',
@@ -324,7 +331,8 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No TGA ARTG assembler; conformity-assessment evidence reused from EU/MDSAP work. Descriptive + readiness only.',
-    canTransmit: false,
+    canTransmit: true,
+    gatewayRegion: 'au',
     citations: [
       'Therapeutic Goods Act 1989 + IVD framework (2010)',
       'TGA IVD classification (GHTF-aligned); ARTG inclusion requirements',
@@ -365,7 +373,8 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No ANVISA Cadastro/Registro assembler; descriptive + readiness only. MDSAP leveraged for B-GMP.',
-    canTransmit: false,
+    canTransmit: true,
+    gatewayRegion: 'br',
     citations: [
       'ANVISA RDC resolutions (IVD classification/registration)',
       'RDC 665/2022 (B-GMP); MDSAP participation (Brazil)',
@@ -407,7 +416,8 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No MFDS dossier assembler; descriptive + readiness only.',
-    canTransmit: false,
+    canTransmit: true,
+    gatewayRegion: 'kr',
     citations: [
       'Korea In Vitro Diagnostic Medical Devices Act; MFDS guidance',
       'KGMP certification; IMDRF alignment',
@@ -450,7 +460,8 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: true,
     assembleNote:
       'Platform reuses the EU CE technical-documentation/CER assembler (EU-equivalent file); CH-REP + registration layered separately.',
-    canTransmit: false,
+    canTransmit: true,
+    gatewayRegion: 'ch',
     citations: [
       'Swiss Ordinance on IVD Medical Devices (IvDO) / MepV; Swissmedic guidance',
       'Lapsed EU-Swiss MRA (third-country status; CH-REP required)',
@@ -492,7 +503,8 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'No CDSCO MD-14/MD-15 assembler; descriptive + readiness only.',
-    canTransmit: false,
+    canTransmit: true,
+    gatewayRegion: 'in',
     citations: [
       'India Medical Devices Rules 2017; CDSCO guidance',
       'Form MD-14/MD-15 import process; DMF/PMF requirements',
@@ -569,7 +581,8 @@ export const MARKET_DESCRIPTORS: Record<MarketId, MarketDescriptor> = {
     canAssemble: false,
     assembleNote:
       'Platform does not assemble the HSA CSDT/IMDRF ToC submission; descriptor is advisory + readiness only.',
-    canTransmit: false,
+    canTransmit: true,
+    gatewayRegion: 'sg',
     citations: [
       'Health Products Act (Medical Devices) and HSA GN-15/GN-16 guidance',
       'ASEAN CSDT; IMDRF Table of Contents',
@@ -746,7 +759,7 @@ export interface MarketRegistrySummary {
   total: number;
   byRegion: Record<MarketDescriptor['region'], number>;
   assembleCapable: MarketId[];
-  /** Always empty — honest invariant that nothing transmits. */
+  /** Markets with a live gateway (canTransmit: true). */
   transmitCapable: MarketId[];
 }
 

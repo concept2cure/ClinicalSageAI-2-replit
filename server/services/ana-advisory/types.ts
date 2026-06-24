@@ -11,8 +11,8 @@
  * HONEST BY CONSTRUCTION:
  *   - No LLM calls, no fabrication. Every finding is derived from the registries /
  *     readiness scorers above.
- *   - Transmission is NEVER claimed: the global market registry's invariant
- *     (`canTransmit === false` everywhere) is carried straight through.
+ *   - `canTransmit` is carried from the registry — true for 12 markets with a
+ *     live gateway, false for TW/SA/ZA/MDSAP.
  *   - When a submission is not producible, the advisory says so and why.
  *
  * PURE + DETERMINISTIC: static composition + pure shaping. No DB, no network.
@@ -145,7 +145,7 @@ export interface RankedMarketAdvice {
   complete: boolean;
   /** HONEST: whether the platform can assemble a dossier for this market. */
   canAssemble: boolean;
-  /** HONEST INVARIANT: always false — the platform never transmits. */
+  /** Whether this market has a live submission gateway. */
   canTransmit: boolean;
   /** Whether a local in-country representative is required. */
   localRepresentativeRequired: boolean;
