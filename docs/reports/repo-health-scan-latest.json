@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-24T19:29:35.487Z",
+  "generatedAt": "2026-06-24T22:43:22.981Z",
   "git": {
-    "sha": "831d696db45b10b7d367f76409b3ff61bbfa8e81",
+    "sha": "373d29632bc7c0c1b8e9122d7f2b3ececd43a313",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2209,7 +2209,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 569741
+        "bytes": 569954
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2267,7 +2267,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 11627
+        "lines": 11632
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2378,16 +2378,16 @@
         "lines": 1816
       },
       {
+        "file": "server/services/precedent-engine.ts",
+        "lines": 1798
+      },
+      {
         "file": "design-system/ui_kits/home/Projects.jsx",
         "lines": 1796
       },
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1785
-      },
-      {
-        "file": "server/services/precedent-engine.ts",
-        "lines": 1763
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
