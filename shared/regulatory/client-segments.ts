@@ -19,6 +19,12 @@
  */
 
 import type { ProductClass, ApplicationFamily } from './document-taxonomy.js';
+import {
+  standardDesignation,
+  getStandard,
+  type StandardId,
+  type StandardEntry,
+} from './standards-registry.js';
 
 // ─── Axes of variance (orthogonal; a program is a point in this space) ───────
 
@@ -67,11 +73,16 @@ export interface ClientSegment {
   lifecycleModel: LifecycleModel;
   /** Default dossier standard for the segment. */
   dossierStandard: 'eCTD' | 'eSTAR';
-  /** The standards corpus in force for the segment. */
+  /** The standards corpus in force for the segment, by registry id (source of truth). */
+  standardIds: StandardId[];
+  /** The standards corpus as cited designations — DERIVED from standardIds. */
   standards: string[];
 }
 
-export const CLIENT_SEGMENTS: Record<ClientSegmentId, ClientSegment> = {
+/** Segments without the derived `standards` field; standards come from standardIds. */
+type RawSegment = Omit<ClientSegment, 'standards'>;
+
+const RAW_SEGMENTS: Record<ClientSegmentId, RawSegment> = {
   device: {
     id: 'device',
     label: 'Medical Device',
@@ -83,7 +94,7 @@ export const CLIENT_SEGMENTS: Record<ClientSegmentId, ClientSegment> = {
     riskModel: 'iso14971',
     lifecycleModel: 'modifications_lettertofile',
     dossierStandard: 'eSTAR',
-    standards: ['ISO 13485', 'ISO 14971', 'IEC 62304', 'IEC 62366-1', 'FD&C §524B', '21 CFR 820 / QMSR'],
+    standardIds: ['iso_13485', 'iso_14971', 'iec_62304', 'iec_62366_1', 'fdc_524b', 'cfr_820_qmsr'],
   },
   ivd: {
     id: 'ivd',
@@ -96,7 +107,7 @@ export const CLIENT_SEGMENTS: Record<ClientSegmentId, ClientSegment> = {
     riskModel: 'iso14971',
     lifecycleModel: 'performance_monitoring',
     dossierStandard: 'eSTAR',
-    standards: ['ISO 13485', 'CLSI EP05/EP06/EP07/EP17', 'ISO 14971', '42 CFR 493 (CLIA)'],
+    standardIds: ['iso_13485', 'clsi_ep_suite', 'iso_14971', 'cfr_493_clia'],
   },
   biotech: {
     id: 'biotech',
@@ -109,7 +120,7 @@ export const CLIENT_SEGMENTS: Record<ClientSegmentId, ClientSegment> = {
     riskModel: 'nonclinical_pv',
     lifecycleModel: 'supplements_variations',
     dossierStandard: 'eCTD',
-    standards: ['ICH Q5A–Q5E', 'ICH E (efficacy)', 'ICH S6', 'PHS Act §351'],
+    standardIds: ['ich_q5', 'ich_e_efficacy', 'ich_s6', 'phs_351'],
   },
   pharma: {
     id: 'pharma',
@@ -122,9 +133,17 @@ export const CLIENT_SEGMENTS: Record<ClientSegmentId, ClientSegment> = {
     riskModel: 'nonclinical_pv',
     lifecycleModel: 'supplements_variations',
     dossierStandard: 'eCTD',
-    standards: ['ICH Q1–Q12', 'ICH E (efficacy)', 'ICH M3(R2) / S-series', '21 CFR 314'],
+    standardIds: ['ich_q_chemistry', 'ich_e_efficacy', 'ich_m3_s', 'cfr_314'],
   },
 };
+
+/** The four segments, with `standards` derived from the registry (single source of truth). */
+export const CLIENT_SEGMENTS: Record<ClientSegmentId, ClientSegment> = Object.fromEntries(
+  Object.entries(RAW_SEGMENTS).map(([id, seg]) => [
+    id,
+    { ...seg, standards: seg.standardIds.map(standardDesignation) },
+  ]),
+) as Record<ClientSegmentId, ClientSegment>;
 
 /** The segment a product class belongs to, or undefined for cross-cutting classes ('any'). */
 export function segmentForProductClass(pc: ProductClass): ClientSegmentId | undefined {
@@ -145,6 +164,11 @@ export function segmentForProductClasses(classes: ProductClass[]): ClientSegment
 
 export function getSegment(id: ClientSegmentId): ClientSegment {
   return CLIENT_SEGMENTS[id];
+}
+
+/** The full registry entries for a segment's standards corpus (versioned, grounded). */
+export function standardsForSegment(id: ClientSegmentId): StandardEntry[] {
+  return CLIENT_SEGMENTS[id].standardIds.map(getStandard);
 }
 
 /**
@@ -174,4 +198,4 @@ export function resolveEvidenceModel(
   return CLIENT_SEGMENTS[segment].defaultEvidenceModel;
 }
 
-export default { CLIENT_SEGMENTS, getSegment, segmentForProductClass, segmentForProductClasses, resolveEvidenceModel };
+export default { CLIENT_SEGMENTS, getSegment, standardsForSegment, segmentForProductClass, segmentForProductClasses, resolveEvidenceModel };
