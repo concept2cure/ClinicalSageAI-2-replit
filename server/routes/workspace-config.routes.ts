@@ -16,6 +16,11 @@
  *      enriched with the region + client-type overlays; clientType defaults to
  *      the org's industryMode, region to the selected type's own region)
  *
+ * GET /api/workspace/project-map?need=BLA[&clientType=biotech][&region=US]
+ *   → { data: ProjectMap }         (the project MAP + capability INVENTORY: the
+ *      ordered milestones for the selection and, per app/service, the phase[s]
+ *      at which it is needed — what project setup suggests to the client)
+ *
  * @module server/routes/workspace-config
  */
 
@@ -26,6 +31,7 @@ import {
   buildSelectionCatalog,
   resolveWorkspaceConfig,
 } from '../../shared/regulatory/workspace-config';
+import { resolveProjectMap } from '../../shared/regulatory/project-map';
 import { enrichWorkspaceConfig } from '../services/regulatory/workspace-config-enrichment';
 
 const router = Router();
@@ -82,6 +88,33 @@ router.get('/config', async (req: Request, res: Response) => {
     // Fail-open: enrichment must never 500. Fall back to the pure config.
     return res.json({ data: resolveWorkspaceConfig(need) });
   }
+});
+
+// The project map + capability inventory for a selected need. Pure projection
+// (no enrichment, no tenant data): the milestones and the "what's needed, when"
+// inventory that the setup wizard surfaces to suggest capabilities to the client.
+// clientType defaults to the org's industryMode; both accept a query override.
+router.get('/project-map', (req: Request, res: Response) => {
+  if (!requireTenant(req, res)) return;
+
+  const need = typeof req.query.need === 'string' ? req.query.need.trim() : '';
+  if (!need) {
+    return res.status(400).json({ error: 'Query parameter "need" is required' });
+  }
+
+  const clientTypeOverride =
+    typeof req.query.clientType === 'string' ? req.query.clientType.trim() : undefined;
+  const regionOverride =
+    typeof req.query.region === 'string' ? req.query.region.trim() : undefined;
+
+  const orgIndustry =
+    (req as any).user?.industryMode ?? (req as any).tenantContext?.industryMode ?? undefined;
+  const clientType =
+    clientTypeOverride ?? (typeof orgIndustry === 'string' ? orgIndustry : undefined);
+
+  return res.json({
+    data: resolveProjectMap({ need, clientType, region: regionOverride }),
+  });
 });
 
 export default router;

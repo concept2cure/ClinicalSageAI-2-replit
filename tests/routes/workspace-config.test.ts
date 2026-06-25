@@ -150,3 +150,45 @@ describe('GET /api/workspace/config — region + client-type axes', () => {
     expect(clientType.vertical).toBe('biopharma');
   });
 });
+
+describe('GET /api/workspace/project-map', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns the ordered project map + capability inventory for a known need', async () => {
+    const req = createMockRequest({}) as any;
+    req.user = { organizationId: 2 };
+    req.query = { need: 'BLA' };
+    const res = createMockResponse() as any;
+
+    await getHandler('get', '/project-map')(req, res);
+
+    const { data } = res.json.mock.calls[0][0];
+    expect(data.known).toBe(true);
+    expect(data.scope).toBe('dossier');
+    // the full program arc, in order
+    expect(data.milestones.map((m: any) => m.phase)).toEqual([
+      'strategy', 'quality', 'nonclinical', 'clinical',
+      'authoring', 'assembly', 'submission', 'review', 'post_market',
+    ]);
+    // the inventory says when each ability is first needed
+    const cmc = data.inventory.apps.find((a: any) => a.id === 'cmc');
+    expect(cmc.firstNeededPhase).toBe('quality');
+  });
+
+  it('rejects when the need query parameter is missing (400)', async () => {
+    const req = createMockRequest({}) as any;
+    req.user = { organizationId: 2 };
+    req.query = {};
+    const res = createMockResponse() as any;
+    await getHandler('get', '/project-map')(req, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it('rejects when tenant context is missing (403)', async () => {
+    const req = createMockRequest({}) as any;
+    req.query = { need: 'BLA' };
+    const res = createMockResponse() as any;
+    await getHandler('get', '/project-map')(req, res);
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+});
