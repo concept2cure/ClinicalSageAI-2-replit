@@ -64,6 +64,11 @@ import type {
 } from './document-taxonomy.js';
 import { getRegionProfile } from './region-profiles.js';
 import { getClientTypeProfile } from './client-type-profiles.js';
+import {
+  APP_REGISTRY,
+  type AppRegistryEntry,
+  type WorkspaceAppId,
+} from './app-registry.js';
 
 // ─── Workspace vocabulary ────────────────────────────────────────────────────
 
@@ -92,39 +97,12 @@ export type WorkspaceVocabulary = 'drug' | 'device' | 'ivd' | 'quality' | 'gener
 export const WORKSPACE_SHELL = ['file_tree', 'editor', 'co_author'] as const;
 export type WorkspaceShellZone = (typeof WORKSPACE_SHELL)[number];
 
-/**
- * Full discipline workspaces a client opens from inside the project. Each is its
- * own surface (not a panel on the editor), shared across every document type,
- * and produces an artifact that flows back into the project's file tree.
- */
-export type WorkspaceAppId =
-  | 'study_protocol_design' // protocol, schedule-of-activities, CRF shells, feasibility
-  | 'irb'                   // IRB / ethics — human-subjects governance
-  | 'iacuc'                 // IACUC — animal-care governance
-  | 'ibc'                   // IBC — biosafety governance
-  | 'submission_center' // assemble + transmit (dossier scope only)
-  | 'cmc'               // CMC / Module 3 quality workbench
-  | 'nonclinical'       // Module 4 nonclinical
-  | 'biostatistics'     // SAP, power, group-sequential, endpoint defensibility
-  | 'clinical_csr'      // Module 5 / clinical study report authoring
-  | 'risk'              // ISO 14971 risk management
-  | 'human_factors'     // IEC 62366-1
-  | 'cybersecurity'     // FDA §524B
-  | 'substantial_equiv' // 510(k) predicate / SE
-  | 'labeling'          // labeling / SPL / artwork
-  | 'pharmacovigilance' // PV / ICSR / safety
-  | 'cer'               // EU MDR/IVDR clinical evaluation report / performance eval
-  | 'etmf'              // electronic Trial Master File
-  | 'market_access';    // coverage / reimbursement (CPT/HCPCS, payer dossier)
+// The app id + discipline types and the catalog data live in the canonical
+// app-registry (single source of truth, shared with license entitlements).
+export type { WorkspaceAppId, AppDiscipline } from './app-registry.js';
 
-export interface WorkspaceApp {
-  id: WorkspaceAppId;
-  label: string;
-  /** Artifact keys this app produces back into the project file tree. */
-  produces: string[];
-  /** Where those artifacts land in the dossier tree (CTD-ish hint). */
-  landsAt: string;
-}
+/** A discipline app as surfaced in the workspace — its full registry entry. */
+export type WorkspaceApp = AppRegistryEntry;
 
 /** Cross-cutting capabilities available on any artifact (not full apps). */
 export type WorkspaceCapability = 'validator' | 'esignature' | 'audit_trail';
@@ -239,6 +217,10 @@ export interface WorkspaceClientTypeConfig {
   defaultNeed: string;
   // ── server enrichment overlay (optional) ──
   entitlement?: { tier: string; enabledModules: string[] };
+  /** Apps the org's license permits (subset of config.apps). Set by enrichment. */
+  accessibleApps?: WorkspaceAppId[];
+  /** Apps gated behind a module the org hasn't enabled, with the module needed. */
+  lockedApps?: { id: WorkspaceAppId; requiredModule: string }[];
 }
 
 /**
@@ -249,31 +231,10 @@ export type WorkspaceConfigInput =
   | string
   | { need: string; clientType?: string; region?: string };
 
-// ─── App catalog (the full discipline workspaces) ────────────────────────────
-
-const APP_CATALOG: Record<WorkspaceAppId, Omit<WorkspaceApp, 'id'>> = {
-  study_protocol_design: { label: 'Study & Protocol Design', produces: ['protocol', 'schedule_of_activities', 'crf_shells', 'feasibility'], landsAt: 'protocol / M5 (5.3.5)' },
-  irb:               { label: 'IRB / Ethics (human subjects)', produces: ['irb_submission', 'informed_consent'], landsAt: 'study governance' },
-  iacuc:             { label: 'IACUC (animal care)', produces: ['iacuc_protocol'], landsAt: 'nonclinical governance' },
-  ibc:               { label: 'IBC (biosafety)', produces: ['ibc_registration'], landsAt: 'study governance' },
-  submission_center: { label: 'Submission Center', produces: ['assembled_bundle', 'transmittal'], landsAt: 'gateway / transmit' },
-  cmc:               { label: 'CMC (Module 3)', produces: ['quality_overall_summary', 'drug_substance', 'drug_product', 'stability'], landsAt: 'M3' },
-  nonclinical:       { label: 'Nonclinical (Module 4)', produces: ['nonclinical_overview', 'tox_reports'], landsAt: 'M4' },
-  biostatistics:     { label: 'Biostatistics', produces: ['sap', 'power_analysis', 'statistical_methods'], landsAt: 'protocol / M5 (5.3.5)' },
-  clinical_csr:      { label: 'Clinical / CSR', produces: ['clinical_study_report', 'clinical_overview', 'clinical_summary'], landsAt: 'M5 / M2.5 / M2.7' },
-  risk:              { label: 'Risk Management (ISO 14971)', produces: ['risk_management_file'], landsAt: 'GSPR / design controls' },
-  human_factors:     { label: 'Human Factors (IEC 62366-1)', produces: ['hf_validation_report'], landsAt: 'device performance' },
-  cybersecurity:     { label: 'Cybersecurity (§524B)', produces: ['sbom', 'cyber_risk_assessment'], landsAt: 'device performance' },
-  substantial_equiv: { label: 'Substantial Equivalence', produces: ['se_comparison', 'predicate_analysis'], landsAt: '510(k) SE' },
-  labeling:          { label: 'Labeling', produces: ['draft_labeling', 'spl', 'ifu'], landsAt: 'M1 / labeling' },
-  pharmacovigilance: { label: 'Pharmacovigilance', produces: ['icsr', 'psur'], landsAt: 'safety / M5.3.6' },
-  cer:               { label: 'Clinical Evaluation (CER/PER)', produces: ['clinical_evaluation_report', 'pmcf_plan'], landsAt: 'EU MDR Annex II / IVDR PER' },
-  etmf:              { label: 'Trial Master File (eTMF)', produces: ['tmf_index', 'essential_documents'], landsAt: 'study governance' },
-  market_access:     { label: 'Market Access & Coverage', produces: ['coverage_dossier', 'hcpcs_cpt_strategy'], landsAt: 'commercial / post-approval' },
-};
+// ─── App catalog (resolved from the canonical app-registry) ──────────────────
 
 function app(id: WorkspaceAppId): WorkspaceApp {
-  return { id, ...APP_CATALOG[id] };
+  return { ...APP_REGISTRY[id] };
 }
 
 // ─── Service catalog (AnA toolset + inline authoring helpers) ─────────────────
