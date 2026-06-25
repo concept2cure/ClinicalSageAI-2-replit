@@ -9,17 +9,34 @@
  * different rows in the registry; each yields a different `WorkspaceConfig`,
  * and the same shell renders it.
  *
- * Two tiers compose a project:
+ * Boundary definitions (the load-bearing distinction):
  *
- *   1. THE SHELL  — fixed three zones: file tree + editor (center) and the AnA
+ *   • SERVICE — a capability that feeds AnA and is available INLINE as the client
+ *     authors. No standalone workspace; it goes *into* the document (predicate /
+ *     precedent intelligence, CDISC validation, regulatory-intelligence readiness,
+ *     knowledge-base lookup, literature/evidence search). Services are AnA's
+ *     toolset and the author's inline helpers.
+ *
+ *   • APP — a robust, standalone solution that has its OWN significant workspace
+ *     and ALSO feeds artifacts into the document (Study & Protocol Design,
+ *     Biostatistics, CMC, IRB/IACUC/IBC, Submission Center). An app is a service
+ *     that grew a full surface of its own.
+ *
+ *   • Everything — apps and services alike — is SELECTED FROM WITHIN THE PROJECT.
+ *
+ * Three tiers compose a project:
+ *
+ *   1. THE SHELL    — fixed three zones: file tree + editor (center) and the AnA
  *      co-author panel (right). Always present; the document type only changes
  *      what the tree contains, what schema the editor enforces, and AnA's context.
  *
- *   2. THE APPS   — full, dedicated discipline workspaces (Biostatistics, CMC,
- *      Risk, Submission Center, …) that a client opens FROM INSIDE the project.
- *      Each is its own surface, SHARED across every document type (per-discipline,
- *      never per-type), inherits the project's context, and produces an artifact
- *      that flows back into the project's file tree.
+ *   2. THE APPS     — full, dedicated discipline workspaces opened FROM INSIDE the
+ *      project. Each is its own surface, SHARED across every document type
+ *      (per-discipline, never per-type), inherits the project's context, and
+ *      produces an artifact that flows back into the project's file tree.
+ *
+ *   3. THE SERVICES — capabilities AnA draws on and the author invokes inline.
+ *      No surface of their own; they enrich the document being built.
  *
  * This module is the projection:  registry entry → WorkspaceConfig (shell + apps).
  *
@@ -164,6 +181,9 @@ export interface WorkspaceConfig {
   /** Full discipline apps the client can open from inside this project. */
   apps: WorkspaceApp[];
 
+  /** Services AnA draws on and the author invokes inline (no standalone surface). */
+  services: WorkspaceService[];
+
   /** Cross-cutting capabilities available on any artifact here. */
   capabilities: WorkspaceCapability[];
 
@@ -196,6 +216,51 @@ const APP_CATALOG: Record<WorkspaceAppId, Omit<WorkspaceApp, 'id'>> = {
 
 function app(id: WorkspaceAppId): WorkspaceApp {
   return { id, ...APP_CATALOG[id] };
+}
+
+// ─── Service catalog (AnA toolset + inline authoring helpers) ─────────────────
+
+/**
+ * Services are capabilities with NO standalone workspace — they feed AnA and are
+ * invoked inline while the client authors. Each maps to a real backend service
+ * domain. The selected document type decides which are in scope.
+ */
+export type WorkspaceServiceId =
+  | 'knowledge_base'             // ICH / pathways / standards / deficiencies lookup
+  | 'regulatory_intelligence'   // CRL/RTF prediction, blended readiness scoring
+  | 'cross_artifact_intelligence' // consistency across the dossier
+  | 'readiness_assessment'      // per-domain readiness verdicts
+  | 'precedent_intelligence'    // precedent mining / predicate intelligence
+  | 'literature_search'         // PubMed / scientific literature
+  | 'evidence_search'           // evidence fabric / sufficiency
+  | 'cdisc_validation'          // SDTM / ADaM conformance
+  | 'statistical_defensibility' // endpoint / power sanity (thin; not the biostat app)
+  | 'substantial_equivalence_check' // predicate comparison analysis (device/IVD)
+  | 'external_intelligence';    // agency feeds / review-timeline signals
+
+export interface WorkspaceService {
+  id: WorkspaceServiceId;
+  label: string;
+  /** Where the capability shows up. */
+  feeds: 'ana' | 'inline' | 'both';
+}
+
+const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> = {
+  knowledge_base:               { label: 'Knowledge base (ICH / standards / deficiencies)', feeds: 'both' },
+  regulatory_intelligence:      { label: 'Regulatory intelligence (CRL/RTF, readiness)', feeds: 'both' },
+  cross_artifact_intelligence:  { label: 'Cross-artifact consistency', feeds: 'ana' },
+  readiness_assessment:         { label: 'Readiness assessment', feeds: 'both' },
+  precedent_intelligence:       { label: 'Precedent / predicate intelligence', feeds: 'both' },
+  literature_search:            { label: 'Literature search', feeds: 'inline' },
+  evidence_search:              { label: 'Evidence search / sufficiency', feeds: 'both' },
+  cdisc_validation:             { label: 'CDISC validation (SDTM / ADaM)', feeds: 'inline' },
+  statistical_defensibility:    { label: 'Statistical defensibility check', feeds: 'ana' },
+  substantial_equivalence_check:{ label: 'Substantial-equivalence check', feeds: 'both' },
+  external_intelligence:        { label: 'External agency intelligence', feeds: 'ana' },
+};
+
+function svc(id: WorkspaceServiceId): WorkspaceService {
+  return { id, ...SERVICE_CATALOG[id] };
 }
 
 // ─── Supplementary (non-filing) document catalog ─────────────────────────────
@@ -361,6 +426,51 @@ function appsFor(opts: {
   return [...ids].map(app);
 }
 
+/** Decide which inline/AnA services are in scope for this selection. */
+function servicesFor(opts: {
+  scope: WorkspaceScope;
+  vocabulary: WorkspaceVocabulary;
+  family: ApplicationFamily | null;
+  ctdModule: string | null;
+  productClasses: ProductClass[];
+  isRegulatory: boolean;
+}): WorkspaceService[] {
+  const { scope, vocabulary, family, ctdModule, productClasses, isRegulatory } = opts;
+  const ids = new Set<WorkspaceServiceId>(['knowledge_base', 'cross_artifact_intelligence']);
+
+  // Non-regulatory docs (SOP/WI) get authoring aids only — no agency intelligence.
+  if (!isRegulatory) {
+    return [...ids].map(svc);
+  }
+
+  ids.add('regulatory_intelligence');
+  ids.add('readiness_assessment');
+
+  const mod = (ctdModule ?? '').toUpperCase();
+  const spansAll = scope === 'dossier';
+  const isDeviceOrIvd =
+    vocabulary === 'device' || vocabulary === 'ivd' ||
+    productClasses.includes('medical_device') || productClasses.includes('ivd');
+  const isClinical = spansAll || mod.includes('M5') || family === 'clinical_document' || family === 'clinical_trial';
+
+  if (isClinical) {
+    ids.add('literature_search');
+    ids.add('evidence_search');
+    ids.add('cdisc_validation');
+    ids.add('statistical_defensibility');
+    ids.add('precedent_intelligence');
+  }
+  if (isDeviceOrIvd) {
+    ids.add('precedent_intelligence'); // predicate intelligence
+    ids.add('evidence_search');
+    if (family === 'device_clearance' || scope === 'dossier') ids.add('substantial_equivalence_check');
+  }
+  // Transmittable dossiers get agency review-timeline signals.
+  if (scope === 'dossier') ids.add('external_intelligence');
+
+  return [...ids].map(svc);
+}
+
 function personaFor(vocabulary: WorkspaceVocabulary): string {
   switch (vocabulary) {
     case 'device': return 'Device regulatory strategist (FDA CDRH / EU MDR)';
@@ -396,6 +506,7 @@ export function resolveWorkspaceConfig(need: string): WorkspaceConfig {
     const vocabulary = vocabularyFor(entry.productClass ?? [], entry.segment);
     const ctdModule = entry.ctdModule ?? null;
     const apps = appsFor({ scope, vocabulary, family, ctdModule, productClasses: entry.productClass ?? [] });
+    const services = servicesFor({ scope, vocabulary, family, ctdModule, productClasses: entry.productClass ?? [], isRegulatory: true });
 
     const gateway =
       scope === 'dossier' && entry.region && GATEWAY_REGION_BY_TAXONOMY_REGION[entry.region]
@@ -433,6 +544,7 @@ export function resolveWorkspaceConfig(need: string): WorkspaceConfig {
           `${entry.displayName} (${entry.agency ?? 'agency'})`,
       },
       apps,
+      services,
       capabilities: BASE_CAPABILITIES,
       gateway,
       lifecycleActions: entry.lifecycleActions ?? [],
@@ -444,6 +556,7 @@ export function resolveWorkspaceConfig(need: string): WorkspaceConfig {
   if (supp) {
     const scope = scopeFor(supp.family);
     const apps = appsFor({ scope, vocabulary: supp.vocabulary, family: supp.family, ctdModule: null, productClasses: [] });
+    const services = servicesFor({ scope, vocabulary: supp.vocabulary, family: supp.family, ctdModule: null, productClasses: [], isRegulatory: false });
     return {
       need: key,
       known: true,
@@ -455,6 +568,7 @@ export function resolveWorkspaceConfig(need: string): WorkspaceConfig {
       editor: { validationProfile: supp.validationProfile, dossierStandard: 'none', requiredArtifacts: supp.requiredArtifacts },
       coAuthor: { persona: supp.persona, context: supp.context },
       apps,
+      services,
       capabilities: BASE_CAPABILITIES,
       gateway: null,
       lifecycleActions: ['draft', 'review', 'approve', 'effective', 'revise'],
@@ -473,6 +587,7 @@ export function resolveWorkspaceConfig(need: string): WorkspaceConfig {
     editor: { validationProfile: 'generic_document', dossierStandard: 'none', requiredArtifacts: [] },
     coAuthor: { persona: 'Regulatory co-author', context: 'Unrecognized document type — author freely; no profile applied.' },
     apps: [],
+    services: [svc('knowledge_base')],
     capabilities: ['esignature', 'audit_trail'],
     gateway: null,
     lifecycleActions: ['draft', 'review', 'approve'],
