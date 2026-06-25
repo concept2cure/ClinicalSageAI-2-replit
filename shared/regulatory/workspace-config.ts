@@ -62,6 +62,8 @@ import type {
   ProductClass,
   Region,
 } from './document-taxonomy.js';
+import { getRegionProfile } from './region-profiles.js';
+import { getClientTypeProfile } from './client-type-profiles.js';
 
 // ─── Workspace vocabulary ────────────────────────────────────────────────────
 
@@ -196,7 +198,56 @@ export interface WorkspaceConfig {
 
   /** Lifecycle actions available (submit / amend / supplement / withdraw …). */
   lifecycleActions: string[];
+
+  /**
+   * REGION overlay — present only when a region is supplied to the resolver.
+   * Core fields (language, dossierStandard, gatewayUrl) are pure; the rest are
+   * filled by the server enrichment service (M1 backbone, component checklist,
+   * gateway size limit, translation mandate).
+   */
+  region?: WorkspaceRegionConfig;
+
+  /**
+   * CLIENT-TYPE (vertical) overlay — present only when a clientType/industry is
+   * supplied. Core fields (vertical, persona emphasis, terminology, default
+   * approval path, default need) are pure; `entitlement` is filled by the
+   * server enrichment service from the org license.
+   */
+  clientType?: WorkspaceClientTypeConfig;
 }
+
+/** Region overlay block. Core fields pure; optional fields = server enrichment. */
+export interface WorkspaceRegionConfig {
+  code: string;
+  language: string;
+  dossierStandard: string;
+  gatewayUrl?: string;
+  // ── server enrichment overlay (optional) ──
+  m1BackbonePath?: string;
+  requiredModule1Components?: string[];
+  gatewaySizeLimitBytes?: number;
+  translationMandate?: string;
+}
+
+/** Client-type (vertical) overlay. Core fields pure; `entitlement` = enrichment. */
+export interface WorkspaceClientTypeConfig {
+  industry: string;
+  vertical: string;
+  personaEmphasis: string;
+  terminology: Record<string, string>;
+  defaultApprovalPath: string;
+  defaultNeed: string;
+  // ── server enrichment overlay (optional) ──
+  entitlement?: { tier: string; enabledModules: string[] };
+}
+
+/**
+ * Resolver input. A bare string keeps the original document-type-only behavior
+ * byte-for-byte; the object form adds the optional clientType + region axes.
+ */
+export type WorkspaceConfigInput =
+  | string
+  | { need: string; clientType?: string; region?: string };
 
 // ─── App catalog (the full discipline workspaces) ────────────────────────────
 
@@ -510,7 +561,7 @@ const BASE_CAPABILITIES: WorkspaceCapability[] = ['validator', 'esignature', 'au
  *   2. The supplementary non-filing catalog (SOP, work instruction, …).
  *   3. An honest unknown fallback (a blank single-document workspace).
  */
-export function resolveWorkspaceConfig(need: string): WorkspaceConfig {
+function resolveBaseConfig(need: string): WorkspaceConfig {
   const key = (need ?? '').trim();
 
   // 1) Filing registry (the 158-type canonical source).
@@ -608,6 +659,56 @@ export function resolveWorkspaceConfig(need: string): WorkspaceConfig {
     gateway: null,
     lifecycleActions: ['draft', 'review', 'approve'],
   };
+}
+
+/** Pure core of the region overlay (language, dossier standard, gateway URL). */
+function buildRegionCore(region: string): WorkspaceRegionConfig | undefined {
+  const p = getRegionProfile(region);
+  if (!p) return undefined;
+  return {
+    code: p.region,
+    language: p.language,
+    dossierStandard: p.dossierStandard,
+    gatewayUrl: p.submissionGateway,
+  };
+}
+
+/** Pure core of the client-type overlay (vertical preset). */
+function buildClientTypeCore(industry: string): WorkspaceClientTypeConfig | undefined {
+  const p = getClientTypeProfile(industry);
+  if (!p) return undefined;
+  return {
+    industry: p.industry,
+    vertical: p.vertical,
+    personaEmphasis: p.personaEmphasis,
+    terminology: p.terminology,
+    defaultApprovalPath: p.defaultApprovalPath,
+    defaultNeed: p.defaultNeed,
+  };
+}
+
+/**
+ * Resolve the workspace configuration for a selection.
+ *
+ * - String form: `resolveWorkspaceConfig('NDA')` — document-type only, byte-for-
+ *   byte identical to the original behavior (no region/clientType blocks).
+ * - Object form: `resolveWorkspaceConfig({ need, clientType?, region? })` — adds
+ *   the pure CORE of the region and/or client-type overlays when supplied. The
+ *   server enrichment layer fills the remaining (server-only) overlay fields.
+ */
+export function resolveWorkspaceConfig(input: WorkspaceConfigInput): WorkspaceConfig {
+  if (typeof input === 'string') return resolveBaseConfig(input);
+
+  const base = resolveBaseConfig(input.need);
+  if (input.clientType) {
+    const ct = buildClientTypeCore(input.clientType);
+    if (ct) base.clientType = ct;
+  }
+  if (input.region) {
+    const rg = buildRegionCore(input.region);
+    if (rg) base.region = rg;
+  }
+  return base;
 }
 
 // ─── The "select your need" catalog ──────────────────────────────────────────

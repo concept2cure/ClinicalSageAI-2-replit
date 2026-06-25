@@ -77,3 +77,61 @@ describe('GET /api/workspace/config', () => {
     expect(res.status).toHaveBeenCalledWith(403);
   });
 });
+
+describe('GET /api/workspace/config — region + client-type axes', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('defaults the region overlay to the selected type’s own region', async () => {
+    const req = createMockRequest({}) as any;
+    req.user = { organizationId: 2 };
+    req.query = { need: 'NDA' }; // US_NDA → US
+    const res = createMockResponse() as any;
+
+    await getHandler('get', '/config')(req, res);
+
+    const { region } = res.json.mock.calls[0][0].data;
+    expect(region.code).toBe('US');
+    expect(region.m1BackbonePath).toBe('m1/us/us-regional.xml');
+    expect(region.requiredModule1Components).toContain('us_356h');
+    expect(region.gatewaySizeLimitBytes).toBeGreaterThan(0);
+  });
+
+  it('applies a region override with translation mandate (JP)', async () => {
+    const req = createMockRequest({}) as any;
+    req.user = { organizationId: 2 };
+    req.query = { need: 'NDA', region: 'JP' };
+    const res = createMockResponse() as any;
+
+    await getHandler('get', '/config')(req, res);
+
+    const { region } = res.json.mock.calls[0][0].data;
+    expect(region.code).toBe('JP');
+    expect(region.language).toBe('ja');
+    expect(region.translationMandate).toMatch(/Japanese/);
+  });
+
+  it('presets the client-type overlay from the org industryMode', async () => {
+    const req = createMockRequest({}) as any;
+    req.user = { organizationId: 2, industryMode: 'medtech' };
+    req.query = { need: 'NDA' };
+    const res = createMockResponse() as any;
+
+    await getHandler('get', '/config')(req, res);
+
+    const { clientType } = res.json.mock.calls[0][0].data;
+    expect(clientType.vertical).toBe('mdx');
+    expect(clientType.defaultNeed).toBe('US_510K');
+  });
+
+  it('lets an explicit clientType override beat the org industryMode', async () => {
+    const req = createMockRequest({}) as any;
+    req.user = { organizationId: 2, industryMode: 'medtech' };
+    req.query = { need: 'NDA', clientType: 'pharma' };
+    const res = createMockResponse() as any;
+
+    await getHandler('get', '/config')(req, res);
+
+    const { clientType } = res.json.mock.calls[0][0].data;
+    expect(clientType.vertical).toBe('biopharma');
+  });
+});

@@ -11,8 +11,10 @@
  * GET /api/workspace/selection-catalog
  *   → { data: SelectionGroup[] }   (the unified "select your need" picker)
  *
- * GET /api/workspace/config?need=NDA
- *   → { data: WorkspaceConfig }    (the shell + apps tailored to the selection)
+ * GET /api/workspace/config?need=NDA[&clientType=pharma][&region=EU]
+ *   → { data: WorkspaceConfig }    (the shell + apps tailored to the selection,
+ *      enriched with the region + client-type overlays; clientType defaults to
+ *      the org's industryMode, region to the selected type's own region)
  *
  * @module server/routes/workspace-config
  */
@@ -24,6 +26,7 @@ import {
   buildSelectionCatalog,
   resolveWorkspaceConfig,
 } from '../../shared/regulatory/workspace-config';
+import { enrichWorkspaceConfig } from '../services/regulatory/workspace-config-enrichment';
 
 const router = Router();
 router.use(authMiddleware);
@@ -44,7 +47,10 @@ router.get('/selection-catalog', (req: Request, res: Response) => {
 });
 
 // The tailored workspace for a selected need (submission type, document, or QMS doc).
-router.get('/config', (req: Request, res: Response) => {
+// Enriched across all three axes: document type (need), client type (industry),
+// and region. clientType defaults to the org's industryMode; region to the
+// selected type's own region. Both accept an explicit query override.
+router.get('/config', async (req: Request, res: Response) => {
   if (!requireTenant(req, res)) return;
 
   const need = typeof req.query.need === 'string' ? req.query.need.trim() : '';
@@ -52,7 +58,30 @@ router.get('/config', (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Query parameter "need" is required' });
   }
 
-  return res.json({ data: resolveWorkspaceConfig(need) });
+  const clientTypeOverride =
+    typeof req.query.clientType === 'string' ? req.query.clientType.trim() : undefined;
+  const regionOverride =
+    typeof req.query.region === 'string' ? req.query.region.trim() : undefined;
+
+  // Industry comes from the authenticated tenant context unless overridden.
+  const orgIndustry =
+    (req as any).user?.industryMode ?? (req as any).tenantContext?.industryMode ?? undefined;
+  const clientType =
+    clientTypeOverride ?? (typeof orgIndustry === 'string' ? orgIndustry : undefined);
+  const organizationId = authedOrgId(req) ?? undefined;
+
+  try {
+    const data = await enrichWorkspaceConfig({
+      need,
+      clientType,
+      region: regionOverride,
+      organizationId: organizationId ?? undefined,
+    });
+    return res.json({ data });
+  } catch {
+    // Fail-open: enrichment must never 500. Fall back to the pure config.
+    return res.json({ data: resolveWorkspaceConfig(need) });
+  }
 });
 
 export default router;
