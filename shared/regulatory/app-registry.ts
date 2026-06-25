@@ -40,7 +40,9 @@ export type WorkspaceAppId =
   | 'pharmacovigilance'     // PV / ICSR / safety
   | 'cer'                   // EU MDR/IVDR clinical evaluation report / performance eval
   | 'etmf'                  // electronic Trial Master File
-  | 'market_access';        // coverage / reimbursement (CPT/HCPCS, payer dossier)
+  | 'market_access'         // coverage / reimbursement (CPT/HCPCS, payer dossier)
+  | 'analytical_performance' // IVD analytical validation (precision, LoD/LoQ, linearity, interference — CLSI EP)
+  | 'analytical_similarity'; // biosimilar / generic comparability (analytical similarity / bioequivalence)
 
 /** The discipline an app belongs to — the organizing axis for apps. */
 export type AppDiscipline =
@@ -51,6 +53,7 @@ export type AppDiscipline =
   | 'clinical'
   | 'biostatistics'
   | 'device_safety'
+  | 'diagnostics'
   | 'labeling'
   | 'safety_pv'
   | 'commercial';
@@ -91,6 +94,8 @@ export const APP_REGISTRY: Record<WorkspaceAppId, AppRegistryEntry> = {
   cer:               { id: 'cer', label: 'Clinical Evaluation (CER/PER)', discipline: 'clinical', moduleId: 'cer-generator', produces: ['clinical_evaluation_report', 'pmcf_plan'], landsAt: 'EU MDR Annex II / IVDR PER' },
   etmf:              { id: 'etmf', label: 'Trial Master File (eTMF)', discipline: 'governance', produces: ['tmf_index', 'essential_documents'], landsAt: 'study governance' },
   market_access:     { id: 'market_access', label: 'Market Access & Coverage', discipline: 'commercial', produces: ['coverage_dossier', 'hcpcs_cpt_strategy'], landsAt: 'commercial / post-approval' },
+  analytical_performance: { id: 'analytical_performance', label: 'Analytical Performance (IVD)', discipline: 'diagnostics', produces: ['precision', 'lod_loq', 'linearity', 'interference', 'analytical_performance_report'], landsAt: 'IVD analytical performance' },
+  analytical_similarity:  { id: 'analytical_similarity', label: 'Analytical Similarity (biosimilar/generic)', discipline: 'quality_cmc', produces: ['similarity_assessment', 'tier_analysis', 'bioequivalence'], landsAt: 'M3.2 / comparability' },
 };
 
 /** The registry entry for an app id. */

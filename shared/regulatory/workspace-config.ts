@@ -432,6 +432,16 @@ function appsFor(opts: {
     }
   }
 
+  // IVD performance: analytical performance is the core IVD evidence (CLSI EP).
+  if (vocabulary === 'ivd' || productClasses.includes('ivd')) {
+    ids.add('analytical_performance');
+  }
+
+  // Biosimilar / generic: the program rests on analytical similarity / bioequivalence.
+  if (productClasses.includes('biosimilar') || productClasses.includes('generic')) {
+    ids.add('analytical_similarity');
+  }
+
   // Safety / PV.
   if (family === 'safety_report') ids.add('pharmacovigilance');
 
