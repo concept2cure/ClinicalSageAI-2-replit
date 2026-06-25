@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { resolveValidationProfile } from '../../shared/regulatory/validation-profile';
+import { resolveWorkspaceConfig } from '../../shared/regulatory/workspace-config';
 
 describe('validation-profile — grounded in (segment, evidence model)', () => {
   it('NDA → pharma-clinical_efficacy with the efficacy/quality claims', () => {
@@ -41,5 +42,20 @@ describe('validation-profile — grounded in (segment, evidence model)', () => {
     expect(p.grounded).toBe(false);
     expect(p.profileId).toBe('generic-document');
     expect(p.requiredClaims).toHaveLength(0);
+  });
+});
+
+describe('grounding fixes surfaced by the client×project matrix', () => {
+  it('EU MAA / CTA are now segment-grounded (were on the decorative profile)', () => {
+    const maa = resolveValidationProfile('EU_MAA');
+    expect(maa.grounded).toBe(true);
+    expect(maa.profileId).toBe('pharma-clinical_efficacy');
+    expect(resolveValidationProfile('EU_CTA').grounded).toBe(true);
+  });
+
+  it('analytical_similarity surfaces only for exclusively generic/biosimilar filings', () => {
+    // NDA/BLA "cover" biosimilar in their product-class list but are not sameness.
+    expect(resolveWorkspaceConfig('NDA').apps.map((a) => a.id)).not.toContain('analytical_similarity');
+    expect(resolveWorkspaceConfig('ANDA').apps.map((a) => a.id)).toContain('analytical_similarity');
   });
 });

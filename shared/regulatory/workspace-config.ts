@@ -465,7 +465,13 @@ function appsFor(opts: {
   }
 
   // Biosimilar / generic: the program rests on analytical similarity / bioequivalence.
-  if (productClasses.includes('biosimilar') || productClasses.includes('generic')) {
+  // Use the EXCLUSIVE test (matching resolveEvidenceModel) so innovator entries
+  // like NDA/BLA/IND — whose product-class list merely *covers* biosimilar — do
+  // not wrongly surface the similarity app.
+  const samenessOnly =
+    productClasses.length > 0 &&
+    productClasses.every((p) => p === 'generic' || p === 'biosimilar');
+  if (samenessOnly) {
     ids.add('analytical_similarity');
   }
 
