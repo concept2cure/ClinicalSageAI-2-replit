@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-24T22:43:22.981Z",
+  "generatedAt": "2026-06-25T02:28:08.014Z",
   "git": {
-    "sha": "373d29632bc7c0c1b8e9122d7f2b3ececd43a313",
-    "branch": "concept2cure-v2"
+    "sha": "aaa5b3f8cfae04815103c42ab67eca3794d93a6e",
+    "branch": "claude/build-remaining-gaps"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -2435,7 +2435,14 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

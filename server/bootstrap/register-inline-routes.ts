@@ -192,7 +192,7 @@ export async function registerInlineLitCommerceRoutes({
     { path: '/api/report-os', mod: '../routes/report-os.js', name: 'Report OS' },
     { path: '/api/device-cockpit', mod: '../routes/device-cockpit.js', name: 'Device Cockpit' },
     { path: '/api/global-markets', mod: '../routes/global-markets.js', name: 'Global Markets' },
-    { path: '/api/workspace', mod: '../routes/workspace-config.js', name: 'Workspace Config' },
+    { path: '/api/workspace', mod: '../routes/workspace-config.routes.js', name: 'Workspace Config' },
     { path: '/api/insights', mod: '../routes/report-os-insights.js', name: 'Insights' },
   ] as const;
   const litIntResults = await Promise.allSettled(litIntConfig.map(c => import(c.mod)));

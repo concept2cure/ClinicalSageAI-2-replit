@@ -5,7 +5,7 @@ vi.mock('../../server/auth', () => ({
   authMiddleware: (_req: any, _res: any, next: any) => next(),
 }));
 
-import workspaceRoutes from '../../server/routes/workspace-config';
+import workspaceRoutes from '../../server/routes/workspace-config.routes';
 
 function getHandler(method: 'get' | 'post', path: string) {
   const layer = (workspaceRoutes as any).stack.find(
