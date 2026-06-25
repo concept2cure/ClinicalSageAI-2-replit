@@ -26,6 +26,7 @@ import {
   type RegulatoryMarket,
 } from '../global-ri/regional-module1-requirements';
 import { getLicenseInfo } from '../license-manager';
+import { appModuleId } from '../../../shared/regulatory/app-registry';
 
 /** Taxonomy region (uppercase) → the agency-keyed market used by M1 requirements. */
 const REGION_TO_MARKET: Partial<Record<string, RegulatoryMarket>> = {
@@ -108,12 +109,26 @@ export async function enrichWorkspaceConfig(
     }
   }
 
-  // ── CLIENT-TYPE enrichment overlay (license entitlement) ──
+  // ── CLIENT-TYPE enrichment overlay (license entitlement + app gating) ──
   if (config.clientType && input.organizationId != null) {
     try {
       const lic = await getLicenseInfo(input.organizationId);
       if (lic) {
         config.clientType.entitlement = { tier: lic.tier, enabledModules: lic.enabledModules };
+
+        // App-level gating falls straight out of the unified app-registry: an app
+        // is locked iff it maps to a module the org has not enabled. Apps with no
+        // moduleId are always accessible.
+        const enabled = new Set(lic.enabledModules);
+        const accessible: typeof config.clientType.accessibleApps = [];
+        const locked: typeof config.clientType.lockedApps = [];
+        for (const a of config.apps) {
+          const mod = appModuleId(a.id);
+          if (mod && !enabled.has(mod)) locked.push({ id: a.id, requiredModule: mod });
+          else accessible.push(a.id);
+        }
+        config.clientType.accessibleApps = accessible;
+        config.clientType.lockedApps = locked;
       }
     } catch {
       /* entitlement is best-effort — never block the config on it */
