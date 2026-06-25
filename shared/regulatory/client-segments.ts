@@ -160,9 +160,14 @@ export function resolveEvidenceModel(
   family: ApplicationFamily | null | undefined,
   productClasses: ProductClass[],
 ): EvidenceModel {
-  if (productClasses.includes('biosimilar') || productClasses.includes('generic')) {
-    return 'sameness';
-  }
+  // Sameness only when the filing is EXCLUSIVELY a generic/biosimilar pathway
+  // (ANDA ['generic'], 351(k) ['biosimilar']). Innovator entries like BLA or IND
+  // that merely *cover* biosimilar among many product classes are not sameness.
+  const samenessOnly =
+    productClasses.length > 0 &&
+    productClasses.every((p) => p === 'generic' || p === 'biosimilar');
+  if (samenessOnly) return 'sameness';
+
   if (segment === 'device' && family === 'device_approval') {
     return 'clinical_efficacy'; // PMA rests on valid scientific (clinical) evidence
   }
