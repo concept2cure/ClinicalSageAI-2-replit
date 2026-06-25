@@ -359,6 +359,10 @@ const DOSSIER_FAMILIES: ReadonlySet<ApplicationFamily> = new Set<ApplicationFami
   'device_approval',
   'device_clearance',
   'clinical_trial',
+  // A companion-diagnostic PMA / 510(k) is a full IVD marketing dossier, reviewed
+  // concurrently with the paired therapeutic. It assembles + transmits like any
+  // dossier (submission center + agency gateway + the IVD discipline app set).
+  'companion_diagnostic',
 ]);
 
 const CHANGE_FAMILIES: ReadonlySet<ApplicationFamily> = new Set<ApplicationFamily>([
@@ -371,8 +375,13 @@ const RECORD_FAMILIES: ReadonlySet<ApplicationFamily> = new Set<ApplicationFamil
   'safety_report',
 ]);
 
-function scopeFor(family: ApplicationFamily | null): WorkspaceScope {
+function scopeFor(family: ApplicationFamily | null, stage?: string | null): WorkspaceScope {
   if (!family) return 'document';
+  // A pre-submission interaction (meeting request, co-development agreement,
+  // scientific advice) authors a single document even when it shares a dossier
+  // family — e.g. a CDx co-development agreement is companion_diagnostic but is
+  // not itself the marketing dossier.
+  if (stage === 'pre_submission') return 'document';
   if (family === 'post_market') return 'registration'; // labeling/registration-status family
   if (RECORD_FAMILIES.has(family)) return 'record';
   if (DOSSIER_FAMILIES.has(family) || CHANGE_FAMILIES.has(family)) return 'dossier';
@@ -562,7 +571,7 @@ function resolveBaseConfig(need: string): WorkspaceConfig {
   if (entry) {
     const ctx: SubmissionTypeContext | null = getSubmissionTypeContext(entry.id);
     const family = entry.applicationFamily ?? null;
-    const scope = scopeFor(family);
+    const scope = scopeFor(family, entry.stage ?? null);
     const vocabulary = vocabularyFor(entry.productClass ?? [], entry.segment);
     const ctdModule = entry.ctdModule ?? null;
     const apps = appsFor({ scope, vocabulary, family, ctdModule, productClasses: entry.productClass ?? [] });
@@ -777,7 +786,7 @@ export function buildSelectionCatalog(): SelectionGroup[] {
 
   // Filing registry (158 canonical types).
   for (const e of getAllActiveSubmissionTypes()) {
-    const scope = scopeFor(e.applicationFamily ?? null);
+    const scope = scopeFor(e.applicationFamily ?? null, e.stage ?? null);
     const option: SelectionOption = {
       value: e.id,
       label: e.displayName,
