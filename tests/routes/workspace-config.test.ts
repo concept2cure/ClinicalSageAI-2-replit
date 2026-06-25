@@ -76,6 +76,21 @@ describe('GET /api/workspace/config', () => {
     await getHandler('get', '/config')(req, res);
     expect(res.status).toHaveBeenCalledWith(403);
   });
+
+  it('grounds the workspace in the program model (segment, evidence, claims)', async () => {
+    const req = createMockRequest({}) as any;
+    req.user = { organizationId: 2 };
+    req.query = { need: 'NDA' };
+    const res = createMockResponse() as any;
+
+    await getHandler('get', '/config')(req, res);
+
+    const { program } = res.json.mock.calls[0][0].data;
+    expect(program.segment).toBe('pharma');
+    expect(program.evidenceModel).toBe('clinical_efficacy');
+    expect(program.validationProfile).toBe('pharma-clinical_efficacy');
+    expect(program.requiredClaims.map((c: any) => c.id)).toContain('efficacy');
+  });
 });
 
 describe('GET /api/workspace/config — region + client-type axes', () => {

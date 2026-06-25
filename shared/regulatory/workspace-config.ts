@@ -65,6 +65,8 @@ import type {
 import { getRegionProfile } from './region-profiles.js';
 import { getClientTypeProfile } from './client-type-profiles.js';
 import { toGatewaySlug } from './region-identity.js';
+import { resolveProgramModel } from './program-model.js';
+import { resolveValidationProfile } from './validation-profile.js';
 import {
   APP_REGISTRY,
   type AppRegistryEntry,
@@ -193,6 +195,31 @@ export interface WorkspaceConfig {
    * server enrichment service from the org license.
    */
   clientType?: WorkspaceClientTypeConfig;
+
+  /**
+   * PROGRAM overlay — the grounded program model (segment, evidence model, the
+   * claim spine being argued, the grounded validation profile). Present for
+   * product filings; absent for non-product selections (SOP, ICH modules).
+   * This is what makes the workspace scaffold the *program*, not just the dossier.
+   */
+  program?: WorkspaceProgram;
+}
+
+/** The grounded program a filing builds — segment + evidence + claim spine. */
+export interface WorkspaceProgram {
+  segment: string;
+  evidenceModel: string | null;
+  /** Grounded validation profile id (`<segment>-<evidenceModel>`). */
+  validationProfile: string;
+  /** Standards corpus in force for the segment (ICH/ISO/CLSI/CFR). */
+  standards: string[];
+  /** Claims that must be supported for a complete, defensible argument. */
+  requiredClaims: {
+    id: string;
+    label: string;
+    supportedByApps: WorkspaceAppId[];
+    projectsTo: string[];
+  }[];
 }
 
 /** Region overlay block. Core fields pure; optional fields = server enrichment. */
@@ -544,6 +571,26 @@ function resolveBaseConfig(need: string): WorkspaceConfig {
     const gwSlug = scope === 'dossier' && entry.region ? toGatewaySlug(entry.region) : undefined;
     const gateway = gwSlug ? { region: gwSlug } : null;
 
+    // Ground the workspace in the program model: segment, evidence model, the
+    // claim spine being argued, and the grounded validation profile. Present
+    // only when the filing resolves to a concrete product segment.
+    const programModel = resolveProgramModel(key);
+    const program: WorkspaceProgram | undefined =
+      programModel.segment && programModel.axes
+        ? {
+            segment: programModel.segment.id,
+            evidenceModel: programModel.axes.evidenceModel,
+            validationProfile: resolveValidationProfile(key).profileId,
+            standards: programModel.segment.standards,
+            requiredClaims: (programModel.claimSpine?.claims ?? []).map((c) => ({
+              id: c.id,
+              label: c.label,
+              supportedByApps: c.supportedByApps,
+              projectsTo: c.projectsTo,
+            })),
+          }
+        : undefined;
+
     return {
       need: key,
       known: true,
@@ -579,6 +626,7 @@ function resolveBaseConfig(need: string): WorkspaceConfig {
       capabilities: BASE_CAPABILITIES,
       gateway,
       lifecycleActions: entry.lifecycleActions ?? [],
+      program,
     };
   }
 
