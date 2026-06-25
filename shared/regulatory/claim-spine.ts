@@ -11,9 +11,9 @@
  * lands. The per-segment "journey" is the dependency order over these claims —
  * derived, not hand-enumerated.
  *
- * NOTE on gaps surfaced by this linkage (honest, not papered over): IVD analytical
- * performance and biosimilar analytical similarity have no dedicated WorkspaceApp
- * yet; they currently route through `biostatistics` + `cmc`. Flagged in-line.
+ * The two gaps this linkage originally surfaced — IVD analytical performance and
+ * biosimilar/generic analytical similarity — now have dedicated apps
+ * (`analytical_performance`, `analytical_similarity`) in the app registry.
  *
  * Pure, no DB.
  *
@@ -70,9 +70,8 @@ export const CLAIM_SPINES: Record<EvidenceModel, ClaimSpine> = {
   performance: {
     evidenceModel: 'performance',
     rootClaim: INTENDED_USE,
-    // GAP: no dedicated IVD analytical-performance app — routed via biostatistics for now.
     claims: [
-      { id: 'analytical_performance', label: 'Analytical performance is validated (precision, LoD/LoQ, linearity, interference)', supportedByApps: ['biostatistics'], projectsTo: ['Analytical performance'] },
+      { id: 'analytical_performance', label: 'Analytical performance is validated (precision, LoD/LoQ, linearity, interference)', supportedByApps: ['analytical_performance', 'biostatistics'], projectsTo: ['Analytical performance'] },
       { id: 'clinical_performance', label: 'Clinical performance is demonstrated (sensitivity / specificity, PPA / NPA)', supportedByApps: ['clinical_csr', 'biostatistics'], projectsTo: ['Clinical performance'] },
       { id: 'risk', label: 'Risk is managed (ISO 14971)', supportedByApps: ['risk'], projectsTo: ['Risk management file'] },
       { id: 'labeling', label: 'Labeling / intended use is consistent', supportedByApps: ['labeling'], projectsTo: ['Labeling'] },
@@ -81,9 +80,8 @@ export const CLAIM_SPINES: Record<EvidenceModel, ClaimSpine> = {
   sameness: {
     evidenceModel: 'sameness',
     rootClaim: 'Equivalent to the reference product for the intended use',
-    // GAP: no dedicated analytical-similarity app — routed via cmc + biostatistics.
     claims: [
-      { id: 'quality_similarity', label: 'Analytical similarity / bioequivalence to the reference', supportedByApps: ['cmc', 'biostatistics'], projectsTo: ['M3.2', 'Comparability / BE'] },
+      { id: 'quality_similarity', label: 'Analytical similarity / bioequivalence to the reference', supportedByApps: ['analytical_similarity', 'cmc', 'biostatistics'], projectsTo: ['M3.2', 'Comparability / BE'] },
       { id: 'residual_clinical', label: 'Residual uncertainty addressed (confirmatory PK/PD or clinical)', supportedByApps: ['clinical_csr', 'biostatistics'], projectsTo: ['M5.3'] },
       { id: 'labeling', label: 'Labeling carried from / compared to reference', supportedByApps: ['labeling'], projectsTo: ['M1 labeling'] },
     ],

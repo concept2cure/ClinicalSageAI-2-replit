@@ -28,6 +28,14 @@ describe('app-registry — single source of truth', () => {
     expect(appModuleId('biostatistics')).toBeUndefined();
   });
 
+  it('includes the IVD + biosimilar apps that close the claim-spine gaps', () => {
+    expect(getApp('analytical_performance').discipline).toBe('diagnostics');
+    expect(getApp('analytical_similarity').discipline).toBe('quality_cmc');
+    // Neither is a separately-sold module yet — always available.
+    expect(appModuleId('analytical_performance')).toBeUndefined();
+    expect(appModuleId('analytical_similarity')).toBeUndefined();
+  });
+
   it('getApp returns the full entry', () => {
     const a = getApp('cmc');
     expect(a.label).toBe('CMC (Module 3)');

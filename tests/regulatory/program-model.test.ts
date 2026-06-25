@@ -86,4 +86,12 @@ describe('claim spines are complete', () => {
       }
     }
   });
+
+  it('the IVD + biosimilar gaps are closed by dedicated apps in the spine', () => {
+    const analytical = CLAIM_SPINES.performance.claims.find((c) => c.id === 'analytical_performance');
+    expect(analytical?.supportedByApps).toContain('analytical_performance');
+
+    const similarity = CLAIM_SPINES.sameness.claims.find((c) => c.id === 'quality_similarity');
+    expect(similarity?.supportedByApps).toContain('analytical_similarity');
+  });
 });
