@@ -64,6 +64,7 @@ import type {
 } from './document-taxonomy.js';
 import { getRegionProfile } from './region-profiles.js';
 import { getClientTypeProfile } from './client-type-profiles.js';
+import { toGatewaySlug } from './region-identity.js';
 import {
   APP_REGISTRY,
   type AppRegistryEntry,
@@ -343,12 +344,6 @@ const RECORD_FAMILIES: ReadonlySet<ApplicationFamily> = new Set<ApplicationFamil
   'safety_report',
 ]);
 
-/** US/EU/JP/… (taxonomy region) → fda/ema/pmda/… (gateway region). */
-const GATEWAY_REGION_BY_TAXONOMY_REGION: Record<string, string> = {
-  US: 'fda', EU: 'ema', JP: 'pmda', CA: 'ca', UK: 'uk', CN: 'cn',
-  AU: 'au', CH: 'ch', BR: 'br', IN: 'in', KR: 'kr', SG: 'sg',
-};
-
 function scopeFor(family: ApplicationFamily | null): WorkspaceScope {
   if (!family) return 'document';
   if (family === 'post_market') return 'registration'; // labeling/registration-status family
@@ -536,10 +531,8 @@ function resolveBaseConfig(need: string): WorkspaceConfig {
     const apps = appsFor({ scope, vocabulary, family, ctdModule, productClasses: entry.productClass ?? [] });
     const services = servicesFor({ scope, vocabulary, family, ctdModule, productClasses: entry.productClass ?? [], isRegulatory: true });
 
-    const gateway =
-      scope === 'dossier' && entry.region && GATEWAY_REGION_BY_TAXONOMY_REGION[entry.region]
-        ? { region: GATEWAY_REGION_BY_TAXONOMY_REGION[entry.region] }
-        : null;
+    const gwSlug = scope === 'dossier' && entry.region ? toGatewaySlug(entry.region) : undefined;
+    const gateway = gwSlug ? { region: gwSlug } : null;
 
     return {
       need: key,

@@ -21,28 +21,10 @@ import {
   type WorkspaceConfig,
 } from '../../../shared/regulatory/workspace-config';
 import { getGatewaySizeLimit, type RegulatoryRegion } from '../ectd/ectd-regional-rules';
-import {
-  REGIONAL_MODULE1_REQUIREMENTS,
-  type RegulatoryMarket,
-} from '../global-ri/regional-module1-requirements';
+import { REGIONAL_MODULE1_REQUIREMENTS } from '../global-ri/regional-module1-requirements';
 import { getLicenseInfo } from '../license-manager';
 import { appModuleId } from '../../../shared/regulatory/app-registry';
-
-/** Taxonomy region (uppercase) → the agency-keyed market used by M1 requirements. */
-const REGION_TO_MARKET: Partial<Record<string, RegulatoryMarket>> = {
-  US: 'FDA',
-  EU: 'EMA',
-  JP: 'PMDA',
-  CA: 'HEALTH_CANADA',
-  UK: 'MHRA',
-  AU: 'TGA',
-  CN: 'NMPA',
-};
-
-/** Regions with a live eCTD gateway + a regional Module 1 backbone. */
-const GATEWAY_REGIONS = new Set<string>([
-  'US', 'EU', 'JP', 'CA', 'CN', 'KR', 'UK', 'AU', 'CH', 'BR', 'IN', 'SG',
-]);
+import { toMarket, isCanonicalRegion } from '../../../shared/regulatory/region-identity';
 
 const LANGUAGE_NAMES: Record<string, string> = {
   ja: 'Japanese',
@@ -86,7 +68,7 @@ export async function enrichWorkspaceConfig(
     const lower = code.toLowerCase();
     config.region.m1BackbonePath = `m1/${lower}/${lower}-regional.xml`;
 
-    if (GATEWAY_REGIONS.has(code)) {
+    if (isCanonicalRegion(code)) {
       try {
         config.region.gatewaySizeLimitBytes = getGatewaySizeLimit(code as RegulatoryRegion);
       } catch {
@@ -94,7 +76,7 @@ export async function enrichWorkspaceConfig(
       }
     }
 
-    const market = REGION_TO_MARKET[code];
+    const market = toMarket(code);
     if (market && REGIONAL_MODULE1_REQUIREMENTS[market]) {
       config.region.requiredModule1Components = REGIONAL_MODULE1_REQUIREMENTS[market].map(
         (c) => c.code,
