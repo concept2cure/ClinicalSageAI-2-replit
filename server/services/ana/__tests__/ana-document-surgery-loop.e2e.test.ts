@@ -43,6 +43,11 @@ function docxRuntimeAvailable(): boolean {
 }
 
 const RUNTIME = docxRuntimeAvailable();
+// CI sets ANA_DOCX_E2E_REQUIRED=1 (Test job installs python-docx + lxml). When
+// required, the suite must NOT self-skip: a missing runtime FAILS instead, so a
+// broken document runtime can never masquerade as a green pass. Locally (flag
+// unset) it skips gracefully when python-docx is absent.
+const REQUIRED = process.env.ANA_DOCX_E2E_REQUIRED === '1';
 const ctx = { organizationId: 1 } as any;
 const call = async (name: string, input: Record<string, unknown>) =>
   JSON.parse(await getToolHandler(name)!(input, ctx));
@@ -56,9 +61,15 @@ const VERIFICATION_ANCHOR = 'VERIFICATION';
 const SWORN_PARAGRAPH =
   'I declare under penalty of perjury under the laws of the State that the foregoing is true and correct.';
 
-describe.skipIf(!RUNTIME)(
+describe.skipIf(!RUNTIME && !REQUIRED)(
   'AnA full document-surgery loop (12/12) — end to end against python-docx',
   () => {
+    it('has the document runtime when CI requires it (no silent skip)', () => {
+      // Guard: in CI (ANA_DOCX_E2E_REQUIRED=1) python-docx must be installed.
+      // If this fails, the runtime setup regressed — fix CI, do not skip.
+      expect(RUNTIME).toBe(true);
+    });
+
     it('runs author → clone base → inject → correct → append → validate → verify', async () => {
       // Move 5 — materialize the validated base template as a real .docx.
       // (Stands in for "clone a validated base": we author the base, then

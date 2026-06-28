@@ -143,6 +143,38 @@ export function useK510EstarSections(projectIdent: string | null): UseK510EstarR
   };
 }
 
+/* ─── Official eSTAR readiness probe (drives the gated "Generate" button) ── */
+
+export interface EstarReadiness {
+  descriptorId: string | null;
+  ready: boolean;
+  templateAvailable: boolean;
+  fieldMapPopulated: boolean;
+  blockers: string[];
+}
+
+export interface UseEstarReadinessResult {
+  readiness: EstarReadiness | null;
+  loading: boolean;
+  error: string | null;
+}
+
+/**
+ * Probe whether the OFFICIAL FDA eSTAR PDF can be produced for a descriptor.
+ * Read-only — hits GET /api/510k/estar/readiness, which produces nothing. The
+ * surface uses `ready` to enable/disable the "Generate official eSTAR" action
+ * and `blockers` to show the reason when it's gated. `ready` is true only once
+ * the official template is vendored AND its field map is populated.
+ */
+export function useEstarReadiness(
+  type: '510k' | 'de_novo' = '510k',
+  variant: 'device' | 'ivd' = 'device',
+): UseEstarReadinessResult {
+  const url = `/api/510k/estar/readiness?type=${encodeURIComponent(type)}&variant=${encodeURIComponent(variant)}`;
+  const { data, loading, error } = useFetchJson<EstarReadiness>(url);
+  return { readiness: data ?? null, loading, error };
+}
+
 /* ─── Predicate candidates (proxies to shadow service) ──────────────── */
 
 /** Defensive shape — handles snake_case + camelCase from shadow service. */

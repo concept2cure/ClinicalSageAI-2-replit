@@ -405,4 +405,57 @@ router.post('/official', authMiddleware, requireEditorAccess, async (req, res) =
   }
 });
 
+const readinessSchema = z.object({
+  type: z.enum(ESTAR_TYPES).default('510k'),
+  variant: z.enum(ESTAR_VARIANTS).default('device'),
+});
+
+/**
+ * GET /api/510k/estar/readiness?type=510k&variant=device
+ *
+ * Read-only honesty probe for the UI: can the OFFICIAL FDA eSTAR PDF be produced
+ * for this descriptor yet? Drives the "Generate official eSTAR" button's
+ * disabled-with-reason state on the 510(k) surface. This produces and persists
+ * NOTHING — `ready` is true only when the official template is vendored AND its
+ * field map is populated, the same gate POST /official enforces before it will
+ * emit a submittable PDF. When not ready, `blockers` explains exactly why so the
+ * surface can show the reason instead of hiding the capability.
+ */
+router.get('/readiness', authMiddleware, async (req, res) => {
+  const validation = readinessSchema.safeParse(req.query);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid query', details: validation.error.flatten() });
+  }
+  const { type, variant } = validation.data;
+  try {
+    // Dry assessment via the single source of truth. With empty data and the
+    // default skip policy this is side-effect-free (no persistence); we read
+    // only the readiness booleans + blockers and ignore any produced bytes.
+    const result = await fillEstarSubmission({
+      type,
+      variant: variant as EstarTemplateVariant,
+      data: {},
+    });
+    const ready = result.templateAvailable && result.fieldMapPopulated;
+    return res.status(200).json({
+      descriptorId: result.descriptorId,
+      type,
+      variant,
+      ready,
+      officialEstarPdf: ready,
+      templateAvailable: result.templateAvailable,
+      fieldMapPopulated: result.fieldMapPopulated,
+      blockers: ready ? [] : result.blockers,
+    });
+  } catch (error: any) {
+    logger.error('estar readiness probe failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_READINESS_FAILED',
+      message: error.message || 'Failed to assess eSTAR readiness',
+    });
+  }
+});
+
 export default router;

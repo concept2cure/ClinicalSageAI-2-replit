@@ -3,6 +3,7 @@ import {
   resolveProjectMap,
   PHASE_ORDER,
   type ProjectPhase,
+  type MilestoneStandard,
 } from '../../shared/regulatory/project-map';
 
 const phasesOf = (need: string): ProjectPhase[] =>
@@ -88,5 +89,79 @@ describe('project map — milestones and capability inventory', () => {
     expect(phases).not.toContain('submission');
     // and never claims a phase outside the canonical order
     for (const p of phases) expect(PHASE_ORDER).toContain(p);
+  });
+});
+
+const standardsAt = (need: string, phase: ProjectPhase): MilestoneStandard[] =>
+  milestone(need, phase)?.standards ?? [];
+
+const stdIdsAt = (need: string, phase: ProjectPhase): string[] =>
+  standardsAt(need, phase).map((s) => s.id);
+
+describe('project map — per-milestone standards in force', () => {
+  it('BLA quality phase carries the biologic CMC standard (ICH Q5A–Q5E)', () => {
+    const ids = stdIdsAt('BLA', 'quality');
+    expect(ids).toContain('ich_q5');
+    const q5 = standardsAt('BLA', 'quality').find((s) => s.id === 'ich_q5')!;
+    expect(q5.designation).toBe('ICH Q5A–Q5E');
+    expect(q5.currentVersion).toBe('Q5A(R2) 2023');
+    expect(q5.body).toBe('ICH');
+    expect(q5.domain).toBe('cmc_biologic');
+  });
+
+  it('BLA clinical phase carries the efficacy guidelines (ICH E)', () => {
+    expect(stdIdsAt('BLA', 'clinical')).toContain('ich_e_efficacy');
+  });
+
+  it('BLA nonclinical phase carries ICH S6', () => {
+    expect(stdIdsAt('BLA', 'nonclinical')).toContain('ich_s6');
+  });
+
+  it('BLA strategy + submission + review carry the regulatory statute (PHS 351)', () => {
+    expect(stdIdsAt('BLA', 'strategy')).toContain('phs_351');
+    expect(stdIdsAt('BLA', 'submission')).toContain('phs_351');
+    expect(stdIdsAt('BLA', 'review')).toContain('phs_351');
+  });
+
+  it('510(k) quality phase carries device QMS standards (ISO 13485, 21 CFR 820)', () => {
+    const ids = stdIdsAt('510k', 'quality');
+    expect(ids).toContain('iso_13485');
+    expect(ids).toContain('cfr_820_qmsr');
+  });
+
+  it('510(k) clinical phase carries risk + human factors + cybersecurity standards', () => {
+    const ids = stdIdsAt('510k', 'clinical');
+    expect(ids).toContain('iso_14971');
+    expect(ids).toContain('iec_62366_1');
+    expect(ids).toContain('fdc_524b');
+  });
+
+  it('IVD (CDx PMA) quality phase carries CLSI EP and ISO 13485', () => {
+    const ids = stdIdsAt('US_CDX_PMA', 'quality');
+    expect(ids).toContain('clsi_ep_suite');
+    expect(ids).toContain('iso_13485');
+  });
+
+  it('NDA (pharma) quality phase carries ICH Q chemistry, clinical carries ICH E', () => {
+    expect(stdIdsAt('NDA', 'quality')).toContain('ich_q_chemistry');
+    expect(stdIdsAt('NDA', 'clinical')).toContain('ich_e_efficacy');
+    expect(stdIdsAt('NDA', 'nonclinical')).toContain('ich_m3_s');
+  });
+
+  it('every milestone standard carries a version (never blank)', () => {
+    const plan = resolveProjectMap('BLA');
+    for (const m of plan.milestones) {
+      for (const s of m.standards) {
+        expect(s.currentVersion.length).toBeGreaterThan(0);
+        expect(s.designation.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('a non-program document has no standards on its milestones', () => {
+    const plan = resolveProjectMap('SOP');
+    for (const m of plan.milestones) {
+      expect(m.standards).toEqual([]);
+    }
   });
 });
