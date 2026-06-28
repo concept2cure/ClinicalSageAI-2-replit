@@ -204,15 +204,21 @@ describe('planGlobalSubmission — readiness reflects availableArtifacts', () =>
 });
 
 describe('planGlobalSubmission — honest capability flags & blockers', () => {
-  it('reports a cannot-transmit blocker for EVERY planned market', () => {
+  it('reports canTransmit matching the registry and cannot-transmit blocker only for gateway-less markets', () => {
     const plan = planGlobalSubmission(emptyProfile(), [...MARKET_IDS]);
     expect(plan.marketPlans).toHaveLength(MARKET_IDS.length);
-    for (const mp of plan.marketPlans) {
-      expect(mp.canTransmit).toBe(false);
-      const hasTransmitBlocker = mp.blockers.some((b) =>
-        b.includes('cannot transmit'),
-      );
+    const transmitCapable = plan.marketPlans.filter((mp) => mp.canTransmit);
+    const transmitIncapable = plan.marketPlans.filter((mp) => !mp.canTransmit);
+    // 12 markets have live gateways; 4 (TW/SA/ZA/MDSAP) do not.
+    expect(transmitCapable.length).toBe(12);
+    expect(transmitIncapable.length).toBe(4);
+    for (const mp of transmitIncapable) {
+      const hasTransmitBlocker = mp.blockers.some((b) => b.includes('cannot transmit'));
       expect(hasTransmitBlocker).toBe(true);
+    }
+    for (const mp of transmitCapable) {
+      const hasTransmitBlocker = mp.blockers.some((b) => b.includes('cannot transmit'));
+      expect(hasTransmitBlocker).toBe(false);
     }
   });
 
@@ -316,9 +322,9 @@ describe('planGlobalSubmission — aggregate rollup', () => {
     expect(union).toEqual(plan.marketPlans.map((p) => p.marketId).sort());
   });
 
-  it('keeps the transmit-capable set empty (honest invariant) across all markets', () => {
+  it('reports transmit-capable markets matching the registry (12 with gateways)', () => {
     const plan = planGlobalSubmission(emptyProfile(), [...MARKET_IDS]);
-    expect(plan.transmitCapableMarkets).toHaveLength(0);
+    expect(plan.transmitCapableMarkets).toHaveLength(12);
   });
 
   it('rolls up a de-duplicated set of all per-market blockers', () => {
@@ -333,9 +339,9 @@ describe('planGlobalSubmission — aggregate rollup', () => {
     );
     expect(new Set(plan.globalBlockers)).toEqual(expectedUnion);
 
-    // And it contains the honest cannot-transmit blockers.
-    expect(plan.globalBlockers.some((b) => b.includes('cannot transmit'))).toBe(
-      true,
-    );
+    // us-fda and eu-mdr-ivdr both have gateways, so no cannot-transmit in global blockers
+    // for this subset. The blocker only appears when gateway-less markets are planned.
+    const hasTransmitBlocker = plan.globalBlockers.some((b) => b.includes('cannot transmit'));
+    expect(hasTransmitBlocker).toBe(false);
   });
 });

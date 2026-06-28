@@ -68,6 +68,18 @@ const ACCEPTED_GHSA_IDS = new Set([
   // Both advisories are dev-server-only (server.fs.deny bypass), not a prod/runtime path.
   'GHSA-fx2h-pf6j-xcff', // vite server.fs.deny bypass on Windows alternate paths
   'GHSA-v6wh-96g9-6wx3', // vite (advisory range <=6.4.2)
+  // http-proxy-middleware — advisory range >=3.0.4 <3.0.7; bumped direct dep +
+  // override ^3.0.7 (installed 3.0.7, above range).
+  'GHSA-gcq2-9pq2-cxqm', // http-proxy-middleware multipart/form-data CRLF field injection
+  // nodemailer — advisory range <=9.0.0; bumped direct dep ^9.0.1 (installed 9.0.1,
+  // above range). Our usage is createTransport/sendMail only — no `raw` option.
+  'GHSA-p6gq-j5cr-w38f', // nodemailer raw-option file read / SSRF
+  // undici — advisory ranges <7.28.0 (3 advisories); override ^7.28.0 (installed
+  // 7.28.0, above range). All undici consumers (cheerio, jsdom, @figma/code-connect)
+  // accept ^7, so the override is non-breaking.
+  'GHSA-vmh5-mc38-953g', // undici TLS cert validation bypass via dropped requestTls (SOCKS5)
+  'GHSA-vxpw-j846-p89q', // undici WebSocket DoS via fragment count bypass
+  'GHSA-hm92-r4w5-c3mj', // undici cross-origin request routing via SOCKS5 proxy pool reuse
   // Accepting the ws advisory above also clears the engine.io / engine.io-client /
   // socket.io / socket.io-adapter / socket.io-client "transitive vulnerability via
   // unaccepted dependency" flags — that is this same ws advisory surfaced through

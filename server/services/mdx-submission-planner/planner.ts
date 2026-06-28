@@ -11,9 +11,9 @@
  *   - global-markets/market-readiness (assessMarketReadiness)
  *
  * HONEST BY CONSTRUCTION: capability flags come straight from the registry;
- * `canTransmit` is false for every market, so every plan carries the standing
- * cannot-transmit blocker. The planner never asserts an assemble/transmit
- * capability the registry does not.
+ * `canTransmit` mirrors the registry — true for the 12 markets with a live
+ * gateway, false for TW/SA/ZA/MDSAP. The planner never asserts a capability
+ * the registry does not have.
  *
  * PURE + DETERMINISTIC: same inputs ⇒ same output (apart from the ISO timestamp
  * in provenance). No DB, no network, no LLM. Results are sorted by canonical
@@ -93,7 +93,6 @@ function buildMarketPlan(
     readiness,
     canAssemble: descriptor.canAssemble,
     assembleNote: descriptor.assembleNote,
-    // Honest invariant — never assert transmission.
     canTransmit: descriptor.canTransmit,
     blockers,
     nextActions: buildNextActions(descriptor, readiness.missingElements),
@@ -166,7 +165,6 @@ export function planGlobalSubmission(
   const assembleIncapableMarkets = marketPlans
     .filter((p) => !p.canAssemble)
     .map((p) => p.marketId);
-  // Honest invariant: nothing transmits, so this is always empty.
   const transmitCapableMarkets = marketPlans
     .filter((p) => p.canTransmit)
     .map((p) => p.marketId);

@@ -371,16 +371,36 @@ export function dispatchSequence(
 export function selectGateway(
   region: string,
   clientType: string
-): { gwRegion: 'fda' | 'ema' | 'pmda'; gwName: 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway' } | null {
+): { gwRegion: string; gwName: string } | null {
   switch (region) {
     case 'fda':
       return { gwRegion: 'fda', gwName: 'esg' };
     case 'jp':
+    case 'pmda':
       return { gwRegion: 'pmda', gwName: 'pmda_gateway' };
     case 'eu':
+    case 'ema':
       return clientType === 'mdx' || clientType === 'ivd'
         ? { gwRegion: 'ema', gwName: 'eudamed' }
         : { gwRegion: 'ema', gwName: 'cesp' };
+    case 'ca':
+      return { gwRegion: 'ca', gwName: 'hc_cesg' };
+    case 'uk':
+      return { gwRegion: 'uk', gwName: 'mhra_gateway' };
+    case 'cn':
+      return { gwRegion: 'cn', gwName: 'nmpa_gateway' };
+    case 'au':
+      return { gwRegion: 'au', gwName: 'tga_ebs' };
+    case 'ch':
+      return { gwRegion: 'ch', gwName: 'swissmedic_egateway' };
+    case 'br':
+      return { gwRegion: 'br', gwName: 'anvisa_gateway' };
+    case 'in':
+      return { gwRegion: 'in', gwName: 'cdsco_sugam' };
+    case 'kr':
+      return { gwRegion: 'kr', gwName: 'mfds_dbio' };
+    case 'sg':
+      return { gwRegion: 'sg', gwName: 'hsa_prism' };
     default:
       return null;
   }
@@ -453,7 +473,9 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   }
 
   const { getGateway } = await import('../submission-gateways/index');
-  const gw = getGateway(route.gwRegion, route.gwName);
+  // gwRegion and gwName are always valid Region/GatewayName values returned by selectGateway
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const gw = getGateway(route.gwRegion as any, route.gwName as any);
 
   // Honest: only transmit when the org has credentials for this gateway+env.
   if (!(await gw.isConfigured(ctx.organizationId, environment))) {

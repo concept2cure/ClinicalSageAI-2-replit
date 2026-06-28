@@ -39,7 +39,7 @@ describe('lifecycleStageToSubmissionType', () => {
 
 describe('assembleCoverLetterContext', () => {
   it('maps sponsor + submission into a cover-letter input', () => {
-    const input = assembleCoverLetterContext({ sponsor, submission });
+    const { input } = assembleCoverLetterContext({ sponsor, submission });
     expect(input.sponsorName).toBe('Acme Therapeutics');
     expect(input.sponsorAddress).toBe('1 Main St, Boston, MA, 02110, USA');
     expect(input.drugName).toBe('C2C-001');
@@ -49,7 +49,7 @@ describe('assembleCoverLetterContext', () => {
   });
 
   it('lets overrides win (IND number, indication, division not stored on the records)', () => {
-    const input = assembleCoverLetterContext({
+    const { input } = assembleCoverLetterContext({
       sponsor,
       submission,
       overrides: { indNumber: '123456', indication: 'NSCLC', fdaDivision: 'Division of Oncology 1' },
@@ -60,9 +60,22 @@ describe('assembleCoverLetterContext', () => {
   });
 
   it('produces a usable input even with no records (empty required fields)', () => {
-    const input = assembleCoverLetterContext({});
+    const { input } = assembleCoverLetterContext({});
     expect(input.sponsorName).toBe('');
     expect(input.drugName).toBe('');
     expect(input.submissionType).toBe('original');
+  });
+
+  it('returns bridge context for the default IND regulatory type', () => {
+    const { bridgeContext } = assembleCoverLetterContext({ sponsor, submission });
+    expect(bridgeContext).not.toBeNull();
+    expect(bridgeContext!.registryId).toBe('US_IND');
+    expect(bridgeContext!.agency).toBe('FDA');
+  });
+
+  it('resolves a custom regulatory type through the bridge', () => {
+    const { bridgeContext } = assembleCoverLetterContext({ sponsor, submission, regulatoryType: 'US_IND' });
+    expect(bridgeContext).not.toBeNull();
+    expect(bridgeContext!.registryId).toBe('US_IND');
   });
 });

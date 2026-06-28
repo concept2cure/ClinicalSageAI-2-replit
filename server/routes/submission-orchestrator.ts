@@ -38,8 +38,8 @@ const router = Router();
 
 // ── Validation schemas ──────────────────────────────────────────────────────
 
-const RegionSchema = z.enum(['US', 'EU', 'JP', 'CA']);
-const SubmissionTypeSchema = z.enum(['IND', 'NDA', 'BLA', '510k', 'PMA', 'JNDA', 'MAA']);
+const RegionSchema = z.enum(['US', 'EU', 'JP', 'CA', 'UK', 'CN', 'AU', 'CH', 'BR', 'IN', 'KR', 'SG', 'GLOBAL']);
+const SubmissionTypeSchema = z.string().min(1);
 
 const CanonicalSourceSchema = z.object({
   id: z.string(),
@@ -324,10 +324,11 @@ router.post('/validate/hardened', async (req: Request, res: Response) => {
     fileSize: z.number(),
     studyId: z.string().optional(),
   });
+  const ValidatorRegionSchema = z.enum(['US', 'EU', 'JP', 'CA', 'UK', 'CN', 'AU', 'CH', 'BR', 'IN', 'KR', 'SG']);
   const Schema = z.object({
     leaves: z.array(LeafSchema),
     submissionId: z.string(),
-    region: RegionSchema,
+    region: ValidatorRegionSchema,
     applicationNumber: z.string(),
     sequenceNumber: z.string().regex(/^\d{4}$/),
     submissionType: z.string(),

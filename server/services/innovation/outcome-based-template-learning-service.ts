@@ -16,6 +16,11 @@
 import { Pool } from 'pg';
 import crypto from 'crypto';
 import { ai } from '../../lib/unified-ai-client';
+import {
+  resolveToRegistryEntry,
+  getSubmissionTypeContext,
+  type SubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 
 // Types
 export interface LearningTemplate {
@@ -137,8 +142,13 @@ export class OutcomeBasedTemplateLearningService {
       metadata?: { version?: string };
     }
   ): Promise<LearningTemplate> {
+    // Resolve submission type through the canonical bridge
+    const rawSubType = template.submissionType || 'NDA';
+    const resolvedEntry = resolveToRegistryEntry(rawSubType);
+    const canonicalSubType = resolvedEntry?.id ?? rawSubType;
+
     const mappedTemplate: Partial<LearningTemplate> = template.templateName
-      ? template
+      ? { ...template, submissionType: resolvedEntry ? canonicalSubType : template.submissionType }
       : {
           orgId: template.organizationId,
           templateCode: `${template.category || 'template'}_${(template.name || 'template').toLowerCase().replace(/[^a-z0-9]+/g, '_')}`,
@@ -146,7 +156,7 @@ export class OutcomeBasedTemplateLearningService {
           description: template.category,
           version: template.metadata?.version || '1.0',
           templateType: 'document',
-          submissionType: 'NDA',
+          submissionType: canonicalSubType,
           modulePath: template.documentType,
           templateContent: template.content || '',
           contentFormat: 'markdown'
@@ -241,7 +251,8 @@ export class OutcomeBasedTemplateLearningService {
       query += ` AND template_type = $${params.length}`;
     }
     if (options.submissionType) {
-      params.push(options.submissionType);
+      const entry = resolveToRegistryEntry(options.submissionType);
+      params.push(entry?.id ?? options.submissionType);
       query += ` AND (submission_type IS NULL OR submission_type = $${params.length})`;
     }
     if (options.modulePath) {
@@ -373,16 +384,30 @@ export class OutcomeBasedTemplateLearningService {
   }): Promise<SubmissionOutcome> {
     if ('outcome' in outcome) {
       const programId = await this.resolveProgramId();
+      // Derive submission type and agency from bridge context when available
+      const subTypeCtx = getSubmissionTypeContext('NDA');
       return this.recordOutcomeInternal({
         programId: programId || '',
         submissionId: outcome.submissionId,
-        submissionType: 'NDA',
-        agency: 'FDA',
+        submissionType: subTypeCtx?.registryId ?? 'US_NDA',
+        agency: subTypeCtx?.agency ?? 'FDA',
         submittedAt: new Date(),
         outcomeStatus: outcome.outcome,
         reviewDays: outcome.cycleTime,
         questionsReceived: outcome.agencyQuestions
       });
+    }
+
+    // Resolve any legacy submission type string coming in via the full outcome path
+    if (outcome.submissionType) {
+      const entry = resolveToRegistryEntry(outcome.submissionType);
+      if (entry) {
+        outcome = { ...outcome, submissionType: entry.id };
+        if (!outcome.agency) {
+          const ctx = getSubmissionTypeContext(entry.id);
+          if (ctx) outcome = { ...outcome, agency: ctx.agency };
+        }
+      }
     }
 
     return this.recordOutcomeInternal(outcome);
@@ -659,8 +684,10 @@ export class OutcomeBasedTemplateLearningService {
     documentType?: string;
     context?: { therapeuticArea?: string };
   }): Promise<{ recommendations: TemplateRecommendation[] }> {
+    const rawSubType = options.submissionType || 'NDA';
+    const entry = resolveToRegistryEntry(rawSubType);
     const recommendations = await this.getRecommendationsInternal({
-      submissionType: options.submissionType || 'NDA',
+      submissionType: entry?.id ?? rawSubType,
       modulePath: options.modulePath || options.documentType,
       therapeuticArea: options.therapeuticArea || options.context?.therapeuticArea,
       orgId: options.orgId || options.organizationId,
@@ -703,11 +730,12 @@ export class OutcomeBasedTemplateLearningService {
     feedbackSummary?: string;
   }): Promise<SubmissionOutcome> {
     const programId = await this.resolveProgramId();
+    const subTypeCtx = getSubmissionTypeContext('NDA');
     return this.recordOutcome({
       programId: programId || '',
       submissionId: input.submissionId,
-      submissionType: 'NDA',
-      agency: 'FDA',
+      submissionType: subTypeCtx?.registryId ?? 'US_NDA',
+      agency: subTypeCtx?.agency ?? 'FDA',
       submittedAt: new Date(),
       outcomeStatus: input.outcome,
       reviewDays: input.cycleTime,
@@ -843,7 +871,8 @@ export class OutcomeBasedTemplateLearningService {
     const params: any[] = [];
 
     if (options.submissionType) {
-      params.push(options.submissionType);
+      const entry = resolveToRegistryEntry(options.submissionType);
+      params.push(entry?.id ?? options.submissionType);
       query += ` AND (submission_type = $${params.length} OR submission_type IS NULL)`;
     }
 

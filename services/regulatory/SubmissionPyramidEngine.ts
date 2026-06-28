@@ -7,7 +7,8 @@ import { buildMaaPyramid } from './pyramids/maa-pyramid';
 import { buildJndaPyramid } from './pyramids/jnda-pyramid';
 import { buildDeNovoPyramid } from './pyramids/de-novo-pyramid';
 
-export type SubmissionType = '510K' | 'IND' | 'NDA' | 'BLA' | 'PMA' | 'MAA' | 'JNDA' | 'DE_NOVO';
+import type { PyramidType } from '../../shared/regulatory/submission-type-bridge.js';
+export type SubmissionType = PyramidType;
 export type TaskStatus = 'todo' | 'in-progress' | 'review' | 'done' | 'blocked';
 
 export type PyramidTask = {

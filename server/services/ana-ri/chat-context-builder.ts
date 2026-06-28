@@ -21,6 +21,10 @@ import {
 } from './index.js';
 import { prefetchProjectIntelligence, preloadRIMContext } from './orchestrator.js';
 import type { SubmissionType } from './deficiency-taxonomy.js';
+import {
+  resolveToDeficiencyType,
+  getSubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 import { inferRole } from './role-adapter.js';
 import { buildMemoryContextForChat } from '../memory-context-assembler.js';
 import { getIntelligencePrefix, buildSectionSpecificPrompt } from '../lumen-context-builder.js';
@@ -99,7 +103,14 @@ export function buildRouteContextBlock(context: any): string {
       .join(' ');
     parts.push(`  <project ${attrs}/>`);
   }
-  if (productType) parts.push(`  <submission_type>${productType}</submission_type>`);
+  if (productType) {
+    const bridgeCtx = getSubmissionTypeContext(productType);
+    if (bridgeCtx) {
+      parts.push(`  <submission_type registry_id="${bridgeCtx.registryId}" agency="${bridgeCtx.agency}" region="${bridgeCtx.region}">${bridgeCtx.displayName}</submission_type>`);
+    } else {
+      parts.push(`  <submission_type>${productType}</submission_type>`);
+    }
+  }
   if (userRole) parts.push(`  <user_role>${userRole}</user_role>`);
   if (sectionCode) parts.push(`  <section_code>${sectionCode}</section_code>`);
 
@@ -119,7 +130,14 @@ export function buildAuthoringContextBlock(authoring_context: any): string {
   if (ac.artifactId) parts.push(`  <artifact_id>${ac.artifactId}</artifact_id>`);
   if (ac.artifactVersionId) parts.push(`  <artifact_version_id>${ac.artifactVersionId}</artifact_version_id>`);
   if (ac.artifactStatus) parts.push(`  <artifact_status>${ac.artifactStatus}</artifact_status>`);
-  if (ac.submissionType) parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
+  if (ac.submissionType) {
+    const bridgeCtx = getSubmissionTypeContext(ac.submissionType);
+    if (bridgeCtx) {
+      parts.push(`  <submission_type registry_id="${bridgeCtx.registryId}" agency="${bridgeCtx.agency}" region="${bridgeCtx.region}">${bridgeCtx.displayName}</submission_type>`);
+    } else {
+      parts.push(`  <submission_type>${ac.submissionType}</submission_type>`);
+    }
+  }
   if (ac.readiness) {
     parts.push(`  <readiness score="${ac.readiness.score ?? 'unknown'}" blocked="${ac.readiness.blocked ?? false}">`);
     if (ac.readiness.blockers?.length) {
@@ -382,7 +400,9 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     userRole: effectiveRole,
     projectContext: project_context,
     documentContext: document_context,
-    submissionType: submission_type as SubmissionType | undefined,
+    submissionType: submission_type
+      ? resolveToDeficiencyType(submission_type) as SubmissionType
+      : undefined,
     conversationHistory: conversation_history,
     authoringContext: prefetchedContext.orchestratorAuthoringContext,
     _feedbackContext: prefetchedContext.feedbackContext,

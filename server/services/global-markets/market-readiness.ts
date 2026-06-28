@@ -6,8 +6,8 @@
  * missing element ids, a 0..100 score, a readiness band, and HONEST blockers.
  *
  * In the spirit of regulatory/global-pathways.ts `assessPathwayReadiness`, but
- * (a) banded, (b) percentage-scored 0..100, and (c) honesty-first: every result
- * carries the standing blocker "platform cannot transmit to <authority>", and
+ * (a) banded, (b) percentage-scored 0..100, and (c) honesty-first: results for
+ * markets without a live gateway carry the standing cannot-transmit blocker;
  * markets requiring a local representative surface that too.
  *
  * PURE + DETERMINISTIC: no DB, no network, no LLM.
@@ -55,10 +55,11 @@ export function assessMarketReadiness(
 
   const complete = missingElements.length === 0;
 
-  // Honesty-first blockers — always present, independent of artifact coverage.
-  const blockers: string[] = [
-    `platform cannot transmit to ${market.authorityShort}`,
-  ];
+  // Honesty-first blockers — present when the capability is absent.
+  const blockers: string[] = [];
+  if (!market.canTransmit) {
+    blockers.push(`platform cannot transmit to ${market.authorityShort}`);
+  }
   if (!market.canAssemble) {
     blockers.push(`platform cannot assemble a ${market.dossierStandard} dossier for ${market.authorityShort}`);
   }

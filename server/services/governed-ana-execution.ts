@@ -10,6 +10,12 @@ import type {
   GovernedArtifactMutationContract,
   GovernedLearningEvent,
 } from '../../shared/types/governed-document-fabric.js';
+import {
+  resolveToRegistryEntry,
+  resolveToDeficiencyType,
+  getSubmissionTypeContext,
+  type SubmissionTypeContext,
+} from '../../shared/regulatory/submission-type-bridge.js';
 
 interface ExecuteGovernedAnaOperationInput {
   evaluationInput: GovernedEvaluationInput;
@@ -41,6 +47,34 @@ const PLACEHOLDER_PATTERNS = [
   /\bcoming soon\b/i,
   /\binsert .* here\b/i,
 ];
+
+// ─── Submission Type Bridge Resolution ───────────────────────────────────────
+// Resolves the raw submissionType from the evaluation context via the canonical
+// bridge. Returns enriched context or null if the type is unknown/absent.
+
+interface ResolvedSubmissionContext {
+  /** Canonical registry ID (e.g. 'US_IND', 'EU_MAA') */
+  registryId: string;
+  /** Deficiency-taxonomy-compatible type for intelligence services */
+  deficiencyType: string;
+  /** Full context from bridge (display name, agency, region, etc.) */
+  bridgeContext: SubmissionTypeContext;
+}
+
+function resolveSubmissionTypeFromContext(
+  submissionType: string | undefined,
+): ResolvedSubmissionContext | null {
+  if (!submissionType) return null;
+  const entry = resolveToRegistryEntry(submissionType);
+  if (!entry) return null;
+  const bridgeContext = getSubmissionTypeContext(submissionType);
+  if (!bridgeContext) return null;
+  return {
+    registryId: bridgeContext.registryId,
+    deficiencyType: resolveToDeficiencyType(submissionType),
+    bridgeContext,
+  };
+}
 
 function normalizeOutcomeLabel(outcome: string): 'pass' | 'warn' | 'fail' {
   if (outcome === 'allow') return 'pass';
@@ -155,10 +189,26 @@ export async function buildCanonicalGovernedState(
   };
   canonical.derivedFlags = buildDerivedFlags(canonical);
 
+  // Enrich context with canonical submission type data from the bridge.
+  // If the raw submissionType resolves, upgrade it to the registry ID and
+  // backfill regulatorBody from the registry when the caller didn't supply one.
+  const resolved = resolveSubmissionTypeFromContext(canonical.context.submissionType);
+  if (resolved) {
+    canonical.context.submissionType = resolved.registryId;
+    if (!canonical.context.regulatorBody) {
+      canonical.context.regulatorBody = resolved.bridgeContext.agency;
+    }
+  }
+
   return canonical;
 }
 
 export async function emitGovernedLearningEvent(event: GovernedLearningEvent): Promise<string> {
+  // Resolve submission type via the canonical bridge so intelligence services
+  // receive the registry ID and deficiency-taxonomy type regardless of what
+  // string the caller originally supplied.
+  const resolvedSub = resolveSubmissionTypeFromContext(event.submissionType);
+
   const result = integrateSignal(
     {
       organizationId: event.organizationId,
@@ -178,6 +228,14 @@ export async function emitGovernedLearningEvent(event: GovernedLearningEvent): P
       metadata: {
         source: 'governed_ana_execution',
         ...event,
+        // Canonical bridge enrichment — downstream consumers get the registry
+        // ID and deficiency type without needing their own resolution logic.
+        ...(resolvedSub && {
+          canonicalSubmissionType: resolvedSub.registryId,
+          deficiencyType: resolvedSub.deficiencyType,
+          submissionRegion: resolvedSub.bridgeContext.region,
+          submissionAgency: resolvedSub.bridgeContext.agency,
+        }),
       },
     }
   );

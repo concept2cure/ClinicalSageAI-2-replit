@@ -72,7 +72,7 @@ function daysUntil(iso: string | undefined): number | null {
 function PathwayTabBar({ tab, setTab, pathway, counts }: { tab: PaneTab; setTab: (t: PaneTab) => void; pathway: PathwayKey; counts: PaneCounts }) {
   const corrLabel = PATHWAY_TABS_DATA[pathway]?.corrLabel || 'Correspondence';
   const tabs: Array<{ id: PaneTab; label: string; sub: string; count?: number; badge?: boolean }> = [
-    { id: 'workspace',      label: 'Workspace',   sub: pathway === 'k510' ? 'Predicate · SE · eSTAR' : pathway === 'pma' ? 'Phases · modules' : 'Signals · literature' },
+    { id: 'workspace',      label: 'Workspace',   sub: pathway === 'k510' ? 'Predicate · SE · eSTAR' : pathway === 'pma' ? 'Phases · modules' : pathway === 'ivd' ? 'Class · validation · GSPR' : 'Signals · literature' },
     { id: 'audit',          label: 'Audit trail', sub: '21 CFR Part 11', count: counts.audit },
     { id: 'correspondence', label: corrLabel,     sub: 'Agency / NB queries', count: counts.correspondence, badge: counts.corrOpen > 0 },
     { id: 'approvals',      label: 'Approvals',   sub: 'Pending e-sign', count: counts.approvals, badge: counts.apPending > 0 },
@@ -585,7 +585,7 @@ export function DossierDrawer({ open, target, pathway, onClose, onOpenEditor }: 
     setAutosaveAt(new Date());
   };
 
-  const labelByPathway = pathway === 'k510' ? '510(k) dossier' : pathway === 'pma' ? 'PMA dossier' : 'CER dossier';
+  const labelByPathway = pathway === 'k510' ? '510(k) dossier' : pathway === 'pma' ? 'PMA dossier' : pathway === 'ivd' ? 'IVD dossier' : 'CER dossier';
   const status = meta.status || 'draft';
   const version = meta.version || 1;
   const lastEdited = meta.lastEdited || '';

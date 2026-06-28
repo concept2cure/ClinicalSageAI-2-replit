@@ -75,8 +75,8 @@ async function ensureBundleLocal(bundle: {
   await fsp.writeFile(bundle.path, buf);
 }
 
-const REGION_SET   = ['fda', 'ema', 'pmda'] as const;
-const GATEWAY_SET  = ['esg', 'cesp', 'eudamed', 'pmda_gateway'] as const;
+const REGION_SET   = ['fda', 'ema', 'pmda', 'ca'] as const;
+const GATEWAY_SET  = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] as const;
 const UUID_RE      = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /* ─── GET /api/mdx/gateways ──────────────────────────────────────── */

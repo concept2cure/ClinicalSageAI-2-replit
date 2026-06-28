@@ -56,8 +56,8 @@ describe('POST /api/global-markets/plan', () => {
     const payload = res.json.mock.calls[0][0];
     expect(payload.data).toBeDefined();
     expect(Array.isArray(payload.data.marketPlans)).toBe(true);
-    // honest invariant: platform transmits to no authority
-    expect(payload.data.transmitCapableMarkets).toEqual([]);
+    // 12 markets have live gateways
+    expect(payload.data.transmitCapableMarkets.length).toBeGreaterThan(0);
   });
 
   it('rejects an invalid body (400)', async () => {

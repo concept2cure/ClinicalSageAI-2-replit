@@ -18,7 +18,8 @@ import {
   type DetectorType
 } from './detectors';
 
-export type SubmissionType = '510k' | 'IND' | 'NDA' | 'BLA' | 'PMA' | 'MAA' | 'DE_NOVO';
+import type { LegacyUpperType } from '../../shared/regulatory/submission-type-bridge.js';
+export type SubmissionType = '510k' | Exclude<LegacyUpperType, '510K' | 'EUA'>;
 
 export interface PredictionInput {
   projectId: string;

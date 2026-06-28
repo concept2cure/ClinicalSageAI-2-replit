@@ -682,38 +682,16 @@ const SubmissionTypeEnum = z
   .max(50)
   .transform(val => (val === 'FDA_510K' ? '510K' : val));
 
-// Submission-type-specific default instruction templates
-const submissionTypeInstructionTemplates: Record<string, (product: string) => string> = {
-  '510K': product =>
-    `You are an FDA 510(k) regulatory expert for ${product}. Focus on substantial equivalence analysis, predicate device comparison, performance data requirements, and 510(k) submission readiness. Reference all project documents, predicate device information, and intelligence when responding.`,
-  IND: product =>
-    `You are an FDA IND (Investigational New Drug) regulatory expert for ${product}. Focus on preclinical data requirements, clinical trial protocol design, CMC (Chemistry, Manufacturing, and Controls) documentation, and IND submission strategy. Reference all project documents and intelligence when responding.`,
-  NDA: product =>
-    `You are an FDA NDA (New Drug Application) regulatory expert for ${product}. Focus on clinical efficacy and safety data, labeling strategy, risk-benefit analysis, CMC compliance, and NDA submission readiness. Reference all project documents and intelligence when responding.`,
-  BLA: product =>
-    `You are an FDA BLA (Biologics License Application) regulatory expert for ${product}. Focus on biological product characterization, manufacturing process validation, clinical immunogenicity data, and BLA submission strategy. Reference all project documents and intelligence when responding.`,
-  MAA: product =>
-    `You are an EMA MAA (Marketing Authorisation Application) regulatory expert for ${product}. Focus on EU regulatory requirements, CTD Module structure, scientific advice alignment, and MAA submission readiness across EU member states. Reference all project documents and intelligence when responding.`,
-  PMA: product =>
-    `You are an FDA PMA (Premarket Approval) regulatory expert for ${product}. Focus on clinical evidence requirements, device safety and effectiveness, manufacturing quality systems, and PMA submission strategy. Reference all project documents and intelligence when responding.`,
-  DE_NOVO: product =>
-    `You are an FDA De Novo classification regulatory expert for ${product}. Focus on risk-benefit analysis for novel devices, classification rationale, special controls development, and De Novo submission readiness. Reference all project documents and intelligence when responding.`,
-  EUA: product =>
-    `You are an FDA EUA (Emergency Use Authorization) regulatory expert for ${product}. Focus on known and potential benefits vs. risks, available alternatives analysis, emergency use criteria, and EUA submission strategy. Reference all project documents and intelligence when responding.`,
-};
+// Registry-driven instruction builder replaces hardcoded templates.
+// Works for ALL 158+ application types in the Global Document Registry.
+import { buildInstructionsFromLegacyType } from '../services/regulatory/defaultInstructionBuilder.js';
 
 function generateDefaultCustomInstructions(
   submissionType: string,
   product?: string | null,
   projectName?: string
 ): string {
-  const productLabel = product || projectName || 'this product';
-  const templateFn = submissionTypeInstructionTemplates[submissionType];
-  if (templateFn) {
-    return templateFn(productLabel);
-  }
-  // Generic fallback for unknown submission types
-  return `You are a ${submissionType} regulatory expert for ${productLabel}. Focus on regulatory strategy, submission readiness, and compliance. Reference all project documents and intelligence when responding.`;
+  return buildInstructionsFromLegacyType(submissionType, product, projectName);
 }
 const createProjectSchema = z.object({
   name: z.string().min(1, 'Project name is required').max(200, 'Name too long'),

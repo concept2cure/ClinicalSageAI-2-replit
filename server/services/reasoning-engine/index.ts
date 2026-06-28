@@ -25,6 +25,7 @@ export {
   buildSubmissionStructure,
   normalizeRegion,
   normalizeApplicationType,
+  resolveToReasoningParams,
   type RegionStructure,
   type SubmissionStructure,
 } from './submission-structure.js';

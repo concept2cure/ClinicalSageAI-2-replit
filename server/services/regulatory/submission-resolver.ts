@@ -23,20 +23,26 @@ import {
   search,
 } from '../../../shared/regulatory/global-document-registry';
 import { listGateways, type GatewayName, type Region as GatewayRegion } from '../submission-gateways';
+import { REGION_IDENTITY } from '../../../shared/regulatory/region-identity';
 
 /** The three regions the build+submit stack has region-correct support for. */
 export const CORE_REGIONS: Region[] = ['US', 'EU', 'JP'];
 
+// Gateway + Module 1 backbone come from the canonical region-identity registry —
+// no hand-typed slugs/names/paths. The KEYS pin the agencies this resolver has
+// region-correct build+submit support for today (US/EU/JP); the VALUES are the
+// single source of truth, so adding a region is a region-identity change, not a
+// re-typing of slugs here.
 const AGENCY_GATEWAY: Partial<Record<Agency, { region: GatewayRegion; name: GatewayName }>> = {
-  FDA: { region: 'fda', name: 'esg' },
-  EMA: { region: 'ema', name: 'cesp' },
-  PMDA: { region: 'pmda', name: 'pmda_gateway' },
+  FDA:  { region: REGION_IDENTITY.US.gatewaySlug, name: REGION_IDENTITY.US.defaultGateway },
+  EMA:  { region: REGION_IDENTITY.EU.gatewaySlug, name: REGION_IDENTITY.EU.defaultGateway },
+  PMDA: { region: REGION_IDENTITY.JP.gatewaySlug, name: REGION_IDENTITY.JP.defaultGateway },
 };
 
 const AGENCY_MODULE1: Partial<Record<Agency, string>> = {
-  FDA: '/m1/us/us-regional.xml',
-  EMA: '/m1/eu/eu-regional.xml',
-  PMDA: '/m1/jp/jp-regional.xml',
+  FDA:  `/${REGION_IDENTITY.US.m1Backbone}`,
+  EMA:  `/${REGION_IDENTITY.EU.m1Backbone}`,
+  PMDA: `/${REGION_IDENTITY.JP.m1Backbone}`,
 };
 
 export interface SubmissionPlanRegion {

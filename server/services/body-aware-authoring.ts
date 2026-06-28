@@ -24,6 +24,8 @@ export interface GapAnalysis {
   overallCompleteness: number;
 }
 
+import { resolveToDeficiencyType, resolveToRegistryEntry } from '../../shared/regulatory/submission-type-bridge.js';
+
 type AgencyKey = 'fda' | 'ema' | 'pmda' | 'health_canada' | 'tga' | 'general';
 type SubmissionTypeKey = 'ind' | 'nda' | 'bla' | '510k' | 'pma' | 'de_novo' | 'cer' | 'ectd' | 'general';
 
@@ -31,10 +33,31 @@ const BODY_MAP: Record<string, AgencyKey> = {
   FDA: 'fda', EMA: 'ema', PMDA: 'pmda', MHRA: 'general', NMPA: 'general',
   TGA: 'tga', HEALTH_CANADA: 'health_canada',
 };
-const SUBMISSION_TYPE_MAP: Record<string, SubmissionTypeKey> = {
-  IND: 'ind', NDA: 'nda', BLA: 'bla', '510K': '510k', PMA: 'pma',
-  DE_NOVO: 'de_novo', CER: 'cer', ECTD: 'ectd',
+
+const AGENCY_FROM_REGISTRY: Record<string, AgencyKey> = {
+  FDA: 'fda', EMA: 'ema', PMDA: 'pmda', 'Health Canada': 'health_canada',
+  TGA: 'tga', MHRA: 'general', NMPA: 'general', Swissmedic: 'general',
+  ANVISA: 'general', CDSCO: 'general', MFDS: 'general', HSA: 'general',
 };
+
+function resolveAgencyKey(regulatorBody: string): AgencyKey {
+  const bodyUpper = regulatorBody.toUpperCase();
+  const direct = BODY_MAP[bodyUpper];
+  if (direct) return direct;
+  const entry = resolveToRegistryEntry(regulatorBody);
+  if (entry) return AGENCY_FROM_REGISTRY[entry.agency] ?? 'general';
+  return 'general';
+}
+
+function resolveSubmissionTypeKey(submissionType: string): SubmissionTypeKey {
+  const resolved = resolveToDeficiencyType(submissionType);
+  if (resolved === 'general' || resolved === 'ind' || resolved === 'nda' || resolved === 'bla'
+    || resolved === '510k' || resolved === 'pma' || resolved === 'de_novo'
+    || resolved === 'cer' || resolved === 'ectd') {
+    return resolved;
+  }
+  return 'general';
+}
 const isModule1 = (code: string) => code.startsWith('1.') || code === '1';
 
 // Dynamic loaders — graceful degradation when services unavailable
@@ -69,8 +92,8 @@ export async function getSectionExpectations(
   };
 
   const bodyUpper = regulatorBody.toUpperCase();
-  const agencyKey = BODY_MAP[bodyUpper] ?? 'general';
-  const subTypeKey = SUBMISSION_TYPE_MAP[submissionType.toUpperCase()] ?? 'general';
+  const agencyKey = resolveAgencyKey(regulatorBody);
+  const subTypeKey = resolveSubmissionTypeKey(submissionType);
 
   // Module 1: regional template expectations
   if (isModule1(sectionCode)) {
