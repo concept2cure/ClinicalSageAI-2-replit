@@ -17,11 +17,44 @@ import { I } from './icons';
 import type { VerificationResult } from './useAnaChat';
 import styles from './styles.module.css';
 
-export interface VerificationPanelProps {
-  verification: VerificationResult;
+/**
+ * Compose the targeted fix request AnA receives when the user clicks "Ask AnA
+ * to resolve" on a failed verification — it cites exactly what diverged so AnA
+ * can correct and re-verify. Pure + exported for testing.
+ */
+export function composeVerificationFixMessage(
+  title: string,
+  verification: VerificationResult,
+): string {
+  const parts: string[] = [`The document "${title}" failed verification against the source.`];
+  if (verification.missingRequiredStrings.length > 0) {
+    parts.push(
+      `These required strings are missing and must appear verbatim: ${verification.missingRequiredStrings
+        .map(s => `"${s}"`)
+        .join(', ')}.`,
+    );
+  }
+  const div = verification.divergence;
+  if (div && (div.additions > 0 || div.deletions > 0)) {
+    parts.push(`There are ${div.additions} added and ${div.deletions} dropped line(s) versus the source.`);
+  }
+  parts.push(
+    'Please correct the document so it reproduces the source verbatim — restore the missing strings and reconcile the divergences — then re-verify it.',
+  );
+  return parts.join(' ');
 }
 
-export function VerificationPanel({ verification }: VerificationPanelProps) {
+export interface VerificationPanelProps {
+  verification: VerificationResult;
+  /**
+   * When the document is NOT verified, offer a one-click action to ask AnA to
+   * fix the divergences (missing caption strings / content drift) and re-verify.
+   * Omit to hide the action (e.g. read-only history views).
+   */
+  onResolve?: () => void;
+}
+
+export function VerificationPanel({ verification, onResolve }: VerificationPanelProps) {
   const { ok, missingRequiredStrings, requiredStringsChecked, divergence } = verification;
   const checked = requiredStringsChecked ?? 0;
   const missingCount = missingRequiredStrings.length;
@@ -71,6 +104,13 @@ export function VerificationPanel({ verification }: VerificationPanelProps) {
             </li>
           ))}
         </ul>
+      )}
+
+      {!ok && onResolve && (
+        <button type="button" className={styles.verifyResolve} onClick={onResolve}>
+          <I.sparkles size={12} />
+          <span>Ask AnA to resolve</span>
+        </button>
       )}
     </div>
   );

@@ -1019,3 +1019,21 @@
   font-size: 11px;
   word-break: break-word;
 }
+
+/* "Ask AnA to resolve" — appears in the verification panel when not verified. */
+.verifyResolve {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-main-100, #6366f1);
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
+  border: 1px solid var(--accent-main-100, #6366f1);
+  border-radius: 7px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 200ms ease-out;
+}
+.verifyResolve:hover { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }

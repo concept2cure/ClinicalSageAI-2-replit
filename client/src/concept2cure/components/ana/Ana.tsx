@@ -29,6 +29,7 @@ import { ChatView, type ChatMessageView } from './ChatView';
 import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
+import { composeVerificationFixMessage } from './VerificationPanel';
 import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult } from './useAnaChat';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
@@ -558,17 +559,26 @@ export function Ana({
   const studioOpen = Boolean(activeDocument) && !studioClosed && view === 'chat';
 
   // The version currently shown (clamped), and the draft/verification for it.
+  // Memoized so they stay referentially stable across renders (the resolve
+  // callback depends on them).
   const safeVersionIndex = activeDocument
     ? Math.max(0, Math.min(versionIndex, activeDocument.versions.length - 1))
     : 0;
-  const shownDraft: DocumentStudioDraft | null = activeDocument
-    ? {
-        title: activeDocument.title,
-        documentType: activeDocument.documentType,
-        content: activeDocument.versions[safeVersionIndex]?.content ?? '',
-      }
-    : null;
-  const shownVerification = activeDocument?.versions[safeVersionIndex]?.verification;
+  const shownDraft = useMemo<DocumentStudioDraft | null>(
+    () =>
+      activeDocument
+        ? {
+            title: activeDocument.title,
+            documentType: activeDocument.documentType,
+            content: activeDocument.versions[safeVersionIndex]?.content ?? '',
+          }
+        : null,
+    [activeDocument, safeVersionIndex],
+  );
+  const shownVerification = useMemo(
+    () => activeDocument?.versions[safeVersionIndex]?.verification,
+    [activeDocument, safeVersionIndex],
+  );
 
   // Download the rendered draft as a Word file. Calls the server DOCX render
   // route; on any failure, falls back to an honest Markdown download so the
@@ -592,6 +602,13 @@ export function Ana({
       setDownloading(false);
     }
   }, []);
+
+  // Close the verification loop: when a document failed verification, send AnA
+  // a targeted fix request citing exactly what diverged, then it re-verifies.
+  const handleResolveVerification = useCallback(() => {
+    if (!shownDraft || !shownVerification || shownVerification.ok) return;
+    void chat.send(composeVerificationFixMessage(shownDraft.title, shownVerification));
+  }, [chat, shownDraft, shownVerification]);
 
   // The view content (home / chat / projects / artifacts). Rendered directly
   // when the studio is closed, or inside the left Panel when it is open — so
@@ -683,6 +700,7 @@ export function Ana({
                 onSelectVersion={setVersionIndex}
                 onDownloadDocx={handleDownloadDocx}
                 onClose={() => setStudioClosed(true)}
+                onResolveVerification={handleResolveVerification}
                 downloading={downloading}
               />
             </Panel>
