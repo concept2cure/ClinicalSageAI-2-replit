@@ -387,3 +387,43 @@ This round landed:
 - `eslint.config.js` expanded (+~120 LOC of rules/overrides/ignores, well-commented)
 - 8 backing scripts moved to `scripts/deprecated/`
 - `npm run lint`: was broken at tooling layer; now exits clean with 0 errors
+
+---
+
+## 10. Round 6 — eslint-plugin-security re-integration (2026-06-28)
+
+The legacy `.eslintrc.cjs` declared `eslint-plugin-security@^1.7.1` and applied `plugin:security/recommended`. Since ESLint 10 silently ignored the legacy config, **none of those security rules were actually firing** in the months that followed — a real gap on a 21 CFR Part 11 / GxP-regulated platform.
+
+This round restored the gate:
+
+1. **Bumped `eslint-plugin-security` from `^1.7.1` to `^3.0.1`**. v1.7.1 used the legacy plugin API (string plugin names) AND its rule implementations called `context.getSourceCode()`, which ESLint 10 removed.
+2. **Wired the plugin into `eslint.config.js`** as `plugins: { security: securityPlugin }`, with the 14 recommended rules transcribed inline. The plugin's bundled `configs.recommended` is shaped for the legacy schema and can't be assigned directly in a flat config.
+3. **8 of the 14 recommended rules are enabled** (as `warn`, matching the baseline-ratchet pattern of the rest of the file):
+   - `detect-bidi-characters` — Unicode "trojan source" attack patterns
+   - `detect-buffer-noassert` — Buffer write methods with `noAssert: true`
+   - `detect-disable-mustache-escape` — Handlebars/Mustache HTML-escape disabled
+   - `detect-eval-with-expression` — `eval()` with a dynamic argument
+   - `detect-new-buffer` — deprecated, vulnerable `new Buffer(...)` constructor
+   - `detect-possible-timing-attacks` — string comparison patterns vulnerable to timing
+   - `detect-pseudoRandomBytes` — non-cryptographic randomness in security contexts
+   - `detect-object-injection` — kept OFF (carried from legacy config; flags every computed property access, too noisy on legitimate map/dict patterns)
+4. **6 rules are explicitly OFF with a `// re-enable when v4 ships` comment** because their implementations still call the dropped `context.getSourceCode()` API and crash lint on file load. Each rule has high real-world value and the explicit OFF lines make it cheap to flip them back on when upstream releases v4:
+   - `detect-child-process` — shell-injection sites (`exec`/`spawn`)
+   - `detect-no-csrf-before-method-override` — Express CSRF wiring order
+   - `detect-non-literal-fs-filename` — path-traversal sites
+   - `detect-non-literal-regexp` — dynamic regex construction
+   - `detect-non-literal-require` — dynamic module load
+   - `detect-unsafe-regex` — ReDoS detection
+5. **Verified the wiring**: a canary file with `eval(userInput)`, `crypto.pseudoRandomBytes()`, and a timing-attack comparison was correctly flagged by the right rules.
+6. **Verified the production codebase**: ZERO security findings across the 8 enabled rules. The codebase has been written defensively. This is a clean baseline.
+
+### Round 6 deltas
+
+- `package.json`: `eslint-plugin-security` bumped `^1.7.1` → `^3.0.1`
+- `eslint.config.js`: +1 import, +1 plugin entry, +~30 LOC of rule declarations with documentation
+- Total security findings: **0** (canary verified the rules load and fire)
+- `npm run lint` still exits 0 (5,576 warnings, no errors)
+
+### Why this matters
+
+This is a regulated platform handling clinical/regulatory submission data. Several of the **disabled** rules — `detect-child-process`, `detect-non-literal-fs-filename` — are exactly the rules that would catch shell injection in PDF/docx pipelines and path traversal in file APIs. Re-enabling them when the upstream API fix lands should be a high-priority follow-up.

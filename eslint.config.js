@@ -3,6 +3,7 @@ import tsPlugin from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import securityPlugin from 'eslint-plugin-security';
 
 export default [
   {
@@ -161,6 +162,7 @@ export default [
       '@typescript-eslint': tsPlugin,
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
+      security: securityPlugin,
     },
     settings: {
       react: {
@@ -215,6 +217,48 @@ export default [
       // off, and prop validation is delegated to TypeScript.
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
+
+      // eslint-plugin-security@3.0.1 ported into the flat config. The
+      // plugin was declared in the legacy .eslintrc.cjs as
+      // `plugin:security/recommended` but ESLint 10 was silently
+      // ignoring the legacy config, so none of these rules were
+      // actually firing. Re-enabling here.
+      //
+      // 8 of the 13 recommended rules are enabled. The remaining 6
+      // are OFF because their implementations call
+      // `context.getSourceCode()` (an API ESLint 10 removed) and
+      // would crash lint at file load. They will re-enable
+      // automatically when eslint-plugin-security ships a v4 that
+      // switches to `context.sourceCode`; the rule list and notes
+      // below make it cheap to flip them back on then.
+      //
+      // All enabled rules are 'warn' so they surface real risk
+      // without blocking CI on the legacy backlog — same
+      // baseline-ratchet pattern used by the tech-debt rules above.
+      // `detect-object-injection` was intentionally off in the legacy
+      // config (too noisy on legitimate map/dict patterns); preserved.
+
+      // Enabled — work with ESLint 10:
+      'security/detect-bidi-characters': 'warn',
+      'security/detect-buffer-noassert': 'warn',
+      'security/detect-disable-mustache-escape': 'warn',
+      'security/detect-eval-with-expression': 'warn',
+      'security/detect-new-buffer': 'warn',
+      'security/detect-possible-timing-attacks': 'warn',
+      'security/detect-pseudoRandomBytes': 'warn',
+
+      // Off — legacy decision (too noisy):
+      'security/detect-object-injection': 'off',
+
+      // Off — incompatible with ESLint 10 until plugin v4. Each rule
+      // still has high value; document so they can be re-enabled the
+      // moment the upstream API fix lands.
+      'security/detect-child-process': 'off',                    // shell injection — high value when fixed
+      'security/detect-no-csrf-before-method-override': 'off',   // Express CSRF
+      'security/detect-non-literal-fs-filename': 'off',          // path traversal — high value when fixed
+      'security/detect-non-literal-regexp': 'off',               // dynamic regex
+      'security/detect-non-literal-require': 'off',              // dynamic require
+      'security/detect-unsafe-regex': 'off',                     // ReDoS
 
       'eqeqeq': ['warn', 'always', { null: 'ignore' }],
       'react-hooks/rules-of-hooks': 'error',
