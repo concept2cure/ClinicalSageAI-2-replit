@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-28T20:01:51.044Z",
+  "generatedAt": "2026-06-28T20:35:54.229Z",
   "git": {
-    "sha": "5045ab77c1fbfd6060521b124f11cb78f50f5441",
+    "sha": "40fde1c75ed16a8ae1600b77f3a478d9b290b95b",
     "branch": "claude/magical-thompson-mazk1e"
   },
   "thresholds": {
@@ -2419,7 +2419,7 @@
       },
       {
         "file": "server/routes/cortex-unified.ts",
-        "lines": 1552
+        "lines": 1553
       },
       {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",

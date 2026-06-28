@@ -284,7 +284,8 @@ export type WorkspaceServiceId =
   | 'statistical_defensibility' // endpoint / power sanity (thin; not the biostat app)
   | 'substantial_equivalence_check' // predicate comparison analysis (device/IVD)
   | 'external_intelligence'    // agency feeds / review-timeline signals
-  | 'compliance_calendar';     // post-approval obligation deadlines + escalation
+  | 'compliance_calendar'      // post-approval obligation deadlines + escalation
+  | 'change_control';          // post-approval change classification + vehicle routing
 
 export interface WorkspaceService {
   id: WorkspaceServiceId;
@@ -306,6 +307,7 @@ const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> 
   substantial_equivalence_check:{ label: 'Substantial-equivalence check', feeds: 'both' },
   external_intelligence:        { label: 'External agency intelligence', feeds: 'ana' },
   compliance_calendar:          { label: 'Compliance calendar (obligations & deadlines)', feeds: 'both' },
+  change_control:               { label: 'Change-control classification & vehicle routing', feeds: 'both' },
 };
 
 function svc(id: WorkspaceServiceId): WorkspaceService {
@@ -539,9 +541,14 @@ function servicesFor(opts: {
   // Transmittable dossiers get agency review-timeline signals.
   if (scope === 'dossier') ids.add('external_intelligence');
 
-  // Registration-maintaining filings get the compliance calendar (post-approval obligations).
+  // Registration-maintaining filings get the compliance calendar (post-approval obligations)
+  // and the change-control classifier (supplement/variation vehicle routing).
   if (scope === 'dossier' || scope === 'registration' || family === 'safety_report') {
     ids.add('compliance_calendar');
+    ids.add('change_control');
+  }
+  if (family === 'supplement' || family === 'variation') {
+    ids.add('change_control');
   }
 
   return [...ids].map(svc);

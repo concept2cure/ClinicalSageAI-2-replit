@@ -140,6 +140,7 @@ const SERVICE_PHASES: Record<WorkspaceServiceId, ProjectPhase[]> = {
   readiness_assessment: ['assembly'],
   external_intelligence: ['submission', 'review'],
   compliance_calendar: ['post_market'],
+  change_control: ['post_market'],
 };
 
 /** The phase each evidence claim (from the claim spine) is built in. */
