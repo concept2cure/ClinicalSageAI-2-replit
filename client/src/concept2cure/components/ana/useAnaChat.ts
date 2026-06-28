@@ -52,6 +52,47 @@ export interface AnaToolCall {
 }
 
 /**
+ * Result of `verify_docx_against_source` — the audited "verify it against your
+ * text" step. Surfaced as the Document Studio verification trust-panel: a
+ * pass/fail with the exact caption/boilerplate strings that were missing and
+ * the line-level divergence vs. the supplied source.
+ */
+export interface VerificationResult {
+  ok: boolean;
+  /** Required caption / boilerplate strings absent from the rebuilt document. */
+  missingRequiredStrings: string[];
+  /** How many required strings were checked in total. */
+  requiredStringsChecked?: number;
+  /** Line-level divergence vs. the source text, when a source was supplied. */
+  divergence?: { additions: number; deletions: number; summary?: unknown };
+  /** Factual one-line summary from the tool. */
+  message?: string;
+}
+
+/**
+ * Map a parsed `verify_docx_against_source` tool result into the client
+ * VerificationResult shape. Returns null for an error envelope or non-object.
+ * Exported for unit testing the parse in isolation from the SSE stream.
+ */
+export function mapVerificationResult(
+  parsed: Record<string, unknown> | null | undefined,
+): VerificationResult | null {
+  if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
+  const div = parsed.divergence;
+  return {
+    ok: Boolean(parsed.ok),
+    missingRequiredStrings: Array.isArray(parsed.missingRequiredStrings)
+      ? (parsed.missingRequiredStrings as unknown[]).filter((s): s is string => typeof s === 'string')
+      : [],
+    requiredStringsChecked:
+      typeof parsed.requiredStringsChecked === 'number' ? parsed.requiredStringsChecked : undefined,
+    divergence:
+      div && typeof div === 'object' ? (div as VerificationResult['divergence']) : undefined,
+    message: typeof parsed.message === 'string' ? parsed.message : undefined,
+  };
+}
+
+/**
  * Human-readable labels for AnA's tools, so the chat shows "Computing sample
  * size (biostatistics engine)" instead of a raw tool name. Anything not listed
  * falls back to a humanized form of the tool name.
@@ -71,6 +112,11 @@ const TOOL_LABELS: Record<string, string> = {
   lookup_regulatory_precedents: 'Looking up regulatory precedents',
   check_numerical_integrity: 'Checking numerical integrity',
   check_dossier_consistency: 'Checking dossier consistency',
+  author_docx_native: 'Authoring the document',
+  build_from_template: 'Building from your template',
+  surgical_docx_xml_edit: 'Applying edits to the document',
+  validate_docx: 'Validating document integrity',
+  verify_docx_against_source: 'Verifying against your source',
 };
 
 /** A file attached to a sent message — the minimal shape the thread renders. */
@@ -173,6 +219,11 @@ export interface AnaChatMessage {
    * user see that a deterministic engine ran rather than a free-text guess.
    */
   toolCalls?: AnaToolCall[];
+  /**
+   * Result of the `verify_docx_against_source` step this turn, if it ran.
+   * Powers the Document Studio "verified against your source" trust-panel.
+   */
+  verification?: VerificationResult;
 }
 
 export interface UseAnaChatOptions {
@@ -645,25 +696,38 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // result for an error envelope when status wasn't sent.
               const name: string = event.name || '';
               let failed = false;
-              if (typeof event.status === 'string') {
-                failed = event.status !== 'success';
-              } else if (typeof event.result === 'string') {
+              let parsedResult: Record<string, unknown> | null = null;
+              if (typeof event.result === 'string') {
                 try {
-                  const parsed = JSON.parse(event.result);
-                  failed = Boolean(parsed?.error);
+                  parsedResult = JSON.parse(event.result);
                 } catch {
-                  /* non-JSON result — treat as success */
+                  /* non-JSON result */
                 }
               }
+              if (typeof event.status === 'string') {
+                failed = event.status !== 'success';
+              } else if (parsedResult) {
+                failed = Boolean(parsedResult.error);
+              }
+              // Capture the verification result so the Document Studio trust-panel
+              // can show "verified against your source" (caption strings + diff).
+              const verification: VerificationResult | null =
+                name === 'verify_docx_against_source' ? mapVerificationResult(parsedResult) : null;
               setMessages(prev =>
                 prev.map(m => {
-                  if (m.id !== assistantId || !m.toolCalls) return m;
-                  const idx = [...m.toolCalls].reverse().findIndex(t => t.name === name && t.status === 'running');
-                  if (idx === -1) return m;
-                  const realIdx = m.toolCalls.length - 1 - idx;
-                  const next = m.toolCalls.slice();
-                  next[realIdx] = { ...next[realIdx], status: failed ? 'error' : 'success' };
-                  return { ...m, toolCalls: next };
+                  if (m.id !== assistantId) return m;
+                  let next = m;
+                  if (m.toolCalls) {
+                    const idx = [...m.toolCalls].reverse().findIndex(t => t.name === name && t.status === 'running');
+                    if (idx !== -1) {
+                      const realIdx = m.toolCalls.length - 1 - idx;
+                      const calls = m.toolCalls.slice();
+                      calls[realIdx] = { ...calls[realIdx], status: failed ? 'error' : 'success' };
+                      next = { ...next, toolCalls: calls };
+                    }
+                  }
+                  if (verification) next = { ...next, verification };
+                  return next;
                 })
               );
             } else if (event.type === 'artifact_draft') {
@@ -736,7 +800,6 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         setIsStreaming(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       isStreaming,
       messages,
