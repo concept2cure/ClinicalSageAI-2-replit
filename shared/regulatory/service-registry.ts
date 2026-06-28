@@ -43,7 +43,14 @@ export type WorkspaceServiceId =
   | 'financial_disclosures'    // 21 CFR 54 FCOI — investigator financial disclosure (3454/3455)
   | 'cmc_consistency'          // CMC contradiction detection across specs, stability, batches
   | 'dose_optimization'        // exposure-response / Project Optimus dose selection
-  | 'effort_certification';    // 2 CFR 200.430 personnel effort certification (grant-funded)
+  | 'effort_certification'    // 2 CFR 200.430 personnel effort certification (grant-funded)
+  | 'study_design_judgment'   // biostatistics judgment pipeline (power, fragility, defensibility)
+  | 'nonclinical_send'        // SEND domain validation + CTD M4 routing + readiness gate
+  | 'estimand_framework'      // ICH E9(R1) estimand definition, multiplicity strategy
+  | 'endpoint_intelligence'   // endpoint recommendation from CSR corpus + regulatory guidance
+  | 'contradiction_detection' // formal contradiction governance (authority states, overlays)
+  | 'biologics_pathway'       // modality-specific pathways + biosimilar requirements
+  | 'combination_product';    // FDA OCP primary mode determination + regulatory mapping
 
 export interface WorkspaceService {
   id: WorkspaceServiceId;
@@ -78,6 +85,13 @@ const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> 
   cmc_consistency:              { label: 'CMC consistency & contradiction detection', feeds: 'both' },
   dose_optimization:            { label: 'Dose optimization (exposure-response / Project Optimus)', feeds: 'both' },
   effort_certification:         { label: 'Effort certification (2 CFR 200.430)', feeds: 'both' },
+  study_design_judgment:        { label: 'Study-design judgment (power / fragility / defensibility)', feeds: 'both' },
+  nonclinical_send:             { label: 'Nonclinical SEND validation & CTD M4 routing', feeds: 'both' },
+  estimand_framework:           { label: 'Estimand framework (ICH E9(R1) / multiplicity)', feeds: 'both' },
+  endpoint_intelligence:        { label: 'Endpoint intelligence (CSR corpus / regulatory precedent)', feeds: 'both' },
+  contradiction_detection:      { label: 'Contradiction detection & governance (authority / overlays)', feeds: 'ana' },
+  biologics_pathway:            { label: 'Biologics pathway intelligence (modality / biosimilar)', feeds: 'both' },
+  combination_product:          { label: 'Combination-product classification (FDA OCP / primary mode)', feeds: 'both' },
 };
 
 export function getService(id: WorkspaceServiceId): WorkspaceService {
@@ -196,6 +210,63 @@ export function servicesFor(opts: {
 
   if (family === 'clinical_trial') {
     ids.add('effort_certification');
+  }
+
+  // Study-design judgment: clinical drug/biologic dossiers and clinical trial families
+  if (
+    isClinical &&
+    (vocabulary === 'drug' || vocabulary === 'generic') &&
+    (scope === 'dossier' || family === 'clinical_trial' || family === 'marketing_authorization')
+  ) {
+    ids.add('study_design_judgment');
+  }
+
+  // Nonclinical SEND validation: drug dossiers with M4 scope
+  if (
+    (vocabulary === 'drug' || vocabulary === 'generic') &&
+    (spansAll || mod.includes('M4') || family === 'clinical_trial' || family === 'marketing_authorization')
+  ) {
+    ids.add('nonclinical_send');
+  }
+
+  // Estimand framework: clinical trial design and M5 analysis plans
+  if (
+    (vocabulary === 'drug' || vocabulary === 'generic') &&
+    (family === 'clinical_trial' || mod.includes('M5') || (isClinical && scope === 'dossier'))
+  ) {
+    ids.add('estimand_framework');
+  }
+
+  // Endpoint intelligence: clinical trial design and marketing authorization
+  if (
+    family === 'clinical_trial' || family === 'marketing_authorization' ||
+    family === 'device_approval' || family === 'device_clearance' ||
+    (isClinical && scope === 'dossier')
+  ) {
+    ids.add('endpoint_intelligence');
+  }
+
+  // Contradiction detection: dossier-level governance
+  if (scope === 'dossier') {
+    ids.add('contradiction_detection');
+  }
+
+  // Biologics pathway: biologic/biosimilar/atmp/vaccine product classes
+  if (
+    productClasses.some((p) =>
+      ['biologic', 'biosimilar', 'atmp', 'vaccine'].includes(p),
+    )
+  ) {
+    ids.add('biologics_pathway');
+  }
+
+  // Combination product: when multiple product classes span drug+device/IVD
+  if (
+    productClasses.length >= 2 &&
+    productClasses.some((p) => ['small_molecule', 'biologic', 'biosimilar'].includes(p)) &&
+    productClasses.some((p) => ['medical_device', 'ivd'].includes(p))
+  ) {
+    ids.add('combination_product');
   }
 
   return [...ids].map(getService);

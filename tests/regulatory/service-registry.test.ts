@@ -26,6 +26,9 @@ describe('service-registry — catalog', () => {
       'pediatric_intelligence', 'inspection_readiness', 'controlled_substances',
       'cdx_intelligence', 'financial_disclosures', 'cmc_consistency',
       'dose_optimization', 'effort_certification',
+      'study_design_judgment', 'nonclinical_send', 'estimand_framework',
+      'endpoint_intelligence', 'contradiction_detection', 'biologics_pathway',
+      'combination_product',
     ];
     for (const id of ALL) {
       const svc = getService(id);
@@ -126,5 +129,80 @@ describe('service-registry — servicesFor selection logic', () => {
     const ids = svcIds(drug_dossier);
     expect(ids).toContain('compliance_calendar');
     expect(ids).toContain('change_control');
+  });
+
+  it('drug dossier gets study_design_judgment, nonclinical_send, estimand_framework', () => {
+    const ids = svcIds(drug_dossier);
+    expect(ids).toContain('study_design_judgment');
+    expect(ids).toContain('nonclinical_send');
+    expect(ids).toContain('estimand_framework');
+  });
+
+  it('clinical trial gets endpoint_intelligence', () => {
+    const ids = svcIds(clinical_trial);
+    expect(ids).toContain('endpoint_intelligence');
+  });
+
+  it('dossier scope triggers contradiction_detection', () => {
+    const ids = svcIds(drug_dossier);
+    expect(ids).toContain('contradiction_detection');
+  });
+
+  it('device clearance does NOT get drug-specific new services', () => {
+    const ids = svcIds(device_clearance);
+    expect(ids).not.toContain('study_design_judgment');
+    expect(ids).not.toContain('nonclinical_send');
+    expect(ids).not.toContain('estimand_framework');
+  });
+
+  it('device clearance DOES get endpoint_intelligence and contradiction_detection', () => {
+    const ids = svcIds(device_clearance);
+    expect(ids).toContain('endpoint_intelligence');
+    expect(ids).toContain('contradiction_detection');
+  });
+
+  it('biologic product gets biologics_pathway', () => {
+    const ids = svcIds({
+      scope: 'dossier',
+      vocabulary: 'drug',
+      family: 'marketing_authorization',
+      ctdModule: null,
+      productClasses: ['biologic'],
+      isRegulatory: true,
+    });
+    expect(ids).toContain('biologics_pathway');
+  });
+
+  it('non-biologic drug does NOT get biologics_pathway', () => {
+    const ids = svcIds(drug_dossier);
+    expect(ids).not.toContain('biologics_pathway');
+  });
+
+  it('combination product (drug+device) gets combination_product', () => {
+    const ids = svcIds({
+      scope: 'dossier',
+      vocabulary: 'drug',
+      family: 'marketing_authorization',
+      ctdModule: null,
+      productClasses: ['small_molecule', 'medical_device'],
+      isRegulatory: true,
+    });
+    expect(ids).toContain('combination_product');
+  });
+
+  it('single-class product does NOT get combination_product', () => {
+    const ids = svcIds(drug_dossier);
+    expect(ids).not.toContain('combination_product');
+  });
+
+  it('non-regulatory docs do NOT get any new services', () => {
+    const ids = svcIds(non_regulatory);
+    expect(ids).not.toContain('study_design_judgment');
+    expect(ids).not.toContain('nonclinical_send');
+    expect(ids).not.toContain('estimand_framework');
+    expect(ids).not.toContain('endpoint_intelligence');
+    expect(ids).not.toContain('contradiction_detection');
+    expect(ids).not.toContain('biologics_pathway');
+    expect(ids).not.toContain('combination_product');
   });
 });
