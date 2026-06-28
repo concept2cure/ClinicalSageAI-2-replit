@@ -47,13 +47,13 @@ try {
     pool = new Pool({
       connectionString: databaseUrl,
       ssl: getSslConfig(databaseUrl),
-      max: isProduction ? 40 : 20, // Scale pool for production concurrency
-      idleTimeoutMillis: 30000, // Release idle connections after 30s (balanced for bursty traffic)
+      max: isProduction ? 40 : 20,
+      idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
-      statement_timeout: 30000, // Kill queries running longer than 30s
-      idle_in_transaction_session_timeout: 60000, // Kill idle-in-transaction after 60s
-      allowExitOnIdle: !isProduction, // Dev: let process exit; Prod: keep pool alive
-    });
+      statement_timeout: 30000,
+      idle_in_transaction_session_timeout: 60000,
+      allowExitOnIdle: !isProduction,
+    } as ConstructorParameters<typeof Pool>[0]);
 
     // Observability hook for the RLS rollout (PR A): every pool.query /
     // pool.connect emits a counter labelled by tenant-scope presence and
