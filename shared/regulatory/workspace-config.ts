@@ -67,11 +67,7 @@ import { getClientTypeProfile } from './client-type-profiles.js';
 import { toGatewaySlug } from './region-identity.js';
 import { resolveProgramModel } from './program-model.js';
 import { resolveValidationProfile } from './validation-profile.js';
-import {
-  APP_REGISTRY,
-  type AppRegistryEntry,
-  type WorkspaceAppId,
-} from './app-registry.js';
+import type { WorkspaceAppId } from './app-registry.js';
 import {
   servicesFor,
   getService,
@@ -80,6 +76,13 @@ import {
   type WorkspaceScope,
   type WorkspaceVocabulary,
 } from './service-registry.js';
+import {
+  scopeFor,
+  vocabularyFor,
+  appsFor,
+  personaFor,
+  type WorkspaceApp,
+} from './workspace-derivation.js';
 
 // Re-export service types so downstream consumers are unaffected.
 export type { WorkspaceServiceId, WorkspaceService, WorkspaceScope, WorkspaceVocabulary };
@@ -95,9 +98,7 @@ export type WorkspaceShellZone = (typeof WORKSPACE_SHELL)[number];
 // The app id + discipline types and the catalog data live in the canonical
 // app-registry (single source of truth, shared with license entitlements).
 export type { WorkspaceAppId, AppDiscipline } from './app-registry.js';
-
-/** A discipline app as surfaced in the workspace — its full registry entry. */
-export type WorkspaceApp = AppRegistryEntry;
+export type { WorkspaceApp } from './workspace-derivation.js';
 
 /** Cross-cutting capabilities available on any artifact (not full apps). */
 export type WorkspaceCapability = 'validator' | 'esignature' | 'audit_trail';
@@ -251,12 +252,6 @@ export type WorkspaceConfigInput =
   | string
   | { need: string; clientType?: string; region?: string };
 
-// ─── App catalog (resolved from the canonical app-registry) ──────────────────
-
-function app(id: WorkspaceAppId): WorkspaceApp {
-  return { ...APP_REGISTRY[id] };
-}
-
 // ─── Supplementary (non-filing) document catalog ─────────────────────────────
 
 /**
@@ -298,162 +293,6 @@ const SUPPLEMENTARY_CATALOG: Record<string, SupplementaryDoc> = {
     context: 'Controlled work instruction subordinate to a parent SOP.',
   },
 };
-
-// ─── Derivation helpers ──────────────────────────────────────────────────────
-
-const DOSSIER_FAMILIES: ReadonlySet<ApplicationFamily> = new Set<ApplicationFamily>([
-  'marketing_authorization',
-  'device_approval',
-  'device_clearance',
-  'clinical_trial',
-  // A companion-diagnostic PMA / 510(k) is a full IVD marketing dossier, reviewed
-  // concurrently with the paired therapeutic. It assembles + transmits like any
-  // dossier (submission center + agency gateway + the IVD discipline app set).
-  'companion_diagnostic',
-]);
-
-const CHANGE_FAMILIES: ReadonlySet<ApplicationFamily> = new Set<ApplicationFamily>([
-  'variation',
-  'renewal',
-  'supplement',
-]);
-
-const RECORD_FAMILIES: ReadonlySet<ApplicationFamily> = new Set<ApplicationFamily>([
-  'safety_report',
-]);
-
-function scopeFor(family: ApplicationFamily | null, stage?: string | null): WorkspaceScope {
-  if (!family) return 'document';
-  // A pre-submission interaction (meeting request, co-development agreement,
-  // scientific advice) authors a single document even when it shares a dossier
-  // family — e.g. a CDx co-development agreement is companion_diagnostic but is
-  // not itself the marketing dossier.
-  if (stage === 'pre_submission') return 'document';
-  if (family === 'post_market') return 'registration'; // labeling/registration-status family
-  if (RECORD_FAMILIES.has(family)) return 'record';
-  if (DOSSIER_FAMILIES.has(family) || CHANGE_FAMILIES.has(family)) return 'dossier';
-  // clinical_document, dossier_module, quality_cmc, quality_system,
-  // software_documentation, master_file, designation, pre_submission → a single
-  // authored document (possibly a module-sized subtree).
-  return 'document';
-}
-
-function vocabularyFor(productClasses: ProductClass[], segment?: string): WorkspaceVocabulary {
-  if (productClasses.includes('ivd')) return 'ivd';
-  if (productClasses.includes('medical_device')) return 'device';
-  if (segment === 'medical_devices') return 'device';
-  if (segment === 'diagnostics_ivd') return 'ivd';
-  if (
-    productClasses.some((p) =>
-      ['small_molecule', 'biologic', 'biosimilar', 'generic', 'vaccine', 'atmp'].includes(p),
-    )
-  ) {
-    return 'drug';
-  }
-  return 'generic';
-}
-
-/** Decide which full discipline apps are available inside the project. */
-function appsFor(opts: {
-  scope: WorkspaceScope;
-  vocabulary: WorkspaceVocabulary;
-  family: ApplicationFamily | null;
-  ctdModule: string | null;
-  productClasses: ProductClass[];
-}): WorkspaceApp[] {
-  const { scope, vocabulary, family, ctdModule, productClasses } = opts;
-  const ids = new Set<WorkspaceAppId>();
-
-  const mod = (ctdModule ?? '').toUpperCase();
-  const spansAll = scope === 'dossier';
-  const isDeviceOrIvd =
-    vocabulary === 'device' || vocabulary === 'ivd' ||
-    productClasses.includes('medical_device') || productClasses.includes('ivd');
-
-  // Dossier scope can assemble + transmit; single documents/records cannot.
-  if (scope === 'dossier') ids.add('submission_center');
-
-  // CMC / Module 3 quality.
-  if (spansAll || mod.includes('M3') || family === 'quality_cmc') ids.add('cmc');
-  // Nonclinical / Module 4. Animal studies pull in IACUC governance.
-  if (spansAll || mod.includes('M4')) {
-    ids.add('nonclinical');
-    if (vocabulary === 'drug') ids.add('iacuc');
-  }
-  // Clinical / Module 5 + biostatistics (a CSR alone still needs both).
-  if (spansAll || mod.includes('M5') || family === 'clinical_document') {
-    ids.add('clinical_csr');
-    ids.add('biostatistics');
-  }
-
-  // Investigational context (a trial is being designed/run): study & protocol
-  // design plus human-subjects IRB governance. Covers IND/CTA (clinical_trial),
-  // device IDE (device_clearance), and standalone clinical documents (CSR).
-  const isInvestigational =
-    family === 'clinical_trial' ||
-    family === 'device_clearance' ||
-    family === 'clinical_document' ||
-    mod.includes('M5');
-  if (isInvestigational) {
-    ids.add('study_protocol_design');
-    ids.add('irb');
-  }
-
-  // Biosafety (IBC) where recombinant / gene-therapy / biologic agents are in play.
-  if (productClasses.some((p) => ['biologic', 'atmp', 'vaccine'].includes(p))) {
-    ids.add('ibc');
-  }
-
-  // Device / IVD disciplines.
-  if (isDeviceOrIvd) {
-    ids.add('risk');
-    if (scope === 'dossier') {
-      ids.add('human_factors');
-      ids.add('cybersecurity');
-      ids.add('cer'); // EU MDR/IVDR clinical evaluation / performance evaluation
-      if (family === 'device_clearance') ids.add('substantial_equiv');
-    }
-  }
-
-  // IVD performance: analytical performance is the core IVD evidence (CLSI EP).
-  if (vocabulary === 'ivd' || productClasses.includes('ivd')) {
-    ids.add('analytical_performance');
-  }
-
-  // Biosimilar / generic: the program rests on analytical similarity / bioequivalence.
-  if (productClasses.includes('biosimilar') || productClasses.includes('generic')) {
-    ids.add('analytical_similarity');
-  }
-
-  // Safety / PV — standalone PV reports, marketing applications (RMP, Module 1.12),
-  // and device approvals (post-market surveillance plan) all need the PV workspace.
-  if (family === 'safety_report' || family === 'marketing_authorization' || family === 'device_approval') {
-    ids.add('pharmacovigilance');
-  }
-
-  // Trial Master File travels with any investigational program.
-  if (isInvestigational) ids.add('etmf');
-
-  // Market access / reimbursement opens once a product is heading to market.
-  if (family === 'marketing_authorization' || family === 'device_approval') {
-    ids.add('market_access');
-  }
-
-  // Labeling participates in any dossier and is its own registration function.
-  if (scope === 'dossier' || scope === 'registration') ids.add('labeling');
-
-  return [...ids].map(app);
-}
-
-function personaFor(vocabulary: WorkspaceVocabulary): string {
-  switch (vocabulary) {
-    case 'device': return 'Device regulatory strategist (FDA CDRH / EU MDR)';
-    case 'ivd':    return 'IVD regulatory strategist (FDA CDRH / EU IVDR)';
-    case 'drug':   return 'Drug/biologic regulatory strategist (FDA CDER/CBER / ICH)';
-    case 'quality':return 'Quality systems author (21 CFR 820 / ICH Q10)';
-    default:       return 'Regulatory co-author';
-  }
-}
 
 // ─── The resolver ────────────────────────────────────────────────────────────
 
