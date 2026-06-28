@@ -283,7 +283,8 @@ export type WorkspaceServiceId =
   | 'cdisc_validation'          // SDTM / ADaM conformance
   | 'statistical_defensibility' // endpoint / power sanity (thin; not the biostat app)
   | 'substantial_equivalence_check' // predicate comparison analysis (device/IVD)
-  | 'external_intelligence';    // agency feeds / review-timeline signals
+  | 'external_intelligence'    // agency feeds / review-timeline signals
+  | 'compliance_calendar';     // post-approval obligation deadlines + escalation
 
 export interface WorkspaceService {
   id: WorkspaceServiceId;
@@ -304,6 +305,7 @@ const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> 
   statistical_defensibility:    { label: 'Statistical defensibility check', feeds: 'ana' },
   substantial_equivalence_check:{ label: 'Substantial-equivalence check', feeds: 'both' },
   external_intelligence:        { label: 'External agency intelligence', feeds: 'ana' },
+  compliance_calendar:          { label: 'Compliance calendar (obligations & deadlines)', feeds: 'both' },
 };
 
 function svc(id: WorkspaceServiceId): WorkspaceService {
@@ -536,6 +538,11 @@ function servicesFor(opts: {
   }
   // Transmittable dossiers get agency review-timeline signals.
   if (scope === 'dossier') ids.add('external_intelligence');
+
+  // Registration-maintaining filings get the compliance calendar (post-approval obligations).
+  if (scope === 'dossier' || scope === 'registration' || family === 'safety_report') {
+    ids.add('compliance_calendar');
+  }
 
   return [...ids].map(svc);
 }

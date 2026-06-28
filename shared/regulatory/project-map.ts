@@ -139,6 +139,7 @@ const SERVICE_PHASES: Record<WorkspaceServiceId, ProjectPhase[]> = {
   cross_artifact_intelligence: ['assembly'],
   readiness_assessment: ['assembly'],
   external_intelligence: ['submission', 'review'],
+  compliance_calendar: ['post_market'],
 };
 
 /** The phase each evidence claim (from the claim spine) is built in. */
