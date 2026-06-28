@@ -286,7 +286,11 @@ export type WorkspaceServiceId =
   | 'external_intelligence'    // agency feeds / review-timeline signals
   | 'compliance_calendar'      // post-approval obligation deadlines + escalation
   | 'change_control'           // post-approval change classification + vehicle routing
-  | 'health_economics';        // HTA intelligence, value evidence, reimbursement routing
+  | 'health_economics'         // HTA intelligence, value evidence, reimbursement routing
+  | 'special_designations'     // expedited programs, orphan, breakthrough eligibility
+  | 'pediatric_intelligence'   // pediatric study-plan obligations (PREA iPSP, PIP)
+  | 'inspection_readiness'     // PAI/BIMO/GMP readiness assessment
+  | 'controlled_substances';   // DEA scheduling, handling controls, perpetual inventory
 
 export interface WorkspaceService {
   id: WorkspaceServiceId;
@@ -310,6 +314,10 @@ const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> 
   compliance_calendar:          { label: 'Compliance calendar (obligations & deadlines)', feeds: 'both' },
   change_control:               { label: 'Change-control classification & vehicle routing', feeds: 'both' },
   health_economics:             { label: 'Health-economics & market-access intelligence', feeds: 'both' },
+  special_designations:         { label: 'Special designations & expedited programs', feeds: 'both' },
+  pediatric_intelligence:       { label: 'Pediatric study-plan obligations (PREA/PIP)', feeds: 'both' },
+  inspection_readiness:         { label: 'Inspection readiness (PAI/BIMO/GMP)', feeds: 'both' },
+  controlled_substances:        { label: 'Controlled-substances scheduling & compliance', feeds: 'both' },
 };
 
 function svc(id: WorkspaceServiceId): WorkspaceService {
@@ -556,6 +564,40 @@ function servicesFor(opts: {
   // Products heading to market need health-economics intelligence for HTA/payer strategy.
   if (family === 'marketing_authorization' || family === 'device_approval' || family === 'device_clearance') {
     ids.add('health_economics');
+  }
+
+  // Designation / expedited-program intelligence: any investigational or marketing application
+  // may qualify for orphan, breakthrough, fast-track, or other special designations.
+  if (
+    family === 'clinical_trial' || family === 'marketing_authorization' ||
+    family === 'device_approval' || family === 'device_clearance' ||
+    family === 'designation' || family === 'orphan'
+  ) {
+    ids.add('special_designations');
+  }
+
+  // Pediatric study-plan obligations: triggered by drug/biologic marketing applications
+  // and clinical trial programs (PREA iPSP, EMA PIP).
+  if (
+    family === 'marketing_authorization' || family === 'clinical_trial' ||
+    family === 'pediatric'
+  ) {
+    ids.add('pediatric_intelligence');
+  }
+
+  // Inspection readiness: any dossier filing triggers a pre-approval inspection risk,
+  // and manufacturing/GMP contexts need readiness assessment.
+  if (scope === 'dossier' || family === 'marketing_authorization' || family === 'device_approval') {
+    ids.add('inspection_readiness');
+  }
+
+  // Controlled-substances compliance: drug/biologic programs that may involve
+  // scheduled substances need DEA compliance tracking.
+  if (
+    (vocabulary === 'drug' || vocabulary === 'generic') &&
+    (scope === 'dossier' || family === 'clinical_trial' || family === 'marketing_authorization')
+  ) {
+    ids.add('controlled_substances');
   }
 
   return [...ids].map(svc);

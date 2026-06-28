@@ -142,6 +142,10 @@ const SERVICE_PHASES: Record<WorkspaceServiceId, ProjectPhase[]> = {
   compliance_calendar: ['post_market'],
   change_control: ['post_market'],
   health_economics: ['strategy', 'post_market'],
+  special_designations: ['strategy'],
+  pediatric_intelligence: ['strategy', 'clinical'],
+  inspection_readiness: ['quality', 'review'],
+  controlled_substances: ['strategy', 'clinical'],
 };
 
 /** The phase each evidence claim (from the claim spine) is built in. */
