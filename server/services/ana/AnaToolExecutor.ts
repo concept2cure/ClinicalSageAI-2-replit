@@ -11250,6 +11250,24 @@ registerToolHandler('code_drug', async (input: Record<string, unknown>) => {
   }
 });
 
+// ICH Q1E shelf-life / retest-period estimation by regression — deterministic.
+registerToolHandler('estimate_shelf_life', async (input: Record<string, unknown>) => {
+  try {
+    const { estimateShelfLife } = await import('../cmc/shelf-life.js');
+    const result = estimateShelfLife(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction: 'Report the estimated shelfLife, the regression, and the notes verbatim. If exceedsEvaluatedRange is true, do not extrapolate beyond justified limits. Single-batch/attribute estimate, not multi-batch poolability.',
+    });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|requires|at least|distinct|direction|finite|vary/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `estimate_shelf_life failed: ${m}` });
+  }
+});
+
 // ── Advanced HEOR + CDISC pipeline — deterministic, no DB/network. ──
 registerToolHandler('model_markov_cohort', async (input: Record<string, unknown>) => {
   try {

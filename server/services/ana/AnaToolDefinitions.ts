@@ -22,6 +22,7 @@ import { PHARMACOVIGILANCE_REPORTING_TOOLS } from './pharmacovigilanceReportingT
 import { ANALYTICAL_METHOD_TOOLS } from './analyticalMethodTools';
 import { ADVANCED_MODELING_TOOLS } from './advancedModelingTools';
 import { COVER_LETTER_TOOLS } from './coverLetterTools';
+import { SHELF_LIFE_TOOLS } from './shelfLifeTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7166,6 +7167,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // 510(k) cover-letter + 510(k) summary composition (tenant-scoped). See
   // coverLetterTools.ts.
   ...COVER_LETTER_TOOLS,
+  // ICH Q1E shelf-life / retest-period estimation by regression. See shelfLifeTools.ts.
+  ...SHELF_LIFE_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
