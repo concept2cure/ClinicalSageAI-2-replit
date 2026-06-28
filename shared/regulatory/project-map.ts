@@ -147,6 +147,9 @@ const SERVICE_PHASES: Record<WorkspaceServiceId, ProjectPhase[]> = {
   inspection_readiness: ['quality', 'review'],
   controlled_substances: ['strategy', 'clinical'],
   cdx_intelligence: ['strategy', 'clinical'],
+  financial_disclosures: ['clinical'],
+  cmc_consistency: ['quality', 'assembly'],
+  dose_optimization: ['clinical'],
 };
 
 /** The phase each evidence claim (from the claim spine) is built in. */

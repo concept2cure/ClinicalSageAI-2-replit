@@ -291,7 +291,10 @@ export type WorkspaceServiceId =
   | 'pediatric_intelligence'   // pediatric study-plan obligations (PREA iPSP, PIP)
   | 'inspection_readiness'     // PAI/BIMO/GMP readiness assessment
   | 'controlled_substances'    // DEA scheduling, handling controls, perpetual inventory
-  | 'cdx_intelligence';        // companion-diagnostic pairing, biomarker validity, co-development
+  | 'cdx_intelligence'         // companion-diagnostic pairing, biomarker validity, co-development
+  | 'financial_disclosures'    // 21 CFR 54 FCOI — investigator financial disclosure (3454/3455)
+  | 'cmc_consistency'          // CMC contradiction detection across specs, stability, batches
+  | 'dose_optimization';       // exposure-response / Project Optimus dose selection
 
 export interface WorkspaceService {
   id: WorkspaceServiceId;
@@ -320,6 +323,9 @@ const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> 
   inspection_readiness:         { label: 'Inspection readiness (PAI/BIMO/GMP)', feeds: 'both' },
   controlled_substances:        { label: 'Controlled-substances scheduling & compliance', feeds: 'both' },
   cdx_intelligence:             { label: 'Companion-diagnostic pairing & co-development', feeds: 'both' },
+  financial_disclosures:        { label: 'Financial disclosures (21 CFR 54 FCOI)', feeds: 'both' },
+  cmc_consistency:              { label: 'CMC consistency & contradiction detection', feeds: 'both' },
+  dose_optimization:            { label: 'Dose optimization (exposure-response / Project Optimus)', feeds: 'both' },
 };
 
 function svc(id: WorkspaceServiceId): WorkspaceService {
@@ -609,6 +615,34 @@ function servicesFor(opts: {
     (vocabulary === 'ivd' && scope === 'dossier')
   ) {
     ids.add('cdx_intelligence');
+  }
+
+  // Financial disclosures (21 CFR 54): clinical trial applications and marketing
+  // authorizations must certify or disclose investigator financial interests.
+  if (
+    family === 'clinical_trial' || family === 'marketing_authorization' ||
+    (isClinical && scope === 'dossier')
+  ) {
+    ids.add('financial_disclosures');
+  }
+
+  // CMC consistency: dossier filings with Module 3 / quality content need
+  // contradiction detection across specifications, stability, and batch data.
+  if (
+    scope === 'dossier' ||
+    mod.includes('M3') ||
+    family === 'marketing_authorization' || family === 'device_approval'
+  ) {
+    ids.add('cmc_consistency');
+  }
+
+  // Dose optimization (Project Optimus): drug/biologic programs benefit from
+  // exposure-response modeling to select the lowest efficacious dose.
+  if (
+    (vocabulary === 'drug' || vocabulary === 'generic') &&
+    (family === 'clinical_trial' || family === 'marketing_authorization' || scope === 'dossier')
+  ) {
+    ids.add('dose_optimization');
   }
 
   return [...ids].map(svc);
