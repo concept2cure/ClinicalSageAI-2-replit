@@ -11,7 +11,7 @@ import {
   ErrorState,
   Empty,
 } from '../../master-admin/components/ui';
-import { fmtNumber, fmtRelative } from '../util';
+import { fmtNumber, fmtRelative } from '../bizc-format';
 
 export function MeteringCoverage() {
   const { data, loading, error, refresh } = useMeteringCoverage();

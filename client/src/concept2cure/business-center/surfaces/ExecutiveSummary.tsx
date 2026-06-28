@@ -11,7 +11,7 @@ import {
   ErrorState,
   Empty,
 } from '../../master-admin/components/ui';
-import { fmtUsd, fmtPct, fmtNumber } from '../util';
+import { fmtUsd, fmtPct, fmtNumber } from '../bizc-format';
 
 export function ExecutiveSummary({ onJump }: { onJump?: (nav: string) => void }) {
   const { data, loading, error, refresh } = useExecutiveSummary();

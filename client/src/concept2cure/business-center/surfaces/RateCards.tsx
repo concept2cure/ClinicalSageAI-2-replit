@@ -18,7 +18,7 @@ import {
   Empty,
 } from '../../master-admin/components/ui';
 import { GovernedActionDialog } from '../../master-admin/components/GovernedActionDialog';
-import { fmtUsd, fmtRelative } from '../util';
+import { fmtUsd, fmtRelative } from '../bizc-format';
 import type { CostRate, TierPrice } from '../types';
 
 /** Parse a dollar string (e.g. "14.99") into integer cents. */

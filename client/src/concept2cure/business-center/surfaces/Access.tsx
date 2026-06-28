@@ -11,7 +11,7 @@ import {
   ErrorState,
   Empty,
 } from '../../master-admin/components/ui';
-import { statusTone } from '../util';
+import { statusTone } from '../bizc-format';
 
 export function Access() {
   const { data, loading, error, refresh } = useAccess();

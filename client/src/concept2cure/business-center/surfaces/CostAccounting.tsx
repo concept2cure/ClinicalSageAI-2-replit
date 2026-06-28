@@ -13,7 +13,7 @@ import {
   Empty,
 } from '../../master-admin/components/ui';
 import { I } from '../../mdx/icons';
-import { fmtUsd, fmtPct, statusTone, marginTone } from '../util';
+import { fmtUsd, fmtPct, statusTone, marginTone } from '../bizc-format';
 
 const CSV_URL = '/api/admin/business/cost-accounting.csv';
 
