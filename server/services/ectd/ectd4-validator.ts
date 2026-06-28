@@ -20,6 +20,7 @@
  */
 
 import crypto from 'crypto';
+import { applyRegionalRules } from './regional-rules';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -75,6 +76,12 @@ export interface ECTDLeaf {
   mimeType: string;
   /** File size in bytes */
   fileSize: number;
+  /** Optional raw file buffer — when provided, used for MD5 verification against declared checksum */
+  buffer?: Buffer;
+  /** Optional study identifier — required for M5 clinical leaves (m5.3.*) per ICH M8 v4.0 */
+  studyId?: string;
+  /** Optional lifecycle target leaf id — required for replace/append/delete operations */
+  lifecycleTarget?: string;
 }
 
 /** eCTD 4.0 backbone context of use entry (ICH M8) */
@@ -275,11 +282,21 @@ function requiredSectionsFor(submissionType: string): ReadonlySet<string> {
  *
  * @param leaves - Array of document leaves in the package
  * @param submissionType - Type of submission (default: IND)
+ * @param options - Optional validation context:
+ *   - region: when set, applies regional rule pack (FDA/EMA/PMDA)
+ *   - priorSequenceNumbers + sequenceNumber: enables sequence-gap detection
+ *   - priorLeafIds: enables lifecycle-operation target-leaf reference check
  * @returns Validation result with findings and score
  */
 export function validatePackage(
   leaves: ECTDLeaf[],
-  submissionType: string = 'IND'
+  submissionType: string = 'IND',
+  options?: {
+    region?: 'FDA' | 'EMA' | 'PMDA';
+    priorSequenceNumbers?: string[];
+    sequenceNumber?: string;
+    priorLeafIds?: Set<string>;
+  }
 ): ValidationResult {
   const findings: ValidationFinding[] = [];
   let findingId = 0;
@@ -320,8 +337,10 @@ export function validatePackage(
       });
     }
 
-    // Checksum validation
-    if (!leaf.checksum || leaf.checksum.length !== 32) {
+    // Checksum validation — MD5 must be exactly 32 hexadecimal characters.
+    // Previously this only checked length, which let 32-character non-hex
+    // strings (e.g., base64-like blobs) pass when no buffer was attached.
+    if (!leaf.checksum) {
       findings.push({
         id: `V${++findingId}`,
         severity: 'error',
@@ -329,8 +348,95 @@ export function validatePackage(
         sectionCode: leaf.sectionCode,
         message: `Document "${leaf.title}" has invalid or missing MD5 checksum`,
         fix: 'Regenerate MD5 checksum for the document file',
-        rule: 'FDA ESG Technical Conformance Guide',
+        rule: 'FDA ESG Technical Conformance Guide §3.3',
       });
+    } else if (leaf.checksum.length !== 32) {
+      findings.push({
+        id: `V${++findingId}`,
+        severity: 'error',
+        code: 'INVALID_CHECKSUM_LENGTH',
+        sectionCode: leaf.sectionCode,
+        message: `Document "${leaf.title}" MD5 checksum is ${leaf.checksum.length} characters; expected 32`,
+        fix: 'Regenerate the MD5 hex digest — it must be exactly 32 characters',
+        rule: 'FDA ESG Technical Conformance Guide §3.3',
+      });
+    } else if (!/^[a-f0-9]{32}$/i.test(leaf.checksum)) {
+      findings.push({
+        id: `V${++findingId}`,
+        severity: 'error',
+        code: 'INVALID_CHECKSUM_FORMAT',
+        sectionCode: leaf.sectionCode,
+        message: `Document "${leaf.title}" MD5 checksum is not a valid hex digest`,
+        fix: 'Regenerate the MD5 as a 32-character hexadecimal string ([0-9a-f])',
+        rule: 'FDA ESG Technical Conformance Guide §3.3',
+      });
+    } else if (leaf.checksum !== leaf.checksum.toLowerCase()) {
+      // FDA ESG TCG §3.3: MD5 digests SHOULD be lowercase. Flag uppercase/mixed
+      // case so the team normalizes before submission rather than silently
+      // accepting either case.
+      findings.push({
+        id: `V${++findingId}`,
+        severity: 'warning',
+        code: 'CHECKSUM_NOT_LOWERCASE',
+        sectionCode: leaf.sectionCode,
+        message: `Document "${leaf.title}" MD5 checksum is not lowercase`,
+        fix: 'Normalize the MD5 hex digest to lowercase before submission',
+        rule: 'FDA ESG Technical Conformance Guide §3.3',
+      });
+    }
+
+    // MD5 buffer-vs-declared-checksum verification (only when buffer is provided)
+    if (leaf.buffer) {
+      const computed = computeChecksum(leaf.buffer);
+      const declared = leaf.checksum ?? '';
+      if (computed.toLowerCase() !== declared.toLowerCase()) {
+        findings.push({
+          id: `V${++findingId}`,
+          severity: 'error',
+          code: 'CHECKSUM_MISMATCH',
+          sectionCode: leaf.sectionCode,
+          message: `Declared MD5 does not match computed MD5 for "${leaf.title}"`,
+          fix: 'Recompute MD5 with computeChecksum() and re-store on the leaf',
+          rule: 'FDA ESG Technical Conformance Guide §3.3',
+        });
+      }
+    }
+
+    // M5 clinical study-id mandatory check (m5.3.* — not m5.3 alone)
+    if (/^m5\.3\..+/i.test(leaf.sectionCode)) {
+      if (!leaf.studyId || leaf.studyId.trim() === '') {
+        findings.push({
+          id: `V${++findingId}`,
+          severity: 'error',
+          code: 'MISSING_STUDY_ID',
+          sectionCode: leaf.sectionCode,
+          message: 'M5 clinical leaf has no studyId',
+          fix: 'Set leaf.studyId to the study identifier (e.g., "NCT12345678" or sponsor study code)',
+          rule: 'ICH M8 v4.0 study-tag attribute (M5 clinical)',
+        });
+      }
+    }
+
+    // Lifecycle-op target-leaf reference check (only when priorLeafIds is provided)
+    if (options?.priorLeafIds !== undefined) {
+      if (
+        leaf.operation === 'replace' ||
+        leaf.operation === 'append' ||
+        leaf.operation === 'delete'
+      ) {
+        const target = leaf.lifecycleTarget;
+        if (!target || !options.priorLeafIds.has(target)) {
+          findings.push({
+            id: `V${++findingId}`,
+            severity: 'error',
+            code: 'INVALID_LIFECYCLE_TARGET',
+            sectionCode: leaf.sectionCode,
+            message: 'Lifecycle operation references missing prior leaf',
+            fix: 'Set leaf.lifecycleTarget to a valid prior-leaf id, or change operation to "new"',
+            rule: 'ICH M8 Lifecycle Operations',
+          });
+        }
+      }
     }
 
     // PDF-specific checks
@@ -381,6 +487,31 @@ export function validatePackage(
     }
   }
 
+  // 4. Sequence-number gap detection
+  if (options?.priorSequenceNumbers !== undefined && options?.sequenceNumber !== undefined) {
+    const combined = [...options.priorSequenceNumbers, options.sequenceNumber];
+    const gaps = detectSequenceGaps(combined);
+    for (const missing of gaps) {
+      findings.push({
+        id: `V${++findingId}`,
+        severity: 'warning',
+        code: 'SEQUENCE_GAP',
+        sectionCode: '',
+        message: `Sequence ${missing} is missing`,
+        fix: 'Submit the missing sequence or document the skip',
+        rule: 'eCTD sequence numbering',
+      });
+    }
+  }
+
+  // 5. Regional rule packs
+  if (options?.region) {
+    const regional = applyRegionalRules(leaves, options.region);
+    for (const f of regional) {
+      findings.push({ ...f, id: `V${++findingId}` });
+    }
+  }
+
   // Calculate score
   const errorCount = findings.filter(f => f.severity === 'error').length;
   const warningCount = findings.filter(f => f.severity === 'warning').length;
@@ -402,6 +533,37 @@ export function validatePackage(
     },
     timestamp: new Date().toISOString(),
   };
+}
+
+/**
+ * Detect gaps in a list of 4-digit eCTD sequence numbers.
+ * Inputs are zero-padded to 4 digits internally; the result lists any
+ * missing 4-digit sequences between '0000' and the maximum submitted.
+ *
+ * Example: detectSequenceGaps(['0000', '0002']) → ['0001']
+ */
+export function detectSequenceGaps(submitted: string[]): string[] {
+  if (!submitted || submitted.length === 0) return [];
+
+  // Normalize: zero-pad to 4 digits, drop blanks/non-numerics
+  const normalized = new Set<number>();
+  for (const raw of submitted) {
+    if (raw === undefined || raw === null) continue;
+    const trimmed = String(raw).trim();
+    if (trimmed === '') continue;
+    if (!/^\d+$/.test(trimmed)) continue;
+    normalized.add(parseInt(trimmed, 10));
+  }
+  if (normalized.size === 0) return [];
+
+  const max = Math.max(...Array.from(normalized));
+  const missing: string[] = [];
+  for (let i = 0; i <= max; i++) {
+    if (!normalized.has(i)) {
+      missing.push(String(i).padStart(4, '0'));
+    }
+  }
+  return missing;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
