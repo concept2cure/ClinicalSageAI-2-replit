@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-28T18:49:45.418Z",
+  "generatedAt": "2026-06-28T18:42:33.096Z",
   "git": {
-    "sha": "ea03ef39a464fbdf4d24c7a273a7b41d5467d547",
-    "branch": "concept2cure-v2"
+    "sha": "d77be69339090f05c0d5105ba896d6a3b394b7b8",
+    "branch": "claude/project-map-standards"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -2209,11 +2209,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 570893
+        "bytes": 569954
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 395709
+        "bytes": 395544
       },
       {
         "file": "server/statistics-service.ts",
@@ -2267,11 +2267,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 11650
+        "lines": 11632
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7259
+        "lines": 7256
       },
       {
         "file": "server/statistics-service.ts",
@@ -2438,67 +2438,10 @@
   "comparison": null,
   "ownerSummary": [
     {
-      "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 351,
-      "largeByBytes": 11,
-      "largeByLines": 34
-    },
-    {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 271,
-      "largeByBytes": 2,
-      "largeByLines": 7
-    },
-    {
-      "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 151,
-      "largeByBytes": 0,
-      "largeByLines": 1
-    },
-    {
-      "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 47,
-      "largeByBytes": 1,
-      "largeByLines": 2
-    },
-    {
-      "owner": "Frontend Platform (client/src maintainers)",
-      "duplicateGroups": 39,
-      "largeByBytes": 0,
-      "largeByLines": 0
-    },
-    {
-      "owner": "Developer Experience (scripts maintainers)",
-      "duplicateGroups": 3,
-      "largeByBytes": 0,
-      "largeByLines": 0
-    }
-  ],
-  "owners": [
-    {
-      "pattern": "^server/",
-      "owner": "Backend Platform",
-      "contact": "server/routes + server/services owners"
-    },
-    {
-      "pattern": "^client/src/concept2cure/",
-      "owner": "Concept2Cure Frontend",
-      "contact": "client/src/concept2cure maintainers"
-    },
-    {
-      "pattern": "^client/src/",
-      "owner": "Frontend Platform",
-      "contact": "client/src maintainers"
-    },
-    {
-      "pattern": "^shared/",
-      "owner": "Shared Contracts",
-      "contact": "shared/schema + shared/types owners"
-    },
-    {
-      "pattern": "^scripts/",
-      "owner": "Developer Experience",
-      "contact": "scripts maintainers"
+      "duplicateGroups": 862,
+      "largeByBytes": 14,
+      "largeByLines": 44
     }
   ]
 }
