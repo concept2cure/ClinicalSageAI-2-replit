@@ -425,8 +425,11 @@ function appsFor(opts: {
     ids.add('analytical_similarity');
   }
 
-  // Safety / PV.
-  if (family === 'safety_report') ids.add('pharmacovigilance');
+  // Safety / PV — standalone PV reports, marketing applications (RMP, Module 1.12),
+  // and device approvals (post-market surveillance plan) all need the PV workspace.
+  if (family === 'safety_report' || family === 'marketing_authorization' || family === 'device_approval') {
+    ids.add('pharmacovigilance');
+  }
 
   // Trial Master File travels with any investigational program.
   if (isInvestigational) ids.add('etmf');

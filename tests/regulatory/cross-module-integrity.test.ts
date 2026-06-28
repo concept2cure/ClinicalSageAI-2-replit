@@ -159,6 +159,52 @@ describe('cross-module integrity — workspace config ↔ project map (broad)', 
   });
 });
 
+describe('cross-module integrity — workspace config program → apps', () => {
+  const PROGRAM_FILINGS = ['BLA', 'NDA', '510K', 'US_PMA', 'US_CDX_PMA', 'IND'];
+
+  it('every required claim has at least one supporting app available in the workspace', () => {
+    for (const need of PROGRAM_FILINGS) {
+      const cfg = resolveWorkspaceConfig(need);
+      if (!cfg.program) continue;
+      const cfgAppIds = new Set(cfg.apps.map((a) => a.id));
+      for (const claim of cfg.program.requiredClaims) {
+        const available = claim.supportedByApps.filter((id) => cfgAppIds.has(id));
+        expect(
+          available.length,
+          `Claim "${claim.id}" in "${need}" has NO supporting apps in the workspace (needs one of: ${claim.supportedByApps.join(', ')})`,
+        ).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('every claim-supporting app that IS in the workspace exists in the app registry', () => {
+    for (const need of PROGRAM_FILINGS) {
+      const cfg = resolveWorkspaceConfig(need);
+      if (!cfg.program) continue;
+      for (const claim of cfg.program.requiredClaims) {
+        for (const appId of claim.supportedByApps) {
+          expect(
+            ALL_APP_IDS.has(appId),
+            `Claim "${claim.id}" in "${need}" references unknown app "${appId}"`,
+          ).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('every program segment matches a known client segment', () => {
+    const segmentIds = new Set(Object.keys(CLIENT_SEGMENTS));
+    for (const need of PROGRAM_FILINGS) {
+      const cfg = resolveWorkspaceConfig(need);
+      if (!cfg.program) continue;
+      expect(
+        segmentIds.has(cfg.program.segment),
+        `Program for "${need}" references unknown segment "${cfg.program.segment}"`,
+      ).toBe(true);
+    }
+  });
+});
+
 describe('cross-module integrity — application families → dossier standards', () => {
   const VALID_STANDARDS = new Set(['eCTD', 'CTD', 'ACTD', 'NeeS', 'eSTAR', 'regional', 'none']);
 
