@@ -11250,6 +11250,49 @@ registerToolHandler('code_drug', async (input: Record<string, unknown>) => {
   }
 });
 
+// DailyMed (NLM) published-label lookup — open documented SPL repository.
+// Honest: returns no_match / lookup_failed rather than fabricating a setid.
+registerToolHandler('lookup_published_label', async (input: Record<string, unknown>) => {
+  const drugName = typeof input.drug_name === 'string' ? input.drug_name.trim() : '';
+  if (!drugName) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'drug_name is required (the drug to look up).' });
+  }
+  const maxResults = Math.min(Math.max(Number(input.max_results) || 10, 1), 50);
+  try {
+    const url = `https://dailymed.nlm.nih.gov/dailymed/services/v2/spls.json?drug_name=${encodeURIComponent(drugName)}&pagesize=${maxResults}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000), headers: { Accept: 'application/json' } });
+    if (!res.ok) {
+      return JSON.stringify({ status: 'lookup_failed', source: 'DailyMed (NLM)', message: `DailyMed returned HTTP ${res.status}. Do not fabricate a label; retry or check manually at dailymed.nlm.nih.gov.` });
+    }
+    const data = await res.json();
+    const rows = (data?.data ?? []) as Array<Record<string, unknown>>;
+    const labels = rows.slice(0, maxResults).map(r => ({
+      setid: typeof r.setid === 'string' ? r.setid : undefined,
+      title: typeof r.title === 'string' ? r.title : undefined,
+      splVersion: r.spl_version != null ? Number(r.spl_version) : undefined,
+      publishedDate: typeof r.published_date === 'string' ? r.published_date : undefined,
+    })).filter(l => l.setid);
+    if (labels.length === 0) {
+      return JSON.stringify({ status: 'no_match', source: 'DailyMed (NLM)', query: drugName, message: 'No published label matched. Refine the drug name; do not invent a setid.' });
+    }
+    return JSON.stringify({
+      status: 'found',
+      source: 'DailyMed (NLM, open)',
+      query: drugName,
+      count: labels.length,
+      labels,
+      instruction: 'Reference labels by setid (the authoritative current label). Report titles/dates verbatim; never fabricate label content not retrieved here.',
+    });
+  } catch (err: any) {
+    const aborted = err?.name === 'TimeoutError' || /abort|timeout/i.test(err?.message || '');
+    return JSON.stringify({
+      status: 'lookup_failed',
+      source: 'DailyMed (NLM)',
+      message: aborted ? 'DailyMed request timed out. Do not fabricate a label; retry or check manually.' : `DailyMed lookup failed: ${err?.message || 'unknown error'}.`,
+    });
+  }
+});
+
 // Multi-batch ICH Q1E poolability (ANCOVA combinability) — deterministic.
 registerToolHandler('assess_batch_poolability', async (input: Record<string, unknown>) => {
   try {
