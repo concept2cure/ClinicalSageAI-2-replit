@@ -53,7 +53,11 @@ export type WorkspaceServiceId =
   | 'combination_product'     // FDA OCP primary mode determination + regulatory mapping
   | 'rwe_analytics'           // real-world evidence study design + FHIR execution
   | 'external_control_arm'    // external/historical control synthesis (PSM, IPW, Bayesian)
-  | 'outcome_prediction';     // regulatory outcome prediction from CSR precedent corpus
+  | 'outcome_prediction'      // regulatory outcome prediction from CSR precedent corpus
+  | 'adaptive_trial_operations' // interim analysis, stopping rules, IDMC reporting
+  | 'fih_dose_derivation'     // MRSD/MABEL first-in-human starting dose computation
+  | 'reviewer_simulation'     // anticipated reviewer questions by persona
+  | 'analytical_method_validation'; // ICH Q2(R2) method validation assessment
 
 export interface WorkspaceService {
   id: WorkspaceServiceId;
@@ -98,6 +102,10 @@ const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> 
   rwe_analytics:                { label: 'Real-world evidence analytics (FHIR / comparative cohort)', feeds: 'both' },
   external_control_arm:         { label: 'External control-arm synthesis (PSM / IPW / Bayesian borrowing)', feeds: 'both' },
   outcome_prediction:           { label: 'Regulatory outcome prediction (design → success rate)', feeds: 'both' },
+  adaptive_trial_operations:    { label: 'Adaptive trial operations (interim analysis / IDMC / stopping rules)', feeds: 'both' },
+  fih_dose_derivation:          { label: 'First-in-human dose derivation (MRSD / MABEL)', feeds: 'both' },
+  reviewer_simulation:          { label: 'Reviewer simulation (anticipated questions by persona)', feeds: 'ana' },
+  analytical_method_validation: { label: 'Analytical method validation (ICH Q2(R2))', feeds: 'both' },
 };
 
 export function getService(id: WorkspaceServiceId): WorkspaceService {
@@ -299,6 +307,38 @@ export function servicesFor(opts: {
     scope === 'dossier'
   ) {
     ids.add('outcome_prediction');
+  }
+
+  // Adaptive trial operations: interim analysis and IDMC reporting for adaptive designs
+  if (
+    isClinical &&
+    (vocabulary === 'drug' || vocabulary === 'generic') &&
+    (family === 'clinical_trial' || family === 'marketing_authorization' || scope === 'dossier')
+  ) {
+    ids.add('adaptive_trial_operations');
+  }
+
+  // FIH dose derivation: MRSD/MABEL computation for first-in-human studies
+  if (
+    (vocabulary === 'drug' || vocabulary === 'generic') &&
+    (family === 'clinical_trial' || family === 'marketing_authorization' ||
+     (spansAll && (mod.includes('M4') || isClinical)))
+  ) {
+    ids.add('fih_dose_derivation');
+  }
+
+  // Reviewer simulation: anticipated questions for any regulatory submission
+  if (scope === 'dossier') {
+    ids.add('reviewer_simulation');
+  }
+
+  // Analytical method validation: ICH Q2(R2) for CMC/analytical dossiers
+  if (
+    scope === 'dossier' ||
+    mod.includes('M3') ||
+    family === 'marketing_authorization' || family === 'device_approval'
+  ) {
+    ids.add('analytical_method_validation');
   }
 
   return [...ids].map(getService);

@@ -29,7 +29,8 @@ describe('service-registry — catalog', () => {
       'study_design_judgment', 'nonclinical_send', 'estimand_framework',
       'endpoint_intelligence', 'contradiction_detection', 'biologics_pathway',
       'combination_product', 'rwe_analytics', 'external_control_arm',
-      'outcome_prediction',
+      'outcome_prediction', 'adaptive_trial_operations', 'fih_dose_derivation',
+      'reviewer_simulation', 'analytical_method_validation',
     ];
     for (const id of ALL) {
       const svc = getService(id);
@@ -232,5 +233,68 @@ describe('service-registry — servicesFor selection logic', () => {
     expect(ids).toContain('rwe_analytics');
     expect(ids).toContain('external_control_arm');
     expect(ids).toContain('outcome_prediction');
+  });
+
+  it('drug dossier gets adaptive_trial_operations', () => {
+    const ids = svcIds(drug_dossier);
+    expect(ids).toContain('adaptive_trial_operations');
+  });
+
+  it('clinical trial gets adaptive_trial_operations', () => {
+    const ids = svcIds(clinical_trial);
+    expect(ids).toContain('adaptive_trial_operations');
+  });
+
+  it('device clearance does NOT get adaptive_trial_operations', () => {
+    const ids = svcIds(device_clearance);
+    expect(ids).not.toContain('adaptive_trial_operations');
+  });
+
+  it('drug dossier gets fih_dose_derivation', () => {
+    const ids = svcIds(drug_dossier);
+    expect(ids).toContain('fih_dose_derivation');
+  });
+
+  it('clinical trial gets fih_dose_derivation', () => {
+    const ids = svcIds(clinical_trial);
+    expect(ids).toContain('fih_dose_derivation');
+  });
+
+  it('device clearance does NOT get fih_dose_derivation', () => {
+    const ids = svcIds(device_clearance);
+    expect(ids).not.toContain('fih_dose_derivation');
+  });
+
+  it('dossier scope gets reviewer_simulation', () => {
+    const ids = svcIds(drug_dossier);
+    expect(ids).toContain('reviewer_simulation');
+  });
+
+  it('device dossier also gets reviewer_simulation', () => {
+    const ids = svcIds(device_clearance);
+    expect(ids).toContain('reviewer_simulation');
+  });
+
+  it('non-regulatory docs do NOT get reviewer_simulation', () => {
+    const ids = svcIds(non_regulatory);
+    expect(ids).not.toContain('reviewer_simulation');
+  });
+
+  it('dossier scope gets analytical_method_validation', () => {
+    const ids = svcIds(drug_dossier);
+    expect(ids).toContain('analytical_method_validation');
+  });
+
+  it('device clearance gets analytical_method_validation', () => {
+    const ids = svcIds(device_clearance);
+    expect(ids).toContain('analytical_method_validation');
+  });
+
+  it('non-regulatory docs do NOT get new operational services', () => {
+    const ids = svcIds(non_regulatory);
+    expect(ids).not.toContain('adaptive_trial_operations');
+    expect(ids).not.toContain('fih_dose_derivation');
+    expect(ids).not.toContain('reviewer_simulation');
+    expect(ids).not.toContain('analytical_method_validation');
   });
 });

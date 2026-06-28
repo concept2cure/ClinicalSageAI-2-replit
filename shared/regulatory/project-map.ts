@@ -161,6 +161,10 @@ const SERVICE_PHASES: Record<WorkspaceServiceId, ProjectPhase[]> = {
   rwe_analytics: ['clinical', 'post_market'],
   external_control_arm: ['clinical'],
   outcome_prediction: ['strategy', 'clinical'],
+  adaptive_trial_operations: ['clinical'],
+  fih_dose_derivation: ['nonclinical'],
+  reviewer_simulation: ['assembly', 'review'],
+  analytical_method_validation: ['quality'],
 };
 
 /** The phase each evidence claim (from the claim spine) is built in. */
