@@ -72,26 +72,18 @@ import {
   type AppRegistryEntry,
   type WorkspaceAppId,
 } from './app-registry.js';
+import {
+  servicesFor,
+  getService,
+  type WorkspaceServiceId,
+  type WorkspaceService,
+  type WorkspaceScope,
+  type WorkspaceVocabulary,
+} from './service-registry.js';
 
-// ─── Workspace vocabulary ────────────────────────────────────────────────────
-
-/**
- * The structural shape of what the client selected. Drives how the center file
- * tree is rendered and whether a transmit gateway is even applicable.
- *
- *  - 'dossier'      a multi-module application (NDA, BLA, IND, 510(k), PMA) —
- *                   full CTD/eSTAR tree, assembled + transmitted to an agency.
- *  - 'document'     a single structured document (CSR, CER, SOP, a QOS) — one
- *                   authored artifact with an internal section tree.
- *  - 'record'       a form/data record (ICSR, MedWatch, annual report) — driven
- *                   by fields, not prose.
- *  - 'registration' a perpetual, product-scoped function (labeling/CCDS,
- *                   registration status) that outlives any single submission.
- */
-export type WorkspaceScope = 'dossier' | 'document' | 'record' | 'registration';
-
-/** Domain language the shell speaks for this type. */
-export type WorkspaceVocabulary = 'drug' | 'device' | 'ivd' | 'quality' | 'generic';
+// Re-export service types so downstream consumers are unaffected.
+export type { WorkspaceServiceId, WorkspaceService, WorkspaceScope, WorkspaceVocabulary };
+export { servicesFor, getService };
 
 /**
  * The fixed shell zones — always present in every project, regardless of the
@@ -263,75 +255,6 @@ export type WorkspaceConfigInput =
 
 function app(id: WorkspaceAppId): WorkspaceApp {
   return { ...APP_REGISTRY[id] };
-}
-
-// ─── Service catalog (AnA toolset + inline authoring helpers) ─────────────────
-
-/**
- * Services are capabilities with NO standalone workspace — they feed AnA and are
- * invoked inline while the client authors. Each maps to a real backend service
- * domain. The selected document type decides which are in scope.
- */
-export type WorkspaceServiceId =
-  | 'knowledge_base'             // ICH / pathways / standards / deficiencies lookup
-  | 'regulatory_intelligence'   // CRL/RTF prediction, blended readiness scoring
-  | 'cross_artifact_intelligence' // consistency across the dossier
-  | 'readiness_assessment'      // per-domain readiness verdicts
-  | 'precedent_intelligence'    // precedent mining / predicate intelligence
-  | 'literature_search'         // PubMed / scientific literature
-  | 'evidence_search'           // evidence fabric / sufficiency
-  | 'cdisc_validation'          // SDTM / ADaM conformance
-  | 'statistical_defensibility' // endpoint / power sanity (thin; not the biostat app)
-  | 'substantial_equivalence_check' // predicate comparison analysis (device/IVD)
-  | 'external_intelligence'    // agency feeds / review-timeline signals
-  | 'compliance_calendar'      // post-approval obligation deadlines + escalation
-  | 'change_control'           // post-approval change classification + vehicle routing
-  | 'health_economics'         // HTA intelligence, value evidence, reimbursement routing
-  | 'special_designations'     // expedited programs, orphan, breakthrough eligibility
-  | 'pediatric_intelligence'   // pediatric study-plan obligations (PREA iPSP, PIP)
-  | 'inspection_readiness'     // PAI/BIMO/GMP readiness assessment
-  | 'controlled_substances'    // DEA scheduling, handling controls, perpetual inventory
-  | 'cdx_intelligence'         // companion-diagnostic pairing, biomarker validity, co-development
-  | 'financial_disclosures'    // 21 CFR 54 FCOI — investigator financial disclosure (3454/3455)
-  | 'cmc_consistency'          // CMC contradiction detection across specs, stability, batches
-  | 'dose_optimization'        // exposure-response / Project Optimus dose selection
-  | 'effort_certification';    // 2 CFR 200.430 personnel effort certification (grant-funded)
-
-export interface WorkspaceService {
-  id: WorkspaceServiceId;
-  label: string;
-  /** Where the capability shows up. */
-  feeds: 'ana' | 'inline' | 'both';
-}
-
-const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> = {
-  knowledge_base:               { label: 'Knowledge base (ICH / standards / deficiencies)', feeds: 'both' },
-  regulatory_intelligence:      { label: 'Regulatory intelligence (CRL/RTF, readiness)', feeds: 'both' },
-  cross_artifact_intelligence:  { label: 'Cross-artifact consistency', feeds: 'ana' },
-  readiness_assessment:         { label: 'Readiness assessment', feeds: 'both' },
-  precedent_intelligence:       { label: 'Precedent / predicate intelligence', feeds: 'both' },
-  literature_search:            { label: 'Literature search', feeds: 'inline' },
-  evidence_search:              { label: 'Evidence search / sufficiency', feeds: 'both' },
-  cdisc_validation:             { label: 'CDISC validation (SDTM / ADaM)', feeds: 'inline' },
-  statistical_defensibility:    { label: 'Statistical defensibility check', feeds: 'ana' },
-  substantial_equivalence_check:{ label: 'Substantial-equivalence check', feeds: 'both' },
-  external_intelligence:        { label: 'External agency intelligence', feeds: 'ana' },
-  compliance_calendar:          { label: 'Compliance calendar (obligations & deadlines)', feeds: 'both' },
-  change_control:               { label: 'Change-control classification & vehicle routing', feeds: 'both' },
-  health_economics:             { label: 'Health-economics & market-access intelligence', feeds: 'both' },
-  special_designations:         { label: 'Special designations & expedited programs', feeds: 'both' },
-  pediatric_intelligence:       { label: 'Pediatric study-plan obligations (PREA/PIP)', feeds: 'both' },
-  inspection_readiness:         { label: 'Inspection readiness (PAI/BIMO/GMP)', feeds: 'both' },
-  controlled_substances:        { label: 'Controlled-substances scheduling & compliance', feeds: 'both' },
-  cdx_intelligence:             { label: 'Companion-diagnostic pairing & co-development', feeds: 'both' },
-  financial_disclosures:        { label: 'Financial disclosures (21 CFR 54 FCOI)', feeds: 'both' },
-  cmc_consistency:              { label: 'CMC consistency & contradiction detection', feeds: 'both' },
-  dose_optimization:            { label: 'Dose optimization (exposure-response / Project Optimus)', feeds: 'both' },
-  effort_certification:         { label: 'Effort certification (2 CFR 200.430)', feeds: 'both' },
-};
-
-function svc(id: WorkspaceServiceId): WorkspaceService {
-  return { id, ...SERVICE_CATALOG[id] };
 }
 
 // ─── Supplementary (non-filing) document catalog ─────────────────────────────
@@ -519,143 +442,6 @@ function appsFor(opts: {
   return [...ids].map(app);
 }
 
-/** Decide which inline/AnA services are in scope for this selection. */
-function servicesFor(opts: {
-  scope: WorkspaceScope;
-  vocabulary: WorkspaceVocabulary;
-  family: ApplicationFamily | null;
-  ctdModule: string | null;
-  productClasses: ProductClass[];
-  isRegulatory: boolean;
-}): WorkspaceService[] {
-  const { scope, vocabulary, family, ctdModule, productClasses, isRegulatory } = opts;
-  const ids = new Set<WorkspaceServiceId>(['knowledge_base', 'cross_artifact_intelligence']);
-
-  // Non-regulatory docs (SOP/WI) get authoring aids only — no agency intelligence.
-  if (!isRegulatory) {
-    return [...ids].map(svc);
-  }
-
-  ids.add('regulatory_intelligence');
-  ids.add('readiness_assessment');
-
-  const mod = (ctdModule ?? '').toUpperCase();
-  const spansAll = scope === 'dossier';
-  const isDeviceOrIvd =
-    vocabulary === 'device' || vocabulary === 'ivd' ||
-    productClasses.includes('medical_device') || productClasses.includes('ivd');
-  const isClinical = spansAll || mod.includes('M5') || family === 'clinical_document' || family === 'clinical_trial';
-
-  if (isClinical) {
-    ids.add('literature_search');
-    ids.add('evidence_search');
-    ids.add('cdisc_validation');
-    ids.add('statistical_defensibility');
-    ids.add('precedent_intelligence');
-  }
-  if (isDeviceOrIvd) {
-    ids.add('precedent_intelligence'); // predicate intelligence
-    ids.add('evidence_search');
-    if (family === 'device_clearance' || scope === 'dossier') ids.add('substantial_equivalence_check');
-  }
-  // Transmittable dossiers get agency review-timeline signals.
-  if (scope === 'dossier') ids.add('external_intelligence');
-
-  // Registration-maintaining filings get the compliance calendar (post-approval obligations)
-  // and the change-control classifier (supplement/variation vehicle routing).
-  if (scope === 'dossier' || scope === 'registration' || family === 'safety_report') {
-    ids.add('compliance_calendar');
-    ids.add('change_control');
-  }
-  if (family === 'supplement' || family === 'variation') {
-    ids.add('change_control');
-  }
-
-  // Products heading to market need health-economics intelligence for HTA/payer strategy.
-  if (family === 'marketing_authorization' || family === 'device_approval' || family === 'device_clearance') {
-    ids.add('health_economics');
-  }
-
-  // Designation / expedited-program intelligence: any investigational or marketing application
-  // may qualify for orphan, breakthrough, fast-track, or other special designations.
-  if (
-    family === 'clinical_trial' || family === 'marketing_authorization' ||
-    family === 'device_approval' || family === 'device_clearance' ||
-    family === 'designation' || family === 'orphan'
-  ) {
-    ids.add('special_designations');
-  }
-
-  // Pediatric study-plan obligations: triggered by drug/biologic marketing applications
-  // and clinical trial programs (PREA iPSP, EMA PIP).
-  if (
-    family === 'marketing_authorization' || family === 'clinical_trial' ||
-    family === 'pediatric'
-  ) {
-    ids.add('pediatric_intelligence');
-  }
-
-  // Inspection readiness: any dossier filing triggers a pre-approval inspection risk,
-  // and manufacturing/GMP contexts need readiness assessment.
-  if (scope === 'dossier' || family === 'marketing_authorization' || family === 'device_approval') {
-    ids.add('inspection_readiness');
-  }
-
-  // Controlled-substances compliance: drug/biologic programs that may involve
-  // scheduled substances need DEA compliance tracking.
-  if (
-    (vocabulary === 'drug' || vocabulary === 'generic') &&
-    (scope === 'dossier' || family === 'clinical_trial' || family === 'marketing_authorization')
-  ) {
-    ids.add('controlled_substances');
-  }
-
-  // Companion-diagnostic intelligence: IVD CDx filings and any therapeutic program
-  // that may pair with a CDx need biomarker validity and co-development assessment.
-  if (
-    family === 'companion_diagnostic' ||
-    (vocabulary === 'ivd' && scope === 'dossier')
-  ) {
-    ids.add('cdx_intelligence');
-  }
-
-  // Financial disclosures (21 CFR 54): clinical trial applications and marketing
-  // authorizations must certify or disclose investigator financial interests.
-  if (
-    family === 'clinical_trial' || family === 'marketing_authorization' ||
-    (isClinical && scope === 'dossier')
-  ) {
-    ids.add('financial_disclosures');
-  }
-
-  // CMC consistency: dossier filings with Module 3 / quality content need
-  // contradiction detection across specifications, stability, and batch data.
-  if (
-    scope === 'dossier' ||
-    mod.includes('M3') ||
-    family === 'marketing_authorization' || family === 'device_approval'
-  ) {
-    ids.add('cmc_consistency');
-  }
-
-  // Dose optimization (Project Optimus): drug/biologic programs benefit from
-  // exposure-response modeling to select the lowest efficacious dose.
-  if (
-    (vocabulary === 'drug' || vocabulary === 'generic') &&
-    (family === 'clinical_trial' || family === 'marketing_authorization' || scope === 'dossier')
-  ) {
-    ids.add('dose_optimization');
-  }
-
-  // Effort certification (2 CFR 200.430): grant-funded clinical trial programs
-  // need personnel effort certification for Uniform Guidance compliance.
-  if (family === 'clinical_trial') {
-    ids.add('effort_certification');
-  }
-
-  return [...ids].map(svc);
-}
-
 function personaFor(vocabulary: WorkspaceVocabulary): string {
   switch (vocabulary) {
     case 'device': return 'Device regulatory strategist (FDA CDRH / EU MDR)';
@@ -791,7 +577,7 @@ function resolveBaseConfig(need: string): WorkspaceConfig {
     editor: { validationProfile: 'generic_document', dossierStandard: 'none', requiredArtifacts: [] },
     coAuthor: { persona: 'Regulatory co-author', context: 'Unrecognized document type — author freely; no profile applied.' },
     apps: [],
-    services: [svc('knowledge_base')],
+    services: [getService('knowledge_base')],
     capabilities: ['esignature', 'audit_trail'],
     gateway: null,
     lifecycleActions: ['draft', 'review', 'approve'],

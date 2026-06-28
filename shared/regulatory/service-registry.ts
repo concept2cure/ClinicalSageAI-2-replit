@@ -1,0 +1,202 @@
+/**
+ * Service registry — the catalog of inline/AnA capabilities and the selection
+ * logic that decides which are in scope for a given document type.
+ *
+ * Services are capabilities with NO standalone workspace — they feed AnA and
+ * are invoked inline while the client authors. Each maps to a real backend
+ * service domain. The selected document type decides which are in scope.
+ *
+ * Extracted from workspace-config.ts for modularity (the service catalog is
+ * self-contained and growing). workspace-config re-exports the types so
+ * downstream consumers are unaffected.
+ *
+ * @module shared/regulatory/service-registry
+ */
+
+import type { ApplicationFamily, ProductClass } from './document-taxonomy.js';
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+export type WorkspaceScope = 'dossier' | 'document' | 'record' | 'registration';
+export type WorkspaceVocabulary = 'drug' | 'device' | 'ivd' | 'quality' | 'generic';
+
+export type WorkspaceServiceId =
+  | 'knowledge_base'             // ICH / pathways / standards / deficiencies lookup
+  | 'regulatory_intelligence'   // CRL/RTF prediction, blended readiness scoring
+  | 'cross_artifact_intelligence' // consistency across the dossier
+  | 'readiness_assessment'      // per-domain readiness verdicts
+  | 'precedent_intelligence'    // precedent mining / predicate intelligence
+  | 'literature_search'         // PubMed / scientific literature
+  | 'evidence_search'           // evidence fabric / sufficiency
+  | 'cdisc_validation'          // SDTM / ADaM conformance
+  | 'statistical_defensibility' // endpoint / power sanity (thin; not the biostat app)
+  | 'substantial_equivalence_check' // predicate comparison analysis (device/IVD)
+  | 'external_intelligence'    // agency feeds / review-timeline signals
+  | 'compliance_calendar'      // post-approval obligation deadlines + escalation
+  | 'change_control'           // post-approval change classification + vehicle routing
+  | 'health_economics'         // HTA intelligence, value evidence, reimbursement routing
+  | 'special_designations'     // expedited programs, orphan, breakthrough eligibility
+  | 'pediatric_intelligence'   // pediatric study-plan obligations (PREA iPSP, PIP)
+  | 'inspection_readiness'     // PAI/BIMO/GMP readiness assessment
+  | 'controlled_substances'    // DEA scheduling, handling controls, perpetual inventory
+  | 'cdx_intelligence'         // companion-diagnostic pairing, biomarker validity, co-development
+  | 'financial_disclosures'    // 21 CFR 54 FCOI — investigator financial disclosure (3454/3455)
+  | 'cmc_consistency'          // CMC contradiction detection across specs, stability, batches
+  | 'dose_optimization'        // exposure-response / Project Optimus dose selection
+  | 'effort_certification';    // 2 CFR 200.430 personnel effort certification (grant-funded)
+
+export interface WorkspaceService {
+  id: WorkspaceServiceId;
+  label: string;
+  /** Where the capability shows up. */
+  feeds: 'ana' | 'inline' | 'both';
+}
+
+// ─── Catalog ────────────────────────────────────────────────────────────────
+
+const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> = {
+  knowledge_base:               { label: 'Knowledge base (ICH / standards / deficiencies)', feeds: 'both' },
+  regulatory_intelligence:      { label: 'Regulatory intelligence (CRL/RTF, readiness)', feeds: 'both' },
+  cross_artifact_intelligence:  { label: 'Cross-artifact consistency', feeds: 'ana' },
+  readiness_assessment:         { label: 'Readiness assessment', feeds: 'both' },
+  precedent_intelligence:       { label: 'Precedent / predicate intelligence', feeds: 'both' },
+  literature_search:            { label: 'Literature search', feeds: 'inline' },
+  evidence_search:              { label: 'Evidence search / sufficiency', feeds: 'both' },
+  cdisc_validation:             { label: 'CDISC validation (SDTM / ADaM)', feeds: 'inline' },
+  statistical_defensibility:    { label: 'Statistical defensibility check', feeds: 'ana' },
+  substantial_equivalence_check:{ label: 'Substantial-equivalence check', feeds: 'both' },
+  external_intelligence:        { label: 'External agency intelligence', feeds: 'ana' },
+  compliance_calendar:          { label: 'Compliance calendar (obligations & deadlines)', feeds: 'both' },
+  change_control:               { label: 'Change-control classification & vehicle routing', feeds: 'both' },
+  health_economics:             { label: 'Health-economics & market-access intelligence', feeds: 'both' },
+  special_designations:         { label: 'Special designations & expedited programs', feeds: 'both' },
+  pediatric_intelligence:       { label: 'Pediatric study-plan obligations (PREA/PIP)', feeds: 'both' },
+  inspection_readiness:         { label: 'Inspection readiness (PAI/BIMO/GMP)', feeds: 'both' },
+  controlled_substances:        { label: 'Controlled-substances scheduling & compliance', feeds: 'both' },
+  cdx_intelligence:             { label: 'Companion-diagnostic pairing & co-development', feeds: 'both' },
+  financial_disclosures:        { label: 'Financial disclosures (21 CFR 54 FCOI)', feeds: 'both' },
+  cmc_consistency:              { label: 'CMC consistency & contradiction detection', feeds: 'both' },
+  dose_optimization:            { label: 'Dose optimization (exposure-response / Project Optimus)', feeds: 'both' },
+  effort_certification:         { label: 'Effort certification (2 CFR 200.430)', feeds: 'both' },
+};
+
+export function getService(id: WorkspaceServiceId): WorkspaceService {
+  return { id, ...SERVICE_CATALOG[id] };
+}
+
+// ─── Selection logic ────────────────────────────────────────────────────────
+
+/** Decide which inline/AnA services are in scope for this selection. */
+export function servicesFor(opts: {
+  scope: WorkspaceScope;
+  vocabulary: WorkspaceVocabulary;
+  family: ApplicationFamily | null;
+  ctdModule: string | null;
+  productClasses: ProductClass[];
+  isRegulatory: boolean;
+}): WorkspaceService[] {
+  const { scope, vocabulary, family, ctdModule, productClasses, isRegulatory } = opts;
+  const ids = new Set<WorkspaceServiceId>(['knowledge_base', 'cross_artifact_intelligence']);
+
+  // Non-regulatory docs (SOP/WI) get authoring aids only — no agency intelligence.
+  if (!isRegulatory) {
+    return [...ids].map(getService);
+  }
+
+  ids.add('regulatory_intelligence');
+  ids.add('readiness_assessment');
+
+  const mod = (ctdModule ?? '').toUpperCase();
+  const spansAll = scope === 'dossier';
+  const isDeviceOrIvd =
+    vocabulary === 'device' || vocabulary === 'ivd' ||
+    productClasses.includes('medical_device') || productClasses.includes('ivd');
+  const isClinical = spansAll || mod.includes('M5') || family === 'clinical_document' || family === 'clinical_trial';
+
+  if (isClinical) {
+    ids.add('literature_search');
+    ids.add('evidence_search');
+    ids.add('cdisc_validation');
+    ids.add('statistical_defensibility');
+    ids.add('precedent_intelligence');
+  }
+  if (isDeviceOrIvd) {
+    ids.add('precedent_intelligence');
+    ids.add('evidence_search');
+    if (family === 'device_clearance' || scope === 'dossier') ids.add('substantial_equivalence_check');
+  }
+  if (scope === 'dossier') ids.add('external_intelligence');
+
+  if (scope === 'dossier' || scope === 'registration' || family === 'safety_report') {
+    ids.add('compliance_calendar');
+    ids.add('change_control');
+  }
+  if (family === 'supplement' || family === 'variation') {
+    ids.add('change_control');
+  }
+
+  if (family === 'marketing_authorization' || family === 'device_approval' || family === 'device_clearance') {
+    ids.add('health_economics');
+  }
+
+  if (
+    family === 'clinical_trial' || family === 'marketing_authorization' ||
+    family === 'device_approval' || family === 'device_clearance' ||
+    family === 'designation' || family === 'orphan'
+  ) {
+    ids.add('special_designations');
+  }
+
+  if (
+    family === 'marketing_authorization' || family === 'clinical_trial' ||
+    family === 'pediatric'
+  ) {
+    ids.add('pediatric_intelligence');
+  }
+
+  if (scope === 'dossier' || family === 'marketing_authorization' || family === 'device_approval') {
+    ids.add('inspection_readiness');
+  }
+
+  if (
+    (vocabulary === 'drug' || vocabulary === 'generic') &&
+    (scope === 'dossier' || family === 'clinical_trial' || family === 'marketing_authorization')
+  ) {
+    ids.add('controlled_substances');
+  }
+
+  if (
+    family === 'companion_diagnostic' ||
+    (vocabulary === 'ivd' && scope === 'dossier')
+  ) {
+    ids.add('cdx_intelligence');
+  }
+
+  if (
+    family === 'clinical_trial' || family === 'marketing_authorization' ||
+    (isClinical && scope === 'dossier')
+  ) {
+    ids.add('financial_disclosures');
+  }
+
+  if (
+    scope === 'dossier' ||
+    mod.includes('M3') ||
+    family === 'marketing_authorization' || family === 'device_approval'
+  ) {
+    ids.add('cmc_consistency');
+  }
+
+  if (
+    (vocabulary === 'drug' || vocabulary === 'generic') &&
+    (family === 'clinical_trial' || family === 'marketing_authorization' || scope === 'dossier')
+  ) {
+    ids.add('dose_optimization');
+  }
+
+  if (family === 'clinical_trial') {
+    ids.add('effort_certification');
+  }
+
+  return [...ids].map(getService);
+}
