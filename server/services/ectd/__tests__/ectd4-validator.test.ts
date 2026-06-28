@@ -68,19 +68,32 @@ describe('quickValidate', () => {
     expect(r.completeness).toBeLessThan(100);
     expect(r.missing).toEqual(IND_REQUIRED.slice(10));
   });
-  it('does not apply IND required sections to a non-IND submission', () => {
-    // Previously both ternary branches were IND_REQUIRED_SECTIONS, so an NDA with
-    // no IND sections was wrongly reported as missing all of them.
+  it('applies the NDA profile (not IND) to a non-IND submission', () => {
+    // Guards the bug where every type was validated against IND_REQUIRED_SECTIONS.
+    // An empty NDA is missing its OWN required sections (21 CFR 314.50 / ICH M4),
+    // not IND's — so IND-only sections must never be flagged on an NDA.
     const r = quickValidate([], 'NDA');
-    expect(r.missing).toHaveLength(0);
-    expect(r.completeness).toBe(100);
+    expect(r.missing).not.toContain('m1.6'); // IND general investigational plan
+    expect(r.missing).not.toContain('m1.7'); // IND investigator's brochure
+    expect(r.missing).not.toContain('m1.9'); // IND environmental assessment
+    // NDA-specific required sections that are absent are correctly flagged.
+    expect(r.missing).toContain('m2.5'); // Clinical Overview
+    expect(r.missing).toContain('m1.14'); // Labeling
   });
 });
 
 describe('validatePackage — submission type', () => {
-  it('does not flag IND sections as missing on a non-IND submission', () => {
+  it('does not flag IND-only sections as missing on a non-IND submission', () => {
     const res = validatePackage([leaf({ sectionCode: 'm1.1' })], 'NDA');
-    expect(res.findings.filter(f => f.code === 'MISSING_REQUIRED_SECTION')).toHaveLength(0);
+    const missing = res.findings
+      .filter(f => f.code === 'MISSING_REQUIRED_SECTION')
+      .map(f => f.sectionCode);
+    // IND-only sections are not part of the NDA profile, so they're never missing…
+    expect(missing).not.toContain('m1.6');
+    expect(missing).not.toContain('m1.7');
+    expect(missing).not.toContain('m1.9');
+    // …while an absent NDA-specific required section is flagged.
+    expect(missing).toContain('m2.5');
   });
   it('still validates IND required sections for an IND submission', () => {
     const res = validatePackage([], 'IND');
