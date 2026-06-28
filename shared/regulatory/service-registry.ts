@@ -50,7 +50,10 @@ export type WorkspaceServiceId =
   | 'endpoint_intelligence'   // endpoint recommendation from CSR corpus + regulatory guidance
   | 'contradiction_detection' // formal contradiction governance (authority states, overlays)
   | 'biologics_pathway'       // modality-specific pathways + biosimilar requirements
-  | 'combination_product';    // FDA OCP primary mode determination + regulatory mapping
+  | 'combination_product'     // FDA OCP primary mode determination + regulatory mapping
+  | 'rwe_analytics'           // real-world evidence study design + FHIR execution
+  | 'external_control_arm'    // external/historical control synthesis (PSM, IPW, Bayesian)
+  | 'outcome_prediction';     // regulatory outcome prediction from CSR precedent corpus
 
 export interface WorkspaceService {
   id: WorkspaceServiceId;
@@ -92,6 +95,9 @@ const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> 
   contradiction_detection:      { label: 'Contradiction detection & governance (authority / overlays)', feeds: 'ana' },
   biologics_pathway:            { label: 'Biologics pathway intelligence (modality / biosimilar)', feeds: 'both' },
   combination_product:          { label: 'Combination-product classification (FDA OCP / primary mode)', feeds: 'both' },
+  rwe_analytics:                { label: 'Real-world evidence analytics (FHIR / comparative cohort)', feeds: 'both' },
+  external_control_arm:         { label: 'External control-arm synthesis (PSM / IPW / Bayesian borrowing)', feeds: 'both' },
+  outcome_prediction:           { label: 'Regulatory outcome prediction (design → success rate)', feeds: 'both' },
 };
 
 export function getService(id: WorkspaceServiceId): WorkspaceService {
@@ -267,6 +273,32 @@ export function servicesFor(opts: {
     productClasses.some((p) => ['medical_device', 'ivd'].includes(p))
   ) {
     ids.add('combination_product');
+  }
+
+  // RWE analytics: clinical dossier work where real-world data can inform design
+  if (
+    isClinical &&
+    (family === 'marketing_authorization' || family === 'clinical_trial' || scope === 'dossier')
+  ) {
+    ids.add('rwe_analytics');
+  }
+
+  // External control arm: single-arm or accelerated approval contexts
+  if (
+    isClinical &&
+    (vocabulary === 'drug' || vocabulary === 'generic') &&
+    (family === 'clinical_trial' || family === 'marketing_authorization' || scope === 'dossier')
+  ) {
+    ids.add('external_control_arm');
+  }
+
+  // Outcome prediction: strategy-phase design optimization
+  if (
+    family === 'clinical_trial' || family === 'marketing_authorization' ||
+    family === 'device_approval' || family === 'device_clearance' ||
+    scope === 'dossier'
+  ) {
+    ids.add('outcome_prediction');
   }
 
   return [...ids].map(getService);

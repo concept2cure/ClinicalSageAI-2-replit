@@ -28,7 +28,8 @@ describe('service-registry — catalog', () => {
       'dose_optimization', 'effort_certification',
       'study_design_judgment', 'nonclinical_send', 'estimand_framework',
       'endpoint_intelligence', 'contradiction_detection', 'biologics_pathway',
-      'combination_product',
+      'combination_product', 'rwe_analytics', 'external_control_arm',
+      'outcome_prediction',
     ];
     for (const id of ALL) {
       const svc = getService(id);
@@ -204,5 +205,32 @@ describe('service-registry — servicesFor selection logic', () => {
     expect(ids).not.toContain('contradiction_detection');
     expect(ids).not.toContain('biologics_pathway');
     expect(ids).not.toContain('combination_product');
+    expect(ids).not.toContain('rwe_analytics');
+    expect(ids).not.toContain('external_control_arm');
+    expect(ids).not.toContain('outcome_prediction');
+  });
+
+  it('drug dossier gets rwe_analytics and external_control_arm', () => {
+    const ids = svcIds(drug_dossier);
+    expect(ids).toContain('rwe_analytics');
+    expect(ids).toContain('external_control_arm');
+  });
+
+  it('dossier scope gets outcome_prediction', () => {
+    const ids = svcIds(drug_dossier);
+    expect(ids).toContain('outcome_prediction');
+  });
+
+  it('device clearance gets outcome_prediction but not external_control_arm', () => {
+    const ids = svcIds(device_clearance);
+    expect(ids).toContain('outcome_prediction');
+    expect(ids).not.toContain('external_control_arm');
+  });
+
+  it('clinical trial gets all three analytical services', () => {
+    const ids = svcIds(clinical_trial);
+    expect(ids).toContain('rwe_analytics');
+    expect(ids).toContain('external_control_arm');
+    expect(ids).toContain('outcome_prediction');
   });
 });

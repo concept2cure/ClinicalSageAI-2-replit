@@ -158,6 +158,9 @@ const SERVICE_PHASES: Record<WorkspaceServiceId, ProjectPhase[]> = {
   contradiction_detection: ['assembly', 'review'],
   biologics_pathway: ['strategy', 'quality'],
   combination_product: ['strategy'],
+  rwe_analytics: ['clinical', 'post_market'],
+  external_control_arm: ['clinical'],
+  outcome_prediction: ['strategy', 'clinical'],
 };
 
 /** The phase each evidence claim (from the claim spine) is built in. */
