@@ -1,0 +1,359 @@
+/* ═════════════════════════════════════════════════════════════════
+   Business Center — owner + finance executive console.
+   Non-client-facing. Scoped entirely under `.bizc` so it never collides
+   with the MDX / Master Administration / home global shell CSS. Tokens
+   come from design-system/colors_and_type.css (imported once at the client
+   root); we only alias the brand-accent name and declare local layout vars.
+
+   This module's own shell + surfaces use `bizc-` class names. It also imports
+   a few read-only primitives from the Master Administration module
+   (components/ui + GovernedActionDialog) which emit `ma-`/`.ma-` classes; we
+   therefore define those `ma-` classes here, under the `.bizc` root, so the
+   imported components render correctly without depending on master-admin/app.css.
+   ═════════════════════════════════════════════════════════════════ */
+
+.bizc {
+  --bizc-accent: var(--accent-main-100, #d97757);
+  --bizc-accent-soft: var(--accent-main-000, #f5e9e2);
+  --bizc-accent-strong: var(--accent-main-200, #b35a3a);
+  --bizc-rail: 248px;
+  --bizc-rail-collapsed: 56px;
+  --bizc-topbar: 48px;
+  --bizc-dur: var(--dur-normal, 0.2s);
+  --bizc-ease: var(--ease, cubic-bezier(0.2, 0, 0, 1));
+
+  height: 100vh;
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-100);
+  background: var(--bg-000);
+  -webkit-font-smoothing: antialiased;
+}
+
+.bizc *,
+.bizc *::before,
+.bizc *::after { box-sizing: border-box; }
+
+.bizc button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+.bizc button:focus-visible,
+.bizc input:focus-visible,
+.bizc textarea:focus-visible {
+  outline: 2px solid var(--bizc-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-md, 6px);
+}
+.bizc svg { display: block; }
+.bizc code {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  background: var(--bg-200);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+/* ─── Shell grid ─── */
+.bizc-shell {
+  display: grid;
+  grid-template-columns: var(--bizc-rail) 1fr;
+  height: 100vh;
+  width: 100%;
+}
+.bizc-shell[data-collapsed='true'] { grid-template-columns: var(--bizc-rail-collapsed) 1fr; }
+
+/* ════════════════ Rail ════════════════ */
+.bizc-rail {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-100);
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+}
+.bizc-rail-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--bizc-topbar);
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+}
+.bizc-rail-logo { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.bizc-rail-badge {
+  width: 24px; height: 24px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px;
+  background: var(--bizc-accent);
+  color: #fff;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+}
+.bizc-rail-logo-text {
+  font-weight: 600; font-size: 13px; color: var(--text-100);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bizc-rail-logo-text span { color: var(--bizc-accent); font-weight: 500; }
+.bizc-shell[data-collapsed='true'] .bizc-rail-logo-text { display: none; }
+
+.bizc-rail-collapse {
+  width: 26px; height: 26px; border-radius: var(--radius-md, 6px);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-300); flex-shrink: 0;
+}
+.bizc-rail-collapse:hover { background: var(--bg-200); color: var(--text-100); }
+
+.bizc-rail-section {
+  padding: 12px 16px 6px; font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-400);
+}
+.bizc-shell[data-collapsed='true'] .bizc-rail-section { opacity: 0; height: 8px; padding: 0; }
+
+.bizc-rail-nav { display: flex; flex-direction: column; gap: 1px; padding: 0 8px; }
+.bizc-nav-item {
+  display: flex; align-items: center; gap: 10px;
+  height: 32px; padding: 0 8px; border-radius: var(--radius-md, 6px);
+  color: var(--text-200); font-size: 13px; width: 100%;
+  transition: background var(--bizc-dur) var(--bizc-ease);
+  white-space: nowrap; overflow: hidden;
+}
+.bizc-nav-item .bizc-ico { width: 16px; height: 16px; flex-shrink: 0; color: var(--text-400); }
+.bizc-nav-item .bizc-lbl { overflow: hidden; text-overflow: ellipsis; }
+.bizc-nav-item:hover { background: var(--bg-200); color: var(--text-100); }
+.bizc-nav-item:hover .bizc-ico { color: var(--text-200); }
+.bizc-nav-item[aria-current] {
+  background: var(--bizc-accent-soft); color: var(--bizc-accent-strong); font-weight: 500;
+}
+.bizc-nav-item[aria-current] .bizc-ico { color: var(--bizc-accent-strong); }
+.bizc-shell[data-collapsed='true'] .bizc-nav-item { padding: 0; justify-content: center; }
+.bizc-shell[data-collapsed='true'] .bizc-nav-item .bizc-lbl { display: none; }
+
+.bizc-rail-spacer { flex: 1; }
+.bizc-exit { margin: 0 8px 4px; color: var(--text-300); }
+.bizc-rail-account {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border-top: 1px solid var(--border); min-width: 0;
+}
+.bizc-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--bizc-accent); color: #fff;
+  font-size: 10px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.bizc-who { flex: 1; min-width: 0; }
+.bizc-who .bizc-name { font-size: 12px; color: var(--text-100); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bizc-who .bizc-plan { font-size: 10px; color: var(--text-400); }
+.bizc-shell[data-collapsed='true'] .bizc-who { display: none; }
+
+/* ════════════════ Main ════════════════ */
+.bizc-main { display: flex; flex-direction: column; min-width: 0; background: var(--bg-000); }
+
+.bizc-topbar {
+  height: var(--bizc-topbar); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px; padding: 0 16px;
+  background: var(--bg-000); flex-shrink: 0;
+}
+.bizc-crumbs { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-400); }
+.bizc-crumbs .bizc-sep { color: var(--text-500); }
+.bizc-crumbs .bizc-here { color: var(--text-100); font-weight: 500; }
+.bizc-tb-spacer { flex: 1; }
+.bizc-tb-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 26px; padding: 0 10px; border-radius: 99px;
+  font-size: 11px; color: var(--text-300);
+  background: var(--bg-050); border: 1px solid var(--border);
+}
+.bizc-tb-tag .bizc-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--bizc-accent); }
+.bizc-tb-btn {
+  width: 28px; height: 28px; border-radius: var(--radius-md, 6px);
+  display: flex; align-items: center; justify-content: center; color: var(--text-400);
+}
+.bizc-tb-btn:hover { background: var(--bg-100); color: var(--text-100); }
+
+.bizc-page { flex: 1; overflow-y: auto; }
+.bizc-page-inner { max-width: 1280px; margin: 0 auto; padding: 24px 24px 64px; }
+
+/* ─── Small inline form helpers (business-center) ─── */
+.bizc-input-sm { width: 110px; height: 28px; text-align: right; display: inline-block; }
+.bizc-btn-ico { width: 14px; height: 14px; display: inline-flex; margin-right: 6px; }
+.bizc-btn-ico svg { width: 14px; height: 14px; }
+
+/* ─── Access-denied panel (uses bizc- classes) ─── */
+.bizc-denied { display: flex; align-items: center; justify-content: center; height: 100vh; padding: 24px; }
+.bizc-denied-card {
+  max-width: 440px; text-align: center; background: var(--bg-050);
+  border: 1px solid var(--border); border-radius: var(--radius-xl, 14px); padding: 32px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.bizc-denied-title { font-size: 18px; font-weight: 600; color: var(--text-100); }
+.bizc-denied-body { font-size: 13px; color: var(--text-300); line-height: 1.5; margin: 0; }
+.bizc-denied-hint { font-size: 12px; color: var(--text-400); line-height: 1.5; margin: 0; }
+.bizc-denied-card .bizc-btn { align-self: center; margin-top: 8px; }
+
+.bizc-btn {
+  height: 32px; padding: 0 14px; border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--border); background: var(--bg-050);
+  color: var(--text-200); font-size: 12px; font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all var(--bizc-dur) var(--bizc-ease);
+}
+.bizc-btn:hover:not(:disabled) { background: var(--bg-100); border-color: var(--border-strong); color: var(--text-100); }
+.bizc-btn-primary { background: var(--bizc-accent); border-color: var(--bizc-accent); color: #fff; }
+.bizc-btn-primary:hover:not(:disabled) { background: var(--bizc-accent-strong); border-color: var(--bizc-accent-strong); color: #fff; }
+
+/* ═════════════════════════════════════════════════════════════════
+   Imported Master Administration primitives, scoped under `.bizc`.
+   These mirror master-admin/app.css so the shared ui.tsx +
+   GovernedActionDialog render identically inside this module.
+   ═════════════════════════════════════════════════════════════════ */
+.bizc {
+  --ma-accent: var(--bizc-accent);
+  --ma-accent-soft: var(--bizc-accent-soft);
+  --ma-accent-strong: var(--bizc-accent-strong);
+  --ma-dur: var(--bizc-dur);
+  --ma-ease: var(--bizc-ease);
+}
+
+/* ─── Layout primitives ─── */
+.bizc .ma-stack { display: flex; flex-direction: column; gap: 20px; }
+.bizc .ma-muted { color: var(--text-400); font-size: 12px; }
+.bizc .ma-foot-note { font-size: 11px; color: var(--text-400); }
+
+.bizc .ma-section-hdr { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.bizc .ma-section-title { font-size: 15px; font-weight: 600; color: var(--text-100); }
+.bizc .ma-section-sub { font-size: 12px; color: var(--text-400); margin-top: 2px; }
+.bizc .ma-section-actions { display: flex; gap: 8px; align-items: center; }
+
+.bizc .ma-link { color: var(--text-300); font-size: 12px; }
+.bizc .ma-link:hover { color: var(--ma-accent-strong); }
+
+.bizc .ma-card {
+  background: var(--bg-050); border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 10px); padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.bizc .ma-subsection-title { font-size: 12px; font-weight: 600; color: var(--text-200); text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* ─── KPI grid ─── */
+.bizc .ma-kpi-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;
+}
+.bizc .ma-kpi {
+  background: var(--bg-050); border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 10px); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 6px;
+  transition: border-color var(--ma-dur) var(--ma-ease);
+}
+.bizc .ma-kpi:hover { border-color: var(--border-strong); }
+.bizc .ma-kpi-label { font-size: 11px; color: var(--text-400); font-weight: 500; }
+.bizc .ma-kpi-value {
+  font-family: var(--font-serif, serif); font-size: 26px; font-weight: 400;
+  color: var(--text-100); line-height: 1; font-variant-numeric: tabular-nums;
+}
+.bizc .ma-kpi-unit { font-size: 13px; color: var(--text-300); margin-left: 4px; font-family: var(--font-sans); }
+.bizc .ma-kpi-meta { font-size: 11px; color: var(--text-300); }
+.bizc .ma-tone-ok { color: var(--success, #2e7d32); }
+.bizc .ma-tone-warn { color: var(--warning, #b26a00); }
+.bizc .ma-tone-err { color: var(--error, #c62828); }
+.bizc .ma-tone-muted { color: var(--text-400); }
+
+/* ─── Badges ─── */
+.bizc .ma-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 99px;
+  font-size: 10px; font-weight: 600; text-transform: capitalize;
+  border: 1px solid transparent; white-space: nowrap;
+}
+.bizc .ma-badge-ok { background: var(--success-muted, #e6f4ea); color: var(--success, #2e7d32); }
+.bizc .ma-badge-warn { background: var(--warning-muted, #fdf2e2); color: var(--warning, #b26a00); }
+.bizc .ma-badge-err { background: var(--error-muted, #fdecea); color: var(--error, #c62828); }
+.bizc .ma-badge-muted { background: var(--bg-200); color: var(--text-300); }
+.bizc .ma-badge-accent { background: var(--ma-accent-soft); color: var(--ma-accent-strong); }
+
+/* ─── Tag list ─── */
+.bizc .ma-tag-list { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+
+/* ─── Inputs ─── */
+.bizc .ma-input {
+  width: 100%; height: 32px; padding: 0 12px;
+  background: var(--bg-050); border: 1px solid var(--border);
+  border-radius: var(--radius-md, 6px); color: var(--text-100); font-size: 13px;
+}
+.bizc .ma-input::placeholder { color: var(--text-400); }
+
+/* ─── Tables ─── */
+.bizc .ma-table-wrap {
+  border: 1px solid var(--border); border-radius: var(--radius-lg, 10px); overflow: hidden;
+  background: var(--bg-050);
+}
+.bizc .ma-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bizc .ma-table thead th {
+  text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600;
+  color: var(--text-400); text-transform: uppercase; letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border); background: var(--bg-100);
+}
+.bizc .ma-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); color: var(--text-200); vertical-align: middle; }
+.bizc .ma-table tbody tr:last-child td { border-bottom: 0; }
+.bizc .ma-table .ma-num { text-align: right; font-variant-numeric: tabular-nums; }
+.bizc .ma-cell-primary { color: var(--text-100); font-weight: 500; }
+.bizc .ma-cell-sub { color: var(--text-400); font-size: 11px; margin-top: 1px; }
+.bizc .ma-table-compact td, .bizc .ma-table-compact thead th { padding: 8px 12px; }
+.bizc .ma-table-compact { border: 1px solid var(--border); border-radius: var(--radius-md, 6px); }
+
+/* ─── Buttons ─── */
+.bizc .ma-btn {
+  height: 32px; padding: 0 14px; border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--border); background: var(--bg-050);
+  color: var(--text-200); font-size: 12px; font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all var(--ma-dur) var(--ma-ease);
+}
+.bizc .ma-btn:hover:not(:disabled) { background: var(--bg-100); border-color: var(--border-strong); color: var(--text-100); }
+.bizc .ma-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.bizc .ma-btn-sm { height: 26px; padding: 0 10px; font-size: 11px; }
+.bizc .ma-btn-primary { background: var(--ma-accent); border-color: var(--ma-accent); color: #fff; }
+.bizc .ma-btn-primary:hover:not(:disabled) { background: var(--ma-accent-strong); border-color: var(--ma-accent-strong); color: #fff; }
+.bizc .ma-btn-danger { background: var(--error, #c62828); border-color: var(--error, #c62828); color: #fff; }
+.bizc .ma-btn-danger:hover:not(:disabled) { filter: brightness(0.92); color: #fff; }
+
+/* ─── State views ─── */
+.bizc .ma-state {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 48px 24px; color: var(--text-400); font-size: 13px; text-align: center;
+}
+.bizc .ma-state-detail { font-size: 11px; color: var(--text-400); max-width: 480px; word-break: break-word; }
+.bizc .ma-state-err { color: var(--error, #c62828); }
+.bizc .ma-state-empty {
+  border: 1px dashed var(--border); border-radius: var(--radius-lg, 10px); background: var(--bg-050);
+}
+
+/* ─── Modal (governed action) ─── */
+.bizc .ma-modal-scrim {
+  position: fixed; inset: 0; background: rgba(20, 20, 19, 0.45);
+  display: flex; align-items: center; justify-content: center; z-index: 80;
+  animation: bizc-fade var(--ma-dur) var(--ma-ease);
+}
+.bizc .ma-modal {
+  width: 460px; max-width: 92vw; background: var(--bg-000);
+  border: 1px solid var(--border); border-radius: var(--radius-lg, 10px);
+  padding: 20px; display: flex; flex-direction: column; gap: 12px;
+  box-shadow: var(--shadow-md, 0 12px 40px rgba(0,0,0,0.2));
+}
+.bizc .ma-modal-title { font-size: 15px; font-weight: 600; color: var(--text-100); }
+.bizc .ma-modal-desc { font-size: 12px; color: var(--text-300); line-height: 1.5; margin: 0; }
+.bizc .ma-field-label { font-size: 11px; font-weight: 600; color: var(--text-300); display: flex; gap: 6px; align-items: center; }
+.bizc .ma-req { color: var(--error, #c62828); font-weight: 500; text-transform: uppercase; font-size: 9px; letter-spacing: 0.05em; }
+.bizc .ma-textarea {
+  width: 100%; padding: 8px 10px; resize: vertical;
+  background: var(--bg-050); border: 1px solid var(--border);
+  border-radius: var(--radius-md, 6px); color: var(--text-100); font-size: 13px; font-family: inherit;
+}
+.bizc .ma-modal-error {
+  font-size: 12px; color: var(--error, #c62828);
+  background: var(--error-muted, #fdecea); border-radius: var(--radius-md, 6px); padding: 8px 10px;
+}
+.bizc .ma-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+
+@keyframes bizc-fade { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bizc *,
+  .bizc .ma-modal-scrim { animation: none !important; transition: none !important; }
+}

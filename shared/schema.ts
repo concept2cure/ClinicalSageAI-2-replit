@@ -17478,6 +17478,48 @@ export const insertTierPricingSchema = createInsertSchemaOmit(tierPricing, {
 export type TierPricing = InferSelectModel<typeof tierPricing>;
 
 // ============================================================
+// PLATFORM ROLE GRANTS — designate personnel (platform tier)
+// ============================================================
+// Platform-level role grants the owner can assign/revoke from inside the app
+// instead of editing env allowlists or the DB by hand. DELIBERATELY SEPARATE
+// from organization_users.role: that column carries ONLY org-scoped roles
+// (admin/manager/member/viewer); platform roles (super_admin/platform_admin/
+// support/business_admin/owner) live here so org-level access can never be
+// corrupted by a platform grant. The platform access guards
+// (requirePlatformAdmin / requireBusinessAdmin) honor active rows here as a
+// DB-backed fallback to the synchronous role/email checks. Owner-managed,
+// non-tenant config (no organization column) → out of scope for RLS / tenant
+// isolation. The unique (user_id, role) index keeps at most one active grant
+// per (user, role) and backs the ON CONFLICT upsert in the access router.
+//
+// @compliance FDA 21 CFR Part 11 §11.10(d) — limiting system access to
+//             authorized individuals; every grant/revoke is audited.
+export const platformRoleGrants = pgTable(
+  'platform_role_grants',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .references(() => users.id)
+      .notNull(),
+    role: text('role').notNull(), // super_admin | platform_admin | support | business_admin | owner
+    grantedBy: text('granted_by'),
+    grantedAt: timestamp('granted_at').defaultNow().notNull(),
+    revokedAt: timestamp('revoked_at'),
+    revokedBy: text('revoked_by'),
+    reason: text('reason'),
+  },
+  table => ({
+    userRoleIdx: uniqueIndex('platform_role_grants_user_role_idx').on(table.userId, table.role),
+  })
+);
+
+export const insertPlatformRoleGrantSchema = createInsertSchemaOmit(platformRoleGrants, {
+  id: true,
+  grantedAt: true,
+});
+export type PlatformRoleGrant = InferSelectModel<typeof platformRoleGrants>;
+
+// ============================================================
 // DATA LINEAGE TRACKING (Regulatory-Grade)
 // ============================================================
 

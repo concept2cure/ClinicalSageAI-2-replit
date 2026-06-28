@@ -31,6 +31,7 @@ import {
 import { query } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 import auditService from '../../services/auditService';
+import { getInvoicedRevenueCentsByOrg } from '../../services/billing/stripe-revenue';
 
 const logger = createScopedLogger('admin-business-center');
 const router = Router();
@@ -92,6 +93,8 @@ interface ClientCostRow {
   status: string;
   seats: number;
   revenueCents: number;
+  /** Where revenueCents came from: actual paid Stripe invoices, or the modeled tier card. */
+  revenueSource: 'stripe' | 'modeled';
   costCents: number;
   marginCents: number;
   marginPct: number | null;
@@ -100,7 +103,7 @@ interface ClientCostRow {
 
 /** Build the per-client cost-accounting rows for the trailing 30 days. */
 async function buildCostAccounting(): Promise<ClientCostRow[]> {
-  const [rates, prices, orgsRes, usageRes] = await Promise.all([
+  const [rates, prices, orgsRes, usageRes, invoicedByOrg] = await Promise.all([
     loadCostRates(),
     loadTierPrices(),
     query(
@@ -114,6 +117,10 @@ async function buildCostAccounting(): Promise<ClientCostRow[]> {
         WHERE created_at > now() - interval '30 days'
         GROUP BY organization_id, feature_id`
     ),
+    // Actual invoiced revenue from Stripe for the same trailing-30d window.
+    // Empty map when Stripe is unconfigured/down → every client falls back to
+    // the modeled tier card below.
+    getInvoicedRevenueCentsByOrg(30),
   ]);
 
   // Index usage by org.
@@ -133,7 +140,12 @@ async function buildCostAccounting(): Promise<ClientCostRow[]> {
     seats: number;
   }>).map(o => {
     const price = prices.get(o.tier) ?? { monthly: 0, perSeat: 0 };
-    const revenueCents = price.monthly + price.perSeat * (o.seats || 0);
+    const modeledRevenueCents = price.monthly + price.perSeat * (o.seats || 0);
+    // Prefer actual invoiced revenue from Stripe when we have it for this org;
+    // otherwise fall back to the modeled tier card.
+    const invoiced = invoicedByOrg.get(o.id);
+    const usedStripe = invoiced != null;
+    const revenueCents = usedStripe ? invoiced : modeledRevenueCents;
     const usage = usageByOrg.get(o.id) ?? [];
     const byFeature = usage.map(u => ({
       featureId: u.featureId,
@@ -151,6 +163,7 @@ async function buildCostAccounting(): Promise<ClientCostRow[]> {
       status: o.status,
       seats: o.seats || 0,
       revenueCents,
+      revenueSource: usedStripe ? 'stripe' : 'modeled',
       costCents,
       marginCents,
       marginPct,
@@ -177,9 +190,15 @@ router.get('/cost-accounting', async (_req: Request, res: Response) => {
       { revenueCents: 0, costCents: 0 }
     );
     const marginCents = totals.revenueCents - totals.costCents;
+    // Surface whether revenue is actual (Stripe), modeled, or a mix.
+    const hasStripe = rows.some(r => r.revenueSource === 'stripe');
+    const hasModeled = rows.some(r => r.revenueSource === 'modeled');
+    const revenueModel: 'stripe' | 'modeled' | 'mixed' =
+      hasStripe && hasModeled ? 'mixed' : hasStripe ? 'stripe' : 'modeled';
     return res.json({
       period: 'trailing_30d',
       currency: 'usd',
+      revenueModel,
       clients: rows,
       totals: {
         ...totals,
@@ -203,7 +222,7 @@ router.get('/cost-accounting.csv', async (req: Request, res: Response) => {
   try {
     const rows = await buildCostAccounting();
     const fmt = (cents: number) => (cents / 100).toFixed(2);
-    const header = 'organization_id,client,slug,tier,status,seats,revenue_usd,cost_usd,margin_usd,margin_pct';
+    const header = 'organization_id,client,slug,tier,status,seats,revenue_usd,cost_usd,margin_usd,margin_pct,revenue_source';
     const lines = rows.map(r =>
       [
         r.organizationId,
@@ -216,6 +235,7 @@ router.get('/cost-accounting.csv', async (req: Request, res: Response) => {
         fmt(r.costCents),
         fmt(r.marginCents),
         r.marginPct == null ? '' : r.marginPct,
+        r.revenueSource,
       ].join(',')
     );
     const csv = [header, ...lines].join('\n') + '\n';

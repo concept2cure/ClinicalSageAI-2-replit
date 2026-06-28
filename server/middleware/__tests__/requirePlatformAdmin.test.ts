@@ -8,9 +8,20 @@
  *     (no org-admin bypass — unlike the generic requireRole helper)
  *   - the PLATFORM_ADMIN_EMAILS allowlist is honoured as a bootstrap path
  *   - unauthenticated requests get 401, authenticated-but-unauthorized 403
+ *
+ * NOTE: these cases all exercise the SYNCHRONOUS fast-path (role / email
+ * allowlist) of the guard, which short-circuits before any DB access. The
+ * db module is mocked only so the async grant fallback (used when the sync
+ * checks fail) resolves to "no grant" without touching a real connection —
+ * the access-management route tests cover the DB-grant path itself.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+vi.mock('../../db', () => ({
+  query: vi.fn(async () => ({ rows: [] })),
+}));
+
 import { isPlatformAdmin, requirePlatformAdmin } from '../requirePlatformAdmin';
 
 function mkReq(over: Record<string, unknown> = {}): any {
@@ -75,29 +86,29 @@ describe('requirePlatformAdmin', () => {
     delete process.env.PLATFORM_ADMIN_EMAILS;
   });
 
-  it('401s when unauthenticated', () => {
+  it('401s when unauthenticated', async () => {
     const req = mkReq();
     const res = mkRes();
     const next = vi.fn();
-    requirePlatformAdmin(req, res, next);
+    await requirePlatformAdmin(req, res, next);
     expect(res.statusCode).toBe(401);
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('403s an authenticated non-platform user', () => {
+  it('403s an authenticated non-platform user (no role, no grant)', async () => {
     const req = mkReq({ userId: 7, user: { id: 7 }, userRole: 'admin' });
     const res = mkRes();
     const next = vi.fn();
-    requirePlatformAdmin(req, res, next);
+    await requirePlatformAdmin(req, res, next);
     expect(res.statusCode).toBe(403);
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('calls next() for a platform admin', () => {
+  it('calls next() for a platform admin (sync fast-path, no db)', async () => {
     const req = mkReq({ userId: 1, user: { id: 1 }, userRole: 'super_admin' });
     const res = mkRes();
     const next = vi.fn();
-    requirePlatformAdmin(req, res, next);
+    await requirePlatformAdmin(req, res, next);
     expect(next).toHaveBeenCalledOnce();
     expect(res.status).not.toHaveBeenCalled();
   });

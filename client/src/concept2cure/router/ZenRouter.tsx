@@ -25,6 +25,7 @@ import { Concept2CureLogin } from '../components/concept2cure-auth';
 import { ZenApp } from '../ZenApp';
 import MdxRoute from '../mdx/MdxRoute';
 import MasterAdminRoute from '../master-admin/MasterAdminRoute';
+import BusinessCenterRoute from '../business-center/BusinessCenterRoute';
 import { InsightsSurface } from '../insights/surface';
 import { ProjectProvider } from '../context/ProjectContext';
 import {
@@ -210,6 +211,19 @@ export const ZenRouter: React.FC = () => {
               <ProtectedRoute>
                 <PageTransition>
                   <MasterAdminRoute />
+                </PageTransition>
+              </ProtectedRoute>
+            )}
+          </Route>
+
+          {/* Business Center — owner/finance tier. Cost accounting, P&L,
+              executive summary. Gated client-side by business role (and
+              server-side on every endpoint by requireBusinessAdmin). */}
+          <Route path="/concept2cure/business-center">
+            {() => (
+              <ProtectedRoute>
+                <PageTransition>
+                  <BusinessCenterRoute />
                 </PageTransition>
               </ProtectedRoute>
             )}

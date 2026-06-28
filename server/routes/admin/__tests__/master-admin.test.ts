@@ -58,7 +58,13 @@ const MEMBER = JSON.stringify({ id: 2, role: 'member', email: 'user@x.io' });
 beforeEach(() => {
   queryMock.mockReset();
   logActionMock.mockReset();
-  queryMock.mockResolvedValue({ rows: [{}] });
+  // The guard's async grant fallback queries platform_role_grants when the sync
+  // role/email checks fail; return no grant so the 403 cases stay 403. Every
+  // other query gets the generic single-row stub.
+  queryMock.mockImplementation((sql: string) => {
+    if (/platform_role_grants/.test(sql)) return Promise.resolve({ rows: [] });
+    return Promise.resolve({ rows: [{}] });
+  });
 });
 
 describe('access gating', () => {

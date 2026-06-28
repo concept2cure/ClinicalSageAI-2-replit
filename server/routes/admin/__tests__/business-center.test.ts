@@ -17,6 +17,13 @@ const logActionMock = vi.fn();
 vi.mock('../../../db', () => ({
   query: (...args: unknown[]) => queryMock(...args),
 }));
+// Default: Stripe unconfigured → empty map → modeled revenue everywhere. Tests
+// that want actual invoiced revenue override getInvoicedRevenueCentsByOrg below.
+const invoicedByOrgMock = vi.fn(async () => new Map<number, number>());
+vi.mock('../../../services/billing/stripe-revenue', () => ({
+  stripeConfigured: () => false,
+  getInvoicedRevenueCentsByOrg: (...args: unknown[]) => invoicedByOrgMock(...(args as [])),
+}));
 vi.mock('../../../services/auditService', () => ({
   default: { logAction: (...args: unknown[]) => logActionMock(...args) },
 }));
@@ -49,7 +56,12 @@ const SUPPORT = JSON.stringify({ id: 2, role: 'support', email: 's@x.io' });
 beforeEach(() => {
   queryMock.mockReset();
   logActionMock.mockReset();
+  invoicedByOrgMock.mockReset();
+  invoicedByOrgMock.mockImplementation(async () => new Map<number, number>());
   queryMock.mockImplementation((sql: string) => {
+    // Guard's async grant fallback (when sync role/email checks fail): no grant,
+    // so support-user 403 cases stay 403.
+    if (/platform_role_grants/.test(sql)) return Promise.resolve({ rows: [] });
     if (/FROM platform_cost_rates/.test(sql)) return Promise.resolve({ rows: [] }); // use defaults
     if (/FROM tier_pricing/.test(sql)) return Promise.resolve({ rows: [] }); // use defaults
     if (/INSERT INTO platform_cost_rates/.test(sql))
@@ -94,10 +106,12 @@ describe('cost accounting math', () => {
     const acme = res.body.clients.find((c: any) => c.organizationId === 1);
     // standard default monthly = 49900c; 100 deep_research credits × 25c = 2500c
     expect(acme.revenueCents).toBe(49900);
+    expect(acme.revenueSource).toBe('modeled');
     expect(acme.costCents).toBe(2500);
     expect(acme.marginCents).toBe(47400);
     expect(res.body.totals.revenueCents).toBe(49900);
     expect(res.body.totals.costCents).toBe(2500);
+    expect(res.body.revenueModel).toBe('modeled');
   });
 
   it('rolls up a platform P&L', async () => {
@@ -118,6 +132,50 @@ describe('cost accounting math', () => {
     expect(res.headers['content-type']).toContain('text/csv');
     expect(res.text.split('\n')[0]).toContain('revenue_usd,cost_usd,margin_usd');
     expect(logActionMock).toHaveBeenCalledOnce();
+  });
+});
+
+describe('actual invoiced revenue (Stripe) overrides the modeled tier card', () => {
+  it('uses Stripe amount_paid and marks revenueSource=stripe when available', async () => {
+    invoicedByOrgMock.mockImplementation(async () => new Map([[1, 80000]]));
+    const res = await request(makeApp())
+      .get('/api/admin/business/cost-accounting')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+    const acme = res.body.clients.find((c: any) => c.organizationId === 1);
+    expect(acme.revenueCents).toBe(80000); // actual invoiced, NOT modeled 49900
+    expect(acme.revenueSource).toBe('stripe');
+    // margin = invoiced revenue - cost (100 deep_research × 25c = 2500c)
+    expect(acme.costCents).toBe(2500);
+    expect(acme.marginCents).toBe(77500);
+    expect(res.body.totals.revenueCents).toBe(80000);
+    expect(res.body.revenueModel).toBe('stripe');
+  });
+
+  it('falls back to modeled revenue for orgs absent from the Stripe map', async () => {
+    // Map present but does not include org 1 → modeled fallback.
+    invoicedByOrgMock.mockImplementation(async () => new Map([[999, 12345]]));
+    const res = await request(makeApp())
+      .get('/api/admin/business/cost-accounting')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+    const acme = res.body.clients.find((c: any) => c.organizationId === 1);
+    expect(acme.revenueCents).toBe(49900);
+    expect(acme.revenueSource).toBe('modeled');
+    expect(res.body.revenueModel).toBe('modeled');
+  });
+
+  it('treats a Stripe-reported zero as actual (revenueSource=stripe, revenue 0)', async () => {
+    invoicedByOrgMock.mockImplementation(async () => new Map([[1, 0]]));
+    const res = await request(makeApp())
+      .get('/api/admin/business/cost-accounting')
+      .set('x-test-user', BIZ);
+    expect(res.status).toBe(200);
+    const acme = res.body.clients.find((c: any) => c.organizationId === 1);
+    expect(acme.revenueCents).toBe(0);
+    expect(acme.revenueSource).toBe('stripe');
+    // margin = 0 - 2500c cost
+    expect(acme.marginCents).toBe(-2500);
   });
 });
 

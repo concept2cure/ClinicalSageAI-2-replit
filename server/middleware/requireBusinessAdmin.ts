@@ -21,6 +21,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { createScopedLogger } from '../utils/logger';
+import { query } from '../db';
 
 const logger = createScopedLogger('business-center-guard');
 
@@ -56,23 +57,52 @@ export function isBusinessAdmin(req: Request): boolean {
 }
 
 /**
+ * True when the user holds an active platform_role_grants row for one of the
+ * business roles. DB-backed fallback for when the synchronous role/email checks
+ * fail — lets the owner designate finance personnel from inside the app (see
+ * shared/schema.ts platformRoleGrants) without editing env allowlists. On any
+ * DB error we DENY (return false) so a transient outage can never widen access.
+ */
+async function hasActiveBusinessGrant(userId: number): Promise<boolean> {
+  try {
+    const result = await query(
+      `SELECT 1 FROM platform_role_grants
+        WHERE user_id = $1 AND revoked_at IS NULL AND LOWER(role) = ANY($2)
+        LIMIT 1`,
+      [userId, [...BUSINESS_ROLES]]
+    );
+    return result.rows.length > 0;
+  } catch (err) {
+    logger.error('Business grant lookup failed — denying', err as Record<string, unknown>);
+    return false;
+  }
+}
+
+/**
  * Express middleware — gate a route to the Business Center tier. Must run AFTER
  * authMiddleware (relies on resolved req.user / req.userRole).
+ *
+ * The synchronous role/email checks run FIRST and short-circuit with NO db
+ * access (the hot path stays sync + db-free). Only when they fail do we fall
+ * back to an async lookup against platform_role_grants for a designated grant.
  */
-export function requireBusinessAdmin(req: Request, res: Response, next: NextFunction) {
+export async function requireBusinessAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.user && req.userId == null) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  if (!isBusinessAdmin(req)) {
-    logger.warn('Business Center access denied', {
-      userId: req.userId,
-      role: req.userRole,
-      email: req.userEmail,
-      path: req.originalUrl,
-    });
-    return res.status(403).json({
-      error: 'Business Center access is restricted to the platform owner and designated finance personnel.',
-    });
+  if (isBusinessAdmin(req)) {
+    return next();
   }
-  return next();
+  if (req.userId != null && (await hasActiveBusinessGrant(Number(req.userId)))) {
+    return next();
+  }
+  logger.warn('Business Center access denied', {
+    userId: req.userId,
+    role: req.userRole,
+    email: req.userEmail,
+    path: req.originalUrl,
+  });
+  return res.status(403).json({
+    error: 'Business Center access is restricted to the platform owner and designated finance personnel.',
+  });
 }

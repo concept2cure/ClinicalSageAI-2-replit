@@ -163,6 +163,11 @@ const ALLOWLIST_FILES = new Set([
   // accounting + the access roster span every client), gated by
   // requireBusinessAdmin. Same rationale as master-admin.ts above.
   'server/routes/admin/business-center.ts',
+  // Access management — platform-admin tooling to grant/revoke platform role
+  // grants. Looks users up by email (pre-grant, cross-tenant) and reads/writes
+  // platform_role_grants. Same cross-tenant-by-design rationale as the other
+  // admin routers above.
+  'server/routes/admin/access-management.ts',
   'server/services/audit/audit-archive.service.ts',
   'server/services/audit/chainIntegrityMonitor.ts',
   // The audit_logs SHA-256 hash chain is a single append-only chain ACROSS

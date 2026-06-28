@@ -5,9 +5,20 @@
  * tests pin that boundary: support/platform_admin (which DO reach Master Admin)
  * must NOT reach the Business Center; only business roles or the
  * BUSINESS_CENTER_EMAILS allowlist do.
+ *
+ * NOTE: these cases all exercise the SYNCHRONOUS fast-path (role / email
+ * allowlist) of the guard, which short-circuits before any DB access. The
+ * db module is mocked only so the async grant fallback (used when the sync
+ * checks fail) resolves to "no grant" without touching a real connection —
+ * the access-management route tests cover the DB-grant path itself.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+vi.mock('../../db', () => ({
+  query: vi.fn(async () => ({ rows: [] })),
+}));
+
 import { isBusinessAdmin, requireBusinessAdmin } from '../requireBusinessAdmin';
 
 function mkReq(over: Record<string, unknown> = {}): any {
@@ -67,26 +78,26 @@ describe('requireBusinessAdmin', () => {
     delete process.env.BUSINESS_CENTER_EMAILS;
   });
 
-  it('401s when unauthenticated', () => {
+  it('401s when unauthenticated', async () => {
     const res = mkRes();
     const next = vi.fn();
-    requireBusinessAdmin(mkReq(), res, next);
+    await requireBusinessAdmin(mkReq(), res, next);
     expect(res.statusCode).toBe(401);
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('403s a support user (has Master Admin, not Business Center)', () => {
+  it('403s a support user (has Master Admin, not Business Center; no grant)', async () => {
     const res = mkRes();
     const next = vi.fn();
-    requireBusinessAdmin(mkReq({ userId: 3, user: { id: 3 }, userRole: 'support' }), res, next);
+    await requireBusinessAdmin(mkReq({ userId: 3, user: { id: 3 }, userRole: 'support' }), res, next);
     expect(res.statusCode).toBe(403);
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('calls next() for a business admin', () => {
+  it('calls next() for a business admin (sync fast-path, no db)', async () => {
     const res = mkRes();
     const next = vi.fn();
-    requireBusinessAdmin(mkReq({ userId: 1, user: { id: 1 }, userRole: 'business_admin' }), res, next);
+    await requireBusinessAdmin(mkReq({ userId: 1, user: { id: 1 }, userRole: 'business_admin' }), res, next);
     expect(next).toHaveBeenCalledOnce();
   });
 });
