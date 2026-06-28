@@ -10,7 +10,7 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
-import { VerificationPanel } from '../VerificationPanel';
+import { VerificationPanel, composeVerificationFixMessage } from '../VerificationPanel';
 import { DocumentStudioPane, paginateContent } from '../DocumentStudioPane';
 import type { VerificationResult } from '../useAnaChat';
 
@@ -46,6 +46,59 @@ describe('VerificationPanel', () => {
     expect(screen.getByText(/4 added \/ 1 dropped line vs\. source/)).toBeTruthy();
     expect(screen.getByText('IN THE SUPERIOR COURT OF KING COUNTY')).toBeTruthy();
     expect(screen.getByRole('status').getAttribute('data-status')).toBe('unverified');
+  });
+
+  it('offers "Ask AnA to resolve" only when unverified and a handler is given', () => {
+    const onResolve = vi.fn();
+    const { rerender } = render(
+      <VerificationPanel
+        verification={{ ok: false, missingRequiredStrings: ['CAPTION'], requiredStringsChecked: 1 }}
+        onResolve={onResolve}
+      />,
+    );
+    fireEvent.click(screen.getByText('Ask AnA to resolve'));
+    expect(onResolve).toHaveBeenCalledTimes(1);
+
+    // Verified → no resolve action.
+    rerender(
+      <VerificationPanel
+        verification={{ ok: true, missingRequiredStrings: [], requiredStringsChecked: 1 }}
+        onResolve={onResolve}
+      />,
+    );
+    expect(screen.queryByText('Ask AnA to resolve')).toBeNull();
+  });
+
+  it('hides the resolve action when no handler is provided', () => {
+    render(
+      <VerificationPanel verification={{ ok: false, missingRequiredStrings: ['X'], requiredStringsChecked: 1 }} />,
+    );
+    expect(screen.queryByText('Ask AnA to resolve')).toBeNull();
+  });
+});
+
+describe('composeVerificationFixMessage', () => {
+  it('cites the missing strings and the divergence', () => {
+    const msg = composeVerificationFixMessage('Smith objections v3', {
+      ok: false,
+      missingRequiredStrings: ['IN THE SUPERIOR COURT', 'penalty of perjury'],
+      requiredStringsChecked: 2,
+      divergence: { additions: 3, deletions: 1 },
+    });
+    expect(msg).toContain('"Smith objections v3" failed verification');
+    expect(msg).toContain('"IN THE SUPERIOR COURT", "penalty of perjury"');
+    expect(msg).toContain('3 added and 1 dropped line(s)');
+    expect(msg).toContain('re-verify');
+  });
+
+  it('omits the divergence sentence when there is none', () => {
+    const msg = composeVerificationFixMessage('Doc', {
+      ok: false,
+      missingRequiredStrings: ['A'],
+      requiredStringsChecked: 1,
+    });
+    expect(msg).toContain('"A"');
+    expect(msg).not.toContain('dropped line');
   });
 });
 

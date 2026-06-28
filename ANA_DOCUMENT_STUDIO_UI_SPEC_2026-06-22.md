@@ -46,6 +46,7 @@ Renders `verify_docx_against_source`'s result as a calm strip:
 
 It is a `role="status"` / `aria-live="polite"` region. Status reads as quiet stone (verified = `--success` fallback green; unverified = `--danger`), never neon. This is the evidence a regulatory user (and the Part 11 trail) cites.
 
+- **Closing the loop ("Ask AnA to resolve"):** when the document is **not verified**, the panel offers a one-click action. `composeVerificationFixMessage()` (pure, exported) builds a targeted request citing the exact missing strings and the line divergence; `Ana.tsx` sends it via `chat.send`, so AnA corrects the document and re-verifies — verify → fix → re-verify without leaving the pane. Hidden when verified or when no handler is wired (read-only history).
 - **Data path:** `useAnaChat.ts` parses the verify tool result in the `tool_result` SSE handler via the exported pure `mapVerificationResult(...)`, attaching `verification` to the assistant message.
 
 ---

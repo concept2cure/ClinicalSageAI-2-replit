@@ -40,6 +40,8 @@ export interface DocumentStudioPaneProps {
   onDownloadDocx: (draft: DocumentStudioDraft) => void;
   /** Collapse the preview pane. */
   onClose: () => void;
+  /** Ask AnA to fix an unverified document (missing strings / divergence). */
+  onResolveVerification?: () => void;
   /** True while a download/render request is in flight. */
   downloading?: boolean;
   /** Target characters per page for pagination. Exposed for testing. */
@@ -80,6 +82,7 @@ export function DocumentStudioPane({
   onSelectVersion,
   onDownloadDocx,
   onClose,
+  onResolveVerification,
   downloading,
   pageSize,
 }: DocumentStudioPaneProps) {
@@ -182,7 +185,7 @@ export function DocumentStudioPane({
 
       {verification && (
         <div className={styles.studioVerify}>
-          <VerificationPanel verification={verification} />
+          <VerificationPanel verification={verification} onResolve={onResolveVerification} />
         </div>
       )}
 
