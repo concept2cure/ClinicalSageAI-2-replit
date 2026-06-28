@@ -98,6 +98,82 @@ describe('cross-module integrity — workspace config ↔ project map', () => {
   });
 });
 
+describe('cross-module integrity — workspace config app IDs → app registry', () => {
+  const FILING_TYPES = ['BLA', 'NDA', 'IND', '510K', 'US_PMA', 'US_CDX_PMA', 'US_CDX_510K', 'US_DE_NOVO', 'CSR'];
+
+  it('every app produced by resolveWorkspaceConfig exists in APP_REGISTRY', () => {
+    const unknownApps: string[] = [];
+    for (const need of FILING_TYPES) {
+      const cfg = resolveWorkspaceConfig(need);
+      for (const app of cfg.apps) {
+        if (!ALL_APP_IDS.has(app.id)) {
+          unknownApps.push(`${need} → ${app.id}`);
+        }
+      }
+    }
+    expect(unknownApps, `Unknown app IDs: ${unknownApps.join(', ')}`).toHaveLength(0);
+  });
+
+  it('the full set of apps across all filings is a subset of APP_REGISTRY', () => {
+    const allProduced = new Set<string>();
+    for (const need of FILING_TYPES) {
+      for (const app of resolveWorkspaceConfig(need).apps) {
+        allProduced.add(app.id);
+      }
+    }
+    for (const id of allProduced) {
+      expect(ALL_APP_IDS.has(id as WorkspaceAppId), `App "${id}" not in registry`).toBe(true);
+    }
+  });
+});
+
+describe('cross-module integrity — workspace config ↔ project map (broad)', () => {
+  const FILINGS = ['BLA', 'NDA', 'IND', '510K', 'US_PMA', 'US_CDX_PMA'];
+
+  it('every service in workspace config appears in project map inventory for all filings', () => {
+    for (const need of FILINGS) {
+      const cfg = resolveWorkspaceConfig(need);
+      const map = resolveProjectMap(need);
+      const inventorySvcIds = new Set(map.inventory.services.map((s) => s.id));
+      for (const svc of cfg.services) {
+        expect(
+          inventorySvcIds.has(svc.id),
+          `Service "${svc.id}" in workspace config for "${need}" missing from project map inventory`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('every app in workspace config appears in project map inventory for all filings', () => {
+    for (const need of FILINGS) {
+      const cfg = resolveWorkspaceConfig(need);
+      const map = resolveProjectMap(need);
+      const inventoryAppIds = new Set(map.inventory.apps.map((a) => a.id));
+      for (const app of cfg.apps) {
+        expect(
+          inventoryAppIds.has(app.id),
+          `App "${app.id}" in workspace config for "${need}" missing from project map inventory`,
+        ).toBe(true);
+      }
+    }
+  });
+});
+
+describe('cross-module integrity — application families → dossier standards', () => {
+  const VALID_STANDARDS = new Set(['eCTD', 'CTD', 'ACTD', 'NeeS', 'eSTAR', 'regional', 'none']);
+
+  it('every typicalDossierStandard in APPLICATION_FAMILY_METADATA is a valid DossierStandard', () => {
+    for (const fam of APPLICATION_FAMILY_METADATA) {
+      for (const std of fam.typicalDossierStandards) {
+        expect(
+          VALID_STANDARDS.has(std),
+          `Family "${fam.id}" references unknown dossier standard "${std}"`,
+        ).toBe(true);
+      }
+    }
+  });
+});
+
 describe('cross-module integrity — application families ↔ document taxonomy', () => {
   it('every family in APPLICATION_FAMILY_METADATA is a valid ApplicationFamily', () => {
     for (const fam of APPLICATION_FAMILY_METADATA) {
