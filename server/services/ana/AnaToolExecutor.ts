@@ -11250,6 +11250,42 @@ registerToolHandler('code_drug', async (input: Record<string, unknown>) => {
   }
 });
 
+// Multi-batch ICH Q1E poolability (ANCOVA combinability) — deterministic.
+registerToolHandler('assess_batch_poolability', async (input: Record<string, unknown>) => {
+  try {
+    const { assessBatchPoolability } = await import('../cmc/shelf-life-poolability.js');
+    const result = assessBatchPoolability(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction: 'Lead with the decision (pooled vs minimum-of-batches) and the recommended shelfLife; report the slope/intercept F-tests verbatim. Single-attribute estimate.',
+    });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|requires|at least|distinct|direction|finite|batchId/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `assess_batch_poolability failed: ${m}` });
+  }
+});
+
+// Structured benefit-risk assessment (BRAT-style) — deterministic decision aid.
+registerToolHandler('assess_benefit_risk', async (input: Record<string, unknown>) => {
+  try {
+    const { assessBenefitRisk } = await import('../regulatory/benefit-risk.js');
+    const result = assessBenefitRisk(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction: 'Report the weighted benefit/risk, net, and favorability with the per-item contributions and the disclaimer. This is a decision aid, NOT a regulatory determination.',
+    });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|non-empty|needs a name|cannot all be zero|\[0,100\]|threshold/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `assess_benefit_risk failed: ${m}` });
+  }
+});
+
 // ICH Q1E shelf-life / retest-period estimation by regression — deterministic.
 registerToolHandler('estimate_shelf_life', async (input: Record<string, unknown>) => {
   try {

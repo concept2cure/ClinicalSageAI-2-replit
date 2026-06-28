@@ -23,6 +23,7 @@ import { ANALYTICAL_METHOD_TOOLS } from './analyticalMethodTools';
 import { ADVANCED_MODELING_TOOLS } from './advancedModelingTools';
 import { COVER_LETTER_TOOLS } from './coverLetterTools';
 import { SHELF_LIFE_TOOLS } from './shelfLifeTools';
+import { DEEPENING_TOOLS } from './deepeningTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7169,6 +7170,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ...COVER_LETTER_TOOLS,
   // ICH Q1E shelf-life / retest-period estimation by regression. See shelfLifeTools.ts.
   ...SHELF_LIFE_TOOLS,
+  // Multi-batch ICH Q1E poolability + structured benefit-risk. See deepeningTools.ts.
+  ...DEEPENING_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
