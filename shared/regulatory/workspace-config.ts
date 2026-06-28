@@ -290,7 +290,8 @@ export type WorkspaceServiceId =
   | 'special_designations'     // expedited programs, orphan, breakthrough eligibility
   | 'pediatric_intelligence'   // pediatric study-plan obligations (PREA iPSP, PIP)
   | 'inspection_readiness'     // PAI/BIMO/GMP readiness assessment
-  | 'controlled_substances';   // DEA scheduling, handling controls, perpetual inventory
+  | 'controlled_substances'    // DEA scheduling, handling controls, perpetual inventory
+  | 'cdx_intelligence';        // companion-diagnostic pairing, biomarker validity, co-development
 
 export interface WorkspaceService {
   id: WorkspaceServiceId;
@@ -318,6 +319,7 @@ const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> 
   pediatric_intelligence:       { label: 'Pediatric study-plan obligations (PREA/PIP)', feeds: 'both' },
   inspection_readiness:         { label: 'Inspection readiness (PAI/BIMO/GMP)', feeds: 'both' },
   controlled_substances:        { label: 'Controlled-substances scheduling & compliance', feeds: 'both' },
+  cdx_intelligence:             { label: 'Companion-diagnostic pairing & co-development', feeds: 'both' },
 };
 
 function svc(id: WorkspaceServiceId): WorkspaceService {
@@ -598,6 +600,15 @@ function servicesFor(opts: {
     (scope === 'dossier' || family === 'clinical_trial' || family === 'marketing_authorization')
   ) {
     ids.add('controlled_substances');
+  }
+
+  // Companion-diagnostic intelligence: IVD CDx filings and any therapeutic program
+  // that may pair with a CDx need biomarker validity and co-development assessment.
+  if (
+    family === 'companion_diagnostic' ||
+    (vocabulary === 'ivd' && scope === 'dossier')
+  ) {
+    ids.add('cdx_intelligence');
   }
 
   return [...ids].map(svc);
