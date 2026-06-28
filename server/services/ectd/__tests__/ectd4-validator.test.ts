@@ -16,6 +16,15 @@ const IND_REQUIRED = [
   'm4.2.1', 'm4.2.2', 'm4.2.3', 'm5.3.5',
 ];
 
+const NDA_REQUIRED = [
+  'm1.1', 'm1.2', 'm1.3', 'm1.5', 'm1.14', 'm1.15',
+  'm2.2', 'm2.3', 'm2.4', 'm2.5', 'm2.6', 'm2.7',
+  'm3.2.S', 'm3.2.P', 'm3.2.A', 'm3.2.R',
+  'm4.2.1', 'm4.2.2', 'm4.2.3', 'm5.2', 'm5.3.5',
+];
+
+const IND_ONLY_SECTIONS = IND_REQUIRED.filter(s => !NDA_REQUIRED.includes(s));
+
 const leaf = (over: Partial<ECTDLeaf> & { sectionCode: string }): ECTDLeaf => ({
   title: over.title ?? over.sectionCode,
   checksum: over.checksum ?? MD5,
@@ -69,18 +78,25 @@ describe('quickValidate', () => {
     expect(r.missing).toEqual(IND_REQUIRED.slice(10));
   });
   it('does not apply IND required sections to a non-IND submission', () => {
-    // Previously both ternary branches were IND_REQUIRED_SECTIONS, so an NDA with
-    // no IND sections was wrongly reported as missing all of them.
+    // NDA validates against NDA_REQUIRED_SECTIONS, not IND_REQUIRED_SECTIONS.
+    // IND-only sections (m1.6, m1.7, m1.9) must not appear in the missing list.
     const r = quickValidate([], 'NDA');
-    expect(r.missing).toHaveLength(0);
-    expect(r.completeness).toBe(100);
+    expect(r.missing).toHaveLength(NDA_REQUIRED.length);
+    for (const s of IND_ONLY_SECTIONS) {
+      expect(r.missing).not.toContain(s);
+    }
   });
 });
 
 describe('validatePackage — submission type', () => {
-  it('does not flag IND sections as missing on a non-IND submission', () => {
+  it('does not flag IND-only sections as missing on a non-IND submission', () => {
     const res = validatePackage([leaf({ sectionCode: 'm1.1' })], 'NDA');
-    expect(res.findings.filter(f => f.code === 'MISSING_REQUIRED_SECTION')).toHaveLength(0);
+    const missingSections = res.findings
+      .filter(f => f.code === 'MISSING_REQUIRED_SECTION')
+      .map(f => f.sectionCode);
+    for (const s of IND_ONLY_SECTIONS) {
+      expect(missingSections).not.toContain(s);
+    }
   });
   it('still validates IND required sections for an IND submission', () => {
     const res = validatePackage([], 'IND');
