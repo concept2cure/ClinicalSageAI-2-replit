@@ -16,6 +16,9 @@ import {
   getTaxonomyTree,
   getCountBySegment,
   getCategoriesForSegment,
+  getSegmentMetadata,
+  getCategoryMetadata,
+  getSegmentsSorted,
 } from '../../shared/regulatory/filing-taxonomy';
 import type { Segment } from '../../shared/regulatory/document-taxonomy';
 
@@ -157,5 +160,73 @@ describe('Filing Taxonomy — segment/category axis', () => {
   it('all IDs remain unique after the buildout', () => {
     const ids = GLOBAL_REGISTRY.map(e => e.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  describe('getSegmentMetadata', () => {
+    it('returns metadata for each known segment', () => {
+      for (const s of SEGMENTS) {
+        const meta = getSegmentMetadata(s);
+        expect(meta).toBeDefined();
+        expect(meta!.id).toBe(s);
+        expect(meta!.title).toBeTruthy();
+        expect(meta!.subtitle).toBeTruthy();
+        expect(meta!.iconHint).toBeTruthy();
+      }
+    });
+
+    it('returns undefined for unknown segment', () => {
+      expect(getSegmentMetadata('nonexistent' as any)).toBeUndefined();
+    });
+
+    it('pharma_biotech has order 1 (first)', () => {
+      expect(getSegmentMetadata('pharma_biotech')!.order).toBe(1);
+    });
+
+    it('cross_cutting has order 4 (last)', () => {
+      expect(getSegmentMetadata('cross_cutting')!.order).toBe(4);
+    });
+  });
+
+  describe('getCategoryMetadata', () => {
+    it('returns metadata for a known category', () => {
+      const meta = getCategoryMetadata('investigational');
+      expect(meta).toBeDefined();
+      expect(meta!.id).toBe('investigational');
+      expect(meta!.segment).toBe('pharma_biotech');
+      expect(meta!.title).toBeTruthy();
+      expect(meta!.description).toBeTruthy();
+    });
+
+    it('returns undefined for unknown category', () => {
+      expect(getCategoryMetadata('nonexistent' as any)).toBeUndefined();
+    });
+
+    it('device_samd_ai belongs to medical_devices', () => {
+      expect(getCategoryMetadata('device_samd_ai')!.segment).toBe('medical_devices');
+    });
+
+    it('ivd_companion_dx belongs to diagnostics_ivd', () => {
+      expect(getCategoryMetadata('ivd_companion_dx')!.segment).toBe('diagnostics_ivd');
+    });
+
+    it('safety_pv belongs to cross_cutting', () => {
+      expect(getCategoryMetadata('safety_pv')!.segment).toBe('cross_cutting');
+    });
+  });
+
+  describe('getSegmentsSorted', () => {
+    it('returns all 4 segments in ascending order', () => {
+      const sorted = getSegmentsSorted();
+      expect(sorted).toHaveLength(4);
+      for (let i = 1; i < sorted.length; i++) {
+        expect(sorted[i].order).toBeGreaterThan(sorted[i - 1].order);
+      }
+    });
+
+    it('first segment is pharma_biotech, last is cross_cutting', () => {
+      const sorted = getSegmentsSorted();
+      expect(sorted[0].id).toBe('pharma_biotech');
+      expect(sorted[sorted.length - 1].id).toBe('cross_cutting');
+    });
   });
 });
