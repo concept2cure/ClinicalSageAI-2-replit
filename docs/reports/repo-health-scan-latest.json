@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-28T20:35:50.248Z",
+  "generatedAt": "2026-06-28T20:01:51.044Z",
   "git": {
-    "sha": "1b04f0dcbbb1e7c2c24ec69d20f55af3de3f843a",
-    "branch": "concept2cure-v2"
+    "sha": "5045ab77c1fbfd6060521b124f11cb78f50f5441",
+    "branch": "claude/magical-thompson-mazk1e"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -2209,11 +2209,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 575200
+        "bytes": 570893
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 396007
+        "bytes": 395709
       },
       {
         "file": "server/statistics-service.ts",
@@ -2267,11 +2267,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 11729
+        "lines": 11650
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7265
+        "lines": 7259
       },
       {
         "file": "server/statistics-service.ts",
@@ -2419,7 +2419,7 @@
       },
       {
         "file": "server/routes/cortex-unified.ts",
-        "lines": 1553
+        "lines": 1552
       },
       {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
@@ -2438,67 +2438,10 @@
   "comparison": null,
   "ownerSummary": [
     {
-      "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 351,
-      "largeByBytes": 11,
-      "largeByLines": 34
-    },
-    {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 271,
-      "largeByBytes": 2,
-      "largeByLines": 7
-    },
-    {
-      "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 151,
-      "largeByBytes": 0,
-      "largeByLines": 1
-    },
-    {
-      "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 47,
-      "largeByBytes": 1,
-      "largeByLines": 2
-    },
-    {
-      "owner": "Frontend Platform (client/src maintainers)",
-      "duplicateGroups": 39,
-      "largeByBytes": 0,
-      "largeByLines": 0
-    },
-    {
-      "owner": "Developer Experience (scripts maintainers)",
-      "duplicateGroups": 3,
-      "largeByBytes": 0,
-      "largeByLines": 0
-    }
-  ],
-  "owners": [
-    {
-      "pattern": "^server/",
-      "owner": "Backend Platform",
-      "contact": "server/routes + server/services owners"
-    },
-    {
-      "pattern": "^client/src/concept2cure/",
-      "owner": "Concept2Cure Frontend",
-      "contact": "client/src/concept2cure maintainers"
-    },
-    {
-      "pattern": "^client/src/",
-      "owner": "Frontend Platform",
-      "contact": "client/src maintainers"
-    },
-    {
-      "pattern": "^shared/",
-      "owner": "Shared Contracts",
-      "contact": "shared/schema + shared/types owners"
-    },
-    {
-      "pattern": "^scripts/",
-      "owner": "Developer Experience",
-      "contact": "scripts maintainers"
+      "duplicateGroups": 862,
+      "largeByBytes": 14,
+      "largeByLines": 44
     }
   ]
 }
