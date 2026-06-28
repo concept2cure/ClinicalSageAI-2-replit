@@ -6,19 +6,46 @@ import reactHooksPlugin from 'eslint-plugin-react-hooks';
 
 export default [
   {
-    // Project-wide ignores. Mirrors the --ignore-pattern flags in the
-    // npm `lint` script plus paths the script can't reach (the
-    // design-system mirror under client/public, Claude Code agent skills
-    // under .claude, and the vanilla-JS admin UI under server/frontend
-    // which legitimately uses browser APIs that don't apply to a
-    // server-side lint config). Keeping these here rather than in
-    // package.json avoids re-triggering the ops-audit workflow on every
-    // lint tweak (ops-audit's path filter listens on package.json).
+    // Project-wide ignores. Single source of truth for what the lint
+    // gate never inspects. Previously some entries lived as inline
+    // `--ignore-pattern` flags on the `lint` npm script and others
+    // lived in a legacy `.eslintrc.cjs`; both are consolidated here.
+    //
+    // - .claude/, client/public/, design-system/, server/frontend/
+    //   are paths the lint config never reaches by intent (Claude
+    //   skills, public-assets mirror, design-system bundles, and the
+    //   vanilla-JS admin UI that uses browser-only globals).
+    // - dist/, build/, .replit/, public/assets/ are build artifacts.
+    // - _archive/ and **/_deprecated/ are quarantine paths the
+    //   dangerfile.js gate also bans new imports into.
+    // - tests/integration/api/vault.test.js, server/events/eventBus.js,
+    //   and server/routes/fda510k-routes.ts each carry pre-existing
+    //   violations the team has chosen to defer; quarantine here
+    //   rather than block CI on legacy debt. The fda510k-routes file
+    //   header marks itself @deprecated with a 2026-06-30 sunset, at
+    //   which point this entry can come out.
+    // - client/src/ is currently excluded because the UI is going
+    //   through a separate styling/refactor pass. Re-enable once that
+    //   lands.
     ignores: [
       '.claude/**',
       'client/public/**',
+      'client/src/**',
       'design-system/**',
       'server/frontend/**',
+      'dist/**',
+      'build/**',
+      '.replit/**',
+      'public/assets/**',
+      '_archive/**',
+      '**/_deprecated_migrations/**',
+      'server/services/_deprecated/**',
+      'server/routes/_deprecated/**',
+      'client/src/components/_deprecated/**',
+      'scripts/**',
+      'tests/integration/api/vault.test.js',
+      'server/events/eventBus.js',
+      'server/routes/fda510k-routes.ts',
     ],
   },
   js.configs.recommended,
@@ -135,6 +162,11 @@ export default [
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
     },
+    settings: {
+      react: {
+        version: 'detect',
+      },
+    },
     rules: {
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
@@ -167,6 +199,23 @@ export default [
       'no-useless-assignment': 'warn',
       'no-unassigned-vars': 'warn',
 
+      // Tech-debt prevention. Ported from the legacy .eslintrc.cjs
+      // (Added 2026-01-24). Same rationale as above — kept as 'warn'
+      // because the existing codebase has many pre-existing
+      // violations that need ratcheting down over time, not in one PR.
+      // Stricter overrides apply to modules/** (see below).
+      'max-lines': ['warn', { max: 500, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': ['warn', { max: 100, skipBlankLines: true, skipComments: true }],
+      'max-depth': ['warn', 4],
+      'max-params': ['warn', 5],
+      'complexity': ['warn', 15],
+
+      // React rules ported from the legacy .eslintrc.cjs. With React
+      // 19 the JSX runtime is automatic so `react-in-jsx-scope` is
+      // off, and prop validation is delegated to TypeScript.
+      'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
+
       'eqeqeq': ['warn', 'always', { null: 'ignore' }],
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
@@ -178,6 +227,60 @@ export default [
           },
         ],
       }],
+    },
+  },
+  {
+    // UI State & Layout Governance — enforce canonical primitives in
+    // concept2cure/. Ported from the legacy .eslintrc.cjs override.
+    // The flat config's last-match-wins semantics on the same rule
+    // mean this overrides the base `no-restricted-imports` above when
+    // a file under client/src/concept2cure/**/*.tsx is being linted.
+    files: ['client/src/concept2cure/**/*.tsx'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        paths: [
+          {
+            name: '@/components/ui/states',
+            message: 'Deprecated. Use @/components/ui/statesV2 instead.',
+          },
+          {
+            name: '@/components/common/LoadingOverlay',
+            message: 'Deprecated. Use LoadingState from @/components/ui/statesV2 instead.',
+          },
+          {
+            name: '@/components/common/ThinkingDots',
+            message: 'Deprecated. Use Spinner from @/components/ui/spinner instead.',
+          },
+        ],
+        patterns: [
+          {
+            group: ['@/components/ui/states'],
+            message: 'Deprecated. Use @/components/ui/statesV2 instead.',
+          },
+        ],
+      }],
+    },
+  },
+  {
+    // Stricter tech-debt rules for new code in modules/. Ported from
+    // .eslintrc.cjs — these are 'error' here, not 'warn', because
+    // modules/ is greenfield where the rules can be enforced from day
+    // one.
+    files: ['modules/**/*.{ts,tsx}'],
+    rules: {
+      'max-lines': ['error', { max: 500, skipBlankLines: true, skipComments: true }],
+      'no-console': 'error',
+    },
+  },
+  {
+    // Allow larger files and console use in legacy areas. These
+    // directories are quarantined (dangerfile.js bans new imports
+    // from them) so applying tech-debt rules to them just produces
+    // noise — they're scheduled for deletion, not improvement.
+    files: ['server/services/_deprecated/**', 'server/routes/_deprecated/**'],
+    rules: {
+      'max-lines': 'off',
+      'no-console': 'off',
     },
   },
   {

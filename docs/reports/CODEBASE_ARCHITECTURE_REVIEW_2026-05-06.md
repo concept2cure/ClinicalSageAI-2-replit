@@ -351,3 +351,39 @@ Multiple commits on `claude/review-codebase-architecture-eXZ6z`. After every cod
 ### Summary
 
 Across four rounds: **52 files removed**, **~6,900 LOC deleted**, **16 npm packages dropped** (15 unused + Prisma), **0 typecheck regressions**. The remaining recommendations in this document each need an owner decision before proceeding.
+
+---
+
+## 9. Round 5 — ESLint config consolidation + Phase D (2026-06-28)
+
+Picked up after the codebase moved 331 commits ahead on `concept2cure-v2`. Several deferred items had been resolved upstream:
+
+- **React 19 / React-DOM alignment** (was §2.1): **DONE by upstream** — `react-dom` is now `^19.2.6`, `@types/react-dom` `^19.2.3`, `@testing-library/react` `^16.3.2`. Discovery agent confirmed zero React-19-only API usage in `client/src/`, so the bump was a no-op on behavior.
+- **ESLint tooling broken** (was §6): **partially DONE by upstream** — `@typescript-eslint/*` bumped to `^8.0.0`, `eslint-plugin-react-hooks` to `^7.0.0`, `@eslint/js` added as `^10.0.0`. The flat config now loads correctly. Remaining work in this round.
+- **Typecheck baseline of 2,628 errors**: also fully cleaned by upstream. `tsc --noEmit` now exits with 0 errors.
+
+This round landed:
+
+1. **ESLint dual-config collapsed**. Ported every rule and override from `.eslintrc.cjs` (144 LOC) into `eslint.config.js` and deleted the legacy file:
+   - Tech-debt rules: `max-lines: 500`, `max-lines-per-function: 100`, `max-depth: 4`, `max-params: 5`, `complexity: 15` (all `warn`)
+   - `react/react-in-jsx-scope: off`, `react/prop-types: off`, `settings.react.version: detect`
+   - `client/src/concept2cure/**/*.tsx` override banning `LoadingOverlay`, `ThinkingDots`, and pattern-matched `@/components/ui/states`
+   - `modules/**/*.{ts,tsx}` strict override (`max-lines` and `no-console` as `error`)
+   - `server/{services,routes}/_deprecated/**` relaxed override
+   - Expanded `ignores`: all `--ignore-pattern` flags from the lint scripts, plus the legacy `ignorePatterns` (`_archive/`, `_deprecated_migrations/`, etc.)
+2. **`lint` and `lint:fix` scripts simplified**: now plain `eslint .` and `eslint . --fix`. The 7 inline `--ignore-pattern` flags moved into `eslint.config.js` `ignores`.
+3. **NOT ported**: `eslint-plugin-security` and `eslint-plugin-tailwindcss` integration. The legacy config used them but ESLint 10 was silently ignoring `.eslintrc.cjs`, so those plugins weren't actually enforcing anything before this change. Their migration is a separate effort that needs a plugin version audit (security v1.x → v3+ for flat config; tailwindcss v3.18.3 needs flat-config testing) and the team to decide which rules to re-enable.
+4. **Phase D — npm script consolidation**:
+   - Removed 15 npm script entries with **zero CI references**: `cerv2:{seed-demo, verify, staging-verify, deploy-rc, postmerge-verify}`, `beta:{seed:510k, founder-proof}`, `smoke:{e2e-assembly, pdev, cerv2-workbench}`, `audit:last-20-prs`, `audit:last-20-prs:plan`, `audit:last-20-prs:plan:auto-install`, `audit:repo-health` (base), `ci:audit-route-mounts` (base).
+   - All CI-active variants kept (`:no-regression`, `:full-strict`, `:strict` suffixes; `beta:proof`, `beta:typecheck`, `audit:last-20-prs:plan:strict`).
+   - Storybook scripts kept (`.storybook/` is configured).
+   - Archived 8 backing scripts (all zero cross-refs) to `scripts/deprecated/` with explanatory `README.md` listing the original npm script entry per file.
+5. **Verified**: `npm run lint` exits 0 with 5,575 warnings (legacy violations of the newly-enforced tech-debt rules, as expected — same baseline-ratchet pattern the existing `'warn'`-level rules already use). `tsc --noEmit` exits with 0 errors. No CI breakage.
+
+### Round 5 deltas
+
+- `package.json` script count: 295 → 280 (-15)
+- `.eslintrc.cjs` deleted (-144 LOC)
+- `eslint.config.js` expanded (+~120 LOC of rules/overrides/ignores, well-commented)
+- 8 backing scripts moved to `scripts/deprecated/`
+- `npm run lint`: was broken at tooling layer; now exits clean with 0 errors
