@@ -125,6 +125,12 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
     params: [{ name: 'authoringDocType', required: false, description: 'Document type to author (drives the editor template).' }],
   },
   { id: 'ectd-coauthor', label: 'eCTD Co-Author', description: 'The eCTD co-authoring surface.', scope: 'project', group: 'module' },
+
+  // ── Capability surfaces pending a design (see docs/ANA_SURFACE_MAP.md) ──
+  // Registered so AnA can route to them as soon as the screens are built. Until
+  // then the underlying tools (PV / HEOR) are still reachable from chat.
+  { id: 'safety', label: 'Safety / Pharmacovigilance', description: 'The safety/PV workspace — SAE line listings, E2B(R3) ICSR composition, and PV deliverables for the project.', scope: 'project', group: 'module' },
+  { id: 'market-access', label: 'Market Access / HEOR', description: 'The health-economics & market-access workspace — budget-impact, cost-effectiveness (ICER), Markov, and PSA modeling for payer dossiers.', scope: 'project', group: 'module' },
 ] as const;
 
 const TARGETS_BY_ID: ReadonlyMap<string, NavigationTarget> = new Map(
