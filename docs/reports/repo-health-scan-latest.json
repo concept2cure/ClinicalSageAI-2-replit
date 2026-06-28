@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-28T19:54:32.245Z",
+  "generatedAt": "2026-06-28T20:04:30.248Z",
   "git": {
-    "sha": "7707e1169b17ecbe0535662a071236bf8a4f1ed7",
+    "sha": "fb573af9b074a844c54c7439838c53870d9ace3e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2419,7 +2419,7 @@
       },
       {
         "file": "server/routes/cortex-unified.ts",
-        "lines": 1552
+        "lines": 1553
       },
       {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
