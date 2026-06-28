@@ -285,7 +285,8 @@ export type WorkspaceServiceId =
   | 'substantial_equivalence_check' // predicate comparison analysis (device/IVD)
   | 'external_intelligence'    // agency feeds / review-timeline signals
   | 'compliance_calendar'      // post-approval obligation deadlines + escalation
-  | 'change_control';          // post-approval change classification + vehicle routing
+  | 'change_control'           // post-approval change classification + vehicle routing
+  | 'health_economics';        // HTA intelligence, value evidence, reimbursement routing
 
 export interface WorkspaceService {
   id: WorkspaceServiceId;
@@ -308,6 +309,7 @@ const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> 
   external_intelligence:        { label: 'External agency intelligence', feeds: 'ana' },
   compliance_calendar:          { label: 'Compliance calendar (obligations & deadlines)', feeds: 'both' },
   change_control:               { label: 'Change-control classification & vehicle routing', feeds: 'both' },
+  health_economics:             { label: 'Health-economics & market-access intelligence', feeds: 'both' },
 };
 
 function svc(id: WorkspaceServiceId): WorkspaceService {
@@ -549,6 +551,11 @@ function servicesFor(opts: {
   }
   if (family === 'supplement' || family === 'variation') {
     ids.add('change_control');
+  }
+
+  // Products heading to market need health-economics intelligence for HTA/payer strategy.
+  if (family === 'marketing_authorization' || family === 'device_approval' || family === 'device_clearance') {
+    ids.add('health_economics');
   }
 
   return [...ids].map(svc);
