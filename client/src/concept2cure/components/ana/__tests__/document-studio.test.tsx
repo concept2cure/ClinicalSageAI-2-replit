@@ -11,7 +11,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { VerificationPanel } from '../VerificationPanel';
-import { DocumentStudioPane } from '../DocumentStudioPane';
+import { DocumentStudioPane, paginateContent } from '../DocumentStudioPane';
 import type { VerificationResult } from '../useAnaChat';
 
 afterEach(cleanup);
@@ -85,5 +85,70 @@ describe('DocumentStudioPane', () => {
     render(<DocumentStudioPane draft={draft} downloading onDownloadDocx={() => {}} onClose={() => {}} />);
     const btn = screen.getByText('Preparing…').closest('button') as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
+  });
+
+  it('hides the version picker and pager for a single short version', () => {
+    render(<DocumentStudioPane draft={draft} versionCount={1} onDownloadDocx={() => {}} onClose={() => {}} />);
+    expect(screen.queryByLabelText('Document version')).toBeNull();
+    expect(screen.queryByText(/Page \d+ \//)).toBeNull();
+  });
+
+  it('shows a version dropdown (latest selected) and switches versions', () => {
+    const onSelectVersion = vi.fn();
+    render(
+      <DocumentStudioPane
+        draft={draft}
+        versionCount={3}
+        activeVersionIndex={2}
+        onSelectVersion={onSelectVersion}
+        onDownloadDocx={() => {}}
+        onClose={() => {}}
+      />,
+    );
+    const select = screen.getByLabelText('Document version') as HTMLSelectElement;
+    expect(select.value).toBe('2');
+    expect(screen.getByText('v3 (latest)')).toBeTruthy();
+    fireEvent.change(select, { target: { value: '0' } });
+    expect(onSelectVersion).toHaveBeenCalledWith(0);
+  });
+
+  it('paginates a long document and navigates pages', () => {
+    const long = Array.from({ length: 6 }, (_, i) => `Paragraph ${i} ${'x'.repeat(400)}`).join('\n\n');
+    render(
+      <DocumentStudioPane
+        draft={{ title: 'Long', content: long }}
+        pageSize={500}
+        onDownloadDocx={() => {}}
+        onClose={() => {}}
+      />,
+    );
+    expect(screen.getByText(/Page 1 \/ 6/)).toBeTruthy();
+    const prev = screen.getByLabelText('Previous page') as HTMLButtonElement;
+    const next = screen.getByLabelText('Next page') as HTMLButtonElement;
+    expect(prev.disabled).toBe(true); // first page
+    fireEvent.click(next);
+    expect(screen.getByText(/Page 2 \/ 6/)).toBeTruthy();
+  });
+});
+
+describe('paginateContent', () => {
+  it('returns a single page for short content', () => {
+    expect(paginateContent('one\n\ntwo', 2000)).toEqual(['one\n\ntwo']);
+  });
+
+  it('splits at paragraph boundaries when over the page size', () => {
+    const pages = paginateContent(['a'.repeat(300), 'b'.repeat(300), 'c'.repeat(300)].join('\n\n'), 400);
+    expect(pages.length).toBe(3);
+    expect(pages[0]).toBe('a'.repeat(300));
+  });
+
+  it('never cuts a single oversized paragraph mid-block', () => {
+    const big = 'z'.repeat(1000);
+    const pages = paginateContent(big, 400);
+    expect(pages).toEqual([big]);
+  });
+
+  it('returns one empty page for empty content', () => {
+    expect(paginateContent('', 400)).toEqual(['']);
   });
 });
