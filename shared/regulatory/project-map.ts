@@ -21,7 +21,7 @@
  * This is the CROSS-SEGMENT, qualitative scaffold (all ~190 document types: which
  * apps/services at which phase). It is distinct from — and complementary to — the
  * IVD-specific quantitative engine in `server/services/regulatory/program-plan.ts`
- * (`buildProjectMap`: classification → CDx pairing → study design → reviewer
+ * (`buildProgramPlan`: classification → CDx pairing → study design → reviewer
  * simulation → Monte-Carlo timeline/cost). That engine can later fill quantitative
  * detail into an IVD project's phases; this names the phases for every segment.
  *
@@ -34,6 +34,8 @@ import type { WorkspaceAppId } from './app-registry.js';
 import { getApp } from './app-registry.js';
 import type { WorkspaceServiceId } from './workspace-config.js';
 import type { ClientSegmentId } from './client-segments.js';
+import { standardsForSegment } from './client-segments.js';
+import type { StandardId, StandardBody, StandardDomain } from './standards-registry.js';
 import { meetingsForSegment } from './agency-interaction.js';
 
 // ─── Phases — the ordered spine of a regulatory program ──────────────────────
@@ -156,6 +158,21 @@ const CLAIM_PHASES: Record<string, ProjectPhase> = {
   labeling: 'authoring',
 };
 
+/** The phase(s) at which each standard domain applies. */
+const DOMAIN_PHASES: Record<StandardDomain, ProjectPhase[]> = {
+  quality_system: ['quality'],
+  risk: ['clinical', 'post_market'],
+  software: ['quality', 'clinical'],
+  human_factors: ['clinical'],
+  cybersecurity: ['clinical', 'post_market'],
+  analytical_performance: ['quality'],
+  cmc_biologic: ['quality'],
+  cmc_chemistry: ['quality'],
+  nonclinical: ['nonclinical'],
+  clinical: ['clinical'],
+  regulation: ['strategy', 'submission', 'review'],
+};
+
 /** Structural deliverables a phase contributes beyond the claim spine. */
 const FRAMING_DELIVERABLES: Partial<Record<ProjectPhase, string[]>> = {
   strategy: ['Regulatory strategy', 'Pre-submission meeting'],
@@ -166,6 +183,14 @@ const FRAMING_DELIVERABLES: Partial<Record<ProjectPhase, string[]>> = {
 };
 
 // ─── Output shapes ───────────────────────────────────────────────────────────
+
+export interface MilestoneStandard {
+  id: StandardId;
+  designation: string;
+  body: StandardBody;
+  currentVersion: string;
+  domain: StandardDomain;
+}
 
 export interface ProjectMilestone {
   /** Stable milestone id (`<phase>`). */
@@ -183,6 +208,8 @@ export interface ProjectMilestone {
   objectives: { id: string; label: string }[];
   /** Concrete deliverables produced (claim section targets + framing). */
   deliverables: string[];
+  /** Standards in force at this milestone (segment corpus filtered by domain→phase). */
+  standards: MilestoneStandard[];
   /** The transmit target, on the submission milestone only. */
   gateway: { region: string } | null;
 }
@@ -281,6 +308,11 @@ export function resolveProjectMap(input: WorkspaceConfigInput): ProjectMap {
 
   const emitted = phasesFor(cfg, availableApps);
 
+  // Resolve the segment's standards corpus once (empty if no segment).
+  const segmentStandards = cfg.program?.segment
+    ? standardsForSegment(cfg.program.segment as ClientSegmentId)
+    : [];
+
   const milestones: ProjectMilestone[] = [];
   let ordinal = 0;
 
@@ -309,6 +341,17 @@ export function resolveProjectMap(input: WorkspaceConfigInput): ProjectMap {
       if (meetings.length) deliverables.push(`Agency meeting (${meetings[0]})`);
     }
 
+    // Standards in force at this phase (segment corpus filtered by domain→phase).
+    const standards: MilestoneStandard[] = segmentStandards
+      .filter((s) => DOMAIN_PHASES[s.domain].includes(phase))
+      .map((s) => ({
+        id: s.id,
+        designation: s.designation,
+        body: s.body,
+        currentVersion: s.currentVersion,
+        domain: s.domain,
+      }));
+
     milestones.push({
       id: phase,
       phase,
@@ -319,6 +362,7 @@ export function resolveProjectMap(input: WorkspaceConfigInput): ProjectMap {
       services,
       objectives,
       deliverables,
+      standards,
       gateway: phase === 'submission' ? cfg.gateway : null,
     });
   }
