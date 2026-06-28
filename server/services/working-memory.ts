@@ -212,15 +212,21 @@ export async function getLatestWorkingMemory(
 
 /**
  * Get the latest working memory for a thread (used by cortex-unified).
+ * Org-scoped to prevent any cross-tenant leak if a thread_id ever collides.
  */
 export async function getLatestWorkingMemoryByThread(
-  threadId: string
+  threadId: string,
+  organizationId: number
 ): Promise<string | null> {
+  if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) {
+    return null;
+  }
   try {
     const result = await pool.query(
       `SELECT summary FROM conversation_working_memory
-       WHERE thread_id = $1 ORDER BY generated_at DESC LIMIT 1`,
-      [threadId]
+       WHERE thread_id = $1 AND organization_id = $2
+       ORDER BY generated_at DESC LIMIT 1`,
+      [threadId, organizationId]
     );
     return result.rows.length > 0 ? result.rows[0].summary : null;
   } catch (error) {
@@ -356,14 +362,16 @@ export async function needsWorkingMemoryRefresh(
  */
 export async function needsWorkingMemoryRefreshByThread(
   threadId: string,
+  organizationId: number,
   currentMessageCount: number
 ): Promise<boolean> {
-  if (!threadId) return false;
+  if (!threadId || !Number.isFinite(organizationId) || organizationId <= 0) return false;
   try {
     const result = await pool.query(
       `SELECT message_count_at_generation FROM conversation_working_memory
-       WHERE thread_id = $1 ORDER BY generated_at DESC LIMIT 1`,
-      [threadId]
+       WHERE thread_id = $1 AND organization_id = $2
+       ORDER BY generated_at DESC LIMIT 1`,
+      [threadId, organizationId]
     );
     if (result.rows.length === 0) {
       return currentMessageCount >= WORKING_MEMORY_THRESHOLD;
@@ -372,7 +380,6 @@ export async function needsWorkingMemoryRefreshByThread(
       currentMessageCount - (result.rows[0].message_count_at_generation || 0);
     return messagesSinceSummary >= WORKING_MEMORY_THRESHOLD;
   } catch {
-    // Table may be missing in sparse envs — skip refresh instead of crashing.
     return false;
   }
 }
@@ -427,12 +434,10 @@ export async function summarizeAndStoreWorkingMemoryForThread(params: {
   if (!Array.isArray(messages) || messages.length === 0) return;
 
   try {
-    const shouldRefresh = await needsWorkingMemoryRefreshByThread(threadId, messages.length);
+    const shouldRefresh = await needsWorkingMemoryRefreshByThread(threadId, organizationId, messages.length);
     if (!shouldRefresh) return;
 
-    // Pull the previous summary for incremental refresh (keeps the model
-    // focused on the delta instead of re-deriving everything each time).
-    const previousSummary = (await getLatestWorkingMemoryByThread(threadId)) || undefined;
+    const previousSummary = (await getLatestWorkingMemoryByThread(threadId, organizationId)) || undefined;
     const prompt = buildWorkingMemoryPrompt(messages, previousSummary);
 
     const { getGateway } = await import('./ai-gateway/gateway.js');

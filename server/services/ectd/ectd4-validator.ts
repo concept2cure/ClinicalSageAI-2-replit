@@ -195,17 +195,75 @@ const IND_REQUIRED_SECTIONS = new Set([
   'm5.3.5', // Phase 1 Protocol
 ]);
 
+/** Sections required for an NDA filing per 21 CFR 314.50 / ICH M4 */
+const NDA_REQUIRED_SECTIONS: ReadonlySet<string> = new Set([
+  'm1.1', // FDA Forms (356h)
+  'm1.2', // Cover Letter
+  'm1.3', // Administrative Information
+  'm1.5', // Table of Contents
+  'm1.14', // Labeling
+  'm1.15', // Annotated Labeling
+  'm2.2', // Introduction
+  'm2.3', // Quality Overall Summary
+  'm2.4', // Nonclinical Overview
+  'm2.5', // Clinical Overview
+  'm2.6', // Nonclinical Written & Tabulated Summaries
+  'm2.7', // Clinical Summary
+  'm3.2.S', // Drug Substance
+  'm3.2.P', // Drug Product
+  'm3.2.A', // Appendices (facilities, adventitious agents, excipients)
+  'm3.2.R', // Regional Information
+  'm4.2.1', // Pharmacology
+  'm4.2.2', // Pharmacokinetics
+  'm4.2.3', // Toxicology
+  'm5.2', // Tabular Listing of Clinical Studies
+  'm5.3.5', // Reports of Efficacy and Safety Studies (CSRs)
+]);
+
+/** Sections required for a BLA filing per 21 CFR 601 / ICH M4 */
+const BLA_REQUIRED_SECTIONS: ReadonlySet<string> = new Set([
+  'm1.1', // FDA Forms (356h)
+  'm1.2', // Cover Letter
+  'm1.3', // Administrative Information
+  'm1.5', // Table of Contents
+  'm1.14', // Labeling
+  'm2.2', // Introduction
+  'm2.3', // Quality Overall Summary (incl. characterization for biologics)
+  'm2.4', // Nonclinical Overview
+  'm2.5', // Clinical Overview
+  'm2.6', // Nonclinical Written & Tabulated Summaries
+  'm2.7', // Clinical Summary (incl. immunogenicity)
+  'm3.2.S', // Drug Substance
+  'm3.2.P', // Drug Product
+  'm3.2.A', // Appendices (adventitious agents required for biologics)
+  'm3.2.R', // Regional Information
+  'm4.2.1', // Pharmacology
+  'm4.2.3', // Toxicology
+  'm5.2', // Tabular Listing of Clinical Studies
+  'm5.3.5', // Reports of Efficacy and Safety Studies (CSRs)
+]);
+
 const EMPTY_REQUIRED_SECTIONS: ReadonlySet<string> = new Set();
 
 /**
- * The required-section profile for a submission type. Today only IND has a
- * defined profile; other types (NDA, BLA, …) return an empty set so the
- * completeness check does not falsely flag IND-specific sections as "missing"
- * on a non-IND submission. (Previously both ternary branches were
- * IND_REQUIRED_SECTIONS, so every type was validated against IND's sections.)
+ * The required-section profile for a submission type. Unrecognized submission
+ * types return an empty set so the completeness check does not falsely flag
+ * IND-specific sections as "missing" on a non-IND submission. (Previously both
+ * ternary branches were IND_REQUIRED_SECTIONS, so every type — including NDA
+ * and BLA — was validated against IND's sections.)
  */
 function requiredSectionsFor(submissionType: string): ReadonlySet<string> {
-  return submissionType.toUpperCase() === 'IND' ? IND_REQUIRED_SECTIONS : EMPTY_REQUIRED_SECTIONS;
+  const normalized = submissionType?.toUpperCase?.() ?? 'IND';
+  switch (normalized) {
+    case 'IND':
+      return IND_REQUIRED_SECTIONS;
+    case 'NDA':
+      return NDA_REQUIRED_SECTIONS;
+    case 'BLA':
+      return BLA_REQUIRED_SECTIONS;
+    default:
+      return EMPTY_REQUIRED_SECTIONS;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

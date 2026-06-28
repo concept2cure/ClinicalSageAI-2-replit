@@ -245,7 +245,7 @@ export async function buildMemoryContextForChat(
   }
 
   if (!useSemanticWorkingMemory) {
-    const workingSummary = await getLatestWorkingMemoryByThread(input.threadId).catch(() => null);
+    const workingSummary = await getLatestWorkingMemoryByThread(input.threadId, input.organizationId).catch(() => null);
     if (workingSummary) {
       atoms.push({
         id: 0,

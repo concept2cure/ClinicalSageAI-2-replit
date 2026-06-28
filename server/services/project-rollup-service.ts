@@ -147,8 +147,8 @@ export class ProjectRollupService {
     // Pre-fetch task and module counts in bulk to avoid N+1 queries
     const allNodeIds = Array.from(nodeMap.keys());
     const [taskCountsMap, moduleCountsMap] = await Promise.all([
-      this.batchFetchTaskCounts(allNodeIds),
-      this.batchFetchModuleCounts(allNodeIds),
+      this.batchFetchTaskCounts(allNodeIds, organizationId),
+      this.batchFetchModuleCounts(allNodeIds, organizationId),
     ]);
 
     const rootNode = nodeMap.get(projectId)!;
@@ -164,7 +164,8 @@ export class ProjectRollupService {
    * Fetch task counts for all project IDs in a single query.
    */
   private async batchFetchTaskCounts(
-    projectIds: number[]
+    projectIds: number[],
+    organizationId: number
   ): Promise<Map<number, { total: number; completed: number; blocked: number; overdue: number }>> {
     const map = new Map<
       number,
@@ -180,9 +181,9 @@ export class ProjectRollupService {
          COUNT(*) FILTER (WHERE status = 'blocked')::int as blocked,
          COUNT(*) FILTER (WHERE status != 'done' AND due_date < NOW())::int as overdue
        FROM unified_tasks
-       WHERE project_id = ANY($1)
+       WHERE project_id = ANY($1) AND organization_id = $2
        GROUP BY project_id`,
-      [projectIds]
+      [projectIds, organizationId]
     );
 
     for (const row of result.rows) {
@@ -199,16 +200,19 @@ export class ProjectRollupService {
   /**
    * Fetch module counts for all project IDs in a single query.
    */
-  private async batchFetchModuleCounts(projectIds: number[]): Promise<Map<number, number>> {
+  private async batchFetchModuleCounts(
+    projectIds: number[],
+    organizationId: number
+  ): Promise<Map<number, number>> {
     const map = new Map<number, number>();
     if (projectIds.length === 0) return map;
 
     const result = await this.pool.query(
       `SELECT project_id, COUNT(*)::int as count
        FROM project_modules
-       WHERE project_id = ANY($1)
+       WHERE project_id = ANY($1) AND organization_id = $2
        GROUP BY project_id`,
-      [projectIds]
+      [projectIds, organizationId]
     );
 
     for (const row of result.rows) {
