@@ -193,3 +193,100 @@ describe('POST /api/510k/estar/official', () => {
     });
   });
 });
+
+function getGetHandler(routePath: string) {
+  const layer = estarRoutes.stack.find(
+    (l: any) => l.route?.path === routePath && l.route?.methods?.get,
+  );
+  if (!layer) throw new Error(`Missing route GET ${routePath}`);
+  return layer.route.stack[layer.route.stack.length - 1].handle;
+}
+
+function makeQueryReq(query: any) {
+  const req = createMockRequest({}) as any;
+  req.query = query;
+  req.userRole = 'editor';
+  req.userId = 9;
+  req.resolvedOrganizationId = 2;
+  req.header = (name: string) => (name === 'x-organization-id' ? '2' : undefined);
+  return req;
+}
+
+describe('GET /api/510k/estar/readiness (drives the gated UI button)', () => {
+  describe('not ready (no template / empty map)', () => {
+    let emptyDir: string;
+    let priorEnv: string | undefined;
+
+    beforeAll(async () => {
+      emptyDir = await fs.mkdtemp(path.join(os.tmpdir(), 'estar-readiness-empty-'));
+      priorEnv = process.env.ESTAR_TEMPLATE_DIR;
+      process.env.ESTAR_TEMPLATE_DIR = emptyDir;
+    });
+
+    afterAll(async () => {
+      if (priorEnv === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+      else process.env.ESTAR_TEMPLATE_DIR = priorEnv;
+      await fs.rm(emptyDir, { recursive: true, force: true });
+    });
+
+    beforeEach(() => vi.clearAllMocks());
+
+    it('reports ready:false with blockers and persists nothing', async () => {
+      const req = makeQueryReq({ type: '510k', variant: 'device' });
+      const res = createMockResponse() as any;
+
+      await getGetHandler('/readiness')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      const payload = res.json.mock.calls[0][0];
+      expect(payload.ready).toBe(false);
+      expect(payload.officialEstarPdf).toBe(false);
+      expect(Array.isArray(payload.blockers)).toBe(true);
+      expect(payload.blockers.length).toBeGreaterThan(0);
+      expect(mockGovernedConsequence).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ready (template + verified map present)', () => {
+    let templateDir: string;
+    let priorEnv: string | undefined;
+
+    beforeAll(async () => {
+      templateDir = await fs.mkdtemp(path.join(os.tmpdir(), 'estar-readiness-ready-'));
+      priorEnv = process.env.ESTAR_TEMPLATE_DIR;
+      process.env.ESTAR_TEMPLATE_DIR = templateDir;
+      await fs.writeFile(
+        path.join(templateDir, 'eSTAR-510k-non-ivd.pdf'),
+        Buffer.from(await makeSyntheticEstar()),
+      );
+      ESTAR_FIELD_MAPS['510k-device'] = {
+        deviceName: { acroField: 'DeviceName', type: 'text' },
+        isIvd: { acroField: 'IsIvd', type: 'checkbox' },
+      };
+    });
+
+    afterAll(async () => {
+      if (priorEnv === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+      else process.env.ESTAR_TEMPLATE_DIR = priorEnv;
+      ESTAR_FIELD_MAPS['510k-device'] = {};
+      await fs.rm(templateDir, { recursive: true, force: true });
+    });
+
+    beforeEach(() => vi.clearAllMocks());
+
+    it('reports ready:true with no blockers', async () => {
+      const req = makeQueryReq({ type: '510k', variant: 'device' });
+      const res = createMockResponse() as any;
+
+      await getGetHandler('/readiness')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      const payload = res.json.mock.calls[0][0];
+      expect(payload.ready).toBe(true);
+      expect(payload.officialEstarPdf).toBe(true);
+      expect(payload.templateAvailable).toBe(true);
+      expect(payload.fieldMapPopulated).toBe(true);
+      expect(payload.blockers).toEqual([]);
+    });
+  });
+});
