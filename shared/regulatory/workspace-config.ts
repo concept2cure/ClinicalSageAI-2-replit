@@ -294,7 +294,8 @@ export type WorkspaceServiceId =
   | 'cdx_intelligence'         // companion-diagnostic pairing, biomarker validity, co-development
   | 'financial_disclosures'    // 21 CFR 54 FCOI — investigator financial disclosure (3454/3455)
   | 'cmc_consistency'          // CMC contradiction detection across specs, stability, batches
-  | 'dose_optimization';       // exposure-response / Project Optimus dose selection
+  | 'dose_optimization'        // exposure-response / Project Optimus dose selection
+  | 'effort_certification';    // 2 CFR 200.430 personnel effort certification (grant-funded)
 
 export interface WorkspaceService {
   id: WorkspaceServiceId;
@@ -326,6 +327,7 @@ const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> 
   financial_disclosures:        { label: 'Financial disclosures (21 CFR 54 FCOI)', feeds: 'both' },
   cmc_consistency:              { label: 'CMC consistency & contradiction detection', feeds: 'both' },
   dose_optimization:            { label: 'Dose optimization (exposure-response / Project Optimus)', feeds: 'both' },
+  effort_certification:         { label: 'Effort certification (2 CFR 200.430)', feeds: 'both' },
 };
 
 function svc(id: WorkspaceServiceId): WorkspaceService {
@@ -643,6 +645,12 @@ function servicesFor(opts: {
     (family === 'clinical_trial' || family === 'marketing_authorization' || scope === 'dossier')
   ) {
     ids.add('dose_optimization');
+  }
+
+  // Effort certification (2 CFR 200.430): grant-funded clinical trial programs
+  // need personnel effort certification for Uniform Guidance compliance.
+  if (family === 'clinical_trial') {
+    ids.add('effort_certification');
   }
 
   return [...ids].map(svc);
