@@ -18,6 +18,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { apiRequest } from '@/lib/queryClient';
+import { isFeatureEnabled } from '@/flags/featureFlags';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 
 import { Sidebar, type AnaView, type AccountInfo, type Recent } from './Sidebar';
@@ -26,7 +27,8 @@ import { EmptyState, type EmptySuggestion } from './EmptyState';
 import { ChatView, type ChatMessageView } from './ChatView';
 import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
-import { useAnaChat, type AnaChatMessage, type AnaChatAction, type MessageAttachment } from './useAnaChat';
+import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
+import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult } from './useAnaChat';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
 
@@ -152,6 +154,23 @@ function deriveInitials(name?: string | null): string {
   const parts = (name || '').split(/\s+/).filter(Boolean).slice(0, 2);
   const initials = parts.map(p => p[0]?.toUpperCase() ?? '').join('');
   return initials || 'U';
+}
+
+// Trigger a browser download for a blob without leaking the object URL.
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// A filesystem-safe stem from a document title.
+function safeFileStem(title: string): string {
+  return (title || 'document').replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'document';
 }
 
 // Client-side display labels for server DocumentActionType values.
@@ -481,6 +500,62 @@ export function Ana({
 
   const greetingName = account.name.split(' ')[0] || account.name;
 
+  /* ─────────────────────────────────────────────────────────────
+     AnA Document Studio — split-pane preview of the active draft +
+     its "verified against your source" trust-panel. Flag-gated.
+     ───────────────────────────────────────────────────────────── */
+  const studioEnabled = isFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO');
+
+  // The active draft is the most recent assistant turn that produced one.
+  const activeDraft = useMemo<{ id: string; draft: DocumentStudioDraft; verification?: VerificationResult } | null>(() => {
+    if (!studioEnabled) return null;
+    for (let i = chat.messages.length - 1; i >= 0; i--) {
+      const m = chat.messages[i];
+      if (m.generatedDraft) {
+        return { id: m.id, draft: m.generatedDraft, verification: m.verification };
+      }
+    }
+    return null;
+  }, [studioEnabled, chat.messages]);
+
+  // The pane auto-opens for each new draft; the user can close it, and it
+  // re-opens when a *different* draft arrives.
+  const [studioClosed, setStudioClosed] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const lastDraftIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const id = activeDraft?.id ?? null;
+    if (id && id !== lastDraftIdRef.current) {
+      lastDraftIdRef.current = id;
+      setStudioClosed(false);
+    }
+  }, [activeDraft?.id]);
+
+  const studioOpen = Boolean(activeDraft) && !studioClosed && view === 'chat';
+
+  // Download the rendered draft as a Word file. Calls the server DOCX render
+  // route; on any failure, falls back to an honest Markdown download so the
+  // action never silently no-ops. (See ANA_DOCUMENT_STUDIO_UI_SPEC for the
+  // render contract the host backend fulfils.)
+  const handleDownloadDocx = useCallback(async (draft: DocumentStudioDraft) => {
+    setDownloading(true);
+    try {
+      const res = await fetch('/api/docx-factory/render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: draft.title, markdown: draft.content, format: 'docx' }),
+      });
+      if (!res.ok) throw new Error(`render failed: ${res.status}`);
+      const blob = await res.blob();
+      downloadBlob(blob, `${safeFileStem(draft.title)}.docx`);
+    } catch (err) {
+      console.warn('[Ana] DOCX render unavailable; downloading source as Markdown:', (err as Error)?.message);
+      downloadBlob(new Blob([draft.content], { type: 'text/markdown' }), `${safeFileStem(draft.title)}.md`);
+    } finally {
+      setDownloading(false);
+    }
+  }, []);
+
   return (
     <div className={styles.shell} data-collapsed={collapsed ? 'true' : 'false'}>
       <Sidebar
@@ -500,6 +575,8 @@ export function Ana({
           canExport={view === 'chat' && chat.messages.length > 0}
           onExport={handleExport}
         />
+        <div className={studioOpen ? styles.studioLayout : styles.studioPassthrough}>
+        <div className={studioOpen ? styles.studioChat : styles.studioPassthrough}>
         {view === 'home' && (
           <EmptyState
             greetingName={greetingName}
@@ -547,6 +624,17 @@ export function Ana({
             onSelect={id => onSelectProject?.(id)}
           />
         )}
+        </div>
+        {studioOpen && activeDraft && (
+          <DocumentStudioPane
+            draft={activeDraft.draft}
+            verification={activeDraft.verification}
+            onDownloadDocx={handleDownloadDocx}
+            onClose={() => setStudioClosed(true)}
+            downloading={downloading}
+          />
+        )}
+        </div>
       </main>
     </div>
   );
