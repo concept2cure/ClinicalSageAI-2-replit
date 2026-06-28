@@ -34,24 +34,24 @@ Surface ids below are real navigation targets (see `shared/navigation/index.ts`)
 These are real, working capabilities that currently only have the chat path.
 Recommend Claude Design add a surface (or a tab on an existing one):
 
-1. **Safety / Pharmacovigilance** — *no surface exists.*
+1. **Safety / Pharmacovigilance** — *nav target registered (`safety`); screen not built.*
    Tools: `build_sae_line_listing`, `compose_e2b_icsr`, `advise_pharmacovigilance`,
    safety-narrative tools.
    Recommendation: a **Safety** project surface (or a tab under `review`), hosting
    the SAE line-listing table (CSV export) and the ICSR composer (XML + the
-   mandatory-gap checklist). New navigation target id suggestion: `safety`.
+   mandatory-gap checklist). `navigate_to({ target: "safety" })` already resolves.
 
-2. **Market Access / HEOR** — *no surface exists.*
+2. **Market Access / HEOR** — *nav target registered (`market-access`); screen not built.*
    Tools: `model_budget_impact`, `model_cost_effectiveness`, `model_markov_cohort`,
    `run_probabilistic_sensitivity` (+ `search_medicare_coverage`).
    Recommendation: a **Market Access** surface (or a tab under `report-engine`/
    `intelligence`) hosting the 4 charts (bars / ICER plane / Markov trace / CEAC).
-   New navigation target id suggestion: `market-access`.
+   `navigate_to({ target: "market-access" })` already resolves.
 
-> When a new surface lands, add it to `NAVIGATION_TARGETS` in
-> `shared/navigation/index.ts` (one entry) — then `navigate_to`/`list_app_screens`
-> reach it automatically and AnA can route users to it. That's the only wiring
-> needed on the AnA side.
+> Both ids are now in `NAVIGATION_TARGETS` (`shared/navigation/index.ts`), so
+> `navigate_to`/`list_app_screens` reach them and AnA can route users there. The
+> only remaining work is the **screen itself** (Claude Design) — render the tools'
+> results using the contracts in `shared/ui-contracts/ana-renderers.ts`.
 
 ## How a result reaches a surface
 

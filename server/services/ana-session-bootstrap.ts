@@ -99,7 +99,7 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
 
   // 1. Working memory — latest thread summary (returned as the summary string).
   const workingMemorySummary = threadId
-    ? await safe(getLatestWorkingMemoryByThread(threadId), null)
+    ? await safe(getLatestWorkingMemoryByThread(threadId, organizationId), null)
     : null;
 
   // 2. Project atoms (query-independent, by profile).
