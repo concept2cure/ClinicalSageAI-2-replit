@@ -245,7 +245,9 @@ export async function buildMemoryContextForChat(
   }
 
   if (!useSemanticWorkingMemory) {
-    const workingSummary = await getLatestWorkingMemoryByThread(input.threadId, input.organizationId).catch(() => null);
+    // organizationId may be undefined here; the loader treats 0/invalid as "no
+    // org" and returns null, matching the .catch(() => null) fallback below.
+    const workingSummary = await getLatestWorkingMemoryByThread(input.threadId, input.organizationId ?? 0).catch(() => null);
     if (workingSummary) {
       atoms.push({
         id: 0,
