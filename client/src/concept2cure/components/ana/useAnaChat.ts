@@ -70,6 +70,29 @@ export interface VerificationResult {
 }
 
 /**
+ * E14 — the board-ready CRL/RTF pre-mortem decision artifact, surfaced from the
+ * `assemble_crl_premortem_artifact` tool result so the Document Studio can show
+ * the approval-probability estimate, ranked precedent-cited risks, and the
+ * prioritized fix-list. Honest by construction: a `not_assessed`/`sample`
+ * artifact is non-exportable; the artifact is always unsealed until E1 lands.
+ */
+export type { CrlPremortemArtifact } from './CrlPremortemPanel';
+
+/**
+ * Map a parsed `assemble_crl_premortem_artifact` tool result into the client
+ * artifact shape. Returns null for an error envelope, a non-object, or a missing
+ * artifact. Exported for unit testing the parse in isolation from the stream.
+ */
+export function mapCrlPremortemArtifact(
+  parsed: Record<string, unknown> | null | undefined,
+): import('./CrlPremortemPanel').CrlPremortemArtifact | null {
+  if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
+  const a = parsed.artifact;
+  if (!a || typeof a !== 'object') return null;
+  return a as import('./CrlPremortemPanel').CrlPremortemArtifact;
+}
+
+/**
  * Map a parsed `verify_docx_against_source` tool result into the client
  * VerificationResult shape. Returns null for an error envelope or non-object.
  * Exported for unit testing the parse in isolation from the SSE stream.
@@ -224,6 +247,13 @@ export interface AnaChatMessage {
    * Powers the Document Studio "verified against your source" trust-panel.
    */
   verification?: VerificationResult;
+  /**
+   * E14 — board-ready CRL/RTF pre-mortem decision artifact produced by
+   * `assemble_crl_premortem_artifact` this turn, if it ran. Powers the Document
+   * Studio pre-mortem panel (approval-probability estimate + cited risks + fix-
+   * list). Always unsealed until E1's Sign-and-seal lands.
+   */
+  crlPremortem?: import('./CrlPremortemPanel').CrlPremortemArtifact;
 }
 
 export interface UseAnaChatOptions {
@@ -713,6 +743,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // can show "verified against your source" (caption strings + diff).
               const verification: VerificationResult | null =
                 name === 'verify_docx_against_source' ? mapVerificationResult(parsedResult) : null;
+              // E14 — capture the CRL/RTF pre-mortem decision artifact so the
+              // Document Studio can render the board-ready pre-mortem panel.
+              const crlPremortem =
+                name === 'assemble_crl_premortem_artifact' ? mapCrlPremortemArtifact(parsedResult) : null;
               setMessages(prev =>
                 prev.map(m => {
                   if (m.id !== assistantId) return m;
@@ -727,6 +761,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     }
                   }
                   if (verification) next = { ...next, verification };
+                  if (crlPremortem) next = { ...next, crlPremortem };
                   return next;
                 })
               );

@@ -1089,6 +1089,58 @@ export const RUN_SUBMISSION_PREMORTEM: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// E14 — CRL/RTF pre-mortem sealed as an exportable DECISION ARTIFACT. Lifts the
+// run_submission_premortem verdict into a board-ready artifact: an approval-
+// probability ESTIMATE (grounded in the cited precedent approve/deny split,
+// never a guarantee), a ranked top-risks list with each risk bound to its
+// grounding precedent, a prioritized fix-list, and an exportability/honesty
+// guard. Honest by construction: pattern-only / insufficient-data reads are
+// marked not_assessed and are NOT exportable/sealable; sample artifacts never
+// export. The artifact is generated UNSEALED — E1's Sign-and-seal attaches the
+// seal/provenance without changing assembly.
+// ─────────────────────────────────────────────────────────────────────────────
+export const ASSEMBLE_CRL_PREMORTEM_ARTIFACT: AnaTool = {
+  name: 'assemble_crl_premortem_artifact',
+  description:
+    "Assemble a board-ready CRL/RTF pre-mortem DECISION ARTIFACT from draft submission text: runs the RTF/CRL pre-mortem (deterministic reviewer-trigger detection + the precedent engine) and composes an executive-ready artifact — an approval-probability ESTIMATE grounded in the approve/deny split of the cited precedents (always framed as an estimate, never a guarantee, carrying its denominator and confidence), a ranked top-risks list where each risk is bound to the precedent that grounds it, a prioritized fix-list, and the precedent citations. Honest by construction: when the precedent corpus is too thin to calibrate, the artifact is marked 'not_assessed' and carries NO probability and is NOT exportable. Set export=true to also render and author the artifact as a Word document via the native docx engine (only permitted for an 'estimated', non-sample artifact); the exported document is marked UNSEALED until signed. Provide the draft text and, ideally, the agency and submission type.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: {
+        type: 'string',
+        description: 'The draft submission text to assess (a section, module, or claim set).',
+      },
+      submission_type: {
+        type: 'string',
+        description: 'Submission type for precedent calibration (e.g. IND, NDA, BLA, 510(k), PMA, MAA).',
+      },
+      agency: {
+        type: 'string',
+        description: 'Target agency (e.g. FDA, EMA, PMDA). Used for scope and precedent filtering.',
+      },
+      indication: {
+        type: 'string',
+        description: 'Optional indication / therapeutic area to sharpen precedent matching.',
+      },
+      location: {
+        type: 'string',
+        description: "Section/field reference for provenance (e.g. '2.5 Clinical Overview'). Default 'document'.",
+      },
+      title: {
+        type: 'string',
+        description: 'Optional artifact title for the board-ready report.',
+      },
+      export: {
+        type: 'boolean',
+        description:
+          'When true, also render and author the artifact as a Word document via the native docx engine (only for an estimable, non-sample artifact). Default false.',
+      },
+    },
+    required: ['text'],
+  },
+};
+
 export const SCAN_REGULATORY_DEFICIENCIES: AnaTool = {
   name: 'scan_regulatory_deficiencies',
   description:
@@ -6658,6 +6710,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_LARGE_DOCUMENT,
   REMEMBER_DOCUMENT_IN_PROJECT,
   RUN_SUBMISSION_PREMORTEM,
+  ASSEMBLE_CRL_PREMORTEM_ARTIFACT,
   ASSESS_OUTPUT_CONFIDENCE,
   CHECK_GROUNDING,
   RENDER_SIGNATURE_MANIFESTATION,
