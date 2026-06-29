@@ -72,6 +72,25 @@ describe('LabelCurrencyPanel (deterministic currency gate)', () => {
     expect(screen.getByText(/FDA 21 CFR 201\.56/)).toBeTruthy();
     expect(screen.getByRole('status').getAttribute('data-status')).toBe('unverified');
   });
+
+  it('verdict is DETERMINISTIC: equal finding sets render the same verdict text', () => {
+    const a = render(<LabelCurrencyPanel verdict={{ riskLevel: 'low', findings: [] }} />);
+    expect(a.getByText('Label currency: current')).toBeTruthy();
+    cleanup();
+    const b = render(<LabelCurrencyPanel verdict={{ riskLevel: 'high', findings: [] }} />);
+    // No finding ⇒ current, regardless of the (cosmetic) riskLevel field.
+    expect(b.getByText('Label currency: current')).toBeTruthy();
+  });
+
+  it('COLOR NEVER ALONE: the verdict carries a text label and an icon, not color only', () => {
+    const { container } = render(<LabelCurrencyPanel verdict={staleVerdict} />);
+    // Text label present…
+    expect(screen.getByText('Label currency: stale')).toBeTruthy();
+    // …and a (decorative, aria-hidden) icon accompanies it.
+    expect(container.querySelector('[aria-hidden="true"] svg')).toBeTruthy();
+    // The cited basis is conveyed as text, not via color.
+    expect(screen.getByText(/FDA 21 CFR 201\.56/)).toBeTruthy();
+  });
 });
 
 describe('LabelingAuthoringPane', () => {
@@ -91,6 +110,37 @@ describe('LabelingAuthoringPane', () => {
     expect(euBtn.getAttribute('aria-checked')).toBe('false');
     fireEvent.click(euBtn);
     expect(onModeChange).toHaveBeenCalledWith('eu');
+  });
+
+  it('mode toggle is a labeled radiogroup of radios (semantic, keyboard operable)', () => {
+    render(<LabelingAuthoringPane mode="us" onModeChange={() => {}} draft={draft} />);
+    const group = screen.getByRole('radiogroup', { name: 'Labeling structure' });
+    expect(group).toBeTruthy();
+    const radios = screen.getAllByRole('radio');
+    expect(radios.length).toBe(2);
+    // Both are real <button> elements (no div-onClick).
+    radios.forEach((r) => expect(r.tagName).toBe('BUTTON'));
+  });
+
+  it('radiogroup uses roving tabindex: only the checked radio is in the tab order', () => {
+    render(<LabelingAuthoringPane mode="us" onModeChange={() => {}} draft={draft} />);
+    const us = screen.getByRole('radio', { name: 'US' });
+    const eu = screen.getByRole('radio', { name: 'EU' });
+    expect(us.getAttribute('aria-checked')).toBe('true');
+    expect(us.getAttribute('tabindex')).toBe('0');
+    expect(eu.getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('ArrowRight/ArrowDown moves selection to the next structure; ArrowLeft/Up wraps back', () => {
+    const onModeChange = vi.fn();
+    render(<LabelingAuthoringPane mode="us" onModeChange={onModeChange} draft={draft} />);
+    const us = screen.getByRole('radio', { name: 'US' });
+    fireEvent.keyDown(us, { key: 'ArrowRight' });
+    expect(onModeChange).toHaveBeenLastCalledWith('eu');
+    fireEvent.keyDown(us, { key: 'ArrowLeft' });
+    expect(onModeChange).toHaveBeenLastCalledWith('eu'); // wraps from us → eu
+    fireEvent.keyDown(us, { key: 'ArrowDown' });
+    expect(onModeChange).toHaveBeenLastCalledWith('eu');
   });
 
   it('flags missing sections when the draft is incomplete', () => {
@@ -131,6 +181,8 @@ describe('LabelingAuthoringPane', () => {
     );
     const exportBtn = screen.getByText('Seal & export').closest('button') as HTMLButtonElement;
     expect(exportBtn.disabled).toBe(true);
+    // Disabled-with-reason: the reason is stated in the button tooltip AND inline.
+    expect(exportBtn.getAttribute('title')).toMatch(/Sample drafts cannot be exported/);
     expect(screen.getByText(/Sample data/)).toBeTruthy();
   });
 
