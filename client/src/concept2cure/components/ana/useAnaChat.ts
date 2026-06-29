@@ -212,6 +212,14 @@ export interface AnaChatMessage {
     title: string;
     content: string;
     documentType?: string;
+    /**
+     * Set once the server persists this draft to the governed artifact version
+     * history (server emits `artifact_version_saved`). Their presence lets the
+     * UI fetch the durable cross-session version lineage instead of relying on
+     * the per-session in-memory grouping.
+     */
+    artifactId?: string;
+    version?: number;
   };
   /**
    * Tools AnA invoked this turn, shown as calm status rows for transparency
@@ -742,6 +750,28 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                       ? { ...m, generatedDraft: { title, content, documentType } }
                       : m
                   )
+                );
+              }
+            } else if (event.type === 'artifact_version_saved') {
+              // Server persisted this draft to the governed artifact version
+              // history. Attach the durable artifactId/version to the matching
+              // draft so the UI can fetch its cross-session lineage.
+              const artifactId: string | undefined =
+                typeof event.artifactId === 'string' ? event.artifactId : undefined;
+              const version: number | undefined =
+                typeof event.version === 'number' ? event.version : undefined;
+              const savedTitle: string | undefined =
+                typeof event.title === 'string' ? event.title : undefined;
+              if (artifactId) {
+                setMessages(prev =>
+                  prev.map(m => {
+                    if (m.id !== assistantId || !m.generatedDraft) return m;
+                    if (savedTitle && m.generatedDraft.title !== savedTitle) return m;
+                    return {
+                      ...m,
+                      generatedDraft: { ...m.generatedDraft, artifactId, version },
+                    };
+                  })
                 );
               }
             } else if (event.type === 'error') {

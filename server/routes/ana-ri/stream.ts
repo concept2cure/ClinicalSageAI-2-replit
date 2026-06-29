@@ -489,6 +489,10 @@ router.post('/stream', async (req: Request, res: Response) => {
     // pathological multi-round turn can't accumulate unbounded records.
     const collectedProvenance: ProvenanceRecord[] = [];
     const PROVENANCE_CAP = 200;
+    // Document drafts emitted this turn — persisted to the governed artifact
+    // version history (concept2cure_artifacts / _artifact_versions) by
+    // post-processing so Document Studio version history survives the session.
+    const collectedDrafts: { title: string; content: string; documentType?: string }[] = [];
 
     // Stream via gateway
     const streamGatewayStart = Date.now();
@@ -666,10 +670,17 @@ router.post('/stream', async (req: Request, res: Response) => {
                 }
               }
               if (parsed && parsed.status === 'generated' && typeof parsed.content === 'string' && parsed.content.length > 0) {
+                const draftTitle: string = parsed.title || 'Generated document';
+                // Record for durable version-history persistence in post-processing.
+                collectedDrafts.push({
+                  title: draftTitle,
+                  content: parsed.content,
+                  documentType: typeof parsed.documentType === 'string' ? parsed.documentType : undefined,
+                });
                 res.write(
                   `data: ${JSON.stringify({
                     type: 'artifact_draft',
-                    title: parsed.title || 'Generated document',
+                    title: draftTitle,
                     content: parsed.content,
                     documentType: parsed.documentType,
                     source: toolUse.name,
@@ -828,6 +839,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       toolTrace,
       toolEvidenceCorpus,
       collectedProvenance,
+      collectedDrafts,
       messages,
       model: gwResponse.model,
       provider: gwResponse.provider,

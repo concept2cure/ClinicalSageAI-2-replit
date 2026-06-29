@@ -512,34 +512,117 @@ export function Ana({
   // in the conversation. Its "versions" are every draft this session that
   // carries the same title, oldest→newest — so successive AnA rewrites become
   // v1, v2, v3 the user can flip between.
+  // Durable, cross-session version history fetched from the governed artifact
+  // store, keyed by external artifact id. Populated once a draft reports a
+  // persisted `artifactId` (server `artifact_version_saved`). Preferred over the
+  // in-session grouping below so a reloaded thread shows real version lineage.
+  const [persistedVersions, setPersistedVersions] = useState<
+    Record<string, { content: string }[]>
+  >({});
+
   const activeDocument = useMemo<{
     id: string;
     title: string;
     documentType?: string;
+    artifactId?: string;
     versions: { content: string; verification?: VerificationResult }[];
   } | null>(() => {
     if (!studioEnabled) return null;
     let latestTitle: string | null = null;
     let latestId: string | null = null;
     let latestType: string | undefined;
+    let latestArtifactId: string | undefined;
     for (let i = chat.messages.length - 1; i >= 0; i--) {
       const d = chat.messages[i].generatedDraft;
       if (d) {
         latestTitle = d.title;
         latestId = chat.messages[i].id;
         latestType = d.documentType;
+        latestArtifactId = d.artifactId;
         break;
       }
     }
     if (latestTitle == null || latestId == null) return null;
+
+    // Prefer the durable persisted version history when available for this
+    // artifact; fall back to the per-session grouping (same-title drafts) so the
+    // pane still works before/without persistence.
+    const persisted = latestArtifactId ? persistedVersions[latestArtifactId] : undefined;
+    if (persisted && persisted.length > 0) {
+      // Carry the latest in-session verification onto the newest version so the
+      // "verified against your source" panel still shows when applicable.
+      const versions: { content: string; verification?: VerificationResult }[] =
+        persisted.map(v => ({ content: v.content }));
+      let latestVerification: VerificationResult | undefined;
+      for (const m of chat.messages) {
+        if (m.generatedDraft && m.generatedDraft.title === latestTitle && m.verification) {
+          latestVerification = m.verification;
+        }
+      }
+      if (latestVerification && versions.length > 0) {
+        versions[versions.length - 1] = {
+          ...versions[versions.length - 1],
+          verification: latestVerification,
+        };
+      }
+      return {
+        id: latestId,
+        title: latestTitle,
+        documentType: latestType,
+        artifactId: latestArtifactId,
+        versions,
+      };
+    }
+
     const versions: { content: string; verification?: VerificationResult }[] = [];
     for (const m of chat.messages) {
       if (m.generatedDraft && m.generatedDraft.title === latestTitle) {
         versions.push({ content: m.generatedDraft.content, verification: m.verification });
       }
     }
-    return { id: latestId, title: latestTitle, documentType: latestType, versions };
-  }, [studioEnabled, chat.messages]);
+    return {
+      id: latestId,
+      title: latestTitle,
+      documentType: latestType,
+      artifactId: latestArtifactId,
+      versions,
+    };
+  }, [studioEnabled, chat.messages, persistedVersions]);
+
+  // Fetch the durable version history whenever a draft reports a persisted
+  // artifactId we haven't loaded yet (or its version count changed). Failures
+  // are silent — the in-session grouping remains the fallback.
+  useEffect(() => {
+    if (!studioEnabled) return;
+    const seen = new Set<string>();
+    for (const m of chat.messages) {
+      const d = m.generatedDraft;
+      if (!d?.artifactId || seen.has(d.artifactId)) continue;
+      seen.add(d.artifactId);
+      const artifactId = d.artifactId;
+      const knownCount = persistedVersions[artifactId]?.length ?? 0;
+      if (typeof d.version === 'number' && d.version <= knownCount) continue;
+      void (async () => {
+        try {
+          const res = await fetch(
+            `/api/conversation-os/artifacts/${encodeURIComponent(artifactId)}/document-versions`,
+          );
+          if (!res.ok) return;
+          const data = await res.json();
+          if (!data?.success || !Array.isArray(data.versions)) return;
+          const versions = data.versions
+            .filter((v: unknown): v is { content: string } =>
+              Boolean(v) && typeof (v as { content?: unknown }).content === 'string',
+            )
+            .map((v: { content: string }) => ({ content: v.content }));
+          if (versions.length === 0) return;
+          setPersistedVersions(prev => ({ ...prev, [artifactId]: versions }));
+        } catch {
+          /* silent — fall back to in-session grouping */
+        }
+      })();
+    }
+  }, [studioEnabled, chat.messages, persistedVersions]);
 
   // The pane auto-opens for each new draft; the user can close it, and it
   // re-opens (showing the latest version) when a *different* draft arrives.

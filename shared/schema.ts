@@ -5414,6 +5414,13 @@ export const concept2cureArtifacts = pgTable(
     version: integer('version').default(1).notNull(),
     ctdSection: text('ctd_section'), // eCTD section reference
     templateId: text('template_id'), // Reference to source template
+    // AnA Document Studio per-thread version lookup key. Nullable; set only on
+    // artifacts created by the AnA draft-version store so successive drafts of the
+    // same document within a thread append as governed versions. See
+    // server/services/ana/artifactVersionStore.ts and migration
+    // 20260629_ana_artifact_thread_lookup.sql.
+    anaThreadId: text('ana_thread_id'),
+    titleSlug: text('title_slug'),
     status: text('status').default('draft').notNull(), // draft, review, approved, locked
     approvedVersionId: integer('approved_version_id'), // version when last approved
     publishedVersionId: integer('published_version_id'), // version when locked/published
