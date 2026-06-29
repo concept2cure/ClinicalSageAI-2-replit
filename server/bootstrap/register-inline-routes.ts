@@ -538,6 +538,33 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Protocol consent routes:', error);
   }
 
+  // Protocol templates library + clone-to-new-document.
+  try {
+    const protocolTemplatesModule = await import('../routes/protocol-templates');
+    app.use('/api/protocol-templates', authMiddleware, protocolTemplatesModule.default);
+    console.info('✅ Protocol templates routes mounted (/api/protocol-templates)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol templates routes:', error);
+  }
+
+  // Protocol milestones / timeline.
+  try {
+    const protocolMilestonesModule = await import('../routes/protocol-milestones');
+    app.use('/api/protocol-milestones', authMiddleware, protocolMilestonesModule.default);
+    console.info('✅ Protocol milestones routes mounted (/api/protocol-milestones)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol milestones routes:', error);
+  }
+
+  // Protocol export + ClinicalTrials.gov registration draft (FDAAA 801).
+  try {
+    const protocolExportModule = await import('../routes/protocol-export');
+    app.use('/api/protocol-export', authMiddleware, protocolExportModule.default);
+    console.info('✅ Protocol export routes mounted (/api/protocol-export)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol export routes:', error);
+  }
+
   // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
   try {
     const rimModule = await import('../routes/rim');

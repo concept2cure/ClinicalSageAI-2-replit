@@ -8382,6 +8382,118 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Protocol Authoring Extensions (C2C-20: templates / milestones / export). Reuses
+// governedPdev (domain 'protocol_development'); read tools have no transaction.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_protocol_template', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_protocol_template requires tenant + user context.' });
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  const protocolKind = typeof input.protocol_kind === 'string' ? input.protocol_kind : '';
+  if (!name || !['iacuc', 'irb', 'clinical', 'ibc'].includes(protocolKind)) return JSON.stringify({ error: 'name and a valid protocol_kind are required.' });
+  const { createTemplateTx } = await import('../protocol-templates/protocol-templates-service.js');
+  return governedPdev(ctx, 'create', 'protocol-template', 'Protocol template created via AnA', input, async (client) => {
+    const { id } = await createTemplateTx(client, ctx.organizationId!, ctx.userId!, { name, protocolKind, designType: typeof input.design_type === 'string' ? input.design_type : null, description: typeof input.description === 'string' ? input.description : null });
+    return { templateId: id };
+  });
+});
+
+registerToolHandler('clone_protocol_template', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'clone_protocol_template requires tenant + user context.' });
+  const templateId = typeof input.template_id === 'number' ? input.template_id : NaN;
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!Number.isInteger(templateId) || !title) return JSON.stringify({ error: 'template_id and title are required.' });
+  const { cloneTemplateToDocumentTx } = await import('../protocol-templates/protocol-templates-service.js');
+  return governedPdev(ctx, 'create', `protocol-template:${templateId}`, 'Protocol document cloned from template via AnA', input, async (client) => {
+    const { documentId, sectionsSeeded } = await cloneTemplateToDocumentTx(client, ctx.organizationId!, ctx.userId!, templateId, { title, protocolNumber: typeof input.protocol_number === 'string' ? input.protocol_number : null });
+    return { documentId, sectionsSeeded };
+  });
+});
+
+registerToolHandler('save_document_as_template', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'save_document_as_template requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!Number.isInteger(documentId) || !name) return JSON.stringify({ error: 'document_id and name are required.' });
+  const { saveDocumentAsTemplateTx } = await import('../protocol-templates/protocol-templates-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'Document saved as template via AnA', input, async (client) => {
+    const { templateId, sectionsCopied } = await saveDocumentAsTemplateTx(client, ctx.organizationId!, ctx.userId!, documentId, { name, description: typeof input.description === 'string' ? input.description : null });
+    return { templateId, sectionsCopied };
+  });
+});
+
+registerToolHandler('list_protocol_templates', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'list_protocol_templates requires tenant context.' });
+  const { listTemplates } = await import('../protocol-templates/protocol-templates-service.js');
+  try {
+    return JSON.stringify({ ok: true, templates: await listTemplates(ctx.organizationId, typeof input.kind === 'string' ? input.kind : undefined) });
+  } catch (err) {
+    return JSON.stringify({ error: `list_protocol_templates failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('add_protocol_milestone', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_milestone requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!Number.isInteger(documentId) || !name) return JSON.stringify({ error: 'document_id and name are required.' });
+  const { addMilestoneTx } = await import('../protocol-milestones/protocol-milestones-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'Protocol milestone added via AnA', input, async (client) => {
+    const { id } = await addMilestoneTx(client, ctx.organizationId!, ctx.userId!, documentId, { name, milestoneType: typeof input.milestone_type === 'string' ? input.milestone_type : undefined, targetDate: typeof input.target_date === 'string' ? input.target_date : null, notes: typeof input.notes === 'string' ? input.notes : null });
+    return { milestoneId: id };
+  });
+});
+
+registerToolHandler('set_protocol_milestone_status', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_protocol_milestone_status requires tenant + user context.' });
+  const milestoneId = typeof input.milestone_id === 'number' ? input.milestone_id : NaN;
+  const status = typeof input.status === 'string' ? input.status : '';
+  if (!Number.isInteger(milestoneId) || !['planned', 'in_progress', 'met', 'missed', 'cancelled'].includes(status)) return JSON.stringify({ error: 'milestone_id and a valid status are required.' });
+  const { setMilestoneStatusTx } = await import('../protocol-milestones/protocol-milestones-service.js');
+  return governedPdev(ctx, 'transition', `protocol-milestone:${milestoneId}`, 'Milestone status set via AnA', input, async (client) => {
+    await setMilestoneStatusTx(client, ctx.organizationId!, milestoneId, status, typeof input.actual_date === 'string' ? input.actual_date : null);
+    return { milestoneId, status };
+  });
+});
+
+registerToolHandler('review_protocol_timeline', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_timeline requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getTimeline } = await import('../protocol-milestones/protocol-milestones-service.js');
+  try {
+    return JSON.stringify({ ok: true, timeline: await getTimeline(ctx.organizationId, documentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_timeline failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('export_protocol_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'export_protocol_document requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getProtocolExport } = await import('../protocol-export/protocol-export-service.js');
+  try {
+    const out = await getProtocolExport(ctx.organizationId, documentId);
+    return JSON.stringify({ ok: true, document: out.document, markdown: out.markdown });
+  } catch (err) {
+    return JSON.stringify({ error: `export_protocol_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('generate_ctgov_registration_draft', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'generate_ctgov_registration_draft requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getCtGovDraft } = await import('../protocol-export/protocol-export-service.js');
+  try {
+    return JSON.stringify({ ok: true, draft: await getCtGovDraft(ctx.organizationId, documentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `generate_ctgov_registration_draft failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Protocol Amendments / Deviations / Reviews / Consent (C2C-18a–d). Mutations
 // share the governed/audited path (domain 'protocol_development'); review tools
 // are read-only.

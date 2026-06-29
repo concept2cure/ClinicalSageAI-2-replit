@@ -4301,6 +4301,82 @@ export const REVIEW_CONSENT_COMPLETENESS: AnaTool = {
   input_schema: { type: 'object', properties: { form_id: { type: 'number' } }, required: ['form_id'] },
 };
 
+// ─── Protocol Authoring Extensions (C2C-20: templates / milestones / export) ──
+
+export const CREATE_PROTOCOL_TEMPLATE: AnaTool = {
+  name: 'create_protocol_template',
+  description: "Create an org protocol template (named, kind-scoped) that can later be cloned into new protocol documents. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { name: { type: 'string' }, protocol_kind: { type: 'string', enum: ['iacuc', 'irb', 'clinical', 'ibc'] }, design_type: { type: 'string' }, description: { type: 'string' }, reason: { type: 'string' } },
+    required: ['name', 'protocol_kind'],
+  },
+};
+
+export const CLONE_PROTOCOL_TEMPLATE: AnaTool = {
+  name: 'clone_protocol_template',
+  description: "Clone a protocol template into a new protocol document, seeding its sections (any required catalog section missing from the template is injected automatically). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { template_id: { type: 'number' }, title: { type: 'string' }, protocol_number: { type: 'string' }, reason: { type: 'string' } },
+    required: ['template_id', 'title'],
+  },
+};
+
+export const SAVE_DOCUMENT_AS_TEMPLATE: AnaTool = {
+  name: 'save_document_as_template',
+  description: "Snapshot an existing protocol document's sections into a new reusable org template. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, name: { type: 'string' }, description: { type: 'string' }, reason: { type: 'string' } },
+    required: ['document_id', 'name'],
+  },
+};
+
+export const LIST_PROTOCOL_TEMPLATES: AnaTool = {
+  name: 'list_protocol_templates',
+  description: "Read-only list of the org's protocol templates (optionally filtered by kind).",
+  input_schema: { type: 'object', properties: { kind: { type: 'string', enum: ['iacuc', 'irb', 'clinical', 'ibc'] } }, required: [] },
+};
+
+export const ADD_PROTOCOL_MILESTONE: AnaTool = {
+  name: 'add_protocol_milestone',
+  description: "Add a milestone to a protocol document's timeline (IRB submission, first/last subject, database lock, CSR, …) with a target date. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, name: { type: 'string' }, milestone_type: { type: 'string', enum: ['protocol_approval', 'irb_submission', 'site_activation', 'first_subject', 'last_subject', 'enrollment_complete', 'database_lock', 'csr', 'closeout', 'other'] }, target_date: { type: 'string', description: 'YYYY-MM-DD.' }, notes: { type: 'string' }, reason: { type: 'string' } },
+    required: ['document_id', 'name'],
+  },
+};
+
+export const SET_PROTOCOL_MILESTONE_STATUS: AnaTool = {
+  name: 'set_protocol_milestone_status',
+  description: "Transition a protocol milestone's status (planned/in_progress/met/missed/cancelled); 'met' stamps the actual date. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { milestone_id: { type: 'number' }, status: { type: 'string', enum: ['planned', 'in_progress', 'met', 'missed', 'cancelled'] }, actual_date: { type: 'string' }, reason: { type: 'string' } },
+    required: ['milestone_id', 'status'],
+  },
+};
+
+export const REVIEW_PROTOCOL_TIMELINE: AnaTool = {
+  name: 'review_protocol_timeline',
+  description: "Read-only protocol timeline: milestones ordered by date with urgency buckets (overdue/due_30/due_90/upcoming), counts, and the next upcoming milestone.",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
+export const EXPORT_PROTOCOL_DOCUMENT: AnaTool = {
+  name: 'export_protocol_document',
+  description: "Read-only: assemble a protocol document (sections + objectives + eligibility + schedule) into a structured export and rendered Markdown.",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
+export const GENERATE_CTGOV_REGISTRATION_DRAFT: AnaTool = {
+  name: 'generate_ctgov_registration_draft',
+  description: "Read-only: generate a ClinicalTrials.gov PRS registration draft (FDAAA 801 data elements: titles, study type, phase, primary/secondary outcomes, eligibility) from a protocol document, with completeness findings.",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
 // ─── CITI Training full integration (C2C-01/02) ──────────────────────────────
 
 export const IMPORT_CITI_RECORDS: AnaTool = {
@@ -7275,6 +7351,15 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   FINALIZE_PROTOCOL_DOCUMENT,
   ADD_PROTOCOL_RISK,
   REVIEW_PROTOCOL_RISK_REGISTER,
+  CREATE_PROTOCOL_TEMPLATE,
+  CLONE_PROTOCOL_TEMPLATE,
+  SAVE_DOCUMENT_AS_TEMPLATE,
+  LIST_PROTOCOL_TEMPLATES,
+  ADD_PROTOCOL_MILESTONE,
+  SET_PROTOCOL_MILESTONE_STATUS,
+  REVIEW_PROTOCOL_TIMELINE,
+  EXPORT_PROTOCOL_DOCUMENT,
+  GENERATE_CTGOV_REGISTRATION_DRAFT,
   CREATE_PROTOCOL_AMENDMENT,
   ADD_AMENDMENT_CHANGE,
   REVIEW_AMENDMENT,
