@@ -1001,6 +1001,42 @@
 .studioClose:hover { background: var(--bg-200); color: var(--ink); }
 
 .studioVerify { padding: 10px 14px 0; }
+.studioEctd { padding: 10px 14px 0; }
+.studioAssemble {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--bg-000);
+}
+.studioAssembleLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 200px;
+}
+.studioAssembleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-body, var(--ink));
+  background: var(--bg-100, #f1f1f0);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 200ms ease-out;
+}
+.studioAssembleBtn:hover:not(:disabled) { background: var(--bg-200, #e7e7e5); }
+.studioAssembleBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) {
+  .studioAssembleBtn { transition: none; }
+}
 .studioBody {
   flex: 1 1 auto;
   overflow-y: auto;
@@ -1109,6 +1145,37 @@
 }
 .perIntro {
   margin: 0;
+/* ──────────────────────────────────────────────────────────────────────────
+   ReadinessGatePanel — the E10 "assemble Module 2/5 + readiness gate" strip.
+   Same calm, reviewer-grade language as the verification panel: a left accent
+   bar carries the verdict colour (never colour-alone — an icon + text label
+   always accompanies it). Motion is restrained; respects reduced-motion.
+   ────────────────────────────────────────────────────────────────────────── */
+.gatePanel {
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--bg-000);
+}
+.gatePanel[data-status='ready'] { border-left-color: var(--success, #2f7d57); }
+.gatePanel[data-status='blocked'] { border-left-color: var(--danger, #b4541f); }
+.gatePanel[data-status='not_assessed'] { border-left-color: var(--border); }
+.gateHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gatePanel[data-status='ready'] .gateHead { color: var(--success, #2f7d57); }
+.gatePanel[data-status='blocked'] .gateHead { color: var(--danger, #b4541f); }
+.gatePanel[data-status='not_assessed'] .gateHead { color: var(--ink-muted, var(--text-300)); }
+.gateTitle {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.gateSummary {
+  margin: 4px 0 0;
   font-size: 12px;
   line-height: 1.5;
   color: var(--ink-muted, var(--text-300));
@@ -1176,6 +1243,8 @@
 .perVerdictText { letter-spacing: 0.01em; }
 .perBlockers {
   margin: 0;
+.gateChecks {
+  margin: 8px 0 0;
   padding: 0;
   list-style: none;
   display: flex;
@@ -1183,6 +1252,24 @@
   gap: 4px;
 }
 .perBlockers li {
+.gateChecks li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-body, var(--ink));
+}
+.gateChecks li[data-ok='true'] .ico { color: var(--success, #2f7d57); }
+.gateChecks li[data-ok='false'] .ico { color: var(--danger, #b4541f); }
+.gateBlockers {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gateBlockers li {
   display: flex;
   align-items: flex-start;
   gap: 6px;
@@ -1299,4 +1386,55 @@
   margin: 10px 0 0;
   font-size: 11.5px;
   color: var(--ink-muted, var(--text-300));
+.gateBlockers li[data-severity='critical'] .ico,
+.gateBlockers li[data-severity='high'] .ico { color: var(--danger, #b4541f); }
+.gateBlockerText { flex: 1 1 auto; word-break: break-word; }
+.gateDeepLink {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent-main-100, #6366f1);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.gateDeepLink:hover { color: var(--accent-main-200, #4f46e5); }
+.gateActions {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gateSeal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--success, #2f7d57);
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 200ms ease-out, opacity 200ms ease-out;
+}
+.gateSeal:hover:not(:disabled) { background: var(--success-strong, #276649); }
+.gateSeal:disabled {
+  background: var(--bg-100, #f1f1f0);
+  color: var(--ink-muted, var(--text-300));
+  border-color: var(--border);
+  cursor: not-allowed;
+}
+.gateSealHint {
+  font-size: 11px;
+  color: var(--ink-muted, var(--text-300));
+  line-height: 1.4;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gateSeal { transition: none; }
 }

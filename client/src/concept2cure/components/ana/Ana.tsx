@@ -30,6 +30,15 @@ import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
 import { composeVerificationFixMessage } from './VerificationPanel';
+import { aggregateReadiness, type ReadinessGate, type BlockingItem } from './ectdReadiness';
+import {
+  SAMPLE_ASSEMBLED_M2_5,
+  SAMPLE_ASSEMBLED_M5_3_5,
+  SAMPLE_STRUCTURAL_OK,
+  SAMPLE_STRUCTURAL_FAIL,
+  SAMPLE_CONSISTENCY_CLEAN,
+  SAMPLE_CONSISTENCY_BLOCKER,
+} from './ectdReadinessFixtures';
 import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult } from './useAnaChat';
 import type { EffortLevel } from './ModelEffortPicker';
 import { useRecents } from './useRecents';
@@ -700,6 +709,77 @@ export function Ana({
     void chat.send(composeVerificationFixMessage(shownDraft.title, shownVerification));
   }, [chat, shownDraft, shownVerification]);
 
+  /* ─────────────────────────────────────────────────────────────
+     E10 — One-turn eCTD Module 2/5 assembly + readiness gate.
+     The single audited action assembles the selected module from the
+     project's artifacts (assemble_ectd_module_from_artifacts) and runs the
+     structural (validate_docx) + consistency (check_dossier_consistency)
+     readiness checks over the assembled output, then aggregates them into a
+     blocking gate. The gate must be green BEFORE the seal / PDUFA-clock step.
+     ───────────────────────────────────────────────────────────── */
+  const [readinessGate, setReadinessGate] = useState<ReadinessGate | undefined>();
+  const [assembling, setAssembling] = useState(false);
+
+  const handleAssembleModule = useCallback(
+    async (moduleNumber: string) => {
+      setAssembling(true);
+      try {
+        // INTEGRATION: replace the fixtures below with the live tool envelopes.
+        // The real flow runs three already-built tools, in order, over the SSE
+        // orchestration layer and maps their JSON results into the client
+        // shapes (assemble_ectd_module_from_artifacts → AssembledModuleResult,
+        // validate_docx → StructuralReadiness, check_dossier_consistency →
+        // ConsistencyReadiness). This component only ORCHESTRATES + AGGREGATES;
+        // it must not change how those tools work (eCTD/CSR guardrail).
+        //
+        //   const assembled = mapAssembled(await runTool('assemble_ectd_module_from_artifacts',
+        //     { project_id: resolvedProjectId, module_number: moduleNumber }));
+        //   const structural = mapStructural(await runTool('validate_docx',
+        //     { input_docx_path: assembled.output.path }));
+        //   const consistency = mapConsistency(await runTool('check_dossier_consistency',
+        //     { project_id: resolvedProjectId, ctd_section: moduleNumber, draft_content: assembled.text }));
+        const assembled =
+          moduleNumber === '5.3.5' ? SAMPLE_ASSEMBLED_M5_3_5 : SAMPLE_ASSEMBLED_M2_5;
+        // Sample fixtures intentionally vary so reviewers see both gate states;
+        // the honesty contract still refuses to seal them (sample: true).
+        const structural = moduleNumber === '5.3.5' ? SAMPLE_STRUCTURAL_FAIL : SAMPLE_STRUCTURAL_OK;
+        const consistency =
+          moduleNumber === '5.3.5' ? SAMPLE_CONSISTENCY_BLOCKER : SAMPLE_CONSISTENCY_CLEAN;
+        const gate = aggregateReadiness({ assembled, structural, consistency });
+        // BUILD-1 INTEGRATION: once Build 1 lands, persist the assembled module
+        // + this readiness verdict as a new version row (assembled_module_version)
+        // here — the gate verdict (gate.gate, gate.blockingItems, gate.sealable)
+        // is the audit payload the version carries into the 21 CFR Part 11 trail.
+        setReadinessGate(gate);
+      } finally {
+        setAssembling(false);
+      }
+    },
+    [],
+  );
+
+  const handleSeal = useCallback(() => {
+    // The gate's seal button is disabled unless sealable, so this is only ever
+    // reached for a green, non-sample gate. Defense-in-depth: re-check here so a
+    // programmatic call can never bypass the honesty contract.
+    if (!readinessGate?.sealable) return;
+    // INTEGRATION: invoke the PDUFA-clock submission step here once Build 1
+    // exposes the sealed-submission action. Until then this is a no-op guard.
+  }, [readinessGate]);
+
+  const handleFollowReadinessLink = useCallback((item: BlockingItem) => {
+    // INTEGRATION: route to the deep link target. For a CTD section, scroll the
+    // relevant artifact into view / open it; for an output path, open the
+    // assembled module. Logged for now so the affordance is observable.
+    console.info('[Ana] readiness deep-link followed:', item.deepLink?.target);
+  }, []);
+
+  // Reset the gate when the active document changes — a gate certifies the
+  // module it was run for, never a different draft.
+  useEffect(() => {
+    setReadinessGate(undefined);
+  }, [activeDocument?.id]);
+
   // The view content (home / chat / projects / artifacts). Rendered directly
   // when the studio is closed, or inside the left Panel when it is open — so
   // the chat layout is identical in both modes.
@@ -800,6 +880,12 @@ export function Ana({
                 onClose={() => setStudioClosed(true)}
                 onResolveVerification={handleResolveVerification}
                 downloading={downloading}
+                ectdEnabled={studioEnabled}
+                readinessGate={readinessGate}
+                onAssembleModule={handleAssembleModule}
+                onSeal={handleSeal}
+                onFollowReadinessLink={handleFollowReadinessLink}
+                assembling={assembling}
               />
             </Panel>
           </PanelGroup>
