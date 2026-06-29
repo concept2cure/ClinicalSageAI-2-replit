@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T15:19:40.665Z",
+  "generatedAt": "2026-06-29T15:26:24.898Z",
   "git": {
-    "sha": "9cd1499ae8c68ea892615ef8421f1450732fd316",
+    "sha": "57e310c3dd1078a2d2daa9456f17d89e5f160f17",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 230,
+    "duplicateBasenames": 231,
     "largeFilesByBytes": 21,
     "largeFilesByLines": 61
   },
@@ -1882,6 +1882,14 @@
         ]
       },
       {
+        "basename": "protocol-budget",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-budget.ts",
+          "shared/schema/protocol-budget.ts"
+        ]
+      },
+      {
         "basename": "protocol-consent",
         "count": 2,
         "paths": [
@@ -2289,7 +2297,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 713431
+        "bytes": 717090
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2297,7 +2305,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 436046
+        "bytes": 438017
       },
       {
         "file": "server/statistics-service.ts",
@@ -2379,11 +2387,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 14122
+        "lines": 14162
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 8011
+        "lines": 8042
       },
       {
         "file": "server/statistics-service.ts",
@@ -2619,7 +2627,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 363,
+      "duplicateGroups": 364,
       "largeByBytes": 18,
       "largeByLines": 51
     },
@@ -2637,7 +2645,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 58,
+      "duplicateGroups": 59,
       "largeByBytes": 1,
       "largeByLines": 2
     },
