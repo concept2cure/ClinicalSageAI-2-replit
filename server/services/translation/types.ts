@@ -175,5 +175,3 @@ export interface GuardrailDecision {
   /** Populated when allowed === false, using the shared error envelope. */
   error?: ApiError;
 }
-
-const __probe: number = "x";
