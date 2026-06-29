@@ -7,19 +7,132 @@
  * Endpoints:
  *   POST /api/ectd/export/:submissionId        — Generate & download eCTD package
  *   POST /api/ectd/export/:submissionId/validate — Validate an existing package
+ *                                                  (ZIP-level + leaf-level merged)
+ *   POST /api/ectd/export/validate/preflight   — Leaf-level-only preflight on an
+ *                                                  in-memory ECTDLeaf[] (no ZIP).
+ *                                                  Mounted at /api/ectd/validate/preflight
+ *                                                  via preflightRouter (see exports).
  *
  * @module server/routes/ectd-export
  * @compliance ICH M8 v4.0
  */
 
 import { Router, Request, Response } from 'express';
+import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { generateEctdPackage, validateEctdPackage } from '../services/ectdExportService';
+import {
+  validatePackage as validateEctdLeafPackage,
+  type ECTDLeaf,
+  type ValidationFinding,
+  type ValidationResult as LeafValidationResult,
+} from '../services/ectd/ectd4-validator';
 import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('ectd-export');
+
+/**
+ * Cap on the decoded ZIP buffer accepted by /validate. 200 MB decoded is a
+ * generous-but-bounded ceiling for an eCTD package; base64-encoded that is
+ * ~280 MB on the wire, which the schema enforces via .max() before the
+ * Buffer.from() decode. The cap protects against caller-driven memory
+ * pressure / DoS when an authenticated user submits an arbitrarily large
+ * body. Keep this in sync with any global express.json limit.
+ */
+const MAX_ZIP_DECODED_BYTES = 200 * 1024 * 1024;
+const MAX_ZIP_BASE64_LENGTH = Math.ceil((MAX_ZIP_DECODED_BYTES * 4) / 3);
+
+/**
+ * Resolve the tenant org id from the JWT-bound request. Returns null if no
+ * organization context is present; callers must fail-closed (403) before
+ * touching regulated content.
+ */
+function resolveOrgId(req: Request): number | null {
+  const raw =
+    (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
+  if (raw == null) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Distinguish unauthenticated (no JWT principal at all) from
+ * authenticated-but-missing-org. 401 for the former, 403 for the latter — per
+ * HTTP semantics.
+ */
+function requireTenant(req: Request, res: Response): number | null {
+  const user = (req as any).user;
+  if (!user) {
+    res.status(401).json({ error: 'Authentication required' });
+    return null;
+  }
+  const orgId = resolveOrgId(req);
+  if (orgId == null) {
+    res.status(403).json({ error: 'Organization context required' });
+    return null;
+  }
+  return orgId;
+}
+
+/**
+ * Map a thrown service-layer error to the appropriate HTTP status and a
+ * generic, leak-free client message. The detailed error is returned via a
+ * correlation id that is also written to the structured log, so support can
+ * pivot from a client report to the log row without exposing implementation
+ * details (DB exceptions, file paths, validator stacks) to the caller.
+ */
+function classifyError(error: unknown): {
+  status: number;
+  code: string;
+  message: string;
+} {
+  const raw = error instanceof Error ? error.message : String(error);
+  // Region-unsupported is thrown by resolveEctdRegion with a stable prefix.
+  if (/does not support region/i.test(raw)) {
+    return {
+      status: 400,
+      code: 'REGION_UNSUPPORTED',
+      message: 'Requested eCTD region is not supported',
+    };
+  }
+  if (/not found|no such|does not exist/i.test(raw)) {
+    return {
+      status: 404,
+      code: 'SUBMISSION_NOT_FOUND',
+      message: 'Submission not found for the current organization',
+    };
+  }
+  return {
+    status: 500,
+    code: 'INTERNAL_ERROR',
+    message: 'eCTD operation failed',
+  };
+}
+
+/**
+ * Wrap a raw ZIP-validator error/warning string into the leaf validator's
+ * ValidationFinding shape so the merged `findings` array has a single schema.
+ * The synthetic `code` (ZIP_ERROR / ZIP_WARNING) and stable id-per-index let
+ * the UI render zip-side findings in the same table as leaf-side findings.
+ */
+function zipStringToFinding(
+  raw: string,
+  severity: 'error' | 'warning',
+  index: number,
+): ValidationFinding & { source: 'zip' } {
+  return {
+    id: `zip-${severity}-${index}`,
+    severity,
+    code: severity === 'error' ? 'ZIP_ERROR' : 'ZIP_WARNING',
+    sectionCode: '',
+    message: raw,
+    fix: '',
+    rule: 'ectd-zip-structural',
+    source: 'zip',
+  };
+}
 
 /**
  * Fire-and-forget audit for eCTD content access. 21 CFR Part 11
@@ -31,9 +144,19 @@ const log = createScopedLogger('ectd-export');
 async function auditEctdAccess(
   req: Request,
   organizationId: number,
-  submissionId: number,
-  action: 'ectd_export_generated' | 'ectd_export_previewed' | 'ectd_export_validated',
+  // resourceId is string | number so preflight (which is not bound to a
+  // numeric submission id) can pass a distinct sentinel like 'preflight'
+  // instead of polluting submissionId=0 across all tenants.
+  submissionId: number | string,
+  action:
+    | 'ectd_export_generated'
+    | 'ectd_export_previewed'
+    | 'ectd_export_validated'
+    | 'ectd_export_preflight_validated',
   details: Record<string, unknown> = {},
+  // Allow preflight to use a distinct resourceType so dashboards can group
+  // by resourceType without colliding with real submissions.
+  resourceType: 'ectd_submission' | 'ectd_preflight' = 'ectd_submission',
 ): Promise<void> {
   try {
     const user = (req as any).user;
@@ -41,7 +164,7 @@ async function auditEctdAccess(
       tenantId: organizationId,
       userId: user?.id ?? user?.userId,
       action,
-      resourceType: 'ectd_submission',
+      resourceType,
       resourceId: String(submissionId),
       ipAddress: req.ip,
       userAgent: req.headers['user-agent'] as string | undefined,
@@ -57,6 +180,77 @@ async function auditEctdAccess(
 }
 
 const router = Router();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Leaf-level validator request schemas (Phase 1 ectd4-validator surface)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Mirror of the runtime ECTDLeaf shape from ectd4-validator. Optional fields
+ * are kept optional so callers can post the minimum a leaf-only preflight
+ * needs (sectionCode + filePath + checksum). Buffer is intentionally NOT
+ * accepted over the wire — leaf-level MD5 verification needs a Buffer, which
+ * we don't carry through JSON; the validator falls back to declared-checksum
+ * structural checks when no buffer is attached.
+ */
+const ectdLeafSchema = z.object({
+  sectionCode: z.string().min(1),
+  title: z.string(),
+  checksum: z.string(),
+  checksumType: z.literal('md5').default('md5'),
+  operation: z.enum(['new', 'append', 'replace', 'delete']),
+  lifecycleOperator: z.string().optional(),
+  filePath: z.string().min(1),
+  mimeType: z.string(),
+  fileSize: z.number().int().nonnegative(),
+  studyId: z.string().optional(),
+  lifecycleTarget: z.string().optional(),
+});
+
+const leafValidatorOptionsSchema = z.object({
+  region: z.enum(['FDA', 'EMA', 'PMDA']).optional(),
+  priorSequenceNumbers: z.array(z.string()).optional(),
+  sequenceNumber: z.string().optional(),
+  priorLeafIds: z.array(z.string()).optional(),
+  submissionType: z.string().optional(),
+});
+
+const preflightBodySchema = z.object({
+  leaves: z.array(ectdLeafSchema),
+  region: z.enum(['FDA', 'EMA', 'PMDA']).optional(),
+  priorSequenceNumbers: z.array(z.string()).optional(),
+  sequenceNumber: z.string().optional(),
+  priorLeafIds: z.array(z.string()).optional(),
+  submissionType: z.string().optional(),
+});
+
+/**
+ * Map a parsed body into the options object validatePackage expects, including
+ * the priorLeafIds Set<string> conversion.
+ */
+function buildLeafValidatorOptions(parsed: z.infer<typeof leafValidatorOptionsSchema>): {
+  region?: 'FDA' | 'EMA' | 'PMDA';
+  priorSequenceNumbers?: string[];
+  sequenceNumber?: string;
+  priorLeafIds?: Set<string>;
+} {
+  const out: {
+    region?: 'FDA' | 'EMA' | 'PMDA';
+    priorSequenceNumbers?: string[];
+    sequenceNumber?: string;
+    priorLeafIds?: Set<string>;
+  } = {};
+  if (parsed.region) out.region = parsed.region;
+  if (parsed.priorSequenceNumbers) out.priorSequenceNumbers = parsed.priorSequenceNumbers;
+  if (parsed.sequenceNumber !== undefined) out.sequenceNumber = parsed.sequenceNumber;
+  // Set conversion is dedup-by-design — duplicates in the input array are
+  // collapsed and array order is NOT preserved. The validator only uses the
+  // `.has(target)` membership semantics for lifecycle-target reference
+  // checks (ectd4-validator.ts:421-428), so dedup + unordered is the
+  // intended contract.
+  if (parsed.priorLeafIds) out.priorLeafIds = new Set(parsed.priorLeafIds);
+  return out;
+}
 
 const exportGovernanceSchema = z.object({
   aiGenerated: z.boolean().default(true),
@@ -105,6 +299,20 @@ function validateExportGovernance(req: Request, res: Response) {
 // POST /api/ectd/export/:submissionId — Generate & download eCTD package
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Body schema for the export route. `region` was previously accepted as a
+// free string and forwarded to resolveEctdRegion(), which threw on unknown
+// regions and surfaced as a 500. The /validate and /preflight routes both
+// already use this enum; aligning the export route closes the contract gap.
+const exportBodySchema = z
+  .object({
+    region: z.enum(['FDA', 'EMA', 'PMDA']).default('FDA'),
+    submissionType: z.string().default('initial'),
+    sequenceNumber: z.string().default('0000'),
+    applicationNumber: z.string().optional(),
+    validateAfter: z.boolean().default(true),
+  })
+  .passthrough(); // governance + future fields ride through untouched
+
 router.post('/:submissionId', async (req: Request, res: Response) => {
   const submissionId = parseInt(String(req.params.submissionId), 10);
   if (!submissionId || isNaN(submissionId)) {
@@ -113,23 +321,23 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
 
   // SECURITY: org id from JWT only — the legacy `|| 1` fallback at the
   // end of the chain would have generated and emitted another tenant's
-  // eCTD package when JWT context was missing. Even if upstream auth
-  // catches the missing JWT today, the defense-in-depth keeps a future
-  // misconfiguration from leaking.
-  const organizationId =
-    (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
+  // eCTD package when JWT context was missing. requireTenant returns 401
+  // when no JWT principal is present (unauthenticated) and 403 when the
+  // principal lacks an organizationId (authenticated-but-forbidden).
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
 
-  if (organizationId == null) {
-    return res.status(403).json({ error: 'Organization context required' });
+  // Validate region up-front so an unsupported region returns 400 with a
+  // helpful list instead of 500 from resolveEctdRegion().
+  const parsedBody = exportBodySchema.safeParse(req.body ?? {});
+  if (!parsedBody.success) {
+    return res.status(400).json({
+      error: 'Invalid export body',
+      details: parsedBody.error.flatten(),
+    });
   }
-
-  const {
-    region = 'FDA',
-    submissionType = 'initial',
-    sequenceNumber = '0000',
-    applicationNumber,
-    validateAfter = true,
-  } = req.body || {};
+  const { region, submissionType, sequenceNumber, applicationNumber, validateAfter } =
+    parsedBody.data;
 
   if (!validateExportGovernance(req, res)) return;
 
@@ -173,15 +381,15 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
 
     // Register governed export (fail-closed for regulated export path).
     // SECURITY: the org/user attribution on the export audit record
-    // must be the JWT principal, not a `|| 1` / `|| 0` fallback that
-    // would have stamped exports with a placeholder identity.
+    // must be the JWT principal. requireTenant() already guaranteed an
+    // organizationId at the top; we re-fetch the user object here for
+    // the user.id required by the governance service.
     const user = (req as any).user;
-    const govOrgId = user?.organizationId ?? (req as any).tenantContext?.organizationId;
-    if (govOrgId == null || user?.id == null) {
+    if (user?.id == null) {
       return res.status(403).json({ error: 'Tenant context required for governed export' });
     }
     const governanceResult = await registerExportGovernanceQuick({
-      organizationId: Number(govOrgId),
+      organizationId,
       projectId: submissionId,
       userId: Number(user.id),
       userName: user?.name || user?.email || 'unknown',
@@ -203,26 +411,79 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     // Audit the export BEFORE returning the buffer. Even if the
     // response stream fails downstream, the user-requested
     // generation is the §11.10(e) event we need to record.
-    await auditEctdAccess(req, Number(organizationId), submissionId, 'ectd_export_generated', {
+    await auditEctdAccess(req, organizationId, submissionId, 'ectd_export_generated', {
       packageSizeBytes: result.buffer?.length,
-      region: req.body?.region ?? 'FDA',
+      region,
     });
 
     return res.send(result.buffer);
   } catch (error: any) {
+    const correlationId = randomUUID();
     log.error('eCTD Export failed', {
       err: error instanceof Error ? error.message : String(error),
+      correlationId,
+      submissionId,
     });
-    return res.status(500).json({
+    const classified = classifyError(error);
+    return res.status(classified.status).json({
       error: 'eCTD package generation failed',
-      message: error.message,
+      code: classified.code,
+      message: classified.message,
+      correlationId,
     });
   }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ectd/export/:submissionId/validate — Validate an uploaded package
+//
+// Phase 1 surface extension: now runs BOTH the ZIP-level structural validator
+// (ectdExportService.validateEctdPackage) and the leaf-level validator
+// (ectd4-validator.validatePackage) and merges their findings into a single
+// response.
+//
+// Body content-type drives parsing:
+//   • application/json → parsed by express.json. Body may contain:
+//       { leaves?: ECTDLeaf[], region?, priorSequenceNumbers?, sequenceNumber?,
+//         priorLeafIds?, submissionType?, zipBufferBase64? }
+//     When `leaves` is present, leaf-level validation runs. When
+//     `zipBufferBase64` is present, ZIP-level validation runs against the
+//     decoded buffer. When neither is present, the route generates a fresh
+//     package via generateEctdPackage and validates it (legacy behavior).
+//   • anything else → raw bytes streamed and treated as a ZIP buffer (legacy
+//     behavior). Leaf-level validator is skipped in this mode because the
+//     leaves payload is not available.
+//
+// Response shape:
+//   { submissionId, valid, zipValidation?, leafValidation?, packageSize?, stats? }
+//   where `valid` is the AND of both validators' valid flags.
 // ─────────────────────────────────────────────────────────────────────────────
+
+// JSON body schema for /validate. Extracted to a const so the same shape can
+// be reused for "did the caller opt into the new validator surface" detection
+// (presence of leaves / zipBufferBase64 / validator-options keys) — when none
+// of those are present we treat the body as a legacy no-op envelope and
+// preserve the original generate-then-validate behavior WITHOUT enforcing the
+// strict schema. zipBufferBase64 is capped at MAX_ZIP_BASE64_LENGTH so an
+// authenticated caller cannot OOM the process with an arbitrarily large body.
+const validateJsonBodySchema = preflightBodySchema
+  .partial({ leaves: true })
+  .extend({
+    zipBufferBase64: z.string().max(MAX_ZIP_BASE64_LENGTH).optional(),
+  });
+
+// Keys whose presence indicates the caller is intentionally driving the
+// extended validator surface. If the body has none of these, legacy callers
+// who posted incidental JSON (e.g. `{ region: 'foo' }`) get the legacy
+// generate-then-validate behavior preserved.
+const VALIDATOR_OPT_IN_KEYS = [
+  'leaves',
+  'zipBufferBase64',
+  'priorSequenceNumbers',
+  'sequenceNumber',
+  'priorLeafIds',
+  'submissionType',
+];
 
 router.post('/:submissionId/validate', async (req: Request, res: Response) => {
   const submissionId = parseInt(String(req.params.submissionId), 10);
@@ -230,76 +491,359 @@ router.post('/:submissionId/validate', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Valid numeric submission ID required' });
   }
 
+  // SECURITY (defense-in-depth): tenant gate at the TOP so every downstream
+  // branch — leaves-only, user-supplied buffer, generate-then-validate, raw
+  // ZIP bytes — is gated identically. The previous layout only checked org
+  // context inside specific sub-branches, leaving the leaves-only and
+  // raw-non-empty-buffer paths reachable without an org claim. Failing
+  // closed here also ensures the §11.10(e) audit row at the end is never
+  // silently dropped for lack of attribution.
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
+  // Detect JSON mode. express.json (mounted globally on /api in startup
+  // middleware) populates req.body for application/json requests; for any
+  // other content-type req.body is the express default empty object.
+  const ct = String(req.headers['content-type'] || '').toLowerCase();
+  const isJson = ct.includes('application/json');
+
+  // Holders for the two validators' outputs.
+  let zipValidation: { valid: boolean; errors: string[]; warnings: string[] } | null = null;
+  let leafValidation: LeafValidationResult | null = null;
+  let zipBufferLength = 0;
+  let generatedStats: unknown = undefined;
+  let mode = 'unspecified';
+
   try {
-    // Accept the ZIP buffer directly from the request body
-    // In production this would use multer for file upload handling
-    const chunks: Buffer[] = [];
-    req.on('data', (chunk: Buffer) => chunks.push(chunk));
-
-    await new Promise<void>((resolve, reject) => {
-      req.on('end', resolve);
-      req.on('error', reject);
-    });
-
-    const zipBuffer = Buffer.concat(chunks);
-
-    if (zipBuffer.length === 0) {
-      // If no body, generate a package and validate it. SECURITY:
-      // org id from JWT only — the legacy `|| 1` fallback would have
-      // generated another tenant's package on an unauth request.
-      const organizationId =
-        (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
-      if (organizationId == null) {
-        return res.status(403).json({ error: 'Organization context required' });
-      }
-
-      const result = await generateEctdPackage(submissionId, Number(organizationId));
-      const validation = await validateEctdPackage(result.buffer);
-
-      await auditEctdAccess(
-        req,
-        Number(organizationId),
-        submissionId,
-        'ectd_export_validated',
-        { mode: 'generated-then-validated', valid: validation?.valid },
+    // ─── JSON mode: leaf-validator options + optional ZIP base64 ────────────
+    if (isJson) {
+      const rawBody = (req.body ?? {}) as Record<string, unknown>;
+      const optedIn = VALIDATOR_OPT_IN_KEYS.some(
+        k => Object.prototype.hasOwnProperty.call(rawBody, k),
       );
 
-      return res.json({
-        submissionId,
-        ...validation,
-        stats: result.stats,
+      if (!optedIn) {
+        // Legacy contract: JSON body present but no extended-validator keys.
+        // Preserve the old generate-then-validate behavior WITHOUT running
+        // the strict zod parse, so callers who post incidental metadata
+        // (e.g. `{ region: 'foo' }` or `{}`) do not regress to a 400.
+        const result = await generateEctdPackage(submissionId, organizationId);
+        zipValidation = await validateEctdPackage(result.buffer);
+        generatedStats = result.stats;
+        mode = 'json-generated-then-validated-legacy';
+      } else {
+        const parsed = validateJsonBodySchema.safeParse(rawBody);
+        if (!parsed.success) {
+          return res.status(400).json({
+            error: 'Invalid validate request body',
+            details: parsed.error.flatten(),
+          });
+        }
+        const body = parsed.data;
+        const leafOpts = buildLeafValidatorOptions(body);
+
+        // 1. Leaf-level validation. `leaves` being PRESENT (even empty) is
+        //    an explicit request to run leaf validation; previously
+        //    `leaves: []` silently escalated to a full generateEctdPackage
+        //    which was both expensive and surprising. An empty array now
+        //    runs the validator on [] and returns its (likely "missing
+        //    required sections") findings.
+        if (body.leaves !== undefined) {
+          leafValidation = validateEctdLeafPackage(
+            body.leaves as ECTDLeaf[],
+            body.submissionType ?? 'IND',
+            leafOpts,
+          );
+        }
+
+        // 2. ZIP-level validation. Either decode the supplied base64 buffer
+        //    or fall back to generate-then-validate when no buffer was
+        //    supplied AND no leaves were supplied either.
+        if (body.zipBufferBase64) {
+          const zipBuffer = Buffer.from(body.zipBufferBase64, 'base64');
+          // Defense-in-depth: the schema already caps the base64 length,
+          // but the decoded buffer cap is the regulator-meaningful bound.
+          if (zipBuffer.length > MAX_ZIP_DECODED_BYTES) {
+            return res.status(413).json({
+              error: 'eCTD ZIP exceeds maximum allowed size',
+              code: 'PAYLOAD_TOO_LARGE',
+              maxBytes: MAX_ZIP_DECODED_BYTES,
+            });
+          }
+          zipBufferLength = zipBuffer.length;
+          zipValidation = await validateEctdPackage(zipBuffer);
+          mode = leafValidation
+            ? 'json-user-supplied-buffer-and-leaves'
+            : 'json-user-supplied-buffer';
+        } else if (!leafValidation) {
+          // No leaves AND no buffer → preserve legacy generate-then-validate.
+          const result = await generateEctdPackage(submissionId, organizationId);
+          zipValidation = await validateEctdPackage(result.buffer);
+          generatedStats = result.stats;
+          mode = 'json-generated-then-validated';
+        } else {
+          mode = 'json-leaves-only';
+        }
+      }
+    }
+
+    // ─── Raw-bytes mode: legacy ZIP-buffer path ─────────────────────────────
+    if (!isJson) {
+      // Detect a stream that some upstream middleware has already drained.
+      // If we attach `req.on('data')` on a body that has already ended, we
+      // would silently collect zero bytes and fall through to the
+      // generate-then-validate branch — meaning a caller who posted THEIR
+      // ZIP for validation would get a freshly-generated package validated
+      // and a misleading `valid: true`. Fail loudly instead.
+      if (req.complete || req.readableEnded) {
+        return res.status(400).json({
+          error:
+            'Request body was already consumed before /validate could read it. ' +
+            'Ensure no upstream body-parser middleware is mounted for non-JSON ' +
+            'content-types on this route.',
+          code: 'RAW_BODY_DRAINED',
+        });
+      }
+
+      const chunks: Buffer[] = [];
+      let totalLength = 0;
+      let overflow = false;
+      req.on('data', (chunk: Buffer) => {
+        totalLength += chunk.length;
+        if (totalLength > MAX_ZIP_DECODED_BYTES) {
+          overflow = true;
+          return;
+        }
+        chunks.push(chunk);
+      });
+      await new Promise<void>((resolve, reject) => {
+        req.on('end', resolve);
+        req.on('error', reject);
+      });
+
+      if (overflow) {
+        return res.status(413).json({
+          error: 'eCTD ZIP exceeds maximum allowed size',
+          code: 'PAYLOAD_TOO_LARGE',
+          maxBytes: MAX_ZIP_DECODED_BYTES,
+        });
+      }
+
+      const zipBuffer = Buffer.concat(chunks);
+      zipBufferLength = zipBuffer.length;
+
+      if (zipBuffer.length === 0) {
+        // Top-level requireTenant() already enforced the org context for
+        // this branch; we can safely invoke generateEctdPackage with the
+        // resolved organizationId.
+        const result = await generateEctdPackage(submissionId, organizationId);
+        zipValidation = await validateEctdPackage(result.buffer);
+        generatedStats = result.stats;
+        mode = 'generated-then-validated';
+      } else {
+        zipValidation = await validateEctdPackage(zipBuffer);
+        mode = 'user-supplied-buffer';
+      }
+    }
+
+    // ─── Merge + audit + respond ────────────────────────────────────────────
+    const ranZipValidator = zipValidation !== null;
+    const ranLeafValidator = leafValidation !== null;
+
+    // Defensive guard: if neither validator ran, refuse to return a
+    // misleading `valid: true`. The flow above guarantees at least one runs
+    // today, but a future refactor that accidentally skipped both would
+    // otherwise silently report success.
+    if (!ranZipValidator && !ranLeafValidator) {
+      const correlationId = randomUUID();
+      log.error('Validate produced no validator output', { correlationId, submissionId, mode });
+      return res.status(500).json({
+        error: 'eCTD validation failed',
+        code: 'VALIDATOR_NOT_RUN',
+        message: 'Neither the ZIP nor the leaf validator was invoked',
+        correlationId,
       });
     }
 
-    const validation = await validateEctdPackage(zipBuffer);
+    const zipValid = zipValidation ? zipValidation.valid : true;
+    const leafValid = leafValidation ? leafValidation.valid : true;
+    const valid = zipValid && leafValid;
 
-    // Validation of a user-supplied buffer is also a §11.10(e) view
-    // event — recorded under the JWT-bound tenant when available.
-    const orgIdForAudit =
-      (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
-    if (orgIdForAudit != null) {
-      await auditEctdAccess(
-        req,
-        Number(orgIdForAudit),
-        submissionId,
-        'ectd_export_validated',
-        { mode: 'user-supplied-buffer', valid: validation?.valid },
+    // Build a unified `findings` array with a `source` discriminator so
+    // the UI can render zip-side and leaf-side findings in one table
+    // without inspecting nested keys. Per-validator envelopes are still
+    // attached for back-compat consumers that already parse them.
+    const unifiedFindings: Array<ValidationFinding & { source: 'zip' | 'leaf' }> = [];
+    if (zipValidation) {
+      zipValidation.errors.forEach((e, i) =>
+        unifiedFindings.push(zipStringToFinding(e, 'error', i)),
+      );
+      zipValidation.warnings.forEach((w, i) =>
+        unifiedFindings.push(zipStringToFinding(w, 'warning', i)),
       );
     }
+    if (leafValidation) {
+      for (const f of leafValidation.findings) {
+        unifiedFindings.push({ ...f, source: 'leaf' });
+      }
+    }
 
-    return res.json({
-      submissionId,
-      ...validation,
-      packageSize: zipBuffer.length,
+    // Aggregate summary computed server-side so UI doesn't have to sum
+    // two different shapes.
+    const summary = {
+      errors: unifiedFindings.filter(f => f.severity === 'error').length,
+      warnings: unifiedFindings.filter(f => f.severity === 'warning').length,
+      infos: unifiedFindings.filter(f => f.severity === 'info').length,
+      fromZip: unifiedFindings.filter(f => f.source === 'zip').length,
+      fromLeaf: unifiedFindings.filter(f => f.source === 'leaf').length,
+    };
+
+    // Tenant org is guaranteed non-null by requireTenant() at top, so the
+    // audit row is always written (no silent §11.10(e) drop).
+    await auditEctdAccess(req, organizationId, submissionId, 'ectd_export_validated', {
+      mode,
+      valid,
+      ranZipValidator,
+      ranLeafValidator,
+      findingsCount: unifiedFindings.length,
     });
+
+    const response: Record<string, unknown> = {
+      submissionId,
+      valid,
+      mode,
+      coverage: { ranZipValidator, ranLeafValidator },
+      findings: unifiedFindings,
+      summary,
+    };
+    if (zipValidation) response.zipValidation = zipValidation;
+    if (leafValidation) response.leafValidation = leafValidation;
+    if (zipBufferLength > 0) response.packageSize = zipBufferLength;
+    if (generatedStats !== undefined) response.stats = generatedStats;
+    return res.json(response);
   } catch (error: any) {
-    log.error('Failed', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({
+    const correlationId = randomUUID();
+    log.error('Validate failed', {
+      err: error instanceof Error ? error.message : String(error),
+      correlationId,
+      submissionId,
+    });
+    const classified = classifyError(error);
+    return res.status(classified.status).json({
       error: 'eCTD validation failed',
-      message: error.message,
+      code: classified.code,
+      message: classified.message,
+      correlationId,
     });
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/ectd/validate/preflight — Leaf-level-only preflight
+//
+// Runs ONLY the leaf-level validator (ectd4-validator.validatePackage) against
+// an in-memory ECTDLeaf[] supplied by the caller. No ZIP build, no DB read —
+// intended as a UI gate that can flag missing required sections, bad
+// filenames, lifecycle-target mismatches, and regional rule violations
+// BEFORE the package is actually compiled.
+//
+// Mount: this handler lives on `preflightRouter`, which the bootstrap mounts
+// at `/api/ectd`, giving the literal URL `/api/ectd/validate/preflight`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const preflightRouter = Router();
+
+preflightRouter.post('/validate/preflight', async (req: Request, res: Response) => {
+  // Tenant isolation: preserve the same JWT-bound pattern used by the ZIP
+  // validate route. The preflight validator does not touch persisted data,
+  // but accepting unauthenticated traffic on a regulated-flow endpoint
+  // would be a §11.10(e) attribution gap. requireTenant returns 401 when
+  // unauthenticated, 403 when authenticated-but-missing-org.
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
+  // Input validation. leaves MUST be an array per the schema; region MUST
+  // be one of FDA/EMA/PMDA (z.enum enforces this); priorSequenceNumbers
+  // and priorLeafIds MUST be arrays of strings.
+  const parsed = preflightBodySchema.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return res.status(400).json({
+      error: 'Invalid preflight body',
+      details: parsed.error.flatten(),
+    });
+  }
+
+  const body = parsed.data;
+  const leafOpts = buildLeafValidatorOptions(body);
+
+  try {
+    const result = validateEctdLeafPackage(
+      body.leaves as ECTDLeaf[],
+      body.submissionType ?? 'IND',
+      leafOpts,
+    );
+
+    // Preflight is a regulated-flow view too — audit it under the JWT tenant.
+    // Use a distinct action (`ectd_export_preflight_validated`) AND a distinct
+    // resourceType (`ectd_preflight`) AND a non-numeric resourceId sentinel,
+    // so dashboards that filter on (action, resourceType, resourceId) never
+    // collide preflight rows with a real submissionId=0 or with rows from
+    // the ZIP /validate path.
+    await auditEctdAccess(
+      req,
+      organizationId,
+      'preflight',
+      'ectd_export_preflight_validated',
+      {
+        mode: 'leaf-preflight',
+        leafCount: body.leaves.length,
+        region: body.region,
+        valid: result.valid,
+      },
+      'ectd_preflight',
+    );
+
+    // Build a unified findings array matching the /validate response shape so
+    // a single UI parser can render both surfaces. Preflight runs ONLY the
+    // leaf validator, so all findings carry `source: 'leaf'`.
+    const unifiedFindings: Array<ValidationFinding & { source: 'leaf' }> =
+      result.findings.map(f => ({ ...f, source: 'leaf' as const }));
+    const summary = {
+      errors: unifiedFindings.filter(f => f.severity === 'error').length,
+      warnings: unifiedFindings.filter(f => f.severity === 'warning').length,
+      infos: unifiedFindings.filter(f => f.severity === 'info').length,
+      fromZip: 0,
+      fromLeaf: unifiedFindings.length,
+    };
+
+    return res.json({
+      // submissionId is null because preflight is not bound to a numeric
+      // submission. Kept in the envelope for shape parity with /validate.
+      submissionId: null,
+      valid: result.valid,
+      mode: 'leaf-preflight',
+      coverage: { ranZipValidator: false, ranLeafValidator: true },
+      findings: unifiedFindings,
+      summary,
+      leafValidation: result,
+    });
+  } catch (error: any) {
+    const correlationId = randomUUID();
+    log.error('Preflight failed', {
+      err: error instanceof Error ? error.message : String(error),
+      correlationId,
+    });
+    const classified = classifyError(error);
+    return res.status(classified.status).json({
+      error: 'eCTD preflight validation failed',
+      code: classified.code,
+      message: classified.message,
+      correlationId,
+    });
+  }
+});
+
+export { preflightRouter };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/ectd/export/:submissionId/preview — Preview package structure
@@ -314,16 +858,27 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
   // SECURITY: JWT-bound. The legacy chain that fell back to
   // `?organizationId=` and then to `|| 1` was a double IDOR: pre-auth
   // requests would generate an eCTD package for org 1, and post-auth
-  // requests could target any org via the query string.
-  const organizationId =
-    (req as any).user?.organizationId ?? (req as any).tenantContext?.organizationId;
-  if (organizationId == null) {
-    return res.status(403).json({ error: 'Tenant context required' });
+  // requests could target any org via the query string. requireTenant
+  // emits 401 for unauthenticated / 403 for authenticated-but-no-org.
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
+  // Validate the optional ?region= query against the supported enum so an
+  // unsupported region returns 400 from this route rather than 500 from
+  // resolveEctdRegion deep inside the service.
+  const regionQuery = (req.query.region as string) || 'FDA';
+  const regionParsed = z.enum(['FDA', 'EMA', 'PMDA']).safeParse(regionQuery);
+  if (!regionParsed.success) {
+    return res.status(400).json({
+      error: 'Unsupported region',
+      code: 'REGION_UNSUPPORTED',
+      supported: ['FDA', 'EMA', 'PMDA'],
+    });
   }
 
   try {
-    const result = await generateEctdPackage(submissionId, Number(organizationId), {
-      region: (req.query.region as string) || 'FDA',
+    const result = await generateEctdPackage(submissionId, organizationId, {
+      region: regionParsed.data,
     });
 
     // Load the ZIP to list contents
@@ -337,8 +892,8 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
       .filter(f => zip.files[f].dir)
       .sort();
 
-    await auditEctdAccess(req, Number(organizationId), submissionId, 'ectd_export_previewed', {
-      region: (req.query.region as string) || 'FDA',
+    await auditEctdAccess(req, organizationId, submissionId, 'ectd_export_previewed', {
+      region: regionParsed.data,
       fileCount: files.length,
     });
 
@@ -354,10 +909,18 @@ router.get('/:submissionId/preview', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    log.error('Failed', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({
+    const correlationId = randomUUID();
+    log.error('Preview failed', {
+      err: error instanceof Error ? error.message : String(error),
+      correlationId,
+      submissionId,
+    });
+    const classified = classifyError(error);
+    return res.status(classified.status).json({
       error: 'eCTD preview failed',
-      message: error.message,
+      code: classified.code,
+      message: classified.message,
+      correlationId,
     });
   }
 });
