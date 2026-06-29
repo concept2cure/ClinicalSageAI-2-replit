@@ -80,6 +80,24 @@ describe('NatHistoryDossierAffordance', () => {
     expect(screen.getByRole('status').getAttribute('data-exportable')).toBe('false');
   });
 
+  it('states the non-exportable reason in text, not colour alone (honesty + color-never-alone)', () => {
+    // not_assessed: the reason is spelled out in the panel detail text.
+    render(<NatHistoryDossierAffordance indication="Disease X" provenance="not_assessed" onAssemble={vi.fn()} />);
+    const status = screen.getByRole('status');
+    expect(status.getAttribute('data-exportable')).toBe('false');
+    expect(status.textContent).toMatch(/cannot be sealed until the evidence is live/i);
+    // The status icon is decorative (aria-hidden) — meaning is carried by text.
+    const ico = status.querySelector('[aria-hidden="true"]');
+    expect(ico).toBeTruthy();
+  });
+
+  it('the assemble control is a real verb-labelled button', () => {
+    render(<NatHistoryDossierAffordance indication="Disease X" onAssemble={vi.fn()} />);
+    const btn = screen.getByText('Assemble evidence dossier').closest('button') as HTMLButtonElement;
+    expect(btn.tagName).toBe('BUTTON');
+    expect(btn.getAttribute('type')).toBe('button');
+  });
+
   it('disables the assemble button while busy', () => {
     render(<NatHistoryDossierAffordance indication="Disease X" onAssemble={vi.fn()} busy />);
     const btn = screen.getByText('Assembling…').closest('button') as HTMLButtonElement;

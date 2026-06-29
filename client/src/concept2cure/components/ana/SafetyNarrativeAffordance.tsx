@@ -122,6 +122,12 @@ export function SafetyNarrativeAffordance({ onSubmit, disabled }: SafetyNarrativ
     [listingText, isSample],
   );
 
+  // The required-field error is announced only once the writer has engaged the
+  // form (touched either required field) — never on an untouched, pristine form.
+  const singleEngaged = subjectId.trim().length > 0 || term.trim().length > 0;
+  const subjectIdMissing = singleEngaged && subjectId.trim().length === 0;
+  const termMissing = singleEngaged && term.trim().length === 0;
+
   const canSubmitSingle = subjectId.trim().length > 0 && term.trim().length > 0;
   const canSubmitBatch = (batch?.cases.length ?? 0) > 0;
   const canSubmit = !disabled && (mode === 'single' ? canSubmitSingle : canSubmitBatch);
@@ -175,7 +181,18 @@ export function SafetyNarrativeAffordance({ onSubmit, disabled }: SafetyNarrativ
   }
 
   return (
-    <div className={styles.narrativePanel} role="group" aria-label="Guided safety narrative">
+    <div
+      className={styles.narrativePanel}
+      role="group"
+      aria-label="Guided safety narrative"
+      onKeyDown={(e) => {
+        // Dismiss the expandable panel with Escape (no keyboard trap).
+        if (e.key === 'Escape') {
+          e.stopPropagation();
+          setOpen(false);
+        }
+      }}
+    >
       <div className={styles.narrativeHead}>
         <span className={styles.narrativeTitle}>
           <I.flask size={13} /> Guided safety narrative — ICH E3 §16
@@ -215,11 +232,25 @@ export function SafetyNarrativeAffordance({ onSubmit, disabled }: SafetyNarrativ
 
       {mode === 'single' ? (
         <div className={styles.narrativeForm}>
-          <Field label="Subject id" required value={subjectId} onChange={setSubjectId} />
+          <Field
+            label="Subject id"
+            required
+            value={subjectId}
+            onChange={setSubjectId}
+            invalid={subjectIdMissing}
+            errorText="Subject id is required before drafting."
+          />
           <Field label="Study id" value={studyId} onChange={setStudyId} />
           <Field label="Study drug" value={studyDrug} onChange={setStudyDrug} />
           <Field label="Relevant medical history (; separated)" value={medicalHistory} onChange={setMedicalHistory} />
-          <Field label="Event term" required value={term} onChange={setTerm} />
+          <Field
+            label="Event term"
+            required
+            value={term}
+            onChange={setTerm}
+            invalid={termMissing}
+            errorText="Event term is required before drafting."
+          />
           <Field label="Severity / grade" value={severity} onChange={setSeverity} />
           <Field label="Seriousness criteria (; separated)" value={seriousness} onChange={setSeriousness} />
           <Field label="Action taken with study drug" value={actionTaken} onChange={setActionTaken} />
@@ -308,10 +339,16 @@ interface FieldProps {
   value: string;
   onChange: (v: string) => void;
   required?: boolean;
+  /** When true, the field is marked invalid and the error is announced. */
+  invalid?: boolean;
+  /** Factual error text shown + associated via aria-describedby. */
+  errorText?: string;
 }
 
-function Field({ label, value, onChange, required }: FieldProps) {
+function Field({ label, value, onChange, required, invalid, errorText }: FieldProps) {
   const id = `sn-${label.replace(/[^a-z]+/gi, '-').toLowerCase()}`;
+  const errorId = `${id}-error`;
+  const showError = Boolean(invalid && errorText);
   return (
     <div className={styles.narrativeField}>
       <label className={styles.narrativeFieldLabel} htmlFor={id}>
@@ -325,7 +362,17 @@ function Field({ label, value, onChange, required }: FieldProps) {
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        aria-invalid={showError || undefined}
+        aria-describedby={showError ? errorId : undefined}
       />
+      {showError && (
+        <p id={errorId} className={styles.narrativeFieldError}>
+          <span className={styles.ico} aria-hidden="true">
+            <I.alert size={11} />
+          </span>
+          {errorText}
+        </p>
+      )}
     </div>
   );
 }
