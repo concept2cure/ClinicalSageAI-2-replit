@@ -299,6 +299,22 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Protocol amendments metrics (C2C-18a).
+      try {
+        const { renderProtocolAmendmentsMetrics } = await import('../services/protocol-amendments-metrics.js');
+        lines.push(...renderProtocolAmendmentsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol deviations metrics (C2C-18b).
+      try {
+        const { renderProtocolDeviationsMetrics } = await import('../services/protocol-deviations-metrics.js');
+        lines.push(...renderProtocolDeviationsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RIM-lite metrics (C2C-12).
       try {
         const { renderRimMetrics } = await import('../services/rim-metrics.js');
