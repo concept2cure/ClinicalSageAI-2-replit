@@ -78,14 +78,12 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   { sectionKey: '3.2.P.6', requiredSourceTypes: ['drug_product', 'reference_standard'], requiredFields: ['referenceStandardDescription', 'certificateOfAnalysis'] },
   { sectionKey: '3.2.P.7', requiredSourceTypes: ['container_closure'], requiredFields: ['containerDescription', 'closureDescription', 'suitabilityJustification'] },
   { sectionKey: '3.2.P.8', requiredSourceTypes: ['stability', 'comparability'], requiredFields: ['shelfLifeClaim', 'comparabilityStatus'] },
-  // --- Appendices (A) ---
-  { sectionKey: '3.2.A.1', requiredSourceTypes: ['manufacturing_process', 'container_closure'], requiredFields: ['manufacturingSite', 'containerDescription'] },
-  { sectionKey: '3.2.A.2', requiredSourceTypes: ['drug_substance', 'manufacturing_process'], requiredFields: ['name', 'manufacturingRoute'] },
-  { sectionKey: '3.2.A.3', requiredSourceTypes: ['drug_product'], requiredFields: ['composition'] },
-  // --- Regional Information (R) ---
-  { sectionKey: '3.2.R.1.US', requiredSourceTypes: ['drug_product', 'manufacturing_process'], requiredFields: ['dosageFormDescription', 'manufacturingSite'] },
-  { sectionKey: '3.2.R.1.EU', requiredSourceTypes: ['drug_product'], requiredFields: ['dosageFormDescription'] },
-  { sectionKey: '3.2.R.1.JP', requiredSourceTypes: ['drug_product'], requiredFields: ['dosageFormDescription'] },
+  // NOTE: Appendices (3.2.A.*) and Regional Information (3.2.R.*) are intentionally
+  // NOT composed here. They are owned by module3-extensions.ts, which performs the
+  // region-specific dispatch (US/EU/JP/CA). composeFullModule3() concatenates this
+  // core composer (S/P + structural) with the extensions; defining A/R rules here as
+  // well produced duplicate appendix leaves and region leakage in assembled eCTD
+  // packages. Keep this composer scoped to S/P + 3.1/3.3 (single source of truth).
   // --- Structural support sections ---
   { sectionKey: '3.1', requiredSourceTypes: ['drug_substance', 'drug_product'], requiredFields: ['name', 'dosageFormDescription'] },
   { sectionKey: '3.3', requiredSourceTypes: ['drug_substance', 'drug_product', 'reference_standard'], requiredFields: ['name', 'dosageFormDescription'] },
@@ -640,6 +638,12 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     };
   },
 
+  // The 3.2.A.* (Appendices) and 3.2.R.* (Regional) generators below are retained
+  // for reference/possible reuse but are intentionally NOT wired into
+  // MODULE3_SECTION_RULES — those sections are composed by module3-extensions.ts
+  // with region-specific dispatch. Looked up by sectionKey only, so they are
+  // dormant unless a matching rule is (re)added (which would re-introduce the
+  // duplicate-appendix regression these were removed to fix).
   '3.2.A.1': (m) => {
     const mfgSite = val(m, 'manufacturingSite');
     const route = val(m, 'manufacturingRoute');
@@ -1051,12 +1055,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
           ['3.2.P.6', 'Reference Standards (Drug Product)'],
           ['3.2.P.7', 'Container Closure System (Drug Product)'],
           ['3.2.P.8', 'Stability (Drug Product)'],
-          ['3.2.A.1', 'Facilities and Equipment'],
-          ['3.2.A.2', 'Adventitious Agents Safety Evaluation'],
-          ['3.2.A.3', 'Excipients of Human or Animal Origin'],
-          ['3.2.R.1.US', 'Regional Information — United States'],
-          ['3.2.R.1.EU', 'Regional Information — European Union'],
-          ['3.2.R.1.JP', 'Regional Information — Japan'],
+          // Appendices (3.2.A.*) and Regional (3.2.R.*) are listed by the
+          // module3-extensions composer, which owns those sections with
+          // region-specific dispatch. See the MODULE3_SECTION_RULES note above.
         ],
       }],
     };
