@@ -11252,6 +11252,72 @@ registerToolHandler('project_events', async (input: Record<string, unknown>) =>
   )
 );
 
+registerToolHandler('compute_assurance', async (input: Record<string, unknown>) =>
+  runStatsTool(
+    'compute_assurance',
+    async () => {
+      const { assuranceTwoSampleMeans, assuranceMonteCarloTwoSampleMeans } = await import(
+        '../stats/assurance.js'
+      );
+      return input.method === 'monte_carlo'
+        ? assuranceMonteCarloTwoSampleMeans(input as any)
+        : assuranceTwoSampleMeans(input as any);
+    },
+    // Quadrature is closed-form deterministic; the MC path is seeded/reproducible.
+    input.method === 'monte_carlo' ? 'seeded-monte-carlo' : 'deterministic'
+  )
+);
+
+registerToolHandler('run_monte_carlo_simulation', async (input: Record<string, unknown>) =>
+  runStatsTool(
+    'run_monte_carlo_simulation',
+    async () => {
+      const { diagnosticAccuracyMonteCarlo, timeToMarketMonteCarlo, reviewOutcomeMonteCarlo } =
+        await import('../stats/monte-carlo.js');
+      const mode = input.mode as string;
+      if (mode === 'diagnostic_accuracy') {
+        return diagnosticAccuracyMonteCarlo(input as any);
+      }
+      if (mode === 'time_to_market') {
+        return timeToMarketMonteCarlo(input as any);
+      }
+      if (mode === 'review_outcome') {
+        return reviewOutcomeMonteCarlo(input as any);
+      }
+      throw new Error("mode must be 'diagnostic_accuracy', 'time_to_market', or 'review_outcome'");
+    },
+    'seeded-monte-carlo'
+  )
+);
+
+registerToolHandler('assess_ivd_analytical_extensions', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_ivd_analytical_extensions', async () => {
+    const mod = await import('../stats/analytical-performance-extensions.js');
+    const mode = input.mode as string;
+    if (mode === 'real_time_stability') {
+      return mod.assessRealTimeStability(input as any);
+    }
+    if (mode === 'accelerated_stability') {
+      return mod.assessAcceleratedStability(input as any);
+    }
+    if (mode === 'carryover') {
+      return mod.assessCarryover(input as any);
+    }
+    if (mode === 'hook_effect') {
+      return mod.assessHookEffect(input as any);
+    }
+    if (mode === 'recovery') {
+      return mod.assessRecovery(input as any);
+    }
+    if (mode === 'cutoff') {
+      return mod.determineCutoff(input.observations as any);
+    }
+    throw new Error(
+      "mode must be 'real_time_stability', 'accelerated_stability', 'carryover', 'hook_effect', 'recovery', or 'cutoff'"
+    );
+  })
+);
+
 // Submission intelligence (Tier 1.3/1.4) — precedent benchmarking + package
 // completeness. Both engines are pure/structured-input; thin pass-throughs.
 registerToolHandler('benchmark_precedent_trials', async (input: Record<string, unknown>) =>
