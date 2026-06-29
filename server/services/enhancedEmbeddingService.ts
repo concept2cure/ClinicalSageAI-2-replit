@@ -348,12 +348,17 @@ export class EnhancedEmbeddingService {
   }
 
   /**
-   * Semantic search for similar atoms
+   * Semantic search for similar atoms. Tenant-scoped: organizationUuid is
+   * required to prevent cross-tenant retrieval. When omitted, returns an
+   * empty array rather than searching across all tenants — callers that
+   * legitimately need cross-tenant search should add an explicit method
+   * with its own access checks.
    */
   async searchSimilar(
     query: string,
     limit = 10,
     threshold = 0.7,
+    organizationUuid?: string,
     filters?: {
       atomType?: string;
       domain?: string;
@@ -368,40 +373,52 @@ export class EnhancedEmbeddingService {
       atomType: string;
     }>
   > {
-    // Generate query embedding
+    if (!organizationUuid) {
+      console.warn(
+        '[enhancedEmbeddingService] searchSimilar called without organizationUuid; refusing to search cross-tenant.'
+      );
+      return [];
+    }
+
     const queryResult = await this.embed(query, this.defaultModel);
 
-    // Build filter conditions
     let filterSql = '';
-    const params: unknown[] = [`[${queryResult.embedding.join(',')}]`, threshold, limit];
-    let paramIndex = 4;
+    const params: unknown[] = [
+      `[${queryResult.embedding.join(',')}]`,
+      threshold,
+      limit,
+      organizationUuid,
+    ];
+    let paramIndex = 5;
 
     if (filters?.atomType) {
-      filterSql += ` AND atom_type = $${paramIndex++}`;
+      filterSql += ` AND a.atom_type = $${paramIndex++}`;
       params.push(filters.atomType);
     }
     if (filters?.domain) {
-      filterSql += ` AND domain = $${paramIndex++}`;
+      filterSql += ` AND a.domain = $${paramIndex++}`;
       params.push(filters.domain);
     }
     if (filters?.source) {
-      filterSql += ` AND source = $${paramIndex++}`;
+      filterSql += ` AND a.source = $${paramIndex++}`;
       params.push(filters.source);
     }
 
     const { rows } = await this.pool.query(
       `
       SELECT
-        id,
-        content,
-        title,
-        atom_type,
-        1 - (embedding <=> $1::vector) as similarity
-      FROM lumen_data_atoms
-      WHERE embedding IS NOT NULL
-        AND 1 - (embedding <=> $1::vector) > $2
+        a.id,
+        a.content,
+        a.title,
+        a.atom_type,
+        1 - (a.embedding <=> $1::vector) as similarity
+      FROM lumen_data_atoms a
+      JOIN organizations o ON a.organization_id = o.id
+      WHERE a.embedding IS NOT NULL
+        AND o.uuid = $4
+        AND 1 - (a.embedding <=> $1::vector) > $2
         ${filterSql}
-      ORDER BY embedding <=> $1::vector
+      ORDER BY a.embedding <=> $1::vector
       LIMIT $3
     `,
       params
