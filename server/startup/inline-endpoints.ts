@@ -315,6 +315,22 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Protocol review & comment metrics (C2C-18c).
+      try {
+        const { renderProtocolReviewMetrics } = await import('../services/protocol-reviews-metrics.js');
+        lines.push(...renderProtocolReviewMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Informed consent builder metrics (C2C-18d).
+      try {
+        const { renderConsentMetrics } = await import('../services/protocol-consent-metrics.js');
+        lines.push(...renderConsentMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RIM-lite metrics (C2C-12).
       try {
         const { renderRimMetrics } = await import('../services/rim-metrics.js');

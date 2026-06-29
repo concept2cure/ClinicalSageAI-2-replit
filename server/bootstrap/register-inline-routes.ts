@@ -520,6 +520,24 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Protocol deviations routes:', error);
   }
 
+  // Protocol review & comment workflow (reviewer assignments, dispositions, consensus).
+  try {
+    const protocolReviewsModule = await import('../routes/protocol-reviews');
+    app.use('/api/protocol-reviews', authMiddleware, protocolReviewsModule.default);
+    console.info('✅ Protocol review routes mounted (/api/protocol-reviews)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol review routes:', error);
+  }
+
+  // Informed consent form builder (45 CFR 46.116 required-elements completeness gate).
+  try {
+    const protocolConsentModule = await import('../routes/protocol-consent');
+    app.use('/api/protocol-consent', authMiddleware, protocolConsentModule.default);
+    console.info('✅ Protocol consent routes mounted (/api/protocol-consent)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol consent routes:', error);
+  }
+
   // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
   try {
     const rimModule = await import('../routes/rim');
