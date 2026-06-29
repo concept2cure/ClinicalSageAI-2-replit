@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T05:15:50.509Z",
+  "generatedAt": "2026-06-29T05:16:49.171Z",
   "git": {
-    "sha": "55a2f0516590b14f9627b4b69c288190943ccb2d",
+    "sha": "c60f86feeacace417e206b273e812010cdfb187d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 223,
+    "duplicateBasenames": 225,
     "largeFilesByBytes": 16,
     "largeFilesByLines": 50
   },
@@ -1874,11 +1874,27 @@
         ]
       },
       {
+        "basename": "protocol-amendments",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-amendments.ts",
+          "shared/schema/protocol-amendments.ts"
+        ]
+      },
+      {
         "basename": "protocol-development",
         "count": 2,
         "paths": [
           "server/routes/protocol-development.ts",
           "shared/schema/protocol-development.ts"
+        ]
+      },
+      {
+        "basename": "protocol-deviations",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-deviations.ts",
+          "shared/schema/protocol-deviations.ts"
         ]
       },
       {
@@ -2499,7 +2515,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 356,
+      "duplicateGroups": 358,
       "largeByBytes": 13,
       "largeByLines": 40
     },
@@ -2517,7 +2533,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 51,
+      "duplicateGroups": 53,
       "largeByBytes": 1,
       "largeByLines": 2
     },
