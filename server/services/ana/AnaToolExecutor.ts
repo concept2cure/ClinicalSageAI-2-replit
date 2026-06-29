@@ -736,6 +736,145 @@ registerToolHandler('run_submission_premortem', async (input, ctx) => {
   }
 });
 
+// E14 — CRL/RTF pre-mortem DECISION ARTIFACT. Reuses the same honest-by-
+// construction composition path as run_submission_premortem (deterministic
+// deficiency scan + fault-tolerant precedent engine), then lifts the verdict
+// into a board-ready artifact (approval-probability ESTIMATE grounded in the
+// precedent approve/deny split, ranked precedent-cited risks, prioritized
+// fix-list) via the pure crl-premortem-report core. Optionally renders + authors
+// the artifact as a Word doc via author_docx_native — but ONLY for an estimable,
+// non-sample artifact (the exportability/honesty guard). The artifact is always
+// produced UNSEALED.
+//
+// E1 INTEGRATION: when E1's Sign-and-seal lands, attach the seal action +
+// SealedRecord to the returned artifact here (sealStatus flips to 'sealed' and a
+// ProvenanceTrail entry is recorded). The report is fully generatable/exportable
+// without sealing now.
+//
+// BUILD-1 INTEGRATION: when Build 1 lands, persist the assembled artifact as a
+// version row here (so each generated pre-mortem becomes an immutable record).
+registerToolHandler('assemble_crl_premortem_artifact', async (input, ctx) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ error: 'assemble_crl_premortem_artifact requires text (non-empty string).' });
+  }
+  const location =
+    typeof input.location === 'string' && input.location.trim() ? input.location.trim() : 'document';
+  const submissionType = typeof input.submission_type === 'string' ? input.submission_type.trim() : undefined;
+  const agency = typeof input.agency === 'string' ? input.agency.trim() : undefined;
+  const indication = typeof input.indication === 'string' ? input.indication.trim() : undefined;
+  const title = typeof input.title === 'string' ? input.title : undefined;
+  const doExport = input.export === true;
+
+  try {
+    const { quickPatternScan } = await import('../intelligence/rim.js');
+    const { composePremortem } = await import('./submission-premortem-core.js');
+    const { assembleCrlPremortemArtifact, renderArtifactMarkdown } = await import('./crl-premortem-report.js');
+
+    // 1. Deterministic deficiency/reviewer-trigger findings (no LLM).
+    const criteria: Record<string, unknown> = {};
+    if (agency) criteria.agency = agency;
+    if (submissionType) criteria.submissionType = submissionType;
+    const matches = quickPatternScan(text, location, Object.keys(criteria).length ? (criteria as any) : undefined);
+    const findings = matches.map(m => ({
+      patternId: m.patternId,
+      title: m.pattern.name,
+      category: m.pattern.category,
+      severity: m.pattern.severity,
+      matchedText: m.matchedText,
+      matchConfidence: m.matchConfidence,
+      reviewerQuestion: m.pattern.reviewerQuestion,
+      regulatoryBasis: m.pattern.regulatoryBasis,
+      remediation: m.pattern.remediation,
+    }));
+
+    // 2. Precedent calibration — same fault-tolerant path as the pre-mortem; an
+    //    unavailable corpus degrades to n=0 (artifact becomes not_assessed),
+    //    never an error. The full outcome split grounds the probability estimate.
+    let precedentCount = 0;
+    let precedentCitations: Array<{ id: string; label: string; outcome: string }> = [];
+    let precedentOutcomes: Array<{ id: string; label: string; outcome: string }> = [];
+    if (submissionType) {
+      try {
+        const { precedentEngine } = await import('../precedent-engine.js');
+        const records = await precedentEngine.search(
+          { submissionType, indication, limit: 25 },
+          ctx?.organizationId ?? undefined,
+        );
+        precedentCount = records.length;
+        // DATA-OP: grounding fidelity ultimately depends on the P2 precedent-
+        // corpus ingestion; we drive from whatever the engine returns today.
+        precedentOutcomes = records.map(r => ({
+          id: r.id,
+          label: r.clearanceNumber || r.deviceName || r.applicant || r.id,
+          outcome: r.decisionOutcome,
+        }));
+        precedentCitations = precedentOutcomes.slice(0, 5);
+      } catch {
+        /* corpus unavailable — honest n=0 read (artifact: not_assessed) */
+      }
+    }
+
+    const verdict = composePremortem({
+      findings,
+      precedentCount,
+      precedentCitations,
+      submissionType,
+      agency,
+    });
+
+    const artifact = assembleCrlPremortemArtifact({
+      verdict,
+      precedents: precedentOutcomes,
+      title,
+    });
+
+    // Optional export — guarded: only an estimable, non-sample artifact may be
+    // rendered/authored. renderArtifactMarkdown throws otherwise.
+    let exportResult: Record<string, unknown> | null = null;
+    if (doExport) {
+      if (!artifact.exportable) {
+        exportResult = {
+          exported: false,
+          reason: `Artifact is not exportable (status: ${artifact.status}). Pattern-only / insufficient-data and sample artifacts cannot be sealed or exported.`,
+        };
+      } else {
+        try {
+          const markdown = renderArtifactMarkdown(artifact);
+          const authorHandler = getToolHandler('author_docx_native');
+          if (authorHandler) {
+            const authored = JSON.parse(
+              await authorHandler({ title: artifact.title, content: markdown, output_format: 'docx' }, ctx),
+            );
+            exportResult = authored.error
+              ? { exported: false, reason: authored.error, markdown }
+              : { exported: true, sealed: false, docxPath: authored.docxPath, fileName: authored.fileName, markdown };
+          } else {
+            exportResult = { exported: false, reason: 'author_docx_native unavailable', markdown };
+          }
+        } catch (err) {
+          exportResult = {
+            exported: false,
+            reason: err instanceof Error ? err.message : String(err),
+          };
+        }
+      }
+    }
+
+    return JSON.stringify({
+      engine: 'CRL/RTF pre-mortem decision artifact (honest-by-construction, unsealed)',
+      location,
+      artifact,
+      export: exportResult,
+      message: artifact.approvalProbability.framing,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `assemble_crl_premortem_artifact failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // Deterministic regulatory deficiency scan — runs the codified pattern registry
 // (quickPatternScan) with NO language-model call. AnA's reasoning-without-the-LLM
 // surface: fast, reproducible, citable pattern matching over regulatory text.
