@@ -192,6 +192,18 @@ const CSRInputSchema = z.object({
 // ── Common fields shared by Mode A and Mode B ───────────────────────────────
 const RunCommonSchema = z.object({
   submissionId: z.string().min(1),
+  /**
+   * Path-to-GA §C.4 (Path B): optional canonical FK back to
+   * public.submissions(id). When supplied, the orchestrator dual-writes
+   * both `submission_id` (TEXT, legacy) and `submission_id_fk` (INTEGER,
+   * joinable). Legacy callers omit this and the FK column stays NULL
+   * until a per-tenant backfill resolves it. The route handler threads
+   * this straight into OrchestratorInputs.submissionFk without
+   * normalization — the service layer (and
+   * loadSubmissionFkBySubmissionIdText) owns the resolution / dual-write
+   * logic.
+   */
+  submissionFk: z.number().int().positive().optional(),
   applicationNumber: z.string().min(1),
   region: RegionSchema,
   submissionType: SubmissionTypeSchema,
@@ -342,6 +354,11 @@ router.post('/runs', async (req: Request, res: Response) => {
 
       orchestratorInputs = {
         submissionId: parsed.data.submissionId,
+        // Path-to-GA §C.4 (Path B): thread the optional canonical FK
+        // through both modes without normalization. Undefined when the
+        // caller didn't supply it; the service layer leaves the column
+        // NULL in that case.
+        submissionFk: parsed.data.submissionFk,
         applicationNumber: parsed.data.applicationNumber,
         region: parsed.data.region,
         submissionType: parsed.data.submissionType,
@@ -358,6 +375,7 @@ router.post('/runs', async (req: Request, res: Response) => {
       // ── Mode B: backward-compat inline inputs ───────────────────────────
       orchestratorInputs = {
         submissionId: parsed.data.submissionId,
+        submissionFk: parsed.data.submissionFk,
         applicationNumber: parsed.data.applicationNumber,
         region: parsed.data.region,
         submissionType: parsed.data.submissionType,

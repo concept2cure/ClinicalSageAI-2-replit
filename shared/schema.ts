@@ -18533,6 +18533,14 @@ export const submissionTransmittals = pgTable(
     bundleSha256:         text('bundle_sha256'),
     bundleSizeBytes:      bigint('bundle_size_bytes', { mode: 'number' }),
     transmissionId:       text('transmission_id'),
+    /**
+     * Raw MDN response body verbatim from the FDA ESG AS2 endpoint. Populated
+     * on a successful AS2 receipt (fda-esg.ts transmit() AS2 branch). NULL for
+     * transmittals predating migration 20260629_submission_transmittals_mdn_raw,
+     * and NULL for non-AS2 transports (SFTP has no MDN). downloadAcknowledgment
+     * returns this when present, otherwise falls back to a synthesised summary.
+     */
+    mdnRaw:               text('mdn_raw'),
     status:               text('status').default('pending').notNull(),
     httpStatus:           integer('http_status'),
     errorClass:           text('error_class'),

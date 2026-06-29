@@ -63,32 +63,47 @@ const hoisted = vi.hoisted(() => {
     // Captured arguments for auditService.logAction.
     auditLogAction: vi.fn() as ReturnType<typeof vi.fn>,
 
-    // Captured chains for db.select(...).from(...).where(...).limit(...).
+    // Captured chains for db.select(...).from(...).where(...).limit/orderBy.
     selectCalls: [] as Array<{
       projection: unknown;
       table: unknown;
       whereCalled: boolean;
       limitArg: unknown;
+      orderByCalled: boolean;
     }>,
-    // What the next .limit() resolves with. Tests override per-case to drive
-    // the project-ownership SELECT (POST path) and charter-fetch SELECT (GET
-    // path). We use a per-call queue so a single test that issues TWO selects
-    // (POST does both project-ownership and an implicit RETURNING-style flow)
-    // can stage distinct rows.
+    // What the next .limit() / .orderBy() resolves with. Tests override
+    // per-case to drive the project-ownership SELECT (POST path),
+    // charter-fetch SELECT (GET path), commitments-list SELECT, and the
+    // owned-charter SELECT inside the commitments POST. Per-call queue so a
+    // single test that issues multiple selects can stage distinct rows.
     selectLimitRows: [] as unknown[][],
 
-    // Captured chains for db.insert(...).values(...).returning().
+    // Captured chains for db.insert(...).values(...).returning() AND
+    // tx.insert(...).values(...).returning() inside db.transaction(cb).
     insertCalls: [] as Array<{
       table: unknown;
       values: unknown;
       returningCalled: boolean;
+      insideTx: boolean;
     }>,
     insertReturningRows: [{ id: 555, approvalStatus: 'draft' }] as Array<
       Record<string, unknown>
     >,
+    // Per-call queue for transaction-side returning rows. Set when a test
+    // needs distinct rows for two sequential tx.insert(...).returning()
+    // calls (commitment INSERT yields { id: ... }; charter_audit_events
+    // INSERT does NOT call .returning() so doesn't consume the queue).
+    txInsertReturningQueue: [] as unknown[][],
     // If set, the next insert().values().returning() will REJECT with this
-    // error instead of resolving — used to prove a DB write fault surfaces 500.
+    // error — proves a DB write fault surfaces 500.
     insertReturningError: null as Error | null,
+    // If set, the next tx.insert(charterAuditEvents)...values() will REJECT
+    // with this error — proves the per-entity audit insert failure rolls
+    // back the commitment insert.
+    txAuditInsertError: null as Error | null,
+    // Counts of tx.insert calls per table (key is table identity). Helps
+    // tests assert which inserts happened inside a transaction.
+    txInsertTableSequence: [] as unknown[],
 
     reset() {
       this.auditLogAction.mockReset();
@@ -97,7 +112,10 @@ const hoisted = vi.hoisted(() => {
       this.selectLimitRows = [];
       this.insertCalls = [];
       this.insertReturningRows = [{ id: 555, approvalStatus: 'draft' }];
+      this.txInsertReturningQueue = [];
       this.insertReturningError = null;
+      this.txAuditInsertError = null;
+      this.txInsertTableSequence = [];
     },
   };
 });
@@ -136,64 +154,137 @@ vi.mock('../../server/services/auditService', () => ({
 // ═══════════════════════════════════════════════════════════════════════════════
 
 vi.mock('../../server/db', () => {
+  // Shared select-builder factory — used by both top-level db and the tx
+  // handle inside db.transaction(). Resolves rows from the same per-call
+  // queue (hoisted.selectLimitRows) on EITHER .limit() OR .orderBy(), so
+  // the GET commitments path (no .limit, only .orderBy) and the POST
+  // commitments path (no .limit on the unbounded list select, .limit(1) on
+  // the owned-charter probe) both work against one mock.
+  function makeSelect(projection?: unknown) {
+    const call: {
+      projection: unknown;
+      table: unknown;
+      whereCalled: boolean;
+      limitArg: unknown;
+      orderByCalled: boolean;
+    } = {
+      projection,
+      table: null,
+      whereCalled: false,
+      limitArg: null,
+      orderByCalled: false,
+    };
+    hoisted.selectCalls.push(call);
+    const resolveRows = () => {
+      const rows = hoisted.selectLimitRows.shift() ?? [];
+      return Promise.resolve(rows);
+    };
+    const builder: any = {
+      from(t: unknown) {
+        call.table = t;
+        return builder;
+      },
+      where(_pred: unknown) {
+        call.whereCalled = true;
+        return builder;
+      },
+      limit(n: unknown) {
+        call.limitArg = n;
+        return resolveRows();
+      },
+      orderBy(_clause: unknown) {
+        call.orderByCalled = true;
+        return resolveRows();
+      },
+    };
+    return builder;
+  }
+
+  // Shared insert-builder factory — used by both top-level db (no-tx
+  // legacy POST /charters path) and the tx handle inside db.transaction()
+  // (POST /charters/:id/commitments). Tracks whether the insert ran inside
+  // a transaction so tests can assert atomic behaviour.
+  function makeInsert(table: unknown, insideTx: boolean) {
+    const call: {
+      table: unknown;
+      values: unknown;
+      returningCalled: boolean;
+      insideTx: boolean;
+    } = {
+      table,
+      values: null,
+      returningCalled: false,
+      insideTx,
+    };
+    hoisted.insertCalls.push(call);
+    if (insideTx) {
+      hoisted.txInsertTableSequence.push(table);
+    }
+    const builder: any = {
+      values(v: unknown) {
+        call.values = v;
+        // The audit-insert path inside the tx is awaited WITHOUT
+        // .returning() in the route — make .values(...) itself a thenable
+        // so `await tx.insert(...).values(...)` works. We also need
+        // .returning() (chained) to keep the existing POST /charters path
+        // and the commitment insert working.
+        const thenable: any = {
+          then(onFulfilled: any, onRejected: any) {
+            // Per-table fault injection — if the test arms
+            // txAuditInsertError and this is the audit-row insert, REJECT.
+            // We identify "the audit-row insert" as the SECOND tx insert
+            // (commitment first, audit second) per the route's order.
+            if (
+              insideTx &&
+              hoisted.txAuditInsertError &&
+              hoisted.txInsertTableSequence.length === 2
+            ) {
+              const err = hoisted.txAuditInsertError;
+              hoisted.txAuditInsertError = null; // one-shot
+              return Promise.reject(err).then(onFulfilled, onRejected);
+            }
+            return Promise.resolve(undefined).then(onFulfilled, onRejected);
+          },
+          returning() {
+            call.returningCalled = true;
+            if (hoisted.insertReturningError) {
+              return Promise.reject(hoisted.insertReturningError);
+            }
+            // Inside a tx, prefer the per-call queue if staged; else fall
+            // back to the legacy single-row default.
+            if (insideTx && hoisted.txInsertReturningQueue.length > 0) {
+              const rows = hoisted.txInsertReturningQueue.shift() ?? [];
+              return Promise.resolve(rows);
+            }
+            return Promise.resolve(hoisted.insertReturningRows);
+          },
+        };
+        return thenable;
+      },
+    };
+    return builder;
+  }
+
   const db = {
     select(projection?: unknown) {
-      const call: {
-        projection: unknown;
-        table: unknown;
-        whereCalled: boolean;
-        limitArg: unknown;
-      } = {
-        projection,
-        table: null,
-        whereCalled: false,
-        limitArg: null,
-      };
-      hoisted.selectCalls.push(call);
-      const builder: any = {
-        from(t: unknown) {
-          call.table = t;
-          return builder;
-        },
-        where(_pred: unknown) {
-          call.whereCalled = true;
-          return builder;
-        },
-        limit(n: unknown) {
-          call.limitArg = n;
-          // Pop the head of the queue if staged; else default to empty array
-          // (i.e. "no row found" — the safe miss state).
-          const rows = hoisted.selectLimitRows.shift() ?? [];
-          return Promise.resolve(rows);
-        },
-      };
-      return builder;
+      return makeSelect(projection);
     },
     insert(table: unknown) {
-      const call: {
-        table: unknown;
-        values: unknown;
-        returningCalled: boolean;
-      } = {
-        table,
-        values: null,
-        returningCalled: false,
+      return makeInsert(table, false);
+    },
+    // db.transaction(cb) — execute the callback with a tx handle whose
+    // .insert / .select route through the same captured-mock state.
+    // Errors thrown inside cb propagate (mirroring Drizzle's real
+    // behaviour). The mock does NOT model rollback semantics for the
+    // captured rows — tests assert on insertCalls (which records every
+    // attempted insert) and on the route's HTTP response (which is the
+    // observable outcome of a rolled-back transaction).
+    async transaction(cb: (tx: unknown) => Promise<unknown>) {
+      const tx = {
+        select: (projection?: unknown) => makeSelect(projection),
+        insert: (table: unknown) => makeInsert(table, true),
       };
-      hoisted.insertCalls.push(call);
-      const builder: any = {
-        values(v: unknown) {
-          call.values = v;
-          return builder;
-        },
-        returning() {
-          call.returningCalled = true;
-          if (hoisted.insertReturningError) {
-            return Promise.reject(hoisted.insertReturningError);
-          }
-          return Promise.resolve(hoisted.insertReturningRows);
-        },
-      };
-      return builder;
+      return cb(tx);
     },
   };
   return { db, pool: null, getPool: () => null, getDb: () => db };

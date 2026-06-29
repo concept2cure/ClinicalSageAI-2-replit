@@ -62,9 +62,15 @@ type Command =
   | 'claim' | 'transition' | 'resolve' | 'sign'
   | 'accept-ai-suggestion' | 'lock'
   | 'unclaim' | 'transition-back' | 'reopen'
-  | 'revoke-signature' | 'reject-ai-suggestion' | 'unlock';
+  | 'revoke-signature' | 'reject-ai-suggestion' | 'unlock'
+  // Submission-gateway operator-initiated rollback. Counterpart to `sign` for
+  // FDA ESG transmittals: the kit cannot un-send bytes to FDA, but the audit
+  // trail records the rollback alongside a WebTrader retraction. See
+  // server/services/submission-gateways/fda-esg.ts#rollbackTransmittal and
+  // docs/runbooks/fda-esg-production-uat.md §11 (FIX 6).
+  | 'transmittal_rollback';
 
-const HIGH_RISK_COMMANDS: Set<Command> = new Set(['sign', 'lock', 'revoke-signature']);
+const HIGH_RISK_COMMANDS: Set<Command> = new Set(['sign', 'lock', 'revoke-signature', 'transmittal_rollback']);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;

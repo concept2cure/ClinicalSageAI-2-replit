@@ -26,6 +26,9 @@ CREATE TABLE IF NOT EXISTS submission_transmittals (
   transmission_id      text,                     -- gateway-issued tracking id (MDN id, CESP basket, PMDA receipt)
   status               text NOT NULL DEFAULT 'pending',
                                                  -- 'pending' | 'in_transit' | 'received' | 'rejected'
+                                                 -- | 'rolled_back' (operator-initiated rollback; see
+                                                 --   migrations/20260629_submission_transmittals_active_lock.sql
+                                                 --   and the transmittal-rollback governed action)
                                                  -- | 'ack1_received' | 'ack2_received' | 'ack3_received'
                                                  -- | 'validation_passed' | 'validation_failed'
                                                  -- | 'review_started' | 'response_required' | 'completed'

@@ -549,3 +549,133 @@ describe('Move 6 — getRunResumeReadiness', () => {
     expect(hoisted.getCSRBuildJobStatus).not.toHaveBeenCalled();
   });
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Path-to-GA §C.4 — submissionFk threads through persistRun / persistStepEvent
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// These cases overlap the Move 3/5/6 surface to prove the new column
+// behaves correctly across (a) the fresh-run synchronous pipeline (Move 3),
+// (b) the m3.refine AI step (Move 5), and (c) the awaiting-async enqueue
+// path (Move 6). They harvest the persistRun INSERT params straight from
+// the mocked pool.query — the FK column position is what we're locking in.
+//
+// Param order (per persistRun in submission-package-orchestrator.ts):
+//   $1 run_id, $2 organization_id, $3 submission_id, $4 submission_id_fk,
+//   $5 application_number, $6 region, $7 submission_type, $8 started_at,
+//   $9 completed_at, $10 status, $11 steps
+const RUN_INSERT_FK_PARAM_INDEX = 3;
+
+// Param order for persistStepEvent INSERT:
+//   $1 run_id, $2 organization_id, $3 submission_id_fk, $4 step_key,
+//   $5 event_type, $6 status, $7 input_hash, $8 output_hash, $9 output_ref,
+//   $10 error
+const STEP_INSERT_FK_PARAM_INDEX = 2;
+
+function isRunInsertCall(call: [string, unknown[]?]): boolean {
+  return typeof call[0] === 'string' && /INSERT\s+INTO\s+submission_orchestrator_runs/i.test(call[0]);
+}
+
+function isStepInsertCall(call: [string, unknown[]?]): boolean {
+  return typeof call[0] === 'string' && /INSERT\s+INTO\s+submission_orchestrator_steps/i.test(call[0]);
+}
+
+describe('Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6', () => {
+  it('threads submissionFk into every persistRun + persistStepEvent INSERT when supplied (Move 3 happy path)', async () => {
+    // gatewayReady=true by default; this is the all-sync, single-pass case.
+    const { run } = await runOrchestrator(baseInputs({ submissionFk: 42 }));
+    expect(run.submissionFk).toBe(42);
+
+    // Every captured persistRun INSERT carries fk=42 at the expected position.
+    const runInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isRunInsertCall(c as [string, unknown[]?]),
+    );
+    expect(runInserts.length).toBeGreaterThan(0);
+    for (const call of runInserts) {
+      const params = call[1] as unknown[];
+      expect(params[RUN_INSERT_FK_PARAM_INDEX]).toBe(42);
+    }
+
+    // Every captured persistStepEvent INSERT carries fk=42 at the expected position.
+    const stepInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isStepInsertCall(c as [string, unknown[]?]),
+    );
+    expect(stepInserts.length).toBeGreaterThan(0);
+    for (const call of stepInserts) {
+      const params = call[1] as unknown[];
+      expect(params[STEP_INSERT_FK_PARAM_INDEX]).toBe(42);
+    }
+  });
+
+  it('leaves submissionFk NULL on every INSERT when caller omits it (back-compat)', async () => {
+    const inputs = baseInputs();
+    // Defensive: baseInputs does not set submissionFk, but make it explicit.
+    delete (inputs as { submissionFk?: number }).submissionFk;
+
+    const { run } = await runOrchestrator(inputs);
+    expect(run.submissionFk).toBeUndefined();
+
+    const runInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isRunInsertCall(c as [string, unknown[]?]),
+    );
+    for (const call of runInserts) {
+      const params = call[1] as unknown[];
+      expect(params[RUN_INSERT_FK_PARAM_INDEX]).toBeNull();
+    }
+    const stepInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isStepInsertCall(c as [string, unknown[]?]),
+    );
+    for (const call of stepInserts) {
+      const params = call[1] as unknown[];
+      expect(params[STEP_INSERT_FK_PARAM_INDEX]).toBeNull();
+    }
+  });
+
+  it('refuses to persist a non-positive submissionFk — coerces to NULL rather than corrupting the column', async () => {
+    // The interface types submissionFk as `number`, but a buggy caller
+    // could pass 0 / negative / NaN. The service-layer guard coerces
+    // those to NULL on the wire so the FK column never carries a value
+    // that could never resolve to a real submissions.id.
+    const inputs = baseInputs() as OrchestratorInputs & { submissionFk?: number };
+    inputs.submissionFk = 0;
+    await runOrchestrator(inputs);
+
+    const runInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isRunInsertCall(c as [string, unknown[]?]),
+    );
+    expect(runInserts.length).toBeGreaterThan(0);
+    for (const call of runInserts) {
+      const params = call[1] as unknown[];
+      expect(params[RUN_INSERT_FK_PARAM_INDEX]).toBeNull();
+    }
+  });
+
+  it('Move 6: awaiting-async enqueue carries submissionFk on the suspended-run persistRun INSERT', async () => {
+    hoisted.launchCSRBuildAsync.mockResolvedValue({ jobId: 555, status: 'queued' });
+    const { run } = await runOrchestrator(baseInputs({ enableCSRNarrative: true, submissionFk: 99 }));
+    expect(run.status).toBe('awaiting-async');
+    expect(run.submissionFk).toBe(99);
+
+    // The final persistRun INSERT before the awaiting-async return must
+    // still carry the FK (we don't lose it on the suspend boundary).
+    const runInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isRunInsertCall(c as [string, unknown[]?]),
+    );
+    expect(runInserts.length).toBeGreaterThan(0);
+    const lastRunInsert = runInserts[runInserts.length - 1];
+    const params = lastRunInsert[1] as unknown[];
+    expect(params[RUN_INSERT_FK_PARAM_INDEX]).toBe(99);
+
+    // And every step audit row written while building the suspend point
+    // mirrors it too — the csr.draft-narrative `start` / `complete` rows
+    // both carry the FK.
+    const stepInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isStepInsertCall(c as [string, unknown[]?]),
+    );
+    expect(stepInserts.length).toBeGreaterThan(0);
+    for (const call of stepInserts) {
+      const params = call[1] as unknown[];
+      expect(params[STEP_INSERT_FK_PARAM_INDEX]).toBe(99);
+    }
+  });
+});

@@ -142,6 +142,17 @@ export interface OrchestratorRun {
   /** Tenant scope — pinned at run creation; every persistence call carries this. */
   organizationId: number;
   submissionId: string;
+  /**
+   * Optional canonical FK back to public.submissions(id) — the joinable
+   * lineage column added by Path-to-GA §C.4 (Path B). When the caller
+   * supplies `OrchestratorInputs.submissionFk`, this round-trips through
+   * persistRun / getRun and is dual-written alongside the legacy
+   * `submissionId` TEXT. When absent, the column stays NULL until a
+   * backfill resolves the row — see
+   * docs/reports/SUBMISSION_ID_PROVENANCE_DESIGN_2026-06-29.md and
+   * migrations/20260629_orchestrator_submission_id_fk.sql.
+   */
+  submissionFk?: number | null;
   applicationNumber: string;
   region: RegionCode;
   submissionType: string;
@@ -183,6 +194,21 @@ export interface OrchestratorInputs {
    */
   organizationId: number;
   submissionId: string;
+  /**
+   * Optional canonical FK back to public.submissions(id). When supplied,
+   * persistRun dual-writes both `submission_id TEXT` (legacy) and
+   * `submission_id_fk INTEGER` (the joinable FK). When absent, only the
+   * TEXT column is written and submission_id_fk stays NULL — the row will
+   * remain in the "unresolved lineage" bucket until backfill (per the
+   * Path B transition design in
+   * docs/reports/SUBMISSION_ID_PROVENANCE_DESIGN_2026-06-29.md).
+   *
+   * Callers that have only the TEXT submissionId can resolve it via the
+   * exported `loadSubmissionFkBySubmissionIdText` helper before invoking
+   * runOrchestrator — that helper is tenant-scoped and returns null on
+   * miss or cross-org rather than guessing.
+   */
+  submissionFk?: number;
   applicationNumber: string;
   /**
    * 4-digit zero-padded eCTD sequence number. Required by the hardened
@@ -512,18 +538,30 @@ async function persistRun(run: OrchestratorRun): Promise<void> {
     );
   }
   try {
+    // Path-to-GA §C.4 (Path B): dual-write `submission_id` (legacy TEXT,
+    // still NOT NULL) and `submission_id_fk` (nullable canonical FK back to
+    // public.submissions(id)). The ON CONFLICT branch uses COALESCE on the
+    // FK so a resume-write (which may carry submissionFk=null because the
+    // resume path only knows what the previous run row carried) cannot
+    // clear a previously-populated FK back to NULL.
+    const submissionFkParam =
+      typeof run.submissionFk === 'number' && Number.isFinite(run.submissionFk) && run.submissionFk > 0
+        ? run.submissionFk
+        : null;
     await pool.query(
       `INSERT INTO submission_orchestrator_runs
-        (run_id, organization_id, submission_id, application_number, region, submission_type, started_at, completed_at, status, steps)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        (run_id, organization_id, submission_id, submission_id_fk, application_number, region, submission_type, started_at, completed_at, status, steps)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        ON CONFLICT (run_id) DO UPDATE SET
          completed_at = EXCLUDED.completed_at,
          status = EXCLUDED.status,
-         steps = EXCLUDED.steps`,
+         steps = EXCLUDED.steps,
+         submission_id_fk = COALESCE(EXCLUDED.submission_id_fk, submission_orchestrator_runs.submission_id_fk)`,
       [
         run.runId,
         run.organizationId,
         run.submissionId,
+        submissionFkParam,
         run.applicationNumber,
         run.region,
         run.submissionType,
@@ -552,7 +590,8 @@ async function persistStepEvent(
   runId: string,
   organizationId: number,
   step: StepRecord,
-  eventType: 'start' | 'complete' | 'fail' | 'stale'
+  eventType: 'start' | 'complete' | 'fail' | 'stale',
+  submissionFk?: number | null
 ): Promise<void> {
   // Defense-in-depth: same rationale as persistRun.
   if (!Number.isFinite(organizationId) || organizationId <= 0) {
@@ -561,13 +600,22 @@ async function persistStepEvent(
     );
   }
   try {
+    // Path-to-GA §C.4 (Path B): mirror the parent run's submission_id_fk
+    // onto every step audit row when the caller supplied it. Stays NULL
+    // when the parent run row doesn't have it either — backward
+    // compatibility with legacy callers.
+    const submissionFkParam =
+      typeof submissionFk === 'number' && Number.isFinite(submissionFk) && submissionFk > 0
+        ? submissionFk
+        : null;
     await pool.query(
       `INSERT INTO submission_orchestrator_steps
-        (run_id, organization_id, step_key, event_type, status, input_hash, output_hash, output_ref, error, occurred_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())`,
+        (run_id, organization_id, submission_id_fk, step_key, event_type, status, input_hash, output_hash, output_ref, error, occurred_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())`,
       [
         runId,
         organizationId,
+        submissionFkParam,
         step.key,
         eventType,
         step.status,
@@ -682,6 +730,11 @@ export async function runOrchestrator(
     runId,
     organizationId: inputs.organizationId,
     submissionId: inputs.submissionId,
+    // Path-to-GA §C.4 (Path B): thread the optional canonical FK from the
+    // caller's inputs straight into the in-memory run shape so persistRun
+    // can dual-write it. Stays undefined when the caller didn't supply it,
+    // matching legacy behavior.
+    submissionFk: inputs.submissionFk,
     applicationNumber: inputs.applicationNumber,
     region: inputs.region,
     submissionType: inputs.submissionType,
@@ -725,7 +778,7 @@ export async function runOrchestrator(
     step.inputHash = inputHash;
     step.status = 'running';
     step.startedAt = new Date().toISOString();
-    await persistStepEvent(runId, run.organizationId, step, 'start');
+    await persistStepEvent(runId, run.organizationId, step, 'start', run.submissionFk);
 
     const t0 = Date.now();
     try {
@@ -747,7 +800,7 @@ export async function runOrchestrator(
           durationMs: step.durationMs,
         });
       }
-      await persistStepEvent(runId, run.organizationId, step, 'complete');
+      await persistStepEvent(runId, run.organizationId, step, 'complete', run.submissionFk);
     } catch (err) {
       step.completedAt = new Date().toISOString();
       step.durationMs = Date.now() - t0;
@@ -759,7 +812,7 @@ export async function runOrchestrator(
         step: key,
         errorCode: classifyStepError(err),
       });
-      await persistStepEvent(runId, run.organizationId, step, 'fail');
+      await persistStepEvent(runId, run.organizationId, step, 'fail', run.submissionFk);
       throw err;
     }
   };
@@ -973,7 +1026,7 @@ export async function runOrchestrator(
       narrativeStep.inputHash = narrativeHash;
       narrativeStep.status = 'running';
       narrativeStep.startedAt = new Date().toISOString();
-      await persistStepEvent(runId, run.organizationId, narrativeStep, 'start');
+      await persistStepEvent(runId, run.organizationId, narrativeStep, 'start', run.submissionFk);
 
       // userId is required for Part-11 attribution on the enqueued
       // csr_build_jobs row. Mandate at the orchestrator boundary rather
@@ -987,7 +1040,7 @@ export async function runOrchestrator(
         narrativeStep.durationMs = 0;
         narrativeStep.status = 'failed';
         narrativeStep.error = err.message;
-        await persistStepEvent(runId, run.organizationId, narrativeStep, 'fail');
+        await persistStepEvent(runId, run.organizationId, narrativeStep, 'fail', run.submissionFk);
         throw err;
       }
 
@@ -1086,6 +1139,7 @@ export async function runOrchestrator(
           run.organizationId,
           narrativeStep,
           'complete',
+          run.submissionFk,
         );
 
         // Halt the synchronous pipeline. The run is suspended; the
@@ -1106,6 +1160,7 @@ export async function runOrchestrator(
           run.organizationId,
           narrativeStep,
           'fail',
+          run.submissionFk,
         );
         // Re-throw so the outer catch sets run.status = 'failed' and
         // persists the run. This matches the failure semantics of every
@@ -1121,7 +1176,7 @@ export async function runOrchestrator(
       narrativeStep.inputHash = narrativeHash;
       narrativeStep.status = 'running';
       narrativeStep.startedAt = new Date().toISOString();
-      await persistStepEvent(runId, run.organizationId, narrativeStep, 'start');
+      await persistStepEvent(runId, run.organizationId, narrativeStep, 'start', run.submissionFk);
       narrativeStep.status = 'skipped';
       narrativeStep.completedAt = new Date().toISOString();
       narrativeStep.durationMs = 0;
@@ -1133,6 +1188,7 @@ export async function runOrchestrator(
         run.organizationId,
         narrativeStep,
         'complete',
+        run.submissionFk,
       );
     }
 
@@ -1473,6 +1529,7 @@ async function resumeOrchestratorRun(
         previousRun.organizationId,
         stepRef,
         'fail',
+        previousRun.submissionFk,
       );
     }
     previousRun.status = 'failed';
@@ -1504,6 +1561,7 @@ async function resumeOrchestratorRun(
       previousRun.organizationId,
       narrativeStepRef,
       'complete',
+      previousRun.submissionFk,
     );
   }
 
@@ -1547,7 +1605,7 @@ async function resumeOrchestratorRun(
     step.inputHash = inputHash;
     step.status = 'running';
     step.startedAt = new Date().toISOString();
-    await persistStepEvent(runId, previousRun.organizationId, step, 'start');
+    await persistStepEvent(runId, previousRun.organizationId, step, 'start', previousRun.submissionFk);
     const t0 = Date.now();
     try {
       const result = await fn();
@@ -1562,13 +1620,13 @@ async function resumeOrchestratorRun(
         step.outputHash = hashOutput(result.output);
         step.outputRef = result.outputRef;
       }
-      await persistStepEvent(runId, previousRun.organizationId, step, 'complete');
+      await persistStepEvent(runId, previousRun.organizationId, step, 'complete', previousRun.submissionFk);
     } catch (err) {
       step.completedAt = new Date().toISOString();
       step.durationMs = Date.now() - t0;
       step.status = 'failed';
       step.error = err instanceof Error ? err.message : String(err);
-      await persistStepEvent(runId, previousRun.organizationId, step, 'fail');
+      await persistStepEvent(runId, previousRun.organizationId, step, 'fail', previousRun.submissionFk);
       throw err;
     }
   };
@@ -1858,7 +1916,7 @@ export async function getRun(
   }
   try {
     const result = await pool.query(
-      `SELECT run_id, organization_id, submission_id, application_number, region, submission_type,
+      `SELECT run_id, organization_id, submission_id, submission_id_fk, application_number, region, submission_type,
               started_at, completed_at, status, steps
        FROM submission_orchestrator_runs
        WHERE run_id = $1 AND organization_id = $2`,
@@ -1868,10 +1926,25 @@ export async function getRun(
     // cannot distinguish a missing run from a cross-tenant probe.
     if (result.rows.length === 0) return null;
     const row = result.rows[0] as Record<string, unknown>;
+    // Path-to-GA §C.4 (Path B): submission_id_fk is nullable during the
+    // transition window — we project it back as `null` when absent so the
+    // resume / regenerate paths can faithfully round-trip a NULL FK without
+    // accidentally overwriting it with `undefined` semantics. Numbers come
+    // back as `number`; strings (PG driver quirk on some setups) are
+    // coerced; anything else collapses to null.
+    let submissionFkOut: number | null = null;
+    const rawFk = row.submission_id_fk;
+    if (typeof rawFk === 'number' && Number.isFinite(rawFk) && rawFk > 0) {
+      submissionFkOut = rawFk;
+    } else if (typeof rawFk === 'string') {
+      const n = Number(rawFk);
+      if (Number.isFinite(n) && n > 0) submissionFkOut = n;
+    }
     return {
       runId: String(row.run_id),
       organizationId: Number(row.organization_id),
       submissionId: String(row.submission_id),
+      submissionFk: submissionFkOut,
       applicationNumber: String(row.application_number),
       region: String(row.region) as RegionCode,
       submissionType: String(row.submission_type),
@@ -1930,3 +2003,73 @@ export async function getRunAudit(
     return [];
   }
 }
+
+// ── Path-to-GA §C.4 helper: TEXT submissionId → canonical FK ───────────────
+//
+// Callers that historically hold only the free-form `submission_id TEXT` can
+// use this helper to (best-effort, conservatively) resolve it to the
+// canonical `public.submissions(id)` FK BEFORE invoking `runOrchestrator`,
+// so the new orchestrator row carries a non-null `submission_id_fk` from
+// day one.
+//
+// Resolution rule (Path B, intentionally conservative):
+//   1. Trim whitespace.
+//   2. The TEXT must coerce to a positive finite integer. Business-domain
+//      codes like 'SUB-2026-001' or GUIDs return null — no schema-level
+//      business-key column exists today (see design doc §B Path C), so any
+//      string→id mapping would be a guess. We refuse to guess.
+//   3. The resolved integer MUST match a row in `public.submissions(id)`
+//      owned by the supplied `organizationId`. A submissions row owned by
+//      a DIFFERENT org returns null (Risk #3 in the design doc — a
+//      cross-tenant FK leak would be a Part 11 violation worse than the
+//      original provenance gap).
+//
+// On any DB error: returns null (caller proceeds with FK undefined, row
+// goes into the "unresolved lineage" bucket). The helper is best-effort;
+// the orchestrator path never blocks on it.
+//
+// SECURITY: `organizationId` is REQUIRED. The SQL filter on
+// organization_id is the load-bearing tenant guard; the helper refuses
+// non-positive or non-finite values explicitly.
+export async function loadSubmissionFkBySubmissionIdText(
+  text: string,
+  organizationId: number
+): Promise<number | null> {
+  // Tenant gate — same shape as runOrchestrator / getRun.
+  if (!Number.isFinite(organizationId) || organizationId <= 0) {
+    return null;
+  }
+  if (typeof text !== 'string') return null;
+  const trimmed = text.trim();
+  if (trimmed.length === 0) return null;
+
+  // Path B: only integer-coercible TEXT resolves. Anything else (GUID,
+  // 'SUB-2026-001', empty string) returns null — we will NOT guess.
+  const candidate = Number(trimmed);
+  if (!Number.isInteger(candidate) || candidate <= 0) {
+    return null;
+  }
+
+  try {
+    // Tenant-scoped probe against the canonical core. Filtering on
+    // organization_id is the §11.10(e) defense; without it a caller in
+    // org A could resolve a TEXT to a submission in org B and the
+    // orchestrator row would cross-link tenants.
+    const result = await pool.query(
+      `SELECT id FROM submissions WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+      [candidate, organizationId]
+    );
+    if (result.rows.length === 0) return null;
+    const row = result.rows[0] as Record<string, unknown>;
+    const id = Number(row.id);
+    if (!Number.isFinite(id) || id <= 0) return null;
+    return id;
+  } catch (err) {
+    console.warn(
+      '[Orchestrator] loadSubmissionFkBySubmissionIdText failed (non-fatal):',
+      err instanceof Error ? err.message : err
+    );
+    return null;
+  }
+}
+
