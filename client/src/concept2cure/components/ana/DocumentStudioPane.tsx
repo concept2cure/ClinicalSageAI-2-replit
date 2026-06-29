@@ -16,6 +16,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { I } from './icons';
 import { VerificationPanel } from './VerificationPanel';
+import { ReadinessGatePanel } from './ReadinessGatePanel';
+import type { ReadinessGate, BlockingItem } from './ectdReadiness';
 import type { VerificationResult } from './useAnaChat';
 import { renderSafeMarkdown } from './renderSafeMarkdown';
 import styles from './styles.module.css';
@@ -46,7 +48,32 @@ export interface DocumentStudioPaneProps {
   downloading?: boolean;
   /** Target characters per page for pagination. Exposed for testing. */
   pageSize?: number;
+  /**
+   * E10 — eCTD Module 2/5 assembly + readiness gate (flag-gated upstream by
+   * ENABLE_ANA_DOCUMENT_STUDIO). When `ectdEnabled` is true, the pane shows a
+   * single "Assemble Module 2/5 + check readiness" affordance. Once run, the
+   * aggregated `readinessGate` is rendered as a blocking gate that must be green
+   * before the seal / PDUFA-clock submission step.
+   */
+  ectdEnabled?: boolean;
+  /** The aggregated readiness verdict, once the assemble + checks have run. */
+  readinessGate?: ReadinessGate;
+  /** Run the one-turn assemble-module + structural + consistency action. */
+  onAssembleModule?: (moduleNumber: string) => void;
+  /** Seal / submit to the PDUFA clock — only reachable when the gate is green. */
+  onSeal?: () => void;
+  /** Follow a blocking item's deep link (jump to a CTD section / open module). */
+  onFollowReadinessLink?: (item: BlockingItem) => void;
+  /** True while the assemble + readiness action is in flight. */
+  assembling?: boolean;
 }
+
+/** The CTD modules E10 can assemble in one turn — the summary + clinical modules. */
+const ECTD_MODULE_CHOICES: { value: string; label: string }[] = [
+  { value: '2.5', label: 'Module 2.5 — Clinical Overview' },
+  { value: '2.7', label: 'Module 2.7 — Clinical Summary' },
+  { value: '5.3.5', label: 'Module 5.3.5 — Clinical Study Reports' },
+];
 
 const DEFAULT_PAGE_SIZE = 2200;
 
@@ -85,10 +112,17 @@ export function DocumentStudioPane({
   onResolveVerification,
   downloading,
   pageSize,
+  ectdEnabled,
+  readinessGate,
+  onAssembleModule,
+  onSeal,
+  onFollowReadinessLink,
+  assembling,
 }: DocumentStudioPaneProps) {
   const format = (draft.documentType || 'DOCX').toUpperCase();
   const pages = useMemo(() => paginateContent(draft.content, pageSize), [draft.content, pageSize]);
 
+  const [moduleChoice, setModuleChoice] = useState(ECTD_MODULE_CHOICES[0].value);
   const [page, setPage] = useState(0);
   // Reset to the first page whenever the rendered content changes (new draft or
   // a version switch), so the reader never lands on a now-out-of-range page.
@@ -186,6 +220,50 @@ export function DocumentStudioPane({
       {verification && (
         <div className={styles.studioVerify}>
           <VerificationPanel verification={verification} onResolve={onResolveVerification} />
+        </div>
+      )}
+
+      {ectdEnabled && (
+        <div className={styles.studioEctd}>
+          {!readinessGate && (
+            <div className={styles.studioAssemble} role="group" aria-label="Assemble eCTD module">
+              <label className={styles.studioAssembleLabel}>
+                <span className={styles.studioSubLabel}>eCTD module</span>
+                <select
+                  className={styles.studioVersionSelect}
+                  aria-label="eCTD module to assemble"
+                  value={moduleChoice}
+                  onChange={e => setModuleChoice(e.target.value)}
+                  disabled={assembling}
+                >
+                  {ECTD_MODULE_CHOICES.map(m => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                className={styles.studioAssembleBtn}
+                onClick={() => onAssembleModule?.(moduleChoice)}
+                disabled={assembling || !onAssembleModule}
+              >
+                <span className={styles.ico} aria-hidden="true">
+                  <I.file size={13} />
+                </span>
+                <span>{assembling ? 'Assembling and checking…' : 'Assemble module and check readiness'}</span>
+              </button>
+            </div>
+          )}
+          {readinessGate && (
+            <ReadinessGatePanel
+              gate={readinessGate}
+              onSeal={onSeal}
+              onFollowLink={onFollowReadinessLink}
+              assessing={assembling}
+            />
+          )}
         </div>
       )}
 
