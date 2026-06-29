@@ -151,6 +151,23 @@ const ALLOWLIST_FILES = new Set([
   'server/routes/c2c/actions.ts',
   // System / admin tools that legitimately operate cross-tenant.
   'server/routes/admin.ts',
+  // Master Administration — the platform-owner + support console. EVERY query
+  // here is cross-tenant by design (estate-wide monitoring of all clients /
+  // users / audit). The whole router is gated by authMiddleware →
+  // requirePlatformAdmin (strict platform-role check, no org-admin bypass), so
+  // org-scoping these reads would defeat the module's entire purpose. The two
+  // mutations carry their own row-id targeting and are written through the
+  // Part-11 audit chain. See server/routes/admin/master-admin.ts.
+  'server/routes/admin/master-admin.ts',
+  // Business Center — owner/finance tier. Cross-tenant by design (cost
+  // accounting + the access roster span every client), gated by
+  // requireBusinessAdmin. Same rationale as master-admin.ts above.
+  'server/routes/admin/business-center.ts',
+  // Access management — platform-admin tooling to grant/revoke platform role
+  // grants. Looks users up by email (pre-grant, cross-tenant) and reads/writes
+  // platform_role_grants. Same cross-tenant-by-design rationale as the other
+  // admin routers above.
+  'server/routes/admin/access-management.ts',
   'server/services/audit/audit-archive.service.ts',
   'server/services/audit/chainIntegrityMonitor.ts',
   // The audit_logs SHA-256 hash chain is a single append-only chain ACROSS

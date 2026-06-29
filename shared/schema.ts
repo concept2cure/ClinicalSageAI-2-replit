@@ -17606,6 +17606,92 @@ export const featureToggles = pgTable(
 export type FeatureToggle = InferSelectModel<typeof featureToggles>;
 
 // ============================================================
+// BUSINESS CENTER — cost accounting config (platform-global)
+// ============================================================
+// Platform-wide, NON-tenant configuration the Business Center uses to compute
+// cost-based accounting per client. No tenant column (owner-managed rate
+// cards), so out of scope for RLS / tenant-isolation.
+
+/** Unit cost rates the platform owner attributes to metered usage. */
+export const platformCostRates = pgTable('platform_cost_rates', {
+  id: serial('id').primaryKey(),
+  costKey: text('cost_key').notNull().unique(), // usage feature_id, or 'default'
+  label: text('label'),
+  unitCostCents: integer('unit_cost_cents').default(0).notNull(),
+  unit: text('unit').default('credit').notNull(), // credit | seat | gb_month | month
+  updatedBy: text('updated_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertPlatformCostRateSchema = createInsertSchemaOmit(platformCostRates, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type PlatformCostRate = InferSelectModel<typeof platformCostRates>;
+
+/** Per-tier price card used to derive recognized revenue per client. */
+export const tierPricing = pgTable('tier_pricing', {
+  id: serial('id').primaryKey(),
+  tier: text('tier').notNull().unique(), // free | standard | professional | enterprise
+  monthlyPriceCents: integer('monthly_price_cents').default(0).notNull(),
+  perSeatCents: integer('per_seat_cents').default(0).notNull(),
+  updatedBy: text('updated_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertTierPricingSchema = createInsertSchemaOmit(tierPricing, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type TierPricing = InferSelectModel<typeof tierPricing>;
+
+// ============================================================
+// PLATFORM ROLE GRANTS — designate personnel (platform tier)
+// ============================================================
+// Platform-level role grants the owner can assign/revoke from inside the app
+// instead of editing env allowlists or the DB by hand. DELIBERATELY SEPARATE
+// from organization_users.role: that column carries ONLY org-scoped roles
+// (admin/manager/member/viewer); platform roles (super_admin/platform_admin/
+// support/business_admin/owner) live here so org-level access can never be
+// corrupted by a platform grant. The platform access guards
+// (requirePlatformAdmin / requireBusinessAdmin) honor active rows here as a
+// DB-backed fallback to the synchronous role/email checks. Owner-managed,
+// non-tenant config (no organization column) → out of scope for RLS / tenant
+// isolation. The unique (user_id, role) index keeps at most one active grant
+// per (user, role) and backs the ON CONFLICT upsert in the access router.
+//
+// @compliance FDA 21 CFR Part 11 §11.10(d) — limiting system access to
+//             authorized individuals; every grant/revoke is audited.
+export const platformRoleGrants = pgTable(
+  'platform_role_grants',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .references(() => users.id)
+      .notNull(),
+    role: text('role').notNull(), // super_admin | platform_admin | support | business_admin | owner
+    grantedBy: text('granted_by'),
+    grantedAt: timestamp('granted_at').defaultNow().notNull(),
+    revokedAt: timestamp('revoked_at'),
+    revokedBy: text('revoked_by'),
+    reason: text('reason'),
+  },
+  table => ({
+    userRoleIdx: uniqueIndex('platform_role_grants_user_role_idx').on(table.userId, table.role),
+  })
+);
+
+export const insertPlatformRoleGrantSchema = createInsertSchemaOmit(platformRoleGrants, {
+  id: true,
+  grantedAt: true,
+});
+export type PlatformRoleGrant = InferSelectModel<typeof platformRoleGrants>;
+
+// ============================================================
 // DATA LINEAGE TRACKING (Regulatory-Grade)
 // ============================================================
 

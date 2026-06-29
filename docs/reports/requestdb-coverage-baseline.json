@@ -1,7 +1,6 @@
 {
-  "generatedAt": "2026-06-02T00:18:29.566Z",
+  "generatedAt": "2026-06-29T01:18:05.071Z",
   "onSharedPool": [
-    "server/routes/510k-project.routes.ts",
     "server/routes/admin-security.ts",
     "server/routes/ana-cortex.ts",
     "server/routes/ana-features.ts",
@@ -12,7 +11,6 @@
     "server/routes/ana-ri/threads.ts",
     "server/routes/analytics-routes.ts",
     "server/routes/approval-workflow.ts",
-    "server/routes/audit.ts",
     "server/routes/authoring.router.ts",
     "server/routes/cerv2-document-routes.ts",
     "server/routes/cerv2-sections.ts",
@@ -23,6 +21,7 @@
     "server/routes/concept2cure-communication-center.ts",
     "server/routes/concept2cure.ts",
     "server/routes/csr-analytics.ts",
+    "server/routes/csr-jobs.ts",
     "server/routes/device-projects.ts",
     "server/routes/documentAuthoring.routes.ts",
     "server/routes/documentOrchestrationRoutes.ts",
@@ -37,7 +36,6 @@
     "server/routes/external-evidence.ts",
     "server/routes/fda-forms.routes.ts",
     "server/routes/fda510k-routes.ts",
-    "server/routes/fda510k-workflow.ts",
     "server/routes/fieldSync.routes.ts",
     "server/routes/firecrawl-webhooks.ts",
     "server/routes/firecrawl.ts",
@@ -60,7 +58,6 @@
     "server/routes/project-rules.ts",
     "server/routes/projects-management.ts",
     "server/routes/quality-management-api.ts",
-    "server/routes/quality-validation-routes.ts",
     "server/routes/regulatory-correspondence.ts",
     "server/routes/regulatory-digital-twin.ts",
     "server/routes/regulatory-graph.ts",
@@ -75,7 +72,6 @@
     "server/routes/sso.ts",
     "server/routes/standards.ts",
     "server/routes/submission-ops.ts",
-    "server/routes/supplyChain.routes.ts",
     "server/routes/taskManagement.routes.ts",
     "server/routes/templates.routes.ts",
     "server/routes/templates.ts",
@@ -85,8 +81,6 @@
     "server/routes/tenant-stats.ts",
     "server/routes/tenant-traceability.ts",
     "server/routes/tenants.ts",
-    "server/routes/traceability-mapping-routes.ts",
-    "server/routes/users.ts",
-    "server/routes/workspace-projects.ts"
+    "server/routes/users.ts"
   ]
 }
