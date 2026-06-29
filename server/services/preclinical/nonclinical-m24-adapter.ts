@@ -109,7 +109,15 @@ const DEFAULT_SECTION: Record<M24StudyType, string> = {
   reproductive_tox: '4.2.3.5',
 };
 
-function toBuilderStudy(input: NonclinicalStudyInput, index: number): NonclinicalStudy {
+/**
+ * Map a single NonclinicalStudyInput (loader shape) to the NonclinicalStudy
+ * shape consumed by `buildM24NonclinicalOverview` and the orchestrator.
+ *
+ * Promoted to a public export (Path-to-GA Turn 1) so the orchestrator's
+ * input-adapter layer can call it directly without going through
+ * `buildEnrichedM24`. Used by `loadNonclinicalStudiesForProject`.
+ */
+export function toBuilderStudy(input: NonclinicalStudyInput, index: number): NonclinicalStudy {
   const studyType = mapStudyTypeToM24(input.studyType);
   const duration =
     input.duration ??
