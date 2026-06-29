@@ -96,6 +96,15 @@ import { adviseEstimand, listEstimandFramework } from './estimands.js';
 import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance.js';
 import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
 import { adviseLabelingStructure, listLabelTemplates } from './labeling-structure.js';
+import {
+  getLabelingModeSpec,
+  modeToFormat,
+  requiredSectionHeaders,
+  deriveRequiredStrings,
+  checkSectionGuard,
+  buildTemplateReplacements,
+  type LabelingMode,
+} from './labeling-authoring.js';
 import { adviseMedicalInformation, listMedInfoResponseTypes } from './medical-information.js';
 import { adviseReportingGuideline, listReportingGuidelines } from './reporting-guidelines.js';
 import { adviseDataIntegrity, listDataIntegrity } from './data-integrity.js';
@@ -1727,6 +1736,45 @@ registerToolHandler('advise_labeling_structure', async (input) => {
     return JSON.stringify({ source: 'AnA Labeling-Structure Advisor', templates: listLabelTemplates(), ...adviseLabelingStructure({}) });
   }
   return JSON.stringify({ source: 'AnA Labeling-Structure Advisor', ...adviseLabelingStructure({ format, content }) });
+});
+
+// Build-from-template labeling authoring plan (roadmap E9). Returns the
+// deterministic PLR/QRD section guard + the required_strings derivation + the
+// build_from_template replacements for a US (USPI/PLR) or EU (SmPC/QRD) mode, so
+// the host can drive build_from_template → review_label_currency →
+// verify_docx_against_source. Pure/deterministic; the currency verdict is NOT
+// produced here (call review_label_currency for that).
+registerToolHandler('plan_labeling_authoring', async (input) => {
+  const raw = typeof input.mode === 'string' ? input.mode.trim().toLowerCase() : '';
+  const mode: LabelingMode | null = raw === 'us' || raw === 'uspi' || raw === 'plr'
+    ? 'us'
+    : raw === 'eu' || raw === 'smpc' || raw === 'qrd'
+      ? 'eu'
+      : null;
+  if (!mode) {
+    return JSON.stringify({ error: "plan_labeling_authoring requires mode 'us' (USPI/PLR) or 'eu' (SmPC/QRD)." });
+  }
+  const productName = typeof input.product_name === 'string' && input.product_name.trim()
+    ? input.product_name.trim()
+    : 'Product';
+  const draftText = typeof input.draft_text === 'string' ? input.draft_text : '';
+  const spec = getLabelingModeSpec(mode);
+  const guard = checkSectionGuard(mode, draftText);
+  return JSON.stringify({
+    source: 'AnA Labeling Authoring (build-from-template)',
+    mode,
+    format: modeToFormat(mode),
+    structure: spec.structure,
+    label: spec.label,
+    basis: spec.basis,
+    requiredSectionHeaders: requiredSectionHeaders(mode),
+    // The required_strings to pass to verify_docx_against_source for this mode.
+    requiredStrings: deriveRequiredStrings(mode),
+    // The replacements to pass to build_from_template.
+    templateReplacements: buildTemplateReplacements(mode, productName),
+    sectionGuard: guard,
+    note: 'Drive build_from_template with templateReplacements, then review_label_currency (deterministic), then verify_docx_against_source with required_strings. Currency verdict is deterministic — never inferred.',
+  });
 });
 
 // Medical-information / standard-response advisor.

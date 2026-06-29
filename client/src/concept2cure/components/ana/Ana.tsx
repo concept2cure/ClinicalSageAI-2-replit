@@ -29,6 +29,8 @@ import { ChatView, type ChatMessageView } from './ChatView';
 import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
+import { LabelingAuthoringPane, type LabelingDraft } from './LabelingAuthoringPane';
+import { type LabelingMode } from './labelingModes';
 import { composeVerificationFixMessage } from './VerificationPanel';
 import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult } from './useAnaChat';
 import { useRecents } from './useRecents';
@@ -580,6 +582,46 @@ export function Ana({
     [activeDocument, safeVersionIndex],
   );
 
+  /* ─────────────────────────────────────────────────────────────
+     E9 — Build-from-template labeling authoring. When the active draft is a
+     product label (USPI/PLR or SmPC/QRD), the right pane becomes the labeling
+     authoring surface: a US↔EU mode toggle, the mandatory section guard, the
+     deterministic currency gate (review_label_currency), and source
+     verification (required_strings = mandatory section headers). The currency
+     verdict is never inferred client-side — it is the server's finding set.
+     ───────────────────────────────────────────────────────────── */
+  const detectedLabelingMode = useMemo<LabelingMode | null>(() => {
+    const t = (activeDocument?.documentType || '').toLowerCase();
+    if (/uspi|\bplr\b|us pi|prescribing information/.test(t)) return 'us';
+    if (/smpc|\bspc\b|\bqrd\b|summary of product characteristics/.test(t)) return 'eu';
+    return null;
+  }, [activeDocument?.documentType]);
+  const [labelingModeOverride, setLabelingModeOverride] = useState<LabelingMode | null>(null);
+  const labelingMode: LabelingMode = labelingModeOverride ?? detectedLabelingMode ?? 'us';
+  const isLabelingDraft = detectedLabelingMode != null;
+
+  // BUILD-1 INTEGRATION: the deterministic currency verdict from
+  // review_label_currency (and the seal/export → version-row persistence) wire
+  // in here. Until then the gate is undefined (panel simply not shown), so the
+  // honesty contract still blocks export of sample/unverified drafts.
+  // INTEGRATION: live currencyVerdict join.
+  const labelingCurrencyVerdict = undefined;
+
+  const shownLabelingDraft = useMemo<LabelingDraft | null>(
+    () =>
+      shownDraft
+        ? {
+            title: shownDraft.title,
+            content: shownDraft.content,
+            // Honesty contract: absent a live data join, drafts are sample and
+            // therefore non-exportable. Set 'live' only when joined to live label
+            // data (INTEGRATION).
+            dataSource: 'sample',
+          }
+        : null,
+    [shownDraft],
+  );
+
   // Download the rendered draft as a Word file. Calls the server DOCX render
   // route; on any failure, falls back to an honest Markdown download so the
   // action never silently no-ops. (See ANA_DOCUMENT_STUDIO_UI_SPEC for the
@@ -692,17 +734,28 @@ export function Ana({
             </Panel>
             <PanelResizeHandle className={styles.studioResize} aria-label="Resize document preview" />
             <Panel defaultSize={46} minSize={28}>
-              <DocumentStudioPane
-                draft={shownDraft}
-                verification={shownVerification}
-                versionCount={activeDocument.versions.length}
-                activeVersionIndex={safeVersionIndex}
-                onSelectVersion={setVersionIndex}
-                onDownloadDocx={handleDownloadDocx}
-                onClose={() => setStudioClosed(true)}
-                onResolveVerification={handleResolveVerification}
-                downloading={downloading}
-              />
+              {isLabelingDraft && shownLabelingDraft ? (
+                <LabelingAuthoringPane
+                  mode={labelingMode}
+                  onModeChange={setLabelingModeOverride}
+                  draft={shownLabelingDraft}
+                  currencyVerdict={labelingCurrencyVerdict}
+                  verification={shownVerification}
+                  onResolveVerification={handleResolveVerification}
+                />
+              ) : (
+                <DocumentStudioPane
+                  draft={shownDraft}
+                  verification={shownVerification}
+                  versionCount={activeDocument.versions.length}
+                  activeVersionIndex={safeVersionIndex}
+                  onSelectVersion={setVersionIndex}
+                  onDownloadDocx={handleDownloadDocx}
+                  onClose={() => setStudioClosed(true)}
+                  onResolveVerification={handleResolveVerification}
+                  downloading={downloading}
+                />
+              )}
             </Panel>
           </PanelGroup>
         ) : (
