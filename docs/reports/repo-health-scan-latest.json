@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T12:47:17.756Z",
+  "generatedAt": "2026-06-29T12:48:01.813Z",
   "git": {
-    "sha": "b7b18961ae74f7e554b5d05729bb895220471294",
+    "sha": "d6b1a8289d853d8f50f04d3d4151b937777b43c6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -10,8 +10,8 @@
   },
   "summary": {
     "duplicateBasenames": 230,
-    "largeFilesByBytes": 16,
-    "largeFilesByLines": 50
+    "largeFilesByBytes": 21,
+    "largeFilesByLines": 55
   },
   "findings": {
     "duplicateBasenames": [
@@ -2289,7 +2289,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 681687
+        "bytes": 697299
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2297,7 +2297,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 432972
+        "bytes": 434522
       },
       {
         "file": "server/statistics-service.ts",
@@ -2316,8 +2316,24 @@
         "bytes": 175783
       },
       {
+        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
+        "bytes": 150437
+      },
+      {
         "file": "server/storage.ts",
         "bytes": 142122
+      },
+      {
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "bytes": 139064
+      },
+      {
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "bytes": 138123
+      },
+      {
+        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
+        "bytes": 136488
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2326,6 +2342,10 @@
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "bytes": 134822
+      },
+      {
+        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
+        "bytes": 132966
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2359,11 +2379,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 13545
+        "lines": 13833
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7963
+        "lines": 7987
       },
       {
         "file": "server/statistics-service.ts",
@@ -2390,12 +2410,20 @@
         "lines": 3555
       },
       {
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "lines": 3472
+      },
+      {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "lines": 3326
       },
       {
         "file": "server/routes/authoring-actions.ts",
         "lines": 3246
+      },
+      {
+        "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
+        "lines": 3067
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2406,8 +2434,16 @@
         "lines": 2745
       },
       {
+        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
+        "lines": 2609
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2501
+      },
+      {
+        "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
+        "lines": 2419
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
@@ -2416,6 +2452,10 @@
       {
         "file": "client/src/concept2cure/ZenApp.tsx",
         "lines": 2357
+      },
+      {
+        "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
+        "lines": 2340
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
@@ -2556,8 +2596,8 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 363,
-      "largeByBytes": 13,
-      "largeByLines": 40
+      "largeByBytes": 18,
+      "largeByLines": 45
     },
     {
       "owner": "Unassigned (TBD)",
