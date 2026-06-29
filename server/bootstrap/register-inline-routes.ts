@@ -565,6 +565,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Protocol export routes:', error);
   }
 
+  // Protocol schedule-of-assessments (SoA) matrix (ICH M11 / E6 schedule of activities).
+  try {
+    const protocolSoaModule = await import('../routes/protocol-soa');
+    app.use('/api/protocol-soa', authMiddleware, protocolSoaModule.default);
+    console.info('✅ Protocol SoA routes mounted (/api/protocol-soa)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol SoA routes:', error);
+  }
+
   // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
   try {
     const rimModule = await import('../routes/rim');

@@ -355,6 +355,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Protocol SoA matrix metrics (C2C-21).
+      try {
+        const { renderProtocolSoaMetrics } = await import('../services/protocol-soa-metrics.js');
+        lines.push(...renderProtocolSoaMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RIM-lite metrics (C2C-12).
       try {
         const { renderRimMetrics } = await import('../services/rim-metrics.js');
