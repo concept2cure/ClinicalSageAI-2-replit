@@ -21,6 +21,10 @@ import type { ReadinessGate, BlockingItem } from './ectdReadiness';
 import { ConcordancePanel } from './ConcordancePanel';
 import type { CdxConcordanceReport } from './cdxConcordance';
 import type { ConcordanceDataStatus } from './cdxConcordance.fixtures';
+import {
+  NatHistoryDossierAffordance,
+  type DossierProvenance,
+} from './NatHistoryDossierAffordance';
 import type { VerificationResult } from './useAnaChat';
 import { renderSafeMarkdown } from './renderSafeMarkdown';
 import styles from './styles.module.css';
@@ -80,6 +84,19 @@ export interface DocumentStudioPaneProps {
   onFollowReadinessLink?: (item: BlockingItem) => void;
   /** True while the assemble + readiness action is in flight. */
   assembling?: boolean;
+  /**
+   * E13 natural-history / external-control evidence-dossier affordance. When
+   * provided, renders the flag-gated panel that asks AnA to assemble the dossier
+   * and surfaces the Part 11 export/seal honesty state. Omit to hide it (the
+   * default — existing Studio surfaces are unaffected).
+   */
+  dossier?: {
+    indication: string;
+    sponsor?: string;
+    provenance?: DossierProvenance;
+    onAssemble: (message: string) => void;
+    busy?: boolean;
+  };
 }
 
 /** The CTD modules E10 can assemble in one turn — the summary + clinical modules. */
@@ -135,6 +152,7 @@ export function DocumentStudioPane({
   onSeal,
   onFollowReadinessLink,
   assembling,
+  dossier,
 }: DocumentStudioPaneProps) {
   const format = (draft.documentType || 'DOCX').toUpperCase();
   const pages = useMemo(() => paginateContent(draft.content, pageSize), [draft.content, pageSize]);
@@ -290,6 +308,18 @@ export function DocumentStudioPane({
             report={concordance}
             dataStatus={concordanceDataStatus}
             onResolve={onResolveConcordance}
+          />
+        </div>
+      )}
+
+      {dossier && (
+        <div className={styles.studioVerify}>
+          <NatHistoryDossierAffordance
+            indication={dossier.indication}
+            sponsor={dossier.sponsor}
+            provenance={dossier.provenance}
+            onAssemble={dossier.onAssemble}
+            busy={dossier.busy}
           />
         </div>
       )}
