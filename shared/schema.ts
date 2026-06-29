@@ -19063,6 +19063,164 @@ export const labelingSymbols = pgTable(
 export type LabelingSymbol = InferSelectModel<typeof labelingSymbols>;
 
 /* ════════════════════════════════════════════════════════════════════
+   Translation platform (migration 20260629) ═════════════════════════════
+
+   Regulated, tenant-isolated localization for submission content. The
+   workflow is a state machine whose central guardrail is: a segment whose
+   translation `method` is 'machine' can NEVER reach a submission-approved
+   status without human post-edit + back-translation evidence (enforced in
+   the service layer / state machine, surfaced here by the provenance
+   columns: postEditor, reviewer, backTranslationVerified, approvedAt).
+
+   Identifiers that must never be machine-translated (21 CFR / ICH citations,
+   eCTD module labels, agency names, INN / drug names, MedDRA terms, codes,
+   JSON keys, slash commands) are masked before translation and restored
+   after — "translate meaning, not identifiers"
+   (cf. server/services/ana-ri/locale-overlays.ts). Glossary terms below are
+   the do-not-translate (DNT) / forced-translation registry that drives that
+   masking; translation_memory_entries are the reuse cache.
+   ════════════════════════════════════════════════════════════════════ */
+
+export const translationProjects = pgTable(
+  'translation_projects',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    name:              text('name').notNull(),
+    sourceLanguage:    text('source_language').notNull(),
+    // BCP-47 target locales for this project (e.g. ['de-DE','ja-JP']).
+    targetLanguages:   text('target_languages').array().notNull().default(sql`ARRAY[]::text[]`),
+    // 'draft' → 'in_translation' → 'in_review' → 'approved' → 'archived'.
+    status:            text('status').default('draft').notNull(),
+    submissionContext: text('submission_context'),
+    description:       text('description'),
+    metadata:          jsonb('metadata').default('{}'),
+    createdBy:         integer('created_by').notNull().references(() => users.id),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:    index('translation_projects_org_idx').on(table.organizationId),
+    statusIdx: index('translation_projects_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type TranslationProject = InferSelectModel<typeof translationProjects>;
+
+export const translationSegments = pgTable(
+  'translation_segments',
+  {
+    id:                       serial('id').primaryKey(),
+    organizationId:           integer('organization_id').notNull().references(() => organizations.id),
+    projectId:                integer('project_id').notNull().references(() => translationProjects.id, { onDelete: 'cascade' }),
+    targetLanguage:           text('target_language').notNull(),
+    // Ordering key within a document/project (stable segment address).
+    segmentKey:               text('segment_key').notNull(),
+    sourceText:               text('source_text').notNull(),
+    targetText:               text('target_text'),
+    // ─── Provenance (Part 11 auditable) ─────────────────────────────────
+    // SHA-256 of the (DNT-masked) source — re-translation is required when
+    // the source changes, so a stored hash detects staleness.
+    sourceHash:               text('source_hash').notNull(),
+    // 'human' | 'machine' | 'translation_memory'. A 'machine' segment can
+    // never reach an approved status without post-edit + back-translation.
+    method:                   text('method').default('machine').notNull(),
+    // 'pending' → 'machine_translated' → 'post_edited' → 'in_review'
+    //   → 'back_translation_pending' → 'approved' | 'rejected'.
+    status:                   text('status').default('pending').notNull(),
+    // MT engine identifier + version, recorded for reproducibility.
+    engine:                   text('engine'),
+    engineVersion:            text('engine_version'),
+    // Human post-editor and independent reviewer (the two-person rule).
+    postEditor:               integer('post_editor').references(() => users.id),
+    reviewer:                 integer('reviewer').references(() => users.id),
+    // Back-translation evidence — required before a machine-origin segment
+    // may be approved for submission.
+    backTranslationVerified:  boolean('back_translation_verified').default(false).notNull(),
+    backTranslationText:      text('back_translation_text'),
+    approvedBy:               integer('approved_by').references(() => users.id),
+    approvedAt:               timestamp('approved_at', { withTimezone: true }),
+    metadata:                 jsonb('metadata').default('{}'),
+    createdAt:                timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:                timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:                timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('translation_segments_org_idx').on(table.organizationId),
+    projectIdx: index('translation_segments_project_idx').on(table.projectId),
+    statusIdx:  index('translation_segments_status_idx').on(table.organizationId, table.status),
+    langIdx:    index('translation_segments_lang_idx').on(table.projectId, table.targetLanguage),
+    hashIdx:    index('translation_segments_hash_idx').on(table.sourceHash),
+  }),
+);
+export type TranslationSegment = InferSelectModel<typeof translationSegments>;
+
+export const glossaryTerms = pgTable(
+  'glossary_terms',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    // Optional project scoping; NULL = org-wide term.
+    projectId:         integer('project_id').references(() => translationProjects.id, { onDelete: 'cascade' }),
+    sourceLanguage:    text('source_language').notNull(),
+    sourceTerm:        text('source_term').notNull(),
+    targetLanguage:    text('target_language'),
+    targetTerm:        text('target_term'),
+    // 'do_not_translate' | 'preferred' | 'forbidden'. DNT terms (regulatory
+    // citations, eCTD labels, agency names, INN, MedDRA, codes) are masked
+    // before MT and restored verbatim afterwards.
+    termType:          text('term_type').default('preferred').notNull(),
+    caseSensitive:     boolean('case_sensitive').default(false).notNull(),
+    notes:             text('notes'),
+    metadata:          jsonb('metadata').default('{}'),
+    createdBy:         integer('created_by').notNull().references(() => users.id),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:     index('glossary_terms_org_idx').on(table.organizationId),
+    projectIdx: index('glossary_terms_project_idx').on(table.projectId),
+    termIdx:    index('glossary_terms_term_idx').on(table.organizationId, table.sourceTerm),
+  }),
+);
+export type GlossaryTerm = InferSelectModel<typeof glossaryTerms>;
+
+export const translationMemoryEntries = pgTable(
+  'translation_memory_entries',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    sourceLanguage:    text('source_language').notNull(),
+    targetLanguage:    text('target_language').notNull(),
+    sourceText:        text('source_text').notNull(),
+    targetText:        text('target_text').notNull(),
+    // SHA-256 of the source text — the exact-match lookup key for reuse.
+    sourceHash:        text('source_hash').notNull(),
+    // 'human' | 'machine' | 'translation_memory'. Only human-approved
+    // entries are eligible to feed back into approved submission content.
+    method:            text('method').default('human').notNull(),
+    // Number of times this entry has been reused (reuse analytics).
+    usageCount:        integer('usage_count').default(0).notNull(),
+    // True once the entry derives from a human-approved, back-translated
+    // segment — only such entries may auto-populate approved output.
+    approvedForReuse:  boolean('approved_for_reuse').default(false).notNull(),
+    originSegmentId:   integer('origin_segment_id').references(() => translationSegments.id, { onDelete: 'set null' }),
+    metadata:          jsonb('metadata').default('{}'),
+    createdBy:         integer('created_by').references(() => users.id),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:  index('translation_memory_org_idx').on(table.organizationId),
+    hashIdx: index('translation_memory_hash_idx').on(table.organizationId, table.sourceHash),
+    langIdx: index('translation_memory_lang_idx').on(table.organizationId, table.sourceLanguage, table.targetLanguage),
+  }),
+);
+export type TranslationMemoryEntry = InferSelectModel<typeof translationMemoryEntries>;
+
+/* ════════════════════════════════════════════════════════════════════
    Legacy archive importer tables (migration 20260512) ════════════════ */
 
 export const importJobs = pgTable(

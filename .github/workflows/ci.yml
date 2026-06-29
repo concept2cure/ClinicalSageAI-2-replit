@@ -57,6 +57,13 @@ jobs:
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
         run: npm run ci:tenant-isolation:no-regression
 
+      - name: Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)
+        # The production deploy registers a pinned task-def revision
+        # (image @sha256:<digest>) and updates the service by ARN.
+        # --force-new-deployment is banned because it cannot guarantee a
+        # specific image is deployed. Re-introducing it defeats rollback.
+        run: bash scripts/check_no_force_new_deployment.sh
+
       - name: Guardrails — tenant baseline ↔ justification parity
         run: npm run ci:baseline-justifications
 

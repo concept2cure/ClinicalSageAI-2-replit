@@ -15,6 +15,7 @@
 
 import crypto from 'crypto';
 import { pool } from '../../db.js';
+import { createScopedLogger } from '../../utils/logger.js';
 import {
   validatePackage as validateStructural,
   type ECTDLeaf,
@@ -28,6 +29,8 @@ import {
   type RegionalLeafRef,
   type RegulatoryRegion,
 } from './ectd-regional-rules.js';
+
+const log = createScopedLogger('ectd-validator-hardening');
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -68,6 +71,20 @@ export interface SequenceFinding {
   fix: string;
   observedSequences?: string[];
   expectedNextSequence?: string;
+  /**
+   * The sequence number the validator was about to verify when the
+   * failure occurred. Populated on SEQ_QUERY_FAILED so an operator
+   * triaging a blocked submission can identify which value was in
+   * flight without consulting raw logs.
+   */
+  attemptedSequence?: string;
+  /**
+   * Structured error discriminator for diagnostic findings (e.g.
+   * SEQ_QUERY_FAILED). Carries the Postgres SQLSTATE / driver error
+   * code (e.g. 'ECONNREFUSED', '57P01', '42P01') or the error class
+   * name, never the raw error message — that stays server-side only.
+   */
+  errorClass?: string;
 }
 
 export interface DtdFinding {
@@ -429,11 +446,14 @@ export async function detectSequenceGaps(
 ): Promise<SequenceFinding[]> {
   const findings: SequenceFinding[] = [];
 
+  // Query existing sequence numbers for this application across the
+  // various tables that track sequence history. A DB outage must surface
+  // as a gateway-blocking finding — NOT be swallowed as "no history",
+  // because that would silently re-classify a non-0000 submission as a
+  // first-ever submission (RECONCILIATION_AUDIT_2026-06-29 §A.3 / §D.1).
+  let result: { rows: Array<{ sequence_number: string }> };
   try {
-    // Query existing sequence numbers for this application across the
-    // various tables that track sequence history. Use a defensive query:
-    // a missing table or column returns no rows rather than throwing.
-    const result = await pool.query(
+    result = await pool.query(
       `SELECT DISTINCT sequence_number
        FROM (
          SELECT sequence_number FROM ectd_compilations WHERE application_number = $1
@@ -443,88 +463,112 @@ export async function detectSequenceGaps(
        WHERE sequence_number ~ '^\\d{4}$'
        ORDER BY sequence_number ASC`,
       [applicationNumber]
-    ).catch(() => ({ rows: [] as Array<{ sequence_number: string }> }));
+    );
+  } catch (err) {
+    // The raw err.message frequently leaks schema-level intel that an
+    // unauthenticated caller should not see — table names, role names,
+    // internal hostnames/IPs, SQLSTATE strings. We log the raw text on
+    // the server (where ops can see it) and surface only a generic
+    // operator-facing phrase plus a structured errorClass discriminator.
+    const errName = err instanceof Error ? err.name : typeof err;
+    const errCode =
+      err && typeof err === 'object' && 'code' in err
+        ? String((err as { code: unknown }).code)
+        : undefined;
+    const errMessage = err instanceof Error ? err.message : String(err);
+    const errorClass = errCode ?? errName;
 
-    const existing = (result.rows || [])
-      .map(r => String((r as any).sequence_number))
-      .filter(s => /^\d{4}$/.test(s))
-      .sort();
+    log.error('SEQ_QUERY_FAILED — sequence history query rejected', {
+      applicationNumber,
+      attemptedSequence: newSequenceNumber,
+      errName,
+      errCode,
+      errMessage,
+    });
 
-    const newSeq = parseInt(newSequenceNumber, 10);
-    const expectedNext = existing.length === 0 ? '0000' : String(parseInt(existing[existing.length - 1], 10) + 1).padStart(4, '0');
+    findings.push({
+      severity: 'error',
+      code: 'SEQ_QUERY_FAILED',
+      message: `Sequence history for application ${applicationNumber} could not be verified (attempted sequence ${newSequenceNumber}): submission tracking database is unreachable.`,
+      fix: 'Restore connectivity to the submission tracking database (ectd_compilations / ectd_submissions) and re-run validation. Submission cannot be marked gateway-ready until sequence history is confirmed.',
+      attemptedSequence: newSequenceNumber,
+      errorClass,
+    });
+    return findings;
+  }
 
-    // First submission must be 0000
-    if (existing.length === 0 && newSequenceNumber !== '0000') {
+  const existing = (result.rows || [])
+    .map(r => String((r as any).sequence_number))
+    .filter(s => /^\d{4}$/.test(s))
+    .sort();
+
+  const newSeq = parseInt(newSequenceNumber, 10);
+  const expectedNext = existing.length === 0 ? '0000' : String(parseInt(existing[existing.length - 1], 10) + 1).padStart(4, '0');
+
+  // First submission must be 0000
+  if (existing.length === 0 && newSequenceNumber !== '0000') {
+    findings.push({
+      severity: 'error',
+      code: 'SEQ_FIRST_NOT_0000',
+      message: `First submission for application ${applicationNumber} must be sequence 0000, got ${newSequenceNumber}`,
+      fix: 'Set sequence number to 0000 for the initial submission',
+      observedSequences: [],
+      expectedNextSequence: '0000',
+    });
+    return findings;
+  }
+
+  // Duplicate
+  if (existing.includes(newSequenceNumber)) {
+    findings.push({
+      severity: 'error',
+      code: 'SEQ_DUPLICATE',
+      message: `Sequence ${newSequenceNumber} already exists for application ${applicationNumber}`,
+      fix: `Use sequence ${expectedNext} (next available)`,
+      observedSequences: existing,
+      expectedNextSequence: expectedNext,
+    });
+    return findings;
+  }
+
+  // Out of order (gap detection)
+  if (newSequenceNumber !== expectedNext) {
+    const lastSeq = existing.length === 0 ? -1 : parseInt(existing[existing.length - 1], 10);
+    const gap = newSeq - lastSeq - 1;
+    if (gap > 0) {
       findings.push({
         severity: 'error',
-        code: 'SEQ_FIRST_NOT_0000',
-        message: `First submission for application ${applicationNumber} must be sequence 0000, got ${newSequenceNumber}`,
-        fix: 'Set sequence number to 0000 for the initial submission',
-        observedSequences: [],
-        expectedNextSequence: '0000',
-      });
-      return findings;
-    }
-
-    // Duplicate
-    if (existing.includes(newSequenceNumber)) {
-      findings.push({
-        severity: 'error',
-        code: 'SEQ_DUPLICATE',
-        message: `Sequence ${newSequenceNumber} already exists for application ${applicationNumber}`,
-        fix: `Use sequence ${expectedNext} (next available)`,
+        code: 'SEQ_GAP',
+        message: `Sequence ${newSequenceNumber} skips ${gap} sequence(s) — expected ${expectedNext}`,
+        fix: `Use the next sequential number: ${expectedNext}`,
         observedSequences: existing,
         expectedNextSequence: expectedNext,
       });
-      return findings;
+    } else if (gap < 0) {
+      findings.push({
+        severity: 'error',
+        code: 'SEQ_REGRESSION',
+        message: `Sequence ${newSequenceNumber} is lower than the latest submitted ${existing[existing.length - 1]}`,
+        fix: `Use sequence ${expectedNext} or higher`,
+        observedSequences: existing,
+        expectedNextSequence: expectedNext,
+      });
     }
+  }
 
-    // Out of order (gap detection)
-    if (newSequenceNumber !== expectedNext) {
-      const lastSeq = existing.length === 0 ? -1 : parseInt(existing[existing.length - 1], 10);
-      const gap = newSeq - lastSeq - 1;
-      if (gap > 0) {
-        findings.push({
-          severity: 'error',
-          code: 'SEQ_GAP',
-          message: `Sequence ${newSequenceNumber} skips ${gap} sequence(s) — expected ${expectedNext}`,
-          fix: `Use the next sequential number: ${expectedNext}`,
-          observedSequences: existing,
-          expectedNextSequence: expectedNext,
-        });
-      } else if (gap < 0) {
-        findings.push({
-          severity: 'error',
-          code: 'SEQ_REGRESSION',
-          message: `Sequence ${newSequenceNumber} is lower than the latest submitted ${existing[existing.length - 1]}`,
-          fix: `Use sequence ${expectedNext} or higher`,
-          observedSequences: existing,
-          expectedNextSequence: expectedNext,
-        });
-      }
+  // Internal-gap detection across the entire history
+  for (let i = 0; i < existing.length; i++) {
+    const expected = String(i).padStart(4, '0');
+    if (existing[i] !== expected) {
+      findings.push({
+        severity: 'warning',
+        code: 'SEQ_HISTORICAL_GAP',
+        message: `Historical gap in sequences for ${applicationNumber}: expected ${expected}, found ${existing[i]}`,
+        fix: 'Investigate prior submission history and confirm with regulator',
+        observedSequences: existing,
+      });
+      break;
     }
-
-    // Internal-gap detection across the entire history
-    for (let i = 0; i < existing.length; i++) {
-      const expected = String(i).padStart(4, '0');
-      if (existing[i] !== expected) {
-        findings.push({
-          severity: 'warning',
-          code: 'SEQ_HISTORICAL_GAP',
-          message: `Historical gap in sequences for ${applicationNumber}: expected ${expected}, found ${existing[i]}`,
-          fix: 'Investigate prior submission history and confirm with regulator',
-          observedSequences: existing,
-        });
-        break;
-      }
-    }
-  } catch (err) {
-    findings.push({
-      severity: 'warning',
-      code: 'SEQ_QUERY_FAILED',
-      message: `Sequence-gap detection skipped: ${err instanceof Error ? err.message : String(err)}`,
-      fix: 'Ensure ectd_compilations / ectd_submissions tracking tables exist',
-    });
   }
 
   return findings;

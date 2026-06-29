@@ -28,6 +28,9 @@ import { searchDrugLabels } from '../integrations/drug-label-client.js';
 import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
 import { searchChemblCompounds, getChemblMechanisms } from '../integrations/chembl-client.js';
 import { searchPreprints, type PreprintServerFilter } from '../integrations/preprint-client.js';
+import { searchEudamed } from '../integrations/eudamed-client.js';
+import { searchEmaEpar } from '../integrations/ema-epar-client.js';
+import { searchEuCtis } from '../integrations/eu-ctis-client.js';
 import { assessTrialFeasibility } from '../study-design/trial-feasibility-service.js';
 import { screenStructuralAlerts, assessDevelopability } from '../chem/index.js';
 import { buildProvenance, confidenceFromScore } from '../evidence/provenance.js';
@@ -526,6 +529,132 @@ registerToolHandler('recall_session_context', async (input, ctx) => {
     });
   }
 });
+
+// RIM learning-loop read path — recall the org's LEARNED regulatory patterns from
+// the tenant-scoped RIM pattern store. Org comes from ToolContext, never from model
+// input, so it can never read another tenant's patterns. Pure query over governed
+// internal data (no LLM, no network) → deterministic_query pedigree.
+registerToolHandler('recall_rim_patterns', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'recall_rim_patterns requires tenant context (organizationId).' });
+  }
+  const domain =
+    typeof input.domain === 'string' && input.domain.trim() ? input.domain.trim() : undefined;
+
+  try {
+    const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
+    const patterns = getPatterns({ orgId: ctx.organizationId, domain });
+    return JSON.stringify({
+      source: 'RIM Pattern Store',
+      pedigree: 'deterministic_query',
+      organizationId: ctx.organizationId,
+      domain: domain ?? null,
+      count: patterns.length,
+      patterns,
+      message:
+        patterns.length === 0
+          ? 'No RIM patterns have been learned for this organization yet — proceed with generic guidance and do NOT invent learned patterns.'
+          : 'Learned RIM patterns for this organization (strongest first). Ground your response in them.',
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `recall_rim_patterns failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// RIM domain query — filter learned patterns by domain with optional confidence
+// and occurrence thresholds, sorted by occurrences descending. Tenant-scoped.
+registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string, unknown>) =>
+  runStatsTool('query_rim_patterns_by_domain', async () => {
+    const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
+    const orgId = typeof input.orgId === 'number' ? input.orgId : 0;
+    const domain = typeof input.domain === 'string' ? input.domain.trim() : '';
+    if (!orgId || !domain) {
+      throw new Error('orgId (number) and domain (string) are required.');
+    }
+    const minConfidence = typeof input.minConfidence === 'number' ? input.minConfidence : 0;
+    const minOccurrences = typeof input.minOccurrences === 'number' ? input.minOccurrences : 0;
+
+    const patterns = getPatterns({ orgId, domain })
+      .filter((p) => p.confidence >= minConfidence && p.occurrences >= minOccurrences)
+      .sort((a, b) => b.occurrences - a.occurrences || b.confidence - a.confidence);
+
+    return {
+      source: 'RIM Pattern Store',
+      pedigree: 'rim_learned',
+      organizationId: orgId,
+      domain,
+      filters: { minConfidence, minOccurrences },
+      count: patterns.length,
+      patterns,
+    };
+  })
+);
+
+// RIM intelligence summary — aggregate domain counts, top patterns, date range.
+registerToolHandler('summarize_rim_intelligence', async (input: Record<string, unknown>) =>
+  runStatsTool('summarize_rim_intelligence', async () => {
+    const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
+    const orgId = typeof input.orgId === 'number' ? input.orgId : 0;
+    if (!orgId) {
+      throw new Error('orgId (number) is required.');
+    }
+
+    const patterns = getPatterns({ orgId });
+    if (patterns.length === 0) {
+      return {
+        source: 'RIM Pattern Store',
+        pedigree: 'rim_learned',
+        organizationId: orgId,
+        totalPatterns: 0,
+        domains: [],
+        topPatterns: [],
+        oldestPattern: null,
+        newestPattern: null,
+        message: 'No RIM patterns have been learned for this organization yet.',
+      };
+    }
+
+    // Domain counts
+    const domainMap = new Map<string, number>();
+    for (const p of patterns) {
+      domainMap.set(p.domain, (domainMap.get(p.domain) ?? 0) + 1);
+    }
+    const domains = Array.from(domainMap.entries())
+      .map(([domain, count]) => ({ domain, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Top patterns by occurrences
+    const topPatterns = [...patterns]
+      .sort((a, b) => b.occurrences - a.occurrences || b.confidence - a.confidence)
+      .slice(0, 10)
+      .map((p) => ({
+        observation: p.observation,
+        occurrences: p.occurrences,
+        confidence: p.confidence,
+      }));
+
+    // Date range
+    let oldest = patterns[0].firstSeen;
+    let newest = patterns[0].lastSeen;
+    for (const p of patterns) {
+      if (p.firstSeen < oldest) oldest = p.firstSeen;
+      if (p.lastSeen > newest) newest = p.lastSeen;
+    }
+
+    return {
+      source: 'RIM Pattern Store',
+      pedigree: 'rim_learned',
+      organizationId: orgId,
+      totalPatterns: patterns.length,
+      domains,
+      topPatterns,
+      oldestPattern: oldest,
+      newestPattern: newest,
+    };
+  })
+);
 
 // 21 CFR Part 11 §11.50 signature manifestation — load an executed signature
 // (tenant-scoped) and render the human-readable block (printed name, date/time,
@@ -1384,6 +1513,144 @@ registerToolHandler('search_literature', async (input) => {
       url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(query)}`,
     });
   }
+});
+
+// Search EUDAMED — live EU medical-device database (EU analogue of FDA device
+// data). The client never throws: a network/HTTP failure yields a typed
+// status:'unavailable' result, which we relay as manual-search guidance.
+registerToolHandler('search_eudamed', async (input) => {
+  const query = typeof input.query === 'string' ? input.query : '';
+  const maxResults = Math.min((input.max_results as number) || 10, 50);
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+
+  const result = await searchEudamed({
+    query: query || undefined,
+    manufacturer: asStr(input.manufacturer),
+    riskClass: asStr(input.risk_class),
+    pageSize: maxResults,
+  });
+
+  if (result.status === 'unavailable') {
+    return JSON.stringify({
+      source: result.source,
+      status: 'unavailable',
+      query,
+      note: `EUDAMED unavailable — ${result.message || 'returning guidance for manual search'}`,
+      url: 'https://ec.europa.eu/tools/eudamed/#/screen/search-device',
+    });
+  }
+
+  const provenance = result.devices.map(d =>
+    buildProvenance({
+      sourceId: 'eudamed',
+      citation: { title: d.deviceName || d.basicUdiDi, identifier: d.basicUdiDi || null, url: d.url },
+      query: query || undefined,
+      confidence: 'high',
+    })
+  );
+  return JSON.stringify({
+    source: result.source,
+    status: 'ok',
+    query: query || undefined,
+    totalCount: result.totalCount,
+    resultCount: result.devices.length,
+    devices: result.devices,
+    provenance,
+    citation_hint: 'Cite each device by its Basic UDI-DI and link to the provided EUDAMED url.',
+  });
+});
+
+// Search EMA EPAR — live EU centrally-authorised human medicines (EU analogue of
+// search_drug_labels). Graceful, never-throw client; relay status:'unavailable'.
+registerToolHandler('search_ema_epar', async (input) => {
+  const query = typeof input.query === 'string' ? input.query : '';
+  const maxResults = Math.min((input.max_results as number) || 10, 50);
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+
+  const result = await searchEmaEpar({
+    query: query || undefined,
+    activeSubstance: asStr(input.active_substance),
+    therapeuticArea: asStr(input.therapeutic_area),
+    pageSize: maxResults,
+  });
+
+  if (result.status === 'unavailable') {
+    return JSON.stringify({
+      source: result.source,
+      status: 'unavailable',
+      query,
+      note: `EMA EPAR unavailable — ${result.message || 'returning guidance for manual search'}`,
+      url: `https://www.ema.europa.eu/en/medicines?search_api_fulltext=${encodeURIComponent(query)}`,
+    });
+  }
+
+  const provenance = result.medicines.map(m =>
+    buildProvenance({
+      sourceId: 'ema_epar',
+      citation: { title: m.medicineName || m.productNumber, identifier: m.productNumber || null, url: m.url },
+      query: query || undefined,
+      confidence: 'high',
+    })
+  );
+  return JSON.stringify({
+    source: result.source,
+    status: 'ok',
+    query: query || undefined,
+    totalCount: result.totalCount,
+    resultCount: result.medicines.length,
+    medicines: result.medicines,
+    provenance,
+    citation_hint: 'Cite each medicine by its EMA product number and link to the provided EPAR url.',
+  });
+});
+
+// Search EU CTIS — live EU clinical trials under Reg (EU) 536/2014 (EU analogue
+// of search_clinical_evidence). Graceful, never-throw client.
+registerToolHandler('search_eu_ctis', async (input) => {
+  const query = typeof input.query === 'string' ? input.query : '';
+  const maxResults = Math.min((input.max_results as number) || 10, 50);
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+
+  const result = await searchEuCtis({
+    query: query || undefined,
+    condition: asStr(input.condition),
+    sponsor: asStr(input.sponsor),
+    phase: asStr(input.phase),
+    status: asStr(input.status),
+    pageSize: maxResults,
+  });
+
+  if (result.status === 'unavailable') {
+    return JSON.stringify({
+      source: result.source,
+      status: 'unavailable',
+      query,
+      note: `EU CTIS unavailable — ${result.message || 'returning guidance for manual search'}`,
+      url: 'https://euclinicaltrials.eu/ctis-public/search',
+    });
+  }
+
+  const provenance = result.trials.map(t =>
+    buildProvenance({
+      sourceId: 'eu_ctis',
+      citation: { title: t.title || t.euTrialNumber, identifier: t.euTrialNumber || null, url: t.url },
+      query: query || undefined,
+      confidence: 'high',
+    })
+  );
+  return JSON.stringify({
+    source: result.source,
+    status: 'ok',
+    query: query || undefined,
+    totalCount: result.totalCount,
+    resultCount: result.trials.length,
+    trials: result.trials,
+    provenance,
+    citation_hint: 'Cite each trial by its EU trial number and link to the provided CTIS url.',
+  });
 });
 
 // Search Connected Repositories — fan out across the org's configured data
@@ -4648,6 +4915,38 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
     return JSON.stringify({
       error: `Consistency check failed: ${err?.message || 'unknown error'}`,
     });
+  }
+});
+
+// Cross-document number reconciliation over ALREADY-EXTRACTED, structured
+// figures — the cross-module check the two consistency tools above lack, and
+// the structured-input complement to the prose-mining reconcile_dossier_numbers
+// tool. The engine groups by quantityKey and flags values that disagree across
+// documents beyond a configurable tolerance, returning per-key value clusters,
+// sources, a plurality consensus, and a severity. Deterministic; validation
+// errors are relayed as needs_parameters so the model asks rather than guesses.
+registerToolHandler('reconcile_extracted_figures', async (input: Record<string, unknown>) => {
+  try {
+    const { reconcileDossierNumbers } = await import(
+      '../reconciliation/dossier-number-reconciler.js'
+    );
+    const report = reconcileDossierNumbers({
+      figures: input.figures as any,
+      tolerance: input.tolerance as any,
+    });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result: report,
+      instruction:
+        'Report these conflicts and values verbatim. A cross-document number mismatch (especially enrolment N or dose) is a recurring reviewer finding — surface each conflict, its sources, and the consensus.',
+    });
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (isStatsParamError(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `reconcile_extracted_figures failed: ${message}` });
   }
 });
 
@@ -8568,6 +8867,975 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Protocol Authoring Extensions (C2C-20: templates / milestones / export). Reuses
+// governedPdev (domain 'protocol_development'); read tools have no transaction.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_protocol_template', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_protocol_template requires tenant + user context.' });
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  const protocolKind = typeof input.protocol_kind === 'string' ? input.protocol_kind : '';
+  if (!name || !['iacuc', 'irb', 'clinical', 'ibc'].includes(protocolKind)) return JSON.stringify({ error: 'name and a valid protocol_kind are required.' });
+  const { createTemplateTx } = await import('../protocol-templates/protocol-templates-service.js');
+  return governedPdev(ctx, 'create', 'protocol-template', 'Protocol template created via AnA', input, async (client) => {
+    const { id } = await createTemplateTx(client, ctx.organizationId!, ctx.userId!, { name, protocolKind, designType: typeof input.design_type === 'string' ? input.design_type : null, description: typeof input.description === 'string' ? input.description : null });
+    return { templateId: id };
+  });
+});
+
+registerToolHandler('clone_protocol_template', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'clone_protocol_template requires tenant + user context.' });
+  const templateId = typeof input.template_id === 'number' ? input.template_id : NaN;
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!Number.isInteger(templateId) || !title) return JSON.stringify({ error: 'template_id and title are required.' });
+  const { cloneTemplateToDocumentTx } = await import('../protocol-templates/protocol-templates-service.js');
+  return governedPdev(ctx, 'create', `protocol-template:${templateId}`, 'Protocol document cloned from template via AnA', input, async (client) => {
+    const { documentId, sectionsSeeded } = await cloneTemplateToDocumentTx(client, ctx.organizationId!, ctx.userId!, templateId, { title, protocolNumber: typeof input.protocol_number === 'string' ? input.protocol_number : null });
+    return { documentId, sectionsSeeded };
+  });
+});
+
+registerToolHandler('save_document_as_template', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'save_document_as_template requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!Number.isInteger(documentId) || !name) return JSON.stringify({ error: 'document_id and name are required.' });
+  const { saveDocumentAsTemplateTx } = await import('../protocol-templates/protocol-templates-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'Document saved as template via AnA', input, async (client) => {
+    const { templateId, sectionsCopied } = await saveDocumentAsTemplateTx(client, ctx.organizationId!, ctx.userId!, documentId, { name, description: typeof input.description === 'string' ? input.description : null });
+    return { templateId, sectionsCopied };
+  });
+});
+
+registerToolHandler('list_protocol_templates', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'list_protocol_templates requires tenant context.' });
+  const { listTemplates } = await import('../protocol-templates/protocol-templates-service.js');
+  try {
+    return JSON.stringify({ ok: true, templates: await listTemplates(ctx.organizationId, typeof input.kind === 'string' ? input.kind : undefined) });
+  } catch (err) {
+    return JSON.stringify({ error: `list_protocol_templates failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('add_protocol_milestone', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_milestone requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!Number.isInteger(documentId) || !name) return JSON.stringify({ error: 'document_id and name are required.' });
+  const { addMilestoneTx } = await import('../protocol-milestones/protocol-milestones-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'Protocol milestone added via AnA', input, async (client) => {
+    const { id } = await addMilestoneTx(client, ctx.organizationId!, ctx.userId!, documentId, { name, milestoneType: typeof input.milestone_type === 'string' ? input.milestone_type : undefined, targetDate: typeof input.target_date === 'string' ? input.target_date : null, notes: typeof input.notes === 'string' ? input.notes : null });
+    return { milestoneId: id };
+  });
+});
+
+registerToolHandler('set_protocol_milestone_status', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_protocol_milestone_status requires tenant + user context.' });
+  const milestoneId = typeof input.milestone_id === 'number' ? input.milestone_id : NaN;
+  const status = typeof input.status === 'string' ? input.status : '';
+  if (!Number.isInteger(milestoneId) || !['planned', 'in_progress', 'met', 'missed', 'cancelled'].includes(status)) return JSON.stringify({ error: 'milestone_id and a valid status are required.' });
+  const { setMilestoneStatusTx } = await import('../protocol-milestones/protocol-milestones-service.js');
+  return governedPdev(ctx, 'transition', `protocol-milestone:${milestoneId}`, 'Milestone status set via AnA', input, async (client) => {
+    await setMilestoneStatusTx(client, ctx.organizationId!, milestoneId, status, typeof input.actual_date === 'string' ? input.actual_date : null);
+    return { milestoneId, status };
+  });
+});
+
+registerToolHandler('review_protocol_timeline', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_timeline requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getTimeline } = await import('../protocol-milestones/protocol-milestones-service.js');
+  try {
+    return JSON.stringify({ ok: true, timeline: await getTimeline(ctx.organizationId, documentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_timeline failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('export_protocol_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'export_protocol_document requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getProtocolExport } = await import('../protocol-export/protocol-export-service.js');
+  try {
+    const out = await getProtocolExport(ctx.organizationId, documentId);
+    return JSON.stringify({ ok: true, document: out.document, markdown: out.markdown });
+  } catch (err) {
+    return JSON.stringify({ error: `export_protocol_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('generate_ctgov_registration_draft', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'generate_ctgov_registration_draft requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getCtGovDraft } = await import('../protocol-export/protocol-export-service.js');
+  try {
+    return JSON.stringify({ ok: true, draft: await getCtGovDraft(ctx.organizationId, documentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `generate_ctgov_registration_draft failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol Amendments / Deviations / Reviews / Consent (C2C-18a–d). Mutations
+// share the governed/audited path (domain 'protocol_development'); review tools
+// are read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function governedPdev(ctx: any, command: string, target: string, fallbackReason: string, input: Record<string, unknown>, run: (client: any) => Promise<Record<string, unknown>>): Promise<string> {
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId!);
+    const body = await run(client);
+    await recordGovernedAction(client, { orgId: ctx.organizationId!, userId: ctx.userId!, command, target, reason: fcoiReason(input, fallbackReason), payload: body, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, ...body });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `${command} failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+}
+
+registerToolHandler('create_protocol_amendment', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_protocol_amendment requires tenant + user context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!Number.isInteger(protocolDocumentId) || !title) return JSON.stringify({ error: 'protocol_document_id and title are required.' });
+  const { createAmendmentTx } = await import('../protocol-amendments/protocol-amendments-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'Protocol amendment opened via AnA', input, async (client) => {
+    const { id } = await createAmendmentTx(client, ctx.organizationId!, ctx.userId!, {
+      protocolDocumentId, title,
+      amendmentNumber: typeof input.amendment_number === 'string' ? input.amendment_number : null,
+      rationale: typeof input.rationale === 'string' ? input.rationale : null,
+      amendmentType: typeof input.amendment_type === 'string' ? input.amendment_type : null,
+      affectsConsent: typeof input.affects_consent === 'boolean' ? input.affects_consent : undefined,
+      affectsRisk: typeof input.affects_risk === 'boolean' ? input.affects_risk : undefined,
+    });
+    return { amendmentId: id };
+  });
+});
+
+registerToolHandler('add_amendment_change', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_amendment_change requires tenant + user context.' });
+  const amendmentId = typeof input.amendment_id === 'number' ? input.amendment_id : NaN;
+  const changeDescription = typeof input.change_description === 'string' ? input.change_description.trim() : '';
+  if (!Number.isInteger(amendmentId) || !changeDescription) return JSON.stringify({ error: 'amendment_id and change_description are required.' });
+  const { addChangeTx } = await import('../protocol-amendments/protocol-amendments-service.js');
+  return governedPdev(ctx, 'update', `protocol-amendment:${amendmentId}`, 'Amendment change added via AnA', input, async (client) => {
+    const { id } = await addChangeTx(client, ctx.organizationId!, ctx.userId!, amendmentId, {
+      changeDescription,
+      sectionRef: typeof input.section_ref === 'string' ? input.section_ref : null,
+      previousText: typeof input.previous_text === 'string' ? input.previous_text : null,
+      proposedText: typeof input.proposed_text === 'string' ? input.proposed_text : null,
+    });
+    return { changeId: id };
+  });
+});
+
+registerToolHandler('review_amendment', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_amendment requires tenant context.' });
+  const amendmentId = typeof input.amendment_id === 'number' ? input.amendment_id : NaN;
+  if (!Number.isInteger(amendmentId)) return JSON.stringify({ error: 'amendment_id is required.' });
+  const { getAmendmentReadiness } = await import('../protocol-amendments/protocol-amendments-service.js');
+  try {
+    return JSON.stringify({ ok: true, readiness: await getAmendmentReadiness(ctx.organizationId!, amendmentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_amendment failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('report_protocol_deviation', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'report_protocol_deviation requires tenant + user context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  if (!Number.isInteger(protocolDocumentId) || !description) return JSON.stringify({ error: 'protocol_document_id and description are required.' });
+  const { createDeviationTx } = await import('../protocol-deviations/protocol-deviations-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'Protocol deviation reported via AnA', input, async (client) => {
+    const r = await createDeviationTx(client, ctx.organizationId!, ctx.userId!, {
+      protocolDocumentId, description,
+      category: typeof input.category === 'string' ? (input.category as any) : undefined,
+      severity: typeof input.severity === 'string' ? (input.severity as any) : undefined,
+      affectsSafety: typeof input.affects_safety === 'boolean' ? input.affects_safety : undefined,
+      rootCause: typeof input.root_cause === 'string' ? input.root_cause : null,
+    });
+    return { deviationId: r.id, reportable: r.reportable, timelinessDays: r.timelinessDays };
+  });
+});
+
+registerToolHandler('add_capa_action', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_capa_action requires tenant + user context.' });
+  const deviationId = typeof input.deviation_id === 'number' ? input.deviation_id : NaN;
+  const action = typeof input.action === 'string' ? input.action.trim() : '';
+  if (!Number.isInteger(deviationId) || !action) return JSON.stringify({ error: 'deviation_id and action are required.' });
+  const { addCapaActionTx } = await import('../protocol-deviations/protocol-deviations-service.js');
+  return governedPdev(ctx, 'update', `protocol-deviation:${deviationId}`, 'CAPA action added via AnA', input, async (client) => {
+    const { id } = await addCapaActionTx(client, ctx.organizationId!, ctx.userId!, deviationId, {
+      action, owner: typeof input.owner === 'string' ? input.owner : null, dueDate: typeof input.due_date === 'string' ? input.due_date : null,
+    });
+    return { capaId: id };
+  });
+});
+
+registerToolHandler('review_deviation', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_deviation requires tenant context.' });
+  const deviationId = typeof input.deviation_id === 'number' ? input.deviation_id : NaN;
+  if (!Number.isInteger(deviationId)) return JSON.stringify({ error: 'deviation_id is required.' });
+  const { getDeviation, getCapaClosure } = await import('../protocol-deviations/protocol-deviations-service.js');
+  try {
+    const deviation = await getDeviation(ctx.organizationId!, deviationId);
+    if (!deviation) return JSON.stringify({ error: 'Deviation not found.' });
+    const closure = await getCapaClosure(ctx.organizationId!, deviationId);
+    return JSON.stringify({ ok: true, deviation, closure });
+  } catch (err) {
+    return JSON.stringify({ error: `review_deviation failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('assign_protocol_reviewer', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'assign_protocol_reviewer requires tenant + user context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  const reviewerName = typeof input.reviewer_name === 'string' ? input.reviewer_name.trim() : '';
+  if (!Number.isInteger(protocolDocumentId) || !reviewerName) return JSON.stringify({ error: 'protocol_document_id and reviewer_name are required.' });
+  const { assignReviewerTx } = await import('../protocol-reviews/protocol-reviews-service.js');
+  return governedPdev(ctx, 'assign', `protocol-document:${protocolDocumentId}`, 'Reviewer assigned via AnA', input, async (client) => {
+    const { id, role } = await assignReviewerTx(client, ctx.organizationId!, ctx.userId!, protocolDocumentId, {
+      reviewerName, reviewerUserId: typeof input.reviewer_user_id === 'number' ? input.reviewer_user_id : null,
+      role: typeof input.role === 'string' ? input.role : undefined, dueDate: typeof input.due_date === 'string' ? input.due_date : null,
+    });
+    return { assignmentId: id, role };
+  });
+});
+
+registerToolHandler('add_protocol_review_comment', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_review_comment requires tenant + user context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  const comment = typeof input.comment === 'string' ? input.comment.trim() : '';
+  if (!Number.isInteger(protocolDocumentId) || !comment) return JSON.stringify({ error: 'protocol_document_id and comment are required.' });
+  const { addCommentTx } = await import('../protocol-reviews/protocol-reviews-service.js');
+  return governedPdev(ctx, 'update', `protocol-document:${protocolDocumentId}`, 'Review comment added via AnA', input, async (client) => {
+    const { id, severity } = await addCommentTx(client, ctx.organizationId!, ctx.userId!, protocolDocumentId, {
+      comment, assignmentId: typeof input.assignment_id === 'number' ? input.assignment_id : null,
+      sectionRef: typeof input.section_ref === 'string' ? input.section_ref : null, severity: typeof input.severity === 'string' ? input.severity : null,
+    });
+    return { commentId: id, severity };
+  });
+});
+
+registerToolHandler('review_protocol_review_status', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_review_status requires tenant context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  if (!Number.isInteger(protocolDocumentId)) return JSON.stringify({ error: 'protocol_document_id is required.' });
+  const { getReviewSummary } = await import('../protocol-reviews/protocol-reviews-service.js');
+  try {
+    return JSON.stringify({ ok: true, summary: await getReviewSummary(ctx.organizationId!, protocolDocumentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_review_status failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('create_consent_form', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_consent_form requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { createConsentFormTx } = await import('../protocol-consent/protocol-consent-service.js');
+  return governedPdev(ctx, 'create', 'consent-form', 'Consent form created via AnA', input, async (client) => {
+    const { id, elementsSeeded } = await createConsentFormTx(client, ctx.organizationId!, ctx.userId!, {
+      title, protocolDocumentId: typeof input.protocol_document_id === 'number' ? input.protocol_document_id : null,
+      version: typeof input.version === 'string' ? input.version : null, language: typeof input.language === 'string' ? input.language : null,
+      readingLevel: typeof input.reading_level === 'string' ? input.reading_level : null,
+    });
+    return { consentFormId: id, elementsSeeded };
+  });
+});
+
+registerToolHandler('update_consent_element', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_consent_element requires tenant + user context.' });
+  const elementId = typeof input.element_id === 'number' ? input.element_id : NaN;
+  if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
+  const { updateElementTx } = await import('../protocol-consent/protocol-consent-service.js');
+  return governedPdev(ctx, 'update', `consent-element:${elementId}`, 'Consent element updated via AnA', input, async (client) => {
+    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, present: typeof input.present === 'boolean' ? input.present : undefined });
+    return { elementId };
+  });
+});
+
+registerToolHandler('review_consent_completeness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_consent_completeness requires tenant context.' });
+  const formId = typeof input.form_id === 'number' ? input.form_id : NaN;
+  if (!Number.isInteger(formId)) return JSON.stringify({ error: 'form_id is required.' });
+  const { getCompleteness } = await import('../protocol-consent/protocol-consent-service.js');
+  try {
+    return JSON.stringify({ ok: true, completeness: await getCompleteness(ctx.organizationId!, formId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_consent_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol Risk Register (C2C-19). add is governed/audited; review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('add_protocol_risk', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_risk requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  if (!Number.isInteger(documentId) || !description) return JSON.stringify({ error: 'document_id and description are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addRiskTx } = await import('../protocol-risks/protocol-risks-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id, level } = await addRiskTx(client, ctx.organizationId, ctx.userId, {
+      protocolDocumentId: documentId, description,
+      category: typeof input.category === 'string' ? input.category : undefined,
+      likelihood: typeof input.likelihood === 'string' ? input.likelihood : undefined,
+      impact: typeof input.impact === 'string' ? input.impact : undefined,
+      mitigation: typeof input.mitigation === 'string' ? input.mitigation : null,
+      owner: typeof input.owner === 'string' ? input.owner : null,
+    });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol risk added via AnA'), payload: { riskId: id, level }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, riskId: id, level, message: `Added ${level} risk to protocol ${documentId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_protocol_risk failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_protocol_risk_register', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_risk_register requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getRiskRegister } = await import('../protocol-risks/protocol-risks-service.js');
+  try {
+    const register = await getRiskRegister(ctx.organizationId, documentId);
+    return JSON.stringify({ ok: true, summary: register.summary, risks: register.risks });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_risk_register failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol Development (C2C-17). Authoring shares the governed/audited path;
+// completeness/finalize are deterministic (protocol-development-logic).
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_protocol_document', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_protocol_document requires tenant + user context.' });
+  const protocolKind = typeof input.protocol_kind === 'string' ? input.protocol_kind : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!['iacuc', 'irb', 'clinical', 'ibc'].includes(protocolKind) || !title) return JSON.stringify({ error: 'protocol_kind and title are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createProtocolDocumentTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id, sectionsSeeded } = await createProtocolDocumentTx(client, ctx.organizationId, ctx.userId, {
+      protocolKind: protocolKind as any, title,
+      protocolNumber: typeof input.protocol_number === 'string' ? input.protocol_number : null,
+      designType: typeof input.design_type === 'string' ? input.design_type : null,
+      phase: typeof input.phase === 'string' ? input.phase : null,
+      therapeuticArea: typeof input.therapeutic_area === 'string' ? input.therapeutic_area : null,
+      linkedProtocolId: typeof input.linked_protocol_id === 'number' ? input.linked_protocol_id : null,
+      synopsis: typeof input.synopsis === 'string' ? input.synopsis : null,
+    });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `protocol-document:${id}`, reason: fcoiReason(input, 'Protocol document created via AnA'), payload: { kind: protocolKind }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, sectionsSeeded, message: `Created ${protocolKind.toUpperCase()} protocol "${title}" (id ${id}) seeded with ${sectionsSeeded} templated sections.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_protocol_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('update_protocol_section', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_protocol_section requires tenant + user context.' });
+  const sectionId = typeof input.section_id === 'number' ? input.section_id : NaN;
+  if (!Number.isInteger(sectionId)) return JSON.stringify({ error: 'section_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { updateSectionTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-section:${sectionId}`, reason: fcoiReason(input, 'Protocol section edited via AnA'), payload: { status: input.status }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, sectionId, message: `Updated protocol section ${sectionId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `update_protocol_section failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_protocol_objective', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_objective requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const objective = typeof input.objective === 'string' ? input.objective.trim() : '';
+  if (!Number.isInteger(documentId) || !objective) return JSON.stringify({ error: 'document_id and objective are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addObjectiveTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await addObjectiveTx(client, ctx.organizationId, ctx.userId, documentId, { objectiveType: typeof input.objective_type === 'string' ? input.objective_type : undefined, objective, endpoint: typeof input.endpoint === 'string' ? input.endpoint : null, timepoint: typeof input.timepoint === 'string' ? input.timepoint : null });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol objective added via AnA'), payload: { objectiveId: id }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, objectiveId: id, message: `Added objective to protocol ${documentId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_protocol_objective failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_eligibility_criterion', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_eligibility_criterion requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const kind = typeof input.kind === 'string' ? input.kind : '';
+  const criterion = typeof input.criterion === 'string' ? input.criterion.trim() : '';
+  if (!Number.isInteger(documentId) || !['inclusion', 'exclusion'].includes(kind) || !criterion) return JSON.stringify({ error: 'document_id, kind, and criterion are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addEligibilityCriterionTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await addEligibilityCriterionTx(client, ctx.organizationId, ctx.userId, documentId, { kind, criterion });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Eligibility criterion added via AnA'), payload: { criterionId: id, kind }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, criterionId: id, message: `Added ${kind} criterion to protocol ${documentId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_eligibility_criterion failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_protocol_completeness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_completeness requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getCompleteness } = await import('../protocol-development/protocol-development-service.js');
+  try {
+    const c = await getCompleteness(ctx.organizationId, documentId);
+    return JSON.stringify({ ok: true, requiredCompletionPct: c.requiredCompletionPct, readyToFinalize: c.readyToFinalize, findings: c.findings });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('finalize_protocol_document', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_protocol_document requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { finalizeProtocolTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const result = await finalizeProtocolTx(client, ctx.organizationId, ctx.userId, documentId);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'sign', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol finalized via AnA'), payload: { version: result.version }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, documentId, version: result.version, message: `Finalized protocol ${documentId} as version ${result.version}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `finalize_protocol_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CITI Training full integration (C2C-01/02) + protocol-portfolio analytics.
+// import_citi_records is governed/audited; the review_* tools are read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('import_citi_records', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'import_citi_records requires tenant + user context.' });
+  const personnelId = typeof input.personnel_id === 'number' ? input.personnel_id : NaN;
+  const records = Array.isArray(input.records) ? input.records : [];
+  if (!Number.isInteger(personnelId) || records.length === 0) return JSON.stringify({ error: 'personnel_id and a non-empty records array are required.' });
+  const mapped = records.map((r: any) => ({
+    trainingType: r.training_type,
+    completedDate: typeof r.completed_date === 'string' ? r.completed_date : null,
+    expiresDate: typeof r.expires_date === 'string' ? r.expires_date : null,
+    certificateRef: typeof r.certificate_ref === 'string' ? r.certificate_ref : null,
+  }));
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { importCitiRecordsTx } = await import('../citi/citi-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { ids } = await importCitiRecordsTx(client, ctx.organizationId, ctx.userId, personnelId, mapped);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `research-personnel:${personnelId}`, reason: fcoiReason(input, 'CITI training records imported via AnA'), payload: { imported: ids.length }, domain: 'research_compliance', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, personnelId, imported: ids.length, trainingIds: ids, message: `Imported ${ids.length} CITI training record(s) for personnel ${personnelId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `import_citi_records failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_training_matrix', async (_input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_training_matrix requires tenant context.' });
+  const { getTrainingMatrix } = await import('../citi/citi-service.js');
+  try {
+    const matrix = await getTrainingMatrix(ctx.organizationId);
+    return JSON.stringify({ ok: true, summary: matrix.summary, rows: matrix.rows });
+  } catch (err) {
+    return JSON.stringify({ error: `review_training_matrix failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('review_expiring_training', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_expiring_training requires tenant context.' });
+  const withinDays = typeof input.within_days === 'number' ? input.within_days : undefined;
+  const { getExpiringTraining } = await import('../citi/citi-service.js');
+  try {
+    const expiring = await getExpiringTraining(ctx.organizationId, withinDays);
+    return JSON.stringify({ ok: true, count: expiring.length, expiring });
+  } catch (err) {
+    return JSON.stringify({ error: `review_expiring_training failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('review_protocol_portfolio_analytics', async (_input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_portfolio_analytics requires tenant context.' });
+  const { getPortfolioAnalytics } = await import('../protocols/protocol-portfolio-service.js');
+  try {
+    const summary = await getPortfolioAnalytics(ctx.organizationId);
+    return JSON.stringify({
+      ok: true,
+      counts: summary.counts,
+      overdueCount: summary.overdue.length,
+      expiringSoonCount: summary.expiringSoon.length,
+      needsAttention: summary.needsAttention.slice(0, 25),
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_portfolio_analytics failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Intelligent Grant Finder (C2C-14). set_funding_profile is governed/audited;
+// find_grant_opportunities is a read-only, explainable ranking over Grants.gov.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('set_funding_profile', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_funding_profile requires tenant + user context.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { upsertFundingProfileTx } = await import('../grants/grant-finder-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await upsertFundingProfileTx(client, ctx.organizationId, ctx.userId, {
+      keywords: Array.isArray(input.keywords) ? input.keywords.filter((k: unknown) => typeof k === 'string') as string[] : undefined,
+      agencies: Array.isArray(input.agencies) ? input.agencies.filter((k: unknown) => typeof k === 'string') as string[] : undefined,
+      mechanisms: Array.isArray(input.mechanisms) ? input.mechanisms.filter((k: unknown) => typeof k === 'string') as string[] : undefined,
+      institutionType: typeof input.institution_type === 'string' ? input.institution_type : null,
+      minAward: typeof input.min_award === 'number' ? input.min_award : null,
+      maxAward: typeof input.max_award === 'number' ? input.max_award : null,
+    });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `grant-funding-profile:${id}`, reason: fcoiReason(input, 'Funding profile set via AnA'), payload: {}, domain: 'grants', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: 'Funding profile saved. Use find_grant_opportunities to discover ranked matches.' });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `set_funding_profile failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('find_grant_opportunities', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'find_grant_opportunities requires tenant context.' });
+  const { discoverOpportunities } = await import('../grants/grant-finder-service.js');
+  try {
+    const result = await discoverOpportunities(ctx.organizationId, {
+      query: typeof input.query === 'string' ? input.query : undefined,
+      limit: typeof input.limit === 'number' ? input.limit : undefined,
+    });
+    const top = result.matches.slice(0, 15).map((m) => ({
+      externalId: m.externalId, title: m.title, fitScore: m.fitScore, eligible: m.eligible,
+      daysToDeadline: m.daysToDeadline, keywordHits: m.keywordHits, reasons: m.reasons,
+    }));
+    const strong = result.matches.filter((m) => m.fitScore >= 70).length;
+    return JSON.stringify({
+      ok: true, scored: result.scored, strongMatches: strong, profileUsed: result.profileUsed, matches: top,
+      message: `Scored ${result.scored} Grants.gov opportunit${result.scored === 1 ? 'y' : 'ies'}; ${strong} strong fit(s) (>=70). Record promising ones with record_grant_opportunity.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `find_grant_opportunities failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Research Committee Governance (C2C-16). Conversational committee operations
+// share the governed/audited path (recordGovernedAction, surface 'ana').
+// Determinations are deterministic (committee-logic); finalize is gated on the
+// approve privilege + current CITI training (enforced in the API route).
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assign_committee_member', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'assign_committee_member requires tenant + user context.' });
+  const committeeType = typeof input.committee_type === 'string' ? input.committee_type : '';
+  const memberName = typeof input.member_name === 'string' ? input.member_name.trim() : '';
+  if (!['iacuc', 'irb', 'ibc'].includes(committeeType) || !memberName) return JSON.stringify({ error: 'committee_type and member_name are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addCommitteeMemberTx } = await import('../committees/committee-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await addCommitteeMemberTx(client, ctx.organizationId, ctx.userId, {
+      committeeType: committeeType as any, memberName,
+      role: typeof input.role === 'string' ? input.role : undefined,
+      userId: typeof input.user_id === 'number' ? input.user_id : null,
+      personnelId: typeof input.personnel_id === 'number' ? input.personnel_id : null,
+      votingMember: typeof input.voting_member === 'boolean' ? input.voting_member : undefined,
+      scientist: typeof input.scientist === 'boolean' ? input.scientist : undefined,
+      affiliated: typeof input.affiliated === 'boolean' ? input.affiliated : undefined,
+    });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'assign', target: `committee:${committeeType}`, reason: fcoiReason(input, 'Committee member assigned via AnA'), payload: { memberId: id }, domain: 'committee', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Added ${memberName} to the ${committeeType.toUpperCase()} committee (member id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `assign_committee_member failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('convene_committee_meeting', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'convene_committee_meeting requires tenant + user context.' });
+  const meetingId = typeof input.meeting_id === 'number' ? input.meeting_id : NaN;
+  const present = Array.isArray(input.present_member_ids) ? input.present_member_ids.filter((n: unknown) => typeof n === 'number') as number[] : [];
+  if (!Number.isInteger(meetingId) || present.length === 0) return JSON.stringify({ error: 'meeting_id and a non-empty present_member_ids are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { conveneMeetingTx } = await import('../committees/committee-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const quorum = await conveneMeetingTx(client, ctx.organizationId, meetingId, present);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `committee-meeting:${meetingId}`, reason: fcoiReason(input, 'Committee meeting convened via AnA'), payload: { quorumMet: quorum.quorumMet }, domain: 'committee', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, meetingId, quorumMet: quorum.quorumMet, quorumRequired: quorum.quorumRequired, membersConvened: quorum.membersConvened, issues: quorum.issues, message: quorum.quorumMet ? 'Quorum met — voting may proceed.' : `Quorum NOT met: ${quorum.issues.join(' ')}` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `convene_committee_meeting failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_committee_agenda_item', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_committee_agenda_item requires tenant + user context.' });
+  const meetingId = typeof input.meeting_id === 'number' ? input.meeting_id : NaN;
+  const protocolKind = typeof input.protocol_kind === 'string' ? input.protocol_kind : '';
+  const protocolId = typeof input.protocol_id === 'number' ? input.protocol_id : NaN;
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!Number.isInteger(meetingId) || !['iacuc_protocol', 'irb_submission'].includes(protocolKind) || !Number.isInteger(protocolId) || !title) {
+    return JSON.stringify({ error: 'meeting_id, protocol_kind, protocol_id, and title are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addAgendaItemTx } = await import('../committees/committee-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await addAgendaItemTx(client, ctx.organizationId, ctx.userId, meetingId, { protocolKind: protocolKind as any, protocolId, title, reviewType: typeof input.review_type === 'string' ? input.review_type : null });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `committee-meeting:${meetingId}`, reason: fcoiReason(input, 'Agenda item added via AnA'), payload: { agendaItemId: id }, domain: 'committee', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, agendaItemId: id, message: `Added "${title}" to meeting ${meetingId} agenda (item ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_committee_agenda_item failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('cast_committee_vote', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'cast_committee_vote requires tenant + user context.' });
+  const agendaItemId = typeof input.agenda_item_id === 'number' ? input.agenda_item_id : NaN;
+  const memberId = typeof input.member_id === 'number' ? input.member_id : NaN;
+  const vote = typeof input.vote === 'string' ? input.vote : '';
+  if (!Number.isInteger(agendaItemId) || !Number.isInteger(memberId) || !['approve', 'approve_with_modifications', 'disapprove', 'abstain', 'recuse'].includes(vote)) {
+    return JSON.stringify({ error: 'agenda_item_id, member_id, and a valid vote are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { castVoteTx } = await import('../committees/committee-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    await castVoteTx(client, ctx.organizationId, ctx.userId, agendaItemId, memberId, vote as any, typeof input.comment === 'string' ? input.comment : null);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'review', target: `committee-agenda:${agendaItemId}`, reason: fcoiReason(input, 'Committee vote cast via AnA'), payload: { memberId, vote }, domain: 'committee', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, agendaItemId, memberId, vote, message: `Recorded ${vote} vote from member ${memberId} on item ${agendaItemId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `cast_committee_vote failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('finalize_committee_determination', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_committee_determination requires tenant + user context.' });
+  const agendaItemId = typeof input.agenda_item_id === 'number' ? input.agenda_item_id : NaN;
+  if (!Number.isInteger(agendaItemId)) return JSON.stringify({ error: 'agenda_item_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { finalizeAgendaItemTx, getActorTrainingStatus } = await import('../committees/committee-service.js');
+  const client = await getPool().connect();
+  try {
+    // CITI training gate (read) before opening the transaction.
+    const ct = await client.query(`SELECT committee_type FROM committee_agenda_items WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [agendaItemId, ctx.organizationId]);
+    if (ct.rows.length === 0) { client.release(); return JSON.stringify({ error: 'Agenda item not found.' }); }
+    const training = await getActorTrainingStatus(ctx.organizationId, ctx.userId, ct.rows[0].committee_type);
+    if (!training.trained) { client.release(); return JSON.stringify({ error: `Cannot finalize: ${training.reason}` }); }
+
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const determination = await finalizeAgendaItemTx(client, ctx.organizationId, ctx.userId, agendaItemId);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'sign', target: `committee-agenda:${agendaItemId}`, reason: fcoiReason(input, 'Committee determination finalized via AnA'), payload: { outcome: determination.outcome }, domain: 'committee', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, agendaItemId, outcome: determination.outcome, rationale: determination.rationale, tally: determination.tally });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `finalize_committee_determination failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_protocol_portfolio', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_portfolio requires tenant context.' });
+  const { getProtocolPortfolio } = await import('../committees/committee-service.js');
+  try {
+    const portfolio = await getProtocolPortfolio(ctx.organizationId);
+    return JSON.stringify({
+      ok: true,
+      iacucCount: portfolio.iacuc.length,
+      irbCount: portfolio.irb.length,
+      pendingAgendaCount: portfolio.pendingAgenda.length,
+      iacuc: portfolio.iacuc,
+      irb: portfolio.irb,
+      pendingAgenda: portfolio.pendingAgenda,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_portfolio failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Medicare Coverage Analysis (C2C-15). Conversational building shares the
+// governed/audited path (recordGovernedAction, surface 'ana'). The billing
+// designation is deterministic (classifyCoverageItem); AI text is advisory only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_coverage_analysis', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_coverage_analysis requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createAnalysisTx } = await import('../coverage-analysis/coverage-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id, provenanceLinkId } = await createAnalysisTx(client, ctx.organizationId, ctx.userId, {
+      title,
+      studyId: typeof input.study_id === 'number' ? input.study_id : null,
+      irbSubmissionId: typeof input.irb_submission_id === 'number' ? input.irb_submission_id : null,
+      nctId: typeof input.nct_id === 'string' ? input.nct_id : null,
+      sponsor: typeof input.sponsor === 'string' ? input.sponsor : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `coverage-analysis:${id}`, reason: fcoiReason(input, 'Medicare coverage analysis opened via AnA'),
+      payload: { title, provenanceLinkId }, domain: 'coverage', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, provenanceLinkId, message: `Opened Medicare coverage analysis "${title}" (id ${id}). Set the qualifying-trial determination, then add and classify items.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_coverage_analysis failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('set_coverage_qualifying_determination', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_coverage_qualifying_determination requires tenant + user context.' });
+  const analysisId = typeof input.analysis_id === 'number' ? input.analysis_id : NaN;
+  if (!Number.isInteger(analysisId)) return JSON.stringify({ error: 'analysis_id is required.' });
+  if (typeof input.has_therapeutic_intent !== 'boolean' || typeof input.enrolls_diagnosis_treatment !== 'boolean' || typeof input.has_medicare_benefit_category !== 'boolean') {
+    return JSON.stringify({ error: 'has_therapeutic_intent, enrolls_diagnosis_treatment, and has_medicare_benefit_category (booleans) are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { setQualifyingDeterminationTx } = await import('../coverage-analysis/coverage-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const result = await setQualifyingDeterminationTx(client, ctx.organizationId, analysisId, {
+      hasTherapeuticIntent: input.has_therapeutic_intent,
+      enrollsDiagnosisTreatment: input.enrolls_diagnosis_treatment,
+      hasMedicareBenefitCategory: input.has_medicare_benefit_category,
+      deemedQualifying: typeof input.deemed_qualifying === 'boolean' ? input.deemed_qualifying : undefined,
+      desirableCharacteristicsCount: typeof input.desirable_characteristics_count === 'number' ? input.desirable_characteristics_count : undefined,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `coverage-analysis:${analysisId}`, reason: fcoiReason(input, 'Qualifying-trial determination set via AnA'),
+      payload: { determination: result.determination }, domain: 'coverage', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, analysisId, determination: result.determination, deemed: result.deemed, unmetCriteria: result.unmetCriteria, rationale: result.rationale });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `set_coverage_qualifying_determination failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_coverage_item', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_coverage_item requires tenant + user context.' });
+  const analysisId = typeof input.analysis_id === 'number' ? input.analysis_id : NaN;
+  const itemDescription = typeof input.item_description === 'string' ? input.item_description.trim() : '';
+  if (!Number.isInteger(analysisId) || !itemDescription) return JSON.stringify({ error: 'analysis_id and item_description are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addItemTx } = await import('../coverage-analysis/coverage-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await addItemTx(client, ctx.organizationId, ctx.userId, analysisId, {
+      itemDescription,
+      category: typeof input.category === 'string' ? (input.category as any) : null,
+      cptHcpcsCode: typeof input.cpt_hcpcs_code === 'string' ? input.cpt_hcpcs_code : null,
+      icd10Code: typeof input.icd10_code === 'string' ? input.icd10_code : null,
+      isStandardOfCare: typeof input.is_standard_of_care === 'boolean' ? input.is_standard_of_care : false,
+      sponsorPaidInBudget: typeof input.sponsor_paid_in_budget === 'boolean' ? input.sponsor_paid_in_budget : false,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `coverage-analysis:${analysisId}`, reason: fcoiReason(input, 'Coverage item added via AnA'),
+      payload: { itemId: id }, domain: 'coverage', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, itemId: id, message: `Added coverage item "${itemDescription}" (id ${id}). Classify it with classify_coverage_item.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_coverage_item failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('classify_coverage_item', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'classify_coverage_item requires tenant + user context.' });
+  const itemId = typeof input.item_id === 'number' ? input.item_id : NaN;
+  if (!Number.isInteger(itemId) || typeof input.is_standard_of_care !== 'boolean' || typeof input.sponsor_paid_in_budget !== 'boolean') {
+    return JSON.stringify({ error: 'item_id, is_standard_of_care, and sponsor_paid_in_budget are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { classifyItemTx } = await import('../coverage-analysis/coverage-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const result = await classifyItemTx(client, ctx.organizationId, itemId, {
+      isStandardOfCare: input.is_standard_of_care,
+      sponsorPaidInBudget: input.sponsor_paid_in_budget,
+      ncdCitation: typeof input.ncd_citation === 'string' ? input.ncd_citation : null,
+      lcdCitation: typeof input.lcd_citation === 'string' ? input.lcd_citation : null,
+      coverageDocUrl: typeof input.coverage_doc_url === 'string' ? input.coverage_doc_url : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `coverage-item:${itemId}`, reason: fcoiReason(input, 'Coverage item classified via AnA'),
+      payload: { classification: result.classification, billingDesignation: result.billingDesignation }, domain: 'coverage', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, itemId, classification: result.classification, billingDesignation: result.billingDesignation, citation: result.citation, rationale: result.rationale });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `classify_coverage_item failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_coverage_analysis', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_coverage_analysis requires tenant context.' });
+  const analysisId = typeof input.analysis_id === 'number' ? input.analysis_id : NaN;
+  if (!Number.isInteger(analysisId)) return JSON.stringify({ error: 'analysis_id is required.' });
+  const { getBillingGrid } = await import('../coverage-analysis/coverage-service.js');
+  try {
+    const grid = await getBillingGrid(ctx.organizationId, analysisId);
+    return JSON.stringify({
+      ok: true,
+      readyToFinalize: grid.readiness.readyToFinalize,
+      blockers: grid.readiness.blockers,
+      warnings: grid.readiness.warnings,
+      summary: grid.summary,
+      itemCount: grid.readiness.itemCount,
+      message: grid.readiness.readyToFinalize
+        ? 'Coverage analysis passes the deterministic readiness gate — ready to finalize the billing grid.'
+        : `Not ready to finalize: ${grid.readiness.blockers.join(' ')}`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_coverage_analysis failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // eGrants (C2C-14). Conversational building shares the governed/audited path
 // (recordGovernedAction, surface 'ana'). Awards thread proposal → award provenance.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -11569,6 +12837,102 @@ registerToolHandler('project_events', async (input: Record<string, unknown>) =>
   )
 );
 
+registerToolHandler('compute_assurance', async (input: Record<string, unknown>) =>
+  runStatsTool(
+    'compute_assurance',
+    async () => {
+      const { assuranceTwoSampleMeans, assuranceMonteCarloTwoSampleMeans } = await import(
+        '../stats/assurance.js'
+      );
+      return input.method === 'monte_carlo'
+        ? assuranceMonteCarloTwoSampleMeans(input as any)
+        : assuranceTwoSampleMeans(input as any);
+    },
+    // Quadrature is closed-form deterministic; the MC path is seeded/reproducible.
+    input.method === 'monte_carlo' ? 'seeded-monte-carlo' : 'deterministic'
+  )
+);
+
+registerToolHandler('run_monte_carlo_simulation', async (input: Record<string, unknown>) =>
+  runStatsTool(
+    'run_monte_carlo_simulation',
+    async () => {
+      const { diagnosticAccuracyMonteCarlo, timeToMarketMonteCarlo, reviewOutcomeMonteCarlo } =
+        await import('../stats/monte-carlo.js');
+      const mode = input.mode as string;
+      if (mode === 'diagnostic_accuracy') {
+        return diagnosticAccuracyMonteCarlo(input as any);
+      }
+      if (mode === 'time_to_market') {
+        return timeToMarketMonteCarlo(input as any);
+      }
+      if (mode === 'review_outcome') {
+        return reviewOutcomeMonteCarlo(input as any);
+      }
+      throw new Error("mode must be 'diagnostic_accuracy', 'time_to_market', or 'review_outcome'");
+    },
+    'seeded-monte-carlo'
+  )
+);
+
+registerToolHandler('assess_ivd_analytical_extensions', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_ivd_analytical_extensions', async () => {
+    const mod = await import('../stats/analytical-performance-extensions.js');
+    const mode = input.mode as string;
+    if (mode === 'real_time_stability') {
+      return mod.assessRealTimeStability(input as any);
+    }
+    if (mode === 'accelerated_stability') {
+      return mod.assessAcceleratedStability(input as any);
+    }
+    if (mode === 'carryover') {
+      return mod.assessCarryover(input as any);
+    }
+    if (mode === 'hook_effect') {
+      return mod.assessHookEffect(input as any);
+    }
+    if (mode === 'recovery') {
+      return mod.assessRecovery(input as any);
+    }
+    if (mode === 'cutoff') {
+      return mod.determineCutoff(input.observations as any);
+    }
+    throw new Error(
+      "mode must be 'real_time_stability', 'accelerated_stability', 'carryover', 'hook_effect', 'recovery', or 'cutoff'"
+    );
+  })
+);
+
+// Regulatory Currency Engine (Lane A) — curated, freshness-stamped registry of
+// DATED regulatory facts so AnA never advises on a VOID/superseded rule from its
+// static knowledge. Pure registry lookups (no LLM, no network); reuse the
+// deterministic stats envelope. See regulatoryCurrencyTools.ts + the registry at
+// ../regulatory-currency/currency-registry.ts.
+registerToolHandler('check_regulatory_currency', async (input: Record<string, unknown>) =>
+  runStatsTool('check_regulatory_currency', async () => {
+    const { findFacts } = await import('../regulatory-currency/currency-registry.js');
+    const facts = findFacts({
+      topic: input.topic as string | undefined,
+      jurisdiction: input.jurisdiction as any,
+      segment: input.segment as any,
+    });
+    return { matchCount: facts.length, facts };
+  })
+);
+
+registerToolHandler('guidance_change_radar', async (input: Record<string, unknown>) =>
+  runStatsTool('guidance_change_radar', async () => {
+    const { changeRadar } = await import('../regulatory-currency/currency-registry.js');
+    const drifts = changeRadar({
+      topics: input.topics as string[] | undefined,
+      jurisdictions: input.jurisdictions as any,
+      draftedOn: input.draftedOn as string | undefined,
+    });
+    const highestSeverity = drifts.length > 0 ? drifts[0].severity : null;
+    return { driftCount: drifts.length, highestSeverity, drifts };
+  })
+);
+
 // Submission intelligence (Tier 1.3/1.4) — precedent benchmarking + package
 // completeness. Both engines are pure/structured-input; thin pass-throughs.
 registerToolHandler('benchmark_precedent_trials', async (input: Record<string, unknown>) =>
@@ -11733,6 +13097,60 @@ registerToolHandler('code_drug', async (input: Record<string, unknown>) => {
       message: aborted ? 'RxNav request timed out. Do not fabricate a code; retry or code manually.' : `RxNav lookup failed: ${err?.message || 'unknown error'}.`,
     });
   }
+});
+
+// License-gated MedDRA coding. MedDRA is a proprietary dictionary that is NOT
+// shipped: with no licensed dictionary configured this fails closed with
+// status license_required (never a fabricated PT). With a dictionary loaded the
+// match is a deterministic query over governed data (no LLM, no network).
+registerToolHandler('code_meddra', async (input: Record<string, unknown>) => {
+  const term = typeof input.term === 'string' ? input.term.trim() : '';
+  if (!term) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'term is required (the verbatim adverse-event/condition to code).' });
+  }
+  const context = typeof input.context === 'string' ? input.context : undefined;
+  const { getMedicalCodingService } = await import('../medical-coding/medical-coding-service.js');
+  const result = getMedicalCodingService().codeMeddra(term, { context });
+  if (result.status === 'license_required') {
+    return JSON.stringify({
+      ...result,
+      instruction: 'State plainly that the licensed MedDRA dictionary is not configured. Do NOT guess a code. Suggest ICD-10 tools for open condition coding if appropriate.',
+    });
+  }
+  if (result.status === 'no_match') {
+    return JSON.stringify({ ...result, instruction: 'Report that no MedDRA PT matched; ask for a refined verbatim term. Never fabricate a code.' });
+  }
+  return JSON.stringify({
+    ...result,
+    engine: 'deterministic',
+    instruction: 'Report the ptCode and ptName verbatim. Surface the confidence/matchType; a substring match should be human-verified.',
+  });
+});
+
+// License-gated WHODrug coding. WHODrug is a proprietary dictionary that is NOT
+// shipped: fail closed with license_required when unconfigured; deterministic
+// governed-data lookup when a licensed dictionary is loaded.
+registerToolHandler('code_whodrug', async (input: Record<string, unknown>) => {
+  const drugName = typeof input.drugName === 'string' ? input.drugName.trim() : '';
+  if (!drugName) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'drugName is required (the drug/substance free text to code).' });
+  }
+  const { getMedicalCodingService } = await import('../medical-coding/medical-coding-service.js');
+  const result = getMedicalCodingService().codeWhodrug(drugName);
+  if (result.status === 'license_required') {
+    return JSON.stringify({
+      ...result,
+      instruction: 'State plainly that the licensed WHODrug dictionary is not configured. Do NOT guess a code. Suggest code_drug (RxNorm) for open US drug coding if appropriate.',
+    });
+  }
+  if (result.status === 'no_match') {
+    return JSON.stringify({ ...result, instruction: 'Report that no WHODrug ingredient matched; ask for a refined drug name. Never fabricate a code.' });
+  }
+  return JSON.stringify({
+    ...result,
+    engine: 'deterministic',
+    instruction: 'Report the ingredient and atcCode verbatim. Surface the confidence/matchType; a substring match should be human-verified.',
+  });
 });
 
 // DailyMed (NLM) published-label lookup — open documented SPL repository.
@@ -12027,6 +13445,21 @@ registerToolHandler('model_cost_effectiveness', async (input: Record<string, unk
   }
 });
 
+// ── HEOR market-access (comparator mix; server/services/heor/market-access-models) ──
+registerToolHandler('model_budget_impact_mix', async (input: Record<string, unknown>) =>
+  runStatsTool('model_budget_impact_mix', async () => {
+    const { budgetImpactWithMix } = await import('../heor/market-access-models.js');
+    return budgetImpactWithMix(input as any);
+  })
+);
+
+registerToolHandler('model_cost_effectiveness_nmb', async (input: Record<string, unknown>) =>
+  runStatsTool('model_cost_effectiveness_nmb', async () => {
+    const { costEffectivenessNmb } = await import('../heor/market-access-models.js');
+    return costEffectivenessNmb(input as any);
+  })
+);
+
 // ── SPL labeling (server/services/labeling/spl-generator) — deterministic. ──
 registerToolHandler('generate_spl', async (input: Record<string, unknown>) => {
   try {
@@ -12050,19 +13483,19 @@ registerToolHandler('validate_spl', async (input: Record<string, unknown>) => {
   }
 });
 
-// ── CDISC define.xml / conformance (server/services/cdisc) — deterministic. ──
-registerToolHandler('generate_define_xml', async (input: Record<string, unknown>) => {
-  try {
-    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
-    const { generateDefineXml } = await import('../cdisc/define-xml.js');
-    const result = generateDefineXml(input.spec as any);
-    return JSON.stringify({ status: 'generated', engine: 'deterministic', xml: result.xml, conformance: result.conformance, instruction: 'Surface conformance errors before treating the define.xml as final. Structural subset, not the full validator of record.' });
-  } catch (err: any) {
-    const m = err?.message || 'unknown error';
-    if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
-    return JSON.stringify({ error: `generate_define_xml failed: ${m}` });
-  }
-});
+// ── CDISC validate_cdisc_dataset — dispatches per standard to conformance service. ──
+registerToolHandler('validate_cdisc_dataset', async (input: Record<string, unknown>) =>
+  runStatsTool('validate_cdisc_dataset', async () => {
+    const std = (typeof input.standard === 'string' ? input.standard : '').toUpperCase();
+    const datasets = Array.isArray(input.datasets) ? input.datasets : [];
+    if (std === 'ADAM' && datasets.length > 0) {
+      const { validateAdamDataset } = await import('../cdisc/cdisc-conformance-service.js');
+      return datasets.map((ds: any) => validateAdamDataset({ dataset: ds.name, variables: ds.variables || [] }));
+    }
+    const { validateSdtmDataset } = await import('../cdisc/cdisc-conformance-service.js');
+    return datasets.map((ds: any) => validateSdtmDataset({ domain: ds.name, variables: ds.variables || [] }));
+  }, 'deterministic')
+);
 
 registerToolHandler('check_dataset_conformance', async (input: Record<string, unknown>) => {
   try {
@@ -12211,3 +13644,345 @@ registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, un
     return JSON.stringify({ error: `reconcile_dossier_numbers failed: ${message}` });
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Guidance Ingestion — live FDA/ICH guidance fetching + freshness checks.
+// See guidanceIngestionTools.ts + ../regulatory-currency/guidance-ingestion-service.ts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('fetch_fda_guidance_list', async (input: Record<string, unknown>) =>
+  runStatsTool('fetch_fda_guidance_list', async () => {
+    const { fetchFdaGuidanceList } = await import('../regulatory-currency/guidance-ingestion-service.js');
+    return fetchFdaGuidanceList({
+      topic: input.topic as string | undefined,
+      year: input.year as number | undefined,
+      status: input.status as 'final' | 'draft' | 'withdrawn' | undefined,
+      limit: input.limit as number | undefined,
+    });
+  })
+);
+
+registerToolHandler('fetch_ich_guideline_updates', async (input: Record<string, unknown>) =>
+  runStatsTool('fetch_ich_guideline_updates', async () => {
+    const { fetchIchGuidelineUpdates } = await import('../regulatory-currency/guidance-ingestion-service.js');
+    return fetchIchGuidelineUpdates({
+      category: input.category as 'Q' | 'S' | 'E' | 'M' | undefined,
+      since: input.since as string | undefined,
+    });
+  })
+);
+
+registerToolHandler('check_guidance_freshness', async (input: Record<string, unknown>) =>
+  runStatsTool('check_guidance_freshness', async () => {
+    const { checkGuidanceFreshness } = await import('../regulatory-currency/guidance-ingestion-service.js');
+    if (!input.citedGuidances || !Array.isArray(input.citedGuidances)) {
+      throw new Error('citedGuidances is required');
+    }
+    return checkGuidanceFreshness({
+      citedGuidances: input.citedGuidances as Array<{ title: string; citedDate?: string; jurisdiction?: string }>,
+    });
+  })
+);
+
+// ── SPL generation & PSUR/DSUR safety-report structure ──────────────────────
+
+registerToolHandler('generate_spl_xml', async (input: Record<string, unknown>) =>
+  runStatsTool('generate_spl_xml', async () => {
+    const { generateSplXml } = await import('../labeling/spl-generation-service.js');
+    return generateSplXml(input as any);
+  })
+);
+
+registerToolHandler('validate_spl_structure', async (input: Record<string, unknown>) =>
+  runStatsTool('validate_spl_structure', async () => {
+    const { validateSplStructure } = await import('../labeling/spl-generation-service.js');
+    return validateSplStructure(input.xml as string);
+  })
+);
+
+registerToolHandler('generate_psur_structure', async (input: Record<string, unknown>) =>
+  runStatsTool('generate_psur_structure', async () => {
+    const { generatePsurStructure } = await import('../safety-reports/psur-dsur-service.js');
+    return generatePsurStructure(input as any);
+  })
+);
+
+registerToolHandler('generate_dsur_structure', async (input: Record<string, unknown>) =>
+  runStatsTool('generate_dsur_structure', async () => {
+    const { generateDsurStructure } = await import('../safety-reports/psur-dsur-service.js');
+    return generateDsurStructure(input as any);
+  })
+);
+
+// ── CDISC conformance service (server/services/cdisc/cdisc-conformance-service) — deterministic. ──
+
+registerToolHandler('validate_sdtm_dataset', async (input: Record<string, unknown>) =>
+  runStatsTool('validate_sdtm_dataset', async () => {
+    const { validateSdtmDataset } = await import('../cdisc/cdisc-conformance-service.js');
+    return validateSdtmDataset(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('validate_adam_dataset', async (input: Record<string, unknown>) =>
+  runStatsTool('validate_adam_dataset', async () => {
+    const { validateAdamDataset } = await import('../cdisc/cdisc-conformance-service.js');
+    return validateAdamDataset(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('generate_define_xml', async (input: Record<string, unknown>) =>
+  runStatsTool('generate_define_xml', async () => {
+    const { generateDefineXml } = await import('../cdisc/cdisc-conformance-service.js');
+    return generateDefineXml(input as any);
+  }, 'deterministic')
+);
+
+// ── Bioequivalence & generic drug intelligence (server/services/bioequivalence/bioequivalence-knowledge) — deterministic. ──
+
+registerToolHandler('classify_bcs', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_bcs', async () => {
+    const { classifyBCS } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return classifyBCS(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_be_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_be_study', async () => {
+    const { designBEStudy } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return designBEStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_dissolution_similarity', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_dissolution_similarity', async () => {
+    const { assessDissolutionSimilarity } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return assessDissolutionSimilarity(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_biowaiver', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_biowaiver', async () => {
+    const { assessBiowaiver } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return assessBiowaiver(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('guidance_for_anda', async (input: Record<string, unknown>) =>
+  runStatsTool('guidance_for_anda', async () => {
+    const { guidanceForANDA } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return guidanceForANDA(input as any);
+  }, 'deterministic')
+);
+
+// ── Pharmacometrics intelligence (server/services/pharmacometrics/pharmacometrics-knowledge) — deterministic. ──
+
+registerToolHandler('design_popk_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_popk_study', async () => {
+    const { designPopPKStudy } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return designPopPKStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('evaluate_pbpk_model', async (input: Record<string, unknown>) =>
+  runStatsTool('evaluate_pbpk_model', async () => {
+    const { evaluatePBPKModel } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return evaluatePBPKModel(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('analyze_exposure_response', async (input: Record<string, unknown>) =>
+  runStatsTool('analyze_exposure_response', async () => {
+    const { analyzeExposureResponse } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return analyzeExposureResponse(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('advise_midd', async (input: Record<string, unknown>) =>
+  runStatsTool('advise_midd', async () => {
+    const { adviseMIDD } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return adviseMIDD(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_dose', async (input: Record<string, unknown>) =>
+  runStatsTool('select_dose', async () => {
+    const { selectDose } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return selectDose(input as any);
+  }, 'deterministic')
+);
+
+// ── Preclinical toxicology intelligence (server/services/toxicology/toxicology-knowledge) — deterministic. ──
+
+registerToolHandler('select_tox_species', async (input: Record<string, unknown>) =>
+  runStatsTool('select_tox_species', async () => {
+    const { selectSpecies } = await import('../toxicology/toxicology-knowledge.js');
+    return selectSpecies(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_repeat_dose_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_repeat_dose_study', async () => {
+    const { designRepeatDoseStudy } = await import('../toxicology/toxicology-knowledge.js');
+    return designRepeatDoseStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('calculate_safety_margin', async (input: Record<string, unknown>) =>
+  runStatsTool('calculate_safety_margin', async () => {
+    const { calculateSafetyMargin } = await import('../toxicology/toxicology-knowledge.js');
+    return calculateSafetyMargin(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_genotox_battery', async (input: Record<string, unknown>) =>
+  runStatsTool('design_genotox_battery', async () => {
+    const { designGenotoxBattery } = await import('../toxicology/toxicology-knowledge.js');
+    return designGenotoxBattery(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_carcinogenicity_need', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_carcinogenicity_need', async () => {
+    const { assessCarcinogenicityNeed } = await import('../toxicology/toxicology-knowledge.js');
+    return assessCarcinogenicityNeed(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_repro_tox_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_repro_tox_study', async () => {
+    const { designReproToxStudy } = await import('../toxicology/toxicology-knowledge.js');
+    return designReproToxStudy(input as any);
+  }, 'deterministic')
+);
+
+// ── Pediatric development intelligence (server/services/pediatric/pediatric-knowledge) — deterministic. ──
+
+registerToolHandler('classify_pediatric_age', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_pediatric_age', async () => {
+    const { classifyPediatricAge } = await import('../pediatric/pediatric-knowledge.js');
+    return classifyPediatricAge(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_pediatric_investigation', async (input: Record<string, unknown>) =>
+  runStatsTool('design_pediatric_investigation', async () => {
+    const { designPIP } = await import('../pediatric/pediatric-knowledge.js');
+    return designPIP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_pediatric_extrapolation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_pediatric_extrapolation', async () => {
+    const { assessExtrapolation } = await import('../pediatric/pediatric-knowledge.js');
+    return assessExtrapolation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_pediatric_formulation', async (input: Record<string, unknown>) =>
+  runStatsTool('select_pediatric_formulation', async () => {
+    const { selectFormulation } = await import('../pediatric/pediatric-knowledge.js');
+    return selectFormulation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_pediatric_dose', async (input: Record<string, unknown>) =>
+  runStatsTool('select_pediatric_dose', async () => {
+    const { selectPediatricDose } = await import('../pediatric/pediatric-knowledge.js');
+    return selectPediatricDose(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_pediatric_requirements', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_pediatric_requirements', async () => {
+    const { assessPediatricRequirements } = await import('../pediatric/pediatric-knowledge.js');
+    return assessPediatricRequirements(input as any);
+  }, 'deterministic')
+);
+
+// ── Advanced therapy (ATMP/CGT) intelligence (server/services/advanced-therapy/atmp-knowledge) — deterministic. ──
+
+registerToolHandler('classify_atmp', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_atmp', async () => {
+    const { classifyATMP } = await import('../advanced-therapy/atmp-knowledge.js');
+    return classifyATMP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_gene_therapy_requirements', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_gene_therapy_requirements', async () => {
+    const { assessGeneTherapyRequirements } = await import('../advanced-therapy/atmp-knowledge.js');
+    return assessGeneTherapyRequirements(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_cell_therapy_manufacturing', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_cell_therapy_manufacturing', async () => {
+    const { assessCellTherapyManufacturing } = await import('../advanced-therapy/atmp-knowledge.js');
+    return assessCellTherapyManufacturing(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_cart_requirements', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_cart_requirements', async () => {
+    const { assessCARTRequirements } = await import('../advanced-therapy/atmp-knowledge.js');
+    return assessCARTRequirements(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_atmp_pathway', async (input: Record<string, unknown>) =>
+  runStatsTool('select_atmp_pathway', async () => {
+    const { selectATMPPathway } = await import('../advanced-therapy/atmp-knowledge.js');
+    return selectATMPPathway(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_atmp_comparability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_atmp_comparability', async () => {
+    const { assessATMPComparability } = await import('../advanced-therapy/atmp-knowledge.js');
+    return assessATMPComparability(input as any);
+  }, 'deterministic')
+);
+
+// ── Real-world evidence methodology intelligence (server/services/rwe/rwe-methodology-knowledge) — deterministic. ──
+
+registerToolHandler('design_target_trial', async (input: Record<string, unknown>) =>
+  runStatsTool('design_target_trial', async () => {
+    const { designTargetTrial } = await import('../rwe/rwe-methodology-knowledge.js');
+    return designTargetTrial(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('score_rwe_data_source', async (input: Record<string, unknown>) =>
+  runStatsTool('score_rwe_data_source', async () => {
+    const { scoreDataSource } = await import('../rwe/rwe-methodology-knowledge.js');
+    return scoreDataSource(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_propensity_analysis', async (input: Record<string, unknown>) =>
+  runStatsTool('design_propensity_analysis', async () => {
+    const { designPropensityAnalysis } = await import('../rwe/rwe-methodology-knowledge.js');
+    return designPropensityAnalysis(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_rwe_design', async (input: Record<string, unknown>) =>
+  runStatsTool('select_rwe_design', async () => {
+    const { selectRWEDesign } = await import('../rwe/rwe-methodology-knowledge.js');
+    return selectRWEDesign(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_rwe_bias_risk', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_rwe_bias_risk', async () => {
+    const { assessBiasRisk } = await import('../rwe/rwe-methodology-knowledge.js');
+    return assessBiasRisk(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_rwe_regulatory_acceptability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_rwe_regulatory_acceptability', async () => {
+    const { assessRegulatoryAcceptability } = await import('../rwe/rwe-methodology-knowledge.js');
+    return assessRegulatoryAcceptability(input as any);
+  }, 'deterministic')
+);

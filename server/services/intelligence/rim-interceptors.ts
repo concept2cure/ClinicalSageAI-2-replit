@@ -19,6 +19,59 @@ import {
   integrateSignal,
   type RIMIntegrationContext,
 } from './rim-integration.js';
+import {
+  recordPattern,
+  type RimSignalType,
+} from './rim-pattern-store.js';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 0. LEARNED-PATTERN INTERCEPTOR (Lane E — RIM learning loop)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface LearnedPatternInterceptInput {
+  organizationId: number;
+  domain: string;
+  signalType: RimSignalType;
+  observation: string;
+  /** Optional seed confidence (0–100) for a brand-new pattern. */
+  confidence?: number;
+  /** Optional ISO 8601 observation timestamp (deterministic; defaults to now). */
+  observedAt?: string;
+}
+
+/**
+ * Persist a LEARNED RIM pattern into the durable, tenant-scoped pattern store.
+ *
+ * This is the write half of the RIM learning loop's first increment: the existing
+ * interceptors emit volatile signals; this records the durable, aggregated pattern
+ * that the deterministic read path (`recall_rim_patterns`) later surfaces.
+ *
+ * Additive and non-breaking — it does NOT modify the existing interceptors and is
+ * fire-and-forget: invalid provenance is logged and dropped, never thrown into the
+ * primary pipeline. The store call itself is pure/deterministic (no LLM, no network).
+ */
+export function interceptLearnedPattern(input: LearnedPatternInterceptInput): void {
+  try {
+    const { organizationId, domain, signalType, observation, confidence, observedAt } = input;
+
+    if (!Number.isInteger(organizationId) || organizationId <= 0) {
+      console.warn('[RIM] learned-pattern interceptor skipped — invalid organization', {
+        organizationId, domain, signalType,
+      });
+      return;
+    }
+    if (typeof observation !== 'string' || observation.trim().length === 0) {
+      console.warn('[RIM] learned-pattern interceptor skipped — empty observation', {
+        organizationId, domain, signalType,
+      });
+      return;
+    }
+
+    recordPattern({ orgId: organizationId, domain, signalType, observation, confidence, observedAt });
+  } catch (err) {
+    console.warn('[RIM] Learned-pattern interceptor failed (non-blocking):', err instanceof Error ? err.message : err);
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. CHAT RESPONSE INTERCEPTOR

@@ -88,7 +88,86 @@ export class GrantsGovConnector implements DataConnector {
     };
   }
 
+  /**
+   * Full opportunity detail, hydrated into the normalized shape the intelligent
+   * matcher consumes: synopsis, agency, award ceiling, eligibility (applicant
+   * types), CFDA numbers, funding instrument, and close date. Throws on network/
+   * HTTP error so callers can degrade gracefully.
+   */
+  async fetchOpportunityDetail(resourceId: string): Promise<HydratedOpportunity> {
+    const res = await fetch(`${this.baseUrl}/fetchOpportunity`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opportunityId: resourceId }),
+    });
+    if (!res.ok) throw new Error(`Grants.gov opportunity ${resourceId} not found`);
+    const json = await res.json();
+    return parseOpportunityDetail(resourceId, json?.data ?? {});
+  }
+
   async authenticate(_credentials: ConnectorCredentials): Promise<void> {
     // Public API — no auth required.
   }
+}
+
+/** Normalized opportunity detail (matches MatchableOpportunity in opportunity-matching.ts). */
+export interface HydratedOpportunity {
+  externalId: string;
+  title: string;
+  opportunityNumber: string | null;
+  agency: string | null;
+  agencyCode: string | null;
+  closeDate: string | null;
+  synopsis: string | null;
+  awardCeiling: number | null;
+  awardFloor: number | null;
+  eligibilities: string[];
+  cfdaNumbers: string[];
+  fundingInstrument: string | null;
+}
+
+function asArray(v: any): any[] {
+  if (Array.isArray(v)) return v;
+  if (v == null) return [];
+  return [v];
+}
+function pickText(...vals: any[]): string | null {
+  for (const v of vals) if (typeof v === 'string' && v.trim()) return v.trim();
+  return null;
+}
+function pickNumber(...vals: any[]): number | null {
+  for (const v of vals) {
+    const n = typeof v === 'string' ? Number(v.replace(/[^0-9.]/g, '')) : Number(v);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return null;
+}
+
+/**
+ * Defensively parse a Grants.gov fetchOpportunity `data` envelope into the
+ * normalized shape. The API's field names vary across synopsis/forecast records,
+ * so each field is resolved from several candidate paths. Pure.
+ */
+export function parseOpportunityDetail(resourceId: string, d: any): HydratedOpportunity {
+  const syn = d?.synopsis ?? d?.forecast ?? {};
+  const eligibilities = asArray(d?.applicantTypes ?? syn?.applicantTypes)
+    .map((a: any) => (typeof a === 'string' ? a : a?.description ?? a?.applicantType ?? ''))
+    .filter((s: string) => s && s.trim());
+  const cfdaNumbers = asArray(d?.cfdas ?? d?.opportunityCategoryCfdas ?? syn?.cfdas)
+    .map((c: any) => (typeof c === 'string' ? c : c?.cfdaNumber ?? c?.number ?? ''))
+    .filter((s: string) => s && s.trim());
+  return {
+    externalId: resourceId,
+    title: pickText(d?.opportunityTitle, syn?.opportunityTitle, d?.title),
+    opportunityNumber: pickText(d?.opportunityNumber, syn?.opportunityNumber, d?.number),
+    agency: pickText(d?.agencyName, syn?.agencyName, d?.agency),
+    agencyCode: pickText(d?.agencyCode, syn?.agencyCode),
+    closeDate: pickText(syn?.responseDate, syn?.applicationsDueDate, d?.closeDate, syn?.closeDate),
+    synopsis: pickText(syn?.synopsisDesc, syn?.description, d?.description),
+    awardCeiling: pickNumber(syn?.awardCeiling, d?.awardCeiling),
+    awardFloor: pickNumber(syn?.awardFloor, d?.awardFloor),
+    eligibilities,
+    cfdaNumbers,
+    fundingInstrument: pickText(asArray(syn?.fundingInstruments)[0]?.description, asArray(d?.fundingInstruments)[0]?.description),
+  } as HydratedOpportunity;
 }

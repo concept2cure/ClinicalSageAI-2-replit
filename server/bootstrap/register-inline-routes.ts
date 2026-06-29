@@ -439,6 +439,132 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount eGrants routes:', error);
   }
 
+  // Medicare Coverage Analysis — clinical-research billing compliance (NCD 310.1; 42 CFR 405.211).
+  try {
+    const coverageModule = await import('../routes/coverage-analysis');
+    app.use('/api/coverage-analysis', authMiddleware, coverageModule.default);
+    console.info('✅ Coverage Analysis routes mounted (/api/coverage-analysis)');
+  } catch (error) {
+    console.error('❌ Failed to mount Coverage Analysis routes:', error);
+  }
+
+  // Research committee governance — IACUC/IRB/IBC membership, meetings, polling (PHS Policy; 45 CFR 46.107-108).
+  try {
+    const committeesModule = await import('../routes/committees');
+    app.use('/api/committees', authMiddleware, committeesModule.default);
+    console.info('✅ Research committee routes mounted (/api/committees)');
+  } catch (error) {
+    console.error('❌ Failed to mount Research committee routes:', error);
+  }
+
+  // Intelligent grant finder — funding profile + explainable Grants.gov opportunity matching.
+  try {
+    const finderModule = await import('../routes/grant-finder');
+    app.use('/api/grant-finder', authMiddleware, finderModule.default);
+    console.info('✅ Grant finder routes mounted (/api/grant-finder)');
+  } catch (error) {
+    console.error('❌ Failed to mount Grant finder routes:', error);
+  }
+
+  // CITI training full integration — completion-record import, training matrix, expiry reporting.
+  try {
+    const citiModule = await import('../routes/citi-training');
+    app.use('/api/citi-training', authMiddleware, citiModule.default);
+    console.info('✅ CITI training routes mounted (/api/citi-training)');
+  } catch (error) {
+    console.error('❌ Failed to mount CITI training routes:', error);
+  }
+
+  // Protocol portfolio analytics — expiration/continuing-review across IACUC + IRB.
+  try {
+    const portfolioModule = await import('../routes/protocol-portfolio');
+    app.use('/api/protocol-portfolio', authMiddleware, portfolioModule.default);
+    console.info('✅ Protocol portfolio routes mounted (/api/protocol-portfolio)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol portfolio routes:', error);
+  }
+
+  // Protocol development — structured protocol authoring (ICH M11 / E6, IACUC 3Rs, 45 CFR 46.111).
+  try {
+    const protocolDevModule = await import('../routes/protocol-development');
+    app.use('/api/protocol-development', authMiddleware, protocolDevModule.default);
+    console.info('✅ Protocol development routes mounted (/api/protocol-development)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol development routes:', error);
+  }
+
+  // Protocol risk register — likelihood × impact risk assessment (ICH E6(R2) §5.0 / ISO 14971).
+  try {
+    const protocolRisksModule = await import('../routes/protocol-risks');
+    app.use('/api/protocol-risks', authMiddleware, protocolRisksModule.default);
+    console.info('✅ Protocol risk register routes mounted (/api/protocol-risks)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol risk register routes:', error);
+  }
+
+  // Protocol amendments authoring (impact classification, reconsent triggers; 45 CFR 46.109 / 21 CFR 56.110).
+  try {
+    const protocolAmendmentsModule = await import('../routes/protocol-amendments');
+    app.use('/api/protocol-amendments', authMiddleware, protocolAmendmentsModule.default);
+    console.info('✅ Protocol amendments routes mounted (/api/protocol-amendments)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol amendments routes:', error);
+  }
+
+  // Protocol deviations & CAPA (severity, reportability, corrective actions; 45 CFR 46.108 / ICH E6).
+  try {
+    const protocolDeviationsModule = await import('../routes/protocol-deviations');
+    app.use('/api/protocol-deviations', authMiddleware, protocolDeviationsModule.default);
+    console.info('✅ Protocol deviations routes mounted (/api/protocol-deviations)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol deviations routes:', error);
+  }
+
+  // Protocol review & comment workflow (reviewer assignments, dispositions, consensus).
+  try {
+    const protocolReviewsModule = await import('../routes/protocol-reviews');
+    app.use('/api/protocol-reviews', authMiddleware, protocolReviewsModule.default);
+    console.info('✅ Protocol review routes mounted (/api/protocol-reviews)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol review routes:', error);
+  }
+
+  // Informed consent form builder (45 CFR 46.116 required-elements completeness gate).
+  try {
+    const protocolConsentModule = await import('../routes/protocol-consent');
+    app.use('/api/protocol-consent', authMiddleware, protocolConsentModule.default);
+    console.info('✅ Protocol consent routes mounted (/api/protocol-consent)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol consent routes:', error);
+  }
+
+  // Protocol templates library + clone-to-new-document.
+  try {
+    const protocolTemplatesModule = await import('../routes/protocol-templates');
+    app.use('/api/protocol-templates', authMiddleware, protocolTemplatesModule.default);
+    console.info('✅ Protocol templates routes mounted (/api/protocol-templates)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol templates routes:', error);
+  }
+
+  // Protocol milestones / timeline.
+  try {
+    const protocolMilestonesModule = await import('../routes/protocol-milestones');
+    app.use('/api/protocol-milestones', authMiddleware, protocolMilestonesModule.default);
+    console.info('✅ Protocol milestones routes mounted (/api/protocol-milestones)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol milestones routes:', error);
+  }
+
+  // Protocol export + ClinicalTrials.gov registration draft (FDAAA 801).
+  try {
+    const protocolExportModule = await import('../routes/protocol-export');
+    app.use('/api/protocol-export', authMiddleware, protocolExportModule.default);
+    console.info('✅ Protocol export routes mounted (/api/protocol-export)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol export routes:', error);
+  }
+
   // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
   try {
     const rimModule = await import('../routes/rim');

@@ -35,6 +35,15 @@ env:
   ECS_CLUSTER: c2c-production
   ECS_API_SERVICE: c2c-production-api
   ECS_WORKER_SERVICE: c2c-production-worker
+  # Task definition families and container names for the digest-pinned
+  # register-then-deploy path in deploy-api / deploy-worker. The container
+  # names must match the names in the existing task definitions so the
+  # patch step modifies the right container's image and not a sibling
+  # (e.g. a fluent-bit log router or a datadog sidecar).
+  ECS_API_TASK_FAMILY: c2c-production-api
+  ECS_WORKER_TASK_FAMILY: c2c-production-worker
+  ECS_API_CONTAINER_NAME: api
+  ECS_WORKER_CONTAINER_NAME: worker
   FRONTEND_BUCKET: c2c-prod-frontend
   CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
@@ -126,6 +135,12 @@ jobs:
     if: ${{ github.event.inputs.deploy_api == 'true' || github.event.inputs.deploy_worker == 'true' || startsWith(github.ref, 'refs/tags/v') }}
     outputs:
       image_tag: ${{ steps.meta.outputs.tag }}
+      # Image content digests captured at push time so deploy-api / deploy-worker
+      # can register task-def revisions pinned to @sha256:<digest>. Without this
+      # the deploys would --force-new-deployment whatever the current task def
+      # references and rollback would not be deterministic. See deploy-api.
+      api_digest: ${{ steps.api-push.outputs.digest }}
+      worker_digest: ${{ steps.worker-push.outputs.digest }}
 
     steps:
       - uses: actions/checkout@v4
@@ -151,33 +166,56 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Build & push API image
+        id: api-push
         if: ${{ github.event.inputs.deploy_api != 'false' }}
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ steps.meta.outputs.tag }}
-        # Push ONLY the immutable, SHA/tag-pinned image. The mutable `:latest`
-        # tag was removed so prod can never resolve a floating image and so
-        # rollback (redeploy a prior IMAGE_TAG) is always possible.
-        # TODO(GA-blocker): capture the pushed image digest (docker buildx
-        # --metadata-file / `docker inspect`) and deploy by @sha256:<digest>.
+        # Push the immutable, SHA/tag-pinned image AND capture the content
+        # digest. The digest is the only identifier that survives tag
+        # mutation / ECR garbage-collection, so deploy-api pins the ECS
+        # task-def to <repo>@sha256:<digest> rather than the mutable tag.
+        # Mutable `:latest` was removed so prod can never resolve a floating
+        # image. Rollback redeploys a prior task-def revision (which carries
+        # its own pinned digest), which is the deterministic shape ECR /
+        # ECS support.
         run: |
           docker build -f Dockerfile.optimized \
             -t "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG" \
             .
           docker push "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG"
+          # `docker inspect` on the local tag returns RepoDigests like
+          # "<registry>/<repo>@sha256:<hex>"; take the digest portion.
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' \
+            "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG" | cut -d'@' -f2)
+          if [[ -z "$DIGEST" || "$DIGEST" != sha256:* ]]; then
+            echo "::error::Could not capture sha256 digest for pushed API image"
+            exit 1
+          fi
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "API image pushed: $ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG @ $DIGEST"
 
       - name: Build & push Worker image
+        id: worker-push
         if: ${{ github.event.inputs.deploy_worker != 'false' }}
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ steps.meta.outputs.tag }}
-        # Push ONLY the immutable, SHA/tag-pinned image (no mutable `:latest`).
-        # TODO(GA-blocker): deploy by image digest (@sha256:<digest>).
+        # See API push step. Same digest-capture pattern so deploy-worker
+        # pins by @sha256:<digest>.
         run: |
           docker build -f worker/Dockerfile \
             -t "$ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG" \
             .
           docker push "$ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG"
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' \
+            "$ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG" | cut -d'@' -f2)
+          if [[ -z "$DIGEST" || "$DIGEST" != sha256:* ]]; then
+            echo "::error::Could not capture sha256 digest for pushed Worker image"
+            exit 1
+          fi
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+          echo "Worker image pushed: $ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG @ $DIGEST"
 
   # ── Deploy API to ECS ────────────────────────────────────────────────────
   deploy-api:
@@ -194,23 +232,73 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Force new ECS deployment (API)
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Register pinned task definition revision (API)
+        id: register-api-td
         env:
           # Immutable image tag built+pushed by build-push (e.g. sha-<gitsha> or
-          # the release tag). Passed through so the deploy is pinned to THIS
-          # build and is rollback-able to a prior IMAGE_TAG.
+          # the release tag). Combined with the captured digest so the new task
+          # def is pinned to a specific image, not a mutable tag.
           IMAGE_TAG: ${{ needs.build-push.outputs.image_tag }}
-        # TODO(GA-blocker): register a new task definition revision whose
-        # container image is "$ECR_REGISTRY/$ECR_API_REPO:$IMAGE_TAG" (ideally
-        # pinned by @sha256:<digest>) and deploy that revision, instead of
-        # --force-new-deployment which re-pulls whatever the current task def
-        # references. force-new-deployment alone does not guarantee the new
-        # immutable image is used unless the task def already points at it.
+          IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        # The deterministic shape ECS supports: pull the current task def,
+        # patch the API container image to <repo>@sha256:<digest> (the
+        # digest the build-push job captured), register it as a new
+        # revision, and deploy that revision by ARN. Rollback is a one-line
+        # `aws ecs update-service --task-definition <prior-arn>` against
+        # a prior revision. --force-new-deployment is gone — it could not
+        # guarantee the right image was used because it only re-pulls
+        # whatever the existing task def already references.
+        run: |
+          if [[ -z "$IMAGE_DIGEST" || "$IMAGE_DIGEST" != sha256:* ]]; then
+            echo "::error::API image digest missing or malformed: '$IMAGE_DIGEST'. Refusing to deploy without a pinned digest."
+            exit 1
+          fi
+
+          PINNED_IMAGE="$ECR_REGISTRY/$ECR_API_REPO@$IMAGE_DIGEST"
+          echo "Pinning API task def to: $PINNED_IMAGE"
+
+          # Get current task def, strip metadata that's not allowed on
+          # register-task-definition input, patch the API container image,
+          # register the new revision.
+          aws ecs describe-task-definition \
+            --task-definition "$ECS_API_TASK_FAMILY" \
+            --no-cli-pager \
+            --query 'taskDefinition' > /tmp/api-td.json
+
+          jq --arg img "$PINNED_IMAGE" \
+             --arg api_container "$ECS_API_CONTAINER_NAME" \
+             '
+             {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, runtimePlatform, ipcMode, pidMode, proxyConfiguration, inferenceAccelerators, ephemeralStorage}
+             | with_entries(select(.value != null))
+             | .containerDefinitions = (.containerDefinitions | map(if .name == $api_container then .image = $img else . end))
+             ' /tmp/api-td.json > /tmp/api-td-patched.json
+
+          NEW_TD_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file:///tmp/api-td-patched.json \
+            --no-cli-pager \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "Registered API task def: $NEW_TD_ARN"
+          echo "task_def_arn=$NEW_TD_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy pinned task def revision (API)
+        env:
+          NEW_TD_ARN: ${{ steps.register-api-td.outputs.task_def_arn }}
+        # Deploy by ARN of the just-registered revision. ECS pulls the
+        # image that revision references (which is @sha256:<digest>) and
+        # rolls the service to new tasks. Rollback = update-service with a
+        # prior revision ARN.
         run: |
           aws ecs update-service \
             --cluster "$ECS_CLUSTER" \
             --service "$ECS_API_SERVICE" \
-            --force-new-deployment \
+            --task-definition "$NEW_TD_ARN" \
             --no-cli-pager
 
       - name: Wait for API deployment stability
@@ -234,18 +322,59 @@ jobs:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Force new ECS deployment (Worker)
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Register pinned task definition revision (Worker)
+        id: register-worker-td
         env:
           IMAGE_TAG: ${{ needs.build-push.outputs.image_tag }}
-        # TODO(GA-blocker): register a new task definition revision pinned to
-        # "$ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG" (ideally @sha256:<digest>)
-        # and deploy it, rather than --force-new-deployment of the current
-        # task def. See deploy-api note above.
+          IMAGE_DIGEST: ${{ needs.build-push.outputs.worker_digest }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        # Mirrors deploy-api: describe current TD → patch worker container
+        # image to <repo>@sha256:<digest> → register new revision →
+        # update-service by the new revision ARN. --force-new-deployment is
+        # gone for the same reason. See deploy-api step.
+        run: |
+          if [[ -z "$IMAGE_DIGEST" || "$IMAGE_DIGEST" != sha256:* ]]; then
+            echo "::error::Worker image digest missing or malformed: '$IMAGE_DIGEST'. Refusing to deploy without a pinned digest."
+            exit 1
+          fi
+
+          PINNED_IMAGE="$ECR_REGISTRY/$ECR_WORKER_REPO@$IMAGE_DIGEST"
+          echo "Pinning Worker task def to: $PINNED_IMAGE"
+
+          aws ecs describe-task-definition \
+            --task-definition "$ECS_WORKER_TASK_FAMILY" \
+            --no-cli-pager \
+            --query 'taskDefinition' > /tmp/worker-td.json
+
+          jq --arg img "$PINNED_IMAGE" \
+             --arg worker_container "$ECS_WORKER_CONTAINER_NAME" \
+             '
+             {family, taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, runtimePlatform, ipcMode, pidMode, proxyConfiguration, inferenceAccelerators, ephemeralStorage}
+             | with_entries(select(.value != null))
+             | .containerDefinitions = (.containerDefinitions | map(if .name == $worker_container then .image = $img else . end))
+             ' /tmp/worker-td.json > /tmp/worker-td-patched.json
+
+          NEW_TD_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file:///tmp/worker-td-patched.json \
+            --no-cli-pager \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "Registered Worker task def: $NEW_TD_ARN"
+          echo "task_def_arn=$NEW_TD_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy pinned task def revision (Worker)
+        env:
+          NEW_TD_ARN: ${{ steps.register-worker-td.outputs.task_def_arn }}
         run: |
           aws ecs update-service \
             --cluster "$ECS_CLUSTER" \
             --service "$ECS_WORKER_SERVICE" \
-            --force-new-deployment \
+            --task-definition "$NEW_TD_ARN" \
             --no-cli-pager
 
       - name: Wait for Worker deployment stability

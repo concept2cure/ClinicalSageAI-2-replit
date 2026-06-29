@@ -89,6 +89,22 @@ export const DEFAULT_POLICY: Grant[] = [
   ...allow('regulatory_lead', ['view', 'review', 'approve', 'sign', 'lock', 'submit']),
   ...allow('org_admin', ['*']),
   ...allow('system_admin', ['*']),
+  // — research-committee roles (IACUC / IRB / IBC stakeholders) —
+  // Chairs convene, assign, and finalize determinations (approve/sign); members
+  // vote (review); coordinators/administrators stage agendas (author/assign).
+  // Voting members hold 'review'; finalizing a determination requires 'approve'.
+  ...allow('iacuc_chair', ['view', 'author', 'review', 'approve', 'sign', 'assign']),
+  ...allow('iacuc_member', ['view', 'review']),
+  ...allow('iacuc_veterinarian', ['view', 'review']),
+  ...allow('irb_chair', ['view', 'author', 'review', 'approve', 'sign', 'assign']),
+  ...allow('irb_member', ['view', 'review']),
+  ...allow('irb_coordinator', ['view', 'author', 'assign']),
+  ...allow('ibc_chair', ['view', 'author', 'review', 'approve', 'sign', 'assign']),
+  ...allow('ibc_member', ['view', 'review']),
+  ...allow('committee_administrator', ['view', 'author', 'assign']),
+  // — principal investigator / study team (author + submit own protocols) —
+  ...allow('principal_investigator', ['view', 'author', 'submit']),
+  ...allow('study_coordinator', ['view', 'author']),
 ];
 
 /** Does a grant match the query? A null grant dimension is a wildcard. */

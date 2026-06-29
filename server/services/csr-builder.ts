@@ -357,7 +357,11 @@ export async function draftCSRSectionWithProvenance(
   if (ai) {
     try {
       const systemPrompt = buildSectionSystemPrompt(info);
-      const response = await ai.chat(
+      // The shared AI gateway exposes `complete(messages, options) => Promise<string>`
+      // (see generateSectionWithAI / draftCSRSection below). Use it here too so this
+      // provenance path actually reaches the model instead of silently throwing
+      // (ai.chat is not part of the gateway surface) and falling back to template.
+      const content = await ai.complete(
         [
           { role: 'system', content: systemPrompt },
           {
@@ -376,14 +380,13 @@ export async function draftCSRSectionWithProvenance(
         }
       );
 
-      const content = response?.content ?? '';
-      if (content.length > 0) {
+      if (content && content.length > 0) {
         return {
           number: section.number,
           content,
           source: 'ai',
-          model: response.model ?? null,
-          tokenCost: response.usage?.totalTokens ?? 0,
+          model: null,
+          tokenCost: 0,
           lineage: Object.keys(baseLineage).length > 0 ? baseLineage : null,
         };
       }

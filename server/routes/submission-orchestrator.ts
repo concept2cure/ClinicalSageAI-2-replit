@@ -33,6 +33,104 @@ import {
 } from '../services/m2-summary-builders.js';
 import { buildCSRTables } from '../services/csr-tabulation-builders.js';
 import { validateEctdPackageHardened, flattenFindings } from '../services/ectd/ectd-validator-hardening.js';
+import { loadCmcSourcesForProject } from '../services/cmc/load-cmc-sources-for-project.js';
+import { loadCsrInputsForProject } from '../services/csr/load-csr-inputs-for-project.js';
+import { loadNonclinicalStudiesForProject } from '../services/preclinical/load-nonclinical-studies-for-project.js';
+import { pool } from '../db.js';
+import auditService from '../services/auditService.js';
+import { createScopedLogger } from '../utils/logger.js';
+
+const log = createScopedLogger('submission-orchestrator');
+
+/**
+ * Fire-and-forget audit for standalone-builder + validator access. 21 CFR
+ * Part 11 §11.10(e) requires every view / build of regulated submission
+ * content to be logged with attribution. The standalone routes
+ * (/m2/qos, /m2/nonclinical, /m2/clinical, /m2/clinical-overview,
+ * /csr/tabulate, /validate/hardened) are pure transforms with no DB
+ * writes, but the *act of generating regulated content* still has to be
+ * attributable to a tenant + user. Non-fatal on failure — the response
+ * stream is the user value, the audit row is the regulator value.
+ */
+async function auditOrchestratorAccess(
+  req: Request,
+  organizationId: number,
+  action:
+    | 'orchestrator_m23_built'
+    | 'orchestrator_m24_built'
+    | 'orchestrator_m25_built'
+    | 'orchestrator_m27_built'
+    | 'orchestrator_csr_tabulated'
+    | 'orchestrator_validated_hardened',
+  details: Record<string, unknown> = {},
+): Promise<void> {
+  try {
+    const user = (req as any).user;
+    await auditService.logAction({
+      tenantId: organizationId,
+      userId: user?.id ?? user?.userId,
+      action,
+      resourceType: 'submission_orchestrator',
+      // Standalone routes are not bound to a numeric orchestrator runId; a
+      // 'standalone' sentinel keeps these rows distinct from per-run rows
+      // when grouping by (resourceType, resourceId).
+      resourceId: 'standalone',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details,
+    });
+  } catch (err) {
+    log.warn('orchestrator audit write failed (non-fatal)', {
+      err: err instanceof Error ? err.message : String(err),
+      action,
+      organizationId,
+    });
+  }
+}
+
+// ── Tenant resolution helpers ───────────────────────────────────────────────
+//
+// Per-handler tenant gate mirroring the pattern in `routes/ectd-export.ts`.
+// We intentionally do NOT import the `requireTenant` middleware exported from
+// `middleware/tenantIsolation.ts` — that one has the (req, res, next)
+// middleware signature and reads `req.tenant`, whereas every regulated route
+// in this codebase that needs a numeric orgId resolves it inline from the
+// JWT-bound `req.user` / `req.tenantContext` pair and short-circuits the
+// response. Keeping the same shape here means a future audit only has to
+// reason about one resolution contract for §11.10(e)-attributed routes.
+
+/**
+ * Resolve the tenant org id from the JWT-bound request. Returns null if no
+ * organization context is present; callers must fail-closed (401/403) before
+ * touching regulated content.
+ */
+function resolveOrgId(req: Request): number | null {
+  const raw =
+    (req as any).tenantContext?.organizationId ?? (req as any).user?.organizationId;
+  if (raw == null) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/**
+ * Distinguish unauthenticated (no JWT principal at all) from
+ * authenticated-but-missing-org. 401 for the former, 403 for the latter — per
+ * HTTP semantics. Returns the resolved positive-integer organizationId on
+ * success, or null after writing the response (caller must early-return).
+ */
+function requireTenant(req: Request, res: Response): number | null {
+  const user = (req as any).user;
+  if (!user) {
+    res.status(401).json({ error: 'Authentication required' });
+    return null;
+  }
+  const orgId = resolveOrgId(req);
+  if (orgId == null) {
+    res.status(403).json({ error: 'Organization context required' });
+    return null;
+  }
+  return orgId;
+}
 
 const router = Router();
 
@@ -91,34 +189,198 @@ const CSRInputSchema = z.object({
   deathCount: z.number().optional(),
 });
 
-const RunSchema = z.object({
+// ── Common fields shared by Mode A and Mode B ───────────────────────────────
+const RunCommonSchema = z.object({
   submissionId: z.string().min(1),
   applicationNumber: z.string().min(1),
   region: RegionSchema,
   submissionType: SubmissionTypeSchema,
-  cmcSources: z.array(CanonicalSourceSchema).default([]),
-  nonclinicalStudies: z.array(NonclinicalStudySchema).default([]),
-  clinicalStudyData: z.array(StudyDataSchema).default([]),
-  csrInputs: z.array(CSRInputSchema).default([]),
   drugSubstanceName: z.string().optional(),
   drugProductName: z.string().optional(),
   indication: z.string().optional(),
   skipValidation: z.boolean().optional(),
+  // clinicalStudyData has NO loader yet (per PATH_TO_GA §D.3 — needs a real
+  // CDISC ADaM extractor). Accept it in BOTH modes for now; future GA-2 work
+  // will populate it from a server-side extractor and remove it from the body.
+  clinicalStudyData: z.array(StudyDataSchema).default([]),
 });
+
+// Mode A — server-side input assembly via the three loaders shipped in
+// 58db31a1. The caller supplies project identifiers and the route loads the
+// orchestrator inputs server-side. This is the consumer-facing shape.
+//
+// CRITICAL: three different project-id types. The CMC reader wants the CMC
+// project uuid (cmc_projects.id, string). The CSR reader wants the
+// concept2cure projects.id (number). The nonclinical reader wants
+// ctd_programs.id (number). The body MUST carry all three explicitly so the
+// caller's project model maps to ours unambiguously.
+const RunModeASchema = RunCommonSchema.extend({
+  projectId: z.number().int().positive(),
+  cmcProjectId: z.string().uuid().optional(),
+  ctdProgramId: z.number().int().positive().optional(),
+  // Mode A explicitly rejects hand-built inputs.
+  cmcSources: z.undefined().optional(),
+  nonclinicalStudies: z.undefined().optional(),
+  csrInputs: z.undefined().optional(),
+});
+
+// Mode B — backward-compat. Existing programmatic callers supply
+// pre-assembled OrchestratorInputs arrays in the body. No loader is invoked.
+const RunModeBSchema = RunCommonSchema.extend({
+  cmcSources: z.array(CanonicalSourceSchema).default([]),
+  nonclinicalStudies: z.array(NonclinicalStudySchema).default([]),
+  csrInputs: z.array(CSRInputSchema).default([]),
+  // Mode B explicitly rejects projectId — caller is supplying the assembled
+  // inputs so a project-id reference would be ambiguous.
+  projectId: z.undefined().optional(),
+});
+
+const RunSchema = z.discriminatedUnion('mode', [
+  RunModeASchema.extend({ mode: z.literal('project') }),
+  RunModeBSchema.extend({ mode: z.literal('inline').optional() }).transform(d => ({ ...d, mode: 'inline' as const })),
+]).or(
+  // Permit legacy callers that don't supply `mode` — auto-discriminate from
+  // the presence of `projectId`.
+  z.union([
+    RunModeASchema.transform(d => ({ ...d, mode: 'project' as const })),
+    RunModeBSchema.transform(d => ({ ...d, mode: 'inline' as const })),
+  ]),
+);
 
 // ── Routes ──────────────────────────────────────────────────────────────────
 
 /**
  * Start a new orchestrator run.
+ *
+ * SECURITY: organizationId is resolved from the JWT principal ONLY (never
+ * from the request body). Accepting it from the body would let an
+ * authenticated caller persist an orchestrator run — and the resulting
+ * append-only audit rows — under another tenant's scope, defeating both
+ * row-level isolation in the orchestrator service and §11.10(e)
+ * attribution. The RunSchema deliberately has no organizationId field for
+ * this reason; we splice the JWT-resolved value in below.
  */
 router.post('/runs', async (req: Request, res: Response) => {
-  const parsed = RunSchema.safeParse(req.body);
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
+  // Defensive: reject ambiguous requests where the caller supplied BOTH
+  // projectId AND any hand-built input array. Either mode by itself is
+  // valid; both together is a programming error.
+  const rawBody = req.body ?? {};
+  const hasProjectId = typeof rawBody.projectId === 'number';
+  const hasInlineInputs =
+    Array.isArray(rawBody.cmcSources) ||
+    Array.isArray(rawBody.nonclinicalStudies) ||
+    Array.isArray(rawBody.csrInputs);
+  if (hasProjectId && hasInlineInputs) {
+    // Do NOT echo the parsed body — PHI / sponsor-confidential payloads in
+    // the inline-inputs arrays may end up logged client-side. Log server-side
+    // with org context for triage; client gets a generic message.
+    log.warn('Ambiguous /runs body: both projectId and inline inputs supplied', { organizationId });
+    return res.status(400).json({ error: 'ambiguous_request', message: 'Supply either projectId OR inline {cmcSources, nonclinicalStudies, csrInputs} — never both.' });
+  }
+
+  const parsed = RunSchema.safeParse(rawBody);
   if (!parsed.success) {
-    return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
+    // Same PHI-protection rationale as charters.ts: don't echo parsed.error
+    // (Zod issues include 'received' values). Log full issues server-side.
+    log.warn('Invalid /runs body', { issues: parsed.error.issues, organizationId });
+    return res.status(400).json({ error: 'invalid_request' });
+  }
+
+  let orchestratorInputs: Omit<OrchestratorInputs, 'organizationId'>;
+  try {
+    if (parsed.data.mode === 'project') {
+      // ── Mode A: server-side input assembly ──────────────────────────────
+      // Tenant-scoped probe BEFORE any loader call. Cross-org projectId
+      // returns 403 (not 404) — same existence-info-leak prevention as
+      // charters.ts:238-251. The caller IS authenticated; "you can't see
+      // this resource" is the honest answer regardless of which org owns it.
+      const { rows } = await pool.query(
+        'SELECT id FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1',
+        [parsed.data.projectId, organizationId],
+      );
+      if (rows.length === 0) {
+        return res.status(403).json({ error: 'project_not_accessible' });
+      }
+
+      // Load the three input arrays in parallel. Each loader is
+      // tenant-scoped internally (asserts orgId positivity + filters by org)
+      // so the previous probe is defense-in-depth, not the only check.
+      // Individual failures surface clearly via the named promise rejection
+      // — a single loader failure does NOT produce a half-assembled
+      // OrchestratorInputs (the catch below short-circuits).
+      const [cmcSources, nonclinicalStudies, csrInputs] = await Promise.all([
+        parsed.data.cmcProjectId
+          ? loadCmcSourcesForProject(organizationId, parsed.data.cmcProjectId)
+          : Promise.resolve([]),
+        parsed.data.ctdProgramId
+          ? loadNonclinicalStudiesForProject(organizationId, parsed.data.ctdProgramId)
+          : Promise.resolve([]),
+        loadCsrInputsForProject(organizationId, parsed.data.projectId),
+      ]);
+
+      // 21 CFR Part 11 §11.10(e) audit attribution. Log COUNTS only — never
+      // the payload bodies (PHI / sponsor-confidential data lives there).
+      auditService.logAction({
+        userId: (req as any).user?.id ?? 0,
+        tenantId: organizationId,
+        action: 'orchestrator_inputs_assembled',
+        resourceType: 'submission_orchestrator',
+        resourceId: parsed.data.submissionId,
+        details: {
+          mode: 'project',
+          projectId: parsed.data.projectId,
+          cmcProjectId: parsed.data.cmcProjectId,
+          ctdProgramId: parsed.data.ctdProgramId,
+          cmcSourceCount: cmcSources.length,
+          nonclinicalStudyCount: nonclinicalStudies.length,
+          csrInputCount: csrInputs.length,
+        },
+      }).catch(err => log.warn('Audit log failed (non-fatal)', { err: err?.message }));
+
+      orchestratorInputs = {
+        submissionId: parsed.data.submissionId,
+        applicationNumber: parsed.data.applicationNumber,
+        region: parsed.data.region,
+        submissionType: parsed.data.submissionType,
+        cmcSources,
+        nonclinicalStudies,
+        clinicalStudyData: parsed.data.clinicalStudyData,
+        csrInputs,
+        drugSubstanceName: parsed.data.drugSubstanceName,
+        drugProductName: parsed.data.drugProductName,
+        indication: parsed.data.indication,
+        skipValidation: parsed.data.skipValidation,
+      };
+    } else {
+      // ── Mode B: backward-compat inline inputs ───────────────────────────
+      orchestratorInputs = {
+        submissionId: parsed.data.submissionId,
+        applicationNumber: parsed.data.applicationNumber,
+        region: parsed.data.region,
+        submissionType: parsed.data.submissionType,
+        cmcSources: parsed.data.cmcSources ?? [],
+        nonclinicalStudies: parsed.data.nonclinicalStudies ?? [],
+        clinicalStudyData: parsed.data.clinicalStudyData,
+        csrInputs: parsed.data.csrInputs ?? [],
+        drugSubstanceName: parsed.data.drugSubstanceName,
+        drugProductName: parsed.data.drugProductName,
+        indication: parsed.data.indication,
+        skipValidation: parsed.data.skipValidation,
+      };
+    }
+  } catch (err) {
+    log.error('Input assembly failed', { err: err instanceof Error ? err.message : String(err), organizationId });
+    return res.status(500).json({ error: 'input_assembly_failed', message: err instanceof Error ? err.message : 'unknown' });
   }
 
   try {
-    const result = await runOrchestrator(parsed.data as OrchestratorInputs);
+    const result = await runOrchestrator({
+      ...orchestratorInputs,
+      organizationId,
+    });
     return res.json({
       runId: result.run.runId,
       status: result.run.status,
@@ -160,26 +422,56 @@ router.post('/runs', async (req: Request, res: Response) => {
 
 /**
  * Get the state of an orchestrator run.
+ *
+ * SECURITY: getRun is tenant-scoped at the SQL layer. A missing run and a
+ * cross-org probe both collapse to 404 here so a caller cannot use the
+ * status code to infer that a runId exists under a different tenant.
  */
 router.get('/runs/:runId', async (req: Request, res: Response) => {
-  const run = await getRun(String(req.params.runId));
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
+  const run = await getRun(String(req.params.runId), organizationId);
   if (!run) return res.status(404).json({ error: 'run_not_found' });
   return res.json(run);
 });
 
 /**
  * Get the append-only step audit for a run.
+ *
+ * SECURITY: getRunAudit filters on (run_id, organization_id) at the SQL
+ * layer. We additionally probe getRun first so a cross-org caller sees
+ * 404 rather than an empty events array (which would still leak the
+ * "this runId exists somewhere" signal).
  */
 router.get('/runs/:runId/audit', async (req: Request, res: Response) => {
-  const events = await getRunAudit(String(req.params.runId));
-  return res.json({ runId: req.params.runId, events });
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
+  const runId = String(req.params.runId);
+  const run = await getRun(runId, organizationId);
+  if (!run) return res.status(404).json({ error: 'run_not_found' });
+
+  const events = await getRunAudit(runId, organizationId);
+  return res.json({ runId, events });
 });
 
 /**
  * Regenerate stale steps for a run.
+ *
+ * SECURITY: organizationId is JWT-bound on BOTH sides — the previousRun is
+ * fetched under (runId, organizationId) so a cross-org probe sees 404, and
+ * the same organizationId is spliced into the regenerate inputs so the
+ * orchestrator service's tenant-mismatch guard
+ * (`previousRun.organizationId !== inputs.organizationId`) is satisfied
+ * tautologically. The request body is NOT trusted to carry
+ * organizationId, matching POST /runs.
  */
 router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
-  const previousRun = await getRun(String(req.params.runId));
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
+  const previousRun = await getRun(String(req.params.runId), organizationId);
   if (!previousRun) return res.status(404).json({ error: 'run_not_found' });
 
   const RegenSchema = RunSchema.extend({
@@ -194,7 +486,10 @@ router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
   try {
     const result = await regenerateAffected(
       previousRun,
-      inputs as OrchestratorInputs,
+      {
+        ...(inputs as Omit<OrchestratorInputs, 'organizationId'>),
+        organizationId,
+      },
       changedStep as StepKey | undefined
     );
     return res.json({
@@ -213,8 +508,16 @@ router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
 
 /**
  * Build M2.3 QOS standalone (does not require a full orchestrator run).
+ *
+ * SECURITY: this route performs no DB writes, but a §11.10(e)-attributed
+ * audit row is still required because the response IS regulated
+ * submission content. Gated by requireTenant so unauthenticated /
+ * unscoped callers cannot generate uncovered content.
  */
-router.post('/m2/qos', (req: Request, res: Response) => {
+router.post('/m2/qos', async (req: Request, res: Response) => {
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
   const Schema = z.object({
     module3Sections: z.array(z.unknown()),
     drugSubstanceName: z.string().optional(),
@@ -226,13 +529,20 @@ router.post('/m2/qos', (req: Request, res: Response) => {
   }
   try {
     const summary = buildM23QualityOverallSummary(parsed.data as Parameters<typeof buildM23QualityOverallSummary>[0]);
+    await auditOrchestratorAccess(req, organizationId, 'orchestrator_m23_built', {
+      sectionCount: parsed.data.module3Sections.length,
+      completeness: summary.completeness,
+    });
     return res.json(summary);
   } catch (err) {
     return res.status(500).json({ error: 'm23_failed', message: err instanceof Error ? err.message : String(err) });
   }
 });
 
-router.post('/m2/nonclinical', (req: Request, res: Response) => {
+router.post('/m2/nonclinical', async (req: Request, res: Response) => {
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
   const Schema = z.object({
     nonclinicalStudies: z.array(NonclinicalStudySchema),
     drugSubstanceName: z.string().optional(),
@@ -244,13 +554,20 @@ router.post('/m2/nonclinical', (req: Request, res: Response) => {
   }
   try {
     const summary = buildM24NonclinicalOverview(parsed.data);
+    await auditOrchestratorAccess(req, organizationId, 'orchestrator_m24_built', {
+      studyCount: parsed.data.nonclinicalStudies.length,
+      completeness: summary.completeness,
+    });
     return res.json(summary);
   } catch (err) {
     return res.status(500).json({ error: 'm24_failed', message: err instanceof Error ? err.message : String(err) });
   }
 });
 
-router.post('/m2/clinical', (req: Request, res: Response) => {
+router.post('/m2/clinical', async (req: Request, res: Response) => {
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
   const Schema = z.object({
     csrs: z.array(CSRInputSchema),
     indication: z.string(),
@@ -262,6 +579,10 @@ router.post('/m2/clinical', (req: Request, res: Response) => {
   }
   try {
     const summary = buildM27ClinicalSummary(parsed.data);
+    await auditOrchestratorAccess(req, organizationId, 'orchestrator_m27_built', {
+      csrCount: parsed.data.csrs.length,
+      completeness: summary.completeness,
+    });
     return res.json(summary);
   } catch (err) {
     return res.status(500).json({ error: 'm27_failed', message: err instanceof Error ? err.message : String(err) });
@@ -271,7 +592,10 @@ router.post('/m2/clinical', (req: Request, res: Response) => {
 /**
  * Build M2.5 Clinical Overview standalone (does not require a full orchestrator run).
  */
-router.post('/m2/clinical-overview', (req: Request, res: Response) => {
+router.post('/m2/clinical-overview', async (req: Request, res: Response) => {
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
   const Schema = z.object({
     csrs: z.array(CSRInputSchema),
     indication: z.string(),
@@ -285,6 +609,10 @@ router.post('/m2/clinical-overview', (req: Request, res: Response) => {
   }
   try {
     const summary = buildM25ClinicalOverview(parsed.data);
+    await auditOrchestratorAccess(req, organizationId, 'orchestrator_m25_built', {
+      csrCount: parsed.data.csrs.length,
+      completeness: summary.completeness,
+    });
     return res.json(summary);
   } catch (err) {
     return res.status(500).json({ error: 'm25_failed', message: err instanceof Error ? err.message : String(err) });
@@ -294,7 +622,10 @@ router.post('/m2/clinical-overview', (req: Request, res: Response) => {
 /**
  * Build CSR §10–§12 tabulations for a single study.
  */
-router.post('/csr/tabulate', (req: Request, res: Response) => {
+router.post('/csr/tabulate', async (req: Request, res: Response) => {
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
   const Schema = StudyDataSchema;
   const parsed = Schema.safeParse(req.body);
   if (!parsed.success) {
@@ -302,6 +633,10 @@ router.post('/csr/tabulate', (req: Request, res: Response) => {
   }
   try {
     const tables = buildCSRTables(parsed.data as Parameters<typeof buildCSRTables>[0]);
+    await auditOrchestratorAccess(req, organizationId, 'orchestrator_csr_tabulated', {
+      studyId: parsed.data.studyId,
+      protocolNumber: parsed.data.protocolNumber,
+    });
     return res.json(tables);
   } catch (err) {
     return res.status(500).json({ error: 'csr_tabulate_failed', message: err instanceof Error ? err.message : String(err) });
@@ -310,8 +645,17 @@ router.post('/csr/tabulate', (req: Request, res: Response) => {
 
 /**
  * Run the hardened eCTD validator (DTD + sequence + MD5 + study-id + regional).
+ *
+ * SECURITY: gated by requireTenant for the same §11.10(e) reason as the
+ * standalone builders — the validator output (findings, gatewayReady,
+ * hardenedScore) drives go/no-go submission decisions and so the access
+ * must be attributable to a tenant + user even though no DB write
+ * occurs in the validator itself.
  */
 router.post('/validate/hardened', async (req: Request, res: Response) => {
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
   const LeafSchema = z.object({
     sectionCode: z.string(),
     title: z.string(),
@@ -342,6 +686,14 @@ router.post('/validate/hardened', async (req: Request, res: Response) => {
   const { leaves, backboneXml, ...context } = parsed.data;
   try {
     const result = await validateEctdPackageHardened(leaves, context, backboneXml);
+    await auditOrchestratorAccess(req, organizationId, 'orchestrator_validated_hardened', {
+      submissionId: context.submissionId,
+      region: context.region,
+      sequenceNumber: context.sequenceNumber,
+      leafCount: leaves.length,
+      gatewayReady: result.gatewayReady,
+      hardenedScore: result.hardenedScore,
+    });
     return res.json({
       gatewayReady: result.gatewayReady,
       hardenedScore: result.hardenedScore,

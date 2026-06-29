@@ -24,7 +24,111 @@ describe('statistical-design tools — registration', () => {
     for (const tool of STATISTICAL_DESIGN_TOOLS) {
       expect(getToolHandler(tool.name), `${tool.name} handler`).toBeTruthy();
     }
-    expect(STATISTICAL_DESIGN_TOOLS).toHaveLength(15);
+    expect(STATISTICAL_DESIGN_TOOLS).toHaveLength(18);
+  });
+});
+
+describe('statistical-design tools — stranded-engine batch (assurance, Monte-Carlo, IVD extensions)', () => {
+  it('compute_assurance (quadrature) returns assurance bounded below the design power', async () => {
+    const out = await call('compute_assurance', {
+      priorMean: 0.4,
+      priorSd: 0.15,
+      nPerArm: 120,
+    });
+    expect(out.status).toBe('computed');
+    expect(out.engine).toBe('deterministic');
+    expect(out.result.assurance).toBeGreaterThan(0);
+    expect(out.result.assurance).toBeLessThan(1);
+    // Assurance averages over effect uncertainty ⇒ ≤ power at the prior mean.
+    expect(out.result.assurance).toBeLessThanOrEqual(out.result.powerAtPriorMean + 1e-9);
+  });
+
+  it('compute_assurance (monte_carlo) is seeded/reproducible and tagged seeded-monte-carlo', async () => {
+    const args = { priorMean: 0.4, priorSd: 0.15, nPerArm: 120, method: 'monte_carlo', nSim: 5000, seed: 11 };
+    const a = await call('compute_assurance', args);
+    const b = await call('compute_assurance', args);
+    expect(a.status).toBe('computed');
+    expect(a.engine).toBe('seeded-monte-carlo');
+    expect(a.result.assurance).toBe(b.result.assurance); // reproducible for the seed
+  });
+
+  it('run_monte_carlo_simulation (diagnostic_accuracy) returns credible intervals', async () => {
+    const out = await call('run_monte_carlo_simulation', {
+      mode: 'diagnostic_accuracy',
+      tp: 90, fp: 10, fn: 10, tn: 90,
+      iterations: 2000,
+      seed: 3,
+    });
+    expect(out.status).toBe('computed');
+    expect(out.engine).toBe('seeded-monte-carlo');
+    expect(out.result.sensitivity.p2_5).toBeLessThanOrEqual(out.result.sensitivity.p97_5);
+    expect(out.result.specificity.median).toBeGreaterThan(0);
+  });
+
+  it('run_monte_carlo_simulation (time_to_market) returns P50 ≤ P90 weeks', async () => {
+    const out = await call('run_monte_carlo_simulation', {
+      mode: 'time_to_market',
+      phases: [
+        { name: 'Analytical', studyWeeks: [12, 16] },
+        { name: 'Clinical', studyWeeks: [40] },
+      ],
+      iterations: 1000,
+      seed: 5,
+    });
+    expect(out.status).toBe('computed');
+    expect(out.result.p90Weeks).toBeGreaterThanOrEqual(out.result.p50Weeks);
+  });
+
+  it('run_monte_carlo_simulation (review_outcome) returns a verdict distribution', async () => {
+    const out = await call('run_monte_carlo_simulation', {
+      mode: 'review_outcome',
+      profile: { pathway: '510k', assayType: 'quantitative', intendedUse: 'diagnosis' },
+      evidenceProbabilities: { analyticalPrecision: 0.9, detectionCapability: 0.8, clinicalPerformance: 0.7 },
+      iterations: 1000,
+      seed: 9,
+    });
+    expect(out.status).toBe('computed');
+    const v = out.result.verdictProbabilities;
+    expect(v.likely_acceptance + v.additional_information_likely + v.not_substantially_complete)
+      .toBeCloseTo(1, 6);
+  });
+
+  it('run_monte_carlo_simulation relays an invalid mode as needs_parameters', async () => {
+    const out = await call('run_monte_carlo_simulation', { mode: 'nonsense' });
+    expect(out.status).toBe('needs_parameters');
+  });
+
+  it('assess_ivd_analytical_extensions (carryover) computes a pass/fail percent', async () => {
+    const out = await call('assess_ivd_analytical_extensions', {
+      mode: 'carryover',
+      lowAfterHigh: [1.05, 1.1, 1.0],
+      lowBaseline: [1.0, 1.02, 0.98],
+      highSample: [100, 101, 99],
+    });
+    expect(out.status).toBe('computed');
+    expect(out.engine).toBe('deterministic');
+    expect(typeof out.result.carryoverPct).toBe('number');
+    expect(typeof out.result.pass).toBe('boolean');
+  });
+
+  it('assess_ivd_analytical_extensions (cutoff) maximizes the Youden index', async () => {
+    const out = await call('assess_ivd_analytical_extensions', {
+      mode: 'cutoff',
+      observations: [
+        { score: 1, positive: false },
+        { score: 2, positive: false },
+        { score: 5, positive: true },
+        { score: 6, positive: true },
+      ],
+    });
+    expect(out.status).toBe('computed');
+    expect(out.result.youdenJ).toBeGreaterThan(0);
+    expect(out.result.sensitivity).toBeGreaterThan(0);
+  });
+
+  it('assess_ivd_analytical_extensions relays an invalid mode as needs_parameters', async () => {
+    const out = await call('assess_ivd_analytical_extensions', { mode: 'nonsense' });
+    expect(out.status).toBe('needs_parameters');
   });
 });
 

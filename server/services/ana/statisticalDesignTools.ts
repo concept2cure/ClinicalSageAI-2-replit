@@ -18,6 +18,9 @@
  *   analyze_external_control_borrow — normal power-prior historical borrowing (external-control.ts)
  *   analyze_safety_signal        — PRR/ROR disproportionality signalling (signal-disproportionality.ts)
  *   adjust_multiplicity          — Bonferroni/Holm/Hochberg/fixed-seq/graphical FWER control (multiplicity.ts)
+ *   compute_assurance            — Bayesian assurance / probability of success (assurance.ts)
+ *   assess_ivd_analytical_extensions — EP25/Arrhenius/EP10/EP06/EP07/Youden extensions (analytical-performance-extensions.ts)
+ *   run_monte_carlo_simulation   — seeded MC: diagnostic accuracy / time-to-market / review outcome (monte-carlo.ts)
  *
  * @module server/services/ana/statisticalDesignTools
  */
@@ -392,6 +395,126 @@ export const PROJECT_EVENTS: AnaTool = {
   },
 };
 
+export const COMPUTE_ASSURANCE: AnaTool = {
+  name: 'compute_assurance',
+  description:
+    "Compute Bayesian assurance (unconditional probability of trial success) for a two-sample means design with a normal prior on the standardized effect δ: assurance = ∫ power(δ)·π(δ) dδ (O'Hagan-Stevens-Campbell). Unlike power (conditional on one assumed effect), assurance averages power over genuine effect-size uncertainty and is bounded well away from 1 for a diffuse prior. method='quadrature' (default) is DETERMINISTIC Gaussian quadrature over the prior grid; method='monte_carlo' is the seeded simulation the quadrature is validated against. Also returns the naive design power at the prior mean for comparison. " +
+    DETERMINISTIC_NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      priorMean: { type: 'number', description: 'Prior mean of the standardized effect δ = (μ₁−μ₀)/σ.' },
+      priorSd: { type: 'number', description: 'Prior SD of δ (effect-size uncertainty). 0 ⇒ assurance equals power at the prior mean.' },
+      nPerArm: { type: 'number', description: 'Subjects per arm (> 0, equal allocation).' },
+      alpha: { type: 'number', description: 'Type I error level. Default 0.025.' },
+      oneSided: { type: 'boolean', description: 'One-sided test. Default true.' },
+      nNodes: { type: 'number', description: '[quadrature] Number of prior grid nodes. Default 33.' },
+      method: { type: 'string', enum: ['quadrature', 'monte_carlo'], description: "Estimation path. Default 'quadrature' (deterministic). 'monte_carlo' is the seeded validation simulation." },
+      nSim: { type: 'number', description: '[monte_carlo] Number of simulations. Default 200000.' },
+      seed: { type: 'number', description: '[monte_carlo] Optional seed for reproducibility (otherwise derived from inputs).' },
+    },
+    required: ['priorMean', 'priorSd', 'nPerArm'],
+  },
+};
+
+export const RUN_MONTE_CARLO_SIMULATION: AnaTool = {
+  name: 'run_monte_carlo_simulation',
+  description:
+    "Seeded (reproducible) Monte-Carlo simulation that turns point estimates into distributions with credible/prediction intervals. mode='diagnostic_accuracy': Beta-posterior (Jeffreys) credible intervals for sensitivity/specificity/PPV/NPV from a 2×2 table. mode='time_to_market': triangular per-study, parallel-within-phase calendar-time forecast for a multi-phase program (P50/P90 weeks). mode='review_outcome': propagate per-element evidence-completion probabilities through the deterministic IVD reviewer engine into a distribution of likely review verdicts and readiness scores. Seeded Monte-Carlo — REPRODUCIBLE for a given seed. " +
+    DETERMINISTIC_NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      mode: { type: 'string', enum: ['diagnostic_accuracy', 'time_to_market', 'review_outcome'], description: 'Which Monte-Carlo simulation to run.' },
+      // diagnostic_accuracy
+      tp: { type: 'number', description: '[diagnostic_accuracy] True positives (non-negative integer).' },
+      fp: { type: 'number', description: '[diagnostic_accuracy] False positives (non-negative integer).' },
+      fn: { type: 'number', description: '[diagnostic_accuracy] False negatives (non-negative integer).' },
+      tn: { type: 'number', description: '[diagnostic_accuracy] True negatives (non-negative integer).' },
+      // time_to_market
+      phases: {
+        type: 'array',
+        description: '[time_to_market] Sequenced phases; studies within a phase run in parallel.',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Phase name.' },
+            studyWeeks: { type: 'array', items: { type: 'number' }, description: 'Mode (most-likely) duration in weeks for each study in the phase.' },
+          },
+          required: ['name', 'studyWeeks'],
+        },
+      },
+      slipFactor: { type: 'number', description: '[time_to_market] Upside risk factor on the mode estimate (e.g. 0.6 → up to 1.6× slippage). Default 0.5.' },
+      // review_outcome
+      profile: {
+        type: 'object',
+        description: '[review_outcome] The IVD review profile (without evidence).',
+        properties: {
+          pathway: { type: 'string', enum: ['510k', 'de_novo', 'pma', 'eu_ivdr'], description: 'Regulatory pathway.' },
+          assayType: { type: 'string', enum: ['quantitative', 'qualitative', 'ihc', 'ngs', 'molecular'], description: 'Assay type.' },
+          intendedUse: { type: 'string', enum: ['cdx', 'screening', 'diagnosis', 'monitoring', 'aid_to_diagnosis'], description: 'Intended use.' },
+          biomarker: { type: 'string', description: 'Optional biomarker name.' },
+          hasSoftware: { type: 'boolean', description: 'Whether the device includes software.' },
+        },
+        required: ['pathway', 'assayType', 'intendedUse'],
+      },
+      evidenceProbabilities: {
+        type: 'object',
+        description: '[review_outcome] Per-evidence-element probability (0–1) of being complete by submission, keyed by evidence element (e.g. analyticalPrecision, detectionCapability, stability, clinicalPerformance).',
+        additionalProperties: { type: 'number' },
+      },
+      iterations: { type: 'number', description: 'Monte-Carlo iterations (engine-clamped per mode). Optional.' },
+      seed: { type: 'number', description: 'Optional seed for reproducibility (otherwise the engine default).' },
+    },
+    required: ['mode'],
+  },
+};
+
+export const ASSESS_IVD_ANALYTICAL_EXTENSIONS: AnaTool = {
+  name: 'assess_ivd_analytical_extensions',
+  description:
+    "Extended IVD analytical-performance studies the core engine does not cover, all DETERMINISTIC (CLSI-style). mode='real_time_stability' (EP25): shelf-life from a value-vs-time series and a spec limit. mode='accelerated_stability' (Arrhenius): predicted real-time shelf-life and activation energy from elevated-temperature rate constants. mode='carryover' (EP10): carryover percent from a high→low run sequence vs an acceptance limit. mode='hook_effect': high-dose hook (prozone) detection from a concentration–signal series. mode='recovery' (EP06/EP07): spike-recovery / dilution-linearity recovery vs an acceptance band. mode='cutoff': clinical decision point by maximizing the Youden index over a labelled score set. " +
+    DETERMINISTIC_NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      mode: { type: 'string', enum: ['real_time_stability', 'accelerated_stability', 'carryover', 'hook_effect', 'recovery', 'cutoff'], description: 'Which analytical-extension study to run.' },
+      // real_time_stability
+      points: {
+        type: 'array',
+        description: "[real_time_stability] {time,value} series. [accelerated_stability] {temperatureC,rateConstant} series. [recovery] {expected,observed} series. Field set depends on mode.",
+        items: { type: 'object', additionalProperties: { type: 'number' } },
+      },
+      initialValue: { type: 'number', description: '[real_time_stability] Optional t=0 reference value (defaults to the regression intercept).' },
+      maxPercentChange: { type: 'number', description: '[real_time_stability] Max acceptable percent change before out-of-spec (e.g. 10 for ±10%).' },
+      // accelerated_stability
+      storageTemperatureC: { type: 'number', description: '[accelerated_stability] Intended real-time storage temperature in Celsius (e.g. 4, 25).' },
+      degradationThreshold: { type: 'number', description: '[accelerated_stability] Degradation fraction defining end of shelf-life (0–1, e.g. 0.1).' },
+      // carryover
+      lowAfterHigh: { type: 'array', items: { type: 'number' }, description: '[carryover] Replicates of the low sample run immediately after a high-concentration sample.' },
+      lowBaseline: { type: 'array', items: { type: 'number' }, description: '[carryover] Replicates of the low sample run in a clean sequence.' },
+      highSample: { type: 'array', items: { type: 'number' }, description: '[carryover] Replicates of the high-concentration sample.' },
+      acceptanceLimitPct: { type: 'number', description: '[carryover] Acceptance limit for carryover percent. Default 1.' },
+      // hook_effect
+      series: {
+        type: 'array',
+        description: '[hook_effect] Concentration–signal series (≥ 3 points).',
+        items: { type: 'object', properties: { concentration: { type: 'number' }, signal: { type: 'number' } }, required: ['concentration', 'signal'] },
+      },
+      dropThreshold: { type: 'number', description: '[hook_effect] Fractional drop from the peak that flags a hook. Default 0.05.' },
+      // recovery
+      recoveryBandPct: { type: 'array', items: { type: 'number' }, description: '[recovery] Acceptable recovery band [low, high] percent. Default [80, 120].' },
+      // cutoff
+      observations: {
+        type: 'array',
+        description: '[cutoff] Labelled scores: each {score, positive} where positive=true marks the diseased/positive reference state. Higher scores assumed to indicate disease.',
+        items: { type: 'object', properties: { score: { type: 'number' }, positive: { type: 'boolean' } }, required: ['score', 'positive'] },
+      },
+    },
+    required: ['mode'],
+  },
+};
+
 /** All statistical-design & analysis tools, spread into ALL_ANA_TOOLS. */
 export const STATISTICAL_DESIGN_TOOLS: AnaTool[] = [
   DESIGN_MMRM,
@@ -407,6 +530,9 @@ export const STATISTICAL_DESIGN_TOOLS: AnaTool[] = [
   SIZE_DIAGNOSTIC_STUDY,
   DESIGN_BAYESIAN_DEVICE,
   COMPUTE_ANALYTICAL_PERFORMANCE,
+  ASSESS_IVD_ANALYTICAL_EXTENSIONS,
+  COMPUTE_ASSURANCE,
   FORECAST_ENROLLMENT,
   PROJECT_EVENTS,
+  RUN_MONTE_CARLO_SIMULATION,
 ];

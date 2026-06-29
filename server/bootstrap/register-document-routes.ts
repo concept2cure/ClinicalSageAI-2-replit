@@ -58,6 +58,7 @@ export async function registerDocumentRoutes({
       { path: '/api/ectd-compile', mod: '../routes/ectd-compile', name: 'eCTD Compile' },
       { path: '/api/ectd/export', mod: '../routes/ectd-export', name: 'eCTD Export' },
       { path: '/api/csr/jobs', mod: '../routes/csr-jobs', name: 'CSR Jobs' },
+      { path: '/api/charters', mod: '../routes/charters', name: 'Project Charters' },
       {
         path: '/api/ectd-submissions',
         mod: '../routes/ectd-submission-agent.routes',
@@ -101,10 +102,18 @@ export async function registerDocumentRoutes({
   }
 
   // ── Submission-Package Orchestrator (M2/M3 composition, CSR tabulation, hardened validation) ──
+  //
+  // SECURITY: every handler calls requireTenant(req, res) which reads
+  // (req as any).user / (req as any).tenantContext — those are populated
+  // EXCLUSIVELY by authenticateToken (server/auth.ts populates req.user +
+  // req.tenantContext). Without this mount-level middleware, requireTenant
+  // would always see undefined and 401 every request, making the route
+  // functionally dead. Mirrors the auth-gating pattern used by
+  // /api/document-authoring (line 41) and the eCTD family above.
   try {
     const orchestratorModule = await import('../routes/submission-orchestrator');
-    app.use('/api/submission-orchestrator', orchestratorModule.default);
-    console.log('✅ Submission-Package Orchestrator routes mounted (M2/M3/CSR/hardened-validation)');
+    app.use('/api/submission-orchestrator', authenticateToken, orchestratorModule.default);
+    console.log('✅ Submission-Package Orchestrator routes mounted (M2/M3/CSR/hardened-validation, auth-gated)');
   } catch (error) {
     console.error('❌ Failed to mount Submission-Package Orchestrator routes:', error);
   }

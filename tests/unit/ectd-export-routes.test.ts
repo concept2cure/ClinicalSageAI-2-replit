@@ -272,7 +272,7 @@ describe('POST /api/ectd/export/:submissionId/validate', () => {
   });
 
   it('case 3: priorSequenceNumbers=["0000","0002"] + sequenceNumber="0003" → SEQUENCE_GAP for 0001', async () => {
-    // detectSequenceGaps normalizes to 4-digit ints and reports missing
+    // detectSequenceGapsFromArray normalizes to 4-digit ints and reports missing
     // sequences between the lowest supplied (0000) and the maximum (0003).
     // Supplied: 0000, 0002, 0003 → gap is 0001.
     const res = await request(makeApp())

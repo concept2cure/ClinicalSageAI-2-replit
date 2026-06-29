@@ -275,6 +275,32 @@ export const REGIONAL_RULES: RegionalRule[] = [
     severity: 'error',
     citation: 'HC Guidance Document — Regulatory Enrolment Process (REP)',
   },
+
+  // --- ICH-aligned regions without a fully encoded rule pack yet ---
+  // (UK/AU/CH/BR/IN/SG). Until a region-specific pack is added,
+  // validateRegionalPackage enforces only the universal eCTD invariants:
+  // M1 regional-backbone presence ({REGION}-REG-001) and the ASCII
+  // file-naming convention ({REGION}-REG-002). Application-number prefix,
+  // gateway size limit, language requirements, and labeling rules remain
+  // unchecked for these regions and should be encoded as proper validator
+  // packs (MHRA / TGA / Swissmedic / ANVISA / CDSCO / HSA) when their
+  // specifications are landed.
+  ...(['UK', 'AU', 'CH', 'BR', 'IN', 'SG'] as const).flatMap<RegionalRule>((region) => [
+    {
+      id: `${region}-REG-001`,
+      region,
+      description: `M1 regional file required at /m1/${region.toLowerCase()}/${region.toLowerCase()}-regional.xml`,
+      severity: 'error',
+      citation: 'eCTD specification — universal M1 regional backbone requirement',
+    },
+    {
+      id: `${region}-REG-002`,
+      region,
+      description: 'Filenames must follow the eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods; max 64 chars)',
+      severity: 'warning',
+      citation: 'eCTD specification — universal file-naming convention',
+    },
+  ]),
 ];
 
 const RULES_BY_REGION = new Map<RegulatoryRegion, RegionalRule[]>();
@@ -419,6 +445,22 @@ export function validateRegionalPackage(
       break;
     case 'KR':
       validateMFDSPackage(context, leaves, findings);
+      break;
+    case 'UK':
+    case 'AU':
+    case 'CH':
+    case 'BR':
+    case 'IN':
+    case 'SG':
+      // These ICH-aligned regions do not yet have full rule packs (no
+      // application-number prefix regex, no gateway-size limit constant, no
+      // language/labeling requirements). To prevent the switch from silently
+      // no-oping past every gateway check — which would let
+      // validateRegionalPackage return only FDA-ESG-001 (sequence format)
+      // for a submission targeting these regions — at minimum enforce the
+      // M1 regional backbone file presence rule that REGIONAL_BACKBONE has
+      // a path for. See GENERIC-REG-001.
+      validateGenericRegionPackage(context, leaves, findings);
       break;
   }
 
@@ -612,6 +654,42 @@ function validateMFDSPackage(
     makeMessage: (filename) =>
       `Filename "${filename}" does not follow the KR eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
     fix: 'Rename to ASCII per the KR eCTD v1.0 file-naming rules (Korean belongs in document content, not file names)',
+  });
+}
+
+/**
+ * Minimum-viable validator for ICH-aligned regions whose full rule pack has
+ * not yet been encoded in REGIONAL_RULES (UK/AU/CH/BR/IN/SG). Without this
+ * stub the `switch` in validateRegionalPackage would silently no-op for
+ * these regions — backbone file presence, ASCII file names, application
+ * number format, gateway size limit — all skipped. The stub at minimum
+ * enforces M1 regional-backbone presence (the universal eCTD invariant
+ * available from REGIONAL_BACKBONE) and the eCTD ASCII file-naming
+ * convention. Region-specific rules (app-number prefix, gateway size limit,
+ * language requirements, labeling) should be added as full validator
+ * functions when those specifications are encoded. The rule IDs follow the
+ * `{REGION}-REG-NNN` pattern (e.g., UK-REG-001) so they remain unique in
+ * REGIONAL_RULES.
+ */
+function validateGenericRegionPackage(
+  context: RegionalContext,
+  leaves: RegionalLeafRef[],
+  findings: RegionalFinding[]
+): void {
+  requireBackbone(
+    leaves,
+    context.region,
+    `${context.region}-REG-001`,
+    `Generate and include the ${context.region} M1 regional XML at /${REGIONAL_BACKBONE[context.region]}`,
+    findings,
+  );
+
+  checkAsciiFilenames(leaves, context.region, findings, {
+    ruleId: `${context.region}-REG-002`,
+    severity: 'warning',
+    makeMessage: (filename) =>
+      `Filename "${filename}" does not follow the eCTD ASCII naming convention (lowercase a-z, 0-9, hyphens, periods)`,
+    fix: 'Rename per the eCTD file-naming rules (ASCII only, max 64 chars, no spaces)',
   });
 }
 

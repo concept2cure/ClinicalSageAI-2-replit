@@ -174,6 +174,19 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Submission orchestrator metrics — per-run / per-step counters +
+      // histograms + the dedicated SEQ_QUERY_FAILED counter so Alertmanager
+      // can fire on the rate independently of other gateway-not-ready causes.
+      // See infra/alerts/orchestrator.yml for the rule definitions.
+      try {
+        const { renderSubmissionOrchestratorMetrics } = await import(
+          '../services/submission-orchestrator-metrics.js'
+        );
+        lines.push(...renderSubmissionOrchestratorMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // FCOI metrics — 21 CFR 54 disclosure lifecycle (C2C-01).
       try {
         const { renderFcoiMetrics } = await import('../services/fcoi-metrics.js');
@@ -226,6 +239,118 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
       try {
         const { renderGrantsMetrics } = await import('../services/grants-metrics.js');
         lines.push(...renderGrantsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Medicare Coverage Analysis metrics (C2C-15).
+      try {
+        const { renderCoverageMetrics } = await import('../services/coverage-metrics.js');
+        lines.push(...renderCoverageMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Research committee governance metrics (C2C-16).
+      try {
+        const { renderCommitteeMetrics } = await import('../services/committee-metrics.js');
+        lines.push(...renderCommitteeMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Intelligent grant finder metrics (C2C-14).
+      try {
+        const { renderGrantFinderMetrics } = await import('../services/grant-finder-metrics.js');
+        lines.push(...renderGrantFinderMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // CITI training metrics (C2C-01/02).
+      try {
+        const { renderCitiMetrics } = await import('../services/citi-metrics.js');
+        lines.push(...renderCitiMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol portfolio metrics (C2C-16).
+      try {
+        const { renderProtocolPortfolioMetrics } = await import('../services/protocol-portfolio-metrics.js');
+        lines.push(...renderProtocolPortfolioMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol development metrics (C2C-17).
+      try {
+        const { renderProtocolDevMetrics } = await import('../services/protocol-development-metrics.js');
+        lines.push(...renderProtocolDevMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol risk register metrics (C2C-19).
+      try {
+        const { renderProtocolRiskMetrics } = await import('../services/protocol-risks-metrics.js');
+        lines.push(...renderProtocolRiskMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol amendments metrics (C2C-18a).
+      try {
+        const { renderProtocolAmendmentsMetrics } = await import('../services/protocol-amendments-metrics.js');
+        lines.push(...renderProtocolAmendmentsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol deviations metrics (C2C-18b).
+      try {
+        const { renderProtocolDeviationsMetrics } = await import('../services/protocol-deviations-metrics.js');
+        lines.push(...renderProtocolDeviationsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol review & comment metrics (C2C-18c).
+      try {
+        const { renderProtocolReviewMetrics } = await import('../services/protocol-reviews-metrics.js');
+        lines.push(...renderProtocolReviewMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Informed consent builder metrics (C2C-18d).
+      try {
+        const { renderConsentMetrics } = await import('../services/protocol-consent-metrics.js');
+        lines.push(...renderConsentMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol templates metrics (C2C-20a).
+      try {
+        const { renderProtocolTemplatesMetrics } = await import('../services/protocol-templates-metrics.js');
+        lines.push(...renderProtocolTemplatesMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol milestones metrics (C2C-20b).
+      try {
+        const { renderProtocolMilestonesMetrics } = await import('../services/protocol-milestones-metrics.js');
+        lines.push(...renderProtocolMilestonesMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol export metrics (C2C-20c).
+      try {
+        const { renderProtocolExportMetrics } = await import('../services/protocol-export-metrics.js');
+        lines.push(...renderProtocolExportMetrics());
       } catch {
         /* metrics module not loaded yet — skip */
       }
