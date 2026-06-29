@@ -163,14 +163,17 @@ export function servicesFor(opts: {
     ids.add('change_control');
   }
 
-  if (family === 'marketing_authorization' || family === 'device_approval' || family === 'device_clearance') {
+  if (
+    family === 'marketing_authorization' || family === 'device_approval' ||
+    family === 'device_clearance' || family === 'companion_diagnostic'
+  ) {
     ids.add('health_economics');
   }
 
   if (
     family === 'clinical_trial' || family === 'marketing_authorization' ||
     family === 'device_approval' || family === 'device_clearance' ||
-    family === 'designation' || family === 'orphan'
+    family === 'designation' || family === 'orphan' || family === 'companion_diagnostic'
   ) {
     ids.add('special_designations');
   }
