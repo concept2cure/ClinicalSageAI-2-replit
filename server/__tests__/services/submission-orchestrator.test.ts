@@ -493,7 +493,8 @@ describe('submission-package-orchestrator', () => {
     const { run, outputs } = await runOrchestrator(baseInputs);
     expect(run.runId).toBeDefined();
     expect(run.status).toMatch(/complete|partial/);
-    expect(run.steps.length).toBe(11);
+    // ORDERED_STEPS count: 11 original + m3.refine (Move 5) + csr.draft-narrative (Move 6) = 13.
+    expect(run.steps.length).toBe(13);
     expect(outputs.module3Sections.length).toBeGreaterThan(0);
     expect(outputs.csrTables.length).toBe(1);
     expect(outputs.m23).toBeDefined();
