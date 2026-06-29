@@ -53,13 +53,11 @@
 import {
   resolveToRegistryEntry,
   getSubmissionTypeContext,
-  getAllActiveSubmissionTypes,
   type SubmissionTypeContext,
 } from './submission-type-bridge.js';
 import type {
   RegulatoryApplicationType,
   ApplicationFamily,
-  ProductClass,
   Region,
 } from './document-taxonomy.js';
 import { getRegionProfile } from './region-profiles.js';
@@ -67,31 +65,30 @@ import { getClientTypeProfile } from './client-type-profiles.js';
 import { toGatewaySlug } from './region-identity.js';
 import { resolveProgramModel } from './program-model.js';
 import { resolveValidationProfile } from './validation-profile.js';
+import type { WorkspaceAppId } from './app-registry.js';
 import {
-  APP_REGISTRY,
-  type AppRegistryEntry,
-  type WorkspaceAppId,
-} from './app-registry.js';
+  servicesFor,
+  getService,
+  type WorkspaceServiceId,
+  type WorkspaceService,
+  type WorkspaceScope,
+  type WorkspaceVocabulary,
+} from './service-registry.js';
+import {
+  scopeFor,
+  vocabularyFor,
+  appsFor,
+  personaFor,
+  type WorkspaceApp,
+} from './workspace-derivation.js';
+import { SUPPLEMENTARY_CATALOG, buildSelectionCatalog } from './selection-catalog.js';
 
-// ─── Workspace vocabulary ────────────────────────────────────────────────────
+// Re-export the selection catalog so downstream consumers are unaffected.
+export { buildSelectionCatalog, type SelectionOption, type SelectionGroup } from './selection-catalog.js';
 
-/**
- * The structural shape of what the client selected. Drives how the center file
- * tree is rendered and whether a transmit gateway is even applicable.
- *
- *  - 'dossier'      a multi-module application (NDA, BLA, IND, 510(k), PMA) —
- *                   full CTD/eSTAR tree, assembled + transmitted to an agency.
- *  - 'document'     a single structured document (CSR, CER, SOP, a QOS) — one
- *                   authored artifact with an internal section tree.
- *  - 'record'       a form/data record (ICSR, MedWatch, annual report) — driven
- *                   by fields, not prose.
- *  - 'registration' a perpetual, product-scoped function (labeling/CCDS,
- *                   registration status) that outlives any single submission.
- */
-export type WorkspaceScope = 'dossier' | 'document' | 'record' | 'registration';
-
-/** Domain language the shell speaks for this type. */
-export type WorkspaceVocabulary = 'drug' | 'device' | 'ivd' | 'quality' | 'generic';
+// Re-export service types so downstream consumers are unaffected.
+export type { WorkspaceServiceId, WorkspaceService, WorkspaceScope, WorkspaceVocabulary };
+export { servicesFor, getService };
 
 /**
  * The fixed shell zones — always present in every project, regardless of the
@@ -103,9 +100,7 @@ export type WorkspaceShellZone = (typeof WORKSPACE_SHELL)[number];
 // The app id + discipline types and the catalog data live in the canonical
 // app-registry (single source of truth, shared with license entitlements).
 export type { WorkspaceAppId, AppDiscipline } from './app-registry.js';
-
-/** A discipline app as surfaced in the workspace — its full registry entry. */
-export type WorkspaceApp = AppRegistryEntry;
+export type { WorkspaceApp } from './workspace-derivation.js';
 
 /** Cross-cutting capabilities available on any artifact (not full apps). */
 export type WorkspaceCapability = 'validator' | 'esignature' | 'audit_trail';
@@ -259,297 +254,6 @@ export type WorkspaceConfigInput =
   | string
   | { need: string; clientType?: string; region?: string };
 
-// ─── App catalog (resolved from the canonical app-registry) ──────────────────
-
-function app(id: WorkspaceAppId): WorkspaceApp {
-  return { ...APP_REGISTRY[id] };
-}
-
-// ─── Service catalog (AnA toolset + inline authoring helpers) ─────────────────
-
-/**
- * Services are capabilities with NO standalone workspace — they feed AnA and are
- * invoked inline while the client authors. Each maps to a real backend service
- * domain. The selected document type decides which are in scope.
- */
-export type WorkspaceServiceId =
-  | 'knowledge_base'             // ICH / pathways / standards / deficiencies lookup
-  | 'regulatory_intelligence'   // CRL/RTF prediction, blended readiness scoring
-  | 'cross_artifact_intelligence' // consistency across the dossier
-  | 'readiness_assessment'      // per-domain readiness verdicts
-  | 'precedent_intelligence'    // precedent mining / predicate intelligence
-  | 'literature_search'         // PubMed / scientific literature
-  | 'evidence_search'           // evidence fabric / sufficiency
-  | 'cdisc_validation'          // SDTM / ADaM conformance
-  | 'statistical_defensibility' // endpoint / power sanity (thin; not the biostat app)
-  | 'substantial_equivalence_check' // predicate comparison analysis (device/IVD)
-  | 'external_intelligence';    // agency feeds / review-timeline signals
-
-export interface WorkspaceService {
-  id: WorkspaceServiceId;
-  label: string;
-  /** Where the capability shows up. */
-  feeds: 'ana' | 'inline' | 'both';
-}
-
-const SERVICE_CATALOG: Record<WorkspaceServiceId, Omit<WorkspaceService, 'id'>> = {
-  knowledge_base:               { label: 'Knowledge base (ICH / standards / deficiencies)', feeds: 'both' },
-  regulatory_intelligence:      { label: 'Regulatory intelligence (CRL/RTF, readiness)', feeds: 'both' },
-  cross_artifact_intelligence:  { label: 'Cross-artifact consistency', feeds: 'ana' },
-  readiness_assessment:         { label: 'Readiness assessment', feeds: 'both' },
-  precedent_intelligence:       { label: 'Precedent / predicate intelligence', feeds: 'both' },
-  literature_search:            { label: 'Literature search', feeds: 'inline' },
-  evidence_search:              { label: 'Evidence search / sufficiency', feeds: 'both' },
-  cdisc_validation:             { label: 'CDISC validation (SDTM / ADaM)', feeds: 'inline' },
-  statistical_defensibility:    { label: 'Statistical defensibility check', feeds: 'ana' },
-  substantial_equivalence_check:{ label: 'Substantial-equivalence check', feeds: 'both' },
-  external_intelligence:        { label: 'External agency intelligence', feeds: 'ana' },
-};
-
-function svc(id: WorkspaceServiceId): WorkspaceService {
-  return { id, ...SERVICE_CATALOG[id] };
-}
-
-// ─── Supplementary (non-filing) document catalog ─────────────────────────────
-
-/**
- * Document types a client can select that are NOT regulatory filings — they
- * live in the QMS or are cross-cutting authored documents — so the registry
- * (which is a *filing* registry) does not carry them. The "select your need"
- * catalog is the UNION of the filing registry and this list. Same contract.
- */
-interface SupplementaryDoc {
-  id: string;
-  displayName: string;
-  family: ApplicationFamily;
-  vocabulary: WorkspaceVocabulary;
-  validationProfile: string;
-  requiredArtifacts: string[];
-  persona: string;
-  context: string;
-}
-
-const SUPPLEMENTARY_CATALOG: Record<string, SupplementaryDoc> = {
-  SOP: {
-    id: 'QMS_SOP',
-    displayName: 'Standard Operating Procedure',
-    family: 'quality_system',
-    vocabulary: 'quality',
-    validationProfile: 'qms_controlled_document',
-    requiredArtifacts: ['purpose_scope', 'responsibilities', 'procedure', 'revision_history'],
-    persona: 'Quality systems author (21 CFR 820 / ICH Q10)',
-    context: 'Controlled QMS procedure: effective-dated, version-controlled, e-signed, training-gated.',
-  },
-  WORK_INSTRUCTION: {
-    id: 'QMS_WI',
-    displayName: 'Work Instruction',
-    family: 'quality_system',
-    vocabulary: 'quality',
-    validationProfile: 'qms_controlled_document',
-    requiredArtifacts: ['scope', 'steps', 'revision_history'],
-    persona: 'Quality systems author (21 CFR 820 / ICH Q10)',
-    context: 'Controlled work instruction subordinate to a parent SOP.',
-  },
-};
-
-// ─── Derivation helpers ──────────────────────────────────────────────────────
-
-const DOSSIER_FAMILIES: ReadonlySet<ApplicationFamily> = new Set<ApplicationFamily>([
-  'marketing_authorization',
-  'device_approval',
-  'device_clearance',
-  'clinical_trial',
-  // A companion-diagnostic PMA / 510(k) is a full IVD marketing dossier, reviewed
-  // concurrently with the paired therapeutic. It assembles + transmits like any
-  // dossier (submission center + agency gateway + the IVD discipline app set).
-  'companion_diagnostic',
-]);
-
-const CHANGE_FAMILIES: ReadonlySet<ApplicationFamily> = new Set<ApplicationFamily>([
-  'variation',
-  'renewal',
-  'supplement',
-]);
-
-const RECORD_FAMILIES: ReadonlySet<ApplicationFamily> = new Set<ApplicationFamily>([
-  'safety_report',
-]);
-
-function scopeFor(family: ApplicationFamily | null, stage?: string | null): WorkspaceScope {
-  if (!family) return 'document';
-  // A pre-submission interaction (meeting request, co-development agreement,
-  // scientific advice) authors a single document even when it shares a dossier
-  // family — e.g. a CDx co-development agreement is companion_diagnostic but is
-  // not itself the marketing dossier.
-  if (stage === 'pre_submission') return 'document';
-  if (family === 'post_market') return 'registration'; // labeling/registration-status family
-  if (RECORD_FAMILIES.has(family)) return 'record';
-  if (DOSSIER_FAMILIES.has(family) || CHANGE_FAMILIES.has(family)) return 'dossier';
-  // clinical_document, dossier_module, quality_cmc, quality_system,
-  // software_documentation, master_file, designation, pre_submission → a single
-  // authored document (possibly a module-sized subtree).
-  return 'document';
-}
-
-function vocabularyFor(productClasses: ProductClass[], segment?: string): WorkspaceVocabulary {
-  if (productClasses.includes('ivd')) return 'ivd';
-  if (productClasses.includes('medical_device')) return 'device';
-  if (segment === 'medical_devices') return 'device';
-  if (segment === 'diagnostics_ivd') return 'ivd';
-  if (
-    productClasses.some((p) =>
-      ['small_molecule', 'biologic', 'biosimilar', 'generic', 'vaccine', 'atmp'].includes(p),
-    )
-  ) {
-    return 'drug';
-  }
-  return 'generic';
-}
-
-/** Decide which full discipline apps are available inside the project. */
-function appsFor(opts: {
-  scope: WorkspaceScope;
-  vocabulary: WorkspaceVocabulary;
-  family: ApplicationFamily | null;
-  ctdModule: string | null;
-  productClasses: ProductClass[];
-}): WorkspaceApp[] {
-  const { scope, vocabulary, family, ctdModule, productClasses } = opts;
-  const ids = new Set<WorkspaceAppId>();
-
-  const mod = (ctdModule ?? '').toUpperCase();
-  const spansAll = scope === 'dossier';
-  const isDeviceOrIvd =
-    vocabulary === 'device' || vocabulary === 'ivd' ||
-    productClasses.includes('medical_device') || productClasses.includes('ivd');
-
-  // Dossier scope can assemble + transmit; single documents/records cannot.
-  if (scope === 'dossier') ids.add('submission_center');
-
-  // CMC / Module 3 quality.
-  if (spansAll || mod.includes('M3') || family === 'quality_cmc') ids.add('cmc');
-  // Nonclinical / Module 4. Animal studies pull in IACUC governance.
-  if (spansAll || mod.includes('M4')) {
-    ids.add('nonclinical');
-    if (vocabulary === 'drug') ids.add('iacuc');
-  }
-  // Clinical / Module 5 + biostatistics (a CSR alone still needs both).
-  if (spansAll || mod.includes('M5') || family === 'clinical_document') {
-    ids.add('clinical_csr');
-    ids.add('biostatistics');
-  }
-
-  // Investigational context (a trial is being designed/run): study & protocol
-  // design plus human-subjects IRB governance. Covers IND/CTA (clinical_trial),
-  // device IDE (device_clearance), and standalone clinical documents (CSR).
-  const isInvestigational =
-    family === 'clinical_trial' ||
-    family === 'device_clearance' ||
-    family === 'clinical_document' ||
-    mod.includes('M5');
-  if (isInvestigational) {
-    ids.add('study_protocol_design');
-    ids.add('irb');
-  }
-
-  // Biosafety (IBC) where recombinant / gene-therapy / biologic agents are in play.
-  if (productClasses.some((p) => ['biologic', 'atmp', 'vaccine'].includes(p))) {
-    ids.add('ibc');
-  }
-
-  // Device / IVD disciplines.
-  if (isDeviceOrIvd) {
-    ids.add('risk');
-    if (scope === 'dossier') {
-      ids.add('human_factors');
-      ids.add('cybersecurity');
-      ids.add('cer'); // EU MDR/IVDR clinical evaluation / performance evaluation
-      if (family === 'device_clearance') ids.add('substantial_equiv');
-    }
-  }
-
-  // IVD performance: analytical performance is the core IVD evidence (CLSI EP).
-  if (vocabulary === 'ivd' || productClasses.includes('ivd')) {
-    ids.add('analytical_performance');
-  }
-
-  // Biosimilar / generic: the program rests on analytical similarity / bioequivalence.
-  if (productClasses.includes('biosimilar') || productClasses.includes('generic')) {
-    ids.add('analytical_similarity');
-  }
-
-  // Safety / PV.
-  if (family === 'safety_report') ids.add('pharmacovigilance');
-
-  // Trial Master File travels with any investigational program.
-  if (isInvestigational) ids.add('etmf');
-
-  // Market access / reimbursement opens once a product is heading to market.
-  if (family === 'marketing_authorization' || family === 'device_approval') {
-    ids.add('market_access');
-  }
-
-  // Labeling participates in any dossier and is its own registration function.
-  if (scope === 'dossier' || scope === 'registration') ids.add('labeling');
-
-  return [...ids].map(app);
-}
-
-/** Decide which inline/AnA services are in scope for this selection. */
-function servicesFor(opts: {
-  scope: WorkspaceScope;
-  vocabulary: WorkspaceVocabulary;
-  family: ApplicationFamily | null;
-  ctdModule: string | null;
-  productClasses: ProductClass[];
-  isRegulatory: boolean;
-}): WorkspaceService[] {
-  const { scope, vocabulary, family, ctdModule, productClasses, isRegulatory } = opts;
-  const ids = new Set<WorkspaceServiceId>(['knowledge_base', 'cross_artifact_intelligence']);
-
-  // Non-regulatory docs (SOP/WI) get authoring aids only — no agency intelligence.
-  if (!isRegulatory) {
-    return [...ids].map(svc);
-  }
-
-  ids.add('regulatory_intelligence');
-  ids.add('readiness_assessment');
-
-  const mod = (ctdModule ?? '').toUpperCase();
-  const spansAll = scope === 'dossier';
-  const isDeviceOrIvd =
-    vocabulary === 'device' || vocabulary === 'ivd' ||
-    productClasses.includes('medical_device') || productClasses.includes('ivd');
-  const isClinical = spansAll || mod.includes('M5') || family === 'clinical_document' || family === 'clinical_trial';
-
-  if (isClinical) {
-    ids.add('literature_search');
-    ids.add('evidence_search');
-    ids.add('cdisc_validation');
-    ids.add('statistical_defensibility');
-    ids.add('precedent_intelligence');
-  }
-  if (isDeviceOrIvd) {
-    ids.add('precedent_intelligence'); // predicate intelligence
-    ids.add('evidence_search');
-    if (family === 'device_clearance' || scope === 'dossier') ids.add('substantial_equivalence_check');
-  }
-  // Transmittable dossiers get agency review-timeline signals.
-  if (scope === 'dossier') ids.add('external_intelligence');
-
-  return [...ids].map(svc);
-}
-
-function personaFor(vocabulary: WorkspaceVocabulary): string {
-  switch (vocabulary) {
-    case 'device': return 'Device regulatory strategist (FDA CDRH / EU MDR)';
-    case 'ivd':    return 'IVD regulatory strategist (FDA CDRH / EU IVDR)';
-    case 'drug':   return 'Drug/biologic regulatory strategist (FDA CDER/CBER / ICH)';
-    case 'quality':return 'Quality systems author (21 CFR 820 / ICH Q10)';
-    default:       return 'Regulatory co-author';
-  }
-}
-
 // ─── The resolver ────────────────────────────────────────────────────────────
 
 const BASE_CAPABILITIES: WorkspaceCapability[] = ['validator', 'esignature', 'audit_trail'];
@@ -675,7 +379,7 @@ function resolveBaseConfig(need: string): WorkspaceConfig {
     editor: { validationProfile: 'generic_document', dossierStandard: 'none', requiredArtifacts: [] },
     coAuthor: { persona: 'Regulatory co-author', context: 'Unrecognized document type — author freely; no profile applied.' },
     apps: [],
-    services: [svc('knowledge_base')],
+    services: [getService('knowledge_base')],
     capabilities: ['esignature', 'audit_trail'],
     gateway: null,
     lifecycleActions: ['draft', 'review', 'approve'],
@@ -730,97 +434,6 @@ export function resolveWorkspaceConfig(input: WorkspaceConfigInput): WorkspaceCo
     if (rg) base.region = rg;
   }
   return base;
-}
-
-// ─── The "select your need" catalog ──────────────────────────────────────────
-
-/** One selectable option in the project-creation picker. */
-export interface SelectionOption {
-  /** The key to hand to resolveWorkspaceConfig once chosen. */
-  value: string;
-  label: string;
-  scope: WorkspaceScope;
-  vocabulary: WorkspaceVocabulary;
-  agency: string | null;
-  region: string | null;
-}
-
-/** A labeled group of options in the picker. */
-export interface SelectionGroup {
-  id: string;
-  label: string;
-  options: SelectionOption[];
-}
-
-/** Friendly group order + labels, keyed by the structural scope. */
-const SELECTION_GROUPS: ReadonlyArray<readonly [string, string]> = [
-  ['submissions', 'Submissions — full applications'],
-  ['documents', 'Documents'],
-  ['records', 'Safety & post-market records'],
-  ['registration', 'Product registration & labeling'],
-  ['qms', 'Quality system documents'],
-];
-
-function groupForScope(scope: WorkspaceScope): string {
-  switch (scope) {
-    case 'dossier': return 'submissions';
-    case 'record': return 'records';
-    case 'registration': return 'registration';
-    default: return 'documents';
-  }
-}
-
-/**
- * The unified picker a client uses at project creation. It is the UNION of the
- * canonical filing registry (NDA, IND, CSR, 510(k), …) and the supplementary
- * non-filing catalog (SOP, work instruction). Every option's `value` feeds
- * straight into resolveWorkspaceConfig — selection IS configuration.
- *
- * Grouped by structural scope so a client sees "full submissions" separately
- * from "single documents" and "QMS documents" — the same distinction that
- * decides how the workspace renders.
- */
-export function buildSelectionCatalog(): SelectionGroup[] {
-  const byGroup = new Map<string, SelectionOption[]>();
-  for (const [id] of SELECTION_GROUPS) byGroup.set(id, []);
-
-  // Filing registry (158 canonical types).
-  for (const e of getAllActiveSubmissionTypes()) {
-    const scope = scopeFor(e.applicationFamily ?? null, e.stage ?? null);
-    const option: SelectionOption = {
-      value: e.id,
-      label: e.displayName,
-      scope,
-      vocabulary: vocabularyFor(e.productClass ?? [], e.segment),
-      agency: e.agency ?? null,
-      region: e.region ?? null,
-    };
-    byGroup.get(groupForScope(scope))!.push(option);
-  }
-
-  // Supplementary non-filing documents (QMS).
-  for (const [key, doc] of Object.entries(SUPPLEMENTARY_CATALOG)) {
-    const scope = scopeFor(doc.family);
-    byGroup.get('qms')!.push({
-      value: key,
-      label: doc.displayName,
-      scope,
-      vocabulary: doc.vocabulary,
-      agency: null,
-      region: null,
-    });
-  }
-
-  // Deterministic order within each group: region, then label.
-  for (const opts of byGroup.values()) {
-    opts.sort(
-      (a, b) => (a.region ?? '').localeCompare(b.region ?? '') || a.label.localeCompare(b.label),
-    );
-  }
-
-  return SELECTION_GROUPS
-    .map(([id, label]) => ({ id, label, options: byGroup.get(id)! }))
-    .filter((g) => g.options.length > 0);
 }
 
 export default { resolveWorkspaceConfig, buildSelectionCatalog };

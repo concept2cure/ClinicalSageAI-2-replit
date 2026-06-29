@@ -165,3 +165,61 @@ describe('project map — per-milestone standards in force', () => {
     }
   });
 });
+
+const servicesAt = (need: string, phase: ProjectPhase): string[] =>
+  milestone(need, phase)?.services ?? [];
+
+describe('project map — service phase assignments', () => {
+  it('financial_disclosures surfaces in the clinical phase', () => {
+    expect(servicesAt('BLA', 'clinical')).toContain('financial_disclosures');
+    expect(servicesAt('BLA', 'strategy')).not.toContain('financial_disclosures');
+  });
+
+  it('cmc_consistency surfaces in quality and assembly phases', () => {
+    expect(servicesAt('NDA', 'quality')).toContain('cmc_consistency');
+    expect(servicesAt('NDA', 'assembly')).toContain('cmc_consistency');
+    expect(servicesAt('NDA', 'clinical')).not.toContain('cmc_consistency');
+  });
+
+  it('dose_optimization surfaces in the clinical phase for drug programs', () => {
+    expect(servicesAt('NDA', 'clinical')).toContain('dose_optimization');
+    expect(servicesAt('NDA', 'strategy')).not.toContain('dose_optimization');
+  });
+
+  it('effort_certification surfaces in the clinical phase for clinical trials', () => {
+    expect(servicesAt('IND', 'clinical')).toContain('effort_certification');
+  });
+
+  it('special_designations surfaces in the strategy phase', () => {
+    expect(servicesAt('BLA', 'strategy')).toContain('special_designations');
+  });
+
+  it('health_economics surfaces in strategy and post_market', () => {
+    expect(servicesAt('NDA', 'strategy')).toContain('health_economics');
+    expect(servicesAt('NDA', 'post_market')).toContain('health_economics');
+  });
+
+  it('inspection_readiness surfaces in quality and review', () => {
+    expect(servicesAt('NDA', 'quality')).toContain('inspection_readiness');
+    expect(servicesAt('NDA', 'review')).toContain('inspection_readiness');
+  });
+
+  it('controlled_substances surfaces in strategy and clinical for drug programs', () => {
+    expect(servicesAt('NDA', 'strategy')).toContain('controlled_substances');
+    expect(servicesAt('NDA', 'clinical')).toContain('controlled_substances');
+  });
+
+  it('cdx_intelligence surfaces in strategy and clinical for CDx filings', () => {
+    expect(servicesAt('US_CDX_PMA', 'strategy')).toContain('cdx_intelligence');
+    expect(servicesAt('US_CDX_PMA', 'clinical')).toContain('cdx_intelligence');
+  });
+
+  it('the service inventory says when each service is first needed', () => {
+    const plan = resolveProjectMap('NDA');
+    const fcoi = plan.inventory.services.find((s) => s.id === 'financial_disclosures');
+    expect(fcoi?.firstNeededPhase).toBe('clinical');
+    const cmc = plan.inventory.services.find((s) => s.id === 'cmc_consistency');
+    expect(cmc?.firstNeededPhase).toBe('quality');
+    expect(cmc?.neededAtPhases).toEqual(['quality', 'assembly']);
+  });
+});
