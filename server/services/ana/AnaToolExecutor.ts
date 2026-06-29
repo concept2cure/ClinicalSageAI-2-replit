@@ -8382,6 +8382,206 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Protocol Amendments / Deviations / Reviews / Consent (C2C-18a–d). Mutations
+// share the governed/audited path (domain 'protocol_development'); review tools
+// are read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function governedPdev(ctx: any, command: string, target: string, fallbackReason: string, input: Record<string, unknown>, run: (client: any) => Promise<Record<string, unknown>>): Promise<string> {
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId!);
+    const body = await run(client);
+    await recordGovernedAction(client, { orgId: ctx.organizationId!, userId: ctx.userId!, command, target, reason: fcoiReason(input, fallbackReason), payload: body, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, ...body });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `${command} failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+}
+
+registerToolHandler('create_protocol_amendment', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_protocol_amendment requires tenant + user context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!Number.isInteger(protocolDocumentId) || !title) return JSON.stringify({ error: 'protocol_document_id and title are required.' });
+  const { createAmendmentTx } = await import('../protocol-amendments/protocol-amendments-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'Protocol amendment opened via AnA', input, async (client) => {
+    const { id } = await createAmendmentTx(client, ctx.organizationId!, ctx.userId!, {
+      protocolDocumentId, title,
+      amendmentNumber: typeof input.amendment_number === 'string' ? input.amendment_number : null,
+      rationale: typeof input.rationale === 'string' ? input.rationale : null,
+      amendmentType: typeof input.amendment_type === 'string' ? input.amendment_type : null,
+      affectsConsent: typeof input.affects_consent === 'boolean' ? input.affects_consent : undefined,
+      affectsRisk: typeof input.affects_risk === 'boolean' ? input.affects_risk : undefined,
+    });
+    return { amendmentId: id };
+  });
+});
+
+registerToolHandler('add_amendment_change', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_amendment_change requires tenant + user context.' });
+  const amendmentId = typeof input.amendment_id === 'number' ? input.amendment_id : NaN;
+  const changeDescription = typeof input.change_description === 'string' ? input.change_description.trim() : '';
+  if (!Number.isInteger(amendmentId) || !changeDescription) return JSON.stringify({ error: 'amendment_id and change_description are required.' });
+  const { addChangeTx } = await import('../protocol-amendments/protocol-amendments-service.js');
+  return governedPdev(ctx, 'update', `protocol-amendment:${amendmentId}`, 'Amendment change added via AnA', input, async (client) => {
+    const { id } = await addChangeTx(client, ctx.organizationId!, ctx.userId!, amendmentId, {
+      changeDescription,
+      sectionRef: typeof input.section_ref === 'string' ? input.section_ref : null,
+      previousText: typeof input.previous_text === 'string' ? input.previous_text : null,
+      proposedText: typeof input.proposed_text === 'string' ? input.proposed_text : null,
+    });
+    return { changeId: id };
+  });
+});
+
+registerToolHandler('review_amendment', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_amendment requires tenant context.' });
+  const amendmentId = typeof input.amendment_id === 'number' ? input.amendment_id : NaN;
+  if (!Number.isInteger(amendmentId)) return JSON.stringify({ error: 'amendment_id is required.' });
+  const { getAmendmentReadiness } = await import('../protocol-amendments/protocol-amendments-service.js');
+  try {
+    return JSON.stringify({ ok: true, readiness: await getAmendmentReadiness(ctx.organizationId!, amendmentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_amendment failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('report_protocol_deviation', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'report_protocol_deviation requires tenant + user context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  if (!Number.isInteger(protocolDocumentId) || !description) return JSON.stringify({ error: 'protocol_document_id and description are required.' });
+  const { createDeviationTx } = await import('../protocol-deviations/protocol-deviations-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'Protocol deviation reported via AnA', input, async (client) => {
+    const r = await createDeviationTx(client, ctx.organizationId!, ctx.userId!, {
+      protocolDocumentId, description,
+      category: typeof input.category === 'string' ? (input.category as any) : undefined,
+      severity: typeof input.severity === 'string' ? (input.severity as any) : undefined,
+      affectsSafety: typeof input.affects_safety === 'boolean' ? input.affects_safety : undefined,
+      rootCause: typeof input.root_cause === 'string' ? input.root_cause : null,
+    });
+    return { deviationId: r.id, reportable: r.reportable, timelinessDays: r.timelinessDays };
+  });
+});
+
+registerToolHandler('add_capa_action', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_capa_action requires tenant + user context.' });
+  const deviationId = typeof input.deviation_id === 'number' ? input.deviation_id : NaN;
+  const action = typeof input.action === 'string' ? input.action.trim() : '';
+  if (!Number.isInteger(deviationId) || !action) return JSON.stringify({ error: 'deviation_id and action are required.' });
+  const { addCapaActionTx } = await import('../protocol-deviations/protocol-deviations-service.js');
+  return governedPdev(ctx, 'update', `protocol-deviation:${deviationId}`, 'CAPA action added via AnA', input, async (client) => {
+    const { id } = await addCapaActionTx(client, ctx.organizationId!, ctx.userId!, deviationId, {
+      action, owner: typeof input.owner === 'string' ? input.owner : null, dueDate: typeof input.due_date === 'string' ? input.due_date : null,
+    });
+    return { capaId: id };
+  });
+});
+
+registerToolHandler('review_deviation', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_deviation requires tenant context.' });
+  const deviationId = typeof input.deviation_id === 'number' ? input.deviation_id : NaN;
+  if (!Number.isInteger(deviationId)) return JSON.stringify({ error: 'deviation_id is required.' });
+  const { getDeviation, getCapaClosure } = await import('../protocol-deviations/protocol-deviations-service.js');
+  try {
+    const deviation = await getDeviation(ctx.organizationId!, deviationId);
+    if (!deviation) return JSON.stringify({ error: 'Deviation not found.' });
+    const closure = await getCapaClosure(ctx.organizationId!, deviationId);
+    return JSON.stringify({ ok: true, deviation, closure });
+  } catch (err) {
+    return JSON.stringify({ error: `review_deviation failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('assign_protocol_reviewer', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'assign_protocol_reviewer requires tenant + user context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  const reviewerName = typeof input.reviewer_name === 'string' ? input.reviewer_name.trim() : '';
+  if (!Number.isInteger(protocolDocumentId) || !reviewerName) return JSON.stringify({ error: 'protocol_document_id and reviewer_name are required.' });
+  const { assignReviewerTx } = await import('../protocol-reviews/protocol-reviews-service.js');
+  return governedPdev(ctx, 'assign', `protocol-document:${protocolDocumentId}`, 'Reviewer assigned via AnA', input, async (client) => {
+    const { id, role } = await assignReviewerTx(client, ctx.organizationId!, ctx.userId!, protocolDocumentId, {
+      reviewerName, reviewerUserId: typeof input.reviewer_user_id === 'number' ? input.reviewer_user_id : null,
+      role: typeof input.role === 'string' ? input.role : undefined, dueDate: typeof input.due_date === 'string' ? input.due_date : null,
+    });
+    return { assignmentId: id, role };
+  });
+});
+
+registerToolHandler('add_protocol_review_comment', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_review_comment requires tenant + user context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  const comment = typeof input.comment === 'string' ? input.comment.trim() : '';
+  if (!Number.isInteger(protocolDocumentId) || !comment) return JSON.stringify({ error: 'protocol_document_id and comment are required.' });
+  const { addCommentTx } = await import('../protocol-reviews/protocol-reviews-service.js');
+  return governedPdev(ctx, 'update', `protocol-document:${protocolDocumentId}`, 'Review comment added via AnA', input, async (client) => {
+    const { id, severity } = await addCommentTx(client, ctx.organizationId!, ctx.userId!, protocolDocumentId, {
+      comment, assignmentId: typeof input.assignment_id === 'number' ? input.assignment_id : null,
+      sectionRef: typeof input.section_ref === 'string' ? input.section_ref : null, severity: typeof input.severity === 'string' ? input.severity : null,
+    });
+    return { commentId: id, severity };
+  });
+});
+
+registerToolHandler('review_protocol_review_status', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_review_status requires tenant context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  if (!Number.isInteger(protocolDocumentId)) return JSON.stringify({ error: 'protocol_document_id is required.' });
+  const { getReviewSummary } = await import('../protocol-reviews/protocol-reviews-service.js');
+  try {
+    return JSON.stringify({ ok: true, summary: await getReviewSummary(ctx.organizationId!, protocolDocumentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_review_status failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('create_consent_form', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_consent_form requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { createConsentFormTx } = await import('../protocol-consent/protocol-consent-service.js');
+  return governedPdev(ctx, 'create', 'consent-form', 'Consent form created via AnA', input, async (client) => {
+    const { id, elementsSeeded } = await createConsentFormTx(client, ctx.organizationId!, ctx.userId!, {
+      title, protocolDocumentId: typeof input.protocol_document_id === 'number' ? input.protocol_document_id : null,
+      version: typeof input.version === 'string' ? input.version : null, language: typeof input.language === 'string' ? input.language : null,
+      readingLevel: typeof input.reading_level === 'string' ? input.reading_level : null,
+    });
+    return { consentFormId: id, elementsSeeded };
+  });
+});
+
+registerToolHandler('update_consent_element', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_consent_element requires tenant + user context.' });
+  const elementId = typeof input.element_id === 'number' ? input.element_id : NaN;
+  if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
+  const { updateElementTx } = await import('../protocol-consent/protocol-consent-service.js');
+  return governedPdev(ctx, 'update', `consent-element:${elementId}`, 'Consent element updated via AnA', input, async (client) => {
+    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, present: typeof input.present === 'boolean' ? input.present : undefined });
+    return { elementId };
+  });
+});
+
+registerToolHandler('review_consent_completeness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_consent_completeness requires tenant context.' });
+  const formId = typeof input.form_id === 'number' ? input.form_id : NaN;
+  if (!Number.isInteger(formId)) return JSON.stringify({ error: 'form_id is required.' });
+  const { getCompleteness } = await import('../protocol-consent/protocol-consent-service.js');
+  try {
+    return JSON.stringify({ ok: true, completeness: await getCompleteness(ctx.organizationId!, formId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_consent_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Protocol Risk Register (C2C-19). add is governed/audited; review is read-only.
 // ─────────────────────────────────────────────────────────────────────────────
 

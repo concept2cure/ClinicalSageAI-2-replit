@@ -4184,6 +4184,123 @@ export const REVIEW_PROTOCOL_RISK_REGISTER: AnaTool = {
   input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
 };
 
+// ─── Protocol Amendments / Deviations / Reviews / Consent (C2C-18a–d) ─────────
+
+export const CREATE_PROTOCOL_AMENDMENT: AnaTool = {
+  name: 'create_protocol_amendment',
+  description:
+    "Open a protocol amendment against a protocol document. Type (major/minor/administrative) plus the affects-consent / affects-risk flags drive the deterministic review path and reconsent trigger (45 CFR 46.109 / 21 CFR 56.110). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      protocol_document_id: { type: 'number' }, title: { type: 'string' }, amendment_number: { type: 'string' },
+      rationale: { type: 'string' }, amendment_type: { type: 'string', enum: ['major', 'minor', 'administrative'] },
+      affects_consent: { type: 'boolean' }, affects_risk: { type: 'boolean' }, reason: { type: 'string' },
+    },
+    required: ['protocol_document_id', 'title'],
+  },
+};
+
+export const ADD_AMENDMENT_CHANGE: AnaTool = {
+  name: 'add_amendment_change',
+  description: "Add a specific change (section, previous → proposed text) to a protocol amendment. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { amendment_id: { type: 'number' }, section_ref: { type: 'string' }, change_description: { type: 'string' }, previous_text: { type: 'string' }, proposed_text: { type: 'string' }, reason: { type: 'string' } },
+    required: ['amendment_id', 'change_description'],
+  },
+};
+
+export const REVIEW_AMENDMENT: AnaTool = {
+  name: 'review_amendment',
+  description: "Read-only amendment readiness: change count, computed review path / reconsent trigger, and any blockers before submission.",
+  input_schema: { type: 'object', properties: { amendment_id: { type: 'number' } }, required: ['amendment_id'] },
+};
+
+export const REPORT_PROTOCOL_DEVIATION: AnaTool = {
+  name: 'report_protocol_deviation',
+  description:
+    "Report a protocol deviation. Category + severity (and whether it affects safety) drive the deterministic reportability + timeliness assessment (45 CFR 46.108 / ICH E6). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      protocol_document_id: { type: 'number' }, description: { type: 'string' },
+      category: { type: 'string', enum: ['enrollment', 'consent', 'procedure', 'safety', 'data', 'other'] },
+      severity: { type: 'string', enum: ['minor', 'major', 'critical'] },
+      affects_safety: { type: 'boolean' }, root_cause: { type: 'string' }, reason: { type: 'string' },
+    },
+    required: ['protocol_document_id', 'description'],
+  },
+};
+
+export const ADD_CAPA_ACTION: AnaTool = {
+  name: 'add_capa_action',
+  description: "Add a corrective/preventive action (CAPA) to a protocol deviation. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { deviation_id: { type: 'number' }, action: { type: 'string' }, owner: { type: 'string' }, due_date: { type: 'string' }, reason: { type: 'string' } },
+    required: ['deviation_id', 'action'],
+  },
+};
+
+export const REVIEW_DEVIATION: AnaTool = {
+  name: 'review_deviation',
+  description: "Read-only deviation review: the deviation with its CAPA actions and whether it is ready to close (all CAPA complete/verified).",
+  input_schema: { type: 'object', properties: { deviation_id: { type: 'number' } }, required: ['deviation_id'] },
+};
+
+export const ASSIGN_PROTOCOL_REVIEWER: AnaTool = {
+  name: 'assign_protocol_reviewer',
+  description: "Assign a reviewer to a protocol document with a review role (scientific/statistical/ethics/safety/regulatory/general). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { protocol_document_id: { type: 'number' }, reviewer_name: { type: 'string' }, reviewer_user_id: { type: 'number' }, role: { type: 'string', enum: ['scientific', 'statistical', 'ethics', 'safety', 'regulatory', 'general'] }, due_date: { type: 'string' }, reason: { type: 'string' } },
+    required: ['protocol_document_id', 'reviewer_name'],
+  },
+};
+
+export const ADD_PROTOCOL_REVIEW_COMMENT: AnaTool = {
+  name: 'add_protocol_review_comment',
+  description: "Add a review comment to a protocol document (optionally tied to an assignment / section), with severity (blocking/major/minor/info). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { protocol_document_id: { type: 'number' }, comment: { type: 'string' }, assignment_id: { type: 'number' }, section_ref: { type: 'string' }, severity: { type: 'string', enum: ['blocking', 'major', 'minor', 'info'] }, reason: { type: 'string' } },
+    required: ['protocol_document_id', 'comment'],
+  },
+};
+
+export const REVIEW_PROTOCOL_REVIEW_STATUS: AnaTool = {
+  name: 'review_protocol_review_status',
+  description: "Read-only review-workflow status for a protocol: assignment completion, dispositions, consensus, open blocking comments, and whether a decision can be made.",
+  input_schema: { type: 'object', properties: { protocol_document_id: { type: 'number' } }, required: ['protocol_document_id'] },
+};
+
+export const CREATE_CONSENT_FORM: AnaTool = {
+  name: 'create_consent_form',
+  description: "Create an informed-consent form (optionally for a protocol document), auto-seeded with the 45 CFR 46.116 required elements as not-yet-present rows. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { title: { type: 'string' }, protocol_document_id: { type: 'number' }, version: { type: 'string' }, language: { type: 'string' }, reading_level: { type: 'string' }, reason: { type: 'string' } },
+    required: ['title'],
+  },
+};
+
+export const UPDATE_CONSENT_ELEMENT: AnaTool = {
+  name: 'update_consent_element',
+  description: "Write a consent-form element's content and mark it present. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { element_id: { type: 'number' }, content: { type: 'string' }, present: { type: 'boolean' }, reason: { type: 'string' } },
+    required: ['element_id'],
+  },
+};
+
+export const REVIEW_CONSENT_COMPLETENESS: AnaTool = {
+  name: 'review_consent_completeness',
+  description: "Read-only consent-form completeness: percent of required 45 CFR 46.116 elements present, missing required elements, and whether it can be approved.",
+  input_schema: { type: 'object', properties: { form_id: { type: 'number' } }, required: ['form_id'] },
+};
+
 // ─── CITI Training full integration (C2C-01/02) ──────────────────────────────
 
 export const IMPORT_CITI_RECORDS: AnaTool = {
@@ -7158,6 +7275,18 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   FINALIZE_PROTOCOL_DOCUMENT,
   ADD_PROTOCOL_RISK,
   REVIEW_PROTOCOL_RISK_REGISTER,
+  CREATE_PROTOCOL_AMENDMENT,
+  ADD_AMENDMENT_CHANGE,
+  REVIEW_AMENDMENT,
+  REPORT_PROTOCOL_DEVIATION,
+  ADD_CAPA_ACTION,
+  REVIEW_DEVIATION,
+  ASSIGN_PROTOCOL_REVIEWER,
+  ADD_PROTOCOL_REVIEW_COMMENT,
+  REVIEW_PROTOCOL_REVIEW_STATUS,
+  CREATE_CONSENT_FORM,
+  UPDATE_CONSENT_ELEMENT,
+  REVIEW_CONSENT_COMPLETENESS,
   IMPORT_CITI_RECORDS,
   REVIEW_TRAINING_MATRIX,
   REVIEW_EXPIRING_TRAINING,
