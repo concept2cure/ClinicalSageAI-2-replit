@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T01:46:17.571Z",
+  "generatedAt": "2026-06-29T01:56:49.208Z",
   "git": {
-    "sha": "0a06c2f311e2d533d0a887d06d3eef840bf321d3",
+    "sha": "0891dbbe1af920eaa6c0afa52b162eb69a43f8f3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 220,
+    "duplicateBasenames": 221,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 44
   },
@@ -1368,6 +1368,14 @@
         ]
       },
       {
+        "basename": "coverage-analysis",
+        "count": 2,
+        "paths": [
+          "server/routes/coverage-analysis.ts",
+          "shared/schema/coverage-analysis.ts"
+        ]
+      },
+      {
         "basename": "cybersecurity-524b",
         "count": 2,
         "paths": [
@@ -2211,11 +2219,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 575200
+        "bytes": 585953
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 396007
+        "bytes": 401014
       },
       {
         "file": "server/statistics-service.ts",
@@ -2269,11 +2277,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 11729
+        "lines": 11897
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7265
+        "lines": 7359
       },
       {
         "file": "server/statistics-service.ts",
@@ -2441,7 +2449,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 351,
+      "duplicateGroups": 352,
       "largeByBytes": 11,
       "largeByLines": 34
     },
@@ -2459,7 +2467,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 48,
+      "duplicateGroups": 49,
       "largeByBytes": 1,
       "largeByLines": 2
     },
