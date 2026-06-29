@@ -15,6 +15,7 @@
  * this is the same pool the writeback path uses successfully.
  */
 import crypto from 'node:crypto';
+import type { PoolClient } from 'pg';
 import { getPool } from '../../db';
 
 /**
@@ -48,8 +49,6 @@ export interface UpsertDocumentArtifactVersionResult {
   version: number;
   contentHash: string;
 }
-
-type PoolClient = Awaited<ReturnType<ReturnType<typeof getPool>['connect']>>;
 
 /**
  * Insert the first artifacts row + initial version for a document AnA has not

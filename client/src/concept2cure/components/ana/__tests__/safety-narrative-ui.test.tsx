@@ -19,7 +19,8 @@ import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { SafetyNarrativeQcPanel } from '../SafetyNarrativeQcPanel';
 import { SafetyNarrativeAffordance } from '../SafetyNarrativeAffordance';
 import { Composer } from '../Composer';
-import { computeNarrativeQc, type SafetyNarrativeSubmit } from '../safetyNarrativeBatch';
+import { computeNarrativeQc } from '../safetyNarrativeBatch';
+import { type SafetyNarrativeSubmit } from '../SafetyNarrativeAffordance';
 import { setFeatureEnabled, resetFeatureFlags } from '@/flags/featureFlags';
 
 afterEach(() => {

@@ -142,7 +142,7 @@ describe('DocumentStudioPane — eCTD affordance flag gating', () => {
         ectdEnabled
         readinessGate={readyGate}
         onAssembleModule={() => {}}
-        onSeal={() => {}}
+        onReadinessSubmit={() => {}}
         onDownloadDocx={() => {}}
         onClose={() => {}}
       />,

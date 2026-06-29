@@ -218,7 +218,7 @@ describe('parseLineListing — CSV', () => {
     const r = parseLineListing(csv);
     expect(r.cases).toHaveLength(1);
     expect(r.cases[0].event.term).toBe('rash');
-    expect((r.cases[0] as Record<string, unknown>).unknown_col).toBeUndefined();
+    expect((r.cases[0] as unknown as Record<string, unknown>).unknown_col).toBeUndefined();
   });
 });
 

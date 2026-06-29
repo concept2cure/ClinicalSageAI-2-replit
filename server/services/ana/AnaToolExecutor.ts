@@ -2054,6 +2054,89 @@ registerToolHandler('plan_labeling_authoring', async (input) => {
   });
 });
 
+// Orphan-Drug Designation (ODD) authoring — 21 CFR Part 316 (§316.20(b) / §316.21).
+// Pure orchestration: build the author_docx_native plan (title + content +
+// required_strings) from the product/evidence, verify the generated document
+// contains every mandatory header, and emit the Part 11 honesty verdict
+// (sample/not_assessed or any uncited prevalence/eligibility claim ⇒ non-sealable).
+registerToolHandler('plan_orphan_drug_designation', async (input) => {
+  const rawProduct =
+    input.product && typeof input.product === 'object' ? (input.product as Record<string, unknown>) : null;
+  if (!rawProduct) {
+    return JSON.stringify({ error: 'plan_orphan_drug_designation requires a product object.' });
+  }
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+  const name = str(rawProduct.name);
+  const indication = str(rawProduct.indication);
+  if (!name || !indication) {
+    return JSON.stringify({ error: 'plan_orphan_drug_designation requires product.name and product.indication.' });
+  }
+
+  const designations = Array.isArray(rawProduct.designations)
+    ? (rawProduct.designations.filter((d): d is string => typeof d === 'string') as string[])
+    : undefined;
+
+  const product: OddProductInput = {
+    name,
+    indication,
+    genericName: str(rawProduct.generic_name),
+    brandName: str(rawProduct.brand_name),
+    modality: str(rawProduct.modality),
+    designations,
+    sponsorName: str(rawProduct.sponsor_name),
+    sponsorAddress: str(rawProduct.sponsor_address),
+    contactName: str(rawProduct.contact_name),
+    fdaDivision: str(rawProduct.fda_division),
+  };
+
+  const citations: OddCitation[] = Array.isArray(input.citations)
+    ? (input.citations as unknown[])
+        .map((c) => (c && typeof c === 'object' ? (c as Record<string, unknown>) : null))
+        .filter((c): c is Record<string, unknown> => c !== null)
+        .map((c) => ({
+          sectionId: typeof c.section_id === 'string' ? c.section_id : '',
+          label: typeof c.label === 'string' ? c.label : '',
+          source: typeof c.source === 'string' ? c.source : '',
+        }))
+        .filter((c) => c.sectionId && c.source)
+    : [];
+
+  const rawProv = typeof input.provenance === 'string' ? input.provenance : '';
+  const provenance: OddProvenance =
+    rawProv === 'live' || rawProv === 'sample' || rawProv === 'not_assessed' ? rawProv : 'not_assessed';
+
+  const rationale = typeof input.rationale === 'string' ? input.rationale : undefined;
+
+  const plan = buildOddAuthoringPlan({ product, rationale, citations, provenance });
+  const verification = evaluateOddVerification(plan.content);
+  const sealability = assessOddSealability({
+    provenance,
+    verification,
+    uncitedClaimSections: plan.uncitedClaimSections,
+  });
+
+  return JSON.stringify({
+    source: 'AnA Orphan-Drug Designation Authoring (21 CFR Part 316)',
+    status: 'generated',
+    author_docx_native: {
+      title: plan.title,
+      content: plan.content,
+      required_strings: plan.requiredStrings,
+    },
+    verification,
+    honesty: {
+      sealable: sealability.sealable,
+      provenance: plan.provenance,
+      blockers: sealability.blockers,
+      uncitedClaimSections: plan.uncitedClaimSections,
+    },
+    note:
+      'Drive author_docx_native with author_docx_native.{title,content}, then verify_docx_against_source ' +
+      'with required_strings. sample/not_assessed drafts and any uncited prevalence/eligibility claim are ' +
+      'non-sealable and non-exportable.',
+  });
+});
+
 // Medical-information / standard-response advisor.
 registerToolHandler('advise_medical_information', async (input) => {
   const responseType = typeof input.response_type === 'string' ? input.response_type : undefined;
