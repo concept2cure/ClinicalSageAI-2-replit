@@ -30,7 +30,8 @@ import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
 import { composeVerificationFixMessage } from './VerificationPanel';
-import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult } from './useAnaChat';
+import { composeConsistencyFixMessage } from './ConsistencyPanel';
+import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult, type ConsistencyResult } from './useAnaChat';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
 
@@ -516,7 +517,7 @@ export function Ana({
     id: string;
     title: string;
     documentType?: string;
-    versions: { content: string; verification?: VerificationResult }[];
+    versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult }[];
   } | null>(() => {
     if (!studioEnabled) return null;
     let latestTitle: string | null = null;
@@ -532,10 +533,16 @@ export function Ana({
       }
     }
     if (latestTitle == null || latestId == null) return null;
-    const versions: { content: string; verification?: VerificationResult }[] = [];
+    const versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult }[] = [];
     for (const m of chat.messages) {
       if (m.generatedDraft && m.generatedDraft.title === latestTitle) {
-        versions.push({ content: m.generatedDraft.content, verification: m.verification });
+        versions.push({
+          content: m.generatedDraft.content,
+          verification: m.verification,
+          // The dossier-consistency sweep that ran on the turn that produced
+          // this draft (author_docx_native / surgical_docx_xml_edit → sweep).
+          consistency: m.consistency,
+        });
       }
     }
     return { id: latestId, title: latestTitle, documentType: latestType, versions };
@@ -579,6 +586,10 @@ export function Ana({
     () => activeDocument?.versions[safeVersionIndex]?.verification,
     [activeDocument, safeVersionIndex],
   );
+  const shownConsistency = useMemo(
+    () => activeDocument?.versions[safeVersionIndex]?.consistency,
+    [activeDocument, safeVersionIndex],
+  );
 
   // Download the rendered draft as a Word file. Calls the server DOCX render
   // route; on any failure, falls back to an honest Markdown download so the
@@ -609,6 +620,16 @@ export function Ana({
     if (!shownDraft || !shownVerification || shownVerification.ok) return;
     void chat.send(composeVerificationFixMessage(shownDraft.title, shownVerification));
   }, [chat, shownDraft, shownVerification]);
+
+  // Close the consistency loop: when the draft diverges from the dossier, send
+  // AnA a targeted reconciliation request citing the conflicting values and
+  // their source artifacts, then it re-runs the sweep. Suppressed for clean
+  // verdicts and for sample-derived (non-sealable) drafts.
+  const handleResolveConsistency = useCallback(() => {
+    if (!shownDraft || !shownConsistency) return;
+    if (shownConsistency.verdict === 'clean' || shownConsistency.isSample) return;
+    void chat.send(composeConsistencyFixMessage(shownDraft.title, shownConsistency));
+  }, [chat, shownDraft, shownConsistency]);
 
   // The view content (home / chat / projects / artifacts). Rendered directly
   // when the studio is closed, or inside the left Panel when it is open — so
@@ -695,12 +716,14 @@ export function Ana({
               <DocumentStudioPane
                 draft={shownDraft}
                 verification={shownVerification}
+                consistency={shownConsistency}
                 versionCount={activeDocument.versions.length}
                 activeVersionIndex={safeVersionIndex}
                 onSelectVersion={setVersionIndex}
                 onDownloadDocx={handleDownloadDocx}
                 onClose={() => setStudioClosed(true)}
                 onResolveVerification={handleResolveVerification}
+                onResolveConsistency={handleResolveConsistency}
                 downloading={downloading}
               />
             </Panel>

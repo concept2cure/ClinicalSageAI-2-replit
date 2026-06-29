@@ -92,6 +92,122 @@ export function mapVerificationResult(
   };
 }
 
+/** The four verdict tiers `check_dossier_consistency` can return. */
+export type ConsistencyVerdict = 'clean' | 'minor_issues' | 'needs_review' | 'blocker';
+
+/** Per-divergence severity from the cross-artifact consistency engine. */
+export type ConsistencyDivergenceSeverity = 'critical' | 'high' | 'medium' | 'low';
+
+/**
+ * One divergence the dossier-consistency sweep found: a labelled quantity (N,
+ * p-value, dose, NOAEL, shelf-life …) or a cross-reference that conflicts with
+ * another artifact in the same project. Carries both conflicting values and a
+ * pointer back to the source artifact so the bullet can be deep-linked.
+ */
+export interface ConsistencyDivergence {
+  /** Why it diverged: numeric, endpoint/population drift, or a broken reference. */
+  kind: string;
+  severity: ConsistencyDivergenceSeverity;
+  /** Factual one-line statement of the conflict. */
+  description: string;
+  /** The value stated in the draft being checked. */
+  draftValue: string;
+  /** The conflicting value found in the existing dossier (absent for orphan refs). */
+  existingValue?: string;
+  /** Title of the source artifact the conflicting value came from. */
+  existingArtifact?: string;
+  /** CTD section of the source artifact, when known (e.g. "2.5", "5.3.5.1"). */
+  existingCtdSection?: string | null;
+}
+
+/**
+ * Result of `check_dossier_consistency` — the per-version Dossier Consistency
+ * Sweep. A SECOND Document Studio verification surface, parallel to
+ * VerificationResult: where verification proves the draft matches *its own*
+ * source, this proves the draft does not contradict the *rest of the dossier*.
+ * Surfaced as the ConsistencyPanel trust-strip.
+ */
+export interface ConsistencyResult {
+  verdict: ConsistencyVerdict;
+  /** How many other artifacts in the project the draft was compared against. */
+  artifactsCompared: number;
+  /** How many labelled facts were extracted from the draft for comparison. */
+  draftFactsExtracted: number;
+  /** Total divergences found (may exceed the surfaced `divergences` list). */
+  divergenceCount: number;
+  /** Per-severity counts, for the verdict sub-line. */
+  bySeverity: { critical: number; high: number; medium: number; low: number };
+  /** The surfaced divergences (server caps at 20), each deep-linkable. */
+  divergences: ConsistencyDivergence[];
+  /** Factual reviewer recommendation line from the tool. */
+  recommendation?: string;
+  /**
+   * Honesty guard: true when the checked draft was sample / not-assessed
+   * content. A sample-derived verdict is never sealable/exportable, so the
+   * panel renders it as advisory-only and suppresses the resolve affordance.
+   */
+  isSample?: boolean;
+}
+
+/**
+ * Map a parsed `check_dossier_consistency` tool result into the client
+ * ConsistencyResult shape. Returns null for an error envelope or non-object.
+ * Mirrors mapVerificationResult; exported for unit testing in isolation.
+ */
+export function mapConsistencyResult(
+  parsed: Record<string, unknown> | null | undefined,
+): ConsistencyResult | null {
+  if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
+
+  const allowedVerdicts: ConsistencyVerdict[] = ['clean', 'minor_issues', 'needs_review', 'blocker'];
+  const verdict = allowedVerdicts.includes(parsed.verdict as ConsistencyVerdict)
+    ? (parsed.verdict as ConsistencyVerdict)
+    : 'clean';
+
+  const sev = parsed.bySeverity;
+  const bySeverity =
+    sev && typeof sev === 'object'
+      ? {
+          critical: Number((sev as Record<string, unknown>).critical) || 0,
+          high: Number((sev as Record<string, unknown>).high) || 0,
+          medium: Number((sev as Record<string, unknown>).medium) || 0,
+          low: Number((sev as Record<string, unknown>).low) || 0,
+        }
+      : { critical: 0, high: 0, medium: 0, low: 0 };
+
+  const allowedSeverities: ConsistencyDivergenceSeverity[] = ['critical', 'high', 'medium', 'low'];
+  const divergences: ConsistencyDivergence[] = Array.isArray(parsed.divergences)
+    ? (parsed.divergences as unknown[])
+        .filter((d): d is Record<string, unknown> => !!d && typeof d === 'object')
+        .map(d => ({
+          kind: typeof d.kind === 'string' ? d.kind : 'numeric_divergence',
+          severity: allowedSeverities.includes(d.severity as ConsistencyDivergenceSeverity)
+            ? (d.severity as ConsistencyDivergenceSeverity)
+            : 'medium',
+          description: typeof d.description === 'string' ? d.description : '',
+          draftValue: typeof d.draftValue === 'string' ? d.draftValue : '',
+          existingValue: typeof d.existingValue === 'string' ? d.existingValue : undefined,
+          existingArtifact: typeof d.existingArtifact === 'string' ? d.existingArtifact : undefined,
+          existingCtdSection:
+            typeof d.existingCtdSection === 'string' ? d.existingCtdSection : null,
+        }))
+    : [];
+
+  return {
+    verdict,
+    artifactsCompared: Number(parsed.artifactsCompared) || 0,
+    draftFactsExtracted: Number(parsed.draftFactsExtracted) || 0,
+    divergenceCount:
+      typeof parsed.divergenceCount === 'number' ? parsed.divergenceCount : divergences.length,
+    bySeverity,
+    divergences,
+    recommendation: typeof parsed.recommendation === 'string' ? parsed.recommendation : undefined,
+    // The server may flag sample-derived drafts; honesty contract forbids
+    // treating such a verdict as sealable/exportable.
+    isSample: parsed.isSample === true || parsed.is_sample === true,
+  };
+}
+
 /**
  * Human-readable labels for AnA's tools, so the chat shows "Computing sample
  * size (biostatistics engine)" instead of a raw tool name. Anything not listed
@@ -224,6 +340,12 @@ export interface AnaChatMessage {
    * Powers the Document Studio "verified against your source" trust-panel.
    */
   verification?: VerificationResult;
+  /**
+   * Result of the `check_dossier_consistency` sweep this turn, if it ran.
+   * Powers the Document Studio "consistent with your dossier" trust-panel —
+   * the SECOND verification surface, rendered alongside `verification`.
+   */
+  consistency?: ConsistencyResult;
 }
 
 export interface UseAnaChatOptions {
@@ -713,6 +835,17 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // can show "verified against your source" (caption strings + diff).
               const verification: VerificationResult | null =
                 name === 'verify_docx_against_source' ? mapVerificationResult(parsedResult) : null;
+              // Capture the dossier-consistency sweep so the Document Studio
+              // ConsistencyPanel (the second verification surface) can show the
+              // verdict + per-divergence conflicts. This is the natural surface
+              // to render after an author_docx_native / surgical_docx_xml_edit
+              // returns a Module 2/5 draft and the server runs the sweep.
+              // BUILD-1 INTEGRATION: once Build 1 (concept2cure_artifact_versions)
+              // is merged, the persisted version row for this draft should carry
+              // this verdict. The server executor would attach it to the version
+              // when sealing; here on the client we only render the live result.
+              const consistency: ConsistencyResult | null =
+                name === 'check_dossier_consistency' ? mapConsistencyResult(parsedResult) : null;
               setMessages(prev =>
                 prev.map(m => {
                   if (m.id !== assistantId) return m;
@@ -727,6 +860,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     }
                   }
                   if (verification) next = { ...next, verification };
+                  if (consistency) next = { ...next, consistency };
                   return next;
                 })
               );
