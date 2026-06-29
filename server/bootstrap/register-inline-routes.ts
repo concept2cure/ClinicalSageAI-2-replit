@@ -520,6 +520,51 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Protocol deviations routes:', error);
   }
 
+  // Protocol review & comment workflow (reviewer assignments, dispositions, consensus).
+  try {
+    const protocolReviewsModule = await import('../routes/protocol-reviews');
+    app.use('/api/protocol-reviews', authMiddleware, protocolReviewsModule.default);
+    console.info('✅ Protocol review routes mounted (/api/protocol-reviews)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol review routes:', error);
+  }
+
+  // Informed consent form builder (45 CFR 46.116 required-elements completeness gate).
+  try {
+    const protocolConsentModule = await import('../routes/protocol-consent');
+    app.use('/api/protocol-consent', authMiddleware, protocolConsentModule.default);
+    console.info('✅ Protocol consent routes mounted (/api/protocol-consent)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol consent routes:', error);
+  }
+
+  // Protocol templates library + clone-to-new-document.
+  try {
+    const protocolTemplatesModule = await import('../routes/protocol-templates');
+    app.use('/api/protocol-templates', authMiddleware, protocolTemplatesModule.default);
+    console.info('✅ Protocol templates routes mounted (/api/protocol-templates)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol templates routes:', error);
+  }
+
+  // Protocol milestones / timeline.
+  try {
+    const protocolMilestonesModule = await import('../routes/protocol-milestones');
+    app.use('/api/protocol-milestones', authMiddleware, protocolMilestonesModule.default);
+    console.info('✅ Protocol milestones routes mounted (/api/protocol-milestones)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol milestones routes:', error);
+  }
+
+  // Protocol export + ClinicalTrials.gov registration draft (FDAAA 801).
+  try {
+    const protocolExportModule = await import('../routes/protocol-export');
+    app.use('/api/protocol-export', authMiddleware, protocolExportModule.default);
+    console.info('✅ Protocol export routes mounted (/api/protocol-export)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol export routes:', error);
+  }
+
   // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
   try {
     const rimModule = await import('../routes/rim');

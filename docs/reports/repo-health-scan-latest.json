@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T05:16:49.171Z",
+  "generatedAt": "2026-06-29T12:34:52.442Z",
   "git": {
-    "sha": "c60f86feeacace417e206b273e812010cdfb187d",
+    "sha": "a2b739ca749f8ca5e57258df4d0287e39941e35d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 225,
+    "duplicateBasenames": 229,
     "largeFilesByBytes": 16,
     "largeFilesByLines": 50
   },
@@ -1882,6 +1882,14 @@
         ]
       },
       {
+        "basename": "protocol-consent",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-consent.ts",
+          "shared/schema/protocol-consent.ts"
+        ]
+      },
+      {
         "basename": "protocol-development",
         "count": 2,
         "paths": [
@@ -1898,11 +1906,35 @@
         ]
       },
       {
+        "basename": "protocol-milestones",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-milestones.ts",
+          "shared/schema/protocol-milestones.ts"
+        ]
+      },
+      {
+        "basename": "protocol-reviews",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-reviews.ts",
+          "shared/schema/protocol-reviews.ts"
+        ]
+      },
+      {
         "basename": "protocol-risks",
         "count": 2,
         "paths": [
           "server/routes/protocol-risks.ts",
           "shared/schema/protocol-risks.ts"
+        ]
+      },
+      {
+        "basename": "protocol-templates",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-templates.ts",
+          "shared/schema/protocol-templates.ts"
         ]
       },
       {
@@ -2253,11 +2285,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 655438
+        "bytes": 678441
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 419995
+        "bytes": 431270
       },
       {
         "file": "server/statistics-service.ts",
@@ -2319,11 +2351,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 13192
+        "lines": 13504
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7718
+        "lines": 7932
       },
       {
         "file": "server/statistics-service.ts",
@@ -2515,7 +2547,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 358,
+      "duplicateGroups": 362,
       "largeByBytes": 13,
       "largeByLines": 40
     },
@@ -2533,7 +2565,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 53,
+      "duplicateGroups": 57,
       "largeByBytes": 1,
       "largeByLines": 2
     },
