@@ -157,8 +157,11 @@ describe('MFDS (Korea) package validator', () => {
 
 // Every supported region. Kept in lock-step with the RegulatoryRegion union so
 // that adding a region without a rule pack, gateway limit, or dispatcher case
-// fails CI rather than silently shipping a half-wired region.
-const ALL_REGIONS = ['US', 'EU', 'JP', 'CA', 'CN', 'KR'] as const;
+// fails CI rather than silently shipping a half-wired region. UK/AU/CH/BR/IN/SG
+// are covered by validateGenericRegionPackage (minimum-viable stubs enforcing
+// only M1 regional-backbone presence + ASCII file names) until their full
+// MHRA / TGA / Swissmedic / ANVISA / CDSCO / HSA rule packs are encoded.
+const ALL_REGIONS = ['US', 'EU', 'JP', 'CA', 'CN', 'KR', 'UK', 'AU', 'CH', 'BR', 'IN', 'SG'] as const;
 
 describe('regional eCTD rule catalog — cross-region invariants', () => {
   it('every catalog rule has a valid region, non-empty citation, and valid severity', () => {

@@ -557,6 +557,15 @@ export function validatePackage(
       studyId: l.studyId,
     }));
     const regional = validateRegionalPackage(context, regionalLeafRefs);
+    // When the legacy loose check already fired MISSING_REGIONAL_* for the
+    // region, suppress the canonical backbone-presence finding for the SAME
+    // semantic violation (FDA-ESG-004 / EMA-CESP-001 / PMDA-001 / HC-REP-001).
+    // Without this suppression validatePackage would emit two findings for
+    // one underlying problem and double-deduct the score (15 + 15 = 30).
+    // The loose code is the user-facing one; the canonical strict backbone
+    // check still runs unsuppressed via the direct validateRegionalPackage
+    // entrypoint that ectd-validator-hardening calls.
+    const canonicalBackboneCode = looseFinding ? regionalBackboneRuleId(region) : null;
     for (const rf of regional) {
       // Suppress validateRegionalPackage findings that the caller cannot
       // act on because they require RegionalContext fields that the
@@ -565,6 +574,9 @@ export function validatePackage(
       // where the full submission context is available.
       if (!options.applicationNumber && isApplicationNumberFinding(rf)) continue;
       if (!options.sequenceNumber && rf.ruleId === 'FDA-ESG-001') continue;
+      // Suppress the canonical backbone-presence rule when the legacy loose
+      // check already covered it for this region (see comment above).
+      if (canonicalBackboneCode && rf.ruleId === canonicalBackboneCode) continue;
       findings.push({
         id: `V${++findingId}`,
         severity: rf.severity === 'info' ? 'info' : rf.severity,
@@ -875,4 +887,23 @@ function isApplicationNumberFinding(rf: { ruleId: string }): boolean {
     rf.ruleId === 'PMDA-002' ||
     rf.ruleId === 'HC-REP-003'
   );
+}
+
+/**
+ * Map a RegulatoryRegion to its canonical M1 regional-backbone rule ID.
+ * Used to suppress the canonical strict backbone-presence finding when the
+ * legacy loose presence check (MISSING_REGIONAL_*) has already fired for the
+ * same semantic violation — avoids emitting two findings for one underlying
+ * problem and double-deducting the score. Returns null for regions whose
+ * backbone presence rule is not in scope for the loose-check shim (i.e. all
+ * regions other than US/EU/JP/CA today).
+ */
+function regionalBackboneRuleId(region: RegulatoryRegion): string | null {
+  switch (region) {
+    case 'US': return 'FDA-ESG-004';
+    case 'EU': return 'EMA-CESP-001';
+    case 'JP': return 'PMDA-001';
+    case 'CA': return 'HC-REP-001';
+    default: return null;
+  }
 }
