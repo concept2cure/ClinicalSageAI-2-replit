@@ -8289,6 +8289,172 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Research Committee Governance (C2C-16). Conversational committee operations
+// share the governed/audited path (recordGovernedAction, surface 'ana').
+// Determinations are deterministic (committee-logic); finalize is gated on the
+// approve privilege + current CITI training (enforced in the API route).
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assign_committee_member', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'assign_committee_member requires tenant + user context.' });
+  const committeeType = typeof input.committee_type === 'string' ? input.committee_type : '';
+  const memberName = typeof input.member_name === 'string' ? input.member_name.trim() : '';
+  if (!['iacuc', 'irb', 'ibc'].includes(committeeType) || !memberName) return JSON.stringify({ error: 'committee_type and member_name are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addCommitteeMemberTx } = await import('../committees/committee-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await addCommitteeMemberTx(client, ctx.organizationId, ctx.userId, {
+      committeeType: committeeType as any, memberName,
+      role: typeof input.role === 'string' ? input.role : undefined,
+      userId: typeof input.user_id === 'number' ? input.user_id : null,
+      personnelId: typeof input.personnel_id === 'number' ? input.personnel_id : null,
+      votingMember: typeof input.voting_member === 'boolean' ? input.voting_member : undefined,
+      scientist: typeof input.scientist === 'boolean' ? input.scientist : undefined,
+      affiliated: typeof input.affiliated === 'boolean' ? input.affiliated : undefined,
+    });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'assign', target: `committee:${committeeType}`, reason: fcoiReason(input, 'Committee member assigned via AnA'), payload: { memberId: id }, domain: 'committee', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: `Added ${memberName} to the ${committeeType.toUpperCase()} committee (member id ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `assign_committee_member failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('convene_committee_meeting', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'convene_committee_meeting requires tenant + user context.' });
+  const meetingId = typeof input.meeting_id === 'number' ? input.meeting_id : NaN;
+  const present = Array.isArray(input.present_member_ids) ? input.present_member_ids.filter((n: unknown) => typeof n === 'number') as number[] : [];
+  if (!Number.isInteger(meetingId) || present.length === 0) return JSON.stringify({ error: 'meeting_id and a non-empty present_member_ids are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { conveneMeetingTx } = await import('../committees/committee-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const quorum = await conveneMeetingTx(client, ctx.organizationId, meetingId, present);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `committee-meeting:${meetingId}`, reason: fcoiReason(input, 'Committee meeting convened via AnA'), payload: { quorumMet: quorum.quorumMet }, domain: 'committee', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, meetingId, quorumMet: quorum.quorumMet, quorumRequired: quorum.quorumRequired, membersConvened: quorum.membersConvened, issues: quorum.issues, message: quorum.quorumMet ? 'Quorum met — voting may proceed.' : `Quorum NOT met: ${quorum.issues.join(' ')}` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `convene_committee_meeting failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_committee_agenda_item', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_committee_agenda_item requires tenant + user context.' });
+  const meetingId = typeof input.meeting_id === 'number' ? input.meeting_id : NaN;
+  const protocolKind = typeof input.protocol_kind === 'string' ? input.protocol_kind : '';
+  const protocolId = typeof input.protocol_id === 'number' ? input.protocol_id : NaN;
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!Number.isInteger(meetingId) || !['iacuc_protocol', 'irb_submission'].includes(protocolKind) || !Number.isInteger(protocolId) || !title) {
+    return JSON.stringify({ error: 'meeting_id, protocol_kind, protocol_id, and title are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addAgendaItemTx } = await import('../committees/committee-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await addAgendaItemTx(client, ctx.organizationId, ctx.userId, meetingId, { protocolKind: protocolKind as any, protocolId, title, reviewType: typeof input.review_type === 'string' ? input.review_type : null });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `committee-meeting:${meetingId}`, reason: fcoiReason(input, 'Agenda item added via AnA'), payload: { agendaItemId: id }, domain: 'committee', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, agendaItemId: id, message: `Added "${title}" to meeting ${meetingId} agenda (item ${id}).` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_committee_agenda_item failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('cast_committee_vote', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'cast_committee_vote requires tenant + user context.' });
+  const agendaItemId = typeof input.agenda_item_id === 'number' ? input.agenda_item_id : NaN;
+  const memberId = typeof input.member_id === 'number' ? input.member_id : NaN;
+  const vote = typeof input.vote === 'string' ? input.vote : '';
+  if (!Number.isInteger(agendaItemId) || !Number.isInteger(memberId) || !['approve', 'approve_with_modifications', 'disapprove', 'abstain', 'recuse'].includes(vote)) {
+    return JSON.stringify({ error: 'agenda_item_id, member_id, and a valid vote are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { castVoteTx } = await import('../committees/committee-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    await castVoteTx(client, ctx.organizationId, ctx.userId, agendaItemId, memberId, vote as any, typeof input.comment === 'string' ? input.comment : null);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'review', target: `committee-agenda:${agendaItemId}`, reason: fcoiReason(input, 'Committee vote cast via AnA'), payload: { memberId, vote }, domain: 'committee', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, agendaItemId, memberId, vote, message: `Recorded ${vote} vote from member ${memberId} on item ${agendaItemId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `cast_committee_vote failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('finalize_committee_determination', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_committee_determination requires tenant + user context.' });
+  const agendaItemId = typeof input.agenda_item_id === 'number' ? input.agenda_item_id : NaN;
+  if (!Number.isInteger(agendaItemId)) return JSON.stringify({ error: 'agenda_item_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { finalizeAgendaItemTx, getActorTrainingStatus } = await import('../committees/committee-service.js');
+  const client = await getPool().connect();
+  try {
+    // CITI training gate (read) before opening the transaction.
+    const ct = await client.query(`SELECT committee_type FROM committee_agenda_items WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [agendaItemId, ctx.organizationId]);
+    if (ct.rows.length === 0) { client.release(); return JSON.stringify({ error: 'Agenda item not found.' }); }
+    const training = await getActorTrainingStatus(ctx.organizationId, ctx.userId, ct.rows[0].committee_type);
+    if (!training.trained) { client.release(); return JSON.stringify({ error: `Cannot finalize: ${training.reason}` }); }
+
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const determination = await finalizeAgendaItemTx(client, ctx.organizationId, ctx.userId, agendaItemId);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'sign', target: `committee-agenda:${agendaItemId}`, reason: fcoiReason(input, 'Committee determination finalized via AnA'), payload: { outcome: determination.outcome }, domain: 'committee', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, agendaItemId, outcome: determination.outcome, rationale: determination.rationale, tally: determination.tally });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `finalize_committee_determination failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_protocol_portfolio', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_portfolio requires tenant context.' });
+  const { getProtocolPortfolio } = await import('../committees/committee-service.js');
+  try {
+    const portfolio = await getProtocolPortfolio(ctx.organizationId);
+    return JSON.stringify({
+      ok: true,
+      iacucCount: portfolio.iacuc.length,
+      irbCount: portfolio.irb.length,
+      pendingAgendaCount: portfolio.pendingAgenda.length,
+      iacuc: portfolio.iacuc,
+      irb: portfolio.irb,
+      pendingAgenda: portfolio.pendingAgenda,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_portfolio failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Medicare Coverage Analysis (C2C-15). Conversational building shares the
 // governed/audited path (recordGovernedAction, surface 'ana'). The billing
 // designation is deterministic (classifyCoverageItem); AI text is advisory only.

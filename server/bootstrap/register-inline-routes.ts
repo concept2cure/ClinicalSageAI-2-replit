@@ -448,6 +448,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Coverage Analysis routes:', error);
   }
 
+  // Research committee governance — IACUC/IRB/IBC membership, meetings, polling (PHS Policy; 45 CFR 46.107-108).
+  try {
+    const committeesModule = await import('../routes/committees');
+    app.use('/api/committees', authMiddleware, committeesModule.default);
+    console.info('✅ Research committee routes mounted (/api/committees)');
+  } catch (error) {
+    console.error('❌ Failed to mount Research committee routes:', error);
+  }
+
   // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
   try {
     const rimModule = await import('../routes/rim');

@@ -4075,6 +4075,97 @@ export const REVIEW_SEND_READINESS: AnaTool = {
   },
 };
 
+// ─── Research Committee Governance (C2C-16) ──────────────────────────────────
+
+export const ASSIGN_COMMITTEE_MEMBER: AnaTool = {
+  name: 'assign_committee_member',
+  description:
+    "Add a member to an IACUC / IRB / IBC committee with their stakeholder role (chair, vice_chair, member, veterinarian, nonscientist, community_member, coordinator, administrator). Composition is checked against the regulatory minimums (PHS Policy / 45 CFR 46.107). Governed + audited; requires the 'assign' privilege.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      committee_type: { type: 'string', enum: ['iacuc', 'irb', 'ibc'] },
+      member_name: { type: 'string' },
+      role: { type: 'string', enum: ['chair', 'vice_chair', 'member', 'veterinarian', 'nonscientist', 'community_member', 'coordinator', 'administrator'] },
+      user_id: { type: 'number', description: 'Platform user id (for role-gated privileges).' },
+      personnel_id: { type: 'number', description: 'research_personnel id (where CITI training is tracked).' },
+      voting_member: { type: 'boolean' },
+      scientist: { type: 'boolean' },
+      affiliated: { type: 'boolean' },
+      reason: { type: 'string' },
+    },
+    required: ['committee_type', 'member_name'],
+  },
+};
+
+export const CONVENE_COMMITTEE_MEETING: AnaTool = {
+  name: 'convene_committee_meeting',
+  description:
+    "Convene a scheduled committee meeting with the members present, computing quorum (a majority of voting members, plus a nonscientist present for the IRB — 45 CFR 46.108). Returns whether quorum is met. Governed + audited; requires the 'assign' privilege.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      meeting_id: { type: 'number' },
+      present_member_ids: { type: 'array', items: { type: 'number' }, description: 'committee_members ids recorded present.' },
+      reason: { type: 'string' },
+    },
+    required: ['meeting_id', 'present_member_ids'],
+  },
+};
+
+export const ADD_COMMITTEE_AGENDA_ITEM: AnaTool = {
+  name: 'add_committee_agenda_item',
+  description:
+    "Add a protocol to a meeting agenda for committee review — references an existing iacuc_protocol or irb_submission. Governed + audited; requires the 'assign' privilege.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      meeting_id: { type: 'number' },
+      protocol_kind: { type: 'string', enum: ['iacuc_protocol', 'irb_submission'] },
+      protocol_id: { type: 'number' },
+      title: { type: 'string' },
+      review_type: { type: 'string' },
+      reason: { type: 'string' },
+    },
+    required: ['meeting_id', 'protocol_kind', 'protocol_id', 'title'],
+  },
+};
+
+export const CAST_COMMITTEE_VOTE: AnaTool = {
+  name: 'cast_committee_vote',
+  description:
+    "Cast (or change) a committee member's vote on an agenda item during a convened meeting (the poll): approve, approve_with_modifications, disapprove, abstain, or recuse. The voter must be an active voting member recorded present. Governed + audited; requires the 'review' privilege.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      agenda_item_id: { type: 'number' },
+      member_id: { type: 'number' },
+      vote: { type: 'string', enum: ['approve', 'approve_with_modifications', 'disapprove', 'abstain', 'recuse'] },
+      comment: { type: 'string' },
+      reason: { type: 'string' },
+    },
+    required: ['agenda_item_id', 'member_id', 'vote'],
+  },
+};
+
+export const FINALIZE_COMMITTEE_DETERMINATION: AnaTool = {
+  name: 'finalize_committee_determination',
+  description:
+    "Finalize an agenda item by tallying the poll into the deterministic determination (approved / approved_with_modifications / disapproved / tabled). Gated: a convened meeting WITH quorum, the 'approve' privilege, AND current CITI training for the finalizing actor (citi_human_subjects for IRB, citi_animal for IACUC). Governed + audited (signature).",
+  input_schema: {
+    type: 'object',
+    properties: { agenda_item_id: { type: 'number' }, reason: { type: 'string' } },
+    required: ['agenda_item_id'],
+  },
+};
+
+export const REVIEW_PROTOCOL_PORTFOLIO: AnaTool = {
+  name: 'review_protocol_portfolio',
+  description:
+    "Read-only portfolio across all IACUC protocols and IRB submissions for the org — status, review type, approval/expiration dates — plus any pending committee agenda items. Use to manage many protocols at once and surface what is due for review or expiring.",
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
 // ─── Medicare Coverage Analysis (C2C-15) ─────────────────────────────────────
 
 export const CREATE_COVERAGE_ANALYSIS: AnaTool = {
@@ -6865,6 +6956,12 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REVIEW_IBC_REGISTRATION,
   CREATE_NONCLINICAL_STUDY,
   REVIEW_SEND_READINESS,
+  ASSIGN_COMMITTEE_MEMBER,
+  CONVENE_COMMITTEE_MEETING,
+  ADD_COMMITTEE_AGENDA_ITEM,
+  CAST_COMMITTEE_VOTE,
+  FINALIZE_COMMITTEE_DETERMINATION,
+  REVIEW_PROTOCOL_PORTFOLIO,
   CREATE_COVERAGE_ANALYSIS,
   SET_COVERAGE_QUALIFYING_DETERMINATION,
   ADD_COVERAGE_ITEM,

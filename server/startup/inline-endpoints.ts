@@ -251,6 +251,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Research committee governance metrics (C2C-16).
+      try {
+        const { renderCommitteeMetrics } = await import('../services/committee-metrics.js');
+        lines.push(...renderCommitteeMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RIM-lite metrics (C2C-12).
       try {
         const { renderRimMetrics } = await import('../services/rim-metrics.js');
