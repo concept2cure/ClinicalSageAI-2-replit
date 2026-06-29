@@ -26,8 +26,12 @@
  *      dictionary is configured, match deterministically over governed dictionary
  *      data — and otherwise return an honest license_required, never a model guess)
  *      → `deterministic_query`.
- *   4. Names beginning `search_` → `external_api_live`.
- *   5. Everything else (advise_/narrate_/generate_/draft_/review_ and any unknown
+ *   4. Names in {@link RIM_LEARNED_NAMES} (RIM pattern-store recall: tenant-scoped
+ *      accumulated judgment, never fabricated) → `rim_learned`.
+ *   5. Names in {@link EXTERNAL_API_NAMES} (live external APIs that don't start with
+ *      `search_`, e.g. `fetch_fda_guidance_list`) → `external_api_live`.
+ *   6. Names beginning `search_` → `external_api_live`.
+ *   7. Everything else (advise_/narrate_/generate_/draft_/review_ and any unknown
  *      tool) → `model_assisted` (the safe default).
  *
  * @module server/services/ana/tool-pedigree
@@ -42,6 +46,7 @@ import { GLOBAL_RI_TOOL_NAMES } from '../global-ri/ana-tools';
 export type DeterminismPedigree =
   | 'deterministic_registry' // pure rule/registry lookup, no LLM, no network (bulletproof)
   | 'deterministic_query' // pure query over governed internal data (reproducible)
+  | 'rim_learned' // RIM pattern store: tenant-scoped, occurrence-weighted, never fabricated
   | 'external_api_live' // live external authority API (authoritative but time-varying)
   | 'model_assisted'; // LLM-generated or RAG+LLM narrative/advisory (verify before relying)
 
@@ -58,9 +63,10 @@ export interface PedigreeInfo {
 }
 
 /**
- * The four pedigree descriptors. Trust mapping (per design):
+ * The five pedigree descriptors. Trust mapping (per design):
  *   - deterministic_registry → deterministic, trust 'high'
  *   - deterministic_query    → deterministic, trust 'high'
+ *   - rim_learned            → non-deterministic, trust 'medium' (accumulated org judgment)
  *   - external_api_live      → non-deterministic, trust 'medium' (verify currency)
  *   - model_assisted         → non-deterministic, trust 'requires_verification'
  */
@@ -80,6 +86,15 @@ export const PEDIGREE_LEVELS: Record<DeterminismPedigree, PedigreeInfo> = {
     guidance:
       'Pure query over governed internal data — no LLM. Reproducible for the same data snapshot; ' +
       'may be relied on directly (note the data version when the underlying records can change).',
+  },
+  rim_learned: {
+    pedigree: 'rim_learned',
+    deterministic: false,
+    trust: 'medium',
+    guidance:
+      'RIM learned pattern — accumulated from deterministic tool outputs over time, tenant-scoped, ' +
+      'occurrence-weighted. More trustworthy than model-generated but less than a live registry lookup. ' +
+      'Cite the pattern confidence and occurrence count; flag low-occurrence patterns for verification.',
   },
   external_api_live: {
     pedigree: 'external_api_live',
@@ -113,6 +128,9 @@ export const DETERMINISTIC_REGISTRY_EXTRA: string[] = [
   // network — exactly mirroring how the global-RI experts are classified.
   'check_regulatory_currency',
   'guidance_change_radar',
+  // Guidance Ingestion: check_guidance_freshness is a pure cross-reference against
+  // the local currency registry + curated ICH step-date registry — deterministic.
+  'check_guidance_freshness',
 ];
 
 const REGISTRY_NAME_SET: ReadonlySet<string> = new Set<string>([
@@ -131,12 +149,43 @@ const REGISTRY_NAME_SET: ReadonlySet<string> = new Set<string>([
 export const DETERMINISTIC_QUERY_NAMES: ReadonlySet<string> = new Set<string>([
   'code_meddra',
   'code_whodrug',
+  'generate_spl_xml',
+  'validate_spl_structure',
+  'generate_psur_structure',
+  'generate_dsur_structure',
+  'validate_sdtm_dataset',
+  'validate_adam_dataset',
+  'generate_define_xml',
+]);
+
+/**
+ * Tools that call a live external authority API but do NOT start with `search_`.
+ * Listed explicitly so the classify function can assign `external_api_live`
+ * without relying on a prefix convention that does not apply to them.
+ */
+export const EXTERNAL_API_NAMES: ReadonlySet<string> = new Set<string>([
+  // Guidance Ingestion: these hit live FDA/ICH APIs (or configurable endpoints).
+  'fetch_fda_guidance_list',
+  'fetch_ich_guideline_updates',
+]);
+
+/**
+ * RIM pattern-store tools. These recall tenant-scoped learned patterns that
+ * were recorded from deterministic tool outputs — never fabricated, but also
+ * not reproducible across tenants or time. Classified as `rim_learned`.
+ */
+export const RIM_LEARNED_NAMES: ReadonlySet<string> = new Set<string>([
+  'recall_rim_patterns',
+  'query_rim_patterns_by_domain',
+  'summarize_rim_intelligence',
 ]);
 
 /** Resolve a tool name to its pedigree class (precedence as documented above). */
 function classify(toolName: string): DeterminismPedigree {
   if (REGISTRY_NAME_SET.has(toolName)) return 'deterministic_registry';
   if (DETERMINISTIC_QUERY_NAMES.has(toolName)) return 'deterministic_query';
+  if (RIM_LEARNED_NAMES.has(toolName)) return 'rim_learned';
+  if (EXTERNAL_API_NAMES.has(toolName)) return 'external_api_live';
   if (toolName.startsWith('search_')) return 'external_api_live';
   return 'model_assisted';
 }
@@ -169,6 +218,8 @@ export function listDeterministicTools(): string[] {
 export default {
   PEDIGREE_LEVELS,
   DETERMINISTIC_REGISTRY_EXTRA,
+  EXTERNAL_API_NAMES,
+  RIM_LEARNED_NAMES,
   getToolPedigree,
   classifyTools,
   listDeterministicTools,

@@ -27,6 +27,8 @@
  * @module server/services/intelligence/rim-pattern-store
  */
 
+import { persistPatterns, loadPersistedPatterns } from './rim-pattern-persistence.js';
+
 /**
  * The class of regulatory signal a pattern aggregates. Mirrors the signal/pattern
  * vocabulary described in the "RIM Intelligence Layer Rules" scoped rule (deficiency,
@@ -143,6 +145,42 @@ export function rimPatternId(
  */
 export class InMemoryRimPatternStore implements RimPatternStore {
   private readonly patterns = new Map<string, RimPattern>();
+  /** Track which orgIds have been loaded from persistence (once per org). */
+  private readonly loadedOrgs = new Set<number>();
+  /** Track which orgIds have a pending persistence load (avoid double-loading). */
+  private readonly loadingOrgs = new Map<number, Promise<void>>();
+
+  /**
+   * Attempt to load persisted patterns for an org into the in-memory store.
+   * Only loads once per org per process lifetime. Non-blocking: returns a promise
+   * that resolves when loading is complete but callers may ignore it.
+   */
+  private ensureLoaded(orgId: number): Promise<void> {
+    if (this.loadedOrgs.has(orgId)) return Promise.resolve();
+    const existing = this.loadingOrgs.get(orgId);
+    if (existing) return existing;
+
+    const loading = loadPersistedPatterns(String(orgId))
+      .then((persisted) => {
+        // Only hydrate if in-memory is still empty for this org.
+        const hasAny = Array.from(this.patterns.values()).some((p) => p.orgId === orgId);
+        if (!hasAny && persisted.length > 0) {
+          for (const p of persisted) {
+            this.patterns.set(p.id, p);
+          }
+        }
+        this.loadedOrgs.add(orgId);
+        this.loadingOrgs.delete(orgId);
+      })
+      .catch(() => {
+        // Persistence load failure is non-fatal.
+        this.loadedOrgs.add(orgId);
+        this.loadingOrgs.delete(orgId);
+      });
+
+    this.loadingOrgs.set(orgId, loading);
+    return loading;
+  }
 
   recordPattern(input: RecordPatternInput): RimPattern {
     const orgId = input.orgId;
@@ -172,6 +210,10 @@ export class InMemoryRimPatternStore implements RimPatternStore {
         lastSeen: observedAt,
       };
       this.patterns.set(id, updated);
+
+      // Fire-and-forget persistence of the org's full pattern set.
+      this.persistOrg(orgId);
+
       return updated;
     }
 
@@ -187,10 +229,25 @@ export class InMemoryRimPatternStore implements RimPatternStore {
       lastSeen: observedAt,
     };
     this.patterns.set(id, created);
+
+    // Fire-and-forget persistence of the org's full pattern set.
+    this.persistOrg(orgId);
+
     return created;
   }
 
+  /** Fire-and-forget: persist all patterns for an org to disk. */
+  private persistOrg(orgId: number): void {
+    const orgPatterns = this.getPatterns({ orgId });
+    Promise.resolve()
+      .then(() => persistPatterns(String(orgId), orgPatterns))
+      .catch(() => {});
+  }
+
   getPatterns(query: GetPatternsQuery): RimPattern[] {
+    // Kick off async load from persistence on first access (best-effort).
+    this.ensureLoaded(query.orgId).catch(() => {});
+
     const { orgId, domain } = query;
     const out: RimPattern[] = [];
     for (const pattern of this.patterns.values()) {

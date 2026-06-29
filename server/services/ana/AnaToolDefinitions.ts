@@ -30,7 +30,11 @@ import { SHELF_LIFE_TOOLS } from './shelfLifeTools';
 import { DEEPENING_TOOLS } from './deepeningTools';
 import { DAILYMED_TOOLS } from './dailymedTools';
 import { RIM_TOOLS } from './rimTools';
+import { RIM_QUERY_TOOLS } from './rimQueryTools';
 import { EU_DATA_TOOLS } from './euDataTools';
+import { CDISC_TOOLS } from './cdiscTools';
+import { GUIDANCE_INGESTION_TOOLS } from './guidanceIngestionTools';
+import { SPL_SAFETY_TOOLS } from './splSafetyTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7481,8 +7485,18 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // RIM learning-loop read path: recall the org's learned regulatory patterns
   // (deterministic_query over the tenant-scoped RIM pattern store). See rimTools.ts.
   ...RIM_TOOLS,
+  // RIM domain query + summarization: filter by domain/confidence/occurrences,
+  // and get a high-level summary of accumulated RIM intelligence. See rimQueryTools.ts.
+  ...RIM_QUERY_TOOLS,
   // Live EU/global data: EUDAMED, EMA EPAR, EU CTIS. See euDataTools.ts.
   ...EU_DATA_TOOLS,
+  // CDISC SDTM/ADaM conformance + define.xml generation. See cdiscTools.ts.
+  ...CDISC_TOOLS,
+  // Live guidance ingestion: FDA guidance API, ICH guideline registry, freshness checks.
+  // See guidanceIngestionTools.ts + ../regulatory-currency/guidance-ingestion-service.ts.
+  ...GUIDANCE_INGESTION_TOOLS,
+  // SPL generation + PSUR/DSUR safety-report structure. See splSafetyTools.ts.
+  ...SPL_SAFETY_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -538,6 +538,99 @@ registerToolHandler('recall_rim_patterns', async (input, ctx) => {
   }
 });
 
+// RIM domain query — filter learned patterns by domain with optional confidence
+// and occurrence thresholds, sorted by occurrences descending. Tenant-scoped.
+registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string, unknown>) =>
+  runStatsTool('query_rim_patterns_by_domain', async () => {
+    const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
+    const orgId = typeof input.orgId === 'number' ? input.orgId : 0;
+    const domain = typeof input.domain === 'string' ? input.domain.trim() : '';
+    if (!orgId || !domain) {
+      throw new Error('orgId (number) and domain (string) are required.');
+    }
+    const minConfidence = typeof input.minConfidence === 'number' ? input.minConfidence : 0;
+    const minOccurrences = typeof input.minOccurrences === 'number' ? input.minOccurrences : 0;
+
+    const patterns = getPatterns({ orgId, domain })
+      .filter((p) => p.confidence >= minConfidence && p.occurrences >= minOccurrences)
+      .sort((a, b) => b.occurrences - a.occurrences || b.confidence - a.confidence);
+
+    return {
+      source: 'RIM Pattern Store',
+      pedigree: 'rim_learned',
+      organizationId: orgId,
+      domain,
+      filters: { minConfidence, minOccurrences },
+      count: patterns.length,
+      patterns,
+    };
+  })
+);
+
+// RIM intelligence summary — aggregate domain counts, top patterns, date range.
+registerToolHandler('summarize_rim_intelligence', async (input: Record<string, unknown>) =>
+  runStatsTool('summarize_rim_intelligence', async () => {
+    const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
+    const orgId = typeof input.orgId === 'number' ? input.orgId : 0;
+    if (!orgId) {
+      throw new Error('orgId (number) is required.');
+    }
+
+    const patterns = getPatterns({ orgId });
+    if (patterns.length === 0) {
+      return {
+        source: 'RIM Pattern Store',
+        pedigree: 'rim_learned',
+        organizationId: orgId,
+        totalPatterns: 0,
+        domains: [],
+        topPatterns: [],
+        oldestPattern: null,
+        newestPattern: null,
+        message: 'No RIM patterns have been learned for this organization yet.',
+      };
+    }
+
+    // Domain counts
+    const domainMap = new Map<string, number>();
+    for (const p of patterns) {
+      domainMap.set(p.domain, (domainMap.get(p.domain) ?? 0) + 1);
+    }
+    const domains = Array.from(domainMap.entries())
+      .map(([domain, count]) => ({ domain, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Top patterns by occurrences
+    const topPatterns = [...patterns]
+      .sort((a, b) => b.occurrences - a.occurrences || b.confidence - a.confidence)
+      .slice(0, 10)
+      .map((p) => ({
+        observation: p.observation,
+        occurrences: p.occurrences,
+        confidence: p.confidence,
+      }));
+
+    // Date range
+    let oldest = patterns[0].firstSeen;
+    let newest = patterns[0].lastSeen;
+    for (const p of patterns) {
+      if (p.firstSeen < oldest) oldest = p.firstSeen;
+      if (p.lastSeen > newest) newest = p.lastSeen;
+    }
+
+    return {
+      source: 'RIM Pattern Store',
+      pedigree: 'rim_learned',
+      organizationId: orgId,
+      totalPatterns: patterns.length,
+      domains,
+      topPatterns,
+      oldestPattern: oldest,
+      newestPattern: newest,
+    };
+  })
+);
+
 // 21 CFR Part 11 §11.50 signature manifestation — load an executed signature
 // (tenant-scoped) and render the human-readable block (printed name, date/time,
 // meaning + supporting controls) to embed in the rendered record.
@@ -12400,19 +12493,19 @@ registerToolHandler('validate_spl', async (input: Record<string, unknown>) => {
   }
 });
 
-// ── CDISC define.xml / conformance (server/services/cdisc) — deterministic. ──
-registerToolHandler('generate_define_xml', async (input: Record<string, unknown>) => {
-  try {
-    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
-    const { generateDefineXml } = await import('../cdisc/define-xml.js');
-    const result = generateDefineXml(input.spec as any);
-    return JSON.stringify({ status: 'generated', engine: 'deterministic', xml: result.xml, conformance: result.conformance, instruction: 'Surface conformance errors before treating the define.xml as final. Structural subset, not the full validator of record.' });
-  } catch (err: any) {
-    const m = err?.message || 'unknown error';
-    if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
-    return JSON.stringify({ error: `generate_define_xml failed: ${m}` });
-  }
-});
+// ── CDISC validate_cdisc_dataset — dispatches per standard to conformance service. ──
+registerToolHandler('validate_cdisc_dataset', async (input: Record<string, unknown>) =>
+  runStatsTool('validate_cdisc_dataset', async () => {
+    const std = (typeof input.standard === 'string' ? input.standard : '').toUpperCase();
+    const datasets = Array.isArray(input.datasets) ? input.datasets : [];
+    if (std === 'ADAM' && datasets.length > 0) {
+      const { validateAdamDataset } = await import('../cdisc/cdisc-conformance-service.js');
+      return datasets.map((ds: any) => validateAdamDataset({ dataset: ds.name, variables: ds.variables || [] }));
+    }
+    const { validateSdtmDataset } = await import('../cdisc/cdisc-conformance-service.js');
+    return datasets.map((ds: any) => validateSdtmDataset({ domain: ds.name, variables: ds.variables || [] }));
+  }, 'deterministic')
+);
 
 registerToolHandler('check_dataset_conformance', async (input: Record<string, unknown>) => {
   try {
@@ -12561,3 +12654,95 @@ registerToolHandler('reconcile_dossier_numbers', async (input: Record<string, un
     return JSON.stringify({ error: `reconcile_dossier_numbers failed: ${message}` });
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Guidance Ingestion — live FDA/ICH guidance fetching + freshness checks.
+// See guidanceIngestionTools.ts + ../regulatory-currency/guidance-ingestion-service.ts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('fetch_fda_guidance_list', async (input: Record<string, unknown>) =>
+  runStatsTool('fetch_fda_guidance_list', async () => {
+    const { fetchFdaGuidanceList } = await import('../regulatory-currency/guidance-ingestion-service.js');
+    return fetchFdaGuidanceList({
+      topic: input.topic as string | undefined,
+      year: input.year as number | undefined,
+      status: input.status as 'final' | 'draft' | 'withdrawn' | undefined,
+      limit: input.limit as number | undefined,
+    });
+  })
+);
+
+registerToolHandler('fetch_ich_guideline_updates', async (input: Record<string, unknown>) =>
+  runStatsTool('fetch_ich_guideline_updates', async () => {
+    const { fetchIchGuidelineUpdates } = await import('../regulatory-currency/guidance-ingestion-service.js');
+    return fetchIchGuidelineUpdates({
+      category: input.category as 'Q' | 'S' | 'E' | 'M' | undefined,
+      since: input.since as string | undefined,
+    });
+  })
+);
+
+registerToolHandler('check_guidance_freshness', async (input: Record<string, unknown>) =>
+  runStatsTool('check_guidance_freshness', async () => {
+    const { checkGuidanceFreshness } = await import('../regulatory-currency/guidance-ingestion-service.js');
+    if (!input.citedGuidances || !Array.isArray(input.citedGuidances)) {
+      throw new Error('citedGuidances is required');
+    }
+    return checkGuidanceFreshness({
+      citedGuidances: input.citedGuidances as Array<{ title: string; citedDate?: string; jurisdiction?: string }>,
+    });
+  })
+);
+
+// ── SPL generation & PSUR/DSUR safety-report structure ──────────────────────
+
+registerToolHandler('generate_spl_xml', async (input: Record<string, unknown>) =>
+  runStatsTool('generate_spl_xml', async () => {
+    const { generateSplXml } = await import('../labeling/spl-generation-service.js');
+    return generateSplXml(input as any);
+  })
+);
+
+registerToolHandler('validate_spl_structure', async (input: Record<string, unknown>) =>
+  runStatsTool('validate_spl_structure', async () => {
+    const { validateSplStructure } = await import('../labeling/spl-generation-service.js');
+    return validateSplStructure(input.xml as string);
+  })
+);
+
+registerToolHandler('generate_psur_structure', async (input: Record<string, unknown>) =>
+  runStatsTool('generate_psur_structure', async () => {
+    const { generatePsurStructure } = await import('../safety-reports/psur-dsur-service.js');
+    return generatePsurStructure(input as any);
+  })
+);
+
+registerToolHandler('generate_dsur_structure', async (input: Record<string, unknown>) =>
+  runStatsTool('generate_dsur_structure', async () => {
+    const { generateDsurStructure } = await import('../safety-reports/psur-dsur-service.js');
+    return generateDsurStructure(input as any);
+  })
+);
+
+// ── CDISC conformance service (server/services/cdisc/cdisc-conformance-service) — deterministic. ──
+
+registerToolHandler('validate_sdtm_dataset', async (input: Record<string, unknown>) =>
+  runStatsTool('validate_sdtm_dataset', async () => {
+    const { validateSdtmDataset } = await import('../cdisc/cdisc-conformance-service.js');
+    return validateSdtmDataset(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('validate_adam_dataset', async (input: Record<string, unknown>) =>
+  runStatsTool('validate_adam_dataset', async () => {
+    const { validateAdamDataset } = await import('../cdisc/cdisc-conformance-service.js');
+    return validateAdamDataset(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('generate_define_xml', async (input: Record<string, unknown>) =>
+  runStatsTool('generate_define_xml', async () => {
+    const { generateDefineXml } = await import('../cdisc/cdisc-conformance-service.js');
+    return generateDefineXml(input as any);
+  }, 'deterministic')
+);
