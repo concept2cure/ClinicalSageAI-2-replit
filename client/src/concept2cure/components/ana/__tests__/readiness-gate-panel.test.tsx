@@ -89,6 +89,22 @@ describe('ReadinessGatePanel — blocked', () => {
     fireEvent.click(screen.getAllByText(withLink!.deepLink!.label)[0]);
     expect(onFollowLink).toHaveBeenCalled();
   });
+
+  it('gives each deep-link an accessible name carrying its blocking item', () => {
+    render(<ReadinessGatePanel gate={blockedGate} onSeal={() => {}} onFollowLink={() => {}} />);
+    const withLink = blockedGate.blockingItems.find(b => b.deepLink)!;
+    const btn = screen.getByRole('button', {
+      name: `${withLink.deepLink!.label}: ${withLink.label}`,
+    });
+    expect(btn).toBeTruthy();
+  });
+
+  it('disabled seal states the reason in text (not colour alone)', () => {
+    render(<ReadinessGatePanel gate={sampleGate} onSeal={() => {}} />);
+    const btn = screen.getByText(/Seal and submit/).closest('button') as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    expect(screen.getByText(/Available once the module is assembled from live artifacts/)).toBeTruthy();
+  });
 });
 
 describe('ReadinessGatePanel — honesty for sample / not-assessed', () => {

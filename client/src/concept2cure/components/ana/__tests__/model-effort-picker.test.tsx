@@ -97,6 +97,42 @@ describe('Composer — picker flag gating', () => {
     fireEvent.click(screen.getByRole('radio', { name: /Thorough effort/ }));
     expect(onEffortChange).toHaveBeenCalledWith('thorough');
   });
+
+  it('roving tabindex: only the checked radio is in the tab order', () => {
+    setFeatureEnabled('ENABLE_MODEL_EFFORT_PICKER', true);
+    render(
+      <Composer
+        value=""
+        onChange={() => {}}
+        onSend={() => {}}
+        effort="balanced"
+        onEffortChange={() => {}}
+      />,
+    );
+    const radios = screen.getAllByRole('radio');
+    const tabbable = radios.filter((r) => r.getAttribute('tabindex') === '0');
+    expect(tabbable.length).toBe(1);
+    expect(tabbable[0].getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('arrow keys move selection within the radiogroup', () => {
+    setFeatureEnabled('ENABLE_MODEL_EFFORT_PICKER', true);
+    const onEffortChange = vi.fn();
+    render(
+      <Composer
+        value=""
+        onChange={() => {}}
+        onSend={() => {}}
+        effort="balanced"
+        onEffortChange={onEffortChange}
+      />,
+    );
+    const group = screen.getByRole('radiogroup', { name: 'Response effort' });
+    fireEvent.keyDown(group, { key: 'ArrowRight' });
+    expect(onEffortChange).toHaveBeenLastCalledWith('thorough');
+    fireEvent.keyDown(group, { key: 'ArrowLeft' });
+    expect(onEffortChange).toHaveBeenLastCalledWith('fast');
+  });
 });
 
 describe('EmptyState forwards effort/model props to its Composer', () => {

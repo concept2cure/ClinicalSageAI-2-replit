@@ -34,13 +34,21 @@ export function formatSealedAt(iso: string): string {
 
 export interface SealBadgeProps {
   seal: VerifiedSeal;
+  /**
+   * When this sealed version has been superseded, the version that replaced it.
+   * Stated as text ("Superseded by v4") so the reviewer is never shown a stale
+   * seal as current. Omit for the current sealed version.
+   */
+  supersededByVersion?: number;
 }
 
-export function SealBadge({ seal }: SealBadgeProps) {
+export function SealBadge({ seal, supersededByVersion }: SealBadgeProps) {
   const [open, setOpen] = useState(false);
   const trailId = useId();
   const { sealedRecord } = seal;
   const meaningLabel = MEANING_LABEL[seal.meaning] ?? seal.meaning;
+  const versionText = seal.version > 0 ? `v${seal.version}` : 'this version';
+  const superseded = typeof supersededByVersion === 'number';
 
   return (
     <div className={styles.sealBadge} role="group" aria-label="Sealed verified version">
@@ -48,12 +56,14 @@ export function SealBadge({ seal }: SealBadgeProps) {
         <span className={styles.ico} aria-hidden="true">
           <I.shieldCheck size={14} />
         </span>
-        <span>Signed and sealed</span>
+        {/* Status is carried as text, never colour alone. */}
+        <span>{superseded ? 'Signed and sealed (superseded)' : 'Signed and sealed'}</span>
       </div>
 
       <p className={styles.sealBadgeMeta}>
-        {meaningLabel} by {seal.printedName} on {formatSealedAt(sealedRecord.sealedAt)}.
+        {versionText} — {meaningLabel} by {seal.printedName} on {formatSealedAt(sealedRecord.sealedAt)}.
         {sealedRecord.aiDisclosed ? ' AI involvement disclosed.' : ''}
+        {superseded ? ` Superseded by v${supersededByVersion}.` : ''}
       </p>
 
       <button
@@ -63,10 +73,13 @@ export function SealBadge({ seal }: SealBadgeProps) {
         aria-controls={trailId}
         onClick={() => setOpen(o => !o)}
       >
-        <I.down
-          size={12}
-          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 200ms ease-out' }}
-        />
+        <span
+          className={styles.provTrailChevron}
+          data-open={open}
+          aria-hidden="true"
+        >
+          <I.down size={12} />
+        </span>
         <span>{open ? 'Hide provenance trail' : 'Show provenance trail'}</span>
       </button>
 

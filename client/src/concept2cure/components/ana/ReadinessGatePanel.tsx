@@ -108,6 +108,9 @@ export function ReadinessGatePanel({ gate, onSeal, onFollowLink, assessing }: Re
                 <button
                   type="button"
                   className={styles.gateDeepLink}
+                  // Name carries the blocker so the link is distinguishable out
+                  // of context (multiple "Open" links would otherwise collide).
+                  aria-label={`${item.deepLink.label}: ${item.label}`}
                   onClick={() => onFollowLink?.(item)}
                 >
                   {item.deepLink.label}
