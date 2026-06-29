@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T01:26:13.722Z",
+  "generatedAt": "2026-06-29T01:46:17.571Z",
   "git": {
-    "sha": "c7732cbca378b4bebb2b685024688c01b5506acf",
+    "sha": "0a06c2f311e2d533d0a887d06d3eef840bf321d3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1083,6 +1083,24 @@
         ]
       },
       {
+        "basename": "special-designations",
+        "count": 3,
+        "paths": [
+          "server/services/ana/special-designations.ts",
+          "server/services/global-ri/special-designations.ts",
+          "shared/regulatory/special-designations.ts"
+        ]
+      },
+      {
+        "basename": "special-designations.test",
+        "count": 3,
+        "paths": [
+          "server/services/ana/__tests__/special-designations.test.ts",
+          "server/services/global-ri/__tests__/special-designations.test.ts",
+          "tests/regulatory/special-designations.test.ts"
+        ]
+      },
+      {
         "basename": "submissions",
         "count": 3,
         "paths": [
@@ -1998,22 +2016,6 @@
         ]
       },
       {
-        "basename": "special-designations",
-        "count": 2,
-        "paths": [
-          "server/services/ana/special-designations.ts",
-          "server/services/global-ri/special-designations.ts"
-        ]
-      },
-      {
-        "basename": "special-designations.test",
-        "count": 2,
-        "paths": [
-          "server/services/ana/__tests__/special-designations.test.ts",
-          "server/services/global-ri/__tests__/special-designations.test.ts"
-        ]
-      },
-      {
         "basename": "spl-fhir",
         "count": 2,
         "paths": [
@@ -2445,7 +2447,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 271,
+      "duplicateGroups": 272,
       "largeByBytes": 2,
       "largeByLines": 7
     },
@@ -2457,7 +2459,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 47,
+      "duplicateGroups": 48,
       "largeByBytes": 1,
       "largeByLines": 2
     },
