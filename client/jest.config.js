@@ -28,7 +28,6 @@ export default {
     // Individual vitest-flavored test files outside the listed dirs.
     // Each imports from 'vitest', which Jest can't load. Vitest picks
     // them up via vitest.config.ts's client/** include.
-    'renderSafeMarkdown\\.test\\.ts$',
     'schemaValidator\\.test\\.ts$',
     'cspNonce\\.test\\.ts$',
     'reportOsClient\\.test\\.ts$',

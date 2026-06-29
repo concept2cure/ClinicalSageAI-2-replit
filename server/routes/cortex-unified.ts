@@ -320,13 +320,14 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
     const MODEL_MAX_TOKENS = 128_000;
     const RESPONSE_BUFFER = 4_000;
 
-    // Load working memory summary if available
+    // Load working memory summary if available (org-scoped to prevent cross-tenant leak).
     let workingMemorySummary: string | null = null;
     try {
       const wmResult = await pool.query(
         `SELECT summary FROM conversation_working_memory
-         WHERE thread_id = $1 ORDER BY generated_at DESC LIMIT 1`,
-        [threadId]
+         WHERE thread_id = $1 AND organization_id = $2
+         ORDER BY generated_at DESC LIMIT 1`,
+        [threadId, organizationId]
       );
       if (wmResult.rows.length > 0) {
         workingMemorySummary = wmResult.rows[0].summary;

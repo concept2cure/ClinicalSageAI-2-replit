@@ -16,6 +16,15 @@ import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
 import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
 import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
 import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
+import { NAVIGATION_TOOLS } from './navigationTools';
+import { EXTENDED_REGULATORY_TOOLS } from './extendedRegulatoryTools';
+import { PHARMACOVIGILANCE_REPORTING_TOOLS } from './pharmacovigilanceReportingTools';
+import { ANALYTICAL_METHOD_TOOLS } from './analyticalMethodTools';
+import { ADVANCED_MODELING_TOOLS } from './advancedModelingTools';
+import { COVER_LETTER_TOOLS } from './coverLetterTools';
+import { SHELF_LIFE_TOOLS } from './shelfLifeTools';
+import { DEEPENING_TOOLS } from './deepeningTools';
+import { DAILYMED_TOOLS } from './dailymedTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -2801,12 +2810,12 @@ export const REGISTER_LDT: AnaTool = {
 export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
   name: 'package_ectd_for_region',
   description:
-    "Assemble a regional eCTD zip (FDA us-regional.xml / EMA eu-regional.xml / PMDA jp-regional.xml) from a set of CTD leaves. Produces the correct Module 1 folder structure per region, computes SHA-256, and returns the bundle metadata for downstream transmit. Use after AnA has gathered the leaf manifest for a submission.",
+    "Assemble a regional eCTD zip (FDA us-regional.xml / EMA eu-regional.xml / PMDA jp-regional.xml / Health Canada ca-regional.xml) from a set of CTD leaves. Produces the correct Module 1 folder structure per region, computes SHA-256, and returns the bundle metadata for downstream transmit. Use after AnA has gathered the leaf manifest for a submission.",
   input_schema: {
     type: 'object',
     properties: {
-      region:          { type: 'string', enum: ['fda', 'ema', 'pmda'] },
-      application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA).' },
+      region:          { type: 'string', enum: ['fda', 'ema', 'pmda', 'ca'] },
+      application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA), dossier id (Health Canada).' },
       sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
       submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
       sponsor_id:      { type: 'string', description: 'DUNS / EMA org id / PMDA applicant id.' },
@@ -2836,12 +2845,12 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
 export const TRANSMIT_SUBMISSION: AnaTool = {
   name: 'transmit_submission',
   description:
-    "Transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, or PMDA Gateway). Returns the transmittal id and gateway-issued tracking number. Throws when credentials are not configured for the org × environment. Use after package_ectd_for_region or after assembling a region-specific deliverable like an eSTAR or a EUDAMED device-registration JSON.",
+    "Transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, or Health Canada CESG). Returns the transmittal id and gateway-issued tracking number. Throws when credentials are not configured for the org × environment. Use after package_ectd_for_region or after assembling a region-specific deliverable like an eSTAR or a EUDAMED device-registration JSON.",
   input_schema: {
     type: 'object',
     properties: {
-      region:      { type: 'string', enum: ['fda', 'ema', 'pmda'] },
-      gateway:     { type: 'string', enum: ['esg', 'cesp', 'eudamed', 'pmda_gateway'] },
+      region:      { type: 'string', enum: ['fda', 'ema', 'pmda', 'ca'] },
+      gateway:     { type: 'string', enum: ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] },
       environment: { type: 'string', enum: ['staging', 'production'], description: "Default 'production'." },
       bundle_path: { type: 'string', description: 'Absolute path to the package on disk.' },
       bundle_sha256: { type: 'string', description: '64-char hex SHA-256.' },
@@ -5317,6 +5326,40 @@ export const VALIDATE_DOCX: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Content-fidelity verification — proves a freshly built/edited .docx actually
+// reproduces the supplied source text (and any required caption/boilerplate
+// strings) verbatim, beyond what validate_docx (structural OOXML integrity)
+// checks. Extracts the .docx text via the same extraction path AnA reads
+// uploads with, diffs it against the source, and asserts each required string
+// is present exactly. This is the audited "verify it against your text" step.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const VERIFY_DOCX_AGAINST_SOURCE: AnaTool = {
+  name: 'verify_docx_against_source',
+  description:
+    "Verify that a built or edited Word (.docx) faithfully reproduces a known source text — the audited \"verify it against your text\" step after rebuilding from a template, applying corrections, or appending paragraphs. Unlike validate_docx (which checks OOXML/ZIP structural integrity only), this extracts the document's text and (1) diffs it against expected_text to surface any content divergence, and (2) confirms each entry in required_strings (e.g. caption block, case/sponsor identifiers, sworn-paragraph or boilerplate anchors) appears verbatim. Returns { ok, missingRequiredStrings, divergenceSummary, additions, deletions } — a pass/fail the user and the Part 11 audit trail can cite. Pair with validate_docx for full (structural + content) verification. Tenant-scoped via ToolContext.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      input_docx_path: {
+        type: 'string',
+        description: 'Absolute path to the built/edited .docx to verify (e.g. a docxPath returned by author_docx_native, build_from_template, or surgical_docx_xml_edit).',
+      },
+      expected_text: {
+        type: 'string',
+        description: 'The verbatim source text the document is supposed to contain (e.g. the complete text the user provided). The extracted document text is diffed against this. Optional when only required_strings is supplied.',
+      },
+      required_strings: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Strings that MUST appear verbatim in the document (e.g. caption strings, case/sponsor numbers, sworn-paragraph anchors). Each is checked for an exact substring match; any missing entry fails verification.',
+      },
+    },
+    required: ['input_docx_path'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MDX kit-section write-back — closes the loop between AnA's drafting and the
 // kit's section editors (K510Surface, PmaSurface, CerSurface). When the model
 // has produced a draft section (cover letter, SE discussion, device
@@ -6639,6 +6682,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   RUN_PYTHON_SCRIPT,
   INSERT_DOCUMENT_CONTENT,
   SURGICAL_DOCX_XML_EDIT,
+  VERIFY_DOCX_AGAINST_SOURCE,
   INSERT_CLAUSE_TEMPLATE,
   VALIDATE_DOCX,
   RUN_IN_CONTAINER,
@@ -7106,6 +7150,31 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ...DEVICE_SUBMISSION_TOOLS,
   // Read-only window into enterprise usage controls (weekly limits, overage, seats).
   ...LICENSE_STATUS_TOOLS,
+  // Self-navigation: discover + navigate to any app screen via the governed
+  // navigation registry (shared/navigation). See navigationTools.ts.
+  ...NAVIGATION_TOOLS,
+  // HEOR modeling, SPL labeling XML, CDISC define.xml/conformance, and reference
+  // formatting — deterministic engines newly reachable by AnA. See
+  // extendedRegulatoryTools.ts.
+  ...EXTENDED_REGULATORY_TOOLS,
+  // Pharmacovigilance reporting: SAE line listing + E2B(R3) ICSR composition
+  // over the org's recorded adverse events. See pharmacovigilanceReportingTools.ts.
+  ...PHARMACOVIGILANCE_REPORTING_TOOLS,
+  // ICH Q2 analytical method-validation assessment (linearity/precision/accuracy).
+  // See analyticalMethodTools.ts.
+  ...ANALYTICAL_METHOD_TOOLS,
+  // Advanced HEOR (Markov cohort + probabilistic sensitivity) and the full CDISC
+  // pipeline. See advancedModelingTools.ts.
+  ...ADVANCED_MODELING_TOOLS,
+  // 510(k) cover-letter + 510(k) summary composition (tenant-scoped). See
+  // coverLetterTools.ts.
+  ...COVER_LETTER_TOOLS,
+  // ICH Q1E shelf-life / retest-period estimation by regression. See shelfLifeTools.ts.
+  ...SHELF_LIFE_TOOLS,
+  // Multi-batch ICH Q1E poolability + structured benefit-risk. See deepeningTools.ts.
+  ...DEEPENING_TOOLS,
+  // DailyMed (NLM) published-label lookup. See dailymedTools.ts.
+  ...DAILYMED_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -244,6 +244,8 @@ export interface MatchInput {
   comprehensiveDataUnobtainable?: boolean;
   /** Intended for early / world-first development and filing in Japan (PMDA Sakigake). */
   intendedForEarlyJapanDevelopment?: boolean;
+  /** Innovative product with a novel mechanism of action (PMDA Sakigake). */
+  innovativeNovelMechanism?: boolean;
 }
 
 /** A program the input qualifies for, with the rationale. */
@@ -390,7 +392,13 @@ const RULES: Record<Region, ProgramRule[]> = {
     {
       id: 'pmda-sakigake',
       test: (i) =>
-        !!i.substantialImprovementOverExisting && !!i.intendedForEarlyJapanDevelopment,
+        // All four catalog criteria must hold — previously only the last two were
+        // checked, so products that were neither innovative/novel-mechanism nor
+        // for a serious/life-threatening disease were wrongly screened as eligible.
+        !!i.innovativeNovelMechanism &&
+        !!i.seriousOrLifeThreatening &&
+        !!i.substantialImprovementOverExisting &&
+        !!i.intendedForEarlyJapanDevelopment,
       rationale:
         'Innovative product expected to show prominent effectiveness and intended for early/world-first development in Japan — candidate for Sakigake Designation.',
       reason:

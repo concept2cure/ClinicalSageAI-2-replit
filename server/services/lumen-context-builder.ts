@@ -32,6 +32,12 @@ import {
   buildProjectIntelligenceContext,
 } from './client-intelligence-memory.js';
 import { resolveAccountContext, formatResolvedContextForPrompt } from './account-canon.js';
+import {
+  getSubmissionTypeContext,
+  getSubmissionTypeLabel,
+  resolveToRegistryEntry,
+  type SubmissionTypeContext,
+} from '../../shared/regulatory/submission-type-bridge.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -51,6 +57,8 @@ export interface ProjectContext {
   tags: string[];
   depth: number;
   parentProjectId: number | null;
+  /** Canonical bridge-resolved context (null when type is unrecognized) */
+  submissionTypeContext: SubmissionTypeContext | null;
 }
 
 export interface DocumentContext {
@@ -134,12 +142,17 @@ async function loadProjectContext(
     const p = result.rows[0];
     const meta = p.metadata || {};
 
+    const rawSubmissionType = meta.submissionType || meta.submission_type || 'IND';
+    // Resolve through the canonical bridge — enriches with display name, agency, region, etc.
+    const stContext = getSubmissionTypeContext(rawSubmissionType);
+
     return {
       id: p.id,
       name: p.name,
       description: p.description,
       status: p.status,
-      submissionType: meta.submissionType || meta.submission_type || 'IND',
+      // Use canonical display-friendly label when available, fall back to raw value
+      submissionType: stContext?.displayName ?? rawSubmissionType,
       therapeuticArea: meta.therapeuticArea || meta.therapeutic_area || null,
       phase: meta.phase || meta.clinicalPhase || null,
       progress: p.progress || 0,
@@ -148,6 +161,7 @@ async function loadProjectContext(
       tags: p.tags || [],
       depth: p.depth || 0,
       parentProjectId: p.parent_project_id,
+      submissionTypeContext: stContext,
     };
   } catch (error) {
     console.warn('[AnA RI] Failed to load project context:', error);
@@ -542,7 +556,7 @@ ${
       .slice(0, 6)
       .map(
         p =>
-          `  - **${p.name}** (${p.submissionType}, ${p.status}, ${p.progress}% complete)${
+          `  - **${p.name}** (${getSubmissionTypeLabel(p.submissionType)}, ${p.status}, ${p.progress}% complete)${
             p.phase ? ` — ${p.phase}` : ''
           }${p.therapeuticArea ? ` [${p.therapeuticArea}]` : ''}`
       )
@@ -558,12 +572,19 @@ ${projectList}${
   // ── Active Project Context ────────────────────────────────────────────────
   if (context.project) {
     const p = context.project;
+    const stc = p.submissionTypeContext;
     parts.push(`
 ## Active Project Context (Currently Working On)
 - **Project**: ${p.name} (ID: ${p.id})
-- **Submission Type**: ${p.submissionType}${
-      p.therapeuticArea ? `\n- **Therapeutic Area**: ${p.therapeuticArea}` : ''
-    }${p.phase ? `\n- **Phase**: ${p.phase}` : ''}
+- **Submission Type**: ${p.submissionType}${stc ? ` (${stc.registryId})` : ''}${
+      stc ? `\n- **Agency**: ${stc.agency} | **Region**: ${stc.region}` : ''
+    }${stc?.segment ? `\n- **Segment**: ${stc.segment.replace(/_/g, ' ')}` : ''}${
+      stc?.category ? ` | **Category**: ${stc.category.replace(/_/g, ' ')}` : ''
+    }${stc?.dossierStandard ? `\n- **Dossier Standard**: ${stc.dossierStandard}` : ''}${
+      stc?.submissionFormat ? ` | **Format**: ${stc.submissionFormat}` : ''
+    }${p.therapeuticArea ? `\n- **Therapeutic Area**: ${p.therapeuticArea}` : ''}${
+      p.phase ? `\n- **Phase**: ${p.phase}` : ''
+    }
 - **Status**: ${p.status} | **Progress**: ${p.progress}%
 - **Priority**: ${p.priority} | **Risk Level**: ${p.riskLevel}${
       p.description ? `\n- **Description**: ${p.description}` : ''
@@ -803,8 +824,14 @@ You can suggest running orchestration workflows: submission_readiness_review, dr
   }
 
   // ── Submission-specific guidance ─────────────────────────────────────────
-  const subType = context.project?.submissionType?.toUpperCase();
-  if (subType === 'IND') {
+  // Uses the canonical bridge for ALL 158+ filing types, with deep guidance
+  // specializations for the most common types.
+  const stc = context.project?.submissionTypeContext;
+  const subType = stc?.registryId;
+  let submissionGuidanceEmitted = false;
+
+  if (subType === 'US_IND') {
+    submissionGuidanceEmitted = true;
     parts.push(`
 ## IND-Specific Guidance
 You are currently assisting with an IND (Investigational New Drug) application per 21 CFR 312.23.
@@ -814,7 +841,8 @@ You are currently assisting with an IND (Investigational New Drug) application p
 - Flag any missing ICH M4 sections and suggest next authoring steps
 - Reference eCTD 4.0 formatting requirements per ICH M8
 - Consider IND Safety Reporting requirements (21 CFR 312.32)`);
-  } else if (subType === '510K' || subType === '510(K)') {
+  } else if (subType === 'US_510K') {
+    submissionGuidanceEmitted = true;
     parts.push(`
 ## 510(k) Specific Guidance
 You are currently assisting with a 510(k) premarket notification.
@@ -823,20 +851,23 @@ You are currently assisting with a 510(k) premarket notification.
 - Review biocompatibility per ISO 10993 series
 - Verify software documentation per IEC 62304 if applicable
 - Consider MDSAP alignment for multi-market submissions`);
-  } else if (subType === 'NDA' || subType === 'BLA') {
+  } else if (subType === 'US_NDA' || subType === 'US_BLA') {
+    submissionGuidanceEmitted = true;
+    const label = subType === 'US_NDA' ? 'NDA' : 'BLA';
     parts.push(`
-## ${subType} Specific Guidance
+## ${label} Specific Guidance
 You are assisting with a ${
-      subType === 'NDA' ? 'New Drug Application' : 'Biologics License Application'
+      subType === 'US_NDA' ? 'New Drug Application' : 'Biologics License Application'
     }.
 - Full CTD Modules 1-5 are required with complete clinical datasets
 - Ensure ISS/ISE (Integrated Summary of Safety/Efficacy) are comprehensive
 - REMS assessment may be required if safety signals warrant it
-- Reference ICH E1 for duration of exposure requirements (≥1500 patients for chronic use)
+- Reference ICH E1 for duration of exposure requirements (>=1500 patients for chronic use)
 - Reference ICH E3 for CSR format, ICH E9(R1) for estimand framework
 - Labeling per PLR format — Highlights, Full Prescribing Information, Medication Guide
 - FDA Prescription Drug User Fee Act (PDUFA) date awareness — plan for Advisory Committee if applicable`);
-  } else if (subType === 'ANDA') {
+  } else if (subType === 'US_ANDA') {
+    submissionGuidanceEmitted = true;
     parts.push(`
 ## ANDA Specific Guidance
 You are assisting with an Abbreviated New Drug Application (generic drug).
@@ -848,7 +879,8 @@ You are assisting with an Abbreviated New Drug Application (generic drug).
 - Suitability petition (505(j)(2)(C)) if any differences from RLD
 - Patent certification (Paragraph I-IV) strategy — assess Orange Book patents
 - Flag any exclusivity blocks (NCE, ODE, pediatric, CGT)`);
-  } else if (subType === '505B2' || subType === '505(B)(2)') {
+  } else if (subType === 'US_505B2') {
+    submissionGuidanceEmitted = true;
     parts.push(`
 ## 505(b)(2) Specific Guidance
 You are assisting with a 505(b)(2) application — the hybrid pathway.
@@ -859,7 +891,8 @@ You are assisting with a 505(b)(2) application — the hybrid pathway.
 - CMC data requirements: full Module 3 for new formulation; comparative dissolution/BA data
 - FDA Pre-IND/Type B meeting to confirm pathway acceptance is critical
 - Patent considerations: same Paragraph certification requirements as ANDA`);
-  } else if (subType === 'PMA') {
+  } else if (subType === 'US_PMA') {
+    submissionGuidanceEmitted = true;
     parts.push(`
 ## PMA Specific Guidance
 You are assisting with a Premarket Approval application for a Class III medical device.
@@ -871,7 +904,8 @@ You are assisting with a Premarket Approval application for a Class III medical 
 - Labeling review: professional labeling, patient labeling, IFU compliance
 - Post-approval requirements: PAS/30-day supplements strategy, annual reports
 - Panel track vs. traditional PMA — assess which review pathway applies`);
-  } else if (subType === 'DENOVO' || subType === 'DE_NOVO') {
+  } else if (subType === 'US_DE_NOVO') {
+    submissionGuidanceEmitted = true;
     parts.push(`
 ## De Novo Specific Guidance
 You are assisting with a De Novo classification request for a novel device.
@@ -883,7 +917,8 @@ You are assisting with a De Novo classification request for a novel device.
 - Clinical data may be required depending on device risk profile
 - Special controls proposal: define the controls needed for this device type
 - Post-De Novo: device becomes predicate for future 510(k) submissions`);
-  } else if (subType === 'MAA') {
+  } else if (subType === 'EU_MAA') {
+    submissionGuidanceEmitted = true;
     parts.push(`
 ## MAA Specific Guidance
 You are assisting with a Marketing Authorisation Application for the EMA.
@@ -896,6 +931,32 @@ You are assisting with a Marketing Authorisation Application for the EMA.
 - EU Orphan Designation if applicable (10-year market exclusivity)
 - Environmental Risk Assessment (ERA) per EMA guidelines
 - Conditional Marketing Authorisation or Authorisation under Exceptional Circumstances if data is limited`);
+  }
+
+  // Dynamic bridge-generated guidance for any recognized submission type
+  // that does not have a deep specialization above. Ensures all 158+ registry
+  // types get at least baseline contextual guidance.
+  if (!submissionGuidanceEmitted && stc) {
+    const entry = resolveToRegistryEntry(stc.registryId);
+    const lines: string[] = [
+      `## ${stc.displayName} — Submission Guidance`,
+      `You are assisting with a **${stc.displayName}** filing.`,
+      `- **Agency**: ${stc.agency} (${stc.region})`,
+    ];
+    if (stc.description) lines.push(`- **Purpose**: ${stc.description}`);
+    if (stc.dossierStandard) lines.push(`- **Dossier Standard**: ${stc.dossierStandard}`);
+    if (stc.submissionFormat) lines.push(`- **Submission Format**: ${stc.submissionFormat}`);
+    if (stc.ctdModule) lines.push(`- **CTD Location**: ${stc.ctdModule}`);
+    if (stc.applicationFamily) lines.push(`- **Application Family**: ${stc.applicationFamily.replace(/_/g, ' ')}`);
+    if (entry?.requiredArtifacts?.length) {
+      lines.push(`- **Key Artifacts**: ${entry.requiredArtifacts.slice(0, 8).join(', ')}`);
+    }
+    if (entry?.lifecycleActions?.length) {
+      lines.push(`- **Lifecycle Actions**: ${entry.lifecycleActions.join(', ')}`);
+    }
+    lines.push('');
+    lines.push('Provide guidance consistent with this regulatory pathway, its regional requirements, and the applicable dossier standard.');
+    parts.push(lines.join('\n'));
   }
 
   // ── Artifact Awareness ────────────────────────────────────────────────────

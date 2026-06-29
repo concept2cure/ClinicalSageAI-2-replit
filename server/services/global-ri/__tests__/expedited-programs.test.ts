@@ -149,13 +149,24 @@ describe('matchExpeditedPrograms — EMA', () => {
 });
 
 describe('matchExpeditedPrograms — PMDA', () => {
-  it('substantial improvement + early JP development → Sakigake eligible', () => {
+  it('all four Sakigake criteria → eligible', () => {
+    const res = matchExpeditedPrograms({
+      region: 'PMDA',
+      innovativeNovelMechanism: true,
+      seriousOrLifeThreatening: true,
+      substantialImprovementOverExisting: true,
+      intendedForEarlyJapanDevelopment: true,
+    });
+    expect(ids(res.eligible)).toContain('pmda-sakigake');
+  });
+
+  it('only substantial improvement + early JP development → NOT Sakigake eligible (all four criteria required)', () => {
     const res = matchExpeditedPrograms({
       region: 'PMDA',
       substantialImprovementOverExisting: true,
       intendedForEarlyJapanDevelopment: true,
     });
-    expect(ids(res.eligible)).toContain('pmda-sakigake');
+    expect(ids(res.eligible)).not.toContain('pmda-sakigake');
   });
 
   it('orphan → Orphan Drug Designation eligible', () => {

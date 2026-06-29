@@ -15,6 +15,10 @@
 
 import { Pool } from 'pg';
 import crypto from 'crypto';
+import {
+  resolveToRegistryEntry,
+  getSubmissionTypeContext,
+} from '../../../shared/regulatory/submission-type-bridge.js';
 
 // Types
 export interface GuardrailRule {
@@ -304,7 +308,8 @@ export class ComplianceGuardrailsSDKService {
       query += ` AND severity = $${params.length}`;
     }
     if (options.submissionType) {
-      params.push(options.submissionType);
+      const entry = resolveToRegistryEntry(options.submissionType);
+      params.push(entry?.id ?? options.submissionType);
       query += ` AND (submission_types IS NULL OR $${params.length} = ANY(submission_types))`;
     }
     if (options.modulePath) {
@@ -469,7 +474,8 @@ export class ComplianceGuardrailsSDKService {
       query += ` AND (org_id IS NULL OR org_id = $${params.length})`;
     }
     if (resolvedOptions.submissionType) {
-      params.push(resolvedOptions.submissionType);
+      const entry = resolveToRegistryEntry(resolvedOptions.submissionType);
+      params.push(entry?.id ?? resolvedOptions.submissionType);
       query += ` AND (submission_type IS NULL OR submission_type = $${params.length})`;
     }
     if (resolvedOptions.agency) {
@@ -518,6 +524,14 @@ export class ComplianceGuardrailsSDKService {
     apiClientId?: string;
   }): Promise<ValidationResult> {
     const startTime = Date.now();
+
+    // Resolve submission type through the canonical bridge
+    if (options.submissionType) {
+      const entry = resolveToRegistryEntry(options.submissionType);
+      if (entry) {
+        options = { ...options, submissionType: entry.id };
+      }
+    }
 
     // Get profile
     let profile: GuardrailProfile | null = null;
@@ -777,7 +791,17 @@ export class ComplianceGuardrailsSDKService {
    */
   private isRuleApplicable(rule: GuardrailRule, options: any): boolean {
     if (rule.submissionTypes && options.submissionType) {
-      if (!rule.submissionTypes.includes(options.submissionType)) {
+      // Resolve the incoming type (already resolved at validate entry, but be
+      // defensive for direct callers) and compare against both the stored
+      // strings and their canonical registry IDs for backward compatibility.
+      const incomingEntry = resolveToRegistryEntry(options.submissionType);
+      const incomingId = incomingEntry?.id ?? options.submissionType;
+      const matches = rule.submissionTypes.some(st => {
+        if (st === incomingId || st === options.submissionType) return true;
+        const stEntry = resolveToRegistryEntry(st);
+        return stEntry?.id === incomingId;
+      });
+      if (!matches) {
         return false;
       }
     }

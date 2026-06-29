@@ -7,7 +7,9 @@
  * Integrates with deep research results and existing CSR database.
  */
 
-import { pool } from '../db.js';
+import { and, desc, eq, ilike, or } from 'drizzle-orm';
+import { db } from '../db.js';
+import { csrReports } from '../../shared/schema.js';
 import { recordUsage, checkQuota } from './usage-metering.js';
 
 // AI-powered drafting via the unified AI client (Claude primary)
@@ -147,10 +149,16 @@ export interface CSRBuildJob {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
- * Launch a CSR build job.
+ * Shared quota + usage envelope. Called from BOTH launchCSRBuild (sync) and
+ * launchCSRBuildAsync (queued) so the async path can't silently bypass
+ * billing once a route migrates to it. Throws an upgrade-required Error on
+ * quota failure — callers should let that propagate so the HTTP response is
+ * identical to the sync path.
+ *
+ * Usage is recorded at enqueue time, not at job completion, so a failed job
+ * still counts (matches sync behavior, which records before drafting).
  */
-export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuildJob> {
-  // Check quota
+async function reserveCSRBuilderQuota(request: CSRBuildRequest): Promise<void> {
   const quota = await checkQuota(request.organizationId, 'csr_builder');
   if (!quota.allowed) {
     throw new Error(
@@ -159,12 +167,17 @@ export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuild
         : 'CSR Builder quota exceeded for this billing period'
     );
   }
-
-  // Record usage
   await recordUsage(request.organizationId, request.userId, 'csr_builder', 1, {
     protocolNumber: request.studyInfo.protocolNumber,
     indication: request.studyInfo.indication,
   });
+}
+
+/**
+ * Launch a CSR build job.
+ */
+export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuildJob> {
+  await reserveCSRBuilderQuota(request);
 
   // Initialize section structure
   const sections = JSON.parse(JSON.stringify(ICH_E3_STRUCTURE)) as CSRSection[];
@@ -183,15 +196,87 @@ export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuild
 }
 
 /**
+ * Async variant of launchCSRBuild.
+ *
+ * Inserts a csr_build_jobs row in the queued state, kicks off the worker
+ * out-of-band via setImmediate (deliberately NOT awaited), and returns the
+ * jobId immediately so the HTTP request never blocks on AI drafting.
+ *
+ * Back-compat: launchCSRBuild (synchronous, in-process, single shot) is
+ * preserved untouched for legacy callers. New callers — and the route
+ * layer in Phase 3c — should prefer launchCSRBuildAsync. The two share the
+ * same CSRBuildRequest input shape so the call site change is a 1-liner.
+ *
+ * Lazy import of csr-job-runner avoids a module-load circular dependency
+ * (csr-job-runner imports generateCSRSections from this file).
+ */
+export async function launchCSRBuildAsync(
+  request: CSRBuildRequest,
+  ctx: { organizationId: number; projectId?: number; requestedBy?: number }
+): Promise<{ jobId: number; status: 'queued' }> {
+  // Quota + usage are reserved BEFORE enqueue so the async path can't bypass
+  // billing. Throws the same upgrade-required error as launchCSRBuild on
+  // quota failure — the HTTP response shape is identical at the route layer.
+  await reserveCSRBuilderQuota(request);
+
+  const { enqueueCSRBuildJob, runCSRBuildJob } = await import(
+    './csr/csr-job-runner.js'
+  );
+
+  const enqueued = await enqueueCSRBuildJob(request, ctx);
+
+  // Fire-and-forget worker. Errors are persisted on the job row by
+  // runCSRBuildJob's own catch block; we still attach a .catch handler
+  // here as a safety net so an unhandled rejection can't crash the process.
+  setImmediate(() => {
+    runCSRBuildJob(enqueued.jobId).catch(err => {
+      console.error(
+        `[CSR Builder] runCSRBuildJob(${enqueued.jobId}) threw outside its own error handler:`,
+        err
+      );
+    });
+  });
+
+  return enqueued;
+}
+
+/**
+ * Optional AI Gateway tenant context. Phase 3b: the async job runner threads
+ * organizationId / projectId / userId down so the unified AI client can
+ * attribute the call. Legacy synchronous callers leave this undefined and
+ * the gateway falls back to whatever request.organizationId carries.
+ */
+export interface CSRAIContext {
+  organizationId?: number;
+  projectId?: number;
+  userId?: number;
+}
+
+/**
  * Generate content for CSR sections using study information.
  * Uses AI Gateway (Claude) when available, falls back to templates.
+ *
+ * Exported so the async job runner (server/services/csr/csr-job-runner.ts)
+ * can drive section drafting without going through launchCSRBuild's
+ * quota / single-shot envelope.
+ *
+ * NOTE: sectionsToGenerate is a *filter* over which sections to draft —
+ * it does NOT switch off AI. AI is used whenever the unified AI client is
+ * available; template fallback only kicks in when ai is null or a per-
+ * section AI call throws.
  */
-async function generateCSRSections(
+export async function generateCSRSections(
   sections: CSRSection[],
-  request: CSRBuildRequest
+  request: CSRBuildRequest,
+  aiContext?: CSRAIContext
 ): Promise<CSRSection[]> {
   const info = request.studyInfo;
-  const useAI = !!ai && !request.sectionsToGenerate; // AI for full builds only
+  const useAI = !!ai;
+  const ctx: CSRAIContext = {
+    organizationId: aiContext?.organizationId ?? request.organizationId,
+    projectId: aiContext?.projectId ?? request.projectId,
+    userId: aiContext?.userId ?? request.userId,
+  };
 
   for (const section of sections) {
     if (request.sectionsToGenerate?.length && !request.sectionsToGenerate.includes(section.number)) {
@@ -199,7 +284,7 @@ async function generateCSRSections(
     }
 
     if (useAI) {
-      section.content = await generateSectionWithAI(section, info);
+      section.content = await generateSectionWithAI(section, info, ctx);
     } else {
       section.content = generateSectionTemplate(section, info);
     }
@@ -211,7 +296,7 @@ async function generateCSRSections(
           continue;
         }
         if (useAI) {
-          child.content = await generateSectionWithAI(child, info);
+          child.content = await generateSectionWithAI(child, info, ctx);
         } else {
           child.content = generateSectionTemplate(child, info);
         }
@@ -224,16 +309,111 @@ async function generateCSRSections(
 }
 
 /**
- * AI-powered section drafting via Claude (AI Gateway).
- * Generates regulatory-grade content aligned with ICH E3 structure.
+ * Per-section drafting with full provenance, intended for the async job
+ * runner. Unlike generateCSRSections (which mutates a tree and returns
+ * content strings only), this returns the model + token cost + source
+ * envelope so the runner can persist `model`, `token_cost`, `ai_generated`,
+ * and `lineage` columns on csr_section_outputs.
+ *
+ * Source semantics:
+ *   - 'ai'        — AI gateway returned content. model + tokenCost populated.
+ *   - 'template'  — AI was unavailable or returned an empty/failed response;
+ *                   we fell back to generateSectionTemplate. ai_generated MUST
+ *                   be persisted as false (so the audit trail doesn't lie).
+ *
+ * Throws if both AI and template return empty content — the caller (runner)
+ * is responsible for translating that into a failed-job transition.
  */
-async function generateSectionWithAI(
-  section: CSRSection,
-  info: CSRBuildRequest['studyInfo']
-): Promise<string> {
-  if (!ai) return generateSectionTemplate(section, info);
+export interface DraftedCSRSection {
+  number: string;
+  content: string;
+  source: 'ai' | 'template';
+  model: string | null;
+  tokenCost: number;
+  lineage: Record<string, unknown> | null;
+}
 
-  const systemPrompt = `You are an expert clinical study report writer specializing in ICH E3 guideline-compliant CSRs.
+export async function draftCSRSectionWithProvenance(
+  section: CSRSection,
+  request: CSRBuildRequest,
+  aiContext?: CSRAIContext
+): Promise<DraftedCSRSection> {
+  const info = request.studyInfo;
+  const ctx: CSRAIContext = {
+    organizationId: aiContext?.organizationId ?? request.organizationId,
+    projectId: aiContext?.projectId ?? request.projectId,
+    userId: aiContext?.userId ?? request.userId,
+  };
+
+  // Common lineage envelope. deepResearchJobId is the closest thing we
+  // currently have to a source citation; persist it here so future audits
+  // can chase the source. Section-level citation extraction will hang off
+  // this same envelope as the gateway grows that capability.
+  const baseLineage: Record<string, unknown> = {};
+  if (request.deepResearchJobId != null) {
+    baseLineage.deepResearchJobId = request.deepResearchJobId;
+  }
+
+  if (ai) {
+    try {
+      const systemPrompt = buildSectionSystemPrompt(info);
+      const response = await ai.chat(
+        [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: `Draft ICH E3 Section ${section.number}: ${section.title}\n\nDescription: ${section.description}\n\nWrite a complete, submission-ready draft for this section. Include all required elements per ICH E3 guidelines.`,
+          },
+        ],
+        {
+          taskType: 'document_drafting',
+          maxTokens: 4096,
+          temperature: 0.3,
+          callerModule: 'csr-builder/section-draft',
+          organizationId: ctx.organizationId,
+          projectId: ctx.projectId,
+          userId: ctx.userId,
+        }
+      );
+
+      const content = response?.content ?? '';
+      if (content.length > 0) {
+        return {
+          number: section.number,
+          content,
+          source: 'ai',
+          model: response.model ?? null,
+          tokenCost: response.usage?.totalTokens ?? 0,
+          lineage: Object.keys(baseLineage).length > 0 ? baseLineage : null,
+        };
+      }
+      // Empty content — fall through to template
+    } catch (err) {
+      console.warn(
+        `[CSR Builder] AI drafting failed for section ${section.number}, using template:`,
+        err
+      );
+    }
+  }
+
+  // Template fallback. ai_generated MUST be false for this row.
+  const templateContent = generateSectionTemplate(section, info);
+  return {
+    number: section.number,
+    content: templateContent,
+    source: 'template',
+    model: null,
+    tokenCost: 0,
+    lineage: Object.keys(baseLineage).length > 0 ? baseLineage : null,
+  };
+}
+
+/**
+ * Shared system prompt builder so generateSectionWithAI and
+ * draftCSRSectionWithProvenance stay in lock-step.
+ */
+function buildSectionSystemPrompt(info: CSRBuildRequest['studyInfo']): string {
+  return `You are an expert clinical study report writer specializing in ICH E3 guideline-compliant CSRs.
 You are drafting a section of a Clinical Study Report for a ${info.phase} clinical trial.
 
 Study Details:
@@ -253,6 +433,37 @@ ${info.treatmentDuration ? `- Treatment Duration: ${info.treatmentDuration}` : '
 Write professional regulatory prose suitable for FDA/EMA submission. Use precise clinical language.
 Do NOT use markdown. Write in plain text with section headers in CAPS.
 Include placeholders like [DATA TO BE INSERTED] where actual study data would go.`;
+}
+
+/**
+ * Flatten ICH-E3 tree → leaf-or-parent list for the runner. Exported so the
+ * runner doesn't duplicate the walk logic; matches what
+ * generateCSRSections actually drafts (parents AND children, both filtered
+ * by sectionsToGenerate when provided).
+ */
+export function flattenICHE3Sections(sections: CSRSection[]): CSRSection[] {
+  const out: CSRSection[] = [];
+  for (const s of sections) {
+    out.push(s);
+    if (s.childSections) {
+      for (const c of s.childSections) out.push(c);
+    }
+  }
+  return out;
+}
+
+/**
+ * AI-powered section drafting via Claude (AI Gateway).
+ * Generates regulatory-grade content aligned with ICH E3 structure.
+ */
+async function generateSectionWithAI(
+  section: CSRSection,
+  info: CSRBuildRequest['studyInfo'],
+  aiContext?: CSRAIContext
+): Promise<string> {
+  if (!ai) return generateSectionTemplate(section, info);
+
+  const systemPrompt = buildSectionSystemPrompt(info);
 
   try {
     const content = await ai.complete(
@@ -265,6 +476,9 @@ Include placeholders like [DATA TO BE INSERTED] where actual study data would go
         maxTokens: 4096,
         temperature: 0.3,
         callerModule: 'csr-builder/section-draft',
+        organizationId: aiContext?.organizationId,
+        projectId: aiContext?.projectId,
+        userId: aiContext?.userId,
       }
     );
     return content;
@@ -323,32 +537,46 @@ export async function compareWithExistingCSRs(
   similarity: number;
 }>> {
   try {
-    // Tenant-scoped query with proper parenthesization
-    const query = organizationId
-      ? `SELECT id, title, phase, indication, sample_size, primary_endpoint, outcome
-         FROM csr_reports
-         WHERE (LOWER(indication) LIKE $1 OR LOWER(primary_endpoint) LIKE $2)
-         AND organization_id = $3
-         ORDER BY created_at DESC
-         LIMIT 20`
-      : `SELECT id, title, phase, indication, sample_size, primary_endpoint, outcome
-         FROM csr_reports
-         WHERE (LOWER(indication) LIKE $1 OR LOWER(primary_endpoint) LIKE $2)
-         ORDER BY created_at DESC
-         LIMIT 20`;
-    const params = organizationId
-      ? [`%${indication.toLowerCase()}%`, `%${endpoint.toLowerCase()}%`, organizationId]
-      : [`%${indication.toLowerCase()}%`, `%${endpoint.toLowerCase()}%`];
-    const result = await pool.query(query, params);
+    // Tenant-scoped Drizzle query. The original raw SQL also selected an `outcome`
+    // column from `csr_reports`, but no such column exists in the Drizzle schema
+    // (shared/schema.ts csrReports, ~lines 12659-12697) or in any migration for
+    // `csr_reports`. The raw query was therefore failing with "column outcome does
+    // not exist" and falling through the catch to return []. We surface the gap
+    // here rather than re-introduce raw SQL or silently add a column: the mapper
+    // already defaults outcome to 'Unknown', which preserves the consumer-visible
+    // shape until the column is added (or sourced from another table).
+    const indicationPattern = `%${indication.toLowerCase()}%`;
+    const endpointPattern = `%${endpoint.toLowerCase()}%`;
+    const textMatch = or(
+      ilike(csrReports.indication, indicationPattern),
+      ilike(csrReports.primaryEndpoint, endpointPattern),
+    );
+    const whereClause = organizationId
+      ? and(textMatch, eq(csrReports.organizationId, organizationId))
+      : textMatch;
 
-    return (result.rows || []).map((row: Record<string, unknown>) => ({
-      studyId: String(row.id || ''),
+    const rows = await db
+      .select({
+        id: csrReports.id,
+        title: csrReports.title,
+        phase: csrReports.phase,
+        indication: csrReports.indication,
+        sampleSize: csrReports.sampleSize,
+        primaryEndpoint: csrReports.primaryEndpoint,
+      })
+      .from(csrReports)
+      .where(whereClause)
+      .orderBy(desc(csrReports.createdAt))
+      .limit(20);
+
+    return rows.map(row => ({
+      studyId: String(row.id ?? ''),
       title: String(row.title || 'Untitled'),
       phase: String(row.phase || ''),
       indication: String(row.indication || ''),
-      sampleSize: Number(row.sample_size) || 0,
-      primaryEndpoint: String(row.primary_endpoint || ''),
-      outcome: String(row.outcome || 'Unknown'),
+      sampleSize: Number(row.sampleSize) || 0,
+      primaryEndpoint: String(row.primaryEndpoint || ''),
+      outcome: 'Unknown',
       similarity: indication.toLowerCase() === String(row.indication || '').toLowerCase() ? 0.95 : 0.6,
     }));
   } catch (err) {
@@ -488,6 +716,10 @@ export function getICHE3Structure(): CSRSection[] {
 
 export default {
   launchCSRBuild,
+  launchCSRBuildAsync,
+  generateCSRSections,
+  draftCSRSectionWithProvenance,
+  flattenICHE3Sections,
   getICHE3Structure,
   draftCSRSection,
   compareWithExistingCSRs,

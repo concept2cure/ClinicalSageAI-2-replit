@@ -55,10 +55,26 @@ export interface ModuleBuildState {
 
 // ── Region normalization ───────────────────────────────────────────────────────
 
+import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge.js';
+
+const REGION_TO_CTD: Record<string, CtdRegion> = {
+  US: 'FDA', EU: 'EMA', JP: 'PMDA',
+  CA: 'FDA', UK: 'EMA', CN: 'FDA', AU: 'FDA',
+  CH: 'EMA', BR: 'FDA', IN: 'FDA', KR: 'FDA', SG: 'FDA', ICH: 'FDA',
+};
+
 export function normalizeRegion(input?: string): CtdRegion {
   const v = (input ?? 'FDA').toUpperCase();
   if (v === 'EU' || v === 'EMA') return 'EMA';
   if (v === 'JP' || v === 'PMDA' || v === 'JNDA') return 'PMDA';
+  if (v === 'CA' || v === 'UK' || v === 'MHRA' || v === 'CN' || v === 'NMPA' || v === 'AU' || v === 'TGA'
+    || v === 'CH' || v === 'SWISSMEDIC' || v === 'BR' || v === 'ANVISA'
+    || v === 'IN' || v === 'CDSCO' || v === 'KR' || v === 'MFDS' || v === 'SG' || v === 'HSA') {
+    return REGION_TO_CTD[v] ?? REGION_TO_CTD[v.substring(0, 2)] ?? 'FDA';
+  }
+  // Try resolving as a registry ID (e.g. 'CA_NDS' → region 'CA' → 'FDA')
+  const entry = resolveToRegistryEntry(v);
+  if (entry) return REGION_TO_CTD[entry.region] ?? 'FDA';
   return 'FDA';
 }
 

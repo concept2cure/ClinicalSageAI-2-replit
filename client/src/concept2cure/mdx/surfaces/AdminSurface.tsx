@@ -25,6 +25,7 @@ import {
 } from '../data/admin';
 import { ADM_DOC_FRAMEWORKS, ADM_DOCUMENTS } from '../data/admin-docs';
 import { useAdmin } from '../hooks/useAdmin';
+import { useGatewayStatus, type GatewayStatusRow } from '../hooks/useGatewayStatus';
 import { SampleDataBanner } from '../components/SampleDataBanner';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 
@@ -32,14 +33,35 @@ export interface AdminSurfaceProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
 }
 
-type AdminTab = 'members' | 'roles' | 'sso' | 'apikeys' | 'settings';
+type AdminTab = 'members' | 'roles' | 'sso' | 'apikeys' | 'gateways' | 'settings';
 
 const TABS: ReadonlyArray<{ id: AdminTab; label: string; icon: IconKey }> = [
   { id: 'members', label: 'Members', icon: 'users' },
   { id: 'roles', label: 'Roles + scopes', icon: 'shield' },
   { id: 'sso', label: 'SSO + provisioning', icon: 'shieldCheck' },
   { id: 'apikeys', label: 'API keys', icon: 'key' },
+  { id: 'gateways', label: 'Submission gateways', icon: 'rocket' },
   { id: 'settings', label: 'Settings', icon: 'sliders' },
+];
+
+/** Friendly agency labels + the env-var prefix an admin sets to credential each
+ *  gateway. Keyed by `${region}:${gateway}` to match the backend rows. */
+const GATEWAY_META: Record<string, { agency: string; label: string; envPrefix: string }> = {
+  'fda:esg':           { agency: 'FDA',           label: 'Electronic Submissions Gateway (ESG)',          envPrefix: 'FDA_ESG_*' },
+  'ema:cesp':          { agency: 'EMA',           label: 'Common European Submission Portal (CESP)',      envPrefix: 'EMA_CESP_*' },
+  'ema:eudamed':       { agency: 'EU',            label: 'EUDAMED — device registration + vigilance',     envPrefix: 'EUDAMED_*' },
+  'pmda:pmda_gateway': { agency: 'PMDA',          label: 'PMDA Gateway',                                  envPrefix: 'PMDA_*' },
+  'ca:hc_cesg':        { agency: 'Health Canada', label: 'Common Electronic Submissions Gateway (CESG)',  envPrefix: 'HC_CESG_*' },
+};
+
+/** Shown when the live status fetch hasn't resolved, so the section still lists
+ *  the gateways (status rendered as "unavailable" rather than a false negative). */
+const FALLBACK_GATEWAYS: GatewayStatusRow[] = [
+  { region: 'fda',  gateway: 'esg',           transport: 'as2',  configured: false, environment: 'production' },
+  { region: 'ema',  gateway: 'cesp',          transport: 'rest', configured: false, environment: 'production' },
+  { region: 'ema',  gateway: 'eudamed',       transport: 'rest', configured: false, environment: 'production' },
+  { region: 'pmda', gateway: 'pmda_gateway',  transport: 'rest', configured: false, environment: 'production' },
+  { region: 'ca',   gateway: 'hc_cesg',       transport: 'rest', configured: false, environment: 'production' },
 ];
 
 export function AdminSurface({ onAskAna }: AdminSurfaceProps) {
@@ -52,6 +74,7 @@ export function AdminSurface({ onAskAna }: AdminSurfaceProps) {
   const audit = live.audit ?? ADM_AUDIT;
   const settings = live.settings ?? ADM_SETTINGS;
   const sso = live.sso ?? ADM_SSO;
+  const gateways = useGatewayStatus('production');
   const documents = ADM_DOCUMENTS as unknown as KitDocument[];
   const frameworks = ADM_DOC_FRAMEWORKS as unknown as KitDocFramework[];
 
@@ -674,6 +697,65 @@ export function AdminSurface({ onAskAna }: AdminSurfaceProps) {
                 </div>
               </button>
             ))}
+          </div>
+        </section>
+      )}
+
+      {tab === 'gateways' && (
+        <section className="section">
+          <div className="section-head">
+            <h2>Submission gateways</h2>
+            <span className="section-sub">
+              Agency transmission endpoints (production). Credentials are
+              environment-scoped and set by an administrator — a gateway stays
+              inert until configured, and never transmits with partial setup.
+            </span>
+          </div>
+          <div className="adm-settings">
+            {gateways.loading && !gateways.rows ? (
+              <div className="adm-setting" style={{ cursor: 'default' }}>
+                <div className="adm-setting-desc">Checking gateway configuration…</div>
+              </div>
+            ) : (
+              (gateways.rows ?? FALLBACK_GATEWAYS).map((g) => {
+                const meta = GATEWAY_META[`${g.region}:${g.gateway}`];
+                const live = gateways.rows !== null;
+                const badge = !live
+                  ? { text: 'Status unavailable', bg: 'rgba(148,163,184,0.15)', fg: '#64748b' }
+                  : g.configured
+                    ? { text: 'Configured', bg: 'rgba(34,197,94,0.15)', fg: '#16a34a' }
+                    : { text: 'Not configured', bg: 'rgba(234,179,8,0.15)', fg: '#a16207' };
+                return (
+                  <div key={`${g.region}:${g.gateway}`} className="adm-setting" style={{ cursor: 'default' }}>
+                    <div>
+                      <div className="adm-setting-label">
+                        {meta?.agency ?? g.region.toUpperCase()} — {meta?.label ?? g.gateway}
+                      </div>
+                      <div className="adm-setting-desc">
+                        {g.transport.toUpperCase()} ·{' '}
+                        {live && g.configured
+                          ? 'credentials configured'
+                          : `set ${meta?.envPrefix ?? 'credentials'} to enable`}
+                      </div>
+                    </div>
+                    <div className="adm-setting-val">
+                      <span
+                        style={{
+                          fontSize: 11,
+                          fontWeight: 600,
+                          padding: '2px 8px',
+                          borderRadius: 999,
+                          background: badge.bg,
+                          color: badge.fg,
+                        }}
+                      >
+                        {badge.text}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </section>
       )}

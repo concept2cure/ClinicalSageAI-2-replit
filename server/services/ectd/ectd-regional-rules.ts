@@ -14,7 +14,9 @@
  *  - Health Canada Regulatory Enrolment Process (REP)
  */
 
-export type RegulatoryRegion = 'US' | 'EU' | 'JP' | 'CA' | 'CN' | 'KR';
+import { resolveToRegistryEntry } from '../../../shared/regulatory/submission-type-bridge.js';
+
+export type RegulatoryRegion = 'US' | 'EU' | 'JP' | 'CA' | 'CN' | 'KR' | 'UK' | 'AU' | 'CH' | 'BR' | 'IN' | 'SG';
 export type RegionalSeverity = 'error' | 'warning' | 'info';
 
 export interface RegionalRule {
@@ -314,6 +316,12 @@ const REGIONAL_BACKBONE: Record<RegulatoryRegion, string> = {
   CA: 'm1/ca/ca-regional.xml',
   CN: 'm1/cn/cn-regional.xml',
   KR: 'm1/kr/kr-regional.xml',
+  UK: 'm1/uk/uk-regional.xml',
+  AU: 'm1/au/au-regional.xml',
+  CH: 'm1/ch/ch-regional.xml',
+  BR: 'm1/br/br-regional.xml',
+  IN: 'm1/in/in-regional.xml',
+  SG: 'm1/sg/sg-regional.xml',
 };
 
 /**
@@ -534,8 +542,10 @@ function validatePMDAPackage(
   requireBackbone(leaves, 'JP', 'PMDA-001', 'Generate and include the JP regional XML at /m1/jp/jp-regional.xml', findings);
 
   const hasJpClinical = leaves.some(l => l.sectionCode.startsWith('m1.13'));
-  const submissionRequiresJpClinical = context.submissionType.toLowerCase().includes('nda') ||
-    context.submissionType.toLowerCase().includes('jnda');
+  const bridgeEntry = resolveToRegistryEntry(context.submissionType);
+  const resolvedType = bridgeEntry?.applicationType?.toLowerCase() ?? context.submissionType.toLowerCase();
+  const submissionRequiresJpClinical = resolvedType.includes('nda') ||
+    resolvedType.includes('jnda') || resolvedType.includes('marketing approval');
   if (submissionRequiresJpClinical && !hasJpClinical) {
     findings.push({
       ruleId: 'PMDA-004',
@@ -623,5 +633,7 @@ export function getGatewaySizeLimit(region: RegulatoryRegion): number {
     case 'CA': return FDA_GATEWAY_LIMIT_BYTES;
     case 'CN': return NMPA_LIMIT_BYTES;
     case 'KR': return MFDS_LIMIT_BYTES;
+    // ICH-aligned agencies: conservative 1 GB default pending published specs
+    default: return PMDA_LIMIT_BYTES;
   }
 }

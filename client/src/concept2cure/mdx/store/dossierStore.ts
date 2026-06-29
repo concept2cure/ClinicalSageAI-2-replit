@@ -45,6 +45,7 @@ const ROOTS: Record<string, RootSpec> = {
   k510: { program: 'BX-204', label: '510(k) — K-251401',      numFmt: (n) => `§${String(n).padStart(2, '0')}` },
   pma:  { program: 'CV-330', label: 'PMA — P250048',          numFmt: (n) => String(n) },
   cer:  { program: 'IV-415', label: 'CER — IV-415 Companion', numFmt: (n) => `§${n}` },
+  ivd:  { program: 'IVD-318', label: 'IVDR — IVD-318 Technical File', numFmt: (n) => `§${n}` },
 };
 
 function rootFor(pathway: PathwayId): string {

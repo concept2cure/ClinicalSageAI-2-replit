@@ -16,12 +16,18 @@ export type Region =
 export type Agency =
   | 'FDA' | 'EMA' | 'MHRA' | 'Health_Canada' | 'PMDA' | 'NMPA' | 'TGA'
   | 'Swissmedic' | 'ANVISA' | 'CDSCO' | 'MFDS' | 'HSA'
-  | 'ICH';
+  | 'ICH'
+  // Global standards / harmonization bodies (cross-cutting documents).
+  | 'ISO' | 'IEC' | 'IMDRF';
 
 export type ApplicationFamily =
   | 'clinical_trial' | 'marketing_authorization' | 'variation' | 'renewal'
   | 'master_file' | 'pediatric' | 'orphan' | 'safety_report' | 'supplement'
-  | 'pre_submission' | 'device_clearance' | 'device_approval';
+  | 'pre_submission' | 'device_clearance' | 'device_approval'
+  // Extended families introduced with the segment/category taxonomy buildout.
+  | 'designation' | 'quality_cmc' | 'quality_system' | 'post_market'
+  | 'software_documentation' | 'companion_diagnostic' | 'clinical_document'
+  | 'dossier_module';
 
 export type ProductClass =
   | 'small_molecule' | 'biologic' | 'biosimilar' | 'generic' | 'otc'
@@ -34,6 +40,63 @@ export type DossierStandard =
 export type LifecycleStage =
   | 'pre_submission' | 'initial' | 'amendment' | 'supplement'
   | 'annual_report' | 'renewal' | 'withdrawal' | 'post_approval';
+
+// ─── Segment / Category Taxonomy ──────────────────────────────────────────────
+// Mirrors the Concept2Cure Regulatory Filing & Document Taxonomy reference:
+// 4 life-sciences segments, each split into ordered filing categories. This is
+// the SECOND organizing axis (the first being region/agency). Every registry
+// entry is classified on BOTH axes.
+
+export type Segment =
+  | 'pharma_biotech'
+  | 'medical_devices'
+  | 'diagnostics_ivd'
+  | 'cross_cutting';
+
+export type FilingCategory =
+  // Pharma & Biotech
+  | 'preclinical_pre_ind'
+  | 'investigational'
+  | 'marketing_authorization'
+  | 'post_approval_lifecycle'
+  | 'cmc_quality'
+  // Medical Devices
+  | 'device_classification_pre_sub'
+  | 'device_market_auth_us'
+  | 'device_market_auth_eu_intl'
+  | 'device_post_market'
+  | 'device_samd_ai'
+  // Diagnostics & IVD
+  | 'ivd_classification_pre_sub'
+  | 'ivd_market_auth_us'
+  | 'ivd_companion_dx'
+  | 'ivd_market_auth_eu'
+  | 'ivd_post_market'
+  // Cross-Cutting
+  | 'ctd_ectd'
+  | 'qms'
+  | 'safety_pv';
+
+export interface SegmentMetadata {
+  id: Segment;
+  title: string;
+  /** One-line scope description (from the taxonomy reference). */
+  subtitle: string;
+  /** Display/sort order. */
+  order: number;
+  /** lucide icon hint for the UI. */
+  iconHint: string;
+}
+
+export interface FilingCategoryMetadata {
+  id: FilingCategory;
+  segment: Segment;
+  title: string;
+  /** Description of what this category covers (from the taxonomy reference). */
+  description: string;
+  /** Display/sort order within the segment. */
+  order: number;
+}
 
 // ─── Registry Entry ───────────────────────────────────────────────────────────
 
@@ -56,6 +119,16 @@ export interface RegulatoryApplicationType {
   synonyms: string[];
   /** Lifecycle stage */
   stage: LifecycleStage;
+  /** Segment classification (taxonomy axis 2) */
+  segment?: Segment;
+  /** Filing category within the segment (taxonomy axis 2) */
+  category?: FilingCategory;
+  /** Human-readable description of the filing (from the taxonomy reference) */
+  description?: string;
+  /** Submission format as published by the authority (eCTD, eSTAR, eCopy, eMDR, Letter, STED, MEDDEV 2.7/1, E2B(R3), …). Distinct from the broader dossierStandard. */
+  submissionFormat?: string;
+  /** CTD module/section location where the document lives, when applicable (e.g. 'M1–M5', '3.2.S', '2.3'). */
+  ctdModule?: string;
   /** Product class(es) this applies to */
   productClass: ProductClass[];
   /** Dossier format standard */

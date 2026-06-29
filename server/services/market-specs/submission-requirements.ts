@@ -19,13 +19,14 @@
  */
 
 import type { SubmissionFamily } from './market-submission-specs';
+import type { LegacyLowerType } from '../../../shared/regulatory/submission-type-bridge.js';
 
-export type SubmissionType =
-  | 'ind' | 'nda' | 'bla' | 'anda'           // FDA drug/biologic
-  | '510k' | 'de_novo' | 'pma'               // FDA device
-  | 'maa' | 'cta'                            // EU drug / clinical trial
-  | 'jnda'                                   // Japan drug
-  | 'mdr_td' | 'ivdr_td';                    // EU device / IVD technical documentation
+export type SubmissionType = Extract<LegacyLowerType,
+  | 'ind' | 'nda' | 'bla' | 'anda'
+  | '510k' | 'de_novo' | 'pma'
+  | 'maa' | 'cta'
+  | 'jnda'
+  | 'mdr_td' | 'ivdr_td'>;
 
 export interface RequiredDocument {
   /** Links to a document-template-library id where one exists. */

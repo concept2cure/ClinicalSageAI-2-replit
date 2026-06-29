@@ -74,6 +74,7 @@ const CODE_STATUS: Record<string, number> = {
   FORBIDDEN: 403,
   VALIDATION: 400,
   RATE_LIMITED: 429,
+  OVERLOADED: 503,
   TOKEN_LIMIT_EXCEEDED: 413,
   INVALID_AI_RESPONSE: 502,
   PROVIDER_UNAVAILABLE: 503,
@@ -102,11 +103,11 @@ const createSubmissionSchema = z.object({
   productName: z.string().max(500).optional(),
   applicationType: z.string().min(1).max(64),
   clientType: z.enum(['pharma', 'biotech', 'mdx', 'ivd']),
-  primaryRegion: z.enum(['fda', 'eu', 'jp']),
+  primaryRegion: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
   lifecycleStage: z.string().max(64).optional(),
 });
 const createSequenceSchema = z.object({
-  region: z.enum(['fda', 'eu', 'jp']),
+  region: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
   sequenceNumber: z.string().regex(/^\d{4}$/, 'sequenceNumber must be 4 digits, e.g. "0000".'),
   type: z.enum(['original', 'amendment', 'response', 'variation', 'annual', 'withdrawal']).optional(),
 });
@@ -853,7 +854,7 @@ router.put('/sequences/:seqId/leaves', limiter, requireRole(AUTHOR), async (req,
 const planSchema = z.object({
   applicationType: z.string().min(1).max(64),
   clientType: z.enum(['pharma', 'biotech', 'mdx', 'ivd']),
-  regions: z.array(z.enum(['fda', 'eu', 'jp'])).min(1),
+  regions: z.array(z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'])).min(1),
   productProfile: z.string().max(4000).optional(),
 });
 router.post('/:id/plan', limiter, requireRole(AUTHOR), async (req, res) => {
@@ -873,7 +874,7 @@ router.post('/:id/plan', limiter, requireRole(AUTHOR), async (req, res) => {
 
 // ── Validation co-pilot (AI explain) ─────────────────────────────────────────
 const explainSchema = z.object({
-  region: z.enum(['fda', 'eu', 'jp']),
+  region: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
   findings: z
     .array(z.object({ ruleId: z.string().optional(), severity: z.enum(['error', 'warning', 'info']), message: z.string(), leaf: z.string().optional() }))
     .min(1),
@@ -895,8 +896,8 @@ router.post('/:id/validation/explain', limiter, requireRole(AUTHOR), async (req,
 
 // ── Cross-region gap (AI) ────────────────────────────────────────────────────
 const crossRegionSchema = z.object({
-  sourceRegion: z.enum(['fda', 'eu', 'jp']),
-  targetRegions: z.array(z.enum(['fda', 'eu', 'jp'])).min(1),
+  sourceRegion: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
+  targetRegions: z.array(z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'])).min(1),
   applicationType: z.string().min(1).max(64),
   sectionsPresent: z.array(z.string()).optional(),
 });
@@ -921,7 +922,7 @@ router.post('/:id/cross-region', limiter, requireRole(AUTHOR), async (req, res) 
 // values. Without a sequenceId it falls back to the supplied numbers (advisory
 // only); prefer GET /sequences/:seqId/dispatch-readiness for the tamper-proof gate.
 const dispatchQcSchema = z.object({
-  region: z.enum(['fda', 'eu', 'jp']),
+  region: z.enum(['fda', 'ema', 'eu', 'pmda', 'jp', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg']),
   sequenceId: z.number().int().positive().optional(),
   validationErrors: z.number().int().min(0),
   unresolvedShadowCriticals: z.number().int().min(0),

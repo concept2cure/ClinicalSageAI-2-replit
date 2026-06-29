@@ -17,6 +17,16 @@ export type FeatureFlag = {
 
 // Define all available feature flags
 export const featureFlags: Record<string, FeatureFlag> = {
+  // AnA Document Studio — split-pane authoring (chat left, live document
+  // preview + verification trust-panel right). Ships dark; enable per-org.
+  ENABLE_ANA_DOCUMENT_STUDIO: {
+    id: 'ENABLE_ANA_DOCUMENT_STUDIO',
+    name: 'AnA Document Studio',
+    description:
+      'Enables the in-AnA split-pane document preview with Download-as-DOCX and the "verified against your source" trust-panel.',
+    defaultValue: false,
+    enabled: false,
+  },
   // 510k module flags
   ENABLE_510K_MODULE: {
     id: 'ENABLE_510K_MODULE',

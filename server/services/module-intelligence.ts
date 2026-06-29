@@ -26,6 +26,7 @@
  */
 
 import type { UserIntelligence, ProjectSummary } from './user-intelligence.js';
+import { resolveToDeficiencyType, getSubmissionTypeContext } from '../../shared/regulatory/submission-type-bridge.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -82,10 +83,8 @@ export interface EvidenceRequirement {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function getMedicalDeviceIntelligence(project: ProjectSummary | null): ModuleIntelligence {
-  const submissionType = project?.submissionType?.toUpperCase() || '510K';
-  const is510k = submissionType === '510K' || submissionType === '510(K)';
-  const isPMA = submissionType === 'PMA';
-  const isDeNovo = submissionType === 'DE_NOVO';
+  const defType = resolveToDeficiencyType(project?.submissionType || '510k');
+  const is510k = defType === '510k', isPMA = defType === 'pma', isDeNovo = defType === 'de_novo';
 
   const basePrompt = `
 ## Medical Device & Diagnostics Intelligence — Active Module
@@ -373,8 +372,9 @@ When the user asks me to analyze or draft, I will:
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function getEctdCoauthorIntelligence(project: ProjectSummary | null): ModuleIntelligence {
-  const submissionType = project?.submissionType?.toUpperCase() || 'IND';
-  const phase = project?.phase || 'Phase 1';
+  const rawType = project?.submissionType || 'ind';
+  const defType = resolveToDeficiencyType(rawType);
+  const submissionType = getSubmissionTypeContext(rawType)?.displayName ?? rawType.toUpperCase(), phase = project?.phase || 'Phase 1';
 
   return {
     moduleId: 'ectd-coauthor',
@@ -400,7 +400,7 @@ You operate within a single connected platform where:
 - **Module 5** (Clinical): Study Reports (5.3), Listing of Clinical Studies (5.2), Tabular Listings (5.3.5), Literature References (5.4)
 
 ### Submission Context
-- **Type**: ${submissionType}${submissionType === 'IND' ? ` (Investigational New Drug, 21 CFR 312.23)` : submissionType === 'NDA' ? ` (New Drug Application, 21 CFR 314)` : submissionType === 'BLA' ? ` (Biologics License Application, 42 USC 262)` : ''}
+- **Type**: ${submissionType}${defType === 'ind' ? ` (Investigational New Drug, 21 CFR 312.23)` : defType === 'nda' ? ` (New Drug Application, 21 CFR 314)` : defType === 'bla' ? ` (Biologics License Application, 42 USC 262)` : ''}
 - **Phase**: ${phase}
 
 ### Content Generation — You Generate Entire Sections
@@ -1482,13 +1482,13 @@ export function detectActiveModule(intelligence: UserIntelligence): string | nul
     if (contextModuleMap[sessionContext]) return contextModuleMap[sessionContext];
   }
 
-  // Infer from submission type
-  const subType = intelligence.activeProject?.submissionType?.toUpperCase();
-  if (subType === '510K' || subType === '510(K)' || subType === 'PMA' || subType === 'DE_NOVO') {
-    return '510k-submission';
+  // Infer from submission type via the canonical bridge
+  const rawSubType = intelligence.activeProject?.submissionType;
+  if (rawSubType) {
+    const moduleByType: Record<string, string> = { '510k': '510k-submission', pma: '510k-submission', de_novo: '510k-submission', ind: 'ind-filing', nda: 'nda-bla', bla: 'nda-bla', cer: 'ce-marking', ectd: 'ectd-coauthor' };
+    const hit = moduleByType[resolveToDeficiencyType(rawSubType)];
+    if (hit) return hit;
   }
-  if (subType === 'IND') return 'ind-filing';
-  if (subType === 'NDA' || subType === 'BLA') return 'nda-bla';
 
   // Infer from industry mode
   if (intelligence.organization.industryMode === 'medtech') return '510k-submission';

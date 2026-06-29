@@ -5213,6 +5213,83 @@ registerToolHandler('validate_docx', async (input, ctx) => {
   }
 });
 
+// Verify Docx Against Source — content-fidelity check (not just structure).
+// Extracts the built .docx text and (1) diffs it against the supplied source
+// text and (2) asserts each required string appears verbatim. This is the
+// audited "verify it against your text / confirm the base caption strings" step.
+registerToolHandler('verify_docx_against_source', async (input, ctx) => {
+  const inputDocxPath = typeof input.input_docx_path === 'string' ? input.input_docx_path : '';
+  if (!inputDocxPath) {
+    return JSON.stringify({ error: 'verify_docx_against_source requires input_docx_path (string).' });
+  }
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'verify_docx_against_source requires tenant context (organizationId).' });
+  }
+
+  const expectedText = typeof input.expected_text === 'string' ? input.expected_text : '';
+  const requiredStrings = Array.isArray(input.required_strings)
+    ? input.required_strings.filter((s): s is string => typeof s === 'string' && s.length > 0)
+    : [];
+
+  if (!expectedText && requiredStrings.length === 0) {
+    return JSON.stringify({
+      error: 'verify_docx_against_source requires expected_text and/or a non-empty required_strings array.',
+    });
+  }
+
+  try {
+    const { promises: fs } = await import('fs');
+    const path = await import('path');
+    const { extractDocumentText } = await import('../ocr/index.js');
+
+    const buf = await fs.readFile(inputDocxPath);
+    const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const extracted = await extractDocumentText(buf, DOCX_MIME, path.basename(inputDocxPath));
+    const docText = extracted.text ?? '';
+
+    // (1) Required-string verbatim check (exact substring match).
+    const missingRequiredStrings = requiredStrings.filter((s) => !docText.includes(s));
+
+    // (2) Structural text diff against the supplied source, when provided.
+    let divergenceSummary: { added: number; removed: number; modified: number; unchanged: number } | undefined;
+    let additions = 0;
+    let deletions = 0;
+    if (expectedText) {
+      const { diffDocumentStructure } = await import('../document-analysis');
+      const d = diffDocumentStructure(expectedText, docText);
+      divergenceSummary = d.summary;
+      additions = d.flat.additions;
+      deletions = d.flat.deletions;
+    }
+
+    const ok = missingRequiredStrings.length === 0 && additions === 0 && deletions === 0;
+
+    return JSON.stringify({
+      ok,
+      docxPath: inputDocxPath,
+      extractionMethod: extracted.method,
+      docCharCount: docText.length,
+      requiredStringsChecked: requiredStrings.length,
+      missingRequiredStrings,
+      // additions = lines in the document not in the source; deletions = source lines absent from the document.
+      divergence: expectedText ? { summary: divergenceSummary, additions, deletions } : undefined,
+      message: ok
+        ? `Verified — document reproduces the source${
+            requiredStrings.length ? ` and all ${requiredStrings.length} required string(s)` : ''
+          }; no content divergence.`
+        : `NOT verified — ${
+            missingRequiredStrings.length ? `${missingRequiredStrings.length} required string(s) missing; ` : ''
+          }${expectedText ? `${additions} added / ${deletions} dropped line(s) vs. source.` : ''}`.trim(),
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `verify_docx_against_source failed: ${
+        err instanceof Error ? err.message : String(err)
+      }. Verify the .docx path exists and is a readable Word document.`,
+    });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Container execution handler — run a bash script in a hardened Docker
 // container (the native computer-use path). Gated off by default; returns a
@@ -6139,9 +6216,10 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
   }
-  const region = typeof input.region === 'string' ? input.region : '';
-  if (!['fda', 'ema', 'pmda'].includes(region)) {
-    return JSON.stringify({ error: 'region must be fda / ema / pmda.' });
+  const region = typeof input.region === 'string' ? input.region.toLowerCase() : '';
+  const VALID_REGIONS = ['fda', 'ema', 'pmda', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'];
+  if (!VALID_REGIONS.includes(region)) {
+    return JSON.stringify({ error: `region must be one of: ${VALID_REGIONS.join(' / ')}.` });
   }
   const leaves = Array.isArray(input.leaves) ? (input.leaves as Array<Record<string, unknown>>) : [];
   if (leaves.length === 0) {
@@ -6155,7 +6233,7 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
         ? input.output_dir
         : path.resolve(process.cwd(), 'tmp', 'submissions', String(ctx.organizationId));
     const bundle = await packageEctdSubmission({
-      region: region as 'fda' | 'ema' | 'pmda',
+      region: region as any,
       applicationId: String(input.application_id),
       sequence:      String(input.sequence),
       submissionType: String(input.submission_type),
@@ -6191,17 +6269,21 @@ registerToolHandler('transmit_submission', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'transmit_submission requires tenant context.' });
   }
-  const region  = typeof input.region === 'string' ? input.region : '';
-  const gateway = typeof input.gateway === 'string' ? input.gateway : '';
-  if (!['fda', 'ema', 'pmda'].includes(region)) {
-    return JSON.stringify({ error: 'region must be fda / ema / pmda.' });
+  const region  = typeof input.region === 'string' ? input.region.toLowerCase() : '';
+  const gateway = typeof input.gateway === 'string' ? input.gateway.toLowerCase() : '';
+  const VALID_REGIONS_TX = ['fda', 'ema', 'pmda', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'];
+  const VALID_GATEWAYS   = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg',
+                             'mhra_gateway', 'nmpa_gateway', 'tga_ebs', 'swissmedic_egateway',
+                             'anvisa_gateway', 'cdsco_sugam', 'mfds_dbio', 'hsa_prism'];
+  if (!VALID_REGIONS_TX.includes(region)) {
+    return JSON.stringify({ error: `region must be one of: ${VALID_REGIONS_TX.join(' / ')}.` });
   }
-  if (!['esg', 'cesp', 'eudamed', 'pmda_gateway'].includes(gateway)) {
-    return JSON.stringify({ error: 'gateway must be esg / cesp / eudamed / pmda_gateway.' });
+  if (!VALID_GATEWAYS.includes(gateway)) {
+    return JSON.stringify({ error: `gateway must be one of: ${VALID_GATEWAYS.join(' / ')}.` });
   }
   try {
     const { getGateway, CredentialError, GatewayError, TransportError } = await import('../submission-gateways/index.js');
-    const gw = getGateway(region as 'fda' | 'ema' | 'pmda', gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway');
+    const gw = getGateway(region as any, gateway as any);
     const environment = input.environment === 'staging' ? 'staging' : 'production';
     const result = await gw.transmit({
       organizationId: ctx.organizationId,
@@ -6260,7 +6342,7 @@ registerToolHandler('check_submission_status', async (input, ctx) => {
       return JSON.stringify({ error: `Transmittal ${id} not found in this organization.` });
     }
     const { getGateway } = await import('../submission-gateways/index.js');
-    const gw = getGateway(own.rows[0].region as 'fda' | 'ema' | 'pmda', own.rows[0].gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway');
+    const gw = getGateway(own.rows[0].region as any, own.rows[0].gateway as any);
     const result = await gw.checkStatus(id);
     return JSON.stringify({ ok: true, ...result });
   } catch (err) {
@@ -6288,7 +6370,7 @@ registerToolHandler('get_submission_ack', async (input, ctx) => {
       return JSON.stringify({ error: `Transmittal ${id} not found in this organization.` });
     }
     const { getGateway } = await import('../submission-gateways/index.js');
-    const gw = getGateway(own.rows[0].region as 'fda' | 'ema' | 'pmda', own.rows[0].gateway as 'esg' | 'cesp' | 'eudamed' | 'pmda_gateway');
+    const gw = getGateway(own.rows[0].region as any, own.rows[0].gateway as any);
     const ack = await gw.downloadAcknowledgment(id);
     return JSON.stringify({
       ok: true,
@@ -11165,6 +11247,459 @@ registerToolHandler('code_drug', async (input: Record<string, unknown>) => {
       source: 'RxNorm/RxNav (NLM)',
       message: aborted ? 'RxNav request timed out. Do not fabricate a code; retry or code manually.' : `RxNav lookup failed: ${err?.message || 'unknown error'}.`,
     });
+  }
+});
+
+// DailyMed (NLM) published-label lookup — open documented SPL repository.
+// Honest: returns no_match / lookup_failed rather than fabricating a setid.
+registerToolHandler('lookup_published_label', async (input: Record<string, unknown>) => {
+  const drugName = typeof input.drug_name === 'string' ? input.drug_name.trim() : '';
+  if (!drugName) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'drug_name is required (the drug to look up).' });
+  }
+  const maxResults = Math.min(Math.max(Number(input.max_results) || 10, 1), 50);
+  try {
+    const url = `https://dailymed.nlm.nih.gov/dailymed/services/v2/spls.json?drug_name=${encodeURIComponent(drugName)}&pagesize=${maxResults}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(10000), headers: { Accept: 'application/json' } });
+    if (!res.ok) {
+      return JSON.stringify({ status: 'lookup_failed', source: 'DailyMed (NLM)', message: `DailyMed returned HTTP ${res.status}. Do not fabricate a label; retry or check manually at dailymed.nlm.nih.gov.` });
+    }
+    const data = await res.json();
+    const rows = (data?.data ?? []) as Array<Record<string, unknown>>;
+    const labels = rows.slice(0, maxResults).map(r => ({
+      setid: typeof r.setid === 'string' ? r.setid : undefined,
+      title: typeof r.title === 'string' ? r.title : undefined,
+      splVersion: r.spl_version != null ? Number(r.spl_version) : undefined,
+      publishedDate: typeof r.published_date === 'string' ? r.published_date : undefined,
+    })).filter(l => l.setid);
+    if (labels.length === 0) {
+      return JSON.stringify({ status: 'no_match', source: 'DailyMed (NLM)', query: drugName, message: 'No published label matched. Refine the drug name; do not invent a setid.' });
+    }
+    return JSON.stringify({
+      status: 'found',
+      source: 'DailyMed (NLM, open)',
+      query: drugName,
+      count: labels.length,
+      labels,
+      instruction: 'Reference labels by setid (the authoritative current label). Report titles/dates verbatim; never fabricate label content not retrieved here.',
+    });
+  } catch (err: any) {
+    const aborted = err?.name === 'TimeoutError' || /abort|timeout/i.test(err?.message || '');
+    return JSON.stringify({
+      status: 'lookup_failed',
+      source: 'DailyMed (NLM)',
+      message: aborted ? 'DailyMed request timed out. Do not fabricate a label; retry or check manually.' : `DailyMed lookup failed: ${err?.message || 'unknown error'}.`,
+    });
+  }
+});
+
+// Multi-batch ICH Q1E poolability (ANCOVA combinability) — deterministic.
+registerToolHandler('assess_batch_poolability', async (input: Record<string, unknown>) => {
+  try {
+    const { assessBatchPoolability } = await import('../cmc/shelf-life-poolability.js');
+    const result = assessBatchPoolability(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction: 'Lead with the decision (pooled vs minimum-of-batches) and the recommended shelfLife; report the slope/intercept F-tests verbatim. Single-attribute estimate.',
+    });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|requires|at least|distinct|direction|finite|batchId/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `assess_batch_poolability failed: ${m}` });
+  }
+});
+
+// Structured benefit-risk assessment (BRAT-style) — deterministic decision aid.
+registerToolHandler('assess_benefit_risk', async (input: Record<string, unknown>) => {
+  try {
+    const { assessBenefitRisk } = await import('../regulatory/benefit-risk.js');
+    const result = assessBenefitRisk(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction: 'Report the weighted benefit/risk, net, and favorability with the per-item contributions and the disclaimer. This is a decision aid, NOT a regulatory determination.',
+    });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|non-empty|needs a name|cannot all be zero|\[0,100\]|threshold/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `assess_benefit_risk failed: ${m}` });
+  }
+});
+
+// ICH Q1E shelf-life / retest-period estimation by regression — deterministic.
+registerToolHandler('estimate_shelf_life', async (input: Record<string, unknown>) => {
+  try {
+    const { estimateShelfLife } = await import('../cmc/shelf-life.js');
+    const result = estimateShelfLife(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction: 'Report the estimated shelfLife, the regression, and the notes verbatim. If exceedsEvaluatedRange is true, do not extrapolate beyond justified limits. Single-batch/attribute estimate, not multi-batch poolability.',
+    });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|requires|at least|distinct|direction|finite|vary/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `estimate_shelf_life failed: ${m}` });
+  }
+});
+
+// ── Advanced HEOR + CDISC pipeline — deterministic, no DB/network. ──
+registerToolHandler('model_markov_cohort', async (input: Record<string, unknown>) => {
+  try {
+    const { runMarkovModel } = await import('../heor/markov-model.js');
+    const result = runMarkovModel(input as any);
+    return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction: 'Report total discounted cost and QALYs verbatim; note the start-of-cycle / first-cycle-undiscounted conventions.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must|sum to 1|index-aligned|at least|cycles|discount|cycleLength|cohortSize/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `model_markov_cohort failed: ${m}` });
+  }
+});
+
+registerToolHandler('run_probabilistic_sensitivity', async (input: Record<string, unknown>) => {
+  try {
+    const { runProbabilisticSensitivity } = await import('../heor/psa.js');
+    const result = runProbabilisticSensitivity(input as any);
+    return JSON.stringify({ status: 'computed', engine: 'seeded-monte-carlo', result, instruction: 'Report the ICER, probabilityDominant, and CEAC verbatim. Results are reproducible for the given seed.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/finite|non-negative|willingnessToPay|requires/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `run_probabilistic_sensitivity failed: ${m}` });
+  }
+});
+
+registerToolHandler('run_cdisc_pipeline', async (input: Record<string, unknown>) => {
+  try {
+    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
+    const { runCdiscPipeline } = await import('../cdisc/pipeline.js');
+    const result = runCdiscPipeline(input.spec as any);
+    return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction: 'Lead with readiness.submissionReady and error count; list errors before warnings. Structural subset, not the full validator of record.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `run_cdisc_pipeline failed: ${m}` });
+  }
+});
+
+// ── 510(k) cover-letter + summary composition — tenant-scoped (org-scoped
+// section pull); fail closed without organization context. ──
+registerToolHandler('compose_correspondence_cover_letter', async (input: Record<string, unknown>, ctx) => {
+  try {
+    if (!ctx?.organizationId) return JSON.stringify({ status: 'needs_context', message: 'compose_correspondence_cover_letter requires an active organization context.' });
+    const documentId = typeof input.documentId === 'number' ? input.documentId : Number(input.documentId);
+    if (!Number.isFinite(documentId)) return JSON.stringify({ status: 'needs_parameters', message: 'documentId (number) is required.' });
+    if (!Array.isArray(input.issues) || input.issues.length === 0) return JSON.stringify({ status: 'needs_parameters', message: 'issues[] is required and must be non-empty.' });
+    const { composeCoverLetterDraft } = await import('../cover-letter/cover-letter-composer.js');
+    const draft = await composeCoverLetterDraft({
+      organizationId: Number(ctx.organizationId),
+      documentId,
+      submissionTrackingNumber: typeof input.submissionTrackingNumber === 'string' ? input.submissionTrackingNumber : null,
+      sponsorName: typeof input.sponsorName === 'string' ? input.sponsorName : '',
+      issues: input.issues as any[],
+    });
+    return JSON.stringify({ status: 'composed', engine: 'deterministic', body: draft.body, missingSections: draft.missingSections, provenance: draft.provenance, instruction: 'Surface missingSections before sending; the body is deterministic.' });
+  } catch (err: any) {
+    return JSON.stringify({ error: `compose_correspondence_cover_letter failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('compose_510k_summary', async (input: Record<string, unknown>, ctx) => {
+  try {
+    if (!ctx?.organizationId) return JSON.stringify({ status: 'needs_context', message: 'compose_510k_summary requires an active organization context.' });
+    const documentId = typeof input.documentId === 'number' ? input.documentId : Number(input.documentId);
+    if (!Number.isFinite(documentId)) return JSON.stringify({ status: 'needs_parameters', message: 'documentId (number) is required.' });
+    if (!Array.isArray(input.predicates) || input.predicates.length === 0) return JSON.stringify({ status: 'needs_parameters', message: 'predicates[] is required and must be non-empty.' });
+    const dc = input.deviceClass;
+    if (dc !== 'I' && dc !== 'II' && dc !== 'III') return JSON.stringify({ status: 'needs_parameters', message: "deviceClass must be 'I', 'II', or 'III'." });
+    const { compose510kSummary } = await import('../cover-letter/k510-summary-composer.js');
+    const draft = await compose510kSummary({
+      organizationId: Number(ctx.organizationId),
+      documentId,
+      submissionTrackingNumber: typeof input.submissionTrackingNumber === 'string' ? input.submissionTrackingNumber : null,
+      sponsorName: typeof input.sponsorName === 'string' ? input.sponsorName : '',
+      deviceTradeName: typeof input.deviceTradeName === 'string' ? input.deviceTradeName : '',
+      commonName: typeof input.commonName === 'string' ? input.commonName : null,
+      productCode: typeof input.productCode === 'string' ? input.productCode : null,
+      regulationNumber: typeof input.regulationNumber === 'string' ? input.regulationNumber : null,
+      deviceClass: dc,
+      contactName: typeof input.contactName === 'string' ? input.contactName : null,
+      contactEmail: typeof input.contactEmail === 'string' ? input.contactEmail : null,
+      preparedDate: new Date(),
+      predicates: input.predicates as any[],
+    });
+    return JSON.stringify({ status: 'composed', engine: 'deterministic', body: draft.body, missingSections: draft.missingSections, provenance: draft.provenance, instruction: 'Report missingSections; do not present the summary as complete while required sections are missing.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/predicate|primary|required/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `compose_510k_summary failed: ${m}` });
+  }
+});
+
+// ICH Q2 analytical method validation — deterministic, no DB/network.
+registerToolHandler('assess_analytical_method_validation', async (input: Record<string, unknown>) => {
+  try {
+    const { assessMethodValidation } = await import('../analytical/method-validation.js');
+    const result = assessMethodValidation(input as any);
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction: 'Report the linearity/precision/accuracy numbers and pass/fail verbatim. No lack-of-fit p-value is computed (out of scope).',
+    });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|at least|requires|LOW\/MID\/HIGH|r2Min|finite/i.test(m)) {
+      return JSON.stringify({ status: 'needs_parameters', message: m });
+    }
+    return JSON.stringify({ error: `assess_analytical_method_validation failed: ${m}` });
+  }
+});
+
+// AnA self-navigation — discover navigable screens from the governed registry.
+registerToolHandler('list_app_screens', async (input: Record<string, unknown>) => {
+  try {
+    const { NAVIGATION_TARGETS } = await import('../../../shared/navigation/index.js');
+    const group = typeof input.group === 'string' ? input.group : undefined;
+    const scope = input.scope === 'global' || input.scope === 'project' ? input.scope : undefined;
+    const screens = NAVIGATION_TARGETS
+      .filter(t => (group ? t.group === group : true) && (scope ? t.scope === scope : true))
+      .map(t => ({
+        id: t.id,
+        label: t.label,
+        description: t.description,
+        scope: t.scope,
+        group: t.group,
+        params: t.params,
+      }));
+    return JSON.stringify({
+      status: 'ok',
+      count: screens.length,
+      screens,
+      instruction:
+        "Navigate with navigate_to using a screen id verbatim. 'project'-scope screens require an active project in context. Pass any listed params (e.g. intelligenceTab).",
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `list_app_screens failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// AnA self-navigation — validate a target against the governed registry and
+// produce the navigation directive the chat client applies. Refuses unknown
+// targets / invalid params rather than emitting a broken jump.
+registerToolHandler('navigate_to', async (input: Record<string, unknown>) => {
+  try {
+    const target = typeof input.target === 'string' ? input.target.trim() : '';
+    if (!target) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'target is required — call list_app_screens to discover screen ids.' });
+    }
+    const params = input.params && typeof input.params === 'object' ? (input.params as Record<string, unknown>) : {};
+    const { resolveNavigation } = await import('../../../shared/navigation/index.js');
+    const res = resolveNavigation(target, params);
+    if (!res.ok) {
+      return JSON.stringify({
+        status: res.code === 'unknown_target' ? 'unknown_target' : 'needs_parameters',
+        message: res.error,
+        ...(res.code === 'unknown_target' ? { validTargets: res.validTargets } : {}),
+      });
+    }
+    return JSON.stringify({
+      status: 'navigation_ready',
+      directive: res.directive,
+      instruction:
+        'A navigation directive was produced; the UI will move to this screen. Tell the user where you are taking them. Project-scoped screens require an active project.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `navigate_to failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// ── HEOR modeling (server/services/heor) — deterministic, no DB/network. ──
+registerToolHandler('model_budget_impact', async (input: Record<string, unknown>) => {
+  try {
+    const { computeBudgetImpact } = await import('../heor/heor-models.js');
+    const result = computeBudgetImpact(input as any);
+    return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction: 'Report the per-year and total budget impact and PMPM verbatim. Costs are in the caller-supplied currency unit.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `model_budget_impact failed: ${m}` });
+  }
+});
+
+registerToolHandler('model_cost_effectiveness', async (input: Record<string, unknown>) => {
+  try {
+    const { computeCostEffectiveness } = await import('../heor/heor-models.js');
+    const result = computeCostEffectiveness(input as any);
+    return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction: 'Report the ICER, dominance, and (if given) net monetary benefit verbatim. A null ICER means effects are equal.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|finite|non-?negative/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `model_cost_effectiveness failed: ${m}` });
+  }
+});
+
+// ── SPL labeling (server/services/labeling/spl-generator) — deterministic. ──
+registerToolHandler('generate_spl', async (input: Record<string, unknown>) => {
+  try {
+    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the SPL document spec).' });
+    const { generateSpl } = await import('../labeling/spl-generator.js');
+    const result = generateSpl(input.spec as any);
+    return JSON.stringify({ status: result.structurallyValid ? 'generated' : 'generated_with_errors', engine: 'deterministic', xml: result.xml, warnings: result.warnings, structurallyValid: result.structurallyValid, instruction: 'If structurallyValid is false, surface the warnings/errors; the XML is structural SPL, not FDA full-schematron acceptance.' });
+  } catch (err: any) {
+    return JSON.stringify({ error: `generate_spl failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('validate_spl', async (input: Record<string, unknown>) => {
+  try {
+    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the SPL document spec).' });
+    const { validateSplSpec } = await import('../labeling/spl-generator.js');
+    const result = validateSplSpec(input.spec as any);
+    return JSON.stringify({ status: 'validated', engine: 'deterministic', result, instruction: 'List errors first, then warnings. Structural validation only — not FDA full-schematron.' });
+  } catch (err: any) {
+    return JSON.stringify({ error: `validate_spl failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// ── CDISC define.xml / conformance (server/services/cdisc) — deterministic. ──
+registerToolHandler('generate_define_xml', async (input: Record<string, unknown>) => {
+  try {
+    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
+    const { generateDefineXml } = await import('../cdisc/define-xml.js');
+    const result = generateDefineXml(input.spec as any);
+    return JSON.stringify({ status: 'generated', engine: 'deterministic', xml: result.xml, conformance: result.conformance, instruction: 'Surface conformance errors before treating the define.xml as final. Structural subset, not the full validator of record.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `generate_define_xml failed: ${m}` });
+  }
+});
+
+registerToolHandler('check_dataset_conformance', async (input: Record<string, unknown>) => {
+  try {
+    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
+    const { checkDatasetConformance } = await import('../cdisc/define-xml.js');
+    const result = checkDatasetConformance(input.spec as any);
+    return JSON.stringify({ status: 'checked', engine: 'deterministic', result, instruction: 'Report errors (blocking) before warnings. Structural subset, not the full validator of record.' });
+  } catch (err: any) {
+    const m = err?.message || 'unknown error';
+    if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
+    return JSON.stringify({ error: `check_dataset_conformance failed: ${m}` });
+  }
+});
+
+// ── Reference management (server/services/references) — deterministic. ──
+registerToolHandler('import_ris_references', async (input: Record<string, unknown>) => {
+  try {
+    const ris = typeof input.ris === 'string' ? input.ris : '';
+    if (!ris.trim()) return JSON.stringify({ status: 'needs_parameters', message: 'ris is required (RIS-format text).' });
+    const { parseRis } = await import('../references/reference-manager.js');
+    const references = parseRis(ris);
+    return JSON.stringify({ status: 'parsed', engine: 'deterministic', count: references.length, references, instruction: 'Use these structured references with format_references / lint_references.' });
+  } catch (err: any) {
+    return JSON.stringify({ error: `import_ris_references failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('format_references', async (input: Record<string, unknown>) => {
+  try {
+    if (!Array.isArray(input.references) || input.references.length === 0) return JSON.stringify({ status: 'needs_parameters', message: 'references[] is required and must be non-empty.' });
+    const style = input.style === 'ama' ? 'ama' : 'vancouver';
+    const { formatBibliography } = await import('../references/reference-manager.js');
+    const bibliography = formatBibliography(input.references as any[], style);
+    return JSON.stringify({ status: 'formatted', engine: 'deterministic', style, bibliography, instruction: 'Use the formatted bibliography verbatim.' });
+  } catch (err: any) {
+    return JSON.stringify({ error: `format_references failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('lint_references', async (input: Record<string, unknown>) => {
+  try {
+    if (!Array.isArray(input.references) || input.references.length === 0) return JSON.stringify({ status: 'needs_parameters', message: 'references[] is required and must be non-empty.' });
+    const { lintReferences } = await import('../references/reference-manager.js');
+    const result = lintReferences(input.references as any[]);
+    return JSON.stringify({ status: 'checked', engine: 'deterministic', result, instruction: 'Report errors and duplicate groups first; fix before finalizing the bibliography.' });
+  } catch (err: any) {
+    return JSON.stringify({ error: `lint_references failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+// ── Pharmacovigilance reporting — SAE line listing + E2B(R3) ICSR over the
+// org's recorded adverse events. Tenant-scoped (fail closed without org ctx);
+// the fetch is organization-scoped so no cross-tenant safety data is exposed. ──
+registerToolHandler('build_sae_line_listing', async (input: Record<string, unknown>, ctx) => {
+  try {
+    if (!ctx?.organizationId) {
+      return JSON.stringify({ status: 'needs_context', message: 'build_sae_line_listing requires an active organization context.' });
+    }
+    const fromDate = typeof input.from_date === 'string' ? input.from_date : '';
+    const toDate = typeof input.to_date === 'string' ? input.to_date : '';
+    if (!fromDate || !toDate) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'from_date and to_date (ISO dates) are required.' });
+    }
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'from_date / to_date must be valid ISO dates.' });
+    }
+    const { getAdverseEvents } = await import('../compliance/pharmacovigilanceService.js');
+    let events = await getAdverseEvents(String(ctx.organizationId), { fromDate: from, toDate: to });
+    if (typeof input.project_id === 'string' && input.project_id) {
+      events = events.filter(e => String(e.projectId) === input.project_id);
+    }
+    const { buildSaeLineListing, saeLineListingToCsv } = await import('../ind-lifecycle/ind-sae-line-listing.js');
+    const listing = buildSaeLineListing({ events, periodStart: from, periodEnd: to });
+    const csv = saeLineListingToCsv(listing);
+    return JSON.stringify({
+      status: 'built',
+      engine: 'deterministic',
+      caseCount: listing.rows.length,
+      listing,
+      csv,
+      instruction: 'Report the listing and summary as recorded; if caseCount is 0, say no qualifying cases were found in the period rather than implying none exist.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `build_sae_line_listing failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('compose_e2b_icsr', async (input: Record<string, unknown>, ctx) => {
+  try {
+    if (!ctx?.organizationId) {
+      return JSON.stringify({ status: 'needs_context', message: 'compose_e2b_icsr requires an active organization context.' });
+    }
+    const aeId = typeof input.adverse_event_id === 'string' ? input.adverse_event_id : '';
+    if (!aeId) {
+      return JSON.stringify({ status: 'needs_parameters', message: 'adverse_event_id is required.' });
+    }
+    const { getAdverseEvents } = await import('../compliance/pharmacovigilanceService.js');
+    // Fetch via the org-scoped service and select by id — guarantees the case
+    // belongs to this tenant (no raw cross-tenant id lookup).
+    const events = await getAdverseEvents(String(ctx.organizationId));
+    const event = events.find(e => String(e.id) === aeId);
+    if (!event) {
+      return JSON.stringify({ status: 'not_found', message: `No adverse event "${aeId}" found in this organization.` });
+    }
+    const { composeE2bR3Icsr } = await import('../ind-lifecycle/e2b-icsr-composer.js');
+    const result = composeE2bR3Icsr(event, {
+      expedited: typeof input.expedited === 'boolean' ? input.expedited : undefined,
+      nullificationReason: typeof input.nullification_reason === 'string' ? input.nullification_reason : undefined,
+    });
+    return JSON.stringify({
+      status: 'composed',
+      engine: 'deterministic',
+      completeness: result.completeness,
+      gaps: result.gaps,
+      icsr: result.icsr,
+      xml: result.xml,
+      instruction: 'List the mandatory gaps first — they must be resolved before transmit. Report completeness honestly; do not claim a submittable ICSR while gaps remain.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `compose_e2b_icsr failed: ${err?.message || 'unknown error'}` });
   }
 });
 

@@ -19,6 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'projects',   label: 'Projects',                       icon: 'folder',      group: 'work',         href: null },
   { id: 'vault',      label: 'Vault DMS',                      icon: 'vault',       group: 'work',         href: null },
   { id: 'tasking',    label: 'Tasking and Collaboration',      icon: 'checkCircle', group: 'work',         href: null },
+  { id: 'communication', label: 'Communication Center',        icon: 'chat',        group: 'work',         href: null },
   { id: 'submission', label: 'Submission Center',              icon: 'send',        group: 'work',         href: null },
 
   { id: 'protocol',   label: 'Protocol and Study Design',      icon: 'microscope',  group: 'intelligence', href: null },
@@ -37,6 +38,7 @@ export const NAV_SUB: Record<string, string[]> = {
   projects:   ['NDA 212345 · BX-204', '510(k) · BX-204 device', 'EMA scientific advice', 'Pediatric plan'],
   vault:      ['Source documents', 'Controlled copies', 'Audit log'],
   tasking:    ['Assigned to me', 'Open reviews', 'Due this week'],
+  communication: ['Review queue', 'Pending approvals', 'Audit trail'],
   submission: ['In flight · 2', 'Archive · 14'],
   protocol:   ['Active protocols · 3', 'Templates', 'Endpoint library'],
   cmc:        ['Drug substance · §3.2.S', 'Drug product · §3.2.P', 'Stability studies', 'Specifications'],
@@ -100,6 +102,7 @@ export const MODULES: ModuleCard[] = [
   { navId: 'projects',   icon: 'folder',      title: 'Projects',                       desc: 'Persistent workspaces with shared context, chats, artifacts and files.',                                                   foot: '14 projects · 42 contributors' },
   { navId: 'vault',      icon: 'vault',       title: 'Vault DMS',                      desc: 'Controlled document management with 21 CFR Part 11 audit trail and e-signatures.',                                         foot: '12,480 docs · 99.8% valid' },
   { navId: 'tasking',    icon: 'checkCircle', title: 'Tasking and Collaboration',      desc: 'Review assignments, sign-offs and cross-team handoffs tied to artifacts.',                                                 foot: '7 open · 3 overdue' },
+  { navId: 'communication', icon: 'chat',     title: 'Communication Center',           desc: 'One regulated-handoff hub — review queue, pending e-signature approvals, and the 21 CFR Part 11 audit trail.',            foot: 'Approvals · reviews · audit' },
   { navId: 'submission', icon: 'send',        title: 'Submission Center',              desc: 'Compose, validate and ship eCTD, EU-CTR and other agency packages.',                                                       foot: '2 in flight · next: NDA 212345' },
   { navId: 'protocol',   icon: 'microscope',  title: 'Protocol and Study Design',      desc: 'Draft protocols and study designs grounded in agency precedent and endpoint libraries.',                                  foot: '3 protocols · biostat AnA' },
   { navId: 'cmc',        icon: 'beaker',      title: 'CMC Module',                     desc: 'Chemistry, Manufacturing and Controls — drug substance, drug product, stability, specs.',                                foot: '§3.2.S / §3.2.P · 12 docs' },

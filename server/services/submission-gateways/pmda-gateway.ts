@@ -28,6 +28,7 @@ import { pool } from '../../db';
 import { readVerifiedBundle } from './bundle-integrity';
 import {
   CredentialError, GatewayError, TransportError,
+  resolveToRegistryEntry, getSubmissionTypeLabel,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
 } from './types';
@@ -199,21 +200,29 @@ export class PmdaGateway implements SubmissionGateway {
   }
 
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
-    const transmittalId = await createTransmittalRow(req);
+    /* Resolve the caller-supplied submission type through the canonical bridge
+       so the transmittal row and PMDA metadata use the canonical identifier.
+       Falls back to the raw string for unrecognized types. */
+    const resolvedEntry = req.submissionType ? resolveToRegistryEntry(req.submissionType) : null;
+    const normalizedReq: GatewayTransmitRequest = resolvedEntry
+      ? { ...req, submissionType: resolvedEntry.applicationType }
+      : req;
+
+    const transmittalId = await createTransmittalRow(normalizedReq);
     try {
-      const creds = await loadPmdaCredentials(req.environment);
+      const creds = await loadPmdaCredentials(normalizedReq.environment);
       await updateTransmittal(transmittalId, { status: 'in_transit' });
 
-      const zipBuf = await readVerifiedBundle(req.bundle);
+      const zipBuf = await readVerifiedBundle(normalizedReq.bundle);
       const boundary = `----c2c-pmda-${Date.now()}`;
       const metaPart = Buffer.from(
         '﻿' + JSON.stringify({
           applicantId:     creds.applicantId,
-          applicationId:   req.metadata?.applicationId ?? null,
-          sequenceNumber:  req.metadata?.sequence ?? '0001',
-          submissionType:  req.submissionType ?? 'initial',
-          productName:     req.metadata?.productName ?? null,
-          sha256:          req.bundle.sha256,
+          applicationId:   normalizedReq.metadata?.applicationId ?? null,
+          sequenceNumber:  normalizedReq.metadata?.sequence ?? '0001',
+          submissionType:  normalizedReq.submissionType ?? 'initial',
+          productName:     normalizedReq.metadata?.productName ?? null,
+          sha256:          normalizedReq.bundle.sha256,
         }),
         'utf8',
       );

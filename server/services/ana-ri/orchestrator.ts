@@ -22,6 +22,7 @@ import {
   type WorkstreamType,
 } from './persona.js';
 import { buildDeficiencyContext, type SubmissionType } from './deficiency-taxonomy.js';
+import { resolveToDeficiencyType, resolveToRegistryEntry, getSubmissionTypeContext } from '../../../shared/regulatory/submission-type-bridge.js';
 import { buildDocumentActionContext, type DocumentActionType } from './document-actions.js';
 import { buildRoleAdaptiveContext } from './role-adapter.js';
 import { buildCommandContextForPrompt } from './command-executor.js';
@@ -171,21 +172,25 @@ export function detectIntent(message: string): DetectedIntent {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SUBMISSION_PATTERNS: Record<SubmissionType, RegExp[]> = {
-  ind: [/\bIND\b/, /\binvestigational new drug\b/i, /\bpre-?IND\b/i, /\b21 CFR 312\b/],
-  nda: [/\bNDA\b/, /\bnew drug application\b/i, /\b21 CFR 314\b/],
-  bla: [/\bBLA\b/, /\bbiologics? license\b/i, /\b21 CFR 601\b/],
+  ind: [/\bIND\b/, /\binvestigational new drug\b/i, /\bpre-?IND\b/i, /\b21 CFR 312\b/, /\bCTA\b/, /\bclinical trial a(?:pplication|uthoris?ation)\b/i, /\bCTN\b/, /\bclinical trial notification\b/i],
+  nda: [/\bNDA\b/, /\bnew drug application\b/i, /\b21 CFR 314\b/, /\bMAA\b/, /\bmarketing authori[sz]ation\b/i, /\bNDS\b/, /\bnew drug submission\b/i, /\bJNDA\b/, /\bmarket(?:ing)? approval\b/i],
+  bla: [/\bBLA\b/, /\bbiologics? license\b/i, /\b21 CFR 601\b/, /\bbiosimilar\b/i],
   '510k': [/\b510\(?k\)?\b/, /\bsubstantial equivalence\b/i, /\bpredicate\b/i],
   pma: [/\bPMA\b/, /\bpremarket approval\b/i],
   de_novo: [/\bde novo\b/i, /\bnovel device\b/i],
-  cer: [/\bCER\b/, /\bclinical evaluation report\b/i, /\bMEDDEV\b/i, /\bEU MDR\b/i],
+  cer: [/\bCER\b/, /\bclinical evaluation report\b/i, /\bMEDDEV\b/i, /\bEU MDR\b/i, /\bIVDR\b/i, /\btechnical documentation\b/i],
   ectd: [/\beCTD\b/, /\bcommon technical document\b/i, /\bModule [1-5]\b/],
   general: [], // Never matched
 };
 
 /**
  * Detect submission type from message content.
+ * Uses both pattern matching AND registry resolution so that international
+ * types (EU_MAA, CA_NDS, JP_MKT_APPROVAL, etc.) map to the nearest
+ * deficiency-taxonomy-compatible type for intelligence activation.
  */
 export function detectSubmissionType(message: string): SubmissionType | null {
+  // 1. Pattern match first (fast path for common types)
   for (const [type, patterns] of Object.entries(SUBMISSION_PATTERNS)) {
     if (type === 'general') continue;
     for (const pattern of patterns) {
@@ -194,7 +199,27 @@ export function detectSubmissionType(message: string): SubmissionType | null {
       }
     }
   }
+
+  // 2. Try resolving registry IDs mentioned in the message (e.g. "US_IND", "EU_MAA")
+  const registryIdPattern = /\b([A-Z]{2,6}_[A-Z0-9_]{2,30})\b/g;
+  let match;
+  while ((match = registryIdPattern.exec(message)) !== null) {
+    const entry = resolveToRegistryEntry(match[1]);
+    if (entry) {
+      return resolveToDeficiencyType(entry.id);
+    }
+  }
+
   return null;
+}
+
+/**
+ * Resolve a registry ID or project submission type to a deficiency-compatible
+ * type. This is the bridge that ensures ALL 158+ filing types get intelligence.
+ * Called when the project's submissionType or registryId is known (from DB).
+ */
+export function resolveProjectSubmissionType(submissionTypeOrRegistryId: string): SubmissionType {
+  return resolveToDeficiencyType(submissionTypeOrRegistryId);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -294,7 +319,7 @@ export interface OrchestratorOutput {
   /** Metadata about what was orchestrated */
   orchestrationMeta: {
     intentSource: 'explicit' | 'detected' | 'default';
-    submissionTypeSource: 'explicit' | 'detected' | 'none';
+    submissionTypeSource: 'explicit' | 'project_context' | 'detected' | 'none';
     roleSource: 'explicit' | 'default';
     deficiencyContextInjected: boolean;
     documentActionContextInjected: boolean;
@@ -323,12 +348,17 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
         ? ('detected' as const)
         : ('default' as const);
 
-  // 2. Detect submission type
-  const detectedSubmissionType = input.submissionType || detectSubmissionType(input.message);
+  // 2. Detect submission type — cascade: explicit → project context → message detection
+  const projectSubmissionType = input.projectContext?.submissionType
+    ? resolveToDeficiencyType(input.projectContext.submissionType) as SubmissionType
+    : null;
+  const detectedSubmissionType = input.submissionType || projectSubmissionType || detectSubmissionType(input.message);
   const submissionTypeSource = input.submissionType
     ? ('explicit' as const)
-    : detectedSubmissionType
-      ? ('detected' as const)
+    : projectSubmissionType
+      ? ('project_context' as const)
+      : detectedSubmissionType
+        ? ('detected' as const)
       : ('none' as const);
 
   // 3. Determine role
@@ -395,6 +425,28 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     if (deficiencyContext) {
       systemPrompt += '\n\n' + deficiencyContext;
       deficiencyContextInjected = true;
+    }
+  }
+
+  // 5b. Inject full registry context when the project has a registry ID or
+  //     international submission type, so AnA knows the exact regulatory framework.
+  const registrySource = input.projectContext?.submissionType || input.submissionType;
+  if (registrySource) {
+    const regCtx = getSubmissionTypeContext(registrySource);
+    if (regCtx && regCtx.registryId !== detectedSubmissionType) {
+      const lines = [
+        `## REGULATORY CONTEXT (${regCtx.registryId})`,
+        `**Filing Type:** ${regCtx.displayName}`,
+        `**Agency:** ${regCtx.agency} (${regCtx.region})`,
+        `**Dossier Standard:** ${regCtx.dossierStandard}`,
+        `**Application Family:** ${regCtx.applicationFamily}`,
+      ];
+      if (regCtx.segment) lines.push(`**Segment:** ${regCtx.segment}`);
+      if (regCtx.category) lines.push(`**Category:** ${regCtx.category}`);
+      if (regCtx.description) lines.push(`**Description:** ${regCtx.description}`);
+      if (regCtx.submissionFormat) lines.push(`**Submission Format:** ${regCtx.submissionFormat}`);
+      if (regCtx.ctdModule) lines.push(`**CTD Module:** ${regCtx.ctdModule}`);
+      systemPrompt += '\n\n' + lines.join('\n');
     }
   }
 

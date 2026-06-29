@@ -12,6 +12,10 @@
  * 4-digit eCTD form.
  */
 
+import {
+  resolveToRegistryEntry,
+} from '../../../shared/regulatory/submission-type-bridge.js';
+
 export type EctdApplicationType = 'ind' | 'nda' | 'bla' | 'anda' | 'dmf';
 
 export interface EctdEnvelopeInput {
@@ -56,7 +60,13 @@ export function buildUsRegionalEnvelope(input: EctdEnvelopeInput): string {
     throw new Error('ENVELOPE_INVALID: sequenceNumber must be 4 digits, e.g. "0000".');
   }
 
-  const appType = (input.applicationType ?? 'ind').toUpperCase();
+  // Normalize the application type through the submission-type bridge so that
+  // variant strings ('US_IND', 'IND', 'ind') all resolve to the canonical form.
+  const rawAppType = input.applicationType ?? 'ind';
+  const bridgeEntry = resolveToRegistryEntry(rawAppType);
+  // Use the registry entry's applicationType (e.g. 'IND') when available;
+  // fall back to the raw value uppercased for backward compatibility.
+  const appType = bridgeEntry?.applicationType?.toUpperCase() ?? rawAppType.toUpperCase();
   const lines = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<fda-regional:fda-regional xmlns:fda-regional="http://www.fda.gov/eCTD/3.2">',

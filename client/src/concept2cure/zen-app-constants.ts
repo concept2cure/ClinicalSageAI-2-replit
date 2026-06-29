@@ -124,6 +124,7 @@ export type LayoutMode =
   | 'labeling'
   | 'risk'
   | 'tasking'
+  | 'communication'
   | 'submission-gateway'
   | 'project-detail'
   // ── Phase 11 surface ──
