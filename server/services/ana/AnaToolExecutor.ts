@@ -13830,3 +13830,292 @@ registerToolHandler('assess_otc_labeling', async (input: Record<string, unknown>
     return assessOTCLabeling(input as any);
   }, 'deterministic')
 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 3 — Immunogenicity intelligence handlers
+// FDA 2019 immunogenicity testing guidance, FDA 2014 ADA assay, EMA
+// immunogenicity guideline, USP <1106>, ICH S6(R1). Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assess_immunogenicity_risk', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_immunogenicity_risk', async () => {
+    const { assessImmunogenicityRisk } = await import('../immunogenicity/immunogenicity-knowledge.js');
+    return assessImmunogenicityRisk(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_ada_assay_strategy', async (input: Record<string, unknown>) =>
+  runStatsTool('design_ada_assay_strategy', async () => {
+    const { designADAAssayStrategy } = await import('../immunogenicity/immunogenicity-knowledge.js');
+    return designADAAssayStrategy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('classify_immunogenicity_clinical_impact', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_immunogenicity_clinical_impact', async () => {
+    const { classifyImmunogenicityClinicalImpact } = await import('../immunogenicity/immunogenicity-knowledge.js');
+    return classifyImmunogenicityClinicalImpact(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_nab_assay', async (input: Record<string, unknown>) =>
+  runStatsTool('design_nab_assay', async () => {
+    const { designNAbAssay } = await import('../immunogenicity/immunogenicity-knowledge.js');
+    return designNAbAssay(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_immunogenicity_sampling', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_immunogenicity_sampling', async () => {
+    const { planImmunogenicitySampling } = await import('../immunogenicity/immunogenicity-knowledge.js');
+    return planImmunogenicitySampling(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_immunogenicity_comparability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_immunogenicity_comparability', async () => {
+    const { assessImmunogenicityComparability } = await import('../immunogenicity/immunogenicity-knowledge.js');
+    return assessImmunogenicityComparability(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 3 — Safety pharmacology intelligence handlers
+// ICH S7A core battery, ICH S7B, ICH S6(R1), ICH M3(R2), FDA abuse-potential
+// guidance (2017). Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('design_core_battery', async (input: Record<string, unknown>) =>
+  runStatsTool('design_core_battery', async () => {
+    const { designCoreBattery } = await import('../safety-pharmacology/safety-pharmacology-knowledge.js');
+    return designCoreBattery(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_cardiovascular_safety_pharmacology', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_cardiovascular_safety_pharmacology', async () => {
+    const { assessCardiovascularSafetyPharmacology } = await import('../safety-pharmacology/safety-pharmacology-knowledge.js');
+    return assessCardiovascularSafetyPharmacology(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_cns_safety_pharmacology', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_cns_safety_pharmacology', async () => {
+    const { assessCNSSafetyPharmacology } = await import('../safety-pharmacology/safety-pharmacology-knowledge.js');
+    return assessCNSSafetyPharmacology(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_respiratory_safety_pharmacology', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_respiratory_safety_pharmacology', async () => {
+    const { assessRespiratorySafetyPharmacology } = await import('../safety-pharmacology/safety-pharmacology-knowledge.js');
+    return assessRespiratorySafetyPharmacology(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_followup_safety_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_followup_safety_study', async () => {
+    const { designFollowupSafetyStudy } = await import('../safety-pharmacology/safety-pharmacology-knowledge.js');
+    return designFollowupSafetyStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_abuse_liability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_abuse_liability', async () => {
+    const { assessAbuseLiability } = await import('../safety-pharmacology/safety-pharmacology-knowledge.js');
+    return assessAbuseLiability(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 3 — Pharmacovigilance & signal detection handlers
+// ICH E2A-E2F, GVP Modules VI/IX, 21 CFR 314.80/600.80, WHO-UMC & Naranjo
+// causality, disproportionality (PRR/ROR/EBGM). Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_expedited_reporting', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_expedited_reporting', async () => {
+    const { classifyExpeditedReporting } = await import('../pharmacovigilance/pharmacovigilance-knowledge.js');
+    return classifyExpeditedReporting(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_pv_causality', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_pv_causality', async () => {
+    const { assessCausality } = await import('../pharmacovigilance/pharmacovigilance-knowledge.js');
+    return assessCausality(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_aggregate_safety_report', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_aggregate_safety_report', async () => {
+    const { planAggregateReport } = await import('../pharmacovigilance/pharmacovigilance-knowledge.js');
+    return planAggregateReport(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('detect_safety_signal', async (input: Record<string, unknown>) =>
+  runStatsTool('detect_safety_signal', async () => {
+    const { detectSafetySignal } = await import('../pharmacovigilance/pharmacovigilance-knowledge.js');
+    return detectSafetySignal(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_signal_priority', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_signal_priority', async () => {
+    const { assessSignalPriority } = await import('../pharmacovigilance/pharmacovigilance-knowledge.js');
+    return assessSignalPriority(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_pv_system', async (input: Record<string, unknown>) =>
+  runStatsTool('design_pv_system', async () => {
+    const { designPVSystem } = await import('../pharmacovigilance/pharmacovigilance-knowledge.js');
+    return designPVSystem(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 3 — Clinical outcome assessment (COA/PRO) handlers
+// FDA PRO Guidance (2009), FDA PFDD Guidance 1-4, FDA COA qualification,
+// ISPOR/ISOQOL. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('select_coa_type', async (input: Record<string, unknown>) =>
+  runStatsTool('select_coa_type', async () => {
+    const { selectCOAType } = await import('../clinical-outcome-assessment/coa-knowledge.js');
+    return selectCOAType(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_coa_validation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_coa_validation', async () => {
+    const { assessCOAValidation } = await import('../clinical-outcome-assessment/coa-knowledge.js');
+    return assessCOAValidation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('determine_meaningful_change', async (input: Record<string, unknown>) =>
+  runStatsTool('determine_meaningful_change', async () => {
+    const { determineMeaningfulChange } = await import('../clinical-outcome-assessment/coa-knowledge.js');
+    return determineMeaningfulChange(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_coa_fit_for_purpose', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_coa_fit_for_purpose', async () => {
+    const { assessCOAFitForPurpose } = await import('../clinical-outcome-assessment/coa-knowledge.js');
+    return assessCOAFitForPurpose(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('position_coa_endpoint', async (input: Record<string, unknown>) =>
+  runStatsTool('position_coa_endpoint', async () => {
+    const { positionCOAEndpoint } = await import('../clinical-outcome-assessment/coa-knowledge.js');
+    return positionCOAEndpoint(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_coa_development', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_coa_development', async () => {
+    const { planCOADevelopment } = await import('../clinical-outcome-assessment/coa-knowledge.js');
+    return planCOADevelopment(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 3 — Oncology dose optimization (Project Optimus) handlers
+// FDA Project Optimus, FDA dose-optimization draft guidance (Jan 2023),
+// Project FrontRunner, ICH E4, ICH S9. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('select_dose_finding_design', async (input: Record<string, unknown>) =>
+  runStatsTool('select_dose_finding_design', async () => {
+    const { selectDoseFindingDesign } = await import('../dose-optimization/dose-optimization-knowledge.js');
+    return selectDoseFindingDesign(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_project_optimus_alignment', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_project_optimus_alignment', async () => {
+    const { assessProjectOptimusAlignment } = await import('../dose-optimization/dose-optimization-knowledge.js');
+    return assessProjectOptimusAlignment(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_randomized_dose_comparison', async (input: Record<string, unknown>) =>
+  runStatsTool('design_randomized_dose_comparison', async () => {
+    const { designRandomizedDoseComparison } = await import('../dose-optimization/dose-optimization-knowledge.js');
+    return designRandomizedDoseComparison(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_rp2d', async (input: Record<string, unknown>) =>
+  runStatsTool('select_rp2d', async () => {
+    const { selectRP2D } = await import('../dose-optimization/dose-optimization-knowledge.js');
+    return selectRP2D(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_backfill_strategy', async (input: Record<string, unknown>) =>
+  runStatsTool('design_backfill_strategy', async () => {
+    const { designBackfillStrategy } = await import('../dose-optimization/dose-optimization-knowledge.js');
+    return designBackfillStrategy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_dose_exposure_response', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_dose_exposure_response', async () => {
+    const { assessDoseExposureResponse } = await import('../dose-optimization/dose-optimization-knowledge.js');
+    return assessDoseExposureResponse(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 3 — Combination products & device constituent handlers
+// 21 CFR Part 3 (PMOA), 21 CFR Part 4 (cGMP), 21 CFR 820/QMSR design controls,
+// FDA Human Factors guidance (2016), IEC 62366-1, ISO 14971, EU MDR Art 117.
+// Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('determine_primary_mode_of_action', async (input: Record<string, unknown>) =>
+  runStatsTool('determine_primary_mode_of_action', async () => {
+    const { determinePrimaryModeOfAction } = await import('../combination-products/combination-products-knowledge.js');
+    return determinePrimaryModeOfAction(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('classify_combination_product', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_combination_product', async () => {
+    const { classifyCombinationProduct } = await import('../combination-products/combination-products-knowledge.js');
+    return classifyCombinationProduct(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_combination_cgmp', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_combination_cgmp', async () => {
+    const { planCombinationCGMP } = await import('../combination-products/combination-products-knowledge.js');
+    return planCombinationCGMP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_human_factors_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_human_factors_study', async () => {
+    const { designHumanFactorsStudy } = await import('../combination-products/combination-products-knowledge.js');
+    return designHumanFactorsStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_device_constituent_controls', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_device_constituent_controls', async () => {
+    const { assessDeviceConstituentControls } = await import('../combination-products/combination-products-knowledge.js');
+    return assessDeviceConstituentControls(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_combination_submission_pathway', async (input: Record<string, unknown>) =>
+  runStatsTool('select_combination_submission_pathway', async () => {
+    const { selectCombinationSubmissionPathway } = await import('../combination-products/combination-products-knowledge.js');
+    return selectCombinationSubmissionPathway(input as any);
+  }, 'deterministic')
+);

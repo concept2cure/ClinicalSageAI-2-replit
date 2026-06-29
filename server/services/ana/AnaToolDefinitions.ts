@@ -47,6 +47,12 @@ import { REGULATORY_STRATEGY_TOOLS } from './regulatoryStrategyTools';
 import { BIOSIMILAR_TOOLS } from './biosimilarTools';
 import { MUTAGENIC_IMPURITY_TOOLS } from './mutagenicImpurityTools';
 import { LABELING_INTELLIGENCE_TOOLS } from './labelingIntelligenceTools';
+import { IMMUNOGENICITY_TOOLS } from './immunogenicityTools';
+import { SAFETY_PHARMACOLOGY_TOOLS } from './safetyPharmacologyTools';
+import { PHARMACOVIGILANCE_TOOLS } from './pharmacovigilanceTools';
+import { COA_PRO_TOOLS } from './coaProTools';
+import { DOSE_OPTIMIZATION_TOOLS } from './doseOptimizationTools';
+import { COMBINATION_PRODUCTS_TOOLS } from './combinationProductsTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7587,6 +7593,24 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // Wave 2 — Labeling intelligence (PLR structure, boxed warning, REMS, PLLR,
   // EU SmPC, OTC Drug Facts). Deterministic.
   ...LABELING_INTELLIGENCE_TOOLS,
+  // Wave 3 — Immunogenicity intelligence (risk assessment, ADA/NAb assay
+  // strategy, clinical impact, sampling, comparability). FDA 2019 / EMA. Deterministic.
+  ...IMMUNOGENICITY_TOOLS,
+  // Wave 3 — Safety pharmacology intelligence (ICH S7A core battery: CV/CNS/
+  // respiratory, follow-up studies, abuse liability). Deterministic.
+  ...SAFETY_PHARMACOLOGY_TOOLS,
+  // Wave 3 — Pharmacovigilance & signal detection (ICH E2A-E2F, causality,
+  // disproportionality, signal priority, PV system). Deterministic.
+  ...PHARMACOVIGILANCE_TOOLS,
+  // Wave 3 — Clinical outcome assessment / PRO (COA type, validation, meaningful
+  // change, fit-for-purpose, endpoint positioning, development plan). Deterministic.
+  ...COA_PRO_TOOLS,
+  // Wave 3 — Oncology dose optimization (Project Optimus: dose-finding design,
+  // alignment, randomized comparison, RP2D, backfill, exposure-response). Deterministic.
+  ...DOSE_OPTIMIZATION_TOOLS,
+  // Wave 3 — Combination products & device constituent (PMOA, classification,
+  // cGMP, human factors, design controls, submission pathway). Deterministic.
+  ...COMBINATION_PRODUCTS_TOOLS,
   // Inference self-awareness: classify a tool's output by determinism pedigree
   // (deterministic_registry / deterministic_query / external_api_live /
   // model_assisted) so AnA can weight bulletproof registry facts above
