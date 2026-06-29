@@ -8289,6 +8289,61 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Intelligent Grant Finder (C2C-14). set_funding_profile is governed/audited;
+// find_grant_opportunities is a read-only, explainable ranking over Grants.gov.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('set_funding_profile', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_funding_profile requires tenant + user context.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { upsertFundingProfileTx } = await import('../grants/grant-finder-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await upsertFundingProfileTx(client, ctx.organizationId, ctx.userId, {
+      keywords: Array.isArray(input.keywords) ? input.keywords.filter((k: unknown) => typeof k === 'string') as string[] : undefined,
+      agencies: Array.isArray(input.agencies) ? input.agencies.filter((k: unknown) => typeof k === 'string') as string[] : undefined,
+      mechanisms: Array.isArray(input.mechanisms) ? input.mechanisms.filter((k: unknown) => typeof k === 'string') as string[] : undefined,
+      institutionType: typeof input.institution_type === 'string' ? input.institution_type : null,
+      minAward: typeof input.min_award === 'number' ? input.min_award : null,
+      maxAward: typeof input.max_award === 'number' ? input.max_award : null,
+    });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `grant-funding-profile:${id}`, reason: fcoiReason(input, 'Funding profile set via AnA'), payload: {}, domain: 'grants', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, message: 'Funding profile saved. Use find_grant_opportunities to discover ranked matches.' });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `set_funding_profile failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('find_grant_opportunities', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'find_grant_opportunities requires tenant context.' });
+  const { discoverOpportunities } = await import('../grants/grant-finder-service.js');
+  try {
+    const result = await discoverOpportunities(ctx.organizationId, {
+      query: typeof input.query === 'string' ? input.query : undefined,
+      limit: typeof input.limit === 'number' ? input.limit : undefined,
+    });
+    const top = result.matches.slice(0, 15).map((m) => ({
+      externalId: m.externalId, title: m.title, fitScore: m.fitScore, eligible: m.eligible,
+      daysToDeadline: m.daysToDeadline, keywordHits: m.keywordHits, reasons: m.reasons,
+    }));
+    const strong = result.matches.filter((m) => m.fitScore >= 70).length;
+    return JSON.stringify({
+      ok: true, scored: result.scored, strongMatches: strong, profileUsed: result.profileUsed, matches: top,
+      message: `Scored ${result.scored} Grants.gov opportunit${result.scored === 1 ? 'y' : 'ies'}; ${strong} strong fit(s) (>=70). Record promising ones with record_grant_opportunity.`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `find_grant_opportunities failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Research Committee Governance (C2C-16). Conversational committee operations
 // share the governed/audited path (recordGovernedAction, surface 'ana').
 // Determinations are deterministic (committee-logic); finalize is gated on the

@@ -457,6 +457,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Research committee routes:', error);
   }
 
+  // Intelligent grant finder — funding profile + explainable Grants.gov opportunity matching.
+  try {
+    const finderModule = await import('../routes/grant-finder');
+    app.use('/api/grant-finder', authMiddleware, finderModule.default);
+    console.info('✅ Grant finder routes mounted (/api/grant-finder)');
+  } catch (error) {
+    console.error('❌ Failed to mount Grant finder routes:', error);
+  }
+
   // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
   try {
     const rimModule = await import('../routes/rim');

@@ -259,6 +259,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Intelligent grant finder metrics (C2C-14).
+      try {
+        const { renderGrantFinderMetrics } = await import('../services/grant-finder-metrics.js');
+        lines.push(...renderGrantFinderMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RIM-lite metrics (C2C-12).
       try {
         const { renderRimMetrics } = await import('../services/rim-metrics.js');

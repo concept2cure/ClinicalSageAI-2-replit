@@ -4075,6 +4075,41 @@ export const REVIEW_SEND_READINESS: AnaTool = {
   },
 };
 
+// ─── Intelligent Grant Finder (C2C-14) ───────────────────────────────────────
+
+export const SET_FUNDING_PROFILE: AnaTool = {
+  name: 'set_funding_profile',
+  description:
+    "Set the organization's funding profile — research keywords, target agencies, preferred mechanisms, institution type, and award-size range — that the intelligent opportunity finder matches against. One profile per org (upsert). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      keywords: { type: 'array', items: { type: 'string' }, description: 'Research foci / keywords.' },
+      agencies: { type: 'array', items: { type: 'string', enum: ['nih', 'nsf', 'barda', 'dod', 'cdc', 'arpa_h', 'foundation', 'industry', 'other'] } },
+      mechanisms: { type: 'array', items: { type: 'string', enum: ['sbir', 'sttr', 'r01', 'r21', 'u01', 'p01', 'contract', 'cooperative_agreement', 'other'] } },
+      institution_type: { type: 'string', description: 'e.g. higher_ed, nonprofit, small_business.' },
+      min_award: { type: 'number' },
+      max_award: { type: 'number' },
+      reason: { type: 'string' },
+    },
+    required: [],
+  },
+};
+
+export const FIND_GRANT_OPPORTUNITIES: AnaTool = {
+  name: 'find_grant_opportunities',
+  description:
+    "Intelligently discover funding opportunities: searches Grants.gov, hydrates the top candidates, and ranks every opportunity against the org's funding profile with a transparent fit score (0-100) and per-factor reasons (keyword overlap, agency/mechanism fit, deadline window, award size, eligibility). Read-only. Optionally pass a query to seed/override the search; without a stored profile a query is required.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: { type: 'string', description: 'Optional keyword/topic to seed or override the profile search.' },
+      limit: { type: 'number', description: 'Max opportunities to score (default 25, max 50).' },
+    },
+    required: [],
+  },
+};
+
 // ─── Research Committee Governance (C2C-16) ──────────────────────────────────
 
 export const ASSIGN_COMMITTEE_MEMBER: AnaTool = {
@@ -6956,6 +6991,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REVIEW_IBC_REGISTRATION,
   CREATE_NONCLINICAL_STUDY,
   REVIEW_SEND_READINESS,
+  SET_FUNDING_PROFILE,
+  FIND_GRANT_OPPORTUNITIES,
   ASSIGN_COMMITTEE_MEMBER,
   CONVENE_COMMITTEE_MEETING,
   ADD_COMMITTEE_AGENDA_ITEM,
