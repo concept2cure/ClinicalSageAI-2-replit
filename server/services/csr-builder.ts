@@ -12,8 +12,22 @@ import { db } from '../db.js';
 import { csrReports } from '../../shared/schema.js';
 import { recordUsage, checkQuota } from './usage-metering.js';
 
-// AI-powered drafting via the unified AI client (Claude primary)
-let ai: { complete: (messages: any, options?: any) => Promise<string> } | null = null;
+// AI-powered drafting via the unified AI client (Claude primary).
+// `complete` returns just the text; `chat` returns the full gateway response
+// (content + model + usage) which the section-draft path below records.
+let ai:
+  | {
+      complete: (messages: any, options?: any) => Promise<string>;
+      chat: (
+        messages: any,
+        options?: any
+      ) => Promise<{
+        content: string;
+        model?: string | null;
+        usage?: { totalTokens?: number } | null;
+      }>;
+    }
+  | null = null;
 try {
   const mod = await import('../lib/unified-ai-client.js');
   ai = mod.ai;
