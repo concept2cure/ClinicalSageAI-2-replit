@@ -100,6 +100,15 @@ const TENANT_SCOPED_TABLES = new Set([
   'account_canon_items',
   'document_chunks',
   'document_vectors',
+  // Translation platform (migration 20260629) — tenant-scoped localization
+  // of submission content. Any raw SQL in server/ touching these must carry
+  // an org/tenant filter; all current access is via the Drizzle query
+  // builder (out of scope), so adding them here tightens the gate with no
+  // new findings.
+  'translation_projects',
+  'translation_segments',
+  'glossary_terms',
+  'translation_memory_entries',
 ]);
 
 // ─── Tenant-filter signals ──────────────────────────────────────────────────
