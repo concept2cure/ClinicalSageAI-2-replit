@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T12:48:01.813Z",
+  "generatedAt": "2026-06-29T15:19:40.665Z",
   "git": {
-    "sha": "d6b1a8289d853d8f50f04d3d4151b937777b43c6",
+    "sha": "9cd1499ae8c68ea892615ef8421f1450732fd316",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 230,
     "largeFilesByBytes": 21,
-    "largeFilesByLines": 55
+    "largeFilesByLines": 61
   },
   "findings": {
     "duplicateBasenames": [
@@ -2289,7 +2289,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 697299
+        "bytes": 713431
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2297,7 +2297,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 434522
+        "bytes": 436046
       },
       {
         "file": "server/statistics-service.ts",
@@ -2379,11 +2379,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 13833
+        "lines": 14122
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7987
+        "lines": 8011
       },
       {
         "file": "server/statistics-service.ts",
@@ -2462,8 +2462,16 @@
         "lines": 2254
       },
       {
+        "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
+        "lines": 2155
+      },
+      {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
         "lines": 2076
+      },
+      {
+        "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
+        "lines": 2068
       },
       {
         "file": "server/services/foresight-ai-engine.ts",
@@ -2514,12 +2522,20 @@
         "lines": 1828
       },
       {
+        "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
+        "lines": 1828
+      },
+      {
         "file": "server/services/compliance/globalComplianceEngine.ts",
         "lines": 1824
       },
       {
         "file": "server/routes/report-os.ts",
         "lines": 1816
+      },
+      {
+        "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
+        "lines": 1815
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2536,6 +2552,10 @@
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1785
+      },
+      {
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 1726
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2556,6 +2576,10 @@
       {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
+      },
+      {
+        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
+        "lines": 1650
       },
       {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
@@ -2597,7 +2621,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 363,
       "largeByBytes": 18,
-      "largeByLines": 45
+      "largeByLines": 51
     },
     {
       "owner": "Unassigned (TBD)",
