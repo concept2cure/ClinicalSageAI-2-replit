@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T04:52:36.058Z",
+  "generatedAt": "2026-06-29T05:11:38.325Z",
   "git": {
-    "sha": "a4fe08bc5389a63d9c410488d67a90d011dfa369",
+    "sha": "f2afac1707e5ad3f94815e9c6a644b658ab522bc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 221,
+    "duplicateBasenames": 223,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 45
   },
@@ -1874,6 +1874,22 @@
         ]
       },
       {
+        "basename": "protocol-development",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-development.ts",
+          "shared/schema/protocol-development.ts"
+        ]
+      },
+      {
+        "basename": "protocol-risks",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-risks.ts",
+          "shared/schema/protocol-risks.ts"
+        ]
+      },
+      {
         "basename": "provenance",
         "count": 2,
         "paths": [
@@ -2221,11 +2237,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 629899
+        "bytes": 644219
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 412995
+        "bytes": 418534
       },
       {
         "file": "server/statistics-service.ts",
@@ -2279,11 +2295,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 12749
+        "lines": 12942
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7587
+        "lines": 7694
       },
       {
         "file": "server/statistics-service.ts",
@@ -2455,7 +2471,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 354,
+      "duplicateGroups": 356,
       "largeByBytes": 11,
       "largeByLines": 35
     },
@@ -2473,7 +2489,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 49,
+      "duplicateGroups": 51,
       "largeByBytes": 1,
       "largeByLines": 2
     },
