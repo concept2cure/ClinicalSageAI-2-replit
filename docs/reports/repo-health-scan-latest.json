@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T05:11:38.325Z",
+  "generatedAt": "2026-06-29T05:16:49.171Z",
   "git": {
-    "sha": "f2afac1707e5ad3f94815e9c6a644b658ab522bc",
+    "sha": "c60f86feeacace417e206b273e812010cdfb187d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,9 +9,9 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 223,
-    "largeFilesByBytes": 14,
-    "largeFilesByLines": 45
+    "duplicateBasenames": 225,
+    "largeFilesByBytes": 16,
+    "largeFilesByLines": 50
   },
   "findings": {
     "duplicateBasenames": [
@@ -1874,11 +1874,27 @@
         ]
       },
       {
+        "basename": "protocol-amendments",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-amendments.ts",
+          "shared/schema/protocol-amendments.ts"
+        ]
+      },
+      {
         "basename": "protocol-development",
         "count": 2,
         "paths": [
           "server/routes/protocol-development.ts",
           "shared/schema/protocol-development.ts"
+        ]
+      },
+      {
+        "basename": "protocol-deviations",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-deviations.ts",
+          "shared/schema/protocol-deviations.ts"
         ]
       },
       {
@@ -2237,11 +2253,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 644219
+        "bytes": 655438
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 418534
+        "bytes": 419995
       },
       {
         "file": "server/statistics-service.ts",
@@ -2282,6 +2298,14 @@
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
+      },
+      {
+        "file": "server/services/rwe/rwe-methodology-knowledge.ts",
+        "bytes": 109447
+      },
+      {
+        "file": "server/services/advanced-therapy/atmp-knowledge.ts",
+        "bytes": 108892
       }
     ],
     "largeFilesByLines": [
@@ -2295,11 +2319,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 12942
+        "lines": 13192
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7694
+        "lines": 7718
       },
       {
         "file": "server/statistics-service.ts",
@@ -2370,6 +2394,14 @@
         "lines": 2002
       },
       {
+        "file": "server/services/advanced-therapy/atmp-knowledge.ts",
+        "lines": 2002
+      },
+      {
+        "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
+        "lines": 1981
+      },
+      {
         "file": "server/routes/auth.ts",
         "lines": 1937
       },
@@ -2418,6 +2450,10 @@
         "lines": 1796
       },
       {
+        "file": "server/services/rwe/rwe-methodology-knowledge.ts",
+        "lines": 1794
+      },
+      {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1785
       },
@@ -2440,6 +2476,14 @@
       {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
+      },
+      {
+        "file": "server/services/pediatric/pediatric-knowledge.ts",
+        "lines": 1606
+      },
+      {
+        "file": "server/services/toxicology/toxicology-knowledge.ts",
+        "lines": 1602
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
@@ -2471,9 +2515,9 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 356,
-      "largeByBytes": 11,
-      "largeByLines": 35
+      "duplicateGroups": 358,
+      "largeByBytes": 13,
+      "largeByLines": 40
     },
     {
       "owner": "Unassigned (TBD)",
@@ -2489,7 +2533,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 51,
+      "duplicateGroups": 53,
       "largeByBytes": 1,
       "largeByLines": 2
     },

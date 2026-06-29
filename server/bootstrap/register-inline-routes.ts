@@ -502,6 +502,24 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Protocol risk register routes:', error);
   }
 
+  // Protocol amendments authoring (impact classification, reconsent triggers; 45 CFR 46.109 / 21 CFR 56.110).
+  try {
+    const protocolAmendmentsModule = await import('../routes/protocol-amendments');
+    app.use('/api/protocol-amendments', authMiddleware, protocolAmendmentsModule.default);
+    console.info('✅ Protocol amendments routes mounted (/api/protocol-amendments)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol amendments routes:', error);
+  }
+
+  // Protocol deviations & CAPA (severity, reportability, corrective actions; 45 CFR 46.108 / ICH E6).
+  try {
+    const protocolDeviationsModule = await import('../routes/protocol-deviations');
+    app.use('/api/protocol-deviations', authMiddleware, protocolDeviationsModule.default);
+    console.info('✅ Protocol deviations routes mounted (/api/protocol-deviations)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol deviations routes:', error);
+  }
+
   // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
   try {
     const rimModule = await import('../routes/rim');
