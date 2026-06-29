@@ -574,6 +574,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Protocol SoA routes:', error);
   }
 
+  // Protocol budget & feasibility (per-subject costing, F&A, sponsor margin; 2 CFR 200.414).
+  try {
+    const protocolBudgetModule = await import('../routes/protocol-budget');
+    app.use('/api/protocol-budget', authMiddleware, protocolBudgetModule.default);
+    console.info('✅ Protocol budget routes mounted (/api/protocol-budget)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol budget routes:', error);
+  }
+
   // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
   try {
     const rimModule = await import('../routes/rim');

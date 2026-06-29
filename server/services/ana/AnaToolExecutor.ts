@@ -8382,6 +8382,46 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Protocol Budget & Feasibility (C2C-22). Reuses governedPdev; review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('add_protocol_budget_item', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_budget_item requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  const unitCost = typeof input.unit_cost === 'number' ? input.unit_cost : NaN;
+  if (!Number.isInteger(documentId) || !description || !Number.isFinite(unitCost)) return JSON.stringify({ error: 'document_id, description, and unit_cost are required.' });
+  const { addBudgetItemTx } = await import('../protocol-budget/protocol-budget-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'Protocol budget item added via AnA', input, async (client) => {
+    const { id } = await addBudgetItemTx(client, ctx.organizationId!, ctx.userId!, documentId, { description, unitCost, category: typeof input.category === 'string' ? input.category : undefined, quantityPerSubject: typeof input.quantity_per_subject === 'number' ? input.quantity_per_subject : undefined, payer: typeof input.payer === 'string' ? input.payer : undefined });
+    return { itemId: id };
+  });
+});
+
+registerToolHandler('set_protocol_budget_params', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_protocol_budget_params requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { setBudgetParamsTx } = await import('../protocol-budget/protocol-budget-service.js');
+  return governedPdev(ctx, 'update', `protocol-document:${documentId}`, 'Protocol budget params set via AnA', input, async (client) => {
+    const { id } = await setBudgetParamsTx(client, ctx.organizationId!, ctx.userId!, documentId, { targetEnrollment: typeof input.target_enrollment === 'number' ? input.target_enrollment : undefined, sponsorPaymentPerSubject: typeof input.sponsor_payment_per_subject === 'number' ? input.sponsor_payment_per_subject : null, indirectRatePct: typeof input.indirect_rate_pct === 'number' ? input.indirect_rate_pct : null });
+    return { paramsId: id };
+  });
+});
+
+registerToolHandler('review_protocol_budget', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_budget requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getBudgetSummary } = await import('../protocol-budget/protocol-budget-service.js');
+  try {
+    return JSON.stringify({ ok: true, budget: await getBudgetSummary(ctx.organizationId, documentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_budget failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Protocol Schedule of Assessments (C2C-21). Reuses governedPdev; review is read-only.
 // ─────────────────────────────────────────────────────────────────────────────
 
