@@ -153,4 +153,17 @@ describe('SealBadge / ProvenanceTrail', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByText(sampleSeal.sealedRecord.contentHash)).toBeTruthy();
   });
+
+  it('states version + who/when/meaning as text (not colour alone)', () => {
+    const { container } = render(<SealBadge seal={{ ...sampleSeal, version: 3 }} />);
+    const meta = container.textContent || '';
+    expect(meta).toMatch(/v3/);
+    expect(meta).toMatch(/Approval by Dr\. Jane Roe on 2026-06-29 12:00:00 UTC/);
+  });
+
+  it('marks a superseded seal in text and names the superseding version', () => {
+    render(<SealBadge seal={{ ...sampleSeal, version: 3 }} supersededByVersion={4} />);
+    expect(screen.getByText(/signed and sealed \(superseded\)/i)).toBeTruthy();
+    expect(screen.getByText(/Superseded by v4\./)).toBeTruthy();
+  });
 });

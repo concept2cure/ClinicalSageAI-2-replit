@@ -2321,3 +2321,77 @@
   font-size: 11px;
   word-break: break-all;
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Cluster B hardening — Part 11 / WCAG 2.2 AA additions (scoped, additive).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Governed-action sign-off dialog. */
+.signoffTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-100, var(--ink));
+  margin: 0;
+}
+.signoffMeanings {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9999px;
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  align-self: flex-start;
+}
+.signoffMeaning {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ink-muted, var(--text-300));
+  transition: background 200ms ease-out, color 200ms ease-out;
+}
+.signoffMeaning:hover { color: var(--ink, var(--text-100)); }
+.signoffMeaning[data-active='true'] {
+  background: var(--bg-100, #fff);
+  color: var(--ink, var(--text-100));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.signoffMeaning:focus-visible {
+  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline-offset: 1px;
+}
+.signoffAttest {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+  margin: 4px 0 0;
+}
+/* The Cancel pill in the sign-off dialog needs a visible focus ring. */
+.suggestPill:focus-visible {
+  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline-offset: 1px;
+}
+/* Deep-link to a blocking item needs a visible focus ring. */
+.gateDeepLink:focus-visible {
+  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Provenance-trail chevron: calm 200ms rotation, static under reduced motion. */
+.provTrailChevron {
+  display: inline-flex;
+  transition: transform 200ms ease-out;
+}
+.provTrailChevron[data-open='true'] { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .provTrailChevron { transition: none; }
+  .signoffMeaning { transition: none; }
+}

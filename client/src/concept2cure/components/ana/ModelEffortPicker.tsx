@@ -108,12 +108,30 @@ export function ModelEffortPicker({
     };
   }, [loaded]);
 
+  // Arrow-key navigation across the radiogroup (WCAG 2.2 / ARIA radiogroup
+  // pattern): arrows move selection and focus; only the checked radio is in the
+  // tab order (roving tabindex).
+  const handleEffortKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const idx = EFFORT_OPTIONS.findIndex((o) => o.value === effort);
+    if (idx < 0) return;
+    let next = idx;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next = (idx + 1) % EFFORT_OPTIONS.length;
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp')
+      next = (idx - 1 + EFFORT_OPTIONS.length) % EFFORT_OPTIONS.length;
+    else return;
+    e.preventDefault();
+    onEffortChange(EFFORT_OPTIONS[next].value);
+    const group = e.currentTarget;
+    group.querySelectorAll<HTMLButtonElement>('[role="radio"]')[next]?.focus();
+  };
+
   return (
     <>
       <div
         className={styles.effortControl}
         role="radiogroup"
         aria-label="Response effort"
+        onKeyDown={handleEffortKeyDown}
       >
         {EFFORT_OPTIONS.map((opt) => {
           const active = opt.value === effort;
@@ -126,6 +144,8 @@ export function ModelEffortPicker({
               aria-label={`${opt.label} effort — ${opt.hint}`}
               title={opt.hint}
               data-active={active}
+              // Roving tabindex: only the selected radio is tabbable.
+              tabIndex={active ? 0 : -1}
               className={styles.effortOption}
               onClick={() => onEffortChange(opt.value)}
             >
