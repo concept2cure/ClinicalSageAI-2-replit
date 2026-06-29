@@ -8382,6 +8382,54 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Protocol Risk Register (C2C-19). add is governed/audited; review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('add_protocol_risk', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_risk requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  if (!Number.isInteger(documentId) || !description) return JSON.stringify({ error: 'document_id and description are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addRiskTx } = await import('../protocol-risks/protocol-risks-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id, level } = await addRiskTx(client, ctx.organizationId, ctx.userId, {
+      protocolDocumentId: documentId, description,
+      category: typeof input.category === 'string' ? input.category : undefined,
+      likelihood: typeof input.likelihood === 'string' ? input.likelihood : undefined,
+      impact: typeof input.impact === 'string' ? input.impact : undefined,
+      mitigation: typeof input.mitigation === 'string' ? input.mitigation : null,
+      owner: typeof input.owner === 'string' ? input.owner : null,
+    });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol risk added via AnA'), payload: { riskId: id, level }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, riskId: id, level, message: `Added ${level} risk to protocol ${documentId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_protocol_risk failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_protocol_risk_register', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_risk_register requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getRiskRegister } = await import('../protocol-risks/protocol-risks-service.js');
+  try {
+    const register = await getRiskRegister(ctx.organizationId, documentId);
+    return JSON.stringify({ ok: true, summary: register.summary, risks: register.risks });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_risk_register failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Protocol Development (C2C-17). Authoring shares the governed/audited path;
 // completeness/finalize are deterministic (protocol-development-logic).
 // ─────────────────────────────────────────────────────────────────────────────

@@ -291,6 +291,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Protocol risk register metrics (C2C-19).
+      try {
+        const { renderProtocolRiskMetrics } = await import('../services/protocol-risks-metrics.js');
+        lines.push(...renderProtocolRiskMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RIM-lite metrics (C2C-12).
       try {
         const { renderRimMetrics } = await import('../services/rim-metrics.js');

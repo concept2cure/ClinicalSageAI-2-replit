@@ -4149,6 +4149,35 @@ export const FINALIZE_PROTOCOL_DOCUMENT: AnaTool = {
   input_schema: { type: 'object', properties: { document_id: { type: 'number' }, reason: { type: 'string' } }, required: ['document_id'] },
 };
 
+// ─── Protocol Risk Register (C2C-19) ─────────────────────────────────────────
+
+export const ADD_PROTOCOL_RISK: AnaTool = {
+  name: 'add_protocol_risk',
+  description:
+    "Add a risk to a protocol's risk register, scored on a likelihood × impact matrix (ICH E6(R2) §5.0). Categories: participant_safety, data_integrity, regulatory, operational, privacy, other. Returns the computed risk level. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id: { type: 'number' },
+      category: { type: 'string', enum: ['participant_safety', 'data_integrity', 'regulatory', 'operational', 'privacy', 'other'] },
+      description: { type: 'string' },
+      likelihood: { type: 'string', enum: ['rare', 'unlikely', 'possible', 'likely', 'almost_certain'] },
+      impact: { type: 'string', enum: ['negligible', 'minor', 'moderate', 'major', 'severe'] },
+      mitigation: { type: 'string' },
+      owner: { type: 'string' },
+      reason: { type: 'string' },
+    },
+    required: ['document_id', 'description'],
+  },
+};
+
+export const REVIEW_PROTOCOL_RISK_REGISTER: AnaTool = {
+  name: 'review_protocol_risk_register',
+  description:
+    "Read-only protocol risk register: each risk with its inherent and residual scores/levels, plus a summary (counts by level, open high/extreme risks, residual exposure index). Use to see where mitigation is still needed.",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
 // ─── CITI Training full integration (C2C-01/02) ──────────────────────────────
 
 export const IMPORT_CITI_RECORDS: AnaTool = {
@@ -7121,6 +7150,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ADD_ELIGIBILITY_CRITERION,
   REVIEW_PROTOCOL_COMPLETENESS,
   FINALIZE_PROTOCOL_DOCUMENT,
+  ADD_PROTOCOL_RISK,
+  REVIEW_PROTOCOL_RISK_REGISTER,
   IMPORT_CITI_RECORDS,
   REVIEW_TRAINING_MATRIX,
   REVIEW_EXPIRING_TRAINING,
