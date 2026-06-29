@@ -72,6 +72,8 @@ export type StepStatus = 'pending' | 'running' | 'complete' | 'failed' | 'stale'
 
 export interface OrchestratorRun {
   runId: string;
+  /** Tenant scope — pinned at run creation; every persistence call carries this. */
+  organizationId: number;
   submissionId: string;
   applicationNumber: string;
   region: RegionCode;
@@ -99,6 +101,11 @@ export interface StepRecord {
 }
 
 export interface OrchestratorInputs {
+  /**
+   * Tenant scope. Required. Every persisted run + audit row is filtered by this.
+   * Must be a positive finite integer; runOrchestrator throws otherwise.
+   */
+  organizationId: number;
   submissionId: string;
   applicationNumber: string;
   region: RegionCode;
@@ -165,7 +172,11 @@ const ORDERED_STEPS: StepKey[] = [
 function hashInputs(...inputs: unknown[]): string {
   const h = crypto.createHash('sha256');
   for (const input of inputs) {
-    h.update(JSON.stringify(input));
+    // JSON.stringify(undefined) returns undefined (not a string), which would
+    // make crypto.Hash.update throw TypeError. Coerce undefined → "" so that
+    // any caller passing an optional/undefined field cannot crash the run.
+    const serialized = input === undefined ? '' : JSON.stringify(input);
+    h.update(serialized ?? '');
   }
   return h.digest('hex');
 }
@@ -176,18 +187,55 @@ function hashOutput(output: unknown): string {
 
 // ── Audit log persistence ───────────────────────────────────────────────────
 
+/**
+ * Postgres error codes that indicate the running service code is incompatible
+ * with the live DB schema — NOT transient connectivity issues. Swallowing
+ * these turns every run into a permanently-orphaned in-memory object
+ * (route returns 200 + runId, subsequent getRun returns 404). Re-throw so
+ * the route handler returns 500 and the operator sees the real failure
+ * instead of a silent data-loss path.
+ *
+ * Codes:
+ *   42703 undefined_column        — e.g. organization_id missing pre-migration
+ *   42P01 undefined_table         — orchestrator tables not created
+ *   23502 not_null_violation      — column tightened to NOT NULL after write paths assumed nullable
+ *   23503 foreign_key_violation   — organizations row deleted under us, or wrong FK target
+ *   23514 check_violation         — value rejected by a CHECK we should have validated first
+ *
+ * Connection-level / transient codes (08*, 57*) and ON CONFLICT race
+ * losers stay on the swallow path because retrying or running in-memory is
+ * the safe default for those.
+ */
+const SCHEMA_SHAPE_ERROR_CODES = new Set(['42703', '42P01', '23502', '23503', '23514']);
+
+function isSchemaShapeError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const code = (err as { code?: unknown }).code;
+  return typeof code === 'string' && SCHEMA_SHAPE_ERROR_CODES.has(code);
+}
+
 async function persistRun(run: OrchestratorRun): Promise<void> {
+  // Defense-in-depth: callers (runOrchestrator) already guard, but persistRun
+  // is the last hop before the row hits the DB. Refuse to write a row that
+  // would coerce to NULL organization_id under Path B (nullable column),
+  // because such a row goes DARK to every tenant-scoped read.
+  if (!Number.isFinite(run.organizationId) || run.organizationId <= 0) {
+    throw new Error(
+      `[Orchestrator] persistRun: organizationId must be a positive integer (got: ${String(run.organizationId)})`
+    );
+  }
   try {
     await pool.query(
       `INSERT INTO submission_orchestrator_runs
-        (run_id, submission_id, application_number, region, submission_type, started_at, completed_at, status, steps)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        (run_id, organization_id, submission_id, application_number, region, submission_type, started_at, completed_at, status, steps)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        ON CONFLICT (run_id) DO UPDATE SET
          completed_at = EXCLUDED.completed_at,
          status = EXCLUDED.status,
          steps = EXCLUDED.steps`,
       [
         run.runId,
+        run.organizationId,
         run.submissionId,
         run.applicationNumber,
         run.region,
@@ -199,22 +247,40 @@ async function persistRun(run: OrchestratorRun): Promise<void> {
       ]
     );
   } catch (err) {
+    // Schema-shape mismatches are NOT non-fatal — they mean every run will
+    // be permanently invisible to subsequent reads. Surface to the route.
+    if (isSchemaShapeError(err)) {
+      const code = (err as { code?: string }).code;
+      console.error(
+        `[Orchestrator] persistRun: schema-shape error ${code} — re-throwing to avoid silent dark-row creation:`,
+        err instanceof Error ? err.message : err
+      );
+      throw err;
+    }
     console.warn('[Orchestrator] persistRun failed (non-fatal):', err instanceof Error ? err.message : err);
   }
 }
 
 async function persistStepEvent(
   runId: string,
+  organizationId: number,
   step: StepRecord,
   eventType: 'start' | 'complete' | 'fail' | 'stale'
 ): Promise<void> {
+  // Defense-in-depth: same rationale as persistRun.
+  if (!Number.isFinite(organizationId) || organizationId <= 0) {
+    throw new Error(
+      `[Orchestrator] persistStepEvent: organizationId must be a positive integer (got: ${String(organizationId)})`
+    );
+  }
   try {
     await pool.query(
       `INSERT INTO submission_orchestrator_steps
-        (run_id, step_key, event_type, status, input_hash, output_hash, output_ref, error, occurred_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+        (run_id, organization_id, step_key, event_type, status, input_hash, output_hash, output_ref, error, occurred_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())`,
       [
         runId,
+        organizationId,
         step.key,
         eventType,
         step.status,
@@ -225,6 +291,14 @@ async function persistStepEvent(
       ]
     );
   } catch (err) {
+    if (isSchemaShapeError(err)) {
+      const code = (err as { code?: string }).code;
+      console.error(
+        `[Orchestrator] persistStepEvent: schema-shape error ${code} — re-throwing to avoid silent dark-audit-row creation:`,
+        err instanceof Error ? err.message : err
+      );
+      throw err;
+    }
     console.warn('[Orchestrator] persistStepEvent failed (non-fatal):', err instanceof Error ? err.message : err);
   }
 }
@@ -238,11 +312,19 @@ async function persistStepEvent(
 export async function runOrchestrator(
   inputs: OrchestratorInputs
 ): Promise<{ run: OrchestratorRun; outputs: OrchestratorOutputs }> {
+  // Tenant gate — fail fast before any DB write so we never persist an unscoped row.
+  if (!Number.isFinite(inputs.organizationId) || inputs.organizationId <= 0) {
+    throw new Error(
+      `[Orchestrator] organizationId is required and must be a positive integer (got: ${String(inputs.organizationId)})`
+    );
+  }
+
   const runId = crypto.randomUUID();
   const startedAt = new Date().toISOString();
 
   const run: OrchestratorRun = {
     runId,
+    organizationId: inputs.organizationId,
     submissionId: inputs.submissionId,
     applicationNumber: inputs.applicationNumber,
     region: inputs.region,
@@ -277,7 +359,7 @@ export async function runOrchestrator(
     step.inputHash = inputHash;
     step.status = 'running';
     step.startedAt = new Date().toISOString();
-    await persistStepEvent(runId, step, 'start');
+    await persistStepEvent(runId, run.organizationId, step, 'start');
 
     const t0 = Date.now();
     try {
@@ -293,13 +375,13 @@ export async function runOrchestrator(
         step.outputHash = hashOutput(result.output);
         step.outputRef = result.outputRef;
       }
-      await persistStepEvent(runId, step, 'complete');
+      await persistStepEvent(runId, run.organizationId, step, 'complete');
     } catch (err) {
       step.completedAt = new Date().toISOString();
       step.durationMs = Date.now() - t0;
       step.status = 'failed';
       step.error = err instanceof Error ? err.message : String(err);
-      await persistStepEvent(runId, step, 'fail');
+      await persistStepEvent(runId, run.organizationId, step, 'fail');
       throw err;
     }
   };
@@ -342,7 +424,7 @@ export async function runOrchestrator(
     });
 
     // m2.3.qos
-    const m23Hash = hashInputs(outputs.module3Sections, inputs.drugSubstanceName, inputs.drugProductName);
+    const m23Hash = hashInputs(outputs.module3Sections, inputs.drugSubstanceName ?? '', inputs.drugProductName ?? '');
     await runStep('m2.3.qos', m23Hash, async () => {
       if (outputs.module3Sections.length === 0) return null;
       outputs.m23 = buildM23QualityOverallSummary({
@@ -354,7 +436,7 @@ export async function runOrchestrator(
     });
 
     // m2.4.nonclinical
-    const m24Hash = hashInputs(inputs.nonclinicalStudies, inputs.drugSubstanceName, inputs.indication);
+    const m24Hash = hashInputs(inputs.nonclinicalStudies, inputs.drugSubstanceName ?? '', inputs.indication ?? '');
     await runStep('m2.4.nonclinical', m24Hash, async () => {
       if (inputs.nonclinicalStudies.length === 0) return null;
       outputs.m24 = buildM24NonclinicalOverview({
@@ -366,7 +448,7 @@ export async function runOrchestrator(
     });
 
     // m2.5.clinical-overview
-    const m25Hash = hashInputs(inputs.csrInputs, inputs.indication, inputs.drugProductName);
+    const m25Hash = hashInputs(inputs.csrInputs, inputs.indication ?? '', inputs.drugProductName ?? '');
     await runStep('m2.5.clinical', m25Hash, async () => {
       if (inputs.csrInputs.length === 0) return null;
       outputs.m25 = buildM25ClinicalOverview({
@@ -378,7 +460,7 @@ export async function runOrchestrator(
     });
 
     // m2.7.clinical
-    const m27Hash = hashInputs(inputs.csrInputs, inputs.indication);
+    const m27Hash = hashInputs(inputs.csrInputs, inputs.indication ?? '');
     await runStep('m2.7.clinical', m27Hash, async () => {
       if (inputs.csrInputs.length === 0) return null;
       outputs.m27 = buildM27ClinicalSummary({
@@ -485,6 +567,21 @@ export async function regenerateAffected(
   inputs: OrchestratorInputs,
   changedStep?: StepKey
 ): Promise<{ run: OrchestratorRun; outputs: OrchestratorOutputs; regenerated: StepKey[] }> {
+  // Tenant gates — refuse to regenerate without a scope, AND refuse to splice a
+  // previous run from one tenant into a regenerate call carrying a different one.
+  // The second check is the load-bearing one: without it a route handler with a
+  // stale/forged previousRun could drive a regeneration under the wrong tenant.
+  if (!Number.isFinite(inputs.organizationId) || inputs.organizationId <= 0) {
+    throw new Error(
+      `[Orchestrator] regenerateAffected: inputs.organizationId is required and must be a positive integer (got: ${String(inputs.organizationId)})`
+    );
+  }
+  if (previousRun.organizationId !== inputs.organizationId) {
+    throw new Error(
+      `[Orchestrator] regenerateAffected: tenant mismatch — previousRun.organizationId=${previousRun.organizationId} but inputs.organizationId=${inputs.organizationId}`
+    );
+  }
+
   if (changedStep) {
     markDownstreamStale(previousRun.steps, changedStep);
   }
@@ -492,7 +589,7 @@ export async function regenerateAffected(
   // Detect input-hash changes for terminal-source steps
   const m3Hash = hashInputs(inputs.cmcSources, inputs.region);
   const csrHash = hashInputs(inputs.clinicalStudyData);
-  const m24Hash = hashInputs(inputs.nonclinicalStudies, inputs.drugSubstanceName, inputs.indication);
+  const m24Hash = hashInputs(inputs.nonclinicalStudies, inputs.drugSubstanceName ?? '', inputs.indication ?? '');
 
   const m3Step = previousRun.steps.find(s => s.key === 'm3.compose');
   const csrStep = previousRun.steps.find(s => s.key === 'csr.tabulate');
@@ -512,18 +609,32 @@ export async function regenerateAffected(
 
 // ── Status query ────────────────────────────────────────────────────────────
 
-export async function getRun(runId: string): Promise<OrchestratorRun | null> {
+export async function getRun(
+  runId: string,
+  organizationId: number
+): Promise<OrchestratorRun | null> {
+  // Tenant gate — refuse to query without a positive tenant scope.
+  // Returning null instead of throwing keeps callers' null-check semantics intact
+  // while ensuring an unscoped call never matches a row.
+  if (!Number.isFinite(organizationId) || organizationId <= 0) {
+    console.warn('[Orchestrator] getRun called with invalid organizationId:', organizationId);
+    return null;
+  }
   try {
     const result = await pool.query(
-      `SELECT run_id, submission_id, application_number, region, submission_type,
+      `SELECT run_id, organization_id, submission_id, application_number, region, submission_type,
               started_at, completed_at, status, steps
-       FROM submission_orchestrator_runs WHERE run_id = $1`,
-      [runId]
+       FROM submission_orchestrator_runs
+       WHERE run_id = $1 AND organization_id = $2`,
+      [runId, organizationId]
     );
+    // Collapsed result: not-found and org-mismatch both return null so the caller
+    // cannot distinguish a missing run from a cross-tenant probe.
     if (result.rows.length === 0) return null;
     const row = result.rows[0] as Record<string, unknown>;
     return {
       runId: String(row.run_id),
+      organizationId: Number(row.organization_id),
       submissionId: String(row.submission_id),
       applicationNumber: String(row.application_number),
       region: String(row.region) as RegionCode,
@@ -539,7 +650,10 @@ export async function getRun(runId: string): Promise<OrchestratorRun | null> {
   }
 }
 
-export async function getRunAudit(runId: string): Promise<Array<{
+export async function getRunAudit(
+  runId: string,
+  organizationId: number
+): Promise<Array<{
   stepKey: string;
   eventType: string;
   status: string;
@@ -549,13 +663,21 @@ export async function getRunAudit(runId: string): Promise<Array<{
   error: string | null;
   occurredAt: string;
 }>> {
+  // Tenant gate — refuse to query without a positive tenant scope.
+  if (!Number.isFinite(organizationId) || organizationId <= 0) {
+    console.warn('[Orchestrator] getRunAudit called with invalid organizationId:', organizationId);
+    return [];
+  }
   try {
+    // Filter on organization_id directly. If the parent run is not visible to this
+    // org, no step rows match either (effectively the same as a JOIN-side filter,
+    // since every step row was inserted with its parent run's organization_id).
     const result = await pool.query(
       `SELECT step_key, event_type, status, input_hash, output_hash, output_ref, error, occurred_at
        FROM submission_orchestrator_steps
-       WHERE run_id = $1
+       WHERE run_id = $1 AND organization_id = $2
        ORDER BY occurred_at ASC`,
-      [runId]
+      [runId, organizationId]
     );
     return (result.rows as Array<Record<string, unknown>>).map(r => ({
       stepKey: String(r.step_key),

@@ -61,6 +61,11 @@ import {
 
 function emptyInputs(over: Partial<OrchestratorInputs> = {}): OrchestratorInputs {
   return {
+    // organizationId is required by the Move 1 tenant-scope gate
+    // (runOrchestrator throws on missing/non-positive). Fixture orgId 1 is
+    // a placeholder — DB mock swallows persistence so the value is never
+    // round-tripped to a real organizations row.
+    organizationId: 1,
     submissionId: 'sub-1',
     applicationNumber: 'IND123456',
     region: 'US',
@@ -239,6 +244,9 @@ describe('regenerateAffected', () => {
     // transitions complete → stale).
     const previousRun: OrchestratorRun = {
       runId: 'prev-run-1',
+      // Must match inputs.organizationId (default 1 from inputsWithSomeData)
+      // or regenerateAffected's tenant-mismatch guard throws.
+      organizationId: 1,
       submissionId: 'sub-1',
       applicationNumber: 'IND123456',
       region: 'US',
@@ -294,6 +302,8 @@ describe('regenerateAffected', () => {
     // ─────────────────────────────────────────────────────────────────────
     const previousRun: OrchestratorRun = {
       runId: 'prev-run-2',
+      // Must match inputs.organizationId (default 1 from inputsWithSomeData).
+      organizationId: 1,
       submissionId: 'sub-1',
       applicationNumber: 'IND123456',
       region: 'US',
@@ -343,6 +353,8 @@ describe('regenerateAffected', () => {
     // changedStep argument.
     const previousRun: OrchestratorRun = {
       runId: 'prev-run-3',
+      // Must match inputs.organizationId (default 1 from inputsWithSomeData).
+      organizationId: 1,
       submissionId: 'sub-1',
       applicationNumber: 'IND123456',
       region: 'US',
@@ -378,59 +390,49 @@ describe('regenerateAffected', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe('region-CHECK violation handling', () => {
-  it('PINS CURRENT BEHAVIOR: a region that the migration 0018 CHECK rejects causes a silent persist failure — the run still returns success in memory', async () => {
-    // Simulate the constraint rejection at the pool level by failing every
-    // query the orchestrator issues. The Postgres driver throws an Error
-    // with `code: '23514'` (check_violation) but the orchestrator's
-    // try/catch swallows it and only logs a console.warn — so the run keeps
-    // going.
+  it('PINS POST-FIX BEHAVIOR: a CHECK violation (23514) is re-thrown — no silent dark-row creation', async () => {
+    // Move 1 closes the silent-data-loss path documented in §D.6: Postgres
+    // schema-shape errors (CHECK violations, undefined_column, undefined_table,
+    // FK violations, NOT NULL violations) are now re-thrown from persistRun
+    // so the route handler surfaces a 500. Previously the orchestrator
+    // swallowed these and returned a runId pointing at nothing — the run
+    // existed only in memory, then disappeared.
     //
-    // The audit reconciliation move #7 ALREADY shipped a follow-up migration
+    // The audit reconciliation Move 7 ALREADY shipped a follow-up migration
     // (20260629_orchestrator_region_check_alignment.sql) that widens the
-    // CHECK to all 13 Zod regions, but until every prod DB has that
-    // migration applied this is the live failure mode. This test PINS the
-    // graceful-degradation contract: a 'KR' run returns a runId and never
-    // throws to the route handler.
+    // CHECK to all 13 Zod regions, so in normal operation 23514 should no
+    // longer fire from `region`. The re-throw is the defense-in-depth that
+    // catches the failure mode if a future schema-drift recurs.
     const constraintErr: NodeJS.ErrnoException = new Error(
       'new row for relation "submission_orchestrator_runs" violates check constraint "submission_orchestrator_runs_region_check"'
     );
     (constraintErr as unknown as { code: string }).code = '23514';
     hoisted.poolQuery.mockRejectedValue(constraintErr);
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
-      hoisted.warnings.push({ args });
-    });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     try {
-      // Use inputsWithSomeData so the hash inputs are defined (otherwise the
-      // pipeline trips an unrelated hash-update bug on undefined and the run
-      // ends `failed` for the wrong reason). The point of THIS test is the
-      // persistence-error path, not validation of step bodies.
       const inputs = inputsWithSomeData({ region: 'KR' as unknown as OrchestratorInputs['region'] });
-      const result = await runOrchestrator(inputs);
-
-      // (a) The route handler sees a fully-formed run object — no throw.
-      expect(result.run).toBeDefined();
-      expect(result.run.runId).toBeDefined();
-      expect(typeof result.run.runId).toBe('string');
-      // (b) The run reports a non-error status (this is the silent-loss
-      //     concern: a user would see green even though nothing persisted).
-      expect(['complete', 'partial', 'running']).toContain(result.run.status);
-      // (c) The persistence error WAS surfaced to console.warn — confirming
-      //     the swallow path is at least operator-observable.
-      const persistWarns = hoisted.warnings.filter(w =>
-        w.args.some(a => typeof a === 'string' && a.includes('[Orchestrator] persistRun failed'))
+      // runOrchestrator must reject (not swallow + return a fake-success run).
+      await expect(runOrchestrator(inputs)).rejects.toThrow(/violates check constraint/);
+      // The schema-shape detection branch logs to console.error before throwing.
+      expect(errorSpy).toHaveBeenCalled();
+      const errCall = errorSpy.mock.calls.find(call =>
+        call.some(a => typeof a === 'string' && a.includes('schema-shape error 23514'))
       );
-      expect(persistWarns.length).toBeGreaterThanOrEqual(1);
+      expect(errCall).toBeDefined();
     } finally {
       warnSpy.mockRestore();
+      errorSpy.mockRestore();
     }
   });
 
-  it('persistStepEvent failures are also swallowed — every step still gets a fresh `runStep` cycle', async () => {
-    // Same mock: every query rejects. The orchestrator should still
-    // populate every step record with a status (complete or skipped) and
-    // never abort the pipeline.
+  it('transient persist failures (no Postgres code) are STILL swallowed — every step gets a fresh `runStep` cycle', async () => {
+    // Connection-level / generic errors without a SCHEMA_SHAPE_ERROR_CODES
+    // code stay on the swallow path: a transient blip should not abort the
+    // in-memory pipeline; retrying or running ephemerally is the safe
+    // default for those.
     const err = new Error('connection refused');
     hoisted.poolQuery.mockRejectedValue(err);
 

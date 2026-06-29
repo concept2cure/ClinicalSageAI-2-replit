@@ -471,6 +471,10 @@ describe('ectd-validator-hardening', () => {
 
 describe('submission-package-orchestrator', () => {
   const baseInputs: OrchestratorInputs = {
+    // organizationId is required by the Move 1 tenant-scope gate
+    // (runOrchestrator throws on missing/non-positive). Fixture orgId 1 is
+    // a placeholder.
+    organizationId: 1,
     submissionId: 'sub-001',
     applicationNumber: 'IND123456',
     region: 'US',
