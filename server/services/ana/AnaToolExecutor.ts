@@ -884,6 +884,136 @@ registerToolHandler('assemble_crl_premortem_artifact', async (input, ctx) => {
   }
 });
 
+// E8 — Pre-IND / EOP2 briefing-book builder with reviewer-challenge pre-mortem.
+// Assembles the briefing book from a RegAgencyMeeting (fixture when no live id),
+// derives required_strings (mandatory headers + sponsor questions) for
+// verify_docx_against_source, and folds anticipated FDA pushback from
+// simulate_reviewer_challenges + run_submission_premortem into an honest
+// per-question pre-mortem verdict. The actual author_docx_native /
+// verify_docx_against_source calls are driven by AnA in the agentic loop using
+// the content + required_strings this tool returns.
+registerToolHandler('assemble_briefing_book', async (input, ctx) => {
+  try {
+    const briefing = await import('./briefing-book-core.js');
+
+    // 1. Resolve the meeting. A live meeting_id would join the product's
+    //    strategy.meetings[]; absent that we use the labelled fixture.
+    // INTEGRATION: join the live RegAgencyMeeting row by meeting_id + org scope
+    //   (client/src/concept2cure/types/workspace.ts → product.strategy.meetings).
+    const meetingId = typeof input.meeting_id === 'string' ? input.meeting_id.trim() : '';
+    const overrideQuestions = Array.isArray(input.key_questions)
+      ? (input.key_questions as unknown[]).filter((q): q is string => typeof q === 'string')
+      : undefined;
+
+    let meeting: import('./briefing-book-core.js').RegAgencyMeetingInput;
+    let context: import('./briefing-book-core.js').BriefingBookContext;
+    let dataSource: import('./briefing-book-core.js').BriefingBookDataSource;
+
+    if (meetingId) {
+      // INTEGRATION: load the live meeting here. Until that join exists, an
+      // explicit id with no loader still degrades honestly to fixture-sourced.
+      meeting = { ...briefing.FIXTURE_EOP2_MEETING, id: meetingId };
+      context = { ...briefing.FIXTURE_EOP2_CONTEXT };
+      dataSource = 'fixture';
+    } else {
+      meeting = { ...briefing.FIXTURE_EOP2_MEETING };
+      context = { ...briefing.FIXTURE_EOP2_CONTEXT };
+      dataSource = 'fixture';
+    }
+
+    const meetingType =
+      typeof input.meeting_type === 'string' ? input.meeting_type : undefined;
+    if (meetingType) meeting.type = meetingType as typeof meeting.type;
+    if (overrideQuestions && overrideQuestions.length) meeting.keyQuestions = overrideQuestions;
+    if (typeof input.product_name === 'string') context.productName = input.product_name;
+    if (typeof input.indication === 'string') context.indication = input.indication;
+    if (typeof input.sponsor === 'string') context.sponsor = input.sponsor;
+
+    // 2. Assemble the markdown + required_strings.
+    const assembled = briefing.assembleBriefingBook(meeting, context);
+
+    // 3. Pre-mortem — anticipated FDA pushback per sponsor question.
+    const runPremortem = input.run_premortem !== false;
+    let challenges: import('./briefing-book-core.js').AnticipatedChallenge[] = [];
+    // Pattern-only pre-mortem: no precedent corpus is joined for the briefing
+    // book, so the denominator is honestly zero (insufficient_data risk read).
+    const precedentCount = 0;
+
+    if (runPremortem) {
+      // 3a. run_submission_premortem (pattern scan). Deterministic; runs over
+      //     the assembled book text. No precedent corpus is joined here, so the
+      //     pre-mortem stays honestly pattern-only (precedentCount = 0).
+      //     Fault-tolerant: an unavailable engine degrades to no findings.
+      try {
+        const { quickPatternScan } = await import('../intelligence/rim.js');
+        const matches = quickPatternScan(assembled.content, 'briefing-book', { agency: 'FDA' } as any);
+        const findings = matches.map(m => ({
+          title: m.pattern.name,
+          category: m.pattern.category,
+          severity: m.pattern.severity,
+          reviewerQuestion: m.pattern.reviewerQuestion,
+          regulatoryBasis: m.pattern.regulatoryBasis,
+          remediation: m.pattern.remediation,
+        }));
+        challenges = challenges.concat(briefing.normalizePremortemFindings({ findings }));
+      } catch {
+        /* engine unavailable — degrade to no findings, honest n=0 */
+      }
+
+      // 3b. simulate_reviewer_challenges (reviewer lenses) — only when the
+      //     caller supplied a package + assessment to scope it.
+      const packageId = typeof input.package_id === 'number' ? input.package_id : undefined;
+      const assessmentId = typeof input.assessment_id === 'number' ? input.assessment_id : undefined;
+      if (packageId && assessmentId && ctx?.organizationId) {
+        try {
+          const { submissionTwinService } = await import('../submission-twin-service.js');
+          const lensChallenges = await submissionTwinService.simulateChallenges(
+            packageId,
+            ctx.organizationId,
+            assessmentId,
+          );
+          challenges = challenges.concat(
+            briefing.normalizeReviewerChallenges({ challenges: lensChallenges }),
+          );
+        } catch {
+          /* reviewer-lens pass unavailable — keep pattern-only challenges */
+        }
+      }
+    }
+
+    const premortem = briefing.composeBriefingBookPremortem({
+      meeting,
+      challenges,
+      precedentCount,
+      dataSource,
+    });
+
+    // BUILD-1 INTEGRATION: persist { assembled, premortem } as a briefing-book
+    //   version row (briefing_book_versions) so the assembled book + pre-mortem
+    //   verdict are versioned and citable in the 21 CFR Part 11 audit trail.
+    //   Sealing/exporting is gated on premortem.sealable (false for fixtures).
+
+    // status:'generated' + content surfaces the book as an editor-openable draft
+    // in the Document Studio (same artifact_draft path as author_docx_native),
+    // so the markdown body and required_strings the model uses to call
+    // author_docx_native / verify_docx_against_source are also previewable.
+    return JSON.stringify({
+      status: 'generated',
+      documentType: 'briefing-book',
+      title: assembled.title,
+      content: assembled.content,
+      requiredStrings: assembled.requiredStrings,
+      questionCount: assembled.questionCount,
+      premortem,
+      message: premortem.summary,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `assemble_briefing_book failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // Deterministic regulatory deficiency scan — runs the codified pattern registry
 // (quickPatternScan) with NO language-model call. AnA's reasoning-without-the-LLM
 // surface: fast, reproducible, citable pattern matching over regulatory text.

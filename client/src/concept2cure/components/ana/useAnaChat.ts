@@ -24,6 +24,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { getAuthHeaders } from '../../../utils/authToken';
 import { extractPendingSignoffs, type PendingSignoff } from './useGovernedAction';
+import type { BriefingBookPremortemResult } from './BriefingBookPanel';
 import i18n from '@/i18n';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 
@@ -90,6 +91,41 @@ export function mapCrlPremortemArtifact(
   const a = parsed.artifact;
   if (!a || typeof a !== 'object') return null;
   return a as import('./CrlPremortemPanel').CrlPremortemArtifact;
+}
+
+/**
+ * Map a parsed `assemble_briefing_book` tool result into the client
+ * BriefingBookPremortemResult shape (E8). Returns null for an error envelope,
+ * a non-object, or a result with no premortem. Exported for unit testing.
+ *
+ * Honest by construction: `anticipated` is forced true and the sealable/
+ * assessment flags are passed through verbatim — sample/not_assessed data is
+ * never re-flagged as sealable.
+ */
+export function mapBriefingPremortem(
+  parsed: Record<string, unknown> | null | undefined,
+): BriefingBookPremortemResult | null {
+  if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
+  const pm = parsed.premortem as Record<string, unknown> | undefined;
+  if (!pm || typeof pm !== 'object') return null;
+  const perQuestion = Array.isArray(pm.perQuestion)
+    ? (pm.perQuestion as BriefingBookPremortemResult['perQuestion'])
+    : [];
+  const unmapped = Array.isArray(pm.unmappedChallenges)
+    ? (pm.unmappedChallenges as BriefingBookPremortemResult['unmappedChallenges'])
+    : [];
+  return {
+    anticipated: true,
+    perQuestion,
+    unmappedChallenges: unmapped,
+    overallRisk: (pm.overallRisk as BriefingBookPremortemResult['overallRisk']) ?? 'insufficient_data',
+    precedentCount: typeof pm.precedentCount === 'number' ? pm.precedentCount : 0,
+    dataSource: pm.dataSource === 'live' ? 'live' : 'fixture',
+    // Sample/not_assessed is never sealable: only a true server flag passes.
+    sealable: pm.sealable === true,
+    assessment: pm.assessment === 'assessed' ? 'assessed' : 'not_assessed',
+    summary: typeof pm.summary === 'string' ? pm.summary : undefined,
+  };
 }
 
 /**
@@ -386,6 +422,11 @@ export interface AnaChatMessage {
    * the SECOND verification surface, rendered alongside `verification`.
    */
   consistency?: ConsistencyResult;
+  /**
+   * Result of the `assemble_briefing_book` step this turn, if it ran (E8).
+   * Powers the Document Studio "anticipated FDA pushback" pre-mortem panel.
+   */
+  briefingPremortem?: BriefingBookPremortemResult;
 }
 
 export interface UseAnaChatOptions {
@@ -912,6 +953,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // when sealing; here on the client we only render the live result.
               const consistency: ConsistencyResult | null =
                 name === 'check_dossier_consistency' ? mapConsistencyResult(parsedResult) : null;
+              // E8: capture the briefing-book pre-mortem so the Document Studio
+              // can show the "anticipated FDA pushback" panel alongside the book.
+              const briefingPremortem: BriefingBookPremortemResult | null =
+                name === 'assemble_briefing_book' ? mapBriefingPremortem(parsedResult) : null;
               setMessages(prev =>
                 prev.map(m => {
                   if (m.id !== assistantId) return m;
@@ -928,6 +973,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   if (verification) next = { ...next, verification };
                   if (crlPremortem) next = { ...next, crlPremortem };
                   if (consistency) next = { ...next, consistency };
+                  if (briefingPremortem) next = { ...next, briefingPremortem };
                   return next;
                 })
               );

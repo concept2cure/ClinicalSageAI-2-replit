@@ -26,6 +26,7 @@ import {
   type DossierProvenance,
 } from './NatHistoryDossierAffordance';
 import { ConsistencyPanel } from './ConsistencyPanel';
+import { BriefingBookPanel, type BriefingBookPremortemResult } from './BriefingBookPanel';
 import type { VerificationResult, ConsistencyResult } from './useAnaChat';
 import { renderSafeMarkdown } from './renderSafeMarkdown';
 import styles from './styles.module.css';
@@ -42,6 +43,12 @@ export interface DocumentStudioPaneProps {
   verification?: VerificationResult;
   /** Dossier-consistency sweep for the selected version, when AnA ran it. */
   consistency?: ConsistencyResult;
+  /**
+   * Briefing-book reviewer-challenge / pre-mortem for the selected version (E8),
+   * when this document is a Pre-IND / EOP2 briefing book. Renders the
+   * "anticipated FDA pushback" panel below the verification strip.
+   */
+  briefingPremortem?: BriefingBookPremortemResult;
   /** How many versions of this document exist this session (1 = no picker). */
   versionCount?: number;
   /** Zero-based index of the version currently shown. */
@@ -141,6 +148,7 @@ export function DocumentStudioPane({
   draft,
   verification,
   consistency,
+  briefingPremortem,
   versionCount = 1,
   activeVersionIndex = 0,
   onSelectVersion,
@@ -334,6 +342,12 @@ export function DocumentStudioPane({
       {consistency && (
         <div className={styles.studioConsistency}>
           <ConsistencyPanel consistency={consistency} onResolve={onResolveConsistency} />
+        </div>
+      )}
+
+      {briefingPremortem && (
+        <div className={styles.studioVerify}>
+          <BriefingBookPanel premortem={briefingPremortem} />
         </div>
       )}
 

@@ -31,6 +31,7 @@ import { ProjectsView, type AnaProject } from './ProjectsView';
 import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
 import { LabelingAuthoringPane, type LabelingDraft } from './LabelingAuthoringPane';
 import { type LabelingMode } from './labelingModes';
+import type { BriefingBookPremortemResult } from './BriefingBookPanel';
 import { composeVerificationFixMessage } from './VerificationPanel';
 import { aggregateReadiness, type ReadinessGate, type BlockingItem } from './ectdReadiness';
 import {
@@ -561,7 +562,7 @@ export function Ana({
     title: string;
     documentType?: string;
     artifactId?: string;
-    versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult }[];
+    versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult; briefingPremortem?: BriefingBookPremortemResult }[];
   } | null>(() => {
     if (!studioEnabled) return null;
     let latestTitle: string | null = null;
@@ -587,21 +588,24 @@ export function Ana({
     if (persisted && persisted.length > 0) {
       // Carry the latest in-session verification onto the newest version so the
       // "verified against your source" panel still shows when applicable.
-      const versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult }[] =
+      const versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult; briefingPremortem?: BriefingBookPremortemResult }[] =
         persisted.map(v => ({ content: v.content }));
       let latestVerification: VerificationResult | undefined;
       let latestConsistency: ConsistencyResult | undefined;
+      let latestBriefingPremortem: BriefingBookPremortemResult | undefined;
       for (const m of chat.messages) {
         if (m.generatedDraft && m.generatedDraft.title === latestTitle) {
           if (m.verification) latestVerification = m.verification;
           if (m.consistency) latestConsistency = m.consistency;
+          if (m.briefingPremortem) latestBriefingPremortem = m.briefingPremortem;
         }
       }
-      if (versions.length > 0 && (latestVerification || latestConsistency)) {
+      if (versions.length > 0 && (latestVerification || latestConsistency || latestBriefingPremortem)) {
         versions[versions.length - 1] = {
           ...versions[versions.length - 1],
           verification: latestVerification,
           consistency: latestConsistency,
+          briefingPremortem: latestBriefingPremortem,
         };
       }
       return {
@@ -613,7 +617,7 @@ export function Ana({
       };
     }
 
-    const versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult }[] = [];
+    const versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult; briefingPremortem?: BriefingBookPremortemResult }[] = [];
     for (const m of chat.messages) {
       if (m.generatedDraft && m.generatedDraft.title === latestTitle) {
         versions.push({
@@ -622,6 +626,7 @@ export function Ana({
           // The dossier-consistency sweep that ran on the turn that produced
           // this draft (author_docx_native / surgical_docx_xml_edit → sweep).
           consistency: m.consistency,
+          briefingPremortem: m.briefingPremortem,
         });
       }
     }
@@ -750,6 +755,11 @@ export function Ana({
           }
         : null,
     [shownDraft],
+  );
+
+  const shownBriefingPremortem = useMemo(
+    () => activeDocument?.versions[safeVersionIndex]?.briefingPremortem,
+    [activeDocument, safeVersionIndex],
   );
 
   // Download the rendered draft as a Word file. Calls the server DOCX render
@@ -969,6 +979,7 @@ export function Ana({
                   draft={shownDraft}
                   verification={shownVerification}
                   consistency={shownConsistency}
+                  briefingPremortem={shownBriefingPremortem}
                   versionCount={activeDocument.versions.length}
                   activeVersionIndex={safeVersionIndex}
                   onSelectVersion={setVersionIndex}
