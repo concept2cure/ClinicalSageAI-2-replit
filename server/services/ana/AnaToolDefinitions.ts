@@ -13,6 +13,7 @@ import type { AnaTool, AnthropicServerTool, AnyAnaTool } from '../ai-gateway/typ
 import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC, IVD_KNOWLEDGE_TOOL_SPEC } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
+import { RECONCILIATION_TOOLS } from './reconciliationTools';
 import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
 import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
 import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
@@ -7237,6 +7238,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // Deterministic statistical design & analysis engines (server/services/stats/*),
   // previously implemented but unreachable by AnA. See statisticalDesignTools.ts.
   ...STATISTICAL_DESIGN_TOOLS,
+  // Cross-document number reconciliation — flags figures that disagree ACROSS a
+  // submission's documents (enrolled N in 2.5 ≠ 2.7.3 ≠ CSR). The cross-module
+  // reconciliation check_numerical_integrity / check_dossier_consistency lack.
+  ...RECONCILIATION_TOOLS,
   // Submission intelligence: precedent benchmarking + package completeness.
   ...SUBMISSION_INTELLIGENCE_TOOLS,
   // Device/IVD submission assembly, predicate-adequacy scoring, drug coding —

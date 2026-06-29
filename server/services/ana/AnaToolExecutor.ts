@@ -4166,6 +4166,38 @@ registerToolHandler('check_dossier_consistency', async (input: Record<string, un
   }
 });
 
+// Cross-document number reconciliation over ALREADY-EXTRACTED, structured
+// figures — the cross-module check the two consistency tools above lack, and
+// the structured-input complement to the prose-mining reconcile_dossier_numbers
+// tool. The engine groups by quantityKey and flags values that disagree across
+// documents beyond a configurable tolerance, returning per-key value clusters,
+// sources, a plurality consensus, and a severity. Deterministic; validation
+// errors are relayed as needs_parameters so the model asks rather than guesses.
+registerToolHandler('reconcile_extracted_figures', async (input: Record<string, unknown>) => {
+  try {
+    const { reconcileDossierNumbers } = await import(
+      '../reconciliation/dossier-number-reconciler.js'
+    );
+    const report = reconcileDossierNumbers({
+      figures: input.figures as any,
+      tolerance: input.tolerance as any,
+    });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result: report,
+      instruction:
+        'Report these conflicts and values verbatim. A cross-document number mismatch (especially enrolment N or dose) is a recurring reviewer finding — surface each conflict, its sources, and the consensus.',
+    });
+  } catch (err: any) {
+    const message = err?.message || 'unknown error';
+    if (isStatsParamError(message)) {
+      return JSON.stringify({ status: 'needs_parameters', message });
+    }
+    return JSON.stringify({ error: `reconcile_extracted_figures failed: ${message}` });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Generation Tools (Master Document Builder)
 // ─────────────────────────────────────────────────────────────────────────────
