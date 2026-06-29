@@ -132,6 +132,15 @@ describe('ConcordancePanel rendering', () => {
     expect(screen.getByText('No such claim in the device submission.')).toBeTruthy();
     expect(screen.getByRole('status').getAttribute('data-status')).toBe('discordant');
   });
+
+  it('carries each claim status in text, not color alone, and names the claims list', () => {
+    const report = computeCdxConcordance(DISCORDANT_SAMPLE.paired);
+    render(<ConcordancePanel report={report} dataStatus="sample" />);
+    // Color-never-alone: every discordant/missing marker has a textual status word.
+    expect(screen.getAllByText('Discordant').length).toBeGreaterThan(0);
+    expect(screen.getByText('Missing counterpart')).toBeTruthy();
+    expect(screen.getByLabelText('CDx claim concordance by category')).toBeTruthy();
+  });
 });
 
 describe('honesty guard — sample data is never sealable/exportable', () => {

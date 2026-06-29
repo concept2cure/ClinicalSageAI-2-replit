@@ -75,6 +75,26 @@ describe('VerificationPanel', () => {
     );
     expect(screen.queryByText('Ask AnA to resolve')).toBeNull();
   });
+
+  it('carries the verdict in text, not color alone (icon + title both present)', () => {
+    // Color-never-alone: the verdict is a named title; the icon is decorative.
+    render(
+      <VerificationPanel verification={{ ok: false, missingRequiredStrings: ['X'], requiredStringsChecked: 1 }} />,
+    );
+    expect(screen.getByText('Not verified against your source')).toBeTruthy();
+    const status = screen.getByRole('status');
+    // Decorative status icon is hidden from AT — the text alone conveys the verdict.
+    expect(status.querySelector('[aria-hidden="true"]')).toBeTruthy();
+  });
+
+  it('gives the missing-strings list an accessible name', () => {
+    render(
+      <VerificationPanel
+        verification={{ ok: false, missingRequiredStrings: ['CAPTION A', 'CAPTION B'], requiredStringsChecked: 2 }}
+      />,
+    );
+    expect(screen.getByLabelText('Missing required strings')).toBeTruthy();
+  });
 });
 
 describe('composeVerificationFixMessage', () => {
@@ -143,7 +163,7 @@ describe('DocumentStudioPane', () => {
   it('hides the version picker and pager for a single short version', () => {
     render(<DocumentStudioPane draft={draft} versionCount={1} onDownloadDocx={() => {}} onClose={() => {}} />);
     expect(screen.queryByLabelText('Document version')).toBeNull();
-    expect(screen.queryByText(/Page \d+ \//)).toBeNull();
+    expect(screen.queryByText(/Page \d+ of/)).toBeNull();
   });
 
   it('shows a version dropdown (latest selected) and switches versions', () => {
@@ -175,12 +195,57 @@ describe('DocumentStudioPane', () => {
         onClose={() => {}}
       />,
     );
-    expect(screen.getByText(/Page 1 \/ 6/)).toBeTruthy();
+    expect(screen.getByText(/Page 1 of 6/)).toBeTruthy();
     const prev = screen.getByLabelText('Previous page') as HTMLButtonElement;
     const next = screen.getByLabelText('Next page') as HTMLButtonElement;
     expect(prev.disabled).toBe(true); // first page
     fireEvent.click(next);
-    expect(screen.getByText(/Page 2 \/ 6/)).toBeTruthy();
+    expect(screen.getByText(/Page 2 of 6/)).toBeTruthy();
+  });
+});
+
+describe('DocumentStudioPane — keyboard + a11y hardening', () => {
+  const draft = { title: 'Smith objections final v3', content: '# Heading\n\nBody text.', documentType: 'docx' };
+
+  it('closes the preview when Escape is pressed inside the pane', () => {
+    const onClose = vi.fn();
+    render(<DocumentStudioPane draft={draft} onDownloadDocx={() => {}} onClose={onClose} />);
+    const pane = screen.getByLabelText('Document preview');
+    fireEvent.keyDown(pane, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not close on Escape while a version <select> is focused (the picker owns it)', () => {
+    const onClose = vi.fn();
+    render(
+      <DocumentStudioPane
+        draft={draft}
+        versionCount={3}
+        activeVersionIndex={2}
+        onSelectVersion={() => {}}
+        onDownloadDocx={() => {}}
+        onClose={onClose}
+      />,
+    );
+    const select = screen.getByLabelText('Document version');
+    fireEvent.keyDown(select, { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('marks the download button busy while a render is in flight', () => {
+    render(<DocumentStudioPane draft={draft} downloading onDownloadDocx={() => {}} onClose={() => {}} />);
+    const btn = screen.getByText('Preparing…').closest('button') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-busy')).toBe('true');
+  });
+
+  it('announces the current page via a live status region', () => {
+    const long = Array.from({ length: 4 }, (_, i) => `Paragraph ${i} ${'x'.repeat(400)}`).join('\n\n');
+    render(
+      <DocumentStudioPane draft={{ title: 'Long', content: long }} pageSize={500} onDownloadDocx={() => {}} onClose={() => {}} />,
+    );
+    const pageLabel = screen.getByText(/Page 1 of 4/);
+    expect(pageLabel.getAttribute('role')).toBe('status');
+    expect(pageLabel.getAttribute('aria-live')).toBe('polite');
   });
 });
 

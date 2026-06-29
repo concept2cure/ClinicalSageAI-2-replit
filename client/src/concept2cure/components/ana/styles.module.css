@@ -934,6 +934,12 @@
 }
 .studioPagerBtn:hover:not(:disabled) { background: var(--bg-200); color: var(--ink); }
 .studioPagerBtn:disabled { opacity: 0.4; cursor: default; }
+.studioPagerBtn:focus-visible,
+.studioVersionSelect:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
+  border-color: var(--accent-main-100, #6366f1);
+}
 
 .studioHeader {
   display: flex;
@@ -986,6 +992,11 @@
 }
 .studioDownload:hover { background: var(--bg-300); border-color: var(--border-strong); }
 .studioDownload:disabled { opacity: 0.6; cursor: default; }
+.studioDownload:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
+  border-color: var(--accent-main-100, #6366f1);
+}
 .studioClose {
   display: inline-flex;
   align-items: center;
@@ -999,6 +1010,11 @@
   transition: background 200ms ease-out, color 200ms ease-out;
 }
 .studioClose:hover { background: var(--bg-200); color: var(--ink); }
+.studioClose:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
+  color: var(--ink);
+}
 
 .studioVerify { padding: 10px 14px 0; }
 .studioEctd { padding: 10px 14px 0; }
@@ -1118,6 +1134,15 @@
   transition: background 200ms ease-out;
 }
 .verifyResolve:hover { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
+.verifyResolve:focus-visible,
+.consistencyResolve:focus-visible,
+.concordResolve:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
+}
+@media (prefers-reduced-motion: reduce) {
+  .verifyResolve { transition: none; }
+}
 
 /* ───────────────────────────────────────────────────────────────────────────
    IVDR PER authoring panel (E3). Gated by ENABLE_ANA_DOCUMENT_STUDIO. Quiet

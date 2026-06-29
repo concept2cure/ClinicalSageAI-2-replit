@@ -110,6 +110,45 @@ describe('ConsistencyPanel — verdict tiers', () => {
   });
 });
 
+describe('ConsistencyPanel — color-never-alone + accessible names', () => {
+  it('names every verdict tier in text (not color alone) and hides the decorative icons', () => {
+    const tiers: { verdict: ConsistencyResult['verdict']; label: string }[] = [
+      { verdict: 'clean', label: 'Consistent with your dossier' },
+      { verdict: 'minor_issues', label: 'Minor inconsistencies' },
+      { verdict: 'needs_review', label: 'Inconsistencies need review' },
+      { verdict: 'blocker', label: 'Blocking inconsistencies' },
+    ];
+    for (const t of tiers) {
+      const { unmount } = render(
+        <ConsistencyPanel consistency={result({ verdict: t.verdict, divergenceCount: t.verdict === 'clean' ? 0 : 1 })} />,
+      );
+      // The verdict reads as text regardless of the data-status color.
+      expect(screen.getByText(t.label)).toBeTruthy();
+      const status = screen.getByRole('status');
+      expect(status.querySelector('[aria-hidden="true"]')).toBeTruthy();
+      unmount();
+    }
+  });
+
+  it('labels the divergence list and tags each row with a textual kind label', () => {
+    render(
+      <ConsistencyPanel
+        consistency={result({
+          verdict: 'blocker',
+          divergenceCount: 1,
+          bySeverity: { critical: 1, high: 0, medium: 0, low: 0 },
+          divergences: [
+            { kind: 'numeric_divergence', severity: 'critical', description: 'NOAEL conflict.', draftValue: '100', existingValue: '50' },
+          ],
+        })}
+      />,
+    );
+    expect(screen.getByLabelText('Dossier divergences')).toBeTruthy();
+    // Severity is carried in text ("Value mismatch"), not by the icon/color alone.
+    expect(screen.getByText('Value mismatch')).toBeTruthy();
+  });
+});
+
 describe('ConsistencyPanel — resolve affordance', () => {
   it('offers "Ask AnA to resolve" only when not clean and a handler is given', () => {
     const onResolve = vi.fn();

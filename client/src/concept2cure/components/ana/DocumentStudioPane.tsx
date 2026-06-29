@@ -13,7 +13,7 @@
  * It owns no chat state — it is a pure view over the draft + versions the chat
  * hook already produced. Gated by ENABLE_ANA_DOCUMENT_STUDIO upstream.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { I } from './icons';
 import { VerificationPanel } from './VerificationPanel';
 import { ReadinessGatePanel } from './ReadinessGatePanel';
@@ -225,8 +225,28 @@ export function DocumentStudioPane({
   const hasVersions = versionCount > 1;
   const hasPages = pages.length > 1;
 
+  // Escape collapses the preview pane, but only when focus is inside the pane
+  // and not captured by a nested overlay (the e-sign seal modal owns its own
+  // Escape). Keyboard parity for the icon-only close control.
+  const paneRef = useRef<HTMLElement | null>(null);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLElement>) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      // Let a focused <select> (version/module picker) close its own popup first.
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === 'SELECT') return;
+      onClose();
+    },
+    [onClose],
+  );
+
   return (
-    <aside className={styles.studioPane} aria-label="Document preview">
+    <aside
+      ref={paneRef}
+      className={styles.studioPane}
+      aria-label="Document preview"
+      onKeyDown={handleKeyDown}
+    >
       <header className={styles.studioHeader}>
         <div className={styles.studioTitleWrap}>
           <span className={styles.ico} aria-hidden="true">
@@ -243,8 +263,11 @@ export function DocumentStudioPane({
             className={styles.studioDownload}
             onClick={() => onDownloadDocx(draft)}
             disabled={downloading}
+            aria-busy={downloading || undefined}
           >
-            <I.share size={13} />
+            <span className={styles.ico} aria-hidden="true">
+              <I.share size={13} />
+            </span>
             <span>{downloading ? 'Preparing…' : 'Download as DOCX'}</span>
           </button>
           <button
@@ -279,7 +302,7 @@ export function DocumentStudioPane({
             </label>
           )}
           {hasPages && (
-            <div className={styles.studioPager}>
+            <div className={styles.studioPager} role="group" aria-label="Document pages">
               <button
                 type="button"
                 className={styles.studioPagerBtn}
@@ -287,10 +310,12 @@ export function DocumentStudioPane({
                 disabled={safePage === 0}
                 aria-label="Previous page"
               >
-                <I.down size={13} style={{ transform: 'rotate(90deg)' }} />
+                <span className={styles.ico} aria-hidden="true">
+                  <I.down size={13} style={{ transform: 'rotate(90deg)' }} />
+                </span>
               </button>
-              <span className={styles.studioPagerLabel} aria-live="polite">
-                Page {safePage + 1} / {pages.length}
+              <span className={styles.studioPagerLabel} role="status" aria-live="polite">
+                Page {safePage + 1} of {pages.length}
               </span>
               <button
                 type="button"
@@ -299,7 +324,9 @@ export function DocumentStudioPane({
                 disabled={safePage === pages.length - 1}
                 aria-label="Next page"
               >
-                <I.down size={13} style={{ transform: 'rotate(-90deg)' }} />
+                <span className={styles.ico} aria-hidden="true">
+                  <I.down size={13} style={{ transform: 'rotate(-90deg)' }} />
+                </span>
               </button>
             </div>
           )}
@@ -344,6 +371,7 @@ export function DocumentStudioPane({
                 className={styles.studioAssembleBtn}
                 onClick={() => onAssembleModule?.(moduleChoice)}
                 disabled={assembling || !onAssembleModule}
+                aria-busy={assembling || undefined}
               >
                 <span className={styles.ico} aria-hidden="true">
                   <I.file size={13} />
