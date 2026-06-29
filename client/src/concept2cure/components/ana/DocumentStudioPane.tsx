@@ -16,6 +16,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { I } from './icons';
 import { VerificationPanel } from './VerificationPanel';
+import {
+  NatHistoryDossierAffordance,
+  type DossierProvenance,
+} from './NatHistoryDossierAffordance';
 import type { VerificationResult } from './useAnaChat';
 import { renderSafeMarkdown } from './renderSafeMarkdown';
 import styles from './styles.module.css';
@@ -46,6 +50,19 @@ export interface DocumentStudioPaneProps {
   downloading?: boolean;
   /** Target characters per page for pagination. Exposed for testing. */
   pageSize?: number;
+  /**
+   * E13 natural-history / external-control evidence-dossier affordance. When
+   * provided, renders the flag-gated panel that asks AnA to assemble the dossier
+   * and surfaces the Part 11 export/seal honesty state. Omit to hide it (the
+   * default — existing Studio surfaces are unaffected).
+   */
+  dossier?: {
+    indication: string;
+    sponsor?: string;
+    provenance?: DossierProvenance;
+    onAssemble: (message: string) => void;
+    busy?: boolean;
+  };
 }
 
 const DEFAULT_PAGE_SIZE = 2200;
@@ -85,6 +102,7 @@ export function DocumentStudioPane({
   onResolveVerification,
   downloading,
   pageSize,
+  dossier,
 }: DocumentStudioPaneProps) {
   const format = (draft.documentType || 'DOCX').toUpperCase();
   const pages = useMemo(() => paginateContent(draft.content, pageSize), [draft.content, pageSize]);
@@ -186,6 +204,18 @@ export function DocumentStudioPane({
       {verification && (
         <div className={styles.studioVerify}>
           <VerificationPanel verification={verification} onResolve={onResolveVerification} />
+        </div>
+      )}
+
+      {dossier && (
+        <div className={styles.studioVerify}>
+          <NatHistoryDossierAffordance
+            indication={dossier.indication}
+            sponsor={dossier.sponsor}
+            provenance={dossier.provenance}
+            onAssemble={dossier.onAssemble}
+            busy={dossier.busy}
+          />
         </div>
       )}
 
