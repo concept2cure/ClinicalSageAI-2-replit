@@ -63,6 +63,32 @@ import {
 import type { ECTDLeaf } from './ectd/ectd4-validator.js';
 import { launchCSRBuildAsync } from './csr-builder.js';
 import { getCSRBuildJobStatus } from './csr/csr-job-runner.js';
+import {
+  recordOrchestratorRunStarted,
+  recordOrchestratorStepCompleted,
+  recordOrchestratorStepFailed,
+  recordOrchestratorRunCompleted,
+  recordOrchestratorGatewayReady,
+  recordOrchestratorSequenceQueryFailed,
+} from './submission-orchestrator-metrics.js';
+
+/**
+ * Bucket a thrown error message into one of the closed error_code labels in
+ * submission-orchestrator-metrics. Closed enum so label cardinality stays
+ * bounded. Anything we can't classify maps to 'unknown' rather than the raw
+ * exception message (which would be unbounded and could carry PHI).
+ */
+function classifyStepError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/tenant|organization_id|organizationId.+required/i.test(msg)) return 'tenant_isolation_violation';
+  if (/SEQ_QUERY_FAILED|sequence history|sequence query/i.test(msg)) return 'sequence_query_failed';
+  if (/gatewayReady|gateway not ready|hardenedScore/i.test(msg)) return 'gateway_not_ready';
+  if (/hallucination|prompt-injection/i.test(msg)) return 'ai_hallucination_guard';
+  if (/AI gateway|getGateway|provider|completion/i.test(msg)) return 'ai_gateway_error';
+  if (/db|pool|query|postgres|connection/i.test(msg)) return 'db_query_failed';
+  if (/validation|Zod|invalid input/i.test(msg)) return 'validation_failed';
+  return 'unknown';
+}
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -671,10 +697,20 @@ export async function runOrchestrator(
 
   await persistRun(run);
 
+  // Prometheus run-started counter (bounded labels — submission_type and
+  // region; orgId deliberately NOT a label per cardinality policy).
+  recordOrchestratorRunStarted({
+    submissionType: run.submissionType,
+    region: run.region,
+  });
+
   const outputs: OrchestratorOutputs = {
     module3Sections: [],
     csrTables: [],
   };
+
+  // Track t0 for the overall-run duration histogram.
+  const runT0 = Date.now();
 
   // Helper: locate a step record
   const stepOf = (key: StepKey): StepRecord => run.steps.find(s => s.key === key)!;
@@ -704,6 +740,12 @@ export async function runOrchestrator(
         step.status = 'complete';
         step.outputHash = hashOutput(result.output);
         step.outputRef = result.outputRef;
+        // Prometheus step-duration histogram — skipped steps don't observe
+        // (their duration is meaningless; would skew p95). Only 'complete'.
+        recordOrchestratorStepCompleted({
+          step: key,
+          durationMs: step.durationMs,
+        });
       }
       await persistStepEvent(runId, run.organizationId, step, 'complete');
     } catch (err) {
@@ -711,6 +753,12 @@ export async function runOrchestrator(
       step.durationMs = Date.now() - t0;
       step.status = 'failed';
       step.error = err instanceof Error ? err.message : String(err);
+      // Prometheus step-failed counter — error_code bucketed via classifyStepError
+      // into the closed KNOWN_ERROR_CODES set so label cardinality stays bounded.
+      recordOrchestratorStepFailed({
+        step: key,
+        errorCode: classifyStepError(err),
+      });
       await persistStepEvent(runId, run.organizationId, step, 'fail');
       throw err;
     }
@@ -1182,6 +1230,19 @@ export async function runOrchestrator(
         // it captures error message + persists a 'fail' step event with
         // the orchestrator-bound organizationId, so the audit row is
         // tenant-scoped (Move 1 invariant).
+        // Prometheus gateway-ready counter (every validation contributes).
+        recordOrchestratorGatewayReady({ ready: result.gatewayReady });
+
+        // Dedicated SEQ_QUERY_FAILED counter — surfaced so Alertmanager can
+        // page on DB-outage rate independently of other gateway-not-ready
+        // causes. The hardened validator emits SEQ_QUERY_FAILED at severity
+        // 'error' (Move 13 fix); we count its presence regardless of the
+        // overall gatewayReady outcome.
+        const seqQueryFailed = result.sequence.some(f => f.code === 'SEQ_QUERY_FAILED');
+        if (seqQueryFailed) {
+          recordOrchestratorSequenceQueryFailed();
+        }
+
         if (!result.gatewayReady) {
           const errCount = result.summary.errors;
           const regionalErrCount = result.regional.filter(f => f.severity === 'error').length;
@@ -1219,6 +1280,18 @@ export async function runOrchestrator(
 
   run.completedAt = new Date().toISOString();
   await persistRun(run);
+
+  // Prometheus run-completed counter + overall-duration histogram. Status is
+  // bucketed into success/failure on the recorder side. awaiting-async runs
+  // do NOT fire this — they return from the early-exit branch above without
+  // setting completedAt, and the resume path will fire this on its eventual
+  // terminal transition.
+  recordOrchestratorRunCompleted({
+    submissionType: run.submissionType,
+    region: run.region,
+    status: run.status as 'complete' | 'failed' | 'partial',
+    durationMs: Date.now() - runT0,
+  });
 
   return { run, outputs };
 }

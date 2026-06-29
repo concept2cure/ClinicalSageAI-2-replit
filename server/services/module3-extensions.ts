@@ -2,13 +2,18 @@
  * @fileoverview M3 narrative composer extensions — 3.2.A.*, 3.2.R.*, cross-references
  * @module server/services/module3-extensions
  *
- * Extends `module3Composer.ts` with the appendix (3.2.A.*) and regional (3.2.R.*)
- * subsections, plus a cross-reference injection helper that adds inline pointers
- * like "(see 3.2.S.7 Stability)" wherever a section depends on another section's
- * data.
+ * SINGLE SOURCE OF TRUTH for Module 3 Appendices (3.2.A.*) and Regional
+ * Information (3.2.R.*). The core composer (module3Composer.ts) owns ONLY the
+ * S/P subsections plus the structural 3.1/3.3 sections (17 sections total) and
+ * does NOT emit any A/R leaves — defining A/R rules there as well produced
+ * duplicate appendix leaves and region leakage in assembled eCTD packages.
+ *
+ * This file performs the region-specific dispatch (US/EU/JP/CA): the rich
+ * appendix and regional generators below were ported here from the core
+ * composer so the deterministic A/R narratives live in exactly one place.
  *
  * Why a separate file:
- *  - module3Composer.ts is 750 lines already; extending in-place creates a monolith
+ *  - module3Composer.ts is already large; extending in-place creates a monolith
  *  - Appendices and Regional are submission-type-specific (US vs EU vs JP vs CA),
  *    so they need their own dispatcher
  */
@@ -22,6 +27,34 @@ import {
 } from './module3Composer.js';
 
 export type RegionCode = 'US' | 'EU' | 'JP' | 'CA';
+
+// ── Local helpers ───────────────────────────────────────────────────────────
+
+function val(sources: CanonicalSource[], field: string): string {
+  for (const s of sources) {
+    const v = s.sourcePayload?.[field];
+    if (v !== undefined && v !== null && v !== '') return String(v);
+  }
+  return '';
+}
+
+function valArr(sources: CanonicalSource[], field: string): any[] {
+  for (const s of sources) {
+    const v = s.sourcePayload?.[field];
+    if (Array.isArray(v)) return v;
+  }
+  return [];
+}
+
+function kvTable(title: string, data: Record<string, any>): GeneratedTable {
+  return {
+    title,
+    headers: ['Property', 'Value'],
+    rows: Object.entries(data)
+      .filter(([, v]) => v !== undefined && v !== null && v !== '')
+      .map(([k, v]) => [k, typeof v === 'object' ? JSON.stringify(v) : String(v)]),
+  };
+}
 
 // ── 3.2.A.* — Appendices ────────────────────────────────────────────────────
 
@@ -37,34 +70,55 @@ const APPENDIX_RULES: AppendixRule[] = [
   {
     sectionKey: '3.2.A.1',
     title: 'Facilities and Equipment',
-    requiredSourceTypes: ['manufacturing_process'],
+    requiredSourceTypes: ['manufacturing_process', 'drug_substance', 'drug_product', 'container_closure'],
     optional: false,
-    generator: (matched) => {
-      const sites = matched
-        .map(m => String(m.sourcePayload?.manufacturingSite || m.sourcePayload?.site || ''))
-        .filter(s => s);
-      const equipment = matched
-        .flatMap(m => Array.isArray(m.sourcePayload?.equipment) ? m.sourcePayload.equipment : [])
-        .filter(e => e);
+    generator: (m) => {
+      const mfgSite = val(m, 'manufacturingSite');
+      const route = val(m, 'manufacturingRoute');
+      const processDesc = val(m, 'processDescription');
+      const container = val(m, 'containerDescription');
+      const closure = val(m, 'closureDescription');
+      const justification = val(m, 'suitabilityJustification');
+      const processSteps = valArr(m, 'processSteps');
       const tables: GeneratedTable[] = [];
-      if (sites.length > 0) {
+      tables.push(kvTable('Facilities Summary', {
+        'Manufacturing Site': mfgSite,
+        'Synthetic/Manufacturing Route': route,
+        'Process Description': processDesc,
+      }));
+      tables.push(kvTable('Primary Equipment / Container Closure', {
+        'Primary Container': container,
+        'Closure': closure,
+        'Suitability Justification': justification,
+      }));
+      if (processSteps.length > 0) {
         tables.push({
-          title: 'Manufacturing Facilities',
-          headers: ['Site', 'Function'],
-          rows: sites.map(s => [s, 'Drug substance / drug product manufacturing']),
-        });
-      }
-      if (equipment.length > 0) {
-        tables.push({
-          title: 'Critical Equipment',
-          headers: ['Equipment', 'Operation'],
-          rows: equipment.map((e: any) => [String(e.name || e), String(e.operation || '—')]),
+          title: 'Unit Operations and Associated Equipment',
+          headers: ['Step', 'Unit Operation', 'Equipment / Facility'],
+          rows: processSteps.map((step: any, idx: number) => {
+            if (typeof step === 'object' && step !== null) {
+              return [
+                String(idx + 1),
+                step.operation || step.name || 'Unspecified',
+                step.equipment || step.facility || mfgSite || '—',
+              ];
+            }
+            return [String(idx + 1), String(step), mfgSite || '—'];
+          }),
         });
       }
       return {
-        narrative: `This section describes facilities and equipment used in the manufacture of the drug substance and drug product. ` +
-          (sites.length > 0 ? `Manufacturing is performed at ${sites.length} site(s): ${sites.join(', ')}. ` : '') +
-          `All facilities operate under current Good Manufacturing Practice (cGMP) per 21 CFR 210/211 and EU GMP Annex 1.`,
+        narrative: `Per ICH M4Q, Section 3.2.A.1 (Facilities and Equipment) describes the facilities, equipment, and ` +
+          `related controls used in the manufacture of the drug substance and drug product. ` +
+          (mfgSite ? `Manufacturing operations are performed at ${mfgSite}. ` : 'Manufacturing site not yet recorded. ') +
+          (route ? `The manufacturing route is: ${route}. ` : '') +
+          (processDesc ? `Process overview: ${processDesc}. ` : '') +
+          `\n\nPrimary container closure equipment and packaging components used during manufacture and storage are ` +
+          (container ? `${container}` + (closure ? ` with ${closure}` : '') + `. ` : `not yet specified. `) +
+          (justification ? `Suitability of the equipment and packaging is supported by: ${justification}. ` : '') +
+          `\n\nFacility cleaning, equipment qualification, and changeover procedures follow site SOPs and current GMP requirements. ` +
+          `Cross-contamination controls, environmental monitoring, and utilities (HVAC, water, compressed gases) ` +
+          `meet the standards applicable to the dosage form.`,
         tables,
       };
     },
@@ -72,64 +126,232 @@ const APPENDIX_RULES: AppendixRule[] = [
   {
     sectionKey: '3.2.A.2',
     title: 'Adventitious Agents Safety Evaluation',
-    requiredSourceTypes: ['drug_substance', 'characterization'],
+    requiredSourceTypes: ['drug_substance', 'characterization', 'manufacturing_process'],
     optional: true,
-    generator: (matched) => {
-      const ds = matched.find(m => m.sourceType === 'drug_substance');
-      const isBiologic = ds?.sourcePayload?.modality === 'biologic' ||
-        ds?.sourcePayload?.molecularType === 'biologic' ||
-        ds?.sourcePayload?.cellLine !== undefined;
+    generator: (m) => {
+      const name = val(m, 'name');
+      const route = val(m, 'manufacturingRoute');
+      const processDesc = val(m, 'processDescription');
+      const biologicalOrigin = val(m, 'biologicalOrigin');
+      const cellLine = val(m, 'cellLine');
+      const sourceOrganism = val(m, 'sourceOrganism');
+      const viralSafety = val(m, 'viralSafetyEvaluation');
+      const tseStatus = val(m, 'tseStatus');
+      const modality = val(m, 'modality'); // 'small_molecule' | 'biologic' (preferred explicit signal)
+      const molecularType = val(m, 'molecularType');
+
+      // Detect biological origin. Prefer an explicit 'modality'/'molecularType'
+      // field on the drug substance source; fall back to a heuristic regex only
+      // when no structured signal is present. Regex uses word boundaries and
+      // concrete biologic tokens to avoid false positives on chemical drug
+      // substances whose name or processDescription incidentally mentions
+      // 'tissue' or 'plasma' (e.g. 'tissue paper packaging', 'plasma etching').
+      const explicitSmallMolecule = /^(small[-_ ]?molecule|synthetic|chemical)$/i.test(modality);
+      const explicitBiologic =
+        /^biologic(al)?$/i.test(modality) || /^biologic(al)?$/i.test(molecularType);
+      const biologicHeuristic =
+        /\b(biologic|recombinant|monoclonal|vaccine|fermentation|mammalian)\b|\bmAb\b|\bcell[\s-]*line\b|\b(human|animal)\s*tissue\b|\bplasma[-\s]derived\b/i
+          .test(`${route} ${processDesc} ${name}`);
+      const isBiologic =
+        explicitBiologic ||
+        (!explicitSmallMolecule &&
+          !!(biologicalOrigin || cellLine || sourceOrganism || viralSafety || tseStatus || biologicHeuristic));
+
       if (!isBiologic) {
         return {
-          narrative: `Section 3.2.A.2 is not applicable for this product as it is a small-molecule chemical entity not derived from animal/human source material. No adventitious agents safety evaluation is required.`,
-          tables: [],
+          narrative: `Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, ` +
+            `bacterial, fungal, mycoplasma, and TSE/BSE safety for biologically-derived materials. ` +
+            `\n\nNot applicable for chemical drug substances. ` +
+            (name ? `The drug substance ${name} is synthesized via ${route || 'a chemical route'} ` : 'The drug substance is produced via a chemical synthetic route ') +
+            `with no animal- or human-derived raw materials, no cell-line propagation, and no fermentation step. ` +
+            `This section is therefore not applicable, and an adventitious agents safety evaluation is not required. ` +
+            `\n\nRaw materials are controlled per 3.2.S.2.3 and excipients per 3.2.P.4. ` +
+            `Any future change to a biologically-derived starting material would trigger re-assessment of this section.`,
+          tables: [kvTable('Adventitious Agents Safety Evaluation', {
+            'Applicability': 'Not applicable — chemical drug substance',
+            'Drug Substance': name || '—',
+            'Manufacturing Route': route || '—',
+            'Biological Origin': 'None',
+          })],
         };
       }
-      const cellLine = String(ds?.sourcePayload?.cellLine || '[not specified]');
-      const sourceMaterial = String(ds?.sourcePayload?.sourceMaterial || '[not specified]');
+
+      const tables: GeneratedTable[] = [];
+      tables.push(kvTable('Adventitious Agents Safety — Source Materials', {
+        'Drug Substance': name,
+        'Biological Origin': biologicalOrigin,
+        'Source Organism / Cell Line': sourceOrganism || cellLine,
+        'Manufacturing Route': route,
+        'TSE/BSE Status': tseStatus,
+      }));
+      if (viralSafety) {
+        tables.push(kvTable('Viral Safety Evaluation Summary', {
+          'Evaluation': viralSafety,
+          'Reference': 'ICH Q5A(R2) — Viral Safety Evaluation of Biotechnology Products',
+        }));
+      }
       return {
-        narrative: `Adventitious agents safety evaluation is provided for the biologic drug substance derived from ${cellLine} cell line. ` +
-          `Source materials: ${sourceMaterial}. The viral safety strategy follows ICH Q5A(R2) and includes (1) selection and testing of cell lines, ` +
-          `(2) testing of unprocessed bulk for viral contaminants, and (3) viral clearance studies on the manufacturing process.`,
-        tables: [{
-          title: 'Adventitious Agents Safety Strategy (ICH Q5A)',
-          headers: ['Stage', 'Test Type', 'Outcome'],
-          rows: [
-            ['Cell Line', 'In vitro / in vivo testing', 'Cleared per ICH Q5A'],
-            ['Unprocessed Bulk', 'Viral testing per 9 CFR 113', '[results]'],
-            ['Process Clearance', 'Spike-and-recover viral clearance', '[log10 reduction]'],
-          ],
-        }],
+        narrative: `Per ICH M4Q and ICH Q5A(R2), Section 3.2.A.2 (Adventitious Agents Safety Evaluation) summarizes ` +
+          `the controls implemented to assure freedom from adventitious viral, bacterial, fungal, mycoplasma, and ` +
+          `TSE/BSE agents in the drug substance and drug product. ` +
+          (name ? `The drug substance ${name} ` : 'The drug substance ') +
+          (biologicalOrigin ? `is derived from ${biologicalOrigin}. ` : 'is biologically derived. ') +
+          (sourceOrganism || cellLine ? `Source material: ${sourceOrganism || cellLine}. ` : '') +
+          `\n\nThe control strategy combines (i) qualification and testing of source materials, ` +
+          `(ii) in-process testing for adventitious agents, and (iii) viral clearance / inactivation steps ` +
+          `incorporated into the manufacturing process. ` +
+          (viralSafety ? `Viral safety evaluation: ${viralSafety}. ` : '') +
+          (tseStatus ? `TSE/BSE risk assessment: ${tseStatus}. ` : '') +
+          `\n\nCell bank characterization, end-of-production cell testing, and downstream clearance data ` +
+          `are referenced in 3.2.S.2.3. Raw materials of animal or human origin (where applicable) are ` +
+          `controlled per EMA EMEA/410/01 and 9 CFR.`,
+        tables,
       };
     },
   },
   {
     sectionKey: '3.2.A.3',
     title: 'Excipients',
-    requiredSourceTypes: ['excipient'],
+    requiredSourceTypes: ['excipient', 'drug_product', 'formulation_record'],
     optional: true,
-    generator: (matched) => {
-      const excipients = matched.filter(m => m.sourceType === 'excipient');
-      const novelExcipients = excipients.filter(e => e.sourcePayload?.novel === true);
-      if (novelExcipients.length === 0) {
+    generator: (m) => {
+      const comp = val(m, 'composition');
+      const formulationName = val(m, 'formulationName');
+      const components = valArr(m, 'components');
+      const excipientSources = m.filter((s) => s.sourceType === 'excipient');
+      const novelExcipients = excipientSources.filter((e) => e.sourcePayload?.novel === true);
+
+      // ── Novel excipients (ICH Q3C / FDA novel-excipient qualification) ──
+      // Detected via dedicated `excipient` sources flagged novel:true.
+      if (novelExcipients.length > 0) {
         return {
-          narrative: `Section 3.2.A.3 is not applicable; all excipients used in the drug product are compendial and have established safety profiles.`,
-          tables: [],
+          narrative: `Per ICH M4Q, Section 3.2.A.3 (Excipients) addresses excipients requiring additional safety ` +
+            `qualification. ${novelExcipients.length} novel excipient(s) are used in the drug product formulation` +
+            (formulationName ? ` (${formulationName})` : '') + `. ` +
+            `Safety qualification data per ICH Q3C / FDA Guidance for Industry — Nonclinical Studies for the Safety ` +
+            `Evaluation of Pharmaceutical Excipients is provided below.`,
+          tables: [{
+            title: 'Novel Excipients — Safety Qualification',
+            headers: ['Excipient', 'Function', 'Concentration', 'Safety Studies'],
+            rows: novelExcipients.map((e) => [
+              String(e.sourcePayload?.materialName || 'Unknown'),
+              String(e.sourcePayload?.function || '—'),
+              String(e.sourcePayload?.concentration || '—'),
+              String(e.sourcePayload?.safetyStudies || 'See M4'),
+            ]),
+          }],
         };
       }
+
+      // ── Excipients of human or animal origin (TSE/BSE) ──
+      // Detect human/animal-origin excipients from structured formulation
+      // components.
+      //
+      // Strategy:
+      //  (1) Trust an explicit per-component `origin` field when present
+      //      ('animal', 'human', 'bovine', 'porcine', ovine, equine, murine,
+      //      hamster). Plant/mineral/synthetic origins do NOT trigger this
+      //      section.
+      //  (2) Fall back to a name-based regex restricted to unambiguously
+      //      human/animal tokens. Excluded intentionally:
+      //        - 'stearate' — magnesium stearate is overwhelmingly vegetable
+      //          grade in modern pharma and CANNOT be inferred animal-origin
+      //          from the name alone.
+      //        - 'lactose' — should be declared via the structured origin field.
+      //        - 'cholesterol' — can be synthetic or phytosterol-derived.
+      //  (3) When the only signal is the regex fallback (not an explicit
+      //      origin field), the section is rendered as POTENTIAL / review-required
+      //      rather than asserting human/animal origin.
+      const explicitAnimalOriginRe = /^(animal|human|bovine|porcine|ovine|equine|murine|hamster|fish|egg|milk)$/i;
+      const animalNameRe = /\b(gelatin|tallow|albumin|serum|collagen|chondroitin|heparin|insulin|bovine|porcine|ovine|equine|murine|hamster|lanolin|shellac)\b/i;
+      const humanNameRe = /\bhuman[\s-]*(serum|albumin|plasma|tissue|cell|derived)\b/i;
+
+      function classifyComponent(c: any): 'explicit' | 'name-fallback' | 'none' {
+        if (typeof c !== 'object' || c === null) return 'none';
+        const originField = String(c.origin || c.source || '').trim();
+        if (originField && explicitAnimalOriginRe.test(originField)) return 'explicit';
+        const text = `${c.component || ''} ${c.name || ''}`;
+        if (animalNameRe.test(text) || humanNameRe.test(text)) return 'name-fallback';
+        return 'none';
+      }
+
+      const explicitOriginComponents = components.filter((c) => classifyComponent(c) === 'explicit');
+      const nameFallbackComponents = components.filter((c) => classifyComponent(c) === 'name-fallback');
+      const humanAnimalComponents = [...explicitOriginComponents, ...nameFallbackComponents];
+
+      const compPotentiallyAnimal = !!comp && (animalNameRe.test(comp) || humanNameRe.test(comp));
+
+      const confidence: 'explicit' | 'potential' | 'none' =
+        explicitOriginComponents.length > 0
+          ? 'explicit'
+          : nameFallbackComponents.length > 0 || compPotentiallyAnimal
+            ? 'potential'
+            : 'none';
+
+      const tables: GeneratedTable[] = [];
+
+      if (confidence === 'none') {
+        tables.push(kvTable('Excipients of Human or Animal Origin', {
+          'Applicability': 'Not applicable — no excipients of human or animal origin',
+          'Drug Product Formulation': formulationName || '—',
+          'Composition': comp || '—',
+        }));
+        return {
+          narrative: `Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) addresses TSE/BSE, ` +
+            `viral, and other adventitious-agent risks associated with excipients of human or animal origin. ` +
+            `\n\nNo excipients of human or animal origin are used in the drug product formulation` +
+            (formulationName ? ` (${formulationName})` : '') + `. ` +
+            `All excipients are of plant, mineral, or synthetic origin and comply with the relevant compendial ` +
+            `monographs (USP/NF, Ph. Eur., JP) as detailed in 3.2.P.4. ` +
+            `\n\nAccordingly, no additional TSE/BSE or viral safety documentation is required for this section. ` +
+            `Any future formulation change introducing a human- or animal-derived excipient would trigger ` +
+            `re-evaluation and supplementary safety documentation per EMA EMEA/410/01 rev. 3.`,
+          tables,
+        };
+      }
+
+      tables.push({
+        title: confidence === 'potential'
+          ? 'Excipients of Human or Animal Origin — POTENTIAL (Review Required)'
+          : 'Excipients of Human or Animal Origin',
+        headers: ['Excipient', 'Function / Role', 'Origin', 'TSE/BSE Certification'],
+        rows: humanAnimalComponents.length > 0
+          ? humanAnimalComponents.map((c: any) => [
+              c.component || c.name || 'Unknown',
+              c.role || c.function || '—',
+              c.origin || c.source || (confidence === 'potential'
+                ? 'Potential animal/human origin (name-based fallback — review required)'
+                : 'Animal/human origin (per composition)'),
+              c.tseCertification || c.certification ||
+                (confidence === 'potential' ? 'CEP/TSE certification — confirm via supplier' : 'Certificate on file (CEP/TSE-compliant)'),
+            ])
+          : [['(Per composition statement)', '—',
+              confidence === 'potential'
+                ? 'Potential human/animal-origin material — review required'
+                : 'Human/animal-origin material detected',
+              confidence === 'potential' ? 'Confirm CEP/TSE certification with supplier' : 'CEP/TSE certification required']],
+      });
+
+      const leadParagraph = confidence === 'explicit'
+        ? `${explicitOriginComponents.length > 0 ? explicitOriginComponents.length : 'One or more'} excipient(s) ` +
+          `of human or animal origin have been identified. Each is qualified through (i) a documented origin / ` +
+          `country-of-origin statement, (ii) TSE/BSE compliance per EMA EMEA/410/01 rev. 3 (Certificate of ` +
+          `Suitability — CEP), and (iii) viral safety evaluation where applicable.`
+        : `Potential human- or animal-origin excipient(s) have been flagged by a name-based heuristic and require ` +
+          `confirmation. Where confirmed, each component must be qualified through (i) a documented origin / ` +
+          `country-of-origin statement, (ii) TSE/BSE compliance per EMA EMEA/410/01 rev. 3 (Certificate of ` +
+          `Suitability — CEP), and (iii) viral safety evaluation where applicable. ` +
+          `Components identified as plant, mineral, or synthetic in origin should be re-tagged via the structured ` +
+          `origin field to suppress this flag.`;
+
       return {
-        narrative: `${novelExcipients.length} novel excipient(s) are used in the drug product formulation. ` +
-          `Safety qualification data per ICH Q3C / FDA Guidance for Industry — Nonclinical Studies for Novel Excipients is provided below.`,
-        tables: [{
-          title: 'Novel Excipients — Safety Qualification',
-          headers: ['Excipient', 'Function', 'Concentration', 'Safety Studies'],
-          rows: novelExcipients.map(e => [
-            String(e.sourcePayload?.materialName || 'Unknown'),
-            String(e.sourcePayload?.function || '—'),
-            String(e.sourcePayload?.concentration || '—'),
-            String(e.sourcePayload?.safetyStudies || 'See M4'),
-          ]),
-        }],
+        narrative: `Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) summarizes the controls ` +
+          `applied to excipients derived from human or animal sources used in the drug product formulation. ` +
+          (formulationName ? `Formulation: ${formulationName}. ` : '') +
+          `\n\n${leadParagraph} ` +
+          `\n\nSpecifications, analytical procedures, and supplier qualification details are provided in 3.2.P.4 ` +
+          `(Control of Excipients). Audit trails for vendor changes are maintained per the site quality system.`,
+        tables,
       };
     },
   },
@@ -147,82 +369,182 @@ interface RegionalSubsection {
 const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
   {
     sectionKey: '3.2.R.1.US',
-    title: 'Executed Batch Records (US)',
+    title: 'Regional Information — United States (FDA)',
     region: 'US',
-    generator: (matched) => {
-      const batches = matched.filter(m => m.sourceType === 'batch');
+    generator: (m) => {
+      const form = val(m, 'dosageFormDescription');
+      const strength = val(m, 'strength');
+      const comp = val(m, 'composition');
+      const mfgSite = val(m, 'manufacturingSite');
+      const batchNum = val(m, 'batchNumber');
+      const batchSize = val(m, 'batchSize');
+      const tables: GeneratedTable[] = [];
+      tables.push(kvTable('US Regional Information — Submission Summary', {
+        'Region': 'United States — FDA',
+        'Submission Type': 'NDA / ANDA / BLA (as applicable)',
+        'Dosage Form': form,
+        'Strength': strength,
+        'Manufacturing Site': mfgSite,
+        'Representative Batch': batchNum,
+        'Batch Size': batchSize,
+      }));
+      tables.push({
+        title: 'US-Specific Documentation Pointers',
+        headers: ['Item', 'Reference / Location'],
+        rows: [
+          // NDA / ANDA — governed by 21 CFR Part 314
+          ['Executed Batch Records (NDA / ANDA)', 'Provided per 21 CFR 314.50(d)(1)(ii) — see 3.2.P.3.4'],
+          ['Comparability Protocols (NDA / ANDA)', 'Per 21 CFR 314.70 — referenced in 3.2.P.2 / 3.2.P.3'],
+          // BLA — governed by 21 CFR Parts 600–680
+          ['Executed Batch Records (BLA)', 'Provided per 21 CFR 601.2 (content & format of BLA) — see 3.2.P.3.4'],
+          ['Post-Approval Changes (BLA)', 'Per 21 CFR 601.12 — referenced in 3.2.P.2 / 3.2.P.3'],
+          // Cross-application items
+          ['Method Validation Package', 'Per FDA Guidance for Industry (Analytical Procedures and Methods Validation)'],
+          ['Container Closure (Type III DMF)', 'Letter of Authorization on file — see 3.2.P.7'],
+          ['Establishment Information', `FEI / DUNS for ${mfgSite || '[site]'} — see Form FDA 356h`],
+        ],
+      });
       return {
-        narrative: `This US-specific section provides executed batch records for the drug substance and drug product. ` +
-          `${batches.length} batch record(s) are referenced. Per FDA Guidance for Industry — Submission of Documentation in Drug Applications for Manufacturing Changes (SUPAC), ` +
-          `batch records support the proposed commercial manufacturing process.`,
-        tables: batches.length > 0 ? [{
-          title: 'Executed Batch Records',
-          headers: ['Batch Number', 'Date', 'Disposition', 'Yield'],
-          rows: batches.map(b => [
-            String(b.sourcePayload?.batchNumber || '—'),
-            String(b.sourcePayload?.manufactureDate || '—'),
-            String(b.sourcePayload?.disposition || '—'),
-            String(b.sourcePayload?.yield || '—'),
-          ]),
-        }] : [],
+        narrative: `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — United States contains FDA-specific ` +
+          `information required to support a US marketing application (NDA, ANDA, or BLA, as applicable). ` +
+          (form ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. ` : '') +
+          (mfgSite ? `Primary US-listed manufacturing site: ${mfgSite}. ` : '') +
+          `\n\nThis section provides pointers to the regulations applicable by submission type. For NDA / ANDA: ` +
+          `(i) executed batch records per 21 CFR 314.50(d)(1)(ii), (ii) the method validation package per ` +
+          `FDA Guidance for Industry, (iii) comparability protocols per 21 CFR 314.70, and (iv) Type III Drug ` +
+          `Master File (DMF) letters of authorization for container closure components. For BLA: equivalent ` +
+          `content per 21 CFR 601.2 (BLA content & format) and 21 CFR 601.12 (post-approval changes), with ` +
+          `additional product- and establishment-specific requirements under 21 CFR Parts 600–680. ` +
+          `\n\nEstablishment information (FEI / DUNS / registration status) for all manufacturing, packaging, ` +
+          `testing, and labeling sites listed in Form FDA 356h is cross-referenced. Field copies, certifications, ` +
+          `and patent/exclusivity information are provided in Module 1 (administrative). ` +
+          (comp ? `\n\nComposition statement: ${comp}.` : ''),
+        tables,
       };
     },
   },
   {
-    sectionKey: '3.2.R.2.US',
-    title: 'Comparability Protocols (US)',
-    region: 'US',
-    generator: (matched) => {
-      const comparability = matched.filter(m => m.sourceType === 'comparability');
-      return {
-        narrative: comparability.length > 0
-          ? `Comparability protocols submitted under 21 CFR 314.70 / 314.71 to support post-approval changes. ${comparability.length} protocol(s) are referenced.`
-          : `No comparability protocols are submitted with this application. Future post-approval CMC changes will be submitted via supplement per 21 CFR 314.70.`,
-        tables: comparability.length > 0 ? [{
-          title: 'Comparability Protocols',
-          headers: ['Protocol ID', 'Scope', 'Acceptance Criteria'],
-          rows: comparability.map(c => [
-            String(c.sourcePayload?.protocolId || '—'),
-            String(c.sourcePayload?.scope || '—'),
-            String(c.sourcePayload?.acceptanceCriteria || '—'),
-          ]),
-        }] : [],
-      };
-    },
-  },
-  {
-    sectionKey: '3.2.R.3.EU',
-    title: 'Medical Device Information (EU)',
+    sectionKey: '3.2.R.1.EU',
+    title: 'Regional Information — European Union (EMA)',
     region: 'EU',
-    generator: (matched) => {
-      const dp = matched.find(m => m.sourceType === 'drug_product');
-      const isCombination = dp?.sourcePayload?.deliveryDevice !== undefined;
+    generator: (m) => {
+      const form = val(m, 'dosageFormDescription');
+      const strength = val(m, 'strength');
+      const comp = val(m, 'composition');
+      const tables: GeneratedTable[] = [];
+      tables.push(kvTable('EU Regional Information — Submission Summary', {
+        'Region': 'European Union — EMA',
+        'Submission Type': 'MAA (Centralised / Decentralised / National)',
+        'Dosage Form': form,
+        'Strength': strength,
+      }));
+      tables.push({
+        title: 'EU-Specific Documentation Pointers',
+        headers: ['Item', 'Reference / Location'],
+        rows: [
+          ['QP Declaration on GMP Compliance', 'Per Annex 16 of EU GMP Guide — included in Module 1.5.2'],
+          ['Manufacturing Authorisation', 'Copy of MIA for each EU-based site — Module 1.2'],
+          ['Process Validation Scheme', 'Per Annex 15 (Qualification & Validation) — cross-ref 3.2.P.3.5'],
+          ['Certificate of Suitability (CEP)', 'Where applicable, for drug substance and excipients — Module 1'],
+          ['Environmental Risk Assessment', 'Per EMA/CHMP/SWP/4447/00 Rev. 1 — Module 1.6'],
+          ['TSE/BSE Compliance', 'Per EMA EMEA/410/01 rev. 3 — cross-ref 3.2.A.2 and 3.2.A.3'],
+        ],
+      });
       return {
-        narrative: isCombination
-          ? `This drug product is a combination product incorporating ${String(dp?.sourcePayload?.deliveryDevice)} delivery device. ` +
-            `CE-marking documentation and Notified Body opinion are provided per Article 117 of EU MDR 2017/745.`
-          : `Section 3.2.R.3 is not applicable; the drug product does not incorporate a medical device.`,
-        tables: [],
+        narrative: `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — European Union contains EMA-specific ` +
+          `information required to support a Marketing Authorisation Application (MAA) under the centralised, ` +
+          `decentralised, mutual recognition, or national procedure. ` +
+          (form ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. ` : '') +
+          `\n\nThis section provides pointers to the Qualified Person (QP) declaration on GMP compliance ` +
+          `(per Annex 16 of the EU GMP Guide), Manufacturing Authorisations (MIA) for each EU-based ` +
+          `manufacturing site, the process validation scheme aligned with Annex 15 (Qualification & ` +
+          `Validation), and Certificates of Suitability (CEP) for the drug substance and applicable excipients. ` +
+          `\n\nEnvironmental Risk Assessment (ERA) per EMA/CHMP/SWP/4447/00 Rev. 1 and TSE/BSE compliance ` +
+          `documentation per EMA EMEA/410/01 rev. 3 are provided in Module 1.6 and cross-referenced from ` +
+          `3.2.A.2 / 3.2.A.3 of this dossier. ` +
+          (comp ? `\n\nComposition statement: ${comp}.` : ''),
+        tables,
       };
     },
   },
   {
-    sectionKey: '3.2.R.4.JP',
-    title: 'Master File Information (JP)',
+    sectionKey: '3.2.R.1.JP',
+    title: 'Regional Information — Japan (PMDA / MHLW)',
     region: 'JP',
-    generator: () => ({
-      narrative: `Drug Master File (DMF) information for active substance, intermediates, and packaging components is provided per PMDA Notification 0628.`,
-      tables: [],
-    }),
+    generator: (m) => {
+      const form = val(m, 'dosageFormDescription');
+      const strength = val(m, 'strength');
+      const comp = val(m, 'composition');
+      const tables: GeneratedTable[] = [];
+      tables.push(kvTable('Japan Regional Information — Submission Summary', {
+        'Region': 'Japan — PMDA / MHLW',
+        'Submission Type': 'J-NDA (Shinyaku Shinsei)',
+        'Dosage Form': form,
+        'Strength': strength,
+      }));
+      tables.push({
+        title: 'Japan-Specific Documentation Pointers',
+        headers: ['Item', 'Reference / Location'],
+        rows: [
+          ['Foreign Manufacturer Accreditation', 'Per Article 13-3, PMD Act — Module 1 (J-administrative)'],
+          ['Marketing Authorization Holder (MAH)', 'Designated MAH details — Module 1'],
+          ['JP Compendial Compliance', 'JP 18th Edition — referenced in 3.2.P.4 and 3.2.P.5'],
+          ['GMP Compliance Certificate', 'Per MHLW Ordinance No. 179 — Module 1'],
+          ['Japanese-Specific Specifications', 'Where JP monograph differs from USP/Ph. Eur. — see 3.2.P.5'],
+          ['Stability Data — Japanese Climate Zone', 'Zone II data per ICH Q1A(R2) (long-term 25 °C / 60% RH; intermediate 30 °C / 65% RH) per PMDA expectations — cross-ref 3.2.P.8'],
+        ],
+      });
+      return {
+        narrative: `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — Japan contains PMDA / MHLW-specific ` +
+          `information required to support a Japanese New Drug Application (J-NDA, Shinyaku Shinsei) ` +
+          `under the Pharmaceuticals and Medical Devices (PMD) Act. ` +
+          (form ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. ` : '') +
+          `\n\nThis section provides pointers to Foreign Manufacturer Accreditation under Article 13-3 of ` +
+          `the PMD Act, designation of the Japanese Marketing Authorization Holder (MAH), and GMP ` +
+          `compliance certification per MHLW Ordinance No. 179. ` +
+          `\n\nCompendial compliance with the Japanese Pharmacopoeia (JP 18th Edition) is documented in ` +
+          `3.2.P.4 (Control of Excipients) and 3.2.P.5 (Control of Drug Product). Where JP monograph ` +
+          `requirements differ from USP or Ph. Eur., the Japan-specific specifications are presented. ` +
+          `Stability data covering Japanese climate Zone II per ICH Q1A(R2) (long-term 25 °C / 60% RH; ` +
+          `intermediate 30 °C / 65% RH), as expected by PMDA, are cross-referenced to 3.2.P.8. ` +
+          (comp ? `\n\nComposition statement: ${comp}.` : ''),
+        tables,
+      };
+    },
   },
   {
-    sectionKey: '3.2.R.5.CA',
-    title: 'Yearly Biologic Product Reports (CA)',
+    sectionKey: '3.2.R.1.CA',
+    title: 'Regional Information — Canada (Health Canada)',
     region: 'CA',
-    generator: () => ({
-      narrative: `Yearly Biologic Product Report (YBPR) commitment per Health Canada Guidance Document — Submission of Biologic Drug Substance and Product Information.`,
-      tables: [],
-    }),
+    generator: (m) => {
+      const form = val(m, 'dosageFormDescription');
+      const strength = val(m, 'strength');
+      const tables: GeneratedTable[] = [];
+      tables.push(kvTable('Canada Regional Information — Submission Summary', {
+        'Region': 'Canada — Health Canada',
+        'Submission Type': 'NDS / ANDS',
+        'Dosage Form': form,
+        'Strength': strength,
+      }));
+      tables.push({
+        title: 'Canada-Specific Documentation Pointers',
+        headers: ['Item', 'Reference / Location'],
+        rows: [
+          ['Yearly Biologic Product Report (YBPR)', 'Per Health Canada Guidance — Submission of Biologic Drug Substance and Product Information'],
+          ['Certified Product Information Document (CPID)', 'Module 1 (Canadian administrative)'],
+          ['Drug Master File (Type I — Drug Substance)', 'Letter of Access on file — cross-ref 3.2.S'],
+        ],
+      });
+      return {
+        narrative: `Per ICH M4Q, Section 3.2.R.1 (Regional Information) — Canada contains Health Canada-specific ` +
+          `information required to support a New Drug Submission (NDS / ANDS). ` +
+          (form ? `The drug product is a ${form}` + (strength ? ` (${strength})` : '') + `. ` : '') +
+          `\n\nThis section provides pointers to the Certified Product Information Document (CPID), the Yearly ` +
+          `Biologic Product Report (YBPR) commitment where applicable, and Drug Master File letters of access for ` +
+          `the drug substance and packaging components.`,
+        tables,
+      };
+    },
   },
 ];
 

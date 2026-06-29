@@ -48,10 +48,11 @@ vi.mock('../../server/services/ai-gateway/gateway.js', () => ({
   getGateway: () => ({ route: h.route }),
 }));
 
+import { type CanonicalSource } from '../../server/services/module3Composer';
 import {
-  composeModule3FromCanonicalSources,
-  type CanonicalSource,
-} from '../../server/services/module3Composer';
+  composeAppendices,
+  composeRegional,
+} from '../../server/services/module3-extensions';
 import { refineSectionWithAI } from '../../server/services/cmc/module3-narrative-builder';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -145,9 +146,9 @@ function smallMoleculeSources(): CanonicalSource[] {
 // 1. Deterministic composer — Appendix (3.2.A.*) sections
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('composeModule3FromCanonicalSources — Appendix sections (3.2.A.*)', () => {
+describe('composeAppendices — Appendix sections (3.2.A.*)', () => {
   it('produces non-empty output for 3.2.A.1, 3.2.A.2, and 3.2.A.3', () => {
-    const sections = composeModule3FromCanonicalSources(smallMoleculeSources());
+    const sections = composeAppendices(smallMoleculeSources());
 
     for (const key of ['3.2.A.1', '3.2.A.2', '3.2.A.3']) {
       const sec = sections.find((s) => s.sectionKey === key);
@@ -161,7 +162,7 @@ describe('composeModule3FromCanonicalSources — Appendix sections (3.2.A.*)', (
   });
 
   it('3.2.A.2 produces "not applicable" narrative when no biological drug substance is present', () => {
-    const sections = composeModule3FromCanonicalSources(smallMoleculeSources());
+    const sections = composeAppendices(smallMoleculeSources());
     const a2 = sections.find((s) => s.sectionKey === '3.2.A.2');
     expect(a2).toBeDefined();
     // The chemical-modality path must render the NOT-APPLICABLE narrative —
@@ -179,9 +180,23 @@ describe('composeModule3FromCanonicalSources — Appendix sections (3.2.A.*)', (
 // 2. Deterministic composer — Regional (3.2.R.1.*) sections
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('composeModule3FromCanonicalSources — Regional sections (3.2.R.1.*)', () => {
+describe('composeRegional — Regional sections (3.2.R.1.*)', () => {
+  /**
+   * Regional dispatch is per-region: compose US/EU/JP independently and merge,
+   * since a single submission targets one region but these tests assert the
+   * full regional matrix is distinct.
+   */
+  function allRegions() {
+    const src = smallMoleculeSources();
+    return [
+      ...composeRegional(src, 'US'),
+      ...composeRegional(src, 'EU'),
+      ...composeRegional(src, 'JP'),
+    ];
+  }
+
   it('produces non-empty output for 3.2.R.1.US, 3.2.R.1.EU, and 3.2.R.1.JP', () => {
-    const sections = composeModule3FromCanonicalSources(smallMoleculeSources());
+    const sections = allRegions();
 
     for (const key of ['3.2.R.1.US', '3.2.R.1.EU', '3.2.R.1.JP']) {
       const sec = sections.find((s) => s.sectionKey === key);
@@ -192,7 +207,7 @@ describe('composeModule3FromCanonicalSources — Regional sections (3.2.R.1.*)',
   });
 
   it('regional narratives are distinct — each cites its own regulator and framework', () => {
-    const sections = composeModule3FromCanonicalSources(smallMoleculeSources());
+    const sections = allRegions();
     const us = sections.find((s) => s.sectionKey === '3.2.R.1.US')!;
     const eu = sections.find((s) => s.sectionKey === '3.2.R.1.EU')!;
     const jp = sections.find((s) => s.sectionKey === '3.2.R.1.JP')!;

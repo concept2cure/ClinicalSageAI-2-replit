@@ -484,6 +484,24 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Protocol portfolio routes:', error);
   }
 
+  // Protocol development — structured protocol authoring (ICH M11 / E6, IACUC 3Rs, 45 CFR 46.111).
+  try {
+    const protocolDevModule = await import('../routes/protocol-development');
+    app.use('/api/protocol-development', authMiddleware, protocolDevModule.default);
+    console.info('✅ Protocol development routes mounted (/api/protocol-development)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol development routes:', error);
+  }
+
+  // Protocol risk register — likelihood × impact risk assessment (ICH E6(R2) §5.0 / ISO 14971).
+  try {
+    const protocolRisksModule = await import('../routes/protocol-risks');
+    app.use('/api/protocol-risks', authMiddleware, protocolRisksModule.default);
+    console.info('✅ Protocol risk register routes mounted (/api/protocol-risks)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol risk register routes:', error);
+  }
+
   // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
   try {
     const rimModule = await import('../routes/rim');

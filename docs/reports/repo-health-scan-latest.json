@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T03:51:22.540Z",
+  "generatedAt": "2026-06-29T05:11:38.325Z",
   "git": {
-    "sha": "56346abe52d96ab69da22da5f56980541696d15c",
+    "sha": "f2afac1707e5ad3f94815e9c6a644b658ab522bc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 221,
+    "duplicateBasenames": 223,
     "largeFilesByBytes": 14,
     "largeFilesByLines": 45
   },
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 95,
+        "count": 96,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -102,6 +102,7 @@
           "server/services/submission-gateways/index.ts",
           "server/services/templates/index.ts",
           "server/services/tools/index.ts",
+          "server/services/translation/index.ts",
           "server/types/index.ts",
           "services/ai/detectors/index.ts",
           "services/ai/index.ts",
@@ -114,6 +115,54 @@
           "shared/schema/index.ts",
           "shared/types/generated/index.ts",
           "tests/resolution/drivers/index.ts"
+        ]
+      },
+      {
+        "basename": "types",
+        "count": 42,
+        "paths": [
+          ".claude/skills/gstack/scripts/resolvers/types.ts",
+          "client/src/concept2cure/components/concept2cure-projects/types.ts",
+          "client/src/concept2cure/components/intelligentDocs/types.ts",
+          "client/src/concept2cure/insights/data/types.ts",
+          "client/src/concept2cure/mdx/types.ts",
+          "client/src/concept2cure/pdev/data/types.ts",
+          "server/api/cmc/types.js",
+          "server/bootstrap/types.ts",
+          "server/config/types.ts",
+          "server/services/ai-gateway/types.ts",
+          "server/services/ai-governance/classification/types.ts",
+          "server/services/ana-advisory/types.ts",
+          "server/services/ana-biostats/types.ts",
+          "server/services/ana/therapeutic-area-profiles/types.ts",
+          "server/services/biostatistics-judgment/types.ts",
+          "server/services/biostats-signal-engine/types.ts",
+          "server/services/cognitive-ecosystem/types.ts",
+          "server/services/compute/types.ts",
+          "server/services/conversation-os/types.ts",
+          "server/services/ectd/external-validator/types.ts",
+          "server/services/entitlements/types.ts",
+          "server/services/global-markets/types.ts",
+          "server/services/grdhe/types.ts",
+          "server/services/intelligence-engine/types.ts",
+          "server/services/ivd-knowledge/types.ts",
+          "server/services/mdx-submission-planner/types.ts",
+          "server/services/reasoning-engine/types.ts",
+          "server/services/report-os/portfolio/types.ts",
+          "server/services/report-os/prediction/types.ts",
+          "server/services/report-os/providers/types.ts",
+          "server/services/report-os/quality/types.ts",
+          "server/services/report-os/regional/types.ts",
+          "server/services/report-os/render/types.ts",
+          "server/services/report-os/scheduling/types.ts",
+          "server/services/report-os/sealing/types.ts",
+          "server/services/rules-engine/types.ts",
+          "server/services/sentinel/types.ts",
+          "server/services/submission-gateways/types.ts",
+          "server/services/translation/types.ts",
+          "server/startup/types.ts",
+          "services/proof/types.ts",
+          "shared/ivd/types.ts"
         ]
       },
       {
@@ -161,53 +210,6 @@
           "ui_kits/submission/app.jsx",
           "ui_kits/task-tray/app.jsx",
           "ui_kits/tasking/app.jsx"
-        ]
-      },
-      {
-        "basename": "types",
-        "count": 41,
-        "paths": [
-          ".claude/skills/gstack/scripts/resolvers/types.ts",
-          "client/src/concept2cure/components/concept2cure-projects/types.ts",
-          "client/src/concept2cure/components/intelligentDocs/types.ts",
-          "client/src/concept2cure/insights/data/types.ts",
-          "client/src/concept2cure/mdx/types.ts",
-          "client/src/concept2cure/pdev/data/types.ts",
-          "server/api/cmc/types.js",
-          "server/bootstrap/types.ts",
-          "server/config/types.ts",
-          "server/services/ai-gateway/types.ts",
-          "server/services/ai-governance/classification/types.ts",
-          "server/services/ana-advisory/types.ts",
-          "server/services/ana-biostats/types.ts",
-          "server/services/ana/therapeutic-area-profiles/types.ts",
-          "server/services/biostatistics-judgment/types.ts",
-          "server/services/biostats-signal-engine/types.ts",
-          "server/services/cognitive-ecosystem/types.ts",
-          "server/services/compute/types.ts",
-          "server/services/conversation-os/types.ts",
-          "server/services/ectd/external-validator/types.ts",
-          "server/services/entitlements/types.ts",
-          "server/services/global-markets/types.ts",
-          "server/services/grdhe/types.ts",
-          "server/services/intelligence-engine/types.ts",
-          "server/services/ivd-knowledge/types.ts",
-          "server/services/mdx-submission-planner/types.ts",
-          "server/services/reasoning-engine/types.ts",
-          "server/services/report-os/portfolio/types.ts",
-          "server/services/report-os/prediction/types.ts",
-          "server/services/report-os/providers/types.ts",
-          "server/services/report-os/quality/types.ts",
-          "server/services/report-os/regional/types.ts",
-          "server/services/report-os/render/types.ts",
-          "server/services/report-os/scheduling/types.ts",
-          "server/services/report-os/sealing/types.ts",
-          "server/services/rules-engine/types.ts",
-          "server/services/sentinel/types.ts",
-          "server/services/submission-gateways/types.ts",
-          "server/startup/types.ts",
-          "services/proof/types.ts",
-          "shared/ivd/types.ts"
         ]
       },
       {
@@ -1872,6 +1874,22 @@
         ]
       },
       {
+        "basename": "protocol-development",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-development.ts",
+          "shared/schema/protocol-development.ts"
+        ]
+      },
+      {
+        "basename": "protocol-risks",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-risks.ts",
+          "shared/schema/protocol-risks.ts"
+        ]
+      },
+      {
         "basename": "provenance",
         "count": 2,
         "paths": [
@@ -2211,7 +2229,7 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 793958
+        "bytes": 803833
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2219,11 +2237,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 629899
+        "bytes": 644219
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 412995
+        "bytes": 418534
       },
       {
         "file": "server/statistics-service.ts",
@@ -2269,7 +2287,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19173
+        "lines": 19331
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2277,11 +2295,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 12749
+        "lines": 12942
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7587
+        "lines": 7694
       },
       {
         "file": "server/statistics-service.ts",
@@ -2356,16 +2374,16 @@
         "lines": 1937
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 1933
+      },
+      {
         "file": "server/services/ai-gateway/gateway.ts",
         "lines": 1876
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
         "lines": 1862
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 1860
       },
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
@@ -2453,7 +2471,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 352,
+      "duplicateGroups": 356,
       "largeByBytes": 11,
       "largeByLines": 35
     },
@@ -2471,7 +2489,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 49,
+      "duplicateGroups": 51,
       "largeByBytes": 1,
       "largeByLines": 2
     },

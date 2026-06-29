@@ -4085,6 +4085,105 @@ export const REVIEW_SEND_READINESS: AnaTool = {
   },
 };
 
+// ─── Protocol Development (C2C-17) ───────────────────────────────────────────
+
+export const CREATE_PROTOCOL_DOCUMENT: AnaTool = {
+  name: 'create_protocol_document',
+  description:
+    "Start authoring a protocol document for a given kind (iacuc / irb / clinical / ibc). Auto-seeds the kind's templated sections (ICH M11/E6 for clinical, 3Rs for IACUC, 45 CFR 46.111 for IRB). Optionally link an existing governed protocol record. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      protocol_kind: { type: 'string', enum: ['iacuc', 'irb', 'clinical', 'ibc'] },
+      title: { type: 'string' },
+      protocol_number: { type: 'string' },
+      design_type: { type: 'string', enum: ['interventional', 'observational', 'expanded_access', 'animal_study', 'basic_science', 'registry', 'other'] },
+      phase: { type: 'string' },
+      therapeutic_area: { type: 'string' },
+      linked_protocol_id: { type: 'number' },
+      synopsis: { type: 'string' },
+      reason: { type: 'string' },
+    },
+    required: ['protocol_kind', 'title'],
+  },
+};
+
+export const UPDATE_PROTOCOL_SECTION: AnaTool = {
+  name: 'update_protocol_section',
+  description:
+    "Write or update a protocol section's content and mark its status (not_started / draft / complete). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { section_id: { type: 'number' }, content: { type: 'string' }, status: { type: 'string', enum: ['not_started', 'draft', 'complete'] }, reason: { type: 'string' } },
+    required: ['section_id'],
+  },
+};
+
+export const ADD_PROTOCOL_OBJECTIVE: AnaTool = {
+  name: 'add_protocol_objective',
+  description:
+    "Add an objective + endpoint to a protocol (primary / secondary / exploratory), with an optional analysis timepoint. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, objective_type: { type: 'string', enum: ['primary', 'secondary', 'exploratory'] }, objective: { type: 'string' }, endpoint: { type: 'string' }, timepoint: { type: 'string' }, reason: { type: 'string' } },
+    required: ['document_id', 'objective'],
+  },
+};
+
+export const ADD_ELIGIBILITY_CRITERION: AnaTool = {
+  name: 'add_eligibility_criterion',
+  description:
+    "Add an inclusion or exclusion eligibility criterion to a protocol. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, kind: { type: 'string', enum: ['inclusion', 'exclusion'] }, criterion: { type: 'string' }, reason: { type: 'string' } },
+    required: ['document_id', 'kind', 'criterion'],
+  },
+};
+
+export const REVIEW_PROTOCOL_COMPLETENESS: AnaTool = {
+  name: 'review_protocol_completeness',
+  description:
+    "Read-only completeness assessment of a protocol document: percent of required sections complete, cited gaps (missing sections, no objectives, missing eligibility/schedule for clinical/IRB), and whether it is ready to finalize.",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
+export const FINALIZE_PROTOCOL_DOCUMENT: AnaTool = {
+  name: 'finalize_protocol_document',
+  description:
+    "Finalize a protocol document. Gated on the deterministic completeness check (all required sections complete + objectives, plus eligibility/schedule for clinical/IRB); rejected with the gaps otherwise. On success it snapshots a major version. Governed + audited (signature).",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' }, reason: { type: 'string' } }, required: ['document_id'] },
+};
+
+// ─── Protocol Risk Register (C2C-19) ─────────────────────────────────────────
+
+export const ADD_PROTOCOL_RISK: AnaTool = {
+  name: 'add_protocol_risk',
+  description:
+    "Add a risk to a protocol's risk register, scored on a likelihood × impact matrix (ICH E6(R2) §5.0). Categories: participant_safety, data_integrity, regulatory, operational, privacy, other. Returns the computed risk level. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id: { type: 'number' },
+      category: { type: 'string', enum: ['participant_safety', 'data_integrity', 'regulatory', 'operational', 'privacy', 'other'] },
+      description: { type: 'string' },
+      likelihood: { type: 'string', enum: ['rare', 'unlikely', 'possible', 'likely', 'almost_certain'] },
+      impact: { type: 'string', enum: ['negligible', 'minor', 'moderate', 'major', 'severe'] },
+      mitigation: { type: 'string' },
+      owner: { type: 'string' },
+      reason: { type: 'string' },
+    },
+    required: ['document_id', 'description'],
+  },
+};
+
+export const REVIEW_PROTOCOL_RISK_REGISTER: AnaTool = {
+  name: 'review_protocol_risk_register',
+  description:
+    "Read-only protocol risk register: each risk with its inherent and residual scores/levels, plus a summary (counts by level, open high/extreme risks, residual exposure index). Use to see where mitigation is still needed.",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
 // ─── CITI Training full integration (C2C-01/02) ──────────────────────────────
 
 export const IMPORT_CITI_RECORDS: AnaTool = {
@@ -7051,6 +7150,14 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REVIEW_IBC_REGISTRATION,
   CREATE_NONCLINICAL_STUDY,
   REVIEW_SEND_READINESS,
+  CREATE_PROTOCOL_DOCUMENT,
+  UPDATE_PROTOCOL_SECTION,
+  ADD_PROTOCOL_OBJECTIVE,
+  ADD_ELIGIBILITY_CRITERION,
+  REVIEW_PROTOCOL_COMPLETENESS,
+  FINALIZE_PROTOCOL_DOCUMENT,
+  ADD_PROTOCOL_RISK,
+  REVIEW_PROTOCOL_RISK_REGISTER,
   IMPORT_CITI_RECORDS,
   REVIEW_TRAINING_MATRIX,
   REVIEW_EXPIRING_TRAINING,
