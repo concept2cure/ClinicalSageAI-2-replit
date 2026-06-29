@@ -502,6 +502,39 @@ registerToolHandler('recall_session_context', async (input, ctx) => {
   }
 });
 
+// RIM learning-loop read path — recall the org's LEARNED regulatory patterns from
+// the tenant-scoped RIM pattern store. Org comes from ToolContext, never from model
+// input, so it can never read another tenant's patterns. Pure query over governed
+// internal data (no LLM, no network) → deterministic_query pedigree.
+registerToolHandler('recall_rim_patterns', async (input, ctx) => {
+  if (!ctx?.organizationId) {
+    return JSON.stringify({ error: 'recall_rim_patterns requires tenant context (organizationId).' });
+  }
+  const domain =
+    typeof input.domain === 'string' && input.domain.trim() ? input.domain.trim() : undefined;
+
+  try {
+    const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
+    const patterns = getPatterns({ orgId: ctx.organizationId, domain });
+    return JSON.stringify({
+      source: 'RIM Pattern Store',
+      pedigree: 'deterministic_query',
+      organizationId: ctx.organizationId,
+      domain: domain ?? null,
+      count: patterns.length,
+      patterns,
+      message:
+        patterns.length === 0
+          ? 'No RIM patterns have been learned for this organization yet — proceed with generic guidance and do NOT invent learned patterns.'
+          : 'Learned RIM patterns for this organization (strongest first). Ground your response in them.',
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `recall_rim_patterns failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
 // 21 CFR Part 11 §11.50 signature manifestation — load an executed signature
 // (tenant-scoped) and render the human-readable block (printed name, date/time,
 // meaning + supporting controls) to embed in the rendered record.

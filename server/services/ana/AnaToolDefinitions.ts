@@ -29,6 +29,7 @@ import { COVER_LETTER_TOOLS } from './coverLetterTools';
 import { SHELF_LIFE_TOOLS } from './shelfLifeTools';
 import { DEEPENING_TOOLS } from './deepeningTools';
 import { DAILYMED_TOOLS } from './dailymedTools';
+import { RIM_TOOLS } from './rimTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7288,6 +7289,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ...DEEPENING_TOOLS,
   // DailyMed (NLM) published-label lookup. See dailymedTools.ts.
   ...DAILYMED_TOOLS,
+  // RIM learning-loop read path: recall the org's learned regulatory patterns
+  // (deterministic_query over the tenant-scoped RIM pattern store). See rimTools.ts.
+  ...RIM_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
