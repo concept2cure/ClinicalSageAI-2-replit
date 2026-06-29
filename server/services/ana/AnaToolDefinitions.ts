@@ -487,6 +487,64 @@ export const PLAN_ORPHAN_DRUG_DESIGNATION: AnaTool = {
   },
 };
 
+// IND narrative-module authoring (E11). Author a CTD Module 2 clinical summary
+// (2.5 Clinical Overview / 2.7 Clinical Summary) from a STRUCTURED source and
+// derive the required_strings for verify_docx_against_source from the source's
+// key facts/figures — so the verify step proves transcription fidelity (a
+// missing/mistyped figure fails) before the user signs + seals the persisted
+// version. Honesty contract: sample/not_assessed sources are non-sealable.
+export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
+  name: 'plan_ind_module_authoring',
+  description:
+    'Author a transcription-safe IND narrative module (CTD Module 2.5 Clinical Overview or 2.7 Clinical ' +
+    'Summary) from a STRUCTURED source. Returns the author_docx_native title + markdown content (every ' +
+    'mandatory CTD Module 2 section header) and the required_strings to pass to verify_docx_against_source. ' +
+    'CRITICAL: required_strings include the section headers PLUS every source figure VALUE, so the verify ' +
+    'step proves each figure was transcribed verbatim and CATCHES a missing or mistyped figure before the ' +
+    'draft can be sealed. Honesty contract: a sample/not_assessed source is never sealable, and a draft ' +
+    'whose figures do not verify is non-sealable. Supply the structured source facts/figures in `facts`.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      module: {
+        type: 'string',
+        enum: ['2.5', '2.7'],
+        description: 'CTD Module 2 clinical summary to author: 2.5 (Clinical Overview) or 2.7 (Clinical Summary).',
+      },
+      product_name: { type: 'string', description: 'Product / compound name for the title + running header.' },
+      indication: { type: 'string', description: 'Proposed indication.' },
+      facts: {
+        type: 'array',
+        description:
+          'Structured source facts/figures to transcribe verbatim. Each value becomes a required_strings entry, ' +
+          'so a mistyped figure fails verification.',
+        items: {
+          type: 'object',
+          properties: {
+            section_id: {
+              type: 'string',
+              description: 'Which template section the fact belongs in (e.g. overview_efficacy, summary_clinical_safety).',
+            },
+            label: { type: 'string', description: 'Human label for the fact (e.g. "Primary endpoint response rate").' },
+            value: {
+              type: 'string',
+              description: 'The verbatim figure/string to transcribe AND verify (e.g. "42.3%", "200 mg", "24 months").',
+            },
+            source: { type: 'string', description: 'Optional source pointer (table/dataset id) recorded for provenance.' },
+          },
+          required: ['section_id', 'label', 'value'],
+        },
+      },
+      provenance: {
+        type: 'string',
+        enum: ['live', 'sample', 'not_assessed'],
+        description: 'Provenance of the source data. sample/not_assessed sources are non-sealable.',
+      },
+    },
+    required: ['module', 'product_name', 'indication'],
+  },
+};
+
 export const ADVISE_GCP: AnaTool = {
   name: 'advise_gcp',
   description:
@@ -6831,6 +6889,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ADVISE_CTD_STRUCTURE,
   ADVISE_SPECIAL_DESIGNATION,
   PLAN_ORPHAN_DRUG_DESIGNATION,
+  PLAN_IND_MODULE_AUTHORING,
   ADVISE_ESTIMAND,
   ADVISE_PHARMACOVIGILANCE,
   ADVISE_STUDY_DESIGN,

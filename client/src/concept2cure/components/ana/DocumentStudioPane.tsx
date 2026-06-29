@@ -25,6 +25,10 @@ import {
   NatHistoryDossierAffordance,
   type DossierProvenance,
 } from './NatHistoryDossierAffordance';
+import {
+  IndModuleAffordance,
+  type IndModuleProvenance,
+} from './IndModuleAffordance';
 import { ConsistencyPanel } from './ConsistencyPanel';
 import { BriefingBookPanel, type BriefingBookPremortemResult } from './BriefingBookPanel';
 import type { VerificationResult, ConsistencyResult } from './useAnaChat';
@@ -125,6 +129,20 @@ export interface DocumentStudioPaneProps {
     onAssemble: (message: string) => void;
     busy?: boolean;
   };
+  /**
+   * E11 IND narrative-module authoring affordance (CTD Module 2.5 / 2.7). When
+   * provided, renders the flag-gated panel that asks AnA to author the module
+   * from the structured source and verify every figure before sealing. Omit to
+   * hide it (the default — existing Studio surfaces are unaffected).
+   */
+  indModule?: {
+    module: string;
+    productName: string;
+    indication: string;
+    provenance?: IndModuleProvenance;
+    onAuthor: (message: string) => void;
+    busy?: boolean;
+  };
 }
 
 /** The CTD modules E10 can assemble in one turn — the summary + clinical modules. */
@@ -188,6 +206,7 @@ export function DocumentStudioPane({
   onFollowReadinessLink,
   assembling,
   dossier,
+  indModule,
 }: DocumentStudioPaneProps) {
   const format = (draft.documentType || 'DOCX').toUpperCase();
   const pages = useMemo(() => paginateContent(draft.content, pageSize), [draft.content, pageSize]);
@@ -362,6 +381,19 @@ export function DocumentStudioPane({
             provenance={dossier.provenance}
             onAssemble={dossier.onAssemble}
             busy={dossier.busy}
+          />
+        </div>
+      )}
+
+      {indModule && (
+        <div className={styles.studioVerify}>
+          <IndModuleAffordance
+            module={indModule.module}
+            productName={indModule.productName}
+            indication={indModule.indication}
+            provenance={indModule.provenance}
+            onAuthor={indModule.onAuthor}
+            busy={indModule.busy}
           />
         </div>
       )}

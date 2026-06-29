@@ -100,6 +100,14 @@ import {
   type OddProvenance,
   type OddProductInput,
 } from 'shared/ana/orphan-drug-designation.js';
+import {
+  buildIndModuleAuthoringPlan,
+  evaluateIndModuleVerification,
+  assessIndModuleSealability,
+  listIndModules,
+  type IndModuleProvenance,
+  type IndSourceFact,
+} from 'shared/ana/ind-module-authoring.js';
 import { adviseEstimand, listEstimandFramework } from './estimands.js';
 import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance.js';
 import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
@@ -2134,6 +2142,75 @@ registerToolHandler('plan_orphan_drug_designation', async (input) => {
       'Drive author_docx_native with author_docx_native.{title,content}, then verify_docx_against_source ' +
       'with required_strings. sample/not_assessed drafts and any uncited prevalence/eligibility claim are ' +
       'non-sealable and non-exportable.',
+  });
+});
+
+// IND narrative-module authoring (CTD Module 2.5 / 2.7) — E11.
+// Pure orchestration: build the author_docx_native plan (title + content) from a
+// STRUCTURED source, derive required_strings for verify_docx_against_source from
+// the source's key facts/figures (section headers PLUS every figure value), and
+// emit the Part 11 honesty verdict (sample/not_assessed ⇒ non-sealable; a
+// missing/mistyped figure ⇒ verification fails ⇒ non-sealable). The actual
+// author_docx_native / verify_docx_against_source calls are driven by AnA in the
+// agentic loop using the content + required_strings this tool returns.
+registerToolHandler('plan_ind_module_authoring', async (input) => {
+  const moduleId = typeof input.module === 'string' ? input.module.trim() : '';
+  if (!moduleId || !listIndModules().includes(moduleId)) {
+    return JSON.stringify({
+      error: `plan_ind_module_authoring requires module to be one of ${listIndModules().join(', ')}.`,
+      modules: listIndModules(),
+    });
+  }
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+  const productName = str(input.product_name);
+  const indication = str(input.indication);
+  if (!productName || !indication) {
+    return JSON.stringify({ error: 'plan_ind_module_authoring requires product_name and indication.' });
+  }
+
+  const facts: IndSourceFact[] = Array.isArray(input.facts)
+    ? (input.facts as unknown[])
+        .map((f) => (f && typeof f === 'object' ? (f as Record<string, unknown>) : null))
+        .filter((f): f is Record<string, unknown> => f !== null)
+        .map((f) => ({
+          sectionId: typeof f.section_id === 'string' ? f.section_id : '',
+          label: typeof f.label === 'string' ? f.label : '',
+          value: typeof f.value === 'string' ? f.value : '',
+          source: typeof f.source === 'string' ? f.source : undefined,
+        }))
+        .filter((f) => f.sectionId && typeof f.value === 'string' && f.value.trim().length > 0)
+    : [];
+
+  const rawProv = typeof input.provenance === 'string' ? input.provenance : '';
+  const provenance: IndModuleProvenance =
+    rawProv === 'live' || rawProv === 'sample' || rawProv === 'not_assessed' ? rawProv : 'not_assessed';
+
+  const plan = buildIndModuleAuthoringPlan({ module: moduleId, productName, indication, facts, provenance });
+  const verification = evaluateIndModuleVerification({
+    documentText: plan.content,
+    requiredStrings: plan.requiredStrings,
+  });
+  const sealability = assessIndModuleSealability({ provenance, verification });
+
+  return JSON.stringify({
+    source: `AnA IND Module ${moduleId} Authoring (ICH M4E — CTD Module 2)`,
+    status: 'generated',
+    author_docx_native: {
+      title: plan.title,
+      content: plan.content,
+      required_strings: plan.requiredStrings,
+    },
+    verification,
+    honesty: {
+      sealable: sealability.sealable,
+      provenance: plan.provenance,
+      blockers: sealability.blockers,
+      sectionsWithoutFacts: plan.sectionsWithoutFacts,
+    },
+    note:
+      'Drive author_docx_native with author_docx_native.{title,content}, then verify_docx_against_source ' +
+      'with required_strings. required_strings include every source figure, so a missing or mistyped ' +
+      'figure fails verification and the draft is non-sealable. sample/not_assessed sources are never sealable.',
   });
 });
 
