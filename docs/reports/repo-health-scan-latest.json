@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T03:20:04.409Z",
+  "generatedAt": "2026-06-29T03:49:29.322Z",
   "git": {
-    "sha": "f6347b05276fd1433d597e462b4719e4c755e903",
+    "sha": "d1cd531e9e711c5e5f0a9724662784b00693bfac",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 221,
     "largeFilesByBytes": 14,
-    "largeFilesByLines": 44
+    "largeFilesByLines": 45
   },
   "findings": {
     "duplicateBasenames": [
@@ -2364,6 +2364,10 @@
         "lines": 1862
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 1860
+      },
+      {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
         "lines": 1849
       },
@@ -2451,7 +2455,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 352,
       "largeByBytes": 11,
-      "largeByLines": 34
+      "largeByLines": 35
     },
     {
       "owner": "Unassigned (TBD)",
