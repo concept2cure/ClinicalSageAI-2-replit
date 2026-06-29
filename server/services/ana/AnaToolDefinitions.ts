@@ -7426,7 +7426,7 @@ export const RECONCILE_DOSSIER_NUMBERS: AnaTool = {
   },
 };
 
-export const ALL_ANA_TOOLS: AnaTool[] = [
+const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   RECONCILE_DOSSIER_NUMBERS,
   GENERATE_SCHEDULE_OF_EVENTS,
   AMEND_SCHEDULE_OF_EVENTS,
@@ -8097,6 +8097,16 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // SPL generation + PSUR/DSUR safety-report structure. See splSafetyTools.ts.
   ...SPL_SAFETY_TOOLS,
 ];
+
+// Defensive registry guard: v2's cdiscTools.ts currently re-registers
+// run_cdisc_pipeline / generate_define_xml, which also live in
+// EXTENDED_REGULATORY_TOOLS — producing duplicate tool names in the raw list.
+// Dedupe by name (first occurrence wins) so the ALL_ANA_TOOLS invariant holds
+// regardless of upstream double-registration. Remove once the duplicate is
+// resolved at source in the CDISC tools refactor.
+export const ALL_ANA_TOOLS: AnaTool[] = ALL_ANA_TOOLS_RAW.filter(
+  (tool, index) => ALL_ANA_TOOLS_RAW.findIndex((t) => t.name === tool.name) === index,
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Anthropic server-side tools (executed by Anthropic's infrastructure)
