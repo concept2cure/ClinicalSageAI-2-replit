@@ -1089,6 +1089,56 @@ export const RUN_SUBMISSION_PREMORTEM: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// E8 — Pre-IND / EOP2 briefing-book builder with reviewer-challenge pre-mortem.
+// Assembles a regulatory-agency meeting briefing book (background, objectives,
+// questions for the agency, supporting-data summary) from a RegAgencyMeeting,
+// then stress-tests the sponsor's enumerated questions against ANTICIPATED FDA
+// pushback via simulate_reviewer_challenges + run_submission_premortem. Returns
+// the assembled markdown (hand to author_docx_native), the required_strings for
+// verify_docx_against_source (mandatory headers + sponsor questions), and an
+// honest pre-mortem verdict. Honest by construction: a book built from sample /
+// fixture meeting data is not_assessed and not sealable/exportable; anticipated
+// pushback is framed as anticipated, never an actual agency position.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ASSEMBLE_BRIEFING_BOOK: AnaTool = {
+  name: 'assemble_briefing_book',
+  description:
+    "Assemble a Pre-IND / End-of-Phase-2 (or other Type A/B/C) regulatory-agency MEETING BRIEFING BOOK from a RegAgencyMeeting and stress-test the sponsor's questions against anticipated FDA pushback. Produces the four mandatory sections (Background, Product Development Objectives, Questions for the Agency, Supporting-Data Summary) as markdown ready for author_docx_native, plus the required_strings (the mandatory section headers AND each enumerated sponsor question, verbatim) to pass to verify_docx_against_source. When run_premortem is set, it also surfaces the anticipated reviewer pushback per sponsor question by folding in simulate_reviewer_challenges + run_submission_premortem — labelled ANTICIPATED, never an actual agency position. Honest by construction: a book assembled from sample/fixture meeting data (no live meeting id supplied) is marked not_assessed and is NOT sealable or exportable. Tenant context is injected from the request.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      meeting_id: {
+        type: 'string',
+        description:
+          'Optional id of a live RegAgencyMeeting to build from. When omitted, a labelled fixture EOP2 meeting is used and the resulting book is marked sample / not_assessed.',
+      },
+      meeting_type: {
+        type: 'string',
+        enum: ['pre_ind', 'eop1', 'eop2', 'pre_nda', 'pre_bla', 'type_a', 'type_b', 'type_c', 'type_d'],
+        description: 'Meeting type. Defaults to the fixture meeting type (eop2) when no live meeting is supplied.',
+      },
+      key_questions: {
+        type: 'array',
+        items: { type: 'string' },
+        description: "The sponsor's enumerated questions for the agency. Each becomes a required_string and a pre-mortem row.",
+      },
+      product_name: { type: 'string', description: 'Investigational product name for the title and narrative.' },
+      indication: { type: 'string', description: 'Indication / therapeutic area.' },
+      sponsor: { type: 'string', description: 'Sponsor name.' },
+      run_premortem: {
+        type: 'boolean',
+        description:
+          'When true (default), surface anticipated FDA pushback per sponsor question via the reviewer-challenge and pre-mortem engines. Requires package_id + assessment_id for the reviewer-lens pass; degrades to pattern-only pre-mortem otherwise.',
+      },
+      package_id: { type: 'number', description: 'Submission package id for simulate_reviewer_challenges (optional).' },
+      assessment_id: { type: 'number', description: 'Submission-twin assessment id for simulate_reviewer_challenges (optional).' },
+    },
+    required: [],
+  },
+};
+
 export const SCAN_REGULATORY_DEFICIENCIES: AnaTool = {
   name: 'scan_regulatory_deficiencies',
   description:
@@ -6658,6 +6708,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_LARGE_DOCUMENT,
   REMEMBER_DOCUMENT_IN_PROJECT,
   RUN_SUBMISSION_PREMORTEM,
+  ASSEMBLE_BRIEFING_BOOK,
   ASSESS_OUTPUT_CONFIDENCE,
   CHECK_GROUNDING,
   RENDER_SIGNATURE_MANIFESTATION,

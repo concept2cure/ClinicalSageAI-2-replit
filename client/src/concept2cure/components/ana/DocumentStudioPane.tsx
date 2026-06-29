@@ -16,6 +16,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { I } from './icons';
 import { VerificationPanel } from './VerificationPanel';
+import { BriefingBookPanel, type BriefingBookPremortemResult } from './BriefingBookPanel';
 import type { VerificationResult } from './useAnaChat';
 import { renderSafeMarkdown } from './renderSafeMarkdown';
 import styles from './styles.module.css';
@@ -30,6 +31,12 @@ export interface DocumentStudioPaneProps {
   draft: DocumentStudioDraft;
   /** Verification result for the selected version, when AnA verified it. */
   verification?: VerificationResult;
+  /**
+   * Briefing-book reviewer-challenge / pre-mortem for the selected version (E8),
+   * when this document is a Pre-IND / EOP2 briefing book. Renders the
+   * "anticipated FDA pushback" panel below the verification strip.
+   */
+  briefingPremortem?: BriefingBookPremortemResult;
   /** How many versions of this document exist this session (1 = no picker). */
   versionCount?: number;
   /** Zero-based index of the version currently shown. */
@@ -77,6 +84,7 @@ export function paginateContent(content: string, pageSize = DEFAULT_PAGE_SIZE): 
 export function DocumentStudioPane({
   draft,
   verification,
+  briefingPremortem,
   versionCount = 1,
   activeVersionIndex = 0,
   onSelectVersion,
@@ -186,6 +194,12 @@ export function DocumentStudioPane({
       {verification && (
         <div className={styles.studioVerify}>
           <VerificationPanel verification={verification} onResolve={onResolveVerification} />
+        </div>
+      )}
+
+      {briefingPremortem && (
+        <div className={styles.studioVerify}>
+          <BriefingBookPanel premortem={briefingPremortem} />
         </div>
       )}
 

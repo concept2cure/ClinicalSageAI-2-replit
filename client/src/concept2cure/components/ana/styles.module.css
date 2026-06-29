@@ -1037,3 +1037,108 @@
   transition: background 200ms ease-out;
 }
 .verifyResolve:hover { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Briefing-book reviewer-challenge / pre-mortem panel (E8). Modeled on the
+   verification trust-strip: calm, factual, accessible. All pushback is framed
+   as ANTICIPATED — never an actual agency position.
+   ─────────────────────────────────────────────────────────────────────────── */
+.briefPanel {
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-left-color: var(--warning, #b4831f);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--bg-000);
+}
+.briefPanel[data-risk='critical'],
+.briefPanel[data-risk='high'] { border-left-color: var(--danger, #b4541f); }
+.briefPanel[data-risk='insufficient_data'] { border-left-color: var(--border); }
+.briefHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--warning, #b4831f);
+}
+.briefTitle {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.briefDetail {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+}
+.briefAnticipatedNote {
+  margin: 6px 0 0;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--ink-muted, var(--text-300));
+}
+.briefSampleNote {
+  margin: 6px 0 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--danger, #b4541f);
+}
+.briefQuestion { margin-top: 12px; }
+.briefQuestionTitle {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.briefChallengeList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.briefChallenge {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  background: var(--bg-100, var(--bg-000));
+}
+.briefChallengeHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.briefSeverity {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--ink-muted, var(--text-300));
+  border: 1px solid var(--border);
+}
+.briefSeverity[data-severity='critical'],
+.briefSeverity[data-severity='high'] {
+  color: var(--danger, #b4541f);
+  border-color: var(--danger, #b4541f);
+}
+.briefLens {
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--ink-muted, var(--text-300));
+}
+.briefChallengeQ {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-body, var(--ink));
+}
+.briefChallengeMeta {
+  margin: 3px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink-muted, var(--text-300));
+}

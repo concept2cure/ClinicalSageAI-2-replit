@@ -29,6 +29,7 @@ import { ChatView, type ChatMessageView } from './ChatView';
 import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
+import type { BriefingBookPremortemResult } from './BriefingBookPanel';
 import { composeVerificationFixMessage } from './VerificationPanel';
 import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult } from './useAnaChat';
 import { useRecents } from './useRecents';
@@ -516,7 +517,7 @@ export function Ana({
     id: string;
     title: string;
     documentType?: string;
-    versions: { content: string; verification?: VerificationResult }[];
+    versions: { content: string; verification?: VerificationResult; briefingPremortem?: BriefingBookPremortemResult }[];
   } | null>(() => {
     if (!studioEnabled) return null;
     let latestTitle: string | null = null;
@@ -532,10 +533,14 @@ export function Ana({
       }
     }
     if (latestTitle == null || latestId == null) return null;
-    const versions: { content: string; verification?: VerificationResult }[] = [];
+    const versions: { content: string; verification?: VerificationResult; briefingPremortem?: BriefingBookPremortemResult }[] = [];
     for (const m of chat.messages) {
       if (m.generatedDraft && m.generatedDraft.title === latestTitle) {
-        versions.push({ content: m.generatedDraft.content, verification: m.verification });
+        versions.push({
+          content: m.generatedDraft.content,
+          verification: m.verification,
+          briefingPremortem: m.briefingPremortem,
+        });
       }
     }
     return { id: latestId, title: latestTitle, documentType: latestType, versions };
@@ -577,6 +582,10 @@ export function Ana({
   );
   const shownVerification = useMemo(
     () => activeDocument?.versions[safeVersionIndex]?.verification,
+    [activeDocument, safeVersionIndex],
+  );
+  const shownBriefingPremortem = useMemo(
+    () => activeDocument?.versions[safeVersionIndex]?.briefingPremortem,
     [activeDocument, safeVersionIndex],
   );
 
@@ -695,6 +704,7 @@ export function Ana({
               <DocumentStudioPane
                 draft={shownDraft}
                 verification={shownVerification}
+                briefingPremortem={shownBriefingPremortem}
                 versionCount={activeDocument.versions.length}
                 activeVersionIndex={safeVersionIndex}
                 onSelectVersion={setVersionIndex}
