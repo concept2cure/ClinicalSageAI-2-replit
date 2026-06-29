@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T15:26:24.898Z",
+  "generatedAt": "2026-06-29T15:34:56.174Z",
   "git": {
-    "sha": "57e310c3dd1078a2d2daa9456f17d89e5f160f17",
+    "sha": "10270667127bc28a6ae982433e7f82d8c80cad7e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2293,7 +2293,7 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 803833
+        "bytes": 804295
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2379,7 +2379,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19331
+        "lines": 19339
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2478,6 +2478,10 @@
         "lines": 2076
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 2076
+      },
+      {
         "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
         "lines": 2068
       },
@@ -2500,10 +2504,6 @@
       {
         "file": "server/routes/auth.ts",
         "lines": 1937
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 1933
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
