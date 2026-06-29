@@ -70,7 +70,12 @@ describe('eCTD export governance gate', () => {
       params: { submissionId: '123' },
       body: {},
     }) as any;
-    req.organizationId = 1;
+    // Authenticated, tenant-bound principal (mirrors the sibling tests). The
+    // handler authenticates (→401) and resolves tenant before the governance
+    // gate, so the request must be authenticated to reach the 403 human-review
+    // block this test asserts.
+    req.user = { id: 7, organizationId: 1, name: 'Test User' };
+    req.tenantContext = { organizationId: 1 };
     const res = createMockResponse();
 
     const handler = getHandler('/:submissionId');
