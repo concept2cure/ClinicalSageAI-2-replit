@@ -30,6 +30,7 @@ import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
 import { composeVerificationFixMessage } from './VerificationPanel';
+import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
 import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult } from './useAnaChat';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
@@ -305,6 +306,22 @@ export function Ana({
     (text: string, attachments?: MessageAttachment[]) => {
       setView('chat');
       void chat.send(text, attachments);
+    },
+    [chat]
+  );
+
+  // E5 — guided Safety Narrative submit. Pins the draft→author→verify tool set
+  // (additive focus) and sends the composed message through the normal stream
+  // path, so the existing tool_use / tool_result / verification handling drives
+  // the author→verify QC loop. The three tools are orchestrated, not rebuilt.
+  // BUILD-1 INTEGRATION: `payload.cases` carries the case set so that, once
+  // Build 1 lands version persistence, each finished QC-clear narrative can be
+  // persisted as a version row here. Persistence is intentionally not wired yet.
+  const handleSafetyNarrative = useCallback(
+    (payload: SafetyNarrativeSubmit) => {
+      setSelectedTools(prev => Array.from(new Set([...prev, ...payload.tools])));
+      setView('chat');
+      void chat.send(payload.message);
     },
     [chat]
   );
@@ -627,6 +644,7 @@ export function Ana({
           selectedTools={selectedTools}
           onSelectedToolsChange={setSelectedTools}
           projectIntelligence={projectIntelligence}
+          onSafetyNarrative={handleSafetyNarrative}
         />
       )}
       {view === 'chat' && (
@@ -645,6 +663,7 @@ export function Ana({
           projectId={resolvedProjectId ?? undefined}
           selectedTools={selectedTools}
           onSelectedToolsChange={setSelectedTools}
+          onSafetyNarrative={handleSafetyNarrative}
         />
       )}
       {view === 'projects' && (

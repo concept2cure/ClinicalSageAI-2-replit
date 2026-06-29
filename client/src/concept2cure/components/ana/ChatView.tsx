@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { I } from './icons';
 import { Composer, type ComposerReadyAttachment } from './Composer';
+import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
 import { Message, type ExecutedActionChip, type ToolCallView } from './Message';
 import type { MessageAttachment } from './useAnaChat';
 import type { PendingSignoff } from './useGovernedAction';
@@ -80,6 +81,8 @@ export interface ChatViewProps {
   /** Tools pinned for the next turn, forwarded to the composer's tool picker. */
   selectedTools?: string[];
   onSelectedToolsChange?: (tools: string[]) => void;
+  /** Guided Safety Narrative submit (E5). Forwarded to the composer's affordance. */
+  onSafetyNarrative?: (payload: SafetyNarrativeSubmit) => void;
 }
 
 export function ChatView({
@@ -97,6 +100,7 @@ export function ChatView({
   projectId,
   selectedTools,
   onSelectedToolsChange,
+  onSafetyNarrative,
 }: ChatViewProps) {
   const [draft, setDraft] = useState('');
   // Attachments the composer hands up at send time, consumed by `send`.
@@ -214,6 +218,7 @@ export function ChatView({
           projectId={projectId}
           selectedTools={selectedTools}
           onSelectedToolsChange={onSelectedToolsChange}
+          onSafetyNarrative={onSafetyNarrative}
         />
       </div>
     </div>

@@ -23,6 +23,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { I } from './icons';
 import styles from './styles.module.css';
 import { ToolPicker } from './ToolPicker';
+import { isFeatureEnabled } from '@/flags/featureFlags';
+import { SafetyNarrativeAffordance, type SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
 import {
   useChatUpload,
   attachmentReadLabel as readLabel,
@@ -48,6 +50,13 @@ export interface ComposerProps {
   selectedTools?: string[];
   /** Replace the pinned tool set. When omitted, the Tools control is read-only auto. */
   onSelectedToolsChange?: (tools: string[]) => void;
+  /**
+   * Fired when the guided Safety Narrative affordance is submitted (E5). When
+   * provided AND the ENABLE_ANA_DOCUMENT_STUDIO flag is on, the composer renders
+   * the "Safety narrative" chip that opens the guided draft→author→verify form.
+   * The host pins the returned tools and sends the composed message.
+   */
+  onSafetyNarrative?: (payload: SafetyNarrativeSubmit) => void;
 }
 
 /** A successfully-uploaded attachment, handed to the host on send. */
@@ -70,7 +79,12 @@ export function Composer({
   onAttachmentsSend,
   selectedTools,
   onSelectedToolsChange,
+  onSafetyNarrative,
 }: ComposerProps) {
+  // E5 — the guided Safety Narrative affordance is gated behind the Document
+  // Studio flag and only appears when the host wires the submit handler.
+  const safetyNarrativeEnabled =
+    Boolean(onSafetyNarrative) && isFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO');
   const AttachIco = I.attach;
   const DownIco = I.down;
   const ArrowUpIco = I.arrowUp;
@@ -172,6 +186,9 @@ export function Composer({
             </span>
           ))}
         </div>
+      )}
+      {safetyNarrativeEnabled && onSafetyNarrative && (
+        <SafetyNarrativeAffordance onSubmit={onSafetyNarrative} disabled={isStreaming} />
       )}
       <textarea
         ref={taRef}
