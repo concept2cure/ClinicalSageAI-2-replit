@@ -1,0 +1,21 @@
+[
+  {
+    "__NOTE__": "SYNTHETIC TEST DATA — NOT REAL WHODrug. Invented ingredient/ATC rows for unit tests only. WHODrug is a licensed dictionary; no real WHODrug content appears in this repository.",
+    "ingredient": "Synthetacetamol",
+    "atcCode": "Z01AA01",
+    "atcText": "Synthetic analgesics",
+    "synonyms": ["Synthadol", "Synthapain"]
+  },
+  {
+    "ingredient": "Synthacillin",
+    "atcCode": "Z02BB02",
+    "atcText": "Synthetic antibacterials",
+    "synonyms": ["Synthamox"]
+  },
+  {
+    "ingredient": "Synthaprofen",
+    "atcCode": "Z03CC03",
+    "atcText": "Synthetic anti-inflammatory agents",
+    "synonyms": ["Synthabrufen"]
+  }
+]

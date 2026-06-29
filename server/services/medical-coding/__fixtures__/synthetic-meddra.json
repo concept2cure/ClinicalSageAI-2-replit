@@ -1,0 +1,24 @@
+[
+  {
+    "__NOTE__": "SYNTHETIC TEST DATA — NOT REAL MedDRA. Invented PT/LLT rows for unit tests only. MedDRA is a licensed dictionary; no real MedDRA content appears in this repository.",
+    "ptCode": "00000001",
+    "ptName": "Synthetic headache",
+    "llt": ["Synthetic head pain", "Synthetic cephalalgia"],
+    "hlt": "Synthetic head and neck symptoms",
+    "soc": "Synthetic nervous system disorders"
+  },
+  {
+    "ptCode": "00000002",
+    "ptName": "Synthetic nausea",
+    "llt": ["Synthetic feeling sick", "Synthetic queasiness"],
+    "hlt": "Synthetic gastrointestinal symptoms",
+    "soc": "Synthetic gastrointestinal disorders"
+  },
+  {
+    "ptCode": "00000003",
+    "ptName": "Synthetic fatigue",
+    "llt": ["Synthetic tiredness"],
+    "hlt": "Synthetic general symptoms",
+    "soc": "Synthetic general disorders"
+  }
+]

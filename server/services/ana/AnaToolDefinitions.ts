@@ -17,6 +17,7 @@ import { RECONCILIATION_TOOLS } from './reconciliationTools';
 import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
 import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
 import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
+import { CODING_TOOLS } from './codingTools';
 import { NAVIGATION_TOOLS } from './navigationTools';
 import { EXTENDED_REGULATORY_TOOLS } from './extendedRegulatoryTools';
 import { PHARMACOVIGILANCE_REPORTING_TOOLS } from './pharmacovigilanceReportingTools';
@@ -7247,6 +7248,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // Device/IVD submission assembly, predicate-adequacy scoring, drug coding —
   // engines/data sources previously unreachable by AnA. See deviceSubmissionTools.ts.
   ...DEVICE_SUBMISSION_TOOLS,
+  // License-gated medical coding (MedDRA / WHODrug). Proprietary dictionaries are
+  // NOT shipped: these fail closed with license_required until a licensed dictionary
+  // is configured, then code deterministically over it. See codingTools.ts.
+  ...CODING_TOOLS,
   // Read-only window into enterprise usage controls (weekly limits, overage, seats).
   ...LICENSE_STATUS_TOOLS,
   // Self-navigation: discover + navigate to any app screen via the governed

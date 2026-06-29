@@ -22,8 +22,12 @@
  *      → `deterministic_registry`.
  *   2. Names in {@link DETERMINISTIC_REGISTRY_EXTRA} (a short, defensible allowlist
  *      of other clearly-pure registry tools) → `deterministic_registry`.
- *   3. Names beginning `search_` → `external_api_live`.
- *   4. Everything else (advise_/narrate_/generate_/draft_/review_ and any unknown
+ *   3. Names in {@link DETERMINISTIC_QUERY_NAMES} (license-gated coders that, when a
+ *      dictionary is configured, match deterministically over governed dictionary
+ *      data — and otherwise return an honest license_required, never a model guess)
+ *      → `deterministic_query`.
+ *   4. Names beginning `search_` → `external_api_live`.
+ *   5. Everything else (advise_/narrate_/generate_/draft_/review_ and any unknown
  *      tool) → `model_assisted` (the safe default).
  *
  * @module server/services/ana/tool-pedigree
@@ -111,9 +115,23 @@ const REGISTRY_NAME_SET: ReadonlySet<string> = new Set<string>([
   ...DETERMINISTIC_REGISTRY_EXTRA,
 ]);
 
+/**
+ * License-gated medical coders (MedDRA / WHODrug). These are NOT registry lookups,
+ * but they are honest-by-construction: when a licensed dictionary is configured the
+ * match is a pure, reproducible query over governed dictionary data (no LLM, no
+ * network); when it is not, they return an explicit `license_required` status rather
+ * than a model-assisted guess. Either way the output is never fabricated, so the
+ * correct pedigree is `deterministic_query`, not `model_assisted`.
+ */
+export const DETERMINISTIC_QUERY_NAMES: ReadonlySet<string> = new Set<string>([
+  'code_meddra',
+  'code_whodrug',
+]);
+
 /** Resolve a tool name to its pedigree class (precedence as documented above). */
 function classify(toolName: string): DeterminismPedigree {
   if (REGISTRY_NAME_SET.has(toolName)) return 'deterministic_registry';
+  if (DETERMINISTIC_QUERY_NAMES.has(toolName)) return 'deterministic_query';
   if (toolName.startsWith('search_')) return 'external_api_live';
   return 'model_assisted';
 }

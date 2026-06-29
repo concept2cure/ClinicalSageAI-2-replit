@@ -11516,6 +11516,60 @@ registerToolHandler('code_drug', async (input: Record<string, unknown>) => {
   }
 });
 
+// License-gated MedDRA coding. MedDRA is a proprietary dictionary that is NOT
+// shipped: with no licensed dictionary configured this fails closed with
+// status license_required (never a fabricated PT). With a dictionary loaded the
+// match is a deterministic query over governed data (no LLM, no network).
+registerToolHandler('code_meddra', async (input: Record<string, unknown>) => {
+  const term = typeof input.term === 'string' ? input.term.trim() : '';
+  if (!term) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'term is required (the verbatim adverse-event/condition to code).' });
+  }
+  const context = typeof input.context === 'string' ? input.context : undefined;
+  const { getMedicalCodingService } = await import('../medical-coding/medical-coding-service.js');
+  const result = getMedicalCodingService().codeMeddra(term, { context });
+  if (result.status === 'license_required') {
+    return JSON.stringify({
+      ...result,
+      instruction: 'State plainly that the licensed MedDRA dictionary is not configured. Do NOT guess a code. Suggest ICD-10 tools for open condition coding if appropriate.',
+    });
+  }
+  if (result.status === 'no_match') {
+    return JSON.stringify({ ...result, instruction: 'Report that no MedDRA PT matched; ask for a refined verbatim term. Never fabricate a code.' });
+  }
+  return JSON.stringify({
+    ...result,
+    engine: 'deterministic',
+    instruction: 'Report the ptCode and ptName verbatim. Surface the confidence/matchType; a substring match should be human-verified.',
+  });
+});
+
+// License-gated WHODrug coding. WHODrug is a proprietary dictionary that is NOT
+// shipped: fail closed with license_required when unconfigured; deterministic
+// governed-data lookup when a licensed dictionary is loaded.
+registerToolHandler('code_whodrug', async (input: Record<string, unknown>) => {
+  const drugName = typeof input.drugName === 'string' ? input.drugName.trim() : '';
+  if (!drugName) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'drugName is required (the drug/substance free text to code).' });
+  }
+  const { getMedicalCodingService } = await import('../medical-coding/medical-coding-service.js');
+  const result = getMedicalCodingService().codeWhodrug(drugName);
+  if (result.status === 'license_required') {
+    return JSON.stringify({
+      ...result,
+      instruction: 'State plainly that the licensed WHODrug dictionary is not configured. Do NOT guess a code. Suggest code_drug (RxNorm) for open US drug coding if appropriate.',
+    });
+  }
+  if (result.status === 'no_match') {
+    return JSON.stringify({ ...result, instruction: 'Report that no WHODrug ingredient matched; ask for a refined drug name. Never fabricate a code.' });
+  }
+  return JSON.stringify({
+    ...result,
+    engine: 'deterministic',
+    instruction: 'Report the ingredient and atcCode verbatim. Surface the confidence/matchType; a substring match should be human-verified.',
+  });
+});
+
 // DailyMed (NLM) published-label lookup — open documented SPL repository.
 // Honest: returns no_match / lookup_failed rather than fabricating a setid.
 registerToolHandler('lookup_published_label', async (input: Record<string, unknown>) => {
