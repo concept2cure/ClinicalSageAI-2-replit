@@ -18,6 +18,8 @@
 import type { TerminologyEntry, DomainTerminologyModule, TerminologyVerificationStatus, GlossaryCategory } from './types';
 import { regulatoryCtdModule } from './domains/regulatory-ctd';
 import { clinicalSafetyPvModule } from './domains/clinical-safety-pv';
+import { pharmacologyPkAdmeModule } from './domains/pharmacology-pk-adme';
+import { oncologyModule } from './domains/oncology';
 
 /**
  * Every domain module in the corpus, in a stable order. Append new domains here
@@ -26,6 +28,8 @@ import { clinicalSafetyPvModule } from './domains/clinical-safety-pv';
 export const DOMAIN_MODULES: readonly DomainTerminologyModule[] = [
   regulatoryCtdModule,
   clinicalSafetyPvModule,
+  pharmacologyPkAdmeModule,
+  oncologyModule,
 ];
 
 /** The flat corpus: every entry across every domain, in domain/registration order. */
