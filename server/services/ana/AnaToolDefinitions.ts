@@ -41,6 +41,12 @@ import { TOXICOLOGY_TOOLS } from './toxicologyTools';
 import { PEDIATRIC_TOOLS } from './pediatricTools';
 import { ADVANCED_THERAPY_TOOLS } from './advancedTherapyTools';
 import { RWE_METHODOLOGY_TOOLS } from './rweMethodologyTools';
+import { CLINICAL_PHARMACOLOGY_TOOLS } from './clinicalPharmacologyTools';
+import { CMC_QUALITY_TOOLS } from './cmcQualityTools';
+import { REGULATORY_STRATEGY_TOOLS } from './regulatoryStrategyTools';
+import { BIOSIMILAR_TOOLS } from './biosimilarTools';
+import { MUTAGENIC_IMPURITY_TOOLS } from './mutagenicImpurityTools';
+import { LABELING_INTELLIGENCE_TOOLS } from './labelingIntelligenceTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7318,6 +7324,24 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // Real-world evidence methodology intelligence (target trial emulation, data
   // source scoring, propensity scores, study design, bias, regulatory). Deterministic.
   ...RWE_METHODOLOGY_TOOLS,
+  // Wave 2 — Clinical pharmacology intelligence (DDI risk, QTc/E14-S7B, organ
+  // impairment, CYP phenotype, bioanalytical method, food effect). Deterministic.
+  ...CLINICAL_PHARMACOLOGY_TOOLS,
+  // Wave 2 — CMC quality intelligence (stability, analytical validation, impurity
+  // classification, specifications, process validation, comparability). Deterministic.
+  ...CMC_QUALITY_TOOLS,
+  // Wave 2 — Regulatory strategy intelligence (expedited programs, FDA meetings,
+  // orphan designation, 505 pathway, rolling submission, global pathways). Deterministic.
+  ...REGULATORY_STRATEGY_TOOLS,
+  // Wave 2 — Biosimilar development intelligence (analytical similarity, clinical
+  // program, extrapolation, interchangeability, IP strategy, CMC). Deterministic.
+  ...BIOSIMILAR_TOOLS,
+  // Wave 2 — Mutagenic impurity intelligence (ICH M7 classification, TTC, structural
+  // alerts, purge study, nitrosamine risk, control strategy). Deterministic.
+  ...MUTAGENIC_IMPURITY_TOOLS,
+  // Wave 2 — Labeling intelligence (PLR structure, boxed warning, REMS, PLLR,
+  // EU SmPC, OTC Drug Facts). Deterministic.
+  ...LABELING_INTELLIGENCE_TOOLS,
   // Inference self-awareness: classify a tool's output by determinism pedigree
   // (deterministic_registry / deterministic_query / external_api_live /
   // model_assisted) so AnA can weight bulletproof registry facts above

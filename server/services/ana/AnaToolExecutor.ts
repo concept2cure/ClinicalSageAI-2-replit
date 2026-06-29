@@ -13189,3 +13189,291 @@ registerToolHandler('assess_rwe_regulatory_acceptability', async (input: Record<
     return assessRegulatoryAcceptability(input as any);
   }, 'deterministic')
 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2 — Clinical Pharmacology intelligence handlers
+// FDA 2020 DDI / ICH M12, ICH E14/S7B, FDA organ impairment guidance, CPIC,
+// ICH M10, BCS food effect. Deterministic knowledge base — no LLM, no network.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_ddi_risk', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_ddi_risk', async () => {
+    const { classifyDDIRisk } = await import('../clinical-pharmacology/clinical-pharmacology-knowledge.js');
+    return classifyDDIRisk(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_qtc_risk', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_qtc_risk', async () => {
+    const { assessQTcRisk } = await import('../clinical-pharmacology/clinical-pharmacology-knowledge.js');
+    return assessQTcRisk(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_organ_impairment_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_organ_impairment_study', async () => {
+    const { designOrganImpairmentStudy } = await import('../clinical-pharmacology/clinical-pharmacology-knowledge.js');
+    return designOrganImpairmentStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('classify_cyp_phenotype', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_cyp_phenotype', async () => {
+    const { classifyCYPPhenotype } = await import('../clinical-pharmacology/clinical-pharmacology-knowledge.js');
+    return classifyCYPPhenotype(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_bioanalytical_method', async (input: Record<string, unknown>) =>
+  runStatsTool('design_bioanalytical_method', async () => {
+    const { designBioanalyticalMethod } = await import('../clinical-pharmacology/clinical-pharmacology-knowledge.js');
+    return designBioanalyticalMethod(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_food_effect', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_food_effect', async () => {
+    const { assessFoodEffect } = await import('../clinical-pharmacology/clinical-pharmacology-knowledge.js');
+    return assessFoodEffect(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2 — CMC Quality intelligence handlers
+// ICH Q1A-Q1E, Q2(R2), Q3A-Q3D, Q6A/Q6B, FDA 2011 process validation, ICH Q5E.
+// Deterministic knowledge base — no LLM, no network.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('design_stability_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_stability_study', async () => {
+    const { designStabilityStudy } = await import('../cmc-quality/cmc-quality-knowledge.js');
+    return designStabilityStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('validate_analytical_method', async (input: Record<string, unknown>) =>
+  runStatsTool('validate_analytical_method', async () => {
+    const { validateAnalyticalMethod } = await import('../cmc-quality/cmc-quality-knowledge.js');
+    return validateAnalyticalMethod(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('classify_impurity', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_impurity', async () => {
+    const { classifyImpurity } = await import('../cmc-quality/cmc-quality-knowledge.js');
+    return classifyImpurity(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('set_specifications', async (input: Record<string, unknown>) =>
+  runStatsTool('set_specifications', async () => {
+    const { setSpecifications } = await import('../cmc-quality/cmc-quality-knowledge.js');
+    return setSpecifications(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_process_validation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_process_validation', async () => {
+    const { assessProcessValidation } = await import('../cmc-quality/cmc-quality-knowledge.js');
+    return assessProcessValidation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_comparability_protocol', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_comparability_protocol', async () => {
+    const { assessComparabilityProtocol } = await import('../cmc-quality/cmc-quality-knowledge.js');
+    return assessComparabilityProtocol(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2 — Regulatory Strategy intelligence handlers
+// FDA expedited programs, FDA meeting types, Orphan Drug Act, 505 pathways,
+// rolling submission, ICH/global pathway comparison. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assess_expedited_program', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_expedited_program', async () => {
+    const { assessExpeditedProgram } = await import('../regulatory-strategy/regulatory-strategy-knowledge.js');
+    return assessExpeditedProgram(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_fda_meeting', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_fda_meeting', async () => {
+    const { planFDAMeeting } = await import('../regulatory-strategy/regulatory-strategy-knowledge.js');
+    return planFDAMeeting(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_orphan_designation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_orphan_designation', async () => {
+    const { assessOrphanDesignation } = await import('../regulatory-strategy/regulatory-strategy-knowledge.js');
+    return assessOrphanDesignation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_505_pathway', async (input: Record<string, unknown>) =>
+  runStatsTool('select_505_pathway', async () => {
+    const { select505Pathway } = await import('../regulatory-strategy/regulatory-strategy-knowledge.js');
+    return select505Pathway(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_rolling_submission', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_rolling_submission', async () => {
+    const { assessRollingSubmission } = await import('../regulatory-strategy/regulatory-strategy-knowledge.js');
+    return assessRollingSubmission(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('compare_global_pathways', async (input: Record<string, unknown>) =>
+  runStatsTool('compare_global_pathways', async () => {
+    const { compareGlobalPathways } = await import('../regulatory-strategy/regulatory-strategy-knowledge.js');
+    return compareGlobalPathways(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2 — Biosimilar Development intelligence handlers
+// BPCIA 351(k), FDA analytical similarity tiers, clinical program, indication
+// extrapolation, interchangeability, IP/BPCIA dance, CMC. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assess_analytical_similarity_biosimilar', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_analytical_similarity_biosimilar', async () => {
+    const { assessAnalyticalSimilarity } = await import('../biosimilar/biosimilar-knowledge.js');
+    return assessAnalyticalSimilarity(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_biosimilar_clinical', async (input: Record<string, unknown>) =>
+  runStatsTool('design_biosimilar_clinical', async () => {
+    const { designBiosimilarClinicalProgram } = await import('../biosimilar/biosimilar-knowledge.js');
+    return designBiosimilarClinicalProgram(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_indication_extrapolation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_indication_extrapolation', async () => {
+    const { assessExtrapolationOfIndications } = await import('../biosimilar/biosimilar-knowledge.js');
+    return assessExtrapolationOfIndications(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_interchangeability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_interchangeability', async () => {
+    const { assessInterchangeability } = await import('../biosimilar/biosimilar-knowledge.js');
+    return assessInterchangeability(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_biosimilar_ip_strategy', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_biosimilar_ip_strategy', async () => {
+    const { planBiosimilarIPStrategy } = await import('../biosimilar/biosimilar-knowledge.js');
+    return planBiosimilarIPStrategy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_biosimilar_cmc', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_biosimilar_cmc', async () => {
+    const { assessBiosimilarCMC } = await import('../biosimilar/biosimilar-knowledge.js');
+    return assessBiosimilarCMC(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2 — Mutagenic Impurity (ICH M7) intelligence handlers
+// ICH M7(R2) classification, Cramer/TTC, structural alerts, purge factors,
+// nitrosamine risk (FDA/EMA), control strategy. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_mutagenic_impurity', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_mutagenic_impurity', async () => {
+    const { classifyMutagenicImpurity } = await import('../mutagenic-impurity/mutagenic-impurity-knowledge.js');
+    return classifyMutagenicImpurity(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('calculate_ttc', async (input: Record<string, unknown>) =>
+  runStatsTool('calculate_ttc', async () => {
+    const { calculateTTC } = await import('../mutagenic-impurity/mutagenic-impurity-knowledge.js');
+    return calculateTTC(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_structural_alerts', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_structural_alerts', async () => {
+    const { assessStructuralAlerts } = await import('../mutagenic-impurity/mutagenic-impurity-knowledge.js');
+    return assessStructuralAlerts(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_purge_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_purge_study', async () => {
+    const { designPurgeStudy } = await import('../mutagenic-impurity/mutagenic-impurity-knowledge.js');
+    return designPurgeStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_nitrosamine_risk', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_nitrosamine_risk', async () => {
+    const { assessNitrosamineRisk } = await import('../mutagenic-impurity/mutagenic-impurity-knowledge.js');
+    return assessNitrosamineRisk(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('control_mutagenic_impurity', async (input: Record<string, unknown>) =>
+  runStatsTool('control_mutagenic_impurity', async () => {
+    const { controlMutagenicImpurity } = await import('../mutagenic-impurity/mutagenic-impurity-knowledge.js');
+    return controlMutagenicImpurity(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2 — Labeling intelligence handlers
+// FDA PLR (21 CFR 201.56-57), boxed warning, REMS (FDAAA/FDORA), PLLR,
+// EMA QRD SmPC, OTC Drug Facts (21 CFR 201.66). Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assess_plr_structure', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_plr_structure', async () => {
+    const { assessPLRStructure } = await import('../labeling/labeling-intelligence-knowledge.js');
+    return assessPLRStructure(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_boxed_warning', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_boxed_warning', async () => {
+    const { assessBoxedWarning } = await import('../labeling/labeling-intelligence-knowledge.js');
+    return assessBoxedWarning(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_rems', async (input: Record<string, unknown>) =>
+  runStatsTool('design_rems', async () => {
+    const { designREMS } = await import('../labeling/labeling-intelligence-knowledge.js');
+    return designREMS(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_pregnancy_lactation_labeling', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_pregnancy_lactation_labeling', async () => {
+    const { assessPregnancyLactationLabeling } = await import('../labeling/labeling-intelligence-knowledge.js');
+    return assessPregnancyLactationLabeling(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('structure_smpc', async (input: Record<string, unknown>) =>
+  runStatsTool('structure_smpc', async () => {
+    const { structureSmPC } = await import('../labeling/labeling-intelligence-knowledge.js');
+    return structureSmPC(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_otc_labeling', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_otc_labeling', async () => {
+    const { assessOTCLabeling } = await import('../labeling/labeling-intelligence-knowledge.js');
+    return assessOTCLabeling(input as any);
+  }, 'deterministic')
+);
