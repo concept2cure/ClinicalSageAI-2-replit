@@ -14,6 +14,7 @@ import { useRef, useState } from 'react';
 import { I } from './icons';
 import { Composer, type ComposerReadyAttachment } from './Composer';
 import type { EffortLevel } from './ModelEffortPicker';
+import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
 import type { MessageAttachment } from './useAnaChat';
 import styles from './styles.module.css';
 
@@ -69,6 +70,8 @@ export interface EmptyStateProps {
   onModelOverrideChange?: (modelId: string | null) => void;
   /** Project health snapshot, rendered as a compact card above the composer. */
   projectIntelligence?: AnaProjectIntelligence;
+  /** Guided Safety Narrative submit (E5). Forwarded to the composer's affordance. */
+  onSafetyNarrative?: (payload: SafetyNarrativeSubmit) => void;
 }
 
 function resolveIcon(key?: EmptySuggestion['iconKey']): typeof I.file {
@@ -101,6 +104,7 @@ export function EmptyState({
   modelOverride,
   onModelOverrideChange,
   projectIntelligence,
+  onSafetyNarrative,
 }: EmptyStateProps) {
   const [draft, setDraft] = useState('');
   // Attachments the composer hands up at send time, consumed by `send`.
@@ -194,6 +198,7 @@ export function EmptyState({
           onEffortChange={onEffortChange}
           modelOverride={modelOverride}
           onModelOverrideChange={onModelOverrideChange}
+          onSafetyNarrative={onSafetyNarrative}
         />
         <div className={styles.suggest}>
           {pills.map(({ Ico, label }) => (

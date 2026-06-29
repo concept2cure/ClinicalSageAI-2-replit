@@ -1127,6 +1127,14 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 14px 16px;
+   E5 — Guided ICH E3 §16 Safety Narrative affordance (composer-hosted).
+   Calm, reviewer-grade form. Subtle motion only; reuses verifyPanel for QC.
+   ─────────────────────────────────────────────────────────────────────────── */
+.narrativePanel {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
   background: var(--bg-000);
   display: flex;
   flex-direction: column;
@@ -1934,6 +1942,84 @@
 }
 .labelingChecklist {
   margin: 8px 0 0;
+.narrativeHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.narrativeTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink, var(--text-100));
+}
+.narrativeModes {
+  display: flex;
+  gap: 6px;
+}
+.narrativeMode {
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-100);
+  color: var(--ink-muted, var(--text-300));
+  cursor: pointer;
+  transition: background 200ms ease-out, color 200ms ease-out;
+}
+.narrativeMode[data-active='true'] {
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
+  border-color: var(--accent-main-100, #6366f1);
+  color: var(--accent-main-100, #6366f1);
+}
+.narrativeForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.narrativeField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.narrativeFieldLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-muted, var(--text-300));
+}
+.narrativeInput,
+.narrativeTextarea {
+  width: 100%;
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-100);
+  color: var(--ink, var(--text-100));
+}
+.narrativeTextarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  resize: vertical;
+}
+.narrativeInput:focus,
+.narrativeTextarea:focus {
+  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline-offset: 1px;
+}
+.narrativeFileRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.narrativeParseMeta {
+  font-size: 11px;
+  color: var(--ink-muted, var(--text-300));
+}
+.narrativeErrors {
+  margin: 0;
   padding: 0;
   list-style: none;
   display: flex;
@@ -1973,6 +2059,25 @@
   color: var(--ink-subtle, var(--text-400));
 }
 .labelingExport {
+.narrativeErrors li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--danger, #b4541f);
+}
+.narrativeSampleToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-muted, var(--text-300));
+}
+.narrativeActions {
+  display: flex;
+  justify-content: flex-end;
+}
+.narrativeSubmit {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1996,4 +2101,28 @@
 @media (prefers-reduced-motion: reduce) {
   .labelingToggleBtn,
   .labelingExport { transition: none; }
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent-main-100, #6366f1);
+  border: 1px solid var(--accent-main-100, #6366f1);
+  border-radius: 7px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: opacity 200ms ease-out;
+}
+.narrativeSubmit:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* QC checklist field rows (reuse verifyPanel / verifyMissing for the frame). */
+.qcFieldLabel {
+  font-size: 12px;
+  color: var(--ink-body, var(--ink));
+}
+.verifyMissing li[data-present='true'] { color: var(--success, #2f7d57); }
+.verifyMissing li[data-present='false'] { color: var(--danger, #b4541f); }
+.qcSampleFlag {
+  font-weight: 600;
+  color: var(--danger, #b4541f);
 }

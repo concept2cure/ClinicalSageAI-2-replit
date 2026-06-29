@@ -25,6 +25,7 @@ import { I } from './icons';
 import styles from './styles.module.css';
 import { ToolPicker } from './ToolPicker';
 import { ModelEffortPicker, type EffortLevel } from './ModelEffortPicker';
+import { SafetyNarrativeAffordance, type SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
 import {
   useChatUpload,
   attachmentReadLabel as readLabel,
@@ -60,6 +61,13 @@ export interface ComposerProps {
   /** Current model override (registry id) or null for Auto. */
   modelOverride?: string | null;
   onModelOverrideChange?: (modelId: string | null) => void;
+  /**
+   * Fired when the guided Safety Narrative affordance is submitted (E5). When
+   * provided AND the ENABLE_ANA_DOCUMENT_STUDIO flag is on, the composer renders
+   * the "Safety narrative" chip that opens the guided draft→author→verify form.
+   * The host pins the returned tools and sends the composed message.
+   */
+  onSafetyNarrative?: (payload: SafetyNarrativeSubmit) => void;
 }
 
 /** A successfully-uploaded attachment, handed to the host on send. */
@@ -86,11 +94,16 @@ export function Composer({
   onEffortChange,
   modelOverride,
   onModelOverrideChange,
+  onSafetyNarrative,
 }: ComposerProps) {
   // The effort/model picker is flag-gated AND requires the host to wire the
   // effort handler. When either is absent the composer renders unchanged.
   const showEffortPicker =
     Boolean(onEffortChange) && isFeatureEnabled('ENABLE_MODEL_EFFORT_PICKER');
+  // E5 — the guided Safety Narrative affordance is gated behind the Document
+  // Studio flag and only appears when the host wires the submit handler.
+  const safetyNarrativeEnabled =
+    Boolean(onSafetyNarrative) && isFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO');
   const AttachIco = I.attach;
   const DownIco = I.down;
   const ArrowUpIco = I.arrowUp;
@@ -192,6 +205,9 @@ export function Composer({
             </span>
           ))}
         </div>
+      )}
+      {safetyNarrativeEnabled && onSafetyNarrative && (
+        <SafetyNarrativeAffordance onSubmit={onSafetyNarrative} disabled={isStreaming} />
       )}
       <textarea
         ref={taRef}

@@ -42,6 +42,7 @@ import {
   SAMPLE_CONSISTENCY_BLOCKER,
 } from './ectdReadinessFixtures';
 import { composeConsistencyFixMessage } from './ConsistencyPanel';
+import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
 import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult, type ConsistencyResult } from './useAnaChat';
 import type { EffortLevel } from './ModelEffortPicker';
 import { useRecents } from './useRecents';
@@ -324,6 +325,22 @@ export function Ana({
     (text: string, attachments?: MessageAttachment[]) => {
       setView('chat');
       void chat.send(text, attachments);
+    },
+    [chat]
+  );
+
+  // E5 — guided Safety Narrative submit. Pins the draft→author→verify tool set
+  // (additive focus) and sends the composed message through the normal stream
+  // path, so the existing tool_use / tool_result / verification handling drives
+  // the author→verify QC loop. The three tools are orchestrated, not rebuilt.
+  // BUILD-1 INTEGRATION: `payload.cases` carries the case set so that, once
+  // Build 1 lands version persistence, each finished QC-clear narrative can be
+  // persisted as a version row here. Persistence is intentionally not wired yet.
+  const handleSafetyNarrative = useCallback(
+    (payload: SafetyNarrativeSubmit) => {
+      setSelectedTools(prev => Array.from(new Set([...prev, ...payload.tools])));
+      setView('chat');
+      void chat.send(payload.message);
     },
     [chat]
   );
@@ -867,6 +884,7 @@ export function Ana({
           modelOverride={modelOverride}
           onModelOverrideChange={setModelOverride}
           projectIntelligence={projectIntelligence}
+          onSafetyNarrative={handleSafetyNarrative}
         />
       )}
       {view === 'chat' && (
@@ -889,6 +907,7 @@ export function Ana({
           onEffortChange={setEffort}
           modelOverride={modelOverride}
           onModelOverrideChange={setModelOverride}
+          onSafetyNarrative={handleSafetyNarrative}
         />
       )}
       {view === 'projects' && (
