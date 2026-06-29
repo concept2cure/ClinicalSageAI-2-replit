@@ -11892,6 +11892,21 @@ registerToolHandler('model_cost_effectiveness', async (input: Record<string, unk
   }
 });
 
+// ── HEOR market-access (comparator mix; server/services/heor/market-access-models) ──
+registerToolHandler('model_budget_impact_mix', async (input: Record<string, unknown>) =>
+  runStatsTool('model_budget_impact_mix', async () => {
+    const { budgetImpactWithMix } = await import('../heor/market-access-models.js');
+    return budgetImpactWithMix(input as any);
+  })
+);
+
+registerToolHandler('model_cost_effectiveness_nmb', async (input: Record<string, unknown>) =>
+  runStatsTool('model_cost_effectiveness_nmb', async () => {
+    const { costEffectivenessNmb } = await import('../heor/market-access-models.js');
+    return costEffectivenessNmb(input as any);
+  })
+);
+
 // ── SPL labeling (server/services/labeling/spl-generator) — deterministic. ──
 registerToolHandler('generate_spl', async (input: Record<string, unknown>) => {
   try {

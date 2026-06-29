@@ -21,6 +21,7 @@ import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
 import { CODING_TOOLS } from './codingTools';
 import { NAVIGATION_TOOLS } from './navigationTools';
 import { EXTENDED_REGULATORY_TOOLS } from './extendedRegulatoryTools';
+import { HEOR_MARKET_ACCESS_TOOLS } from './heorTools';
 import { PHARMACOVIGILANCE_REPORTING_TOOLS } from './pharmacovigilanceReportingTools';
 import { ANALYTICAL_METHOD_TOOLS } from './analyticalMethodTools';
 import { ADVANCED_MODELING_TOOLS } from './advancedModelingTools';
@@ -7266,6 +7267,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // formatting — deterministic engines newly reachable by AnA. See
   // extendedRegulatoryTools.ts.
   ...EXTENDED_REGULATORY_TOOLS,
+  // HEOR / market-access modeling — comparator-mix budget impact and net-monetary-
+  // benefit cost-effectiveness for payer/AMCP dossiers. See heorTools.ts.
+  ...HEOR_MARKET_ACCESS_TOOLS,
   // Pharmacovigilance reporting: SAE line listing + E2B(R3) ICSR composition
   // over the org's recorded adverse events. See pharmacovigilanceReportingTools.ts.
   ...PHARMACOVIGILANCE_REPORTING_TOOLS,
