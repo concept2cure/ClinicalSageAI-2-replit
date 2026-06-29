@@ -31,6 +31,7 @@ import { ProjectsView, type AnaProject } from './ProjectsView';
 import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
 import { composeVerificationFixMessage } from './VerificationPanel';
 import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult } from './useAnaChat';
+import { useVerifiedSeal, type SealMeaning, type VerifiedSeal } from './useVerifiedSeal';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
 
@@ -610,6 +611,43 @@ export function Ana({
     void chat.send(composeVerificationFixMessage(shownDraft.title, shownVerification));
   }, [chat, shownDraft, shownVerification]);
 
+  // E1 — Part 11 verified-and-sealed export. When a version verifies clean, the
+  // VerificationPanel offers "Sign and seal verified version". We persist the
+  // SealedRecord server-side, then keep the applied seal per version index so
+  // the SealBadge stays put when the user flips between versions. Only wired
+  // when the studio flag is on.
+  const { seal: sealVerified } = useVerifiedSeal();
+  const [appliedSeals, setAppliedSeals] = useState<Record<number, VerifiedSeal>>({});
+  const shownSeal = appliedSeals[safeVersionIndex] ?? null;
+  const handleSeal = useCallback(
+    async (input: {
+      printedName: string;
+      meaning: SealMeaning;
+      reasonForChange: string;
+      password: string;
+      mfaToken?: string;
+    }): Promise<VerifiedSeal | null> => {
+      if (!shownDraft || !shownVerification?.ok) return null;
+      const result = await sealVerified({
+        title: shownDraft.title,
+        content: shownDraft.content,
+        verification: { ok: shownVerification.ok, message: shownVerification.message },
+        projectId: resolvedProjectId ?? undefined,
+        signerRole: resolvedUserRole ?? undefined,
+        // TODO(build-1): once version persistence lands, pass the persisted
+        // artifactPk / artifactExternalId / existingVersionId / version number
+        // here so the server seals the existing row instead of a fallback.
+        ...input,
+      });
+      if (result) {
+        const idx = safeVersionIndex;
+        setAppliedSeals(prev => ({ ...prev, [idx]: result }));
+      }
+      return result;
+    },
+    [sealVerified, shownDraft, shownVerification, resolvedProjectId, resolvedUserRole, safeVersionIndex],
+  );
+
   // The view content (home / chat / projects / artifacts). Rendered directly
   // when the studio is closed, or inside the left Panel when it is open — so
   // the chat layout is identical in both modes.
@@ -701,6 +739,9 @@ export function Ana({
                 onDownloadDocx={handleDownloadDocx}
                 onClose={() => setStudioClosed(true)}
                 onResolveVerification={handleResolveVerification}
+                onSeal={handleSeal}
+                signer={{ name: account.name, role: resolvedUserRole ?? undefined }}
+                seal={shownSeal}
                 downloading={downloading}
               />
             </Panel>

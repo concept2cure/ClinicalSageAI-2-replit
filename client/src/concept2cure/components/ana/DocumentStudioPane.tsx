@@ -17,6 +17,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { I } from './icons';
 import { VerificationPanel } from './VerificationPanel';
 import type { VerificationResult } from './useAnaChat';
+import type { SealVerifiedArgs, VerifiedSeal } from './useVerifiedSeal';
 import { renderSafeMarkdown } from './renderSafeMarkdown';
 import styles from './styles.module.css';
 
@@ -42,6 +43,21 @@ export interface DocumentStudioPaneProps {
   onClose: () => void;
   /** Ask AnA to fix an unverified document (missing strings / divergence). */
   onResolveVerification?: () => void;
+  /**
+   * E1 — Part 11 verified-and-sealed export. When supplied (studio flag on), the
+   * VerificationPanel offers "Sign and seal verified version" for a clean
+   * verification. The handler captures the document title/content here and
+   * forwards the manifestation from the e-sign modal.
+   */
+  onSeal?: (
+    args: Pick<SealVerifiedArgs, 'printedName' | 'meaning' | 'reasonForChange' | 'password' | 'mfaToken'>,
+  ) => Promise<VerifiedSeal | null>;
+  /** Identity shown as the signer in the seal e-sign modal. */
+  signer?: { name: string; email?: string; role?: string };
+  /** True when the signer is MFA-enrolled. */
+  requireMfa?: boolean;
+  /** An already-applied seal for the selected version. */
+  seal?: VerifiedSeal | null;
   /** True while a download/render request is in flight. */
   downloading?: boolean;
   /** Target characters per page for pagination. Exposed for testing. */
@@ -83,6 +99,10 @@ export function DocumentStudioPane({
   onDownloadDocx,
   onClose,
   onResolveVerification,
+  onSeal,
+  signer,
+  requireMfa,
+  seal,
   downloading,
   pageSize,
 }: DocumentStudioPaneProps) {
@@ -185,7 +205,14 @@ export function DocumentStudioPane({
 
       {verification && (
         <div className={styles.studioVerify}>
-          <VerificationPanel verification={verification} onResolve={onResolveVerification} />
+          <VerificationPanel
+            verification={verification}
+            onResolve={onResolveVerification}
+            onSeal={onSeal}
+            signer={signer}
+            requireMfa={requireMfa}
+            seal={seal}
+          />
         </div>
       )}
 
