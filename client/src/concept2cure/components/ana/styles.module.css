@@ -2427,4 +2427,41 @@
 @media (prefers-reduced-motion: reduce) {
   .provTrailChevron { transition: none; }
   .signoffMeaning { transition: none; }
+ * AnA hardening cluster E — authoring affordances (safety-narrative /
+ * nat-history / IND). WCAG 2.2 AA focus visibility + calm-motion guards for the
+ * interactive controls in these surfaces. Appended last so the focus-visible
+ * rings win on equal specificity; only adds rules for this cluster's classes.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* Inline required-field validation message (aria-describedby target). */
+.narrativeFieldError {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 1px 0 0;
+  font-size: 11px;
+  color: var(--danger, #b4541f);
+}
+
+/* Visible focus ring on every interactive control in the cluster. */
+.composerChip:focus-visible,
+.composerIcon:focus-visible,
+.narrativeMode:focus-visible,
+.narrativeSubmit:focus-visible,
+.dossierAssemble:focus-visible,
+.narrativeSampleToggle:focus-visible,
+.narrativeSampleToggle input:focus-visible {
+  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline-offset: 2px;
+}
+
+/* Calm-motion: honour prefers-reduced-motion for the cluster's transitions. */
+@media (prefers-reduced-motion: reduce) {
+  .composerChip,
+  .composerIcon,
+  .narrativeMode,
+  .narrativeSubmit,
+  .dossierAssemble {
+    transition: none;
+  }
 }

@@ -70,6 +70,24 @@ describe('SafetyNarrativeQcPanel', () => {
     expect(drugRow.getAttribute('data-present')).toBe('false');
   });
 
+  it('color-never-alone: each missing field row carries icon + text, not colour only', () => {
+    const qc = computeNarrativeQc({ subjectId: 'S-2', event: { term: 'fever' } });
+    const { container } = render(<SafetyNarrativeQcPanel qc={qc} />);
+    // The checklist is a real list under a labelled region.
+    const list = screen.getByLabelText('ICH E3 section 16 required fields');
+    expect(list.tagName).toBe('UL');
+    // Every row carries a textual present/missing token in addition to data-present.
+    const rows = Array.from(list.querySelectorAll('li'));
+    expect(rows.length).toBe(8);
+    for (const row of rows) {
+      const present = row.getAttribute('data-present') === 'true';
+      expect(row.textContent).toContain(present ? '— present' : '— missing');
+      // An icon (svg) accompanies every row so colour is never the sole signal.
+      expect(row.querySelector('svg')).toBeTruthy();
+    }
+    expect(container).toBeTruthy();
+  });
+
   it('honesty guard: a complete SAMPLE case is flagged non-sealable in the UI', () => {
     const qc = computeNarrativeQc({
       subjectId: 'S-3',
@@ -107,6 +125,50 @@ describe('SafetyNarrativeAffordance', () => {
     fireEvent.change(screen.getByLabelText(/Event term/), { target: { value: 'nausea' } });
     expect(screen.getByText(/Narrative QC/)).toBeTruthy();
     expect(screen.getByText(/not ready for sign-off/)).toBeTruthy();
+  });
+
+  it('associates every form field with a label and the submit is a real verb button', () => {
+    render(<SafetyNarrativeAffordance onSubmit={vi.fn()} />);
+    fireEvent.click(screen.getByLabelText('Open guided safety narrative'));
+    // Required + optional fields resolve to a labelled input (label/htmlFor).
+    const subject = screen.getByLabelText(/Subject id/) as HTMLInputElement;
+    const term = screen.getByLabelText(/Event term/) as HTMLInputElement;
+    expect(subject.tagName).toBe('INPUT');
+    expect(subject.id).toBeTruthy();
+    expect(term.id).toBeTruthy();
+    const submit = screen.getByText('Draft, author & verify').closest('button') as HTMLButtonElement;
+    expect(submit.tagName).toBe('BUTTON');
+    expect(submit.getAttribute('type')).toBe('button');
+  });
+
+  it('marks a touched-but-empty required field aria-invalid with an associated error', () => {
+    render(<SafetyNarrativeAffordance onSubmit={vi.fn()} />);
+    fireEvent.click(screen.getByLabelText('Open guided safety narrative'));
+    const subject = screen.getByLabelText(/Subject id/) as HTMLInputElement;
+    const term = screen.getByLabelText(/Event term/) as HTMLInputElement;
+    // Pristine form: no error announced.
+    expect(subject.getAttribute('aria-invalid')).toBeNull();
+    // Engage the form by typing the event term; subject id is now empty-required.
+    fireEvent.change(term, { target: { value: 'nausea' } });
+    expect(subject.getAttribute('aria-invalid')).toBe('true');
+    const describedBy = subject.getAttribute('aria-describedby');
+    expect(describedBy).toBeTruthy();
+    const errEl = document.getElementById(describedBy as string);
+    expect(errEl?.textContent).toMatch(/Subject id is required/);
+    // Filling it clears the invalid state + association.
+    fireEvent.change(subject, { target: { value: 'S-1' } });
+    expect(subject.getAttribute('aria-invalid')).toBeNull();
+    expect(subject.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('dismisses the expandable panel with Escape (no keyboard trap)', () => {
+    render(<SafetyNarrativeAffordance onSubmit={vi.fn()} />);
+    fireEvent.click(screen.getByLabelText('Open guided safety narrative'));
+    const panel = screen.getByLabelText('Guided safety narrative');
+    fireEvent.keyDown(panel, { key: 'Escape' });
+    expect(screen.queryByLabelText('Guided safety narrative')).toBeNull();
+    // The chip is back, reachable again.
+    expect(screen.getByLabelText('Open guided safety narrative')).toBeTruthy();
   });
 
   it('keeps submit disabled until both hard-required facts are present', () => {

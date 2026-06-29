@@ -80,6 +80,22 @@ describe('IndModuleAffordance', () => {
     expect(screen.getByRole('status').getAttribute('data-sealable')).toBe('false');
   });
 
+  it('states the non-sealable reason in text, not colour alone (honesty + color-never-alone)', () => {
+    render(<IndModuleAffordance module="2.5" productName="X" indication="Y" provenance="not_assessed" onAuthor={vi.fn()} />);
+    const status = screen.getByRole('status');
+    expect(status.getAttribute('data-sealable')).toBe('false');
+    expect(status.textContent).toMatch(/cannot be sealed until the source is live/i);
+    // The status icon is decorative (aria-hidden); the verdict is in the text.
+    expect(status.querySelector('[aria-hidden="true"]')).toBeTruthy();
+  });
+
+  it('the author control is a real verb-labelled button', () => {
+    render(<IndModuleAffordance module="2.5" productName="X" indication="Y" onAuthor={vi.fn()} />);
+    const btn = screen.getByText('Author Module 2.5 from source').closest('button') as HTMLButtonElement;
+    expect(btn.tagName).toBe('BUTTON');
+    expect(btn.getAttribute('type')).toBe('button');
+  });
+
   it('disables the author button while busy', () => {
     render(<IndModuleAffordance module="2.5" productName="X" indication="Y" onAuthor={vi.fn()} busy />);
     const btn = screen.getByText('Authoring…').closest('button') as HTMLButtonElement;
