@@ -8382,6 +8382,47 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Protocol Schedule of Assessments (C2C-21). Reuses governedPdev; review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('add_soa_assessment', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_soa_assessment requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!Number.isInteger(documentId) || !name) return JSON.stringify({ error: 'document_id and name are required.' });
+  const { addAssessmentTx } = await import('../protocol-soa/protocol-soa-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'SoA assessment added via AnA', input, async (client) => {
+    const { id } = await addAssessmentTx(client, ctx.organizationId!, ctx.userId!, documentId, { name, category: typeof input.category === 'string' ? input.category : undefined });
+    return { assessmentId: id };
+  });
+});
+
+registerToolHandler('set_soa_cell', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_soa_cell requires tenant + user context.' });
+  const assessmentId = typeof input.assessment_id === 'number' ? input.assessment_id : NaN;
+  const visitId = typeof input.visit_id === 'number' ? input.visit_id : NaN;
+  if (!Number.isInteger(assessmentId) || !Number.isInteger(visitId)) return JSON.stringify({ error: 'assessment_id and visit_id are required.' });
+  const { setCellTx } = await import('../protocol-soa/protocol-soa-service.js');
+  return governedPdev(ctx, 'update', `protocol-soa-assessment:${assessmentId}`, 'SoA cell set via AnA', input, async (client) => {
+    const { id } = await setCellTx(client, ctx.organizationId!, ctx.userId!, { assessmentId, visitId, required: typeof input.required === 'boolean' ? input.required : undefined, notes: typeof input.notes === 'string' ? input.notes : null });
+    return { cellId: id, assessmentId, visitId };
+  });
+});
+
+registerToolHandler('review_soa_matrix', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_soa_matrix requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getSoaMatrix } = await import('../protocol-soa/protocol-soa-service.js');
+  try {
+    const out = await getSoaMatrix(ctx.organizationId, documentId);
+    return JSON.stringify({ ok: true, matrix: out.matrix, validation: out.validation });
+  } catch (err) {
+    return JSON.stringify({ error: `review_soa_matrix failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Protocol Authoring Extensions (C2C-20: templates / milestones / export). Reuses
 // governedPdev (domain 'protocol_development'); read tools have no transaction.
 // ─────────────────────────────────────────────────────────────────────────────

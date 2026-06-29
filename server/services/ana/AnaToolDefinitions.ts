@@ -4377,6 +4377,34 @@ export const GENERATE_CTGOV_REGISTRATION_DRAFT: AnaTool = {
   input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
 };
 
+// ─── Protocol Schedule of Assessments (C2C-21) ───────────────────────────────
+
+export const ADD_SOA_ASSESSMENT: AnaTool = {
+  name: 'add_soa_assessment',
+  description: "Add an assessment (row) to a protocol's schedule-of-assessments matrix (category: lab/imaging/exam/vital_signs/pk/questionnaire/procedure/eligibility/other). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, name: { type: 'string' }, category: { type: 'string', enum: ['lab', 'imaging', 'exam', 'vital_signs', 'pk', 'questionnaire', 'procedure', 'eligibility', 'other'] }, reason: { type: 'string' } },
+    required: ['document_id', 'name'],
+  },
+};
+
+export const SET_SOA_CELL: AnaTool = {
+  name: 'set_soa_cell',
+  description: "Mark an assessment as performed at a visit in the SoA matrix (cell = assessment_id × visit_id; visit_id is a protocol_schedule_visits id). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { assessment_id: { type: 'number' }, visit_id: { type: 'number' }, required: { type: 'boolean' }, notes: { type: 'string' }, reason: { type: 'string' } },
+    required: ['assessment_id', 'visit_id'],
+  },
+};
+
+export const REVIEW_SOA_MATRIX: AnaTool = {
+  name: 'review_soa_matrix',
+  description: "Read-only schedule-of-assessments matrix for a protocol: assessments × visits grid plus validation findings (empty visits, unscheduled assessments, screening coverage; ICH M11).",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
 // ─── CITI Training full integration (C2C-01/02) ──────────────────────────────
 
 export const IMPORT_CITI_RECORDS: AnaTool = {
@@ -7360,6 +7388,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REVIEW_PROTOCOL_TIMELINE,
   EXPORT_PROTOCOL_DOCUMENT,
   GENERATE_CTGOV_REGISTRATION_DRAFT,
+  ADD_SOA_ASSESSMENT,
+  SET_SOA_CELL,
+  REVIEW_SOA_MATRIX,
   CREATE_PROTOCOL_AMENDMENT,
   ADD_AMENDMENT_CHANGE,
   REVIEW_AMENDMENT,
