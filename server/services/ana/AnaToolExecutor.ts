@@ -11350,6 +11350,36 @@ registerToolHandler('assess_ivd_analytical_extensions', async (input: Record<str
   })
 );
 
+// Regulatory Currency Engine (Lane A) — curated, freshness-stamped registry of
+// DATED regulatory facts so AnA never advises on a VOID/superseded rule from its
+// static knowledge. Pure registry lookups (no LLM, no network); reuse the
+// deterministic stats envelope. See regulatoryCurrencyTools.ts + the registry at
+// ../regulatory-currency/currency-registry.ts.
+registerToolHandler('check_regulatory_currency', async (input: Record<string, unknown>) =>
+  runStatsTool('check_regulatory_currency', async () => {
+    const { findFacts } = await import('../regulatory-currency/currency-registry.js');
+    const facts = findFacts({
+      topic: input.topic as string | undefined,
+      jurisdiction: input.jurisdiction as any,
+      segment: input.segment as any,
+    });
+    return { matchCount: facts.length, facts };
+  })
+);
+
+registerToolHandler('guidance_change_radar', async (input: Record<string, unknown>) =>
+  runStatsTool('guidance_change_radar', async () => {
+    const { changeRadar } = await import('../regulatory-currency/currency-registry.js');
+    const drifts = changeRadar({
+      topics: input.topics as string[] | undefined,
+      jurisdictions: input.jurisdictions as any,
+      draftedOn: input.draftedOn as string | undefined,
+    });
+    const highestSeverity = drifts.length > 0 ? drifts[0].severity : null;
+    return { driftCount: drifts.length, highestSeverity, drifts };
+  })
+);
+
 // Submission intelligence (Tier 1.3/1.4) — precedent benchmarking + package
 // completeness. Both engines are pure/structured-input; thin pass-throughs.
 registerToolHandler('benchmark_precedent_trials', async (input: Record<string, unknown>) =>

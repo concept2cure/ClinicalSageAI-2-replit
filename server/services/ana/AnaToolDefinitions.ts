@@ -14,6 +14,7 @@ import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_S
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
 import { RECONCILIATION_TOOLS } from './reconciliationTools';
+import { REGULATORY_CURRENCY_TOOLS } from './regulatoryCurrencyTools';
 import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
 import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
 import { DEVICE_SUBMISSION_TOOLS } from './deviceSubmissionTools';
@@ -7243,6 +7244,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // submission's documents (enrolled N in 2.5 ≠ 2.7.3 ≠ CSR). The cross-module
   // reconciliation check_numerical_integrity / check_dossier_consistency lack.
   ...RECONCILIATION_TOOLS,
+  // Regulatory Currency Engine: curated, freshness-stamped registry of DATED facts
+  // (vacated/superseded/upcoming-mandatory rules) so AnA never advises on a VOID
+  // rule from its static knowledge. See regulatoryCurrencyTools.ts.
+  ...REGULATORY_CURRENCY_TOOLS,
   // Submission intelligence: precedent benchmarking + package completeness.
   ...SUBMISSION_INTELLIGENCE_TOOLS,
   // Device/IVD submission assembly, predicate-adequacy scoring, drug coding —

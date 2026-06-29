@@ -101,14 +101,19 @@ export const PEDIGREE_LEVELS: Record<DeterminismPedigree, PedigreeInfo> = {
  * Short, defensible allowlist of OTHER tools (beyond the global-RI experts) that are
  * clearly pure rule/registry lookups with no LLM and no network.
  *
- * Kept deliberately EMPTY: nothing else in the current tool catalog could be verified
- * to be a pure, no-network registry lookup. Candidates that look like lookups are not
- * eligible — e.g. `lookup_icd10_code` calls a live external (NLM Clinical Tables) API,
- * which is `external_api_live`, not `deterministic_registry`; other `lookup_*` /
- * `classify_*` tools query services or are advisory. When unsure, the conservative
- * default (`model_assisted`) wins rather than over-claiming determinism.
+ * Candidates that merely look like lookups are NOT eligible — e.g. `lookup_icd10_code`
+ * calls a live external (NLM Clinical Tables) API, which is `external_api_live`, not
+ * `deterministic_registry`; other `lookup_*` / `classify_*` tools query services or are
+ * advisory. When unsure, the conservative default (`model_assisted`) wins rather than
+ * over-claiming determinism.
  */
-export const DETERMINISTIC_REGISTRY_EXTRA: string[] = [];
+export const DETERMINISTIC_REGISTRY_EXTRA: string[] = [
+  // Regulatory Currency Engine: both tools are pure lookups over the curated,
+  // freshness-stamped dated-facts registry (currency-registry.ts) — no LLM, no
+  // network — exactly mirroring how the global-RI experts are classified.
+  'check_regulatory_currency',
+  'guidance_change_radar',
+];
 
 const REGISTRY_NAME_SET: ReadonlySet<string> = new Set<string>([
   ...GLOBAL_RI_TOOL_NAMES,
