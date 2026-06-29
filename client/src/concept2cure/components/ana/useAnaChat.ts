@@ -159,6 +159,8 @@ export interface AnaChatMessage {
   latencyMs?: number;
   /** True if the response came from a fallback provider (non-Anthropic). */
   fallback?: boolean;
+  /** Effort the server actually used this turn (fast / balanced / thorough). */
+  effortUsed?: string;
   /** True if the user explicitly stopped the stream. */
   stopped?: boolean;
   /**
@@ -258,6 +260,18 @@ export interface UseAnaChatOptions {
    * so a narrow pin can't break ANA. Empty/undefined = auto (server chooses).
    */
   selectedTools?: string[];
+  /**
+   * Response effort the user picked in the Composer (Fast/Balanced/Thorough).
+   * Sent as `effort_level` when set; the server maps it to a routing strategy
+   * (governance-pinned policy still wins). Omitted → server default 'balanced'.
+   */
+  effortLevel?: 'fast' | 'balanced' | 'thorough' | null;
+  /**
+   * Explicit model override (gateway registry id) the user pinned in the
+   * advanced picker. Sent as `model_override` when set; the server validates it
+   * against the tenant's enabled models and drops it silently when invalid.
+   */
+  modelOverride?: string | null;
 }
 
 export interface UseAnaChatReturn {
@@ -394,6 +408,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       // Capture done-event fields before post_done arrives
       let capturedLatencyMs: number | undefined;
       let capturedProvider: string | undefined;
+      let capturedEffortUsed: string | undefined;
       let streamedThinking = '';
 
       // Unpack the AuthoringContextPack into the three typed slots the server
@@ -472,6 +487,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           options.selectedTools && options.selectedTools.length > 0
             ? options.selectedTools
             : undefined,
+        // Model/effort picker. Both omitted when unset so the server keeps its
+        // default routing (effort='balanced', no model pin).
+        effort_level: options.effortLevel ?? undefined,
+        model_override: options.modelOverride ?? undefined,
       });
 
       let streamedText = '';
@@ -578,6 +597,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             } else if (event.type === 'done') {
               capturedLatencyMs = typeof event.latencyMs === 'number' ? event.latencyMs : undefined;
               capturedProvider = typeof event.provider === 'string' ? event.provider : undefined;
+              // The effort the server actually used this turn (may differ from
+              // the request when a governance policyHint pinned the strategy).
+              capturedEffortUsed =
+                typeof event.effortUsed === 'string' ? event.effortUsed : undefined;
             } else if (event.type === 'post_done') {
               const cleaned: string | undefined = event.cleanedResponse;
               const actions: AnaChatAction[] | undefined = Array.isArray(event.executedActions)
@@ -611,6 +634,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                       capturedProvider !== undefined
                         ? capturedProvider !== 'anthropic'
                         : undefined,
+                    effortUsed: capturedEffortUsed ?? m.effortUsed,
                   };
                 })
               );
@@ -811,6 +835,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       options.authoringContext,
       options.moduleContext,
       options.selectedTools,
+      options.effortLevel,
+      options.modelOverride,
     ]
   );
 

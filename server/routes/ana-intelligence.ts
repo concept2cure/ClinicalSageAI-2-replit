@@ -21,6 +21,11 @@ import {
   type RegulatoryFramework,
 } from '../services/ana/AnaDocumentDraftingService';
 import { getGateway } from '../services/ai-gateway/gateway';
+import {
+  projectModelsForPicker,
+  EFFORT_LEVELS,
+  DEFAULT_EFFORT,
+} from '../services/ai-gateway/effort';
 
 const router = Router();
 
@@ -569,44 +574,23 @@ router.get('/health', (_req: Request, res: Response) => {
 
 /**
  * GET /api/claude/models
- * Available Claude models.
+ * Available models for the AnA Composer's model/effort picker.
+ *
+ * Projected live from the gateway's model registry (gated on API-key presence)
+ * rather than a static list, so the picker only ever offers models the gateway
+ * can actually route to. Each option carries a derived `label` and
+ * `recommendedEffort` (neither exists on the raw ModelConfig). The effort
+ * controls (`effortLevels` + `defaultEffort`) and the legacy `frameworks` array
+ * are preserved alongside the `{ success, data }` envelope.
  */
 router.get('/models', (_req: Request, res: Response) => {
+  const models = projectModelsForPicker(getGateway().getModels());
   res.json({
     success: true,
     data: {
-      models: [
-        {
-          id: 'claude-opus-4',
-          model: 'claude-opus-4-7',
-          description: 'Most capable model — regulatory document drafting, complex analysis, extended thinking',
-          contextWindow: 200000,
-          maxOutput: 32768,
-          pricing: { input: '$15/MTok', output: '$75/MTok' },
-          features: ['extended_thinking', 'tool_use', 'vision', 'prompt_caching', 'streaming'],
-          bestFor: ['document_drafting', 'regulatory_review', 'gap_analysis', 'complex_reasoning'],
-        },
-        {
-          id: 'claude-sonnet-4',
-          model: 'claude-sonnet-4-6',
-          description: 'Best balance of speed and capability — chat, analysis, vision, code',
-          contextWindow: 200000,
-          maxOutput: 16384,
-          pricing: { input: '$3/MTok', output: '$15/MTok' },
-          features: ['extended_thinking', 'tool_use', 'vision', 'prompt_caching', 'streaming'],
-          bestFor: ['chat', 'document_analysis', 'structured_output', 'vision'],
-        },
-        {
-          id: 'claude-haiku-4',
-          model: 'claude-haiku-4-5-20251001',
-          description: 'Fastest and most affordable — summaries, simple queries, structured extraction',
-          contextWindow: 200000,
-          maxOutput: 8192,
-          pricing: { input: '$0.80/MTok', output: '$4/MTok' },
-          features: ['tool_use', 'vision', 'streaming'],
-          bestFor: ['chat', 'summarization', 'structured_output'],
-        },
-      ],
+      models,
+      effortLevels: EFFORT_LEVELS,
+      defaultEffort: DEFAULT_EFFORT,
       frameworks: [
         'fda_510k',
         'fda_pma',

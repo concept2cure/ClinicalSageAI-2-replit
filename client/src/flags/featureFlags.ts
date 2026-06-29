@@ -27,6 +27,16 @@ export const featureFlags: Record<string, FeatureFlag> = {
     defaultValue: false,
     enabled: false,
   },
+  // AnA Composer — Fast/Balanced/Thorough effort segmented control + an advanced
+  // model dropdown. Ships dark; enable per-org once validated.
+  ENABLE_MODEL_EFFORT_PICKER: {
+    id: 'ENABLE_MODEL_EFFORT_PICKER',
+    name: 'AnA Model/Effort Picker',
+    description:
+      'Enables the Fast/Balanced/Thorough effort control and the advanced model dropdown in the AnA Composer.',
+    defaultValue: false,
+    enabled: false,
+  },
   // 510k module flags
   ENABLE_510K_MODULE: {
     id: 'ENABLE_510K_MODULE',
