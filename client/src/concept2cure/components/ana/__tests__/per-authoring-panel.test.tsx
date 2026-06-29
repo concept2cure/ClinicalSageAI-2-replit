@@ -97,8 +97,26 @@ describe('PerAuthoringPanel honesty guard', () => {
     expect(screen.getByText(/built on sample data/i)).toBeTruthy();
     const btn = screen.getByText('Author PER and verify').closest('button') as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
+    // Disabled-with-reason: the button states why and points at the blockers list.
+    expect(btn.getAttribute('title')).toMatch(/cannot be authored yet/i);
+    expect(btn.getAttribute('aria-describedby')).toBe('per-blockers');
     fireEvent.click(btn);
     expect(onAuthor).not.toHaveBeenCalled();
+  });
+
+  it('COLOR NEVER ALONE: the verdict carries text + an aria-hidden icon', () => {
+    const { container } = render(<PerAuthoringPanel bundle={fullBundle()} />);
+    const status = screen.getByRole('status');
+    // Text label conveys the verdict (not color alone)…
+    expect(status.textContent).toMatch(/Ready to author and verify/);
+    // …accompanied by a decorative icon that is hidden from assistive tech.
+    expect(container.querySelector('[aria-hidden="true"] svg')).toBeTruthy();
+  });
+
+  it('the author action icon is decorative (aria-hidden) and the button has an accessible name', () => {
+    render(<PerAuthoringPanel bundle={fullBundle()} onAuthorAndVerify={() => {}} />);
+    const btn = screen.getByRole('button', { name: /Author PER and verify/ });
+    expect(btn.querySelector('[aria-hidden="true"] svg')).toBeTruthy();
   });
 
   it('blocks authoring when a pillar is not assessed', () => {

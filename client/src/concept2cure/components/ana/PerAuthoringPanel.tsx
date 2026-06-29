@@ -43,6 +43,16 @@ export function PerAuthoringPanel({ bundle, onAuthorAndVerify, authoring }: PerA
   const plan = useMemo(() => buildPerAuthoringPlan(bundle), [bundle]);
   const { sections, requiredStrings, exportability } = plan;
   const blocked = !exportability.exportable;
+  const canAuthor = !blocked && !authoring && !!onAuthorAndVerify;
+  // Disabled-with-reason: every reason the action is unavailable is stated in
+  // text (button title + the blockers list), never a silent or color-only gate.
+  const disabledReason = blocked
+    ? 'This PER cannot be authored yet — resolve the blockers below.'
+    : !onAuthorAndVerify
+      ? 'Authoring is unavailable in this context.'
+      : authoring
+        ? 'Authoring is in progress.'
+        : undefined;
 
   return (
     <section className={styles.perPanel} aria-label="IVDR PER authoring">
@@ -104,7 +114,7 @@ export function PerAuthoringPanel({ bundle, onAuthorAndVerify, authoring }: PerA
       </div>
 
       {blocked && (
-        <ul className={styles.perBlockers} aria-label="Reasons this PER cannot be sealed or exported">
+        <ul id="per-blockers" className={styles.perBlockers} aria-label="Reasons this PER cannot be sealed or exported">
           {exportability.blockers.map((b, i) => (
             <li key={i}>
               <span className={styles.ico} aria-hidden="true">
@@ -119,11 +129,15 @@ export function PerAuthoringPanel({ bundle, onAuthorAndVerify, authoring }: PerA
       <button
         type="button"
         className={styles.perAuthorBtn}
-        onClick={() => onAuthorAndVerify?.(plan)}
-        disabled={blocked || authoring || !onAuthorAndVerify}
+        onClick={() => canAuthor && onAuthorAndVerify?.(plan)}
+        disabled={!canAuthor}
+        title={disabledReason ?? 'Author the PER and verify it against the recorded figures'}
+        aria-describedby={blocked ? 'per-blockers' : undefined}
       >
-        <I.sparkles size={13} />
-        <span>{authoring ? 'Authoring…' : 'Author PER and verify'}</span>
+        <span className={styles.ico} aria-hidden="true">
+          <I.sparkles size={13} />
+        </span>
+        <span>{authoring ? 'Authoring' : 'Author PER and verify'}</span>
       </button>
     </section>
   );

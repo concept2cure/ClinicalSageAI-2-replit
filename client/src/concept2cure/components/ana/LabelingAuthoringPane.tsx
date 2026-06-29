@@ -19,7 +19,7 @@
  * watermarked and CANNOT be sealed or exported. The currency verdict is the
  * server's deterministic finding set — never an AI guess.
  */
-import { useMemo } from 'react';
+import { useMemo, useRef, type KeyboardEvent } from 'react';
 import { I } from './icons';
 import { VerificationPanel } from './VerificationPanel';
 import { LabelCurrencyPanel } from './LabelCurrencyPanel';
@@ -70,6 +70,23 @@ export function LabelingAuthoringPane({
   const guard = useMemo(() => checkSectionGuard(mode, draft.content), [mode, draft.content]);
   const requiredStrings = useMemo(() => deriveRequiredStrings(mode), [mode]);
 
+  const MODES: LabelingMode[] = ['us', 'eu'];
+  const radioRefs = useRef<Record<LabelingMode, HTMLButtonElement | null>>({ us: null, eu: null });
+
+  // radiogroup keyboard model: arrow keys move selection (and focus) between the
+  // two structures; the checked radio is the only tab stop (roving tabindex).
+  const onRadioKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowDown' && e.key !== 'ArrowLeft' && e.key !== 'ArrowUp') {
+      return;
+    }
+    e.preventDefault();
+    const idx = MODES.indexOf(mode);
+    const delta = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1;
+    const next = MODES[(idx + delta + MODES.length) % MODES.length];
+    if (next !== mode) onModeChange(next);
+    radioRefs.current[next]?.focus();
+  };
+
   const isSample = draft.dataSource === 'sample';
   // Honesty contract: a sample draft is never sealable/exportable, regardless of
   // currency/verify state. Live drafts may export only once current + verified.
@@ -96,15 +113,21 @@ export function LabelingAuthoringPane({
           role="radiogroup"
           aria-label="Labeling structure"
         >
-          {(['us', 'eu'] as LabelingMode[]).map((m) => (
+          {MODES.map((m) => (
             <button
               key={m}
+              ref={(el) => {
+                radioRefs.current[m] = el;
+              }}
               type="button"
               role="radio"
               aria-checked={mode === m}
+              title={LABELING_MODES[m].label}
+              tabIndex={mode === m ? 0 : -1}
               className={styles.labelingToggleBtn}
               data-active={mode === m ? 'true' : 'false'}
               onClick={() => onModeChange(m)}
+              onKeyDown={onRadioKeyDown}
             >
               {LABELING_MODES[m].short}
             </button>

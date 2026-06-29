@@ -1727,7 +1727,14 @@
   transition: background 200ms ease-out;
 }
 .perAuthorBtn:hover:not(:disabled) { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
-.perAuthorBtn:disabled { opacity: 0.45; cursor: default; }
+.perAuthorBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+.perAuthorBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.45));
+}
+@media (prefers-reduced-motion: reduce) {
+  .perAuthorBtn { transition: none; }
+}
 /* ───────────────────────────────────────────────────────────────────────── */
 /* E6 — Substantial Equivalence comparison table (Document Studio surface).   */
 /* Colour is always paired with a text label; motion is calm (200ms ease-out).*/
