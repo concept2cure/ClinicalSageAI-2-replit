@@ -197,16 +197,20 @@ wherever revenue appears.
 
 ---
 
-## 7. Engineering reference baseline (NOT the design deliverable)
+## 7. Greenfield — no baseline UI in the tree
 
-A functional, wired baseline exists for behavior reference only:
-- Master Admin: `client/src/concept2cure/master-admin/**`
-- Business Center: `client/src/concept2cure/business-center/**`
+By design decision, **no baseline UI ships** for these consoles. Only the
+backend + API are merged. Claude Design builds the UI greenfield from this SOW
+and the API contract (§3) — there is nothing to override or preserve.
 
-Use it to see real data shapes, interaction flows, and the governed-action
-pattern. Claude Design should treat visual design, layout, hierarchy, and
-component choices as greenfield to the design-system standard — replace, don't
-preserve, the baseline styling.
+A throwaway engineering baseline existed during development and was intentionally
+**removed before merge**; if you want it purely as a behavior reference, it is
+recoverable from this branch's git history (PR #918, commit prior to the
+"strip baseline UI" change) — but treat the design as new work to the
+design-system standard. The route registrations at
+`client/src/concept2cure/router/ZenRouter.tsx` (`/concept2cure/master-admin`,
+`/concept2cure/business-center`) are where the designed entrypoints get wired
+back in.
 
 ---
 

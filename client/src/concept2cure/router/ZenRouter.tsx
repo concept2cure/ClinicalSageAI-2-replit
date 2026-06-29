@@ -24,9 +24,10 @@ import { ZenSignup, ZenAuthLayout } from '../auth';
 import { Concept2CureLogin } from '../components/concept2cure-auth';
 import { ZenApp } from '../ZenApp';
 import MdxRoute from '../mdx/MdxRoute';
-import MasterAdminRoute from '../master-admin/MasterAdminRoute';
-import BusinessCenterRoute from '../business-center/BusinessCenterRoute';
 import { InsightsSurface } from '../insights/surface';
+// Master Administration + Business Center UI is owned by Claude Design (built
+// from HANDOFF_TO_DESIGN_master_admin_business_center.md). Only the backend +
+// API ship here; route registrations are added back when the designed UI lands.
 import { ProjectProvider } from '../context/ProjectContext';
 import {
   AuthProvider as PortalAuthProvider,
@@ -197,33 +198,6 @@ export const ZenRouter: React.FC = () => {
               <ProtectedRoute>
                 <PageTransition>
                   <MdxRoute />
-                </PageTransition>
-              </ProtectedRoute>
-            )}
-          </Route>
-
-          {/* Master Administration — platform-owner + support console. Non
-              client-facing; cross-tenant monitoring + support. Gated client-side
-              by platform role (and server-side on every endpoint). Mounted
-              before the ZenApp catch-all so it owns its own URL. */}
-          <Route path="/concept2cure/master-admin">
-            {() => (
-              <ProtectedRoute>
-                <PageTransition>
-                  <MasterAdminRoute />
-                </PageTransition>
-              </ProtectedRoute>
-            )}
-          </Route>
-
-          {/* Business Center — owner/finance tier. Cost accounting, P&L,
-              executive summary. Gated client-side by business role (and
-              server-side on every endpoint by requireBusinessAdmin). */}
-          <Route path="/concept2cure/business-center">
-            {() => (
-              <ProtectedRoute>
-                <PageTransition>
-                  <BusinessCenterRoute />
                 </PageTransition>
               </ProtectedRoute>
             )}
