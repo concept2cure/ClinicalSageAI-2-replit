@@ -92,6 +92,14 @@ import { adviseGcp, reviewInformedConsent, listGcpDomains } from './gcp-consent.
 import { adviseCoaSelection, listCoaTypes } from './coa-selection.js';
 import { adviseCtdStructure, listCtdModules } from './ctd-structure.js';
 import { adviseSpecialDesignation, listDesignations } from './special-designations.js';
+import {
+  buildOddAuthoringPlan,
+  evaluateOddVerification,
+  assessOddSealability,
+  type OddCitation,
+  type OddProvenance,
+  type OddProductInput,
+} from 'shared/ana/orphan-drug-designation.js';
 import { adviseEstimand, listEstimandFramework } from './estimands.js';
 import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance.js';
 import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';

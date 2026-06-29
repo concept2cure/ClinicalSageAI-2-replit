@@ -398,6 +398,75 @@ export const ADVISE_SPECIAL_DESIGNATION: AnaTool = {
   },
 };
 
+// Orphan-Drug Designation request authoring + verification plan (21 CFR 316).
+// Builds the §316.20/§316.21 ODD-request document content from a product's
+// indication/modality/strategy fields, returns the author_docx_native markdown
+// PLUS the required_strings (the mandatory section headers) for the downstream
+// verify_docx_against_source step — so the author→verify loop proves every
+// mandatory element is present before the draft is sealed/exported. Chain
+// advise_special_designation (designation='orphan') for rationale,
+// search_drug_approvals + lookup_regulatory_precedents for same-drug/same-disease
+// prior-designation precedent, and search_literature for prevalence &
+// natural-history citations, then pass the gathered evidence in `citations`.
+export const PLAN_ORPHAN_DRUG_DESIGNATION: AnaTool = {
+  name: 'plan_orphan_drug_designation',
+  description:
+    'Author an FDA Orphan-Drug Designation (ODD) request under 21 CFR Part 316 from a BiotechProduct. ' +
+    'Returns the author_docx_native title + markdown content (all mandatory §316.20(b) / §316.21(b)(c) ' +
+    'sections), and the required_strings (the mandatory section headers) to pass to ' +
+    'verify_docx_against_source so the verification proves every required element is present before ' +
+    'download. Honesty contract: no prevalence/eligibility claim is asserted without a cited source ' +
+    '(supply them via `citations`), and sample/not-assessed drafts are non-sealable. Chain ' +
+    'advise_special_designation (designation="orphan") for rationale, search_drug_approvals + ' +
+    'lookup_regulatory_precedents for prior same-drug/same-disease designation precedent, and ' +
+    'search_literature for prevalence & natural-history citations.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      product: {
+        type: 'object',
+        description: 'Product fields, typically drawn from BiotechProduct (name/indication/modality/strategy).',
+        properties: {
+          name: { type: 'string', description: 'Product code, e.g. "ABC-123".' },
+          generic_name: { type: 'string' },
+          brand_name: { type: 'string' },
+          indication: { type: 'string', description: 'Proposed orphan indication, e.g. "relapsed/refractory AML".' },
+          modality: { type: 'string', description: 'small_molecule | biologic | cell_therapy | gene_therapy | combination.' },
+          designations: { type: 'array', items: { type: 'string' }, description: 'strategy.designation values; "orphan" expected.' },
+          sponsor_name: { type: 'string' },
+          sponsor_address: { type: 'string' },
+          contact_name: { type: 'string' },
+          fda_division: { type: 'string' },
+        },
+        required: ['name', 'indication'],
+      },
+      rationale: {
+        type: 'string',
+        description: 'Scientific rationale narrative, e.g. the brief from advise_special_designation(designation="orphan").',
+      },
+      citations: {
+        type: 'array',
+        description: 'Evidence supporting a section. A prevalence/eligibility section asserts no claim without one.',
+        items: {
+          type: 'object',
+          properties: {
+            section_id: { type: 'string', description: 'e.g. population_estimate | cost_recovery_basis | same_drug_summary.' },
+            label: { type: 'string' },
+            source: { type: 'string', description: 'DOI, PMID, FDA application number, precedent id, or URL.' },
+          },
+          required: ['section_id', 'label', 'source'],
+        },
+      },
+      provenance: {
+        type: 'string',
+        enum: ['live', 'sample', 'not_assessed'],
+        description: 'Provenance of the product data. sample/not_assessed drafts are non-sealable and non-exportable.',
+      },
+    },
+    required: ['product'],
+  },
+};
+
 export const ADVISE_GCP: AnaTool = {
   name: 'advise_gcp',
   description:
@@ -6639,6 +6708,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ADVISE_COA_SELECTION,
   ADVISE_CTD_STRUCTURE,
   ADVISE_SPECIAL_DESIGNATION,
+  PLAN_ORPHAN_DRUG_DESIGNATION,
   ADVISE_ESTIMAND,
   ADVISE_PHARMACOVIGILANCE,
   ADVISE_STUDY_DESIGN,
