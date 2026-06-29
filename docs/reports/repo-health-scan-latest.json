@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T04:35:20.901Z",
+  "generatedAt": "2026-06-29T04:52:36.058Z",
   "git": {
-    "sha": "e7f8a334eb6f66eef1dad4c1ff66b49712322f44",
+    "sha": "a4fe08bc5389a63d9c410488d67a90d011dfa369",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2358,16 +2358,16 @@
         "lines": 1937
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 1933
+      },
+      {
         "file": "server/services/ai-gateway/gateway.ts",
         "lines": 1876
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
         "lines": 1862
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 1860
       },
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
