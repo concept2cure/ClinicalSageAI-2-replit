@@ -17,15 +17,18 @@
  * content that did not verify clean. The §11.50 meaning enum (AUTHOR | REVIEWER
  * | APPROVER) is enforced server-side via validateSealManifestation.
  *
- * ── Build-1 integration points (version persistence is built in PARALLEL) ──
- *   • `input.artifactPk` / `input.artifactExternalId`: when Build 1 has persisted
- *     the artifact + version, pass the existing rows so we DON'T re-insert. Today,
- *     when both are absent, we create a minimal governed artifact + version so the
- *     seal has something durable to point at. Replace that fallback with Build 1's
- *     persisted reference once wired (see TODO(build-1) markers).
- *   • `input.existingVersionId`: when Build 1 already wrote the
- *     `concept2cure_artifact_versions` row for THIS verified content, pass its PK
- *     and we seal against it in place (no second version row).
+ * ── Build-1 integration (CLOSED in E11) ──
+ *   • `input.artifactPk` / `input.artifactExternalId`: Build 1 persists the draft
+ *     to the governed artifact tables and surfaces the EXTERNAL id (`artifact_xxx`)
+ *     to the client (server `artifact_version_saved` SSE). The client threads that
+ *     external id here; we resolve its PK org-scoped and seal the EXISTING row.
+ *   • `input.existingVersionId` / `input.existingVersionNumber`: the client knows
+ *     the persisted version by NUMBER (not row PK). When the number is supplied we
+ *     resolve the `concept2cure_artifact_versions` row PK (org-scoped) and seal it
+ *     in place — no second version row.
+ *   • The fallback artifact/version insert below only runs when NO persisted row
+ *     can be resolved (e.g. an in-session draft that never reached Build 1), so the
+ *     seal always has a durable target. The common path is now the persisted row.
  *
  * The pool is injected so the transaction is unit-testable without a live DB.
  */
@@ -169,6 +172,25 @@ export async function sealVerifiedVersion(
     // ── Resolve / create the artifact (Build-1 integration point) ──
     let artifactPk = input.artifactPk;
     let artifactExternalId = input.artifactExternalId;
+
+    // Build 1 (E11): the client knows the persisted artifact only by its
+    // external id (`artifact_xxx`), not its PK. When the external id is supplied
+    // (and the PK is not), resolve the PK org-scoped so we seal the EXISTING
+    // persisted artifact row — never a fallback. Tenant isolation: the lookup is
+    // bound to organizationId, so a foreign external id resolves to nothing and
+    // falls through to the guarded fallback insert below.
+    if (!artifactPk && artifactExternalId) {
+      const found = await client.query(
+        `SELECT id FROM concept2cure_artifacts
+          WHERE artifact_id = $1 AND organization_id = $2
+          LIMIT 1`,
+        [artifactExternalId, input.organizationId],
+      );
+      if (found.rows.length > 0) {
+        artifactPk = found.rows[0].id as number;
+      }
+    }
+
     if (!artifactPk || !artifactExternalId) {
       // TODO(build-1): When Build 1 persists the artifact, this fallback insert
       // is removed and `artifactPk`/`artifactExternalId` are required inputs.
@@ -198,6 +220,26 @@ export async function sealVerifiedVersion(
     // ── Resolve / create the version (Build-1 integration point) ──
     let versionId = input.existingVersionId;
     let versionNumber = input.existingVersionNumber ?? 1;
+
+    // Build 1 (E11): the client knows the persisted version by its number, not
+    // its row PK. When we have a resolved artifact PK and a version number (but
+    // no version-row PK), bind to the EXISTING `concept2cure_artifact_versions`
+    // row so the seal points at the persisted version — not a fresh insert.
+    // Org-scoped for tenant isolation; a miss falls through to the guarded
+    // fallback insert below.
+    if (!versionId && artifactPk && input.existingVersionNumber != null) {
+      const foundVersion = await client.query(
+        `SELECT id, version FROM concept2cure_artifact_versions
+          WHERE artifact_id = $1 AND organization_id = $2 AND version = $3
+          LIMIT 1`,
+        [artifactPk, input.organizationId, input.existingVersionNumber],
+      );
+      if (foundVersion.rows.length > 0) {
+        versionId = foundVersion.rows[0].id as number;
+        versionNumber = Number(foundVersion.rows[0].version);
+      }
+    }
+
     if (!versionId) {
       // TODO(build-1): When Build 1 persists the version, pass `existingVersionId`
       // (+ `existingVersionNumber`) and this insert is skipped.

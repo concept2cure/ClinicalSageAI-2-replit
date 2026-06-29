@@ -78,6 +78,71 @@ describe('sealVerifiedVersion — happy path (one transaction)', () => {
     expect(parsed.sealedRecord.algorithm).toBe('sha256');
   });
 
+  it('E11: binds the seal to the EXISTING persisted row resolved from external id + version number (no fallback)', async () => {
+    // The client knows only the EXTERNAL artifact id and the version NUMBER — not
+    // the row PKs. The service must resolve both org-scoped and seal the existing
+    // row, never the fallback INSERT.
+    const queries: { sql: string; params?: unknown[] }[] = [];
+    const client = {
+      query: vi.fn(async (sql: string, params?: unknown[]) => {
+        queries.push({ sql, params });
+        // External-id → artifact PK resolution (org-scoped SELECT).
+        if (/SELECT id FROM concept2cure_artifacts/.test(sql)) return { rows: [{ id: 777 }] };
+        // version number → version-row PK resolution (org-scoped SELECT).
+        if (/SELECT id, version FROM concept2cure_artifact_versions/.test(sql)) return { rows: [{ id: 888, version: 4 }] };
+        return { rows: [] };
+      }),
+      release: vi.fn(),
+    };
+    const pool: SealPool = { connect: vi.fn(async () => client) };
+
+    const result = await sealVerifiedVersion(
+      baseInput({ artifactExternalId: 'artifact_persisted_e11', existingVersionNumber: 4 }),
+      pool,
+    );
+
+    const sqls = queries.map((q) => q.sql);
+    // The persisted rows were RESOLVED, not re-inserted.
+    expect(sqls.some((s) => /SELECT id FROM concept2cure_artifacts/.test(s))).toBe(true);
+    expect(sqls.some((s) => /SELECT id, version FROM concept2cure_artifact_versions/.test(s))).toBe(true);
+    expect(sqls.some((s) => /INSERT INTO concept2cure_artifacts\b/.test(s))).toBe(false);
+    expect(sqls.some((s) => /INSERT INTO concept2cure_artifact_versions\b/.test(s))).toBe(false);
+
+    // The id threaded all the way through to the seal target.
+    expect(result.artifactPk).toBe(777);
+    expect(result.artifactId).toBe('artifact_persisted_e11');
+    expect(result.versionId).toBe(888);
+    expect(result.version).toBe(4);
+
+    // The signature + audit rows point at the resolved version PK.
+    const sig = queries.find((q) => /INSERT INTO concept2cure_signatures/.test(q.sql));
+    expect(sig?.params).toContain(888);
+    const audit = queries.find((q) => /INSERT INTO regulatory_audit_logs/.test(q.sql));
+    expect(audit?.params).toContain(String(888));
+  });
+
+  it('E11: falls back to a fresh insert when the external id resolves to nothing (foreign/unknown id)', async () => {
+    const queries: { sql: string; params?: unknown[] }[] = [];
+    const client = {
+      query: vi.fn(async (sql: string, params?: unknown[]) => {
+        queries.push({ sql, params });
+        if (/SELECT id FROM concept2cure_artifacts/.test(sql)) return { rows: [] }; // not found / wrong org
+        if (/INSERT INTO concept2cure_artifacts\b/.test(sql)) return { rows: [{ id: 101 }] };
+        if (/INSERT INTO concept2cure_artifact_versions\b/.test(sql)) return { rows: [{ id: 202, version: 1 }] };
+        return { rows: [] };
+      }),
+      release: vi.fn(),
+    };
+    const pool: SealPool = { connect: vi.fn(async () => client) };
+    const result = await sealVerifiedVersion(
+      baseInput({ artifactExternalId: 'artifact_unknown', existingVersionNumber: 9 }),
+      pool,
+    );
+    const sqls = queries.map((q) => q.sql);
+    expect(sqls.some((s) => /INSERT INTO concept2cure_artifacts\b/.test(s))).toBe(true);
+    expect(result.versionId).toBe(202);
+  });
+
   it('consumes Build-1 references without re-inserting artifact/version', async () => {
     const { pool, queries } = makePool();
     const result = await sealVerifiedVersion(

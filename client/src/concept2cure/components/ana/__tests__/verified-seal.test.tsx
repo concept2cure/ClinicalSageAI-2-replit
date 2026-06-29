@@ -90,6 +90,24 @@ describe('composeSealPayload', () => {
     expect(body.mfaToken).toBe('123456');
     expect(body.signerName).toBe('Dr. Jane Roe');
   });
+
+  it('E11: threads the persisted version identity so the server seals the EXISTING row (not a fallback)', () => {
+    const args: SealVerifiedArgs = {
+      title: 'IND Module 2.5 — ABC-123',
+      content: 'real content',
+      printedName: 'Dr. Jane Roe',
+      meaning: 'AUTHOR',
+      reasonForChange: 'Verified clean against source.',
+      verification: { ok: true },
+      password: 'secret',
+      // The Build-1 persisted references the client threads from the active draft.
+      artifactExternalId: 'artifact_persisted_e11',
+      existingVersionNumber: 4,
+    };
+    const body = composeSealPayload(args);
+    expect(body.artifactExternalId).toBe('artifact_persisted_e11');
+    expect(body.existingVersionNumber).toBe(4);
+  });
 });
 
 describe('formatSealedAt', () => {

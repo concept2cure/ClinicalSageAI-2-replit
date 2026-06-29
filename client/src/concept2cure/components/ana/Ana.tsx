@@ -736,6 +736,20 @@ export function Ana({
   const labelingMode: LabelingMode = labelingModeOverride ?? detectedLabelingMode ?? 'us';
   const isLabelingDraft = detectedLabelingMode != null;
 
+  /* ─────────────────────────────────────────────────────────────
+     E11 — IND narrative-module (CTD Module 2.5 / 2.7) verified authoring.
+     When the active draft is a CTD Module 2 clinical summary, the Studio offers
+     the IND-module affordance: author from the structured source, then verify
+     with required_strings that include every source figure, so a transcription
+     error is caught before the user signs + seals the persisted version.
+     ───────────────────────────────────────────────────────────── */
+  const detectedIndModule = useMemo<string | null>(() => {
+    const t = `${activeDocument?.documentType || ''} ${activeDocument?.title || ''}`.toLowerCase();
+    if (/\b2\.7\b|clinical summary/.test(t)) return '2.7';
+    if (/\b2\.5\b|clinical overview/.test(t)) return '2.5';
+    return null;
+  }, [activeDocument?.documentType, activeDocument?.title]);
+
   // BUILD-1 INTEGRATION: the deterministic currency verdict from
   // review_label_currency (and the seal/export → version-row persistence) wire
   // in here. Until then the gate is undefined (panel simply not shown), so the
@@ -891,15 +905,23 @@ export function Ana({
       mfaToken?: string;
     }): Promise<VerifiedSeal | null> => {
       if (!shownDraft || !shownVerification?.ok) return null;
+      // Build-1 seal binding (E11): when Build 1 has persisted this document, the
+      // active document carries its EXTERNAL artifact id and the version history
+      // is the durable, oldest→newest list — so the version SHOWN at
+      // `safeVersionIndex` is persisted version number `safeVersionIndex + 1`.
+      // Thread both so the server seals the EXISTING persisted row, not a
+      // fallback. (When no persisted artifactId exists yet — an in-session-only
+      // draft — these stay undefined and the server falls back as before.)
+      const persistedArtifactId = activeDocument?.artifactId;
+      const existingVersionNumber = persistedArtifactId ? safeVersionIndex + 1 : undefined;
       const result = await sealVerified({
         title: shownDraft.title,
         content: shownDraft.content,
         verification: { ok: shownVerification.ok, message: shownVerification.message },
         projectId: resolvedProjectId ?? undefined,
         signerRole: resolvedUserRole ?? undefined,
-        // TODO(build-1): once version persistence lands, pass the persisted
-        // artifactPk / artifactExternalId / existingVersionId / version number
-        // here so the server seals the existing row instead of a fallback.
+        artifactExternalId: persistedArtifactId,
+        existingVersionNumber,
         ...input,
       });
       if (result) {
@@ -908,7 +930,7 @@ export function Ana({
       }
       return result;
     },
-    [sealVerified, shownDraft, shownVerification, resolvedProjectId, resolvedUserRole, safeVersionIndex],
+    [sealVerified, shownDraft, shownVerification, resolvedProjectId, resolvedUserRole, safeVersionIndex, activeDocument?.artifactId],
   );
 
   // The view content (home / chat / projects / artifacts). Rendered directly
@@ -1035,6 +1057,19 @@ export function Ana({
                   onSeal={handleSeal}
                   signer={{ name: account.name, role: resolvedUserRole ?? undefined }}
                   seal={shownSeal}
+                  indModule={
+                    studioEnabled && detectedIndModule
+                      ? {
+                          module: detectedIndModule,
+                          productName: activeProjectName || 'the product',
+                          indication: 'the proposed indication',
+                          // Honesty contract: absent a live source join, treat as
+                          // sample (draft-only, never sealable). A live join sets 'live'.
+                          provenance: 'sample',
+                          onAuthor: (message: string) => handleSend(message),
+                        }
+                      : undefined
+                  }
                 />
               )}
             </Panel>
