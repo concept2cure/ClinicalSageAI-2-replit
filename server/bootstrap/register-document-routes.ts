@@ -58,6 +58,7 @@ export async function registerDocumentRoutes({
       { path: '/api/ectd-compile', mod: '../routes/ectd-compile', name: 'eCTD Compile' },
       { path: '/api/ectd/export', mod: '../routes/ectd-export', name: 'eCTD Export' },
       { path: '/api/csr/jobs', mod: '../routes/csr-jobs', name: 'CSR Jobs' },
+      { path: '/api/charters', mod: '../routes/charters', name: 'Project Charters' },
       {
         path: '/api/ectd-submissions',
         mod: '../routes/ectd-submission-agent.routes',
