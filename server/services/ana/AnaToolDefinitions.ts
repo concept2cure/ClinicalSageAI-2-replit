@@ -4075,6 +4075,49 @@ export const REVIEW_SEND_READINESS: AnaTool = {
   },
 };
 
+// ─── CITI Training full integration (C2C-01/02) ──────────────────────────────
+
+export const IMPORT_CITI_RECORDS: AnaTool = {
+  name: 'import_citi_records',
+  description:
+    "Import CITI Program training completion records for a person on the research-personnel roster (training type, completion + expiry dates, certificate reference). Bulk insert. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      personnel_id: { type: 'number' },
+      records: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            training_type: { type: 'string', enum: ['citi_human_subjects', 'citi_gcp', 'citi_animal', 'citi_rcr', 'biosafety', 'bloodborne_pathogens', 'iata_shipping', 'hipaa', 'fcoi_disclosure', 'other'] },
+            completed_date: { type: 'string', description: 'YYYY-MM-DD.' },
+            expires_date: { type: 'string', description: 'YYYY-MM-DD.' },
+            certificate_ref: { type: 'string' },
+          },
+          required: ['training_type'],
+        },
+      },
+      reason: { type: 'string' },
+    },
+    required: ['personnel_id', 'records'],
+  },
+};
+
+export const REVIEW_TRAINING_MATRIX: AnaTool = {
+  name: 'review_training_matrix',
+  description:
+    "Read-only org training matrix: every person on the roster with each of their CITI/training records and its currency status (current / expiring / expired / missing), plus summary counts. Use to see who is cleared and who needs recertification.",
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
+export const REVIEW_EXPIRING_TRAINING: AnaTool = {
+  name: 'review_expiring_training',
+  description:
+    "Read-only report of training records expiring within a window (default 60 days), soonest first, so programs can recertify before lapse. Optionally pass within_days.",
+  input_schema: { type: 'object', properties: { within_days: { type: 'number' } }, required: [] },
+};
+
 // ─── Intelligent Grant Finder (C2C-14) ───────────────────────────────────────
 
 export const SET_FUNDING_PROFILE: AnaTool = {
@@ -4108,6 +4151,13 @@ export const FIND_GRANT_OPPORTUNITIES: AnaTool = {
     },
     required: [],
   },
+};
+
+export const REVIEW_PROTOCOL_PORTFOLIO_ANALYTICS: AnaTool = {
+  name: 'review_protocol_portfolio_analytics',
+  description:
+    "Read-only expiration & continuing-review analytics across all IACUC protocols and IRB submissions: counts by urgency bucket (expired / due in 30 / due in 90 / current), the overdue and expiring-soon lists, and a single prioritized 'needs attention' list with regulatory citations (PHS Policy IV.C.5 de novo; 45 CFR 46.109 annual). Use to manage many protocols and surface what is due.",
+  input_schema: { type: 'object', properties: {}, required: [] },
 };
 
 // ─── Research Committee Governance (C2C-16) ──────────────────────────────────
@@ -6991,6 +7041,10 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REVIEW_IBC_REGISTRATION,
   CREATE_NONCLINICAL_STUDY,
   REVIEW_SEND_READINESS,
+  IMPORT_CITI_RECORDS,
+  REVIEW_TRAINING_MATRIX,
+  REVIEW_EXPIRING_TRAINING,
+  REVIEW_PROTOCOL_PORTFOLIO_ANALYTICS,
   SET_FUNDING_PROFILE,
   FIND_GRANT_OPPORTUNITIES,
   ASSIGN_COMMITTEE_MEMBER,

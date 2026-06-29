@@ -8289,6 +8289,81 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CITI Training full integration (C2C-01/02) + protocol-portfolio analytics.
+// import_citi_records is governed/audited; the review_* tools are read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('import_citi_records', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'import_citi_records requires tenant + user context.' });
+  const personnelId = typeof input.personnel_id === 'number' ? input.personnel_id : NaN;
+  const records = Array.isArray(input.records) ? input.records : [];
+  if (!Number.isInteger(personnelId) || records.length === 0) return JSON.stringify({ error: 'personnel_id and a non-empty records array are required.' });
+  const mapped = records.map((r: any) => ({
+    trainingType: r.training_type,
+    completedDate: typeof r.completed_date === 'string' ? r.completed_date : null,
+    expiresDate: typeof r.expires_date === 'string' ? r.expires_date : null,
+    certificateRef: typeof r.certificate_ref === 'string' ? r.certificate_ref : null,
+  }));
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { importCitiRecordsTx } = await import('../citi/citi-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { ids } = await importCitiRecordsTx(client, ctx.organizationId, ctx.userId, personnelId, mapped);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `research-personnel:${personnelId}`, reason: fcoiReason(input, 'CITI training records imported via AnA'), payload: { imported: ids.length }, domain: 'research_compliance', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, personnelId, imported: ids.length, trainingIds: ids, message: `Imported ${ids.length} CITI training record(s) for personnel ${personnelId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `import_citi_records failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_training_matrix', async (_input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_training_matrix requires tenant context.' });
+  const { getTrainingMatrix } = await import('../citi/citi-service.js');
+  try {
+    const matrix = await getTrainingMatrix(ctx.organizationId);
+    return JSON.stringify({ ok: true, summary: matrix.summary, rows: matrix.rows });
+  } catch (err) {
+    return JSON.stringify({ error: `review_training_matrix failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('review_expiring_training', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_expiring_training requires tenant context.' });
+  const withinDays = typeof input.within_days === 'number' ? input.within_days : undefined;
+  const { getExpiringTraining } = await import('../citi/citi-service.js');
+  try {
+    const expiring = await getExpiringTraining(ctx.organizationId, withinDays);
+    return JSON.stringify({ ok: true, count: expiring.length, expiring });
+  } catch (err) {
+    return JSON.stringify({ error: `review_expiring_training failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('review_protocol_portfolio_analytics', async (_input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_portfolio_analytics requires tenant context.' });
+  const { getPortfolioAnalytics } = await import('../protocols/protocol-portfolio-service.js');
+  try {
+    const summary = await getPortfolioAnalytics(ctx.organizationId);
+    return JSON.stringify({
+      ok: true,
+      counts: summary.counts,
+      overdueCount: summary.overdue.length,
+      expiringSoonCount: summary.expiringSoon.length,
+      needsAttention: summary.needsAttention.slice(0, 25),
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_portfolio_analytics failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Intelligent Grant Finder (C2C-14). set_funding_profile is governed/audited;
 // find_grant_opportunities is a read-only, explainable ranking over Grants.gov.
 // ─────────────────────────────────────────────────────────────────────────────

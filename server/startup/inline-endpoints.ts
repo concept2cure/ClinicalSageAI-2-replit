@@ -267,6 +267,22 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // CITI training metrics (C2C-01/02).
+      try {
+        const { renderCitiMetrics } = await import('../services/citi-metrics.js');
+        lines.push(...renderCitiMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol portfolio metrics (C2C-16).
+      try {
+        const { renderProtocolPortfolioMetrics } = await import('../services/protocol-portfolio-metrics.js');
+        lines.push(...renderProtocolPortfolioMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RIM-lite metrics (C2C-12).
       try {
         const { renderRimMetrics } = await import('../services/rim-metrics.js');

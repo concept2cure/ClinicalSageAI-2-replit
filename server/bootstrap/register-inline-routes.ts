@@ -466,6 +466,24 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Grant finder routes:', error);
   }
 
+  // CITI training full integration — completion-record import, training matrix, expiry reporting.
+  try {
+    const citiModule = await import('../routes/citi-training');
+    app.use('/api/citi-training', authMiddleware, citiModule.default);
+    console.info('✅ CITI training routes mounted (/api/citi-training)');
+  } catch (error) {
+    console.error('❌ Failed to mount CITI training routes:', error);
+  }
+
+  // Protocol portfolio analytics — expiration/continuing-review across IACUC + IRB.
+  try {
+    const portfolioModule = await import('../routes/protocol-portfolio');
+    app.use('/api/protocol-portfolio', authMiddleware, portfolioModule.default);
+    console.info('✅ Protocol portfolio routes mounted (/api/protocol-portfolio)');
+  } catch (error) {
+    console.error('❌ Failed to mount Protocol portfolio routes:', error);
+  }
+
   // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
   try {
     const rimModule = await import('../routes/rim');
