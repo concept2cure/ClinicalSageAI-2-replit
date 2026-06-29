@@ -120,4 +120,28 @@ describe('CrlPremortemPanel', () => {
     expect(btn.disabled).toBe(true);
     expect(screen.getByText(/sample artifact/)).toBeTruthy();
   });
+
+  it('wires the disabled export button to its reason via aria-describedby', () => {
+    const a = artifact({ status: 'sample', exportable: false, sealable: false });
+    render(<CrlPremortemPanel artifact={a} />);
+    const btn = screen.getByText('Export as DOCX').closest('button') as HTMLButtonElement;
+    const describedBy = btn.getAttribute('aria-describedby');
+    expect(describedBy).toBe('premortem-export-reason');
+    const reason = document.getElementById(describedBy!);
+    expect(reason).not.toBeNull();
+    expect(reason!.textContent).toMatch(/Not exportable/);
+  });
+
+  it('exportable artifact has no dangling aria-describedby', () => {
+    render(<CrlPremortemPanel artifact={artifact()} />);
+    const btn = screen.getByText('Export as DOCX').closest('button') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('labels the panel and the estimate strip for assistive tech', () => {
+    render(<CrlPremortemPanel artifact={artifact()} />);
+    expect(screen.getByRole('region', { name: 'CRL/RTF pre-mortem decision artifact' })).toBeTruthy();
+    const strip = screen.getByText('Approval-probability estimate').closest('[role="status"]')!;
+    expect(strip.getAttribute('aria-live')).toBe('polite');
+  });
 });

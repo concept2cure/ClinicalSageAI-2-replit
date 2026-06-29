@@ -43,6 +43,17 @@ function verdictTone(status: SEEquivalenceStatus): 'ok' | 'warn' | 'open' {
   return 'open';
 }
 
+/**
+ * Verdict glyph — paired with the text label and the tone colour so the verdict
+ * never relies on colour alone (WCAG 1.4.1). The icon is decorative; the text
+ * label carries the accessible meaning.
+ */
+function VerdictIcon({ tone }: { tone: 'ok' | 'warn' | 'open' }) {
+  if (tone === 'ok') return <I.check size={12} />;
+  if (tone === 'warn') return <I.alert size={12} />;
+  return <I.blocker size={12} />;
+}
+
 export interface SEComparisonRow {
   characteristic: string;
   subjectValue: string;
@@ -125,7 +136,10 @@ export function SEComparisonTable({
                 <td>{r.predicateValue}</td>
                 <td>
                   <span className={styles.seVerdict} data-tone={verdictTone(r.status)}>
-                    {SE_VERDICT_LABEL[r.status]}
+                    <span className={styles.seVerdictIcon} aria-hidden="true">
+                      <VerdictIcon tone={verdictTone(r.status)} />
+                    </span>
+                    <span>{SE_VERDICT_LABEL[r.status]}</span>
                   </span>
                 </td>
               </tr>

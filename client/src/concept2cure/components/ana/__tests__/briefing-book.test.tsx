@@ -93,6 +93,18 @@ describe('BriefingBookPanel — rendering', () => {
     render(<BriefingBookPanel premortem={liveAssessed} />);
     expect(screen.queryByTestId('brief-sample-notice')).toBeNull();
   });
+
+  it('carries the severity as a text label (not colour alone)', () => {
+    render(<BriefingBookPanel premortem={liveAssessed} />);
+    // mapped challenge severity and the unmapped (general) challenge severity
+    expect(screen.getByText('High')).toBeTruthy();
+    expect(screen.getByText('Critical')).toBeTruthy();
+  });
+
+  it('frames the overall risk as anticipated, never an actual position', () => {
+    render(<BriefingBookPanel premortem={liveAssessed} />);
+    expect(screen.getByText(/Critical anticipated risk/)).toBeTruthy();
+  });
 });
 
 describe('DocumentStudioPane — briefing-book wiring', () => {
