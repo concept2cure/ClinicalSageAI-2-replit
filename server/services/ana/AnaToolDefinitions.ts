@@ -4069,6 +4069,95 @@ export const REVIEW_SEND_READINESS: AnaTool = {
   },
 };
 
+// ─── Medicare Coverage Analysis (C2C-15) ─────────────────────────────────────
+
+export const CREATE_COVERAGE_ANALYSIS: AnaTool = {
+  name: 'create_coverage_analysis',
+  description:
+    "Open a Medicare Coverage Analysis for a clinical trial (NCD 310.1 routine costs in clinical trials). Optionally link the clinical study (study_id), the IRB submission it sits under (irb_submission_id — threads provenance), the ClinicalTrials.gov id (nct_id), and the sponsor. Returns the analysis id. Governed + audited, org-scoped. Advisory only — final billing remains the institution's responsibility.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string' },
+      study_id: { type: 'number' },
+      irb_submission_id: { type: 'number' },
+      nct_id: { type: 'string', description: 'ClinicalTrials.gov identifier (e.g. NCT01234567).' },
+      sponsor: { type: 'string' },
+      reason: { type: 'string', description: 'Audit reason (>= 8 chars).' },
+    },
+    required: ['title'],
+  },
+};
+
+export const SET_COVERAGE_QUALIFYING_DETERMINATION: AnaTool = {
+  name: 'set_coverage_qualifying_determination',
+  description:
+    "Make the NCD 310.1 'qualifying clinical trial' determination for a coverage analysis — the gate for Medicare coverage of routine costs. A trial is deemed qualifying (IND / IDE Category B / AHRQ- or federally-funded), else all three required criteria must hold (therapeutic intent, enrolls patients with the condition, principal purpose within a Medicare benefit category). The seven desirable characteristics are advisory. The determination is computed deterministically. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      analysis_id: { type: 'number' },
+      has_therapeutic_intent: { type: 'boolean' },
+      enrolls_diagnosis_treatment: { type: 'boolean' },
+      has_medicare_benefit_category: { type: 'boolean' },
+      deemed_qualifying: { type: 'boolean', description: 'IND / IDE Cat B / AHRQ- or federally-funded — auto-qualifies.' },
+      desirable_characteristics_count: { type: 'number', description: '0..7, advisory only.' },
+      reason: { type: 'string' },
+    },
+    required: ['analysis_id', 'has_therapeutic_intent', 'enrolls_diagnosis_treatment', 'has_medicare_benefit_category'],
+  },
+};
+
+export const ADD_COVERAGE_ITEM: AnaTool = {
+  name: 'add_coverage_item',
+  description:
+    "Add a protocol procedure / service / visit item to a coverage analysis: description, category, optional CPT/HCPCS code (free text — AMA-licensed, never keyed on), an ICD-10 indication, and whether the item is standard-of-care and whether the sponsor pays for it. The item starts unclear / on hold until classified. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      analysis_id: { type: 'number' },
+      item_description: { type: 'string' },
+      category: { type: 'string', enum: ['procedure', 'lab', 'imaging', 'drug_administration', 'visit', 'device', 'other'] },
+      cpt_hcpcs_code: { type: 'string' },
+      icd10_code: { type: 'string' },
+      is_standard_of_care: { type: 'boolean' },
+      sponsor_paid_in_budget: { type: 'boolean' },
+      reason: { type: 'string' },
+    },
+    required: ['analysis_id', 'item_description'],
+  },
+};
+
+export const CLASSIFY_COVERAGE_ITEM: AnaTool = {
+  name: 'classify_coverage_item',
+  description:
+    "Run the DETERMINISTIC NCD 310.1 billing-designation classifier on a coverage item. The designation is computed from the parent analysis's qualifying determination plus the standard-of-care and sponsor-paid flags: sponsor-paid → bill the sponsor (anti double-billing); standard-of-care → bill the usual payer; qualifying-trial routine cost → bill Medicare; otherwise → hold. Any AI text is advisory rationale only. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      item_id: { type: 'number' },
+      is_standard_of_care: { type: 'boolean' },
+      sponsor_paid_in_budget: { type: 'boolean' },
+      ncd_citation: { type: 'string' },
+      lcd_citation: { type: 'string' },
+      coverage_doc_url: { type: 'string' },
+      reason: { type: 'string' },
+    },
+    required: ['item_id', 'is_standard_of_care', 'sponsor_paid_in_budget'],
+  },
+};
+
+export const REVIEW_COVERAGE_ANALYSIS: AnaTool = {
+  name: 'review_coverage_analysis',
+  description:
+    "Read-only review of a coverage analysis: the exportable billing grid (per-designation summary) and the readiness verdict — qualifying determination made, every item classified (no unclear/hold), ICD-10 validated — with cited blockers (NCD 310.1). Use before finalizing.",
+  input_schema: {
+    type: 'object',
+    properties: { analysis_id: { type: 'number' } },
+    required: ['analysis_id'],
+  },
+};
+
 export const CREATE_GRANT_PROPOSAL: AnaTool = {
   name: 'create_grant_proposal',
   description:
@@ -6770,6 +6859,11 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REVIEW_IBC_REGISTRATION,
   CREATE_NONCLINICAL_STUDY,
   REVIEW_SEND_READINESS,
+  CREATE_COVERAGE_ANALYSIS,
+  SET_COVERAGE_QUALIFYING_DETERMINATION,
+  ADD_COVERAGE_ITEM,
+  CLASSIFY_COVERAGE_ITEM,
+  REVIEW_COVERAGE_ANALYSIS,
   CREATE_GRANT_PROPOSAL,
   RECORD_GRANT_AWARD,
   REVIEW_GRANT_REPORTING,

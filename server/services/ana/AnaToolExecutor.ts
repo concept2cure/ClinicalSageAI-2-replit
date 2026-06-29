@@ -8083,6 +8083,174 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Medicare Coverage Analysis (C2C-15). Conversational building shares the
+// governed/audited path (recordGovernedAction, surface 'ana'). The billing
+// designation is deterministic (classifyCoverageItem); AI text is advisory only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_coverage_analysis', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_coverage_analysis requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createAnalysisTx } = await import('../coverage-analysis/coverage-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id, provenanceLinkId } = await createAnalysisTx(client, ctx.organizationId, ctx.userId, {
+      title,
+      studyId: typeof input.study_id === 'number' ? input.study_id : null,
+      irbSubmissionId: typeof input.irb_submission_id === 'number' ? input.irb_submission_id : null,
+      nctId: typeof input.nct_id === 'string' ? input.nct_id : null,
+      sponsor: typeof input.sponsor === 'string' ? input.sponsor : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `coverage-analysis:${id}`, reason: fcoiReason(input, 'Medicare coverage analysis opened via AnA'),
+      payload: { title, provenanceLinkId }, domain: 'coverage', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, provenanceLinkId, message: `Opened Medicare coverage analysis "${title}" (id ${id}). Set the qualifying-trial determination, then add and classify items.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_coverage_analysis failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('set_coverage_qualifying_determination', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_coverage_qualifying_determination requires tenant + user context.' });
+  const analysisId = typeof input.analysis_id === 'number' ? input.analysis_id : NaN;
+  if (!Number.isInteger(analysisId)) return JSON.stringify({ error: 'analysis_id is required.' });
+  if (typeof input.has_therapeutic_intent !== 'boolean' || typeof input.enrolls_diagnosis_treatment !== 'boolean' || typeof input.has_medicare_benefit_category !== 'boolean') {
+    return JSON.stringify({ error: 'has_therapeutic_intent, enrolls_diagnosis_treatment, and has_medicare_benefit_category (booleans) are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { setQualifyingDeterminationTx } = await import('../coverage-analysis/coverage-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const result = await setQualifyingDeterminationTx(client, ctx.organizationId, analysisId, {
+      hasTherapeuticIntent: input.has_therapeutic_intent,
+      enrollsDiagnosisTreatment: input.enrolls_diagnosis_treatment,
+      hasMedicareBenefitCategory: input.has_medicare_benefit_category,
+      deemedQualifying: typeof input.deemed_qualifying === 'boolean' ? input.deemed_qualifying : undefined,
+      desirableCharacteristicsCount: typeof input.desirable_characteristics_count === 'number' ? input.desirable_characteristics_count : undefined,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `coverage-analysis:${analysisId}`, reason: fcoiReason(input, 'Qualifying-trial determination set via AnA'),
+      payload: { determination: result.determination }, domain: 'coverage', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, analysisId, determination: result.determination, deemed: result.deemed, unmetCriteria: result.unmetCriteria, rationale: result.rationale });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `set_coverage_qualifying_determination failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_coverage_item', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_coverage_item requires tenant + user context.' });
+  const analysisId = typeof input.analysis_id === 'number' ? input.analysis_id : NaN;
+  const itemDescription = typeof input.item_description === 'string' ? input.item_description.trim() : '';
+  if (!Number.isInteger(analysisId) || !itemDescription) return JSON.stringify({ error: 'analysis_id and item_description are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addItemTx } = await import('../coverage-analysis/coverage-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await addItemTx(client, ctx.organizationId, ctx.userId, analysisId, {
+      itemDescription,
+      category: typeof input.category === 'string' ? (input.category as any) : null,
+      cptHcpcsCode: typeof input.cpt_hcpcs_code === 'string' ? input.cpt_hcpcs_code : null,
+      icd10Code: typeof input.icd10_code === 'string' ? input.icd10_code : null,
+      isStandardOfCare: typeof input.is_standard_of_care === 'boolean' ? input.is_standard_of_care : false,
+      sponsorPaidInBudget: typeof input.sponsor_paid_in_budget === 'boolean' ? input.sponsor_paid_in_budget : false,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'create',
+      target: `coverage-analysis:${analysisId}`, reason: fcoiReason(input, 'Coverage item added via AnA'),
+      payload: { itemId: id }, domain: 'coverage', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, itemId: id, message: `Added coverage item "${itemDescription}" (id ${id}). Classify it with classify_coverage_item.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_coverage_item failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('classify_coverage_item', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'classify_coverage_item requires tenant + user context.' });
+  const itemId = typeof input.item_id === 'number' ? input.item_id : NaN;
+  if (!Number.isInteger(itemId) || typeof input.is_standard_of_care !== 'boolean' || typeof input.sponsor_paid_in_budget !== 'boolean') {
+    return JSON.stringify({ error: 'item_id, is_standard_of_care, and sponsor_paid_in_budget are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { classifyItemTx } = await import('../coverage-analysis/coverage-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const result = await classifyItemTx(client, ctx.organizationId, itemId, {
+      isStandardOfCare: input.is_standard_of_care,
+      sponsorPaidInBudget: input.sponsor_paid_in_budget,
+      ncdCitation: typeof input.ncd_citation === 'string' ? input.ncd_citation : null,
+      lcdCitation: typeof input.lcd_citation === 'string' ? input.lcd_citation : null,
+      coverageDocUrl: typeof input.coverage_doc_url === 'string' ? input.coverage_doc_url : null,
+    });
+    await recordGovernedAction(client, {
+      orgId: ctx.organizationId, userId: ctx.userId, command: 'update',
+      target: `coverage-item:${itemId}`, reason: fcoiReason(input, 'Coverage item classified via AnA'),
+      payload: { classification: result.classification, billingDesignation: result.billingDesignation }, domain: 'coverage', surface: 'ana',
+    });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, itemId, classification: result.classification, billingDesignation: result.billingDesignation, citation: result.citation, rationale: result.rationale });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `classify_coverage_item failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_coverage_analysis', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_coverage_analysis requires tenant context.' });
+  const analysisId = typeof input.analysis_id === 'number' ? input.analysis_id : NaN;
+  if (!Number.isInteger(analysisId)) return JSON.stringify({ error: 'analysis_id is required.' });
+  const { getBillingGrid } = await import('../coverage-analysis/coverage-service.js');
+  try {
+    const grid = await getBillingGrid(ctx.organizationId, analysisId);
+    return JSON.stringify({
+      ok: true,
+      readyToFinalize: grid.readiness.readyToFinalize,
+      blockers: grid.readiness.blockers,
+      warnings: grid.readiness.warnings,
+      summary: grid.summary,
+      itemCount: grid.readiness.itemCount,
+      message: grid.readiness.readyToFinalize
+        ? 'Coverage analysis passes the deterministic readiness gate — ready to finalize the billing grid.'
+        : `Not ready to finalize: ${grid.readiness.blockers.join(' ')}`,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `review_coverage_analysis failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // eGrants (C2C-14). Conversational building shares the governed/audited path
 // (recordGovernedAction, surface 'ana'). Awards thread proposal → award provenance.
 // ─────────────────────────────────────────────────────────────────────────────

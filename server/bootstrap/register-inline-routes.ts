@@ -439,6 +439,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount eGrants routes:', error);
   }
 
+  // Medicare Coverage Analysis — clinical-research billing compliance (NCD 310.1; 42 CFR 405.211).
+  try {
+    const coverageModule = await import('../routes/coverage-analysis');
+    app.use('/api/coverage-analysis', authMiddleware, coverageModule.default);
+    console.info('✅ Coverage Analysis routes mounted (/api/coverage-analysis)');
+  } catch (error) {
+    console.error('❌ Failed to mount Coverage Analysis routes:', error);
+  }
+
   // RIM-lite — registration grid + labeling (21 CFR 201; EU 2001/83/EC).
   try {
     const rimModule = await import('../routes/rim');

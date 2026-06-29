@@ -230,6 +230,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Medicare Coverage Analysis metrics (C2C-15).
+      try {
+        const { renderCoverageMetrics } = await import('../services/coverage-metrics.js');
+        lines.push(...renderCoverageMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RIM-lite metrics (C2C-12).
       try {
         const { renderRimMetrics } = await import('../services/rim-metrics.js');
