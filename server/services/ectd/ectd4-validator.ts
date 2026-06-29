@@ -20,7 +20,12 @@
  */
 
 import crypto from 'crypto';
-import { applyRegionalRules } from './regional-rules';
+import {
+  validateRegionalPackage,
+  type RegulatoryRegion,
+  type RegionalContext,
+  type RegionalLeafRef,
+} from './ectd-regional-rules';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -283,16 +288,27 @@ function requiredSectionsFor(submissionType: string): ReadonlySet<string> {
  * @param leaves - Array of document leaves in the package
  * @param submissionType - Type of submission (default: IND)
  * @param options - Optional validation context:
- *   - region: when set, applies regional rule pack (FDA/EMA/PMDA)
+ *   - region: when set, applies the regional rule pack. Accepts either the
+ *     canonical RegulatoryRegion code ('US' | 'EU' | 'JP' | 'CA' | 'CN' | 'KR'
+ *     | 'UK' | 'AU' | 'CH' | 'BR' | 'IN' | 'SG') or the legacy agency token
+ *     ('FDA' | 'EMA' | 'PMDA'). Agency tokens are kept for HTTP-route
+ *     backwards-compatibility and are internally normalized to the matching
+ *     RegulatoryRegion code.
+ *   - applicationNumber + sequenceNumber: passed through to the regional
+ *     validator for gateway-prefix and 4-digit-sequence checks.
  *   - priorSequenceNumbers + sequenceNumber: enables sequence-gap detection
  *   - priorLeafIds: enables lifecycle-operation target-leaf reference check
  * @returns Validation result with findings and score
  */
+export type LegacyAgencyRegion = 'FDA' | 'EMA' | 'PMDA';
+export type ValidatePackageRegion = RegulatoryRegion | LegacyAgencyRegion;
+
 export function validatePackage(
   leaves: ECTDLeaf[],
   submissionType: string = 'IND',
   options?: {
-    region?: 'FDA' | 'EMA' | 'PMDA';
+    region?: ValidatePackageRegion;
+    applicationNumber?: string;
     priorSequenceNumbers?: string[];
     sequenceNumber?: string;
     priorLeafIds?: Set<string>;
@@ -490,7 +506,7 @@ export function validatePackage(
   // 4. Sequence-number gap detection
   if (options?.priorSequenceNumbers !== undefined && options?.sequenceNumber !== undefined) {
     const combined = [...options.priorSequenceNumbers, options.sequenceNumber];
-    const gaps = detectSequenceGaps(combined);
+    const gaps = detectSequenceGapsFromArray(combined);
     for (const missing of gaps) {
       findings.push({
         id: `V${++findingId}`,
@@ -504,11 +520,60 @@ export function validatePackage(
     }
   }
 
-  // 5. Regional rule packs
+  // 5. Regional rule packs — delegated to the canonical
+  // ectd-regional-rules.validateRegionalPackage. The Phase-1 thin presence
+  // check (regional-rules.ts) was retired in favor of the 12-region rule
+  // catalog. To preserve the historical wire-contract that downstream
+  // consumers (server/routes/ectd-export.ts + tests) assert on — namely
+  // the MISSING_REGIONAL_FDA / MISSING_REGIONAL_EMA / MISSING_REGIONAL_PMDA
+  // finding codes and the loose "any leaf under m1/{region}/ counts" rule —
+  // we do a looseness pre-check here, then merge the canonical findings
+  // (mapped from RegionalFinding shape into the ValidationFinding shape).
   if (options?.region) {
-    const regional = applyRegionalRules(leaves, options.region);
-    for (const f of regional) {
-      findings.push({ ...f, id: `V${++findingId}` });
+    const region = normalizeRegion(options.region);
+
+    // Legacy looseness check — kept verbatim from the retired
+    // server/services/ectd/regional-rules.ts so MISSING_REGIONAL_* codes that
+    // the HTTP /api/ectd/export/:id/validate route emits remain stable.
+    const looseFinding = legacyRegionalLooseCheck(leaves, options.region);
+    if (looseFinding) {
+      findings.push({ ...looseFinding, id: `V${++findingId}` });
+    }
+
+    // Canonical strict findings (backbone file, application-number prefix,
+    // gateway size limit, ASCII filenames, etc.). These complement — they do
+    // not replace — the looseness check above.
+    const context: RegionalContext = {
+      region,
+      applicationNumber: options.applicationNumber ?? '',
+      sequenceNumber: options.sequenceNumber ?? '',
+      submissionType,
+    };
+    const regionalLeafRefs: RegionalLeafRef[] = leaves.map(l => ({
+      sectionCode: l.sectionCode,
+      filePath: l.filePath,
+      mimeType: l.mimeType,
+      fileSize: l.fileSize,
+      studyId: l.studyId,
+    }));
+    const regional = validateRegionalPackage(context, regionalLeafRefs);
+    for (const rf of regional) {
+      // Suppress validateRegionalPackage findings that the caller cannot
+      // act on because they require RegionalContext fields that the
+      // ectd4-validator caller did not supply (applicationNumber,
+      // sequenceNumber). These are surfaced by ectd-validator-hardening
+      // where the full submission context is available.
+      if (!options.applicationNumber && isApplicationNumberFinding(rf)) continue;
+      if (!options.sequenceNumber && rf.ruleId === 'FDA-ESG-001') continue;
+      findings.push({
+        id: `V${++findingId}`,
+        severity: rf.severity === 'info' ? 'info' : rf.severity,
+        code: rf.ruleId,
+        sectionCode: '',
+        message: rf.message,
+        fix: rf.fix,
+        rule: rf.ruleId,
+      });
     }
   }
 
@@ -536,13 +601,25 @@ export function validatePackage(
 }
 
 /**
- * Detect gaps in a list of 4-digit eCTD sequence numbers.
+ * Detect gaps in a caller-supplied list of 4-digit eCTD sequence numbers
+ * (synchronous, array variant).
+ *
  * Inputs are zero-padded to 4 digits internally; the result lists any
  * missing 4-digit sequences between '0000' and the maximum submitted.
  *
- * Example: detectSequenceGaps(['0000', '0002']) → ['0001']
+ * Example: detectSequenceGapsFromArray(['0000', '0002']) → ['0001']
+ *
+ * NOTE: This is the Phase 1 sync, array-based variant — it operates purely on
+ * the list the caller passes in. The canonical FDA-ESG sequence-gap check is
+ * the DB-backed `detectSequenceGaps(applicationNumber, newSequenceNumber)`
+ * exported from `./ectd-validator-hardening.ts`, which queries
+ * `ectd_compilations` / `ectd_submissions` for the true submission history
+ * and returns structured `SequenceFinding[]` (duplicates, regressions,
+ * historical gaps, first-must-be-0000). Prefer the hardening variant for
+ * gateway-readiness checks; use this one only when the caller already has
+ * the full list in hand and just needs the missing slot strings.
  */
-export function detectSequenceGaps(submitted: string[]): string[] {
+export function detectSequenceGapsFromArray(submitted: string[]): string[] {
   if (!submitted || submitted.length === 0) return [];
 
   // Normalize: zero-pad to 4 digits, drop blanks/non-numerics
@@ -674,4 +751,128 @@ export function quickValidate(
     required.size > 0 ? Math.round(((required.size - missing.length) / required.size) * 100) : 100;
 
   return { completeness, missing };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REGIONAL ADAPTER — bridges validatePackage's legacy agency-token API to
+// the canonical 12-region rule catalog in ectd-regional-rules.ts.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Normalize the validatePackage region argument to a RegulatoryRegion code.
+ * Accepts either the legacy agency token (FDA/EMA/PMDA — kept for HTTP-route
+ * backwards-compatibility) or a canonical RegulatoryRegion.
+ */
+function normalizeRegion(region: ValidatePackageRegion): RegulatoryRegion {
+  switch (region) {
+    case 'FDA': return 'US';
+    case 'EMA': return 'EU';
+    case 'PMDA': return 'JP';
+    default: return region;
+  }
+}
+
+/**
+ * Map the agency-token region (or a canonical region known to have a legacy
+ * code) to the historical MISSING_REGIONAL_* finding code that the HTTP
+ * /api/ectd/export/:id/validate route contract depends on. Returns null for
+ * regions that never had a legacy presence code.
+ */
+function legacyMissingRegionalCode(region: ValidatePackageRegion): string | null {
+  switch (region) {
+    case 'FDA':
+    case 'US':
+      return 'MISSING_REGIONAL_FDA';
+    case 'EMA':
+    case 'EU':
+      return 'MISSING_REGIONAL_EMA';
+    case 'PMDA':
+    case 'JP':
+      return 'MISSING_REGIONAL_PMDA';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Loose presence check carried forward from the retired
+ * server/services/ectd/regional-rules.ts. Returns a MISSING_REGIONAL_*
+ * ValidationFinding (without an id — caller assigns one) when the package
+ * has no Module-1 regional content for the region, or null otherwise.
+ *
+ * For FDA, "regional content" is any leaf with sectionCode m1.1 OR a file
+ * path containing /m1/us/. EMA matches /m1/eu/, PMDA matches /m1/jp/. This
+ * is intentionally looser than the canonical us-regional.xml backbone check
+ * in validateRegionalPackage — the strict backbone check still runs via the
+ * canonical path below.
+ */
+function legacyRegionalLooseCheck(
+  leaves: ECTDLeaf[],
+  region: ValidatePackageRegion
+): Omit<ValidationFinding, 'id'> | null {
+  const code = legacyMissingRegionalCode(region);
+  if (!code) return null;
+
+  const normalized = normalizeRegion(region);
+
+  if (normalized === 'US') {
+    const hasFDA = leaves.some(
+      l =>
+        (l.sectionCode || '').toLowerCase() === 'm1.1' ||
+        /(^|\/)m1\/us\//i.test(l.filePath || '')
+    );
+    if (hasFDA) return null;
+    return {
+      severity: 'error',
+      code,
+      sectionCode: '',
+      message: 'Submission has no FDA regional content (m1.1 or m1/us/* leaf)',
+      fix: 'Add an FDA Module 1 regional leaf — for example a section m1.1 document or a file under m1/us/',
+      rule: 'FDA ESG 21 CFR 312.23 / 314.50',
+    };
+  }
+
+  if (normalized === 'EU') {
+    const hasEMA = leaves.some(l => /(^|\/)m1\/eu\//i.test(l.filePath || ''));
+    if (hasEMA) return null;
+    return {
+      severity: 'error',
+      code,
+      sectionCode: '',
+      message: 'Submission has no EMA regional content (no leaf under m1/eu/)',
+      fix: 'Add an EMA Module 1 regional leaf under the m1/eu/ path',
+      rule: 'EMA CESP',
+    };
+  }
+
+  if (normalized === 'JP') {
+    const hasPMDA = leaves.some(l => /(^|\/)m1\/jp\//i.test(l.filePath || ''));
+    if (hasPMDA) return null;
+    return {
+      severity: 'error',
+      code,
+      sectionCode: '',
+      message: 'Submission has no PMDA regional content (no leaf under m1/jp/)',
+      fix: 'Add a PMDA Module 1 regional leaf under the m1/jp/ path',
+      rule: 'PMDA Gateway',
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Returns true when a RegionalFinding is reporting an application-number
+ * format violation. These rules require the caller to have supplied
+ * options.applicationNumber on validatePackage; when it is absent (the
+ * common case from the leaf-only HTTP path) the finding would fire as a
+ * false positive on "" (the empty default), so the call site suppresses it.
+ */
+function isApplicationNumberFinding(rf: { ruleId: string }): boolean {
+  return (
+    rf.ruleId === 'FDA-ESG-002' ||
+    rf.ruleId === 'EMA-CESP-002' ||
+    rf.ruleId === 'PMDA-002' ||
+    rf.ruleId === 'HC-REP-003'
+  );
 }
