@@ -190,6 +190,26 @@ export const ADVISE_LABELING_STRUCTURE: AnaTool = {
   },
 };
 
+export const PLAN_LABELING_AUTHORING: AnaTool = {
+  name: 'plan_labeling_authoring',
+  description:
+    'Build-from-template labeling authoring plan (US PLR / EU QRD). Given a labeling mode, returns the ' +
+    'deterministic mandatory PLR/QRD section headers (the section guard), the required_strings to pass to ' +
+    'verify_docx_against_source, and the replacements to pass to build_from_template — plus a section-guard ' +
+    'completeness check of any draft_text supplied. Use to drive build_from_template → review_label_currency ' +
+    '(deterministic currency gate) → verify_docx_against_source. The currency verdict is produced by ' +
+    'review_label_currency and is deterministic — never inferred here.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      mode: { type: 'string', enum: ['us', 'eu'], description: "us (USPI/PLR) | eu (SmPC/QRD). Aliases (uspi/plr/smpc/qrd) accepted." },
+      product_name: { type: 'string', description: 'Product name used in the scaffold title/replacements.' },
+      draft_text: { type: 'string', description: 'Optional current draft text to run the section guard against.' },
+    },
+    required: ['mode'],
+  },
+};
+
 export const ADVISE_MEDICAL_INFORMATION: AnaTool = {
   name: 'advise_medical_information',
   description:
@@ -6765,6 +6785,7 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ADVISE_PHARMACOVIGILANCE,
   ADVISE_STUDY_DESIGN,
   ADVISE_LABELING_STRUCTURE,
+  PLAN_LABELING_AUTHORING,
   ADVISE_MEDICAL_INFORMATION,
   ADVISE_REPORTING_GUIDELINE,
   ADVISE_DATA_INTEGRITY,
