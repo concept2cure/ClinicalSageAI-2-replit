@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T12:34:52.442Z",
+  "generatedAt": "2026-06-29T12:47:17.756Z",
   "git": {
-    "sha": "a2b739ca749f8ca5e57258df4d0287e39941e35d",
+    "sha": "b7b18961ae74f7e554b5d05729bb895220471294",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 229,
+    "duplicateBasenames": 230,
     "largeFilesByBytes": 16,
     "largeFilesByLines": 50
   },
@@ -1930,6 +1930,14 @@
         ]
       },
       {
+        "basename": "protocol-soa",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-soa.ts",
+          "shared/schema/protocol-soa.ts"
+        ]
+      },
+      {
         "basename": "protocol-templates",
         "count": 2,
         "paths": [
@@ -2280,16 +2288,16 @@
         "bytes": 803833
       },
       {
+        "file": "server/services/ana/AnaToolExecutor.ts",
+        "bytes": 681687
+      },
+      {
         "file": "server/routes/concept2cure.ts",
         "bytes": 680498
       },
       {
-        "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 678441
-      },
-      {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 431270
+        "bytes": 432972
       },
       {
         "file": "server/statistics-service.ts",
@@ -2351,11 +2359,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 13504
+        "lines": 13545
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7932
+        "lines": 7963
       },
       {
         "file": "server/statistics-service.ts",
@@ -2547,7 +2555,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 362,
+      "duplicateGroups": 363,
       "largeByBytes": 13,
       "largeByLines": 40
     },
@@ -2565,7 +2573,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 57,
+      "duplicateGroups": 58,
       "largeByBytes": 1,
       "largeByLines": 2
     },
