@@ -35,6 +35,12 @@ import { EU_DATA_TOOLS } from './euDataTools';
 import { CDISC_TOOLS } from './cdiscTools';
 import { GUIDANCE_INGESTION_TOOLS } from './guidanceIngestionTools';
 import { SPL_SAFETY_TOOLS } from './splSafetyTools';
+import { BIOEQUIVALENCE_TOOLS } from './bioequivalenceTools';
+import { PHARMACOMETRICS_TOOLS } from './pharmacometricsTools';
+import { TOXICOLOGY_TOOLS } from './toxicologyTools';
+import { PEDIATRIC_TOOLS } from './pediatricTools';
+import { ADVANCED_THERAPY_TOOLS } from './advancedTherapyTools';
+import { RWE_METHODOLOGY_TOOLS } from './rweMethodologyTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7187,6 +7193,24 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // fabrication). Specs authored in services/global-ri/ana-tools; handlers
   // loop-registered in AnaToolExecutor.
   ...(GLOBAL_RI_TOOL_SPECS as unknown as AnaTool[]),
+  // Bioequivalence & generic drug intelligence (BCS, BE study design, dissolution,
+  // biowaiver, ANDA/505(b)(2) pathway). Deterministic registry lookups.
+  ...BIOEQUIVALENCE_TOOLS,
+  // Pharmacometrics intelligence (PopPK, PBPK, exposure-response, MIDD, dose
+  // selection). Deterministic knowledge base.
+  ...PHARMACOMETRICS_TOOLS,
+  // Preclinical toxicology intelligence (species selection, repeat-dose design,
+  // safety margins, genotoxicity, carcinogenicity, reproductive tox). Deterministic.
+  ...TOXICOLOGY_TOOLS,
+  // Pediatric development intelligence (age classification, PIP/PSP, extrapolation,
+  // formulation, dose selection, regulatory requirements). Deterministic.
+  ...PEDIATRIC_TOOLS,
+  // Advanced therapy (ATMP/CGT) intelligence (classification, gene therapy, cell
+  // therapy manufacturing, CAR-T, pathway selection, comparability). Deterministic.
+  ...ADVANCED_THERAPY_TOOLS,
+  // Real-world evidence methodology intelligence (target trial emulation, data
+  // source scoring, propensity scores, study design, bias, regulatory). Deterministic.
+  ...RWE_METHODOLOGY_TOOLS,
   // Inference self-awareness: classify a tool's output by determinism pedigree
   // (deterministic_registry / deterministic_query / external_api_live /
   // model_assisted) so AnA can weight bulletproof registry facts above

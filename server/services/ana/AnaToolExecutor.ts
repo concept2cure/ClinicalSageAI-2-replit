@@ -12746,3 +12746,253 @@ registerToolHandler('generate_define_xml', async (input: Record<string, unknown>
     return generateDefineXml(input as any);
   }, 'deterministic')
 );
+
+// ── Bioequivalence & generic drug intelligence (server/services/bioequivalence/bioequivalence-knowledge) — deterministic. ──
+
+registerToolHandler('classify_bcs', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_bcs', async () => {
+    const { classifyBCS } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return classifyBCS(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_be_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_be_study', async () => {
+    const { designBEStudy } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return designBEStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_dissolution_similarity', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_dissolution_similarity', async () => {
+    const { assessDissolutionSimilarity } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return assessDissolutionSimilarity(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_biowaiver', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_biowaiver', async () => {
+    const { assessBiowaiver } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return assessBiowaiver(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('guidance_for_anda', async (input: Record<string, unknown>) =>
+  runStatsTool('guidance_for_anda', async () => {
+    const { guidanceForANDA } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return guidanceForANDA(input as any);
+  }, 'deterministic')
+);
+
+// ── Pharmacometrics intelligence (server/services/pharmacometrics/pharmacometrics-knowledge) — deterministic. ──
+
+registerToolHandler('design_popk_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_popk_study', async () => {
+    const { designPopPKStudy } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return designPopPKStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('evaluate_pbpk_model', async (input: Record<string, unknown>) =>
+  runStatsTool('evaluate_pbpk_model', async () => {
+    const { evaluatePBPKModel } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return evaluatePBPKModel(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('analyze_exposure_response', async (input: Record<string, unknown>) =>
+  runStatsTool('analyze_exposure_response', async () => {
+    const { analyzeExposureResponse } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return analyzeExposureResponse(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('advise_midd', async (input: Record<string, unknown>) =>
+  runStatsTool('advise_midd', async () => {
+    const { adviseMIDD } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return adviseMIDD(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_dose', async (input: Record<string, unknown>) =>
+  runStatsTool('select_dose', async () => {
+    const { selectDose } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return selectDose(input as any);
+  }, 'deterministic')
+);
+
+// ── Preclinical toxicology intelligence (server/services/toxicology/toxicology-knowledge) — deterministic. ──
+
+registerToolHandler('select_tox_species', async (input: Record<string, unknown>) =>
+  runStatsTool('select_tox_species', async () => {
+    const { selectSpecies } = await import('../toxicology/toxicology-knowledge.js');
+    return selectSpecies(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_repeat_dose_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_repeat_dose_study', async () => {
+    const { designRepeatDoseStudy } = await import('../toxicology/toxicology-knowledge.js');
+    return designRepeatDoseStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('calculate_safety_margin', async (input: Record<string, unknown>) =>
+  runStatsTool('calculate_safety_margin', async () => {
+    const { calculateSafetyMargin } = await import('../toxicology/toxicology-knowledge.js');
+    return calculateSafetyMargin(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_genotox_battery', async (input: Record<string, unknown>) =>
+  runStatsTool('design_genotox_battery', async () => {
+    const { designGenotoxBattery } = await import('../toxicology/toxicology-knowledge.js');
+    return designGenotoxBattery(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_carcinogenicity_need', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_carcinogenicity_need', async () => {
+    const { assessCarcinogenicityNeed } = await import('../toxicology/toxicology-knowledge.js');
+    return assessCarcinogenicityNeed(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_repro_tox_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_repro_tox_study', async () => {
+    const { designReproToxStudy } = await import('../toxicology/toxicology-knowledge.js');
+    return designReproToxStudy(input as any);
+  }, 'deterministic')
+);
+
+// ── Pediatric development intelligence (server/services/pediatric/pediatric-knowledge) — deterministic. ──
+
+registerToolHandler('classify_pediatric_age', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_pediatric_age', async () => {
+    const { classifyPediatricAge } = await import('../pediatric/pediatric-knowledge.js');
+    return classifyPediatricAge(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_pediatric_investigation', async (input: Record<string, unknown>) =>
+  runStatsTool('design_pediatric_investigation', async () => {
+    const { designPIP } = await import('../pediatric/pediatric-knowledge.js');
+    return designPIP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_pediatric_extrapolation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_pediatric_extrapolation', async () => {
+    const { assessExtrapolation } = await import('../pediatric/pediatric-knowledge.js');
+    return assessExtrapolation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_pediatric_formulation', async (input: Record<string, unknown>) =>
+  runStatsTool('select_pediatric_formulation', async () => {
+    const { selectFormulation } = await import('../pediatric/pediatric-knowledge.js');
+    return selectFormulation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_pediatric_dose', async (input: Record<string, unknown>) =>
+  runStatsTool('select_pediatric_dose', async () => {
+    const { selectPediatricDose } = await import('../pediatric/pediatric-knowledge.js');
+    return selectPediatricDose(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_pediatric_requirements', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_pediatric_requirements', async () => {
+    const { assessPediatricRequirements } = await import('../pediatric/pediatric-knowledge.js');
+    return assessPediatricRequirements(input as any);
+  }, 'deterministic')
+);
+
+// ── Advanced therapy (ATMP/CGT) intelligence (server/services/advanced-therapy/atmp-knowledge) — deterministic. ──
+
+registerToolHandler('classify_atmp', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_atmp', async () => {
+    const { classifyATMP } = await import('../advanced-therapy/atmp-knowledge.js');
+    return classifyATMP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_gene_therapy_requirements', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_gene_therapy_requirements', async () => {
+    const { assessGeneTherapyRequirements } = await import('../advanced-therapy/atmp-knowledge.js');
+    return assessGeneTherapyRequirements(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_cell_therapy_manufacturing', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_cell_therapy_manufacturing', async () => {
+    const { assessCellTherapyManufacturing } = await import('../advanced-therapy/atmp-knowledge.js');
+    return assessCellTherapyManufacturing(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_cart_requirements', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_cart_requirements', async () => {
+    const { assessCARTRequirements } = await import('../advanced-therapy/atmp-knowledge.js');
+    return assessCARTRequirements(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_atmp_pathway', async (input: Record<string, unknown>) =>
+  runStatsTool('select_atmp_pathway', async () => {
+    const { selectATMPPathway } = await import('../advanced-therapy/atmp-knowledge.js');
+    return selectATMPPathway(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_atmp_comparability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_atmp_comparability', async () => {
+    const { assessATMPComparability } = await import('../advanced-therapy/atmp-knowledge.js');
+    return assessATMPComparability(input as any);
+  }, 'deterministic')
+);
+
+// ── Real-world evidence methodology intelligence (server/services/rwe/rwe-methodology-knowledge) — deterministic. ──
+
+registerToolHandler('design_target_trial', async (input: Record<string, unknown>) =>
+  runStatsTool('design_target_trial', async () => {
+    const { designTargetTrial } = await import('../rwe/rwe-methodology-knowledge.js');
+    return designTargetTrial(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('score_rwe_data_source', async (input: Record<string, unknown>) =>
+  runStatsTool('score_rwe_data_source', async () => {
+    const { scoreDataSource } = await import('../rwe/rwe-methodology-knowledge.js');
+    return scoreDataSource(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_propensity_analysis', async (input: Record<string, unknown>) =>
+  runStatsTool('design_propensity_analysis', async () => {
+    const { designPropensityAnalysis } = await import('../rwe/rwe-methodology-knowledge.js');
+    return designPropensityAnalysis(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_rwe_design', async (input: Record<string, unknown>) =>
+  runStatsTool('select_rwe_design', async () => {
+    const { selectRWEDesign } = await import('../rwe/rwe-methodology-knowledge.js');
+    return selectRWEDesign(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_rwe_bias_risk', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_rwe_bias_risk', async () => {
+    const { assessBiasRisk } = await import('../rwe/rwe-methodology-knowledge.js');
+    return assessBiasRisk(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_rwe_regulatory_acceptability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_rwe_regulatory_acceptability', async () => {
+    const { assessRegulatoryAcceptability } = await import('../rwe/rwe-methodology-knowledge.js');
+    return assessRegulatoryAcceptability(input as any);
+  }, 'deterministic')
+);
