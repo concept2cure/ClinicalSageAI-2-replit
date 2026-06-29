@@ -105,7 +105,12 @@ export type StepKey =
   | 'm2.7.clinical'
   | 'm1.admin'
   | 'package.assemble'
-  | 'package.validate';
+  | 'package.validate'
+  // Path-to-GA §C.11 — e-sig gate before transmit. Sits AFTER package.validate
+  // (we sign the gateway-ready package) and BEFORE any future package.transmit
+  // (signature must bind to the as-transmitted record per 21 CFR Part 11 §11.70).
+  // See docs/reports/E_SIG_GATE_DESIGN_2026-06-29.md.
+  | 'package.sign';
 
 /**
  * Per-step status values.
@@ -132,6 +137,14 @@ export type StepStatus =
   | 'pending'
   | 'running'
   | 'awaiting-async'
+  // Path-to-GA §C.11: orchestrator computed the bound payload digest and is
+  // waiting for a human signer to invoke POST /api/submissions/:id/sign-release.
+  // Lifecycle parallels `awaiting-async`: non-terminal; resume path looks up
+  // the matching electronic_signatures row and drives to `complete`. Kept as
+  // a distinct status from `awaiting-async` because the actor (human credential
+  // re-verification) and the alert SLA are operationally distinct from a
+  // background-worker wait (see design doc §B.3).
+  | 'awaiting-signature'
   | 'complete'
   | 'failed'
   | 'stale'
@@ -167,7 +180,16 @@ export interface OrchestratorRun {
    * CHECK constraint on this column is widened in
    * migrations/20260629_orchestrator_awaiting_async_status.sql.
    */
-  status: 'running' | 'awaiting-async' | 'complete' | 'failed' | 'partial';
+  status:
+    | 'running'
+    | 'awaiting-async'
+    // Path-to-GA §C.11: run-level mirror of the per-step `awaiting-signature`.
+    // CHECK constraint widened in
+    // migrations/20260629_orchestrator_awaiting_signature_status.sql.
+    | 'awaiting-signature'
+    | 'complete'
+    | 'failed'
+    | 'partial';
   steps: StepRecord[];
 }
 
@@ -394,6 +416,13 @@ const STEP_DEPENDENCIES: Record<StepKey, StepKey[]> = {
   'm1.admin': [],
   'package.assemble': ['m2.3.qos', 'm2.4.nonclinical', 'm2.5.clinical', 'm2.7.clinical', 'm1.admin'],
   'package.validate': ['package.assemble'],
+  // Path-to-GA §C.11 — e-sig gate. Single edge to package.validate; the
+  // payload digest binds the validated leaf manifest + the validator's
+  // gateway-ready call, so signing only makes sense after validate. A future
+  // package.transmit step will carry ['package.sign']. We deliberately do NOT
+  // add a redundant edge to package.assemble — transitive closure covers it
+  // (package.validate already depends on package.assemble). See design doc §B.2.
+  'package.sign': ['package.validate'],
 };
 
 const ORDERED_STEPS: StepKey[] = [
@@ -417,6 +446,10 @@ const ORDERED_STEPS: StepKey[] = [
   'm1.admin',
   'package.assemble',
   'package.validate',
+  // Path-to-GA §C.11 — e-sig gate before any future package.transmit. Always
+  // sits last in ORDERED_STEPS today; when transmit lands, it will be inserted
+  // after this.
+  'package.sign',
 ];
 
 // ── Hashing for incremental rebuilds ────────────────────────────────────────
@@ -496,6 +529,192 @@ function buildLeafManifestFromSections(sections: ComposedSection[]): ECTDLeaf[] 
       fileSize: Buffer.byteLength(payload, 'utf8'),
     };
   });
+}
+
+// ── Path-to-GA §C.11 — e-sig gate helpers ───────────────────────────────────
+
+/**
+ * OQ-1 decision: REQUIRED-vs-OPTIONAL is encoded as a closed allowlist of
+ * submission types. Per the design doc:
+ *   REQUIRED  — IND, NDA, BLA, MAA (every FDA-bound and EMA-bound submission
+ *               that goes through ESG / CESP — the §11.70 boundary).
+ *   OPTIONAL  — 510k (Letter-to-File is exempt; the §C.11 design doc flags
+ *               this as customer-policy override, future v2).
+ *               PMA, JNDA — fall to OPTIONAL today; future work can promote
+ *               them to REQUIRED per regional policy.
+ *
+ * Per-customer overrides (`organizations.require_release_signature`) are
+ * explicitly out of scope for v1 (OQ-1 §G — "future" item). The closed
+ * allowlist below is the v1 decision and the call site comments it.
+ *
+ * Non-REQUIRED types take the SKIPPED branch — the orchestrator emits a
+ * `skipped` step with a 'not-required' marker and proceeds. Downstream
+ * package.transmit (when added) is the only point that re-checks; this gate
+ * never falsely blocks a non-regulated type.
+ */
+const SIGNATURE_REQUIRED_SUBMISSION_TYPES = new Set<OrchestratorInputs['submissionType']>([
+  'IND',
+  'NDA',
+  'BLA',
+  'MAA',
+]);
+
+/**
+ * OQ-8 decision: signatureMeaning for the release gate. Per 21 CFR Part 11
+ * §11.50(b) every signature manifestation must declare the meaning. The
+ * release gate uses 'approval' (the value already documented in the
+ * existing electronic_signatures row's `signature_type` column for the
+ * standard approval workflow). Other meanings (review, witness,
+ * acknowledgment) remain available for document-level signatures via the
+ * existing service, but the orchestrator gate only accepts 'approval'.
+ */
+export const PACKAGE_SIGN_SIGNATURE_MEANING = 'approval' as const;
+
+/**
+ * OQ-5 decision (revised for OUR file scope): backbone XML digest is
+ * INCLUDED in the bound payload digest from day 1 when present. Today the
+ * backbone XML is not yet produced by the orchestrator (the ZIP builder is
+ * out-of-scope for §C.11), so the helper accepts an optional buffer and
+ * omits it from the concatenation when absent — the digest still binds to
+ * the leaf manifest + validator outcome + identity, which is what §11.70
+ * needs. When the ZIP builder lands, callers pass the backbone XML and the
+ * digest naturally extends. Pre-extension signatures referencing the
+ * shorter digest remain valid for already-transmitted submissions (the
+ * `superseded_by` chain catches anything still in flight).
+ *
+ * Components (canonical concatenation, in this order — order is load-bearing):
+ *   1. leafManifestDigest      — sha256(JSON.stringify(outputs.assembly.leaves))
+ *   2. validatorOutcomeDigest  — sha256(JSON.stringify({gatewayReady, hardenedScore, summary}))
+ *   3. submissionIdentityCanonical — `${submissionId}|${applicationNumber}|${region}|${submissionType}|${organizationId}`
+ *
+ * Any change to ANY input flips the digest, which forces re-signing — the
+ * "regenerate after sign" invariant (OQ-2).
+ */
+export function computeBoundPayloadDigest(params: {
+  assembly: AssembledPackage;
+  validation: HardenedValidationResult;
+  submissionId: string;
+  applicationNumber: string;
+  region: RegionCode;
+  submissionType: string;
+  organizationId: number;
+  backboneXml?: Buffer | string;
+}): string {
+  const leafManifestDigest = crypto
+    .createHash('sha256')
+    .update(JSON.stringify(params.assembly.leaves))
+    .digest('hex');
+
+  const validatorOutcomeDigest = crypto
+    .createHash('sha256')
+    .update(
+      JSON.stringify({
+        gatewayReady: params.validation.gatewayReady,
+        hardenedScore: params.validation.hardenedScore,
+        summary: params.validation.summary,
+      }),
+    )
+    .digest('hex');
+
+  // Tenant-scoped identity tuple — includes organizationId so a replay of a
+  // signature row from Org A onto Org B's identical submission identity would
+  // produce a different digest (defense beyond the WHERE organization_id
+  // tenant filter on the lookup query).
+  const submissionIdentityCanonical = [
+    params.submissionId,
+    params.applicationNumber,
+    params.region,
+    params.submissionType,
+    String(params.organizationId),
+  ].join('|');
+
+  const h = crypto.createHash('sha256');
+  h.update(leafManifestDigest);
+  h.update(validatorOutcomeDigest);
+  h.update(submissionIdentityCanonical);
+  if (params.backboneXml) {
+    h.update(
+      typeof params.backboneXml === 'string'
+        ? Buffer.from(params.backboneXml, 'utf8')
+        : params.backboneXml,
+    );
+  }
+  return h.digest('hex');
+}
+
+/**
+ * Storage shape persisted onto the package.sign step's outputRef so the
+ * resume path can re-discover the payload digest and the (eventual)
+ * signature id without re-deriving them from inputs.
+ */
+interface PackageSignStepPayload {
+  payloadDigest: string;
+  /** When complete, the electronic_signatures.id that satisfied the gate. */
+  signatureId?: number;
+  /** ISO timestamp when the step first transitioned to awaiting-signature. */
+  awaitingSince: string;
+}
+
+function tryParseSignPayload(raw: string | undefined): PackageSignStepPayload | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      typeof (parsed as PackageSignStepPayload).payloadDigest === 'string'
+    ) {
+      return parsed as PackageSignStepPayload;
+    }
+  } catch {
+    /* fall through */
+  }
+  return null;
+}
+
+/**
+ * Look up an active release signature for the given (orgId, payloadDigest).
+ *
+ * OQ-7 mandate: WHERE organization_id = $1 is the tenant guard. The
+ * superseded_by IS NULL clause enforces OQ-4 (§11.70 append-only) — only the
+ * current, non-rolled-back signature is returned. ORDER BY created_at DESC
+ * is defense-in-depth; in practice at most one row matches because every
+ * resign produces a NEW row whose digest is different (any change to inputs
+ * changes the digest).
+ *
+ * Returns the signature id on hit, null on miss-or-cross-org (collapsed
+ * semantics — caller cannot distinguish).
+ */
+export async function findActiveReleaseSignature(params: {
+  organizationId: number;
+  boundPayloadDigest: string;
+}): Promise<{ id: number } | null> {
+  if (!Number.isFinite(params.organizationId) || params.organizationId <= 0) {
+    return null;
+  }
+  if (!params.boundPayloadDigest) return null;
+  try {
+    const result = await pool.query(
+      `SELECT id FROM electronic_signatures
+        WHERE organization_id = $1
+          AND bound_payload_digest = $2
+          AND superseded_by IS NULL
+        ORDER BY created_at DESC
+        LIMIT 1`,
+      [params.organizationId, params.boundPayloadDigest],
+    );
+    if (result.rows.length === 0) return null;
+    const row = result.rows[0] as Record<string, unknown>;
+    const id = Number(row.id);
+    if (!Number.isFinite(id) || id <= 0) return null;
+    return { id };
+  } catch (err) {
+    console.warn(
+      '[Orchestrator] findActiveReleaseSignature failed (non-fatal):',
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
 }
 
 // ── Audit log persistence ───────────────────────────────────────────────────
@@ -1321,6 +1540,160 @@ export async function runOrchestrator(
       stepOf('package.validate').status = 'skipped';
     }
 
+    // ── package.sign (Path-to-GA §C.11) ────────────────────────────────────
+    //
+    // OQ-1 decision: REQUIRED for IND/NDA/BLA/MAA only (closed allowlist
+    // SIGNATURE_REQUIRED_SUBMISSION_TYPES). Non-required types take the
+    // `skipped` branch and the pipeline proceeds.
+    //
+    // Pattern (manual driver, not runStep): the success path here is either
+    // `complete` (a matching signature already exists for this exact payload
+    // digest) or `awaiting-signature` (no signature yet — caller must invoke
+    // POST /api/submissions/:id/sign-release). awaiting-signature is a
+    // non-terminal status that runStep cannot express, so we manage the
+    // transition by hand the same way csr.draft-narrative does for
+    // awaiting-async.
+    {
+      const signStep = stepOf('package.sign');
+      const validateStep = stepOf('package.validate');
+
+      // Compute the input hash early — used for the audit row even on the
+      // skipped path so a future auditor can see the exact inputs that
+      // weren't required to sign.
+      const signInputHash = hashInputs(
+        inputs.submissionId,
+        inputs.applicationNumber,
+        inputs.region,
+        inputs.submissionType,
+        inputs.organizationId,
+        outputs.assembly?.leaves ?? null,
+        outputs.validation
+          ? {
+              gatewayReady: outputs.validation.gatewayReady,
+              hardenedScore: outputs.validation.hardenedScore,
+              summary: outputs.validation.summary,
+            }
+          : null,
+      );
+
+      // OQ-1 skip path: non-REQUIRED submission types bypass the gate.
+      if (!SIGNATURE_REQUIRED_SUBMISSION_TYPES.has(inputs.submissionType)) {
+        signStep.inputHash = signInputHash;
+        signStep.startedAt = new Date().toISOString();
+        signStep.status = 'skipped';
+        signStep.completedAt = new Date().toISOString();
+        signStep.durationMs = 0;
+        signStep.outputRef = `skipped (submissionType=${inputs.submissionType} not in REQUIRED allowlist)`;
+        await persistStepEvent(runId, run.organizationId, signStep, 'complete', run.submissionFk);
+      } else if (validateStep.status !== 'complete' || !outputs.assembly || !outputs.validation) {
+        // The gate is required, but upstream isn't gateway-ready. Mark
+        // skipped (rather than failed) — the validate-failed step already
+        // owns the failure signal; we don't want to double-count it. The
+        // outputRef explains why we didn't sign.
+        signStep.inputHash = signInputHash;
+        signStep.startedAt = new Date().toISOString();
+        signStep.status = 'skipped';
+        signStep.completedAt = new Date().toISOString();
+        signStep.durationMs = 0;
+        signStep.outputRef = `skipped (package.validate status=${validateStep.status}; cannot sign a non-gateway-ready package)`;
+        await persistStepEvent(runId, run.organizationId, signStep, 'complete', run.submissionFk);
+      } else {
+        // REQUIRED + gateway-ready: compute the bound payload digest and
+        // look up an existing signature. If found → complete; else →
+        // awaiting-signature (run is suspended).
+        signStep.inputHash = signInputHash;
+        signStep.status = 'running';
+        signStep.startedAt = new Date().toISOString();
+        await persistStepEvent(runId, run.organizationId, signStep, 'start', run.submissionFk);
+
+        const tSign = Date.now();
+        try {
+          const sequenceNumberForDigest = outputs.assembly.sequenceNumber;
+          const payloadDigest = computeBoundPayloadDigest({
+            assembly: outputs.assembly,
+            validation: outputs.validation,
+            submissionId: inputs.submissionId,
+            applicationNumber: inputs.applicationNumber,
+            region: inputs.region,
+            submissionType: inputs.submissionType,
+            organizationId: inputs.organizationId,
+            // OQ-5: backbone XML is not yet produced inline; helper handles
+            // the absence by binding the available components only. When the
+            // ZIP builder lands, pass `backboneXml` here.
+            backboneXml: undefined,
+          });
+
+          // OQ-7: tenant-scoped lookup — WHERE organization_id = $1.
+          const existing = await findActiveReleaseSignature({
+            organizationId: inputs.organizationId,
+            boundPayloadDigest: payloadDigest,
+          });
+
+          if (existing) {
+            // OQ-2: an existing matching signature satisfies the gate. Any
+            // change to inputs would change the digest and produce no match,
+            // forcing a re-sign — that's the regenerate-after-sign invariant.
+            const completePayload: PackageSignStepPayload = {
+              payloadDigest,
+              signatureId: existing.id,
+              awaitingSince: new Date().toISOString(),
+            };
+            signStep.status = 'complete';
+            signStep.completedAt = new Date().toISOString();
+            signStep.durationMs = Date.now() - tSign;
+            signStep.outputRef = JSON.stringify(completePayload);
+            signStep.outputHash = hashOutput(completePayload);
+            await persistStepEvent(runId, run.organizationId, signStep, 'complete', run.submissionFk);
+            recordOrchestratorStepCompleted({
+              step: 'package.sign',
+              durationMs: signStep.durationMs,
+            });
+            // Sequence number used for the digest — informational; reading
+            // back later if a future probe needs it.
+            void sequenceNumberForDigest;
+          } else {
+            // OQ-3: one signature per release (one electronic_signatures row,
+            // sig_meaning='approval'). Until that row exists, the run hangs in
+            // awaiting-signature.
+            const awaitingPayload: PackageSignStepPayload = {
+              payloadDigest,
+              awaitingSince: new Date().toISOString(),
+            };
+            signStep.status = 'awaiting-signature';
+            // Leave completedAt unset; this step is non-terminal.
+            signStep.completedAt = undefined;
+            signStep.durationMs = Date.now() - tSign;
+            signStep.outputRef = JSON.stringify(awaitingPayload);
+            signStep.outputHash = hashOutput(awaitingPayload);
+            // Persist the audit event as 'complete' for the start/complete
+            // pairing convention (mirrors the csr.draft-narrative pattern);
+            // the status column on the row records 'awaiting-signature' so an
+            // auditor can distinguish.
+            await persistStepEvent(runId, run.organizationId, signStep, 'complete', run.submissionFk);
+
+            // Suspend the run — return unchanged. Caller (UI or background
+            // poller) invokes the signing route, then re-invokes
+            // runOrchestrator(inputs, { resumeRunId }) to advance.
+            run.status = 'awaiting-signature';
+            run.completedAt = undefined;
+            await persistRun(run);
+            return { run, outputs };
+          }
+        } catch (err) {
+          signStep.completedAt = new Date().toISOString();
+          signStep.durationMs = Date.now() - tSign;
+          signStep.status = 'failed';
+          signStep.error = err instanceof Error ? err.message : String(err);
+          recordOrchestratorStepFailed({
+            step: 'package.sign',
+            errorCode: classifyStepError(err),
+          });
+          await persistStepEvent(runId, run.organizationId, signStep, 'fail', run.submissionFk);
+          throw err;
+        }
+      }
+    }
+
     // Compute final run status
     const failedSteps = run.steps.filter(s => s.status === 'failed');
     const skippedSteps = run.steps.filter(s => s.status === 'skipped');
@@ -1421,14 +1794,29 @@ async function resumeOrchestratorRun(
     );
   }
 
-  const awaitingStep = previousRun.steps.find(s => s.status === 'awaiting-async');
-  if (!awaitingStep) {
-    // No awaiting-async step → nothing to resume. Return the run unchanged.
+  // Path-to-GA §C.11 resume support: check for an awaiting-signature step
+  // BEFORE the awaiting-async check. The two suspend states are
+  // mutually-exclusive on a single run today (csr.draft-narrative happens
+  // long before package.sign), but if both ever co-occurred we'd want to
+  // resolve the upstream awaiting-async first — so awaiting-async is
+  // intentionally checked first.
+  const awaitingAsyncStep = previousRun.steps.find(s => s.status === 'awaiting-async');
+  const awaitingSignatureStep = previousRun.steps.find(s => s.status === 'awaiting-signature');
+
+  if (!awaitingAsyncStep && !awaitingSignatureStep) {
+    // No suspended step → nothing to resume. Return the run unchanged.
     // The caller is expected to have used getRunResumeReadiness to gate this
     // call, so reaching here is unusual but not an error.
     const outputs = rederiveSyncOutputsForResume(inputs);
     return { run: previousRun, outputs };
   }
+
+  // ── awaiting-signature branch (Path-to-GA §C.11) ────────────────────────
+  if (awaitingAsyncStep === undefined && awaitingSignatureStep) {
+    return resumeAwaitingSignature(inputs, previousRun, awaitingSignatureStep);
+  }
+
+  const awaitingStep = awaitingAsyncStep!;
 
   // Today only csr.draft-narrative produces awaiting-async. Defensive guard
   // for future steps that adopt the pattern.
@@ -1728,6 +2116,215 @@ async function resumeOrchestratorRun(
     console.error('[Orchestrator] resume failed:', err);
   }
 
+  previousRun.completedAt = new Date().toISOString();
+  await persistRun(previousRun);
+  return { run: previousRun, outputs };
+}
+
+// ── Resume path: awaiting-signature (Path-to-GA §C.11) ─────────────────────
+
+/**
+ * Drive a previously-suspended `package.sign` run forward.
+ *
+ * Steps:
+ *   1. Re-derive the in-memory outputs (sync only — m3.compose, csr.tabulate,
+ *      m2.* deterministic builders, package.assemble, package.validate).
+ *      Mirrors the awaiting-async resume so downstream behavior is consistent.
+ *   2. Re-compute the bound payload digest from the rederived outputs.
+ *   3. If the recomputed digest does NOT match the persisted digest, the
+ *      payload has drifted under us (regenerate-after-suspend). Per OQ-2 the
+ *      step transitions to `failed` with `signature_payload_drift`; the
+ *      caller must regenerate from the changed upstream step and re-sign.
+ *   4. Otherwise: WHERE organization_id = $1 AND bound_payload_digest = $2
+ *      AND superseded_by IS NULL (OQ-4 + OQ-7). If a row exists, transition
+ *      the step to `complete`; if not, leave it in `awaiting-signature` and
+ *      return.
+ *
+ * No transmit step yet; once package.sign is `complete`, the run rolls up to
+ * `complete` (or `partial` if any other step failed).
+ */
+async function resumeAwaitingSignature(
+  inputs: OrchestratorInputs,
+  previousRun: OrchestratorRun,
+  signStep: StepRecord,
+): Promise<{ run: OrchestratorRun; outputs: OrchestratorOutputs }> {
+  const persistedPayload = tryParseSignPayload(signStep.outputRef);
+  if (!persistedPayload) {
+    throw new Error(
+      `[Orchestrator] resume: package.sign step has no parseable payload (outputRef='${signStep.outputRef ?? ''}')`,
+    );
+  }
+
+  // Re-derive sync outputs. This includes module3Sections (composeFullModule3)
+  // and csrTables; subsequent helpers below rebuild assembly + validation.
+  const outputs = rederiveSyncOutputsForResume(inputs);
+
+  // Re-run the downstream synchronous side effects up to but NOT including
+  // package.sign — we need outputs.assembly + outputs.validation to recompute
+  // the digest. The m2.* / m1.admin / package.assemble / package.validate
+  // steps on previousRun are already terminal (complete/failed/skipped); we
+  // re-execute the validators in-memory to populate outputs without
+  // re-persisting the step records (they retain their original terminal
+  // status on previousRun.steps).
+  //
+  // Building outputs.m2.* etc. requires the original inputs the caller
+  // supplies via OrchestratorInputs.
+  outputs.m23 =
+    outputs.module3Sections.length > 0
+      ? buildM23QualityOverallSummary({
+          module3Sections: outputs.module3Sections,
+          drugSubstanceName: inputs.drugSubstanceName,
+          drugProductName: inputs.drugProductName,
+        })
+      : undefined;
+  outputs.m24 =
+    inputs.nonclinicalStudies.length > 0
+      ? buildM24NonclinicalOverview({
+          nonclinicalStudies: inputs.nonclinicalStudies,
+          drugSubstanceName: inputs.drugSubstanceName,
+          indication: inputs.indication,
+        })
+      : undefined;
+  outputs.m25 =
+    inputs.csrInputs.length > 0
+      ? buildM25ClinicalOverview({
+          csrs: inputs.csrInputs,
+          indication: inputs.indication || '[indication not specified]',
+          investigationalProduct:
+            inputs.drugProductName || inputs.drugSubstanceName || '[product]',
+        })
+      : undefined;
+  outputs.m27 =
+    inputs.csrInputs.length > 0
+      ? buildM27ClinicalSummary({
+          csrs: inputs.csrInputs,
+          indication: inputs.indication || '[indication not specified]',
+          investigationalProduct:
+            inputs.drugProductName || inputs.drugSubstanceName || '[product]',
+        })
+      : undefined;
+
+  // package.assemble + package.validate re-derivation
+  const sequenceNumber = inputs.sequenceNumber ?? '0000';
+  const leaves = buildLeafManifestFromSections(outputs.module3Sections);
+  const totalSizeBytes = leaves.reduce((sum, l) => sum + (l.fileSize || 0), 0);
+  outputs.assembly = {
+    leaves,
+    totalSizeBytes,
+    applicationNumber: inputs.applicationNumber,
+    sequenceNumber,
+    region: inputs.region,
+    submissionType: inputs.submissionType,
+  };
+
+  if (!inputs.skipValidation) {
+    const context: HardenedValidationContext = {
+      submissionId: inputs.submissionId,
+      region: outputs.assembly.region as HardenedValidationContext['region'],
+      applicationNumber: outputs.assembly.applicationNumber,
+      sequenceNumber: outputs.assembly.sequenceNumber,
+      submissionType: outputs.assembly.submissionType,
+      totalSizeBytes: outputs.assembly.totalSizeBytes,
+    };
+    outputs.validation = await validateEctdPackageHardened(
+      outputs.assembly.leaves,
+      context,
+      /* backboneXml */ undefined,
+    );
+  }
+
+  // OQ-5: drift-detect by recomputing the digest. If validation is missing
+  // (skipValidation=true) we cannot bind to a validator outcome — fail the
+  // step rather than sign a non-validated package.
+  if (!outputs.validation) {
+    signStep.status = 'failed';
+    signStep.error = 'package.sign cannot resume: validation outcome missing (skipValidation set?)';
+    signStep.completedAt = new Date().toISOString();
+    await persistStepEvent(
+      previousRun.runId,
+      previousRun.organizationId,
+      signStep,
+      'fail',
+      previousRun.submissionFk,
+    );
+    previousRun.status = 'failed';
+    previousRun.completedAt = new Date().toISOString();
+    await persistRun(previousRun);
+    return { run: previousRun, outputs };
+  }
+
+  const recomputedDigest = computeBoundPayloadDigest({
+    assembly: outputs.assembly,
+    validation: outputs.validation,
+    submissionId: inputs.submissionId,
+    applicationNumber: inputs.applicationNumber,
+    region: inputs.region,
+    submissionType: inputs.submissionType,
+    organizationId: inputs.organizationId,
+  });
+
+  if (recomputedDigest !== persistedPayload.payloadDigest) {
+    // Drift — the inputs to the signed payload have changed since the run
+    // was suspended. Per OQ-2 the run cannot recover; the user must
+    // regenerate from the changed upstream step (which produces a fresh
+    // awaiting-signature with a new digest) and re-sign.
+    signStep.status = 'failed';
+    signStep.error = 'signature_payload_drift';
+    signStep.completedAt = new Date().toISOString();
+    await persistStepEvent(
+      previousRun.runId,
+      previousRun.organizationId,
+      signStep,
+      'fail',
+      previousRun.submissionFk,
+    );
+    previousRun.status = 'failed';
+    previousRun.completedAt = new Date().toISOString();
+    await persistRun(previousRun);
+    return { run: previousRun, outputs };
+  }
+
+  // No drift — look up the active signature. OQ-7: WHERE organization_id = $1.
+  // OQ-4: AND superseded_by IS NULL.
+  const found = await findActiveReleaseSignature({
+    organizationId: inputs.organizationId,
+    boundPayloadDigest: recomputedDigest,
+  });
+
+  if (!found) {
+    // Still no signature — leave the run in awaiting-signature, return
+    // unchanged. The caller polls again later (after the signing route
+    // creates the row).
+    return { run: previousRun, outputs };
+  }
+
+  // Active signature found → transition step to complete, run rolls up.
+  const completePayload: PackageSignStepPayload = {
+    payloadDigest: recomputedDigest,
+    signatureId: found.id,
+    awaitingSince: persistedPayload.awaitingSince,
+  };
+  signStep.status = 'complete';
+  signStep.completedAt = new Date().toISOString();
+  signStep.outputRef = JSON.stringify(completePayload);
+  signStep.outputHash = hashOutput(completePayload);
+  await persistStepEvent(
+    previousRun.runId,
+    previousRun.organizationId,
+    signStep,
+    'complete',
+    previousRun.submissionFk,
+  );
+
+  // Final run status — same logic as the fresh-run path.
+  const failedSteps = previousRun.steps.filter(s => s.status === 'failed');
+  const skippedSteps = previousRun.steps.filter(s => s.status === 'skipped');
+  previousRun.status =
+    failedSteps.length > 0
+      ? 'partial'
+      : skippedSteps.length === previousRun.steps.length
+        ? 'failed'
+        : 'complete';
   previousRun.completedAt = new Date().toISOString();
   await persistRun(previousRun);
   return { run: previousRun, outputs };
