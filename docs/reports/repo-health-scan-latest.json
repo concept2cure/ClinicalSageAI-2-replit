@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T15:34:56.174Z",
+  "generatedAt": "2026-06-29T15:39:13.702Z",
   "git": {
-    "sha": "10270667127bc28a6ae982433e7f82d8c80cad7e",
+    "sha": "636b325949c4fd466716da1d477d2746c14b2c30",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 231,
     "largeFilesByBytes": 21,
-    "largeFilesByLines": 61
+    "largeFilesByLines": 62
   },
   "findings": {
     "duplicateBasenames": [
@@ -2582,6 +2582,10 @@
         "lines": 1687
       },
       {
+        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+        "lines": 1678
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
       },
@@ -2629,7 +2633,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 364,
       "largeByBytes": 18,
-      "largeByLines": 51
+      "largeByLines": 52
     },
     {
       "owner": "Unassigned (TBD)",
