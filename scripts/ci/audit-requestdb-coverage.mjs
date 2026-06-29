@@ -61,6 +61,13 @@ const ALLOWLIST_FILES = new Set([
   'server/routes/auth.ts',
   'server/routes/authEnterprise.ts',
   'server/routes/admin.ts',
+  // Master Administration — platform-owner + support console. Intentionally
+  // cross-tenant (estate-wide monitoring of every client), gated by
+  // requirePlatformAdmin. requestDb(req) would RLS-scope it to the caller's own
+  // org, defeating the module; it must run on the shared pool. Same intent as
+  // the cross-tenant admin/billing entries in server/db/rlsAllowlist.ts; under
+  // RLS enforcement it relies on the standard policy's super-admin bypass.
+  'server/routes/admin/master-admin.ts',
   // First-run install setup: runs before any tenant/org exists, so it cannot
   // use the tenant-scoped requestDb. Self-closing once a user exists.
   'server/routes/setup.ts',

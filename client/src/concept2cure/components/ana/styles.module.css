@@ -791,34 +791,104 @@
    ─────────────────────────────────────────────────────────────────────────── */
 
 /* Split layout: chat left, document preview right. */
+/* PanelGroup root: fills the area under the TopBar. */
 .studioLayout {
-  display: flex;
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
 }
+/* Left Panel hosting the chat. */
 .studioChat {
-  flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
+/* The preview pane fills its Panel (the Panel controls width via the handle). */
 .studioPane {
-  flex: 0 0 46%;
-  max-width: 720px;
-  min-width: 360px;
+  width: 100%;
+  height: 100%;
   border-left: 1px solid var(--border);
   background: var(--bg-100);
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
-@media (max-width: 900px) {
-  /* On narrow viewports the preview takes over; chat collapses behind it. */
-  .studioPane { flex-basis: 100%; max-width: none; }
-  .studioChat { display: none; }
+/* Draggable separator between chat and preview. Keyboard-operable (the lib
+   gives it role=separator + arrow-key resize); we just style the affordance. */
+.studioResize {
+  flex: 0 0 auto;
+  width: 6px;
+  background: var(--border);
+  cursor: col-resize;
+  transition: background 200ms ease-out;
+  outline: none;
 }
+.studioResize:hover,
+.studioResize[data-resize-handle-active] {
+  background: var(--accent-main-100, #6366f1);
+}
+.studioResize:focus-visible {
+  background: var(--accent-main-100, #6366f1);
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
+}
+
+/* Sub-bar: version picker + page pagination. */
+.studioSubbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-000);
+}
+.studioVersion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.studioSubLabel {
+  font-size: 11px;
+  color: var(--ink-subtle, var(--text-400));
+  letter-spacing: 0.03em;
+}
+.studioVersionSelect {
+  font-size: 12px;
+  color: var(--ink-body, var(--ink));
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  cursor: pointer;
+}
+.studioPager {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.studioPagerLabel {
+  font-size: 11px;
+  color: var(--ink-muted, var(--text-300));
+  min-width: 78px;
+  text-align: center;
+}
+.studioPagerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-subtle, var(--text-400));
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 5px;
+  cursor: pointer;
+  transition: background 200ms ease-out, color 200ms ease-out;
+}
+.studioPagerBtn:hover:not(:disabled) { background: var(--bg-200); color: var(--ink); }
+.studioPagerBtn:disabled { opacity: 0.4; cursor: default; }
 
 .studioHeader {
   display: flex;
@@ -950,6 +1020,20 @@
   word-break: break-word;
 }
 
-/* Layout-transparent wrapper: when the studio is closed the split-pane
-   wrappers must not affect the existing chat layout. */
-.studioPassthrough { display: contents; }
+/* "Ask AnA to resolve" — appears in the verification panel when not verified. */
+.verifyResolve {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-main-100, #6366f1);
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
+  border: 1px solid var(--accent-main-100, #6366f1);
+  border-radius: 7px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 200ms ease-out;
+}
+.verifyResolve:hover { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }

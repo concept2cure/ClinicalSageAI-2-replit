@@ -25,6 +25,9 @@ import { Concept2CureLogin } from '../components/concept2cure-auth';
 import { ZenApp } from '../ZenApp';
 import MdxRoute from '../mdx/MdxRoute';
 import { InsightsSurface } from '../insights/surface';
+// Master Administration + Business Center UI is owned by Claude Design (built
+// from HANDOFF_TO_DESIGN_master_admin_business_center.md). Only the backend +
+// API ship here; route registrations are added back when the designed UI lands.
 import { ProjectProvider } from '../context/ProjectContext';
 import {
   AuthProvider as PortalAuthProvider,

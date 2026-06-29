@@ -57,6 +57,7 @@ export async function registerDocumentRoutes({
       { path: '/api/ectd-documents', mod: '../routes/ectd-documents', name: 'eCTD Documents' },
       { path: '/api/ectd-compile', mod: '../routes/ectd-compile', name: 'eCTD Compile' },
       { path: '/api/ectd/export', mod: '../routes/ectd-export', name: 'eCTD Export' },
+      { path: '/api/csr/jobs', mod: '../routes/csr-jobs', name: 'CSR Jobs' },
       {
         path: '/api/ectd-submissions',
         mod: '../routes/ectd-submission-agent.routes',
@@ -72,6 +73,22 @@ export async function registerDocumentRoutes({
         console.error(`❌ Failed to mount ${ectdConfig[i].name} routes:`, r.reason);
       }
     });
+
+    // Second mount from the ectd-export module: the leaf-level preflight
+    // validator lives in the same file but needs the URL prefix `/api/ectd`
+    // (not `/api/ectd/export`) so the public path resolves to
+    // `/api/ectd/validate/preflight`. Pulled as a named export so the two
+    // routers can stay co-located while exposing distinct mount points.
+    try {
+      const ectdExportModule = await import('../routes/ectd-export');
+      const preflightRouter = (ectdExportModule as any).preflightRouter;
+      if (preflightRouter) {
+        app.use('/api/ectd', authenticateToken, preflightRouter);
+        console.log('✅ eCTD Leaf Preflight route mounted (auth-gated): /api/ectd/validate/preflight');
+      }
+    } catch (error) {
+      console.error('❌ Failed to mount eCTD Leaf Preflight route:', error);
+    }
   }
 
   // ── Biotech Document Artifacts (eCTD, PV, Clinical Ops document generation) ──

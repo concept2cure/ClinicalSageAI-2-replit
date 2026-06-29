@@ -16,15 +16,6 @@ const IND_REQUIRED = [
   'm4.2.1', 'm4.2.2', 'm4.2.3', 'm5.3.5',
 ];
 
-const NDA_REQUIRED = [
-  'm1.1', 'm1.2', 'm1.3', 'm1.5', 'm1.14', 'm1.15',
-  'm2.2', 'm2.3', 'm2.4', 'm2.5', 'm2.6', 'm2.7',
-  'm3.2.S', 'm3.2.P', 'm3.2.A', 'm3.2.R',
-  'm4.2.1', 'm4.2.2', 'm4.2.3', 'm5.2', 'm5.3.5',
-];
-
-const IND_ONLY_SECTIONS = IND_REQUIRED.filter(s => !NDA_REQUIRED.includes(s));
-
 const leaf = (over: Partial<ECTDLeaf> & { sectionCode: string }): ECTDLeaf => ({
   title: over.title ?? over.sectionCode,
   checksum: over.checksum ?? MD5,
@@ -77,26 +68,32 @@ describe('quickValidate', () => {
     expect(r.completeness).toBeLessThan(100);
     expect(r.missing).toEqual(IND_REQUIRED.slice(10));
   });
-  it('does not apply IND required sections to a non-IND submission', () => {
-    // NDA validates against NDA_REQUIRED_SECTIONS, not IND_REQUIRED_SECTIONS.
-    // IND-only sections (m1.6, m1.7, m1.9) must not appear in the missing list.
+  it('applies the NDA profile (not IND) to a non-IND submission', () => {
+    // Guards the bug where every type was validated against IND_REQUIRED_SECTIONS.
+    // An empty NDA is missing its OWN required sections (21 CFR 314.50 / ICH M4),
+    // not IND's — so IND-only sections must never be flagged on an NDA.
     const r = quickValidate([], 'NDA');
-    expect(r.missing).toHaveLength(NDA_REQUIRED.length);
-    for (const s of IND_ONLY_SECTIONS) {
-      expect(r.missing).not.toContain(s);
-    }
+    expect(r.missing).not.toContain('m1.6'); // IND general investigational plan
+    expect(r.missing).not.toContain('m1.7'); // IND investigator's brochure
+    expect(r.missing).not.toContain('m1.9'); // IND environmental assessment
+    // NDA-specific required sections that are absent are correctly flagged.
+    expect(r.missing).toContain('m2.5'); // Clinical Overview
+    expect(r.missing).toContain('m1.14'); // Labeling
   });
 });
 
 describe('validatePackage — submission type', () => {
   it('does not flag IND-only sections as missing on a non-IND submission', () => {
     const res = validatePackage([leaf({ sectionCode: 'm1.1' })], 'NDA');
-    const missingSections = res.findings
+    const missing = res.findings
       .filter(f => f.code === 'MISSING_REQUIRED_SECTION')
       .map(f => f.sectionCode);
-    for (const s of IND_ONLY_SECTIONS) {
-      expect(missingSections).not.toContain(s);
-    }
+    // IND-only sections are not part of the NDA profile, so they're never missing…
+    expect(missing).not.toContain('m1.6');
+    expect(missing).not.toContain('m1.7');
+    expect(missing).not.toContain('m1.9');
+    // …while an absent NDA-specific required section is flagged.
+    expect(missing).toContain('m2.5');
   });
   it('still validates IND required sections for an IND submission', () => {
     const res = validatePackage([], 'IND');

@@ -8492,6 +8492,178 @@ export const sharepointIntegrationRelations = relations(sharepointIntegration, (
 }));
 
 /**
+ * CSR Build Jobs Table
+ *
+ * Phase 3 job-state wrapper for server/services/csr-builder.ts.
+ * One row per CSR build request, with state transitions tracked here so
+ * launchCSRBuild can run asynchronously and survive a worker restart.
+ *
+ * Design doc: docs/reports/CSR_JOB_STATE_SCHEMA_DESIGN_2026-06-28.md
+ * Migration:  migrations/20260628_csr_job_state.sql
+ *
+ * Tenant-scoping: organizationId is non-negotiable. projectId is nullable
+ * with ON DELETE SET NULL so the audit trail survives a project archive.
+ * status is a CHECK constraint (not a pg enum) so it can be loosened with
+ * a single ALTER TABLE in a future migration.
+ */
+export const csrBuildJobs = pgTable(
+  'csr_build_jobs',
+  {
+    id: serial('id').primaryKey(),
+
+    // Tenant scoping (non-negotiable)
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    // ON DELETE SET NULL: a study can outlive a project archive
+    projectId: integer('project_id').references(() => projects.id, {
+      onDelete: 'set null',
+    }),
+
+    // Study context (the CSR is for a specific study)
+    studyId: text('study_id').notNull(),
+
+    // State machine — CHECK constraint enforced in SQL migration:
+    //   queued | loading_data | drafting | tabulating |
+    //   cross_linking | complete | failed | cancelled
+    status: text('status').notNull().default('queued'),
+    // CHECK (progress >= 0 AND progress <= 100) enforced in SQL migration
+    progress: integer('progress').notNull().default(0),
+
+    // What's being generated (denormalized for fast resume)
+    sectionsToGenerate: text('sections_to_generate').array(),
+    studyInfoSnapshot: jsonb('study_info_snapshot'), // snapshot of CSRBuildRequest at enqueue time
+    error: jsonb('error'), // populated on failed state
+
+    // Audit / lifecycle
+    requestedBy: integer('requested_by').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    startedAt: timestamp('started_at'),
+    completedAt: timestamp('completed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    // Tenant-first index for status dashboards
+    csrBuildJobsOrgProjectIdx: index('csr_build_jobs_org_project_idx').on(
+      table.organizationId,
+      table.projectId
+    ),
+    // Partial status index for the worker poll path is created in the SQL
+    // migration (Drizzle does not express the WHERE clause cleanly here);
+    // the index name is csr_build_jobs_status_idx.
+    csrBuildJobsStatusIdx: index('csr_build_jobs_status_idx').on(table.status),
+    // Org+study lookup for "show me the latest CSR for this study"
+    csrBuildJobsOrgStudyIdx: index('csr_build_jobs_org_study_idx').on(
+      table.organizationId,
+      table.studyId
+    ),
+  })
+);
+
+/**
+ * CSR Section Outputs Table
+ *
+ * Phase 3 per-section persistence. One row per generated ICH-E3 section
+ * so a section-level failure leaves prior work intact.
+ *
+ * Design doc: docs/reports/CSR_JOB_STATE_SCHEMA_DESIGN_2026-06-28.md
+ * Migration:  migrations/20260628_csr_job_state.sql
+ *
+ * organizationId is denormalized from the parent job so "list my org's
+ * CSR sections" reads stay tenant-scoped without a join. ON DELETE CASCADE
+ * on jobId because the section output has no value without its parent job.
+ * UNIQUE (jobId, sectionNumber) keeps regeneration as an upsert.
+ */
+export const csrSectionOutputs = pgTable(
+  'csr_section_outputs',
+  {
+    id: serial('id').primaryKey(),
+
+    // Tenant scoping (denormalized from the job for cheap org-scoped reads)
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: integer('project_id').references(() => projects.id, {
+      onDelete: 'set null',
+    }),
+
+    // Foreign key to the job — CASCADE so section content is purged with job
+    jobId: integer('job_id')
+      .notNull()
+      .references(() => csrBuildJobs.id, { onDelete: 'cascade' }),
+
+    // ICH-E3 section identifier (e.g., '2.1', '11.4', '12.2.4')
+    sectionNumber: text('section_number').notNull(),
+
+    // Content
+    content: text('content').notNull(),
+    contentHash: text('content_hash').notNull(), // SHA-256 lowercase hex of content
+
+    // Provenance
+    aiGenerated: boolean('ai_generated').notNull().default(false),
+    model: text('model'), // e.g., 'claude-opus-4-7'
+    tokenCost: integer('token_cost').default(0),
+    lineage: jsonb('lineage'), // which sources, prior section refs
+
+    generatedAt: timestamp('generated_at').defaultNow().notNull(),
+  },
+  table => ({
+    // Tenant-first index for org-scoped section reads
+    csrSectionOutputsOrgProjectIdx: index('csr_section_outputs_org_project_idx').on(
+      table.organizationId,
+      table.projectId
+    ),
+    // Job-scoped lookup for "all sections of this job"
+    csrSectionOutputsJobIdx: index('csr_section_outputs_job_idx').on(table.jobId),
+    // Regeneration upsert key — one row per (job, section_number)
+    csrSectionOutputsJobSectionUnique: unique('csr_section_outputs_job_section_unique').on(
+      table.jobId,
+      table.sectionNumber
+    ),
+  })
+);
+
+// CSR job-state types
+export type CsrBuildJob = typeof csrBuildJobs.$inferSelect;
+export type NewCsrBuildJob = typeof csrBuildJobs.$inferInsert;
+export type CsrSectionOutput = typeof csrSectionOutputs.$inferSelect;
+export type NewCsrSectionOutput = typeof csrSectionOutputs.$inferInsert;
+
+// CSR job-state relations
+export const csrBuildJobsRelations = relations(csrBuildJobs, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [csrBuildJobs.organizationId],
+    references: [organizations.id],
+  }),
+  project: one(projects, {
+    fields: [csrBuildJobs.projectId],
+    references: [projects.id],
+  }),
+  requestedByUser: one(users, {
+    fields: [csrBuildJobs.requestedBy],
+    references: [users.id],
+  }),
+  sections: many(csrSectionOutputs),
+}));
+
+export const csrSectionOutputsRelations = relations(csrSectionOutputs, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [csrSectionOutputs.organizationId],
+    references: [organizations.id],
+  }),
+  project: one(projects, {
+    fields: [csrSectionOutputs.projectId],
+    references: [projects.id],
+  }),
+  job: one(csrBuildJobs, {
+    fields: [csrSectionOutputs.jobId],
+    references: [csrBuildJobs.id],
+  }),
+}));
+
+/**
  * Structured Observation Terms Table
  *
  * This table stores structured medical/regulatory observation terms
@@ -17432,6 +17604,92 @@ export const featureToggles = pgTable(
 );
 
 export type FeatureToggle = InferSelectModel<typeof featureToggles>;
+
+// ============================================================
+// BUSINESS CENTER — cost accounting config (platform-global)
+// ============================================================
+// Platform-wide, NON-tenant configuration the Business Center uses to compute
+// cost-based accounting per client. No tenant column (owner-managed rate
+// cards), so out of scope for RLS / tenant-isolation.
+
+/** Unit cost rates the platform owner attributes to metered usage. */
+export const platformCostRates = pgTable('platform_cost_rates', {
+  id: serial('id').primaryKey(),
+  costKey: text('cost_key').notNull().unique(), // usage feature_id, or 'default'
+  label: text('label'),
+  unitCostCents: integer('unit_cost_cents').default(0).notNull(),
+  unit: text('unit').default('credit').notNull(), // credit | seat | gb_month | month
+  updatedBy: text('updated_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertPlatformCostRateSchema = createInsertSchemaOmit(platformCostRates, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type PlatformCostRate = InferSelectModel<typeof platformCostRates>;
+
+/** Per-tier price card used to derive recognized revenue per client. */
+export const tierPricing = pgTable('tier_pricing', {
+  id: serial('id').primaryKey(),
+  tier: text('tier').notNull().unique(), // free | standard | professional | enterprise
+  monthlyPriceCents: integer('monthly_price_cents').default(0).notNull(),
+  perSeatCents: integer('per_seat_cents').default(0).notNull(),
+  updatedBy: text('updated_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const insertTierPricingSchema = createInsertSchemaOmit(tierPricing, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type TierPricing = InferSelectModel<typeof tierPricing>;
+
+// ============================================================
+// PLATFORM ROLE GRANTS — designate personnel (platform tier)
+// ============================================================
+// Platform-level role grants the owner can assign/revoke from inside the app
+// instead of editing env allowlists or the DB by hand. DELIBERATELY SEPARATE
+// from organization_users.role: that column carries ONLY org-scoped roles
+// (admin/manager/member/viewer); platform roles (super_admin/platform_admin/
+// support/business_admin/owner) live here so org-level access can never be
+// corrupted by a platform grant. The platform access guards
+// (requirePlatformAdmin / requireBusinessAdmin) honor active rows here as a
+// DB-backed fallback to the synchronous role/email checks. Owner-managed,
+// non-tenant config (no organization column) → out of scope for RLS / tenant
+// isolation. The unique (user_id, role) index keeps at most one active grant
+// per (user, role) and backs the ON CONFLICT upsert in the access router.
+//
+// @compliance FDA 21 CFR Part 11 §11.10(d) — limiting system access to
+//             authorized individuals; every grant/revoke is audited.
+export const platformRoleGrants = pgTable(
+  'platform_role_grants',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .references(() => users.id)
+      .notNull(),
+    role: text('role').notNull(), // super_admin | platform_admin | support | business_admin | owner
+    grantedBy: text('granted_by'),
+    grantedAt: timestamp('granted_at').defaultNow().notNull(),
+    revokedAt: timestamp('revoked_at'),
+    revokedBy: text('revoked_by'),
+    reason: text('reason'),
+  },
+  table => ({
+    userRoleIdx: uniqueIndex('platform_role_grants_user_role_idx').on(table.userId, table.role),
+  })
+);
+
+export const insertPlatformRoleGrantSchema = createInsertSchemaOmit(platformRoleGrants, {
+  id: true,
+  grantedAt: true,
+});
+export type PlatformRoleGrant = InferSelectModel<typeof platformRoleGrants>;
 
 // ============================================================
 // DATA LINEAGE TRACKING (Regulatory-Grade)

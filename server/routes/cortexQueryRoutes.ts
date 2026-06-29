@@ -155,7 +155,7 @@ router.post('/query', async (req: Request, res: Response) => {
         );
         break;
       case 'graph':
-        response = await handleGraphMode(query, options);
+        response = await handleGraphMode(query, options, organizationUuid);
         break;
       case 'advisory':
         response = await handleAdvisoryMode(query, options, context, organizationUuid);
@@ -274,15 +274,28 @@ async function handleGenerateMode(
 }
 
 /**
- * Graph mode: Knowledge graph traversal
+ * Graph mode: Knowledge graph traversal. Org-scoped — refuses to traverse
+ * when organizationUuid is missing so atoms never leak across tenants
+ * (both the candidate search and the edge traversal join lumen_data_atoms
+ * to the requesting org).
  */
 async function handleGraphMode(
   query: string,
-  options: CortexQueryRequest['options']
+  options: CortexQueryRequest['options'],
+  organizationUuid?: string
 ): Promise<CortexQueryResponse> {
-  // First, find relevant atoms via search
+  if (!organizationUuid) {
+    return {
+      success: true,
+      mode: 'graph',
+      query,
+      results: { graph: { nodes: [], edges: [] } },
+      metadata: { processingTimeMs: 0, tokensUsed: 0 },
+    };
+  }
+
   const embeddingService = getEmbeddingService(pool!);
-  const searchResults = await embeddingService.searchSimilar(query, 5, 0.5);
+  const searchResults = await embeddingService.searchSimilar(query, 5, 0.5, organizationUuid);
 
   if (searchResults.length === 0) {
     return {
@@ -296,7 +309,9 @@ async function handleGraphMode(
     };
   }
 
-  // Get graph neighborhood for found atoms
+  // Get graph neighborhood for found atoms. Both endpoint-atoms are joined
+  // to the requesting org so a cross-tenant edge cannot surface even when an
+  // attacker guesses an atom id — the JOINs filter both sides explicitly.
   const atomIds = searchResults.map(r => r.id);
 
   const { rows: edges } = await pool!.query(
@@ -308,10 +323,14 @@ async function handleGraphMode(
     FROM lumen_knowledge_graph_edges e
     JOIN lumen_data_atoms sa ON e.source_atom_id = sa.id
     JOIN lumen_data_atoms ta ON e.target_atom_id = ta.id
-    WHERE e.source_atom_id = ANY($1) OR e.target_atom_id = ANY($1)
+    JOIN organizations osa ON sa.organization_id = osa.id
+    JOIN organizations ota ON ta.organization_id = ota.id
+    WHERE (e.source_atom_id = ANY($1) OR e.target_atom_id = ANY($1))
+      AND osa.uuid = $2
+      AND ota.uuid = $2
     LIMIT 50
   `,
-    [atomIds]
+    [atomIds, organizationUuid]
   );
 
   // Build graph response

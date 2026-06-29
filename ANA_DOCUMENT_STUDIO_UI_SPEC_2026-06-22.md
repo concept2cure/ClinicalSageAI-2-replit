@@ -46,6 +46,7 @@ Renders `verify_docx_against_source`'s result as a calm strip:
 
 It is a `role="status"` / `aria-live="polite"` region. Status reads as quiet stone (verified = `--success` fallback green; unverified = `--danger`), never neon. This is the evidence a regulatory user (and the Part 11 trail) cites.
 
+- **Closing the loop ("Ask AnA to resolve"):** when the document is **not verified**, the panel offers a one-click action. `composeVerificationFixMessage()` (pure, exported) builds a targeted request citing the exact missing strings and the line divergence; `Ana.tsx` sends it via `chat.send`, so AnA corrects the document and re-verifies — verify → fix → re-verify without leaving the pane. Hidden when verified or when no handler is wired (read-only history).
 - **Data path:** `useAnaChat.ts` parses the verify tool result in the `tool_result` SSE handler via the exported pure `mapVerificationResult(...)`, attaching `verification` to the assistant message.
 
 ---
@@ -71,5 +72,10 @@ Home **AnA card / morning briefing** (`concept2cure-home/AnaCard.tsx`), the **An
 
 ---
 
-## 7. Remaining polish (not in this change)
-Version dropdown (R3), page pagination (R7), an explicit resize handle (today the split is a fixed flex ratio), and a model/effort picker (L8) — all small, all documented in `ANA_DOCUMENT_STUDIO_SPEC_2026-06-20.md` §4.
+## 7. Polish (built — follow-up after the initial flag-gated surface)
+
+- **Resize handle** ✅ — the split is now a draggable, keyboard-operable separator via `react-resizable-panels` (`PanelGroup`/`Panel`/`PanelResizeHandle`), with the width persisted per browser (`autoSaveId`). `.studioResize` styles the affordance; the lib supplies `role="separator"` + arrow-key resize.
+- **Version dropdown (R3)** ✅ — `Ana.tsx` groups every draft this session by title into versions (v1…vN, oldest→newest); the pane shows a version `<select>` (latest selected, "(latest)" tagged) when >1, switching the preview — and the per-version verification — without a backend call. Surfaces only when more than one version exists.
+- **Page pagination (R7)** ✅ — `paginateContent()` splits the rendered draft at paragraph boundaries (~2200 chars/page, never cutting a block); the sub-bar shows "Page n / N" with prev/next (disabled at bounds, `aria-live`). Resets to page 1 on version switch / new draft.
+
+Still future: a model/effort picker (L8). Documented in `ANA_DOCUMENT_STUDIO_SPEC_2026-06-20.md` §4.

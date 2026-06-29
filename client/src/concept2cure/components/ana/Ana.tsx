@@ -16,6 +16,7 @@
  * No new design tokens or selectors — every style used exists in the bundle.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import { apiRequest } from '@/lib/queryClient';
 import { isFeatureEnabled } from '@/flags/featureFlags';
@@ -28,6 +29,7 @@ import { ChatView, type ChatMessageView } from './ChatView';
 import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
+import { composeVerificationFixMessage } from './VerificationPanel';
 import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult } from './useAnaChat';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
@@ -506,32 +508,77 @@ export function Ana({
      ───────────────────────────────────────────────────────────── */
   const studioEnabled = isFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO');
 
-  // The active draft is the most recent assistant turn that produced one.
-  const activeDraft = useMemo<{ id: string; draft: DocumentStudioDraft; verification?: VerificationResult } | null>(() => {
+  // The active document is the one whose most recent draft is the latest draft
+  // in the conversation. Its "versions" are every draft this session that
+  // carries the same title, oldest→newest — so successive AnA rewrites become
+  // v1, v2, v3 the user can flip between.
+  const activeDocument = useMemo<{
+    id: string;
+    title: string;
+    documentType?: string;
+    versions: { content: string; verification?: VerificationResult }[];
+  } | null>(() => {
     if (!studioEnabled) return null;
+    let latestTitle: string | null = null;
+    let latestId: string | null = null;
+    let latestType: string | undefined;
     for (let i = chat.messages.length - 1; i >= 0; i--) {
-      const m = chat.messages[i];
-      if (m.generatedDraft) {
-        return { id: m.id, draft: m.generatedDraft, verification: m.verification };
+      const d = chat.messages[i].generatedDraft;
+      if (d) {
+        latestTitle = d.title;
+        latestId = chat.messages[i].id;
+        latestType = d.documentType;
+        break;
       }
     }
-    return null;
+    if (latestTitle == null || latestId == null) return null;
+    const versions: { content: string; verification?: VerificationResult }[] = [];
+    for (const m of chat.messages) {
+      if (m.generatedDraft && m.generatedDraft.title === latestTitle) {
+        versions.push({ content: m.generatedDraft.content, verification: m.verification });
+      }
+    }
+    return { id: latestId, title: latestTitle, documentType: latestType, versions };
   }, [studioEnabled, chat.messages]);
 
   // The pane auto-opens for each new draft; the user can close it, and it
-  // re-opens when a *different* draft arrives.
+  // re-opens (showing the latest version) when a *different* draft arrives.
   const [studioClosed, setStudioClosed] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [versionIndex, setVersionIndex] = useState(0);
   const lastDraftIdRef = useRef<string | null>(null);
   useEffect(() => {
-    const id = activeDraft?.id ?? null;
+    const id = activeDocument?.id ?? null;
     if (id && id !== lastDraftIdRef.current) {
       lastDraftIdRef.current = id;
       setStudioClosed(false);
+      setVersionIndex((activeDocument?.versions.length ?? 1) - 1);
     }
-  }, [activeDraft?.id]);
+  }, [activeDocument?.id, activeDocument?.versions.length]);
 
-  const studioOpen = Boolean(activeDraft) && !studioClosed && view === 'chat';
+  const studioOpen = Boolean(activeDocument) && !studioClosed && view === 'chat';
+
+  // The version currently shown (clamped), and the draft/verification for it.
+  // Memoized so they stay referentially stable across renders (the resolve
+  // callback depends on them).
+  const safeVersionIndex = activeDocument
+    ? Math.max(0, Math.min(versionIndex, activeDocument.versions.length - 1))
+    : 0;
+  const shownDraft = useMemo<DocumentStudioDraft | null>(
+    () =>
+      activeDocument
+        ? {
+            title: activeDocument.title,
+            documentType: activeDocument.documentType,
+            content: activeDocument.versions[safeVersionIndex]?.content ?? '',
+          }
+        : null,
+    [activeDocument, safeVersionIndex],
+  );
+  const shownVerification = useMemo(
+    () => activeDocument?.versions[safeVersionIndex]?.verification,
+    [activeDocument, safeVersionIndex],
+  );
 
   // Download the rendered draft as a Word file. Calls the server DOCX render
   // route; on any failure, falls back to an honest Markdown download so the
@@ -556,6 +603,65 @@ export function Ana({
     }
   }, []);
 
+  // Close the verification loop: when a document failed verification, send AnA
+  // a targeted fix request citing exactly what diverged, then it re-verifies.
+  const handleResolveVerification = useCallback(() => {
+    if (!shownDraft || !shownVerification || shownVerification.ok) return;
+    void chat.send(composeVerificationFixMessage(shownDraft.title, shownVerification));
+  }, [chat, shownDraft, shownVerification]);
+
+  // The view content (home / chat / projects / artifacts). Rendered directly
+  // when the studio is closed, or inside the left Panel when it is open — so
+  // the chat layout is identical in both modes.
+  const viewContent = (
+    <>
+      {view === 'home' && (
+        <EmptyState
+          greetingName={greetingName}
+          onSend={handleSend}
+          onStop={chat.stop}
+          isStreaming={chat.isStreaming}
+          greeting={greeting}
+          suggestions={emptySuggestions}
+          projectId={resolvedProjectId ?? undefined}
+          selectedTools={selectedTools}
+          onSelectedToolsChange={setSelectedTools}
+          projectIntelligence={projectIntelligence}
+        />
+      )}
+      {view === 'chat' && (
+        <ChatView
+          messages={messagesForView}
+          onSend={handleSend}
+          onStop={chat.stop}
+          isStreaming={chat.isStreaming}
+          onCopy={handleCopy}
+          onRetry={handleRetry}
+          onFeedback={handleFeedback}
+          onActionClick={handleActionClick}
+          onEditRegenerate={handleEditRegenerate}
+          onSuggestedAction={handleSuggestedAction}
+          suggestedActionLabels={SUGGESTED_ACTION_LABELS}
+          projectId={resolvedProjectId ?? undefined}
+          selectedTools={selectedTools}
+          onSelectedToolsChange={setSelectedTools}
+        />
+      )}
+      {view === 'projects' && (
+        <ProjectsView
+          projects={projectList}
+          onSelect={id => {
+            onSelectProject?.(id);
+          }}
+          onNew={onCreateProject}
+        />
+      )}
+      {view === 'artifacts' && (
+        <ProjectsView projects={projectList} onSelect={id => onSelectProject?.(id)} />
+      )}
+    </>
+  );
+
   return (
     <div className={styles.shell} data-collapsed={collapsed ? 'true' : 'false'}>
       <Sidebar
@@ -575,66 +681,33 @@ export function Ana({
           canExport={view === 'chat' && chat.messages.length > 0}
           onExport={handleExport}
         />
-        <div className={studioOpen ? styles.studioLayout : styles.studioPassthrough}>
-        <div className={studioOpen ? styles.studioChat : styles.studioPassthrough}>
-        {view === 'home' && (
-          <EmptyState
-            greetingName={greetingName}
-            onSend={handleSend}
-            onStop={chat.stop}
-            isStreaming={chat.isStreaming}
-            greeting={greeting}
-            suggestions={emptySuggestions}
-            projectId={resolvedProjectId ?? undefined}
-            selectedTools={selectedTools}
-            onSelectedToolsChange={setSelectedTools}
-            projectIntelligence={projectIntelligence}
-          />
+        {studioOpen && shownDraft && activeDocument ? (
+          <PanelGroup
+            direction="horizontal"
+            className={styles.studioLayout}
+            autoSaveId="ana-document-studio"
+          >
+            <Panel defaultSize={54} minSize={32} className={styles.studioChat}>
+              {viewContent}
+            </Panel>
+            <PanelResizeHandle className={styles.studioResize} aria-label="Resize document preview" />
+            <Panel defaultSize={46} minSize={28}>
+              <DocumentStudioPane
+                draft={shownDraft}
+                verification={shownVerification}
+                versionCount={activeDocument.versions.length}
+                activeVersionIndex={safeVersionIndex}
+                onSelectVersion={setVersionIndex}
+                onDownloadDocx={handleDownloadDocx}
+                onClose={() => setStudioClosed(true)}
+                onResolveVerification={handleResolveVerification}
+                downloading={downloading}
+              />
+            </Panel>
+          </PanelGroup>
+        ) : (
+          viewContent
         )}
-        {view === 'chat' && (
-          <ChatView
-            messages={messagesForView}
-            onSend={handleSend}
-            onStop={chat.stop}
-            isStreaming={chat.isStreaming}
-            onCopy={handleCopy}
-            onRetry={handleRetry}
-            onFeedback={handleFeedback}
-            onActionClick={handleActionClick}
-            onEditRegenerate={handleEditRegenerate}
-            onSuggestedAction={handleSuggestedAction}
-            suggestedActionLabels={SUGGESTED_ACTION_LABELS}
-            projectId={resolvedProjectId ?? undefined}
-            selectedTools={selectedTools}
-            onSelectedToolsChange={setSelectedTools}
-          />
-        )}
-        {view === 'projects' && (
-          <ProjectsView
-            projects={projectList}
-            onSelect={id => {
-              onSelectProject?.(id);
-            }}
-            onNew={onCreateProject}
-          />
-        )}
-        {view === 'artifacts' && (
-          <ProjectsView
-            projects={projectList}
-            onSelect={id => onSelectProject?.(id)}
-          />
-        )}
-        </div>
-        {studioOpen && activeDraft && (
-          <DocumentStudioPane
-            draft={activeDraft.draft}
-            verification={activeDraft.verification}
-            onDownloadDocx={handleDownloadDocx}
-            onClose={() => setStudioClosed(true)}
-            downloading={downloading}
-          />
-        )}
-        </div>
       </main>
     </div>
   );
