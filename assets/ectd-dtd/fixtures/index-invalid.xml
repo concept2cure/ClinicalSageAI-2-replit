@@ -1,0 +1,35 @@
+<!--
+  Anonymized test fixture for server/services/ectd/ectd-validator-hardening.ts
+  validateDtdConformance — represents an INVALID backbone that intentionally
+  trips every finding the validator emits. Unit tests assert each finding code
+  appears in the result set.
+
+  Not a real submission. All identifiers are placeholders.
+
+  Intentional violations (one per finding code):
+    DTD_NO_DECLARATION         — <?xml ... ?> deliberately omitted
+    DTD_NO_DOCTYPE             — <!DOCTYPE ... ich-ectd-3-2.dtd> omitted
+    DTD_BAD_ROOT               — root is <bad-root> instead of <ectd:ectd>
+    DTD_MISSING_ECTD_NS        — xmlns:ectd not declared
+    DTD_MISSING_XLINK_NS       — xmlns:xlink not declared
+    DTD_LEAF_MISSING_ATTR      — first leaf lacks xlink:href / checksum / operation
+    DTD_CHECKSUM_TYPE          — second leaf declares checksum-type="sha1"
+    DTD_MISSING_REQUIRED_CHILD — no <admin> child element appears anywhere
+-->
+<bad-root>
+  <m2-summaries>
+    <leaf>
+      <title>Leaf with no required attributes</title>
+    </leaf>
+  </m2-summaries>
+  <m5-clinical>
+    <m5-3>
+      <leaf xlink:href="m5/m5-3-5/wrong-checksum-type.pdf"
+            operation="new"
+            checksum="deadbeefdeadbeefdeadbeefdeadbeef"
+            checksum-type="sha1">
+        <title>Leaf with non-MD5 checksum-type</title>
+      </leaf>
+    </m5-3>
+  </m5-clinical>
+</bad-root>

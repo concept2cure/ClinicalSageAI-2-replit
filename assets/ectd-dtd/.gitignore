@@ -1,0 +1,14 @@
+# Licensed agency DTDs — never committed.
+# These files are dropped into this directory by a maintainer during the
+# acquisition workflow documented in docs/runbooks/ectd-dtd-vendoring.md.
+# Everything else in this directory (README.md, checksums.txt, fixtures/,
+# this .gitignore) IS committed.
+*.dtd
+
+# Allow nothing else automatically — explicit "do not ignore" entries here
+# keep the policy honest if a future *.dtd-adjacent file is introduced.
+!.gitignore
+!README.md
+!checksums.txt
+!fixtures/
+!fixtures/**
