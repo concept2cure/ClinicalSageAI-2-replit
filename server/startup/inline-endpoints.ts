@@ -174,6 +174,19 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Submission orchestrator metrics — per-run / per-step counters +
+      // histograms + the dedicated SEQ_QUERY_FAILED counter so Alertmanager
+      // can fire on the rate independently of other gateway-not-ready causes.
+      // See infra/alerts/orchestrator.yml for the rule definitions.
+      try {
+        const { renderSubmissionOrchestratorMetrics } = await import(
+          '../services/submission-orchestrator-metrics.js'
+        );
+        lines.push(...renderSubmissionOrchestratorMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // FCOI metrics — 21 CFR 54 disclosure lifecycle (C2C-01).
       try {
         const { renderFcoiMetrics } = await import('../services/fcoi-metrics.js');
