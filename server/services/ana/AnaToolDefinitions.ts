@@ -30,6 +30,7 @@ import { SHELF_LIFE_TOOLS } from './shelfLifeTools';
 import { DEEPENING_TOOLS } from './deepeningTools';
 import { DAILYMED_TOOLS } from './dailymedTools';
 import { RIM_TOOLS } from './rimTools';
+import { EU_DATA_TOOLS } from './euDataTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7292,6 +7293,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // RIM learning-loop read path: recall the org's learned regulatory patterns
   // (deterministic_query over the tenant-scoped RIM pattern store). See rimTools.ts.
   ...RIM_TOOLS,
+  // Live EU/global data: EUDAMED, EMA EPAR, EU CTIS. See euDataTools.ts.
+  ...EU_DATA_TOOLS,
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -21,6 +21,8 @@ import { ClinicalTrialsGovConnector } from './clinical-trials-gov.js';
 import { PubMedConnector } from './pubmed.js';
 import { FDADrugsConnector } from './fda-drugs.js';
 import { EMAEPARConnector } from './ema-epar.js';
+import { EudamedConnector } from './eudamed.js';
+import { EuCtisConnector } from './eu-ctis.js';
 import { PMDAConnector } from './pmda-reviews.js';
 import { NMPACDEConnector } from './nmpa-cde.js';
 import { VeevaVaultConnector } from './veeva-vault.js';
@@ -109,6 +111,9 @@ function initializeConnectors(): void {
   connectors.set('pubmed', new PubMedConnector());
   connectors.set('fda_drugs', new FDADrugsConnector());
   connectors.set('ema_epar', new EMAEPARConnector());
+  // Live EU/global data connectors (close the geographic data gap).
+  connectors.set('eudamed', new EudamedConnector());
+  connectors.set('eu_ctis', new EuCtisConnector());
   connectors.set('pmda_reviews', new PMDAConnector());
   connectors.set('nmpa_cde', new NMPACDEConnector());
   connectors.set('veeva_vault', new VeevaVaultConnector());

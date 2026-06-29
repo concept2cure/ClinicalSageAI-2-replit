@@ -28,6 +28,9 @@ import { searchDrugLabels } from '../integrations/drug-label-client.js';
 import { searchDrugApprovals } from '../integrations/drug-approvals-client.js';
 import { searchChemblCompounds, getChemblMechanisms } from '../integrations/chembl-client.js';
 import { searchPreprints, type PreprintServerFilter } from '../integrations/preprint-client.js';
+import { searchEudamed } from '../integrations/eudamed-client.js';
+import { searchEmaEpar } from '../integrations/ema-epar-client.js';
+import { searchEuCtis } from '../integrations/eu-ctis-client.js';
 import { assessTrialFeasibility } from '../study-design/trial-feasibility-service.js';
 import { screenStructuralAlerts, assessDevelopability } from '../chem/index.js';
 import { buildProvenance, confidenceFromScore } from '../evidence/provenance.js';
@@ -1123,6 +1126,144 @@ registerToolHandler('search_literature', async (input) => {
       url: `https://pubmed.ncbi.nlm.nih.gov/?term=${encodeURIComponent(query)}`,
     });
   }
+});
+
+// Search EUDAMED — live EU medical-device database (EU analogue of FDA device
+// data). The client never throws: a network/HTTP failure yields a typed
+// status:'unavailable' result, which we relay as manual-search guidance.
+registerToolHandler('search_eudamed', async (input) => {
+  const query = typeof input.query === 'string' ? input.query : '';
+  const maxResults = Math.min((input.max_results as number) || 10, 50);
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+
+  const result = await searchEudamed({
+    query: query || undefined,
+    manufacturer: asStr(input.manufacturer),
+    riskClass: asStr(input.risk_class),
+    pageSize: maxResults,
+  });
+
+  if (result.status === 'unavailable') {
+    return JSON.stringify({
+      source: result.source,
+      status: 'unavailable',
+      query,
+      note: `EUDAMED unavailable — ${result.message || 'returning guidance for manual search'}`,
+      url: 'https://ec.europa.eu/tools/eudamed/#/screen/search-device',
+    });
+  }
+
+  const provenance = result.devices.map(d =>
+    buildProvenance({
+      sourceId: 'eudamed',
+      citation: { title: d.deviceName || d.basicUdiDi, identifier: d.basicUdiDi || null, url: d.url },
+      query: query || undefined,
+      confidence: 'high',
+    })
+  );
+  return JSON.stringify({
+    source: result.source,
+    status: 'ok',
+    query: query || undefined,
+    totalCount: result.totalCount,
+    resultCount: result.devices.length,
+    devices: result.devices,
+    provenance,
+    citation_hint: 'Cite each device by its Basic UDI-DI and link to the provided EUDAMED url.',
+  });
+});
+
+// Search EMA EPAR — live EU centrally-authorised human medicines (EU analogue of
+// search_drug_labels). Graceful, never-throw client; relay status:'unavailable'.
+registerToolHandler('search_ema_epar', async (input) => {
+  const query = typeof input.query === 'string' ? input.query : '';
+  const maxResults = Math.min((input.max_results as number) || 10, 50);
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+
+  const result = await searchEmaEpar({
+    query: query || undefined,
+    activeSubstance: asStr(input.active_substance),
+    therapeuticArea: asStr(input.therapeutic_area),
+    pageSize: maxResults,
+  });
+
+  if (result.status === 'unavailable') {
+    return JSON.stringify({
+      source: result.source,
+      status: 'unavailable',
+      query,
+      note: `EMA EPAR unavailable — ${result.message || 'returning guidance for manual search'}`,
+      url: `https://www.ema.europa.eu/en/medicines?search_api_fulltext=${encodeURIComponent(query)}`,
+    });
+  }
+
+  const provenance = result.medicines.map(m =>
+    buildProvenance({
+      sourceId: 'ema_epar',
+      citation: { title: m.medicineName || m.productNumber, identifier: m.productNumber || null, url: m.url },
+      query: query || undefined,
+      confidence: 'high',
+    })
+  );
+  return JSON.stringify({
+    source: result.source,
+    status: 'ok',
+    query: query || undefined,
+    totalCount: result.totalCount,
+    resultCount: result.medicines.length,
+    medicines: result.medicines,
+    provenance,
+    citation_hint: 'Cite each medicine by its EMA product number and link to the provided EPAR url.',
+  });
+});
+
+// Search EU CTIS — live EU clinical trials under Reg (EU) 536/2014 (EU analogue
+// of search_clinical_evidence). Graceful, never-throw client.
+registerToolHandler('search_eu_ctis', async (input) => {
+  const query = typeof input.query === 'string' ? input.query : '';
+  const maxResults = Math.min((input.max_results as number) || 10, 50);
+  const asStr = (v: unknown): string | undefined =>
+    typeof v === 'string' && v.trim() ? v.trim() : undefined;
+
+  const result = await searchEuCtis({
+    query: query || undefined,
+    condition: asStr(input.condition),
+    sponsor: asStr(input.sponsor),
+    phase: asStr(input.phase),
+    status: asStr(input.status),
+    pageSize: maxResults,
+  });
+
+  if (result.status === 'unavailable') {
+    return JSON.stringify({
+      source: result.source,
+      status: 'unavailable',
+      query,
+      note: `EU CTIS unavailable — ${result.message || 'returning guidance for manual search'}`,
+      url: 'https://euclinicaltrials.eu/ctis-public/search',
+    });
+  }
+
+  const provenance = result.trials.map(t =>
+    buildProvenance({
+      sourceId: 'eu_ctis',
+      citation: { title: t.title || t.euTrialNumber, identifier: t.euTrialNumber || null, url: t.url },
+      query: query || undefined,
+      confidence: 'high',
+    })
+  );
+  return JSON.stringify({
+    source: result.source,
+    status: 'ok',
+    query: query || undefined,
+    totalCount: result.totalCount,
+    resultCount: result.trials.length,
+    trials: result.trials,
+    provenance,
+    citation_hint: 'Cite each trial by its EU trial number and link to the provided CTIS url.',
+  });
 });
 
 // Search Connected Repositories — fan out across the org's configured data
