@@ -9,7 +9,8 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { applyOrgFeatureFlags } from '@/flags/featureFlags';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -159,10 +160,31 @@ export function useEnabledModules() {
         tier: string;
         industryMode: string;
         modules: EnabledModule[];
+        /** Org-overridable feature flags resolved from organizations.settings.features. */
+        featureFlags?: Record<string, boolean>;
       }>('/enabled'),
     staleTime: 5 * 60 * 1000, // 5 minutes — license changes are infrequent
     retry: 1,
   });
+}
+
+/**
+ * Hydrate the org-overridable feature flags from the server into the client
+ * featureFlags module at runtime, so per-org pilots (e.g. ENABLE_ANA_DOCUMENT_STUDIO)
+ * turn on for the resolved org while the global default stays fail-closed false.
+ *
+ * Call ONCE at the shell root (ZenApp). Because `isFeatureEnabled` reads a
+ * mutable module constant at render time, applying the override here — on the
+ * shell's render path — makes descendants (e.g. Ana) re-read the resolved value
+ * when this query resolves and the shell re-renders. Only allowlisted keys are
+ * ever applied; the server already echoes only allowlisted keys.
+ */
+export function useOrgFeatureFlags() {
+  const { data } = useEnabledModules();
+  const flags = data?.featureFlags;
+  useEffect(() => {
+    applyOrgFeatureFlags(flags);
+  }, [flags]);
 }
 
 /**

@@ -54,7 +54,7 @@ import { useAuthoringIntelligence } from './hooks/useAuthoringIntelligence';
 import { useProjects } from './hooks/useProjects';
 import { useCortexThreads, useCortexHealth, useDeleteCortexThread } from './hooks/useCortex';
 import { cortexService } from './services/cortexService';
-import { usePlatformContext } from './hooks/useLicense';
+import { usePlatformContext, useOrgFeatureFlags } from './hooks/useLicense';
 import { useWorkspaceSummary } from './hooks/useWorkspaceSummary';
 import { useReadinessAssessment } from './hooks/useOrchestration';
 import {
@@ -353,6 +353,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     intelligence: userIntelligence,
     // lastWorkSummary, nextTask — unused, not destructured
   } = usePlatformContext();
+
+  // Hydrate per-org feature-flag overrides (e.g. ENABLE_ANA_DOCUMENT_STUDIO for
+  // pilot orgs) at the shell root so descendants read the org-resolved value.
+  useOrgFeatureFlags();
 
   // Workspace summary — real counts, org, recent activity, next actions
   const { data: workspaceSummary } = useWorkspaceSummary();

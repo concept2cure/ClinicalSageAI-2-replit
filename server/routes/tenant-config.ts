@@ -95,6 +95,15 @@ const tenantSettingsSchema = z.object({
       gitConnectionId: z.string().optional(),
     })
     .optional(),
+
+  // Per-org overrides for the small set of org-overridable feature flags.
+  // Only explicitly-listed keys validate (safeParse drops the rest), so an
+  // admin can never toggle arbitrary internal flags through this surface.
+  features: z
+    .object({
+      ENABLE_ANA_DOCUMENT_STUDIO: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 /**
@@ -327,6 +336,7 @@ router.patch(
         'cer',
         'qmp',
         'integration',
+        'features',
       ] as const;
 
       if (!validSections.includes(section as (typeof validSections)[number])) {

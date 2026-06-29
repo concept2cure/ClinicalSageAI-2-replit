@@ -244,6 +244,29 @@ export const featureFlags: Record<string, FeatureFlag> = {
 };
 
 /**
+ * Flags an organization admin may override per-org via
+ * organizations.settings.features (hydrated at runtime by useOrgFeatureFlags).
+ * The server keeps its own authoritative copy of this allowlist; this list is
+ * the client guard so only these keys are ever applied from server data. Keep
+ * the two in sync. Everything else stays controlled solely by this module's
+ * static defaults.
+ */
+export const ORG_OVERRIDABLE_FLAGS = ['ENABLE_ANA_DOCUMENT_STUDIO'] as const;
+
+/**
+ * Apply a server-provided org feature-flag map to the client flag module,
+ * setting ONLY allowlisted keys with boolean values. Pure + exported for
+ * testing; called by useOrgFeatureFlags at the shell root.
+ */
+export function applyOrgFeatureFlags(flags: Record<string, boolean> | undefined): void {
+  if (!flags) return;
+  for (const key of ORG_OVERRIDABLE_FLAGS) {
+    const value = flags[key];
+    if (typeof value === 'boolean') setFeatureEnabled(key, value);
+  }
+}
+
+/**
  * Check if a feature flag is enabled
  * @param flagId The ID of the feature flag to check
  * @returns true if the feature flag is enabled, false otherwise

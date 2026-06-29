@@ -42,6 +42,49 @@ const logger = createScopedLogger('module-subscriptions');
 
 const router = Router();
 
+// Server-side allowlist of feature flags an org admin may override via
+// organizations.settings.features. Keep minimal and in sync with the client's
+// ORG_OVERRIDABLE_FLAGS — ONLY these keys are ever read or echoed, so an admin
+// can never toggle an arbitrary internal flag. Defaults are fail-closed.
+const ORG_OVERRIDABLE_FLAG_DEFAULTS: Record<string, boolean> = {
+  ENABLE_ANA_DOCUMENT_STUDIO: false,
+};
+
+/**
+ * Resolve the org-overridable feature flags for an organization from
+ * organizations.settings.features, applying overrides only for allowlisted
+ * boolean keys. Fails closed (returns defaults) on any read error — these
+ * flags gate a 21 CFR Part 11 surface and must never silently enable.
+ */
+/**
+ * Merge org settings.features overrides onto the fail-closed defaults, applying
+ * ONLY allowlisted boolean keys. Pure + exported for testing — this is the
+ * allowlist guard that prevents an admin from toggling arbitrary internal flags.
+ */
+export function applyOrgFeatureOverrides(overrides: unknown): Record<string, boolean> {
+  const flags: Record<string, boolean> = { ...ORG_OVERRIDABLE_FLAG_DEFAULTS };
+  if (overrides && typeof overrides === 'object') {
+    const o = overrides as Record<string, unknown>;
+    for (const key of Object.keys(ORG_OVERRIDABLE_FLAG_DEFAULTS)) {
+      if (typeof o[key] === 'boolean') flags[key] = o[key] as boolean;
+    }
+  }
+  return flags;
+}
+
+async function resolveOrgFeatureFlags(orgId: number): Promise<Record<string, boolean>> {
+  try {
+    const result = await pool.query('SELECT settings FROM organizations WHERE id = $1', [orgId]);
+    return applyOrgFeatureOverrides(result.rows[0]?.settings?.features);
+  } catch (error) {
+    logger.warn('resolveOrgFeatureFlags failed; returning fail-closed defaults', {
+      orgId,
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return applyOrgFeatureOverrides(undefined);
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /catalog — Full module catalog with tier/industry availability
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,15 +115,18 @@ router.get('/enabled', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Organization context required' });
     }
 
+    const featureFlags = await resolveOrgFeatureFlags(Number(orgId));
+
     const license = await getLicenseInfo(Number(orgId));
     if (!license) {
-      return res.json({ modules: [], tier: 'free' });
+      return res.json({ modules: [], tier: 'free', featureFlags });
     }
 
     return res.json({
       modules: license.enabledModules,
       tier: license.tier,
       industryMode: license.industryMode,
+      featureFlags,
     });
   } catch (error) {
     logger.error('enabled error', { err: error instanceof Error ? error.message : String(error) });
