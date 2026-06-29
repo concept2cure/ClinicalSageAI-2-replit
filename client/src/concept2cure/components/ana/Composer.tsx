@@ -20,9 +20,11 @@
  */
 import { useEffect, useRef, useState, useCallback } from 'react';
 
+import { isFeatureEnabled } from '@/flags/featureFlags';
 import { I } from './icons';
 import styles from './styles.module.css';
 import { ToolPicker } from './ToolPicker';
+import { ModelEffortPicker, type EffortLevel } from './ModelEffortPicker';
 import {
   useChatUpload,
   attachmentReadLabel as readLabel,
@@ -48,6 +50,16 @@ export interface ComposerProps {
   selectedTools?: string[];
   /** Replace the pinned tool set. When omitted, the Tools control is read-only auto. */
   onSelectedToolsChange?: (tools: string[]) => void;
+  /**
+   * Current response effort (Fast/Balanced/Thorough). When `onEffortChange` is
+   * provided AND the ENABLE_MODEL_EFFORT_PICKER flag is on, the composer renders
+   * the effort segmented control + model dropdown.
+   */
+  effort?: EffortLevel;
+  onEffortChange?: (effort: EffortLevel) => void;
+  /** Current model override (registry id) or null for Auto. */
+  modelOverride?: string | null;
+  onModelOverrideChange?: (modelId: string | null) => void;
 }
 
 /** A successfully-uploaded attachment, handed to the host on send. */
@@ -70,7 +82,15 @@ export function Composer({
   onAttachmentsSend,
   selectedTools,
   onSelectedToolsChange,
+  effort = 'balanced',
+  onEffortChange,
+  modelOverride,
+  onModelOverrideChange,
 }: ComposerProps) {
+  // The effort/model picker is flag-gated AND requires the host to wire the
+  // effort handler. When either is absent the composer renders unchanged.
+  const showEffortPicker =
+    Boolean(onEffortChange) && isFeatureEnabled('ENABLE_MODEL_EFFORT_PICKER');
   const AttachIco = I.attach;
   const DownIco = I.down;
   const ArrowUpIco = I.arrowUp;
@@ -227,6 +247,14 @@ export function Composer({
             AnA 1.0 RI
             <DownIco size={12} />
           </button>
+          {showEffortPicker && onEffortChange && (
+            <ModelEffortPicker
+              effort={effort}
+              onEffortChange={onEffortChange}
+              modelOverride={modelOverride}
+              onModelOverrideChange={onModelOverrideChange ?? (() => {})}
+            />
+          )}
         </div>
         <button
           className={styles.composerSend}

@@ -31,6 +31,7 @@ import { ProjectsView, type AnaProject } from './ProjectsView';
 import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
 import { composeVerificationFixMessage } from './VerificationPanel';
 import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult } from './useAnaChat';
+import type { EffortLevel } from './ModelEffortPicker';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
 
@@ -251,6 +252,10 @@ export function Ana({
   const [activeRecentId, setActiveRecentId] = useState<string | null>(null);
   // Tools the user pins for the next turn (additive focus). Empty = auto.
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  // Model/effort picker state (flag-gated in the Composer). Effort defaults to
+  // 'balanced'; modelOverride null = Auto (server routes by effort).
+  const [effort, setEffort] = useState<EffortLevel>('balanced');
+  const [modelOverride, setModelOverride] = useState<string | null>(null);
 
   const chat = useAnaChat({
     projectId: resolvedProjectId,
@@ -261,6 +266,8 @@ export function Ana({
     authoringContext: authoringContext ?? undefined,
     moduleContext: moduleContext ?? undefined,
     selectedTools,
+    effortLevel: effort,
+    modelOverride,
   });
 
   // Notify host when the active thread id changes (legacy parity with
@@ -709,6 +716,10 @@ export function Ana({
           projectId={resolvedProjectId ?? undefined}
           selectedTools={selectedTools}
           onSelectedToolsChange={setSelectedTools}
+          effort={effort}
+          onEffortChange={setEffort}
+          modelOverride={modelOverride}
+          onModelOverrideChange={setModelOverride}
           projectIntelligence={projectIntelligence}
         />
       )}
@@ -728,6 +739,10 @@ export function Ana({
           projectId={resolvedProjectId ?? undefined}
           selectedTools={selectedTools}
           onSelectedToolsChange={setSelectedTools}
+          effort={effort}
+          onEffortChange={setEffort}
+          modelOverride={modelOverride}
+          onModelOverrideChange={setModelOverride}
         />
       )}
       {view === 'projects' && (
