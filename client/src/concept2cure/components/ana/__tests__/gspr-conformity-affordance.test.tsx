@@ -52,6 +52,24 @@ describe('GsprConformityAffordance flag gating', () => {
     expect(screen.getByText('GSPR conformity matrix — EU MDR Annex I')).toBeTruthy();
     expect(screen.getByText(/23 of 23 requirements assessed/)).toBeTruthy();
   });
+
+  it('exposes an accessible group name and states pass coverage as text', () => {
+    setFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO', true);
+    render(<GsprConformityAffordance input={fullyAssessed()} onAuthor={() => {}} />);
+    const group = screen.getByRole('group', { name: 'GSPR conformity matrix' });
+    expect(group.getAttribute('data-status')).toBe('verified');
+    // pass is stated in words, not colour alone
+    expect(screen.getByText(/Every clause row will be verified present before download/)).toBeTruthy();
+  });
+
+  it('the author control is a real button operable by keyboard', () => {
+    setFeatureEnabled('ENABLE_ANA_DOCUMENT_STUDIO', true);
+    render(<GsprConformityAffordance input={fullyAssessed()} onAuthor={() => {}} />);
+    const btn = screen.getByText('Author GSPR conformity matrix').closest('button') as HTMLButtonElement;
+    expect(btn.tagName).toBe('BUTTON');
+    expect(btn.getAttribute('type')).toBe('button');
+    expect(btn.disabled).toBe(false);
+  });
 });
 
 describe('GsprConformityAffordance authoring', () => {
