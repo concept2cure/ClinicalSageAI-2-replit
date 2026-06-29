@@ -8382,6 +8382,151 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Protocol Development (C2C-17). Authoring shares the governed/audited path;
+// completeness/finalize are deterministic (protocol-development-logic).
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_protocol_document', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_protocol_document requires tenant + user context.' });
+  const protocolKind = typeof input.protocol_kind === 'string' ? input.protocol_kind : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!['iacuc', 'irb', 'clinical', 'ibc'].includes(protocolKind) || !title) return JSON.stringify({ error: 'protocol_kind and title are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createProtocolDocumentTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id, sectionsSeeded } = await createProtocolDocumentTx(client, ctx.organizationId, ctx.userId, {
+      protocolKind: protocolKind as any, title,
+      protocolNumber: typeof input.protocol_number === 'string' ? input.protocol_number : null,
+      designType: typeof input.design_type === 'string' ? input.design_type : null,
+      phase: typeof input.phase === 'string' ? input.phase : null,
+      therapeuticArea: typeof input.therapeutic_area === 'string' ? input.therapeutic_area : null,
+      linkedProtocolId: typeof input.linked_protocol_id === 'number' ? input.linked_protocol_id : null,
+      synopsis: typeof input.synopsis === 'string' ? input.synopsis : null,
+    });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `protocol-document:${id}`, reason: fcoiReason(input, 'Protocol document created via AnA'), payload: { kind: protocolKind }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, sectionsSeeded, message: `Created ${protocolKind.toUpperCase()} protocol "${title}" (id ${id}) seeded with ${sectionsSeeded} templated sections.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_protocol_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('update_protocol_section', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_protocol_section requires tenant + user context.' });
+  const sectionId = typeof input.section_id === 'number' ? input.section_id : NaN;
+  if (!Number.isInteger(sectionId)) return JSON.stringify({ error: 'section_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { updateSectionTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-section:${sectionId}`, reason: fcoiReason(input, 'Protocol section edited via AnA'), payload: { status: input.status }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, sectionId, message: `Updated protocol section ${sectionId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `update_protocol_section failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_protocol_objective', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_objective requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const objective = typeof input.objective === 'string' ? input.objective.trim() : '';
+  if (!Number.isInteger(documentId) || !objective) return JSON.stringify({ error: 'document_id and objective are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addObjectiveTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await addObjectiveTx(client, ctx.organizationId, ctx.userId, documentId, { objectiveType: typeof input.objective_type === 'string' ? input.objective_type : undefined, objective, endpoint: typeof input.endpoint === 'string' ? input.endpoint : null, timepoint: typeof input.timepoint === 'string' ? input.timepoint : null });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol objective added via AnA'), payload: { objectiveId: id }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, objectiveId: id, message: `Added objective to protocol ${documentId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_protocol_objective failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_eligibility_criterion', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_eligibility_criterion requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const kind = typeof input.kind === 'string' ? input.kind : '';
+  const criterion = typeof input.criterion === 'string' ? input.criterion.trim() : '';
+  if (!Number.isInteger(documentId) || !['inclusion', 'exclusion'].includes(kind) || !criterion) return JSON.stringify({ error: 'document_id, kind, and criterion are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addEligibilityCriterionTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await addEligibilityCriterionTx(client, ctx.organizationId, ctx.userId, documentId, { kind, criterion });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Eligibility criterion added via AnA'), payload: { criterionId: id, kind }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, criterionId: id, message: `Added ${kind} criterion to protocol ${documentId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_eligibility_criterion failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_protocol_completeness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_completeness requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getCompleteness } = await import('../protocol-development/protocol-development-service.js');
+  try {
+    const c = await getCompleteness(ctx.organizationId, documentId);
+    return JSON.stringify({ ok: true, requiredCompletionPct: c.requiredCompletionPct, readyToFinalize: c.readyToFinalize, findings: c.findings });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('finalize_protocol_document', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_protocol_document requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { finalizeProtocolTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const result = await finalizeProtocolTx(client, ctx.organizationId, ctx.userId, documentId);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'sign', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol finalized via AnA'), payload: { version: result.version }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, documentId, version: result.version, message: `Finalized protocol ${documentId} as version ${result.version}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `finalize_protocol_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CITI Training full integration (C2C-01/02) + protocol-portfolio analytics.
 // import_citi_records is governed/audited; the review_* tools are read-only.
 // ─────────────────────────────────────────────────────────────────────────────

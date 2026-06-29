@@ -283,6 +283,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Protocol development metrics (C2C-17).
+      try {
+        const { renderProtocolDevMetrics } = await import('../services/protocol-development-metrics.js');
+        lines.push(...renderProtocolDevMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RIM-lite metrics (C2C-12).
       try {
         const { renderRimMetrics } = await import('../services/rim-metrics.js');
