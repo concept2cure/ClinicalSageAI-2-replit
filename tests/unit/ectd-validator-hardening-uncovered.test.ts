@@ -86,6 +86,22 @@ beforeEach(() => {
   hoisted.poolQuery.mockReset();
 });
 
+// ── Mock-interception safety check ──────────────────────────────────────────
+// If a future refactor moves ectd-validator-hardening.ts or changes the import
+// to a different specifier shape, the vi.mock entries above could silently
+// miss and the suite would hit real Postgres (or fail to construct a pool).
+// This test asserts the mock IS the thing being called, so a broken mock
+// surfaces immediately rather than as an opaque connection error deep in
+// another test.
+describe('mock interception sanity', () => {
+  it('detectSequenceGaps routes pool.query through the hoisted mock (not real Postgres)', async () => {
+    expect(hoisted.poolQuery).not.toHaveBeenCalled();
+    hoisted.poolQuery.mockResolvedValueOnce(seqRows([]));
+    await detectSequenceGaps('IND000000', '0000');
+    expect(hoisted.poolQuery).toHaveBeenCalledTimes(1);
+  });
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // 1) detectSequenceGaps — branch coverage
 // ═══════════════════════════════════════════════════════════════════════════
@@ -144,16 +160,19 @@ describe('detectSequenceGaps (DB-backed)', () => {
     expect(gap.message).toMatch(/skips\s+1/);
   });
 
-  it('emits SEQ_REGRESSION when the new sequence is lower than the latest history (history 0003 → new 0002)', async () => {
+  it('SEQ_DUPLICATE takes precedence when the candidate sequence is both in-history and below high-water mark', async () => {
+    // Documents the precedence: the duplicate check fires before the
+    // regression check, so a candidate that would otherwise be a
+    // regression surfaces as SEQ_DUPLICATE when it is also in history.
+    // The genuine SEQ_REGRESSION branch is exercised by the next test
+    // (uses a non-duplicate value below the high-water mark).
     hoisted.poolQuery.mockResolvedValueOnce(seqRows(['0000', '0001', '0002', '0003']));
 
     const findings = await detectSequenceGaps('BLA125742', '0002');
 
-    // Duplicate fires first (0002 is in history) — the regression code path
-    // only reaches when the new seq is BELOW the highest but NOT already
-    // present. Use a true regression scenario: history 0000..0003, new 0001
-    // is also a dup. Try a non-present lower number by using a hole.
     expect(findings[0].code).toBe('SEQ_DUPLICATE');
+    // No regression finding should land — duplicate short-circuits.
+    expect(findings.some(f => f.code === 'SEQ_REGRESSION')).toBe(false);
   });
 
   it('emits SEQ_REGRESSION when the new sequence is below the high-water mark and not a duplicate', async () => {
@@ -192,51 +211,88 @@ describe('detectSequenceGaps (DB-backed)', () => {
     expect(findings.find(f => f.code === 'SEQ_REGRESSION')).toBeUndefined();
   });
 
-  it('PINS CURRENT BEHAVIOR: DB query failure is swallowed, NOT surfaced as a finding', async () => {
+  it('emits SEQ_QUERY_FAILED as a gateway-blocking error when the DB query rejects', async () => {
     // ─────────────────────────────────────────────────────────────────────
-    // P0 AUDIT FINDING — RECONCILIATION_AUDIT_2026-06-29 §A.3 / §D.1
+    // P0 AUDIT FINDING (RESOLVED) — RECONCILIATION_AUDIT_2026-06-29 §A.3 / §D.1
     //
-    // The source uses `pool.query(...).catch(() => ({ rows: [] }))`. A DB
-    // outage is therefore indistinguishable from "no history". Worse: the
-    // empty-history code path treats sequence '0000' as VALID, so a DB
-    // outage during a 0000 initial submission produces zero findings, an
-    // empty sequence array, and gatewayReady=true downstream.
+    // Previously: pool.query had an inner `.catch(() => ({ rows: [] }))`
+    // that silently swallowed DB outages. A 0000 initial submission would
+    // come back with zero findings and gatewayReady=true even though no
+    // history could actually be confirmed.
     //
-    // This test PINS that behavior so the next dev sees the regression risk.
-    // When this is fixed (e.g., by letting the rejection bubble to the outer
-    // try/catch so the SEQ_QUERY_FAILED warning fires), this test should be
-    // inverted, not deleted — see the SHOULD-BE assertions below.
+    // Fix: the inner catch was removed; rejections now bubble into an
+    // explicit try/catch that constructs a SEQ_QUERY_FAILED finding at
+    // severity 'error', which the call site (validateEctdPackageHardened)
+    // treats as gateway-blocking.
     // ─────────────────────────────────────────────────────────────────────
     hoisted.poolQuery.mockRejectedValueOnce(new Error('connection terminated'));
 
     const findings = await detectSequenceGaps('IND111222', '0000');
 
-    // Current behavior: swallow.
-    expect(findings).toEqual([]);
-    // ── When fixed, replace with: ──────────────────────────────────────
-    //   expect(findings).toHaveLength(1);
-    //   expect(findings[0].code).toBe('SEQ_QUERY_FAILED');
-    //   expect(findings[0].severity).toBe('warning'); // or 'error' if escalated
-    //   expect(findings[0].message).toContain('connection terminated');
-    // ───────────────────────────────────────────────────────────────────
+    expect(findings).toHaveLength(1);
+    const [f] = findings;
+    expect(f.code).toBe('SEQ_QUERY_FAILED');
+    expect(f.severity).toBe('error');
+    expect(f.message).toContain('IND111222');
+    // The attempted sequence must be surfaced for operator triage…
+    expect(f.message).toContain('0000');
+    expect(f.attemptedSequence).toBe('0000');
+    // …and a structured error discriminator must be present so SRE can
+    // distinguish a transient connection drop from a schema/permission
+    // misconfiguration without consulting raw logs.
+    expect(typeof f.errorClass).toBe('string');
+    expect(f.errorClass!.length).toBeGreaterThan(0);
+    // We must NOT leak the raw err.message into the public finding —
+    // common Postgres failure strings disclose table/role/host details.
+    expect(f.message).not.toContain('connection terminated');
+    // Operator-actionable remediation must reference the tracking tables.
+    expect(f.fix).toMatch(/ectd_compilations|ectd_submissions|tracking/i);
   });
 
-  it('PINS CURRENT BEHAVIOR: a DB outage during a non-0000 submission silently re-classifies it as SEQ_FIRST_NOT_0000', async () => {
-    // A second swallow consequence: when the new sequence is e.g. '0042'
-    // and the DB is unreachable, the function does NOT warn about the DB
-    // failure — it instead reports the misleading SEQ_FIRST_NOT_0000.
-    // This is wrong (the application may well have a history; we just
-    // couldn't see it), but the route layer has no way to distinguish.
+  it('does NOT misclassify a non-0000 submission as SEQ_FIRST_NOT_0000 when the DB is unreachable', async () => {
+    // Before the fix, a swallowed DB outage left existing=[] which made the
+    // empty-history branch emit SEQ_FIRST_NOT_0000 — wrong, because the
+    // application may well have a history; we just couldn't see it. After
+    // the fix, the function returns SEQ_QUERY_FAILED instead and short-
+    // circuits before the empty-history branch runs.
     hoisted.poolQuery.mockRejectedValueOnce(new Error('FATAL: terminating connection due to administrator command'));
 
     const findings = await detectSequenceGaps('NDA987654', '0042');
 
+    // Only SEQ_QUERY_FAILED, never the misleading first-submission code.
     expect(findings).toHaveLength(1);
-    // The fake "first submission" finding — NOT the SEQ_QUERY_FAILED that
-    // a correct implementation would surface.
-    expect(findings[0].code).toBe('SEQ_FIRST_NOT_0000');
-    // Critically, no SEQ_QUERY_FAILED — confirming the swallow.
-    expect(findings.some(f => f.code === 'SEQ_QUERY_FAILED')).toBe(false);
+    expect(findings[0].code).toBe('SEQ_QUERY_FAILED');
+    expect(findings[0].severity).toBe('error');
+    expect(findings.some(f => f.code === 'SEQ_FIRST_NOT_0000')).toBe(false);
+    // The new seq is referenced in the message for operator triage context.
+    expect(findings[0].message).toContain('NDA987654');
+  });
+
+  it('SEQ_QUERY_FAILED flips gatewayReady to false in the composite validator', async () => {
+    // End-to-end guard: confirm the call site (validateEctdPackageHardened)
+    // honors the new error-severity SEQ_QUERY_FAILED finding by setting
+    // gatewayReady=false. This is the assertion the audit demanded.
+    hoisted.poolQuery.mockRejectedValueOnce(new Error('connection refused'));
+
+    const cleanLeaves: ECTDLeaf[] = [
+      makeLeaf({ sectionCode: 'm1.1' }),
+      makeLeaf({ sectionCode: 'm5.3.5', studyId: 'STUDY-001' }),
+    ];
+
+    const result = await validateEctdPackageHardened(
+      cleanLeaves,
+      {
+        submissionId: 'sub-1',
+        region: 'US',
+        applicationNumber: 'IND111222',
+        sequenceNumber: '0000',
+        submissionType: 'IND',
+      },
+      undefined,
+    );
+
+    expect(result.sequence.some(f => f.code === 'SEQ_QUERY_FAILED' && f.severity === 'error')).toBe(true);
+    expect(result.gatewayReady).toBe(false);
   });
 
   it('queries with the application number bound to $1 and filters DISTINCT 4-digit seqs', async () => {
