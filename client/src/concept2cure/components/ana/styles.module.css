@@ -1708,6 +1708,10 @@
   word-break: break-word;
 }
 .consistencyResolve {
+/* ── E1: Part 11 verified-and-sealed export ─────────────────────────────────
+ * "Sign and seal verified version" action, the sealed badge, and the
+ * expandable provenance trail. Calm, reviewer-grade; no decorative color. */
+.sealAction {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2061,6 +2065,71 @@
 }
 .narrativeErrors {
   margin: 0;
+  font-weight: 600;
+  color: var(--success, #2f7d57);
+  background: var(--bg-000);
+  border: 1px solid var(--success, #2f7d57);
+  border-radius: 7px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 200ms ease-out;
+}
+.sealAction:hover { background: var(--success-subtle, rgba(47, 125, 87, 0.1)); }
+.sealAction:disabled { opacity: 0.6; cursor: default; }
+.sealAction:focus-visible {
+  outline: 2px solid var(--success, #2f7d57);
+  outline-offset: 2px;
+}
+
+.sealError {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--danger, #b4541f);
+}
+
+/* The sealed evidence strip shown after a verified version is sealed. */
+.sealBadge {
+  margin-top: 8px;
+  border: 1px solid var(--success, #2f7d57);
+  border-radius: 8px;
+  background: var(--success-subtle, rgba(47, 125, 87, 0.06));
+  padding: 8px 12px;
+}
+.sealBadgeHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--success, #2f7d57);
+  font-size: 12px;
+  font-weight: 600;
+}
+.sealBadgeMeta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+}
+
+/* Expandable provenance trail. */
+.provTrailToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-body, var(--ink));
+  background: transparent;
+  border: 0;
+  padding: 2px 0;
+  cursor: pointer;
+}
+.provTrailToggle:focus-visible {
+  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline-offset: 2px;
+}
+.provTrail {
+  margin: 6px 0 0;
   padding: 0;
   list-style: none;
   display: flex;
@@ -2209,4 +2278,21 @@
   font-size: 11px;
   line-height: 1.4;
   color: var(--ink-muted, var(--text-300));
+  gap: 4px;
+}
+.provTrail dt {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted, var(--text-300));
+}
+.provTrail dd {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--ink-body, var(--ink));
+  word-break: break-word;
+}
+.provTrailHash {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  word-break: break-all;
 }

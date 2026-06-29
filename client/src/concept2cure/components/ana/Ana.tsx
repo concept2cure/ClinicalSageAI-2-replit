@@ -46,6 +46,7 @@ import { composeConsistencyFixMessage } from './ConsistencyPanel';
 import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
 import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult, type ConsistencyResult } from './useAnaChat';
 import type { EffortLevel } from './ModelEffortPicker';
+import { useVerifiedSeal, type SealMeaning, type VerifiedSeal } from './useVerifiedSeal';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
 
@@ -841,7 +842,7 @@ export function Ana({
     [],
   );
 
-  const handleSeal = useCallback(() => {
+  const handleReadinessSubmit = useCallback(() => {
     // The gate's seal button is disabled unless sealable, so this is only ever
     // reached for a green, non-sample gate. Defense-in-depth: re-check here so a
     // programmatic call can never bypass the honesty contract.
@@ -872,6 +873,43 @@ export function Ana({
     if (shownConsistency.verdict === 'clean' || shownConsistency.isSample) return;
     void chat.send(composeConsistencyFixMessage(shownDraft.title, shownConsistency));
   }, [chat, shownDraft, shownConsistency]);
+
+  // E1 — Part 11 verified-and-sealed export. When a version verifies clean, the
+  // VerificationPanel offers "Sign and seal verified version". We persist the
+  // SealedRecord server-side, then keep the applied seal per version index so
+  // the SealBadge stays put when the user flips between versions. Only wired
+  // when the studio flag is on.
+  const { seal: sealVerified } = useVerifiedSeal();
+  const [appliedSeals, setAppliedSeals] = useState<Record<number, VerifiedSeal>>({});
+  const shownSeal = appliedSeals[safeVersionIndex] ?? null;
+  const handleSeal = useCallback(
+    async (input: {
+      printedName: string;
+      meaning: SealMeaning;
+      reasonForChange: string;
+      password: string;
+      mfaToken?: string;
+    }): Promise<VerifiedSeal | null> => {
+      if (!shownDraft || !shownVerification?.ok) return null;
+      const result = await sealVerified({
+        title: shownDraft.title,
+        content: shownDraft.content,
+        verification: { ok: shownVerification.ok, message: shownVerification.message },
+        projectId: resolvedProjectId ?? undefined,
+        signerRole: resolvedUserRole ?? undefined,
+        // TODO(build-1): once version persistence lands, pass the persisted
+        // artifactPk / artifactExternalId / existingVersionId / version number
+        // here so the server seals the existing row instead of a fallback.
+        ...input,
+      });
+      if (result) {
+        const idx = safeVersionIndex;
+        setAppliedSeals(prev => ({ ...prev, [idx]: result }));
+      }
+      return result;
+    },
+    [sealVerified, shownDraft, shownVerification, resolvedProjectId, resolvedUserRole, safeVersionIndex],
+  );
 
   // The view content (home / chat / projects / artifacts). Rendered directly
   // when the studio is closed, or inside the left Panel when it is open — so
@@ -991,9 +1029,12 @@ export function Ana({
                   ectdEnabled={studioEnabled}
                   readinessGate={readinessGate}
                   onAssembleModule={handleAssembleModule}
-                  onSeal={handleSeal}
+                  onReadinessSubmit={handleReadinessSubmit}
                   onFollowReadinessLink={handleFollowReadinessLink}
                   assembling={assembling}
+                  onSeal={handleSeal}
+                  signer={{ name: account.name, role: resolvedUserRole ?? undefined }}
+                  seal={shownSeal}
                 />
               )}
             </Panel>

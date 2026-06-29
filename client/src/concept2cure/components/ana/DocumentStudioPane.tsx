@@ -28,6 +28,7 @@ import {
 import { ConsistencyPanel } from './ConsistencyPanel';
 import { BriefingBookPanel, type BriefingBookPremortemResult } from './BriefingBookPanel';
 import type { VerificationResult, ConsistencyResult } from './useAnaChat';
+import type { SealVerifiedArgs, VerifiedSeal } from './useVerifiedSeal';
 import { renderSafeMarkdown } from './renderSafeMarkdown';
 import styles from './styles.module.css';
 
@@ -74,6 +75,21 @@ export interface DocumentStudioPaneProps {
   onResolveConcordance?: () => void;
   /** Ask AnA to reconcile dossier inconsistencies and re-run the sweep. */
   onResolveConsistency?: () => void;
+  /**
+   * E1 — Part 11 verified-and-sealed export. When supplied (studio flag on), the
+   * VerificationPanel offers "Sign and seal verified version" for a clean
+   * verification. The handler captures the document title/content here and
+   * forwards the manifestation from the e-sign modal.
+   */
+  onSeal?: (
+    args: Pick<SealVerifiedArgs, 'printedName' | 'meaning' | 'reasonForChange' | 'password' | 'mfaToken'>,
+  ) => Promise<VerifiedSeal | null>;
+  /** Identity shown as the signer in the seal e-sign modal. */
+  signer?: { name: string; email?: string; role?: string };
+  /** True when the signer is MFA-enrolled. */
+  requireMfa?: boolean;
+  /** An already-applied seal for the selected version. */
+  seal?: VerifiedSeal | null;
   /** True while a download/render request is in flight. */
   downloading?: boolean;
   /** Target characters per page for pagination. Exposed for testing. */
@@ -91,7 +107,7 @@ export interface DocumentStudioPaneProps {
   /** Run the one-turn assemble-module + structural + consistency action. */
   onAssembleModule?: (moduleNumber: string) => void;
   /** Seal / submit to the PDUFA clock — only reachable when the gate is green. */
-  onSeal?: () => void;
+  onReadinessSubmit?: () => void;
   /** Follow a blocking item's deep link (jump to a CTD section / open module). */
   onFollowReadinessLink?: (item: BlockingItem) => void;
   /** True while the assemble + readiness action is in flight. */
@@ -159,12 +175,16 @@ export function DocumentStudioPane({
   concordanceDataStatus = 'sample',
   onResolveConcordance,
   onResolveConsistency,
+  onSeal,
+  signer,
+  requireMfa,
+  seal,
   downloading,
   pageSize,
   ectdEnabled,
   readinessGate,
   onAssembleModule,
-  onSeal,
+  onReadinessSubmit,
   onFollowReadinessLink,
   assembling,
   dossier,
@@ -269,7 +289,14 @@ export function DocumentStudioPane({
 
       {verification && (
         <div className={styles.studioVerify}>
-          <VerificationPanel verification={verification} onResolve={onResolveVerification} />
+          <VerificationPanel
+            verification={verification}
+            onResolve={onResolveVerification}
+            onSeal={onSeal}
+            signer={signer}
+            requireMfa={requireMfa}
+            seal={seal}
+          />
         </div>
       )}
 
@@ -309,7 +336,7 @@ export function DocumentStudioPane({
           {readinessGate && (
             <ReadinessGatePanel
               gate={readinessGate}
-              onSeal={onSeal}
+              onSeal={onReadinessSubmit}
               onFollowLink={onFollowReadinessLink}
               assessing={assembling}
             />
