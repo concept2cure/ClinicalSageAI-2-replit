@@ -4417,6 +4417,34 @@ export const REVIEW_SOA_MATRIX: AnaTool = {
   input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
 };
 
+// ─── Protocol Budget & Feasibility (C2C-22) ──────────────────────────────────
+
+export const ADD_PROTOCOL_BUDGET_ITEM: AnaTool = {
+  name: 'add_protocol_budget_item',
+  description: "Add a per-subject budget line item to a protocol (category, unit cost, quantity per subject, payer). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, category: { type: 'string', enum: ['personnel', 'procedure', 'lab', 'imaging', 'overhead', 'equipment', 'patient_stipend', 'other'] }, description: { type: 'string' }, unit_cost: { type: 'number' }, quantity_per_subject: { type: 'number' }, payer: { type: 'string', enum: ['sponsor', 'institution', 'other'] }, reason: { type: 'string' } },
+    required: ['document_id', 'description', 'unit_cost'],
+  },
+};
+
+export const SET_PROTOCOL_BUDGET_PARAMS: AnaTool = {
+  name: 'set_protocol_budget_params',
+  description: "Set a protocol's budget parameters (target enrollment, sponsor payment per subject, F&A/indirect rate %). Upsert — one per document. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, target_enrollment: { type: 'number' }, sponsor_payment_per_subject: { type: 'number' }, indirect_rate_pct: { type: 'number' }, reason: { type: 'string' } },
+    required: ['document_id'],
+  },
+};
+
+export const REVIEW_PROTOCOL_BUDGET: AnaTool = {
+  name: 'review_protocol_budget',
+  description: "Read-only protocol budget & feasibility: per-category + per-subject direct cost, indirect (F&A), total per subject, total study cost across enrollment, sponsor revenue, margin, and the feasibility verdict (funded / under_funded / unknown).",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
 // ─── CITI Training full integration (C2C-01/02) ──────────────────────────────
 
 export const IMPORT_CITI_RECORDS: AnaTool = {
@@ -7403,6 +7431,9 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ADD_SOA_ASSESSMENT,
   SET_SOA_CELL,
   REVIEW_SOA_MATRIX,
+  ADD_PROTOCOL_BUDGET_ITEM,
+  SET_PROTOCOL_BUDGET_PARAMS,
+  REVIEW_PROTOCOL_BUDGET,
   CREATE_PROTOCOL_AMENDMENT,
   ADD_AMENDMENT_CHANGE,
   REVIEW_AMENDMENT,

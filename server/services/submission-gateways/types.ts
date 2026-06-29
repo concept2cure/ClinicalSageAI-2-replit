@@ -71,6 +71,9 @@ export type SubmissionStatus =
   | 'in_transit'        // bytes on the wire
   | 'received'          // gateway returned a receipt (HTTP 200 / MDN)
   | 'rejected'          // gateway rejected (auth, format, validation)
+  | 'rolled_back'       // operator-initiated rollback after transmit; paired with
+                        // a `transmittal_rollback` governed action (audit trail)
+                        // and a WebTrader retraction per the FDA ESG UAT runbook
   | 'ack1_received'     // FDA: receipt-of-transmission
   | 'ack2_received'     // FDA: virus scan / structure check passed
   | 'ack3_received'     // FDA: center-specific acceptance

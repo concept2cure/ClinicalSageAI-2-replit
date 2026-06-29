@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T12:48:01.813Z",
+  "generatedAt": "2026-06-29T15:34:56.174Z",
   "git": {
-    "sha": "d6b1a8289d853d8f50f04d3d4151b937777b43c6",
+    "sha": "10270667127bc28a6ae982433e7f82d8c80cad7e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,9 +9,9 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 230,
+    "duplicateBasenames": 231,
     "largeFilesByBytes": 21,
-    "largeFilesByLines": 55
+    "largeFilesByLines": 61
   },
   "findings": {
     "duplicateBasenames": [
@@ -1882,6 +1882,14 @@
         ]
       },
       {
+        "basename": "protocol-budget",
+        "count": 2,
+        "paths": [
+          "server/routes/protocol-budget.ts",
+          "shared/schema/protocol-budget.ts"
+        ]
+      },
+      {
         "basename": "protocol-consent",
         "count": 2,
         "paths": [
@@ -2285,11 +2293,11 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 803833
+        "bytes": 804295
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 697299
+        "bytes": 717090
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2297,7 +2305,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 434522
+        "bytes": 438017
       },
       {
         "file": "server/statistics-service.ts",
@@ -2371,7 +2379,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19331
+        "lines": 19339
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2379,11 +2387,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 13833
+        "lines": 14162
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 7987
+        "lines": 8042
       },
       {
         "file": "server/statistics-service.ts",
@@ -2462,8 +2470,20 @@
         "lines": 2254
       },
       {
+        "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
+        "lines": 2155
+      },
+      {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
         "lines": 2076
+      },
+      {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 2076
+      },
+      {
+        "file": "server/services/pharmacovigilance/pharmacovigilance-knowledge.ts",
+        "lines": 2068
       },
       {
         "file": "server/services/foresight-ai-engine.ts",
@@ -2484,10 +2504,6 @@
       {
         "file": "server/routes/auth.ts",
         "lines": 1937
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 1933
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2514,12 +2530,20 @@
         "lines": 1828
       },
       {
+        "file": "server/services/immunogenicity/immunogenicity-knowledge.ts",
+        "lines": 1828
+      },
+      {
         "file": "server/services/compliance/globalComplianceEngine.ts",
         "lines": 1824
       },
       {
         "file": "server/routes/report-os.ts",
         "lines": 1816
+      },
+      {
+        "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
+        "lines": 1815
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2536,6 +2560,10 @@
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1785
+      },
+      {
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 1726
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2556,6 +2584,10 @@
       {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
+      },
+      {
+        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
+        "lines": 1650
       },
       {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
@@ -2595,9 +2627,9 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 363,
+      "duplicateGroups": 364,
       "largeByBytes": 18,
-      "largeByLines": 45
+      "largeByLines": 51
     },
     {
       "owner": "Unassigned (TBD)",
@@ -2613,7 +2645,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 58,
+      "duplicateGroups": 59,
       "largeByBytes": 1,
       "largeByLines": 2
     },

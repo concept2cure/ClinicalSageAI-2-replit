@@ -198,12 +198,20 @@ async function updateTransmittal(
     errorMessage:   string;
     ackReceivedAt:  Date;
     completedAt:    Date;
+    /**
+     * Raw MDN response body — persisted on the row so the §11.10(e) audit
+     * trail and downloadAcknowledgment can return what the agency actually
+     * sent rather than a kit-side reconstruction. See migration
+     * 20260629_submission_transmittals_mdn_raw.sql.
+     */
+    mdnRaw:         string;
   }>,
 ): Promise<void> {
   const COL: Record<string, string> = {
     status: 'status', transmissionId: 'transmission_id', httpStatus: 'http_status',
     errorClass: 'error_class', errorMessage: 'error_message',
     ackReceivedAt: 'ack_received_at', completedAt: 'completed_at',
+    mdnRaw: 'mdn_raw',
   };
   const setFrags: string[] = []; const args: unknown[] = [];
   for (const [k, v] of Object.entries(patch)) {
@@ -409,9 +417,16 @@ export class FdaEsgGateway implements SubmissionGateway {
           response.httpStatus, null, response.body.toString('utf8'),
         );
       }
+      /* Persist the raw MDN body verbatim alongside the message-id. The
+         §11.10(e) audit trail needs the agency's response as it arrived on
+         the wire, not a kit-side reconstruction (per FDA ESG production UAT
+         §11). downloadAcknowledgment() returns this string when present and
+         falls back to synthesised text for pre-migration rows. */
+      const mdnRaw = response.body.toString('utf8');
       await updateTransmittal(transmittalId, {
         status: 'received', transmissionId: mdnId,
         httpStatus: response.httpStatus, ackReceivedAt: new Date(),
+        mdnRaw,
       });
       return {
         transmittalId, transmissionId: mdnId, status: 'received', transport: 'as2',
@@ -464,16 +479,21 @@ export class FdaEsgGateway implements SubmissionGateway {
   }
 
   async downloadAcknowledgment(transmittalId: number): Promise<GatewayAcknowledgment> {
-    /* Ack download — real impl fetches from /outgoing/<applicant>/ via
-       SFTP or subscribes to the async-MDN. For now we look up the most
-       recent ack metadata stored on the row + return a synthesized text
-       summary so the kit's UI has something to render. Production
-       implementation overrides this once SFTP /outgoing/ access is set. */
+    /* Ack download — when the AS2 transmit captured the agency's MDN body
+       (post-migration 20260629_submission_transmittals_mdn_raw), return the
+       raw bytes verbatim so the auditor sees what FDA actually said
+       (§11.10(e) audit trail). For pre-migration rows where mdn_raw is NULL,
+       fall back to a synthesised text summary so the kit's UI still has
+       something to render. A future async-MDN poller can fetch
+       /outgoing/<applicant>/ over SFTP and back-fill mdn_raw for rows whose
+       MDN arrived asynchronously. */
     const { rows } = await pool.query<{
       transmission_id: string; status: string; ack_received_at: Date | null;
+      mdn_raw: string | null;
       metadata: Record<string, unknown> | null;
     }>(
-      `SELECT transmission_id, status, ack_received_at, metadata FROM submission_transmittals
+      `SELECT transmission_id, status, ack_received_at, mdn_raw, metadata
+         FROM submission_transmittals
         WHERE id = $1 AND region = 'fda' AND gateway = 'esg'`,
       [transmittalId],
     );
@@ -481,6 +501,19 @@ export class FdaEsgGateway implements SubmissionGateway {
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
     }
     const r = rows[0];
+    if (r.mdn_raw && r.mdn_raw.length > 0) {
+      // Return the verbatim MDN response. message/disposition-notification is
+      // the canonical MIME type for MDN; the body itself is multipart and
+      // self-describes. We keep the legacy filename extension stable in the
+      // route layer so existing UI download links continue to work.
+      return {
+        transmittalId,
+        transmissionId: r.transmission_id,
+        contentType: 'message/disposition-notification',
+        buffer: Buffer.from(r.mdn_raw, 'utf8'),
+        receivedAt: r.ack_received_at ?? new Date(),
+      };
+    }
     const text = `FDA ESG Acknowledgement\nTransmission: ${r.transmission_id}\nStatus: ${r.status}\nReceived: ${r.ack_received_at?.toISOString() ?? 'pending'}\n`;
     return {
       transmittalId, transmissionId: r.transmission_id,
@@ -488,4 +521,220 @@ export class FdaEsgGateway implements SubmissionGateway {
       receivedAt: r.ack_received_at ?? new Date(),
     };
   }
+}
+
+/* ─── Rollback helper (FIX 6) ────────────────────────────────────── */
+
+/** Result of a successful operator-initiated rollback. */
+export interface RollbackResult {
+  transmittalId: number;
+  /** Prior status before the row was flipped to 'rolled_back'. */
+  previousStatus: SubmissionStatus;
+  /** New status — always 'rolled_back' on a successful rollback. */
+  status: 'rolled_back';
+  /** Audit-trail correlation id from recordGovernedAction. */
+  auditId: string;
+  /** Governed-action correlation id (act_*) from recordGovernedAction. */
+  actionId: string;
+  /** ISO timestamp of the rollback. */
+  rolledBackAt: string;
+}
+
+/** Thrown when a rollback is requested on a transmittal that hasn't shipped
+ *  yet (or has already been rolled back / rejected). The HTTP layer maps this
+ *  to a 409 Conflict so the operator can refresh the row and retry. */
+export class RollbackNotPermittedError extends Error {
+  readonly errorClass = 'validation' as const;
+  constructor(
+    readonly transmittalId: number,
+    readonly currentStatus: string,
+  ) {
+    super(
+      `Transmittal ${transmittalId} cannot be rolled back from status '${currentStatus}'. ` +
+      `Only 'received' / 'in_transit' / 'ack1_received' / 'ack2_received' / 'ack3_received' ` +
+      `transmittals are eligible.`,
+    );
+    this.name = 'RollbackNotPermittedError';
+  }
+}
+
+/** Statuses from which an operator is allowed to roll back a transmittal. The
+ *  list deliberately excludes terminal-failure states (`rejected`,
+ *  `rolled_back`, `completed`) and pre-shipment states (`pending`). */
+const ROLLBACKABLE_STATUSES: ReadonlySet<string> = new Set<string>([
+  'in_transit',
+  'received',
+  'ack1_received',
+  'ack2_received',
+  'ack3_received',
+  'validation_passed',
+  'validation_failed',
+  'review_started',
+  'response_required',
+]);
+
+/**
+ * Operator-initiated rollback of a transmitted FDA ESG submission.
+ *
+ * The platform cannot un-send bytes to FDA — the operator still has to file a
+ * WebTrader retraction with the agency (documented in the FDA ESG production
+ * UAT runbook §11). This helper records the rollback INSIDE the kit's audit
+ * trail so the §11.10(e) chain has a counterpart to the original `sign`
+ * action: the transmittal row flips to `rolled_back`, and a governed action
+ * with command `transmittal_rollback` is written linking the actor + reason
+ * to the row. The caller (the HTTP route) is responsible for invoking this
+ * inside a tenant-scoped handler — this helper itself does NOT validate
+ * org-scope on its own; it expects the caller to have already loaded the row
+ * tenant-scoped and to pass the verified `organizationId` so the audit row
+ * lands under the right tenant.
+ *
+ * Returns the audit-trail correlation ids so the caller can include them in
+ * the HTTP response (and so monitoring can join "FDA submission shipped" to
+ * "FDA submission rolled back" in a single ledger query).
+ *
+ * @param params.transmittalId    The row to roll back. MUST already be
+ *                                tenant-checked by the caller.
+ * @param params.organizationId   Verified tenant id (used to write the
+ *                                governed-action row under the right org).
+ * @param params.actorUserId      User initiating the rollback. Captured on
+ *                                the audit row.
+ * @param params.reason           Free-form rationale (e.g. "wrong sequence
+ *                                shipped to FDA — retracting"). Persisted
+ *                                verbatim on the governed-action row.
+ * @param params.recordGovernedAction Injected to avoid a circular import
+ *                                between server/services and server/routes.
+ *                                Pass the symbol exported from
+ *                                server/routes/c2c/actions.ts.
+ */
+export async function rollbackTransmittal(params: {
+  transmittalId: number;
+  organizationId: number;
+  actorUserId: number;
+  reason: string;
+  recordGovernedAction: (
+    client: { query: (sql: string, args?: unknown[]) => Promise<{ rows: unknown[] }> },
+    p: {
+      orgId: number;
+      userId: number;
+      command: string;
+      target: string;
+      reason: string;
+      payload?: Record<string, unknown>;
+      domain?: string;
+      surface?: string;
+    },
+  ) => Promise<{ actionId: string; auditId: string; sha256Chain: string }>;
+}): Promise<RollbackResult> {
+  const { transmittalId, organizationId, actorUserId, reason, recordGovernedAction } = params;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Load the row tenant-scoped + lock it so a concurrent rollback or status
+    // update can't race us. SELECT FOR UPDATE means a second rollback waits on
+    // this transaction's commit/rollback before evaluating the status guard.
+    const { rows } = await client.query<{ status: string; package_id: number | null; bundle_sha256: string | null }>(
+      `SELECT status, package_id, bundle_sha256
+         FROM submission_transmittals
+        WHERE id = $1 AND organization_id = $2 AND region = 'fda' AND gateway = 'esg'
+        FOR UPDATE`,
+      [transmittalId, organizationId],
+    );
+    if (rows.length === 0) {
+      await client.query('ROLLBACK');
+      throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
+    }
+    const previousStatus = rows[0].status as SubmissionStatus;
+    if (!ROLLBACKABLE_STATUSES.has(previousStatus)) {
+      await client.query('ROLLBACK');
+      throw new RollbackNotPermittedError(transmittalId, previousStatus);
+    }
+
+    // 1) Emit the audit trail entry FIRST. The governed-action row is
+    //    immutable; if the subsequent UPDATE fails we want the audit trail
+    //    intact so the cause is forensically reconstructable.
+    const gov = await recordGovernedAction(client, {
+      orgId:   organizationId,
+      userId:  actorUserId,
+      command: 'transmittal_rollback',
+      target:  `transmittal:${transmittalId}`,
+      reason,
+      payload: {
+        meaning: 'submission_rollback',
+        previousStatus,
+        packageId:    rows[0].package_id,
+        bundleSha256: rows[0].bundle_sha256,
+      },
+      domain:  'mdx',
+      surface: 'submission-gateway',
+    });
+
+    // 2) Flip the transmittal row to 'rolled_back'. This frees the partial
+    //    unique index (sub_trans_active_lock_idx) so a corrective re-transmit
+    //    of the same package can be enqueued.
+    const rolledBackAt = new Date();
+    await client.query(
+      `UPDATE submission_transmittals
+          SET status        = 'rolled_back',
+              completed_at  = $1,
+              updated_at    = NOW()
+        WHERE id = $2 AND organization_id = $3`,
+      [rolledBackAt, transmittalId, organizationId],
+    );
+
+    await client.query('COMMIT');
+
+    return {
+      transmittalId,
+      previousStatus,
+      status:        'rolled_back',
+      auditId:       gov.auditId,
+      actionId:      gov.actionId,
+      rolledBackAt:  rolledBackAt.toISOString(),
+    };
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch { /* noop */ }
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/* ─── Active-transmittal lookup (FIX 7) ──────────────────────────── */
+
+/**
+ * Returns the active (pending|in_transit|received) transmittal row for an
+ * (organizationId, packageId, bundleSha256) tuple, or null if none exists.
+ * Used by the HTTP transmit handler to refuse duplicates with 409 BEFORE the
+ * gateway is invoked. The DB-level partial unique index
+ * (sub_trans_active_lock_idx) is the backstop for races between this check
+ * and the subsequent INSERT.
+ *
+ * Tenant-scoped: a different org can transmit the same package_id /
+ * bundle_sha256 (realistic for a CMO running multiple sponsors).
+ */
+export async function findActiveTransmittal(params: {
+  organizationId: number;
+  packageId: number | null;
+  bundleSha256: string;
+}): Promise<{ id: number; status: string } | null> {
+  const { organizationId, packageId, bundleSha256 } = params;
+  // If packageId is null we cannot enforce a meaningful lock (the partial
+  // index is keyed on package_id). Return null and let the gateway proceed —
+  // ad-hoc transmits without a package row are not the surface area the lock
+  // is protecting.
+  if (packageId == null) return null;
+
+  const { rows } = await pool.query<{ id: number; status: string }>(
+    `SELECT id, status FROM submission_transmittals
+      WHERE organization_id = $1
+        AND package_id      = $2
+        AND bundle_sha256   = $3
+        AND status IN ('pending', 'in_transit', 'received')
+      ORDER BY submitted_at DESC
+      LIMIT 1`,
+    [organizationId, packageId, bundleSha256],
+  );
+  return rows[0] ?? null;
 }
