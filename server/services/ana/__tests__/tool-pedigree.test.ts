@@ -47,10 +47,11 @@ describe('getToolPedigree — name-prefix heuristic', () => {
 });
 
 describe('PEDIGREE_LEVELS', () => {
-  it('has all four keys, each self-consistent with non-empty guidance', () => {
+  it('has all five keys, each self-consistent with non-empty guidance', () => {
     const keys: DeterminismPedigree[] = [
       'deterministic_registry',
       'deterministic_query',
+      'rim_learned',
       'external_api_live',
       'model_assisted',
     ];
@@ -62,6 +63,8 @@ describe('PEDIGREE_LEVELS', () => {
     }
     expect(PEDIGREE_LEVELS.deterministic_registry.deterministic).toBe(true);
     expect(PEDIGREE_LEVELS.deterministic_query.deterministic).toBe(true);
+    expect(PEDIGREE_LEVELS.rim_learned.deterministic).toBe(false);
+    expect(PEDIGREE_LEVELS.rim_learned.trust).toBe('medium');
     expect(PEDIGREE_LEVELS.external_api_live.deterministic).toBe(false);
     expect(PEDIGREE_LEVELS.model_assisted.deterministic).toBe(false);
     expect(PEDIGREE_LEVELS.model_assisted.trust).toBe('requires_verification');
