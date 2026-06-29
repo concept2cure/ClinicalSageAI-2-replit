@@ -123,6 +123,7 @@ export type LayoutMode =
   | 'cmc'
   | 'labeling'
   | 'risk'
+  | 'rbm'
   | 'tasking'
   | 'communication'
   | 'submission-gateway'

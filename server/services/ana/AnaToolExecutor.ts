@@ -2608,6 +2608,208 @@ registerToolHandler('advise_risk_management', async (input) => {
   });
 });
 
+// ── Risk-Based Monitoring (RBM / RBQM) — ICH E6(R3)/E8(R1) ──────────────────
+const RBM_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Seed or summarize a study Risk Assessment (RACT) for a program.
+registerToolHandler('run_rbm_assessment', async (input, ctx) => {
+  const programId = typeof input.programId === 'string' ? input.programId : undefined;
+  const orgId = ctx?.organizationId ?? null;
+  if (!programId || !RBM_UUID_RE.test(programId)) {
+    return JSON.stringify({ source: 'AnA RBM', error: 'A valid programId (UUID) is required.' });
+  }
+  if (orgId == null) {
+    return JSON.stringify({ source: 'AnA RBM', error: 'Organization context required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const pool = getPool();
+  const { scoreRisk, overallRiskFromScores, DEFAULT_CTQ_FACTORS } = await import('../rbm/rbm-engine.js');
+
+  const existing = await pool.query(
+    `SELECT * FROM rbm_risk_assessments WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1`,
+    [orgId, programId],
+  );
+
+  if (existing.rows.length === 0 && input.seed === true) {
+    const scores = DEFAULT_CTQ_FACTORS.map((f) => scoreRisk(f.likelihood, f.impact).score);
+    const overall = overallRiskFromScores(scores);
+    const a = await pool.query(
+      `INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status)
+       VALUES ($1,$2,'Risk assessment (RACT)','ich_e6r3',$3,'active') RETURNING *`,
+      [orgId, programId, overall],
+    );
+    const assessment = a.rows[0];
+    for (const f of DEFAULT_CTQ_FACTORS) {
+      const { score } = scoreRisk(f.likelihood, f.impact);
+      await pool.query(
+        `INSERT INTO rbm_risk_items (organization_id, assessment_id, program_id, category, ctq_factor, risk_description, likelihood, impact, risk_score, is_critical, mitigation, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'open')`,
+        [orgId, assessment.id, programId, f.category, f.ctqFactor, f.riskDescription, f.likelihood, f.impact, score, f.isCritical, f.mitigation],
+      );
+    }
+  }
+
+  const items = await pool.query(
+    `SELECT category, ctq_factor, likelihood, impact, risk_score, is_critical, status
+       FROM rbm_risk_items WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+       ORDER BY risk_score DESC NULLS LAST`,
+    [orgId, programId],
+  );
+  const assessmentRow = (await pool.query(
+    `SELECT id, title, framework, overall_risk, status FROM rbm_risk_assessments WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1`,
+    [orgId, programId],
+  )).rows[0] ?? null;
+
+  return JSON.stringify({
+    source: 'AnA RBM Assessment',
+    framework: 'ICH E6(R3) / E8(R1)',
+    assessment: assessmentRow,
+    overallRisk: assessmentRow?.overall_risk ?? null,
+    criticalFactors: items.rows.filter((r: any) => r.is_critical).map((r: any) => r.ctq_factor),
+    items: items.rows,
+    hint: items.rows.length === 0 ? 'No RACT yet — call again with seed=true to create a default assessment.' : undefined,
+  });
+});
+
+// Per-site risk snapshot + monitoring tier from Site Intelligence.
+registerToolHandler('assess_site_risk', async (input, ctx) => {
+  const programId = typeof input.programId === 'string' ? input.programId : undefined;
+  const orgId = ctx?.organizationId ?? null;
+  if (!programId || !RBM_UUID_RE.test(programId)) {
+    return JSON.stringify({ source: 'AnA RBM', error: 'A valid programId (UUID) is required.' });
+  }
+  if (orgId == null) {
+    return JSON.stringify({ source: 'AnA RBM', error: 'Organization context required.' });
+  }
+  const { recomputeSiteRisk } = await import('../rbm/site-risk-engine.js');
+  const { getPool } = await import('../../db.js');
+  let sites: any[];
+  if (input.persist === true) {
+    sites = await recomputeSiteRisk(orgId, programId);
+  } else {
+    const { rows } = await getPool().query(
+      `SELECT site_number, site_name, composite_risk, monitoring_tier, drivers FROM rbm_site_risk_scores
+         WHERE organization_id = $1 AND program_id = $2 ORDER BY composite_risk DESC NULLS LAST`,
+      [orgId, programId],
+    );
+    sites = rows;
+    if (sites.length === 0) sites = await recomputeSiteRisk(orgId, programId);
+  }
+  const tiers = { reduced: 0, standard: 0, enhanced: 0 } as Record<string, number>;
+  for (const s of sites) tiers[s.monitoringTier ?? s.monitoring_tier] = (tiers[s.monitoringTier ?? s.monitoring_tier] ?? 0) + 1;
+  return JSON.stringify({
+    source: 'AnA RBM Site Risk',
+    framework: 'ICH E6(R3) risk-proportionate monitoring',
+    siteCount: sites.length,
+    tierCounts: tiers,
+    sites,
+    note: sites.length === 0 ? 'No Site Intelligence data found for this program.' : undefined,
+  });
+});
+
+// KRI / QTL central-monitoring status.
+registerToolHandler('evaluate_kris_qtls', async (input, ctx) => {
+  const programId = typeof input.programId === 'string' ? input.programId : undefined;
+  const orgId = ctx?.organizationId ?? null;
+  if (!programId || !RBM_UUID_RE.test(programId) || orgId == null) {
+    return JSON.stringify({ source: 'AnA RBM', error: 'A valid programId (UUID) and organization context are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const pool = getPool();
+  const kris = await pool.query(
+    `SELECT name, status, current_value, threshold_amber, threshold_red FROM rbm_kris
+       WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
+    [orgId, programId],
+  );
+  const qtls = await pool.query(
+    `SELECT parameter, status, current_value, threshold, secondary_limit FROM rbm_qtls
+       WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
+    [orgId, programId],
+  );
+  return JSON.stringify({
+    source: 'AnA RBM Central Monitoring',
+    kris: {
+      total: kris.rows.length,
+      red: kris.rows.filter((r: any) => r.status === 'red'),
+      amber: kris.rows.filter((r: any) => r.status === 'amber'),
+    },
+    qtls: {
+      total: qtls.rows.length,
+      breached: qtls.rows.filter((r: any) => r.status === 'breached'),
+      approaching: qtls.rows.filter((r: any) => r.status === 'approaching'),
+    },
+    hint: kris.rows.length === 0 && qtls.rows.length === 0
+      ? 'No KRIs/QTLs defined — seed them via POST /api/mdx/rbm-kris/seed and /rbm-qtls/seed.'
+      : undefined,
+  });
+});
+
+// Draft an integrated monitoring plan from the assessment.
+registerToolHandler('generate_rbm_plan', async (input, ctx) => {
+  const programId = typeof input.programId === 'string' ? input.programId : undefined;
+  const orgId = ctx?.organizationId ?? null;
+  if (!programId || !RBM_UUID_RE.test(programId) || orgId == null) {
+    return JSON.stringify({ source: 'AnA RBM', error: 'A valid programId (UUID) and organization context are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { defaultPlanStrategy } = await import('../rbm/rbm-engine.js');
+  const pool = getPool();
+  const assessment = (await pool.query(
+    `SELECT id, overall_risk FROM rbm_risk_assessments WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1`,
+    [orgId, programId],
+  )).rows[0] ?? null;
+  const overall = (assessment?.overall_risk ?? 'medium') as 'low' | 'medium' | 'high';
+  const critical = await pool.query(
+    `SELECT id, ctq_factor, mitigation, risk_score FROM rbm_risk_items
+       WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL AND is_critical = true
+       ORDER BY risk_score DESC NULLS LAST`,
+    [orgId, programId],
+  );
+  return JSON.stringify({
+    source: 'AnA RBM Plan',
+    advisory: 'Draft plan — review and approve before activation (21 CFR Part 11 e-signature).',
+    recommendedStrategy: defaultPlanStrategy(overall),
+    overallRisk: overall,
+    proposedActions: critical.rows.map((r: any) => ({
+      riskItemId: r.id,
+      ctqFactor: r.ctq_factor,
+      actionType: 'site_visit',
+      priority: r.risk_score >= 15 ? 'high' : 'medium',
+      description: r.mitigation || `Targeted monitoring of: ${r.ctq_factor}`,
+    })),
+  });
+});
+
+// Prioritized monitoring worklist — signals + high-risk CtQ items.
+registerToolHandler('prioritize_monitoring_queries', async (input, ctx) => {
+  const programId = typeof input.programId === 'string' ? input.programId : undefined;
+  const orgId = ctx?.organizationId ?? null;
+  if (!programId || !RBM_UUID_RE.test(programId) || orgId == null) {
+    return JSON.stringify({ source: 'AnA RBM', error: 'A valid programId (UUID) and organization context are required.' });
+  }
+  const limit = typeof input.limit === 'number' && input.limit > 0 ? Math.min(50, Math.floor(input.limit)) : 15;
+  const { getPool } = await import('../../db.js');
+  const pool = getPool();
+  const signals = await pool.query(
+    `SELECT id, title, severity, source, status, detected_at FROM rbm_signals
+       WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL AND status NOT IN ('resolved','dismissed')
+       ORDER BY CASE severity WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, detected_at DESC
+       LIMIT $3`,
+    [orgId, programId, limit],
+  );
+  const items = await pool.query(
+    `SELECT id, ctq_factor, risk_score, is_critical, status FROM rbm_risk_items
+       WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL AND status IN ('open','mitigating')
+       ORDER BY risk_score DESC NULLS LAST LIMIT $3`,
+    [orgId, programId, limit],
+  );
+  return JSON.stringify({
+    source: 'AnA RBM Worklist',
+    prioritizedSignals: signals.rows,
+    highRiskItems: items.rows,
+  });
+});
+
 // Regulatory-pathway advisor — drug/biologic/device/IVD routes (FDA & EU).
 registerToolHandler('advise_regulatory_pathway', async (input) => {
   const pathway = typeof input.pathway === 'string' ? input.pathway : undefined;

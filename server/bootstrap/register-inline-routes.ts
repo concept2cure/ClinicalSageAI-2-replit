@@ -44,6 +44,7 @@ import mdxVaultRoutes from '../routes/mdx-vault';
 import mdxEngineeringRoutes from '../routes/mdx-engineering';
 import mdxUdiRoutes from '../routes/mdx-udi';
 import mdxRiskRoutes from '../routes/mdx-risk-management';
+import mdxRbmRoutes from '../routes/mdx-rbm';
 import mdxSoftwareRoutes from '../routes/mdx-software';
 import mdxIvdPerformanceRoutes from '../routes/mdx-ivd-performance';
 import mdxIvdrRoutes from '../routes/mdx-ivdr';
@@ -870,6 +871,7 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxEngineeringRoutes);
   app.use('/api/mdx', mdxUdiRoutes);
   app.use('/api/mdx', mdxRiskRoutes);
+  app.use('/api/mdx', mdxRbmRoutes);
   app.use('/api/mdx', mdxSoftwareRoutes);
   /* IVD + diagnostic surfaces (migration 20260508). */
   app.use('/api/mdx', mdxIvdPerformanceRoutes);

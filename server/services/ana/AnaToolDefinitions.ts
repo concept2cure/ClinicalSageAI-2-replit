@@ -647,6 +647,85 @@ export const ADVISE_RISK_MANAGEMENT: AnaTool = {
   },
 };
 
+export const RUN_RBM_ASSESSMENT: AnaTool = {
+  name: 'run_rbm_assessment',
+  description:
+    'Risk-Based Monitoring (ICH E6(R3)/E8(R1)) advisor: seeds or summarizes a study Risk Assessment ' +
+    '(RACT) for a program — Critical-to-Quality (CtQ) factors with likelihood × impact scores, the ' +
+    'critical factors, and the rolled-up overall risk level. Use when scoping risk-based quality ' +
+    'management for a study. Reads/writes the program\'s RBM risk assessment.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID to assess.' },
+      seed: { type: 'boolean', description: 'If true, create a default RACT from the CtQ library when none exists.' },
+    },
+    required: ['programId'],
+  },
+};
+
+export const ASSESS_SITE_RISK: AnaTool = {
+  name: 'assess_site_risk',
+  description:
+    'Derives a per-site risk snapshot for a program from Site Intelligence and assigns a risk-proportionate ' +
+    'monitoring tier (reduced / standard / enhanced) per ICH E6(R3). Returns the sites ranked by composite ' +
+    'risk with their tier and the drivers. Use to plan monitoring intensity by site.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID.' },
+      persist: { type: 'boolean', description: 'If true, recompute and store the snapshot; otherwise read the latest.' },
+    },
+    required: ['programId'],
+  },
+};
+
+export const EVALUATE_KRIS_QTLS: AnaTool = {
+  name: 'evaluate_kris_qtls',
+  description:
+    'Summarizes the Key Risk Indicators (KRIs) and Quality Tolerance Limits (QTLs) for a program — which ' +
+    'KRIs are amber/red and which QTLs are approaching or breached — so central monitoring can focus on ' +
+    'what is out of tolerance. Use for a central-monitoring status read.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID.' },
+    },
+    required: ['programId'],
+  },
+};
+
+export const GENERATE_RBM_PLAN: AnaTool = {
+  name: 'generate_rbm_plan',
+  description:
+    'Drafts an integrated risk-based monitoring plan for a program: recommends a monitoring strategy ' +
+    '(centralized / risk-based / hybrid) from the assessment\'s overall risk and proposes monitoring actions ' +
+    'from the critical CtQ factors. Advisory — must be reviewed and approved.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID.' },
+    },
+    required: ['programId'],
+  },
+};
+
+export const PRIORITIZE_MONITORING_QUERIES: AnaTool = {
+  name: 'prioritize_monitoring_queries',
+  description:
+    'Ranks a program\'s open central-monitoring signals and high-risk CtQ items by urgency (severity, ' +
+    'criticality, risk score) so monitors and data managers triage the most consequential first. ' +
+    'Use to produce a prioritized monitoring worklist.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID.' },
+      limit: { type: 'number', description: 'Max items to return (default 15).' },
+    },
+    required: ['programId'],
+  },
+};
+
 export const ADVISE_REGULATORY_PATHWAY: AnaTool = {
   name: 'advise_regulatory_pathway',
   description:
@@ -7789,6 +7868,11 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   VALUE_DOSSIER_GUIDANCE,
   ADVISE_REGULATORY_PATHWAY,
   ADVISE_RISK_MANAGEMENT,
+  RUN_RBM_ASSESSMENT,
+  ASSESS_SITE_RISK,
+  EVALUATE_KRIS_QTLS,
+  GENERATE_RBM_PLAN,
+  PRIORITIZE_MONITORING_QUERIES,
   ADVISE_GCP,
   REVIEW_INFORMED_CONSENT,
   ADVISE_COA_SELECTION,
