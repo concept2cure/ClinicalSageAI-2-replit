@@ -33,6 +33,9 @@ import {
   X,
   ShieldCheck,
   TriangleAlert,
+  Info,
+  ScanSearch,
+  OctagonAlert,
 } from 'lucide-react';
 
 export const I = {
@@ -64,6 +67,9 @@ export const I = {
   close: X,
   shieldCheck: ShieldCheck,
   alert: TriangleAlert,
+  info: Info,
+  scan: ScanSearch,
+  blocker: OctagonAlert,
 } as const;
 
 export type IconKey = keyof typeof I;

@@ -25,7 +25,8 @@ import {
   NatHistoryDossierAffordance,
   type DossierProvenance,
 } from './NatHistoryDossierAffordance';
-import type { VerificationResult } from './useAnaChat';
+import { ConsistencyPanel } from './ConsistencyPanel';
+import type { VerificationResult, ConsistencyResult } from './useAnaChat';
 import { renderSafeMarkdown } from './renderSafeMarkdown';
 import styles from './styles.module.css';
 
@@ -39,6 +40,8 @@ export interface DocumentStudioPaneProps {
   draft: DocumentStudioDraft;
   /** Verification result for the selected version, when AnA verified it. */
   verification?: VerificationResult;
+  /** Dossier-consistency sweep for the selected version, when AnA ran it. */
+  consistency?: ConsistencyResult;
   /** How many versions of this document exist this session (1 = no picker). */
   versionCount?: number;
   /** Zero-based index of the version currently shown. */
@@ -62,6 +65,8 @@ export interface DocumentStudioPaneProps {
   concordanceDataStatus?: ConcordanceDataStatus;
   /** Ask AnA to reconcile discordant CDx claims across the paired dossiers. */
   onResolveConcordance?: () => void;
+  /** Ask AnA to reconcile dossier inconsistencies and re-run the sweep. */
+  onResolveConsistency?: () => void;
   /** True while a download/render request is in flight. */
   downloading?: boolean;
   /** Target characters per page for pagination. Exposed for testing. */
@@ -135,6 +140,7 @@ export function paginateContent(content: string, pageSize = DEFAULT_PAGE_SIZE): 
 export function DocumentStudioPane({
   draft,
   verification,
+  consistency,
   versionCount = 1,
   activeVersionIndex = 0,
   onSelectVersion,
@@ -144,6 +150,7 @@ export function DocumentStudioPane({
   concordance,
   concordanceDataStatus = 'sample',
   onResolveConcordance,
+  onResolveConsistency,
   downloading,
   pageSize,
   ectdEnabled,
@@ -321,6 +328,12 @@ export function DocumentStudioPane({
             onAssemble={dossier.onAssemble}
             busy={dossier.busy}
           />
+        </div>
+      )}
+
+      {consistency && (
+        <div className={styles.studioConsistency}>
+          <ConsistencyPanel consistency={consistency} onResolve={onResolveConsistency} />
         </div>
       )}
 

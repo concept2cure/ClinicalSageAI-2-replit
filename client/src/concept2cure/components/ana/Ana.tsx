@@ -39,7 +39,8 @@ import {
   SAMPLE_CONSISTENCY_CLEAN,
   SAMPLE_CONSISTENCY_BLOCKER,
 } from './ectdReadinessFixtures';
-import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult } from './useAnaChat';
+import { composeConsistencyFixMessage } from './ConsistencyPanel';
+import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult, type ConsistencyResult } from './useAnaChat';
 import type { EffortLevel } from './ModelEffortPicker';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
@@ -541,7 +542,7 @@ export function Ana({
     title: string;
     documentType?: string;
     artifactId?: string;
-    versions: { content: string; verification?: VerificationResult }[];
+    versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult }[];
   } | null>(() => {
     if (!studioEnabled) return null;
     let latestTitle: string | null = null;
@@ -567,18 +568,21 @@ export function Ana({
     if (persisted && persisted.length > 0) {
       // Carry the latest in-session verification onto the newest version so the
       // "verified against your source" panel still shows when applicable.
-      const versions: { content: string; verification?: VerificationResult }[] =
+      const versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult }[] =
         persisted.map(v => ({ content: v.content }));
       let latestVerification: VerificationResult | undefined;
+      let latestConsistency: ConsistencyResult | undefined;
       for (const m of chat.messages) {
-        if (m.generatedDraft && m.generatedDraft.title === latestTitle && m.verification) {
-          latestVerification = m.verification;
+        if (m.generatedDraft && m.generatedDraft.title === latestTitle) {
+          if (m.verification) latestVerification = m.verification;
+          if (m.consistency) latestConsistency = m.consistency;
         }
       }
-      if (latestVerification && versions.length > 0) {
+      if (versions.length > 0 && (latestVerification || latestConsistency)) {
         versions[versions.length - 1] = {
           ...versions[versions.length - 1],
           verification: latestVerification,
+          consistency: latestConsistency,
         };
       }
       return {
@@ -590,10 +594,16 @@ export function Ana({
       };
     }
 
-    const versions: { content: string; verification?: VerificationResult }[] = [];
+    const versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult }[] = [];
     for (const m of chat.messages) {
       if (m.generatedDraft && m.generatedDraft.title === latestTitle) {
-        versions.push({ content: m.generatedDraft.content, verification: m.verification });
+        versions.push({
+          content: m.generatedDraft.content,
+          verification: m.verification,
+          // The dossier-consistency sweep that ran on the turn that produced
+          // this draft (author_docx_native / surgical_docx_xml_edit → sweep).
+          consistency: m.consistency,
+        });
       }
     }
     return {
@@ -676,6 +686,10 @@ export function Ana({
   );
   const shownVerification = useMemo(
     () => activeDocument?.versions[safeVersionIndex]?.verification,
+    [activeDocument, safeVersionIndex],
+  );
+  const shownConsistency = useMemo(
+    () => activeDocument?.versions[safeVersionIndex]?.consistency,
     [activeDocument, safeVersionIndex],
   );
 
@@ -780,6 +794,16 @@ export function Ana({
     setReadinessGate(undefined);
   }, [activeDocument?.id]);
 
+  // Close the consistency loop: when the draft diverges from the dossier, send
+  // AnA a targeted reconciliation request citing the conflicting values and
+  // their source artifacts, then it re-runs the sweep. Suppressed for clean
+  // verdicts and for sample-derived (non-sealable) drafts.
+  const handleResolveConsistency = useCallback(() => {
+    if (!shownDraft || !shownConsistency) return;
+    if (shownConsistency.verdict === 'clean' || shownConsistency.isSample) return;
+    void chat.send(composeConsistencyFixMessage(shownDraft.title, shownConsistency));
+  }, [chat, shownDraft, shownConsistency]);
+
   // The view content (home / chat / projects / artifacts). Rendered directly
   // when the studio is closed, or inside the left Panel when it is open — so
   // the chat layout is identical in both modes.
@@ -873,12 +897,14 @@ export function Ana({
               <DocumentStudioPane
                 draft={shownDraft}
                 verification={shownVerification}
+                consistency={shownConsistency}
                 versionCount={activeDocument.versions.length}
                 activeVersionIndex={safeVersionIndex}
                 onSelectVersion={setVersionIndex}
                 onDownloadDocx={handleDownloadDocx}
                 onClose={() => setStudioClosed(true)}
                 onResolveVerification={handleResolveVerification}
+                onResolveConsistency={handleResolveConsistency}
                 downloading={downloading}
                 ectdEnabled={studioEnabled}
                 readinessGate={readinessGate}
