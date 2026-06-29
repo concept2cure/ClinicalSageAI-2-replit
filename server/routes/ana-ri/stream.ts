@@ -503,10 +503,12 @@ router.post('/stream', async (req: Request, res: Response) => {
     // model set; an invalid / disabled / absent value is DROPPED SILENTLY and we
     // fall back to the (effort-derived) strategy above. The override does not
     // bypass governance — the gateway still enforces residency/ZDR placement.
-    const resolvedOverride = resolveModelOverride(
-      model_override,
-      gw.getModels().filter((m) => m.enabled),
-    );
+    // In deterministic mode (or any gateway substrate without a model registry)
+    // there is nothing to override against — pass an empty set so the override
+    // resolves to none and we fall back to the effort-derived strategy.
+    const overrideCandidates =
+      typeof gw.getModels === 'function' ? gw.getModels().filter((m) => m.enabled) : [];
+    const resolvedOverride = resolveModelOverride(model_override, overrideCandidates);
 
     let fullContent = '';
     // Structured record of the tools run this turn (persisted on the assistant
