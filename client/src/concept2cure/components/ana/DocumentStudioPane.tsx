@@ -16,6 +16,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { I } from './icons';
 import { VerificationPanel } from './VerificationPanel';
+import { ConcordancePanel } from './ConcordancePanel';
+import type { CdxConcordanceReport } from './cdxConcordance';
+import type { ConcordanceDataStatus } from './cdxConcordance.fixtures';
 import type { VerificationResult } from './useAnaChat';
 import { renderSafeMarkdown } from './renderSafeMarkdown';
 import styles from './styles.module.css';
@@ -42,6 +45,17 @@ export interface DocumentStudioPaneProps {
   onClose: () => void;
   /** Ask AnA to fix an unverified document (missing strings / divergence). */
   onResolveVerification?: () => void;
+  /**
+   * E12 — cross-dossier CDx claim-concordance report for the paired drug +
+   * device dossier this draft belongs to. When present, the concordance
+   * trust-panel is shown beneath the verification panel. Omit when the draft is
+   * not part of a `pair_companion_diagnostic` pairing.
+   */
+  concordance?: CdxConcordanceReport;
+  /** Provenance of the concordance data — 'sample' is never sealable. */
+  concordanceDataStatus?: ConcordanceDataStatus;
+  /** Ask AnA to reconcile discordant CDx claims across the paired dossiers. */
+  onResolveConcordance?: () => void;
   /** True while a download/render request is in flight. */
   downloading?: boolean;
   /** Target characters per page for pagination. Exposed for testing. */
@@ -83,6 +97,9 @@ export function DocumentStudioPane({
   onDownloadDocx,
   onClose,
   onResolveVerification,
+  concordance,
+  concordanceDataStatus = 'sample',
+  onResolveConcordance,
   downloading,
   pageSize,
 }: DocumentStudioPaneProps) {
@@ -186,6 +203,16 @@ export function DocumentStudioPane({
       {verification && (
         <div className={styles.studioVerify}>
           <VerificationPanel verification={verification} onResolve={onResolveVerification} />
+        </div>
+      )}
+
+      {concordance && (
+        <div className={styles.studioVerify}>
+          <ConcordancePanel
+            report={concordance}
+            dataStatus={concordanceDataStatus}
+            onResolve={onResolveConcordance}
+          />
         </div>
       )}
 

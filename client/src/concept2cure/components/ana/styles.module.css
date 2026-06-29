@@ -1037,3 +1037,157 @@
   transition: background 200ms ease-out;
 }
 .verifyResolve:hover { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   CDx claim-concordance panel (E12). Cross-dossier extension of the
+   verification trust-strip: proves the CDx claims read identically across the
+   paired drug + device dossiers. Same calm, reviewer-grade idiom.
+   ─────────────────────────────────────────────────────────────────────────── */
+.concordPanel {
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--bg-000);
+}
+.concordPanel[data-status='concordant'] { border-left-color: var(--success, #2f7d57); }
+.concordPanel[data-status='discordant'] { border-left-color: var(--danger, #b4541f); }
+.concordHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.concordPanel[data-status='concordant'] .concordHead { color: var(--success, #2f7d57); }
+.concordPanel[data-status='discordant'] .concordHead { color: var(--danger, #b4541f); }
+.concordTitle {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.concordDetail {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+}
+.concordMethod {
+  font-style: italic;
+  color: var(--ink-muted, var(--text-300));
+}
+.concordSampleNote {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-muted, var(--text-300));
+  padding: 4px 8px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+}
+.concordClaims {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.concordClaim {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  background: var(--bg-000);
+}
+.concordClaim[data-status='concordant'] { border-left: 3px solid var(--success, #2f7d57); }
+.concordClaim[data-status='discordant'],
+.concordClaim[data-status='missing_counterpart'] { border-left: 3px solid var(--danger, #b4541f); }
+.concordClaimHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.concordClaim[data-status='concordant'] .concordClaimHead { color: var(--success, #2f7d57); }
+.concordClaim[data-status='discordant'] .concordClaimHead,
+.concordClaim[data-status='missing_counterpart'] .concordClaimHead { color: var(--danger, #b4541f); }
+.concordClaimLabel {
+  font-size: 12px;
+  font-weight: 600;
+}
+.concordClaimStatus {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.concordSingle {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.concordPair {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 560px) {
+  .concordPair { grid-template-columns: 1fr; }
+}
+.concordSide {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-100, var(--bg-000));
+}
+.concordSideLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted, var(--text-300));
+}
+.concordText {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-body, var(--ink));
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.concordAbsent {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--ink-muted, var(--text-300));
+}
+.concordSources {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.concordSource {
+  font-size: 10px;
+  color: var(--ink-muted, var(--text-300));
+}
+.concordResolve {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-main-100, #6366f1);
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
+  border: 1px solid var(--accent-main-100, #6366f1);
+  border-radius: 7px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 200ms ease-out;
+}
+.concordResolve:hover { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
+@media (prefers-reduced-motion: reduce) {
+  .concordResolve { transition: none; }
+}
