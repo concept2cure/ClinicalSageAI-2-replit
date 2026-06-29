@@ -1207,3 +1207,96 @@
 }
 .perAuthorBtn:hover:not(:disabled) { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
 .perAuthorBtn:disabled { opacity: 0.45; cursor: default; }
+/* ───────────────────────────────────────────────────────────────────────── */
+/* E6 — Substantial Equivalence comparison table (Document Studio surface).   */
+/* Colour is always paired with a text label; motion is calm (200ms ease-out).*/
+/* ───────────────────────────────────────────────────────────────────────── */
+.seTableWrap {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-000);
+  padding: 12px 14px 14px;
+}
+.seTableHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+.seTableTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+.seProvenance {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning, #b4801f);
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-body, var(--ink));
+  background: var(--bg-100, transparent);
+}
+.seTableScroll { overflow-x: auto; }
+.seTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.seTable th,
+.seTable td {
+  text-align: left;
+  vertical-align: top;
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--border);
+}
+.seTable thead th {
+  font-weight: 600;
+  color: var(--ink-muted, var(--text-300));
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+.seCharCell {
+  font-weight: 600;
+  color: var(--ink);
+}
+.seNote {
+  display: block;
+  margin-top: 3px;
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--ink-muted, var(--text-300));
+}
+.seVerdict {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+}
+.seVerdict[data-tone='ok'] {
+  color: var(--success, #2f7d57);
+  border-color: var(--success, #2f7d57);
+}
+.seVerdict[data-tone='warn'] {
+  color: var(--warning, #b4801f);
+  border-color: var(--warning, #b4801f);
+}
+.seVerdict[data-tone='open'] {
+  color: var(--danger, #b4541f);
+  border-color: var(--danger, #b4541f);
+}
+.seExportNote {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-muted, var(--text-300));
+}
