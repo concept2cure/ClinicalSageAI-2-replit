@@ -1,0 +1,502 @@
+/**
+ * Submission Release Signing route — unit tests
+ *
+ * Exercises POST /api/submissions/:submissionId/sign-release.
+ * Coverage:
+ *   - 401 when JWT principal is absent
+ *   - 403 when org context is absent
+ *   - 404 collapse on missing-or-cross-org run (getRun returns null)
+ *   - 404 when URL submissionId doesn't match the run's submissionId
+ *   - 409 when run.status !== 'awaiting-signature'
+ *   - 401 on password mismatch (NEVER 200)
+ *   - 200 happy path: signature row created + bound digest persisted
+ *   - 200 idempotent: existing active signature returns its id without
+ *     creating a duplicate row
+ *
+ * The route depends on:
+ *   - submission-package-orchestrator's getRun / findActiveReleaseSignature /
+ *     loadSubmissionFkBySubmissionIdText
+ *   - part11ComplianceService.verifyUserCredentials + createElectronicSignature
+ *   - auditService.logAction
+ *   - the Drizzle db + raw pool for the post-insert UPDATE of the bound digest
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import express, { type Request, type Response, type NextFunction } from 'express';
+import request from 'supertest';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HOISTED MOCK STATE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const hoisted = vi.hoisted(() => ({
+  getRun: vi.fn(),
+  findActiveReleaseSignature: vi.fn(),
+  loadSubmissionFkBySubmissionIdText: vi.fn(),
+  verifyUserCredentials: vi.fn(),
+  createElectronicSignature: vi.fn(),
+  auditLogAction: vi.fn(),
+  // Drizzle update().set().where() — captured for assertion
+  updateCalls: [] as Array<{ patch: unknown; whereCalled: boolean }>,
+  poolQuery: vi.fn(),
+}));
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MOCKS — service layer
+// ═══════════════════════════════════════════════════════════════════════════════
+
+vi.mock('../../server/services/submission-package-orchestrator.js', () => ({
+  getRun: (...args: unknown[]) => hoisted.getRun(...args),
+  findActiveReleaseSignature: (...args: unknown[]) =>
+    hoisted.findActiveReleaseSignature(...args),
+  loadSubmissionFkBySubmissionIdText: (...args: unknown[]) =>
+    hoisted.loadSubmissionFkBySubmissionIdText(...args),
+  // The route never calls computeBoundPayloadDigest directly — it uses the
+  // persisted digest off the run's package.sign outputRef. But the import is
+  // still resolved, so we stub it as a no-op.
+  computeBoundPayloadDigest: () => 'unused-in-route-tests',
+  PACKAGE_SIGN_SIGNATURE_MEANING: 'approval',
+}));
+vi.mock('../../server/services/submission-package-orchestrator', () => ({
+  getRun: (...args: unknown[]) => hoisted.getRun(...args),
+  findActiveReleaseSignature: (...args: unknown[]) =>
+    hoisted.findActiveReleaseSignature(...args),
+  loadSubmissionFkBySubmissionIdText: (...args: unknown[]) =>
+    hoisted.loadSubmissionFkBySubmissionIdText(...args),
+  computeBoundPayloadDigest: () => 'unused-in-route-tests',
+  PACKAGE_SIGN_SIGNATURE_MEANING: 'approval',
+}));
+
+vi.mock('../../server/services/part11ComplianceService.js', () => ({
+  default: {
+    verifyUserCredentials: (...args: unknown[]) =>
+      hoisted.verifyUserCredentials(...args),
+    createElectronicSignature: (...args: unknown[]) =>
+      hoisted.createElectronicSignature(...args),
+  },
+}));
+vi.mock('../../server/services/part11ComplianceService', () => ({
+  default: {
+    verifyUserCredentials: (...args: unknown[]) =>
+      hoisted.verifyUserCredentials(...args),
+    createElectronicSignature: (...args: unknown[]) =>
+      hoisted.createElectronicSignature(...args),
+  },
+}));
+
+vi.mock('../../server/services/auditService.js', () => ({
+  default: {
+    logAction: (...args: unknown[]) => hoisted.auditLogAction(...args),
+  },
+}));
+vi.mock('../../server/services/auditService', () => ({
+  default: {
+    logAction: (...args: unknown[]) => hoisted.auditLogAction(...args),
+  },
+}));
+
+// Drizzle-orm — eq returns a JSON descriptor (don't evaluate)
+vi.mock('drizzle-orm', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('drizzle-orm')>();
+  return {
+    ...actual,
+    eq: (col: any, val: any) => ({ __kind: 'eq', col, val }),
+  };
+});
+
+// db + pool: the route updates the new signature row's bound_payload_digest
+vi.mock('../../server/db', () => {
+  const db = {
+    update(_table: unknown) {
+      const call: { patch: unknown; whereCalled: boolean } = {
+        patch: null,
+        whereCalled: false,
+      };
+      hoisted.updateCalls.push(call);
+      const builder: any = {
+        set(p: unknown) {
+          call.patch = p;
+          return builder;
+        },
+        where(_pred: unknown) {
+          call.whereCalled = true;
+          return Promise.resolve(undefined);
+        },
+      };
+      return builder;
+    },
+  };
+  const pool = { query: (...args: unknown[]) => hoisted.poolQuery(...args) };
+  return { db, pool, getPool: () => pool, getDb: () => db };
+});
+vi.mock('../../server/db.js', () => {
+  const db = {
+    update(_table: unknown) {
+      const call: { patch: unknown; whereCalled: boolean } = {
+        patch: null,
+        whereCalled: false,
+      };
+      hoisted.updateCalls.push(call);
+      const builder: any = {
+        set(p: unknown) {
+          call.patch = p;
+          return builder;
+        },
+        where(_pred: unknown) {
+          call.whereCalled = true;
+          return Promise.resolve(undefined);
+        },
+      };
+      return builder;
+    },
+  };
+  const pool = { query: (...args: unknown[]) => hoisted.poolQuery(...args) };
+  return { db, pool, getPool: () => pool, getDb: () => db };
+});
+
+// Module3 / validator imports — never invoked by the route on the tested
+// paths, but the import resolves. Stub minimally.
+vi.mock('../../server/services/module3-extensions.js', () => ({
+  composeFullModule3: () => [],
+}));
+vi.mock('../../server/services/ectd/ectd-validator-hardening.js', () => ({
+  validateEctdPackageHardened: vi.fn(),
+}));
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORT THE ROUTER (after mocks)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+import signReleaseRouter from '../../server/routes/submission-sign-release';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEST APP
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface AuthCtx {
+  organizationId?: number | null;
+  userId?: number | null;
+}
+
+function makeApp(ctx: AuthCtx = { organizationId: 100, userId: 7 }) {
+  const app = express();
+  app.use(express.json());
+  app.use((req: Request, _res: Response, next: NextFunction) => {
+    const r = req as any;
+    if (ctx.organizationId != null) {
+      r.tenantContext = { organizationId: ctx.organizationId };
+    }
+    if (ctx.userId != null) {
+      r.user = { id: ctx.userId, organizationId: ctx.organizationId ?? undefined };
+    }
+    next();
+  });
+  app.use('/api/submissions', signReleaseRouter);
+  return app;
+}
+
+// Helper: a persisted run that's currently awaiting-signature with a known
+// digest. The route's recompute helper trusts the persisted digest on the
+// step's outputRef.
+function awaitingSignatureRun(over: Partial<Record<string, unknown>> = {}) {
+  const steps = [
+    {
+      key: 'package.sign',
+      status: 'awaiting-signature',
+      outputRef: JSON.stringify({
+        payloadDigest: 'a'.repeat(64),
+        awaitingSince: '2026-06-29T00:00:00.000Z',
+      }),
+      inputHash: 'h',
+      dependsOn: [],
+    },
+  ];
+  return {
+    runId: 'run-123',
+    organizationId: 100,
+    submissionId: 'sub-1',
+    submissionFk: 42,
+    applicationNumber: 'IND123456',
+    region: 'US',
+    submissionType: 'IND',
+    startedAt: '2026-06-29T00:00:00.000Z',
+    status: 'awaiting-signature',
+    steps,
+    ...over,
+  };
+}
+
+beforeEach(() => {
+  hoisted.getRun.mockReset();
+  hoisted.findActiveReleaseSignature.mockReset();
+  hoisted.loadSubmissionFkBySubmissionIdText.mockReset();
+  hoisted.verifyUserCredentials.mockReset();
+  hoisted.createElectronicSignature.mockReset();
+  hoisted.auditLogAction.mockReset();
+  hoisted.poolQuery.mockReset();
+  hoisted.updateCalls = [];
+
+  // Default behaviors
+  hoisted.findActiveReleaseSignature.mockResolvedValue(null);
+  hoisted.loadSubmissionFkBySubmissionIdText.mockResolvedValue(null);
+  hoisted.auditLogAction.mockResolvedValue(undefined);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TESTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+describe('POST /api/submissions/:submissionId/sign-release — auth gating', () => {
+  it('returns 401 when no JWT principal is present', async () => {
+    const res = await request(makeApp({ organizationId: null, userId: null }))
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'pw',
+        signatureMeaning: 'approval',
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(401);
+    expect(hoisted.getRun).not.toHaveBeenCalled();
+    expect(hoisted.verifyUserCredentials).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 when JWT principal is present but org context is missing', async () => {
+    const res = await request(makeApp({ organizationId: null, userId: 7 }))
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'pw',
+        signatureMeaning: 'approval',
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(403);
+    expect(hoisted.getRun).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/submissions/:submissionId/sign-release — run lookup + status checks', () => {
+  it('returns 404 when getRun returns null (collapsed miss-or-cross-org)', async () => {
+    hoisted.getRun.mockResolvedValue(null);
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'pw',
+        signatureMeaning: 'approval',
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'run_not_found' });
+    // CRITICAL: never reached credential verify on a 404
+    expect(hoisted.verifyUserCredentials).not.toHaveBeenCalled();
+    expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 when URL submissionId does not match the run\'s submissionId', async () => {
+    // Run belongs to sub-1, but URL says sub-XXX — defensive cross-submission check.
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun({ submissionId: 'sub-1' }));
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-XXX/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'pw',
+        signatureMeaning: 'approval',
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(404);
+    expect(hoisted.verifyUserCredentials).not.toHaveBeenCalled();
+  });
+
+  it('returns 409 when run.status is not awaiting-signature', async () => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun({ status: 'complete' }));
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'pw',
+        signatureMeaning: 'approval',
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe('run_not_awaiting_signature');
+    expect(hoisted.verifyUserCredentials).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/submissions/:submissionId/sign-release — credential + signature creation', () => {
+  it('returns 401 when password verification fails (NEVER 200, no signature row)', async () => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    hoisted.findActiveReleaseSignature.mockResolvedValue(null);
+    hoisted.verifyUserCredentials.mockResolvedValue(false);
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'wrong-password',
+        signatureMeaning: 'approval',
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(401);
+    expect(res.body).toEqual({ error: 'invalid_credentials' });
+    // CRITICAL: signature is NOT created on a credential failure.
+    expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+    // Response body must NOT echo the password or digest.
+    expect(JSON.stringify(res.body)).not.toContain('wrong-password');
+    expect(JSON.stringify(res.body)).not.toContain('a'.repeat(64));
+  });
+
+  it('creates a signature and persists bound_payload_digest on the happy path', async () => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    hoisted.findActiveReleaseSignature.mockResolvedValue(null);
+    hoisted.verifyUserCredentials.mockResolvedValue(true);
+    hoisted.createElectronicSignature.mockResolvedValue({
+      success: true,
+      signatureId: 999,
+      signedBy: 'Test User',
+      signedAt: new Date('2026-06-29T00:00:00.000Z'),
+      signatureHash: 'attribution-hash',
+      verificationCode: 'ABCD1234',
+    });
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'right-password',
+        signatureMeaning: 'approval',
+        reason: 'release authorization',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.signatureId).toBe(999);
+
+    // Verify the createElectronicSignature call shape — JWT-bound signerId,
+    // tenant-scoped orgId, documentType='submission-release', meaning='approval'.
+    expect(hoisted.createElectronicSignature).toHaveBeenCalledTimes(1);
+    const callArgs = hoisted.createElectronicSignature.mock.calls[0][0] as {
+      userId: number;
+      organizationId: number;
+      documentId: number;
+      documentType: string;
+      signatureReason: string;
+      signatureMeaning: string;
+      password: string;
+    };
+    expect(callArgs.userId).toBe(7);
+    expect(callArgs.organizationId).toBe(100);
+    expect(callArgs.documentId).toBe(42); // submissionFk
+    expect(callArgs.documentType).toBe('submission-release');
+    expect(callArgs.signatureMeaning).toBe('approval');
+    expect(callArgs.signatureReason).toBe('release authorization');
+
+    // The post-insert UPDATE of bound_payload_digest + organization_id ran.
+    expect(hoisted.updateCalls.length).toBe(1);
+    const patch = hoisted.updateCalls[0].patch as {
+      organizationId: number;
+      boundPayloadDigest: string;
+    };
+    expect(patch.organizationId).toBe(100);
+    expect(patch.boundPayloadDigest).toBe('a'.repeat(64));
+    expect(hoisted.updateCalls[0].whereCalled).toBe(true);
+
+    // Audit row written.
+    expect(hoisted.auditLogAction).toHaveBeenCalledTimes(1);
+    const auditCall = hoisted.auditLogAction.mock.calls[0][0] as {
+      tenantId: number;
+      userId: number;
+      action: string;
+      resourceType: string;
+      resourceId: string;
+    };
+    expect(auditCall.tenantId).toBe(100);
+    expect(auditCall.userId).toBe(7);
+    expect(auditCall.action).toBe('release_signature_created');
+    expect(auditCall.resourceId).toBe('run-123');
+  });
+
+  it('returns the existing signatureId without creating a duplicate when one already exists (idempotent)', async () => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+    // findActiveReleaseSignature reports a hit — same digest already signed.
+    hoisted.findActiveReleaseSignature.mockResolvedValue({ id: 555 });
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'pw',
+        signatureMeaning: 'approval',
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.signatureId).toBe(555);
+    expect(res.body.already_signed).toBe(true);
+    // No new signature row, no password check (idempotent short-circuit).
+    expect(hoisted.verifyUserCredentials).not.toHaveBeenCalled();
+    expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+  });
+
+  it('returns 422 when no documentId anchor can be resolved (lineage unresolved)', async () => {
+    // Run has no submissionFk, AND loadSubmissionFkBySubmissionIdText returns null.
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun({ submissionFk: null }));
+    hoisted.findActiveReleaseSignature.mockResolvedValue(null);
+    hoisted.verifyUserCredentials.mockResolvedValue(true);
+    hoisted.loadSubmissionFkBySubmissionIdText.mockResolvedValue(null);
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'pw',
+        signatureMeaning: 'approval',
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(422);
+    expect(res.body.error).toBe('submission_lineage_unresolved');
+    expect(hoisted.createElectronicSignature).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/submissions/:submissionId/sign-release — body schema enforcement', () => {
+  it('returns 400 on invalid signatureMeaning (closed enum, only "approval" allowed)', async () => {
+    hoisted.getRun.mockResolvedValue(awaitingSignatureRun());
+
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'pw',
+        signatureMeaning: 'rubber-stamp', // not in the closed enum
+        reason: 'release',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'invalid_request' });
+    expect(hoisted.getRun).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 on empty reason (§11.50 requires a meaning manifestation)', async () => {
+    const res = await request(makeApp())
+      .post('/api/submissions/sub-1/sign-release')
+      .send({
+        runId: 'run-123',
+        password: 'pw',
+        signatureMeaning: 'approval',
+        reason: '',
+      });
+
+    expect(res.status).toBe(400);
+    expect(hoisted.getRun).not.toHaveBeenCalled();
+  });
+});

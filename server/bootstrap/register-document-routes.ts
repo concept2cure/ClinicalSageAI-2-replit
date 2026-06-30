@@ -118,6 +118,21 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount Submission-Package Orchestrator routes:', error);
   }
 
+  // ── Submission Release Signing (Path-to-GA §C.11 — e-sig gate) ──
+  //
+  // SECURITY: same auth contract as the orchestrator routes — requireTenant
+  // inside the handler reads JWT-bound req.user; this mount-level
+  // authenticateToken backstops reachability. The signing route receives a
+  // password in the body and re-verifies it via bcrypt before persisting
+  // any electronic_signatures row.
+  try {
+    const signReleaseModule = await import('../routes/submission-sign-release');
+    app.use('/api/submissions', authenticateToken, signReleaseModule.default);
+    console.log('✅ Submission Release Signing route mounted (Path-to-GA §C.11, auth-gated)');
+  } catch (error) {
+    console.error('❌ Failed to mount Submission Release Signing routes:', error);
+  }
+
   // ── HAQ Response Manager (FDA IR, EMA D120, PMDA, HC question tracking) ──
   try {
     const haqModule = await import('../routes/haq-manager');

@@ -1942,12 +1942,36 @@ export const electronicSignatures = pgTable(
     signedAt: timestamp('signed_at').defaultNow().notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow(),
+    // ── Path-to-GA §C.11 (e-sig gate) additions ────────────────────────────
+    //
+    // Tenant scope. Historically this table had no orgId; every release-gate
+    // signature lookup must be scoped by orgId so a cross-tenant resume can't
+    // observe Org A's signature row (Risk R-3 / OQ-7 in the design doc).
+    // Backfilled via migration 20260629_orchestrator_awaiting_signature_status.sql.
+    organizationId: integer('organization_id').references(() => organizations.id),
+    // OQ-6 decision: separate column for the orchestrator's payload-binding
+    // hash. signatureHash is the §11.200 attribution hash over signer
+    // metadata; bound_payload_digest is the §11.70 payload-binding hash over
+    // (leafManifestDigest || validatorOutcomeDigest || submissionIdentityCanonical).
+    boundPayloadDigest: text('bound_payload_digest').notNull().default(''),
+    // OQ-4 decision: §11.70 mandates append-only signature history. Rollback
+    // never deletes a row; it inserts a new row referencing the prior via
+    // superseded_by. Resume-path lookups filter `superseded_by IS NULL`.
+    supersededBy: integer('superseded_by'),
   },
   table => ({
     signatureDocumentIdx: index('signature_document_idx').on(table.documentId, table.versionId),
     signatureSignerIdx: index('signature_signer_idx').on(table.signerId),
     signatureTypeIdx: index('signature_type_idx').on(table.signatureType),
     signedAtIdx: index('signed_at_idx').on(table.signedAt),
+    // Composite index supports the resume-path lookup
+    //   WHERE organization_id = $1 AND bound_payload_digest = $2 AND superseded_by IS NULL
+    // (Drizzle does not express partial indexes; partial WHERE lives in the
+    //  raw SQL migration.)
+    signatureOrgPayloadDigestIdx: index('electronic_signatures_org_payload_digest_idx').on(
+      table.organizationId,
+      table.boundPayloadDigest,
+    ),
   })
 );
 

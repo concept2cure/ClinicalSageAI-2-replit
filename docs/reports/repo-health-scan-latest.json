@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T15:34:56.174Z",
+  "generatedAt": "2026-06-29T16:09:21.774Z",
   "git": {
-    "sha": "10270667127bc28a6ae982433e7f82d8c80cad7e",
+    "sha": "44ef7a108b0a80cc49f1a0682eaf37016314d211",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -10,8 +10,8 @@
   },
   "summary": {
     "duplicateBasenames": 231,
-    "largeFilesByBytes": 21,
-    "largeFilesByLines": 61
+    "largeFilesByBytes": 22,
+    "largeFilesByLines": 62
   },
   "findings": {
     "duplicateBasenames": [
@@ -2293,7 +2293,7 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 804295
+        "bytes": 805914
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2360,6 +2360,10 @@
         "bytes": 117471
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "bytes": 115960
+      },
+      {
         "file": "server/services/intelligent-report-engine.ts",
         "bytes": 114705
       },
@@ -2379,7 +2383,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19339
+        "lines": 19363
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2442,6 +2446,10 @@
         "lines": 2745
       },
       {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 2673
+      },
+      {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "lines": 2609
       },
@@ -2475,10 +2483,6 @@
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
-        "lines": 2076
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
         "lines": 2076
       },
       {
@@ -2582,6 +2586,10 @@
         "lines": 1687
       },
       {
+        "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
+        "lines": 1678
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
       },
@@ -2628,8 +2636,8 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 364,
-      "largeByBytes": 18,
-      "largeByLines": 51
+      "largeByBytes": 19,
+      "largeByLines": 52
     },
     {
       "owner": "Unassigned (TBD)",
