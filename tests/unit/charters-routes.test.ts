@@ -291,6 +291,20 @@ vi.mock('../../server/db', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// MOCK ../db/requestDb — charters.ts resolves its Drizzle client via
+// requestDb(req) (the RLS request-scoped wrapper), NOT the ../db facade. Route
+// it through the SAME captured mock db so the select/insert chains the router
+// builds are inspectable. Returns the mocked ../../server/db `db` object.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+vi.mock('../../server/db/requestDb', async () => {
+  const dbModule = await import('../../server/db');
+  return {
+    requestDb: () => (dbModule as { db: unknown }).db,
+  };
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // IMPORT THE ROUTER (after mocks)
 // ═══════════════════════════════════════════════════════════════════════════════
 

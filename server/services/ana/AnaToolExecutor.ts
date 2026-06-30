@@ -14512,16 +14512,47 @@ registerToolHandler('validate_adam_dataset', async (input: Record<string, unknow
 );
 
 registerToolHandler('generate_define_xml', async (input: Record<string, unknown>) => {
-  try {
-    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
-    const { generateDefineXml } = await import('../cdisc/define-xml.js');
-    const { xml, conformance } = generateDefineXml(input.spec as any);
-    return JSON.stringify({ status: 'generated', engine: 'deterministic', xml, conformance, instruction: 'Surface conformance errors (blocking) before warnings. Mechanical metadata only — not a full Pinnacle21/CDISC-CT rule engine.' });
-  } catch (err: any) {
-    const m = err?.message || 'unknown error';
-    if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
-    return JSON.stringify({ error: `generate_define_xml failed: ${m}` });
+  // The dataset spec ({ studyName, standard, datasets[], codelists[] }) is read
+  // at the top level; unwrap a legacy `spec` wrapper for backward compatibility.
+  const raw: any =
+    input && typeof (input as any).spec === 'object' && (input as any).spec
+      ? (input as any).spec
+      : input;
+  if (!raw || !Array.isArray(raw.datasets) || raw.datasets.length === 0) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'datasets is required (a non-empty array of dataset specs alongside studyName).' });
   }
+  // Adapt the model-facing tool schema (variable.type / variable.codelist;
+  // codelist.oid + items[{code,decode}]) to the generator's DefineXmlInput
+  // (variable.dataType / variable.codelistId; codelist.id + terms[{value,decode}]).
+  const spec = {
+    studyName: raw.studyName,
+    standard: raw.standard,
+    datasets: raw.datasets.map((ds: any) => ({
+      ...ds,
+      variables: (ds.variables ?? []).map((v: any) => ({
+        ...v,
+        dataType: v.dataType ?? v.type,
+        codelistId: v.codelistId ?? v.codelist,
+      })),
+    })),
+    codelists: (raw.codelists ?? []).map((c: any) => ({
+      id: c.id ?? c.oid,
+      name: c.name,
+      dataType: c.dataType ?? c.type ?? 'text',
+      terms: (c.terms ?? c.items ?? []).map((t: any) => ({
+        value: t.value ?? t.code,
+        decode: t.decode,
+      })),
+    })),
+  };
+  // Emit define.xml v2.1.0 via the dataset-metadata generator (returns
+  // { xml, datasetCount, variableCount, gaps }). Structural conformance is a
+  // separate tool (check_dataset_conformance). runStatsTool wraps the result as
+  // { status: 'computed', engine, result }.
+  return runStatsTool('generate_define_xml', async () => {
+    const { generateDefineXml } = await import('../cdisc/define-xml-generator.js');
+    return generateDefineXml(spec as any);
+  });
 });
 
 // ── Bioequivalence & generic drug intelligence (server/services/bioequivalence/bioequivalence-knowledge) — deterministic. ──

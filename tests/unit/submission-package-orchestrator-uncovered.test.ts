@@ -465,10 +465,14 @@ describe('region-CHECK violation handling', () => {
         ])
       );
       // Persistence failures are still swallowed (not surfaced as failed steps).
-      // package.validate, however, now fails on its own merits (the fixture's
-      // package is not gateway-ready), so it is the one expected failed step.
+      // With skipValidation set, package.validate is marked 'skipped' (the
+      // orchestrator's else-branch) rather than run — so it cannot fail on its
+      // own merits here. The net effect is NO failed step, which is exactly this
+      // test's subject: a transient persistence blip never aborts the pipeline.
       const failedKeys = result.run.steps.filter(s => s.status === 'failed').map(s => s.key);
-      expect(failedKeys).toEqual(['package.validate']);
+      expect(failedKeys).toEqual([]);
+      const validateStep = result.run.steps.find(s => s.key === 'package.validate');
+      expect(validateStep?.status).toBe('skipped');
     } finally {
       warnSpy.mockRestore();
     }
