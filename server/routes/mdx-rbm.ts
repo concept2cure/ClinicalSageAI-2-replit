@@ -59,6 +59,7 @@ import {
   type KriDirection,
 } from '../services/rbm/rbm-engine';
 import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
+import { detectSiteOutliers, type SiteMetric } from '../services/rbm/central-statistical-monitoring';
 
 const router = Router();
 const log = createScopedLogger('mdx-rbm');
@@ -797,6 +798,105 @@ router.post('/rbm-site-risk/recompute', async (req, res) => {
     const snapshots = await recomputeSiteRisk(orgId, parsed.data.programId);
     return ok(res, snapshots, { count: snapshots.length });
   } catch (err) { return serverError(res, log, 'recompute-site-risk', err); }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// CENTRAL STATISTICAL MONITORING (CluePoints SMART-style cross-site outliers)
+// ════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Run unsupervised cross-site outlier detection over the program's site-risk
+ * snapshot and raise a signal for each flagged site×dimension. Replaces prior
+ * untriaged (status='new') central_stat signals so re-runs don't pile up;
+ * triaged/investigating signals are preserved.
+ */
+router.post('/rbm-central-monitoring/run', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const parsed = seedProgramBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  const { programId } = parsed.data;
+  try {
+    const { rows: sites } = await pool.query(
+      `SELECT site_id, site_number, composite_risk, enrollment_risk, quality_risk, operational_risk
+         FROM rbm_site_risk_scores WHERE organization_id = $1 AND program_id = $2`,
+      [orgId, programId],
+    );
+    const cohort: SiteMetric[] = sites.map((s: any) => ({
+      siteId: s.site_id ?? null,
+      siteNumber: s.site_number ?? null,
+      metrics: {
+        composite: num(s.composite_risk),
+        enrollment: num(s.enrollment_risk),
+        quality: num(s.quality_risk),
+        operational: num(s.operational_risk),
+      },
+    }));
+    const findings = detectSiteOutliers(cohort);
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `DELETE FROM rbm_signals WHERE organization_id = $1 AND program_id = $2
+           AND source = 'central_stat' AND status = 'new'`,
+        [orgId, programId],
+      );
+      const inserted: unknown[] = [];
+      for (const f of findings) {
+        const { rows } = await client.query(
+          `INSERT INTO rbm_signals (organization_id, program_id, site_id, source, signal_type, severity, title, detail, statistic, status)
+           VALUES ($1,$2,$3,'central_stat',$4,$5,$6,$7,$8,'new') RETURNING *`,
+          [
+            orgId, programId, f.siteId, `outlier_${f.dimension}`, f.severity,
+            `Site ${f.siteNumber ?? f.siteId ?? '?'} is a ${f.dimension}-risk outlier`,
+            `Central statistical monitoring flagged this site: ${f.dimension} risk score ${f.value} is an outlier vs the study cohort (robust z ${f.score}).`,
+            JSON.stringify({ dimension: f.dimension, value: f.value, score: f.score }),
+          ],
+        );
+        inserted.push(rows[0]);
+      }
+      await client.query('COMMIT');
+      return ok(res, { findings, signals: inserted }, { cohortSize: cohort.length, flagged: findings.length });
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) { return serverError(res, log, 'central-monitoring-run', err); }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// SITE OVERSIGHT (SPOT-style per-site profile)
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Per-site oversight profile: risk + tier + drivers + open-signal count. */
+router.get('/rbm-site-oversight/:programId', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const programId = String(req.params.programId);
+  if (!UUID_RE.test(programId)) return clientError(res, 422, 'programId must be a UUID');
+  try {
+    const { rows } = await pool.query(
+      `SELECT sr.site_id, sr.site_number, sr.site_name, sr.composite_risk, sr.monitoring_tier, sr.drivers,
+              COALESCE(sig.open_signals, 0)::int AS open_signals,
+              COALESCE(sig.high_signals, 0)::int AS high_signals
+         FROM rbm_site_risk_scores sr
+         LEFT JOIN (
+           SELECT site_id,
+                  COUNT(*) FILTER (WHERE status IN ('new','triaged','investigating')) AS open_signals,
+                  COUNT(*) FILTER (WHERE status IN ('new','triaged','investigating') AND severity IN ('high','critical')) AS high_signals
+             FROM rbm_signals
+            WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+            GROUP BY site_id
+         ) sig ON sig.site_id = sr.site_id
+        WHERE sr.organization_id = $1 AND sr.program_id = $2
+        ORDER BY sr.composite_risk DESC NULLS LAST, sr.site_number`,
+      [orgId, programId],
+    );
+    return ok(res, rows, { count: rows.length });
+  } catch (err) { return serverError(res, log, 'site-oversight', err); }
 });
 
 // ════════════════════════════════════════════════════════════════════════════

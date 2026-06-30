@@ -726,6 +726,22 @@ export const PRIORITIZE_MONITORING_QUERIES: AnaTool = {
   },
 };
 
+export const RUN_CENTRAL_MONITORING: AnaTool = {
+  name: 'run_central_monitoring',
+  description:
+    'Runs unsupervised central statistical monitoring (CluePoints SMART-style) over a program\'s ' +
+    'per-site risk snapshot: scores each site against the study cohort with a robust modified z-score and ' +
+    'flags the sites that are statistical risk outliers (by composite/enrollment/quality/operational ' +
+    'dimension), raising central_stat signals. Use to surface atypical sites before source verification.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID.' },
+    },
+    required: ['programId'],
+  },
+};
+
 export const ADVISE_REGULATORY_PATHWAY: AnaTool = {
   name: 'advise_regulatory_pathway',
   description:
@@ -7873,6 +7889,7 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   EVALUATE_KRIS_QTLS,
   GENERATE_RBM_PLAN,
   PRIORITIZE_MONITORING_QUERIES,
+  RUN_CENTRAL_MONITORING,
   ADVISE_GCP,
   REVIEW_INFORMED_CONSENT,
   ADVISE_COA_SELECTION,

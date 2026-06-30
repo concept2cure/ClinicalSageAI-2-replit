@@ -25,6 +25,7 @@ import rbmService, {
   type RbmSignal,
   type RbmSignalCreate,
   type RbmSiteRisk,
+  type RbmSiteOversight,
   type RbmPlan,
   type RbmPlanCreate,
   type RbmAction,
@@ -255,6 +256,23 @@ export function useUpdateRbmSignal(programId: string | null) {
   const invalidate = useInvalidateProgram(programId);
   return useMutation<RbmSignal, Error, { id: number; patch: Parameters<typeof rbmService.updateSignal>[1] }>({
     mutationFn: ({ id, patch }) => rbmService.updateSignal(id, patch),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRbmSiteOversight(programId: string | null) {
+  return useQuery<RbmSiteOversight[]>({
+    queryKey: [...rbmQueryKeys.all, 'siteOversight', programId ?? ''] as const,
+    queryFn: () => (programId ? rbmService.listSiteOversight(programId) : Promise.resolve([])),
+    enabled: enabledUuid(programId),
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useRunCentralMonitoring(programId: string | null) {
+  const invalidate = useInvalidateProgram(programId);
+  return useMutation<{ findings: unknown[]; signals: unknown[] }, Error, void>({
+    mutationFn: () => rbmService.runCentralMonitoring(programId ?? ''),
     onSuccess: invalidate,
   });
 }

@@ -159,12 +159,50 @@ live data.
 
 ---
 
+## 7. CluePoints deep-dive — what we copied and added
+
+CluePoints is the reference vendor for **Central Statistical Monitoring (CSM)**.
+Its award-winning **SMART™ engine** runs an unsupervised, exhaustive battery of
+distribution-free statistical tests over all collected data to illuminate
+outliers and anomalies across sites, patients, countries and regions — no user
+thresholds required ("the data picks the outliers"), with published specificity
+better than 93% for detecting atypical multicentre data. Around CSM it packages:
+KRI dashboards that rank sites against peers, a QTL module, **SPOT** (Site
+Profile & Oversight Tool) for adaptive per-site monitoring and visit planning,
+Patient Profiles, and integrated issue/action tracking.
+
+**Feature map — CluePoints → our module:**
+
+| CluePoints capability | Our equivalent | Status |
+|---|---|---|
+| KRI dashboard (site ranking vs peers) | `rbm_kris` + thresholds + **KRI trend history** (`rbm_kri_values`) | Shipped |
+| Quality Tolerance Limits | `rbm_qtls` (with secondary early-warning limit) | Shipped |
+| Risk Assessment (RACT) | `rbm_risk_assessments` + CtQ `rbm_risk_items` | Shipped |
+| **Central Statistical Monitoring (SMART)** | `central-statistical-monitoring.ts` — robust modified-z (Iglewicz–Hoaglin) cross-site outlier detection → `central_stat` signals | **Added (this study)** |
+| **SPOT (Site Profile & Oversight)** | `GET /api/mdx/rbm-site-oversight/:programId` — per-site risk + tier + drivers + open-signal counts | **Added (this study)** |
+| Issue / action tracking | `rbm_monitoring_plans` + `rbm_monitoring_actions` | Shipped |
+| Patient Profiles | — patient-level anomaly profiles | Backlog (Phase 3) |
+
+**What we copied and added in this pass.** A deterministic CSM engine that scores
+each site against the study cohort with a robust modified z-score (falling back
+to a classic z when the MAD is degenerate), flags only high-side (worse-than-peers)
+outliers per risk dimension, and raises `central_stat` signals — exposed at
+`POST /api/mdx/rbm-central-monitoring/run` and via the `run_central_monitoring`
+AnA tool. Plus a SPOT-style **site-oversight** endpoint aggregating each site's
+risk tier, drivers and open-signal load. **Our differentiator over CluePoints:**
+this sits inside the same platform that authored the protocol and CtQ factors, so
+CSM, KRIs and the RACT share one tenant-scoped, 21 CFR Part 11-audited data
+fabric, and AnA can drive the whole loop conversationally.
+
 ## Sources
 
 - FDA Publishes ICH E6(R3) — ACRP: https://acrpnet.org/2025/09/16/fda-publishes-ich-e6r3-what-it-means-for-u-s-clinical-trials
 - Decoding ICH E6(R3) for RBQM — CluePoints: https://cluepoints.com/decoding-ich-e6r3-what-it-means-for-risk-based-quality-management-rbqm/
 - ICH E8(R1) / CtQ factors — DIA Global Forum: https://globalforum.diaglobal.org/issue/december-2024/implementation-of-critical-to-quality-ctq-factors-in-a-clinical-trial/
 - RACT in clinical trials — CluePoints: https://cluepoints.com/ract-clinical-trials-how-to-deploy-risk-assessment-categorization-effectively/
+- CluePoints CSM / detection (SMART engine): https://cluepoints.com/what-we-do/risk-based-quality-management-rbqm/detection/
+- Centralized monitoring explained — CluePoints: https://cluepoints.com/centralized-monitoring-in-clinical-trials-everything-you-should-know/
+- SPOT / Patient Profiles — CluePoints: https://cluepoints.com/patient-profiles-unveiled-as-latest-addition-to-cluepoints-risk-based-monitoring-and-data-quality-oversight-solution/
 - TransCelerate Risk-Based Monitoring Solutions: https://www.transceleratebiopharmainc.com/assets/risk-based-monitoring-solutions/
 - elluminate RBQM — eClinical Solutions: https://www.eclinicalsol.com/products/risk-based-quality-management/
 - RBQM 101 — Medidata: https://www.medidata.com/en/life-science-resources/medidata-blog/risk-based-quality-management-rbqm/

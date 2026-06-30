@@ -2810,6 +2810,41 @@ registerToolHandler('prioritize_monitoring_queries', async (input, ctx) => {
   });
 });
 
+// Central statistical monitoring — unsupervised cross-site outlier detection.
+registerToolHandler('run_central_monitoring', async (input, ctx) => {
+  const programId = typeof input.programId === 'string' ? input.programId : undefined;
+  const orgId = ctx?.organizationId ?? null;
+  if (!programId || !RBM_UUID_RE.test(programId) || orgId == null) {
+    return JSON.stringify({ source: 'AnA RBM', error: 'A valid programId (UUID) and organization context are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { detectSiteOutliers, MIN_COHORT } = await import('../rbm/central-statistical-monitoring.js');
+  const pool = getPool();
+  const { rows } = await pool.query(
+    `SELECT site_id, site_number, composite_risk, enrollment_risk, quality_risk, operational_risk
+       FROM rbm_site_risk_scores WHERE organization_id = $1 AND program_id = $2`,
+    [orgId, programId],
+  );
+  const toNum = (v: any) => { const n = typeof v === 'string' ? parseFloat(v) : v; return Number.isFinite(n) ? n : null; };
+  const cohort = rows.map((s: any) => ({
+    siteId: s.site_id ?? null,
+    siteNumber: s.site_number ?? null,
+    metrics: {
+      composite: toNum(s.composite_risk), enrollment: toNum(s.enrollment_risk),
+      quality: toNum(s.quality_risk), operational: toNum(s.operational_risk),
+    },
+  }));
+  const findings = detectSiteOutliers(cohort);
+  return JSON.stringify({
+    source: 'AnA RBM Central Statistical Monitoring',
+    method: 'robust modified z-score (Iglewicz–Hoaglin), cohort-relative',
+    cohortSize: cohort.length,
+    note: cohort.length < MIN_COHORT ? `Need at least ${MIN_COHORT} scored sites for cohort statistics.` : undefined,
+    outliers: findings,
+    hint: 'Persist these as signals via POST /api/mdx/rbm-central-monitoring/run.',
+  });
+});
+
 // Regulatory-pathway advisor — drug/biologic/device/IVD routes (FDA & EU).
 registerToolHandler('advise_regulatory_pathway', async (input) => {
   const pathway = typeof input.pathway === 'string' ? input.pathway : undefined;

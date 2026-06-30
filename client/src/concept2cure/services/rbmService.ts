@@ -125,6 +125,18 @@ export interface RbmSiteRisk {
   [key: string]: unknown;
 }
 
+export interface RbmSiteOversight {
+  site_id: string | null;
+  site_number: string | null;
+  site_name: string | null;
+  composite_risk: string | null;
+  monitoring_tier: 'reduced' | 'standard' | 'enhanced';
+  drivers: string[] | null;
+  open_signals: number;
+  high_signals: number;
+  [key: string]: unknown;
+}
+
 export interface RbmPlan {
   id: number;
   program_id: string | null;
@@ -291,6 +303,10 @@ class RbmService {
   // Site risk
   listSiteRisk(programId: string) { return this.list<RbmSiteRisk>('rbm-site-risk', { program_id: programId }); }
   recomputeSiteRisk(programId: string) { return this.request<unknown[]>('POST', `${this.baseUrl}/rbm-site-risk/recompute`, { programId }); }
+
+  // Central statistical monitoring (CluePoints SMART-style) + SPOT oversight
+  runCentralMonitoring(programId: string) { return this.request<{ findings: unknown[]; signals: RbmSignal[] }>('POST', `${this.baseUrl}/rbm-central-monitoring/run`, { programId }); }
+  listSiteOversight(programId: string) { return this.list<RbmSiteOversight>(`rbm-site-oversight/${programId}`, {}); }
 
   // Plans + actions
   listPlans(programId?: string) { return this.list<RbmPlan>('rbm-monitoring-plans', { program_id: programId }); }
