@@ -66,14 +66,15 @@ vi.mock('../../../db', () => {
       return { rows: [{ id: 4242 }], rowCount: 1 };
     }
     if (/UPDATE submission_transmittals/i.test(sql)) {
-      // Capture mdn_raw value if present in the UPDATE.
-      const mdnIdx = sql.indexOf('mdn_raw');
-      if (mdnIdx >= 0) {
-        // The patch builder emits `mdn_raw = $N`; the actual MDN string is
-        // somewhere in args. Find the first string > 16 chars (the dummy MDN
-        // we'll inject in the test).
-        const mdnArg = args.find((a) => typeof a === 'string' && (a as string).length > 16);
-        if (mdnArg) mdnRawStorage.value = mdnArg as string;
+      // Capture mdn_raw value if present in the UPDATE. The patch builder
+      // emits `mdn_raw = $N`; resolve N from the SQL and read the matching
+      // positional arg. (A naive "first long string in args" heuristic mis-
+      // fires here because `transmission_id = $M` carries the message-id —
+      // also a long string — and may precede mdn_raw in the arg list.)
+      const mdnMatch = sql.match(/mdn_raw\s*=\s*\$(\d+)/i);
+      if (mdnMatch) {
+        const mdnArg = args[Number(mdnMatch[1]) - 1];
+        if (typeof mdnArg === 'string') mdnRawStorage.value = mdnArg;
       }
       return { rows: [], rowCount: 1 };
     }
@@ -137,11 +138,25 @@ vi.mock('../../../db', () => {
   };
 });
 
+// A real RSA private key so signAs2Body's createSign(...).sign(keyPem) does not
+// throw OpenSSL DECODER. Generated once at hoist time (cert/key/fda-cert all
+// read through this same mock; only the key is fed to the signer, so one valid
+// key satisfies every path the FIX-2 transmit exercises).
+const { testKeyPem } = vi.hoisted(() => {
+  const { generateKeyPairSync } = require('node:crypto');
+  const { privateKey } = generateKeyPairSync('rsa', {
+    modulusLength: 2048,
+    privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+    publicKeyEncoding: { type: 'spki', format: 'pem' },
+  });
+  return { testKeyPem: privateKey as string };
+});
+
 vi.mock('fs', async (orig) => {
   const actual = await (orig as () => Promise<typeof import('fs')>)();
   return {
     ...actual,
-    promises: { ...actual.promises, readFile: vi.fn(async () => 'PEM') },
+    promises: { ...actual.promises, readFile: vi.fn(async () => testKeyPem) },
   };
 });
 
@@ -162,9 +177,14 @@ const FAKE_MDN_BODY =
   'Received-Content-MIC: deadbeef==, sha-256\r\n' +
   '------=_Part_FDA_MDN--\r\n';
 
-vi.mock('https', () => {
-  return {
-    request: (_opts: unknown, cb: (res: unknown) => void) => {
+// Vitest 4 resolves bare Node builtins through the package resolver, which
+// fails ("Failed to resolve entry for package 'https'") for a factory mock of
+// the un-prefixed specifier. Mocking the `node:` form intercepts the source's
+// `import * as https from 'https'` all the same. Factory is hoisted above all
+// top-level code, so the request impl is inlined here (cannot close over a
+// module-level const) and exposes a `default` for the namespace import shape.
+vi.mock('node:https', () => {
+  const request = (_opts: unknown, cb: (res: unknown) => void) => {
       const dataHandlers: Array<(c: Buffer) => void> = [];
       const endHandlers: Array<() => void> = [];
       const res: any = {
@@ -186,8 +206,8 @@ vi.mock('https', () => {
         end: () => undefined,
         destroy: () => undefined,
       };
-    },
   };
+  return { default: { request }, request };
 });
 
 import {

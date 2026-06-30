@@ -38,17 +38,14 @@
  *       follow-up (AUDIT_BEST_EFFORT_DOCUMENTED_BUT_RISKY). We assert the
  *       documented contract: audit-throws ⇒ row persists, 201 with id.
  *
- *   (9-12) POST /api/charters/:charterId/commitments — the route does NOT
- *       exist. The module header (charters.ts:9-27) records that the
- *       project_commitments and charter_audit_events tables were dropped, so
- *       a commitments INSERT would fault on a missing relation. The route was
- *       scoped out until a follow-up adds the migration + schema back. We
- *       assert the live behaviour (Express returns 404 for the unregistered
- *       path) so the suite documents the absence as a contract gap rather
- *       than skipping silently.
- *
- *   (12) Zod-400 for invalid commitment.category — folded into the same
- *       not-implemented assertion (no schema exists to validate against).
+ *   (9-12) POST /api/charters/:charterId/commitments — NOW IMPLEMENTED
+ *       (Task #20). project_commitments and charter_audit_events were rebuilt
+ *       by migrations/20260629_charter_tables_rebuild.sql and the route writes
+ *       the commitment + a per-entity charter_audit_events row in one
+ *       db.transaction, then a best-effort audit_logs row. The cases assert the
+ *       as-shipped contract: (9) 201 + dual audit on an owned charter, (10) 404
+ *       cross-org/missing collapse, (11) Zod-400 on an invalid category before
+ *       any DB work, (12) 400 on a non-numeric :charterId.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
@@ -288,6 +285,21 @@ vi.mock('../../server/db', () => {
     },
   };
   return { db, pool: null, getPool: () => null, getDb: () => db };
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MOCK requestDb — the route resolves its Drizzle handle via requestDb(req)
+// (server/db/requestDb.ts), which imports the pool-bound db from
+// server/db/runtime — a DIFFERENT module than the '../../server/db' re-export
+// mocked above, so that mock alone would NOT intercept the route's queries.
+// Return the SAME mocked db object (pulled from the already-mocked
+// '../../server/db') so every select/insert/transaction the route issues
+// flows through the captured-mock state above, regardless of req.dbClient.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+vi.mock('../../server/db/requestDb', async () => {
+  const dbModule = await import('../../server/db');
+  return { requestDb: () => (dbModule as { db: unknown }).db };
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -581,57 +593,95 @@ describe('GET /api/charters/:charterId', () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// POST /api/charters/:charterId/commitments — NOT IMPLEMENTED
+// POST /api/charters/:charterId/commitments — IMPLEMENTED (Task #20)
 //
-// CONTRACT DEVIATION (see file header): project_commitments and
-// charter_audit_events were formally dropped (migration 20260611). The route
-// module header (charters.ts:9-27) records that the commitments endpoint is
-// scoped out until those tables are re-added. We assert the live behaviour —
-// Express returns 404 for the unregistered path — so the suite documents the
-// absence as a contract gap rather than skipping silently.
+// The commitments route is now live: project_commitments and charter_audit_events
+// were rebuilt by migrations/20260629_charter_tables_rebuild.sql and the handler
+// (charters.ts) writes the commitment + a per-entity charter_audit_events row in
+// ONE db.transaction, then a best-effort cross-cutting audit_logs row via
+// auditService.logAction. These cases assert the as-shipped contract.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-describe('POST /api/charters/:charterId/commitments — NOT IMPLEMENTED', () => {
-  it('(9) commitments endpoint is not registered — Express returns 404 (would-be 201)', async () => {
+describe('POST /api/charters/:charterId/commitments', () => {
+  // Canonical valid commitment body — category must be a member of the route's
+  // closed COMMITMENT_CATEGORIES enum; dueDate is ISO-8601 with offset; owner is
+  // either { userId } or { role }.
+  const VALID_COMMITMENT = {
+    category: 'regulatory_submission',
+    title: 'Submit IND module 1',
+    dueDate: '2026-12-01T00:00:00Z',
+    owner: { userId: 7 },
+    priority: 'high' as const,
+  };
+
+  it('(9) creates a commitment for an owned charter — 201 with commitmentId, writes commitment + in-tx audit row', async () => {
+    // loadOwnedCharter SELECT resolves the charter in the caller's tenant.
+    hoisted.selectLimitRows = [[{ id: 555, organizationId: 100, projectId: 9 }]];
+    // The commitment INSERT (first tx insert, .returning()) yields the new id;
+    // the charter_audit_events INSERT (second tx insert) does not call
+    // .returning() so it does not consume this queue.
+    hoisted.txInsertReturningQueue = [[{ id: 777 }]];
+
     const res = await request(makeApp({ organizationId: 100, userId: 7 }))
       .post('/api/charters/555/commitments')
-      .send({ description: 'Submit IND module 1', category: 'submission' });
+      .send(VALID_COMMITMENT);
 
-    // The route surface is absent. Express's default 404 handler returns the
-    // HTML "Cannot POST" body — assert the status only. When the migration
-    // re-adds project_commitments and the route is implemented, this test
-    // should be replaced with the four cases (9)-(12) from the original brief.
-    expect(res.status).toBe(404);
-    expect(hoisted.insertCalls).toHaveLength(0);
-    expect(hoisted.auditLogAction).not.toHaveBeenCalled();
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual({ commitmentId: 777, status: 'open' });
+    // Two inserts ran inside the transaction: the commitment + the per-entity
+    // charter_audit_events row (closes AUDIT_BEST_EFFORT for the charter scope).
+    expect(hoisted.insertCalls).toHaveLength(2);
+    expect(hoisted.insertCalls.every((c) => c.insideTx)).toBe(true);
+    // The cross-cutting audit_logs row is best-effort, post-tx.
+    expect(hoisted.auditLogAction).toHaveBeenCalledTimes(1);
+    const auditArg = hoisted.auditLogAction.mock.calls[0][0] as Record<
+      string,
+      unknown
+    >;
+    expect(auditArg.action).toBe('charter.commitment.created');
+    expect(auditArg.organizationId).toBe(100);
+    expect(auditArg.userId).toBe(7);
   });
 
-  it('(10) cross-org commitment probe — same 404 (route absence subsumes the cross-org collapse)', async () => {
+  it('(10) cross-org / missing charter — 404, no inserts, no audit (existence-leak collapse)', async () => {
+    // loadOwnedCharter SELECT yields zero rows — either "no such charter" or
+    // "wrong tenant"; both collapse to 404 to deny a tenant-membership oracle.
+    hoisted.selectLimitRows = [[]];
+
     const res = await request(makeApp({ organizationId: 100, userId: 7 }))
       .post('/api/charters/12345/commitments')
-      .send({ description: 'x', category: 'submission' });
+      .send(VALID_COMMITMENT);
 
     expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Charter not found' });
     expect(hoisted.insertCalls).toHaveLength(0);
-  });
-
-  it('(11) commitment audit row — not written because no handler exists to write it', async () => {
-    const res = await request(makeApp({ organizationId: 100, userId: 7 }))
-      .post('/api/charters/555/commitments')
-      .send({ description: 'x', category: 'submission' });
-
-    expect(res.status).toBe(404);
     expect(hoisted.auditLogAction).not.toHaveBeenCalled();
   });
 
-  it('(12) invalid commitment.category — no Zod gate because no schema exists; still 404 from missing route', async () => {
+  it('(11) invalid commitment.category — 400 from the closed-enum Zod gate, before any DB work', async () => {
     const res = await request(makeApp({ organizationId: 100, userId: 7 }))
       .post('/api/charters/555/commitments')
-      .send({ description: 'x', category: 'NOT_A_CATEGORY' });
+      .send({ ...VALID_COMMITMENT, category: 'NOT_A_CATEGORY' });
 
-    // When the route is added, this MUST become a 400 from a closed-enum Zod
-    // gate (mirroring the SUBMISSION_TYPES / REGULATORY_REGIONS pattern in
-    // charters.ts). For now it's a 404 from the missing route surface.
-    expect(res.status).toBe(404);
+    // Zod rejects the body before the route touches the DB — no SELECT, no
+    // INSERT, no audit. The error message is generic (no echo of the bad value,
+    // mirroring the createCharter PHI-hygiene contract).
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Invalid commitment payload' });
+    expect(hoisted.selectCalls).toHaveLength(0);
+    expect(hoisted.insertCalls).toHaveLength(0);
+    expect(hoisted.auditLogAction).not.toHaveBeenCalled();
+    expect(JSON.stringify(res.body)).not.toContain('NOT_A_CATEGORY');
+  });
+
+  it('(12) non-numeric :charterId — 400 before auth/DB, never a NaN query', async () => {
+    const res = await request(makeApp({ organizationId: 100, userId: 7 }))
+      .post('/api/charters/not-a-number/commitments')
+      .send(VALID_COMMITMENT);
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Valid numeric charter id required' });
+    expect(hoisted.selectCalls).toHaveLength(0);
+    expect(hoisted.insertCalls).toHaveLength(0);
   });
 });

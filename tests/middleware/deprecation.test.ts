@@ -13,7 +13,7 @@ import { createMockRequest, createMockResponse } from '../setup';
 const DEPRECATION_DATES = {
   '510k': {
     deprecated: new Date('2026-01-26'),
-    sunset: new Date('2026-06-30'),
+    sunset: new Date('2027-06-30'),
   },
 } as const;
 
@@ -65,7 +65,7 @@ describe('Deprecation Middleware', () => {
       const next = vi.fn();
 
       const middleware = deprecationNotice({
-        sunsetDate: new Date('2026-06-30'),
+        sunsetDate: new Date('2027-06-30'),
         successorUrl: '/api/fda510k-unified/device',
       });
 
@@ -79,7 +79,7 @@ describe('Deprecation Middleware', () => {
       const req = createMockRequest();
       const res = createMockResponse();
       const next = vi.fn();
-      const sunsetDate = new Date('2026-06-30');
+      const sunsetDate = new Date('2027-06-30');
 
       const middleware = deprecationNotice({
         sunsetDate,
@@ -97,7 +97,7 @@ describe('Deprecation Middleware', () => {
       const next = vi.fn();
 
       const middleware = deprecationNotice({
-        sunsetDate: new Date('2026-06-30'),
+        sunsetDate: new Date('2027-06-30'),
         successorUrl: '/api/fda510k-unified/device',
       });
 
@@ -115,7 +115,7 @@ describe('Deprecation Middleware', () => {
       const next = vi.fn();
 
       const middleware = deprecationNotice({
-        sunsetDate: new Date('2026-06-30'),
+        sunsetDate: new Date('2027-06-30'),
         successorUrl: '/api/fda510k-unified/device',
       });
 
@@ -130,7 +130,7 @@ describe('Deprecation Middleware', () => {
       const next = vi.fn();
 
       const middleware = deprecationNotice({
-        sunsetDate: new Date('2026-06-30'),
+        sunsetDate: new Date('2027-06-30'),
         successorUrl: '/api/fda510k-unified/device',
       });
 
@@ -183,7 +183,7 @@ describe('Deprecation Middleware', () => {
 
   describe('isPastSunset()', () => {
     it('should return false for future sunset dates', () => {
-      // Assuming current date is before 2026-06-30
+      // Assuming current date is before 2027-06-30
       const result = isPastSunset('510k');
       expect(result).toBe(false);
     });

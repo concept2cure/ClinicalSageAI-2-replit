@@ -171,7 +171,6 @@ vi.mock('../../server/services/ectd/ectd-validator-hardening.js', async () => {
 import {
   runOrchestrator,
   type OrchestratorInputs,
-  type OrchestratorRun,
   type StepKey,
 } from '../../server/services/submission-package-orchestrator';
 import { buildMinimalIndOrchestratorInputs } from './orchestrator-e2e-ind-fixtures';
@@ -200,6 +199,10 @@ const ORDERED_STEPS: StepKey[] = [
   'm1.admin',
   'package.assemble',
   'package.validate',
+  // Path-to-GA §C.11 e-sig gate before any future package.transmit (commit
+  // 44ef7a1). REQUIRED for IND/NDA/BLA/MAA; the run suspends in
+  // `awaiting-signature` until a release signature exists.
+  'package.sign',
 ];
 
 /**
@@ -254,10 +257,16 @@ function defaultPoolQuery(
   const p = params ?? [];
   // INSERT runs (or ON CONFLICT UPDATE)
   if (/INSERT INTO submission_orchestrator_runs/i.test(sql)) {
+    // Path-to-GA §C.4: persistRun now dual-writes `submission_id_fk` as param
+    // $4 (commit 1027066), shifting every subsequent positional parameter by
+    // one. The destructuring MUST account for it or `status`/`steps` land in
+    // the wrong slots (which made getRun's JSON.parse(steps) choke on the bare
+    // status string and broke the resume path).
     const [
       run_id,
       organization_id,
       submission_id,
+      _submission_id_fk,
       application_number,
       region,
       submission_type,
@@ -269,6 +278,7 @@ function defaultPoolQuery(
       string,
       number,
       string,
+      number | null,
       string,
       string,
       string,
@@ -277,6 +287,7 @@ function defaultPoolQuery(
       string,
       string,
     ];
+    void _submission_id_fk;
     hoisted.runRows.set(run_id, {
       run_id,
       organization_id,
@@ -337,20 +348,29 @@ describe('Phase-1 IND e2e — happy path', () => {
       organizationId: 1,
     } as Record<string, unknown> as never);
 
-    // Run terminal status: with the minimal IND fixture (empty csrInputs +
-    // useAI omitted) m3.refine, csr.tabulate, m2.5.clinical, m2.7.clinical,
-    // and csr.draft-narrative all skip. The remaining steps complete; the
-    // mocked validator returns gatewayReady=true, so package.validate
-    // completes too. No failed steps means status === 'complete'.
-    expect(run.status).toBe('complete');
+    // Run status: with the minimal IND fixture (empty csrInputs + useAI
+    // omitted) m3.refine, csr.tabulate, m2.5.clinical, m2.7.clinical, and
+    // csr.draft-narrative all skip. The mocked validator returns
+    // gatewayReady=true, so package.validate completes. IND is a
+    // SIGNATURE_REQUIRED submission type (Path-to-GA §C.11), and no release
+    // signature exists in this mocked run, so package.sign transitions to
+    // `awaiting-signature` and the run suspends there rather than reaching
+    // `complete`. Driving it to complete would require a matching
+    // electronic_signatures row (covered by the dedicated sign-route tests).
+    expect(run.status).toBe('awaiting-signature');
 
-    // Every step in ORDERED_STEPS appears on the run with a terminal
-    // (non-failed) status. complete OR skipped is acceptable per the fixture
-    // comment — anything else is a regression.
+    // Every step in ORDERED_STEPS appears on the run. All steps up to and
+    // including package.validate reach a terminal (non-failed) status; the
+    // final package.sign step sits in the non-terminal `awaiting-signature`
+    // state that suspended the run.
     for (const key of ORDERED_STEPS) {
       const step = run.steps.find(s => s.key === key);
       expect(step, `step ${key} should appear on the run`).toBeDefined();
-      expect(['complete', 'skipped']).toContain(step!.status);
+      if (key === 'package.sign') {
+        expect(step!.status).toBe('awaiting-signature');
+      } else {
+        expect(['complete', 'skipped']).toContain(step!.status);
+      }
     }
 
     // Validator outputs surfaced to caller.
@@ -458,18 +478,20 @@ describe('Phase-1 IND e2e — validator rejection', () => {
     const { run } = await runOrchestrator(inputs);
 
     // The thrown error inside the runStep helper sets the step to 'failed'
-    // and rolls the run status up via the failed-count branch:
-    //   failedSteps.length > 0 → 'partial'
-    // (NOT 'failed' — the run's outer try only assigns 'failed' on an
-    // un-caught thrown exception, which the runStep helper re-throws but
-    // the outer catch absorbs into the existing rollup logic.)
+    // and re-throws. As shipped (Move 3, commit d1cd531), that re-throw
+    // propagates to runOrchestrator's outer catch, which assigns
+    // `run.status = 'failed'` DIRECTLY — the per-step roll-up branch (which
+    // would have produced 'partial') is short-circuited. This is the
+    // behavior pinned by submission-package-orchestrator-moves-3-5-6.test.ts;
+    // the "→ partial" refactor described in the Move-3 commit message has not
+    // yet landed. Update both expectations together if/when it does.
     const validateStep = run.steps.find(s => s.key === 'package.validate');
     expect(validateStep).toBeDefined();
     expect(validateStep!.status).toBe('failed');
 
-    // Run-level: at least one failed step → 'partial' per Move 3+5+6
-    // commit message.
-    expect(run.status).toBe('partial');
+    // Run-level: the outer catch maps the re-thrown validate failure to
+    // 'failed' (not 'partial' — see the comment above).
+    expect(run.status).toBe('failed');
 
     // The validator's error counts must surface in the step's error
     // message so an operator can triage from the audit row alone — the
@@ -570,14 +592,26 @@ describe('Phase-1 IND e2e — awaiting-async resume', () => {
       resumeRunId: first.run.runId,
     });
     expect(second.run.runId).toBe(first.run.runId);
+    // The awaiting-async resume path drives csr.draft-narrative → complete and
+    // runs the downstream validation pipeline (m2.7 / m1.admin /
+    // package.assemble / package.validate), then rolls up to `complete`. It
+    // does NOT re-enter the §C.11 package.sign e-sig gate — that step stays
+    // `pending` after this resume (the dedicated awaiting-signature resume
+    // path owns it). This matches the behavior pinned by
+    // submission-package-orchestrator-moves-3-5-6.test.ts.
     expect(second.run.status).toBe('complete');
     // csr.draft-narrative now complete; downstream steps complete (or
-    // skipped where their inputs are empty).
+    // skipped where their inputs are empty). package.sign is excluded — the
+    // awaiting-async resume leaves it `pending` (see comment above).
     for (const key of ORDERED_STEPS) {
+      if (key === 'package.sign') continue;
       const step = second.run.steps.find(s => s.key === key);
       expect(step, `step ${key} should appear on the resumed run`).toBeDefined();
       expect(['complete', 'skipped']).toContain(step!.status);
     }
+    // package.sign present but left pending by the awaiting-async resume path.
+    const signStep = second.run.steps.find(s => s.key === 'package.sign');
+    expect(signStep?.status).toBe('pending');
   });
 });
 
@@ -652,8 +686,12 @@ describe('Phase-1 IND e2e — Move-7 region widening (KR)', () => {
 
     const { run } = await runOrchestrator(inputs);
 
-    // Run reached a terminal status (not 'failed' from a thrown persist).
-    expect(['complete', 'partial']).toContain(run.status);
+    // Run reached a non-failed status (not 'failed' from a thrown persist).
+    // The fixture is an IND (SIGNATURE_REQUIRED), so with no release signature
+    // the gateway-ready package suspends at package.sign in
+    // `awaiting-signature`; 'complete'/'partial' remain acceptable for
+    // non-signature-required permutations.
+    expect(['complete', 'partial', 'awaiting-signature']).toContain(run.status);
     // Persisted row exists for this run, and its region column is 'KR'
     // (defaultPoolQuery captured every INSERT INTO ... runs call).
     const persisted = hoisted.runRows.get(run.runId);

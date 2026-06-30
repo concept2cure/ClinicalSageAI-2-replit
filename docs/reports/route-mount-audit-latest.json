@@ -1,9 +1,9 @@
 {
   "target": "server/index.ts,server/bootstrap/register-*.ts,server/startup/routes.ts,server/startup/inline-endpoints.ts,server/startup/middleware.ts",
-  "generatedAt": "2026-06-21T19:06:04.006Z",
-  "mounts": 251,
+  "generatedAt": "2026-06-30T19:36:11.471Z",
+  "mounts": 272,
   "errors": 8,
-  "warnings": 6,
+  "warnings": 7,
   "issues": {
     "errors": [
       {
@@ -66,6 +66,11 @@
       {
         "type": "multi-use-prefix",
         "path": "/api/cmc/module3-os",
+        "key": null
+      },
+      {
+        "type": "multi-use-prefix",
+        "path": "/api/submissions",
         "key": null
       },
       {
