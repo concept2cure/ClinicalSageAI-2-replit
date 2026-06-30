@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-29T16:09:21.774Z",
+  "generatedAt": "2026-06-30T04:22:03.905Z",
   "git": {
-    "sha": "44ef7a108b0a80cc49f1a0682eaf37016314d211",
+    "sha": "134fd81f608db331ba3867a050210ff30cd84c83",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -10,8 +10,8 @@
   },
   "summary": {
     "duplicateBasenames": 231,
-    "largeFilesByBytes": 22,
-    "largeFilesByLines": 62
+    "largeFilesByBytes": 23,
+    "largeFilesByLines": 67
   },
   "findings": {
     "duplicateBasenames": [
@@ -2297,7 +2297,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 717090
+        "bytes": 732751
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2305,7 +2305,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 438017
+        "bytes": 439551
       },
       {
         "file": "server/statistics-service.ts",
@@ -2378,6 +2378,10 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "bytes": 108892
+      },
+      {
+        "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
+        "bytes": 105877
       }
     ],
     "largeFilesByLines": [
@@ -2391,11 +2395,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 14162
+        "lines": 14450
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 8042
+        "lines": 8066
       },
       {
         "file": "server/statistics-service.ts",
@@ -2454,6 +2458,10 @@
         "lines": 2609
       },
       {
+        "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
+        "lines": 2559
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2501
       },
@@ -2478,8 +2486,16 @@
         "lines": 2254
       },
       {
+        "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
+        "lines": 2177
+      },
+      {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
+      },
+      {
+        "file": "server/services/biomarkers/biomarker-knowledge.ts",
+        "lines": 2093
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
@@ -2510,8 +2526,16 @@
         "lines": 1937
       },
       {
+        "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
+        "lines": 1927
+      },
+      {
         "file": "server/services/ai-gateway/gateway.ts",
         "lines": 1876
+      },
+      {
+        "file": "server/services/rare-disease/rare-disease-knowledge.ts",
+        "lines": 1866
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
@@ -2636,8 +2660,8 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 364,
-      "largeByBytes": 19,
-      "largeByLines": 52
+      "largeByBytes": 20,
+      "largeByLines": 57
     },
     {
       "owner": "Unassigned (TBD)",
