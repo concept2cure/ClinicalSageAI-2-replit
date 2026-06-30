@@ -4,7 +4,6 @@
  * Production-ready service for pharmaceutical companies
  */
 
-import { getOpenAIClient } from './openai-client';
 import { db } from '../db';
 import {
   foresightPredictions,
@@ -60,11 +59,9 @@ const openai = {
             };
           }
         } catch (e) {
-          console.warn('[AnA Predictions] Gateway call failed, trying direct OpenAI:', e);
+          console.warn('[AnA Predictions] Gateway call failed:', e);
+          throw e;
         }
-        // Fallback to direct OpenAI if gateway fails
-        const directClient = new (require('openai').default)({ apiKey: process.env.OPENAI_API_KEY || '' });
-        return directClient.chat.completions.create(params);
       },
     },
   },

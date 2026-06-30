@@ -37,13 +37,10 @@
  * @license Proprietary - Concept2Cure Inc.
  */
 
-import Anthropic from '@anthropic-ai/sdk';
-import type OpenAI from 'openai';
 import pg from 'pg';
 import { createHash, randomUUID } from 'node:crypto';
 import { EnhancedEmbeddingService, getEmbeddingService } from './enhancedEmbeddingService.js';
 import { AIProviderRouter, getAIRouter, type AIRequest, type AIResponse } from './aiProviderRouter.js';
-import { getOpenAIClient } from './openai-client.js';
 import { getReranker, type Reranker } from './rag-reranker.js';
 import { fuseHybrid, mergeByMaxScore } from './rag-fusion.js';
 import {

@@ -5,7 +5,7 @@ import csvParser from 'csv-parser';
 import { pool, query } from './db';
 import { sql } from 'drizzle-orm';
 import { csrReports, csrDetails } from '../shared/schema';
-import { db as _db } from './drizzle';
+import { db as _db } from './db';
 
 // The importer cannot run without a database connection. `db` from
 // ./drizzle is `Drizzle | null` (null only when no DATABASE_URL is set);
