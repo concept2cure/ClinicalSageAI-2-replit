@@ -88,7 +88,7 @@ import { Router, Request, Response } from 'express';
 import { and, eq, desc } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { db } from '../db';
+import { requestDb, type RequestDb } from '../db/requestDb';
 import { projects } from '@shared/schema';
 import {
   projectCharters,
@@ -181,13 +181,6 @@ function parseCharterIdParam(raw: unknown): number | null {
   return n;
 }
 
-function requireDb(): NonNullable<typeof db> {
-  if (!db) {
-    throw new Error('[charters] Drizzle db is not initialized');
-  }
-  return db;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Validation schemas
 // ─────────────────────────────────────────────────────────────────────────────
@@ -252,7 +245,7 @@ router.post('/', async (req: Request, res: Response) => {
   const body = parsed.data;
 
   try {
-    const d = requireDb();
+    const d = requestDb(req);
 
     // Org-scoped project existence check. A miss here can mean either "no
     // such project anywhere" or "project belongs to another tenant" — both
@@ -397,7 +390,7 @@ router.get('/:charterId', async (req: Request, res: Response) => {
   if (!tenant) return;
 
   try {
-    const d = requireDb();
+    const d = requestDb(req);
 
     // Org-scoped SELECT. Cross-org and not-found collapse to 404 — leaking
     // existence ("this id IS a charter, just not yours") would give an
@@ -554,7 +547,7 @@ const createCommitmentBodySchema = z
  * to a 404 at the caller to deny a tenant-membership oracle.
  */
 async function loadOwnedCharter(
-  d: NonNullable<typeof db>,
+  d: RequestDb,
   charterId: number,
   organizationId: number,
 ): Promise<{ id: number; organizationId: number; projectId: number } | null> {
@@ -634,7 +627,7 @@ router.post('/:charterId/commitments', async (req: Request, res: Response) => {
   const body = parsed.data;
 
   try {
-    const d = requireDb();
+    const d = requestDb(req);
 
     // Resolve charter in the caller's tenant. Miss-or-cross-org → 404
     // (existence-info-leak collapse used by GET /:id). We need the
@@ -815,7 +808,7 @@ router.get('/:charterId/commitments', async (req: Request, res: Response) => {
   if (!tenant) return;
 
   try {
-    const d = requireDb();
+    const d = requestDb(req);
 
     // The commitments SELECT is org-scoped (organizationId + charterId), so
     // a cross-org probe yields [] — indistinguishable from "charter exists
