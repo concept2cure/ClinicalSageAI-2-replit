@@ -18,6 +18,7 @@ export default {
     // include in vitest.config.ts. Adding a path here is the agreed convention
     // for keeping the suite green when a test is written for vitest.
     '/concept2cure/components/ana/__tests__/',
+    '/concept2cure/components/shared/__tests__/',
     '/concept2cure/components/editor/__tests__/',
     '/concept2cure/components/projects/__tests__/',
     '/concept2cure/components/workspace/__tests__/',
