@@ -44,6 +44,7 @@ const GOVERNED_FUNCTIONS = [
 /** Files that have been audited and granted a documented exemption */
 const EXEMPTED_FILES: Record<string, string> = {
   'ectd-compile.ts': 'No downloadable output — returns JSON compilation status only',
+  'protocol-export.ts': 'No downloadable file output — returns the protocol / ClinicalTrials.gov export payload as JSON (res.json), not a governed file download',
   'tenant-export.ts':
     'Bulk org-level data export for GDPR/SOC2 evidence — runs under the tenant-isolation contract and the audit logger; not routed through the per-export governance pipeline',
 };

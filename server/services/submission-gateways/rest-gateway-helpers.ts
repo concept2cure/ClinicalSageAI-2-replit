@@ -8,7 +8,7 @@
  */
 
 import { createHash, createHmac } from 'crypto';
-import * as https from 'https';
+import * as https from 'node:https';
 import { URL } from 'url';
 import { pool } from '../../db';
 import { TransportError } from './types';

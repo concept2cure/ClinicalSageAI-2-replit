@@ -162,7 +162,7 @@ const FAKE_MDN_BODY =
   'Received-Content-MIC: deadbeef==, sha-256\r\n' +
   '------=_Part_FDA_MDN--\r\n';
 
-vi.mock('https', () => {
+vi.mock('node:https', () => {
   return {
     request: (_opts: unknown, cb: (res: unknown) => void) => {
       const dataHandlers: Array<(c: Buffer) => void> = [];
