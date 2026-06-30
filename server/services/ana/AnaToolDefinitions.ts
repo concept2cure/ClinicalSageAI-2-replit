@@ -4690,6 +4690,143 @@ export const FINALIZE_BIOSKETCH: AnaTool = {
   input_schema: { type: 'object', properties: { biosketch_id: { type: 'number' }, reason: { type: 'string' } }, required: ['biosketch_id'] },
 };
 
+// ─── Invention Disclosure / Tech Transfer (C2C-25) ────────────────────────────
+
+export const CREATE_INVENTION_DISCLOSURE: AnaTool = {
+  name: 'create_invention_disclosure',
+  description: "Create an invention disclosure for the technology-transfer office (optionally linked to a grant proposal). Federal funding starts the Bayh-Dole reporting clock (37 CFR 401.14). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string' }, inventors: { type: 'string' }, funding_source: { type: 'string' },
+      federal_funding: { type: 'boolean' }, federal_award: { type: 'string' }, disclosure_date: { type: 'string', description: 'yyyy-mm-dd' },
+      grant_proposal_id: { type: 'number' }, reason: { type: 'string' },
+    },
+    required: ['title'],
+  },
+};
+
+export const UPDATE_INVENTION_DISCLOSURE: AnaTool = {
+  name: 'update_invention_disclosure',
+  description: "Update an invention disclosure's status / TTO decision and dates (election_date drives the patent-filing clock). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      disclosure_id: { type: 'number' },
+      status: { type: 'string', enum: ['submitted', 'under_review', 'elected', 'patent_filed', 'licensed', 'released', 'abandoned'] },
+      inventors: { type: 'string' }, funding_source: { type: 'string' }, federal_funding: { type: 'boolean' }, federal_award: { type: 'string' },
+      disclosure_date: { type: 'string' }, election_date: { type: 'string' }, decision_rationale: { type: 'string' }, reason: { type: 'string' },
+    },
+    required: ['disclosure_id'],
+  },
+};
+
+export const REVIEW_INVENTION_DISCLOSURE: AnaTool = {
+  name: 'review_invention_disclosure',
+  description: "Read-only invention-disclosure review: the Bayh-Dole reporting deadlines + their status (37 CFR 401.14) and the submission-readiness blockers.",
+  input_schema: { type: 'object', properties: { disclosure_id: { type: 'number' }, as_of: { type: 'string', description: 'yyyy-mm-dd (defaults to today)' } }, required: ['disclosure_id'] },
+};
+
+export const SUBMIT_INVENTION_DISCLOSURE: AnaTool = {
+  name: 'submit_invention_disclosure',
+  description: "Submit an invention disclosure for TTO review behind the deterministic readiness gate (title, inventors, funding source, disclosure date; federal award if federally funded). Governed + audited.",
+  input_schema: { type: 'object', properties: { disclosure_id: { type: 'number' }, reason: { type: 'string' } }, required: ['disclosure_id'] },
+};
+
+// ─── Export Control review (C2C-26) ───────────────────────────────────────────
+
+export const CREATE_EXPORT_CONTROL_REVIEW: AnaTool = {
+  name: 'create_export_control_review',
+  description: "Open an export-control review for a project (ITAR/EAR/OFAC). Capture jurisdiction, classification (USML/ECCN/EAR99), foreign-national involvement and publication/proprietary restrictions. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      project_title: { type: 'string' }, description: { type: 'string' },
+      jurisdiction: { type: 'string', enum: ['itar', 'ear', 'ofac', 'not_subject', 'pending'] },
+      classification: { type: 'string' }, involves_foreign_nationals: { type: 'boolean' }, foreign_countries: { type: 'string' },
+      has_publication_restrictions: { type: 'boolean' }, has_proprietary_restrictions: { type: 'boolean' }, involves_physical_export: { type: 'boolean' },
+      grant_proposal_id: { type: 'number' }, reason: { type: 'string' },
+    },
+    required: ['project_title'],
+  },
+};
+
+export const UPDATE_EXPORT_CONTROL_REVIEW: AnaTool = {
+  name: 'update_export_control_review',
+  description: "Update an export-control review's inputs (jurisdiction, classification, restrictions, foreign-national involvement). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      review_id: { type: 'number' }, project_title: { type: 'string' }, description: { type: 'string' },
+      jurisdiction: { type: 'string', enum: ['itar', 'ear', 'ofac', 'not_subject', 'pending'] },
+      classification: { type: 'string' }, involves_foreign_nationals: { type: 'boolean' }, foreign_countries: { type: 'string' },
+      has_publication_restrictions: { type: 'boolean' }, has_proprietary_restrictions: { type: 'boolean' }, involves_physical_export: { type: 'boolean' },
+      reason: { type: 'string' },
+    },
+    required: ['review_id'],
+  },
+};
+
+export const REVIEW_EXPORT_CONTROL: AnaTool = {
+  name: 'review_export_control',
+  description: "Read-only export-control assessment: whether the Fundamental Research Exclusion applies and whether a license is required (ITAR/EAR/OFAC, 15 CFR 734.8), plus the determination-readiness blockers.",
+  input_schema: { type: 'object', properties: { review_id: { type: 'number' } }, required: ['review_id'] },
+};
+
+export const FINALIZE_EXPORT_CONTROL_DETERMINATION: AnaTool = {
+  name: 'finalize_export_control_determination',
+  description: "Finalize an export-control determination behind the deterministic readiness gate; persists the computed license-required outcome and FRE finding. Records a governed signature. Governed + audited.",
+  input_schema: { type: 'object', properties: { review_id: { type: 'number' }, reason: { type: 'string' } }, required: ['review_id'] },
+};
+
+// ─── Research Agreements MTA/DUA/CDA (C2C-27) ─────────────────────────────────
+
+export const CREATE_RESEARCH_AGREEMENT: AnaTool = {
+  name: 'create_research_agreement',
+  description: "Create a research agreement (MTA/DUA/CDA) for a material or data transfer. Capture parties, direction, the material/data, and PHI/human-data flags that gate execution under HIPAA (45 CFR 164.514). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string' }, other_party: { type: 'string' }, our_party: { type: 'string' },
+      agreement_type: { type: 'string', enum: ['mta', 'dua', 'cda'] }, direction: { type: 'string', enum: ['incoming', 'outgoing'] },
+      material_or_data_description: { type: 'string' }, contains_phi: { type: 'boolean' }, contains_human_data: { type: 'boolean' },
+      is_deidentified: { type: 'boolean' }, limited_data_set: { type: 'boolean' }, ip_rights_terms: { type: 'string' }, publication_rights: { type: 'boolean' },
+      effective_date: { type: 'string' }, expiration_date: { type: 'string' }, grant_proposal_id: { type: 'number' }, protocol_document_id: { type: 'number' },
+      reason: { type: 'string' },
+    },
+    required: ['title', 'other_party'],
+  },
+};
+
+export const UPDATE_RESEARCH_AGREEMENT: AnaTool = {
+  name: 'update_research_agreement',
+  description: "Update a research agreement's terms or status (not executed — use the execute tool). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      agreement_id: { type: 'number' }, title: { type: 'string' }, other_party: { type: 'string' }, our_party: { type: 'string' },
+      status: { type: 'string', enum: ['draft', 'under_review', 'negotiation', 'expired', 'terminated'] },
+      agreement_type: { type: 'string', enum: ['mta', 'dua', 'cda'] }, direction: { type: 'string', enum: ['incoming', 'outgoing'] },
+      material_or_data_description: { type: 'string' }, contains_phi: { type: 'boolean' }, contains_human_data: { type: 'boolean' },
+      is_deidentified: { type: 'boolean' }, limited_data_set: { type: 'boolean' }, ip_rights_terms: { type: 'string' }, publication_rights: { type: 'boolean' },
+      effective_date: { type: 'string' }, expiration_date: { type: 'string' }, reason: { type: 'string' },
+    },
+    required: ['agreement_id'],
+  },
+};
+
+export const REVIEW_RESEARCH_AGREEMENT: AnaTool = {
+  name: 'review_research_agreement',
+  description: "Read-only research-agreement execution readiness: HIPAA PHI handling blockers (limited data set / de-identification, 45 CFR 164.514), protocol-link and publication-rights findings.",
+  input_schema: { type: 'object', properties: { agreement_id: { type: 'number' } }, required: ['agreement_id'] },
+};
+
+export const EXECUTE_RESEARCH_AGREEMENT: AnaTool = {
+  name: 'execute_research_agreement',
+  description: "Execute a research agreement behind the deterministic HIPAA readiness gate (PHI properly handled, parties + material described). Records a governed signature. Governed + audited.",
+  input_schema: { type: 'object', properties: { agreement_id: { type: 'number' }, reason: { type: 'string' } }, required: ['agreement_id'] },
+};
+
 // ─── Protocol Authoring Extensions (C2C-20: templates / milestones / export) ──
 
 export const CREATE_PROTOCOL_TEMPLATE: AnaTool = {
@@ -7840,6 +7977,18 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   UPDATE_BIOSKETCH_SECTION,
   REVIEW_BIOSKETCH_COMPLETENESS,
   FINALIZE_BIOSKETCH,
+  CREATE_INVENTION_DISCLOSURE,
+  UPDATE_INVENTION_DISCLOSURE,
+  REVIEW_INVENTION_DISCLOSURE,
+  SUBMIT_INVENTION_DISCLOSURE,
+  CREATE_EXPORT_CONTROL_REVIEW,
+  UPDATE_EXPORT_CONTROL_REVIEW,
+  REVIEW_EXPORT_CONTROL,
+  FINALIZE_EXPORT_CONTROL_DETERMINATION,
+  CREATE_RESEARCH_AGREEMENT,
+  UPDATE_RESEARCH_AGREEMENT,
+  REVIEW_RESEARCH_AGREEMENT,
+  EXECUTE_RESEARCH_AGREEMENT,
   IMPORT_CITI_RECORDS,
   REVIEW_TRAINING_MATRIX,
   REVIEW_EXPIRING_TRAINING,

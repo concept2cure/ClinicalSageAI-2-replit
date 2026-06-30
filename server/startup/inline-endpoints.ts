@@ -355,6 +355,30 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Invention Disclosure metrics (C2C-25).
+      try {
+        const { renderInventionDisclosureMetrics } = await import('../services/invention-disclosure-metrics.js');
+        lines.push(...renderInventionDisclosureMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Export Control metrics (C2C-26).
+      try {
+        const { renderExportControlMetrics } = await import('../services/export-control-metrics.js');
+        lines.push(...renderExportControlMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Research Agreements metrics (C2C-27).
+      try {
+        const { renderResearchAgreementsMetrics } = await import('../services/research-agreements-metrics.js');
+        lines.push(...renderResearchAgreementsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // Protocol templates metrics (C2C-20a).
       try {
         const { renderProtocolTemplatesMetrics } = await import('../services/protocol-templates-metrics.js');

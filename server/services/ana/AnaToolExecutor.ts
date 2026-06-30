@@ -9439,6 +9439,228 @@ registerToolHandler('finalize_biosketch', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Invention Disclosure / Tech Transfer (C2C-25). create/update/submit are
+// governed/audited (domain 'protocol_development'); review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_invention_disclosure', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_invention_disclosure requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { createDisclosureTx } = await import('../invention-disclosure/invention-disclosure-service.js');
+  return governedPdev(ctx, 'create', 'invention-disclosure', 'Invention disclosure created via AnA', input, async (client) => {
+    const { id } = await createDisclosureTx(client, ctx.organizationId!, ctx.userId!, {
+      title,
+      inventors: typeof input.inventors === 'string' ? input.inventors : null,
+      fundingSource: typeof input.funding_source === 'string' ? input.funding_source : null,
+      federalFunding: typeof input.federal_funding === 'boolean' ? input.federal_funding : undefined,
+      federalAward: typeof input.federal_award === 'string' ? input.federal_award : null,
+      disclosureDate: typeof input.disclosure_date === 'string' ? input.disclosure_date : null,
+      grantProposalId: typeof input.grant_proposal_id === 'number' ? input.grant_proposal_id : null,
+    });
+    return { disclosureId: id };
+  });
+});
+
+registerToolHandler('update_invention_disclosure', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_invention_disclosure requires tenant + user context.' });
+  const id = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
+  if (!Number.isInteger(id)) return JSON.stringify({ error: 'disclosure_id is required.' });
+  const { updateDisclosureTx } = await import('../invention-disclosure/invention-disclosure-service.js');
+  return governedPdev(ctx, 'update', `invention-disclosure:${id}`, 'Invention disclosure updated via AnA', input, async (client) => {
+    await updateDisclosureTx(client, ctx.organizationId!, ctx.userId!, id, {
+      status: typeof input.status === 'string' ? input.status : undefined,
+      inventors: typeof input.inventors === 'string' ? input.inventors : null,
+      fundingSource: typeof input.funding_source === 'string' ? input.funding_source : null,
+      federalFunding: typeof input.federal_funding === 'boolean' ? input.federal_funding : undefined,
+      federalAward: typeof input.federal_award === 'string' ? input.federal_award : null,
+      disclosureDate: typeof input.disclosure_date === 'string' ? input.disclosure_date : null,
+      electionDate: typeof input.election_date === 'string' ? input.election_date : null,
+      decisionRationale: typeof input.decision_rationale === 'string' ? input.decision_rationale : null,
+    });
+    return { disclosureId: id };
+  });
+});
+
+registerToolHandler('review_invention_disclosure', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_invention_disclosure requires tenant context.' });
+  const id = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
+  if (!Number.isInteger(id)) return JSON.stringify({ error: 'disclosure_id is required.' });
+  const asOf = typeof input.as_of === 'string' ? input.as_of : undefined;
+  const { getCompliance, getReadiness } = await import('../invention-disclosure/invention-disclosure-service.js');
+  try {
+    return JSON.stringify({ ok: true, compliance: await getCompliance(ctx.organizationId!, id, asOf), readiness: await getReadiness(ctx.organizationId!, id) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_invention_disclosure failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('submit_invention_disclosure', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'submit_invention_disclosure requires tenant + user context.' });
+  const id = typeof input.disclosure_id === 'number' ? input.disclosure_id : NaN;
+  if (!Number.isInteger(id)) return JSON.stringify({ error: 'disclosure_id is required.' });
+  const { submitDisclosureTx } = await import('../invention-disclosure/invention-disclosure-service.js');
+  return governedPdev(ctx, 'submit', `invention-disclosure:${id}`, 'Invention disclosure submitted via AnA', input, async (client) => {
+    const result = await submitDisclosureTx(client, ctx.organizationId!, ctx.userId!, id);
+    return { disclosureId: id, submitted: result.submitted };
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Export Control review (C2C-26). create/update/determine are governed/audited
+// (domain 'protocol_development'); review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_export_control_review', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_export_control_review requires tenant + user context.' });
+  const projectTitle = typeof input.project_title === 'string' ? input.project_title.trim() : '';
+  if (!projectTitle) return JSON.stringify({ error: 'project_title is required.' });
+  const { createReviewTx } = await import('../export-control/export-control-service.js');
+  return governedPdev(ctx, 'create', 'export-control', 'Export-control review created via AnA', input, async (client) => {
+    const { id } = await createReviewTx(client, ctx.organizationId!, ctx.userId!, {
+      projectTitle,
+      description: typeof input.description === 'string' ? input.description : null,
+      jurisdiction: typeof input.jurisdiction === 'string' ? input.jurisdiction : undefined,
+      classification: typeof input.classification === 'string' ? input.classification : null,
+      involvesForeignNationals: typeof input.involves_foreign_nationals === 'boolean' ? input.involves_foreign_nationals : undefined,
+      foreignCountries: typeof input.foreign_countries === 'string' ? input.foreign_countries : null,
+      hasPublicationRestrictions: typeof input.has_publication_restrictions === 'boolean' ? input.has_publication_restrictions : undefined,
+      hasProprietaryRestrictions: typeof input.has_proprietary_restrictions === 'boolean' ? input.has_proprietary_restrictions : undefined,
+      involvesPhysicalExport: typeof input.involves_physical_export === 'boolean' ? input.involves_physical_export : undefined,
+      grantProposalId: typeof input.grant_proposal_id === 'number' ? input.grant_proposal_id : null,
+    });
+    return { reviewId: id };
+  });
+});
+
+registerToolHandler('update_export_control_review', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_export_control_review requires tenant + user context.' });
+  const id = typeof input.review_id === 'number' ? input.review_id : NaN;
+  if (!Number.isInteger(id)) return JSON.stringify({ error: 'review_id is required.' });
+  const { updateReviewTx } = await import('../export-control/export-control-service.js');
+  return governedPdev(ctx, 'update', `export-control:${id}`, 'Export-control review updated via AnA', input, async (client) => {
+    await updateReviewTx(client, ctx.organizationId!, id, {
+      projectTitle: typeof input.project_title === 'string' ? input.project_title : undefined,
+      description: typeof input.description === 'string' ? input.description : null,
+      jurisdiction: typeof input.jurisdiction === 'string' ? input.jurisdiction : undefined,
+      classification: typeof input.classification === 'string' ? input.classification : null,
+      involvesForeignNationals: typeof input.involves_foreign_nationals === 'boolean' ? input.involves_foreign_nationals : undefined,
+      foreignCountries: typeof input.foreign_countries === 'string' ? input.foreign_countries : null,
+      hasPublicationRestrictions: typeof input.has_publication_restrictions === 'boolean' ? input.has_publication_restrictions : undefined,
+      hasProprietaryRestrictions: typeof input.has_proprietary_restrictions === 'boolean' ? input.has_proprietary_restrictions : undefined,
+      involvesPhysicalExport: typeof input.involves_physical_export === 'boolean' ? input.involves_physical_export : undefined,
+    });
+    return { reviewId: id };
+  });
+});
+
+registerToolHandler('review_export_control', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_export_control requires tenant context.' });
+  const id = typeof input.review_id === 'number' ? input.review_id : NaN;
+  if (!Number.isInteger(id)) return JSON.stringify({ error: 'review_id is required.' });
+  const { getAssessment, getReadiness } = await import('../export-control/export-control-service.js');
+  try {
+    return JSON.stringify({ ok: true, assessment: await getAssessment(ctx.organizationId!, id), readiness: await getReadiness(ctx.organizationId!, id) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_export_control failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('finalize_export_control_determination', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_export_control_determination requires tenant + user context.' });
+  const id = typeof input.review_id === 'number' ? input.review_id : NaN;
+  if (!Number.isInteger(id)) return JSON.stringify({ error: 'review_id is required.' });
+  const { determineReviewTx } = await import('../export-control/export-control-service.js');
+  return governedPdev(ctx, 'sign', `export-control:${id}`, 'Export-control determination finalized via AnA', input, async (client) => {
+    const result = await determineReviewTx(client, ctx.organizationId!, ctx.userId!, id);
+    return { reviewId: id, determined: result.determined, licenseRequired: result.readiness.assessment.licenseRequired, freApplies: result.readiness.assessment.freApplies };
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Research Agreements MTA/DUA/CDA (C2C-27). create/update/execute are
+// governed/audited (domain 'protocol_development'); review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_research_agreement', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_research_agreement requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const otherParty = typeof input.other_party === 'string' ? input.other_party.trim() : '';
+  if (!title || !otherParty) return JSON.stringify({ error: 'title and other_party are required.' });
+  const { createAgreementTx } = await import('../research-agreements/research-agreements-service.js');
+  return governedPdev(ctx, 'create', 'research-agreement', 'Research agreement created via AnA', input, async (client) => {
+    const { id } = await createAgreementTx(client, ctx.organizationId!, ctx.userId!, {
+      title, otherParty,
+      ourParty: typeof input.our_party === 'string' ? input.our_party : null,
+      agreementType: typeof input.agreement_type === 'string' ? input.agreement_type : undefined,
+      direction: typeof input.direction === 'string' ? input.direction : undefined,
+      materialOrDataDescription: typeof input.material_or_data_description === 'string' ? input.material_or_data_description : null,
+      containsPhi: typeof input.contains_phi === 'boolean' ? input.contains_phi : undefined,
+      containsHumanData: typeof input.contains_human_data === 'boolean' ? input.contains_human_data : undefined,
+      isDeidentified: typeof input.is_deidentified === 'boolean' ? input.is_deidentified : undefined,
+      limitedDataSet: typeof input.limited_data_set === 'boolean' ? input.limited_data_set : undefined,
+      ipRightsTerms: typeof input.ip_rights_terms === 'string' ? input.ip_rights_terms : null,
+      publicationRights: typeof input.publication_rights === 'boolean' ? input.publication_rights : undefined,
+      effectiveDate: typeof input.effective_date === 'string' ? input.effective_date : null,
+      expirationDate: typeof input.expiration_date === 'string' ? input.expiration_date : null,
+      grantProposalId: typeof input.grant_proposal_id === 'number' ? input.grant_proposal_id : null,
+      protocolDocumentId: typeof input.protocol_document_id === 'number' ? input.protocol_document_id : null,
+    });
+    return { agreementId: id };
+  });
+});
+
+registerToolHandler('update_research_agreement', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_research_agreement requires tenant + user context.' });
+  const id = typeof input.agreement_id === 'number' ? input.agreement_id : NaN;
+  if (!Number.isInteger(id)) return JSON.stringify({ error: 'agreement_id is required.' });
+  const { updateAgreementTx } = await import('../research-agreements/research-agreements-service.js');
+  return governedPdev(ctx, 'update', `research-agreement:${id}`, 'Research agreement updated via AnA', input, async (client) => {
+    await updateAgreementTx(client, ctx.organizationId!, id, {
+      title: typeof input.title === 'string' ? input.title : undefined,
+      otherParty: typeof input.other_party === 'string' ? input.other_party : undefined,
+      ourParty: typeof input.our_party === 'string' ? input.our_party : null,
+      status: typeof input.status === 'string' ? input.status : undefined,
+      agreementType: typeof input.agreement_type === 'string' ? input.agreement_type : undefined,
+      direction: typeof input.direction === 'string' ? input.direction : undefined,
+      materialOrDataDescription: typeof input.material_or_data_description === 'string' ? input.material_or_data_description : null,
+      containsPhi: typeof input.contains_phi === 'boolean' ? input.contains_phi : undefined,
+      containsHumanData: typeof input.contains_human_data === 'boolean' ? input.contains_human_data : undefined,
+      isDeidentified: typeof input.is_deidentified === 'boolean' ? input.is_deidentified : undefined,
+      limitedDataSet: typeof input.limited_data_set === 'boolean' ? input.limited_data_set : undefined,
+      ipRightsTerms: typeof input.ip_rights_terms === 'string' ? input.ip_rights_terms : null,
+      publicationRights: typeof input.publication_rights === 'boolean' ? input.publication_rights : undefined,
+      effectiveDate: typeof input.effective_date === 'string' ? input.effective_date : null,
+      expirationDate: typeof input.expiration_date === 'string' ? input.expiration_date : null,
+    });
+    return { agreementId: id };
+  });
+});
+
+registerToolHandler('review_research_agreement', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_research_agreement requires tenant context.' });
+  const id = typeof input.agreement_id === 'number' ? input.agreement_id : NaN;
+  if (!Number.isInteger(id)) return JSON.stringify({ error: 'agreement_id is required.' });
+  const { getReadiness } = await import('../research-agreements/research-agreements-service.js');
+  try {
+    return JSON.stringify({ ok: true, readiness: await getReadiness(ctx.organizationId!, id) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_research_agreement failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('execute_research_agreement', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'execute_research_agreement requires tenant + user context.' });
+  const id = typeof input.agreement_id === 'number' ? input.agreement_id : NaN;
+  if (!Number.isInteger(id)) return JSON.stringify({ error: 'agreement_id is required.' });
+  const { executeAgreementTx } = await import('../research-agreements/research-agreements-service.js');
+  return governedPdev(ctx, 'sign', `research-agreement:${id}`, 'Research agreement executed via AnA', input, async (client) => {
+    const result = await executeAgreementTx(client, ctx.organizationId!, ctx.userId!, id);
+    return { agreementId: id, executed: result.executed };
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Protocol Risk Register (C2C-19). add is governed/audited; review is read-only.
 // ─────────────────────────────────────────────────────────────────────────────
 

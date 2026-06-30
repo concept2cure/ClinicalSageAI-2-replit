@@ -565,6 +565,33 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Biosketch routes:', error);
   }
 
+  // Invention Disclosure / Tech Transfer (Bayh-Dole 37 CFR 401 reporting clock).
+  try {
+    const inventionModule = await import('../routes/invention-disclosure');
+    app.use('/api/invention-disclosures', authMiddleware, inventionModule.default);
+    console.info('✅ Invention disclosure routes mounted (/api/invention-disclosures)');
+  } catch (error) {
+    console.error('❌ Failed to mount Invention disclosure routes:', error);
+  }
+
+  // Export Control review (ITAR/EAR/OFAC + Fundamental Research Exclusion).
+  try {
+    const exportControlModule = await import('../routes/export-control');
+    app.use('/api/export-control', authMiddleware, exportControlModule.default);
+    console.info('✅ Export control routes mounted (/api/export-control)');
+  } catch (error) {
+    console.error('❌ Failed to mount Export control routes:', error);
+  }
+
+  // Research Agreements (MTA/DUA/CDA, HIPAA 45 CFR 164.514 execution gate).
+  try {
+    const agreementsModule = await import('../routes/research-agreements');
+    app.use('/api/research-agreements', authMiddleware, agreementsModule.default);
+    console.info('✅ Research agreement routes mounted (/api/research-agreements)');
+  } catch (error) {
+    console.error('❌ Failed to mount Research agreement routes:', error);
+  }
+
   // Protocol templates library + clone-to-new-document.
   try {
     const protocolTemplatesModule = await import('../routes/protocol-templates');
