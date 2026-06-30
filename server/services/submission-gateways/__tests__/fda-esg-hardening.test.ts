@@ -70,10 +70,13 @@ vi.mock('../../../db', () => {
       const mdnIdx = sql.indexOf('mdn_raw');
       if (mdnIdx >= 0) {
         // The patch builder emits `mdn_raw = $N`; the actual MDN string is
-        // somewhere in args. Find the first string > 16 chars (the dummy MDN
-        // we'll inject in the test).
-        const mdnArg = args.find((a) => typeof a === 'string' && (a as string).length > 16);
-        if (mdnArg) mdnRawStorage.value = mdnArg as string;
+        // somewhere in args alongside other strings (e.g. transmission_id).
+        // The MDN body is the longest string arg, so pick that rather than the
+        // first long-ish one — transmission_id ('<mdn-msg-id@FDA-CESUB>') is
+        // also > 16 chars and would otherwise win.
+        const mdnArg = (args.filter((a) => typeof a === 'string') as string[])
+          .reduce<string | null>((longest, a) => (!longest || a.length > longest.length ? a : longest), null);
+        if (mdnArg) mdnRawStorage.value = mdnArg;
       }
       return { rows: [], rowCount: 1 };
     }
@@ -137,11 +140,33 @@ vi.mock('../../../db', () => {
   };
 });
 
+/*
+ * The AS2 request signer (signAs2Body) calls
+ * crypto.createSign('RSA-SHA256').sign(privateKeyPem, …). Under OpenSSL 3
+ * (Node 22) that rejects any string that isn't a parseable key with
+ * `error:1E08010C:DECODER routines::unsupported`, so the fs mock must hand
+ * back a real PEM private key rather than a placeholder. The cert paths are
+ * read too but only the key participates in signing, so one valid key for
+ * every readFile call is sufficient for these tests. Generated in a
+ * vi.hoisted block so it is available to the hoisted vi.mock factory below.
+ */
+const { TEST_PRIVATE_KEY_PEM } = vi.hoisted(() => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { generateKeyPairSync } = require('node:crypto');
+  return {
+    TEST_PRIVATE_KEY_PEM: generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+      publicKeyEncoding: { type: 'spki', format: 'pem' },
+    }).privateKey as string,
+  };
+});
+
 vi.mock('fs', async (orig) => {
   const actual = await (orig as () => Promise<typeof import('fs')>)();
   return {
     ...actual,
-    promises: { ...actual.promises, readFile: vi.fn(async () => 'PEM') },
+    promises: { ...actual.promises, readFile: vi.fn(async () => TEST_PRIVATE_KEY_PEM) },
   };
 });
 
