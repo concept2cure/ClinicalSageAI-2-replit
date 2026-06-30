@@ -9314,6 +9314,131 @@ registerToolHandler('finalize_dms_plan', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// NIH Other Support (C2C-24A). create/add/certify are governed/audited
+// (domain 'protocol_development'); review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_other_support', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_other_support requires tenant + user context.' });
+  const personName = typeof input.person_name === 'string' ? input.person_name.trim() : '';
+  if (!personName) return JSON.stringify({ error: 'person_name is required.' });
+  const { createDocumentTx } = await import('../other-support/other-support-service.js');
+  return governedPdev(ctx, 'create', 'other-support', 'Other Support document created via AnA', input, async (client) => {
+    const { id } = await createDocumentTx(client, ctx.organizationId!, ctx.userId!, {
+      personName,
+      personnelId: typeof input.personnel_id === 'number' ? input.personnel_id : null,
+      grantProposalId: typeof input.grant_proposal_id === 'number' ? input.grant_proposal_id : null,
+      eraCommonsId: typeof input.era_commons_id === 'string' ? input.era_commons_id : null,
+      role: typeof input.role === 'string' ? input.role : null,
+    });
+    return { otherSupportId: id };
+  });
+});
+
+registerToolHandler('add_other_support_entry', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_other_support_entry requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const projectTitle = typeof input.project_title === 'string' ? input.project_title.trim() : '';
+  const fundingSource = typeof input.funding_source === 'string' ? input.funding_source.trim() : '';
+  if (!Number.isInteger(documentId) || !projectTitle || !fundingSource) return JSON.stringify({ error: 'document_id, project_title and funding_source are required.' });
+  const { addEntryTx } = await import('../other-support/other-support-service.js');
+  return governedPdev(ctx, 'create', `other-support:${documentId}`, 'Other Support entry added via AnA', input, async (client) => {
+    const { id } = await addEntryTx(client, ctx.organizationId!, ctx.userId!, documentId, {
+      supportType: typeof input.support_type === 'string' ? input.support_type : undefined,
+      projectTitle, fundingSource,
+      status: typeof input.status === 'string' ? input.status : undefined,
+      isForeign: typeof input.is_foreign === 'boolean' ? input.is_foreign : undefined,
+      foreignCountry: typeof input.foreign_country === 'string' ? input.foreign_country : null,
+      personMonthsCalendar: typeof input.person_months_calendar === 'number' ? input.person_months_calendar : undefined,
+      personMonthsAcademic: typeof input.person_months_academic === 'number' ? input.person_months_academic : undefined,
+      personMonthsSummer: typeof input.person_months_summer === 'number' ? input.person_months_summer : undefined,
+      majorGoals: typeof input.major_goals === 'string' ? input.major_goals : null,
+      overlapStatement: typeof input.overlap_statement === 'string' ? input.overlap_statement : null,
+      awardIdentifier: typeof input.award_identifier === 'string' ? input.award_identifier : null,
+    });
+    return { entryId: id };
+  });
+});
+
+registerToolHandler('review_other_support', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_other_support requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getSummary, getReadiness } = await import('../other-support/other-support-service.js');
+  try {
+    return JSON.stringify({ ok: true, summary: await getSummary(ctx.organizationId!, documentId), readiness: await getReadiness(ctx.organizationId!, documentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_other_support failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('certify_other_support', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'certify_other_support requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { certifyDocumentTx } = await import('../other-support/other-support-service.js');
+  return governedPdev(ctx, 'sign', `other-support:${documentId}`, 'Other Support certified via AnA', input, async (client) => {
+    const result = await certifyDocumentTx(client, ctx.organizationId!, ctx.userId!, documentId);
+    return { otherSupportId: documentId, certified: result.certified, activePersonMonths: result.readiness.summary.active.total };
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NIH Biosketch (C2C-24B). create/update/finalize are governed/audited
+// (domain 'protocol_development'); review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_biosketch', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_biosketch requires tenant + user context.' });
+  const personName = typeof input.person_name === 'string' ? input.person_name.trim() : '';
+  if (!personName) return JSON.stringify({ error: 'person_name is required.' });
+  const { createBiosketchTx } = await import('../biosketch/biosketch-service.js');
+  return governedPdev(ctx, 'create', 'biosketch', 'Biosketch created via AnA', input, async (client) => {
+    const { id, sectionsSeeded } = await createBiosketchTx(client, ctx.organizationId!, ctx.userId!, {
+      personName,
+      personnelId: typeof input.personnel_id === 'number' ? input.personnel_id : null,
+      grantProposalId: typeof input.grant_proposal_id === 'number' ? input.grant_proposal_id : null,
+      biosketchType: typeof input.biosketch_type === 'string' ? input.biosketch_type : undefined,
+    });
+    return { biosketchId: id, sectionsSeeded };
+  });
+});
+
+registerToolHandler('update_biosketch_section', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_biosketch_section requires tenant + user context.' });
+  const sectionId = typeof input.section_id === 'number' ? input.section_id : NaN;
+  if (!Number.isInteger(sectionId)) return JSON.stringify({ error: 'section_id is required.' });
+  const { updateSectionTx } = await import('../biosketch/biosketch-service.js');
+  return governedPdev(ctx, 'update', `biosketch-section:${sectionId}`, 'Biosketch section updated via AnA', input, async (client) => {
+    await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined });
+    return { sectionId };
+  });
+});
+
+registerToolHandler('review_biosketch_completeness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_biosketch_completeness requires tenant context.' });
+  const biosketchId = typeof input.biosketch_id === 'number' ? input.biosketch_id : NaN;
+  if (!Number.isInteger(biosketchId)) return JSON.stringify({ error: 'biosketch_id is required.' });
+  const { getCompleteness } = await import('../biosketch/biosketch-service.js');
+  try {
+    return JSON.stringify({ ok: true, completeness: await getCompleteness(ctx.organizationId!, biosketchId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_biosketch_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('finalize_biosketch', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_biosketch requires tenant + user context.' });
+  const biosketchId = typeof input.biosketch_id === 'number' ? input.biosketch_id : NaN;
+  if (!Number.isInteger(biosketchId)) return JSON.stringify({ error: 'biosketch_id is required.' });
+  const { finalizeBiosketchTx } = await import('../biosketch/biosketch-service.js');
+  return governedPdev(ctx, 'sign', `biosketch:${biosketchId}`, 'Biosketch finalized via AnA', input, async (client) => {
+    const result = await finalizeBiosketchTx(client, ctx.organizationId!, ctx.userId!, biosketchId);
+    return { biosketchId, finalized: result.finalized, addressedPct: result.completeness.addressedPct };
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Protocol Risk Register (C2C-19). add is governed/audited; review is read-only.
 // ─────────────────────────────────────────────────────────────────────────────
 

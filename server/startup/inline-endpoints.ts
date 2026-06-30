@@ -339,6 +339,22 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // NIH Other Support metrics (C2C-24A).
+      try {
+        const { renderOtherSupportMetrics } = await import('../services/other-support-metrics.js');
+        lines.push(...renderOtherSupportMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // NIH Biosketch metrics (C2C-24B).
+      try {
+        const { renderBiosketchMetrics } = await import('../services/biosketch-metrics.js');
+        lines.push(...renderBiosketchMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // Protocol templates metrics (C2C-20a).
       try {
         const { renderProtocolTemplatesMetrics } = await import('../services/protocol-templates-metrics.js');

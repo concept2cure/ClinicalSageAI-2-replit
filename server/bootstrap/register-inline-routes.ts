@@ -547,6 +547,24 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount DMS plan routes:', error);
   }
 
+  // NIH Other Support disclosure builder (person-month overcommitment + readiness gate).
+  try {
+    const otherSupportModule = await import('../routes/other-support');
+    app.use('/api/other-support', authMiddleware, otherSupportModule.default);
+    console.info('✅ Other Support routes mounted (/api/other-support)');
+  } catch (error) {
+    console.error('❌ Failed to mount Other Support routes:', error);
+  }
+
+  // NIH Biosketch builder (FORMS-H section completeness gate).
+  try {
+    const biosketchModule = await import('../routes/biosketch');
+    app.use('/api/biosketch', authMiddleware, biosketchModule.default);
+    console.info('✅ Biosketch routes mounted (/api/biosketch)');
+  } catch (error) {
+    console.error('❌ Failed to mount Biosketch routes:', error);
+  }
+
   // Protocol templates library + clone-to-new-document.
   try {
     const protocolTemplatesModule = await import('../routes/protocol-templates');

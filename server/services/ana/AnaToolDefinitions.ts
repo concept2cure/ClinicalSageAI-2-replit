@@ -4607,6 +4607,89 @@ export const FINALIZE_DMS_PLAN: AnaTool = {
   input_schema: { type: 'object', properties: { plan_id: { type: 'number' }, reason: { type: 'string' } }, required: ['plan_id'] },
 };
 
+// ─── NIH Other Support (C2C-24A) ──────────────────────────────────────────────
+
+export const CREATE_OTHER_SUPPORT: AnaTool = {
+  name: 'create_other_support',
+  description: "Create an NIH Other Support document for a person (optionally linked to a research-personnel roster row and/or a grant proposal). Add funding-source entries next, then certify. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { person_name: { type: 'string' }, personnel_id: { type: 'number' }, grant_proposal_id: { type: 'number' }, era_commons_id: { type: 'string' }, role: { type: 'string' }, reason: { type: 'string' } },
+    required: ['person_name'],
+  },
+};
+
+export const ADD_OTHER_SUPPORT_ENTRY: AnaTool = {
+  name: 'add_other_support_entry',
+  description: "Add an Other Support entry (one funding source / resource) to a document: project title, funding source, active/pending status, foreign flag + country, committed person-months (calendar/academic/summer), major goals and overlap statement. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id: { type: 'number' },
+      support_type: { type: 'string', enum: ['grant', 'contract', 'in_kind', 'other'] },
+      project_title: { type: 'string' },
+      funding_source: { type: 'string' },
+      status: { type: 'string', enum: ['active', 'pending'] },
+      is_foreign: { type: 'boolean' },
+      foreign_country: { type: 'string' },
+      person_months_calendar: { type: 'number' },
+      person_months_academic: { type: 'number' },
+      person_months_summer: { type: 'number' },
+      major_goals: { type: 'string' },
+      overlap_statement: { type: 'string' },
+      award_identifier: { type: 'string' },
+      reason: { type: 'string' },
+    },
+    required: ['document_id', 'project_title', 'funding_source'],
+  },
+};
+
+export const REVIEW_OTHER_SUPPORT: AnaTool = {
+  name: 'review_other_support',
+  description: "Read-only Other Support review: committed person-month totals (active/pending/combined), effort-overcommitment flag (>12 calendar months), and the disclosure-readiness blockers/findings that gate certification (NIH GPS 2.5.1 / NOT-OD-21-073).",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
+export const CERTIFY_OTHER_SUPPORT: AnaTool = {
+  name: 'certify_other_support',
+  description: "Certify an NIH Other Support document behind the deterministic readiness gate (every entry complete, foreign components disclosed, no effort overcommitment). Records a governed signature. Governed + audited.",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' }, reason: { type: 'string' } }, required: ['document_id'] },
+};
+
+// ─── NIH Biosketch (C2C-24B) ──────────────────────────────────────────────────
+
+export const CREATE_BIOSKETCH: AnaTool = {
+  name: 'create_biosketch',
+  description: "Create an NIH biosketch for a person (optionally linked to a research-personnel roster row and/or a grant proposal), auto-seeded with the required NIH biosketch sections (FORMS-H: Personal Statement; Positions/Appointments/Honors; Contributions to Science) as not-yet-addressed rows. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { person_name: { type: 'string' }, personnel_id: { type: 'number' }, grant_proposal_id: { type: 'number' }, biosketch_type: { type: 'string', enum: ['nih', 'nsf', 'other'] }, reason: { type: 'string' } },
+    required: ['person_name'],
+  },
+};
+
+export const UPDATE_BIOSKETCH_SECTION: AnaTool = {
+  name: 'update_biosketch_section',
+  description: "Write a biosketch section's content and mark it addressed. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { section_id: { type: 'number' }, content: { type: 'string' }, addressed: { type: 'boolean' }, reason: { type: 'string' } },
+    required: ['section_id'],
+  },
+};
+
+export const REVIEW_BIOSKETCH_COMPLETENESS: AnaTool = {
+  name: 'review_biosketch_completeness',
+  description: "Read-only biosketch completeness: percent of the required NIH biosketch sections (FORMS-H) addressed, the missing sections, and whether the biosketch can be finalized.",
+  input_schema: { type: 'object', properties: { biosketch_id: { type: 'number' } }, required: ['biosketch_id'] },
+};
+
+export const FINALIZE_BIOSKETCH: AnaTool = {
+  name: 'finalize_biosketch',
+  description: "Finalize an NIH biosketch behind the deterministic completeness gate (all required sections addressed). Records a governed signature. Governed + audited.",
+  input_schema: { type: 'object', properties: { biosketch_id: { type: 'number' }, reason: { type: 'string' } }, required: ['biosketch_id'] },
+};
+
 // ─── Protocol Authoring Extensions (C2C-20: templates / milestones / export) ──
 
 export const CREATE_PROTOCOL_TEMPLATE: AnaTool = {
@@ -7749,6 +7832,14 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   UPDATE_DMS_PLAN_ELEMENT,
   REVIEW_DMS_PLAN_COMPLETENESS,
   FINALIZE_DMS_PLAN,
+  CREATE_OTHER_SUPPORT,
+  ADD_OTHER_SUPPORT_ENTRY,
+  REVIEW_OTHER_SUPPORT,
+  CERTIFY_OTHER_SUPPORT,
+  CREATE_BIOSKETCH,
+  UPDATE_BIOSKETCH_SECTION,
+  REVIEW_BIOSKETCH_COMPLETENESS,
+  FINALIZE_BIOSKETCH,
   IMPORT_CITI_RECORDS,
   REVIEW_TRAINING_MATRIX,
   REVIEW_EXPIRING_TRAINING,
