@@ -53,6 +53,12 @@ import { PHARMACOVIGILANCE_TOOLS } from './pharmacovigilanceTools';
 import { COA_PRO_TOOLS } from './coaProTools';
 import { DOSE_OPTIMIZATION_TOOLS } from './doseOptimizationTools';
 import { COMBINATION_PRODUCTS_TOOLS } from './combinationProductsTools';
+import { TRIAL_STATISTICS_TOOLS } from './trialStatisticsTools';
+import { GMP_QUALITY_SYSTEMS_TOOLS } from './gmpQualitySystemsTools';
+import { NONCLINICAL_ADME_TOOLS } from './nonclinicalAdmeTools';
+import { BIOMARKER_TOOLS } from './biomarkerTools';
+import { RARE_DISEASE_TOOLS } from './rareDiseaseTools';
+import { GCP_OPERATIONS_TOOLS } from './gcpOperationsTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7642,6 +7648,24 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // Wave 3 — Combination products & device constituent (PMOA, classification,
   // cGMP, human factors, design controls, submission pathway). Deterministic.
   ...COMBINATION_PRODUCTS_TOOLS,
+  // Wave 4 — Clinical trial statistics & estimands (ICH E9(R1) estimands,
+  // intercurrent events, multiplicity, adaptive, missing data, sample size). Deterministic.
+  ...TRIAL_STATISTICS_TOOLS,
+  // Wave 4 — GMP quality systems & data integrity (ICH Q7, ALCOA+, CAPA,
+  // deviations, Annex 1 sterile, computer system validation). Deterministic.
+  ...GMP_QUALITY_SYSTEMS_TOOLS,
+  // Wave 4 — Nonclinical PK/ADME & toxicokinetics (ADME program, mass balance,
+  // metabolite safety/MIST, TK, reaction phenotyping, protein binding). Deterministic.
+  ...NONCLINICAL_ADME_TOOLS,
+  // Wave 4 — Biomarkers & companion diagnostics (BEST classification, qualification,
+  // CDx co-development, analytical/clinical validation, enrichment). Deterministic.
+  ...BIOMARKER_TOOLS,
+  // Wave 4 — Rare disease & external control arms (natural history, external
+  // controls, small-population design, Bayesian borrowing, endpoints). Deterministic.
+  ...RARE_DISEASE_TOOLS,
+  // Wave 4 — GCP & clinical trial operations (risk-based monitoring, inspection
+  // readiness, GCP compliance, informed consent, deviations, TMF). Deterministic.
+  ...GCP_OPERATIONS_TOOLS,
   // Inference self-awareness: classify a tool's output by determinism pedigree
   // (deterministic_registry / deterministic_query / external_api_live /
   // model_assisted) so AnA can weight bulletproof registry facts above
