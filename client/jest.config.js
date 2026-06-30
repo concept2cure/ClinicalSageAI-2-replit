@@ -36,6 +36,7 @@ export default {
     'cspNonce\\.test\\.ts$',
     'reportOsClient\\.test\\.ts$',
     'query-options\\.test\\.ts$',
+    'LockedModuleCard\\.test\\.tsx$',
   ],
   transformIgnorePatterns: ['/node_modules/(?!wouter)'],
   transform: {
