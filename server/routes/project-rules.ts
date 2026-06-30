@@ -186,7 +186,7 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
       ]
     );
 
-    console.log(`[ProjectRules] Created rule "${data.name}" (${ruleId}) for org ${organizationId}`);
+    console.info(`[ProjectRules] Created rule "${data.name}" (${ruleId}) for org ${organizationId}`);
     res.status(201).json(result.rows[0]);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -496,7 +496,7 @@ router.patch('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
       values
     );
 
-    console.log(`[ProjectRules] Updated rule ${req.params.ruleId}`);
+    console.info(`[ProjectRules] Updated rule ${req.params.ruleId}`);
     res.json(result.rows[0]);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -535,7 +535,7 @@ router.delete('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
     organizationId,
   ]);
 
-  console.log(`[ProjectRules] Deleted rule ${req.params.ruleId}`);
+  console.info(`[ProjectRules] Deleted rule ${req.params.ruleId}`);
   res.json({ message: 'Rule deleted', ruleId: req.params.ruleId });
 }));
 

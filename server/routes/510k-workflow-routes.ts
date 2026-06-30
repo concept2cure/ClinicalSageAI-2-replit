@@ -20,7 +20,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
 
   // POST /:projectId — save workflow data
   router.post('/:projectId', authMiddleware, async (req, res) => {
-    const { projectId } = req.params;
+    const projectId = String(req.params.projectId);
     const numericProjectId = parseInt(projectId);
     if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
       return res.status(400).json({ success: false, error: 'Invalid project ID' });
@@ -309,7 +309,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
 
   // GET /:projectId/stage-data — stage data for client persistence hydration
   router.get('/:projectId/stage-data', authMiddleware, async (req, res) => {
-    const { projectId } = req.params;
+    const projectId = String(req.params.projectId);
     const numericProjectId = parseInt(projectId);
     if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
       return res.status(400).json({ success: false, error: 'Invalid project ID' });
@@ -391,7 +391,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
 
   // GET /:projectId — get 510k workflow data
   router.get('/:projectId', authMiddleware, async (req, res) => {
-    const { projectId } = req.params;
+    const projectId = String(req.params.projectId);
     const numericProjectId = parseInt(projectId);
     if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
       return res.status(400).json({ success: false, error: 'Invalid project ID' });
@@ -429,7 +429,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
 
   // POST /:projectId/generate-document — generate 510k document
   router.post('/:projectId/generate-document', authMiddleware, async (req, res) => {
-    const { projectId } = req.params;
+    const projectId = String(req.params.projectId);
     const numericProjectId = parseInt(projectId);
     if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
       return res.status(400).json({ success: false, error: 'Invalid project ID' });
@@ -500,7 +500,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
 
   // GET /:projectId/audit-trail — audit trail for 510(k) workflow
   router.get('/:projectId/audit-trail', authMiddleware, async (req, res) => {
-    const { projectId } = req.params;
+    const projectId = String(req.params.projectId);
     const numericProjectId = parseInt(projectId);
     if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
       return res.status(400).json({ success: false, error: 'Invalid project ID' });
@@ -528,7 +528,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
 
   // GET /:projectId/data-lineage — data lineage for 510(k) workflow
   router.get('/:projectId/data-lineage', authMiddleware, async (req, res) => {
-    const { projectId } = req.params;
+    const projectId = String(req.params.projectId);
     const numericProjectId = parseInt(projectId);
     if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
       return res.status(400).json({ success: false, error: 'Invalid project ID' });
@@ -549,7 +549,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
 
   // GET /:projectId/versions — version history for 510(k) document
   router.get('/:projectId/versions', authMiddleware, async (req, res) => {
-    const { projectId } = req.params;
+    const projectId = String(req.params.projectId);
     const numericProjectId = parseInt(projectId);
     if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
       return res.status(400).json({ success: false, error: 'Invalid project ID' });
@@ -574,7 +574,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
 
   // GET /:projectId/compliance-report — compliance report for 510(k) submission
   router.get('/:projectId/compliance-report', authMiddleware, async (req, res) => {
-    const { projectId } = req.params;
+    const projectId = String(req.params.projectId);
     const numericProjectId = parseInt(projectId);
     if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
       return res.status(400).json({ success: false, error: 'Invalid project ID' });
