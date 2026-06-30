@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-30T17:08:09.445Z",
+  "generatedAt": "2026-06-30T17:39:18.218Z",
   "git": {
-    "sha": "40b2f1ca5ace917e6ffa934128bdb90547d7ec1c",
+    "sha": "49eb09d373c424b8f3b953434009ad3aaee80dd5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -10,8 +10,8 @@
   },
   "summary": {
     "duplicateBasenames": 231,
-    "largeFilesByBytes": 23,
-    "largeFilesByLines": 67
+    "largeFilesByBytes": 24,
+    "largeFilesByLines": 72
   },
   "findings": {
     "duplicateBasenames": [
@@ -2299,7 +2299,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 754868
+        "bytes": 767679
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2307,7 +2307,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 455824
+        "bytes": 457057
       },
       {
         "file": "server/statistics-service.ts",
@@ -2382,6 +2382,10 @@
         "bytes": 108892
       },
       {
+        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "bytes": 106347
+      },
+      {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
         "bytes": 105877
       }
@@ -2397,11 +2401,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 14935
+        "lines": 15175
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 8330
+        "lines": 8350
       },
       {
         "file": "server/statistics-service.ts",
@@ -2492,8 +2496,16 @@
         "lines": 2177
       },
       {
+        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "lines": 2166
+      },
+      {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
+      },
+      {
+        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
+        "lines": 2151
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
@@ -2536,8 +2548,16 @@
         "lines": 1886
       },
       {
+        "file": "server/services/post-approval/post-approval-knowledge.ts",
+        "lines": 1869
+      },
+      {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
         "lines": 1866
+      },
+      {
+        "file": "server/services/digital-health/digital-health-knowledge.ts",
+        "lines": 1864
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
@@ -2550,6 +2570,10 @@
       {
         "file": "server/routes/regulatory-digital-twin.ts",
         "lines": 1843
+      },
+      {
+        "file": "server/services/vaccine/vaccine-knowledge.ts",
+        "lines": 1836
       },
       {
         "file": "server/services/dataHarvester.js",
@@ -2662,8 +2686,8 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 366,
-      "largeByBytes": 20,
-      "largeByLines": 57
+      "largeByBytes": 21,
+      "largeByLines": 62
     },
     {
       "owner": "Unassigned (TBD)",
