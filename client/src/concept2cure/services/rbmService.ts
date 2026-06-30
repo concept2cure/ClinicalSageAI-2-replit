@@ -72,6 +72,16 @@ export interface RbmKri {
   [key: string]: unknown;
 }
 
+export interface RbmKriValue {
+  id: number;
+  kri_id: number;
+  value: string;
+  status: 'green' | 'amber' | 'red' | null;
+  observed_at: string;
+  note: string | null;
+  [key: string]: unknown;
+}
+
 export interface RbmQtl {
   id: number;
   program_id: string | null;
@@ -264,6 +274,8 @@ class RbmService {
   createKri(body: RbmKriCreate) { return this.request<RbmKri>('POST', `${this.baseUrl}/rbm-kris`, body); }
   updateKri(id: number, patch: RbmKriPatch) { return this.request<RbmKri>('PATCH', `${this.baseUrl}/rbm-kris/${id}`, patch); }
   seedKris(programId: string) { return this.request<RbmKri[]>('POST', `${this.baseUrl}/rbm-kris/seed`, { programId }); }
+  listKriValues(kriId: number) { return this.list<RbmKriValue>(`rbm-kris/${kriId}/values`, {}); }
+  appendKriValue(kriId: number, body: { value: number; observedAt?: string | null; note?: string | null }) { return this.request<RbmKriValue>('POST', `${this.baseUrl}/rbm-kris/${kriId}/values`, body); }
 
   // QTLs
   listQtls(programId?: string) { return this.list<RbmQtl>('rbm-qtls', { program_id: programId }); }

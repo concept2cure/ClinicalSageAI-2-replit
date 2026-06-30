@@ -16,6 +16,7 @@ import rbmService, {
   type RbmRiskItemCreate,
   type RbmRiskItemPatch,
   type RbmKri,
+  type RbmKriValue,
   type RbmKriCreate,
   type RbmKriPatch,
   type RbmQtl,
@@ -170,6 +171,27 @@ export function useUpdateRbmItem(programId: string | null) {
   return useMutation<RbmRiskItem, Error, { id: number; patch: RbmRiskItemPatch }>({
     mutationFn: ({ id, patch }) => rbmService.updateItem(id, patch),
     onSuccess: invalidate,
+  });
+}
+
+export function useRbmKriValues(kriId: number | null) {
+  return useQuery<RbmKriValue[]>({
+    queryKey: [...rbmQueryKeys.all, 'kriValues', kriId ?? -1] as const,
+    queryFn: () => (kriId ? rbmService.listKriValues(kriId) : Promise.resolve([])),
+    enabled: kriId != null,
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useAppendRbmKriValue(programId: string | null) {
+  const qc = useQueryClient();
+  const invalidate = useInvalidateProgram(programId);
+  return useMutation<RbmKriValue, Error, { kriId: number; value: number; observedAt?: string | null; note?: string | null }>({
+    mutationFn: ({ kriId, value, observedAt, note }) => rbmService.appendKriValue(kriId, { value, observedAt, note }),
+    onSuccess: (_data, { kriId }) => {
+      invalidate();
+      qc.invalidateQueries({ queryKey: [...rbmQueryKeys.all, 'kriValues', kriId] });
+    },
   });
 }
 

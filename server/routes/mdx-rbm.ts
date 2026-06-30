@@ -499,6 +499,76 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/* ─── KRI trend history ───────────────────────────────────────────────── */
+
+const appendKriValueBody = z.object({
+  value: z.number(),
+  observedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}([T ].*)?$/).optional().nullable(),
+  note: z.string().max(1000).optional().nullable(),
+});
+
+/** Append a KRI reading; recompute status and roll it onto the KRI snapshot. */
+router.post('/rbm-kris/:id/values', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = numericId(req.params.id);
+  if (id === null) return clientError(res, 422, 'id must be numeric');
+  const parsed = appendKriValueBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  const p = parsed.data;
+  try {
+    const cur = await pool.query(
+      `SELECT direction, threshold_amber, threshold_red FROM rbm_kris WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [id, orgId],
+    );
+    if (cur.rows.length === 0) return notFoundInTenant(res, 'KRI');
+    const row = cur.rows[0];
+    const dir: KriDirection = (row.direction ?? 'higher_worse') as KriDirection;
+    const status = kriStatus(p.value, num(row.threshold_amber), num(row.threshold_red), dir);
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const ins = await client.query(
+        `INSERT INTO rbm_kri_values (organization_id, kri_id, value, status, observed_at, note)
+         VALUES ($1,$2,$3,$4, COALESCE($5::timestamptz, NOW()), $6) RETURNING *`,
+        [orgId, id, p.value, status, p.observedAt ?? null, p.note ?? null],
+      );
+      await client.query(
+        `UPDATE rbm_kris SET current_value = $1, status = $2, evaluated_at = NOW(), updated_at = NOW()
+          WHERE id = $3 AND organization_id = $4`,
+        [p.value, status, id, orgId],
+      );
+      await client.query('COMMIT');
+      return created(res, ins.rows[0]);
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) { return serverError(res, log, 'append-kri-value', err); }
+});
+
+/** List a KRI's readings (oldest first) for a trend sparkline. */
+router.get('/rbm-kris/:id/values', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = numericId(req.params.id);
+  if (id === null) return clientError(res, 422, 'id must be numeric');
+  try {
+    const own = await pool.query(
+      `SELECT 1 FROM rbm_kris WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [id, orgId],
+    );
+    if (own.rows.length === 0) return notFoundInTenant(res, 'KRI');
+    const { rows } = await pool.query(
+      `SELECT * FROM rbm_kri_values WHERE kri_id = $1 AND organization_id = $2 ORDER BY observed_at ASC LIMIT 500`,
+      [id, orgId],
+    );
+    return ok(res, rows, { count: rows.length });
+  } catch (err) { return serverError(res, log, 'list-kri-values', err); }
+});
+
 // ════════════════════════════════════════════════════════════════════════════
 // QUALITY TOLERANCE LIMITS
 // ════════════════════════════════════════════════════════════════════════════

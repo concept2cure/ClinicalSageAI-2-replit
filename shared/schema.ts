@@ -18316,6 +18316,26 @@ export const insertRbmKriSchema = createInsertSchemaOmit(rbmKris, {
   id: true, createdAt: true, updatedAt: true, deletedAt: true,
 });
 
+export const rbmKriValues = pgTable(
+  'rbm_kri_values',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    kriId:          integer('kri_id').notNull().references(() => rbmKris.id, { onDelete: 'cascade' }),
+    value:          numeric('value', { precision: 12, scale: 4 }).notNull(),
+    status:         text('status'),
+    observedAt:     timestamp('observed_at', { withTimezone: true }).defaultNow().notNull(),
+    note:           text('note'),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('rbm_kri_values_org_idx').on(table.organizationId),
+    kriIdx: index('rbm_kri_values_kri_idx').on(table.kriId, table.observedAt),
+  }),
+);
+export type RbmKriValue = InferSelectModel<typeof rbmKriValues>;
+
 export const rbmQtls = pgTable(
   'rbm_qtls',
   {
