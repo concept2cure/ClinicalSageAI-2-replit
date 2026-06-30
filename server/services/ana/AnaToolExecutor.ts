@@ -2875,6 +2875,38 @@ registerToolHandler('scan_patient_profiles', async (input, ctx) => {
   });
 });
 
+// RBM Risk Review report — the inspection-ready deliverable.
+registerToolHandler('generate_rbm_report', async (input, ctx) => {
+  const programId = typeof input.programId === 'string' ? input.programId : undefined;
+  const orgId = ctx?.organizationId ?? null;
+  if (!programId || !RBM_UUID_RE.test(programId) || orgId == null) {
+    return JSON.stringify({ source: 'AnA RBM', error: 'A valid programId (UUID) and organization context are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { loadRiskReviewInput } = await import('../rbm/risk-report-data.js');
+  const { buildRiskReview, renderRiskReviewMarkdown } = await import('../rbm/risk-report.js');
+  const asOf = new Date().toISOString();
+  const data = await loadRiskReviewInput(getPool(), orgId, programId, asOf);
+  const report = buildRiskReview(data);
+  return JSON.stringify({ source: 'AnA RBM Risk Review', report, markdown: renderRiskReviewMarkdown(report) });
+});
+
+// RBM attention feed — the daily monitoring driver.
+registerToolHandler('get_rbm_attention', async (input, ctx) => {
+  const programId = typeof input.programId === 'string' ? input.programId : undefined;
+  const orgId = ctx?.organizationId ?? null;
+  if (!programId || !RBM_UUID_RE.test(programId) || orgId == null) {
+    return JSON.stringify({ source: 'AnA RBM', error: 'A valid programId (UUID) and organization context are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { loadRiskReviewInput } = await import('../rbm/risk-report-data.js');
+  const { buildAttentionFeed } = await import('../rbm/risk-report.js');
+  const asOf = new Date().toISOString();
+  const data = await loadRiskReviewInput(getPool(), orgId, programId, asOf);
+  const items = buildAttentionFeed(data);
+  return JSON.stringify({ source: 'AnA RBM Attention', count: items.length, items });
+});
+
 // Regulatory-pathway advisor — drug/biologic/device/IVD routes (FDA & EU).
 registerToolHandler('advise_regulatory_pathway', async (input) => {
   const pathway = typeof input.pathway === 'string' ? input.pathway : undefined;

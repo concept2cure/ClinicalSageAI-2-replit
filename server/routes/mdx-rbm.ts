@@ -63,6 +63,10 @@ import {
   detectSiteOutliers, scorePatientCohort,
   type SiteMetric, type PatientMetric,
 } from '../services/rbm/central-statistical-monitoring';
+import {
+  buildRiskReview, renderRiskReviewMarkdown, buildAttentionFeed,
+} from '../services/rbm/risk-report';
+import { loadRiskReviewInput } from '../services/rbm/risk-report-data';
 
 const router = Router();
 const log = createScopedLogger('mdx-rbm');
@@ -1303,6 +1307,40 @@ router.get('/rbm-summary/:programId', async (req, res) => {
       sites: sites.rows[0],
     });
   } catch (err) { return serverError(res, log, 'summary', err); }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// RISK REVIEW REPORT + ATTENTION FEED (premium deliverable + daily driver)
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Assemble the aggregated inputs for the risk review / attention feed. */
+const assembleReviewInput = (orgId: number, programId: string, asOf: string) =>
+  loadRiskReviewInput(pool, orgId, programId, asOf);
+
+/** Inspection-ready ICH E6(R3) risk review (structured + markdown). */
+router.get('/rbm-report/:programId', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const programId = String(req.params.programId);
+  if (!UUID_RE.test(programId)) return clientError(res, 422, 'programId must be a UUID');
+  try {
+    const input = await assembleReviewInput(orgId, programId, new Date().toISOString());
+    const report = buildRiskReview(input);
+    return ok(res, { report, markdown: renderRiskReviewMarkdown(report) });
+  } catch (err) { return serverError(res, log, 'report', err); }
+});
+
+/** Prioritized "needs attention now" feed. */
+router.get('/rbm-attention/:programId', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const programId = String(req.params.programId);
+  if (!UUID_RE.test(programId)) return clientError(res, 422, 'programId must be a UUID');
+  try {
+    const input = await assembleReviewInput(orgId, programId, new Date().toISOString());
+    const items = buildAttentionFeed(input);
+    return ok(res, items, { count: items.length });
+  } catch (err) { return serverError(res, log, 'attention', err); }
 });
 
 export default router;

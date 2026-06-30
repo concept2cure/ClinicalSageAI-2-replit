@@ -8,6 +8,7 @@ export interface RbmNavItem {
 
 export const RBM_NAV: RbmNavItem[] = [
   { id: 'overview',  label: 'Overview' },
+  { id: 'report',    label: 'Risk review report' },
   { id: 'ract',      label: 'Risk assessment (RACT)' },
   { id: 'kris',      label: 'Key risk indicators' },
   { id: 'qtls',      label: 'Quality tolerance limits' },
@@ -116,5 +117,10 @@ export const RBM_SUGGESTIONS: Record<string, string[]> = {
     'Show the site oversight profile ranked by risk',
     'Which sites carry the most open high-severity signals',
     'Summarize what each enhanced-tier site needs',
+  ],
+  report: [
+    'Generate the ICH E6(R3) risk review report for this study',
+    'Summarize the overall risk posture for an inspection',
+    'What would a regulator flag in the current risk profile',
   ],
 };

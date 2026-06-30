@@ -757,6 +757,33 @@ export const SCAN_PATIENT_PROFILES: AnaTool = {
   },
 };
 
+export const GENERATE_RBM_REPORT: AnaTool = {
+  name: 'generate_rbm_report',
+  description:
+    'Generates an inspection-ready ICH E6(R3) Risk Review for a program from its live RBM data — overall ' +
+    'risk, open critical CtQ factors, red/amber KRIs, breached/approaching QTLs, high signals, enhanced-tier ' +
+    'sites, flagged patients and overdue actions — as a structured report plus a markdown document. Use to ' +
+    'produce the quality-oversight / inspection deliverable.',
+  input_schema: {
+    type: 'object',
+    properties: { programId: { type: 'string', description: 'Program (project) UUID.' } },
+    required: ['programId'],
+  },
+};
+
+export const GET_RBM_ATTENTION: AnaTool = {
+  name: 'get_rbm_attention',
+  description:
+    'Returns the prioritized "needs attention now" feed for a program: breached QTLs, high signals, red KRIs, ' +
+    'flagged patients, overdue actions and unapproved active assessments, ordered by severity. Use for a fast ' +
+    'monitoring stand-up or daily review.',
+  input_schema: {
+    type: 'object',
+    properties: { programId: { type: 'string', description: 'Program (project) UUID.' } },
+    required: ['programId'],
+  },
+};
+
 export const ADVISE_REGULATORY_PATHWAY: AnaTool = {
   name: 'advise_regulatory_pathway',
   description:
@@ -7906,6 +7933,8 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   PRIORITIZE_MONITORING_QUERIES,
   RUN_CENTRAL_MONITORING,
   SCAN_PATIENT_PROFILES,
+  GENERATE_RBM_REPORT,
+  GET_RBM_ATTENTION,
   ADVISE_GCP,
   REVIEW_INFORMED_CONSENT,
   ADVISE_COA_SELECTION,

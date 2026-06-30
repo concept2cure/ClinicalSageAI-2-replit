@@ -178,6 +178,26 @@ export interface RbmPlanDetail extends RbmPlan {
   actions: RbmAction[];
 }
 
+export interface RbmReportSection { title: string; status: 'ok' | 'attention' | 'critical'; items: string[] }
+export interface RbmRiskReview {
+  programId: string;
+  asOf: string;
+  framework: string;
+  overallRisk: string;
+  headline: string;
+  attentionCount: number;
+  approved: boolean;
+  sections: RbmReportSection[];
+}
+
+export interface RbmAttentionItem {
+  kind: 'kri' | 'qtl' | 'signal' | 'patient' | 'action' | 'assessment';
+  severity: 'critical' | 'high' | 'medium';
+  label: string;
+  detail?: string;
+  [key: string]: unknown;
+}
+
 export interface RbmSummary {
   overallRisk: 'low' | 'medium' | 'high' | null;
   riskItems: { total: number; critical: number; open: number; high: number };
@@ -329,6 +349,10 @@ class RbmService {
   // Governed approval (reason-for-change)
   approveAssessment(id: number, reason: string) { return this.request<RbmAssessment>('POST', `${this.baseUrl}/rbm-assessments/${id}/approve`, { reason }); }
   approvePlan(id: number, reason: string) { return this.request<RbmPlan>('POST', `${this.baseUrl}/rbm-monitoring-plans/${id}/approve`, { reason }); }
+
+  // Risk Review report (premium deliverable) + attention feed (daily driver)
+  getReport(programId: string) { return this.request<{ report: RbmRiskReview; markdown: string }>('GET', `${this.baseUrl}/rbm-report/${programId}`); }
+  getAttention(programId: string) { return this.list<RbmAttentionItem>(`rbm-attention/${programId}`, {}); }
 
   // Plans + actions
   listPlans(programId?: string) { return this.list<RbmPlan>('rbm-monitoring-plans', { program_id: programId }); }

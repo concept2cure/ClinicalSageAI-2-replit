@@ -31,6 +31,8 @@ import rbmService, {
   type RbmPlanCreate,
   type RbmAction,
   type RbmActionCreate,
+  type RbmRiskReview,
+  type RbmAttentionItem,
   type RbmSummary,
 } from '../services/rbmService';
 
@@ -58,6 +60,24 @@ export function useRbmSummary(programId: string | null) {
     queryFn: () => (programId ? rbmService.getSummary(programId) : null),
     enabled: enabledUuid(programId),
     staleTime: 60 * 1000,
+  });
+}
+
+export function useRbmReport(programId: string | null) {
+  return useQuery<{ report: RbmRiskReview; markdown: string } | null>({
+    queryKey: [...rbmQueryKeys.all, 'report', programId ?? ''] as const,
+    queryFn: () => (programId ? rbmService.getReport(programId) : null),
+    enabled: enabledUuid(programId),
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useRbmAttention(programId: string | null) {
+  return useQuery<RbmAttentionItem[]>({
+    queryKey: [...rbmQueryKeys.all, 'attention', programId ?? ''] as const,
+    queryFn: () => (programId ? rbmService.getAttention(programId) : Promise.resolve([])),
+    enabled: enabledUuid(programId),
+    staleTime: 30 * 1000,
   });
 }
 

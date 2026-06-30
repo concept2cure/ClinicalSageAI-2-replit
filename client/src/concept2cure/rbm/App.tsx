@@ -19,6 +19,7 @@ import { useProjects } from '../hooks/useProjects';
 import {
   useRbmSummary, useRbmItems, useRbmKris, useRbmQtls, useRbmSignals,
   useRbmSiteRisk, useRbmPlans, useRbmSiteOversight, useRbmPatientProfiles,
+  useRbmReport, useRbmAttention,
   useSeedRbmAssessment, useSeedRbmKris, useSeedRbmQtls, useRecomputeSiteRisk,
   useRunCentralMonitoring, useScoreRbmPatients,
 } from '../hooks/useRbm';
@@ -348,6 +349,32 @@ function Patients({ programId }: { programId: string | null }) {
   );
 }
 
+function Report({ programId }: { programId: string | null }) {
+  const { data, isLoading } = useRbmReport(programId);
+  const { data: attention = [] } = useRbmAttention(programId);
+  if (!programId) return <StateRow>Select a study.</StateRow>;
+  if (isLoading) return <StateRow>Loading…</StateRow>;
+  if (!data) return <StateRow>No risk review available yet. Seed an assessment and KRIs first.</StateRow>;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {attention.length > 0 && (
+        <div style={{ border: '1px solid var(--border,#e6e2d8)', borderRadius: 12, padding: 16, background: 'var(--bg-000,#fff)' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }}>Needs attention now ({attention.length})</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {attention.slice(0, 12).map((a, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+                <Chip tone={a.severity === 'critical' || a.severity === 'high' ? 'err' : 'warn'}>{a.severity}</Chip>
+                <span>{a.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <pre style={{ whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.5, fontFamily: 'inherit', border: '1px solid var(--border,#e6e2d8)', borderRadius: 12, padding: 16, background: 'var(--bg-000,#fff)', margin: 0 }}>{data.markdown}</pre>
+    </div>
+  );
+}
+
 // ── Shell ─────────────────────────────────────────────────────────────────────
 
 export function RbmApp({ activeProjectId, initialNav = 'overview' }: RbmAppProps) {
@@ -372,6 +399,7 @@ export function RbmApp({ activeProjectId, initialNav = 'overview' }: RbmAppProps
 
   let surface: React.ReactNode;
   switch (activeNav) {
+    case 'report':  surface = <Report programId={projectId} />; break;
     case 'ract':    surface = <Ract programId={projectId} />; break;
     case 'kris':    surface = <Kris programId={projectId} />; break;
     case 'qtls':    surface = <Qtls programId={projectId} />; break;

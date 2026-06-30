@@ -195,6 +195,31 @@ this sits inside the same platform that authored the protocol and CtQ factors, s
 CSM, KRIs and the RACT share one tenant-scoped, 21 CFR Part 11-audited data
 fabric, and AnA can drive the whole loop conversationally.
 
+## 8. Subscription-value enhancement roadmap
+
+How each enhancement grows recurring revenue — by **seats** (more daily users),
+**tier** (premium capability), **stickiness** (retention / switching cost),
+**cross-sell** (pulls other paid modules), or **enterprise** (portfolio scale).
+
+| Enhancement | Lever | Status |
+|---|---|---|
+| **Risk Review Report** — inspection-ready ICH E6(R3) deliverable auto-generated from live data (`/api/mdx/rbm-report`, `generate_rbm_report`) | Tier + cross-sell (authoring/report module) | **Shipped (this pass)** |
+| **"Needs attention now" feed** — red KRIs, breached QTLs, high signals, flagged patients, overdue actions (`/api/mdx/rbm-attention`, `get_rbm_attention`) | Seats + stickiness (daily driver for CRAs/DMs/medical monitors) | **Shipped (this pass)** |
+| **KRI trend history** + central statistical monitoring + Patient Profiles | Tier (advanced analytics) | Shipped |
+| **Governed e-sign approval** (reason-for-change, Part 11) | Tier + stickiness (audit trail lock-in) | Shipped |
+| Scheduled report + email/Slack alert delivery | Seats + stickiness (push, not pull) | Backlog |
+| Portfolio rollup (sponsor-wide cross-study risk board) | Enterprise (priced per study/program) | Backlog |
+| Anonymized KRI/QTL **benchmarking** vs a cohort | Tier (premium analytics) | Backlog |
+| EDC/CTMS **connectors** (live KRI values, subject metrics) | Tier + stickiness (data gravity) | Backlog |
+| Action **SLA / escalation** workflow with owners + due dates | Seats + stickiness (managed workflow) | Partial (overdue surfaced) |
+| One-click **export to the submission/CSR** module (risk file → dossier) | Cross-sell | Backlog |
+
+**Commercial thesis.** The Report is what a sponsor *buys* (the deliverable);
+the attention feed is what makes them *log in every day* (retention); the
+agentic AnA tools and the same-platform design-to-conduct continuity are what
+they *can't get from a point solution*. Packaging: RBM as a conduct-layer tier,
+with portfolio rollup + benchmarking as an enterprise add-on.
+
 ## Sources
 
 - FDA Publishes ICH E6(R3) — ACRP: https://acrpnet.org/2025/09/16/fda-publishes-ich-e6r3-what-it-means-for-u-s-clinical-trials
