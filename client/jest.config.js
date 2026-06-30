@@ -25,9 +25,13 @@ export default {
     '/concept2cure/insights/',
     '/i18n/__tests__/',
     '/portal-v2/',
+    // Translation workspace client tests are vitest-flavored (import from
+    // 'vitest'); vitest picks them up via its client/** include.
+    '/concept2cure/translation/',
     // Individual vitest-flavored test files outside the listed dirs.
     // Each imports from 'vitest', which Jest can't load. Vitest picks
     // them up via vitest.config.ts's client/** include.
+    'LockedModuleCard\\.test\\.tsx$',
     'schemaValidator\\.test\\.ts$',
     'cspNonce\\.test\\.ts$',
     'reportOsClient\\.test\\.ts$',

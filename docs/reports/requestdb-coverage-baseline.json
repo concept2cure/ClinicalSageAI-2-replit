@@ -15,6 +15,7 @@
     "server/routes/cerv2-document-routes.ts",
     "server/routes/cerv2-sections.ts",
     "server/routes/cerv2-versions.ts",
+    "server/routes/charters.ts",
     "server/routes/clients-routes.ts",
     "server/routes/coauthor.ts",
     "server/routes/collaboration.ts",

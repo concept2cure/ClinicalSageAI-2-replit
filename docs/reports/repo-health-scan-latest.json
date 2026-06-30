@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-06-30T19:09:18.546Z",
+  "generatedAt": "2026-06-30T21:36:32.588Z",
   "git": {
-    "sha": "3e13855485e06695f18c1209c639692d7d47be26",
-    "branch": "concept2cure-v2"
+    "sha": "d62ebac4e37e87d4689d6bca82e158fc92e4cd0c",
+    "branch": "claude/translation-pmda-pipeline"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 232,
+    "duplicateBasenames": 233,
     "largeFilesByBytes": 24,
     "largeFilesByLines": 73
   },
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 96,
+        "count": 98,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -103,6 +103,8 @@
           "server/services/templates/index.ts",
           "server/services/tools/index.ts",
           "server/services/translation/index.ts",
+          "server/services/translation/qa/index.ts",
+          "server/services/translation/terminology/index.ts",
           "server/types/index.ts",
           "services/ai/detectors/index.ts",
           "services/ai/index.ts",
@@ -119,7 +121,7 @@
       },
       {
         "basename": "types",
-        "count": 43,
+        "count": 45,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -159,6 +161,8 @@
           "server/services/rules-engine/types.ts",
           "server/services/sentinel/types.ts",
           "server/services/submission-gateways/types.ts",
+          "server/services/translation/qa/types.ts",
+          "server/services/translation/terminology/types.ts",
           "server/services/translation/types.ts",
           "server/startup/types.ts",
           "services/proof/types.ts",
@@ -555,6 +559,17 @@
         ]
       },
       {
+        "basename": "projects",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/components/concept2cure-projects/data/projects.ts",
+          "client/src/concept2cure/translation/surfaces/Projects.tsx",
+          "database/schema/projects.ts",
+          "design-system/ui_kits/home/Projects.jsx",
+          "server/routes/c2c/projects.ts"
+        ]
+      },
+      {
         "basename": "search",
         "count": 5,
         "paths": [
@@ -727,16 +742,6 @@
           "design-system/ui_kits/mdx/surfaces/Onboarding.jsx",
           "ui_kits/mdx/data/onboarding.js",
           "ui_kits/mdx/surfaces/Onboarding.jsx"
-        ]
-      },
-      {
-        "basename": "projects",
-        "count": 4,
-        "paths": [
-          "client/src/concept2cure/components/concept2cure-projects/data/projects.ts",
-          "database/schema/projects.ts",
-          "design-system/ui_kits/home/Projects.jsx",
-          "server/routes/c2c/projects.ts"
         ]
       },
       {
@@ -1773,6 +1778,14 @@
         ]
       },
       {
+        "basename": "oncology",
+        "count": 2,
+        "paths": [
+          "server/services/ana/therapeutic-area-profiles/oncology.ts",
+          "server/services/translation/terminology/domains/oncology.ts"
+        ]
+      },
+      {
         "basename": "operating-system",
         "count": 2,
         "paths": [
@@ -2694,11 +2707,18 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 367,
+      "duplicateGroups": 373,
       "largeByBytes": 21,
       "largeByLines": 62
     },
@@ -2710,7 +2730,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 151,
+      "duplicateGroups": 152,
       "largeByBytes": 0,
       "largeByLines": 1
     },

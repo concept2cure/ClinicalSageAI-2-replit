@@ -22,7 +22,7 @@
 
 import { promises as fs } from 'fs';
 import { createHash, createHmac } from 'crypto';
-import * as https from 'https';
+import * as https from 'node:https';
 import { URL } from 'url';
 import { pool } from '../../db';
 import { readVerifiedBundle } from './bundle-integrity';

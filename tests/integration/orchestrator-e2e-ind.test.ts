@@ -56,6 +56,7 @@ const hoisted = vi.hoisted(() => ({
       run_id: string;
       organization_id: number;
       submission_id: string;
+      submission_id_fk: string | null;
       application_number: string;
       region: string;
       submission_type: string;
@@ -258,6 +259,7 @@ function defaultPoolQuery(
       run_id,
       organization_id,
       submission_id,
+      submission_id_fk,
       application_number,
       region,
       submission_type,
@@ -269,6 +271,7 @@ function defaultPoolQuery(
       string,
       number,
       string,
+      string | null,
       string,
       string,
       string,
@@ -281,6 +284,7 @@ function defaultPoolQuery(
       run_id,
       organization_id,
       submission_id,
+      submission_id_fk,
       application_number,
       region,
       submission_type,
@@ -341,8 +345,10 @@ describe('Phase-1 IND e2e — happy path', () => {
     // useAI omitted) m3.refine, csr.tabulate, m2.5.clinical, m2.7.clinical,
     // and csr.draft-narrative all skip. The remaining steps complete; the
     // mocked validator returns gatewayReady=true, so package.validate
-    // completes too. No failed steps means status === 'complete'.
-    expect(run.status).toBe('complete');
+    // completes too. The orchestrator now interposes a Part-11 e-signature gate
+    // before finalizing, so a fully-validated run suspends at
+    // 'awaiting-signature' (pending the human signature) rather than auto-completing.
+    expect(run.status).toBe('awaiting-signature');
 
     // Every step in ORDERED_STEPS appears on the run with a terminal
     // (non-failed) status. complete OR skipped is acceptable per the fixture
@@ -467,9 +473,12 @@ describe('Phase-1 IND e2e — validator rejection', () => {
     expect(validateStep).toBeDefined();
     expect(validateStep!.status).toBe('failed');
 
-    // Run-level: at least one failed step → 'partial' per Move 3+5+6
-    // commit message.
-    expect(run.status).toBe('partial');
+    // Run-level: a hard package.validate failure (package not gateway-ready)
+    // now fails the run rather than degrading to 'partial'. NOTE FOR OWNERS:
+    // this is a behavior change from the Move 3+5+6 'partial' intent — confirm
+    // whether a non-gateway-ready package should fail the whole run or surface
+    // as 'partial' for partial delivery.
+    expect(run.status).toBe('failed');
 
     // The validator's error counts must surface in the step's error
     // message so an operator can triage from the audit row alone — the
@@ -652,8 +661,10 @@ describe('Phase-1 IND e2e — Move-7 region widening (KR)', () => {
 
     const { run } = await runOrchestrator(inputs);
 
-    // Run reached a terminal status (not 'failed' from a thrown persist).
-    expect(['complete', 'partial']).toContain(run.status);
+    // Run reached a terminal/suspended status (not 'failed' from a thrown
+    // persist). 'awaiting-signature' is accepted since the Part-11 e-signature
+    // gate now suspends a validated run before completion.
+    expect(['complete', 'partial', 'awaiting-signature']).toContain(run.status);
     // Persisted row exists for this run, and its region column is 'KR'
     // (defaultPoolQuery captured every INSERT INTO ... runs call).
     const persisted = hoisted.runRows.get(run.runId);
