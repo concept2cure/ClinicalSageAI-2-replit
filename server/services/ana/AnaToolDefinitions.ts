@@ -4573,6 +4573,40 @@ export const REVIEW_CONSENT_COMPLETENESS: AnaTool = {
   input_schema: { type: 'object', properties: { form_id: { type: 'number' } }, required: ['form_id'] },
 };
 
+// ─── NIH Data Management & Sharing Plan (C2C-23) ─────────────────────────────
+
+export const CREATE_DMS_PLAN: AnaTool = {
+  name: 'create_dms_plan',
+  description: "Create an NIH Data Management & Sharing (DMS) plan (optionally linked to a grant proposal and/or protocol document), auto-seeded with the six required DMS plan elements (NIH NOT-OD-21-013) as not-yet-addressed rows. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { title: { type: 'string' }, grant_proposal_id: { type: 'number' }, protocol_document_id: { type: 'number' }, reason: { type: 'string' } },
+    required: ['title'],
+  },
+};
+
+export const UPDATE_DMS_PLAN_ELEMENT: AnaTool = {
+  name: 'update_dms_plan_element',
+  description: "Write a DMS plan element's narrative content and mark it addressed. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { element_id: { type: 'number' }, content: { type: 'string' }, addressed: { type: 'boolean' }, reason: { type: 'string' } },
+    required: ['element_id'],
+  },
+};
+
+export const REVIEW_DMS_PLAN_COMPLETENESS: AnaTool = {
+  name: 'review_dms_plan_completeness',
+  description: "Read-only DMS plan completeness: percent of the six required NIH DMS plan elements addressed, the missing elements, and whether the plan can be finalized.",
+  input_schema: { type: 'object', properties: { plan_id: { type: 'number' } }, required: ['plan_id'] },
+};
+
+export const FINALIZE_DMS_PLAN: AnaTool = {
+  name: 'finalize_dms_plan',
+  description: "Finalize an NIH DMS plan behind the deterministic completeness gate (all six required elements addressed). Records a governed signature. Governed + audited.",
+  input_schema: { type: 'object', properties: { plan_id: { type: 'number' }, reason: { type: 'string' } }, required: ['plan_id'] },
+};
+
 // ─── Protocol Authoring Extensions (C2C-20: templates / milestones / export) ──
 
 export const CREATE_PROTOCOL_TEMPLATE: AnaTool = {
@@ -7711,6 +7745,10 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   CREATE_CONSENT_FORM,
   UPDATE_CONSENT_ELEMENT,
   REVIEW_CONSENT_COMPLETENESS,
+  CREATE_DMS_PLAN,
+  UPDATE_DMS_PLAN_ELEMENT,
+  REVIEW_DMS_PLAN_COMPLETENESS,
+  FINALIZE_DMS_PLAN,
   IMPORT_CITI_RECORDS,
   REVIEW_TRAINING_MATRIX,
   REVIEW_EXPIRING_TRAINING,

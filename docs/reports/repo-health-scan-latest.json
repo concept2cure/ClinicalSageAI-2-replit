@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-30T17:08:09.445Z",
+  "generatedAt": "2026-06-30T18:00:26.188Z",
   "git": {
-    "sha": "40b2f1ca5ace917e6ffa934128bdb90547d7ec1c",
+    "sha": "40032f318ea142bb77d0ba34f7d05906553c925b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,9 +9,9 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 231,
-    "largeFilesByBytes": 23,
-    "largeFilesByLines": 67
+    "duplicateBasenames": 232,
+    "largeFilesByBytes": 24,
+    "largeFilesByLines": 72
   },
   "findings": {
     "duplicateBasenames": [
@@ -1436,6 +1436,14 @@
         ]
       },
       {
+        "basename": "dmsp",
+        "count": 2,
+        "paths": [
+          "server/routes/dmsp.ts",
+          "shared/schema/dmsp.ts"
+        ]
+      },
+      {
         "basename": "doctypes",
         "count": 2,
         "paths": [
@@ -2299,7 +2307,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 754868
+        "bytes": 771502
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2307,7 +2315,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 455824
+        "bytes": 459022
       },
       {
         "file": "server/statistics-service.ts",
@@ -2382,6 +2390,10 @@
         "bytes": 108892
       },
       {
+        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "bytes": 106347
+      },
+      {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
         "bytes": 105877
       }
@@ -2397,11 +2409,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 14935
+        "lines": 15229
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 8330
+        "lines": 8388
       },
       {
         "file": "server/statistics-service.ts",
@@ -2492,8 +2504,16 @@
         "lines": 2177
       },
       {
+        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "lines": 2166
+      },
+      {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
+      },
+      {
+        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
+        "lines": 2151
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
@@ -2536,8 +2556,16 @@
         "lines": 1886
       },
       {
+        "file": "server/services/post-approval/post-approval-knowledge.ts",
+        "lines": 1869
+      },
+      {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
         "lines": 1866
+      },
+      {
+        "file": "server/services/digital-health/digital-health-knowledge.ts",
+        "lines": 1864
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
@@ -2550,6 +2578,10 @@
       {
         "file": "server/routes/regulatory-digital-twin.ts",
         "lines": 1843
+      },
+      {
+        "file": "server/services/vaccine/vaccine-knowledge.ts",
+        "lines": 1836
       },
       {
         "file": "server/services/dataHarvester.js",
@@ -2661,9 +2693,9 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 366,
-      "largeByBytes": 20,
-      "largeByLines": 57
+      "duplicateGroups": 367,
+      "largeByBytes": 21,
+      "largeByLines": 62
     },
     {
       "owner": "Unassigned (TBD)",
@@ -2679,7 +2711,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 59,
+      "duplicateGroups": 60,
       "largeByBytes": 1,
       "largeByLines": 2
     },
