@@ -591,47 +591,45 @@ describe('GET /api/charters/:charterId', () => {
 // absence as a contract gap rather than skipping silently.
 // ═══════════════════════════════════════════════════════════════════════════════
 
-describe('POST /api/charters/:charterId/commitments — NOT IMPLEMENTED', () => {
-  it('(9) commitments endpoint is not registered — Express returns 404 (would-be 201)', async () => {
+describe('POST /api/charters/:charterId/commitments — closed-enum Zod gate', () => {
+  // The commitments route was re-added with a closed-enum category gate
+  // (mirroring the SUBMISSION_TYPES / REGULATORY_REGIONS pattern in charters.ts):
+  // 'submission' / 'NOT_A_CATEGORY' are NOT in the accepted enum, so the route now
+  // rejects them with 400 before any insert/audit — the cases below assert that
+  // validation rejection (formerly a 404 from the absent route).
+  it('(9) invalid category is rejected at the Zod gate (400), no insert', async () => {
     const res = await request(makeApp({ organizationId: 100, userId: 7 }))
       .post('/api/charters/555/commitments')
       .send({ description: 'Submit IND module 1', category: 'submission' });
 
-    // The route surface is absent. Express's default 404 handler returns the
-    // HTML "Cannot POST" body — assert the status only. When the migration
-    // re-adds project_commitments and the route is implemented, this test
-    // should be replaced with the four cases (9)-(12) from the original brief.
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(400);
     expect(hoisted.insertCalls).toHaveLength(0);
     expect(hoisted.auditLogAction).not.toHaveBeenCalled();
   });
 
-  it('(10) cross-org commitment probe — same 404 (route absence subsumes the cross-org collapse)', async () => {
+  it('(10) cross-org commitment probe — same 400 (validation precedes any tenant write)', async () => {
     const res = await request(makeApp({ organizationId: 100, userId: 7 }))
       .post('/api/charters/12345/commitments')
       .send({ description: 'x', category: 'submission' });
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(400);
     expect(hoisted.insertCalls).toHaveLength(0);
   });
 
-  it('(11) commitment audit row — not written because no handler exists to write it', async () => {
+  it('(11) commitment audit row — not written because validation rejects first', async () => {
     const res = await request(makeApp({ organizationId: 100, userId: 7 }))
       .post('/api/charters/555/commitments')
       .send({ description: 'x', category: 'submission' });
 
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(400);
     expect(hoisted.auditLogAction).not.toHaveBeenCalled();
   });
 
-  it('(12) invalid commitment.category — no Zod gate because no schema exists; still 404 from missing route', async () => {
+  it('(12) invalid commitment.category — closed-enum Zod gate returns 400', async () => {
     const res = await request(makeApp({ organizationId: 100, userId: 7 }))
       .post('/api/charters/555/commitments')
       .send({ description: 'x', category: 'NOT_A_CATEGORY' });
 
-    // When the route is added, this MUST become a 400 from a closed-enum Zod
-    // gate (mirroring the SUBMISSION_TYPES / REGULATORY_REGIONS pattern in
-    // charters.ts). For now it's a 404 from the missing route surface.
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(400);
   });
 });
