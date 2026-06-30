@@ -247,17 +247,22 @@ const RunModeBSchema = RunCommonSchema.extend({
   projectId: z.undefined().optional(),
 });
 
-const RunSchema = z.discriminatedUnion('mode', [
-  RunModeASchema.extend({ mode: z.literal('project') }),
-  RunModeBSchema.extend({ mode: z.literal('inline').optional() }).transform(d => ({ ...d, mode: 'inline' as const })),
-]).or(
-  // Permit legacy callers that don't supply `mode` — auto-discriminate from
-  // the presence of `projectId`.
-  z.union([
-    RunModeASchema.transform(d => ({ ...d, mode: 'project' as const })),
-    RunModeBSchema.transform(d => ({ ...d, mode: 'inline' as const })),
-  ]),
-);
+// The two run modes auto-discriminate by the presence of `projectId`
+// (Mode A requires it; Mode B forbids it), so a plain union over transformed
+// branches is sufficient — and, unlike `discriminatedUnion`, it can legally
+// contain `.transform()`ed options. Each branch normalizes `mode` to a literal
+// so downstream code can still narrow on `parsed.data.mode`. Any `mode` field a
+// legacy caller sends is stripped by the (non-strict) object schema and ignored.
+// A factory lets the regenerate route reuse the exact same shape plus its own
+// fields without calling `.extend()` on the resulting union.
+function buildRunSchema<T extends z.ZodRawShape>(extraShape: T) {
+  return z.union([
+    RunModeASchema.extend(extraShape).transform(d => ({ ...d, mode: 'project' as const })),
+    RunModeBSchema.extend(extraShape).transform(d => ({ ...d, mode: 'inline' as const })),
+  ]);
+}
+
+const RunSchema = buildRunSchema({});
 
 // ── Routes ──────────────────────────────────────────────────────────────────
 
@@ -360,11 +365,18 @@ router.post('/runs', async (req: Request, res: Response) => {
         // NULL in that case.
         submissionFk: parsed.data.submissionFk,
         applicationNumber: parsed.data.applicationNumber,
-        region: parsed.data.region,
-        submissionType: parsed.data.submissionType,
+        // The route validates against the full eCTD region set and a flexible
+        // submission-type string (per #928, which removed the hardcoded
+        // enums). The orchestrator's OrchestratorInputs still declares the
+        // legacy-narrow RegionCode / submission-type union, and treats region
+        // as a string at its own boundaries (see `as RegionCode` in
+        // submission-package-orchestrator). Cast at this trust boundary so the
+        // wider, validated request value flows through unchanged.
+        region: parsed.data.region as OrchestratorInputs['region'],
+        submissionType: parsed.data.submissionType as OrchestratorInputs['submissionType'],
         cmcSources,
         nonclinicalStudies,
-        clinicalStudyData: parsed.data.clinicalStudyData,
+        clinicalStudyData: parsed.data.clinicalStudyData as OrchestratorInputs['clinicalStudyData'],
         csrInputs,
         drugSubstanceName: parsed.data.drugSubstanceName,
         drugProductName: parsed.data.drugProductName,
@@ -377,11 +389,18 @@ router.post('/runs', async (req: Request, res: Response) => {
         submissionId: parsed.data.submissionId,
         submissionFk: parsed.data.submissionFk,
         applicationNumber: parsed.data.applicationNumber,
-        region: parsed.data.region,
-        submissionType: parsed.data.submissionType,
-        cmcSources: parsed.data.cmcSources ?? [],
+        // The route validates against the full eCTD region set and a flexible
+        // submission-type string (per #928, which removed the hardcoded
+        // enums). The orchestrator's OrchestratorInputs still declares the
+        // legacy-narrow RegionCode / submission-type union, and treats region
+        // as a string at its own boundaries (see `as RegionCode` in
+        // submission-package-orchestrator). Cast at this trust boundary so the
+        // wider, validated request value flows through unchanged.
+        region: parsed.data.region as OrchestratorInputs['region'],
+        submissionType: parsed.data.submissionType as OrchestratorInputs['submissionType'],
+        cmcSources: (parsed.data.cmcSources ?? []) as OrchestratorInputs['cmcSources'],
         nonclinicalStudies: parsed.data.nonclinicalStudies ?? [],
-        clinicalStudyData: parsed.data.clinicalStudyData,
+        clinicalStudyData: parsed.data.clinicalStudyData as OrchestratorInputs['clinicalStudyData'],
         csrInputs: parsed.data.csrInputs ?? [],
         drugSubstanceName: parsed.data.drugSubstanceName,
         drugProductName: parsed.data.drugProductName,
@@ -492,7 +511,7 @@ router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
   const previousRun = await getRun(String(req.params.runId), organizationId);
   if (!previousRun) return res.status(404).json({ error: 'run_not_found' });
 
-  const RegenSchema = RunSchema.extend({
+  const RegenSchema = buildRunSchema({
     changedStep: z.string().optional(),
   });
   const parsed = RegenSchema.safeParse(req.body);
