@@ -439,7 +439,14 @@ describe('region-CHECK violation handling', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
     try {
-      const inputs = inputsWithSomeData();
+      // skipValidation keeps this test focused on its actual subject —
+      // PERSISTENCE failures being swallowed without marking any step failed.
+      // Since Move 3 wired package.validate to the real hardened validator, a
+      // minimal fixture is (correctly) not gateway-ready, so the validate
+      // step's own WORK fails independently of persistence. That work-failure
+      // is out of scope here; skipping validation isolates the persistence
+      // path the assertion below actually exercises.
+      const inputs = inputsWithSomeData({ skipValidation: true });
       const result = await runOrchestrator(inputs);
 
       // All known step keys appear in the run record regardless of DB state.
