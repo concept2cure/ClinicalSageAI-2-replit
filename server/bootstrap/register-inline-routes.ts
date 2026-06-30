@@ -538,6 +538,15 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Protocol consent routes:', error);
   }
 
+  // NIH Data Management & Sharing Plan builder (NOT-OD-21-013 six-element completeness gate).
+  try {
+    const dmspModule = await import('../routes/dmsp');
+    app.use('/api/dmsp', authMiddleware, dmspModule.default);
+    console.info('✅ DMS plan routes mounted (/api/dmsp)');
+  } catch (error) {
+    console.error('❌ Failed to mount DMS plan routes:', error);
+  }
+
   // Protocol templates library + clone-to-new-document.
   try {
     const protocolTemplatesModule = await import('../routes/protocol-templates');

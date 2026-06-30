@@ -331,6 +331,14 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // NIH DMS plan metrics (C2C-23).
+      try {
+        const { renderDmspMetrics } = await import('../services/dmsp-metrics.js');
+        lines.push(...renderDmspMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // Protocol templates metrics (C2C-20a).
       try {
         const { renderProtocolTemplatesMetrics } = await import('../services/protocol-templates-metrics.js');

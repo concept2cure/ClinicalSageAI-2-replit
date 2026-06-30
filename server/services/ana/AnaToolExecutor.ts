@@ -9260,6 +9260,60 @@ registerToolHandler('review_consent_completeness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// NIH Data Management & Sharing Plan (C2C-23). create/update/finalize are
+// governed/audited (domain 'protocol_development'); review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_dms_plan', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_dms_plan requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { createPlanTx } = await import('../dmsp/dmsp-service.js');
+  return governedPdev(ctx, 'create', 'dms-plan', 'DMS plan created via AnA', input, async (client) => {
+    const { id, elementsSeeded } = await createPlanTx(client, ctx.organizationId!, ctx.userId!, {
+      title,
+      grantProposalId: typeof input.grant_proposal_id === 'number' ? input.grant_proposal_id : null,
+      protocolDocumentId: typeof input.protocol_document_id === 'number' ? input.protocol_document_id : null,
+    });
+    return { dmsPlanId: id, elementsSeeded };
+  });
+});
+
+registerToolHandler('update_dms_plan_element', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_dms_plan_element requires tenant + user context.' });
+  const elementId = typeof input.element_id === 'number' ? input.element_id : NaN;
+  if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
+  const { updateElementTx } = await import('../dmsp/dmsp-service.js');
+  return governedPdev(ctx, 'update', `dms-plan-element:${elementId}`, 'DMS plan element updated via AnA', input, async (client) => {
+    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined });
+    return { elementId };
+  });
+});
+
+registerToolHandler('review_dms_plan_completeness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_dms_plan_completeness requires tenant context.' });
+  const planId = typeof input.plan_id === 'number' ? input.plan_id : NaN;
+  if (!Number.isInteger(planId)) return JSON.stringify({ error: 'plan_id is required.' });
+  const { getCompleteness } = await import('../dmsp/dmsp-service.js');
+  try {
+    return JSON.stringify({ ok: true, completeness: await getCompleteness(ctx.organizationId!, planId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_dms_plan_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('finalize_dms_plan', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_dms_plan requires tenant + user context.' });
+  const planId = typeof input.plan_id === 'number' ? input.plan_id : NaN;
+  if (!Number.isInteger(planId)) return JSON.stringify({ error: 'plan_id is required.' });
+  const { finalizePlanTx } = await import('../dmsp/dmsp-service.js');
+  return governedPdev(ctx, 'sign', `dms-plan:${planId}`, 'DMS plan finalized via AnA', input, async (client) => {
+    const result = await finalizePlanTx(client, ctx.organizationId!, ctx.userId!, planId);
+    return { dmsPlanId: planId, finalized: result.finalized, addressedPct: result.completeness.addressedPct };
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Protocol Risk Register (C2C-19). add is governed/audited; review is read-only.
 // ─────────────────────────────────────────────────────────────────────────────
 
