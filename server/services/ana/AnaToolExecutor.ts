@@ -95,10 +95,35 @@ import { adviseGcp, reviewInformedConsent, listGcpDomains } from './gcp-consent.
 import { adviseCoaSelection, listCoaTypes } from './coa-selection.js';
 import { adviseCtdStructure, listCtdModules } from './ctd-structure.js';
 import { adviseSpecialDesignation, listDesignations } from './special-designations.js';
+import {
+  buildOddAuthoringPlan,
+  evaluateOddVerification,
+  assessOddSealability,
+  type OddCitation,
+  type OddProvenance,
+  type OddProductInput,
+} from 'shared/ana/orphan-drug-designation.js';
+import {
+  buildIndModuleAuthoringPlan,
+  evaluateIndModuleVerification,
+  assessIndModuleSealability,
+  listIndModules,
+  type IndModuleProvenance,
+  type IndSourceFact,
+} from 'shared/ana/ind-module-authoring.js';
 import { adviseEstimand, listEstimandFramework } from './estimands.js';
 import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance.js';
 import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
 import { adviseLabelingStructure, listLabelTemplates } from './labeling-structure.js';
+import {
+  getLabelingModeSpec,
+  modeToFormat,
+  requiredSectionHeaders,
+  deriveRequiredStrings,
+  checkSectionGuard,
+  buildTemplateReplacements,
+  type LabelingMode,
+} from './labeling-authoring.js';
 import { adviseMedicalInformation, listMedInfoResponseTypes } from './medical-information.js';
 import { adviseReportingGuideline, listReportingGuidelines } from './reporting-guidelines.js';
 import { adviseDataIntegrity, listDataIntegrity } from './data-integrity.js';
@@ -853,6 +878,275 @@ registerToolHandler('run_submission_premortem', async (input, ctx) => {
   } catch (err) {
     return JSON.stringify({
       error: `run_submission_premortem failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// E14 — CRL/RTF pre-mortem DECISION ARTIFACT. Reuses the same honest-by-
+// construction composition path as run_submission_premortem (deterministic
+// deficiency scan + fault-tolerant precedent engine), then lifts the verdict
+// into a board-ready artifact (approval-probability ESTIMATE grounded in the
+// precedent approve/deny split, ranked precedent-cited risks, prioritized
+// fix-list) via the pure crl-premortem-report core. Optionally renders + authors
+// the artifact as a Word doc via author_docx_native — but ONLY for an estimable,
+// non-sample artifact (the exportability/honesty guard). The artifact is always
+// produced UNSEALED.
+//
+// E1 INTEGRATION: when E1's Sign-and-seal lands, attach the seal action +
+// SealedRecord to the returned artifact here (sealStatus flips to 'sealed' and a
+// ProvenanceTrail entry is recorded). The report is fully generatable/exportable
+// without sealing now.
+//
+// BUILD-1 INTEGRATION: when Build 1 lands, persist the assembled artifact as a
+// version row here (so each generated pre-mortem becomes an immutable record).
+registerToolHandler('assemble_crl_premortem_artifact', async (input, ctx) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ error: 'assemble_crl_premortem_artifact requires text (non-empty string).' });
+  }
+  const location =
+    typeof input.location === 'string' && input.location.trim() ? input.location.trim() : 'document';
+  const submissionType = typeof input.submission_type === 'string' ? input.submission_type.trim() : undefined;
+  const agency = typeof input.agency === 'string' ? input.agency.trim() : undefined;
+  const indication = typeof input.indication === 'string' ? input.indication.trim() : undefined;
+  const title = typeof input.title === 'string' ? input.title : undefined;
+  const doExport = input.export === true;
+
+  try {
+    const { quickPatternScan } = await import('../intelligence/rim.js');
+    const { composePremortem } = await import('./submission-premortem-core.js');
+    const { assembleCrlPremortemArtifact, renderArtifactMarkdown } = await import('./crl-premortem-report.js');
+
+    // 1. Deterministic deficiency/reviewer-trigger findings (no LLM).
+    const criteria: Record<string, unknown> = {};
+    if (agency) criteria.agency = agency;
+    if (submissionType) criteria.submissionType = submissionType;
+    const matches = quickPatternScan(text, location, Object.keys(criteria).length ? (criteria as any) : undefined);
+    const findings = matches.map(m => ({
+      patternId: m.patternId,
+      title: m.pattern.name,
+      category: m.pattern.category,
+      severity: m.pattern.severity,
+      matchedText: m.matchedText,
+      matchConfidence: m.matchConfidence,
+      reviewerQuestion: m.pattern.reviewerQuestion,
+      regulatoryBasis: m.pattern.regulatoryBasis,
+      remediation: m.pattern.remediation,
+    }));
+
+    // 2. Precedent calibration — same fault-tolerant path as the pre-mortem; an
+    //    unavailable corpus degrades to n=0 (artifact becomes not_assessed),
+    //    never an error. The full outcome split grounds the probability estimate.
+    let precedentCount = 0;
+    let precedentCitations: Array<{ id: string; label: string; outcome: string }> = [];
+    let precedentOutcomes: Array<{ id: string; label: string; outcome: string }> = [];
+    if (submissionType) {
+      try {
+        const { precedentEngine } = await import('../precedent-engine.js');
+        const records = await precedentEngine.search(
+          { submissionType, indication, limit: 25 },
+          ctx?.organizationId ?? undefined,
+        );
+        precedentCount = records.length;
+        // DATA-OP: grounding fidelity ultimately depends on the P2 precedent-
+        // corpus ingestion; we drive from whatever the engine returns today.
+        precedentOutcomes = records.map(r => ({
+          id: r.id,
+          label: r.clearanceNumber || r.deviceName || r.applicant || r.id,
+          outcome: r.decisionOutcome,
+        }));
+        precedentCitations = precedentOutcomes.slice(0, 5);
+      } catch {
+        /* corpus unavailable — honest n=0 read (artifact: not_assessed) */
+      }
+    }
+
+    const verdict = composePremortem({
+      findings,
+      precedentCount,
+      precedentCitations,
+      submissionType,
+      agency,
+    });
+
+    const artifact = assembleCrlPremortemArtifact({
+      verdict,
+      precedents: precedentOutcomes,
+      title,
+    });
+
+    // Optional export — guarded: only an estimable, non-sample artifact may be
+    // rendered/authored. renderArtifactMarkdown throws otherwise.
+    let exportResult: Record<string, unknown> | null = null;
+    if (doExport) {
+      if (!artifact.exportable) {
+        exportResult = {
+          exported: false,
+          reason: `Artifact is not exportable (status: ${artifact.status}). Pattern-only / insufficient-data and sample artifacts cannot be sealed or exported.`,
+        };
+      } else {
+        try {
+          const markdown = renderArtifactMarkdown(artifact);
+          const authorHandler = getToolHandler('author_docx_native');
+          if (authorHandler) {
+            const authored = JSON.parse(
+              await authorHandler({ title: artifact.title, content: markdown, output_format: 'docx' }, ctx),
+            );
+            exportResult = authored.error
+              ? { exported: false, reason: authored.error, markdown }
+              : { exported: true, sealed: false, docxPath: authored.docxPath, fileName: authored.fileName, markdown };
+          } else {
+            exportResult = { exported: false, reason: 'author_docx_native unavailable', markdown };
+          }
+        } catch (err) {
+          exportResult = {
+            exported: false,
+            reason: err instanceof Error ? err.message : String(err),
+          };
+        }
+      }
+    }
+
+    return JSON.stringify({
+      engine: 'CRL/RTF pre-mortem decision artifact (honest-by-construction, unsealed)',
+      location,
+      artifact,
+      export: exportResult,
+      message: artifact.approvalProbability.framing,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `assemble_crl_premortem_artifact failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// E8 — Pre-IND / EOP2 briefing-book builder with reviewer-challenge pre-mortem.
+// Assembles the briefing book from a RegAgencyMeeting (fixture when no live id),
+// derives required_strings (mandatory headers + sponsor questions) for
+// verify_docx_against_source, and folds anticipated FDA pushback from
+// simulate_reviewer_challenges + run_submission_premortem into an honest
+// per-question pre-mortem verdict. The actual author_docx_native /
+// verify_docx_against_source calls are driven by AnA in the agentic loop using
+// the content + required_strings this tool returns.
+registerToolHandler('assemble_briefing_book', async (input, ctx) => {
+  try {
+    const briefing = await import('./briefing-book-core.js');
+
+    // 1. Resolve the meeting. A live meeting_id would join the product's
+    //    strategy.meetings[]; absent that we use the labelled fixture.
+    // INTEGRATION: join the live RegAgencyMeeting row by meeting_id + org scope
+    //   (client/src/concept2cure/types/workspace.ts → product.strategy.meetings).
+    const meetingId = typeof input.meeting_id === 'string' ? input.meeting_id.trim() : '';
+    const overrideQuestions = Array.isArray(input.key_questions)
+      ? (input.key_questions as unknown[]).filter((q): q is string => typeof q === 'string')
+      : undefined;
+
+    let meeting: import('./briefing-book-core.js').RegAgencyMeetingInput;
+    let context: import('./briefing-book-core.js').BriefingBookContext;
+    let dataSource: import('./briefing-book-core.js').BriefingBookDataSource;
+
+    if (meetingId) {
+      // INTEGRATION: load the live meeting here. Until that join exists, an
+      // explicit id with no loader still degrades honestly to fixture-sourced.
+      meeting = { ...briefing.FIXTURE_EOP2_MEETING, id: meetingId };
+      context = { ...briefing.FIXTURE_EOP2_CONTEXT };
+      dataSource = 'fixture';
+    } else {
+      meeting = { ...briefing.FIXTURE_EOP2_MEETING };
+      context = { ...briefing.FIXTURE_EOP2_CONTEXT };
+      dataSource = 'fixture';
+    }
+
+    const meetingType =
+      typeof input.meeting_type === 'string' ? input.meeting_type : undefined;
+    if (meetingType) meeting.type = meetingType as typeof meeting.type;
+    if (overrideQuestions && overrideQuestions.length) meeting.keyQuestions = overrideQuestions;
+    if (typeof input.product_name === 'string') context.productName = input.product_name;
+    if (typeof input.indication === 'string') context.indication = input.indication;
+    if (typeof input.sponsor === 'string') context.sponsor = input.sponsor;
+
+    // 2. Assemble the markdown + required_strings.
+    const assembled = briefing.assembleBriefingBook(meeting, context);
+
+    // 3. Pre-mortem — anticipated FDA pushback per sponsor question.
+    const runPremortem = input.run_premortem !== false;
+    let challenges: import('./briefing-book-core.js').AnticipatedChallenge[] = [];
+    // Pattern-only pre-mortem: no precedent corpus is joined for the briefing
+    // book, so the denominator is honestly zero (insufficient_data risk read).
+    const precedentCount = 0;
+
+    if (runPremortem) {
+      // 3a. run_submission_premortem (pattern scan). Deterministic; runs over
+      //     the assembled book text. No precedent corpus is joined here, so the
+      //     pre-mortem stays honestly pattern-only (precedentCount = 0).
+      //     Fault-tolerant: an unavailable engine degrades to no findings.
+      try {
+        const { quickPatternScan } = await import('../intelligence/rim.js');
+        const matches = quickPatternScan(assembled.content, 'briefing-book', { agency: 'FDA' } as any);
+        const findings = matches.map(m => ({
+          title: m.pattern.name,
+          category: m.pattern.category,
+          severity: m.pattern.severity,
+          reviewerQuestion: m.pattern.reviewerQuestion,
+          regulatoryBasis: m.pattern.regulatoryBasis,
+          remediation: m.pattern.remediation,
+        }));
+        challenges = challenges.concat(briefing.normalizePremortemFindings({ findings }));
+      } catch {
+        /* engine unavailable — degrade to no findings, honest n=0 */
+      }
+
+      // 3b. simulate_reviewer_challenges (reviewer lenses) — only when the
+      //     caller supplied a package + assessment to scope it.
+      const packageId = typeof input.package_id === 'number' ? input.package_id : undefined;
+      const assessmentId = typeof input.assessment_id === 'number' ? input.assessment_id : undefined;
+      if (packageId && assessmentId && ctx?.organizationId) {
+        try {
+          const { submissionTwinService } = await import('../submission-twin-service.js');
+          const lensChallenges = await submissionTwinService.simulateChallenges(
+            packageId,
+            ctx.organizationId,
+            assessmentId,
+          );
+          challenges = challenges.concat(
+            briefing.normalizeReviewerChallenges({ challenges: lensChallenges }),
+          );
+        } catch {
+          /* reviewer-lens pass unavailable — keep pattern-only challenges */
+        }
+      }
+    }
+
+    const premortem = briefing.composeBriefingBookPremortem({
+      meeting,
+      challenges,
+      precedentCount,
+      dataSource,
+    });
+
+    // BUILD-1 INTEGRATION: persist { assembled, premortem } as a briefing-book
+    //   version row (briefing_book_versions) so the assembled book + pre-mortem
+    //   verdict are versioned and citable in the 21 CFR Part 11 audit trail.
+    //   Sealing/exporting is gated on premortem.sealable (false for fixtures).
+
+    // status:'generated' + content surfaces the book as an editor-openable draft
+    // in the Document Studio (same artifact_draft path as author_docx_native),
+    // so the markdown body and required_strings the model uses to call
+    // author_docx_native / verify_docx_against_source are also previewable.
+    return JSON.stringify({
+      status: 'generated',
+      documentType: 'briefing-book',
+      title: assembled.title,
+      content: assembled.content,
+      requiredStrings: assembled.requiredStrings,
+      questionCount: assembled.questionCount,
+      premortem,
+      message: premortem.summary,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `assemble_briefing_book failed: ${err instanceof Error ? err.message : String(err)}`,
     });
   }
 });
@@ -1994,6 +2288,197 @@ registerToolHandler('advise_labeling_structure', async (input) => {
     return JSON.stringify({ source: 'AnA Labeling-Structure Advisor', templates: listLabelTemplates(), ...adviseLabelingStructure({}) });
   }
   return JSON.stringify({ source: 'AnA Labeling-Structure Advisor', ...adviseLabelingStructure({ format, content }) });
+});
+
+// Build-from-template labeling authoring plan (roadmap E9). Returns the
+// deterministic PLR/QRD section guard + the required_strings derivation + the
+// build_from_template replacements for a US (USPI/PLR) or EU (SmPC/QRD) mode, so
+// the host can drive build_from_template → review_label_currency →
+// verify_docx_against_source. Pure/deterministic; the currency verdict is NOT
+// produced here (call review_label_currency for that).
+registerToolHandler('plan_labeling_authoring', async (input) => {
+  const raw = typeof input.mode === 'string' ? input.mode.trim().toLowerCase() : '';
+  const mode: LabelingMode | null = raw === 'us' || raw === 'uspi' || raw === 'plr'
+    ? 'us'
+    : raw === 'eu' || raw === 'smpc' || raw === 'qrd'
+      ? 'eu'
+      : null;
+  if (!mode) {
+    return JSON.stringify({ error: "plan_labeling_authoring requires mode 'us' (USPI/PLR) or 'eu' (SmPC/QRD)." });
+  }
+  const productName = typeof input.product_name === 'string' && input.product_name.trim()
+    ? input.product_name.trim()
+    : 'Product';
+  const draftText = typeof input.draft_text === 'string' ? input.draft_text : '';
+  const spec = getLabelingModeSpec(mode);
+  const guard = checkSectionGuard(mode, draftText);
+  return JSON.stringify({
+    source: 'AnA Labeling Authoring (build-from-template)',
+    mode,
+    format: modeToFormat(mode),
+    structure: spec.structure,
+    label: spec.label,
+    basis: spec.basis,
+    requiredSectionHeaders: requiredSectionHeaders(mode),
+    // The required_strings to pass to verify_docx_against_source for this mode.
+    requiredStrings: deriveRequiredStrings(mode),
+    // The replacements to pass to build_from_template.
+    templateReplacements: buildTemplateReplacements(mode, productName),
+    sectionGuard: guard,
+    note: 'Drive build_from_template with templateReplacements, then review_label_currency (deterministic), then verify_docx_against_source with required_strings. Currency verdict is deterministic — never inferred.',
+  });
+});
+
+// Orphan-Drug Designation (ODD) authoring — 21 CFR Part 316 (§316.20(b) / §316.21).
+// Pure orchestration: build the author_docx_native plan (title + content +
+// required_strings) from the product/evidence, verify the generated document
+// contains every mandatory header, and emit the Part 11 honesty verdict
+// (sample/not_assessed or any uncited prevalence/eligibility claim ⇒ non-sealable).
+registerToolHandler('plan_orphan_drug_designation', async (input) => {
+  const rawProduct =
+    input.product && typeof input.product === 'object' ? (input.product as Record<string, unknown>) : null;
+  if (!rawProduct) {
+    return JSON.stringify({ error: 'plan_orphan_drug_designation requires a product object.' });
+  }
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+  const name = str(rawProduct.name);
+  const indication = str(rawProduct.indication);
+  if (!name || !indication) {
+    return JSON.stringify({ error: 'plan_orphan_drug_designation requires product.name and product.indication.' });
+  }
+
+  const designations = Array.isArray(rawProduct.designations)
+    ? (rawProduct.designations.filter((d): d is string => typeof d === 'string') as string[])
+    : undefined;
+
+  const product: OddProductInput = {
+    name,
+    indication,
+    genericName: str(rawProduct.generic_name),
+    brandName: str(rawProduct.brand_name),
+    modality: str(rawProduct.modality),
+    designations,
+    sponsorName: str(rawProduct.sponsor_name),
+    sponsorAddress: str(rawProduct.sponsor_address),
+    contactName: str(rawProduct.contact_name),
+    fdaDivision: str(rawProduct.fda_division),
+  };
+
+  const citations: OddCitation[] = Array.isArray(input.citations)
+    ? (input.citations as unknown[])
+        .map((c) => (c && typeof c === 'object' ? (c as Record<string, unknown>) : null))
+        .filter((c): c is Record<string, unknown> => c !== null)
+        .map((c) => ({
+          sectionId: typeof c.section_id === 'string' ? c.section_id : '',
+          label: typeof c.label === 'string' ? c.label : '',
+          source: typeof c.source === 'string' ? c.source : '',
+        }))
+        .filter((c) => c.sectionId && c.source)
+    : [];
+
+  const rawProv = typeof input.provenance === 'string' ? input.provenance : '';
+  const provenance: OddProvenance =
+    rawProv === 'live' || rawProv === 'sample' || rawProv === 'not_assessed' ? rawProv : 'not_assessed';
+
+  const rationale = typeof input.rationale === 'string' ? input.rationale : undefined;
+
+  const plan = buildOddAuthoringPlan({ product, rationale, citations, provenance });
+  const verification = evaluateOddVerification(plan.content);
+  const sealability = assessOddSealability({
+    provenance,
+    verification,
+    uncitedClaimSections: plan.uncitedClaimSections,
+  });
+
+  return JSON.stringify({
+    source: 'AnA Orphan-Drug Designation Authoring (21 CFR Part 316)',
+    status: 'generated',
+    author_docx_native: {
+      title: plan.title,
+      content: plan.content,
+      required_strings: plan.requiredStrings,
+    },
+    verification,
+    honesty: {
+      sealable: sealability.sealable,
+      provenance: plan.provenance,
+      blockers: sealability.blockers,
+      uncitedClaimSections: plan.uncitedClaimSections,
+    },
+    note:
+      'Drive author_docx_native with author_docx_native.{title,content}, then verify_docx_against_source ' +
+      'with required_strings. sample/not_assessed drafts and any uncited prevalence/eligibility claim are ' +
+      'non-sealable and non-exportable.',
+  });
+});
+
+// IND narrative-module authoring (CTD Module 2.5 / 2.7) — E11.
+// Pure orchestration: build the author_docx_native plan (title + content) from a
+// STRUCTURED source, derive required_strings for verify_docx_against_source from
+// the source's key facts/figures (section headers PLUS every figure value), and
+// emit the Part 11 honesty verdict (sample/not_assessed ⇒ non-sealable; a
+// missing/mistyped figure ⇒ verification fails ⇒ non-sealable). The actual
+// author_docx_native / verify_docx_against_source calls are driven by AnA in the
+// agentic loop using the content + required_strings this tool returns.
+registerToolHandler('plan_ind_module_authoring', async (input) => {
+  const moduleId = typeof input.module === 'string' ? input.module.trim() : '';
+  if (!moduleId || !listIndModules().includes(moduleId)) {
+    return JSON.stringify({
+      error: `plan_ind_module_authoring requires module to be one of ${listIndModules().join(', ')}.`,
+      modules: listIndModules(),
+    });
+  }
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+  const productName = str(input.product_name);
+  const indication = str(input.indication);
+  if (!productName || !indication) {
+    return JSON.stringify({ error: 'plan_ind_module_authoring requires product_name and indication.' });
+  }
+
+  const facts: IndSourceFact[] = Array.isArray(input.facts)
+    ? (input.facts as unknown[])
+        .map((f) => (f && typeof f === 'object' ? (f as Record<string, unknown>) : null))
+        .filter((f): f is Record<string, unknown> => f !== null)
+        .map((f) => ({
+          sectionId: typeof f.section_id === 'string' ? f.section_id : '',
+          label: typeof f.label === 'string' ? f.label : '',
+          value: typeof f.value === 'string' ? f.value : '',
+          source: typeof f.source === 'string' ? f.source : undefined,
+        }))
+        .filter((f) => f.sectionId && typeof f.value === 'string' && f.value.trim().length > 0)
+    : [];
+
+  const rawProv = typeof input.provenance === 'string' ? input.provenance : '';
+  const provenance: IndModuleProvenance =
+    rawProv === 'live' || rawProv === 'sample' || rawProv === 'not_assessed' ? rawProv : 'not_assessed';
+
+  const plan = buildIndModuleAuthoringPlan({ module: moduleId, productName, indication, facts, provenance });
+  const verification = evaluateIndModuleVerification({
+    documentText: plan.content,
+    requiredStrings: plan.requiredStrings,
+  });
+  const sealability = assessIndModuleSealability({ provenance, verification });
+
+  return JSON.stringify({
+    source: `AnA IND Module ${moduleId} Authoring (ICH M4E — CTD Module 2)`,
+    status: 'generated',
+    author_docx_native: {
+      title: plan.title,
+      content: plan.content,
+      required_strings: plan.requiredStrings,
+    },
+    verification,
+    honesty: {
+      sealable: sealability.sealable,
+      provenance: plan.provenance,
+      blockers: sealability.blockers,
+      sectionsWithoutFacts: plan.sectionsWithoutFacts,
+    },
+    note:
+      'Drive author_docx_native with author_docx_native.{title,content}, then verify_docx_against_source ' +
+      'with required_strings. required_strings include every source figure, so a missing or mistyped ' +
+      'figure fails verification and the draft is non-sealable. sample/not_assessed sources are never sealable.',
+  });
 });
 
 // Medical-information / standard-response advisor.

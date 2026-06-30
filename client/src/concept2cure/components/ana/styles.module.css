@@ -299,6 +299,51 @@
 .toolPickerRow input { accent-color: var(--accent-main-100); }
 .toolPickerName { min-width: 0; text-transform: capitalize; }
 
+/* ───────── Effort segmented control (Fast / Balanced / Thorough) ───────── */
+.effortControl {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 2px; border-radius: 9999px;
+  background: var(--bg-200); border: 1px solid var(--border);
+}
+.effortOption {
+  appearance: none; border: 0; background: transparent; cursor: pointer;
+  padding: 3px 10px; border-radius: 9999px;
+  font-size: 12px; font-weight: 500; line-height: 1;
+  color: var(--ink-muted, var(--text-300));
+  font-family: var(--font-sans, inherit);
+  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1)),
+    color 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+}
+.effortOption:hover { color: var(--ink, var(--text-100)); }
+.effortOption[data-active='true'] {
+  background: var(--bg-100, #fff); color: var(--ink, var(--text-100));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.effortOption:focus-visible {
+  outline: 2px solid var(--accent-main-100); outline-offset: 1px;
+}
+
+/* ───────── Model dropdown (advanced) ───────── */
+.modelSelect {
+  appearance: none; cursor: pointer;
+  padding: 4px 24px 4px 10px; border-radius: 9999px;
+  font-size: 12px; font-weight: 500; line-height: 1;
+  color: var(--ink-body, var(--text-200));
+  background: transparent; border: 1px solid var(--border);
+  font-family: var(--font-sans, inherit);
+  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 13px) calc(50% + 1px), calc(100% - 9px) calc(50% + 1px);
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+.modelSelect:hover { background-color: var(--bg-200); }
+.modelSelect:focus-visible {
+  outline: 2px solid var(--accent-main-100); outline-offset: 1px;
+}
+.modelSelect:disabled { opacity: 0.55; cursor: default; }
+
 .composerSend {
   width: 32px; height: 32px; border-radius: 9999px;
   background: var(--accent-main-100); color: #fff;
@@ -889,6 +934,12 @@
 }
 .studioPagerBtn:hover:not(:disabled) { background: var(--bg-200); color: var(--ink); }
 .studioPagerBtn:disabled { opacity: 0.4; cursor: default; }
+.studioPagerBtn:focus-visible,
+.studioVersionSelect:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
+  border-color: var(--accent-main-100, #6366f1);
+}
 
 .studioHeader {
   display: flex;
@@ -941,6 +992,11 @@
 }
 .studioDownload:hover { background: var(--bg-300); border-color: var(--border-strong); }
 .studioDownload:disabled { opacity: 0.6; cursor: default; }
+.studioDownload:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
+  border-color: var(--accent-main-100, #6366f1);
+}
 .studioClose {
   display: inline-flex;
   align-items: center;
@@ -954,8 +1010,49 @@
   transition: background 200ms ease-out, color 200ms ease-out;
 }
 .studioClose:hover { background: var(--bg-200); color: var(--ink); }
+.studioClose:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
+  color: var(--ink);
+}
 
 .studioVerify { padding: 10px 14px 0; }
+.studioEctd { padding: 10px 14px 0; }
+.studioAssemble {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--bg-000);
+}
+.studioAssembleLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 200px;
+}
+.studioAssembleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-body, var(--ink));
+  background: var(--bg-100, #f1f1f0);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 200ms ease-out;
+}
+.studioAssembleBtn:hover:not(:disabled) { background: var(--bg-200, #e7e7e5); }
+.studioAssembleBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) {
+  .studioAssembleBtn { transition: none; }
+}
 .studioBody {
   flex: 1 1 auto;
   overflow-y: auto;
@@ -1037,3 +1134,1334 @@
   transition: background 200ms ease-out;
 }
 .verifyResolve:hover { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
+.verifyResolve:focus-visible,
+.consistencyResolve:focus-visible,
+.concordResolve:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.35));
+}
+.verifyResolve:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-000, #fff), 0 0 0 4px var(--accent-main-100, #6366f1);
+}
+.verifyResolve:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) {
+  .verifyResolve { transition: none; }
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   IVDR PER authoring panel (E3). Gated by ENABLE_ANA_DOCUMENT_STUDIO. Quiet
+   stone; the verdict reads as fact, not alarm. Calm 200ms motion only.
+   ─────────────────────────────────────────────────────────────────────────── */
+.perPanel {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+   E5 — Guided ICH E3 §16 Safety Narrative affordance (composer-hosted).
+   Calm, reviewer-grade form. Subtle motion only; reuses verifyPanel for QC.
+   ─────────────────────────────────────────────────────────────────────────── */
+.narrativePanel {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: var(--bg-000);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.perHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-body, var(--ink));
+}
+.perTitle {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.perIntro {
+  margin: 0;
+/* ──────────────────────────────────────────────────────────────────────────
+   ReadinessGatePanel — the E10 "assemble Module 2/5 + readiness gate" strip.
+   Same calm, reviewer-grade language as the verification panel: a left accent
+   bar carries the verdict colour (never colour-alone — an icon + text label
+   always accompanies it). Motion is restrained; respects reduced-motion.
+   ────────────────────────────────────────────────────────────────────────── */
+.gatePanel {
+   CDx claim-concordance panel (E12). Cross-dossier extension of the
+   verification trust-strip: proves the CDx claims read identically across the
+   paired drug + device dossiers. Same calm, reviewer-grade idiom.
+   ─────────────────────────────────────────────────────────────────────────── */
+.concordPanel {
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+   Briefing-book reviewer-challenge / pre-mortem panel (E8). Modeled on the
+   verification trust-strip: calm, factual, accessible. All pushback is framed
+   as ANTICIPATED — never an actual agency position.
+   ─────────────────────────────────────────────────────────────────────────── */
+.briefPanel {
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-left-color: var(--warning, #b4831f);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--bg-000);
+}
+.gatePanel[data-status='ready'] { border-left-color: var(--success, #2f7d57); }
+.gatePanel[data-status='blocked'] { border-left-color: var(--danger, #b4541f); }
+.gatePanel[data-status='not_assessed'] { border-left-color: var(--border); }
+.gateHead {
+.concordPanel[data-status='concordant'] { border-left-color: var(--success, #2f7d57); }
+.concordPanel[data-status='discordant'] { border-left-color: var(--danger, #b4541f); }
+.concordHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.gatePanel[data-status='ready'] .gateHead { color: var(--success, #2f7d57); }
+.gatePanel[data-status='blocked'] .gateHead { color: var(--danger, #b4541f); }
+.gatePanel[data-status='not_assessed'] .gateHead { color: var(--ink-muted, var(--text-300)); }
+.gateTitle {
+.concordPanel[data-status='concordant'] .concordHead { color: var(--success, #2f7d57); }
+.concordPanel[data-status='discordant'] .concordHead { color: var(--danger, #b4541f); }
+.concordTitle {
+.briefPanel[data-risk='critical'],
+.briefPanel[data-risk='high'] { border-left-color: var(--danger, #b4541f); }
+.briefPanel[data-risk='insufficient_data'] { border-left-color: var(--border); }
+.briefHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--warning, #b4831f);
+}
+.briefTitle {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.gateSummary {
+.concordDetail {
+.briefDetail {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+}
+.perSubhead {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-subtle, var(--text-400));
+}
+.perSections {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.perSectionHeading {
+  font-size: 12px;
+  color: var(--ink-body, var(--ink));
+}
+.perFigures {
+/* ─────────────────────────────────────────────────────────────────────────
+   E14 — CRL/RTF pre-mortem decision artifact panel. Calm, reviewer-grade;
+   subtle motion only; honest framing always visible.
+   ───────────────────────────────────────────────────────────────────────── */
+.premortemPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-000);
+}
+.premortemHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.premortemHeader .ico { color: var(--ink-muted, var(--text-300)); display: inline-flex; }
+.premortemTitle {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.premortemSeal {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--ink-muted, var(--text-300));
+}
+.premortemSeal[data-seal='sealed'] {
+  color: var(--success, #2f7d57);
+  border-color: var(--success, #2f7d57);
+}
+
+.premortemEstimate {
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-left-color: var(--ink-subtle, var(--text-400));
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--bg-100, var(--bg-000));
+}
+.premortemEstimate[data-class='high'] { border-left-color: var(--success, #2f7d57); }
+.premortemEstimate[data-class='moderate'] { border-left-color: var(--warning, #b8860b); }
+.premortemEstimate[data-class='low'] { border-left-color: var(--danger, #b4541f); }
+.premortemEstimateHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.premortemEstimateLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted, var(--text-300));
+}
+.premortemEstimateValue {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.premortemFraming {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-body, var(--ink));
+}
+.premortemMeta {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--ink-muted, var(--text-300));
+}
+.premortemHonesty {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  font-style: italic;
+  color: var(--ink-muted, var(--text-300));
+}
+
+.premortemSection { display: flex; flex-direction: column; gap: 8px; }
+.premortemSectionTitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-muted, var(--text-300));
+}
+.premortemDetail {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-body, var(--ink));
+}
+.premortemRiskList, .premortemFixList {
+  margin: 0;
+.concordMethod {
+  font-style: italic;
+  color: var(--ink-muted, var(--text-300));
+}
+.concordSampleNote {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-muted, var(--text-300));
+  padding: 4px 8px;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+}
+.concordClaims {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.perFigures li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.perFigureValue {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: var(--ink-body, var(--ink));
+  word-break: break-word;
+}
+.perFigureSource {
+  font-size: 11px;
+  color: var(--ink-subtle, var(--text-400));
+}
+.perEmpty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-muted, var(--text-300));
+}
+.perVerdict {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+/* Dossier Consistency Sweep (E2) — the second verification surface. Mirrors
+   the verification trust-panel; verdict tiers drive the left-border severity. */
+.studioConsistency { padding: 8px 14px 0; }
+.consistencyPanel {
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.perVerdict[data-status='ready'] { border-left-color: var(--success, #2f7d57); color: var(--success, #2f7d57); }
+.perVerdict[data-status='blocked'] { border-left-color: var(--danger, #b4541f); color: var(--danger, #b4541f); }
+.perVerdictText { letter-spacing: 0.01em; }
+.perBlockers {
+  margin: 0;
+.gateChecks {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  gap: 8px;
+}
+.concordClaim {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  background: var(--bg-000);
+}
+.concordClaim[data-status='concordant'] { border-left: 3px solid var(--success, #2f7d57); }
+.concordClaim[data-status='discordant'],
+.concordClaim[data-status='missing_counterpart'] { border-left: 3px solid var(--danger, #b4541f); }
+.concordClaimHead {
+/* ─────────────────────────────────────────────────────────────────────────
+   Natural-history / external-control evidence-dossier affordance (E13). A
+   flag-gated panel that lets the user ask AnA to assemble the dossier and that
+   surfaces the Part 11 export/seal honesty state. Mirrors the calm verify-panel
+   styling; subtle 200ms ease-out only, prefers-reduced-motion respected.
+   ───────────────────────────────────────────────────────────────────────── */
+.dossierPanel {
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-left-color: var(--accent-main-100, #6366f1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--bg-000);
+}
+.dossierPanel[data-exportable='false'] { border-left-color: var(--danger, #b4541f); }
+.dossierHead {
+  background: var(--bg-000);
+}
+.consistencyPanel[data-status='clean'] { border-left-color: var(--success, #2f7d57); }
+.consistencyPanel[data-status='minor_issues'] { border-left-color: var(--ink-muted, #8a8f98); }
+.consistencyPanel[data-status='needs_review'] { border-left-color: var(--warning, #b4831f); }
+.consistencyPanel[data-status='blocker'] { border-left-color: var(--danger, #b4541f); }
+.consistencyHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.concordClaim[data-status='concordant'] .concordClaimHead { color: var(--success, #2f7d57); }
+.concordClaim[data-status='discordant'] .concordClaimHead,
+.concordClaim[data-status='missing_counterpart'] .concordClaimHead { color: var(--danger, #b4541f); }
+.concordClaimLabel {
+  font-size: 12px;
+  font-weight: 600;
+}
+.concordClaimStatus {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.concordSingle {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.perBlockers li {
+.gateChecks li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-body, var(--ink));
+}
+.gateChecks li[data-ok='true'] .ico { color: var(--success, #2f7d57); }
+.gateChecks li[data-ok='false'] .ico { color: var(--danger, #b4541f); }
+.gateBlockers {
+.consistencyPanel[data-status='clean'] .consistencyHead { color: var(--success, #2f7d57); }
+.consistencyPanel[data-status='minor_issues'] .consistencyHead { color: var(--ink-body, var(--ink)); }
+.consistencyPanel[data-status='needs_review'] .consistencyHead { color: var(--warning, #b4831f); }
+.consistencyPanel[data-status='blocker'] .consistencyHead { color: var(--danger, #b4541f); }
+.consistencyTitle {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.consistencyScope {
+  display: inline-flex;
+  margin-left: auto;
+  color: var(--ink-subtle, var(--text-400));
+}
+.consistencyDetail {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+}
+.consistencySample {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+  font-style: italic;
+}
+.consistencyList {
+  margin: 8px 0 0;
+}
+.briefAnticipatedNote {
+  margin: 6px 0 0;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--ink-muted, var(--text-300));
+}
+.briefSampleNote {
+  margin: 6px 0 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--danger, #b4541f);
+}
+.briefQuestion { margin-top: 12px; }
+.briefQuestionTitle {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.briefChallengeList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gateBlockers li {
+  gap: 8px;
+}
+.consistencyItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-body, var(--ink));
+}
+.perAuthorBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.premortemRisk {
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 7px;
+  padding: 8px 10px;
+}
+.premortemRisk[data-severity='critical'] { border-left-color: var(--danger, #b4541f); }
+.premortemRisk[data-severity='high'] { border-left-color: var(--danger, #b4541f); }
+.premortemRisk[data-severity='medium'] { border-left-color: var(--warning, #b8860b); }
+.premortemRisk[data-severity='low'] { border-left-color: var(--ink-subtle, var(--text-400)); }
+.premortemRiskHead { display: flex; align-items: center; gap: 8px; }
+.premortemRiskSeverity {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg-100, var(--bg-000));
+  border: 1px solid var(--border);
+  color: var(--ink-muted, var(--text-300));
+}
+.premortemRiskTitle { font-size: 12px; font-weight: 600; }
+.premortemCite {
+  margin: 6px 0 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ink-muted, var(--text-300));
+}
+.premortemCite .ico { color: var(--ink-subtle, var(--text-400)); display: inline-flex; margin-top: 1px; }
+
+.premortemFix {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-body, var(--ink));
+}
+.premortemFixPriority {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--ink-muted, var(--text-300));
+}
+.premortemFixAction { flex: 1; }
+
+.premortemFooter { display: flex; flex-direction: column; gap: 6px; }
+.premortemExport {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-main-100, #6366f1);
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
+  border: 1px solid var(--accent-main-100, #6366f1);
+  border-radius: 7px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 200ms ease-out;
+}
+.concordPair {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 560px) {
+  .concordPair { grid-template-columns: 1fr; }
+}
+.concordSide {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-100, var(--bg-000));
+}
+.concordSideLabel {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-muted, var(--text-300));
+}
+.concordText {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-body, var(--ink));
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.concordAbsent {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--ink-muted, var(--text-300));
+}
+.concordSources {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.concordSource {
+  font-size: 10px;
+  color: var(--ink-muted, var(--text-300));
+}
+.concordResolve {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+.dossierTitle {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.dossierDetail {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+}
+.dossierAssemble {
+.consistencyItem[data-severity='critical'] .ico { color: var(--danger, #b4541f); }
+.consistencyItem[data-severity='high'] .ico { color: var(--warning, #b4831f); }
+.consistencyItemBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.consistencyKind {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--ink, var(--text-100));
+}
+.consistencyDesc {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-body, var(--ink));
+}
+.consistencyValues {
+  font-size: 11px;
+  color: var(--ink-muted, var(--text-300));
+  word-break: break-word;
+}
+.consistencyVal {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--ink-body, var(--ink));
+}
+.consistencySource {
+  font-size: 11px;
+  color: var(--ink-subtle, var(--text-400));
+  word-break: break-word;
+}
+.consistencyResolve {
+/* ── E1: Part 11 verified-and-sealed export ─────────────────────────────────
+ * "Sign and seal verified version" action, the sealed badge, and the
+ * expandable provenance trail. Calm, reviewer-grade; no decorative color. */
+.sealAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-main-100, #6366f1);
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
+  border: 1px solid var(--accent-main-100, #6366f1);
+  border-radius: 7px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 200ms ease-out;
+}
+.perAuthorBtn:hover:not(:disabled) { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
+.perAuthorBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+.perAuthorBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.45));
+}
+@media (prefers-reduced-motion: reduce) {
+  .perAuthorBtn { transition: none; }
+}
+/* ───────────────────────────────────────────────────────────────────────── */
+/* E6 — Substantial Equivalence comparison table (Document Studio surface).   */
+/* Colour is always paired with a text label; motion is calm (200ms ease-out).*/
+/* ───────────────────────────────────────────────────────────────────────── */
+.seTableWrap {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-000);
+  padding: 12px 14px 14px;
+}
+.seTableHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 8px;
+}
+.seTableTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+.seProvenance {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 6px 9px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning, #b4801f);
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-body, var(--ink));
+  background: var(--bg-100, transparent);
+}
+.seTableScroll { overflow-x: auto; }
+.seTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.seTable th,
+.seTable td {
+  text-align: left;
+  vertical-align: top;
+  padding: 7px 9px;
+  border-bottom: 1px solid var(--border);
+}
+.seTable thead th {
+  font-weight: 600;
+  color: var(--ink-muted, var(--text-300));
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+.seCharCell {
+  font-weight: 600;
+  color: var(--ink);
+}
+.seNote {
+  display: block;
+  margin-top: 3px;
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--ink-muted, var(--text-300));
+}
+.seVerdict {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+}
+.seVerdictIcon {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+.seVerdict[data-tone='ok'] {
+  color: var(--success, #2f7d57);
+  border-color: var(--success, #2f7d57);
+}
+.seVerdict[data-tone='warn'] {
+  color: var(--warning, #b4801f);
+  border-color: var(--warning, #b4801f);
+}
+.seVerdict[data-tone='open'] {
+  color: var(--danger, #b4541f);
+  border-color: var(--danger, #b4541f);
+}
+.seExportNote {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-muted, var(--text-300));
+}
+.gateBlockers li[data-severity='critical'] .ico,
+.gateBlockers li[data-severity='high'] .ico { color: var(--danger, #b4541f); }
+.gateBlockerText { flex: 1 1 auto; word-break: break-word; }
+.gateDeepLink {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent-main-100, #6366f1);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.gateDeepLink:hover { color: var(--accent-main-200, #4f46e5); }
+.gateActions {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gateSeal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--success, #2f7d57);
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 200ms ease-out, opacity 200ms ease-out;
+}
+.gateSeal:hover:not(:disabled) { background: var(--success-strong, #276649); }
+.gateSeal:disabled {
+  background: var(--bg-100, #f1f1f0);
+  color: var(--ink-muted, var(--text-300));
+  border-color: var(--border);
+  cursor: not-allowed;
+}
+.gateSealHint {
+  font-size: 11px;
+  color: var(--ink-muted, var(--text-300));
+  line-height: 1.4;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gateSeal { transition: none; }
+}
+.premortemExport:hover:not(:disabled) { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
+.premortemExport:disabled { opacity: 0.5; cursor: not-allowed; }
+.premortemExport:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-000, #fff), 0 0 0 4px var(--accent-main-100, #6366f1);
+}
+.premortemExportReason {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+}
+@media (prefers-reduced-motion: reduce) {
+  .premortemExport { transition: none; }
+}
+.concordResolve:hover { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
+@media (prefers-reduced-motion: reduce) {
+  .concordResolve { transition: none; }
+}
+.dossierAssemble:hover { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
+.dossierAssemble:disabled { opacity: 0.6; cursor: default; }
+@media (prefers-reduced-motion: reduce) {
+  .dossierAssemble { transition: none; }
+}
+.consistencyResolve:hover { background: var(--accent-main-200, rgba(99, 102, 241, 0.16)); }
+/* ───────────────────────────────────────────────────────────────────────
+   Labeling authoring pane (roadmap E9). Build-from-template PLR/QRD authoring
+   with a US/EU mode toggle, section guard checklist, deterministic currency
+   gate, and source verification. Calm motion (200ms), no emoji.
+   ─────────────────────────────────────────────────────────────────────── */
+.labelingPane {
+  width: 100%;
+  height: 100%;
+  border-left: 1px solid var(--border);
+  background: var(--bg-100);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+.labelingHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.labelingTitleWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+/* US ↔ EU mode toggle. */
+.labelingToggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+.labelingToggleBtn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: var(--bg-000);
+  color: var(--ink-muted, var(--text-300));
+  border: none;
+  cursor: pointer;
+  transition: background 200ms ease-out, color 200ms ease-out;
+}
+.labelingToggleBtn[data-active='true'] {
+  background: var(--accent-main-100, #6366f1);
+  color: #fff;
+}
+.labelingToggleBtn:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.45));
+}
+.labelingBasis {
+  margin: 0;
+  padding: 8px 14px 0;
+  font-size: 12px;
+  color: var(--ink-subtle, var(--text-400));
+}
+.labelingSample {
+  margin: 8px 14px 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--danger, #b4541f);
+  background: var(--danger-subtle, rgba(180, 84, 31, 0.08));
+  border: 1px solid var(--danger, #b4541f);
+  border-radius: 7px;
+}
+.labelingGuard {
+  padding: 12px 14px 0;
+}
+.labelingGuardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.labelingGuardBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--danger, #b4541f);
+  background: var(--danger-subtle, rgba(180, 84, 31, 0.08));
+}
+.labelingGuardBadge[data-complete='true'] {
+  color: var(--success, #2f7d57);
+  background: var(--success-subtle, rgba(47, 125, 87, 0.08));
+}
+.labelingChecklist {
+  margin: 8px 0 0;
+.narrativeHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.narrativeTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink, var(--text-100));
+}
+.narrativeModes {
+  display: flex;
+  gap: 6px;
+}
+.narrativeMode {
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-100);
+  color: var(--ink-muted, var(--text-300));
+  cursor: pointer;
+  transition: background 200ms ease-out, color 200ms ease-out;
+}
+.narrativeMode[data-active='true'] {
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
+  border-color: var(--accent-main-100, #6366f1);
+  color: var(--accent-main-100, #6366f1);
+}
+.narrativeForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.narrativeField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.narrativeFieldLabel {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-muted, var(--text-300));
+}
+.narrativeInput,
+.narrativeTextarea {
+  width: 100%;
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-100);
+  color: var(--ink, var(--text-100));
+}
+.narrativeTextarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  resize: vertical;
+}
+.narrativeInput:focus,
+.narrativeTextarea:focus {
+  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline-offset: 1px;
+}
+.narrativeFileRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.narrativeParseMeta {
+  font-size: 11px;
+  color: var(--ink-muted, var(--text-300));
+}
+.narrativeErrors {
+  margin: 0;
+  font-weight: 600;
+  color: var(--success, #2f7d57);
+  background: var(--bg-000);
+  border: 1px solid var(--success, #2f7d57);
+  border-radius: 7px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 200ms ease-out;
+}
+.sealAction:hover { background: var(--success-subtle, rgba(47, 125, 87, 0.1)); }
+.sealAction:disabled { opacity: 0.6; cursor: default; }
+.sealAction:focus-visible {
+  outline: 2px solid var(--success, #2f7d57);
+  outline-offset: 2px;
+}
+
+.sealError {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--danger, #b4541f);
+}
+
+/* The sealed evidence strip shown after a verified version is sealed. */
+.sealBadge {
+  margin-top: 8px;
+  border: 1px solid var(--success, #2f7d57);
+  border-radius: 8px;
+  background: var(--success-subtle, rgba(47, 125, 87, 0.06));
+  padding: 8px 12px;
+}
+.sealBadgeHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--success, #2f7d57);
+  font-size: 12px;
+  font-weight: 600;
+}
+.sealBadgeMeta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+}
+
+/* Expandable provenance trail. */
+.provTrailToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-body, var(--ink));
+  background: transparent;
+  border: 0;
+  padding: 2px 0;
+  cursor: pointer;
+}
+.provTrailToggle:focus-visible {
+  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline-offset: 2px;
+}
+.provTrail {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.labelingChecklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-body, var(--ink));
+}
+.labelingChecklist li[data-present='false'] {
+  color: var(--danger, #b4541f);
+}
+.labelingChecklist li[data-present='true'] {
+  color: var(--success, #2f7d57);
+}
+.labelingChecklistText {
+  color: var(--ink-body, var(--ink));
+}
+.labelingGate {
+  padding: 12px 14px 0;
+}
+.labelingFooter {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+}
+.labelingReqCount {
+  font-size: 11px;
+  color: var(--ink-subtle, var(--text-400));
+}
+.labelingExport {
+.narrativeErrors li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--danger, #b4541f);
+}
+.narrativeSampleToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-muted, var(--text-300));
+}
+.narrativeActions {
+  display: flex;
+  justify-content: flex-end;
+}
+.narrativeSubmit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 7px;
+  color: #fff;
+  background: var(--accent-main-100, #6366f1);
+  border: 1px solid var(--accent-main-100, #6366f1);
+  cursor: pointer;
+  transition: background 200ms ease-out, opacity 200ms ease-out;
+}
+.labelingExport:hover:not(:disabled) { background: var(--accent-main-200, #4f46e5); }
+.labelingExport:disabled { opacity: 0.5; cursor: not-allowed; }
+.labelingExport:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-subtle, rgba(99, 102, 241, 0.45));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .labelingToggleBtn,
+  .labelingExport { transition: none; }
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent-main-100, #6366f1);
+  border: 1px solid var(--accent-main-100, #6366f1);
+  border-radius: 7px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: opacity 200ms ease-out;
+}
+.narrativeSubmit:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* QC checklist field rows (reuse verifyPanel / verifyMissing for the frame). */
+.qcFieldLabel {
+  font-size: 12px;
+  color: var(--ink-body, var(--ink));
+}
+.verifyMissing li[data-present='true'] { color: var(--success, #2f7d57); }
+.verifyMissing li[data-present='false'] { color: var(--danger, #b4541f); }
+.qcSampleFlag {
+  font-weight: 600;
+  color: var(--danger, #b4541f);
+}
+.briefChallenge {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  background: var(--bg-100, var(--bg-000));
+}
+.briefChallengeHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.briefSeverity {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--ink-muted, var(--text-300));
+  border: 1px solid var(--border);
+}
+.briefSeverity[data-severity='critical'],
+.briefSeverity[data-severity='high'] {
+  color: var(--danger, #b4541f);
+  border-color: var(--danger, #b4541f);
+}
+.briefLens {
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--ink-muted, var(--text-300));
+}
+.briefChallengeQ {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-body, var(--ink));
+}
+.briefChallengeMeta {
+  margin: 3px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink-muted, var(--text-300));
+  gap: 4px;
+}
+.provTrail dt {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted, var(--text-300));
+}
+.provTrail dd {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--ink-body, var(--ink));
+  word-break: break-word;
+}
+.provTrailHash {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  word-break: break-all;
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Cluster B hardening — Part 11 / WCAG 2.2 AA additions (scoped, additive).
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Governed-action sign-off dialog. */
+.signoffTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-100, var(--ink));
+  margin: 0;
+}
+.signoffMeanings {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9999px;
+  background: var(--bg-200);
+  border: 1px solid var(--border);
+  align-self: flex-start;
+}
+.signoffMeaning {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ink-muted, var(--text-300));
+  transition: background 200ms ease-out, color 200ms ease-out;
+}
+.signoffMeaning:hover { color: var(--ink, var(--text-100)); }
+.signoffMeaning[data-active='true'] {
+  background: var(--bg-100, #fff);
+  color: var(--ink, var(--text-100));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.signoffMeaning:focus-visible {
+  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline-offset: 1px;
+}
+.signoffAttest {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+  margin: 4px 0 0;
+}
+/* The Cancel pill in the sign-off dialog needs a visible focus ring. */
+.suggestPill:focus-visible {
+  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline-offset: 1px;
+}
+/* Deep-link to a blocking item needs a visible focus ring. */
+.gateDeepLink:focus-visible {
+  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Provenance-trail chevron: calm 200ms rotation, static under reduced motion. */
+.provTrailChevron {
+  display: inline-flex;
+  transition: transform 200ms ease-out;
+}
+.provTrailChevron[data-open='true'] { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .provTrailChevron { transition: none; }
+  .signoffMeaning { transition: none; }
+ * AnA hardening cluster E — authoring affordances (safety-narrative /
+ * nat-history / IND). WCAG 2.2 AA focus visibility + calm-motion guards for the
+ * interactive controls in these surfaces. Appended last so the focus-visible
+ * rings win on equal specificity; only adds rules for this cluster's classes.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* Inline required-field validation message (aria-describedby target). */
+.narrativeFieldError {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 1px 0 0;
+  font-size: 11px;
+  color: var(--danger, #b4541f);
+}
+
+/* Visible focus ring on every interactive control in the cluster. */
+.composerChip:focus-visible,
+.composerIcon:focus-visible,
+.narrativeMode:focus-visible,
+.narrativeSubmit:focus-visible,
+.dossierAssemble:focus-visible,
+.narrativeSampleToggle:focus-visible,
+.narrativeSampleToggle input:focus-visible {
+  outline: 2px solid var(--accent-main-100, #6366f1);
+  outline-offset: 2px;
+}
+
+/* Calm-motion: honour prefers-reduced-motion for the cluster's transitions. */
+@media (prefers-reduced-motion: reduce) {
+  .composerChip,
+  .composerIcon,
+  .narrativeMode,
+  .narrativeSubmit,
+  .dossierAssemble {
+    transition: none;
+  }
+}

@@ -31,6 +31,7 @@ import { computeRimClaimMetrics } from '../../services/ana/rim-claim-metrics.js'
 import { interceptChatResponse } from '../../services/intelligence/rim-interceptors.js';
 import { processResponseActions } from '../../services/ana-guidance-executor.js';
 import type { CommandContext } from '../../services/ana-ri/command-executor.js';
+import { upsertDocumentArtifactVersion } from '../../services/ana/artifactVersionStore.js';
 
 export interface StreamPostProcessingContext {
   res: Response;
@@ -52,11 +53,69 @@ export interface StreamPostProcessingContext {
   toolEvidenceCorpus: string[];
   /** Provenance envelopes from evidence tools this turn — persisted to the lineage trail. */
   collectedProvenance: ProvenanceRecord[];
+  /** Document drafts emitted this turn — persisted to the governed artifact version history. */
+  collectedDrafts: { title: string; content: string; documentType?: string }[];
   /** Gateway message history built for the turn (for working-memory write-back). */
   messages: GatewayMessage[];
   model: string | undefined;
   provider: string | undefined;
   enrichment: { sources: unknown[]; enrichmentMeta?: unknown };
+}
+
+/**
+ * Persist the turn's document drafts to the governed artifact version history,
+ * emitting an `artifact_version_saved` SSE event per newly-saved version.
+ *
+ * Skipped silently when org/project/thread context is missing — project_id is
+ * NOT NULL, so a null projectId means no row, no error, which is intended. Every
+ * upsert is wrapped so a DB failure never propagates (and so never blocks the
+ * caller's `post_done`).
+ */
+async function persistCollectedDrafts(args: {
+  res: Response;
+  orgId: string | number | null | undefined;
+  streamProjectId: string | number | null | undefined;
+  userId: number | undefined;
+  threadId: string | undefined;
+  collectedDrafts: { title: string; content: string; documentType?: string }[];
+}): Promise<void> {
+  const { res, orgId, streamProjectId, userId, threadId, collectedDrafts } = args;
+  const projectId =
+    streamProjectId != null && streamProjectId !== ''
+      ? typeof streamProjectId === 'string'
+        ? Number.parseInt(streamProjectId, 10)
+        : streamProjectId
+      : NaN;
+  if (!orgId || !threadId || !Number.isFinite(projectId) || collectedDrafts.length === 0) {
+    return;
+  }
+  for (const draft of collectedDrafts) {
+    if (!draft.content) continue;
+    try {
+      const saved = await upsertDocumentArtifactVersion({
+        organizationId: Number(orgId),
+        projectId,
+        userId: typeof userId === 'number' ? userId : null,
+        anaThreadId: threadId,
+        title: draft.title,
+        content: draft.content,
+        documentType: draft.documentType,
+      });
+      if (saved.created) {
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'artifact_version_saved',
+            artifactId: saved.artifactId,
+            version: saved.version,
+            contentHash: saved.contentHash,
+            title: draft.title,
+          })}\n\n`
+        );
+      }
+    } catch (e: any) {
+      console.warn('[AnA RI Stream] Draft version persistence failed:', e?.message);
+    }
+  }
 }
 
 /**
@@ -78,6 +137,7 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     toolTrace,
     toolEvidenceCorpus,
     collectedProvenance,
+    collectedDrafts,
     messages,
     model,
     provider,
@@ -243,6 +303,19 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
     // Wait for persistence to settle before emitting warning/post_done so
     // `persistenceFailed` reflects the actual DB outcome.
     await persistPromise;
+
+    // Durable Document Studio version history: persist each draft emitted this
+    // turn to the governed artifact tables so its version lineage survives the
+    // session. Delegated to a helper so a DB hiccup NEVER blocks post_done and so
+    // the per-draft loop doesn't inflate this function's complexity.
+    await persistCollectedDrafts({
+      res,
+      orgId,
+      streamProjectId,
+      userId,
+      threadId,
+      collectedDrafts,
+    });
 
     // Warn client if thread persistence failed
     if (persistenceFailed) {

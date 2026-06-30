@@ -229,6 +229,26 @@ export const ADVISE_LABELING_STRUCTURE: AnaTool = {
   },
 };
 
+export const PLAN_LABELING_AUTHORING: AnaTool = {
+  name: 'plan_labeling_authoring',
+  description:
+    'Build-from-template labeling authoring plan (US PLR / EU QRD). Given a labeling mode, returns the ' +
+    'deterministic mandatory PLR/QRD section headers (the section guard), the required_strings to pass to ' +
+    'verify_docx_against_source, and the replacements to pass to build_from_template — plus a section-guard ' +
+    'completeness check of any draft_text supplied. Use to drive build_from_template → review_label_currency ' +
+    '(deterministic currency gate) → verify_docx_against_source. The currency verdict is produced by ' +
+    'review_label_currency and is deterministic — never inferred here.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      mode: { type: 'string', enum: ['us', 'eu'], description: "us (USPI/PLR) | eu (SmPC/QRD). Aliases (uspi/plr/smpc/qrd) accepted." },
+      product_name: { type: 'string', description: 'Product name used in the scaffold title/replacements.' },
+      draft_text: { type: 'string', description: 'Optional current draft text to run the section guard against.' },
+    },
+    required: ['mode'],
+  },
+};
+
 export const ADVISE_MEDICAL_INFORMATION: AnaTool = {
   name: 'advise_medical_information',
   description:
@@ -434,6 +454,133 @@ export const ADVISE_SPECIAL_DESIGNATION: AnaTool = {
       designation: { type: 'string', description: 'e.g. fast_track, breakthrough, accelerated_approval, orphan, prime, conditional_ma.' },
       jurisdiction: { type: 'string', enum: ['us', 'eu'] },
     },
+  },
+};
+
+// Orphan-Drug Designation request authoring + verification plan (21 CFR 316).
+// Builds the §316.20/§316.21 ODD-request document content from a product's
+// indication/modality/strategy fields, returns the author_docx_native markdown
+// PLUS the required_strings (the mandatory section headers) for the downstream
+// verify_docx_against_source step — so the author→verify loop proves every
+// mandatory element is present before the draft is sealed/exported. Chain
+// advise_special_designation (designation='orphan') for rationale,
+// search_drug_approvals + lookup_regulatory_precedents for same-drug/same-disease
+// prior-designation precedent, and search_literature for prevalence &
+// natural-history citations, then pass the gathered evidence in `citations`.
+export const PLAN_ORPHAN_DRUG_DESIGNATION: AnaTool = {
+  name: 'plan_orphan_drug_designation',
+  description:
+    'Author an FDA Orphan-Drug Designation (ODD) request under 21 CFR Part 316 from a BiotechProduct. ' +
+    'Returns the author_docx_native title + markdown content (all mandatory §316.20(b) / §316.21(b)(c) ' +
+    'sections), and the required_strings (the mandatory section headers) to pass to ' +
+    'verify_docx_against_source so the verification proves every required element is present before ' +
+    'download. Honesty contract: no prevalence/eligibility claim is asserted without a cited source ' +
+    '(supply them via `citations`), and sample/not-assessed drafts are non-sealable. Chain ' +
+    'advise_special_designation (designation="orphan") for rationale, search_drug_approvals + ' +
+    'lookup_regulatory_precedents for prior same-drug/same-disease designation precedent, and ' +
+    'search_literature for prevalence & natural-history citations.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      product: {
+        type: 'object',
+        description: 'Product fields, typically drawn from BiotechProduct (name/indication/modality/strategy).',
+        properties: {
+          name: { type: 'string', description: 'Product code, e.g. "ABC-123".' },
+          generic_name: { type: 'string' },
+          brand_name: { type: 'string' },
+          indication: { type: 'string', description: 'Proposed orphan indication, e.g. "relapsed/refractory AML".' },
+          modality: { type: 'string', description: 'small_molecule | biologic | cell_therapy | gene_therapy | combination.' },
+          designations: { type: 'array', items: { type: 'string' }, description: 'strategy.designation values; "orphan" expected.' },
+          sponsor_name: { type: 'string' },
+          sponsor_address: { type: 'string' },
+          contact_name: { type: 'string' },
+          fda_division: { type: 'string' },
+        },
+        required: ['name', 'indication'],
+      },
+      rationale: {
+        type: 'string',
+        description: 'Scientific rationale narrative, e.g. the brief from advise_special_designation(designation="orphan").',
+      },
+      citations: {
+        type: 'array',
+        description: 'Evidence supporting a section. A prevalence/eligibility section asserts no claim without one.',
+        items: {
+          type: 'object',
+          properties: {
+            section_id: { type: 'string', description: 'e.g. population_estimate | cost_recovery_basis | same_drug_summary.' },
+            label: { type: 'string' },
+            source: { type: 'string', description: 'DOI, PMID, FDA application number, precedent id, or URL.' },
+          },
+          required: ['section_id', 'label', 'source'],
+        },
+      },
+      provenance: {
+        type: 'string',
+        enum: ['live', 'sample', 'not_assessed'],
+        description: 'Provenance of the product data. sample/not_assessed drafts are non-sealable and non-exportable.',
+      },
+    },
+    required: ['product'],
+  },
+};
+
+// IND narrative-module authoring (E11). Author a CTD Module 2 clinical summary
+// (2.5 Clinical Overview / 2.7 Clinical Summary) from a STRUCTURED source and
+// derive the required_strings for verify_docx_against_source from the source's
+// key facts/figures — so the verify step proves transcription fidelity (a
+// missing/mistyped figure fails) before the user signs + seals the persisted
+// version. Honesty contract: sample/not_assessed sources are non-sealable.
+export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
+  name: 'plan_ind_module_authoring',
+  description:
+    'Author a transcription-safe IND narrative module (CTD Module 2.5 Clinical Overview or 2.7 Clinical ' +
+    'Summary) from a STRUCTURED source. Returns the author_docx_native title + markdown content (every ' +
+    'mandatory CTD Module 2 section header) and the required_strings to pass to verify_docx_against_source. ' +
+    'CRITICAL: required_strings include the section headers PLUS every source figure VALUE, so the verify ' +
+    'step proves each figure was transcribed verbatim and CATCHES a missing or mistyped figure before the ' +
+    'draft can be sealed. Honesty contract: a sample/not_assessed source is never sealable, and a draft ' +
+    'whose figures do not verify is non-sealable. Supply the structured source facts/figures in `facts`.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      module: {
+        type: 'string',
+        enum: ['2.5', '2.7'],
+        description: 'CTD Module 2 clinical summary to author: 2.5 (Clinical Overview) or 2.7 (Clinical Summary).',
+      },
+      product_name: { type: 'string', description: 'Product / compound name for the title + running header.' },
+      indication: { type: 'string', description: 'Proposed indication.' },
+      facts: {
+        type: 'array',
+        description:
+          'Structured source facts/figures to transcribe verbatim. Each value becomes a required_strings entry, ' +
+          'so a mistyped figure fails verification.',
+        items: {
+          type: 'object',
+          properties: {
+            section_id: {
+              type: 'string',
+              description: 'Which template section the fact belongs in (e.g. overview_efficacy, summary_clinical_safety).',
+            },
+            label: { type: 'string', description: 'Human label for the fact (e.g. "Primary endpoint response rate").' },
+            value: {
+              type: 'string',
+              description: 'The verbatim figure/string to transcribe AND verify (e.g. "42.3%", "200 mg", "24 months").',
+            },
+            source: { type: 'string', description: 'Optional source pointer (table/dataset id) recorded for provenance.' },
+          },
+          required: ['section_id', 'label', 'value'],
+        },
+      },
+      provenance: {
+        type: 'string',
+        enum: ['live', 'sample', 'not_assessed'],
+        description: 'Provenance of the source data. sample/not_assessed sources are non-sealable.',
+      },
+    },
+    required: ['module', 'product_name', 'indication'],
   },
 };
 
@@ -1125,6 +1272,108 @@ export const RUN_SUBMISSION_PREMORTEM: AnaTool = {
       },
     },
     required: ['text'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E14 — CRL/RTF pre-mortem sealed as an exportable DECISION ARTIFACT. Lifts the
+// run_submission_premortem verdict into a board-ready artifact: an approval-
+// probability ESTIMATE (grounded in the cited precedent approve/deny split,
+// never a guarantee), a ranked top-risks list with each risk bound to its
+// grounding precedent, a prioritized fix-list, and an exportability/honesty
+// guard. Honest by construction: pattern-only / insufficient-data reads are
+// marked not_assessed and are NOT exportable/sealable; sample artifacts never
+// export. The artifact is generated UNSEALED — E1's Sign-and-seal attaches the
+// seal/provenance without changing assembly.
+// ─────────────────────────────────────────────────────────────────────────────
+export const ASSEMBLE_CRL_PREMORTEM_ARTIFACT: AnaTool = {
+  name: 'assemble_crl_premortem_artifact',
+  description:
+    "Assemble a board-ready CRL/RTF pre-mortem DECISION ARTIFACT from draft submission text: runs the RTF/CRL pre-mortem (deterministic reviewer-trigger detection + the precedent engine) and composes an executive-ready artifact — an approval-probability ESTIMATE grounded in the approve/deny split of the cited precedents (always framed as an estimate, never a guarantee, carrying its denominator and confidence), a ranked top-risks list where each risk is bound to the precedent that grounds it, a prioritized fix-list, and the precedent citations. Honest by construction: when the precedent corpus is too thin to calibrate, the artifact is marked 'not_assessed' and carries NO probability and is NOT exportable. Set export=true to also render and author the artifact as a Word document via the native docx engine (only permitted for an 'estimated', non-sample artifact); the exported document is marked UNSEALED until signed. Provide the draft text and, ideally, the agency and submission type.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: {
+        type: 'string',
+        description: 'The draft submission text to assess (a section, module, or claim set).',
+      },
+      submission_type: {
+        type: 'string',
+        description: 'Submission type for precedent calibration (e.g. IND, NDA, BLA, 510(k), PMA, MAA).',
+      },
+      agency: {
+        type: 'string',
+        description: 'Target agency (e.g. FDA, EMA, PMDA). Used for scope and precedent filtering.',
+      },
+      indication: {
+        type: 'string',
+        description: 'Optional indication / therapeutic area to sharpen precedent matching.',
+      },
+      location: {
+        type: 'string',
+        description: "Section/field reference for provenance (e.g. '2.5 Clinical Overview'). Default 'document'.",
+      },
+      title: {
+        type: 'string',
+        description: 'Optional artifact title for the board-ready report.',
+      },
+      export: {
+        type: 'boolean',
+        description:
+          'When true, also render and author the artifact as a Word document via the native docx engine (only for an estimable, non-sample artifact). Default false.',
+      },
+    },
+    required: ['text'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E8 — Pre-IND / EOP2 briefing-book builder with reviewer-challenge pre-mortem.
+// Assembles a regulatory-agency meeting briefing book (background, objectives,
+// questions for the agency, supporting-data summary) from a RegAgencyMeeting,
+// then stress-tests the sponsor's enumerated questions against ANTICIPATED FDA
+// pushback via simulate_reviewer_challenges + run_submission_premortem. Returns
+// the assembled markdown (hand to author_docx_native), the required_strings for
+// verify_docx_against_source (mandatory headers + sponsor questions), and an
+// honest pre-mortem verdict. Honest by construction: a book built from sample /
+// fixture meeting data is not_assessed and not sealable/exportable; anticipated
+// pushback is framed as anticipated, never an actual agency position.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ASSEMBLE_BRIEFING_BOOK: AnaTool = {
+  name: 'assemble_briefing_book',
+  description:
+    "Assemble a Pre-IND / End-of-Phase-2 (or other Type A/B/C) regulatory-agency MEETING BRIEFING BOOK from a RegAgencyMeeting and stress-test the sponsor's questions against anticipated FDA pushback. Produces the four mandatory sections (Background, Product Development Objectives, Questions for the Agency, Supporting-Data Summary) as markdown ready for author_docx_native, plus the required_strings (the mandatory section headers AND each enumerated sponsor question, verbatim) to pass to verify_docx_against_source. When run_premortem is set, it also surfaces the anticipated reviewer pushback per sponsor question by folding in simulate_reviewer_challenges + run_submission_premortem — labelled ANTICIPATED, never an actual agency position. Honest by construction: a book assembled from sample/fixture meeting data (no live meeting id supplied) is marked not_assessed and is NOT sealable or exportable. Tenant context is injected from the request.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      meeting_id: {
+        type: 'string',
+        description:
+          'Optional id of a live RegAgencyMeeting to build from. When omitted, a labelled fixture EOP2 meeting is used and the resulting book is marked sample / not_assessed.',
+      },
+      meeting_type: {
+        type: 'string',
+        enum: ['pre_ind', 'eop1', 'eop2', 'pre_nda', 'pre_bla', 'type_a', 'type_b', 'type_c', 'type_d'],
+        description: 'Meeting type. Defaults to the fixture meeting type (eop2) when no live meeting is supplied.',
+      },
+      key_questions: {
+        type: 'array',
+        items: { type: 'string' },
+        description: "The sponsor's enumerated questions for the agency. Each becomes a required_string and a pre-mortem row.",
+      },
+      product_name: { type: 'string', description: 'Investigational product name for the title and narrative.' },
+      indication: { type: 'string', description: 'Indication / therapeutic area.' },
+      sponsor: { type: 'string', description: 'Sponsor name.' },
+      run_premortem: {
+        type: 'boolean',
+        description:
+          'When true (default), surface anticipated FDA pushback per sponsor question via the reviewer-challenge and pre-mortem engines. Requires package_id + assessment_id for the reviewer-lens pass; degrades to pattern-only pre-mortem otherwise.',
+      },
+      package_id: { type: 'number', description: 'Submission package id for simulate_reviewer_challenges (optional).' },
+      assessment_id: { type: 'number', description: 'Submission-twin assessment id for simulate_reviewer_challenges (optional).' },
+    },
+    required: [],
   },
 };
 
@@ -7256,7 +7505,7 @@ export const RECONCILE_DOSSIER_NUMBERS: AnaTool = {
   },
 };
 
-export const ALL_ANA_TOOLS: AnaTool[] = [
+const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   RECONCILE_DOSSIER_NUMBERS,
   GENERATE_SCHEDULE_OF_EVENTS,
   AMEND_SCHEDULE_OF_EVENTS,
@@ -7291,10 +7540,13 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ADVISE_COA_SELECTION,
   ADVISE_CTD_STRUCTURE,
   ADVISE_SPECIAL_DESIGNATION,
+  PLAN_ORPHAN_DRUG_DESIGNATION,
+  PLAN_IND_MODULE_AUTHORING,
   ADVISE_ESTIMAND,
   ADVISE_PHARMACOVIGILANCE,
   ADVISE_STUDY_DESIGN,
   ADVISE_LABELING_STRUCTURE,
+  PLAN_LABELING_AUTHORING,
   ADVISE_MEDICAL_INFORMATION,
   ADVISE_REPORTING_GUIDELINE,
   ADVISE_DATA_INTEGRITY,
@@ -7310,6 +7562,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_LARGE_DOCUMENT,
   REMEMBER_DOCUMENT_IN_PROJECT,
   RUN_SUBMISSION_PREMORTEM,
+  ASSEMBLE_CRL_PREMORTEM_ARTIFACT,
+  ASSEMBLE_BRIEFING_BOOK,
   ASSESS_OUTPUT_CONFIDENCE,
   CHECK_GROUNDING,
   RENDER_SIGNATURE_MANIFESTATION,
@@ -7997,6 +8251,16 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // SPL generation + PSUR/DSUR safety-report structure. See splSafetyTools.ts.
   ...SPL_SAFETY_TOOLS,
 ];
+
+// Defensive registry guard: v2's cdiscTools.ts currently re-registers
+// run_cdisc_pipeline / generate_define_xml, which also live in
+// EXTENDED_REGULATORY_TOOLS — producing duplicate tool names in the raw list.
+// Dedupe by name (first occurrence wins) so the ALL_ANA_TOOLS invariant holds
+// regardless of upstream double-registration. Remove once the duplicate is
+// resolved at source in the CDISC tools refactor.
+export const ALL_ANA_TOOLS: AnaTool[] = ALL_ANA_TOOLS_RAW.filter(
+  (tool, index) => ALL_ANA_TOOLS_RAW.findIndex((t) => t.name === tool.name) === index,
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Anthropic server-side tools (executed by Anthropic's infrastructure)

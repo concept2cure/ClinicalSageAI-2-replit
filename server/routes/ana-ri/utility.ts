@@ -27,6 +27,7 @@ import {
   verifySignerCredentials,
   defaultSignoffDeps,
 } from '../../services/ana-ri/governed-action-signoff.js';
+import { handleSealVerifiedVersion } from './seal-verified.js';
 import auditService from '../../services/auditService.js';
 import {
   sendSuccess,
@@ -295,4 +296,9 @@ export function mountUtilityRoutes(router: Router): void {
       return sendError(res, 500, error?.message || 'Governed action failed', null, 'GOVERNED_ACTION_FAILED');
     }
   });
+
+  // POST /api/ana-ri/seal-verified-version — E1: Part 11 verified-and-sealed
+  // export (handler in ./seal-verified.ts). Gated behind
+  // ENABLE_ANA_DOCUMENT_STUDIO (off by default).
+  router.post('/seal-verified-version', handleSealVerifiedVersion);
 }

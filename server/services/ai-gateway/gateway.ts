@@ -630,6 +630,16 @@ export class AIGateway {
   }
 
   /**
+   * Get the model registry (built at construction, gated on API-key presence).
+   * Read-only accessor for surfaces that need to project the available models —
+   * e.g. the Composer's model picker. Returns the live array reference; callers
+   * must not mutate it (project/filter into a new array instead).
+   */
+  getModels(): ModelConfig[] {
+    return this.models;
+  }
+
+  /**
    * Check if gateway is in deterministic mode.
    */
   isDeterministic(): boolean {

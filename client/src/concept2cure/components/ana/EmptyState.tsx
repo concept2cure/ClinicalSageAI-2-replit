@@ -13,6 +13,8 @@ import { useRef, useState } from 'react';
 
 import { I } from './icons';
 import { Composer, type ComposerReadyAttachment } from './Composer';
+import type { EffortLevel } from './ModelEffortPicker';
+import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
 import type { MessageAttachment } from './useAnaChat';
 import styles from './styles.module.css';
 
@@ -61,8 +63,15 @@ export interface EmptyStateProps {
   /** Tools pinned for the next turn, forwarded to the composer's tool picker. */
   selectedTools?: string[];
   onSelectedToolsChange?: (tools: string[]) => void;
+  /** Response effort + advanced model override, forwarded to the composer's picker. */
+  effort?: EffortLevel;
+  onEffortChange?: (effort: EffortLevel) => void;
+  modelOverride?: string | null;
+  onModelOverrideChange?: (modelId: string | null) => void;
   /** Project health snapshot, rendered as a compact card above the composer. */
   projectIntelligence?: AnaProjectIntelligence;
+  /** Guided Safety Narrative submit (E5). Forwarded to the composer's affordance. */
+  onSafetyNarrative?: (payload: SafetyNarrativeSubmit) => void;
 }
 
 function resolveIcon(key?: EmptySuggestion['iconKey']): typeof I.file {
@@ -90,7 +99,12 @@ export function EmptyState({
   projectId,
   selectedTools,
   onSelectedToolsChange,
+  effort,
+  onEffortChange,
+  modelOverride,
+  onModelOverrideChange,
   projectIntelligence,
+  onSafetyNarrative,
 }: EmptyStateProps) {
   const [draft, setDraft] = useState('');
   // Attachments the composer hands up at send time, consumed by `send`.
@@ -180,6 +194,11 @@ export function EmptyState({
           projectId={projectId}
           selectedTools={selectedTools}
           onSelectedToolsChange={onSelectedToolsChange}
+          effort={effort}
+          onEffortChange={onEffortChange}
+          modelOverride={modelOverride}
+          onModelOverrideChange={onModelOverrideChange}
+          onSafetyNarrative={onSafetyNarrative}
         />
         <div className={styles.suggest}>
           {pills.map(({ Ico, label }) => (

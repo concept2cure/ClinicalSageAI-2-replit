@@ -24,6 +24,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { getAuthHeaders } from '../../../utils/authToken';
 import { extractPendingSignoffs, type PendingSignoff } from './useGovernedAction';
+import type { BriefingBookPremortemResult } from './BriefingBookPanel';
 import i18n from '@/i18n';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 
@@ -70,6 +71,64 @@ export interface VerificationResult {
 }
 
 /**
+ * E14 — the board-ready CRL/RTF pre-mortem decision artifact, surfaced from the
+ * `assemble_crl_premortem_artifact` tool result so the Document Studio can show
+ * the approval-probability estimate, ranked precedent-cited risks, and the
+ * prioritized fix-list. Honest by construction: a `not_assessed`/`sample`
+ * artifact is non-exportable; the artifact is always unsealed until E1 lands.
+ */
+export type { CrlPremortemArtifact } from './CrlPremortemPanel';
+
+/**
+ * Map a parsed `assemble_crl_premortem_artifact` tool result into the client
+ * artifact shape. Returns null for an error envelope, a non-object, or a missing
+ * artifact. Exported for unit testing the parse in isolation from the stream.
+ */
+export function mapCrlPremortemArtifact(
+  parsed: Record<string, unknown> | null | undefined,
+): import('./CrlPremortemPanel').CrlPremortemArtifact | null {
+  if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
+  const a = parsed.artifact;
+  if (!a || typeof a !== 'object') return null;
+  return a as import('./CrlPremortemPanel').CrlPremortemArtifact;
+}
+
+/**
+ * Map a parsed `assemble_briefing_book` tool result into the client
+ * BriefingBookPremortemResult shape (E8). Returns null for an error envelope,
+ * a non-object, or a result with no premortem. Exported for unit testing.
+ *
+ * Honest by construction: `anticipated` is forced true and the sealable/
+ * assessment flags are passed through verbatim — sample/not_assessed data is
+ * never re-flagged as sealable.
+ */
+export function mapBriefingPremortem(
+  parsed: Record<string, unknown> | null | undefined,
+): BriefingBookPremortemResult | null {
+  if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
+  const pm = parsed.premortem as Record<string, unknown> | undefined;
+  if (!pm || typeof pm !== 'object') return null;
+  const perQuestion = Array.isArray(pm.perQuestion)
+    ? (pm.perQuestion as BriefingBookPremortemResult['perQuestion'])
+    : [];
+  const unmapped = Array.isArray(pm.unmappedChallenges)
+    ? (pm.unmappedChallenges as BriefingBookPremortemResult['unmappedChallenges'])
+    : [];
+  return {
+    anticipated: true,
+    perQuestion,
+    unmappedChallenges: unmapped,
+    overallRisk: (pm.overallRisk as BriefingBookPremortemResult['overallRisk']) ?? 'insufficient_data',
+    precedentCount: typeof pm.precedentCount === 'number' ? pm.precedentCount : 0,
+    dataSource: pm.dataSource === 'live' ? 'live' : 'fixture',
+    // Sample/not_assessed is never sealable: only a true server flag passes.
+    sealable: pm.sealable === true,
+    assessment: pm.assessment === 'assessed' ? 'assessed' : 'not_assessed',
+    summary: typeof pm.summary === 'string' ? pm.summary : undefined,
+  };
+}
+
+/**
  * Map a parsed `verify_docx_against_source` tool result into the client
  * VerificationResult shape. Returns null for an error envelope or non-object.
  * Exported for unit testing the parse in isolation from the SSE stream.
@@ -89,6 +148,122 @@ export function mapVerificationResult(
     divergence:
       div && typeof div === 'object' ? (div as VerificationResult['divergence']) : undefined,
     message: typeof parsed.message === 'string' ? parsed.message : undefined,
+  };
+}
+
+/** The four verdict tiers `check_dossier_consistency` can return. */
+export type ConsistencyVerdict = 'clean' | 'minor_issues' | 'needs_review' | 'blocker';
+
+/** Per-divergence severity from the cross-artifact consistency engine. */
+export type ConsistencyDivergenceSeverity = 'critical' | 'high' | 'medium' | 'low';
+
+/**
+ * One divergence the dossier-consistency sweep found: a labelled quantity (N,
+ * p-value, dose, NOAEL, shelf-life …) or a cross-reference that conflicts with
+ * another artifact in the same project. Carries both conflicting values and a
+ * pointer back to the source artifact so the bullet can be deep-linked.
+ */
+export interface ConsistencyDivergence {
+  /** Why it diverged: numeric, endpoint/population drift, or a broken reference. */
+  kind: string;
+  severity: ConsistencyDivergenceSeverity;
+  /** Factual one-line statement of the conflict. */
+  description: string;
+  /** The value stated in the draft being checked. */
+  draftValue: string;
+  /** The conflicting value found in the existing dossier (absent for orphan refs). */
+  existingValue?: string;
+  /** Title of the source artifact the conflicting value came from. */
+  existingArtifact?: string;
+  /** CTD section of the source artifact, when known (e.g. "2.5", "5.3.5.1"). */
+  existingCtdSection?: string | null;
+}
+
+/**
+ * Result of `check_dossier_consistency` — the per-version Dossier Consistency
+ * Sweep. A SECOND Document Studio verification surface, parallel to
+ * VerificationResult: where verification proves the draft matches *its own*
+ * source, this proves the draft does not contradict the *rest of the dossier*.
+ * Surfaced as the ConsistencyPanel trust-strip.
+ */
+export interface ConsistencyResult {
+  verdict: ConsistencyVerdict;
+  /** How many other artifacts in the project the draft was compared against. */
+  artifactsCompared: number;
+  /** How many labelled facts were extracted from the draft for comparison. */
+  draftFactsExtracted: number;
+  /** Total divergences found (may exceed the surfaced `divergences` list). */
+  divergenceCount: number;
+  /** Per-severity counts, for the verdict sub-line. */
+  bySeverity: { critical: number; high: number; medium: number; low: number };
+  /** The surfaced divergences (server caps at 20), each deep-linkable. */
+  divergences: ConsistencyDivergence[];
+  /** Factual reviewer recommendation line from the tool. */
+  recommendation?: string;
+  /**
+   * Honesty guard: true when the checked draft was sample / not-assessed
+   * content. A sample-derived verdict is never sealable/exportable, so the
+   * panel renders it as advisory-only and suppresses the resolve affordance.
+   */
+  isSample?: boolean;
+}
+
+/**
+ * Map a parsed `check_dossier_consistency` tool result into the client
+ * ConsistencyResult shape. Returns null for an error envelope or non-object.
+ * Mirrors mapVerificationResult; exported for unit testing in isolation.
+ */
+export function mapConsistencyResult(
+  parsed: Record<string, unknown> | null | undefined,
+): ConsistencyResult | null {
+  if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
+
+  const allowedVerdicts: ConsistencyVerdict[] = ['clean', 'minor_issues', 'needs_review', 'blocker'];
+  const verdict = allowedVerdicts.includes(parsed.verdict as ConsistencyVerdict)
+    ? (parsed.verdict as ConsistencyVerdict)
+    : 'clean';
+
+  const sev = parsed.bySeverity;
+  const bySeverity =
+    sev && typeof sev === 'object'
+      ? {
+          critical: Number((sev as Record<string, unknown>).critical) || 0,
+          high: Number((sev as Record<string, unknown>).high) || 0,
+          medium: Number((sev as Record<string, unknown>).medium) || 0,
+          low: Number((sev as Record<string, unknown>).low) || 0,
+        }
+      : { critical: 0, high: 0, medium: 0, low: 0 };
+
+  const allowedSeverities: ConsistencyDivergenceSeverity[] = ['critical', 'high', 'medium', 'low'];
+  const divergences: ConsistencyDivergence[] = Array.isArray(parsed.divergences)
+    ? (parsed.divergences as unknown[])
+        .filter((d): d is Record<string, unknown> => !!d && typeof d === 'object')
+        .map(d => ({
+          kind: typeof d.kind === 'string' ? d.kind : 'numeric_divergence',
+          severity: allowedSeverities.includes(d.severity as ConsistencyDivergenceSeverity)
+            ? (d.severity as ConsistencyDivergenceSeverity)
+            : 'medium',
+          description: typeof d.description === 'string' ? d.description : '',
+          draftValue: typeof d.draftValue === 'string' ? d.draftValue : '',
+          existingValue: typeof d.existingValue === 'string' ? d.existingValue : undefined,
+          existingArtifact: typeof d.existingArtifact === 'string' ? d.existingArtifact : undefined,
+          existingCtdSection:
+            typeof d.existingCtdSection === 'string' ? d.existingCtdSection : null,
+        }))
+    : [];
+
+  return {
+    verdict,
+    artifactsCompared: Number(parsed.artifactsCompared) || 0,
+    draftFactsExtracted: Number(parsed.draftFactsExtracted) || 0,
+    divergenceCount:
+      typeof parsed.divergenceCount === 'number' ? parsed.divergenceCount : divergences.length,
+    bySeverity,
+    divergences,
+    recommendation: typeof parsed.recommendation === 'string' ? parsed.recommendation : undefined,
+    // The server may flag sample-derived drafts; honesty contract forbids
+    // treating such a verdict as sealable/exportable.
+    isSample: parsed.isSample === true || parsed.is_sample === true,
   };
 }
 
@@ -159,6 +334,8 @@ export interface AnaChatMessage {
   latencyMs?: number;
   /** True if the response came from a fallback provider (non-Anthropic). */
   fallback?: boolean;
+  /** Effort the server actually used this turn (fast / balanced / thorough). */
+  effortUsed?: string;
   /** True if the user explicitly stopped the stream. */
   stopped?: boolean;
   /**
@@ -212,6 +389,14 @@ export interface AnaChatMessage {
     title: string;
     content: string;
     documentType?: string;
+    /**
+     * Set once the server persists this draft to the governed artifact version
+     * history (server emits `artifact_version_saved`). Their presence lets the
+     * UI fetch the durable cross-session version lineage instead of relying on
+     * the per-session in-memory grouping.
+     */
+    artifactId?: string;
+    version?: number;
   };
   /**
    * Tools AnA invoked this turn, shown as calm status rows for transparency
@@ -224,6 +409,24 @@ export interface AnaChatMessage {
    * Powers the Document Studio "verified against your source" trust-panel.
    */
   verification?: VerificationResult;
+  /**
+   * E14 — board-ready CRL/RTF pre-mortem decision artifact produced by
+   * `assemble_crl_premortem_artifact` this turn, if it ran. Powers the Document
+   * Studio pre-mortem panel (approval-probability estimate + cited risks + fix-
+   * list). Always unsealed until E1's Sign-and-seal lands.
+   */
+  crlPremortem?: import('./CrlPremortemPanel').CrlPremortemArtifact;
+  /**
+   * Result of the `check_dossier_consistency` sweep this turn, if it ran.
+   * Powers the Document Studio "consistent with your dossier" trust-panel —
+   * the SECOND verification surface, rendered alongside `verification`.
+   */
+  consistency?: ConsistencyResult;
+  /**
+   * Result of the `assemble_briefing_book` step this turn, if it ran (E8).
+   * Powers the Document Studio "anticipated FDA pushback" pre-mortem panel.
+   */
+  briefingPremortem?: BriefingBookPremortemResult;
 }
 
 export interface UseAnaChatOptions {
@@ -258,6 +461,18 @@ export interface UseAnaChatOptions {
    * so a narrow pin can't break ANA. Empty/undefined = auto (server chooses).
    */
   selectedTools?: string[];
+  /**
+   * Response effort the user picked in the Composer (Fast/Balanced/Thorough).
+   * Sent as `effort_level` when set; the server maps it to a routing strategy
+   * (governance-pinned policy still wins). Omitted → server default 'balanced'.
+   */
+  effortLevel?: 'fast' | 'balanced' | 'thorough' | null;
+  /**
+   * Explicit model override (gateway registry id) the user pinned in the
+   * advanced picker. Sent as `model_override` when set; the server validates it
+   * against the tenant's enabled models and drops it silently when invalid.
+   */
+  modelOverride?: string | null;
 }
 
 export interface UseAnaChatReturn {
@@ -394,6 +609,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       // Capture done-event fields before post_done arrives
       let capturedLatencyMs: number | undefined;
       let capturedProvider: string | undefined;
+      let capturedEffortUsed: string | undefined;
       let streamedThinking = '';
 
       // Unpack the AuthoringContextPack into the three typed slots the server
@@ -472,6 +688,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           options.selectedTools && options.selectedTools.length > 0
             ? options.selectedTools
             : undefined,
+        // Model/effort picker. Both omitted when unset so the server keeps its
+        // default routing (effort='balanced', no model pin).
+        effort_level: options.effortLevel ?? undefined,
+        model_override: options.modelOverride ?? undefined,
       });
 
       let streamedText = '';
@@ -578,6 +798,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             } else if (event.type === 'done') {
               capturedLatencyMs = typeof event.latencyMs === 'number' ? event.latencyMs : undefined;
               capturedProvider = typeof event.provider === 'string' ? event.provider : undefined;
+              // The effort the server actually used this turn (may differ from
+              // the request when a governance policyHint pinned the strategy).
+              capturedEffortUsed =
+                typeof event.effortUsed === 'string' ? event.effortUsed : undefined;
             } else if (event.type === 'post_done') {
               const cleaned: string | undefined = event.cleanedResponse;
               const actions: AnaChatAction[] | undefined = Array.isArray(event.executedActions)
@@ -611,6 +835,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                       capturedProvider !== undefined
                         ? capturedProvider !== 'anthropic'
                         : undefined,
+                    effortUsed: capturedEffortUsed ?? m.effortUsed,
                   };
                 })
               );
@@ -713,6 +938,25 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // can show "verified against your source" (caption strings + diff).
               const verification: VerificationResult | null =
                 name === 'verify_docx_against_source' ? mapVerificationResult(parsedResult) : null;
+              // E14 — capture the CRL/RTF pre-mortem decision artifact so the
+              // Document Studio can render the board-ready pre-mortem panel.
+              const crlPremortem =
+                name === 'assemble_crl_premortem_artifact' ? mapCrlPremortemArtifact(parsedResult) : null;
+              // Capture the dossier-consistency sweep so the Document Studio
+              // ConsistencyPanel (the second verification surface) can show the
+              // verdict + per-divergence conflicts. This is the natural surface
+              // to render after an author_docx_native / surgical_docx_xml_edit
+              // returns a Module 2/5 draft and the server runs the sweep.
+              // BUILD-1 INTEGRATION: once Build 1 (concept2cure_artifact_versions)
+              // is merged, the persisted version row for this draft should carry
+              // this verdict. The server executor would attach it to the version
+              // when sealing; here on the client we only render the live result.
+              const consistency: ConsistencyResult | null =
+                name === 'check_dossier_consistency' ? mapConsistencyResult(parsedResult) : null;
+              // E8: capture the briefing-book pre-mortem so the Document Studio
+              // can show the "anticipated FDA pushback" panel alongside the book.
+              const briefingPremortem: BriefingBookPremortemResult | null =
+                name === 'assemble_briefing_book' ? mapBriefingPremortem(parsedResult) : null;
               setMessages(prev =>
                 prev.map(m => {
                   if (m.id !== assistantId) return m;
@@ -727,6 +971,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     }
                   }
                   if (verification) next = { ...next, verification };
+                  if (crlPremortem) next = { ...next, crlPremortem };
+                  if (consistency) next = { ...next, consistency };
+                  if (briefingPremortem) next = { ...next, briefingPremortem };
                   return next;
                 })
               );
@@ -742,6 +989,28 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                       ? { ...m, generatedDraft: { title, content, documentType } }
                       : m
                   )
+                );
+              }
+            } else if (event.type === 'artifact_version_saved') {
+              // Server persisted this draft to the governed artifact version
+              // history. Attach the durable artifactId/version to the matching
+              // draft so the UI can fetch its cross-session lineage.
+              const artifactId: string | undefined =
+                typeof event.artifactId === 'string' ? event.artifactId : undefined;
+              const version: number | undefined =
+                typeof event.version === 'number' ? event.version : undefined;
+              const savedTitle: string | undefined =
+                typeof event.title === 'string' ? event.title : undefined;
+              if (artifactId) {
+                setMessages(prev =>
+                  prev.map(m => {
+                    if (m.id !== assistantId || !m.generatedDraft) return m;
+                    if (savedTitle && m.generatedDraft.title !== savedTitle) return m;
+                    return {
+                      ...m,
+                      generatedDraft: { ...m.generatedDraft, artifactId, version },
+                    };
+                  })
                 );
               }
             } else if (event.type === 'error') {
@@ -811,6 +1080,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       options.authoringContext,
       options.moduleContext,
       options.selectedTools,
+      options.effortLevel,
+      options.modelOverride,
     ]
   );
 

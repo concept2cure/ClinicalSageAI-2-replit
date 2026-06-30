@@ -29,8 +29,24 @@ import { ChatView, type ChatMessageView } from './ChatView';
 import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
 import { DocumentStudioPane, type DocumentStudioDraft } from './DocumentStudioPane';
+import { LabelingAuthoringPane, type LabelingDraft } from './LabelingAuthoringPane';
+import { type LabelingMode } from './labelingModes';
+import type { BriefingBookPremortemResult } from './BriefingBookPanel';
 import { composeVerificationFixMessage } from './VerificationPanel';
-import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult } from './useAnaChat';
+import { aggregateReadiness, type ReadinessGate, type BlockingItem } from './ectdReadiness';
+import {
+  SAMPLE_ASSEMBLED_M2_5,
+  SAMPLE_ASSEMBLED_M5_3_5,
+  SAMPLE_STRUCTURAL_OK,
+  SAMPLE_STRUCTURAL_FAIL,
+  SAMPLE_CONSISTENCY_CLEAN,
+  SAMPLE_CONSISTENCY_BLOCKER,
+} from './ectdReadinessFixtures';
+import { composeConsistencyFixMessage } from './ConsistencyPanel';
+import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
+import { useAnaChat, type AnaChatMessage, type MessageAttachment, type VerificationResult, type ConsistencyResult } from './useAnaChat';
+import type { EffortLevel } from './ModelEffortPicker';
+import { useVerifiedSeal, type SealMeaning, type VerifiedSeal } from './useVerifiedSeal';
 import { useRecents } from './useRecents';
 import styles from './styles.module.css';
 
@@ -251,6 +267,10 @@ export function Ana({
   const [activeRecentId, setActiveRecentId] = useState<string | null>(null);
   // Tools the user pins for the next turn (additive focus). Empty = auto.
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  // Model/effort picker state (flag-gated in the Composer). Effort defaults to
+  // 'balanced'; modelOverride null = Auto (server routes by effort).
+  const [effort, setEffort] = useState<EffortLevel>('balanced');
+  const [modelOverride, setModelOverride] = useState<string | null>(null);
 
   const chat = useAnaChat({
     projectId: resolvedProjectId,
@@ -261,6 +281,8 @@ export function Ana({
     authoringContext: authoringContext ?? undefined,
     moduleContext: moduleContext ?? undefined,
     selectedTools,
+    effortLevel: effort,
+    modelOverride,
   });
 
   // Notify host when the active thread id changes (legacy parity with
@@ -305,6 +327,22 @@ export function Ana({
     (text: string, attachments?: MessageAttachment[]) => {
       setView('chat');
       void chat.send(text, attachments);
+    },
+    [chat]
+  );
+
+  // E5 — guided Safety Narrative submit. Pins the draft→author→verify tool set
+  // (additive focus) and sends the composed message through the normal stream
+  // path, so the existing tool_use / tool_result / verification handling drives
+  // the author→verify QC loop. The three tools are orchestrated, not rebuilt.
+  // BUILD-1 INTEGRATION: `payload.cases` carries the case set so that, once
+  // Build 1 lands version persistence, each finished QC-clear narrative can be
+  // persisted as a version row here. Persistence is intentionally not wired yet.
+  const handleSafetyNarrative = useCallback(
+    (payload: SafetyNarrativeSubmit) => {
+      setSelectedTools(prev => Array.from(new Set([...prev, ...payload.tools])));
+      setView('chat');
+      void chat.send(payload.message);
     },
     [chat]
   );
@@ -512,34 +550,130 @@ export function Ana({
   // in the conversation. Its "versions" are every draft this session that
   // carries the same title, oldest→newest — so successive AnA rewrites become
   // v1, v2, v3 the user can flip between.
+  // Durable, cross-session version history fetched from the governed artifact
+  // store, keyed by external artifact id. Populated once a draft reports a
+  // persisted `artifactId` (server `artifact_version_saved`). Preferred over the
+  // in-session grouping below so a reloaded thread shows real version lineage.
+  const [persistedVersions, setPersistedVersions] = useState<
+    Record<string, { content: string }[]>
+  >({});
+
   const activeDocument = useMemo<{
     id: string;
     title: string;
     documentType?: string;
-    versions: { content: string; verification?: VerificationResult }[];
+    artifactId?: string;
+    versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult; briefingPremortem?: BriefingBookPremortemResult }[];
   } | null>(() => {
     if (!studioEnabled) return null;
     let latestTitle: string | null = null;
     let latestId: string | null = null;
     let latestType: string | undefined;
+    let latestArtifactId: string | undefined;
     for (let i = chat.messages.length - 1; i >= 0; i--) {
       const d = chat.messages[i].generatedDraft;
       if (d) {
         latestTitle = d.title;
         latestId = chat.messages[i].id;
         latestType = d.documentType;
+        latestArtifactId = d.artifactId;
         break;
       }
     }
     if (latestTitle == null || latestId == null) return null;
-    const versions: { content: string; verification?: VerificationResult }[] = [];
+
+    // Prefer the durable persisted version history when available for this
+    // artifact; fall back to the per-session grouping (same-title drafts) so the
+    // pane still works before/without persistence.
+    const persisted = latestArtifactId ? persistedVersions[latestArtifactId] : undefined;
+    if (persisted && persisted.length > 0) {
+      // Carry the latest in-session verification onto the newest version so the
+      // "verified against your source" panel still shows when applicable.
+      const versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult; briefingPremortem?: BriefingBookPremortemResult }[] =
+        persisted.map(v => ({ content: v.content }));
+      let latestVerification: VerificationResult | undefined;
+      let latestConsistency: ConsistencyResult | undefined;
+      let latestBriefingPremortem: BriefingBookPremortemResult | undefined;
+      for (const m of chat.messages) {
+        if (m.generatedDraft && m.generatedDraft.title === latestTitle) {
+          if (m.verification) latestVerification = m.verification;
+          if (m.consistency) latestConsistency = m.consistency;
+          if (m.briefingPremortem) latestBriefingPremortem = m.briefingPremortem;
+        }
+      }
+      if (versions.length > 0 && (latestVerification || latestConsistency || latestBriefingPremortem)) {
+        versions[versions.length - 1] = {
+          ...versions[versions.length - 1],
+          verification: latestVerification,
+          consistency: latestConsistency,
+          briefingPremortem: latestBriefingPremortem,
+        };
+      }
+      return {
+        id: latestId,
+        title: latestTitle,
+        documentType: latestType,
+        artifactId: latestArtifactId,
+        versions,
+      };
+    }
+
+    const versions: { content: string; verification?: VerificationResult; consistency?: ConsistencyResult; briefingPremortem?: BriefingBookPremortemResult }[] = [];
     for (const m of chat.messages) {
       if (m.generatedDraft && m.generatedDraft.title === latestTitle) {
-        versions.push({ content: m.generatedDraft.content, verification: m.verification });
+        versions.push({
+          content: m.generatedDraft.content,
+          verification: m.verification,
+          // The dossier-consistency sweep that ran on the turn that produced
+          // this draft (author_docx_native / surgical_docx_xml_edit → sweep).
+          consistency: m.consistency,
+          briefingPremortem: m.briefingPremortem,
+        });
       }
     }
-    return { id: latestId, title: latestTitle, documentType: latestType, versions };
-  }, [studioEnabled, chat.messages]);
+    return {
+      id: latestId,
+      title: latestTitle,
+      documentType: latestType,
+      artifactId: latestArtifactId,
+      versions,
+    };
+  }, [studioEnabled, chat.messages, persistedVersions]);
+
+  // Fetch the durable version history whenever a draft reports a persisted
+  // artifactId we haven't loaded yet (or its version count changed). Failures
+  // are silent — the in-session grouping remains the fallback.
+  useEffect(() => {
+    if (!studioEnabled) return;
+    const seen = new Set<string>();
+    for (const m of chat.messages) {
+      const d = m.generatedDraft;
+      if (!d?.artifactId || seen.has(d.artifactId)) continue;
+      seen.add(d.artifactId);
+      const artifactId = d.artifactId;
+      const knownCount = persistedVersions[artifactId]?.length ?? 0;
+      if (typeof d.version === 'number' && d.version <= knownCount) continue;
+      void (async () => {
+        try {
+          const res = await fetch(
+            `/api/conversation-os/artifacts/${encodeURIComponent(artifactId)}/document-versions`,
+          );
+          if (!res.ok) return;
+          const data = await res.json();
+          if (!data?.success || !Array.isArray(data.versions)) return;
+          const versions = data.versions
+            .filter((v: unknown): v is { content: string } =>
+              Boolean(v) && typeof (v as { content?: unknown }).content === 'string',
+            )
+            .map((v: { content: string }) => ({ content: v.content }));
+          if (versions.length === 0) return;
+          setPersistedVersions(prev => ({ ...prev, [artifactId]: versions }));
+        } catch {
+          /* silent — fall back to in-session grouping */
+        }
+      })();
+    }
+  }, [studioEnabled, chat.messages, persistedVersions]);
 
   // The pane auto-opens for each new draft; the user can close it, and it
   // re-opens (showing the latest version) when a *different* draft arrives.
@@ -579,6 +713,69 @@ export function Ana({
     () => activeDocument?.versions[safeVersionIndex]?.verification,
     [activeDocument, safeVersionIndex],
   );
+  const shownConsistency = useMemo(
+    () => activeDocument?.versions[safeVersionIndex]?.consistency,
+    [activeDocument, safeVersionIndex],
+  );
+
+  /* ─────────────────────────────────────────────────────────────
+     E9 — Build-from-template labeling authoring. When the active draft is a
+     product label (USPI/PLR or SmPC/QRD), the right pane becomes the labeling
+     authoring surface: a US↔EU mode toggle, the mandatory section guard, the
+     deterministic currency gate (review_label_currency), and source
+     verification (required_strings = mandatory section headers). The currency
+     verdict is never inferred client-side — it is the server's finding set.
+     ───────────────────────────────────────────────────────────── */
+  const detectedLabelingMode = useMemo<LabelingMode | null>(() => {
+    const t = (activeDocument?.documentType || '').toLowerCase();
+    if (/uspi|\bplr\b|us pi|prescribing information/.test(t)) return 'us';
+    if (/smpc|\bspc\b|\bqrd\b|summary of product characteristics/.test(t)) return 'eu';
+    return null;
+  }, [activeDocument?.documentType]);
+  const [labelingModeOverride, setLabelingModeOverride] = useState<LabelingMode | null>(null);
+  const labelingMode: LabelingMode = labelingModeOverride ?? detectedLabelingMode ?? 'us';
+  const isLabelingDraft = detectedLabelingMode != null;
+
+  /* ─────────────────────────────────────────────────────────────
+     E11 — IND narrative-module (CTD Module 2.5 / 2.7) verified authoring.
+     When the active draft is a CTD Module 2 clinical summary, the Studio offers
+     the IND-module affordance: author from the structured source, then verify
+     with required_strings that include every source figure, so a transcription
+     error is caught before the user signs + seals the persisted version.
+     ───────────────────────────────────────────────────────────── */
+  const detectedIndModule = useMemo<string | null>(() => {
+    const t = `${activeDocument?.documentType || ''} ${activeDocument?.title || ''}`.toLowerCase();
+    if (/\b2\.7\b|clinical summary/.test(t)) return '2.7';
+    if (/\b2\.5\b|clinical overview/.test(t)) return '2.5';
+    return null;
+  }, [activeDocument?.documentType, activeDocument?.title]);
+
+  // BUILD-1 INTEGRATION: the deterministic currency verdict from
+  // review_label_currency (and the seal/export → version-row persistence) wire
+  // in here. Until then the gate is undefined (panel simply not shown), so the
+  // honesty contract still blocks export of sample/unverified drafts.
+  // INTEGRATION: live currencyVerdict join.
+  const labelingCurrencyVerdict = undefined;
+
+  const shownLabelingDraft = useMemo<LabelingDraft | null>(
+    () =>
+      shownDraft
+        ? {
+            title: shownDraft.title,
+            content: shownDraft.content,
+            // Honesty contract: absent a live data join, drafts are sample and
+            // therefore non-exportable. Set 'live' only when joined to live label
+            // data (INTEGRATION).
+            dataSource: 'sample',
+          }
+        : null,
+    [shownDraft],
+  );
+
+  const shownBriefingPremortem = useMemo(
+    () => activeDocument?.versions[safeVersionIndex]?.briefingPremortem,
+    [activeDocument, safeVersionIndex],
+  );
 
   // Download the rendered draft as a Word file. Calls the server DOCX render
   // route; on any failure, falls back to an honest Markdown download so the
@@ -610,6 +807,132 @@ export function Ana({
     void chat.send(composeVerificationFixMessage(shownDraft.title, shownVerification));
   }, [chat, shownDraft, shownVerification]);
 
+  /* ─────────────────────────────────────────────────────────────
+     E10 — One-turn eCTD Module 2/5 assembly + readiness gate.
+     The single audited action assembles the selected module from the
+     project's artifacts (assemble_ectd_module_from_artifacts) and runs the
+     structural (validate_docx) + consistency (check_dossier_consistency)
+     readiness checks over the assembled output, then aggregates them into a
+     blocking gate. The gate must be green BEFORE the seal / PDUFA-clock step.
+     ───────────────────────────────────────────────────────────── */
+  const [readinessGate, setReadinessGate] = useState<ReadinessGate | undefined>();
+  const [assembling, setAssembling] = useState(false);
+
+  const handleAssembleModule = useCallback(
+    async (moduleNumber: string) => {
+      setAssembling(true);
+      try {
+        // INTEGRATION: replace the fixtures below with the live tool envelopes.
+        // The real flow runs three already-built tools, in order, over the SSE
+        // orchestration layer and maps their JSON results into the client
+        // shapes (assemble_ectd_module_from_artifacts → AssembledModuleResult,
+        // validate_docx → StructuralReadiness, check_dossier_consistency →
+        // ConsistencyReadiness). This component only ORCHESTRATES + AGGREGATES;
+        // it must not change how those tools work (eCTD/CSR guardrail).
+        //
+        //   const assembled = mapAssembled(await runTool('assemble_ectd_module_from_artifacts',
+        //     { project_id: resolvedProjectId, module_number: moduleNumber }));
+        //   const structural = mapStructural(await runTool('validate_docx',
+        //     { input_docx_path: assembled.output.path }));
+        //   const consistency = mapConsistency(await runTool('check_dossier_consistency',
+        //     { project_id: resolvedProjectId, ctd_section: moduleNumber, draft_content: assembled.text }));
+        const assembled =
+          moduleNumber === '5.3.5' ? SAMPLE_ASSEMBLED_M5_3_5 : SAMPLE_ASSEMBLED_M2_5;
+        // Sample fixtures intentionally vary so reviewers see both gate states;
+        // the honesty contract still refuses to seal them (sample: true).
+        const structural = moduleNumber === '5.3.5' ? SAMPLE_STRUCTURAL_FAIL : SAMPLE_STRUCTURAL_OK;
+        const consistency =
+          moduleNumber === '5.3.5' ? SAMPLE_CONSISTENCY_BLOCKER : SAMPLE_CONSISTENCY_CLEAN;
+        const gate = aggregateReadiness({ assembled, structural, consistency });
+        // BUILD-1 INTEGRATION: once Build 1 lands, persist the assembled module
+        // + this readiness verdict as a new version row (assembled_module_version)
+        // here — the gate verdict (gate.gate, gate.blockingItems, gate.sealable)
+        // is the audit payload the version carries into the 21 CFR Part 11 trail.
+        setReadinessGate(gate);
+      } finally {
+        setAssembling(false);
+      }
+    },
+    [],
+  );
+
+  const handleReadinessSubmit = useCallback(() => {
+    // The gate's seal button is disabled unless sealable, so this is only ever
+    // reached for a green, non-sample gate. Defense-in-depth: re-check here so a
+    // programmatic call can never bypass the honesty contract.
+    if (!readinessGate?.sealable) return;
+    // INTEGRATION: invoke the PDUFA-clock submission step here once Build 1
+    // exposes the sealed-submission action. Until then this is a no-op guard.
+  }, [readinessGate]);
+
+  const handleFollowReadinessLink = useCallback((item: BlockingItem) => {
+    // INTEGRATION: route to the deep link target. For a CTD section, scroll the
+    // relevant artifact into view / open it; for an output path, open the
+    // assembled module. Logged for now so the affordance is observable.
+    console.info('[Ana] readiness deep-link followed:', item.deepLink?.target);
+  }, []);
+
+  // Reset the gate when the active document changes — a gate certifies the
+  // module it was run for, never a different draft.
+  useEffect(() => {
+    setReadinessGate(undefined);
+  }, [activeDocument?.id]);
+
+  // Close the consistency loop: when the draft diverges from the dossier, send
+  // AnA a targeted reconciliation request citing the conflicting values and
+  // their source artifacts, then it re-runs the sweep. Suppressed for clean
+  // verdicts and for sample-derived (non-sealable) drafts.
+  const handleResolveConsistency = useCallback(() => {
+    if (!shownDraft || !shownConsistency) return;
+    if (shownConsistency.verdict === 'clean' || shownConsistency.isSample) return;
+    void chat.send(composeConsistencyFixMessage(shownDraft.title, shownConsistency));
+  }, [chat, shownDraft, shownConsistency]);
+
+  // E1 — Part 11 verified-and-sealed export. When a version verifies clean, the
+  // VerificationPanel offers "Sign and seal verified version". We persist the
+  // SealedRecord server-side, then keep the applied seal per version index so
+  // the SealBadge stays put when the user flips between versions. Only wired
+  // when the studio flag is on.
+  const { seal: sealVerified } = useVerifiedSeal();
+  const [appliedSeals, setAppliedSeals] = useState<Record<number, VerifiedSeal>>({});
+  const shownSeal = appliedSeals[safeVersionIndex] ?? null;
+  const handleSeal = useCallback(
+    async (input: {
+      printedName: string;
+      meaning: SealMeaning;
+      reasonForChange: string;
+      password: string;
+      mfaToken?: string;
+    }): Promise<VerifiedSeal | null> => {
+      if (!shownDraft || !shownVerification?.ok) return null;
+      // Build-1 seal binding (E11): when Build 1 has persisted this document, the
+      // active document carries its EXTERNAL artifact id and the version history
+      // is the durable, oldest→newest list — so the version SHOWN at
+      // `safeVersionIndex` is persisted version number `safeVersionIndex + 1`.
+      // Thread both so the server seals the EXISTING persisted row, not a
+      // fallback. (When no persisted artifactId exists yet — an in-session-only
+      // draft — these stay undefined and the server falls back as before.)
+      const persistedArtifactId = activeDocument?.artifactId;
+      const existingVersionNumber = persistedArtifactId ? safeVersionIndex + 1 : undefined;
+      const result = await sealVerified({
+        title: shownDraft.title,
+        content: shownDraft.content,
+        verification: { ok: shownVerification.ok, message: shownVerification.message },
+        projectId: resolvedProjectId ?? undefined,
+        signerRole: resolvedUserRole ?? undefined,
+        artifactExternalId: persistedArtifactId,
+        existingVersionNumber,
+        ...input,
+      });
+      if (result) {
+        const idx = safeVersionIndex;
+        setAppliedSeals(prev => ({ ...prev, [idx]: result }));
+      }
+      return result;
+    },
+    [sealVerified, shownDraft, shownVerification, resolvedProjectId, resolvedUserRole, safeVersionIndex, activeDocument?.artifactId],
+  );
+
   // The view content (home / chat / projects / artifacts). Rendered directly
   // when the studio is closed, or inside the left Panel when it is open — so
   // the chat layout is identical in both modes.
@@ -626,7 +949,12 @@ export function Ana({
           projectId={resolvedProjectId ?? undefined}
           selectedTools={selectedTools}
           onSelectedToolsChange={setSelectedTools}
+          effort={effort}
+          onEffortChange={setEffort}
+          modelOverride={modelOverride}
+          onModelOverrideChange={setModelOverride}
           projectIntelligence={projectIntelligence}
+          onSafetyNarrative={handleSafetyNarrative}
         />
       )}
       {view === 'chat' && (
@@ -645,6 +973,11 @@ export function Ana({
           projectId={resolvedProjectId ?? undefined}
           selectedTools={selectedTools}
           onSelectedToolsChange={setSelectedTools}
+          effort={effort}
+          onEffortChange={setEffort}
+          modelOverride={modelOverride}
+          onModelOverrideChange={setModelOverride}
+          onSafetyNarrative={handleSafetyNarrative}
         />
       )}
       {view === 'projects' && (
@@ -692,17 +1025,53 @@ export function Ana({
             </Panel>
             <PanelResizeHandle className={styles.studioResize} aria-label="Resize document preview" />
             <Panel defaultSize={46} minSize={28}>
-              <DocumentStudioPane
-                draft={shownDraft}
-                verification={shownVerification}
-                versionCount={activeDocument.versions.length}
-                activeVersionIndex={safeVersionIndex}
-                onSelectVersion={setVersionIndex}
-                onDownloadDocx={handleDownloadDocx}
-                onClose={() => setStudioClosed(true)}
-                onResolveVerification={handleResolveVerification}
-                downloading={downloading}
-              />
+              {isLabelingDraft && shownLabelingDraft ? (
+                <LabelingAuthoringPane
+                  mode={labelingMode}
+                  onModeChange={setLabelingModeOverride}
+                  draft={shownLabelingDraft}
+                  currencyVerdict={labelingCurrencyVerdict}
+                  verification={shownVerification}
+                  onResolveVerification={handleResolveVerification}
+                />
+              ) : (
+                <DocumentStudioPane
+                  draft={shownDraft}
+                  verification={shownVerification}
+                  consistency={shownConsistency}
+                  briefingPremortem={shownBriefingPremortem}
+                  versionCount={activeDocument.versions.length}
+                  activeVersionIndex={safeVersionIndex}
+                  onSelectVersion={setVersionIndex}
+                  onDownloadDocx={handleDownloadDocx}
+                  onClose={() => setStudioClosed(true)}
+                  onResolveVerification={handleResolveVerification}
+                  onResolveConsistency={handleResolveConsistency}
+                  downloading={downloading}
+                  ectdEnabled={studioEnabled}
+                  readinessGate={readinessGate}
+                  onAssembleModule={handleAssembleModule}
+                  onReadinessSubmit={handleReadinessSubmit}
+                  onFollowReadinessLink={handleFollowReadinessLink}
+                  assembling={assembling}
+                  onSeal={handleSeal}
+                  signer={{ name: account.name, role: resolvedUserRole ?? undefined }}
+                  seal={shownSeal}
+                  indModule={
+                    studioEnabled && detectedIndModule
+                      ? {
+                          module: detectedIndModule,
+                          productName: activeProjectName || 'the product',
+                          indication: 'the proposed indication',
+                          // Honesty contract: absent a live source join, treat as
+                          // sample (draft-only, never sealable). A live join sets 'live'.
+                          provenance: 'sample',
+                          onAuthor: (message: string) => handleSend(message),
+                        }
+                      : undefined
+                  }
+                />
+              )}
             </Panel>
           </PanelGroup>
         ) : (
