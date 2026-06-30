@@ -21,6 +21,8 @@ import { clinicalSafetyPvModule } from './domains/clinical-safety-pv';
 import { pharmacologyPkAdmeModule } from './domains/pharmacology-pk-adme';
 import { oncologyModule } from './domains/oncology';
 import { biostatisticsDesignModule } from './domains/biostatistics-design';
+import { immunoInflammationVaccinesModule } from './domains/immuno-inflammation-vaccines';
+import { cmcQualityAnalyticalModule } from './domains/cmc-quality-analytical';
 
 /**
  * Every domain module in the corpus, in a stable order. Append new domains here
@@ -32,6 +34,8 @@ export const DOMAIN_MODULES: readonly DomainTerminologyModule[] = [
   pharmacologyPkAdmeModule,
   oncologyModule,
   biostatisticsDesignModule,
+  immunoInflammationVaccinesModule,
+  cmcQualityAnalyticalModule,
 ];
 
 /** The flat corpus: every entry across every domain, in domain/registration order. */
