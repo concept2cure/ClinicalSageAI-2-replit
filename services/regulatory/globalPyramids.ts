@@ -8,12 +8,11 @@
  * - Swissmedic
  * - ANVISA Brazil
  * - NMPA China
- * 
+ * - EU CE Marking (MDR, IVDR)
+ *
  * @module services/regulatory/globalPyramids
- * @version 1.0.0
+ * @version 2.0.0
  */
-
-import type { PyramidTask, PyramidLevel, TaskDependency } from './submissionPyramidEngine';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES
@@ -33,13 +32,32 @@ export type GlobalSubmissionType =
   | 'EU_CE_MDR'        // EU CE Marking under MDR 2017/745
   | 'EU_CE_IVDR';      // EU CE Marking under IVDR 2017/746
 
+export interface GlobalPyramidLevel {
+  id: string;
+  name: string;
+  order: number;
+  color: string;
+}
+
+export interface GlobalPyramidTask {
+  id: string;
+  title: string;
+  description: string;
+  level: string;
+  estimatedHours: number;
+  assignedRole: string;
+  dependencies: string[];
+  deliverables: string[];
+  status: 'pending' | 'in-progress' | 'done';
+}
+
 export interface GlobalPyramidConfig {
   type: GlobalSubmissionType;
   agency: string;
   region: string;
   format: 'eCTD' | 'CTD' | 'custom';
-  levels: PyramidLevel[];
-  tasks: PyramidTask[];
+  levels: GlobalPyramidLevel[];
+  tasks: GlobalPyramidTask[];
   totalEstimatedDays: number;
   localRequirements: string[];
 }
@@ -945,22 +963,639 @@ const TGA_AUST_R_PYRAMID: GlobalPyramidConfig = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SWISSMEDIC PYRAMID (Swiss Marketing Authorization)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const SWISSMEDIC_PYRAMID: GlobalPyramidConfig = {
+  type: 'SWISSMEDIC',
+  agency: 'Swissmedic (Swiss Agency for Therapeutic Products)',
+  region: 'Switzerland',
+  format: 'eCTD',
+  totalEstimatedDays: 200,
+  localRequirements: [
+    'Swissmedic application form (Gesuchsformular)',
+    'Swiss labeling (Arzneimittelinformation) in DE/FR/IT',
+    'EU reference product alignment (if applicable)',
+    'HMG (Heilmittelgesetz) compliance',
+    'GMP certificate accepted by Swissmedic',
+    'Swiss-specific Module 1 regional information',
+    'Risk Management Plan per Swissmedic requirements',
+  ],
+  levels: [
+    { id: 'l1', name: 'Planning', order: 1, color: '#6366F1' },
+    { id: 'l2', name: 'Module 1 - Swiss Admin', order: 2, color: '#8B5CF6' },
+    { id: 'l3', name: 'Module 2 - Summaries', order: 3, color: '#A855F7' },
+    { id: 'l4', name: 'Module 3 - Quality', order: 4, color: '#D946EF' },
+    { id: 'l5', name: 'Module 4 - Nonclinical', order: 5, color: '#EC4899' },
+    { id: 'l6', name: 'Module 5 - Clinical', order: 6, color: '#F43F5E' },
+    { id: 'l7', name: 'Submission & Review', order: 7, color: '#10B981' },
+  ],
+  tasks: [
+    // Planning
+    {
+      id: 'swiss-1',
+      title: 'Regulatory Strategy & Pathway Selection',
+      description: 'Define Swissmedic submission pathway (ZL1/ZL2/ZL3) and identify HMG requirements',
+      level: 'l1',
+      estimatedHours: 12,
+      assignedRole: 'ra_lead',
+      dependencies: [],
+      deliverables: ['Swissmedic Regulatory Strategy Memo'],
+      status: 'pending',
+    },
+    {
+      id: 'swiss-2',
+      title: 'Pre-Submission Scientific Advice',
+      description: 'Request scientific advice from Swissmedic (optional but recommended)',
+      level: 'l1',
+      estimatedHours: 24,
+      assignedRole: 'ra_lead',
+      dependencies: ['swiss-1'],
+      deliverables: ['Scientific Advice Request', 'Briefing Document'],
+      status: 'pending',
+    },
+    // Module 1 - Swiss Admin
+    {
+      id: 'swiss-3',
+      title: 'Swissmedic Application Form (Gesuchsformular)',
+      description: 'Complete the Swissmedic-specific application form and administrative documents',
+      level: 'l2',
+      estimatedHours: 16,
+      assignedRole: 'ra_associate',
+      dependencies: ['swiss-1'],
+      deliverables: ['Gesuchsformular', 'Fee Payment Confirmation'],
+      status: 'pending',
+    },
+    {
+      id: 'swiss-4',
+      title: 'Arzneimittelinformation (Swiss Labeling)',
+      description: 'Prepare trilingual Swiss drug information (German, French, Italian)',
+      level: 'l2',
+      estimatedHours: 60,
+      assignedRole: 'medical_writer',
+      dependencies: ['swiss-1'],
+      deliverables: ['Fachinformation (DE)', 'Information professionnelle (FR)', 'Informazione professionale (IT)'],
+      status: 'pending',
+    },
+    {
+      id: 'swiss-5',
+      title: 'Patient Information Leaflet (Packungsbeilage)',
+      description: 'Consumer-facing medication leaflet in DE/FR/IT',
+      level: 'l2',
+      estimatedHours: 24,
+      assignedRole: 'medical_writer',
+      dependencies: ['swiss-4'],
+      deliverables: ['Packungsbeilage (DE)', 'Notice d\'emballage (FR)', 'Foglietto illustrativo (IT)'],
+      status: 'pending',
+    },
+    // Module 2 - Summaries
+    {
+      id: 'swiss-6',
+      title: 'Quality Overall Summary',
+      description: 'Module 2.3 quality summary, referencing EU dossier where applicable',
+      level: 'l3',
+      estimatedHours: 24,
+      assignedRole: 'cmc_lead',
+      dependencies: ['swiss-1'],
+      deliverables: ['Quality Overall Summary'],
+      status: 'pending',
+    },
+    {
+      id: 'swiss-7',
+      title: 'Nonclinical & Clinical Overviews',
+      description: 'Modules 2.4/2.5 nonclinical and clinical overviews with benefit-risk assessment',
+      level: 'l3',
+      estimatedHours: 60,
+      assignedRole: 'medical_writer',
+      dependencies: ['swiss-1'],
+      deliverables: ['Nonclinical Overview', 'Clinical Overview'],
+      status: 'pending',
+    },
+    // Module 3 - Quality
+    {
+      id: 'swiss-8',
+      title: 'Drug Substance & Drug Product (3.2.S/3.2.P)',
+      description: 'CMC documentation; align with EU reference product data if applicable',
+      level: 'l4',
+      estimatedHours: 60,
+      assignedRole: 'cmc_lead',
+      dependencies: ['swiss-6'],
+      deliverables: ['3.2.S Drug Substance', '3.2.P Drug Product'],
+      status: 'pending',
+    },
+    {
+      id: 'swiss-9',
+      title: 'GMP Certificate & Manufacturing Compliance',
+      description: 'Provide GMP certificate recognized by Swissmedic (MRA with EU/EEA accepted)',
+      level: 'l4',
+      estimatedHours: 16,
+      assignedRole: 'qa_manager',
+      dependencies: [],
+      deliverables: ['GMP Certificate'],
+      status: 'pending',
+    },
+    // Module 4 - Nonclinical
+    {
+      id: 'swiss-10',
+      title: 'Nonclinical Study Reports',
+      description: 'Pharmacology and toxicology study reports per ICH guidelines',
+      level: 'l5',
+      estimatedHours: 24,
+      assignedRole: 'toxicologist',
+      dependencies: ['swiss-7'],
+      deliverables: ['Module 4 Nonclinical Reports'],
+      status: 'pending',
+    },
+    // Module 5 - Clinical
+    {
+      id: 'swiss-11',
+      title: 'Clinical Study Reports',
+      description: 'Clinical data; reference EU-approved product clinical package if applicable',
+      level: 'l6',
+      estimatedHours: 40,
+      assignedRole: 'clinical_lead',
+      dependencies: ['swiss-7'],
+      deliverables: ['Module 5 Clinical Reports'],
+      status: 'pending',
+    },
+    {
+      id: 'swiss-12',
+      title: 'Risk Management Plan (Swissmedic RMP)',
+      description: 'RMP aligned with Swissmedic expectations; may reference EU RMP',
+      level: 'l6',
+      estimatedHours: 32,
+      assignedRole: 'safety_officer',
+      dependencies: ['swiss-7'],
+      deliverables: ['Swissmedic Risk Management Plan'],
+      status: 'pending',
+    },
+    // Submission & Review
+    {
+      id: 'swiss-13',
+      title: 'HMG Compliance Review',
+      description: 'Internal review for Heilmittelgesetz compliance across all modules',
+      level: 'l7',
+      estimatedHours: 16,
+      assignedRole: 'qa_manager',
+      dependencies: ['swiss-4', 'swiss-5', 'swiss-6', 'swiss-8', 'swiss-10', 'swiss-11', 'swiss-12'],
+      deliverables: ['HMG Compliance Checklist'],
+      status: 'pending',
+    },
+    {
+      id: 'swiss-14',
+      title: 'eCTD Assembly & Validation',
+      description: 'Compile and validate eCTD package for Swissmedic gateway',
+      level: 'l7',
+      estimatedHours: 16,
+      assignedRole: 'regulatory_ops',
+      dependencies: ['swiss-13'],
+      deliverables: ['Validated eCTD Package'],
+      status: 'pending',
+    },
+    {
+      id: 'swiss-15',
+      title: 'Submit to Swissmedic',
+      description: 'Electronic submission via Swissmedic portal',
+      level: 'l7',
+      estimatedHours: 4,
+      assignedRole: 'ra_lead',
+      dependencies: ['swiss-14'],
+      deliverables: ['Submission Confirmation', 'Swissmedic Reference Number'],
+      status: 'pending',
+    },
+  ],
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANVISA BRAZIL PYRAMID (Brazil ANVISA Registration)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ANVISA_PYRAMID: GlobalPyramidConfig = {
+  type: 'ANVISA',
+  agency: 'ANVISA (Agencia Nacional de Vigilancia Sanitaria)',
+  region: 'Brazil',
+  format: 'CTD',
+  totalEstimatedDays: 240,
+  localRequirements: [
+    'ANVISA petition form (peticionamento eletronico)',
+    'Portuguese-language labeling (bula)',
+    'GMP certificate via ANVISA inspection of manufacturing sites',
+    'Clinical study in Brazilian population (may be required)',
+    'INPI patent linkage (anuencia previa) for generics',
+    'Certificate of Pharmaceutical Product (CPP) from reference country',
+    'Brazilian local representative (empresa detentora do registro)',
+    'REBLAS-accredited bioequivalence studies (if generic)',
+  ],
+  levels: [
+    { id: 'l1', name: 'Planning', order: 1, color: '#6366F1' },
+    { id: 'l2', name: 'ANVISA Admin', order: 2, color: '#8B5CF6' },
+    { id: 'l3', name: 'CTD Summaries', order: 3, color: '#A855F7' },
+    { id: 'l4', name: 'Quality', order: 4, color: '#D946EF' },
+    { id: 'l5', name: 'Nonclinical', order: 5, color: '#EC4899' },
+    { id: 'l6', name: 'Clinical', order: 6, color: '#F43F5E' },
+    { id: 'l7', name: 'Brazilian Requirements & Submission', order: 7, color: '#10B981' },
+  ],
+  tasks: [
+    // Planning
+    {
+      id: 'anvisa-1',
+      title: 'ANVISA Regulatory Strategy',
+      description: 'Define registration category (new, generic, similar, biological) and RDC pathway',
+      level: 'l1',
+      estimatedHours: 16,
+      assignedRole: 'ra_lead',
+      dependencies: [],
+      deliverables: ['ANVISA Regulatory Strategy Document'],
+      status: 'pending',
+    },
+    {
+      id: 'anvisa-2',
+      title: 'Appoint Brazilian Local Representative',
+      description: 'Designate empresa detentora do registro (registration holder) in Brazil',
+      level: 'l1',
+      estimatedHours: 24,
+      assignedRole: 'ra_lead',
+      dependencies: ['anvisa-1'],
+      deliverables: ['Local Representative Agreement', 'Power of Attorney'],
+      status: 'pending',
+    },
+    // ANVISA Admin
+    {
+      id: 'anvisa-3',
+      title: 'ANVISA Petition Form (Peticionamento Eletronico)',
+      description: 'Complete electronic petition via ANVISA portal',
+      level: 'l2',
+      estimatedHours: 12,
+      assignedRole: 'ra_associate',
+      dependencies: ['anvisa-2'],
+      deliverables: ['ANVISA Electronic Petition', 'GRU Fee Payment'],
+      status: 'pending',
+    },
+    {
+      id: 'anvisa-4',
+      title: 'Bula (Portuguese-Language Labeling)',
+      description: 'Prepare bula para o paciente and bula para o profissional per ANVISA RDC 47/2009',
+      level: 'l2',
+      estimatedHours: 48,
+      assignedRole: 'medical_writer',
+      dependencies: ['anvisa-1'],
+      deliverables: ['Bula para o Paciente', 'Bula para o Profissional de Saude'],
+      status: 'pending',
+    },
+    // CTD Summaries
+    {
+      id: 'anvisa-5',
+      title: 'Quality Overall Summary',
+      description: 'Module 2.3 quality summary adapted for ANVISA format',
+      level: 'l3',
+      estimatedHours: 24,
+      assignedRole: 'cmc_lead',
+      dependencies: ['anvisa-1'],
+      deliverables: ['Quality Overall Summary'],
+      status: 'pending',
+    },
+    {
+      id: 'anvisa-6',
+      title: 'Nonclinical & Clinical Overviews',
+      description: 'Modules 2.4/2.5 summaries; note Brazilian population data requirements',
+      level: 'l3',
+      estimatedHours: 48,
+      assignedRole: 'medical_writer',
+      dependencies: ['anvisa-1'],
+      deliverables: ['Nonclinical Overview', 'Clinical Overview'],
+      status: 'pending',
+    },
+    // Quality
+    {
+      id: 'anvisa-7',
+      title: 'Drug Substance & Product Documentation',
+      description: 'CMC documentation per ICH CTD format; include stability data under Zone IVb conditions',
+      level: 'l4',
+      estimatedHours: 60,
+      assignedRole: 'cmc_lead',
+      dependencies: ['anvisa-5'],
+      deliverables: ['3.2.S Drug Substance', '3.2.P Drug Product', 'Zone IVb Stability Data'],
+      status: 'pending',
+    },
+    {
+      id: 'anvisa-8',
+      title: 'GMP Certificate via ANVISA Inspection',
+      description: 'Schedule and support ANVISA GMP inspection of all manufacturing sites',
+      level: 'l4',
+      estimatedHours: 40,
+      assignedRole: 'qa_manager',
+      dependencies: [],
+      deliverables: ['ANVISA GMP Certificate (CBPF)'],
+      status: 'pending',
+    },
+    // Nonclinical
+    {
+      id: 'anvisa-9',
+      title: 'Nonclinical Study Reports',
+      description: 'Pharmacology and toxicology reports per ANVISA RDC requirements',
+      level: 'l5',
+      estimatedHours: 24,
+      assignedRole: 'toxicologist',
+      dependencies: ['anvisa-6'],
+      deliverables: ['Module 4 Nonclinical Reports'],
+      status: 'pending',
+    },
+    // Clinical
+    {
+      id: 'anvisa-10',
+      title: 'Clinical Study Reports',
+      description: 'Clinical data; include Brazilian population study if required by ANVISA',
+      level: 'l6',
+      estimatedHours: 40,
+      assignedRole: 'clinical_lead',
+      dependencies: ['anvisa-6'],
+      deliverables: ['Module 5 Clinical Reports'],
+      status: 'pending',
+    },
+    {
+      id: 'anvisa-11',
+      title: 'Brazilian Population Clinical Data',
+      description: 'Clinical trial or bridging data from Brazilian population (may be mandatory for new molecules)',
+      level: 'l6',
+      estimatedHours: 40,
+      assignedRole: 'clinical_lead',
+      dependencies: ['anvisa-10'],
+      deliverables: ['Brazilian Clinical Study Report'],
+      status: 'pending',
+    },
+    // Brazilian Requirements & Submission
+    {
+      id: 'anvisa-12',
+      title: 'INPI Patent Linkage (Anuencia Previa)',
+      description: 'INPI patent search and anuencia previa process (mandatory for generics/similars)',
+      level: 'l7',
+      estimatedHours: 24,
+      assignedRole: 'ra_lead',
+      dependencies: ['anvisa-1'],
+      deliverables: ['INPI Patent Search Report', 'Anuencia Previa Documentation'],
+      status: 'pending',
+    },
+    {
+      id: 'anvisa-13',
+      title: 'Certificate of Pharmaceutical Product (CPP)',
+      description: 'Obtain CPP from reference country per WHO format',
+      level: 'l7',
+      estimatedHours: 16,
+      assignedRole: 'ra_associate',
+      dependencies: [],
+      deliverables: ['Certificate of Pharmaceutical Product'],
+      status: 'pending',
+    },
+    {
+      id: 'anvisa-14',
+      title: 'Dossier Assembly & Submission',
+      description: 'Compile final CTD dossier and submit via ANVISA peticionamento eletronico',
+      level: 'l7',
+      estimatedHours: 24,
+      assignedRole: 'regulatory_ops',
+      dependencies: ['anvisa-3', 'anvisa-4', 'anvisa-7', 'anvisa-8', 'anvisa-9', 'anvisa-11', 'anvisa-12', 'anvisa-13'],
+      deliverables: ['Submitted Dossier', 'ANVISA Protocol Number'],
+      status: 'pending',
+    },
+  ],
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NMPA CHINA PYRAMID (China NMPA Registration)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const NMPA_PYRAMID: GlobalPyramidConfig = {
+  type: 'NMPA',
+  agency: 'NMPA (National Medical Products Administration) / CDE',
+  region: 'China',
+  format: 'CTD',
+  totalEstimatedDays: 300,
+  localRequirements: [
+    'CDE pre-submission consultation (pre-IND/pre-NDA meeting)',
+    'Chinese labeling (说明书) in simplified Chinese',
+    'Clinical trial in Chinese population (bridging or full study)',
+    'GMP certificate via NMPA inspection of manufacturing sites',
+    'MAH (Marketing Authorization Holder) system compliance',
+    'Drug registration classification per NMPA categories',
+    'China-specific stability data (ICH Zone IVa conditions)',
+    'Import Drug License (IDL) for imported products',
+    'Designated Chinese agent for imported drugs',
+  ],
+  levels: [
+    { id: 'l1', name: 'Pre-Submission', order: 1, color: '#6366F1' },
+    { id: 'l2', name: 'NMPA Admin', order: 2, color: '#8B5CF6' },
+    { id: 'l3', name: 'Module 2 - Summaries', order: 3, color: '#A855F7' },
+    { id: 'l4', name: 'Module 3 - Quality', order: 4, color: '#D946EF' },
+    { id: 'l5', name: 'Module 4 - Nonclinical', order: 5, color: '#EC4899' },
+    { id: 'l6', name: 'Module 5 - Clinical', order: 6, color: '#F43F5E' },
+    { id: 'l7', name: 'China-Specific Requirements', order: 7, color: '#F97316' },
+    { id: 'l8', name: 'Submission & Review', order: 8, color: '#10B981' },
+  ],
+  tasks: [
+    // Pre-Submission
+    {
+      id: 'nmpa-1',
+      title: 'CDE Pre-Submission Consultation',
+      description: 'Formal pre-IND or pre-NDA meeting with CDE (Center for Drug Evaluation)',
+      level: 'l1',
+      estimatedHours: 40,
+      assignedRole: 'ra_lead',
+      dependencies: [],
+      deliverables: ['CDE Meeting Request', 'Briefing Document (Chinese)'],
+      status: 'pending',
+    },
+    {
+      id: 'nmpa-2',
+      title: 'Drug Registration Classification',
+      description: 'Determine NMPA registration classification (Category 1-5) and applicable pathway',
+      level: 'l1',
+      estimatedHours: 16,
+      assignedRole: 'ra_lead',
+      dependencies: ['nmpa-1'],
+      deliverables: ['Registration Classification Justification'],
+      status: 'pending',
+    },
+    {
+      id: 'nmpa-3',
+      title: 'Appoint Chinese Agent',
+      description: 'Designate a Chinese domestic agent (for imported drugs) or MAH entity',
+      level: 'l1',
+      estimatedHours: 24,
+      assignedRole: 'ra_lead',
+      dependencies: ['nmpa-2'],
+      deliverables: ['Agent Agreement', 'Power of Attorney (notarized)'],
+      status: 'pending',
+    },
+    // NMPA Admin
+    {
+      id: 'nmpa-4',
+      title: 'NMPA Application Forms',
+      description: 'Complete drug registration application forms per NMPA format',
+      level: 'l2',
+      estimatedHours: 16,
+      assignedRole: 'ra_associate',
+      dependencies: ['nmpa-3'],
+      deliverables: ['NMPA Application Forms', 'Fee Payment Confirmation'],
+      status: 'pending',
+    },
+    {
+      id: 'nmpa-5',
+      title: 'Chinese Labeling (说明书)',
+      description: 'Prepare simplified Chinese prescribing information and patient leaflet',
+      level: 'l2',
+      estimatedHours: 48,
+      assignedRole: 'medical_writer',
+      dependencies: ['nmpa-2'],
+      deliverables: ['说明书 (Prescribing Information)', 'Patient Leaflet (Chinese)'],
+      status: 'pending',
+    },
+    // Module 2 - Summaries
+    {
+      id: 'nmpa-6',
+      title: 'Quality Overall Summary',
+      description: 'Module 2.3 quality summary per CTD format for CDE review',
+      level: 'l3',
+      estimatedHours: 24,
+      assignedRole: 'cmc_lead',
+      dependencies: ['nmpa-2'],
+      deliverables: ['Quality Overall Summary'],
+      status: 'pending',
+    },
+    {
+      id: 'nmpa-7',
+      title: 'Nonclinical & Clinical Overviews',
+      description: 'Modules 2.4/2.5 with emphasis on ethnic sensitivity and bridging rationale',
+      level: 'l3',
+      estimatedHours: 60,
+      assignedRole: 'medical_writer',
+      dependencies: ['nmpa-2'],
+      deliverables: ['Nonclinical Overview', 'Clinical Overview', 'Ethnic Sensitivity Assessment'],
+      status: 'pending',
+    },
+    // Module 3 - Quality
+    {
+      id: 'nmpa-8',
+      title: 'Drug Substance & Product Documentation',
+      description: 'CMC data with China-specific stability under ICH Zone IVa conditions',
+      level: 'l4',
+      estimatedHours: 60,
+      assignedRole: 'cmc_lead',
+      dependencies: ['nmpa-6'],
+      deliverables: ['3.2.S Drug Substance', '3.2.P Drug Product', 'Zone IVa Stability Data'],
+      status: 'pending',
+    },
+    // Module 4 - Nonclinical
+    {
+      id: 'nmpa-9',
+      title: 'Nonclinical Study Reports',
+      description: 'Pharmacology and toxicology per CDE requirements',
+      level: 'l5',
+      estimatedHours: 32,
+      assignedRole: 'toxicologist',
+      dependencies: ['nmpa-7'],
+      deliverables: ['Module 4 Nonclinical Reports'],
+      status: 'pending',
+    },
+    // Module 5 - Clinical
+    {
+      id: 'nmpa-10',
+      title: 'Clinical Study Reports (Global)',
+      description: 'Global clinical data package for CDE review',
+      level: 'l6',
+      estimatedHours: 48,
+      assignedRole: 'clinical_lead',
+      dependencies: ['nmpa-7'],
+      deliverables: ['Module 5 Clinical Reports'],
+      status: 'pending',
+    },
+    {
+      id: 'nmpa-11',
+      title: 'Chinese Population Clinical Data',
+      description: 'Clinical trial in Chinese population (bridging PK/PD or full pivotal study per CDE guidance)',
+      level: 'l6',
+      estimatedHours: 60,
+      assignedRole: 'clinical_lead',
+      dependencies: ['nmpa-10'],
+      deliverables: ['Chinese Clinical Study Report', 'Bridging Study Justification'],
+      status: 'pending',
+    },
+    // China-Specific Requirements
+    {
+      id: 'nmpa-12',
+      title: 'GMP Certificate via NMPA Inspection',
+      description: 'Schedule and support NMPA on-site GMP inspection of all manufacturing facilities',
+      level: 'l7',
+      estimatedHours: 60,
+      assignedRole: 'qa_manager',
+      dependencies: [],
+      deliverables: ['NMPA GMP Inspection Report', 'GMP Compliance Certificate'],
+      status: 'pending',
+    },
+    {
+      id: 'nmpa-13',
+      title: 'MAH System Compliance',
+      description: 'Demonstrate compliance with China MAH (Marketing Authorization Holder) pilot program requirements',
+      level: 'l7',
+      estimatedHours: 24,
+      assignedRole: 'ra_lead',
+      dependencies: ['nmpa-3'],
+      deliverables: ['MAH Compliance Documentation', 'Pharmacovigilance System Description'],
+      status: 'pending',
+    },
+    {
+      id: 'nmpa-14',
+      title: 'Import Drug License Preparation',
+      description: 'Prepare Import Drug License (IDL) application for imported products',
+      level: 'l7',
+      estimatedHours: 16,
+      assignedRole: 'ra_associate',
+      dependencies: ['nmpa-3'],
+      deliverables: ['IDL Application Package'],
+      status: 'pending',
+    },
+    // Submission & Review
+    {
+      id: 'nmpa-15',
+      title: 'CTD Assembly & CDE Validation',
+      description: 'Compile CTD dossier and validate per CDE electronic submission requirements',
+      level: 'l8',
+      estimatedHours: 24,
+      assignedRole: 'regulatory_ops',
+      dependencies: ['nmpa-4', 'nmpa-5', 'nmpa-8', 'nmpa-9', 'nmpa-11', 'nmpa-12', 'nmpa-13', 'nmpa-14'],
+      deliverables: ['Validated CTD Package'],
+      status: 'pending',
+    },
+    {
+      id: 'nmpa-16',
+      title: 'Submit to CDE Gateway',
+      description: 'Electronic submission to CDE via NMPA drug registration platform',
+      level: 'l8',
+      estimatedHours: 8,
+      assignedRole: 'ra_lead',
+      dependencies: ['nmpa-15'],
+      deliverables: ['Submission Receipt', 'CDE Acceptance Notification'],
+      status: 'pending',
+    },
+  ],
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // EXPORT ALL PYRAMIDS
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const GLOBAL_PYRAMIDS: Record<GlobalSubmissionType, GlobalPyramidConfig> = {
   HC_NOC: HC_NOC_PYRAMID,
-  HC_NOC_C: HC_NOC_PYRAMID, // Uses same structure with conditions
-  HC_DIN: HC_NOC_PYRAMID,   // Simplified version
+  HC_NOC_C: HC_NOC_PYRAMID,        // Alias: shares HC_NOC structure (NOC with Conditions uses same dossier)
+  HC_DIN: HC_NOC_PYRAMID,          // Alias: shares HC_NOC structure (simplified DIN pathway)
   PMDA_SHONIN: PMDA_SHONIN_PYRAMID,
-  PMDA_CTN: PMDA_SHONIN_PYRAMID, // CTN subset
+  PMDA_CTN: PMDA_SHONIN_PYRAMID,   // Alias: shares PMDA_SHONIN structure (CTN is a subset)
   TGA_AUST_R: TGA_AUST_R_PYRAMID,
-  TGA_CTN: TGA_AUST_R_PYRAMID, // CTN subset
-  SWISSMEDIC: HC_NOC_PYRAMID, // Similar eCTD structure
-  ANVISA: HC_NOC_PYRAMID,     // Similar eCTD structure
-  NMPA: PMDA_SHONIN_PYRAMID,  // Similar Asian requirements
+  TGA_CTN: TGA_AUST_R_PYRAMID,     // Alias: shares TGA_AUST_R structure (CTN is a subset)
+  SWISSMEDIC: SWISSMEDIC_PYRAMID,
+  ANVISA: ANVISA_PYRAMID,
+  NMPA: NMPA_PYRAMID,
   EU_CE_MDR: EU_CE_MDR_PYRAMID,
-  EU_CE_IVDR: EU_CE_MDR_PYRAMID, // Similar MDR structure
+  EU_CE_IVDR: EU_CE_MDR_PYRAMID,   // Alias: shares EU_CE_MDR structure (IVDR uses similar framework)
 };
 
 /**
