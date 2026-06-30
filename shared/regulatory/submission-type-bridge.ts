@@ -258,7 +258,7 @@ export type LegacyLowerType = '510k' | 'ind' | 'nda' | 'bla' | 'pma' | 'maa' | '
 export type FdaDeviceType = '510k' | 'pma' | 'denovo' | 'ide';
 
 /** Pyramid engine types (upper-case). */
-export type PyramidType = '510K' | 'IND' | 'NDA' | 'BLA' | 'PMA' | 'MAA' | 'JNDA' | 'DE_NOVO';
+export type PyramidType = '510K' | 'IND' | 'NDA' | 'BLA' | 'PMA' | 'MAA' | 'JNDA' | 'DE_NOVO' | 'IND_AMENDMENT' | 'IND_ANNUAL_REPORT' | 'IND_SAFETY_SUPPLEMENT';
 
 /** Pattern registry types (mixed case). */
 export type PatternSubmissionType = 'NDA' | 'BLA' | '510k' | 'PMA' | 'ANDA' | 'IND' | 'MAA' | 'CTD' | 'any';
