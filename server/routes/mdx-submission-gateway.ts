@@ -28,6 +28,11 @@ import {
   CredentialError, GatewayError, TransportError, ValidationError,
   type Region, type GatewayName,
 } from '../services/submission-gateways';
+import {
+  findActiveTransmittal,
+  rollbackTransmittal,
+  RollbackNotPermittedError,
+} from '../services/submission-gateways/fda-esg';
 import { recordGovernedAction, verifyReauth } from './c2c/actions';
 import { getBundle } from '../services/submission-bundle-storage';
 import { promises as fsp } from 'fs';
@@ -295,6 +300,33 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
     return serverError(res, log, 'transmit-rematerialize-bundle', err);
   }
 
+  // Per-package transmit lock (FIX 7). Refuse a second transmit against the
+  // same (org, package_id, bundle_sha256) while a prior attempt is still
+  // active (pending|in_transit|received). Terminal states (rejected,
+  // rolled_back, completed) are excluded by findActiveTransmittal so a
+  // rolled-back package CAN be intentionally re-transmitted. The DB-level
+  // partial unique index (sub_trans_active_lock_idx) is the backstop for
+  // races between this check and the gateway's INSERT. Cross-tenant double-
+  // transmit is allowed by design (CMO scenario).
+  try {
+    const active = await findActiveTransmittal({
+      organizationId: orgId,
+      packageId:      p.packageId ?? null,
+      bundleSha256:   bundle.sha256,
+    });
+    if (active) {
+      return clientError(
+        res,
+        409,
+        `An active transmittal already exists for this package (id=${active.id}, status=${active.status}). ` +
+        `Roll it back via POST /api/mdx/gateways/transmittals/${active.id}/rollback before re-transmitting.`,
+        { transmittalId: active.id, status: active.status },
+      );
+    }
+  } catch (err) {
+    return serverError(res, log, 'transmit-active-lock-check', err);
+  }
+
   try {
     const gw = getGateway(region, gateway);
     const result = await gw.transmit({
@@ -419,6 +451,80 @@ router.get('/gateways/transmittals/:id/ack', async (req: Request, res: Response)
   } catch (err: unknown) {
     if (err instanceof GatewayError) return clientError(res, 502, err.message);
     return serverError(res, log, 'ack', err);
+  }
+});
+
+/* ─── POST /api/mdx/gateways/transmittals/:id/rollback ───────────── */
+
+const rollbackBody = z.object({
+  reason: z.string().min(8, 'A rollback reason of at least 8 characters is required.'),
+  reauth: z
+    .object({
+      password: z.string().optional(),
+      totp: z.string().optional(),
+    })
+    .optional(),
+});
+
+router.post('/gateways/transmittals/:id/rollback', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const userId = getUserId(req);
+  if (userId === null) return orgRequired(res);
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
+  const parsed = rollbackBody.safeParse(req.body ?? {});
+  if (!parsed.success) {
+    return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  }
+  const { reason, reauth } = parsed.data;
+
+  // Re-auth gate — rollback is a high-risk governed action (`transmittal_rollback`
+  // is in HIGH_RISK_COMMANDS). Mirrors the transmit handler's gate.
+  const reauthResult = await verifyReauth(userId, reauth);
+  if (!reauthResult.ok) {
+    res.setHeader('WWW-Authenticate', 'ReAuth required');
+    return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+  }
+
+  // Tenant gate. Also identifies the region/gateway so non-FDA transmittals
+  // (which don't currently have a rollback implementation) get a clean 422
+  // rather than a misleading 404 from the FDA-specific helper.
+  try {
+    const own = await pool.query<{ region: string; gateway: string }>(
+      `SELECT region, gateway FROM submission_transmittals
+        WHERE id = $1 AND organization_id = $2`,
+      [id, orgId],
+    );
+    if (own.rows.length === 0) return notFoundInTenant(res, 'Transmittal');
+    if (own.rows[0].region !== 'fda' || own.rows[0].gateway !== 'esg') {
+      return clientError(
+        res, 422,
+        `Rollback is currently implemented for FDA ESG only; transmittal ${id} is ${own.rows[0].region}/${own.rows[0].gateway}.`,
+      );
+    }
+
+    const result = await rollbackTransmittal({
+      transmittalId:  id,
+      organizationId: orgId,
+      actorUserId:    userId,
+      reason,
+      recordGovernedAction,
+    });
+    return ok(res, result);
+  } catch (err: unknown) {
+    if (err instanceof RollbackNotPermittedError) {
+      return clientError(res, 409, err.message, {
+        transmittalId: err.transmittalId,
+        status: err.currentStatus,
+      });
+    }
+    if (err instanceof GatewayError) {
+      // GatewayError from rollbackTransmittal is the row-not-found case
+      // (404). Other GatewayError shapes shouldn't surface here, so map to 502.
+      return clientError(res, err.httpStatus === 404 ? 404 : 502, err.message);
+    }
+    return serverError(res, log, 'transmit-rollback', err);
   }
 });
 

@@ -1942,12 +1942,36 @@ export const electronicSignatures = pgTable(
     signedAt: timestamp('signed_at').defaultNow().notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow(),
+    // ── Path-to-GA §C.11 (e-sig gate) additions ────────────────────────────
+    //
+    // Tenant scope. Historically this table had no orgId; every release-gate
+    // signature lookup must be scoped by orgId so a cross-tenant resume can't
+    // observe Org A's signature row (Risk R-3 / OQ-7 in the design doc).
+    // Backfilled via migration 20260629_orchestrator_awaiting_signature_status.sql.
+    organizationId: integer('organization_id').references(() => organizations.id),
+    // OQ-6 decision: separate column for the orchestrator's payload-binding
+    // hash. signatureHash is the §11.200 attribution hash over signer
+    // metadata; bound_payload_digest is the §11.70 payload-binding hash over
+    // (leafManifestDigest || validatorOutcomeDigest || submissionIdentityCanonical).
+    boundPayloadDigest: text('bound_payload_digest').notNull().default(''),
+    // OQ-4 decision: §11.70 mandates append-only signature history. Rollback
+    // never deletes a row; it inserts a new row referencing the prior via
+    // superseded_by. Resume-path lookups filter `superseded_by IS NULL`.
+    supersededBy: integer('superseded_by'),
   },
   table => ({
     signatureDocumentIdx: index('signature_document_idx').on(table.documentId, table.versionId),
     signatureSignerIdx: index('signature_signer_idx').on(table.signerId),
     signatureTypeIdx: index('signature_type_idx').on(table.signatureType),
     signedAtIdx: index('signed_at_idx').on(table.signedAt),
+    // Composite index supports the resume-path lookup
+    //   WHERE organization_id = $1 AND bound_payload_digest = $2 AND superseded_by IS NULL
+    // (Drizzle does not express partial indexes; partial WHERE lives in the
+    //  raw SQL migration.)
+    signatureOrgPayloadDigestIdx: index('electronic_signatures_org_payload_digest_idx').on(
+      table.organizationId,
+      table.boundPayloadDigest,
+    ),
   })
 );
 
@@ -5414,6 +5438,13 @@ export const concept2cureArtifacts = pgTable(
     version: integer('version').default(1).notNull(),
     ctdSection: text('ctd_section'), // eCTD section reference
     templateId: text('template_id'), // Reference to source template
+    // AnA Document Studio per-thread version lookup key. Nullable; set only on
+    // artifacts created by the AnA draft-version store so successive drafts of the
+    // same document within a thread append as governed versions. See
+    // server/services/ana/artifactVersionStore.ts and migration
+    // 20260629_ana_artifact_thread_lookup.sql.
+    anaThreadId: text('ana_thread_id'),
+    titleSlug: text('title_slug'),
     status: text('status').default('draft').notNull(), // draft, review, approved, locked
     approvedVersionId: integer('approved_version_id'), // version when last approved
     publishedVersionId: integer('published_version_id'), // version when locked/published
@@ -18533,6 +18564,14 @@ export const submissionTransmittals = pgTable(
     bundleSha256:         text('bundle_sha256'),
     bundleSizeBytes:      bigint('bundle_size_bytes', { mode: 'number' }),
     transmissionId:       text('transmission_id'),
+    /**
+     * Raw MDN response body verbatim from the FDA ESG AS2 endpoint. Populated
+     * on a successful AS2 receipt (fda-esg.ts transmit() AS2 branch). NULL for
+     * transmittals predating migration 20260629_submission_transmittals_mdn_raw,
+     * and NULL for non-AS2 transports (SFTP has no MDN). downloadAcknowledgment
+     * returns this when present, otherwise falls back to a synthesised summary.
+     */
+    mdnRaw:               text('mdn_raw'),
     status:               text('status').default('pending').notNull(),
     httpStatus:           integer('http_status'),
     errorClass:           text('error_class'),

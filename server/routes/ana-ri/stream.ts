@@ -22,6 +22,12 @@ import type { QueryResult, QueryResultRow } from 'pg';
 
 import { getPool } from '../../db.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
+import {
+  resolveEffortLevel,
+  resolveEffortStrategy,
+  resolveStrategyWithPrecedence,
+  resolveModelOverride,
+} from '../../services/ai-gateway/effort.js';
 import { orchestrate } from '../../services/ana-ri/orchestrator.js';
 import type { IntentLens, UserRole } from '../../services/ana-ri/persona.js';
 import type { SubmissionType } from '../../services/ana-ri/deficiency-taxonomy.js';
@@ -102,6 +108,8 @@ router.post('/stream', async (req: Request, res: Response) => {
       project_id,
       selected_tools,
       language,
+      model_override,
+      effort_level,
     } = req.body;
 
     if (!message || typeof message !== 'string') {
@@ -475,7 +483,32 @@ router.post('/stream', async (req: Request, res: Response) => {
       route: '/api/ana-ri/stream',
       taskType: routingPlan.taskType,
     });
-    const selectedStrategy = policyHint?.preferredStrategy || routingPlan.strategy;
+
+    // ── Model / effort picker (flag-gated client; server is permissive) ──────
+    // Effort is a calm Fast/Balanced/Thorough abstraction over routing strategy.
+    // An unknown / absent `effort_level` resolves to 'balanced' (never a 4xx).
+    const effortUsed = resolveEffortLevel(effort_level);
+    const effortStrategy = resolveEffortStrategy(effortUsed);
+
+    // Governance-safe precedence: a kernel-pinned policyHint ALWAYS wins, so a
+    // user's effort choice can never override a governance-pinned strategy. When
+    // no policy hint is present, effort takes effect; else the routing plan.
+    const selectedStrategy = resolveStrategyWithPrecedence({
+      policyHintStrategy: policyHint?.preferredStrategy,
+      effortStrategy,
+      routingPlanStrategy: routingPlan.strategy,
+    });
+
+    // Optional explicit model override. Validated against THIS tenant's enabled
+    // model set; an invalid / disabled / absent value is DROPPED SILENTLY and we
+    // fall back to the (effort-derived) strategy above. The override does not
+    // bypass governance — the gateway still enforces residency/ZDR placement.
+    // In deterministic mode (or any gateway substrate without a model registry)
+    // there is nothing to override against — pass an empty set so the override
+    // resolves to none and we fall back to the effort-derived strategy.
+    const overrideCandidates =
+      typeof gw.getModels === 'function' ? gw.getModels().filter((m) => m.enabled) : [];
+    const resolvedOverride = resolveModelOverride(model_override, overrideCandidates);
 
     let fullContent = '';
     // Structured record of the tools run this turn (persisted on the assistant
@@ -489,6 +522,10 @@ router.post('/stream', async (req: Request, res: Response) => {
     // pathological multi-round turn can't accumulate unbounded records.
     const collectedProvenance: ProvenanceRecord[] = [];
     const PROVENANCE_CAP = 200;
+    // Document drafts emitted this turn — persisted to the governed artifact
+    // version history (concept2cure_artifacts / _artifact_versions) by
+    // post-processing so Document Studio version history survives the session.
+    const collectedDrafts: { title: string; content: string; documentType?: string }[] = [];
 
     // Stream via gateway
     const streamGatewayStart = Date.now();
@@ -496,10 +533,20 @@ router.post('/stream', async (req: Request, res: Response) => {
     // (audit/risk lens, critical contradictions). Use Claude's thinking budget
     // to deepen reasoning on those without imposing latency on conversational
     // turns. Gateway will force temperature=1 when thinking is enabled.
-    const streamThinkingConfig =
-      routingPlan.riskTier === 'high'
-        ? { enabled: true, budgetTokens: 10_000 }
-        : undefined;
+    //
+    // Effort gating (additive on top of the risk-tier signal):
+    //   - 'thorough' may enable thinking even when riskTier !== 'high'
+    //     (deeper reasoning is exactly what the user asked for), capped at the
+    //     same 10k budget so it can't run away on latency/cost.
+    //   - 'fast' suppresses thinking outright (the user wants a quick turn).
+    //   - 'balanced' leaves the existing risk-tier behavior untouched.
+    const wantThinking =
+      effortUsed === 'fast'
+        ? false
+        : routingPlan.riskTier === 'high' || effortUsed === 'thorough';
+    const streamThinkingConfig = wantThinking
+      ? { enabled: true, budgetTokens: 10_000 }
+      : undefined;
     // Full tool suite on the streaming path: custom JSON-schema tools
     // (PubMed search, FDA guidance lookup, predicate device analysis, etc.)
     // plus any env-enabled Anthropic server tools (web_search, web_fetch,
@@ -536,6 +583,12 @@ router.post('/stream', async (req: Request, res: Response) => {
       maxTokens: routingPlan.maxTokens,
       temperature: routingPlan.temperature,
       strategy: selectedStrategy,
+      // Explicit-override path: when the user pinned a valid enabled model, hand
+      // the gateway the resolved provider+model so its selectModel() short-
+      // circuits to that exact model (still subject to placement/health).
+      ...(resolvedOverride
+        ? { provider: resolvedOverride.provider, model: resolvedOverride.model }
+        : {}),
       promptCache: { enabled: true, type: 'ephemeral' },
       ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
       ...(streamTools.length > 0 ? { tools: streamTools } : {}),
@@ -666,10 +719,17 @@ router.post('/stream', async (req: Request, res: Response) => {
                 }
               }
               if (parsed && parsed.status === 'generated' && typeof parsed.content === 'string' && parsed.content.length > 0) {
+                const draftTitle: string = parsed.title || 'Generated document';
+                // Record for durable version-history persistence in post-processing.
+                collectedDrafts.push({
+                  title: draftTitle,
+                  content: parsed.content,
+                  documentType: typeof parsed.documentType === 'string' ? parsed.documentType : undefined,
+                });
                 res.write(
                   `data: ${JSON.stringify({
                     type: 'artifact_draft',
-                    title: parsed.title || 'Generated document',
+                    title: draftTitle,
                     content: parsed.content,
                     documentType: parsed.documentType,
                     source: toolUse.name,
@@ -707,6 +767,11 @@ router.post('/stream', async (req: Request, res: Response) => {
           maxTokens: routingPlan.maxTokens,
           temperature: routingPlan.temperature,
           strategy: selectedStrategy,
+          // Keep the same explicit-model pin across the agentic follow-up rounds
+          // so a user-chosen model stays consistent for the whole turn.
+          ...(resolvedOverride
+            ? { provider: resolvedOverride.provider, model: resolvedOverride.model }
+            : {}),
           promptCache: { enabled: true, type: 'ephemeral' },
           ...(includeTools && streamTools.length > 0 ? { tools: streamTools } : {}),
           stream: true,
@@ -793,6 +858,10 @@ router.post('/stream', async (req: Request, res: Response) => {
         type: 'done',
         model: gwResponse.model,
         provider: gwResponse.provider,
+        // Echo the resolved effort back so the client can confirm what ran (the
+        // effort the server actually used — which may differ from the request
+        // when a governance policyHint pinned the strategy). Additive field.
+        effortUsed,
         usage: gwResponse.usage,
         latencyMs: gwResponse.latencyMs,
         response: fullContent || undefined,
@@ -828,6 +897,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       toolTrace,
       toolEvidenceCorpus,
       collectedProvenance,
+      collectedDrafts,
       messages,
       model: gwResponse.model,
       provider: gwResponse.provider,

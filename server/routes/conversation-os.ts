@@ -25,6 +25,7 @@ import {
   DOCUMENT_STACK_FEATURE_KEYS,
   isDocumentStackFeatureEnabled,
 } from '../services/documentIntelligence/featureFlags';
+import { listDocumentArtifactVersions } from '../services/ana/artifactVersionStore';
 
 const router = Router();
 
@@ -257,6 +258,34 @@ router.get('/artifacts/:artifactId/versions', async (req, res) => {
       userId: ctx.userId,
     }),
   });
+});
+
+// AnA Document Studio durable version history. Returns the full, org-scoped
+// version lineage for a document artifact persisted by the AnA draft store
+// (server/services/ana/artifactVersionStore.ts), oldest → newest. Distinct from
+// the proposal-based /artifacts/:artifactId/versions route above.
+router.get('/artifacts/:artifactId/document-versions', async (req, res) => {
+  const ctx = resolveContext(req);
+  // resolveContext returns organizationId as a STRING — coerce to int for the
+  // organization_id integer column.
+  if (!ctx.organizationId) {
+    res
+      .status(403)
+      .json({ success: false, error: 'document versions require organization context' });
+    return;
+  }
+  const organizationId = Number(ctx.organizationId);
+  if (!Number.isFinite(organizationId)) {
+    res
+      .status(400)
+      .json({ success: false, error: 'invalid organization context' });
+    return;
+  }
+  const versions = await listDocumentArtifactVersions({
+    artifactExternalId: req.params.artifactId,
+    organizationId,
+  });
+  res.json({ success: true, versions });
 });
 
 export default router;

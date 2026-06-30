@@ -283,6 +283,102 @@ export function mountDiagnosticEndpoints(app: Express, pool: Pool): void {
         /* metrics module not loaded yet — skip */
       }
 
+      // Protocol development metrics (C2C-17).
+      try {
+        const { renderProtocolDevMetrics } = await import('../services/protocol-development-metrics.js');
+        lines.push(...renderProtocolDevMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol risk register metrics (C2C-19).
+      try {
+        const { renderProtocolRiskMetrics } = await import('../services/protocol-risks-metrics.js');
+        lines.push(...renderProtocolRiskMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol amendments metrics (C2C-18a).
+      try {
+        const { renderProtocolAmendmentsMetrics } = await import('../services/protocol-amendments-metrics.js');
+        lines.push(...renderProtocolAmendmentsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol deviations metrics (C2C-18b).
+      try {
+        const { renderProtocolDeviationsMetrics } = await import('../services/protocol-deviations-metrics.js');
+        lines.push(...renderProtocolDeviationsMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol review & comment metrics (C2C-18c).
+      try {
+        const { renderProtocolReviewMetrics } = await import('../services/protocol-reviews-metrics.js');
+        lines.push(...renderProtocolReviewMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Informed consent builder metrics (C2C-18d).
+      try {
+        const { renderConsentMetrics } = await import('../services/protocol-consent-metrics.js');
+        lines.push(...renderConsentMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // NIH DMS plan metrics (C2C-23).
+      try {
+        const { renderDmspMetrics } = await import('../services/dmsp-metrics.js');
+        lines.push(...renderDmspMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol templates metrics (C2C-20a).
+      try {
+        const { renderProtocolTemplatesMetrics } = await import('../services/protocol-templates-metrics.js');
+        lines.push(...renderProtocolTemplatesMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol milestones metrics (C2C-20b).
+      try {
+        const { renderProtocolMilestonesMetrics } = await import('../services/protocol-milestones-metrics.js');
+        lines.push(...renderProtocolMilestonesMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol export metrics (C2C-20c).
+      try {
+        const { renderProtocolExportMetrics } = await import('../services/protocol-export-metrics.js');
+        lines.push(...renderProtocolExportMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol SoA matrix metrics (C2C-21).
+      try {
+        const { renderProtocolSoaMetrics } = await import('../services/protocol-soa-metrics.js');
+        lines.push(...renderProtocolSoaMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
+      // Protocol budget metrics (C2C-22).
+      try {
+        const { renderProtocolBudgetMetrics } = await import('../services/protocol-budget-metrics.js');
+        lines.push(...renderProtocolBudgetMetrics());
+      } catch {
+        /* metrics module not loaded yet — skip */
+      }
+
       // RIM-lite metrics (C2C-12).
       try {
         const { renderRimMetrics } = await import('../services/rim-metrics.js');

@@ -35,6 +35,35 @@ import { EU_DATA_TOOLS } from './euDataTools';
 import { CDISC_TOOLS } from './cdiscTools';
 import { GUIDANCE_INGESTION_TOOLS } from './guidanceIngestionTools';
 import { SPL_SAFETY_TOOLS } from './splSafetyTools';
+import { BIOEQUIVALENCE_TOOLS } from './bioequivalenceTools';
+import { PHARMACOMETRICS_TOOLS } from './pharmacometricsTools';
+import { TOXICOLOGY_TOOLS } from './toxicologyTools';
+import { PEDIATRIC_TOOLS } from './pediatricTools';
+import { ADVANCED_THERAPY_TOOLS } from './advancedTherapyTools';
+import { RWE_METHODOLOGY_TOOLS } from './rweMethodologyTools';
+import { CLINICAL_PHARMACOLOGY_TOOLS } from './clinicalPharmacologyTools';
+import { CMC_QUALITY_TOOLS } from './cmcQualityTools';
+import { REGULATORY_STRATEGY_TOOLS } from './regulatoryStrategyTools';
+import { BIOSIMILAR_TOOLS } from './biosimilarTools';
+import { MUTAGENIC_IMPURITY_TOOLS } from './mutagenicImpurityTools';
+import { LABELING_INTELLIGENCE_TOOLS } from './labelingIntelligenceTools';
+import { IMMUNOGENICITY_TOOLS } from './immunogenicityTools';
+import { SAFETY_PHARMACOLOGY_TOOLS } from './safetyPharmacologyTools';
+import { PHARMACOVIGILANCE_TOOLS } from './pharmacovigilanceTools';
+import { COA_PRO_TOOLS } from './coaProTools';
+import { DOSE_OPTIMIZATION_TOOLS } from './doseOptimizationTools';
+import { COMBINATION_PRODUCTS_TOOLS } from './combinationProductsTools';
+import { TRIAL_STATISTICS_TOOLS } from './trialStatisticsTools';
+import { GMP_QUALITY_SYSTEMS_TOOLS } from './gmpQualitySystemsTools';
+import { NONCLINICAL_ADME_TOOLS } from './nonclinicalAdmeTools';
+import { BIOMARKER_TOOLS } from './biomarkerTools';
+import { RARE_DISEASE_TOOLS } from './rareDiseaseTools';
+import { GCP_OPERATIONS_TOOLS } from './gcpOperationsTools';
+import { MEDICAL_DEVICE_TOOLS } from './medicalDeviceTools';
+import { DIGITAL_HEALTH_TOOLS } from './digitalHealthTools';
+import { VACCINE_TOOLS } from './vaccineTools';
+import { BENEFIT_RISK_TOOLS } from './benefitRiskTools';
+import { POST_APPROVAL_TOOLS } from './postApprovalTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -197,6 +226,26 @@ export const ADVISE_LABELING_STRUCTURE: AnaTool = {
       format: { type: 'string', enum: ['uspi', 'smpc'], description: 'uspi (US PI) | smpc (EU). Aliases accepted.' },
       content: { type: 'string', description: 'Free-text content to place into a label section.' },
     },
+  },
+};
+
+export const PLAN_LABELING_AUTHORING: AnaTool = {
+  name: 'plan_labeling_authoring',
+  description:
+    'Build-from-template labeling authoring plan (US PLR / EU QRD). Given a labeling mode, returns the ' +
+    'deterministic mandatory PLR/QRD section headers (the section guard), the required_strings to pass to ' +
+    'verify_docx_against_source, and the replacements to pass to build_from_template — plus a section-guard ' +
+    'completeness check of any draft_text supplied. Use to drive build_from_template → review_label_currency ' +
+    '(deterministic currency gate) → verify_docx_against_source. The currency verdict is produced by ' +
+    'review_label_currency and is deterministic — never inferred here.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      mode: { type: 'string', enum: ['us', 'eu'], description: "us (USPI/PLR) | eu (SmPC/QRD). Aliases (uspi/plr/smpc/qrd) accepted." },
+      product_name: { type: 'string', description: 'Product name used in the scaffold title/replacements.' },
+      draft_text: { type: 'string', description: 'Optional current draft text to run the section guard against.' },
+    },
+    required: ['mode'],
   },
 };
 
@@ -405,6 +454,133 @@ export const ADVISE_SPECIAL_DESIGNATION: AnaTool = {
       designation: { type: 'string', description: 'e.g. fast_track, breakthrough, accelerated_approval, orphan, prime, conditional_ma.' },
       jurisdiction: { type: 'string', enum: ['us', 'eu'] },
     },
+  },
+};
+
+// Orphan-Drug Designation request authoring + verification plan (21 CFR 316).
+// Builds the §316.20/§316.21 ODD-request document content from a product's
+// indication/modality/strategy fields, returns the author_docx_native markdown
+// PLUS the required_strings (the mandatory section headers) for the downstream
+// verify_docx_against_source step — so the author→verify loop proves every
+// mandatory element is present before the draft is sealed/exported. Chain
+// advise_special_designation (designation='orphan') for rationale,
+// search_drug_approvals + lookup_regulatory_precedents for same-drug/same-disease
+// prior-designation precedent, and search_literature for prevalence &
+// natural-history citations, then pass the gathered evidence in `citations`.
+export const PLAN_ORPHAN_DRUG_DESIGNATION: AnaTool = {
+  name: 'plan_orphan_drug_designation',
+  description:
+    'Author an FDA Orphan-Drug Designation (ODD) request under 21 CFR Part 316 from a BiotechProduct. ' +
+    'Returns the author_docx_native title + markdown content (all mandatory §316.20(b) / §316.21(b)(c) ' +
+    'sections), and the required_strings (the mandatory section headers) to pass to ' +
+    'verify_docx_against_source so the verification proves every required element is present before ' +
+    'download. Honesty contract: no prevalence/eligibility claim is asserted without a cited source ' +
+    '(supply them via `citations`), and sample/not-assessed drafts are non-sealable. Chain ' +
+    'advise_special_designation (designation="orphan") for rationale, search_drug_approvals + ' +
+    'lookup_regulatory_precedents for prior same-drug/same-disease designation precedent, and ' +
+    'search_literature for prevalence & natural-history citations.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      product: {
+        type: 'object',
+        description: 'Product fields, typically drawn from BiotechProduct (name/indication/modality/strategy).',
+        properties: {
+          name: { type: 'string', description: 'Product code, e.g. "ABC-123".' },
+          generic_name: { type: 'string' },
+          brand_name: { type: 'string' },
+          indication: { type: 'string', description: 'Proposed orphan indication, e.g. "relapsed/refractory AML".' },
+          modality: { type: 'string', description: 'small_molecule | biologic | cell_therapy | gene_therapy | combination.' },
+          designations: { type: 'array', items: { type: 'string' }, description: 'strategy.designation values; "orphan" expected.' },
+          sponsor_name: { type: 'string' },
+          sponsor_address: { type: 'string' },
+          contact_name: { type: 'string' },
+          fda_division: { type: 'string' },
+        },
+        required: ['name', 'indication'],
+      },
+      rationale: {
+        type: 'string',
+        description: 'Scientific rationale narrative, e.g. the brief from advise_special_designation(designation="orphan").',
+      },
+      citations: {
+        type: 'array',
+        description: 'Evidence supporting a section. A prevalence/eligibility section asserts no claim without one.',
+        items: {
+          type: 'object',
+          properties: {
+            section_id: { type: 'string', description: 'e.g. population_estimate | cost_recovery_basis | same_drug_summary.' },
+            label: { type: 'string' },
+            source: { type: 'string', description: 'DOI, PMID, FDA application number, precedent id, or URL.' },
+          },
+          required: ['section_id', 'label', 'source'],
+        },
+      },
+      provenance: {
+        type: 'string',
+        enum: ['live', 'sample', 'not_assessed'],
+        description: 'Provenance of the product data. sample/not_assessed drafts are non-sealable and non-exportable.',
+      },
+    },
+    required: ['product'],
+  },
+};
+
+// IND narrative-module authoring (E11). Author a CTD Module 2 clinical summary
+// (2.5 Clinical Overview / 2.7 Clinical Summary) from a STRUCTURED source and
+// derive the required_strings for verify_docx_against_source from the source's
+// key facts/figures — so the verify step proves transcription fidelity (a
+// missing/mistyped figure fails) before the user signs + seals the persisted
+// version. Honesty contract: sample/not_assessed sources are non-sealable.
+export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
+  name: 'plan_ind_module_authoring',
+  description:
+    'Author a transcription-safe IND narrative module (CTD Module 2.5 Clinical Overview or 2.7 Clinical ' +
+    'Summary) from a STRUCTURED source. Returns the author_docx_native title + markdown content (every ' +
+    'mandatory CTD Module 2 section header) and the required_strings to pass to verify_docx_against_source. ' +
+    'CRITICAL: required_strings include the section headers PLUS every source figure VALUE, so the verify ' +
+    'step proves each figure was transcribed verbatim and CATCHES a missing or mistyped figure before the ' +
+    'draft can be sealed. Honesty contract: a sample/not_assessed source is never sealable, and a draft ' +
+    'whose figures do not verify is non-sealable. Supply the structured source facts/figures in `facts`.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      module: {
+        type: 'string',
+        enum: ['2.5', '2.7'],
+        description: 'CTD Module 2 clinical summary to author: 2.5 (Clinical Overview) or 2.7 (Clinical Summary).',
+      },
+      product_name: { type: 'string', description: 'Product / compound name for the title + running header.' },
+      indication: { type: 'string', description: 'Proposed indication.' },
+      facts: {
+        type: 'array',
+        description:
+          'Structured source facts/figures to transcribe verbatim. Each value becomes a required_strings entry, ' +
+          'so a mistyped figure fails verification.',
+        items: {
+          type: 'object',
+          properties: {
+            section_id: {
+              type: 'string',
+              description: 'Which template section the fact belongs in (e.g. overview_efficacy, summary_clinical_safety).',
+            },
+            label: { type: 'string', description: 'Human label for the fact (e.g. "Primary endpoint response rate").' },
+            value: {
+              type: 'string',
+              description: 'The verbatim figure/string to transcribe AND verify (e.g. "42.3%", "200 mg", "24 months").',
+            },
+            source: { type: 'string', description: 'Optional source pointer (table/dataset id) recorded for provenance.' },
+          },
+          required: ['section_id', 'label', 'value'],
+        },
+      },
+      provenance: {
+        type: 'string',
+        enum: ['live', 'sample', 'not_assessed'],
+        description: 'Provenance of the source data. sample/not_assessed sources are non-sealable.',
+      },
+    },
+    required: ['module', 'product_name', 'indication'],
   },
 };
 
@@ -1096,6 +1272,108 @@ export const RUN_SUBMISSION_PREMORTEM: AnaTool = {
       },
     },
     required: ['text'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E14 — CRL/RTF pre-mortem sealed as an exportable DECISION ARTIFACT. Lifts the
+// run_submission_premortem verdict into a board-ready artifact: an approval-
+// probability ESTIMATE (grounded in the cited precedent approve/deny split,
+// never a guarantee), a ranked top-risks list with each risk bound to its
+// grounding precedent, a prioritized fix-list, and an exportability/honesty
+// guard. Honest by construction: pattern-only / insufficient-data reads are
+// marked not_assessed and are NOT exportable/sealable; sample artifacts never
+// export. The artifact is generated UNSEALED — E1's Sign-and-seal attaches the
+// seal/provenance without changing assembly.
+// ─────────────────────────────────────────────────────────────────────────────
+export const ASSEMBLE_CRL_PREMORTEM_ARTIFACT: AnaTool = {
+  name: 'assemble_crl_premortem_artifact',
+  description:
+    "Assemble a board-ready CRL/RTF pre-mortem DECISION ARTIFACT from draft submission text: runs the RTF/CRL pre-mortem (deterministic reviewer-trigger detection + the precedent engine) and composes an executive-ready artifact — an approval-probability ESTIMATE grounded in the approve/deny split of the cited precedents (always framed as an estimate, never a guarantee, carrying its denominator and confidence), a ranked top-risks list where each risk is bound to the precedent that grounds it, a prioritized fix-list, and the precedent citations. Honest by construction: when the precedent corpus is too thin to calibrate, the artifact is marked 'not_assessed' and carries NO probability and is NOT exportable. Set export=true to also render and author the artifact as a Word document via the native docx engine (only permitted for an 'estimated', non-sample artifact); the exported document is marked UNSEALED until signed. Provide the draft text and, ideally, the agency and submission type.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      text: {
+        type: 'string',
+        description: 'The draft submission text to assess (a section, module, or claim set).',
+      },
+      submission_type: {
+        type: 'string',
+        description: 'Submission type for precedent calibration (e.g. IND, NDA, BLA, 510(k), PMA, MAA).',
+      },
+      agency: {
+        type: 'string',
+        description: 'Target agency (e.g. FDA, EMA, PMDA). Used for scope and precedent filtering.',
+      },
+      indication: {
+        type: 'string',
+        description: 'Optional indication / therapeutic area to sharpen precedent matching.',
+      },
+      location: {
+        type: 'string',
+        description: "Section/field reference for provenance (e.g. '2.5 Clinical Overview'). Default 'document'.",
+      },
+      title: {
+        type: 'string',
+        description: 'Optional artifact title for the board-ready report.',
+      },
+      export: {
+        type: 'boolean',
+        description:
+          'When true, also render and author the artifact as a Word document via the native docx engine (only for an estimable, non-sample artifact). Default false.',
+      },
+    },
+    required: ['text'],
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// E8 — Pre-IND / EOP2 briefing-book builder with reviewer-challenge pre-mortem.
+// Assembles a regulatory-agency meeting briefing book (background, objectives,
+// questions for the agency, supporting-data summary) from a RegAgencyMeeting,
+// then stress-tests the sponsor's enumerated questions against ANTICIPATED FDA
+// pushback via simulate_reviewer_challenges + run_submission_premortem. Returns
+// the assembled markdown (hand to author_docx_native), the required_strings for
+// verify_docx_against_source (mandatory headers + sponsor questions), and an
+// honest pre-mortem verdict. Honest by construction: a book built from sample /
+// fixture meeting data is not_assessed and not sealable/exportable; anticipated
+// pushback is framed as anticipated, never an actual agency position.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ASSEMBLE_BRIEFING_BOOK: AnaTool = {
+  name: 'assemble_briefing_book',
+  description:
+    "Assemble a Pre-IND / End-of-Phase-2 (or other Type A/B/C) regulatory-agency MEETING BRIEFING BOOK from a RegAgencyMeeting and stress-test the sponsor's questions against anticipated FDA pushback. Produces the four mandatory sections (Background, Product Development Objectives, Questions for the Agency, Supporting-Data Summary) as markdown ready for author_docx_native, plus the required_strings (the mandatory section headers AND each enumerated sponsor question, verbatim) to pass to verify_docx_against_source. When run_premortem is set, it also surfaces the anticipated reviewer pushback per sponsor question by folding in simulate_reviewer_challenges + run_submission_premortem — labelled ANTICIPATED, never an actual agency position. Honest by construction: a book assembled from sample/fixture meeting data (no live meeting id supplied) is marked not_assessed and is NOT sealable or exportable. Tenant context is injected from the request.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      meeting_id: {
+        type: 'string',
+        description:
+          'Optional id of a live RegAgencyMeeting to build from. When omitted, a labelled fixture EOP2 meeting is used and the resulting book is marked sample / not_assessed.',
+      },
+      meeting_type: {
+        type: 'string',
+        enum: ['pre_ind', 'eop1', 'eop2', 'pre_nda', 'pre_bla', 'type_a', 'type_b', 'type_c', 'type_d'],
+        description: 'Meeting type. Defaults to the fixture meeting type (eop2) when no live meeting is supplied.',
+      },
+      key_questions: {
+        type: 'array',
+        items: { type: 'string' },
+        description: "The sponsor's enumerated questions for the agency. Each becomes a required_string and a pre-mortem row.",
+      },
+      product_name: { type: 'string', description: 'Investigational product name for the title and narrative.' },
+      indication: { type: 'string', description: 'Indication / therapeutic area.' },
+      sponsor: { type: 'string', description: 'Sponsor name.' },
+      run_premortem: {
+        type: 'boolean',
+        description:
+          'When true (default), surface anticipated FDA pushback per sponsor question via the reviewer-challenge and pre-mortem engines. Requires package_id + assessment_id for the reviewer-lens pass; degrades to pattern-only pre-mortem otherwise.',
+      },
+      package_id: { type: 'number', description: 'Submission package id for simulate_reviewer_challenges (optional).' },
+      assessment_id: { type: 'number', description: 'Submission-twin assessment id for simulate_reviewer_challenges (optional).' },
+    },
+    required: [],
   },
 };
 
@@ -4079,6 +4357,388 @@ export const REVIEW_SEND_READINESS: AnaTool = {
   },
 };
 
+// ─── Protocol Development (C2C-17) ───────────────────────────────────────────
+
+export const CREATE_PROTOCOL_DOCUMENT: AnaTool = {
+  name: 'create_protocol_document',
+  description:
+    "Start authoring a protocol document for a given kind (iacuc / irb / clinical / ibc). Auto-seeds the kind's templated sections (ICH M11/E6 for clinical, 3Rs for IACUC, 45 CFR 46.111 for IRB). Optionally link an existing governed protocol record. Governed + audited, org-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      protocol_kind: { type: 'string', enum: ['iacuc', 'irb', 'clinical', 'ibc'] },
+      title: { type: 'string' },
+      protocol_number: { type: 'string' },
+      design_type: { type: 'string', enum: ['interventional', 'observational', 'expanded_access', 'animal_study', 'basic_science', 'registry', 'other'] },
+      phase: { type: 'string' },
+      therapeutic_area: { type: 'string' },
+      linked_protocol_id: { type: 'number' },
+      synopsis: { type: 'string' },
+      reason: { type: 'string' },
+    },
+    required: ['protocol_kind', 'title'],
+  },
+};
+
+export const UPDATE_PROTOCOL_SECTION: AnaTool = {
+  name: 'update_protocol_section',
+  description:
+    "Write or update a protocol section's content and mark its status (not_started / draft / complete). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { section_id: { type: 'number' }, content: { type: 'string' }, status: { type: 'string', enum: ['not_started', 'draft', 'complete'] }, reason: { type: 'string' } },
+    required: ['section_id'],
+  },
+};
+
+export const ADD_PROTOCOL_OBJECTIVE: AnaTool = {
+  name: 'add_protocol_objective',
+  description:
+    "Add an objective + endpoint to a protocol (primary / secondary / exploratory), with an optional analysis timepoint. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, objective_type: { type: 'string', enum: ['primary', 'secondary', 'exploratory'] }, objective: { type: 'string' }, endpoint: { type: 'string' }, timepoint: { type: 'string' }, reason: { type: 'string' } },
+    required: ['document_id', 'objective'],
+  },
+};
+
+export const ADD_ELIGIBILITY_CRITERION: AnaTool = {
+  name: 'add_eligibility_criterion',
+  description:
+    "Add an inclusion or exclusion eligibility criterion to a protocol. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, kind: { type: 'string', enum: ['inclusion', 'exclusion'] }, criterion: { type: 'string' }, reason: { type: 'string' } },
+    required: ['document_id', 'kind', 'criterion'],
+  },
+};
+
+export const REVIEW_PROTOCOL_COMPLETENESS: AnaTool = {
+  name: 'review_protocol_completeness',
+  description:
+    "Read-only completeness assessment of a protocol document: percent of required sections complete, cited gaps (missing sections, no objectives, missing eligibility/schedule for clinical/IRB), and whether it is ready to finalize.",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
+export const FINALIZE_PROTOCOL_DOCUMENT: AnaTool = {
+  name: 'finalize_protocol_document',
+  description:
+    "Finalize a protocol document. Gated on the deterministic completeness check (all required sections complete + objectives, plus eligibility/schedule for clinical/IRB); rejected with the gaps otherwise. On success it snapshots a major version. Governed + audited (signature).",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' }, reason: { type: 'string' } }, required: ['document_id'] },
+};
+
+// ─── Protocol Risk Register (C2C-19) ─────────────────────────────────────────
+
+export const ADD_PROTOCOL_RISK: AnaTool = {
+  name: 'add_protocol_risk',
+  description:
+    "Add a risk to a protocol's risk register, scored on a likelihood × impact matrix (ICH E6(R2) §5.0). Categories: participant_safety, data_integrity, regulatory, operational, privacy, other. Returns the computed risk level. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id: { type: 'number' },
+      category: { type: 'string', enum: ['participant_safety', 'data_integrity', 'regulatory', 'operational', 'privacy', 'other'] },
+      description: { type: 'string' },
+      likelihood: { type: 'string', enum: ['rare', 'unlikely', 'possible', 'likely', 'almost_certain'] },
+      impact: { type: 'string', enum: ['negligible', 'minor', 'moderate', 'major', 'severe'] },
+      mitigation: { type: 'string' },
+      owner: { type: 'string' },
+      reason: { type: 'string' },
+    },
+    required: ['document_id', 'description'],
+  },
+};
+
+export const REVIEW_PROTOCOL_RISK_REGISTER: AnaTool = {
+  name: 'review_protocol_risk_register',
+  description:
+    "Read-only protocol risk register: each risk with its inherent and residual scores/levels, plus a summary (counts by level, open high/extreme risks, residual exposure index). Use to see where mitigation is still needed.",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
+// ─── Protocol Amendments / Deviations / Reviews / Consent (C2C-18a–d) ─────────
+
+export const CREATE_PROTOCOL_AMENDMENT: AnaTool = {
+  name: 'create_protocol_amendment',
+  description:
+    "Open a protocol amendment against a protocol document. Type (major/minor/administrative) plus the affects-consent / affects-risk flags drive the deterministic review path and reconsent trigger (45 CFR 46.109 / 21 CFR 56.110). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      protocol_document_id: { type: 'number' }, title: { type: 'string' }, amendment_number: { type: 'string' },
+      rationale: { type: 'string' }, amendment_type: { type: 'string', enum: ['major', 'minor', 'administrative'] },
+      affects_consent: { type: 'boolean' }, affects_risk: { type: 'boolean' }, reason: { type: 'string' },
+    },
+    required: ['protocol_document_id', 'title'],
+  },
+};
+
+export const ADD_AMENDMENT_CHANGE: AnaTool = {
+  name: 'add_amendment_change',
+  description: "Add a specific change (section, previous → proposed text) to a protocol amendment. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { amendment_id: { type: 'number' }, section_ref: { type: 'string' }, change_description: { type: 'string' }, previous_text: { type: 'string' }, proposed_text: { type: 'string' }, reason: { type: 'string' } },
+    required: ['amendment_id', 'change_description'],
+  },
+};
+
+export const REVIEW_AMENDMENT: AnaTool = {
+  name: 'review_amendment',
+  description: "Read-only amendment readiness: change count, computed review path / reconsent trigger, and any blockers before submission.",
+  input_schema: { type: 'object', properties: { amendment_id: { type: 'number' } }, required: ['amendment_id'] },
+};
+
+export const REPORT_PROTOCOL_DEVIATION: AnaTool = {
+  name: 'report_protocol_deviation',
+  description:
+    "Report a protocol deviation. Category + severity (and whether it affects safety) drive the deterministic reportability + timeliness assessment (45 CFR 46.108 / ICH E6). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      protocol_document_id: { type: 'number' }, description: { type: 'string' },
+      category: { type: 'string', enum: ['enrollment', 'consent', 'procedure', 'safety', 'data', 'other'] },
+      severity: { type: 'string', enum: ['minor', 'major', 'critical'] },
+      affects_safety: { type: 'boolean' }, root_cause: { type: 'string' }, reason: { type: 'string' },
+    },
+    required: ['protocol_document_id', 'description'],
+  },
+};
+
+export const ADD_CAPA_ACTION: AnaTool = {
+  name: 'add_capa_action',
+  description: "Add a corrective/preventive action (CAPA) to a protocol deviation. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { deviation_id: { type: 'number' }, action: { type: 'string' }, owner: { type: 'string' }, due_date: { type: 'string' }, reason: { type: 'string' } },
+    required: ['deviation_id', 'action'],
+  },
+};
+
+export const REVIEW_DEVIATION: AnaTool = {
+  name: 'review_deviation',
+  description: "Read-only deviation review: the deviation with its CAPA actions and whether it is ready to close (all CAPA complete/verified).",
+  input_schema: { type: 'object', properties: { deviation_id: { type: 'number' } }, required: ['deviation_id'] },
+};
+
+export const ASSIGN_PROTOCOL_REVIEWER: AnaTool = {
+  name: 'assign_protocol_reviewer',
+  description: "Assign a reviewer to a protocol document with a review role (scientific/statistical/ethics/safety/regulatory/general). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { protocol_document_id: { type: 'number' }, reviewer_name: { type: 'string' }, reviewer_user_id: { type: 'number' }, role: { type: 'string', enum: ['scientific', 'statistical', 'ethics', 'safety', 'regulatory', 'general'] }, due_date: { type: 'string' }, reason: { type: 'string' } },
+    required: ['protocol_document_id', 'reviewer_name'],
+  },
+};
+
+export const ADD_PROTOCOL_REVIEW_COMMENT: AnaTool = {
+  name: 'add_protocol_review_comment',
+  description: "Add a review comment to a protocol document (optionally tied to an assignment / section), with severity (blocking/major/minor/info). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { protocol_document_id: { type: 'number' }, comment: { type: 'string' }, assignment_id: { type: 'number' }, section_ref: { type: 'string' }, severity: { type: 'string', enum: ['blocking', 'major', 'minor', 'info'] }, reason: { type: 'string' } },
+    required: ['protocol_document_id', 'comment'],
+  },
+};
+
+export const REVIEW_PROTOCOL_REVIEW_STATUS: AnaTool = {
+  name: 'review_protocol_review_status',
+  description: "Read-only review-workflow status for a protocol: assignment completion, dispositions, consensus, open blocking comments, and whether a decision can be made.",
+  input_schema: { type: 'object', properties: { protocol_document_id: { type: 'number' } }, required: ['protocol_document_id'] },
+};
+
+export const CREATE_CONSENT_FORM: AnaTool = {
+  name: 'create_consent_form',
+  description: "Create an informed-consent form (optionally for a protocol document), auto-seeded with the 45 CFR 46.116 required elements as not-yet-present rows. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { title: { type: 'string' }, protocol_document_id: { type: 'number' }, version: { type: 'string' }, language: { type: 'string' }, reading_level: { type: 'string' }, reason: { type: 'string' } },
+    required: ['title'],
+  },
+};
+
+export const UPDATE_CONSENT_ELEMENT: AnaTool = {
+  name: 'update_consent_element',
+  description: "Write a consent-form element's content and mark it present. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { element_id: { type: 'number' }, content: { type: 'string' }, present: { type: 'boolean' }, reason: { type: 'string' } },
+    required: ['element_id'],
+  },
+};
+
+export const REVIEW_CONSENT_COMPLETENESS: AnaTool = {
+  name: 'review_consent_completeness',
+  description: "Read-only consent-form completeness: percent of required 45 CFR 46.116 elements present, missing required elements, and whether it can be approved.",
+  input_schema: { type: 'object', properties: { form_id: { type: 'number' } }, required: ['form_id'] },
+};
+
+// ─── NIH Data Management & Sharing Plan (C2C-23) ─────────────────────────────
+
+export const CREATE_DMS_PLAN: AnaTool = {
+  name: 'create_dms_plan',
+  description: "Create an NIH Data Management & Sharing (DMS) plan (optionally linked to a grant proposal and/or protocol document), auto-seeded with the six required DMS plan elements (NIH NOT-OD-21-013) as not-yet-addressed rows. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { title: { type: 'string' }, grant_proposal_id: { type: 'number' }, protocol_document_id: { type: 'number' }, reason: { type: 'string' } },
+    required: ['title'],
+  },
+};
+
+export const UPDATE_DMS_PLAN_ELEMENT: AnaTool = {
+  name: 'update_dms_plan_element',
+  description: "Write a DMS plan element's narrative content and mark it addressed. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { element_id: { type: 'number' }, content: { type: 'string' }, addressed: { type: 'boolean' }, reason: { type: 'string' } },
+    required: ['element_id'],
+  },
+};
+
+export const REVIEW_DMS_PLAN_COMPLETENESS: AnaTool = {
+  name: 'review_dms_plan_completeness',
+  description: "Read-only DMS plan completeness: percent of the six required NIH DMS plan elements addressed, the missing elements, and whether the plan can be finalized.",
+  input_schema: { type: 'object', properties: { plan_id: { type: 'number' } }, required: ['plan_id'] },
+};
+
+export const FINALIZE_DMS_PLAN: AnaTool = {
+  name: 'finalize_dms_plan',
+  description: "Finalize an NIH DMS plan behind the deterministic completeness gate (all six required elements addressed). Records a governed signature. Governed + audited.",
+  input_schema: { type: 'object', properties: { plan_id: { type: 'number' }, reason: { type: 'string' } }, required: ['plan_id'] },
+};
+
+// ─── Protocol Authoring Extensions (C2C-20: templates / milestones / export) ──
+
+export const CREATE_PROTOCOL_TEMPLATE: AnaTool = {
+  name: 'create_protocol_template',
+  description: "Create an org protocol template (named, kind-scoped) that can later be cloned into new protocol documents. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { name: { type: 'string' }, protocol_kind: { type: 'string', enum: ['iacuc', 'irb', 'clinical', 'ibc'] }, design_type: { type: 'string' }, description: { type: 'string' }, reason: { type: 'string' } },
+    required: ['name', 'protocol_kind'],
+  },
+};
+
+export const CLONE_PROTOCOL_TEMPLATE: AnaTool = {
+  name: 'clone_protocol_template',
+  description: "Clone a protocol template into a new protocol document, seeding its sections (any required catalog section missing from the template is injected automatically). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { template_id: { type: 'number' }, title: { type: 'string' }, protocol_number: { type: 'string' }, reason: { type: 'string' } },
+    required: ['template_id', 'title'],
+  },
+};
+
+export const SAVE_DOCUMENT_AS_TEMPLATE: AnaTool = {
+  name: 'save_document_as_template',
+  description: "Snapshot an existing protocol document's sections into a new reusable org template. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, name: { type: 'string' }, description: { type: 'string' }, reason: { type: 'string' } },
+    required: ['document_id', 'name'],
+  },
+};
+
+export const LIST_PROTOCOL_TEMPLATES: AnaTool = {
+  name: 'list_protocol_templates',
+  description: "Read-only list of the org's protocol templates (optionally filtered by kind).",
+  input_schema: { type: 'object', properties: { kind: { type: 'string', enum: ['iacuc', 'irb', 'clinical', 'ibc'] } }, required: [] },
+};
+
+export const ADD_PROTOCOL_MILESTONE: AnaTool = {
+  name: 'add_protocol_milestone',
+  description: "Add a milestone to a protocol document's timeline (IRB submission, first/last subject, database lock, CSR, …) with a target date. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, name: { type: 'string' }, milestone_type: { type: 'string', enum: ['protocol_approval', 'irb_submission', 'site_activation', 'first_subject', 'last_subject', 'enrollment_complete', 'database_lock', 'csr', 'closeout', 'other'] }, target_date: { type: 'string', description: 'YYYY-MM-DD.' }, notes: { type: 'string' }, reason: { type: 'string' } },
+    required: ['document_id', 'name'],
+  },
+};
+
+export const SET_PROTOCOL_MILESTONE_STATUS: AnaTool = {
+  name: 'set_protocol_milestone_status',
+  description: "Transition a protocol milestone's status (planned/in_progress/met/missed/cancelled); 'met' stamps the actual date. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { milestone_id: { type: 'number' }, status: { type: 'string', enum: ['planned', 'in_progress', 'met', 'missed', 'cancelled'] }, actual_date: { type: 'string' }, reason: { type: 'string' } },
+    required: ['milestone_id', 'status'],
+  },
+};
+
+export const REVIEW_PROTOCOL_TIMELINE: AnaTool = {
+  name: 'review_protocol_timeline',
+  description: "Read-only protocol timeline: milestones ordered by date with urgency buckets (overdue/due_30/due_90/upcoming), counts, and the next upcoming milestone.",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
+export const EXPORT_PROTOCOL_DOCUMENT: AnaTool = {
+  name: 'export_protocol_document',
+  description: "Read-only: assemble a protocol document (sections + objectives + eligibility + schedule) into a structured export and rendered Markdown.",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
+export const GENERATE_CTGOV_REGISTRATION_DRAFT: AnaTool = {
+  name: 'generate_ctgov_registration_draft',
+  description: "Read-only: generate a ClinicalTrials.gov PRS registration draft (FDAAA 801 data elements: titles, study type, phase, primary/secondary outcomes, eligibility) from a protocol document, with completeness findings.",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
+// ─── Protocol Schedule of Assessments (C2C-21) ───────────────────────────────
+
+export const ADD_SOA_ASSESSMENT: AnaTool = {
+  name: 'add_soa_assessment',
+  description: "Add an assessment (row) to a protocol's schedule-of-assessments matrix (category: lab/imaging/exam/vital_signs/pk/questionnaire/procedure/eligibility/other). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, name: { type: 'string' }, category: { type: 'string', enum: ['lab', 'imaging', 'exam', 'vital_signs', 'pk', 'questionnaire', 'procedure', 'eligibility', 'other'] }, reason: { type: 'string' } },
+    required: ['document_id', 'name'],
+  },
+};
+
+export const SET_SOA_CELL: AnaTool = {
+  name: 'set_soa_cell',
+  description: "Mark an assessment as performed at a visit in the SoA matrix (cell = assessment_id × visit_id; visit_id is a protocol_schedule_visits id). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { assessment_id: { type: 'number' }, visit_id: { type: 'number' }, required: { type: 'boolean' }, notes: { type: 'string' }, reason: { type: 'string' } },
+    required: ['assessment_id', 'visit_id'],
+  },
+};
+
+export const REVIEW_SOA_MATRIX: AnaTool = {
+  name: 'review_soa_matrix',
+  description: "Read-only schedule-of-assessments matrix for a protocol: assessments × visits grid plus validation findings (empty visits, unscheduled assessments, screening coverage; ICH M11).",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
+// ─── Protocol Budget & Feasibility (C2C-22) ──────────────────────────────────
+
+export const ADD_PROTOCOL_BUDGET_ITEM: AnaTool = {
+  name: 'add_protocol_budget_item',
+  description: "Add a per-subject budget line item to a protocol (category, unit cost, quantity per subject, payer). Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, category: { type: 'string', enum: ['personnel', 'procedure', 'lab', 'imaging', 'overhead', 'equipment', 'patient_stipend', 'other'] }, description: { type: 'string' }, unit_cost: { type: 'number' }, quantity_per_subject: { type: 'number' }, payer: { type: 'string', enum: ['sponsor', 'institution', 'other'] }, reason: { type: 'string' } },
+    required: ['document_id', 'description', 'unit_cost'],
+  },
+};
+
+export const SET_PROTOCOL_BUDGET_PARAMS: AnaTool = {
+  name: 'set_protocol_budget_params',
+  description: "Set a protocol's budget parameters (target enrollment, sponsor payment per subject, F&A/indirect rate %). Upsert — one per document. Governed + audited.",
+  input_schema: {
+    type: 'object',
+    properties: { document_id: { type: 'number' }, target_enrollment: { type: 'number' }, sponsor_payment_per_subject: { type: 'number' }, indirect_rate_pct: { type: 'number' }, reason: { type: 'string' } },
+    required: ['document_id'],
+  },
+};
+
+export const REVIEW_PROTOCOL_BUDGET: AnaTool = {
+  name: 'review_protocol_budget',
+  description: "Read-only protocol budget & feasibility: per-category + per-subject direct cost, indirect (F&A), total per subject, total study cost across enrollment, sponsor revenue, margin, and the feasibility verdict (funded / under_funded / unknown).",
+  input_schema: { type: 'object', properties: { document_id: { type: 'number' } }, required: ['document_id'] },
+};
+
 // ─── CITI Training full integration (C2C-01/02) ──────────────────────────────
 
 export const IMPORT_CITI_RECORDS: AnaTool = {
@@ -6879,7 +7539,7 @@ export const RECONCILE_DOSSIER_NUMBERS: AnaTool = {
   },
 };
 
-export const ALL_ANA_TOOLS: AnaTool[] = [
+const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   RECONCILE_DOSSIER_NUMBERS,
   GENERATE_SCHEDULE_OF_EVENTS,
   AMEND_SCHEDULE_OF_EVENTS,
@@ -6914,10 +7574,13 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   ADVISE_COA_SELECTION,
   ADVISE_CTD_STRUCTURE,
   ADVISE_SPECIAL_DESIGNATION,
+  PLAN_ORPHAN_DRUG_DESIGNATION,
+  PLAN_IND_MODULE_AUTHORING,
   ADVISE_ESTIMAND,
   ADVISE_PHARMACOVIGILANCE,
   ADVISE_STUDY_DESIGN,
   ADVISE_LABELING_STRUCTURE,
+  PLAN_LABELING_AUTHORING,
   ADVISE_MEDICAL_INFORMATION,
   ADVISE_REPORTING_GUIDELINE,
   ADVISE_DATA_INTEGRITY,
@@ -6933,6 +7596,8 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   SEARCH_LARGE_DOCUMENT,
   REMEMBER_DOCUMENT_IN_PROJECT,
   RUN_SUBMISSION_PREMORTEM,
+  ASSEMBLE_CRL_PREMORTEM_ARTIFACT,
+  ASSEMBLE_BRIEFING_BOOK,
   ASSESS_OUTPUT_CONFIDENCE,
   CHECK_GROUNDING,
   RENDER_SIGNATURE_MANIFESTATION,
@@ -7045,6 +7710,45 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   REVIEW_IBC_REGISTRATION,
   CREATE_NONCLINICAL_STUDY,
   REVIEW_SEND_READINESS,
+  CREATE_PROTOCOL_DOCUMENT,
+  UPDATE_PROTOCOL_SECTION,
+  ADD_PROTOCOL_OBJECTIVE,
+  ADD_ELIGIBILITY_CRITERION,
+  REVIEW_PROTOCOL_COMPLETENESS,
+  FINALIZE_PROTOCOL_DOCUMENT,
+  ADD_PROTOCOL_RISK,
+  REVIEW_PROTOCOL_RISK_REGISTER,
+  CREATE_PROTOCOL_TEMPLATE,
+  CLONE_PROTOCOL_TEMPLATE,
+  SAVE_DOCUMENT_AS_TEMPLATE,
+  LIST_PROTOCOL_TEMPLATES,
+  ADD_PROTOCOL_MILESTONE,
+  SET_PROTOCOL_MILESTONE_STATUS,
+  REVIEW_PROTOCOL_TIMELINE,
+  EXPORT_PROTOCOL_DOCUMENT,
+  GENERATE_CTGOV_REGISTRATION_DRAFT,
+  ADD_SOA_ASSESSMENT,
+  SET_SOA_CELL,
+  REVIEW_SOA_MATRIX,
+  ADD_PROTOCOL_BUDGET_ITEM,
+  SET_PROTOCOL_BUDGET_PARAMS,
+  REVIEW_PROTOCOL_BUDGET,
+  CREATE_PROTOCOL_AMENDMENT,
+  ADD_AMENDMENT_CHANGE,
+  REVIEW_AMENDMENT,
+  REPORT_PROTOCOL_DEVIATION,
+  ADD_CAPA_ACTION,
+  REVIEW_DEVIATION,
+  ASSIGN_PROTOCOL_REVIEWER,
+  ADD_PROTOCOL_REVIEW_COMMENT,
+  REVIEW_PROTOCOL_REVIEW_STATUS,
+  CREATE_CONSENT_FORM,
+  UPDATE_CONSENT_ELEMENT,
+  REVIEW_CONSENT_COMPLETENESS,
+  CREATE_DMS_PLAN,
+  UPDATE_DMS_PLAN_ELEMENT,
+  REVIEW_DMS_PLAN_COMPLETENESS,
+  FINALIZE_DMS_PLAN,
   IMPORT_CITI_RECORDS,
   REVIEW_TRAINING_MATRIX,
   REVIEW_EXPIRING_TRAINING,
@@ -7187,6 +7891,93 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // fabrication). Specs authored in services/global-ri/ana-tools; handlers
   // loop-registered in AnaToolExecutor.
   ...(GLOBAL_RI_TOOL_SPECS as unknown as AnaTool[]),
+  // Bioequivalence & generic drug intelligence (BCS, BE study design, dissolution,
+  // biowaiver, ANDA/505(b)(2) pathway). Deterministic registry lookups.
+  ...BIOEQUIVALENCE_TOOLS,
+  // Pharmacometrics intelligence (PopPK, PBPK, exposure-response, MIDD, dose
+  // selection). Deterministic knowledge base.
+  ...PHARMACOMETRICS_TOOLS,
+  // Preclinical toxicology intelligence (species selection, repeat-dose design,
+  // safety margins, genotoxicity, carcinogenicity, reproductive tox). Deterministic.
+  ...TOXICOLOGY_TOOLS,
+  // Pediatric development intelligence (age classification, PIP/PSP, extrapolation,
+  // formulation, dose selection, regulatory requirements). Deterministic.
+  ...PEDIATRIC_TOOLS,
+  // Advanced therapy (ATMP/CGT) intelligence (classification, gene therapy, cell
+  // therapy manufacturing, CAR-T, pathway selection, comparability). Deterministic.
+  ...ADVANCED_THERAPY_TOOLS,
+  // Real-world evidence methodology intelligence (target trial emulation, data
+  // source scoring, propensity scores, study design, bias, regulatory). Deterministic.
+  ...RWE_METHODOLOGY_TOOLS,
+  // Wave 2 — Clinical pharmacology intelligence (DDI risk, QTc/E14-S7B, organ
+  // impairment, CYP phenotype, bioanalytical method, food effect). Deterministic.
+  ...CLINICAL_PHARMACOLOGY_TOOLS,
+  // Wave 2 — CMC quality intelligence (stability, analytical validation, impurity
+  // classification, specifications, process validation, comparability). Deterministic.
+  ...CMC_QUALITY_TOOLS,
+  // Wave 2 — Regulatory strategy intelligence (expedited programs, FDA meetings,
+  // orphan designation, 505 pathway, rolling submission, global pathways). Deterministic.
+  ...REGULATORY_STRATEGY_TOOLS,
+  // Wave 2 — Biosimilar development intelligence (analytical similarity, clinical
+  // program, extrapolation, interchangeability, IP strategy, CMC). Deterministic.
+  ...BIOSIMILAR_TOOLS,
+  // Wave 2 — Mutagenic impurity intelligence (ICH M7 classification, TTC, structural
+  // alerts, purge study, nitrosamine risk, control strategy). Deterministic.
+  ...MUTAGENIC_IMPURITY_TOOLS,
+  // Wave 2 — Labeling intelligence (PLR structure, boxed warning, REMS, PLLR,
+  // EU SmPC, OTC Drug Facts). Deterministic.
+  ...LABELING_INTELLIGENCE_TOOLS,
+  // Wave 3 — Immunogenicity intelligence (risk assessment, ADA/NAb assay
+  // strategy, clinical impact, sampling, comparability). FDA 2019 / EMA. Deterministic.
+  ...IMMUNOGENICITY_TOOLS,
+  // Wave 3 — Safety pharmacology intelligence (ICH S7A core battery: CV/CNS/
+  // respiratory, follow-up studies, abuse liability). Deterministic.
+  ...SAFETY_PHARMACOLOGY_TOOLS,
+  // Wave 3 — Pharmacovigilance & signal detection (ICH E2A-E2F, causality,
+  // disproportionality, signal priority, PV system). Deterministic.
+  ...PHARMACOVIGILANCE_TOOLS,
+  // Wave 3 — Clinical outcome assessment / PRO (COA type, validation, meaningful
+  // change, fit-for-purpose, endpoint positioning, development plan). Deterministic.
+  ...COA_PRO_TOOLS,
+  // Wave 3 — Oncology dose optimization (Project Optimus: dose-finding design,
+  // alignment, randomized comparison, RP2D, backfill, exposure-response). Deterministic.
+  ...DOSE_OPTIMIZATION_TOOLS,
+  // Wave 3 — Combination products & device constituent (PMOA, classification,
+  // cGMP, human factors, design controls, submission pathway). Deterministic.
+  ...COMBINATION_PRODUCTS_TOOLS,
+  // Wave 4 — Clinical trial statistics & estimands (ICH E9(R1) estimands,
+  // intercurrent events, multiplicity, adaptive, missing data, sample size). Deterministic.
+  ...TRIAL_STATISTICS_TOOLS,
+  // Wave 4 — GMP quality systems & data integrity (ICH Q7, ALCOA+, CAPA,
+  // deviations, Annex 1 sterile, computer system validation). Deterministic.
+  ...GMP_QUALITY_SYSTEMS_TOOLS,
+  // Wave 4 — Nonclinical PK/ADME & toxicokinetics (ADME program, mass balance,
+  // metabolite safety/MIST, TK, reaction phenotyping, protein binding). Deterministic.
+  ...NONCLINICAL_ADME_TOOLS,
+  // Wave 4 — Biomarkers & companion diagnostics (BEST classification, qualification,
+  // CDx co-development, analytical/clinical validation, enrichment). Deterministic.
+  ...BIOMARKER_TOOLS,
+  // Wave 4 — Rare disease & external control arms (natural history, external
+  // controls, small-population design, Bayesian borrowing, endpoints). Deterministic.
+  ...RARE_DISEASE_TOOLS,
+  // Wave 4 — GCP & clinical trial operations (risk-based monitoring, inspection
+  // readiness, GCP compliance, informed consent, deviations, TMF). Deterministic.
+  ...GCP_OPERATIONS_TOOLS,
+  // Wave 5 — Medical device & IVD regulatory (classification, pathway, substantial
+  // equivalence, clinical evidence, essential principles/GSPR, submission). Deterministic.
+  ...MEDICAL_DEVICE_TOOLS,
+  // Wave 5 — Digital health, SaMD & AI/ML devices (IMDRF SaMD class, AI/ML, PCCP,
+  // GMLP, SaMD clinical validation, premarket cybersecurity). Deterministic.
+  ...DIGITAL_HEALTH_TOOLS,
+  // Wave 5 — Vaccine development (CMC, correlate of protection, clinical program,
+  // lot consistency, platform technology, special populations). Deterministic.
+  ...VACCINE_TOOLS,
+  // Wave 5 — Structured benefit-risk (FDA BR framework, effects table, balance,
+  // value tree, uncertainty, communication). Deterministic.
+  ...BENEFIT_RISK_TOOLS,
+  // Wave 5 — Post-approval lifecycle / ICH Q12 (change classification, established
+  // conditions, PACMP, annual report, comparability, lifecycle plan). Deterministic.
+  ...POST_APPROVAL_TOOLS,
   // Inference self-awareness: classify a tool's output by determinism pedigree
   // (deterministic_registry / deterministic_query / external_api_live /
   // model_assisted) so AnA can weight bulletproof registry facts above
@@ -7498,6 +8289,16 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // SPL generation + PSUR/DSUR safety-report structure. See splSafetyTools.ts.
   ...SPL_SAFETY_TOOLS,
 ];
+
+// Defensive registry guard: v2's cdiscTools.ts currently re-registers
+// run_cdisc_pipeline / generate_define_xml, which also live in
+// EXTENDED_REGULATORY_TOOLS — producing duplicate tool names in the raw list.
+// Dedupe by name (first occurrence wins) so the ALL_ANA_TOOLS invariant holds
+// regardless of upstream double-registration. Remove once the duplicate is
+// resolved at source in the CDISC tools refactor.
+export const ALL_ANA_TOOLS: AnaTool[] = ALL_ANA_TOOLS_RAW.filter(
+  (tool, index) => ALL_ANA_TOOLS_RAW.findIndex((t) => t.name === tool.name) === index,
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Anthropic server-side tools (executed by Anthropic's infrastructure)

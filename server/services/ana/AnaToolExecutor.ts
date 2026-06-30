@@ -95,10 +95,35 @@ import { adviseGcp, reviewInformedConsent, listGcpDomains } from './gcp-consent.
 import { adviseCoaSelection, listCoaTypes } from './coa-selection.js';
 import { adviseCtdStructure, listCtdModules } from './ctd-structure.js';
 import { adviseSpecialDesignation, listDesignations } from './special-designations.js';
+import {
+  buildOddAuthoringPlan,
+  evaluateOddVerification,
+  assessOddSealability,
+  type OddCitation,
+  type OddProvenance,
+  type OddProductInput,
+} from 'shared/ana/orphan-drug-designation.js';
+import {
+  buildIndModuleAuthoringPlan,
+  evaluateIndModuleVerification,
+  assessIndModuleSealability,
+  listIndModules,
+  type IndModuleProvenance,
+  type IndSourceFact,
+} from 'shared/ana/ind-module-authoring.js';
 import { adviseEstimand, listEstimandFramework } from './estimands.js';
 import { advisePharmacovigilance, listPvDeliverables } from './pharmacovigilance.js';
 import { adviseStudyDesign, listStudyDesigns, type SampleSizeInput, type EndpointFamily, type DesignGoal } from './study-design.js';
 import { adviseLabelingStructure, listLabelTemplates } from './labeling-structure.js';
+import {
+  getLabelingModeSpec,
+  modeToFormat,
+  requiredSectionHeaders,
+  deriveRequiredStrings,
+  checkSectionGuard,
+  buildTemplateReplacements,
+  type LabelingMode,
+} from './labeling-authoring.js';
 import { adviseMedicalInformation, listMedInfoResponseTypes } from './medical-information.js';
 import { adviseReportingGuideline, listReportingGuidelines } from './reporting-guidelines.js';
 import { adviseDataIntegrity, listDataIntegrity } from './data-integrity.js';
@@ -853,6 +878,275 @@ registerToolHandler('run_submission_premortem', async (input, ctx) => {
   } catch (err) {
     return JSON.stringify({
       error: `run_submission_premortem failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// E14 — CRL/RTF pre-mortem DECISION ARTIFACT. Reuses the same honest-by-
+// construction composition path as run_submission_premortem (deterministic
+// deficiency scan + fault-tolerant precedent engine), then lifts the verdict
+// into a board-ready artifact (approval-probability ESTIMATE grounded in the
+// precedent approve/deny split, ranked precedent-cited risks, prioritized
+// fix-list) via the pure crl-premortem-report core. Optionally renders + authors
+// the artifact as a Word doc via author_docx_native — but ONLY for an estimable,
+// non-sample artifact (the exportability/honesty guard). The artifact is always
+// produced UNSEALED.
+//
+// E1 INTEGRATION: when E1's Sign-and-seal lands, attach the seal action +
+// SealedRecord to the returned artifact here (sealStatus flips to 'sealed' and a
+// ProvenanceTrail entry is recorded). The report is fully generatable/exportable
+// without sealing now.
+//
+// BUILD-1 INTEGRATION: when Build 1 lands, persist the assembled artifact as a
+// version row here (so each generated pre-mortem becomes an immutable record).
+registerToolHandler('assemble_crl_premortem_artifact', async (input, ctx) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ error: 'assemble_crl_premortem_artifact requires text (non-empty string).' });
+  }
+  const location =
+    typeof input.location === 'string' && input.location.trim() ? input.location.trim() : 'document';
+  const submissionType = typeof input.submission_type === 'string' ? input.submission_type.trim() : undefined;
+  const agency = typeof input.agency === 'string' ? input.agency.trim() : undefined;
+  const indication = typeof input.indication === 'string' ? input.indication.trim() : undefined;
+  const title = typeof input.title === 'string' ? input.title : undefined;
+  const doExport = input.export === true;
+
+  try {
+    const { quickPatternScan } = await import('../intelligence/rim.js');
+    const { composePremortem } = await import('./submission-premortem-core.js');
+    const { assembleCrlPremortemArtifact, renderArtifactMarkdown } = await import('./crl-premortem-report.js');
+
+    // 1. Deterministic deficiency/reviewer-trigger findings (no LLM).
+    const criteria: Record<string, unknown> = {};
+    if (agency) criteria.agency = agency;
+    if (submissionType) criteria.submissionType = submissionType;
+    const matches = quickPatternScan(text, location, Object.keys(criteria).length ? (criteria as any) : undefined);
+    const findings = matches.map(m => ({
+      patternId: m.patternId,
+      title: m.pattern.name,
+      category: m.pattern.category,
+      severity: m.pattern.severity,
+      matchedText: m.matchedText,
+      matchConfidence: m.matchConfidence,
+      reviewerQuestion: m.pattern.reviewerQuestion,
+      regulatoryBasis: m.pattern.regulatoryBasis,
+      remediation: m.pattern.remediation,
+    }));
+
+    // 2. Precedent calibration — same fault-tolerant path as the pre-mortem; an
+    //    unavailable corpus degrades to n=0 (artifact becomes not_assessed),
+    //    never an error. The full outcome split grounds the probability estimate.
+    let precedentCount = 0;
+    let precedentCitations: Array<{ id: string; label: string; outcome: string }> = [];
+    let precedentOutcomes: Array<{ id: string; label: string; outcome: string }> = [];
+    if (submissionType) {
+      try {
+        const { precedentEngine } = await import('../precedent-engine.js');
+        const records = await precedentEngine.search(
+          { submissionType, indication, limit: 25 },
+          ctx?.organizationId ?? undefined,
+        );
+        precedentCount = records.length;
+        // DATA-OP: grounding fidelity ultimately depends on the P2 precedent-
+        // corpus ingestion; we drive from whatever the engine returns today.
+        precedentOutcomes = records.map(r => ({
+          id: r.id,
+          label: r.clearanceNumber || r.deviceName || r.applicant || r.id,
+          outcome: r.decisionOutcome,
+        }));
+        precedentCitations = precedentOutcomes.slice(0, 5);
+      } catch {
+        /* corpus unavailable — honest n=0 read (artifact: not_assessed) */
+      }
+    }
+
+    const verdict = composePremortem({
+      findings,
+      precedentCount,
+      precedentCitations,
+      submissionType,
+      agency,
+    });
+
+    const artifact = assembleCrlPremortemArtifact({
+      verdict,
+      precedents: precedentOutcomes,
+      title,
+    });
+
+    // Optional export — guarded: only an estimable, non-sample artifact may be
+    // rendered/authored. renderArtifactMarkdown throws otherwise.
+    let exportResult: Record<string, unknown> | null = null;
+    if (doExport) {
+      if (!artifact.exportable) {
+        exportResult = {
+          exported: false,
+          reason: `Artifact is not exportable (status: ${artifact.status}). Pattern-only / insufficient-data and sample artifacts cannot be sealed or exported.`,
+        };
+      } else {
+        try {
+          const markdown = renderArtifactMarkdown(artifact);
+          const authorHandler = getToolHandler('author_docx_native');
+          if (authorHandler) {
+            const authored = JSON.parse(
+              await authorHandler({ title: artifact.title, content: markdown, output_format: 'docx' }, ctx),
+            );
+            exportResult = authored.error
+              ? { exported: false, reason: authored.error, markdown }
+              : { exported: true, sealed: false, docxPath: authored.docxPath, fileName: authored.fileName, markdown };
+          } else {
+            exportResult = { exported: false, reason: 'author_docx_native unavailable', markdown };
+          }
+        } catch (err) {
+          exportResult = {
+            exported: false,
+            reason: err instanceof Error ? err.message : String(err),
+          };
+        }
+      }
+    }
+
+    return JSON.stringify({
+      engine: 'CRL/RTF pre-mortem decision artifact (honest-by-construction, unsealed)',
+      location,
+      artifact,
+      export: exportResult,
+      message: artifact.approvalProbability.framing,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `assemble_crl_premortem_artifact failed: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
+});
+
+// E8 — Pre-IND / EOP2 briefing-book builder with reviewer-challenge pre-mortem.
+// Assembles the briefing book from a RegAgencyMeeting (fixture when no live id),
+// derives required_strings (mandatory headers + sponsor questions) for
+// verify_docx_against_source, and folds anticipated FDA pushback from
+// simulate_reviewer_challenges + run_submission_premortem into an honest
+// per-question pre-mortem verdict. The actual author_docx_native /
+// verify_docx_against_source calls are driven by AnA in the agentic loop using
+// the content + required_strings this tool returns.
+registerToolHandler('assemble_briefing_book', async (input, ctx) => {
+  try {
+    const briefing = await import('./briefing-book-core.js');
+
+    // 1. Resolve the meeting. A live meeting_id would join the product's
+    //    strategy.meetings[]; absent that we use the labelled fixture.
+    // INTEGRATION: join the live RegAgencyMeeting row by meeting_id + org scope
+    //   (client/src/concept2cure/types/workspace.ts → product.strategy.meetings).
+    const meetingId = typeof input.meeting_id === 'string' ? input.meeting_id.trim() : '';
+    const overrideQuestions = Array.isArray(input.key_questions)
+      ? (input.key_questions as unknown[]).filter((q): q is string => typeof q === 'string')
+      : undefined;
+
+    let meeting: import('./briefing-book-core.js').RegAgencyMeetingInput;
+    let context: import('./briefing-book-core.js').BriefingBookContext;
+    let dataSource: import('./briefing-book-core.js').BriefingBookDataSource;
+
+    if (meetingId) {
+      // INTEGRATION: load the live meeting here. Until that join exists, an
+      // explicit id with no loader still degrades honestly to fixture-sourced.
+      meeting = { ...briefing.FIXTURE_EOP2_MEETING, id: meetingId };
+      context = { ...briefing.FIXTURE_EOP2_CONTEXT };
+      dataSource = 'fixture';
+    } else {
+      meeting = { ...briefing.FIXTURE_EOP2_MEETING };
+      context = { ...briefing.FIXTURE_EOP2_CONTEXT };
+      dataSource = 'fixture';
+    }
+
+    const meetingType =
+      typeof input.meeting_type === 'string' ? input.meeting_type : undefined;
+    if (meetingType) meeting.type = meetingType as typeof meeting.type;
+    if (overrideQuestions && overrideQuestions.length) meeting.keyQuestions = overrideQuestions;
+    if (typeof input.product_name === 'string') context.productName = input.product_name;
+    if (typeof input.indication === 'string') context.indication = input.indication;
+    if (typeof input.sponsor === 'string') context.sponsor = input.sponsor;
+
+    // 2. Assemble the markdown + required_strings.
+    const assembled = briefing.assembleBriefingBook(meeting, context);
+
+    // 3. Pre-mortem — anticipated FDA pushback per sponsor question.
+    const runPremortem = input.run_premortem !== false;
+    let challenges: import('./briefing-book-core.js').AnticipatedChallenge[] = [];
+    // Pattern-only pre-mortem: no precedent corpus is joined for the briefing
+    // book, so the denominator is honestly zero (insufficient_data risk read).
+    const precedentCount = 0;
+
+    if (runPremortem) {
+      // 3a. run_submission_premortem (pattern scan). Deterministic; runs over
+      //     the assembled book text. No precedent corpus is joined here, so the
+      //     pre-mortem stays honestly pattern-only (precedentCount = 0).
+      //     Fault-tolerant: an unavailable engine degrades to no findings.
+      try {
+        const { quickPatternScan } = await import('../intelligence/rim.js');
+        const matches = quickPatternScan(assembled.content, 'briefing-book', { agency: 'FDA' } as any);
+        const findings = matches.map(m => ({
+          title: m.pattern.name,
+          category: m.pattern.category,
+          severity: m.pattern.severity,
+          reviewerQuestion: m.pattern.reviewerQuestion,
+          regulatoryBasis: m.pattern.regulatoryBasis,
+          remediation: m.pattern.remediation,
+        }));
+        challenges = challenges.concat(briefing.normalizePremortemFindings({ findings }));
+      } catch {
+        /* engine unavailable — degrade to no findings, honest n=0 */
+      }
+
+      // 3b. simulate_reviewer_challenges (reviewer lenses) — only when the
+      //     caller supplied a package + assessment to scope it.
+      const packageId = typeof input.package_id === 'number' ? input.package_id : undefined;
+      const assessmentId = typeof input.assessment_id === 'number' ? input.assessment_id : undefined;
+      if (packageId && assessmentId && ctx?.organizationId) {
+        try {
+          const { submissionTwinService } = await import('../submission-twin-service.js');
+          const lensChallenges = await submissionTwinService.simulateChallenges(
+            packageId,
+            ctx.organizationId,
+            assessmentId,
+          );
+          challenges = challenges.concat(
+            briefing.normalizeReviewerChallenges({ challenges: lensChallenges }),
+          );
+        } catch {
+          /* reviewer-lens pass unavailable — keep pattern-only challenges */
+        }
+      }
+    }
+
+    const premortem = briefing.composeBriefingBookPremortem({
+      meeting,
+      challenges,
+      precedentCount,
+      dataSource,
+    });
+
+    // BUILD-1 INTEGRATION: persist { assembled, premortem } as a briefing-book
+    //   version row (briefing_book_versions) so the assembled book + pre-mortem
+    //   verdict are versioned and citable in the 21 CFR Part 11 audit trail.
+    //   Sealing/exporting is gated on premortem.sealable (false for fixtures).
+
+    // status:'generated' + content surfaces the book as an editor-openable draft
+    // in the Document Studio (same artifact_draft path as author_docx_native),
+    // so the markdown body and required_strings the model uses to call
+    // author_docx_native / verify_docx_against_source are also previewable.
+    return JSON.stringify({
+      status: 'generated',
+      documentType: 'briefing-book',
+      title: assembled.title,
+      content: assembled.content,
+      requiredStrings: assembled.requiredStrings,
+      questionCount: assembled.questionCount,
+      premortem,
+      message: premortem.summary,
+    });
+  } catch (err) {
+    return JSON.stringify({
+      error: `assemble_briefing_book failed: ${err instanceof Error ? err.message : String(err)}`,
     });
   }
 });
@@ -1994,6 +2288,197 @@ registerToolHandler('advise_labeling_structure', async (input) => {
     return JSON.stringify({ source: 'AnA Labeling-Structure Advisor', templates: listLabelTemplates(), ...adviseLabelingStructure({}) });
   }
   return JSON.stringify({ source: 'AnA Labeling-Structure Advisor', ...adviseLabelingStructure({ format, content }) });
+});
+
+// Build-from-template labeling authoring plan (roadmap E9). Returns the
+// deterministic PLR/QRD section guard + the required_strings derivation + the
+// build_from_template replacements for a US (USPI/PLR) or EU (SmPC/QRD) mode, so
+// the host can drive build_from_template → review_label_currency →
+// verify_docx_against_source. Pure/deterministic; the currency verdict is NOT
+// produced here (call review_label_currency for that).
+registerToolHandler('plan_labeling_authoring', async (input) => {
+  const raw = typeof input.mode === 'string' ? input.mode.trim().toLowerCase() : '';
+  const mode: LabelingMode | null = raw === 'us' || raw === 'uspi' || raw === 'plr'
+    ? 'us'
+    : raw === 'eu' || raw === 'smpc' || raw === 'qrd'
+      ? 'eu'
+      : null;
+  if (!mode) {
+    return JSON.stringify({ error: "plan_labeling_authoring requires mode 'us' (USPI/PLR) or 'eu' (SmPC/QRD)." });
+  }
+  const productName = typeof input.product_name === 'string' && input.product_name.trim()
+    ? input.product_name.trim()
+    : 'Product';
+  const draftText = typeof input.draft_text === 'string' ? input.draft_text : '';
+  const spec = getLabelingModeSpec(mode);
+  const guard = checkSectionGuard(mode, draftText);
+  return JSON.stringify({
+    source: 'AnA Labeling Authoring (build-from-template)',
+    mode,
+    format: modeToFormat(mode),
+    structure: spec.structure,
+    label: spec.label,
+    basis: spec.basis,
+    requiredSectionHeaders: requiredSectionHeaders(mode),
+    // The required_strings to pass to verify_docx_against_source for this mode.
+    requiredStrings: deriveRequiredStrings(mode),
+    // The replacements to pass to build_from_template.
+    templateReplacements: buildTemplateReplacements(mode, productName),
+    sectionGuard: guard,
+    note: 'Drive build_from_template with templateReplacements, then review_label_currency (deterministic), then verify_docx_against_source with required_strings. Currency verdict is deterministic — never inferred.',
+  });
+});
+
+// Orphan-Drug Designation (ODD) authoring — 21 CFR Part 316 (§316.20(b) / §316.21).
+// Pure orchestration: build the author_docx_native plan (title + content +
+// required_strings) from the product/evidence, verify the generated document
+// contains every mandatory header, and emit the Part 11 honesty verdict
+// (sample/not_assessed or any uncited prevalence/eligibility claim ⇒ non-sealable).
+registerToolHandler('plan_orphan_drug_designation', async (input) => {
+  const rawProduct =
+    input.product && typeof input.product === 'object' ? (input.product as Record<string, unknown>) : null;
+  if (!rawProduct) {
+    return JSON.stringify({ error: 'plan_orphan_drug_designation requires a product object.' });
+  }
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+  const name = str(rawProduct.name);
+  const indication = str(rawProduct.indication);
+  if (!name || !indication) {
+    return JSON.stringify({ error: 'plan_orphan_drug_designation requires product.name and product.indication.' });
+  }
+
+  const designations = Array.isArray(rawProduct.designations)
+    ? (rawProduct.designations.filter((d): d is string => typeof d === 'string') as string[])
+    : undefined;
+
+  const product: OddProductInput = {
+    name,
+    indication,
+    genericName: str(rawProduct.generic_name),
+    brandName: str(rawProduct.brand_name),
+    modality: str(rawProduct.modality),
+    designations,
+    sponsorName: str(rawProduct.sponsor_name),
+    sponsorAddress: str(rawProduct.sponsor_address),
+    contactName: str(rawProduct.contact_name),
+    fdaDivision: str(rawProduct.fda_division),
+  };
+
+  const citations: OddCitation[] = Array.isArray(input.citations)
+    ? (input.citations as unknown[])
+        .map((c) => (c && typeof c === 'object' ? (c as Record<string, unknown>) : null))
+        .filter((c): c is Record<string, unknown> => c !== null)
+        .map((c) => ({
+          sectionId: typeof c.section_id === 'string' ? c.section_id : '',
+          label: typeof c.label === 'string' ? c.label : '',
+          source: typeof c.source === 'string' ? c.source : '',
+        }))
+        .filter((c) => c.sectionId && c.source)
+    : [];
+
+  const rawProv = typeof input.provenance === 'string' ? input.provenance : '';
+  const provenance: OddProvenance =
+    rawProv === 'live' || rawProv === 'sample' || rawProv === 'not_assessed' ? rawProv : 'not_assessed';
+
+  const rationale = typeof input.rationale === 'string' ? input.rationale : undefined;
+
+  const plan = buildOddAuthoringPlan({ product, rationale, citations, provenance });
+  const verification = evaluateOddVerification(plan.content);
+  const sealability = assessOddSealability({
+    provenance,
+    verification,
+    uncitedClaimSections: plan.uncitedClaimSections,
+  });
+
+  return JSON.stringify({
+    source: 'AnA Orphan-Drug Designation Authoring (21 CFR Part 316)',
+    status: 'generated',
+    author_docx_native: {
+      title: plan.title,
+      content: plan.content,
+      required_strings: plan.requiredStrings,
+    },
+    verification,
+    honesty: {
+      sealable: sealability.sealable,
+      provenance: plan.provenance,
+      blockers: sealability.blockers,
+      uncitedClaimSections: plan.uncitedClaimSections,
+    },
+    note:
+      'Drive author_docx_native with author_docx_native.{title,content}, then verify_docx_against_source ' +
+      'with required_strings. sample/not_assessed drafts and any uncited prevalence/eligibility claim are ' +
+      'non-sealable and non-exportable.',
+  });
+});
+
+// IND narrative-module authoring (CTD Module 2.5 / 2.7) — E11.
+// Pure orchestration: build the author_docx_native plan (title + content) from a
+// STRUCTURED source, derive required_strings for verify_docx_against_source from
+// the source's key facts/figures (section headers PLUS every figure value), and
+// emit the Part 11 honesty verdict (sample/not_assessed ⇒ non-sealable; a
+// missing/mistyped figure ⇒ verification fails ⇒ non-sealable). The actual
+// author_docx_native / verify_docx_against_source calls are driven by AnA in the
+// agentic loop using the content + required_strings this tool returns.
+registerToolHandler('plan_ind_module_authoring', async (input) => {
+  const moduleId = typeof input.module === 'string' ? input.module.trim() : '';
+  if (!moduleId || !listIndModules().includes(moduleId)) {
+    return JSON.stringify({
+      error: `plan_ind_module_authoring requires module to be one of ${listIndModules().join(', ')}.`,
+      modules: listIndModules(),
+    });
+  }
+  const str = (v: unknown): string | undefined => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
+  const productName = str(input.product_name);
+  const indication = str(input.indication);
+  if (!productName || !indication) {
+    return JSON.stringify({ error: 'plan_ind_module_authoring requires product_name and indication.' });
+  }
+
+  const facts: IndSourceFact[] = Array.isArray(input.facts)
+    ? (input.facts as unknown[])
+        .map((f) => (f && typeof f === 'object' ? (f as Record<string, unknown>) : null))
+        .filter((f): f is Record<string, unknown> => f !== null)
+        .map((f) => ({
+          sectionId: typeof f.section_id === 'string' ? f.section_id : '',
+          label: typeof f.label === 'string' ? f.label : '',
+          value: typeof f.value === 'string' ? f.value : '',
+          source: typeof f.source === 'string' ? f.source : undefined,
+        }))
+        .filter((f) => f.sectionId && typeof f.value === 'string' && f.value.trim().length > 0)
+    : [];
+
+  const rawProv = typeof input.provenance === 'string' ? input.provenance : '';
+  const provenance: IndModuleProvenance =
+    rawProv === 'live' || rawProv === 'sample' || rawProv === 'not_assessed' ? rawProv : 'not_assessed';
+
+  const plan = buildIndModuleAuthoringPlan({ module: moduleId, productName, indication, facts, provenance });
+  const verification = evaluateIndModuleVerification({
+    documentText: plan.content,
+    requiredStrings: plan.requiredStrings,
+  });
+  const sealability = assessIndModuleSealability({ provenance, verification });
+
+  return JSON.stringify({
+    source: `AnA IND Module ${moduleId} Authoring (ICH M4E — CTD Module 2)`,
+    status: 'generated',
+    author_docx_native: {
+      title: plan.title,
+      content: plan.content,
+      required_strings: plan.requiredStrings,
+    },
+    verification,
+    honesty: {
+      sealable: sealability.sealable,
+      provenance: plan.provenance,
+      blockers: sealability.blockers,
+      sectionsWithoutFacts: plan.sectionsWithoutFacts,
+    },
+    note:
+      'Drive author_docx_native with author_docx_native.{title,content}, then verify_docx_against_source ' +
+      'with required_strings. required_strings include every source figure, so a missing or mistyped ' +
+      'figure fails verification and the draft is non-sealable. sample/not_assessed sources are never sealable.',
+  });
 });
 
 // Medical-information / standard-response advisor.
@@ -8382,6 +8867,646 @@ registerToolHandler('review_send_readiness', async (input, ctx) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Protocol Budget & Feasibility (C2C-22). Reuses governedPdev; review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('add_protocol_budget_item', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_budget_item requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  const unitCost = typeof input.unit_cost === 'number' ? input.unit_cost : NaN;
+  if (!Number.isInteger(documentId) || !description || !Number.isFinite(unitCost)) return JSON.stringify({ error: 'document_id, description, and unit_cost are required.' });
+  const { addBudgetItemTx } = await import('../protocol-budget/protocol-budget-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'Protocol budget item added via AnA', input, async (client) => {
+    const { id } = await addBudgetItemTx(client, ctx.organizationId!, ctx.userId!, documentId, { description, unitCost, category: typeof input.category === 'string' ? input.category : undefined, quantityPerSubject: typeof input.quantity_per_subject === 'number' ? input.quantity_per_subject : undefined, payer: typeof input.payer === 'string' ? input.payer : undefined });
+    return { itemId: id };
+  });
+});
+
+registerToolHandler('set_protocol_budget_params', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_protocol_budget_params requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { setBudgetParamsTx } = await import('../protocol-budget/protocol-budget-service.js');
+  return governedPdev(ctx, 'update', `protocol-document:${documentId}`, 'Protocol budget params set via AnA', input, async (client) => {
+    const { id } = await setBudgetParamsTx(client, ctx.organizationId!, ctx.userId!, documentId, { targetEnrollment: typeof input.target_enrollment === 'number' ? input.target_enrollment : undefined, sponsorPaymentPerSubject: typeof input.sponsor_payment_per_subject === 'number' ? input.sponsor_payment_per_subject : null, indirectRatePct: typeof input.indirect_rate_pct === 'number' ? input.indirect_rate_pct : null });
+    return { paramsId: id };
+  });
+});
+
+registerToolHandler('review_protocol_budget', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_budget requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getBudgetSummary } = await import('../protocol-budget/protocol-budget-service.js');
+  try {
+    return JSON.stringify({ ok: true, budget: await getBudgetSummary(ctx.organizationId, documentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_budget failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol Schedule of Assessments (C2C-21). Reuses governedPdev; review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('add_soa_assessment', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_soa_assessment requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!Number.isInteger(documentId) || !name) return JSON.stringify({ error: 'document_id and name are required.' });
+  const { addAssessmentTx } = await import('../protocol-soa/protocol-soa-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'SoA assessment added via AnA', input, async (client) => {
+    const { id } = await addAssessmentTx(client, ctx.organizationId!, ctx.userId!, documentId, { name, category: typeof input.category === 'string' ? input.category : undefined });
+    return { assessmentId: id };
+  });
+});
+
+registerToolHandler('set_soa_cell', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_soa_cell requires tenant + user context.' });
+  const assessmentId = typeof input.assessment_id === 'number' ? input.assessment_id : NaN;
+  const visitId = typeof input.visit_id === 'number' ? input.visit_id : NaN;
+  if (!Number.isInteger(assessmentId) || !Number.isInteger(visitId)) return JSON.stringify({ error: 'assessment_id and visit_id are required.' });
+  const { setCellTx } = await import('../protocol-soa/protocol-soa-service.js');
+  return governedPdev(ctx, 'update', `protocol-soa-assessment:${assessmentId}`, 'SoA cell set via AnA', input, async (client) => {
+    const { id } = await setCellTx(client, ctx.organizationId!, ctx.userId!, { assessmentId, visitId, required: typeof input.required === 'boolean' ? input.required : undefined, notes: typeof input.notes === 'string' ? input.notes : null });
+    return { cellId: id, assessmentId, visitId };
+  });
+});
+
+registerToolHandler('review_soa_matrix', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_soa_matrix requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getSoaMatrix } = await import('../protocol-soa/protocol-soa-service.js');
+  try {
+    const out = await getSoaMatrix(ctx.organizationId, documentId);
+    return JSON.stringify({ ok: true, matrix: out.matrix, validation: out.validation });
+  } catch (err) {
+    return JSON.stringify({ error: `review_soa_matrix failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol Authoring Extensions (C2C-20: templates / milestones / export). Reuses
+// governedPdev (domain 'protocol_development'); read tools have no transaction.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_protocol_template', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_protocol_template requires tenant + user context.' });
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  const protocolKind = typeof input.protocol_kind === 'string' ? input.protocol_kind : '';
+  if (!name || !['iacuc', 'irb', 'clinical', 'ibc'].includes(protocolKind)) return JSON.stringify({ error: 'name and a valid protocol_kind are required.' });
+  const { createTemplateTx } = await import('../protocol-templates/protocol-templates-service.js');
+  return governedPdev(ctx, 'create', 'protocol-template', 'Protocol template created via AnA', input, async (client) => {
+    const { id } = await createTemplateTx(client, ctx.organizationId!, ctx.userId!, { name, protocolKind, designType: typeof input.design_type === 'string' ? input.design_type : null, description: typeof input.description === 'string' ? input.description : null });
+    return { templateId: id };
+  });
+});
+
+registerToolHandler('clone_protocol_template', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'clone_protocol_template requires tenant + user context.' });
+  const templateId = typeof input.template_id === 'number' ? input.template_id : NaN;
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!Number.isInteger(templateId) || !title) return JSON.stringify({ error: 'template_id and title are required.' });
+  const { cloneTemplateToDocumentTx } = await import('../protocol-templates/protocol-templates-service.js');
+  return governedPdev(ctx, 'create', `protocol-template:${templateId}`, 'Protocol document cloned from template via AnA', input, async (client) => {
+    const { documentId, sectionsSeeded } = await cloneTemplateToDocumentTx(client, ctx.organizationId!, ctx.userId!, templateId, { title, protocolNumber: typeof input.protocol_number === 'string' ? input.protocol_number : null });
+    return { documentId, sectionsSeeded };
+  });
+});
+
+registerToolHandler('save_document_as_template', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'save_document_as_template requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!Number.isInteger(documentId) || !name) return JSON.stringify({ error: 'document_id and name are required.' });
+  const { saveDocumentAsTemplateTx } = await import('../protocol-templates/protocol-templates-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'Document saved as template via AnA', input, async (client) => {
+    const { templateId, sectionsCopied } = await saveDocumentAsTemplateTx(client, ctx.organizationId!, ctx.userId!, documentId, { name, description: typeof input.description === 'string' ? input.description : null });
+    return { templateId, sectionsCopied };
+  });
+});
+
+registerToolHandler('list_protocol_templates', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'list_protocol_templates requires tenant context.' });
+  const { listTemplates } = await import('../protocol-templates/protocol-templates-service.js');
+  try {
+    return JSON.stringify({ ok: true, templates: await listTemplates(ctx.organizationId, typeof input.kind === 'string' ? input.kind : undefined) });
+  } catch (err) {
+    return JSON.stringify({ error: `list_protocol_templates failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('add_protocol_milestone', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_milestone requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (!Number.isInteger(documentId) || !name) return JSON.stringify({ error: 'document_id and name are required.' });
+  const { addMilestoneTx } = await import('../protocol-milestones/protocol-milestones-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${documentId}`, 'Protocol milestone added via AnA', input, async (client) => {
+    const { id } = await addMilestoneTx(client, ctx.organizationId!, ctx.userId!, documentId, { name, milestoneType: typeof input.milestone_type === 'string' ? input.milestone_type : undefined, targetDate: typeof input.target_date === 'string' ? input.target_date : null, notes: typeof input.notes === 'string' ? input.notes : null });
+    return { milestoneId: id };
+  });
+});
+
+registerToolHandler('set_protocol_milestone_status', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'set_protocol_milestone_status requires tenant + user context.' });
+  const milestoneId = typeof input.milestone_id === 'number' ? input.milestone_id : NaN;
+  const status = typeof input.status === 'string' ? input.status : '';
+  if (!Number.isInteger(milestoneId) || !['planned', 'in_progress', 'met', 'missed', 'cancelled'].includes(status)) return JSON.stringify({ error: 'milestone_id and a valid status are required.' });
+  const { setMilestoneStatusTx } = await import('../protocol-milestones/protocol-milestones-service.js');
+  return governedPdev(ctx, 'transition', `protocol-milestone:${milestoneId}`, 'Milestone status set via AnA', input, async (client) => {
+    await setMilestoneStatusTx(client, ctx.organizationId!, milestoneId, status, typeof input.actual_date === 'string' ? input.actual_date : null);
+    return { milestoneId, status };
+  });
+});
+
+registerToolHandler('review_protocol_timeline', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_timeline requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getTimeline } = await import('../protocol-milestones/protocol-milestones-service.js');
+  try {
+    return JSON.stringify({ ok: true, timeline: await getTimeline(ctx.organizationId, documentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_timeline failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('export_protocol_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'export_protocol_document requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getProtocolExport } = await import('../protocol-export/protocol-export-service.js');
+  try {
+    const out = await getProtocolExport(ctx.organizationId, documentId);
+    return JSON.stringify({ ok: true, document: out.document, markdown: out.markdown });
+  } catch (err) {
+    return JSON.stringify({ error: `export_protocol_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('generate_ctgov_registration_draft', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'generate_ctgov_registration_draft requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getCtGovDraft } = await import('../protocol-export/protocol-export-service.js');
+  try {
+    return JSON.stringify({ ok: true, draft: await getCtGovDraft(ctx.organizationId, documentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `generate_ctgov_registration_draft failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol Amendments / Deviations / Reviews / Consent (C2C-18a–d). Mutations
+// share the governed/audited path (domain 'protocol_development'); review tools
+// are read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function governedPdev(ctx: any, command: string, target: string, fallbackReason: string, input: Record<string, unknown>, run: (client: any) => Promise<Record<string, unknown>>): Promise<string> {
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId!);
+    const body = await run(client);
+    await recordGovernedAction(client, { orgId: ctx.organizationId!, userId: ctx.userId!, command, target, reason: fcoiReason(input, fallbackReason), payload: body, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, ...body });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `${command} failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+}
+
+registerToolHandler('create_protocol_amendment', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_protocol_amendment requires tenant + user context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!Number.isInteger(protocolDocumentId) || !title) return JSON.stringify({ error: 'protocol_document_id and title are required.' });
+  const { createAmendmentTx } = await import('../protocol-amendments/protocol-amendments-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'Protocol amendment opened via AnA', input, async (client) => {
+    const { id } = await createAmendmentTx(client, ctx.organizationId!, ctx.userId!, {
+      protocolDocumentId, title,
+      amendmentNumber: typeof input.amendment_number === 'string' ? input.amendment_number : null,
+      rationale: typeof input.rationale === 'string' ? input.rationale : null,
+      amendmentType: typeof input.amendment_type === 'string' ? input.amendment_type : null,
+      affectsConsent: typeof input.affects_consent === 'boolean' ? input.affects_consent : undefined,
+      affectsRisk: typeof input.affects_risk === 'boolean' ? input.affects_risk : undefined,
+    });
+    return { amendmentId: id };
+  });
+});
+
+registerToolHandler('add_amendment_change', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_amendment_change requires tenant + user context.' });
+  const amendmentId = typeof input.amendment_id === 'number' ? input.amendment_id : NaN;
+  const changeDescription = typeof input.change_description === 'string' ? input.change_description.trim() : '';
+  if (!Number.isInteger(amendmentId) || !changeDescription) return JSON.stringify({ error: 'amendment_id and change_description are required.' });
+  const { addChangeTx } = await import('../protocol-amendments/protocol-amendments-service.js');
+  return governedPdev(ctx, 'update', `protocol-amendment:${amendmentId}`, 'Amendment change added via AnA', input, async (client) => {
+    const { id } = await addChangeTx(client, ctx.organizationId!, ctx.userId!, amendmentId, {
+      changeDescription,
+      sectionRef: typeof input.section_ref === 'string' ? input.section_ref : null,
+      previousText: typeof input.previous_text === 'string' ? input.previous_text : null,
+      proposedText: typeof input.proposed_text === 'string' ? input.proposed_text : null,
+    });
+    return { changeId: id };
+  });
+});
+
+registerToolHandler('review_amendment', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_amendment requires tenant context.' });
+  const amendmentId = typeof input.amendment_id === 'number' ? input.amendment_id : NaN;
+  if (!Number.isInteger(amendmentId)) return JSON.stringify({ error: 'amendment_id is required.' });
+  const { getAmendmentReadiness } = await import('../protocol-amendments/protocol-amendments-service.js');
+  try {
+    return JSON.stringify({ ok: true, readiness: await getAmendmentReadiness(ctx.organizationId!, amendmentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_amendment failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('report_protocol_deviation', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'report_protocol_deviation requires tenant + user context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  if (!Number.isInteger(protocolDocumentId) || !description) return JSON.stringify({ error: 'protocol_document_id and description are required.' });
+  const { createDeviationTx } = await import('../protocol-deviations/protocol-deviations-service.js');
+  return governedPdev(ctx, 'create', `protocol-document:${protocolDocumentId}`, 'Protocol deviation reported via AnA', input, async (client) => {
+    const r = await createDeviationTx(client, ctx.organizationId!, ctx.userId!, {
+      protocolDocumentId, description,
+      category: typeof input.category === 'string' ? (input.category as any) : undefined,
+      severity: typeof input.severity === 'string' ? (input.severity as any) : undefined,
+      affectsSafety: typeof input.affects_safety === 'boolean' ? input.affects_safety : undefined,
+      rootCause: typeof input.root_cause === 'string' ? input.root_cause : null,
+    });
+    return { deviationId: r.id, reportable: r.reportable, timelinessDays: r.timelinessDays };
+  });
+});
+
+registerToolHandler('add_capa_action', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_capa_action requires tenant + user context.' });
+  const deviationId = typeof input.deviation_id === 'number' ? input.deviation_id : NaN;
+  const action = typeof input.action === 'string' ? input.action.trim() : '';
+  if (!Number.isInteger(deviationId) || !action) return JSON.stringify({ error: 'deviation_id and action are required.' });
+  const { addCapaActionTx } = await import('../protocol-deviations/protocol-deviations-service.js');
+  return governedPdev(ctx, 'update', `protocol-deviation:${deviationId}`, 'CAPA action added via AnA', input, async (client) => {
+    const { id } = await addCapaActionTx(client, ctx.organizationId!, ctx.userId!, deviationId, {
+      action, owner: typeof input.owner === 'string' ? input.owner : null, dueDate: typeof input.due_date === 'string' ? input.due_date : null,
+    });
+    return { capaId: id };
+  });
+});
+
+registerToolHandler('review_deviation', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_deviation requires tenant context.' });
+  const deviationId = typeof input.deviation_id === 'number' ? input.deviation_id : NaN;
+  if (!Number.isInteger(deviationId)) return JSON.stringify({ error: 'deviation_id is required.' });
+  const { getDeviation, getCapaClosure } = await import('../protocol-deviations/protocol-deviations-service.js');
+  try {
+    const deviation = await getDeviation(ctx.organizationId!, deviationId);
+    if (!deviation) return JSON.stringify({ error: 'Deviation not found.' });
+    const closure = await getCapaClosure(ctx.organizationId!, deviationId);
+    return JSON.stringify({ ok: true, deviation, closure });
+  } catch (err) {
+    return JSON.stringify({ error: `review_deviation failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('assign_protocol_reviewer', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'assign_protocol_reviewer requires tenant + user context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  const reviewerName = typeof input.reviewer_name === 'string' ? input.reviewer_name.trim() : '';
+  if (!Number.isInteger(protocolDocumentId) || !reviewerName) return JSON.stringify({ error: 'protocol_document_id and reviewer_name are required.' });
+  const { assignReviewerTx } = await import('../protocol-reviews/protocol-reviews-service.js');
+  return governedPdev(ctx, 'assign', `protocol-document:${protocolDocumentId}`, 'Reviewer assigned via AnA', input, async (client) => {
+    const { id, role } = await assignReviewerTx(client, ctx.organizationId!, ctx.userId!, protocolDocumentId, {
+      reviewerName, reviewerUserId: typeof input.reviewer_user_id === 'number' ? input.reviewer_user_id : null,
+      role: typeof input.role === 'string' ? input.role : undefined, dueDate: typeof input.due_date === 'string' ? input.due_date : null,
+    });
+    return { assignmentId: id, role };
+  });
+});
+
+registerToolHandler('add_protocol_review_comment', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_review_comment requires tenant + user context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  const comment = typeof input.comment === 'string' ? input.comment.trim() : '';
+  if (!Number.isInteger(protocolDocumentId) || !comment) return JSON.stringify({ error: 'protocol_document_id and comment are required.' });
+  const { addCommentTx } = await import('../protocol-reviews/protocol-reviews-service.js');
+  return governedPdev(ctx, 'update', `protocol-document:${protocolDocumentId}`, 'Review comment added via AnA', input, async (client) => {
+    const { id, severity } = await addCommentTx(client, ctx.organizationId!, ctx.userId!, protocolDocumentId, {
+      comment, assignmentId: typeof input.assignment_id === 'number' ? input.assignment_id : null,
+      sectionRef: typeof input.section_ref === 'string' ? input.section_ref : null, severity: typeof input.severity === 'string' ? input.severity : null,
+    });
+    return { commentId: id, severity };
+  });
+});
+
+registerToolHandler('review_protocol_review_status', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_review_status requires tenant context.' });
+  const protocolDocumentId = typeof input.protocol_document_id === 'number' ? input.protocol_document_id : NaN;
+  if (!Number.isInteger(protocolDocumentId)) return JSON.stringify({ error: 'protocol_document_id is required.' });
+  const { getReviewSummary } = await import('../protocol-reviews/protocol-reviews-service.js');
+  try {
+    return JSON.stringify({ ok: true, summary: await getReviewSummary(ctx.organizationId!, protocolDocumentId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_review_status failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('create_consent_form', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_consent_form requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { createConsentFormTx } = await import('../protocol-consent/protocol-consent-service.js');
+  return governedPdev(ctx, 'create', 'consent-form', 'Consent form created via AnA', input, async (client) => {
+    const { id, elementsSeeded } = await createConsentFormTx(client, ctx.organizationId!, ctx.userId!, {
+      title, protocolDocumentId: typeof input.protocol_document_id === 'number' ? input.protocol_document_id : null,
+      version: typeof input.version === 'string' ? input.version : null, language: typeof input.language === 'string' ? input.language : null,
+      readingLevel: typeof input.reading_level === 'string' ? input.reading_level : null,
+    });
+    return { consentFormId: id, elementsSeeded };
+  });
+});
+
+registerToolHandler('update_consent_element', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_consent_element requires tenant + user context.' });
+  const elementId = typeof input.element_id === 'number' ? input.element_id : NaN;
+  if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
+  const { updateElementTx } = await import('../protocol-consent/protocol-consent-service.js');
+  return governedPdev(ctx, 'update', `consent-element:${elementId}`, 'Consent element updated via AnA', input, async (client) => {
+    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, present: typeof input.present === 'boolean' ? input.present : undefined });
+    return { elementId };
+  });
+});
+
+registerToolHandler('review_consent_completeness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_consent_completeness requires tenant context.' });
+  const formId = typeof input.form_id === 'number' ? input.form_id : NaN;
+  if (!Number.isInteger(formId)) return JSON.stringify({ error: 'form_id is required.' });
+  const { getCompleteness } = await import('../protocol-consent/protocol-consent-service.js');
+  try {
+    return JSON.stringify({ ok: true, completeness: await getCompleteness(ctx.organizationId!, formId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_consent_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NIH Data Management & Sharing Plan (C2C-23). create/update/finalize are
+// governed/audited (domain 'protocol_development'); review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_dms_plan', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_dms_plan requires tenant + user context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  const { createPlanTx } = await import('../dmsp/dmsp-service.js');
+  return governedPdev(ctx, 'create', 'dms-plan', 'DMS plan created via AnA', input, async (client) => {
+    const { id, elementsSeeded } = await createPlanTx(client, ctx.organizationId!, ctx.userId!, {
+      title,
+      grantProposalId: typeof input.grant_proposal_id === 'number' ? input.grant_proposal_id : null,
+      protocolDocumentId: typeof input.protocol_document_id === 'number' ? input.protocol_document_id : null,
+    });
+    return { dmsPlanId: id, elementsSeeded };
+  });
+});
+
+registerToolHandler('update_dms_plan_element', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_dms_plan_element requires tenant + user context.' });
+  const elementId = typeof input.element_id === 'number' ? input.element_id : NaN;
+  if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
+  const { updateElementTx } = await import('../dmsp/dmsp-service.js');
+  return governedPdev(ctx, 'update', `dms-plan-element:${elementId}`, 'DMS plan element updated via AnA', input, async (client) => {
+    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined });
+    return { elementId };
+  });
+});
+
+registerToolHandler('review_dms_plan_completeness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_dms_plan_completeness requires tenant context.' });
+  const planId = typeof input.plan_id === 'number' ? input.plan_id : NaN;
+  if (!Number.isInteger(planId)) return JSON.stringify({ error: 'plan_id is required.' });
+  const { getCompleteness } = await import('../dmsp/dmsp-service.js');
+  try {
+    return JSON.stringify({ ok: true, completeness: await getCompleteness(ctx.organizationId!, planId) });
+  } catch (err) {
+    return JSON.stringify({ error: `review_dms_plan_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('finalize_dms_plan', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_dms_plan requires tenant + user context.' });
+  const planId = typeof input.plan_id === 'number' ? input.plan_id : NaN;
+  if (!Number.isInteger(planId)) return JSON.stringify({ error: 'plan_id is required.' });
+  const { finalizePlanTx } = await import('../dmsp/dmsp-service.js');
+  return governedPdev(ctx, 'sign', `dms-plan:${planId}`, 'DMS plan finalized via AnA', input, async (client) => {
+    const result = await finalizePlanTx(client, ctx.organizationId!, ctx.userId!, planId);
+    return { dmsPlanId: planId, finalized: result.finalized, addressedPct: result.completeness.addressedPct };
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol Risk Register (C2C-19). add is governed/audited; review is read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('add_protocol_risk', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_risk requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const description = typeof input.description === 'string' ? input.description.trim() : '';
+  if (!Number.isInteger(documentId) || !description) return JSON.stringify({ error: 'document_id and description are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addRiskTx } = await import('../protocol-risks/protocol-risks-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id, level } = await addRiskTx(client, ctx.organizationId, ctx.userId, {
+      protocolDocumentId: documentId, description,
+      category: typeof input.category === 'string' ? input.category : undefined,
+      likelihood: typeof input.likelihood === 'string' ? input.likelihood : undefined,
+      impact: typeof input.impact === 'string' ? input.impact : undefined,
+      mitigation: typeof input.mitigation === 'string' ? input.mitigation : null,
+      owner: typeof input.owner === 'string' ? input.owner : null,
+    });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol risk added via AnA'), payload: { riskId: id, level }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, riskId: id, level, message: `Added ${level} risk to protocol ${documentId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_protocol_risk failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_protocol_risk_register', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_risk_register requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getRiskRegister } = await import('../protocol-risks/protocol-risks-service.js');
+  try {
+    const register = await getRiskRegister(ctx.organizationId, documentId);
+    return JSON.stringify({ ok: true, summary: register.summary, risks: register.risks });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_risk_register failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Protocol Development (C2C-17). Authoring shares the governed/audited path;
+// completeness/finalize are deterministic (protocol-development-logic).
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('create_protocol_document', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'create_protocol_document requires tenant + user context.' });
+  const protocolKind = typeof input.protocol_kind === 'string' ? input.protocol_kind : '';
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  if (!['iacuc', 'irb', 'clinical', 'ibc'].includes(protocolKind) || !title) return JSON.stringify({ error: 'protocol_kind and title are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { createProtocolDocumentTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id, sectionsSeeded } = await createProtocolDocumentTx(client, ctx.organizationId, ctx.userId, {
+      protocolKind: protocolKind as any, title,
+      protocolNumber: typeof input.protocol_number === 'string' ? input.protocol_number : null,
+      designType: typeof input.design_type === 'string' ? input.design_type : null,
+      phase: typeof input.phase === 'string' ? input.phase : null,
+      therapeuticArea: typeof input.therapeutic_area === 'string' ? input.therapeutic_area : null,
+      linkedProtocolId: typeof input.linked_protocol_id === 'number' ? input.linked_protocol_id : null,
+      synopsis: typeof input.synopsis === 'string' ? input.synopsis : null,
+    });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'create', target: `protocol-document:${id}`, reason: fcoiReason(input, 'Protocol document created via AnA'), payload: { kind: protocolKind }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, id, sectionsSeeded, message: `Created ${protocolKind.toUpperCase()} protocol "${title}" (id ${id}) seeded with ${sectionsSeeded} templated sections.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `create_protocol_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('update_protocol_section', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'update_protocol_section requires tenant + user context.' });
+  const sectionId = typeof input.section_id === 'number' ? input.section_id : NaN;
+  if (!Number.isInteger(sectionId)) return JSON.stringify({ error: 'section_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { updateSectionTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-section:${sectionId}`, reason: fcoiReason(input, 'Protocol section edited via AnA'), payload: { status: input.status }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, sectionId, message: `Updated protocol section ${sectionId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `update_protocol_section failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_protocol_objective', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_protocol_objective requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const objective = typeof input.objective === 'string' ? input.objective.trim() : '';
+  if (!Number.isInteger(documentId) || !objective) return JSON.stringify({ error: 'document_id and objective are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addObjectiveTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await addObjectiveTx(client, ctx.organizationId, ctx.userId, documentId, { objectiveType: typeof input.objective_type === 'string' ? input.objective_type : undefined, objective, endpoint: typeof input.endpoint === 'string' ? input.endpoint : null, timepoint: typeof input.timepoint === 'string' ? input.timepoint : null });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol objective added via AnA'), payload: { objectiveId: id }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, objectiveId: id, message: `Added objective to protocol ${documentId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_protocol_objective failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('add_eligibility_criterion', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'add_eligibility_criterion requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  const kind = typeof input.kind === 'string' ? input.kind : '';
+  const criterion = typeof input.criterion === 'string' ? input.criterion.trim() : '';
+  if (!Number.isInteger(documentId) || !['inclusion', 'exclusion'].includes(kind) || !criterion) return JSON.stringify({ error: 'document_id, kind, and criterion are required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { addEligibilityCriterionTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const { id } = await addEligibilityCriterionTx(client, ctx.organizationId, ctx.userId, documentId, { kind, criterion });
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Eligibility criterion added via AnA'), payload: { criterionId: id, kind }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, criterionId: id, message: `Added ${kind} criterion to protocol ${documentId}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `add_eligibility_criterion failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+registerToolHandler('review_protocol_completeness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'review_protocol_completeness requires tenant context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getCompleteness } = await import('../protocol-development/protocol-development-service.js');
+  try {
+    const c = await getCompleteness(ctx.organizationId, documentId);
+    return JSON.stringify({ ok: true, requiredCompletionPct: c.requiredCompletionPct, readyToFinalize: c.readyToFinalize, findings: c.findings });
+  } catch (err) {
+    return JSON.stringify({ error: `review_protocol_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('finalize_protocol_document', async (input, ctx) => {
+  if (!ctx?.organizationId || !ctx?.userId) return JSON.stringify({ error: 'finalize_protocol_document requires tenant + user context.' });
+  const documentId = typeof input.document_id === 'number' ? input.document_id : NaN;
+  if (!Number.isInteger(documentId)) return JSON.stringify({ error: 'document_id is required.' });
+  const { getPool } = await import('../../db.js');
+  const { recordGovernedAction } = await import('../../routes/c2c/actions.js');
+  const { finalizeProtocolTx } = await import('../protocol-development/protocol-development-service.js');
+  const client = await getPool().connect();
+  try {
+    await client.query('BEGIN');
+    await setTenantContextTx(client, ctx.organizationId);
+    const result = await finalizeProtocolTx(client, ctx.organizationId, ctx.userId, documentId);
+    await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'sign', target: `protocol-document:${documentId}`, reason: fcoiReason(input, 'Protocol finalized via AnA'), payload: { version: result.version }, domain: 'protocol_development', surface: 'ana' });
+    await client.query('COMMIT');
+    return JSON.stringify({ ok: true, documentId, version: result.version, message: `Finalized protocol ${documentId} as version ${result.version}.` });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return JSON.stringify({ error: `finalize_protocol_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  } finally {
+    client.release();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CITI Training full integration (C2C-01/02) + protocol-portfolio analytics.
 // import_citi_records is governed/audited; the review_* tools are read-only.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -12744,5 +13869,1360 @@ registerToolHandler('generate_define_xml', async (input: Record<string, unknown>
   runStatsTool('generate_define_xml', async () => {
     const { generateDefineXml } = await import('../cdisc/cdisc-conformance-service.js');
     return generateDefineXml(input as any);
+  }, 'deterministic')
+);
+
+// ── Bioequivalence & generic drug intelligence (server/services/bioequivalence/bioequivalence-knowledge) — deterministic. ──
+
+registerToolHandler('classify_bcs', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_bcs', async () => {
+    const { classifyBCS } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return classifyBCS(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_be_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_be_study', async () => {
+    const { designBEStudy } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return designBEStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_dissolution_similarity', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_dissolution_similarity', async () => {
+    const { assessDissolutionSimilarity } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return assessDissolutionSimilarity(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_biowaiver', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_biowaiver', async () => {
+    const { assessBiowaiver } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return assessBiowaiver(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('guidance_for_anda', async (input: Record<string, unknown>) =>
+  runStatsTool('guidance_for_anda', async () => {
+    const { guidanceForANDA } = await import('../bioequivalence/bioequivalence-knowledge.js');
+    return guidanceForANDA(input as any);
+  }, 'deterministic')
+);
+
+// ── Pharmacometrics intelligence (server/services/pharmacometrics/pharmacometrics-knowledge) — deterministic. ──
+
+registerToolHandler('design_popk_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_popk_study', async () => {
+    const { designPopPKStudy } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return designPopPKStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('evaluate_pbpk_model', async (input: Record<string, unknown>) =>
+  runStatsTool('evaluate_pbpk_model', async () => {
+    const { evaluatePBPKModel } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return evaluatePBPKModel(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('analyze_exposure_response', async (input: Record<string, unknown>) =>
+  runStatsTool('analyze_exposure_response', async () => {
+    const { analyzeExposureResponse } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return analyzeExposureResponse(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('advise_midd', async (input: Record<string, unknown>) =>
+  runStatsTool('advise_midd', async () => {
+    const { adviseMIDD } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return adviseMIDD(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_dose', async (input: Record<string, unknown>) =>
+  runStatsTool('select_dose', async () => {
+    const { selectDose } = await import('../pharmacometrics/pharmacometrics-knowledge.js');
+    return selectDose(input as any);
+  }, 'deterministic')
+);
+
+// ── Preclinical toxicology intelligence (server/services/toxicology/toxicology-knowledge) — deterministic. ──
+
+registerToolHandler('select_tox_species', async (input: Record<string, unknown>) =>
+  runStatsTool('select_tox_species', async () => {
+    const { selectSpecies } = await import('../toxicology/toxicology-knowledge.js');
+    return selectSpecies(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_repeat_dose_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_repeat_dose_study', async () => {
+    const { designRepeatDoseStudy } = await import('../toxicology/toxicology-knowledge.js');
+    return designRepeatDoseStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('calculate_safety_margin', async (input: Record<string, unknown>) =>
+  runStatsTool('calculate_safety_margin', async () => {
+    const { calculateSafetyMargin } = await import('../toxicology/toxicology-knowledge.js');
+    return calculateSafetyMargin(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_genotox_battery', async (input: Record<string, unknown>) =>
+  runStatsTool('design_genotox_battery', async () => {
+    const { designGenotoxBattery } = await import('../toxicology/toxicology-knowledge.js');
+    return designGenotoxBattery(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_carcinogenicity_need', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_carcinogenicity_need', async () => {
+    const { assessCarcinogenicityNeed } = await import('../toxicology/toxicology-knowledge.js');
+    return assessCarcinogenicityNeed(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_repro_tox_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_repro_tox_study', async () => {
+    const { designReproToxStudy } = await import('../toxicology/toxicology-knowledge.js');
+    return designReproToxStudy(input as any);
+  }, 'deterministic')
+);
+
+// ── Pediatric development intelligence (server/services/pediatric/pediatric-knowledge) — deterministic. ──
+
+registerToolHandler('classify_pediatric_age', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_pediatric_age', async () => {
+    const { classifyPediatricAge } = await import('../pediatric/pediatric-knowledge.js');
+    return classifyPediatricAge(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_pediatric_investigation', async (input: Record<string, unknown>) =>
+  runStatsTool('design_pediatric_investigation', async () => {
+    const { designPIP } = await import('../pediatric/pediatric-knowledge.js');
+    return designPIP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_pediatric_extrapolation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_pediatric_extrapolation', async () => {
+    const { assessExtrapolation } = await import('../pediatric/pediatric-knowledge.js');
+    return assessExtrapolation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_pediatric_formulation', async (input: Record<string, unknown>) =>
+  runStatsTool('select_pediatric_formulation', async () => {
+    const { selectFormulation } = await import('../pediatric/pediatric-knowledge.js');
+    return selectFormulation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_pediatric_dose', async (input: Record<string, unknown>) =>
+  runStatsTool('select_pediatric_dose', async () => {
+    const { selectPediatricDose } = await import('../pediatric/pediatric-knowledge.js');
+    return selectPediatricDose(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_pediatric_requirements', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_pediatric_requirements', async () => {
+    const { assessPediatricRequirements } = await import('../pediatric/pediatric-knowledge.js');
+    return assessPediatricRequirements(input as any);
+  }, 'deterministic')
+);
+
+// ── Advanced therapy (ATMP/CGT) intelligence (server/services/advanced-therapy/atmp-knowledge) — deterministic. ──
+
+registerToolHandler('classify_atmp', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_atmp', async () => {
+    const { classifyATMP } = await import('../advanced-therapy/atmp-knowledge.js');
+    return classifyATMP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_gene_therapy_requirements', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_gene_therapy_requirements', async () => {
+    const { assessGeneTherapyRequirements } = await import('../advanced-therapy/atmp-knowledge.js');
+    return assessGeneTherapyRequirements(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_cell_therapy_manufacturing', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_cell_therapy_manufacturing', async () => {
+    const { assessCellTherapyManufacturing } = await import('../advanced-therapy/atmp-knowledge.js');
+    return assessCellTherapyManufacturing(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_cart_requirements', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_cart_requirements', async () => {
+    const { assessCARTRequirements } = await import('../advanced-therapy/atmp-knowledge.js');
+    return assessCARTRequirements(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_atmp_pathway', async (input: Record<string, unknown>) =>
+  runStatsTool('select_atmp_pathway', async () => {
+    const { selectATMPPathway } = await import('../advanced-therapy/atmp-knowledge.js');
+    return selectATMPPathway(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_atmp_comparability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_atmp_comparability', async () => {
+    const { assessATMPComparability } = await import('../advanced-therapy/atmp-knowledge.js');
+    return assessATMPComparability(input as any);
+  }, 'deterministic')
+);
+
+// ── Real-world evidence methodology intelligence (server/services/rwe/rwe-methodology-knowledge) — deterministic. ──
+
+registerToolHandler('design_target_trial', async (input: Record<string, unknown>) =>
+  runStatsTool('design_target_trial', async () => {
+    const { designTargetTrial } = await import('../rwe/rwe-methodology-knowledge.js');
+    return designTargetTrial(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('score_rwe_data_source', async (input: Record<string, unknown>) =>
+  runStatsTool('score_rwe_data_source', async () => {
+    const { scoreDataSource } = await import('../rwe/rwe-methodology-knowledge.js');
+    return scoreDataSource(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_propensity_analysis', async (input: Record<string, unknown>) =>
+  runStatsTool('design_propensity_analysis', async () => {
+    const { designPropensityAnalysis } = await import('../rwe/rwe-methodology-knowledge.js');
+    return designPropensityAnalysis(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_rwe_design', async (input: Record<string, unknown>) =>
+  runStatsTool('select_rwe_design', async () => {
+    const { selectRWEDesign } = await import('../rwe/rwe-methodology-knowledge.js');
+    return selectRWEDesign(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_rwe_bias_risk', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_rwe_bias_risk', async () => {
+    const { assessBiasRisk } = await import('../rwe/rwe-methodology-knowledge.js');
+    return assessBiasRisk(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_rwe_regulatory_acceptability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_rwe_regulatory_acceptability', async () => {
+    const { assessRegulatoryAcceptability } = await import('../rwe/rwe-methodology-knowledge.js');
+    return assessRegulatoryAcceptability(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2 — Clinical Pharmacology intelligence handlers
+// FDA 2020 DDI / ICH M12, ICH E14/S7B, FDA organ impairment guidance, CPIC,
+// ICH M10, BCS food effect. Deterministic knowledge base — no LLM, no network.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_ddi_risk', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_ddi_risk', async () => {
+    const { classifyDDIRisk } = await import('../clinical-pharmacology/clinical-pharmacology-knowledge.js');
+    return classifyDDIRisk(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_qtc_risk', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_qtc_risk', async () => {
+    const { assessQTcRisk } = await import('../clinical-pharmacology/clinical-pharmacology-knowledge.js');
+    return assessQTcRisk(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_organ_impairment_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_organ_impairment_study', async () => {
+    const { designOrganImpairmentStudy } = await import('../clinical-pharmacology/clinical-pharmacology-knowledge.js');
+    return designOrganImpairmentStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('classify_cyp_phenotype', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_cyp_phenotype', async () => {
+    const { classifyCYPPhenotype } = await import('../clinical-pharmacology/clinical-pharmacology-knowledge.js');
+    return classifyCYPPhenotype(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_bioanalytical_method', async (input: Record<string, unknown>) =>
+  runStatsTool('design_bioanalytical_method', async () => {
+    const { designBioanalyticalMethod } = await import('../clinical-pharmacology/clinical-pharmacology-knowledge.js');
+    return designBioanalyticalMethod(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_food_effect', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_food_effect', async () => {
+    const { assessFoodEffect } = await import('../clinical-pharmacology/clinical-pharmacology-knowledge.js');
+    return assessFoodEffect(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2 — CMC Quality intelligence handlers
+// ICH Q1A-Q1E, Q2(R2), Q3A-Q3D, Q6A/Q6B, FDA 2011 process validation, ICH Q5E.
+// Deterministic knowledge base — no LLM, no network.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('design_stability_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_stability_study', async () => {
+    const { designStabilityStudy } = await import('../cmc-quality/cmc-quality-knowledge.js');
+    return designStabilityStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('validate_analytical_method', async (input: Record<string, unknown>) =>
+  runStatsTool('validate_analytical_method', async () => {
+    const { validateAnalyticalMethod } = await import('../cmc-quality/cmc-quality-knowledge.js');
+    return validateAnalyticalMethod(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('classify_impurity', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_impurity', async () => {
+    const { classifyImpurity } = await import('../cmc-quality/cmc-quality-knowledge.js');
+    return classifyImpurity(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('set_specifications', async (input: Record<string, unknown>) =>
+  runStatsTool('set_specifications', async () => {
+    const { setSpecifications } = await import('../cmc-quality/cmc-quality-knowledge.js');
+    return setSpecifications(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_process_validation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_process_validation', async () => {
+    const { assessProcessValidation } = await import('../cmc-quality/cmc-quality-knowledge.js');
+    return assessProcessValidation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_comparability_protocol', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_comparability_protocol', async () => {
+    const { assessComparabilityProtocol } = await import('../cmc-quality/cmc-quality-knowledge.js');
+    return assessComparabilityProtocol(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2 — Regulatory Strategy intelligence handlers
+// FDA expedited programs, FDA meeting types, Orphan Drug Act, 505 pathways,
+// rolling submission, ICH/global pathway comparison. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assess_expedited_program', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_expedited_program', async () => {
+    const { assessExpeditedProgram } = await import('../regulatory-strategy/regulatory-strategy-knowledge.js');
+    return assessExpeditedProgram(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_fda_meeting', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_fda_meeting', async () => {
+    const { planFDAMeeting } = await import('../regulatory-strategy/regulatory-strategy-knowledge.js');
+    return planFDAMeeting(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_orphan_designation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_orphan_designation', async () => {
+    const { assessOrphanDesignation } = await import('../regulatory-strategy/regulatory-strategy-knowledge.js');
+    return assessOrphanDesignation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_505_pathway', async (input: Record<string, unknown>) =>
+  runStatsTool('select_505_pathway', async () => {
+    const { select505Pathway } = await import('../regulatory-strategy/regulatory-strategy-knowledge.js');
+    return select505Pathway(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_rolling_submission', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_rolling_submission', async () => {
+    const { assessRollingSubmission } = await import('../regulatory-strategy/regulatory-strategy-knowledge.js');
+    return assessRollingSubmission(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('compare_global_pathways', async (input: Record<string, unknown>) =>
+  runStatsTool('compare_global_pathways', async () => {
+    const { compareGlobalPathways } = await import('../regulatory-strategy/regulatory-strategy-knowledge.js');
+    return compareGlobalPathways(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2 — Biosimilar Development intelligence handlers
+// BPCIA 351(k), FDA analytical similarity tiers, clinical program, indication
+// extrapolation, interchangeability, IP/BPCIA dance, CMC. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assess_analytical_similarity_biosimilar', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_analytical_similarity_biosimilar', async () => {
+    const { assessAnalyticalSimilarity } = await import('../biosimilar/biosimilar-knowledge.js');
+    return assessAnalyticalSimilarity(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_biosimilar_clinical', async (input: Record<string, unknown>) =>
+  runStatsTool('design_biosimilar_clinical', async () => {
+    const { designBiosimilarClinicalProgram } = await import('../biosimilar/biosimilar-knowledge.js');
+    return designBiosimilarClinicalProgram(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_indication_extrapolation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_indication_extrapolation', async () => {
+    const { assessExtrapolationOfIndications } = await import('../biosimilar/biosimilar-knowledge.js');
+    return assessExtrapolationOfIndications(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_interchangeability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_interchangeability', async () => {
+    const { assessInterchangeability } = await import('../biosimilar/biosimilar-knowledge.js');
+    return assessInterchangeability(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_biosimilar_ip_strategy', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_biosimilar_ip_strategy', async () => {
+    const { planBiosimilarIPStrategy } = await import('../biosimilar/biosimilar-knowledge.js');
+    return planBiosimilarIPStrategy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_biosimilar_cmc', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_biosimilar_cmc', async () => {
+    const { assessBiosimilarCMC } = await import('../biosimilar/biosimilar-knowledge.js');
+    return assessBiosimilarCMC(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2 — Mutagenic Impurity (ICH M7) intelligence handlers
+// ICH M7(R2) classification, Cramer/TTC, structural alerts, purge factors,
+// nitrosamine risk (FDA/EMA), control strategy. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_mutagenic_impurity', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_mutagenic_impurity', async () => {
+    const { classifyMutagenicImpurity } = await import('../mutagenic-impurity/mutagenic-impurity-knowledge.js');
+    return classifyMutagenicImpurity(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('calculate_ttc', async (input: Record<string, unknown>) =>
+  runStatsTool('calculate_ttc', async () => {
+    const { calculateTTC } = await import('../mutagenic-impurity/mutagenic-impurity-knowledge.js');
+    return calculateTTC(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_structural_alerts', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_structural_alerts', async () => {
+    const { assessStructuralAlerts } = await import('../mutagenic-impurity/mutagenic-impurity-knowledge.js');
+    return assessStructuralAlerts(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_purge_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_purge_study', async () => {
+    const { designPurgeStudy } = await import('../mutagenic-impurity/mutagenic-impurity-knowledge.js');
+    return designPurgeStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_nitrosamine_risk', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_nitrosamine_risk', async () => {
+    const { assessNitrosamineRisk } = await import('../mutagenic-impurity/mutagenic-impurity-knowledge.js');
+    return assessNitrosamineRisk(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('control_mutagenic_impurity', async (input: Record<string, unknown>) =>
+  runStatsTool('control_mutagenic_impurity', async () => {
+    const { controlMutagenicImpurity } = await import('../mutagenic-impurity/mutagenic-impurity-knowledge.js');
+    return controlMutagenicImpurity(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 2 — Labeling intelligence handlers
+// FDA PLR (21 CFR 201.56-57), boxed warning, REMS (FDAAA/FDORA), PLLR,
+// EMA QRD SmPC, OTC Drug Facts (21 CFR 201.66). Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assess_plr_structure', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_plr_structure', async () => {
+    const { assessPLRStructure } = await import('../labeling/labeling-intelligence-knowledge.js');
+    return assessPLRStructure(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_boxed_warning', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_boxed_warning', async () => {
+    const { assessBoxedWarning } = await import('../labeling/labeling-intelligence-knowledge.js');
+    return assessBoxedWarning(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_rems', async (input: Record<string, unknown>) =>
+  runStatsTool('design_rems', async () => {
+    const { designREMS } = await import('../labeling/labeling-intelligence-knowledge.js');
+    return designREMS(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_pregnancy_lactation_labeling', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_pregnancy_lactation_labeling', async () => {
+    const { assessPregnancyLactationLabeling } = await import('../labeling/labeling-intelligence-knowledge.js');
+    return assessPregnancyLactationLabeling(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('structure_smpc', async (input: Record<string, unknown>) =>
+  runStatsTool('structure_smpc', async () => {
+    const { structureSmPC } = await import('../labeling/labeling-intelligence-knowledge.js');
+    return structureSmPC(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_otc_labeling', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_otc_labeling', async () => {
+    const { assessOTCLabeling } = await import('../labeling/labeling-intelligence-knowledge.js');
+    return assessOTCLabeling(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 3 — Immunogenicity intelligence handlers
+// FDA 2019 immunogenicity testing guidance, FDA 2014 ADA assay, EMA
+// immunogenicity guideline, USP <1106>, ICH S6(R1). Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assess_immunogenicity_risk', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_immunogenicity_risk', async () => {
+    const { assessImmunogenicityRisk } = await import('../immunogenicity/immunogenicity-knowledge.js');
+    return assessImmunogenicityRisk(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_ada_assay_strategy', async (input: Record<string, unknown>) =>
+  runStatsTool('design_ada_assay_strategy', async () => {
+    const { designADAAssayStrategy } = await import('../immunogenicity/immunogenicity-knowledge.js');
+    return designADAAssayStrategy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('classify_immunogenicity_clinical_impact', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_immunogenicity_clinical_impact', async () => {
+    const { classifyImmunogenicityClinicalImpact } = await import('../immunogenicity/immunogenicity-knowledge.js');
+    return classifyImmunogenicityClinicalImpact(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_nab_assay', async (input: Record<string, unknown>) =>
+  runStatsTool('design_nab_assay', async () => {
+    const { designNAbAssay } = await import('../immunogenicity/immunogenicity-knowledge.js');
+    return designNAbAssay(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_immunogenicity_sampling', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_immunogenicity_sampling', async () => {
+    const { planImmunogenicitySampling } = await import('../immunogenicity/immunogenicity-knowledge.js');
+    return planImmunogenicitySampling(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_immunogenicity_comparability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_immunogenicity_comparability', async () => {
+    const { assessImmunogenicityComparability } = await import('../immunogenicity/immunogenicity-knowledge.js');
+    return assessImmunogenicityComparability(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 3 — Safety pharmacology intelligence handlers
+// ICH S7A core battery, ICH S7B, ICH S6(R1), ICH M3(R2), FDA abuse-potential
+// guidance (2017). Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('design_core_battery', async (input: Record<string, unknown>) =>
+  runStatsTool('design_core_battery', async () => {
+    const { designCoreBattery } = await import('../safety-pharmacology/safety-pharmacology-knowledge.js');
+    return designCoreBattery(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_cardiovascular_safety_pharmacology', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_cardiovascular_safety_pharmacology', async () => {
+    const { assessCardiovascularSafetyPharmacology } = await import('../safety-pharmacology/safety-pharmacology-knowledge.js');
+    return assessCardiovascularSafetyPharmacology(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_cns_safety_pharmacology', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_cns_safety_pharmacology', async () => {
+    const { assessCNSSafetyPharmacology } = await import('../safety-pharmacology/safety-pharmacology-knowledge.js');
+    return assessCNSSafetyPharmacology(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_respiratory_safety_pharmacology', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_respiratory_safety_pharmacology', async () => {
+    const { assessRespiratorySafetyPharmacology } = await import('../safety-pharmacology/safety-pharmacology-knowledge.js');
+    return assessRespiratorySafetyPharmacology(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_followup_safety_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_followup_safety_study', async () => {
+    const { designFollowupSafetyStudy } = await import('../safety-pharmacology/safety-pharmacology-knowledge.js');
+    return designFollowupSafetyStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_abuse_liability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_abuse_liability', async () => {
+    const { assessAbuseLiability } = await import('../safety-pharmacology/safety-pharmacology-knowledge.js');
+    return assessAbuseLiability(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 3 — Pharmacovigilance & signal detection handlers
+// ICH E2A-E2F, GVP Modules VI/IX, 21 CFR 314.80/600.80, WHO-UMC & Naranjo
+// causality, disproportionality (PRR/ROR/EBGM). Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_expedited_reporting', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_expedited_reporting', async () => {
+    const { classifyExpeditedReporting } = await import('../pharmacovigilance/pharmacovigilance-knowledge.js');
+    return classifyExpeditedReporting(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_pv_causality', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_pv_causality', async () => {
+    const { assessCausality } = await import('../pharmacovigilance/pharmacovigilance-knowledge.js');
+    return assessCausality(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_aggregate_safety_report', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_aggregate_safety_report', async () => {
+    const { planAggregateReport } = await import('../pharmacovigilance/pharmacovigilance-knowledge.js');
+    return planAggregateReport(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('detect_safety_signal', async (input: Record<string, unknown>) =>
+  runStatsTool('detect_safety_signal', async () => {
+    const { detectSafetySignal } = await import('../pharmacovigilance/pharmacovigilance-knowledge.js');
+    return detectSafetySignal(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_signal_priority', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_signal_priority', async () => {
+    const { assessSignalPriority } = await import('../pharmacovigilance/pharmacovigilance-knowledge.js');
+    return assessSignalPriority(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_pv_system', async (input: Record<string, unknown>) =>
+  runStatsTool('design_pv_system', async () => {
+    const { designPVSystem } = await import('../pharmacovigilance/pharmacovigilance-knowledge.js');
+    return designPVSystem(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 3 — Clinical outcome assessment (COA/PRO) handlers
+// FDA PRO Guidance (2009), FDA PFDD Guidance 1-4, FDA COA qualification,
+// ISPOR/ISOQOL. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('select_coa_type', async (input: Record<string, unknown>) =>
+  runStatsTool('select_coa_type', async () => {
+    const { selectCOAType } = await import('../clinical-outcome-assessment/coa-knowledge.js');
+    return selectCOAType(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_coa_validation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_coa_validation', async () => {
+    const { assessCOAValidation } = await import('../clinical-outcome-assessment/coa-knowledge.js');
+    return assessCOAValidation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('determine_meaningful_change', async (input: Record<string, unknown>) =>
+  runStatsTool('determine_meaningful_change', async () => {
+    const { determineMeaningfulChange } = await import('../clinical-outcome-assessment/coa-knowledge.js');
+    return determineMeaningfulChange(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_coa_fit_for_purpose', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_coa_fit_for_purpose', async () => {
+    const { assessCOAFitForPurpose } = await import('../clinical-outcome-assessment/coa-knowledge.js');
+    return assessCOAFitForPurpose(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('position_coa_endpoint', async (input: Record<string, unknown>) =>
+  runStatsTool('position_coa_endpoint', async () => {
+    const { positionCOAEndpoint } = await import('../clinical-outcome-assessment/coa-knowledge.js');
+    return positionCOAEndpoint(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_coa_development', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_coa_development', async () => {
+    const { planCOADevelopment } = await import('../clinical-outcome-assessment/coa-knowledge.js');
+    return planCOADevelopment(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 3 — Oncology dose optimization (Project Optimus) handlers
+// FDA Project Optimus, FDA dose-optimization draft guidance (Jan 2023),
+// Project FrontRunner, ICH E4, ICH S9. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('select_dose_finding_design', async (input: Record<string, unknown>) =>
+  runStatsTool('select_dose_finding_design', async () => {
+    const { selectDoseFindingDesign } = await import('../dose-optimization/dose-optimization-knowledge.js');
+    return selectDoseFindingDesign(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_project_optimus_alignment', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_project_optimus_alignment', async () => {
+    const { assessProjectOptimusAlignment } = await import('../dose-optimization/dose-optimization-knowledge.js');
+    return assessProjectOptimusAlignment(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_randomized_dose_comparison', async (input: Record<string, unknown>) =>
+  runStatsTool('design_randomized_dose_comparison', async () => {
+    const { designRandomizedDoseComparison } = await import('../dose-optimization/dose-optimization-knowledge.js');
+    return designRandomizedDoseComparison(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_rp2d', async (input: Record<string, unknown>) =>
+  runStatsTool('select_rp2d', async () => {
+    const { selectRP2D } = await import('../dose-optimization/dose-optimization-knowledge.js');
+    return selectRP2D(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_backfill_strategy', async (input: Record<string, unknown>) =>
+  runStatsTool('design_backfill_strategy', async () => {
+    const { designBackfillStrategy } = await import('../dose-optimization/dose-optimization-knowledge.js');
+    return designBackfillStrategy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_dose_exposure_response', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_dose_exposure_response', async () => {
+    const { assessDoseExposureResponse } = await import('../dose-optimization/dose-optimization-knowledge.js');
+    return assessDoseExposureResponse(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 3 — Combination products & device constituent handlers
+// 21 CFR Part 3 (PMOA), 21 CFR Part 4 (cGMP), 21 CFR 820/QMSR design controls,
+// FDA Human Factors guidance (2016), IEC 62366-1, ISO 14971, EU MDR Art 117.
+// Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('determine_primary_mode_of_action', async (input: Record<string, unknown>) =>
+  runStatsTool('determine_primary_mode_of_action', async () => {
+    const { determinePrimaryModeOfAction } = await import('../combination-products/combination-products-knowledge.js');
+    return determinePrimaryModeOfAction(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('classify_combination_product', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_combination_product', async () => {
+    const { classifyCombinationProduct } = await import('../combination-products/combination-products-knowledge.js');
+    return classifyCombinationProduct(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_combination_cgmp', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_combination_cgmp', async () => {
+    const { planCombinationCGMP } = await import('../combination-products/combination-products-knowledge.js');
+    return planCombinationCGMP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_human_factors_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_human_factors_study', async () => {
+    const { designHumanFactorsStudy } = await import('../combination-products/combination-products-knowledge.js');
+    return designHumanFactorsStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_device_constituent_controls', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_device_constituent_controls', async () => {
+    const { assessDeviceConstituentControls } = await import('../combination-products/combination-products-knowledge.js');
+    return assessDeviceConstituentControls(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_combination_submission_pathway', async (input: Record<string, unknown>) =>
+  runStatsTool('select_combination_submission_pathway', async () => {
+    const { selectCombinationSubmissionPathway } = await import('../combination-products/combination-products-knowledge.js');
+    return selectCombinationSubmissionPathway(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 4 — Clinical trial statistics & estimands handlers
+// ICH E9 / E9(R1), E10, E17, FDA Adaptive Designs (2019), FDA Multiple
+// Endpoints (2022), FDA Non-Inferiority. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('define_estimand', async (input: Record<string, unknown>) =>
+  runStatsTool('define_estimand', async () => {
+    const { defineEstimand } = await import('../trial-statistics/trial-statistics-knowledge.js');
+    return defineEstimand(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_intercurrent_event_strategy', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_intercurrent_event_strategy', async () => {
+    const { assessIntercurrentEventStrategy } = await import('../trial-statistics/trial-statistics-knowledge.js');
+    return assessIntercurrentEventStrategy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_multiplicity_control', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_multiplicity_control', async () => {
+    const { planMultiplicityControl } = await import('../trial-statistics/trial-statistics-knowledge.js');
+    return planMultiplicityControl(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_adaptive_design', async (input: Record<string, unknown>) =>
+  runStatsTool('design_adaptive_design', async () => {
+    const { designAdaptiveDesign } = await import('../trial-statistics/trial-statistics-knowledge.js');
+    return designAdaptiveDesign(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_missing_data_strategy', async (input: Record<string, unknown>) =>
+  runStatsTool('select_missing_data_strategy', async () => {
+    const { selectMissingDataStrategy } = await import('../trial-statistics/trial-statistics-knowledge.js');
+    return selectMissingDataStrategy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('estimate_sample_size', async (input: Record<string, unknown>) =>
+  runStatsTool('estimate_sample_size', async () => {
+    const { estimateSampleSize } = await import('../trial-statistics/trial-statistics-knowledge.js');
+    return estimateSampleSize(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 4 — GMP quality systems & data integrity handlers
+// ICH Q7/Q9(R1)/Q10, 21 CFR 210/211, EU GMP Annex 1/11, FDA & MHRA Data
+// Integrity, PIC/S PI 041, GAMP 5, 21 CFR Part 11. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assess_data_integrity', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_data_integrity', async () => {
+    const { assessDataIntegrity } = await import('../gmp-quality-systems/gmp-quality-systems-knowledge.js');
+    return assessDataIntegrity(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_capa', async (input: Record<string, unknown>) =>
+  runStatsTool('design_capa', async () => {
+    const { designCAPA } = await import('../gmp-quality-systems/gmp-quality-systems-knowledge.js');
+    return designCAPA(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('classify_gmp_deviation', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_gmp_deviation', async () => {
+    const { classifyGMPDeviation } = await import('../gmp-quality-systems/gmp-quality-systems-knowledge.js');
+    return classifyGMPDeviation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_api_gmp', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_api_gmp', async () => {
+    const { assessAPIGMP } = await import('../gmp-quality-systems/gmp-quality-systems-knowledge.js');
+    return assessAPIGMP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_sterile_controls', async (input: Record<string, unknown>) =>
+  runStatsTool('design_sterile_controls', async () => {
+    const { designSterileControls } = await import('../gmp-quality-systems/gmp-quality-systems-knowledge.js');
+    return designSterileControls(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_computer_system_validation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_computer_system_validation', async () => {
+    const { assessComputerSystemValidation } = await import('../gmp-quality-systems/gmp-quality-systems-knowledge.js');
+    return assessComputerSystemValidation(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 4 — Nonclinical PK/ADME & toxicokinetics handlers
+// ICH M3(R2), S3A, S3B, FDA In Vitro DDI (2020), FDA MIST (2020), ICH M12.
+// Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('design_adme_program', async (input: Record<string, unknown>) =>
+  runStatsTool('design_adme_program', async () => {
+    const { designADMEProgram } = await import('../nonclinical-adme/nonclinical-adme-knowledge.js');
+    return designADMEProgram(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_mass_balance_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_mass_balance_study', async () => {
+    const { designMassBalanceStudy } = await import('../nonclinical-adme/nonclinical-adme-knowledge.js');
+    return designMassBalanceStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_metabolite_safety', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_metabolite_safety', async () => {
+    const { assessMetaboliteSafety } = await import('../nonclinical-adme/nonclinical-adme-knowledge.js');
+    return assessMetaboliteSafety(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_toxicokinetics', async (input: Record<string, unknown>) =>
+  runStatsTool('design_toxicokinetics', async () => {
+    const { designToxicokinetics } = await import('../nonclinical-adme/nonclinical-adme-knowledge.js');
+    return designToxicokinetics(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_reaction_phenotyping', async (input: Record<string, unknown>) =>
+  runStatsTool('design_reaction_phenotyping', async () => {
+    const { designReactionPhenotyping } = await import('../nonclinical-adme/nonclinical-adme-knowledge.js');
+    return designReactionPhenotyping(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_protein_binding', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_protein_binding', async () => {
+    const { assessProteinBinding } = await import('../nonclinical-adme/nonclinical-adme-knowledge.js');
+    return assessProteinBinding(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 4 — Biomarkers & companion diagnostics handlers
+// FDA-NIH BEST, FDA Biomarker Qualification Program, FDA IVD CDx (2014),
+// FDA CDx co-development (2016), FDA Enrichment (2019), CLSI. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_biomarker', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_biomarker', async () => {
+    const { classifyBiomarker } = await import('../biomarkers/biomarker-knowledge.js');
+    return classifyBiomarker(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_biomarker_qualification', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_biomarker_qualification', async () => {
+    const { planBiomarkerQualification } = await import('../biomarkers/biomarker-knowledge.js');
+    return planBiomarkerQualification(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_cdx_codevelopment', async (input: Record<string, unknown>) =>
+  runStatsTool('design_cdx_codevelopment', async () => {
+    const { designCDxCodevelopment } = await import('../biomarkers/biomarker-knowledge.js');
+    return designCDxCodevelopment(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_biomarker_analytical_validation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_biomarker_analytical_validation', async () => {
+    const { assessBiomarkerAnalyticalValidation } = await import('../biomarkers/biomarker-knowledge.js');
+    return assessBiomarkerAnalyticalValidation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_biomarker_clinical_validation', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_biomarker_clinical_validation', async () => {
+    const { assessBiomarkerClinicalValidation } = await import('../biomarkers/biomarker-knowledge.js');
+    return assessBiomarkerClinicalValidation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_enrichment_strategy', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_enrichment_strategy', async () => {
+    const { planEnrichmentStrategy } = await import('../biomarkers/biomarker-knowledge.js');
+    return planEnrichmentStrategy(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 4 — Rare disease & external control arms handlers
+// FDA Natural History (2019), FDA Rare Diseases Common Issues (2019), FDA
+// Externally Controlled Trials (2023), ICH E10, FDA CID. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('design_natural_history_study', async (input: Record<string, unknown>) =>
+  runStatsTool('design_natural_history_study', async () => {
+    const { designNaturalHistoryStudy } = await import('../rare-disease/rare-disease-knowledge.js');
+    return designNaturalHistoryStudy(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_external_control', async (input: Record<string, unknown>) =>
+  runStatsTool('design_external_control', async () => {
+    const { designExternalControl } = await import('../rare-disease/rare-disease-knowledge.js');
+    return designExternalControl(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_small_population_design', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_small_population_design', async () => {
+    const { assessSmallPopulationDesign } = await import('../rare-disease/rare-disease-knowledge.js');
+    return assessSmallPopulationDesign(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_bayesian_borrowing', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_bayesian_borrowing', async () => {
+    const { planBayesianBorrowing } = await import('../rare-disease/rare-disease-knowledge.js');
+    return planBayesianBorrowing(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_rare_disease_endpoint', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_rare_disease_endpoint', async () => {
+    const { assessRareDiseaseEndpoint } = await import('../rare-disease/rare-disease-knowledge.js');
+    return assessRareDiseaseEndpoint(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_rare_disease_program', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_rare_disease_program', async () => {
+    const { planRareDiseaseProgram } = await import('../rare-disease/rare-disease-knowledge.js');
+    return planRareDiseaseProgram(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 4 — GCP & clinical trial operations handlers
+// ICH E6(R3), ICH E8(R1), FDA RBM (2013), 21 CFR 50/54/56/312, FDA BIMO.
+// Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('design_monitoring_plan', async (input: Record<string, unknown>) =>
+  runStatsTool('design_monitoring_plan', async () => {
+    const { designMonitoringPlan } = await import('../gcp-operations/gcp-operations-knowledge.js');
+    return designMonitoringPlan(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_inspection_readiness', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_inspection_readiness', async () => {
+    const { assessInspectionReadiness } = await import('../gcp-operations/gcp-operations-knowledge.js');
+    return assessInspectionReadiness(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_gcp_compliance', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_gcp_compliance', async () => {
+    const { assessGCPCompliance } = await import('../gcp-operations/gcp-operations-knowledge.js');
+    return assessGCPCompliance(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_informed_consent', async (input: Record<string, unknown>) =>
+  runStatsTool('design_informed_consent', async () => {
+    const { designInformedConsent } = await import('../gcp-operations/gcp-operations-knowledge.js');
+    return designInformedConsent(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('classify_protocol_deviation', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_protocol_deviation', async () => {
+    const { classifyProtocolDeviation } = await import('../gcp-operations/gcp-operations-knowledge.js');
+    return classifyProtocolDeviation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_essential_documents', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_essential_documents', async () => {
+    const { planEssentialDocuments } = await import('../gcp-operations/gcp-operations-knowledge.js');
+    return planEssentialDocuments(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 5 — Medical device & IVD regulatory handlers
+// 21 CFR 860/807/814, De Novo, FDA 510(k) Program (2014), EU MDR 2017/745 &
+// IVDR 2017/746, IMDRF. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_medical_device', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_medical_device', async () => {
+    const { classifyDevice } = await import('../medical-device/medical-device-knowledge.js');
+    return classifyDevice(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_device_pathway', async (input: Record<string, unknown>) =>
+  runStatsTool('select_device_pathway', async () => {
+    const { selectDevicePathway } = await import('../medical-device/medical-device-knowledge.js');
+    return selectDevicePathway(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_substantial_equivalence', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_substantial_equivalence', async () => {
+    const { assessSubstantialEquivalence } = await import('../medical-device/medical-device-knowledge.js');
+    return assessSubstantialEquivalence(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_device_clinical_evidence', async (input: Record<string, unknown>) =>
+  runStatsTool('design_device_clinical_evidence', async () => {
+    const { designDeviceClinicalEvidence } = await import('../medical-device/medical-device-knowledge.js');
+    return designDeviceClinicalEvidence(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_essential_principles', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_essential_principles', async () => {
+    const { assessEssentialPrinciples } = await import('../medical-device/medical-device-knowledge.js');
+    return assessEssentialPrinciples(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_device_submission', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_device_submission', async () => {
+    const { planDeviceSubmission } = await import('../medical-device/medical-device-knowledge.js');
+    return planDeviceSubmission(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 5 — Digital health, SaMD & AI/ML device handlers
+// IMDRF SaMD (N12/N41), FDA SaMD & PCCP (2024), GMLP (2021), FDA Premarket
+// Cybersecurity (2023) / Section 524B, 21 CFR 820. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_samd', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_samd', async () => {
+    const { classifySaMD } = await import('../digital-health/digital-health-knowledge.js');
+    return classifySaMD(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_ai_ml_device', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_ai_ml_device', async () => {
+    const { assessAIMLDevice } = await import('../digital-health/digital-health-knowledge.js');
+    return assessAIMLDevice(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_pccp', async (input: Record<string, unknown>) =>
+  runStatsTool('design_pccp', async () => {
+    const { designPCCP } = await import('../digital-health/digital-health-knowledge.js');
+    return designPCCP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_gmlp', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_gmlp', async () => {
+    const { assessGMLP } = await import('../digital-health/digital-health-knowledge.js');
+    return assessGMLP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_samd_clinical_validation', async (input: Record<string, unknown>) =>
+  runStatsTool('design_samd_clinical_validation', async () => {
+    const { designSaMDClinicalValidation } = await import('../digital-health/digital-health-knowledge.js');
+    return designSaMDClinicalValidation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_device_cybersecurity', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_device_cybersecurity', async () => {
+    const { assessDeviceCybersecurity } = await import('../digital-health/digital-health-knowledge.js');
+    return assessDeviceCybersecurity(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 5 — Vaccine development handlers
+// FDA vaccine guidance, WHO TRS, ICH Q5A-Q5E, EMA vaccine guidelines,
+// 21 CFR 610, correlates-of-protection. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('design_vaccine_cmc', async (input: Record<string, unknown>) =>
+  runStatsTool('design_vaccine_cmc', async () => {
+    const { designVaccineCMC } = await import('../vaccine/vaccine-knowledge.js');
+    return designVaccineCMC(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_correlate_of_protection', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_correlate_of_protection', async () => {
+    const { assessCorrelateOfProtection } = await import('../vaccine/vaccine-knowledge.js');
+    return assessCorrelateOfProtection(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_vaccine_clinical_program', async (input: Record<string, unknown>) =>
+  runStatsTool('design_vaccine_clinical_program', async () => {
+    const { designVaccineClinicalProgram } = await import('../vaccine/vaccine-knowledge.js');
+    return designVaccineClinicalProgram(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_lot_consistency', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_lot_consistency', async () => {
+    const { assessLotConsistency } = await import('../vaccine/vaccine-knowledge.js');
+    return assessLotConsistency(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_vaccine_platform', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_vaccine_platform', async () => {
+    const { assessVaccinePlatform } = await import('../vaccine/vaccine-knowledge.js');
+    return assessVaccinePlatform(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_vaccine_special_populations', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_vaccine_special_populations', async () => {
+    const { planVaccineSpecialPopulations } = await import('../vaccine/vaccine-knowledge.js');
+    return planVaccineSpecialPopulations(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 5 — Structured benefit-risk handlers
+// FDA Benefit-Risk Framework (PDUFA VI/VII, 2023), EMA PrOACT-URL / effects
+// table, IMI PROTECT BRAT, ICH M4E(R2) §2.5.6, CIOMS IV. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('structure_benefit_risk_framework', async (input: Record<string, unknown>) =>
+  runStatsTool('structure_benefit_risk_framework', async () => {
+    const { structureBenefitRiskFramework } = await import('../benefit-risk/benefit-risk-knowledge.js');
+    return structureBenefitRiskFramework(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('build_effects_table', async (input: Record<string, unknown>) =>
+  runStatsTool('build_effects_table', async () => {
+    const { buildEffectsTable } = await import('../benefit-risk/benefit-risk-knowledge.js');
+    return buildEffectsTable(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_benefit_risk_balance', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_benefit_risk_balance', async () => {
+    const { assessBenefitRiskBalance } = await import('../benefit-risk/benefit-risk-knowledge.js');
+    return assessBenefitRiskBalance(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_value_tree', async (input: Record<string, unknown>) =>
+  runStatsTool('design_value_tree', async () => {
+    const { designValueTree } = await import('../benefit-risk/benefit-risk-knowledge.js');
+    return designValueTree(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_br_uncertainty', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_br_uncertainty', async () => {
+    const { assessBRUncertainty } = await import('../benefit-risk/benefit-risk-knowledge.js');
+    return assessBRUncertainty(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_br_communication', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_br_communication', async () => {
+    const { planBRCommunication } = await import('../benefit-risk/benefit-risk-knowledge.js');
+    return planBRCommunication(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 5 — Post-approval lifecycle (ICH Q12) handlers
+// ICH Q12, 21 CFR 314.70, FDA "Changes to an Approved NDA or ANDA", FDA
+// comparability protocols, EU variations framework. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_post_approval_change', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_post_approval_change', async () => {
+    const { classifyPostApprovalChange } = await import('../post-approval/post-approval-knowledge.js');
+    return classifyPostApprovalChange(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_established_conditions', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_established_conditions', async () => {
+    const { assessEstablishedConditions } = await import('../post-approval/post-approval-knowledge.js');
+    return assessEstablishedConditions(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_pacmp', async (input: Record<string, unknown>) =>
+  runStatsTool('design_pacmp', async () => {
+    const { designPACMP } = await import('../post-approval/post-approval-knowledge.js');
+    return designPACMP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_annual_report', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_annual_report', async () => {
+    const { planAnnualReport } = await import('../post-approval/post-approval-knowledge.js');
+    return planAnnualReport(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_postapproval_comparability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_postapproval_comparability', async () => {
+    const { assessPostApprovalComparability } = await import('../post-approval/post-approval-knowledge.js');
+    return assessPostApprovalComparability(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_lifecycle_management', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_lifecycle_management', async () => {
+    const { planLifecycleManagement } = await import('../post-approval/post-approval-knowledge.js');
+    return planLifecycleManagement(input as any);
   }, 'deterministic')
 );

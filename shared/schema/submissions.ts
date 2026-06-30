@@ -19,10 +19,12 @@
 
 import {
   integer,
+  jsonb,
   pgTable,
   serial,
   text,
   timestamp,
+  uuid,
   index,
   unique,
 } from 'drizzle-orm/pg-core';
@@ -170,6 +172,61 @@ export const submissionLeaves = pgTable(
 );
 
 // ============================================================================
+// SUBMISSION ORCHESTRATOR RUNS / STEPS
+// ============================================================================
+// Mirrors migrations/0018_submission_orchestrator.sql with the tenant-scope
+// column added by migrations/20260629_orchestrator_tenant_scope.sql and the
+// canonical submission FK added by
+// migrations/20260629_orchestrator_submission_id_fk.sql (Path-to-GA §C.4).
+//
+// `submissionIdFk` is the canonical FK back to public.submissions(id). It is
+// NULLABLE during the Path B transition window — new writes from callers
+// that supply the FK dual-write both `submissionId` (legacy TEXT, still
+// NOT NULL) and `submissionIdFk` (joinable INTEGER). Legacy callers leave
+// the FK NULL until a per-tenant data-archaeology backfill resolves them.
+
+export const submissionOrchestratorRuns = pgTable('submission_orchestrator_runs', {
+  runId: uuid('run_id').primaryKey(),
+  organizationId: integer('organization_id').references(() => organizations.id),
+  submissionId: text('submission_id').notNull(),
+  /**
+   * Canonical FK back to public.submissions(id). Nullable for Path B
+   * backward compatibility — see migration header
+   * (20260629_orchestrator_submission_id_fk.sql) for the NOT NULL deferral
+   * rationale.
+   */
+  submissionIdFk: integer('submission_id_fk').references(() => submissions.id),
+  applicationNumber: text('application_number').notNull(),
+  region: text('region').notNull(),
+  submissionType: text('submission_type').notNull(),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  status: text('status').notNull(),
+  steps: jsonb('steps').notNull().default([]),
+});
+
+export const submissionOrchestratorSteps = pgTable('submission_orchestrator_steps', {
+  id: serial('id').primaryKey(),
+  runId: uuid('run_id')
+    .notNull()
+    .references(() => submissionOrchestratorRuns.runId),
+  organizationId: integer('organization_id').references(() => organizations.id),
+  /**
+   * Mirror of the parent run's canonical FK back to public.submissions(id).
+   * Nullable for the same Path B reason as the parent table.
+   */
+  submissionIdFk: integer('submission_id_fk').references(() => submissions.id),
+  stepKey: text('step_key').notNull(),
+  eventType: text('event_type').notNull(),
+  status: text('status').notNull(),
+  inputHash: text('input_hash').notNull(),
+  outputHash: text('output_hash'),
+  outputRef: text('output_ref'),
+  error: text('error'),
+  occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ============================================================================
 // INFERRED TYPES
 // ============================================================================
 
@@ -181,3 +238,7 @@ export type EctdSequence = typeof ectdSequences.$inferSelect;
 export type NewEctdSequence = typeof ectdSequences.$inferInsert;
 export type SubmissionLeaf = typeof submissionLeaves.$inferSelect;
 export type NewSubmissionLeaf = typeof submissionLeaves.$inferInsert;
+export type SubmissionOrchestratorRun = typeof submissionOrchestratorRuns.$inferSelect;
+export type NewSubmissionOrchestratorRun = typeof submissionOrchestratorRuns.$inferInsert;
+export type SubmissionOrchestratorStep = typeof submissionOrchestratorSteps.$inferSelect;
+export type NewSubmissionOrchestratorStep = typeof submissionOrchestratorSteps.$inferInsert;

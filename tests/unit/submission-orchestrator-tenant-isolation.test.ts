@@ -61,6 +61,8 @@ const hoisted = vi.hoisted(() => {
     run_id: string;
     organization_id: number;
     submission_id: string;
+    /** Path-to-GA §C.4 (Path B): nullable canonical FK back to submissions(id). */
+    submission_id_fk: number | null;
     application_number: string;
     region: string;
     submission_type: string;
@@ -72,6 +74,8 @@ const hoisted = vi.hoisted(() => {
   interface StepRow {
     run_id: string;
     organization_id: number;
+    /** Mirror of the parent run's submission_id_fk. */
+    submission_id_fk: number | null;
     step_key: string;
     event_type: string;
     status: string;
@@ -92,11 +96,16 @@ const hoisted = vi.hoisted(() => {
     const s = String(sql);
 
     // persistRun: INSERT ... ON CONFLICT (run_id) DO UPDATE
+    // Param order (post 20260629_orchestrator_submission_id_fk.sql):
+    //   $1 run_id, $2 organization_id, $3 submission_id, $4 submission_id_fk,
+    //   $5 application_number, $6 region, $7 submission_type, $8 started_at,
+    //   $9 completed_at, $10 status, $11 steps
     if (/INSERT\s+INTO\s+submission_orchestrator_runs/i.test(s)) {
       const [
         run_id,
         organization_id,
         submission_id,
+        submission_id_fk,
         application_number,
         region,
         submission_type,
@@ -105,19 +114,23 @@ const hoisted = vi.hoisted(() => {
         status,
         stepsJson,
       ] = params as [
-        string, number, string, string, string, string, string, string | null, string, string,
+        string, number, string, number | null, string, string, string, string, string | null, string, string,
       ];
       const existing = runs.find(r => r.run_id === run_id);
       if (existing) {
-        // ON CONFLICT DO UPDATE — only completed_at / status / steps
+        // ON CONFLICT DO UPDATE — only completed_at / status / steps. The
+        // production SQL also COALESCEs submission_id_fk so a NULL on
+        // resume can't clear a previously-populated FK; mirror that here.
         existing.completed_at = completed_at;
         existing.status = status;
         existing.steps = stepsJson;
+        if (submission_id_fk != null) existing.submission_id_fk = submission_id_fk;
       } else {
         runs.push({
           run_id,
           organization_id,
           submission_id,
+          submission_id_fk,
           application_number,
           region,
           submission_type,
@@ -131,10 +144,15 @@ const hoisted = vi.hoisted(() => {
     }
 
     // persistStepEvent: append-only INSERT
+    // Param order (post 20260629_orchestrator_submission_id_fk.sql):
+    //   $1 run_id, $2 organization_id, $3 submission_id_fk, $4 step_key,
+    //   $5 event_type, $6 status, $7 input_hash, $8 output_hash,
+    //   $9 output_ref, $10 error
     if (/INSERT\s+INTO\s+submission_orchestrator_steps/i.test(s)) {
       const [
         run_id,
         organization_id,
+        submission_id_fk,
         step_key,
         event_type,
         status,
@@ -143,11 +161,12 @@ const hoisted = vi.hoisted(() => {
         output_ref,
         error,
       ] = params as [
-        string, number, string, string, string, string, string | null, string | null, string | null,
+        string, number, number | null, string, string, string, string, string | null, string | null, string | null,
       ];
       steps.push({
         run_id,
         organization_id,
+        submission_id_fk,
         step_key,
         event_type,
         status,
@@ -158,6 +177,17 @@ const hoisted = vi.hoisted(() => {
         occurred_at: new Date().toISOString(),
       });
       return { rows: [], rowCount: 1 };
+    }
+
+    // submissions lookup used by loadSubmissionFkBySubmissionIdText.
+    // Recognized by `FROM submissions` with the tenant-scoped WHERE shape.
+    if (/SELECT\s+id\s+FROM\s+submissions\b/i.test(s)) {
+      // Resolve from the hoisted submissionsFixtures map populated by tests.
+      const [candidate, orgId] = params as [number, number];
+      const match = submissionsFixtures.find(
+        r => r.id === candidate && r.organization_id === orgId
+      );
+      return { rows: match ? [{ id: match.id }] : [], rowCount: match ? 1 : 0 };
     }
 
     // getRun: SELECT ... FROM submission_orchestrator_runs WHERE run_id = $1 AND organization_id = $2
@@ -183,13 +213,19 @@ const hoisted = vi.hoisted(() => {
     return { rows: [], rowCount: 0 };
   });
 
+  // Fixture rows for loadSubmissionFkBySubmissionIdText. Tests populate
+  // this directly to model "submission id=42 belongs to org 100".
+  const submissionsFixtures: Array<{ id: number; organization_id: number }> = [];
+
   return {
     runs,
     steps,
+    submissionsFixtures,
     query,
     reset() {
       runs.length = 0;
       steps.length = 0;
+      submissionsFixtures.length = 0;
       query.mockClear();
     },
   };
@@ -242,6 +278,7 @@ import {
   getRun,
   getRunAudit,
   regenerateAffected,
+  loadSubmissionFkBySubmissionIdText,
   type OrchestratorInputs,
   type OrchestratorRun,
 } from '../../server/services/submission-package-orchestrator';
@@ -582,5 +619,120 @@ describe('hashInputs undefined-field robustness (Case 9)', () => {
     expect(res.status).toBe(200);
     expect(res.body.runId).toBeDefined();
     expect(res.body.status).toMatch(/complete|partial|failed/);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PATH-TO-GA §C.4 — submissionFk dual-write + round-trip (Path B)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// These cases lock in the Move-1-pattern hardening from
+// migrations/20260629_orchestrator_submission_id_fk.sql:
+//   - persistRun dual-writes both submission_id (legacy TEXT) and
+//     submission_id_fk (canonical FK) when the caller supplies submissionFk.
+//   - persistStepEvent mirrors the FK onto every audit row.
+//   - getRun projects the FK back onto OrchestratorRun.submissionFk.
+//   - Back-compat: callers that omit submissionFk leave the column NULL on
+//     both tables and continue to round-trip cleanly.
+//   - loadSubmissionFkBySubmissionIdText: integer-coercible TEXT resolves
+//     when the submissions row is owned by the supplied org; refuses to
+//     guess on non-numeric TEXT; returns null on cross-tenant.
+
+describe('Path-to-GA §C.4 — submissionFk threading through persist/getRun', () => {
+  it('persistRun dual-writes submission_id_fk when caller supplies OrchestratorInputs.submissionFk', async () => {
+    const inputs = baseInputs({ organizationId: 100, submissionFk: 42 });
+    const { run } = await runOrchestrator(inputs);
+
+    // The in-memory shape carries the FK.
+    expect(run.submissionFk).toBe(42);
+
+    // The persisted RunRow carries the FK (the mock captures the INSERT
+    // params at the column position the production SQL emits).
+    const persisted = hoisted.runs.find(r => r.run_id === run.runId);
+    expect(persisted).toBeDefined();
+    expect(persisted!.submission_id_fk).toBe(42);
+
+    // Every step audit row written during the run mirrors the same FK.
+    const stepRows = hoisted.steps.filter(s => s.run_id === run.runId);
+    expect(stepRows.length).toBeGreaterThan(0);
+    for (const row of stepRows) {
+      expect(row.submission_id_fk).toBe(42);
+    }
+  });
+
+  it('getRun round-trips submissionFk back onto OrchestratorRun', async () => {
+    const { run } = await runOrchestrator(baseInputs({ organizationId: 100, submissionFk: 77 }));
+    const fetched = await getRun(run.runId, 100);
+    expect(fetched).not.toBeNull();
+    expect(fetched!.submissionFk).toBe(77);
+  });
+
+  it('back-compat: persistRun leaves submission_id_fk NULL when caller omits submissionFk', async () => {
+    const inputs = baseInputs({ organizationId: 100 });
+    // Defensive: ensure no FK leaks through the fixture default.
+    delete (inputs as { submissionFk?: number }).submissionFk;
+
+    const { run } = await runOrchestrator(inputs);
+    expect(run.submissionFk).toBeUndefined();
+
+    const persisted = hoisted.runs.find(r => r.run_id === run.runId);
+    expect(persisted).toBeDefined();
+    expect(persisted!.submission_id_fk).toBeNull();
+
+    // Step audit rows also have NULL — the FK is not invented on the steps
+    // table either (mirrors the parent run's NULL FK).
+    const stepRows = hoisted.steps.filter(s => s.run_id === run.runId);
+    expect(stepRows.length).toBeGreaterThan(0);
+    for (const row of stepRows) {
+      expect(row.submission_id_fk).toBeNull();
+    }
+
+    // getRun projects the absent FK back as null (NOT undefined) — the
+    // explicit null lets resume / regenerate callers tell "we know the FK
+    // is unresolved" apart from "we forgot to read this column."
+    const fetched = await getRun(run.runId, 100);
+    expect(fetched).not.toBeNull();
+    expect(fetched!.submissionFk).toBeNull();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PATH-TO-GA §C.4 — loadSubmissionFkBySubmissionIdText
+// ═══════════════════════════════════════════════════════════════════════════
+
+describe('loadSubmissionFkBySubmissionIdText (Path-to-GA §C.4 helper)', () => {
+  it('resolves integer-coercible TEXT to an FK owned by the same org', async () => {
+    hoisted.submissionsFixtures.push({ id: 42, organization_id: 100 });
+    expect(await loadSubmissionFkBySubmissionIdText('42', 100)).toBe(42);
+  });
+
+  it('returns null on cross-tenant lookup (submissions row exists but belongs to a different org)', async () => {
+    hoisted.submissionsFixtures.push({ id: 42, organization_id: 100 });
+    // Org 200 cannot resolve org 100's submission_id=42 — same Risk #3
+    // defense as the design doc spells out.
+    expect(await loadSubmissionFkBySubmissionIdText('42', 200)).toBeNull();
+  });
+
+  it('returns null on non-numeric TEXT (does NOT guess at GUID / business-domain codes)', async () => {
+    expect(await loadSubmissionFkBySubmissionIdText('SUB-2026-001', 100)).toBeNull();
+    expect(await loadSubmissionFkBySubmissionIdText('a3f6c9b1-2026-4f2e-9a0a-1234567890ab', 100)).toBeNull();
+  });
+
+  it('returns null on whitespace / empty TEXT', async () => {
+    expect(await loadSubmissionFkBySubmissionIdText('', 100)).toBeNull();
+    expect(await loadSubmissionFkBySubmissionIdText('   ', 100)).toBeNull();
+  });
+
+  it('returns null on missing / non-positive organizationId — defensive tenant gate', async () => {
+    hoisted.submissionsFixtures.push({ id: 42, organization_id: 100 });
+    expect(await loadSubmissionFkBySubmissionIdText('42', 0)).toBeNull();
+    expect(await loadSubmissionFkBySubmissionIdText('42', -1)).toBeNull();
+    expect(await loadSubmissionFkBySubmissionIdText('42', Number.NaN)).toBeNull();
+  });
+
+  it('returns null when the submissions row does not exist (the integer is well-formed but unmatched)', async () => {
+    // No fixture matching id=999 for org=100 → null even though the TEXT
+    // is a valid positive integer.
+    expect(await loadSubmissionFkBySubmissionIdText('999', 100)).toBeNull();
   });
 });

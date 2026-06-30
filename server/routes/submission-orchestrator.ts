@@ -33,6 +33,10 @@ import {
 } from '../services/m2-summary-builders.js';
 import { buildCSRTables } from '../services/csr-tabulation-builders.js';
 import { validateEctdPackageHardened, flattenFindings } from '../services/ectd/ectd-validator-hardening.js';
+import { loadCmcSourcesForProject } from '../services/cmc/load-cmc-sources-for-project.js';
+import { loadCsrInputsForProject } from '../services/csr/load-csr-inputs-for-project.js';
+import { loadNonclinicalStudiesForProject } from '../services/preclinical/load-nonclinical-studies-for-project.js';
+import { pool } from '../db.js';
 import auditService from '../services/auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -185,20 +189,80 @@ const CSRInputSchema = z.object({
   deathCount: z.number().optional(),
 });
 
-const RunSchema = z.object({
+// ── Common fields shared by Mode A and Mode B ───────────────────────────────
+const RunCommonSchema = z.object({
   submissionId: z.string().min(1),
+  /**
+   * Path-to-GA §C.4 (Path B): optional canonical FK back to
+   * public.submissions(id). When supplied, the orchestrator dual-writes
+   * both `submission_id` (TEXT, legacy) and `submission_id_fk` (INTEGER,
+   * joinable). Legacy callers omit this and the FK column stays NULL
+   * until a per-tenant backfill resolves it. The route handler threads
+   * this straight into OrchestratorInputs.submissionFk without
+   * normalization — the service layer (and
+   * loadSubmissionFkBySubmissionIdText) owns the resolution / dual-write
+   * logic.
+   */
+  submissionFk: z.number().int().positive().optional(),
   applicationNumber: z.string().min(1),
   region: RegionSchema,
   submissionType: SubmissionTypeSchema,
-  cmcSources: z.array(CanonicalSourceSchema).default([]),
-  nonclinicalStudies: z.array(NonclinicalStudySchema).default([]),
-  clinicalStudyData: z.array(StudyDataSchema).default([]),
-  csrInputs: z.array(CSRInputSchema).default([]),
   drugSubstanceName: z.string().optional(),
   drugProductName: z.string().optional(),
   indication: z.string().optional(),
   skipValidation: z.boolean().optional(),
+  // clinicalStudyData has NO loader yet (per PATH_TO_GA §D.3 — needs a real
+  // CDISC ADaM extractor). Accept it in BOTH modes for now; future GA-2 work
+  // will populate it from a server-side extractor and remove it from the body.
+  clinicalStudyData: z.array(StudyDataSchema).default([]),
 });
+
+// Mode A — server-side input assembly via the three loaders shipped in
+// 58db31a1. The caller supplies project identifiers and the route loads the
+// orchestrator inputs server-side. This is the consumer-facing shape.
+//
+// CRITICAL: three different project-id types. The CMC reader wants the CMC
+// project uuid (cmc_projects.id, string). The CSR reader wants the
+// concept2cure projects.id (number). The nonclinical reader wants
+// ctd_programs.id (number). The body MUST carry all three explicitly so the
+// caller's project model maps to ours unambiguously.
+const RunModeASchema = RunCommonSchema.extend({
+  projectId: z.number().int().positive(),
+  cmcProjectId: z.string().uuid().optional(),
+  ctdProgramId: z.number().int().positive().optional(),
+  // Mode A explicitly rejects hand-built inputs.
+  cmcSources: z.undefined().optional(),
+  nonclinicalStudies: z.undefined().optional(),
+  csrInputs: z.undefined().optional(),
+});
+
+// Mode B — backward-compat. Existing programmatic callers supply
+// pre-assembled OrchestratorInputs arrays in the body. No loader is invoked.
+const RunModeBSchema = RunCommonSchema.extend({
+  cmcSources: z.array(CanonicalSourceSchema).default([]),
+  nonclinicalStudies: z.array(NonclinicalStudySchema).default([]),
+  csrInputs: z.array(CSRInputSchema).default([]),
+  // Mode B explicitly rejects projectId — caller is supplying the assembled
+  // inputs so a project-id reference would be ambiguous.
+  projectId: z.undefined().optional(),
+});
+
+// The two run modes auto-discriminate by the presence of `projectId`
+// (Mode A requires it; Mode B forbids it), so a plain union over transformed
+// branches is sufficient — and, unlike `discriminatedUnion`, it can legally
+// contain `.transform()`ed options. Each branch normalizes `mode` to a literal
+// so downstream code can still narrow on `parsed.data.mode`. Any `mode` field a
+// legacy caller sends is stripped by the (non-strict) object schema and ignored.
+// A factory lets the regenerate route reuse the exact same shape plus its own
+// fields without calling `.extend()` on the resulting union.
+function buildRunSchema<T extends z.ZodRawShape>(extraShape: T) {
+  return z.union([
+    RunModeASchema.extend(extraShape).transform(d => ({ ...d, mode: 'project' as const })),
+    RunModeBSchema.extend(extraShape).transform(d => ({ ...d, mode: 'inline' as const })),
+  ]);
+}
+
+const RunSchema = buildRunSchema({});
 
 // ── Routes ──────────────────────────────────────────────────────────────────
 
@@ -217,14 +281,141 @@ router.post('/runs', async (req: Request, res: Response) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
 
-  const parsed = RunSchema.safeParse(req.body);
+  // Defensive: reject ambiguous requests where the caller supplied BOTH
+  // projectId AND any hand-built input array. Either mode by itself is
+  // valid; both together is a programming error.
+  const rawBody = req.body ?? {};
+  const hasProjectId = typeof rawBody.projectId === 'number';
+  const hasInlineInputs =
+    Array.isArray(rawBody.cmcSources) ||
+    Array.isArray(rawBody.nonclinicalStudies) ||
+    Array.isArray(rawBody.csrInputs);
+  if (hasProjectId && hasInlineInputs) {
+    // Do NOT echo the parsed body — PHI / sponsor-confidential payloads in
+    // the inline-inputs arrays may end up logged client-side. Log server-side
+    // with org context for triage; client gets a generic message.
+    log.warn('Ambiguous /runs body: both projectId and inline inputs supplied', { organizationId });
+    return res.status(400).json({ error: 'ambiguous_request', message: 'Supply either projectId OR inline {cmcSources, nonclinicalStudies, csrInputs} — never both.' });
+  }
+
+  const parsed = RunSchema.safeParse(rawBody);
   if (!parsed.success) {
-    return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
+    // Same PHI-protection rationale as charters.ts: don't echo parsed.error
+    // (Zod issues include 'received' values). Log full issues server-side.
+    log.warn('Invalid /runs body', { issues: parsed.error.issues, organizationId });
+    return res.status(400).json({ error: 'invalid_request' });
+  }
+
+  let orchestratorInputs: Omit<OrchestratorInputs, 'organizationId'>;
+  try {
+    if (parsed.data.mode === 'project') {
+      // ── Mode A: server-side input assembly ──────────────────────────────
+      // Tenant-scoped probe BEFORE any loader call. Cross-org projectId
+      // returns 403 (not 404) — same existence-info-leak prevention as
+      // charters.ts:238-251. The caller IS authenticated; "you can't see
+      // this resource" is the honest answer regardless of which org owns it.
+      const { rows } = await pool.query(
+        'SELECT id FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1',
+        [parsed.data.projectId, organizationId],
+      );
+      if (rows.length === 0) {
+        return res.status(403).json({ error: 'project_not_accessible' });
+      }
+
+      // Load the three input arrays in parallel. Each loader is
+      // tenant-scoped internally (asserts orgId positivity + filters by org)
+      // so the previous probe is defense-in-depth, not the only check.
+      // Individual failures surface clearly via the named promise rejection
+      // — a single loader failure does NOT produce a half-assembled
+      // OrchestratorInputs (the catch below short-circuits).
+      const [cmcSources, nonclinicalStudies, csrInputs] = await Promise.all([
+        parsed.data.cmcProjectId
+          ? loadCmcSourcesForProject(organizationId, parsed.data.cmcProjectId)
+          : Promise.resolve([]),
+        parsed.data.ctdProgramId
+          ? loadNonclinicalStudiesForProject(organizationId, parsed.data.ctdProgramId)
+          : Promise.resolve([]),
+        loadCsrInputsForProject(organizationId, parsed.data.projectId),
+      ]);
+
+      // 21 CFR Part 11 §11.10(e) audit attribution. Log COUNTS only — never
+      // the payload bodies (PHI / sponsor-confidential data lives there).
+      auditService.logAction({
+        userId: (req as any).user?.id ?? 0,
+        tenantId: organizationId,
+        action: 'orchestrator_inputs_assembled',
+        resourceType: 'submission_orchestrator',
+        resourceId: parsed.data.submissionId,
+        details: {
+          mode: 'project',
+          projectId: parsed.data.projectId,
+          cmcProjectId: parsed.data.cmcProjectId,
+          ctdProgramId: parsed.data.ctdProgramId,
+          cmcSourceCount: cmcSources.length,
+          nonclinicalStudyCount: nonclinicalStudies.length,
+          csrInputCount: csrInputs.length,
+        },
+      }).catch(err => log.warn('Audit log failed (non-fatal)', { err: err?.message }));
+
+      orchestratorInputs = {
+        submissionId: parsed.data.submissionId,
+        // Path-to-GA §C.4 (Path B): thread the optional canonical FK
+        // through both modes without normalization. Undefined when the
+        // caller didn't supply it; the service layer leaves the column
+        // NULL in that case.
+        submissionFk: parsed.data.submissionFk,
+        applicationNumber: parsed.data.applicationNumber,
+        // The route validates against the full eCTD region set and a flexible
+        // submission-type string (per #928, which removed the hardcoded
+        // enums). The orchestrator's OrchestratorInputs still declares the
+        // legacy-narrow RegionCode / submission-type union, and treats region
+        // as a string at its own boundaries (see `as RegionCode` in
+        // submission-package-orchestrator). Cast at this trust boundary so the
+        // wider, validated request value flows through unchanged.
+        region: parsed.data.region as OrchestratorInputs['region'],
+        submissionType: parsed.data.submissionType as OrchestratorInputs['submissionType'],
+        cmcSources,
+        nonclinicalStudies,
+        clinicalStudyData: parsed.data.clinicalStudyData as OrchestratorInputs['clinicalStudyData'],
+        csrInputs,
+        drugSubstanceName: parsed.data.drugSubstanceName,
+        drugProductName: parsed.data.drugProductName,
+        indication: parsed.data.indication,
+        skipValidation: parsed.data.skipValidation,
+      };
+    } else {
+      // ── Mode B: backward-compat inline inputs ───────────────────────────
+      orchestratorInputs = {
+        submissionId: parsed.data.submissionId,
+        submissionFk: parsed.data.submissionFk,
+        applicationNumber: parsed.data.applicationNumber,
+        // The route validates against the full eCTD region set and a flexible
+        // submission-type string (per #928, which removed the hardcoded
+        // enums). The orchestrator's OrchestratorInputs still declares the
+        // legacy-narrow RegionCode / submission-type union, and treats region
+        // as a string at its own boundaries (see `as RegionCode` in
+        // submission-package-orchestrator). Cast at this trust boundary so the
+        // wider, validated request value flows through unchanged.
+        region: parsed.data.region as OrchestratorInputs['region'],
+        submissionType: parsed.data.submissionType as OrchestratorInputs['submissionType'],
+        cmcSources: (parsed.data.cmcSources ?? []) as OrchestratorInputs['cmcSources'],
+        nonclinicalStudies: parsed.data.nonclinicalStudies ?? [],
+        clinicalStudyData: parsed.data.clinicalStudyData as OrchestratorInputs['clinicalStudyData'],
+        csrInputs: parsed.data.csrInputs ?? [],
+        drugSubstanceName: parsed.data.drugSubstanceName,
+        drugProductName: parsed.data.drugProductName,
+        indication: parsed.data.indication,
+        skipValidation: parsed.data.skipValidation,
+      };
+    }
+  } catch (err) {
+    log.error('Input assembly failed', { err: err instanceof Error ? err.message : String(err), organizationId });
+    return res.status(500).json({ error: 'input_assembly_failed', message: err instanceof Error ? err.message : 'unknown' });
   }
 
   try {
     const result = await runOrchestrator({
-      ...(parsed.data as Omit<OrchestratorInputs, 'organizationId'>),
+      ...orchestratorInputs,
       organizationId,
     });
     return res.json({
@@ -320,7 +511,7 @@ router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
   const previousRun = await getRun(String(req.params.runId), organizationId);
   if (!previousRun) return res.status(404).json({ error: 'run_not_found' });
 
-  const RegenSchema = RunSchema.extend({
+  const RegenSchema = buildRunSchema({
     changedStep: z.string().optional(),
   });
   const parsed = RegenSchema.safeParse(req.body);

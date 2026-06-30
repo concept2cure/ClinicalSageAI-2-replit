@@ -270,16 +270,25 @@ describe('Move 3 — package.validate wires validateEctdPackageHardened', () => 
     expect(run.status).toBe('failed');
   });
 
-  it('step is `complete` and run is `complete` when gatewayReady=true (happy path sanity check)', async () => {
+  it('step is `complete` and run suspends at awaiting-signature when gatewayReady=true (happy path)', async () => {
     // Default beforeEach sets gatewayReady=true. This pins the symmetric
     // success contract so the failure assertion above can't be a false
     // positive against an always-failing wiring.
+    //
+    // Path-to-GA §C.11 update: the baseInputs submissionType is 'IND', which
+    // is in the SIGNATURE_REQUIRED_SUBMISSION_TYPES allowlist. With
+    // gatewayReady=true, the run advances through package.validate → complete
+    // and then HALTS at package.sign in `awaiting-signature` (no signature
+    // row exists in the mock DB). Run-level status mirrors the step.
     const { run } = await runOrchestrator(baseInputs());
 
     expect(hoisted.validateEctdPackageHardened).toHaveBeenCalledTimes(1);
     const validateStep = run.steps.find(s => s.key === 'package.validate')!;
     expect(validateStep.status).toBe('complete');
-    expect(run.status).toBe('complete');
+    // Validate completes; sign step suspends.
+    const signStep = run.steps.find(s => s.key === 'package.sign')!;
+    expect(signStep.status).toBe('awaiting-signature');
+    expect(run.status).toBe('awaiting-signature');
   });
 });
 
@@ -547,5 +556,263 @@ describe('Move 6 — getRunResumeReadiness', () => {
     // Crucially: the job-status probe should NOT have been called — the
     // tenant filter shorts the function before any per-job query.
     expect(hoisted.getCSRBuildJobStatus).not.toHaveBeenCalled();
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Path-to-GA §C.4 — submissionFk threads through persistRun / persistStepEvent
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// These cases overlap the Move 3/5/6 surface to prove the new column
+// behaves correctly across (a) the fresh-run synchronous pipeline (Move 3),
+// (b) the m3.refine AI step (Move 5), and (c) the awaiting-async enqueue
+// path (Move 6). They harvest the persistRun INSERT params straight from
+// the mocked pool.query — the FK column position is what we're locking in.
+//
+// Param order (per persistRun in submission-package-orchestrator.ts):
+//   $1 run_id, $2 organization_id, $3 submission_id, $4 submission_id_fk,
+//   $5 application_number, $6 region, $7 submission_type, $8 started_at,
+//   $9 completed_at, $10 status, $11 steps
+const RUN_INSERT_FK_PARAM_INDEX = 3;
+
+// Param order for persistStepEvent INSERT:
+//   $1 run_id, $2 organization_id, $3 submission_id_fk, $4 step_key,
+//   $5 event_type, $6 status, $7 input_hash, $8 output_hash, $9 output_ref,
+//   $10 error
+const STEP_INSERT_FK_PARAM_INDEX = 2;
+
+function isRunInsertCall(call: [string, unknown[]?]): boolean {
+  return typeof call[0] === 'string' && /INSERT\s+INTO\s+submission_orchestrator_runs/i.test(call[0]);
+}
+
+function isStepInsertCall(call: [string, unknown[]?]): boolean {
+  return typeof call[0] === 'string' && /INSERT\s+INTO\s+submission_orchestrator_steps/i.test(call[0]);
+}
+
+describe('Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6', () => {
+  it('threads submissionFk into every persistRun + persistStepEvent INSERT when supplied (Move 3 happy path)', async () => {
+    // gatewayReady=true by default; this is the all-sync, single-pass case.
+    const { run } = await runOrchestrator(baseInputs({ submissionFk: 42 }));
+    expect(run.submissionFk).toBe(42);
+
+    // Every captured persistRun INSERT carries fk=42 at the expected position.
+    const runInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isRunInsertCall(c as [string, unknown[]?]),
+    );
+    expect(runInserts.length).toBeGreaterThan(0);
+    for (const call of runInserts) {
+      const params = call[1] as unknown[];
+      expect(params[RUN_INSERT_FK_PARAM_INDEX]).toBe(42);
+    }
+
+    // Every captured persistStepEvent INSERT carries fk=42 at the expected position.
+    const stepInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isStepInsertCall(c as [string, unknown[]?]),
+    );
+    expect(stepInserts.length).toBeGreaterThan(0);
+    for (const call of stepInserts) {
+      const params = call[1] as unknown[];
+      expect(params[STEP_INSERT_FK_PARAM_INDEX]).toBe(42);
+    }
+  });
+
+  it('leaves submissionFk NULL on every INSERT when caller omits it (back-compat)', async () => {
+    const inputs = baseInputs();
+    // Defensive: baseInputs does not set submissionFk, but make it explicit.
+    delete (inputs as { submissionFk?: number }).submissionFk;
+
+    const { run } = await runOrchestrator(inputs);
+    expect(run.submissionFk).toBeUndefined();
+
+    const runInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isRunInsertCall(c as [string, unknown[]?]),
+    );
+    for (const call of runInserts) {
+      const params = call[1] as unknown[];
+      expect(params[RUN_INSERT_FK_PARAM_INDEX]).toBeNull();
+    }
+    const stepInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isStepInsertCall(c as [string, unknown[]?]),
+    );
+    for (const call of stepInserts) {
+      const params = call[1] as unknown[];
+      expect(params[STEP_INSERT_FK_PARAM_INDEX]).toBeNull();
+    }
+  });
+
+  it('refuses to persist a non-positive submissionFk — coerces to NULL rather than corrupting the column', async () => {
+    // The interface types submissionFk as `number`, but a buggy caller
+    // could pass 0 / negative / NaN. The service-layer guard coerces
+    // those to NULL on the wire so the FK column never carries a value
+    // that could never resolve to a real submissions.id.
+    const inputs = baseInputs() as OrchestratorInputs & { submissionFk?: number };
+    inputs.submissionFk = 0;
+    await runOrchestrator(inputs);
+
+    const runInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isRunInsertCall(c as [string, unknown[]?]),
+    );
+    expect(runInserts.length).toBeGreaterThan(0);
+    for (const call of runInserts) {
+      const params = call[1] as unknown[];
+      expect(params[RUN_INSERT_FK_PARAM_INDEX]).toBeNull();
+    }
+  });
+
+  it('Move 6: awaiting-async enqueue carries submissionFk on the suspended-run persistRun INSERT', async () => {
+    hoisted.launchCSRBuildAsync.mockResolvedValue({ jobId: 555, status: 'queued' });
+    const { run } = await runOrchestrator(baseInputs({ enableCSRNarrative: true, submissionFk: 99 }));
+    expect(run.status).toBe('awaiting-async');
+    expect(run.submissionFk).toBe(99);
+
+    // The final persistRun INSERT before the awaiting-async return must
+    // still carry the FK (we don't lose it on the suspend boundary).
+    const runInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isRunInsertCall(c as [string, unknown[]?]),
+    );
+    expect(runInserts.length).toBeGreaterThan(0);
+    const lastRunInsert = runInserts[runInserts.length - 1];
+    const params = lastRunInsert[1] as unknown[];
+    expect(params[RUN_INSERT_FK_PARAM_INDEX]).toBe(99);
+
+    // And every step audit row written while building the suspend point
+    // mirrors it too — the csr.draft-narrative `start` / `complete` rows
+    // both carry the FK.
+    const stepInserts = hoisted.poolQuery.mock.calls.filter(c =>
+      isStepInsertCall(c as [string, unknown[]?]),
+    );
+    expect(stepInserts.length).toBeGreaterThan(0);
+    for (const call of stepInserts) {
+      const params = call[1] as unknown[];
+      expect(params[STEP_INSERT_FK_PARAM_INDEX]).toBe(99);
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Path-to-GA §C.11 — package.sign e-sig gate
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// These cases pin the orchestrator side of the gate:
+//   - skipped on non-REQUIRED submission types (OQ-1 allowlist)
+//   - awaiting-signature when no signature row exists for the bound digest
+//   - complete-on-resume when a signature row exists for the bound digest
+//
+// The findActiveReleaseSignature lookup hits pool.query directly (raw SQL,
+// not Drizzle), so we drive it through the same hoisted mock that captures
+// every other pool.query invocation.
+
+describe('Path-to-GA §C.11 — package.sign e-sig gate', () => {
+  it('package.sign is `skipped` for non-REQUIRED submission types (OQ-1 allowlist)', async () => {
+    // 510k is NOT in the REQUIRED allowlist (IND/NDA/BLA/MAA only).
+    const { run } = await runOrchestrator(
+      baseInputs({ submissionType: '510k' as OrchestratorInputs['submissionType'] }),
+    );
+
+    const signStep = run.steps.find(s => s.key === 'package.sign')!;
+    expect(signStep.status).toBe('skipped');
+    expect(signStep.outputRef).toMatch(/not in REQUIRED/);
+
+    // Run does NOT suspend — completes normally.
+    expect(run.status).toBe('complete');
+  });
+
+  it('package.sign transitions to `awaiting-signature` when no matching signature exists (IND submission, no sig in DB)', async () => {
+    // Default pool.query mock returns empty rowset → findActiveReleaseSignature
+    // returns null → step transitions to awaiting-signature.
+    const { run } = await runOrchestrator(baseInputs({ submissionType: 'IND' }));
+
+    const signStep = run.steps.find(s => s.key === 'package.sign')!;
+    expect(signStep.status).toBe('awaiting-signature');
+    // Run-level status mirrors the step.
+    expect(run.status).toBe('awaiting-signature');
+    // outputRef carries the persisted payload digest.
+    expect(signStep.outputRef).toBeDefined();
+    const payload = JSON.parse(signStep.outputRef!) as { payloadDigest: string };
+    expect(payload.payloadDigest).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('resume path drives package.sign to `complete` when a matching signature row exists', async () => {
+    // First: run to awaiting-signature.
+    const inputs = baseInputs({ submissionType: 'IND' });
+    const initial = await runOrchestrator(inputs);
+    expect(initial.run.status).toBe('awaiting-signature');
+    const signStep = initial.run.steps.find(s => s.key === 'package.sign')!;
+    const persistedPayload = JSON.parse(signStep.outputRef!) as { payloadDigest: string };
+
+    // Build the persisted-run row that getRun will return on resume.
+    const runRow = {
+      run_id: initial.run.runId,
+      organization_id: 1,
+      submission_id: 'sub-1',
+      application_number: 'IND123456',
+      region: 'US',
+      submission_type: 'IND',
+      started_at: initial.run.startedAt,
+      completed_at: null,
+      status: 'awaiting-signature',
+      steps: JSON.stringify(initial.run.steps),
+    };
+
+    // Drive pool.query: getRun returns the row; the signature lookup returns
+    // a hit for the exact digest the orchestrator computed.
+    hoisted.poolQuery.mockImplementation(async (sql: string, _params?: unknown[]) => {
+      if (typeof sql === 'string' && sql.includes('FROM submission_orchestrator_runs')) {
+        return { rows: [runRow], rowCount: 1 };
+      }
+      if (typeof sql === 'string' && sql.includes('FROM electronic_signatures')) {
+        // Match the persisted digest — caller's tenant + digest filter hits.
+        return { rows: [{ id: 7777 }], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 1 };
+    });
+
+    const resumed = await runOrchestrator(inputs, { resumeRunId: initial.run.runId });
+
+    const resumedSignStep = resumed.run.steps.find(s => s.key === 'package.sign')!;
+    expect(resumedSignStep.status).toBe('complete');
+    expect(resumed.run.status).toBe('complete');
+    const completePayload = JSON.parse(resumedSignStep.outputRef!) as {
+      signatureId: number;
+      payloadDigest: string;
+    };
+    expect(completePayload.signatureId).toBe(7777);
+    expect(completePayload.payloadDigest).toBe(persistedPayload.payloadDigest);
+  });
+
+  it('resume path leaves the run in `awaiting-signature` when no signature row exists yet', async () => {
+    // First: run to awaiting-signature.
+    const inputs = baseInputs({ submissionType: 'IND' });
+    const initial = await runOrchestrator(inputs);
+    expect(initial.run.status).toBe('awaiting-signature');
+
+    const runRow = {
+      run_id: initial.run.runId,
+      organization_id: 1,
+      submission_id: 'sub-1',
+      application_number: 'IND123456',
+      region: 'US',
+      submission_type: 'IND',
+      started_at: initial.run.startedAt,
+      completed_at: null,
+      status: 'awaiting-signature',
+      steps: JSON.stringify(initial.run.steps),
+    };
+
+    // Drive pool.query: getRun returns the row; signature lookup still misses.
+    hoisted.poolQuery.mockImplementation(async (sql: string) => {
+      if (typeof sql === 'string' && sql.includes('FROM submission_orchestrator_runs')) {
+        return { rows: [runRow], rowCount: 1 };
+      }
+      // electronic_signatures lookup — empty (no signature yet).
+      return { rows: [], rowCount: 0 };
+    });
+
+    const resumed = await runOrchestrator(inputs, { resumeRunId: initial.run.runId });
+
+    const resumedSignStep = resumed.run.steps.find(s => s.key === 'package.sign')!;
+    expect(resumedSignStep.status).toBe('awaiting-signature');
+    // Run unchanged — caller polls again.
+    expect(resumed.run.status).toBe('awaiting-signature');
   });
 });
