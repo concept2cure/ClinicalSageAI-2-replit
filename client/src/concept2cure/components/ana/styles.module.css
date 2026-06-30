@@ -1157,6 +1157,10 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 14px 16px;
+  background: var(--bg-000);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
@@ -1188,6 +1192,10 @@
   margin: 0;
 }
 
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+}
 /* ──────────────────────────────────────────────────────────────────────────
    ReadinessGatePanel — the E10 "assemble Module 2/5 + readiness gate" strip.
    Same calm, reviewer-grade language as the verification panel: a left accent
@@ -1203,6 +1211,7 @@
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
+/* ───────────────────────────────────────────────────────────────────────────
    CDx claim-concordance panel (E12). Cross-dossier extension of the
    verification trust-strip: proves the CDx claims read identically across the
    paired drug + device dossiers. Same calm, reviewer-grade idiom.
@@ -1216,6 +1225,7 @@
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
+/* ───────────────────────────────────────────────────────────────────────────
    Briefing-book reviewer-challenge / pre-mortem panel (E8). Modeled on the
    verification trust-strip: calm, factual, accessible. All pushback is framed
    as ANTICIPATED — never an actual agency position.
@@ -1231,6 +1241,11 @@
 .gatePanel[data-status='ready'] { border-left-color: var(--success, #2f7d57); }
 .gatePanel[data-status='blocked'] { border-left-color: var(--danger, #b4541f); }
 .gatePanel[data-status='not_assessed'] { border-left-color: var(--border); }
+.gateHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .concordPanel[data-status='concordant'] { border-left-color: var(--success, #2f7d57); }
 .concordPanel[data-status='discordant'] { border-left-color: var(--danger, #b4541f); }
 .gateHead,
@@ -1244,6 +1259,18 @@
 .gatePanel[data-status='not_assessed'] .gateHead { color: var(--ink-muted, var(--text-300)); }
 .concordPanel[data-status='concordant'] .concordHead { color: var(--success, #2f7d57); }
 .concordPanel[data-status='discordant'] .concordHead { color: var(--danger, #b4541f); }
+.gateTitle {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.concordPanel[data-status='concordant'] .concordHead { color: var(--success, #2f7d57); }
+.concordPanel[data-status='discordant'] .concordHead { color: var(--danger, #b4541f); }
+.concordTitle {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
 .briefPanel[data-risk='critical'],
 .briefPanel[data-risk='high'] { border-left-color: var(--danger, #b4541f); }
 .briefPanel[data-risk='insufficient_data'] { border-left-color: var(--border); }
@@ -1262,6 +1289,18 @@
 }
 .gateSummary,
 .concordDetail,
+.gateSummary {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+}
+.concordDetail {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-muted, var(--text-300));
+}
 .briefDetail {
   margin: 4px 0 0;
   font-size: 12px;
@@ -1293,6 +1332,13 @@
   gap: 8px;
 }
 
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
 /* ─────────────────────────────────────────────────────────────────────────
    E14 — CRL/RTF pre-mortem decision artifact panel. Calm, reviewer-grade;
    subtle motion only; honest framing always visible.
@@ -1450,6 +1496,13 @@
   gap: 6px;
 }
 
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
 /* Dossier Consistency Sweep (E2) — the second verification surface. Mirrors
    the verification trust-panel; verdict tiers drive the left-border severity. */
 .studioConsistency { padding: 8px 14px 0; }
@@ -1458,8 +1511,7 @@
   border-left-width: 3px;
   border-radius: 8px;
   padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 600;
+  background: var(--bg-000);
 }
 .perVerdict[data-status='ready'] { border-left-color: var(--success, #2f7d57); color: var(--success, #2f7d57); }
 .perVerdict[data-status='blocked'] { border-left-color: var(--danger, #b4541f); color: var(--danger, #b4541f); }
@@ -1497,6 +1549,7 @@
   font-weight: 600;
 }
 
+}
 /* ─────────────────────────────────────────────────────────────────────────
    Natural-history / external-control evidence-dossier affordance (E13). A
    flag-gated panel that lets the user ask AnA to assemble the dossier and that
@@ -1545,6 +1598,13 @@
   gap: 4px;
 }
 .perBlockers li,
+.perBlockers li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-body, var(--ink));
+}
 .gateChecks li {
   display: flex;
   align-items: center;
@@ -1558,6 +1618,9 @@
   margin: 8px 0 0;
   padding: 0;
   list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .consistencyPanel[data-status='clean'] .consistencyHead { color: var(--success, #2f7d57); }
 .consistencyPanel[data-status='minor_issues'] .consistencyHead { color: var(--ink-body, var(--ink)); }
@@ -1755,6 +1818,14 @@
   margin-top: 10px;
   font-size: 12px;
   color: var(--accent-main-100, #6366f1);
+  font-weight: 500;
+  color: var(--accent-main-100, #6366f1);
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
+  border: 1px solid var(--accent-main-100, #6366f1);
+  border-radius: 7px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 200ms ease-out;
 }
 .dossierTitle {
   font-size: 12px;
@@ -1779,6 +1850,11 @@
   color: var(--accent-main-100, #6366f1);
   background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
   border: 1px solid var(--accent-main-100, #6366f1);
+  color: var(--accent-main-100, #6366f1);
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
+  border: 1px solid var(--accent-main-100, #6366f1);
+  border-radius: 7px;
+  padding: 5px 10px;
   cursor: pointer;
   transition: background 200ms ease-out;
 }
@@ -1822,6 +1898,20 @@
   color: var(--accent-main-100, #6366f1);
 }
 
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent-main-100, #6366f1);
+  background: var(--accent-subtle, rgba(99, 102, 241, 0.08));
+  border: 1px solid var(--accent-main-100, #6366f1);
+  border-radius: 7px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 200ms ease-out;
+}
 /* ── E1: Part 11 verified-and-sealed export ─────────────────────────────────
  * "Sign and seal verified version" action, the sealed badge, and the
  * expandable provenance trail. Calm, reviewer-grade; no decorative color. */
@@ -2123,6 +2213,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  gap: 3px;
 }
 .narrativeHead {
   display: flex;
@@ -2316,6 +2407,12 @@
   border: 1px solid var(--accent-main-100, #6366f1);
   border-radius: 7px;
   padding: 6px 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 7px;
+  color: #fff;
+  background: var(--accent-main-100, #6366f1);
+  border: 1px solid var(--accent-main-100, #6366f1);
   cursor: pointer;
   transition: background 200ms ease-out, opacity 200ms ease-out;
 }
