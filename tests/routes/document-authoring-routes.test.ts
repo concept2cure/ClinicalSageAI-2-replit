@@ -2,7 +2,7 @@
  * Integration tests for the restored Document Authoring routes
  * (server/routes/documentAuthoring.routes.ts) — the 21 CFR Part 11 document
  * create/fetch path the client depends on, which had regressed to a live 404
- * after the original file was deleted. See FORENSIC_CODE_AUDIT_2026-05-29.md.
+ * after the original file was deleted. See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md.
  *
  * db + auditService are mocked so the handlers' control flow (auth/org/workspace
  * gates, validation, create + initial-version, tenant-scoped fetch) is exercised

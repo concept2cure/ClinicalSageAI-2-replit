@@ -611,7 +611,7 @@ class Part11ComplianceService {
       verificationCode,
       // Honest attribution: record the real client IP when the caller threads it
       // (route handlers have req.ip), or null when unknown — never a fabricated
-      // 127.0.0.1. See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: Part 11 attribution).
+      // 127.0.0.1. See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: Part 11 attribution).
       ipAddress: ipAddress ?? null,
     };
   }

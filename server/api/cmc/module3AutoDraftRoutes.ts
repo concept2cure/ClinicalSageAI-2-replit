@@ -3,7 +3,7 @@
  *
  * Bridges uploaded/extracted CMC documents to a drafted Module 3 in one shot.
  * Closes the GA gap "CMC / Module 3 ... lacks auto-draft-from-uploads"
- * (GA_GAP_AUDIT_2026-06-10.md:40).
+ * (docs/legacy/GA_GAP_AUDIT_2026-06-10.md:40).
  *
  * Endpoint:
  *  POST /auto-draft/:projectId — map extracted documents → CanonicalSource[] →

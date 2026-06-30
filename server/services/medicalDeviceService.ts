@@ -830,7 +830,7 @@ class MedicalDeviceService {
       // Resolve the real username for Part 11 attribution rather than fabricating it.
       // The users table has no role column, so userRole is left null (honest) instead
       // of the previously hardcoded 'regulatory_specialist' applied to every actor.
-      // See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: Part 11 attribution gaps).
+      // See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: Part 11 attribution gaps).
       let resolvedUserName = `User ${userId}`;
       try {
         const userRows = await dbInstance

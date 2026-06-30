@@ -18,6 +18,12 @@
 import { config as dotenvConfig } from 'dotenv';
 dotenvConfig({ override: false, quiet: true });
 
+// Zod-based env validation — catches misconfigured deployments at the
+// earliest possible point after dotenv populates process.env. Importing
+// the module eagerly parses process.env; on failure it prints a
+// developer-friendly summary and exits with code 1.
+import './config/env';
+
 // Initialize OpenTelemetry + Sentry + IPv4 DNS ordering early, before
 // anything that opens a DB connection or HTTP client.
 import { initializeOpenTelemetry } from './services/telemetry/opentelemetry';

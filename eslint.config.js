@@ -269,7 +269,28 @@ export default [
             name: '@/components/ui/states',
             message: 'Deprecated. Use @/components/ui/statesV2 instead.',
           },
+          {
+            name: 'openai',
+            message: "Use getGateway() from 'server/services/ai-gateway' instead.",
+          },
+          {
+            name: '@anthropic-ai/sdk',
+            message: "Use getGateway() from 'server/services/ai-gateway' instead.",
+          },
         ],
+        patterns: [
+          {
+            group: ['**/openai-client', '**/anthropic-client'],
+            message: 'Legacy wrappers deprecated — use AI gateway.',
+          },
+        ],
+      }],
+
+      // Prevent direct pg Pool construction outside the DB layer.
+      // Use getPool() from 'server/db' instead.
+      'no-restricted-syntax': ['error', {
+        selector: "NewExpression[callee.name='Pool']",
+        message: "Use getPool() from 'server/db' instead of constructing Pool directly.",
       }],
     },
   },
@@ -295,11 +316,23 @@ export default [
             name: '@/components/common/ThinkingDots',
             message: 'Deprecated. Use Spinner from @/components/ui/spinner instead.',
           },
+          {
+            name: 'openai',
+            message: "Use getGateway() from 'server/services/ai-gateway' instead.",
+          },
+          {
+            name: '@anthropic-ai/sdk',
+            message: "Use getGateway() from 'server/services/ai-gateway' instead.",
+          },
         ],
         patterns: [
           {
             group: ['@/components/ui/states'],
             message: 'Deprecated. Use @/components/ui/statesV2 instead.',
+          },
+          {
+            group: ['**/openai-client', '**/anthropic-client'],
+            message: 'Legacy wrappers deprecated — use AI gateway.',
           },
         ],
       }],
@@ -341,6 +374,30 @@ export default [
     rules: {
       'no-var': 'off',
       'no-undef': 'off',
+    },
+  },
+  {
+    // The AI gateway itself needs to import the underlying SDKs — exempt
+    // it from the no-restricted-imports ban on 'openai' and
+    // '@anthropic-ai/sdk'.
+    files: ['server/services/ai-gateway/**'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        paths: [
+          {
+            name: '@/components/ui/states',
+            message: 'Deprecated. Use @/components/ui/statesV2 instead.',
+          },
+        ],
+      }],
+    },
+  },
+  {
+    // The DB bootstrap layer and scripts legitimately construct pg Pool
+    // instances — exempt them from the no-restricted-syntax ban.
+    files: ['server/db/runtime.ts', 'server/db/ensureCoreTables.ts', 'scripts/**'],
+    rules: {
+      'no-restricted-syntax': 'off',
     },
   },
 ];

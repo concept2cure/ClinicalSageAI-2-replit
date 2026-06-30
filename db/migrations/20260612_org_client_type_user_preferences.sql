@@ -5,7 +5,7 @@
 -- Purpose: Adds organizations.client_type (tenant IA: medtech | biotech | pharma
 --          drives which biopharma rail/tab surfaces a tenant sees) and
 --          users.preferences (per-user UI preferences: density, rail collapse
---          state, AnA dock open state) per PHASE_10_2_INSTALL.md §2.
+--          state, AnA dock open state) per docs/legacy/PHASE_10_2_INSTALL.md §2.
 --
 -- eCTD/CTD Context:
 --   - Module(s): N/A — platform shell configuration (no dossier content).

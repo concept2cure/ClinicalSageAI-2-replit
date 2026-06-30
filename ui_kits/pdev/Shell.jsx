@@ -2,7 +2,7 @@
  * PDEV kit · shell. Three columns — rail / main / AnA dock.
  *
  * Mirrors design-system/ui_kits/mdx/shell.jsx with PDEV-specific labels
- * and the sub-nav specified in PDEV_IND_DESIGN_BRIEF.md §1.2.
+ * and the sub-nav specified in docs/legacy/PDEV_IND_DESIGN_BRIEF.md §1.2.
  */
 (() => {
 const { PdevI: I, PDEV_NAV_GROUPS, PDEV_NAV_ITEMS, PDEV_SUGGESTIONS, PDEV_COMMANDS } = window;

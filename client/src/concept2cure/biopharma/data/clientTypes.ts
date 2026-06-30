@@ -1,5 +1,5 @@
 /**
- * Client-type configurations — Phase 10.2 (PHASE_10_2_INSTALL.md §3.1).
+ * Client-type configurations — Phase 10.2 (docs/legacy/PHASE_10_2_INSTALL.md §3.1).
  *
  * One shell, three tenant types. The tenant type drives: rail filter,
  * tab filter, Overview greeting state + starters, and AnA dock suggestion

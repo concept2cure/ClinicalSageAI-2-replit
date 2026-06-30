@@ -4,7 +4,7 @@
  * `isConfigured()` is true only when `EVALIDATOR_BINARY`/`EVALIDATOR_ENDPOINT`
  * points at an existing engine. The actual shell/endpoint invocation + parsing
  * of LORENZ's native report format is the licensed drop-in (the engine and its
- * validation profiles are commercial — see EVALIDATOR_INTEGRATION_SPEC.md and
+ * validation profiles are commercial — see docs/legacy/EVALIDATOR_INTEGRATION_SPEC.md and
  * docs/runbooks/evalidator-setup.md once procured).
  *
  * HONEST FAIL-CLOSED: until that integration lands, `validate()` throws rather

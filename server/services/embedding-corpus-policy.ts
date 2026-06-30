@@ -2,7 +2,7 @@
  * Embedding corpus policy.
  *
  * Closes the "no canonical router policy for 1536d / 3072d vector spaces"
- * gap from DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md.
+ * gap from docs/legacy/DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md.
  *
  * The platform stores embeddings in seven pgvector-backed tables; six are
  * 1536d and one is 3072d. Picking the wrong model for a corpus produces a

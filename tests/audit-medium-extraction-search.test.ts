@@ -1,7 +1,7 @@
 /**
  * Forensic audit MEDIUM block 2 — fabricated extraction / search results
  *
- * Locks in two fixes from FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM):
+ * Locks in two fixes from docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM):
  *  - foresight-knowledge-graph: extractBiomarkers/extractEndpoints no longer
  *    fabricate indication/phase-based defaults (HbA1c, PD-L1, "Primary Efficacy")
  *    and present them as "extracted from CSR data"; they return [] without metadata.

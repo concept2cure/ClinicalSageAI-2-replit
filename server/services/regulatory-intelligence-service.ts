@@ -657,7 +657,7 @@ export class RegulatoryIntelligenceService {
       // Add screen summary. We deliberately do NOT emit a "compliance percentage":
       // a keyword-match ratio is not a validated compliance score and stating it as a
       // percentage implies a precision this heuristic does not have.
-      // See FORENSIC_CODE_AUDIT_2026-05-29.md HI-3.
+      // See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md HI-3.
       const matchedCount = complianceResults.filter(r => r.compliant).length;
       const totalCount = complianceResults.length;
       const unmatchedCount = totalCount - matchedCount;

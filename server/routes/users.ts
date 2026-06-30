@@ -279,7 +279,7 @@ router.patch('/me', async (req: Request, res: Response) => {
 });
 
 // ───────────────────────────────────────────────────────────────────────────
-// Phase 10.2 — per-user UI preferences (PHASE_10_2_INSTALL.md §4).
+// Phase 10.2 — per-user UI preferences (docs/legacy/PHASE_10_2_INSTALL.md §4).
 // Display preferences only; merge-patched into users.preferences (jsonb).
 // Allowed keys are validated explicitly — unknown keys are rejected so the
 // column never accumulates unaudited state.

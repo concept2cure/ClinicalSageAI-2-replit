@@ -4,11 +4,11 @@
 --           plus a pgvector embedding column on the canonical eCTD document
 --           table for downstream RAG grounding.
 --
--- Reconcile (RECONCILE.md, WO-1.0):
+-- Reconcile (docs/legacy/RECONCILE.md, WO-1.0):
 --   * pgvector is already in use elsewhere (vault.document_chunks, csr-knowledge-db),
 --     so CREATE EXTENSION is a safe idempotent no-op.
 --   * There is NO public.documents table. The embedding column lands on the
---     canonical eCTD authoring table coauthor_documents (RECONCILE.md §2), and
+--     canonical eCTD authoring table coauthor_documents (docs/legacy/RECONCILE.md §2), and
 --     the provenance table references its source document POLYMORPHICALLY
 --     (source_document_table + source_document_id).
 --   * RENAME: the table `evidence_links` ALREADY EXISTS (programs.ts /
@@ -16,7 +16,7 @@
 --     evidence_objects -> target graph. To avoid clobbering it (CREATE TABLE
 --     IF NOT EXISTS would silently no-op against the existing different shape),
 --     Phase-1 document provenance lives in `submission_evidence_links`. See
---     RECONCILE.md §2.
+--     docs/legacy/RECONCILE.md §2.
 --   * consistency_findings is DEFERRED to Phase 3 — not created here.
 
 -- Up:
@@ -33,7 +33,7 @@ CREATE INDEX IF NOT EXISTS idx_coauthor_documents_embedding
 -- ── submission_evidence_links ────────────────────────────────────────────────
 -- Bidirectional provenance: a claim/section <-> its source document.
 -- source_document_table + source_document_id are a POLYMORPHIC reference
--- (no single public.documents table) — see RECONCILE.md §2.
+-- (no single public.documents table) — see docs/legacy/RECONCILE.md §2.
 -- Named submission_evidence_links to avoid clobbering the pre-existing
 -- evidence_links table (programs.ts).
 CREATE TABLE IF NOT EXISTS public.submission_evidence_links (

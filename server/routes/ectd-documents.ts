@@ -387,7 +387,7 @@ router.get('/meta/structure', (_req: Request, res: Response) => {
 
 // ── Ingestion: classify + extract (Phase 1, WO-1.4) ──────────────────────────
 //
-// RECONCILE (RECONCILE.md §3): the work order specced these under
+// RECONCILE (docs/legacy/RECONCILE.md §3): the work order specced these under
 // /api/documents/:id/* but there is no /api/documents router. coauthor_documents
 // — the canonical eCTD document table — is served by THIS router, mounted at
 // /api/ectd-documents, so the endpoints live here:

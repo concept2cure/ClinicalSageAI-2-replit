@@ -34,7 +34,7 @@ import { GLOBAL_RI_GROUPS } from './global-ri-ui';
 
 // ── Taxonomy ──────────────────────────────────────────────────────────────────
 
-/** Left-rail tier (mirrors FEATURE_INVENTORY.md §7 "left-rail re-structure"). */
+/** Left-rail tier (mirrors docs/legacy/FEATURE_INVENTORY.md §7 "left-rail re-structure"). */
 export type NavTier = 'global' | 'project' | 'specialist' | 'admin';
 
 export const NAV_TIERS: NavTier[] = ['global', 'project', 'specialist', 'admin'];
@@ -190,7 +190,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE, 'motion-discipline'],
-    notes: 'See HANDOFF_TO_DESIGN_document_authoring.md — editor + Yjs co-author + track-changes + comments + versions + approval + e-sign all have working backends, no UI.',
+    notes: 'See docs/legacy/HANDOFF_TO_DESIGN_document_authoring.md — editor + Yjs co-author + track-changes + comments + versions + approval + e-sign all have working backends, no UI.',
   },
   {
     id: 'regulatory-workspace',
@@ -250,7 +250,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: 'SUBMISSION_WORKSPACES (shared/types/submission-ui.ts)',
     readiness: 'contract-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Framework-agnostic workspace map + error catalog already in shared. Package preview, eValidator pass, ESG send vs eSTAR export picker. See SUBMISSION_CENTER_API.md.',
+    notes: 'Framework-agnostic workspace map + error catalog already in shared. Package preview, eValidator pass, ESG send vs eSTAR export picker. See docs/legacy/SUBMISSION_CENTER_API.md.',
   },
   {
     id: 'ectd-coauthor',
@@ -340,7 +340,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'kit-only',
     compliance: [PART11, A11Y, TONE],
-    notes: 'See PDEV_IND_DESIGN_BRIEF.md. Activity → AI draft → evidence → confirm flow prototyped in ui_kits/pdev.',
+    notes: 'See docs/legacy/PDEV_IND_DESIGN_BRIEF.md. Activity → AI draft → evidence → confirm flow prototyped in ui_kits/pdev.',
   },
   {
     id: 'biopharma',
@@ -432,7 +432,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: 'GET /api/global-ri/catalog',
     readiness: 'contract-ready',
     compliance: [A11Y, TONE],
-    notes: 'Gold-standard pattern: ~41 deterministic capabilities, 9 groups, one-call catalog drives nav + dynamic forms. See HANDOFF_TO_DESIGN_global_ri.md.',
+    notes: 'Gold-standard pattern: ~41 deterministic capabilities, 9 groups, one-call catalog drives nav + dynamic forms. See docs/legacy/HANDOFF_TO_DESIGN_global_ri.md.',
   },
   {
     id: 'precedent-intelligence',
@@ -477,7 +477,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Immutable report records, cryptographic seal, provenance atoms. See INSIGHTS_REPORTING_IMPLEMENTATION_SPEC.md.',
+    notes: 'Immutable report records, cryptographic seal, provenance atoms. See docs/legacy/INSIGHTS_REPORTING_IMPLEMENTATION_SPEC.md.',
   },
   {
     id: 'safety-narrative',
@@ -599,7 +599,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Usage, invoices, budgets, alerts. See MDX_PAYING_CUSTOMER_VALUE_AND_ENTITLEMENTS.',
+    notes: 'Usage, invoices, budgets, alerts. See docs/legacy/MDX_PAYING_CUSTOMER_VALUE_AND_ENTITLEMENTS_2026-06-15.md.',
   },
   {
     id: 'ana-memory',

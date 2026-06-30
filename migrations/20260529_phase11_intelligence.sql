@@ -1,7 +1,7 @@
 -- Phase 11 · Intelligence cluster — minor queue/forecast tables.
 --
 -- Backs the Biostat TLF queue and the Reports timeline-forecast surface
--- (PHASE_11_INSTALL.md §4). These are the only two new tables Phase 11
+-- (docs/legacy/PHASE_11_INSTALL.md §4). These are the only two new tables Phase 11
 -- introduces; every other Intelligence dataset aggregates over existing
 -- rows. The /api/intelligence/* read routes degrade to the ported kit
 -- fixtures while these are empty (the surfaces never 404).

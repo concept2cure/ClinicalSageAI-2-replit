@@ -5,35 +5,18 @@
  * @module server/services/protocol-consent-metrics
  */
 
-interface ConsentMetricsState {
-  formsCreated: number;
-  elementsUpdated: number;
-  formsApproved: number;
-}
+import { createMetricsModule } from './shared/metrics-factory';
 
-const state: ConsentMetricsState = { formsCreated: 0, elementsUpdated: 0, formsApproved: 0 };
+const m = createMetricsModule({
+  formsCreated:    { kind: 'scalar', metric: 'consent_forms_created_total',    help: 'Informed-consent forms created' },
+  elementsUpdated: { kind: 'scalar', metric: 'consent_elements_updated_total', help: 'Consent form elements updated' },
+  formsApproved:   { kind: 'scalar', metric: 'consent_forms_approved_total',   help: 'Informed-consent forms approved' },
+} as const);
 
-export function recordConsentFormCreated(): void { state.formsCreated += 1; }
-export function recordConsentElementUpdated(): void { state.elementsUpdated += 1; }
-export function recordConsentFormApproved(): void { state.formsApproved += 1; }
+export function recordConsentFormCreated(): void { m.inc('formsCreated'); }
+export function recordConsentElementUpdated(): void { m.inc('elementsUpdated'); }
+export function recordConsentFormApproved(): void { m.inc('formsApproved'); }
 
-export function renderConsentMetrics(): string[] {
-  const lines: string[] = [];
-  lines.push('# HELP consent_forms_created_total Informed-consent forms created');
-  lines.push('# TYPE consent_forms_created_total counter');
-  lines.push(`consent_forms_created_total ${state.formsCreated}`);
-  lines.push('# HELP consent_elements_updated_total Consent form elements updated');
-  lines.push('# TYPE consent_elements_updated_total counter');
-  lines.push(`consent_elements_updated_total ${state.elementsUpdated}`);
-  lines.push('# HELP consent_forms_approved_total Informed-consent forms approved');
-  lines.push('# TYPE consent_forms_approved_total counter');
-  lines.push(`consent_forms_approved_total ${state.formsApproved}`);
-  return lines;
-}
-
-export function snapshotConsentMetrics(): ConsentMetricsState { return JSON.parse(JSON.stringify(state)); }
-export function resetConsentMetrics(): void {
-  state.formsCreated = 0;
-  state.elementsUpdated = 0;
-  state.formsApproved = 0;
-}
+export function renderConsentMetrics(): string[] { return m.render(); }
+export function snapshotConsentMetrics() { return m.snapshot(); }
+export function resetConsentMetrics(): void { m.reset(); }

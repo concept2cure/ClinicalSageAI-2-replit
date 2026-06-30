@@ -6,7 +6,7 @@
  *   - extractStructure:  document -> structure + claims + sources, seeding
  *                        evidence_links (document-extract task)
  *
- * RECONCILE (RECONCILE.md, WO-1.0):
+ * RECONCILE (docs/legacy/RECONCILE.md, WO-1.0):
  *   - The canonical document table is `coauthor_documents` (integer PK, public,
  *     eCTD-aware). Documents are referenced from leaves/evidence POLYMORPHICALLY
  *     (documentTable + documentId), so all rows here set documentTable to

@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { spawn } from 'child_process';
-import fetch from 'node-fetch';
 import { Pool } from 'pg';
 
 const logger = console;

@@ -1,7 +1,7 @@
 /**
  * Forensic audit MEDIUM block — fabrication / attribution hardening
  *
- * Locks in three MEDIUM fixes from FORENSIC_CODE_AUDIT_2026-05-29.md:
+ * Locks in three MEDIUM fixes from docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md:
  *  - digital-twin CQA: synthetic Math.random() predictions can no longer auto-approve
  *    a real-time release (forced to manual review) and are disclosed as synthetic.
  *  - degraded-by-default RAG: biotechRagService routes embeddings through the governed

@@ -176,7 +176,7 @@ export class ExportService {
     // server-side fetch of a relative URL, which can never resolve in Node and
     // always failed silently). Return null honestly so the export omits the
     // protocol files rather than appearing to attempt a fetch.
-    // See FORENSIC_CODE_AUDIT_2026-05-29.md HI-4.
+    // See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md HI-4.
     console.warn(
       `getLatestProtocol: protocol retrieval not wired for study ${studyId}; omitting from export.`
     );
@@ -204,7 +204,7 @@ export class ExportService {
   private async getPredictionResults(studyId: string): Promise<any> {
     // No success-prediction model is wired. Return null so the export simply omits
     // success_prediction.json, rather than writing a fabricated probability into a
-    // user's deliverable. See FORENSIC_CODE_AUDIT_2026-05-29.md HI-4.
+    // user's deliverable. See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md HI-4.
     console.warn(
       `getPredictionResults: no prediction model wired for study ${studyId}; omitting from export.`
     );
@@ -217,7 +217,7 @@ export class ExportService {
   private async getSummaryReport(studyId: string): Promise<any> {
     // No summary-report generator is wired. Return null so the export omits
     // summary_report.md, rather than writing a fabricated study summary into a
-    // user's deliverable. See FORENSIC_CODE_AUDIT_2026-05-29.md HI-4.
+    // user's deliverable. See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md HI-4.
     console.warn(
       `getSummaryReport: no summary generator wired for study ${studyId}; omitting from export.`
     );

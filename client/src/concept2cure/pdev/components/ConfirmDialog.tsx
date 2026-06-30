@@ -1,7 +1,7 @@
 /**
  * PdevConfirmDialog — universal reason-for-change modal.
  *
- * Per PDEV_IND_DESIGN_BRIEF.md §2.12 / PHASE_7_INSTALL.md §6 Q5
+ * Per docs/legacy/PDEV_IND_DESIGN_BRIEF.md §2.12 / PHASE_7_INSTALL.md §6 Q5
  * (resolved): every governed mutation routes through this dialog with
  * live char count + minimum length displayed, plus a typed confirm word.
  * Server-side audit middleware writes the SHA-256 chain entry with the

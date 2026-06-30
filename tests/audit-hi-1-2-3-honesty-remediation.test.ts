@@ -1,7 +1,7 @@
 /**
  * Forensic audit HI-1 / HI-2 / HI-3 — honesty remediation guards
  *
- * These tests lock in the fixes from FORENSIC_CODE_AUDIT_2026-05-29.md:
+ * These tests lock in the fixes from docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md:
  *
  *  HI-1  regulatory-digital-twin: stochastic "predictions" must carry an explicit
  *        non-predictive disclosure on every prediction-bearing response.

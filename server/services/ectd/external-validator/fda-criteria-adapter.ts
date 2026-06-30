@@ -1,7 +1,7 @@
 /**
  * FDA-criteria validator adapter — a LICENSE-FREE, deterministic subset of FDA's
  * published *Specifications for eCTD Validation Criteria*, run over an unzipped
- * package directory (EVALIDATOR_INTEGRATION_SPEC.md, Adapters / Phase 4).
+ * package directory (docs/legacy/EVALIDATOR_INTEGRATION_SPEC.md, Adapters / Phase 4).
  *
  * PURPOSE: raise the validation floor when the commercial LORENZ engine is not
  * licensed — catch the highest-severity structural defects we can check ourselves
@@ -94,7 +94,7 @@ export async function validateFdaCriteria(args: ValidateArgs): Promise<ExternalV
     message:
       'fda-criteria-subset: a license-free subset of FDA eCTD validation criteria. ' +
       'Passing it is NOT equivalent to passing the agency (LORENZ) validator.',
-    criterion: 'EVALIDATOR_INTEGRATION_SPEC.md',
+    criterion: 'docs/legacy/EVALIDATOR_INTEGRATION_SPEC.md',
   });
 
   // 1. ICH backbone present.

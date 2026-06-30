@@ -1,7 +1,7 @@
 /**
  * Forensic audit HI-4 — empty/no-op service returns presented as results
  *
- * Locks in the fixes from FORENSIC_CODE_AUDIT_2026-05-29.md HI-4:
+ * Locks in the fixes from docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md HI-4:
  *  - export-service: no fabricated success-probability or summary report written
  *    into a user's exported archive; the broken relative-fetch protocol path is
  *    replaced with an honest null.

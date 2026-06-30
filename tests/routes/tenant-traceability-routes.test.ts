@@ -4,7 +4,7 @@
  *
  * Purpose: lock in the route's observable control-flow contract BEFORE removing
  * the file's `// @ts-nocheck` and fixing its 17 latent type errors, so the type
- * cleanup can be proven behavior-preserving. See FORENSIC_CODE_AUDIT_2026-05-29.md
+ * cleanup can be proven behavior-preserving. See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md
  * (MEDIUM: @ts-nocheck cleanup).
  *
  * The Drizzle access layer (getDb) and tenant-context middleware are mocked so the

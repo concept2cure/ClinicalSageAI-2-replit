@@ -10,7 +10,6 @@
  *   node scripts/test-retention-api.js
  */
 
-import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 
 // Load environment variables

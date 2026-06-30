@@ -300,7 +300,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   }
 
   // ── PDEV → IND workflow (read-side orchestrator + state writes) ──
-  // See PDEV_IND_WORKFLOW_AUDIT.md (repo root) for the architecture
+  // See docs/legacy/PDEV_IND_WORKFLOW_AUDIT.md (repo root) for the architecture
   // finding. The route family is a thin layer over existing primitives
   // (regulatoryPrograms, q_submissions, fda_communications,
   // contradiction engine, ind_package_plans, etc.).

@@ -1,6 +1,6 @@
 /**
  * Biopharma AnA dock — persistent right-side conversation surface
- * (Phase 10.2, PHASE_10_2_INSTALL.md §3.3).
+ * (Phase 10.2, docs/legacy/PHASE_10_2_INSTALL.md §3.3).
  *
  * Two states: 32px seam (closed) and 400px dock (open); ⌘\ toggles from
  * the host App and the open state persists to users.preferences.dockOpen.

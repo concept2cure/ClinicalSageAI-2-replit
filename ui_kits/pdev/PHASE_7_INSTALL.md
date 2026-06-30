@@ -1,6 +1,6 @@
 # PHASE 7 — PDEV install guide for Claude Code
 
-> Companion to `PDEV_IND_DESIGN_BRIEF.md` (project root) and `PHASE_4_INSTALL.md` through `PHASE_8_INSTALL.md`. Phase 7 lands the PDEV (Pharmaceutical Development) workstream — the IND-program counterpart to MDX. Read after Phases 4–8.
+> Companion to `docs/legacy/PDEV_IND_DESIGN_BRIEF.md` and `PHASE_4_INSTALL.md` through `PHASE_8_INSTALL.md`. Phase 7 lands the PDEV (Pharmaceutical Development) workstream — the IND-program counterpart to MDX. Read after Phases 4–8.
 
 ---
 

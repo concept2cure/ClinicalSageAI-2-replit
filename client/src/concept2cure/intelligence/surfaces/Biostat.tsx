@@ -5,7 +5,7 @@
  *
  * The sample-size card mirrors the kit: uncontrolled inputs over the designed
  * fixture value. A server compute endpoint (audit-only) wires later per
- * PHASE_11_INSTALL.md §3.
+ * docs/legacy/PHASE_11_INSTALL.md §3.
  *
  * @module client/src/concept2cure/intelligence/surfaces/Biostat
  */

@@ -305,7 +305,7 @@ export class AIProviderRouter {
   private providerHealth: Map<AIProvider, ProviderHealth> = new Map();
   private defaultStrategy: RoutingStrategy = 'task_based';
   // Deterministic round-robin cursor — replaces a Math.random() pick so routing
-  // is reproducible and auditable. See FORENSIC_CODE_AUDIT_2026-05-29.md (LOW).
+  // is reproducible and auditable. See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md (LOW).
   private roundRobinCursor = 0;
   private liteLLMAdapter: LiteLLMAdapter;
   private langfuse: LangfuseService;

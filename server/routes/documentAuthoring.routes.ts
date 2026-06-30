@@ -7,7 +7,7 @@
  * (client/src/concept2cure/hooks/useDocumentActions.ts → POST .../documents):
  * the prior 2,000-line authoring file was deleted in an omnibus commit and its
  * mount left failing closed, so this endpoint was a live 404. See
- * FORENSIC_CODE_AUDIT_2026-05-29.md (broken Part 11 endpoint).
+ * docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md (broken Part 11 endpoint).
  *
  * Scope is deliberately minimal and fully type-checked (no @ts-nocheck):
  * document create (with an initial version) + fetch-by-id. Signatures, locks,

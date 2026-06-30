@@ -54,7 +54,7 @@ export function evaluateExternalValidationGate(
       'External agency-grade eValidator is required for a production dispatch but did not run ' +
         `(configured=${input.configured}, ran=${ran}). Configure EVALIDATOR_BINARY/EVALIDATOR_ENDPOINT ` +
         'and a region profile, or clear ECTD_REQUIRE_EVALIDATOR for non-production builds. ' +
-        'See EVALIDATOR_INTEGRATION_SPEC.md.',
+        'See docs/legacy/EVALIDATOR_INTEGRATION_SPEC.md.',
     );
   }
 

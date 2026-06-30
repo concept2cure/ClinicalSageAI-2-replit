@@ -347,7 +347,7 @@ export class ForesightKnowledgeGraph {
     // Return biomarkers only when they are actually present in the CSR metadata.
     // No NLP extraction is wired, so we do NOT fabricate indication-based defaults
     // (e.g. HbA1c for diabetes, PD-L1 for oncology) and present them as "extracted
-    // from CSR data". See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: heuristic dressed as NLP).
+    // from CSR data". See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: heuristic dressed as NLP).
     if (csrData.metadata?.biomarkers) {
       return csrData.metadata.biomarkers;
     }
@@ -358,7 +358,7 @@ export class ForesightKnowledgeGraph {
     // Return endpoints only when they are actually present in the CSR metadata.
     // No NLP extraction is wired, so we do NOT fabricate phase-based defaults
     // (e.g. "Primary Efficacy" / "Quality of Life") and present them as extracted.
-    // See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: heuristic dressed as NLP).
+    // See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: heuristic dressed as NLP).
     if (csrData.metadata?.endpoints) {
       return csrData.metadata.endpoints;
     }

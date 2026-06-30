@@ -5,7 +5,7 @@
  * (server/routes/global-ri/catalog.routes.ts) and types the response with the
  * shared contract. This is the reference "contract-ready" hook: the UI renders
  * navigation groups and dynamic forms straight from the returned data, without
- * hard-coding endpoints. See HANDOFF_TO_DESIGN_global_ri.md.
+ * hard-coding endpoints. See docs/legacy/HANDOFF_TO_DESIGN_global_ri.md.
  *
  * Pattern to replicate per surface: a pure `*Options()` + a thin `use*()`.
  */

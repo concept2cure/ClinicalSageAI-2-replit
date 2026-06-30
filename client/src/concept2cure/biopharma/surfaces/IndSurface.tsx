@@ -1,6 +1,6 @@
 /**
  * IND / CTA surface — Phase 10.2 reference implementation of the
- * SurfaceComposer pattern (PHASE_10_2_INSTALL.md §3.2). The remaining
+ * SurfaceComposer pattern (docs/legacy/PHASE_10_2_INSTALL.md §3.2). The remaining
  * pathway surfaces follow this template.
  *
  * Live data: programs from /api/biopharma/programs (passed in), inbound

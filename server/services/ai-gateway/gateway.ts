@@ -471,7 +471,7 @@ export class AIGateway {
       // regulatory text from a keyless prod deploy would silently present
       // fabricated content as a real AI response. Demo fallback is for dev only;
       // an explicit deterministicMode (handled above) remains a deliberate opt-in.
-      // See FORENSIC_CODE_AUDIT_2026-05-29.md (LOW: keyless-prod demo mode).
+      // See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md (LOW: keyless-prod demo mode).
       if (process.env.NODE_ENV === 'production') {
         throw new Error(
           '[AI Gateway] No AI provider is configured in production; refusing to serve demo-mode content. ' +

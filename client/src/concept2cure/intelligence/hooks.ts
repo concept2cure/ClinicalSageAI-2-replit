@@ -8,7 +8,7 @@
  * the fixtures, so the surfaces render fully today and light up when the
  * endpoints land.
  *
- * Endpoint contract (PHASE_11_INSTALL.md §3):
+ * Endpoint contract (docs/legacy/PHASE_11_INSTALL.md §3):
  *   protocol  → GET /api/intelligence/protocol
  *   cmc       → GET /api/intelligence/cmc
  *   biostat   → GET /api/intelligence/biostat

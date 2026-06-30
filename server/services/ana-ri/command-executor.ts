@@ -4447,7 +4447,7 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   // ind-assembly / fda-interactions / contradictions / evidence-list, plus
   // governed mutations: activity set-state / ai-draft / evidence-attach /
   // evidence-detach / fda-feedback apply / ind-assembly compile / readiness
-  // snapshot. Audit prefix agent.ana.pdev.*. See PDEV_IND_WORKFLOW_AUDIT.md.
+  // snapshot. Audit prefix agent.ana.pdev.*. See docs/legacy/PDEV_IND_WORKFLOW_AUDIT.md.
   ...PDEV_COMMAND_METADATA,
   // ─── Auditor capability ────────────────────────────────────────────
   EXPLAIN_AUDIT_ROW_METADATA,

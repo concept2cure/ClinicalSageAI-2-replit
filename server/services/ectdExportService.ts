@@ -231,7 +231,7 @@ ${moduleElements}
 // Adding a region requires a verified regional XML structure + DTD — do NOT
 // silently fall back to another region's backbone (that previously shipped a
 // PMDA/jp file for Health Canada and any other non-FDA/EMA input).
-// See HI_8_ECTD_SCOPING_BRIEF.md (regions in scope: FDA, EMA, PMDA, HC).
+// See docs/legacy/HI_8_ECTD_SCOPING_BRIEF.md (regions in scope: FDA, EMA, PMDA, HC).
 const ECTD_REGIONS: Record<string, { code: string; agency: string }> = {
   FDA: { code: 'us', agency: 'U.S. Food and Drug Administration' },
   EMA: { code: 'eu', agency: 'European Medicines Agency' },
@@ -272,7 +272,7 @@ function generateRegionalXml(region: string, applicationNumber: string): string 
  * NOT committed to this repo — drop them into assets/ectd-dtd/ (or set
  * ECTD_DTD_DIR) and they are bundled automatically; absence is surfaced as a
  * "not submission-ready" warning by validateEctdPackage.
- * See assets/ectd-dtd/README.md and HI_8_ECTD_SCOPING_BRIEF.md G1.
+ * See assets/ectd-dtd/README.md and docs/legacy/HI_8_ECTD_SCOPING_BRIEF.md G1.
  */
 function bundleVendoredDtds(zip: JSZip): number {
   try {
@@ -677,7 +677,7 @@ export async function generateEctdPackage(
 
   // 7b. Bundle vendored ICH/regional DTDs into util/dtd/ when available, so the
   // package is self-contained. No-op (with a validator warning) until the team
-  // vendors the licensed DTD files. See HI_8_ECTD_SCOPING_BRIEF.md G1.
+  // vendors the licensed DTD files. See docs/legacy/HI_8_ECTD_SCOPING_BRIEF.md G1.
   bundleVendoredDtds(zip);
 
   // 8. Record the compilation in the database
@@ -812,7 +812,7 @@ export async function validateEctdPackage(
   // 8. DTD self-containment: index.xml declares a DTD via DOCTYPE, but a
   // submission-ready package must bundle that DTD under util/dtd/. Surface this
   // explicitly instead of silently shipping a backbone with a dangling DTD
-  // reference. See HI_8_ECTD_SCOPING_BRIEF.md G1.
+  // reference. See docs/legacy/HI_8_ECTD_SCOPING_BRIEF.md G1.
   try {
     const idxFile = zip.file('index.xml');
     const idxContent = idxFile ? await idxFile.async('string') : '';

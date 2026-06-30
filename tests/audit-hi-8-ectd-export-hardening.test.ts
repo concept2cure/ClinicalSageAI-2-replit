@@ -8,7 +8,7 @@
  *    of silently shipping a PMDA/jp regional backbone.
  *  - DTD self-containment: the validator warns when a referenced DTD isn't bundled.
  *
- * See HI_8_ECTD_SCOPING_BRIEF.md.
+ * See docs/legacy/HI_8_ECTD_SCOPING_BRIEF.md.
  */
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';

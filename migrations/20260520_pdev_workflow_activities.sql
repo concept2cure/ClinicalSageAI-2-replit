@@ -1,7 +1,7 @@
 -- ============================================================================
 -- PDEV → IND Workflow — per-program activity state + readiness snapshots
 -- Branch: claude/pdev-ind-workflow-core-F3koK
--- Architecture: see PDEV_IND_WORKFLOW_AUDIT.md
+-- Architecture: see docs/legacy/PDEV_IND_WORKFLOW_AUDIT.md
 -- ============================================================================
 --
 -- These two tables layer per-program state onto the closed-enum activity

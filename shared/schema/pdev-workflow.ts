@@ -11,7 +11,7 @@
  * read or write. PDEV tables themselves carry only `program_id`,
  * mirroring the q-sub and evidence-sufficiency precedent.
  *
- * See PDEV_IND_WORKFLOW_AUDIT.md (repo root) for the architecture
+ * See docs/legacy/PDEV_IND_WORKFLOW_AUDIT.md (repo root) for the architecture
  * finding that justifies these tables existing alongside the existing
  * IND / regulatory primitives rather than replacing them.
  *

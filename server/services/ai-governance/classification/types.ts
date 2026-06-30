@@ -1,7 +1,7 @@
 /**
  * Content classification — types.
  *
- * The governance contract (GOVERNANCE_BINDING_CONTRACT.md) flags a missing
+ * The governance contract (docs/legacy/GOVERNANCE_BINDING_CONTRACT.md) flags a missing
  * PHI/PII/Regulatory classification model: governed actions need to know
  * whether the content they touch carries protected data before deciding how it
  * may be processed (which substrate, whether redaction is required, what

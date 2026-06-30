@@ -33,16 +33,19 @@ export async function validateZip(base64Zip) {
     });
 
     // Validate against the ICH schema
-    await ichSchema.validate(dirMap, { abortEarly: false });
+    ichSchema.parse(dirMap);
     return {
       valid: true,
       errors: [],
     };
   } catch (err) {
     // Return validation errors
+    const errors = err.issues
+      ? err.issues.map(issue => issue.message)
+      : [err.message || 'Unknown validation error'];
     return {
       valid: false,
-      errors: err.errors || [err.message || 'Unknown validation error'],
+      errors,
     };
   }
 }

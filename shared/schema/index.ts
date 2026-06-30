@@ -217,7 +217,7 @@ export type {
 } from './reviewer-simulation';
 
 // PDEV → IND Workflow — per-program activity state + readiness snapshots
-// See PDEV_IND_WORKFLOW_AUDIT.md (repo root) for the audit that justifies
+// See docs/legacy/PDEV_IND_WORKFLOW_AUDIT.md (repo root) for the audit that justifies
 // these tables existing alongside the existing IND / regulatory primitives.
 export {
   pdevProgramActivities,

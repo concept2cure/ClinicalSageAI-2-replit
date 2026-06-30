@@ -1,7 +1,7 @@
 /**
  * PDEV kit · Surfaces.jsx — 5 main surfaces:
  *   PdevOverview, PdevWorkstream, PdevAssembly, PdevFdaStream, PdevContradictions
- * Per PDEV_IND_DESIGN_BRIEF.md §2.1, §2.2, §2.4, §2.7, §2.8.
+ * Per docs/legacy/PDEV_IND_DESIGN_BRIEF.md §2.1, §2.2, §2.4, §2.7, §2.8.
  */
 (() => {
 const {

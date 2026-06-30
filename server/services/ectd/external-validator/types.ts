@@ -4,7 +4,7 @@
  * Agencies validate eCTD packages with LORENZ eValidator (FDA's published
  * criteria), not our internal validators. This is the stable interface an external
  * validator engine drops in behind — mirroring the fail-closed pattern of the
- * PDF/A and DTD gates. See EVALIDATOR_INTEGRATION_SPEC.md.
+ * PDF/A and DTD gates. See docs/legacy/EVALIDATOR_INTEGRATION_SPEC.md.
  *
  * @module server/services/ectd/external-validator/types
  */

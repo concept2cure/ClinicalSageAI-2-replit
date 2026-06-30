@@ -3,10 +3,6 @@
 
 import Table from 'cli-table3';
 import { blue, green, red, yellow } from 'kleur/colors';
-import fetch_ from 'node-fetch';
-
-const fetch = (...args) => fetch_(...args); // Node 20 compatible
-
 const BASE = (process.env.REPLIT_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
 const SUB = process.env.REPLIT_SUBMISSION_ID;
 

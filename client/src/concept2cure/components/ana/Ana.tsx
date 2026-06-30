@@ -779,7 +779,7 @@ export function Ana({
 
   // Download the rendered draft as a Word file. Calls the server DOCX render
   // route; on any failure, falls back to an honest Markdown download so the
-  // action never silently no-ops. (See ANA_DOCUMENT_STUDIO_UI_SPEC for the
+  // action never silently no-ops. (See docs/legacy/ANA_DOCUMENT_STUDIO_UI_SPEC_2026-06-22.md for the
   // render contract the host backend fulfils.)
   const handleDownloadDocx = useCallback(async (draft: DocumentStudioDraft) => {
     setDownloading(true);

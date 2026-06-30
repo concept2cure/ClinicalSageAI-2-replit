@@ -1,6 +1,6 @@
 /**
  * PUT /api/users/me/preferences — Phase 10.2 route contract
- * (PHASE_10_2_INSTALL.md §4 + issue #619 §4 Step 4).
+ * (docs/legacy/PHASE_10_2_INSTALL.md §4 + issue #619 §4 Step 4).
  *
  * Covers: auth (401 without/with bad token), validation (unknown keys
  * rejected, per-key shape checks), merge-patch semantics (top-level merge,

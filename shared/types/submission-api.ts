@@ -5,7 +5,7 @@
  * /api/ectd-documents is fully typed end-to-end. Entity shapes come from
  * ./database; this file adds the request bodies and response envelopes.
  *
- * Routes are enumerated in SUBMISSION_CENTER_API.md (endpoint → workspace map).
+ * Routes are enumerated in docs/legacy/SUBMISSION_CENTER_API.md (endpoint → workspace map).
  * Errors are uniform: `{ error: { code, message, details? } }`.
  */
 

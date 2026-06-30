@@ -6,7 +6,7 @@
  * rendered from this module carries a visible "Sample data" pill so the
  * fixture is never mistaken for tenant data. Per-surface backend wiring
  * (predicted HAQs, section gates) is a moat-phase deliverable
- * (PHASE_10_2_INSTALL.md §6) — until then these are the reference shapes.
+ * (docs/legacy/PHASE_10_2_INSTALL.md §6) — until then these are the reference shapes.
  *
  * @module client/src/concept2cure/biopharma/data/fixtures
  */

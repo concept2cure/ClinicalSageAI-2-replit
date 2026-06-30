@@ -1,6 +1,6 @@
 /**
  * SurfaceComposer — the conversation-first lead-in every biopharma pathway
- * surface wraps its dashboard in (Phase 10.2, PHASE_10_2_INSTALL.md §3.2).
+ * surface wraps its dashboard in (Phase 10.2, docs/legacy/PHASE_10_2_INSTALL.md §3.2).
  *
  * Pattern: greeting + state-of-this-surface · composer with drop zone ·
  * 4 starters · Today queue · then the existing dashboard as children,

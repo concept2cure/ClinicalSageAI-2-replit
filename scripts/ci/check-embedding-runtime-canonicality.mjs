@@ -6,7 +6,7 @@
  * server/services/enhancedEmbeddingService.ts, governed by the corpus
  * policy in server/services/embedding-corpus-policy.ts.
  *
- * Rationale (from DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md):
+ * Rationale (from docs/legacy/DATA_KNOWLEDGE_MEMORY_LAYER_AUDIT.md):
  *   The platform stores embeddings in seven pgvector tables across two
  *   dimensions (1536d, 3072d). Direct openai.embeddings.create() calls
  *   bypass the corpus policy, so the same query against the same index

@@ -32,7 +32,7 @@ import { ai } from '../lib/unified-ai-client';
 // silently using it degrades retrieval to near-noise. We therefore hard-fail by
 // default when no real embedder is configured. Set ALLOW_FALLBACK_EMBEDDINGS=true
 // to explicitly opt into the lexical fallback (local dev / offline only).
-// See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: degraded-by-default RAG).
+// See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: degraded-by-default RAG).
 const allowFallbackEmbeddings = process.env.ALLOW_FALLBACK_EMBEDDINGS === 'true';
 
 // A real embedder is available when an OpenAI key or a self-hosted embedding

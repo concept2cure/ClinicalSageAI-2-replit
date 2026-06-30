@@ -31,33 +31,33 @@ const openai = {
   chat: {
     completions: {
       create: async (params: any) => {
+        const gw = getGateway();
+        if (gw.getEnabledProviders().length === 0) {
+          throw new Error('[AnA Predictions] No AI providers enabled — configure at least one provider key (OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.)');
+        }
         try {
-          const gw = getGateway();
-          if (gw.getEnabledProviders().length > 0) {
-            const response = await gw.route({
-              taskType: 'document_analysis',
-              messages: (params.messages || []).map((m: any) => ({
-                role: m.role,
-                content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content),
-              })),
-              maxTokens: params.max_tokens || 4096,
-              temperature: params.temperature ?? 0.7,
-              jsonMode: params.response_format?.type === 'json_object',
-              callerModule: 'foresight-ai-engine',
-            });
-            // Return OpenAI-compatible shape
-            return {
-              choices: [{
-                message: { content: response.content, role: 'assistant' },
-                finish_reason: response.finishReason || 'stop',
-              }],
-              usage: {
-                prompt_tokens: response.usage.inputTokens,
-                completion_tokens: response.usage.outputTokens,
-                total_tokens: response.usage.totalTokens,
-              },
-            };
-          }
+          const response = await gw.route({
+            taskType: 'document_analysis',
+            messages: (params.messages || []).map((m: any) => ({
+              role: m.role,
+              content: typeof m.content === 'string' ? m.content : JSON.stringify(m.content),
+            })),
+            maxTokens: params.max_tokens || 4096,
+            temperature: params.temperature ?? 0.7,
+            jsonMode: params.response_format?.type === 'json_object',
+            callerModule: 'foresight-ai-engine',
+          });
+          return {
+            choices: [{
+              message: { content: response.content, role: 'assistant' },
+              finish_reason: response.finishReason || 'stop',
+            }],
+            usage: {
+              prompt_tokens: response.usage.inputTokens,
+              completion_tokens: response.usage.outputTokens,
+              total_tokens: response.usage.totalTokens,
+            },
+          };
         } catch (e) {
           console.warn('[AnA Predictions] Gateway call failed:', e);
           throw e;

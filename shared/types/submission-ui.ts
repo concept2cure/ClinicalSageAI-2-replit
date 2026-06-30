@@ -37,7 +37,7 @@ export interface WorkspaceDef {
   id: string;
   label: string;
   routePattern: string; // wouter/react-router style
-  endpoints: string[]; // primary endpoints (see SUBMISSION_CENTER_API.md)
+  endpoints: string[]; // primary endpoints (see docs/legacy/SUBMISSION_CENTER_API.md)
   anaTools: string[];
 }
 

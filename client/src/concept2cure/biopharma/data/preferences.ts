@@ -1,5 +1,5 @@
 /**
- * Per-user UI preferences — Phase 10.2 (PHASE_10_2_INSTALL.md §3.4).
+ * Per-user UI preferences — Phase 10.2 (docs/legacy/PHASE_10_2_INSTALL.md §3.4).
  *
  * density + rail collapse state + AnA dock open state, persisted to
  * users.preferences via PUT /api/users/me/preferences (merge-patch,

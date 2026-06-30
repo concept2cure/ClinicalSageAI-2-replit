@@ -731,7 +731,7 @@ export class PowerSampleSizeService {
     // No such query is wired yet, so this returns an explicit "unavailable" result
     // rather than fabricated constants that would feed power calculations under the
     // guise of "historical data from similar trials".
-    // See FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
+    // See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
     return {
       available: false,
       source: 'none',
@@ -755,7 +755,7 @@ export class PowerSampleSizeService {
     // No such query is wired yet, so this returns an explicit "unavailable" result
     // rather than a fabricated rate derived from a hardcoded 15% base and arbitrary
     // multipliers presented as "typical patterns".
-    // See FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
+    // See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
     return {
       available: false,
       source: 'none',

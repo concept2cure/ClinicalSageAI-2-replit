@@ -25,7 +25,7 @@ That's it. Routing/nav read `SUBMISSION_WORKSPACE_SLOTS`, so the kit appears wit
   (`REGIONS`, `SEQUENCE_STATUSES`, `LIFECYCLE_OPS`, `FINDING_SEVERITIES`, … each a
   `Choice[]` with sentence-case label + neutral `tone`; map tone→palette in the kit).
 - Workspace/route/error map: `@shared/types/submission-ui`.
-- Endpoint → workspace manifest: `SUBMISSION_CENTER_API.md` (repo root).
+- Endpoint → workspace manifest: `docs/legacy/SUBMISSION_CENTER_API.md`.
 - Feature gating: `submissionClient` + `GET /api/submissions/capabilities` (disable/empty a slot when its capability is false, e.g. `publishTransmit`).
 
 ## Design-system rules the kit must honor (CLAUDE.md / README)

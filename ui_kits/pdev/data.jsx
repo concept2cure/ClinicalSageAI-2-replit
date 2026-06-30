@@ -1,7 +1,7 @@
 /**
  * PDEV kit · closed-enum + fixture data.
  *
- * Mirrors the canonical contracts from PDEV_IND_DESIGN_BRIEF.md §3.
+ * Mirrors the canonical contracts from docs/legacy/PDEV_IND_DESIGN_BRIEF.md §3.
  * Workstream + stage + state enums are hard-coded (the kit owns them).
  * Activity registry is a fixture stand-in for runtime fetch from
  * GET /api/pdev/registry — in production, replace with the live fetch.

@@ -135,8 +135,8 @@ export default defineConfig({
             return 'vendor-datetime';
           }
 
-          // Zod / Yup / Joi — validation schemas
-          if (id.includes('/zod') || id.includes('/yup') || id.includes('/joi')) {
+          // Zod / Joi — validation schemas
+          if (id.includes('/zod') || id.includes('/joi')) {
             return 'vendor-validation';
           }
         },

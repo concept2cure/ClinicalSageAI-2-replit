@@ -446,7 +446,7 @@ export class DigitalTwinRuntime {
       // CQA predictions are synthetic — no ML model is wired (see
       // simulateCQAPredictions). Synthetic, non-actionable values must never drive
       // an automated real-time release: force manual review instead of auto-approving.
-      // See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: digital-twin CQA Math.random).
+      // See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: digital-twin CQA Math.random).
       const cqaPredictionsAreSynthetic = true;
       if (cqaPredictionsAreSynthetic && releaseDecision === ReleaseDecision.RTRT_APPROVED) {
         releaseDecision = ReleaseDecision.MANUAL_REVIEW;

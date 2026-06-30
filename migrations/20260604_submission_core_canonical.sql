@@ -4,7 +4,7 @@
 --           projections, the eCTD sequence ledger, and the doc->CTD-leaf map
 --           that the Phase-2 Builder tree and Phase-4 Shadow Review depend on.
 --
--- Reconcile (RECONCILE.md, WO-1.0):
+-- Reconcile (docs/legacy/RECONCILE.md, WO-1.0):
 --   * submissions / submission_regions / ectd_sequences / submission_leaves
 --     did not exist in the repo — all CREATE-NEW. The work order's "binding
 --     decision" assumed ectd_sequences already named the backbone; it did not
@@ -81,7 +81,7 @@ CREATE INDEX IF NOT EXISTS idx_ectd_sequences_organization_id ON public.ectd_seq
 -- ── submission_leaves ────────────────────────────────────────────────────────
 -- Canonical doc->CTD-leaf mapping with granularity + eCTD lifecycle operator.
 -- document_table + document_id are a POLYMORPHIC reference (no single
--- public.documents table exists) — see RECONCILE.md §2.
+-- public.documents table exists) — see docs/legacy/RECONCILE.md §2.
 CREATE TABLE IF NOT EXISTS public.submission_leaves (
   id               SERIAL PRIMARY KEY,
   sequence_id      INTEGER NOT NULL REFERENCES public.ectd_sequences(id),

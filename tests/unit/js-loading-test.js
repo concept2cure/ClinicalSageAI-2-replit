@@ -11,7 +11,6 @@
  * NOTE: The server must be running before executing this test
  */
 
-import fetch from 'node-fetch';
 import chalk from 'chalk';
 
 // Configuration

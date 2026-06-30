@@ -2,7 +2,7 @@
 //
 // Phase 10.2: the kit-only tenant-type switcher is stripped — in v2 the
 // client type comes from organizations.client_type via the session
-// (PHASE_10_2_INSTALL.md §3.1). The density toggle persists per user via
+// (docs/legacy/PHASE_10_2_INSTALL.md §3.1). The density toggle persists per user via
 // users.preferences.density.
 
 import * as React from 'react';

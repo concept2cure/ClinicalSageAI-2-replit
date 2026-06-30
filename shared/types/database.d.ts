@@ -905,7 +905,7 @@ export interface SubmissionLeaf {
 export type NewSubmissionLeaf = Omit<SubmissionLeaf, 'id' | 'createdAt' | 'updatedAt' | 'deletedAt'>;
 
 // Named SubmissionEvidenceLink (not EvidenceLink) — `evidence_links` already
-// exists in shared/schema/programs.ts. See RECONCILE.md §2.
+// exists in shared/schema/programs.ts. See docs/legacy/RECONCILE.md §2.
 export interface SubmissionEvidenceLink {
   id: number;
   submissionId: number;

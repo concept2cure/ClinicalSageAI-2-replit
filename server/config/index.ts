@@ -12,6 +12,10 @@
 // Core environment configuration
 export { config, default } from './environment';
 
+// Typed + Zod-validated environment variables (startup validation)
+export { env, loadConfig } from './env';
+export type { Env } from './env';
+
 // Feature-specific configuration
 export { default as docushareConfig } from './docushareConfig';
 // @ts-ignore — plain JS config module without type declarations

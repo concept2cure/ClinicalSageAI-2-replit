@@ -2,7 +2,7 @@
  * @fileoverview CMC Module 3 Auto-Draft Composer (extraction → draft bridge)
  * @module server/services/cmc/auto-draft-composer
  *
- * GLUE LAYER. Closes the gap flagged in GA_GAP_AUDIT_2026-06-10.md:40
+ * GLUE LAYER. Closes the gap flagged in docs/legacy/GA_GAP_AUDIT_2026-06-10.md:40
  * ("CMC / Module 3 ... lacks auto-draft-from-uploads").
  *
  * The Module 3 composer (`composeModule3FromCanonicalSources`) and the auto

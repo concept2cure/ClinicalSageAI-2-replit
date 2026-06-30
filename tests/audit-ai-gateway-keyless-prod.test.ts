@@ -1,7 +1,7 @@
 /**
  * Forensic audit (LOW → GA-safety) — keyless production must not serve demo text
  *
- * FORENSIC_CODE_AUDIT_2026-05-29.md flagged that a keyless prod deploy would
+ * docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md flagged that a keyless prod deploy would
  * silently serve demo-mode regulatory text. The AI gateway now fails closed in
  * production when no provider is available, instead of falling back to the
  * deterministic/demo response. The explicit deterministicMode opt-in is unchanged.

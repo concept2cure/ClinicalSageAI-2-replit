@@ -11371,7 +11371,7 @@ export const coauthorDocuments = pgTable(
     moduleName: text('module_name'), // Cached module name for display
 
     // pgvector embedding for RAG grounding (Phase 1, WO-1.2). Canonical eCTD
-    // document table — see RECONCILE.md §2 and the companion migration.
+    // document table — see docs/legacy/RECONCILE.md §2 and the companion migration.
     embedding: vector('embedding', { dimensions: 1536 }),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),

@@ -126,7 +126,7 @@ export class SapGeneratorService {
       // Statistical assumptions come from the caller (the study statistician),
       // not from fabricated random values. When absent, the SAP narrative defers
       // to the statistician rather than asserting a power figure that was never
-      // computed. See FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
+      // computed. See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
       const powerForPrimary =
         typeof target_power === 'number' ? target_power : null;
       const requiredEffectSize =

@@ -5,35 +5,18 @@
  * @module server/services/protocol-reviews-metrics
  */
 
-interface ProtocolReviewMetricsState {
-  reviewersAssigned: Record<string, number>; // by role
-  commentsAdded: Record<string, number>; // by severity
-  dispositions: Record<string, number>; // by disposition
-}
+import { createMetricsModule } from './shared/metrics-factory';
 
-const state: ProtocolReviewMetricsState = { reviewersAssigned: {}, commentsAdded: {}, dispositions: {} };
+const m = createMetricsModule({
+  reviewersAssigned: { kind: 'labeled', metric: 'protocol_reviewers_assigned_total',  help: 'Protocol reviewers assigned, by role', labelKey: 'role' },
+  commentsAdded:     { kind: 'labeled', metric: 'protocol_review_comments_total',     help: 'Protocol review comments added, by severity', labelKey: 'severity' },
+  dispositions:      { kind: 'labeled', metric: 'protocol_review_dispositions_total', help: 'Protocol review dispositions recorded, by disposition', labelKey: 'disposition' },
+} as const);
 
-export function recordReviewerAssigned(role: string): void { state.reviewersAssigned[role] = (state.reviewersAssigned[role] ?? 0) + 1; }
-export function recordReviewComment(severity: string): void { state.commentsAdded[severity] = (state.commentsAdded[severity] ?? 0) + 1; }
-export function recordReviewDisposition(disposition: string): void { state.dispositions[disposition] = (state.dispositions[disposition] ?? 0) + 1; }
+export function recordReviewerAssigned(role: string): void { m.incLabeled('reviewersAssigned', role); }
+export function recordReviewComment(severity: string): void { m.incLabeled('commentsAdded', severity); }
+export function recordReviewDisposition(disposition: string): void { m.incLabeled('dispositions', disposition); }
 
-export function renderProtocolReviewMetrics(): string[] {
-  const lines: string[] = [];
-  lines.push('# HELP protocol_reviewers_assigned_total Protocol reviewers assigned, by role');
-  lines.push('# TYPE protocol_reviewers_assigned_total counter');
-  for (const [k, n] of Object.entries(state.reviewersAssigned)) lines.push(`protocol_reviewers_assigned_total{role="${k}"} ${n}`);
-  lines.push('# HELP protocol_review_comments_total Protocol review comments added, by severity');
-  lines.push('# TYPE protocol_review_comments_total counter');
-  for (const [k, n] of Object.entries(state.commentsAdded)) lines.push(`protocol_review_comments_total{severity="${k}"} ${n}`);
-  lines.push('# HELP protocol_review_dispositions_total Protocol review dispositions recorded, by disposition');
-  lines.push('# TYPE protocol_review_dispositions_total counter');
-  for (const [k, n] of Object.entries(state.dispositions)) lines.push(`protocol_review_dispositions_total{disposition="${k}"} ${n}`);
-  return lines;
-}
-
-export function snapshotProtocolReviewMetrics(): ProtocolReviewMetricsState { return JSON.parse(JSON.stringify(state)); }
-export function resetProtocolReviewMetrics(): void {
-  state.reviewersAssigned = {};
-  state.commentsAdded = {};
-  state.dispositions = {};
-}
+export function renderProtocolReviewMetrics(): string[] { return m.render(); }
+export function snapshotProtocolReviewMetrics() { return m.snapshot(); }
+export function resetProtocolReviewMetrics(): void { m.reset(); }

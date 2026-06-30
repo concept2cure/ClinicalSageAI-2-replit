@@ -5,35 +5,18 @@
  * @module server/services/protocol-amendments-metrics
  */
 
-interface ProtocolAmendmentsMetricsState {
-  created: Record<string, number>; // by amendment type
-  changesAdded: number;
-  statusTransitions: Record<string, number>; // by target status
-}
+import { createMetricsModule } from './shared/metrics-factory';
 
-const state: ProtocolAmendmentsMetricsState = { created: {}, changesAdded: 0, statusTransitions: {} };
+const m = createMetricsModule({
+  created:           { kind: 'labeled', metric: 'protocol_amendments_created_total', help: 'Protocol amendments created, by type', labelKey: 'type' },
+  changesAdded:      { kind: 'scalar',  metric: 'protocol_amendment_changes_total',  help: 'Protocol amendment change line items added' },
+  statusTransitions: { kind: 'labeled', metric: 'protocol_amendments_status_total',  help: 'Protocol amendment status transitions, by status', labelKey: 'status' },
+} as const);
 
-export function recordAmendmentCreated(type: string): void { state.created[type] = (state.created[type] ?? 0) + 1; }
-export function recordAmendmentChangeAdded(): void { state.changesAdded += 1; }
-export function recordAmendmentStatus(status: string): void { state.statusTransitions[status] = (state.statusTransitions[status] ?? 0) + 1; }
+export function recordAmendmentCreated(type: string): void { m.incLabeled('created', type); }
+export function recordAmendmentChangeAdded(): void { m.inc('changesAdded'); }
+export function recordAmendmentStatus(status: string): void { m.incLabeled('statusTransitions', status); }
 
-export function renderProtocolAmendmentsMetrics(): string[] {
-  const lines: string[] = [];
-  lines.push('# HELP protocol_amendments_created_total Protocol amendments created, by type');
-  lines.push('# TYPE protocol_amendments_created_total counter');
-  for (const [t, n] of Object.entries(state.created)) lines.push(`protocol_amendments_created_total{type="${t}"} ${n}`);
-  lines.push('# HELP protocol_amendment_changes_total Protocol amendment change line items added');
-  lines.push('# TYPE protocol_amendment_changes_total counter');
-  lines.push(`protocol_amendment_changes_total ${state.changesAdded}`);
-  lines.push('# HELP protocol_amendments_status_total Protocol amendment status transitions, by status');
-  lines.push('# TYPE protocol_amendments_status_total counter');
-  for (const [s, n] of Object.entries(state.statusTransitions)) lines.push(`protocol_amendments_status_total{status="${s}"} ${n}`);
-  return lines;
-}
-
-export function snapshotProtocolAmendmentsMetrics(): ProtocolAmendmentsMetricsState { return JSON.parse(JSON.stringify(state)); }
-export function resetProtocolAmendmentsMetrics(): void {
-  state.created = {};
-  state.changesAdded = 0;
-  state.statusTransitions = {};
-}
+export function renderProtocolAmendmentsMetrics(): string[] { return m.render(); }
+export function snapshotProtocolAmendmentsMetrics() { return m.snapshot(); }
+export function resetProtocolAmendmentsMetrics(): void { m.reset(); }

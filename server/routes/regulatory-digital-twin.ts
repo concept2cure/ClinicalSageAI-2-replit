@@ -30,7 +30,7 @@ const router = Router();
  * randomized panelist/timing draws — they are NOT trained on, or validated against,
  * historical regulatory decisions. Presenting them without this disclosure would
  * misrepresent RNG output as predictive analysis.
- * See FORENSIC_CODE_AUDIT_2026-05-29.md HI-1.
+ * See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md HI-1.
  */
 const SIMULATION_DISCLOSURE = {
   predictive: false,

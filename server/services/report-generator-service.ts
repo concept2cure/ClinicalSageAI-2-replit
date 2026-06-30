@@ -198,7 +198,7 @@ class InvestorReportGenerator extends BaseReportGenerator {
     // not canned industry constants. We only return a figure when the statistics
     // service provides a real success rate for the indication; otherwise we return an
     // explicit "unavailable" result rather than fabricated numbers presented as a
-    // prediction. See FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
+    // prediction. See docs/legacy/FORENSIC_CODE_AUDIT_2026-05-29.md HI-2.
     let indicationSuccessRate: number | null = null;
 
     if (indication) {

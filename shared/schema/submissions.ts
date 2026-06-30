@@ -7,7 +7,7 @@
  *  - ectdSequences:      eCTD lifecycle ledger (0000, 0001, ...)
  *  - submissionLeaves:   doc -> CTD-leaf mapping (granularity + lifecycle op)
  *
- * RECONCILE (RECONCILE.md, WO-1.0): none of these tables existed — all
+ * RECONCILE (docs/legacy/RECONCILE.md, WO-1.0): none of these tables existed — all
  * CREATE-NEW. submissionLeaves references a document POLYMORPHICALLY
  * (documentTable + documentId) because there is no single public.documents
  * table; this mirrors document_atom_provenance in regulatory-atoms.ts.
@@ -134,7 +134,7 @@ export const ectdSequences = pgTable(
 // SUBMISSION LEAVES — doc -> CTD-leaf mapping (the spine of assembly)
 // ============================================================================
 // documentTable + documentId are a POLYMORPHIC reference (no hard FK) because
-// no single public.documents table exists — see RECONCILE.md §2.
+// no single public.documents table exists — see docs/legacy/RECONCILE.md §2.
 
 export const submissionLeaves = pgTable(
   'submission_leaves',

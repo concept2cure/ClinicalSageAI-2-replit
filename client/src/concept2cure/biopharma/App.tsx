@@ -11,7 +11,7 @@
  * AnA dock: ⌘\ toggles; 400px open, 32px seam closed; chat streams through
  * useAnaChat (/api/ana-ri/stream) with activeNav pinned into module_context.
  *
- * Port of ui_kits/biopharma/app.jsx + shell.jsx per PHASE_10_2_INSTALL.md.
+ * Port of ui_kits/biopharma/app.jsx + shell.jsx per docs/legacy/PHASE_10_2_INSTALL.md.
  *
  * @module client/src/concept2cure/biopharma/App
  */
@@ -71,7 +71,7 @@ export function BiopharmaApp({ initialNav = 'overview' }: BiopharmaAppProps) {
 
   const clientCfg = getClientTypeConfig(clientType);
 
-  // Medtech tenants use the MDX shell — redirect per PHASE_10_2_INSTALL.md §5.
+  // Medtech tenants use the MDX shell — redirect per docs/legacy/PHASE_10_2_INSTALL.md §5.
   const isMedtech = clientType === 'medtech';
   React.useEffect(() => {
     if (isMedtech) window.location.hash = '#mdx';

@@ -3,7 +3,7 @@
   "info": {
     "title": "Concept2Cure Submission Center API",
     "version": "1.1.0",
-    "description": "Endpoints for the Submission Center (spec §4 workspaces). All require an authenticated bearer token (Authorization: Bearer); organization/user are resolved server-side and never accepted in the body. TypeScript shapes: shared/types/submission-api.ts. Human map: SUBMISSION_CENTER_API.md."
+    "description": "Endpoints for the Submission Center (spec §4 workspaces). All require an authenticated bearer token (Authorization: Bearer); organization/user are resolved server-side and never accepted in the body. TypeScript shapes: shared/types/submission-api.ts. Human map: docs/legacy/SUBMISSION_CENTER_API.md."
   },
   "servers": [
     {

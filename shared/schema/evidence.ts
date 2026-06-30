@@ -4,7 +4,7 @@
  *  - submissionEvidenceLinks: bidirectional provenance between a submission
  *    section/claim and its source document.
  *
- * RECONCILE (RECONCILE.md, WO-1.0):
+ * RECONCILE (docs/legacy/RECONCILE.md, WO-1.0):
  *  - The table `evidence_links` ALREADY EXISTS (shared/schema/programs.ts) as a
  *    UUID-keyed evidence_objects -> target graph. To avoid a duplicate/clobbering
  *    table and an export-name collision, Phase-1 document provenance lives in
