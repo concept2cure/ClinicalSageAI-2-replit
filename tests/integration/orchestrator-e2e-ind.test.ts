@@ -56,6 +56,7 @@ const hoisted = vi.hoisted(() => ({
       run_id: string;
       organization_id: number;
       submission_id: string;
+      submission_id_fk: string | null;
       application_number: string;
       region: string;
       submission_type: string;
@@ -258,6 +259,7 @@ function defaultPoolQuery(
       run_id,
       organization_id,
       submission_id,
+      submission_id_fk,
       application_number,
       region,
       submission_type,
@@ -269,6 +271,7 @@ function defaultPoolQuery(
       string,
       number,
       string,
+      string | null,
       string,
       string,
       string,
@@ -281,6 +284,7 @@ function defaultPoolQuery(
       run_id,
       organization_id,
       submission_id,
+      submission_id_fk,
       application_number,
       region,
       submission_type,
