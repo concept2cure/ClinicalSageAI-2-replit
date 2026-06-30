@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-06-30T21:36:32.588Z",
+  "generatedAt": "2026-06-30T21:39:03.000Z",
   "git": {
-    "sha": "d62ebac4e37e87d4689d6bca82e158fc92e4cd0c",
-    "branch": "claude/translation-pmda-pipeline"
+    "sha": "f9e85a79e442cfb4bc0cf012f24b5560c694822c",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -2707,14 +2707,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

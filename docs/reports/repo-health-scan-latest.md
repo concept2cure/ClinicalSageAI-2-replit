@@ -1,18 +1,14 @@
 # Repo Health Scan
 
-Generated: 2026-06-30T21:36:32.588Z
-Branch: claude/translation-pmda-pipeline
-SHA: d62ebac4e37e87d4689d6bca82e158fc92e4cd0c
+Generated: 2026-06-30T21:39:03.000Z
+Branch: concept2cure-v2
+SHA: f9e85a79e442cfb4bc0cf012f24b5560c694822c
 
 ## Summary
 
 - Duplicate basenames: 233
 - Files over byte threshold: 24
 - Files over line threshold: 73
-- Baseline: docs/reports/repo-health-scan-latest.json
-- Delta duplicate basenames: 0
-- Delta files over byte threshold: 0
-- Delta files over line threshold: 0
 
 ## Owner Summary
 
