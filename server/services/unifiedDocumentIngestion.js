@@ -497,11 +497,14 @@ export class UnifiedDocumentIngestion {
       // Write buffer to temporary file
       fs.writeFileSync(tempFile, fileBuffer);
 
-      // Run Tesseract OCR
-      const { stdout } = await execAsync(`tesseract ${tempFile} stdout`);
-
-      // Clean up temporary file
-      fs.unlinkSync(tempFile);
+      // Run Tesseract OCR — quote the path to prevent shell injection
+      let stdout;
+      try {
+        const result = await execAsync(`tesseract '${tempFile.replace(/'/g, "'\\''")}' stdout`);
+        stdout = result.stdout;
+      } finally {
+        try { fs.unlinkSync(tempFile); } catch {}
+      }
 
       return stdout.trim();
     } catch (error) {

@@ -350,9 +350,21 @@ export class LangGraphOrchestrator {
     const startTime = Date.now();
 
     try {
-      // Get checkpoint
+      // Look up the checkpoint's thread_id first (passing empty string would never match)
+      const cpLookup = await this.pool.query(
+        `SELECT thread_id FROM agent_runtime.checkpoints WHERE id = $1`,
+        [checkpointId]
+      );
+      if (cpLookup.rows.length === 0) {
+        return {
+          success: false,
+          error: { code: 'CHECKPOINT_NOT_FOUND', message: 'Checkpoint not found' },
+          metadata: { executionTimeMs: Date.now() - startTime }
+        };
+      }
+
       const checkpoint = await this.checkpointManager.getTuple({
-        configurable: { thread_id: '', checkpoint_id: checkpointId }
+        configurable: { thread_id: cpLookup.rows[0].thread_id, checkpoint_id: checkpointId }
       });
 
       if (!checkpoint?.checkpoint) {

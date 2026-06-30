@@ -122,11 +122,17 @@ export async function saveDerivedUpload(params: {
 
   const { getPool } = await import('../../db.js');
   const pool = getPool();
-  await pool.query(
-    `INSERT INTO file_uploads (id, user_id, original_name, mime_type, file_size, storage_path, status, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, 'uploaded', NOW())`,
-    [fileId, params.userId ?? null, params.fileName, params.mimeType, params.buffer.length, storagePath],
-  );
+  try {
+    await pool.query(
+      `INSERT INTO file_uploads (id, user_id, original_name, mime_type, file_size, storage_path, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'uploaded', NOW())`,
+      [fileId, params.userId ?? null, params.fileName, params.mimeType, params.buffer.length, storagePath],
+    );
+  } catch (err) {
+    // Clean up the orphaned file on disk when the DB insert fails.
+    try { await fs.unlink(resolved); } catch { /* best-effort cleanup */ }
+    throw err;
+  }
 
   logger.info('derived upload saved', { fileId, bytes: params.buffer.length });
   return { fileId, storagePath };

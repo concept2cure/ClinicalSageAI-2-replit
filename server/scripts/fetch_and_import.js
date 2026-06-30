@@ -75,7 +75,7 @@ async function importData(filePath) {
   // Read the file
   const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
-  if (!data || !data.studies || !Array.length) {
+  if (!data || !data.studies || !data.studies.length) {
     throw new Error('Invalid data format in file');
   }
 
@@ -85,7 +85,7 @@ async function importData(filePath) {
   // We'll use the database directly to import the data
 
   // First we need to set up the database connection
-  if (!process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_NEON_NEW_SECRET && !process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL environment variable is not set');
   }
 

@@ -300,6 +300,9 @@ async function generateCERNarrative(faersData: any, productName?: string) {
 // CER FAERS data endpoints
 router.post('/faers/data', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
     const { ndcCode } = faersDataRequestSchema.parse(req.body);
 
     const faersData = await getFaersData(ndcCode);
@@ -320,6 +323,9 @@ router.post('/faers/data', async (req, res) => {
 
 router.post('/faers/generate-narrative', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
     const { faersData, productName } = reportGenerationSchema.parse(req.body);
 
     if (!faersData || !faersData.results || faersData.results.length === 0) {
@@ -341,6 +347,9 @@ router.post('/faers/generate-narrative', async (req, res) => {
 
 router.post('/faers/save-report', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
     const reportData = saveReportSchema.parse(req.body);
 
     // In production, you would save this to your database
@@ -355,8 +364,8 @@ router.post('/faers/save-report', async (req, res) => {
       created_at: new Date().toISOString(),
     };
 
-    // Create directory if it doesn't exist
-    const reportsDir = path.join(process.cwd(), 'data', 'cer_reports');
+    // Create tenant-scoped directory if it doesn't exist
+    const reportsDir = path.join(process.cwd(), 'data', 'cer_reports', `org-${guard.orgId}`);
     if (!fs.existsSync(reportsDir)) {
       fs.mkdirSync(reportsDir, { recursive: true });
     }
@@ -405,7 +414,10 @@ router.post('/faers/save-report', async (req, res) => {
 // Get a list of saved CER reports
 router.get('/reports', async (req, res) => {
   try {
-    const reportsDir = path.join(process.cwd(), 'data', 'cer_reports');
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    const reportsDir = path.join(process.cwd(), 'data', 'cer_reports', `org-${guard.orgId}`);
     if (!fs.existsSync(reportsDir)) {
       return res.json({ reports: [] });
     }

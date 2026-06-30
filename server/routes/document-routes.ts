@@ -129,6 +129,56 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ─── Folder routes ──────────────────────────────────────────────────
+// IMPORTANT: These MUST be registered before the `/:id` catch-all so
+// that `/folders` is not shadowed by `/:id` (Express matches in order).
+
+// Get all folders (tenant-scoped)
+router.get('/folders', async (req, res) => {
+  try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const { parentId } = req.query;
+
+    const options: any = { organizationId: guard.orgId };
+    if (parentId !== undefined) {
+      options.parentId = parentId === 'null' ? null : String(parentId);
+    }
+
+    const folders = await storage.getFolders(options);
+
+    res.json(folders);
+  } catch (error) {
+    console.error('Error fetching folders:', error);
+    res.status(500).json({ error: 'Failed to fetch folders' });
+  }
+});
+
+// Create a new folder (tenant-scoped)
+router.post('/folders', async (req, res) => {
+  try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    // Validate request body using Zod schema
+    const folderData = insertDocumentFolderSchema.parse({
+      ...req.body,
+      organizationId: guard.orgId,
+    });
+
+    // Create folder in storage
+    const folder = await storage.createFolder(folderData);
+
+    res.status(201).json(folder);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid folder data', details: error.errors });
+    }
+
+    console.error('Error creating folder:', error);
+    res.status(500).json({ error: 'Failed to create folder' });
+  }
+});
+
 // Get a single document by ID.
 //
 // SECURITY: storage.getDocument now requires an organizationId — the
@@ -158,11 +208,18 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create a new document
+// Create a new document (tenant-scoped)
 router.post('/', async (req, res) => {
   try {
-    // Validate request body using Zod schema
-    const documentData = insertDocumentSchema.parse(req.body);
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
+    // Validate request body using Zod schema, injecting the org id so
+    // the document is always bound to the caller's tenant.
+    const documentData = insertDocumentSchema.parse({
+      ...req.body,
+      organizationId: guard.orgId,
+    });
 
     // Create document in storage
     const document = await storage.createDocument(documentData);
@@ -357,44 +414,21 @@ router.get('/:id/download', async (req, res) => {
   }
 });
 
-// Get all folders
-router.get('/folders', async (req, res) => {
-  try {
-    const { parentId } = req.query;
+// Folder routes moved above /:id to prevent route shadowing — see top of file.
 
-    const options: any = {};
-    if (parentId !== undefined) {
-      options.parentId = parentId === 'null' ? null : String(parentId);
-    }
-
-    const folders = await storage.getFolders(options);
-
-    res.json(folders);
-  } catch (error) {
-    console.error('Error fetching folders:', error);
-    res.status(500).json({ error: 'Failed to fetch folders' });
-  }
-});
-
-// Create a new folder
-router.post('/folders', async (req, res) => {
-  try {
-    // Validate request body using Zod schema
-    const folderData = insertDocumentFolderSchema.parse(req.body);
-
-    // Create folder in storage
-    const folder = await storage.createFolder(folderData);
-
-    res.status(201).json(folder);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid folder data', details: error.errors });
-    }
-
-    console.error('Error creating folder:', error);
-    res.status(500).json({ error: 'Failed to create folder' });
-  }
-});
+/**
+ * Escape a string for safe interpolation into HTML. Prevents XSS when
+ * user-supplied document fields (title, description, author, tags, section
+ * content) are rendered into the download HTML.
+ */
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 // Helper function to generate HTML from document content
 function generateHtmlFromDocument(document: any): string {
@@ -406,8 +440,8 @@ function generateHtmlFromDocument(document: any): string {
       .map((section: any) => {
         return `
         <div style="margin-bottom: 20px;">
-          <h2 style="color: #333; margin-top: 20px;">${section.title}</h2>
-          <p style="margin-bottom: 10px;">${section.content}</p>
+          <h2 style="color: #333; margin-top: 20px;">${escapeHtml(String(section.title || ''))}</h2>
+          <p style="margin-bottom: 10px;">${escapeHtml(String(section.content || ''))}</p>
         </div>
       `;
       })
@@ -416,11 +450,20 @@ function generateHtmlFromDocument(document: any): string {
     // Fallback if no sections are available
     content = `
       <div style="margin-bottom: 20px;">
-        <h2 style="color: #333; margin-top: 20px;">${document.name}</h2>
-        <p style="margin-bottom: 10px;">${document.description || ''}</p>
+        <h2 style="color: #333; margin-top: 20px;">${escapeHtml(String(document.name || ''))}</h2>
+        <p style="margin-bottom: 10px;">${escapeHtml(String(document.description || ''))}</p>
       </div>
     `;
   }
+
+  const safeName = escapeHtml(String(document.name || ''));
+  const safeVersion = escapeHtml(String(document.version || '1.0.0'));
+  const safeAuthor = escapeHtml(String(document.author || 'Unknown'));
+  const safeId = escapeHtml(String(document.id || ''));
+  const safeTags = document.tags && document.tags.length > 0
+    ? `<div><strong>Tags:</strong> ${document.tags.map((t: string) => escapeHtml(String(t))).join(', ')}</div>`
+    : '';
+  const safeStatus = escapeHtml(String(document.status || 'draft').toUpperCase());
 
   // Create full HTML document
   return `
@@ -428,7 +471,7 @@ function generateHtmlFromDocument(document: any): string {
     <html>
     <head>
       <meta charset="UTF-8">
-      <title>${document.name}</title>
+      <title>${safeName}</title>
       <style>
         body { font-family: Arial, sans-serif; margin: 30px; }
         h1 { color: #1c1917; }
@@ -445,26 +488,26 @@ function generateHtmlFromDocument(document: any): string {
     </head>
     <body>
       ${document.status === 'draft' ? '<div class="watermark">DRAFT</div>' : ''}
-      
+
       <div class="header">
-        <h1>${document.name}</h1>
+        <h1>${safeName}</h1>
         <div class="status ${document.status === 'approved' ? 'status-approved' : 'status-draft'}">
-          ${document.status?.toUpperCase() || 'DRAFT'}
+          ${safeStatus}
         </div>
       </div>
-      
+
       <div class="metadata">
-        <div><strong>Version:</strong> ${document.version || '1.0.0'}</div>
-        <div><strong>Author:</strong> ${document.author || 'Unknown'}</div>
+        <div><strong>Version:</strong> ${safeVersion}</div>
+        <div><strong>Author:</strong> ${safeAuthor}</div>
         <div><strong>Last Modified:</strong> ${new Date(document.modified_at || document.dateModified || Date.now()).toLocaleDateString()}</div>
-        <div><strong>Document ID:</strong> ${document.id}</div>
-        ${document.tags && document.tags.length > 0 ? `<div><strong>Tags:</strong> ${document.tags.join(', ')}</div>` : ''}
+        <div><strong>Document ID:</strong> ${safeId}</div>
+        ${safeTags}
       </div>
-      
+
       <div class="content">
         ${content}
       </div>
-      
+
       <div class="footer">
         Generated by Concept2Cure Document System on ${new Date().toLocaleDateString()}
       </div>

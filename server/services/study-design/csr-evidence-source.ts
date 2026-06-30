@@ -187,7 +187,7 @@ export async function gatherCsrEffectEvidence(args: {
   const reports = await db
     .select()
     .from(csrReports)
-    .where(and(eq(csrReports.organizationId, args.tenantId), ilike(csrReports.indication, `%${args.indication}%`)))
+    .where(and(eq(csrReports.organizationId, args.tenantId), ilike(csrReports.indication, `%${args.indication.replace(/[%_\\]/g, '\\$&')}%`)))
     .orderBy(desc(csrReports.uploadDate))
     .limit(Math.min(args.limit ?? 100, 300));
 

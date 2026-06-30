@@ -28,13 +28,13 @@
  */
 import { getPool } from '../../db/runtime.js';
 
-const DEFAULT_KEEP_LAST_N = parseInt(
-  process.env.ANA_CITATION_RUN_KEEP_LAST_N ?? '10',
-  10
+const DEFAULT_KEEP_LAST_N = Math.max(
+  1,
+  parseInt(process.env.ANA_CITATION_RUN_KEEP_LAST_N ?? '10', 10) || 10
 );
-const DEFAULT_INTERVAL_MS = parseInt(
-  process.env.ANA_CITATION_RUN_PRUNE_INTERVAL_MS ?? String(6 * 60 * 60 * 1000),
-  10
+const DEFAULT_INTERVAL_MS = Math.max(
+  60_000,
+  parseInt(process.env.ANA_CITATION_RUN_PRUNE_INTERVAL_MS ?? String(6 * 60 * 60 * 1000), 10) || 6 * 60 * 60 * 1000
 );
 const STARTUP_DELAY_MS = 10 * 60 * 1000; // 10 min before first prune
 
@@ -101,7 +101,7 @@ export async function pruneOldCitationRuns(
         prunedRunCount: 0,
         prunedArtifactCount: 0,
         keepLastN,
-        scope: orgId ? 'org' : 'global',
+        scope: typeof orgId === 'number' ? 'org' : 'global',
       };
     }
     throw err;
@@ -114,7 +114,7 @@ export async function pruneOldCitationRuns(
     prunedRunCount: result.rows.length,
     prunedArtifactCount: distinctArtifacts.size,
     keepLastN,
-    scope: orgId ? 'org' : 'global',
+    scope: typeof orgId === 'number' ? 'org' : 'global',
   };
 }
 

@@ -178,7 +178,7 @@ router.post('/analyze', checkForOpenAIKey, manufacturingAnalysisLimiter, async (
 
     // Parse the recommendations
     try {
-      const recommendations = JSON.parse(recommendationsResponse.choices[0].message.content);
+      const recommendations = JSON.parse(recommendationsResponse.content);
       analysisResult.recommendations = recommendations;
     } catch (error) {
       console.error('Error parsing recommendations JSON:', error);
@@ -212,7 +212,7 @@ router.post('/analyze', checkForOpenAIKey, manufacturingAnalysisLimiter, async (
 
     // Parse the benchmarks
     try {
-      const benchmarks = JSON.parse(benchmarksResponse.choices[0].message.content);
+      const benchmarks = JSON.parse(benchmarksResponse.content);
       analysisResult.benchmarks = benchmarks;
     } catch (error) {
       console.error('Error parsing benchmarks JSON:', error);
@@ -312,7 +312,7 @@ router.post('/upload', checkForOpenAIKey, upload.array('files', 5), async (req, 
           max_tokens: 1500,
         });
 
-        extractedData = extractionResponse.choices[0].message.content;
+        extractedData = extractionResponse.content;
       }
 
       // Add processed file info
@@ -486,7 +486,7 @@ router.post('/optimize', checkForOpenAIKey, manufacturingAnalysisLimiter, async 
     });
 
     // Get the response
-    const optimizationRecommendations = optimizationResponse.choices[0].message.content;
+    const optimizationRecommendations = optimizationResponse.content;
 
     // Update the analysis results with the optimization recommendations
     analysisData.optimizationRecommendations = {

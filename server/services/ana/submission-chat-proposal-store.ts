@@ -331,14 +331,15 @@ export async function listProposals(
   const offset = Math.max(0, options.offset ?? 0);
 
   try {
+    const rowParams = [...params, limit, offset];
     const [rowsResult, countResult] = await Promise.all([
       getPool().query(
         `SELECT *
            FROM ana_submission_chat_proposals
            ${where}
           ORDER BY created_at DESC
-          LIMIT ${limit} OFFSET ${offset}`,
-        params
+          LIMIT $${n + 1} OFFSET $${n + 2}`,
+        rowParams
       ),
       getPool().query(
         `SELECT COUNT(*)::int AS c

@@ -180,8 +180,8 @@ const getSectionContent = (document, sectionName) => {
 
   const section = document.sections.find(
     s =>
-      s.title.toLowerCase() === sectionName.toLowerCase() ||
-      s.id.toLowerCase() === sectionName.toLowerCase()
+      (s.title && s.title.toLowerCase()) === sectionName.toLowerCase() ||
+      (s.id && s.id.toLowerCase()) === sectionName.toLowerCase()
   );
 
   return section ? section.content : null;

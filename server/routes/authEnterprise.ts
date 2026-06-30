@@ -644,13 +644,21 @@ router.post('/electronic-signature', authMiddleware, async (req: Request, res: R
     }
     const sig = parsed.data;
 
+    // SECURITY: signerId MUST come from the authenticated JWT principal, never
+    // from the request body. Accepting it from the body allowed any user to
+    // forge an electronic signature attributed to another user — a critical
+    // 21 CFR Part 11 violation. The password/MFA check inside
+    // createElectronicSignature is a second factor, not a substitute for
+    // identity binding.
+    const authenticatedUserId = (req as any).user?.id ?? (req as any).user?.userId;
+    if (authenticatedUserId == null) {
+      return res.status(401).json({ error: 'Authenticated user ID required for signing' });
+    }
+
     const result = await createElectronicSignature({
       documentId: sig.documentId,
       versionId: sig.versionId,
-      // signerId is identity — sourced from the request body exactly as before
-      // (createElectronicSignature re-authenticates this user via password/MFA).
-      // It is intentionally NOT part of the validated schema as a trusted field.
-      signerId: req.body.signerId,
+      signerId: authenticatedUserId,
       signerName: sig.signerName,
       signerTitle: sig.signerTitle as string,
       signerEmail: sig.signerEmail as string,
@@ -842,6 +850,17 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
       { expiresIn: '24h' }
     );
 
+    // Revoke the old token to prevent reuse (token rotation).
+    // Without this, a stolen old token remains valid for its full 24h
+    // lifetime, defeating the purpose of rotation.
+    try {
+      const { revokeToken } = await import('../services/token-revocation.js');
+      await revokeToken(oldToken);
+    } catch (err) {
+      // Non-fatal — new token is still issued
+      console.error('Failed to revoke old token during refresh:', err);
+    }
+
     res.json({
       success: true,
       token: newToken,
@@ -888,7 +907,20 @@ router.get('/session', async (req: Request, res: Response) => {
  * POST /logout
  * End user session
  */
-router.post('/logout', (req: Request, res: Response) => {
+router.post('/logout', async (req: Request, res: Response) => {
+  try {
+    const { revokeToken } = await import('../services/token-revocation.js');
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+      await revokeToken(authHeader.slice(7));
+    }
+    if (req.body?.refreshToken) {
+      await revokeToken(req.body.refreshToken);
+    }
+  } catch (err) {
+    // Token revocation failure is non-fatal — still log out on the client side
+    console.error('Token revocation failed during logout:', err);
+  }
   res.json({
     success: true,
     message: 'Logged out successfully',

@@ -47,7 +47,7 @@ const getOrgId = (req: Request): number => {
 };
 
 const getUserId = (req: Request): number | null =>
-  (req as any).userId || (req as any).user?.id || null;
+  (req as any).userId ?? (req as any).user?.id ?? null;
 
 const getUserName = (req: Request): string | null =>
   (req as any).user?.name || (req as any).userName || null;
@@ -208,8 +208,15 @@ router.post('/canon/:id/supersede', authMiddleware, async (req: Request, res: Re
 router.get('/events', authMiddleware, async (req: Request, res: Response) => {
   try {
     const eventType = req.query.eventType as string | undefined;
-    const canonItemId = req.query.canonItemId ? parseInt(req.query.canonItemId as string) : undefined;
+    const canonItemIdRaw = req.query.canonItemId ? parseInt(req.query.canonItemId as string, 10) : undefined;
+    if (canonItemIdRaw !== undefined && isNaN(canonItemIdRaw)) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid canonItemId parameter' } });
+    }
+    const canonItemId = canonItemIdRaw;
     const since = req.query.since ? new Date(req.query.since as string) : undefined;
+    if (since !== undefined && isNaN(since.getTime())) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid since date parameter' } });
+    }
     const limit = parseInt(req.query.limit as string) || 50;
 
     const events = await getEvents(getOrgId(req), { eventType, canonItemId, since, limit });
@@ -475,7 +482,10 @@ router.post('/terms', authMiddleware, async (req: Request, res: Response) => {
 router.get('/terms', authMiddleware, async (req: Request, res: Response) => {
   try {
     const category = req.query.category as string | undefined;
-    const bundleId = req.query.bundleId ? parseInt(req.query.bundleId as string) : undefined;
+    const bundleId = req.query.bundleId ? parseInt(req.query.bundleId as string, 10) : undefined;
+    if (bundleId !== undefined && isNaN(bundleId)) {
+      return res.status(400).json({ success: false, error: { message: 'Invalid bundleId parameter' } });
+    }
 
     const terms = await getTermDictionary(getOrgId(req), { category, bundleId });
     return res.json({ success: true, data: terms });

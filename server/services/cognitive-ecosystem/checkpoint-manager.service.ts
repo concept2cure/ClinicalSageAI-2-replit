@@ -196,6 +196,9 @@ export class CheckpointManager {
 
       if (options?.filter) {
         for (const [key, value] of Object.entries(options.filter)) {
+          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)) {
+            throw new Error(`Invalid filter key: ${key}`);
+          }
           whereClause += ` AND c.metadata->>'${key}' = $${paramIndex++}`;
           params.push(String(value));
         }
@@ -534,10 +537,10 @@ export class CheckpointManager {
           id, agent_definition_id, product_id, tenant_id, parent_thread_id,
           context_data, status, hitl_required, created_at, updated_at, created_by
         ) SELECT $1, agent_definition_id, product_id, tenant_id, $2,
-                 context_data || '{"forked_from": "${checkpointId}"}'::jsonb, 
+                 context_data || $4::jsonb,
                  'active', hitl_required, NOW(), NOW(), $3
         FROM ${this.schema}.agent_threads WHERE id = $2`,
-        [newThreadId, sourceThreadId, createdBy]
+        [newThreadId, sourceThreadId, createdBy, JSON.stringify({ forked_from: checkpointId })]
       );
 
       // Create a new checkpoint in the forked thread

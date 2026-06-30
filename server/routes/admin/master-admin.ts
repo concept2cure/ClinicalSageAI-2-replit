@@ -306,8 +306,8 @@ router.get('/users', async (req: Request, res: Response) => {
          AND ($2::text IS NULL OR u.status = $2)
        GROUP BY u.id
        ORDER BY u.created_at DESC
-       LIMIT ${limit}`,
-      [search, status]
+       LIMIT $3`,
+      [search, status, limit]
     );
 
     return res.json({ users: result.rows });
@@ -449,8 +449,8 @@ router.get('/audit', async (req: Request, res: Response) => {
           WHERE ($1::int IS NULL OR a.tenant_id = $1)
             AND ($2::text IS NULL OR a.action ILIKE $2)
           ORDER BY a.created_at DESC
-          LIMIT ${limit} OFFSET ${offset}`,
-        [tenantId, action]
+          LIMIT $3 OFFSET $4`,
+        [tenantId, action, limit, offset]
       ),
       query(
         `SELECT COUNT(*)::int AS total
@@ -712,8 +712,8 @@ router.get('/jobs', async (req: Request, res: Response) => {
            LEFT JOIN organizations o ON o.id = j.organization_id
           WHERE ($1::text IS NULL OR j.status = $1)
           ORDER BY j.created_at DESC
-          LIMIT ${limit}`,
-        [status]
+          LIMIT $2`,
+        [status, limit]
       ),
       query(
         `SELECT status, COUNT(*)::int AS count

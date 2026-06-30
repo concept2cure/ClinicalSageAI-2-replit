@@ -38,7 +38,7 @@ export class OneDriveConnector implements DataConnector {
   private targetUserId = ''; // Empty = app-level, or specific user ID
 
   async authenticate(credentials: ConnectorCredentials): Promise<void> {
-    this.tenantId = credentials.customHeaders?.tenantId || '';
+    this.tenantId = credentials.baseUrl || credentials.customHeaders?.tenantId || '';
     this.clientId = credentials.clientId || '';
     this.clientSecret = credentials.clientSecret || '';
     this.targetUserId = credentials.username || '';
@@ -121,7 +121,7 @@ export class OneDriveConnector implements DataConnector {
 
     const limit = Math.min(query.limit || 25, 50);
     const data = await this.graphGet(
-      `${this.drivePath}/root/search(q='${encodeURIComponent(searchText)}')?$top=${limit}&$select=id,name,size,webUrl,lastModifiedDateTime,lastModifiedBy,file`,
+      `${this.drivePath}/root/search(q='${encodeURIComponent(searchText).replace(/'/g, "''")}')?$top=${limit}&$select=id,name,size,webUrl,lastModifiedDateTime,lastModifiedBy,file`,
     );
 
     const items = (data.value as Array<Record<string, unknown>>) || [];

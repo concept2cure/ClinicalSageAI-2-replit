@@ -12,7 +12,7 @@
  * @module server/services/ana/medical-writing-review
  */
 
-import { getDocumentTypeStandard } from './medical-writing.js';
+import { getDocumentTypeStandard, listMedicalWritingCatalog } from './medical-writing.js';
 
 export interface SectionCoverage {
   section: string;
@@ -69,7 +69,7 @@ export function reviewMedicalWriting(documentType: string, draftText?: string): 
       governingStandards: [],
       checklist: [],
       readiness: 'Unknown document type — cannot review against a standard.',
-      availableDocumentTypes: undefined,
+      availableDocumentTypes: listMedicalWritingCatalog().documentTypes.map(d => d.id),
     };
   }
 

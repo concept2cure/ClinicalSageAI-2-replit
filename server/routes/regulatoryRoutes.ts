@@ -38,215 +38,250 @@ const CalendarCreateSchema = z.object({
 });
 
 router.get('/submissions', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (!orgId) {
-    return res.status(403).json({ success: false, error: 'Organization context required' });
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(403).json({ success: false, error: 'Organization context required' });
+    }
+
+    const parsedLimit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
+    const rows = await db
+      .select({
+        id: regulatorySubmissions.submissionId,
+        title: regulatorySubmissions.drugName,
+        agency: regulatorySubmissions.targetMarket,
+        status: regulatorySubmissions.status,
+        type: regulatorySubmissions.submissionType,
+        dueDate: regulatorySubmissions.targetSubmissionDate,
+        indication: regulatorySubmissions.indication,
+        sponsor: regulatorySubmissions.sponsor,
+        currentGate: regulatorySubmissions.currentGate,
+        progressPercentage: regulatorySubmissions.progressPercentage,
+      })
+      .from(regulatorySubmissions)
+      .where(eq(regulatorySubmissions.organizationId, orgId))
+      .orderBy(desc(regulatorySubmissions.targetSubmissionDate))
+      .limit(parsedLimit);
+
+    return res.json({
+      success: true,
+      data: rows.map(row => ({
+        ...row,
+        dueDate: row.dueDate?.toISOString?.() ?? row.dueDate,
+      })),
+    });
+  } catch (error) {
+    console.error('Error fetching submissions:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch submissions' });
   }
-
-  const parsedLimit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 500);
-  const rows = await db
-    .select({
-      id: regulatorySubmissions.submissionId,
-      title: regulatorySubmissions.drugName,
-      agency: regulatorySubmissions.targetMarket,
-      status: regulatorySubmissions.status,
-      type: regulatorySubmissions.submissionType,
-      dueDate: regulatorySubmissions.targetSubmissionDate,
-      indication: regulatorySubmissions.indication,
-      sponsor: regulatorySubmissions.sponsor,
-      currentGate: regulatorySubmissions.currentGate,
-      progressPercentage: regulatorySubmissions.progressPercentage,
-    })
-    .from(regulatorySubmissions)
-    .where(eq(regulatorySubmissions.organizationId, orgId))
-    .orderBy(desc(regulatorySubmissions.targetSubmissionDate))
-    .limit(parsedLimit);
-
-  return res.json({
-    success: true,
-    data: rows.map(row => ({
-      ...row,
-      dueDate: row.dueDate?.toISOString?.() ?? row.dueDate,
-    })),
-  });
 });
 
 router.get('/calendar', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (!orgId) {
-    return res.status(403).json({ success: false, error: 'Organization context required' });
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(403).json({ success: false, error: 'Organization context required' });
+    }
+
+    const queryParse = CalendarQuerySchema.safeParse(req.query);
+    if (!queryParse.success) {
+      return res.status(400).json({ success: false, error: 'Invalid calendar query parameters' });
+    }
+    const { dateFrom, dateTo, limit } = queryParse.data;
+
+    const filters = [eq(regulatoryCalendar.organizationId, orgId)];
+    if (dateFrom) filters.push(gte(regulatoryCalendar.eventDate, new Date(dateFrom)));
+    if (dateTo) filters.push(lte(regulatoryCalendar.eventDate, new Date(dateTo)));
+
+    const rows = await db
+      .select({
+        id: regulatoryCalendar.eventId,
+        title: regulatoryCalendar.title,
+        description: regulatoryCalendar.description,
+        eventType: regulatoryCalendar.eventType,
+        status: regulatoryCalendar.status,
+        priority: regulatoryCalendar.priority,
+        eventDate: regulatoryCalendar.eventDate,
+        endDate: regulatoryCalendar.endDate,
+        submissionId: regulatoryCalendar.submissionId,
+        location: regulatoryCalendar.location,
+      })
+      .from(regulatoryCalendar)
+      .where(and(...filters))
+      .orderBy(desc(regulatoryCalendar.eventDate))
+      .limit(limit);
+
+    return res.json({
+      success: true,
+      data: rows.map(row => ({
+        ...row,
+        eventDate: row.eventDate?.toISOString?.() ?? row.eventDate,
+        endDate: row.endDate?.toISOString?.() ?? row.endDate,
+      })),
+    });
+  } catch (error) {
+    console.error('Error fetching calendar:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch calendar' });
   }
-
-  const queryParse = CalendarQuerySchema.safeParse(req.query);
-  if (!queryParse.success) {
-    return res.status(400).json({ success: false, error: 'Invalid calendar query parameters' });
-  }
-  const { dateFrom, dateTo, limit } = queryParse.data;
-
-  const filters = [eq(regulatoryCalendar.organizationId, orgId)];
-  if (dateFrom) filters.push(gte(regulatoryCalendar.eventDate, new Date(dateFrom)));
-  if (dateTo) filters.push(lte(regulatoryCalendar.eventDate, new Date(dateTo)));
-
-  const rows = await db
-    .select({
-      id: regulatoryCalendar.eventId,
-      title: regulatoryCalendar.title,
-      description: regulatoryCalendar.description,
-      eventType: regulatoryCalendar.eventType,
-      status: regulatoryCalendar.status,
-      priority: regulatoryCalendar.priority,
-      eventDate: regulatoryCalendar.eventDate,
-      endDate: regulatoryCalendar.endDate,
-      submissionId: regulatoryCalendar.submissionId,
-      location: regulatoryCalendar.location,
-    })
-    .from(regulatoryCalendar)
-    .where(and(...filters))
-    .orderBy(desc(regulatoryCalendar.eventDate))
-    .limit(limit);
-
-  return res.json({
-    success: true,
-    data: rows.map(row => ({
-      ...row,
-      eventDate: row.eventDate?.toISOString?.() ?? row.eventDate,
-      endDate: row.endDate?.toISOString?.() ?? row.endDate,
-    })),
-  });
 });
 
 router.post('/calendar', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (!orgId) {
-    return res.status(403).json({ success: false, error: 'Organization context required' });
-  }
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) {
+      return res.status(403).json({ success: false, error: 'Organization context required' });
+    }
 
-  const parsedBody = CalendarCreateSchema.safeParse(req.body || {});
-  if (!parsedBody.success) {
-    return res.status(400).json({
-      success: false,
-      error: 'Invalid calendar payload',
-      details: parsedBody.error.flatten(),
-    });
-  }
-  const {
-    title,
-    eventType,
-    eventDate,
-    submissionId,
-    status,
-    priority,
-    description,
-    location,
-    allDay,
-    metadata,
-    reminders,
-    recurrence,
-  } = parsedBody.data;
-
-  const parsedEventDate = new Date(eventDate);
-  if (Number.isNaN(parsedEventDate.getTime())) {
-    return res.status(400).json({ success: false, error: 'eventDate must be a valid ISO date' });
-  }
-
-  const submissionIdValue = submissionId ?? null;
-  if (submissionIdValue) {
-    const [existingSubmission] = await db
-      .select({ id: regulatorySubmissions.id })
-      .from(regulatorySubmissions)
-      .where(
-        and(
-          eq(regulatorySubmissions.id, submissionIdValue),
-          eq(regulatorySubmissions.organizationId, orgId)
-        )
-      )
-      .limit(1);
-    if (!existingSubmission) {
+    const parsedBody = CalendarCreateSchema.safeParse(req.body || {});
+    if (!parsedBody.success) {
       return res.status(400).json({
         success: false,
-        error: 'submissionId does not belong to your organization',
+        error: 'Invalid calendar payload',
+        details: parsedBody.error.flatten(),
       });
     }
-  }
-
-  const [created] = await db
-    .insert(regulatoryCalendar)
-    .values({
-      organizationId: orgId,
-      eventId: `cal-${Date.now()}`,
+    const {
       title,
       eventType,
-      eventDate: parsedEventDate,
-      submissionId: submissionIdValue,
-      status: status || 'scheduled',
-      priority: priority || 'medium',
-      description: description || null,
-      location: location || null,
-      allDay: Boolean(allDay ?? false),
-      metadata: metadata || null,
-      reminders: reminders || null,
-      recurrence: recurrence || null,
-    })
-    .returning({
-      id: regulatoryCalendar.eventId,
-      title: regulatoryCalendar.title,
-      eventType: regulatoryCalendar.eventType,
-      eventDate: regulatoryCalendar.eventDate,
-      submissionId: regulatoryCalendar.submissionId,
-      status: regulatoryCalendar.status,
-      priority: regulatoryCalendar.priority,
-      description: regulatoryCalendar.description,
-      location: regulatoryCalendar.location,
-    });
+      eventDate,
+      submissionId,
+      status,
+      priority,
+      description,
+      location,
+      allDay,
+      metadata,
+      reminders,
+      recurrence,
+    } = parsedBody.data;
 
-  return res.status(201).json({
-    success: true,
-    data: {
-      ...created,
-      eventDate: created.eventDate?.toISOString?.() ?? created.eventDate,
-    },
-  });
+    const parsedEventDate = new Date(eventDate);
+    if (Number.isNaN(parsedEventDate.getTime())) {
+      return res.status(400).json({ success: false, error: 'eventDate must be a valid ISO date' });
+    }
+
+    const submissionIdValue = submissionId ?? null;
+    if (submissionIdValue) {
+      const [existingSubmission] = await db
+        .select({ id: regulatorySubmissions.id })
+        .from(regulatorySubmissions)
+        .where(
+          and(
+            eq(regulatorySubmissions.id, submissionIdValue),
+            eq(regulatorySubmissions.organizationId, orgId)
+          )
+        )
+        .limit(1);
+      if (!existingSubmission) {
+        return res.status(400).json({
+          success: false,
+          error: 'submissionId does not belong to your organization',
+        });
+      }
+    }
+
+    const [created] = await db
+      .insert(regulatoryCalendar)
+      .values({
+        organizationId: orgId,
+        eventId: `cal-${Date.now()}`,
+        title,
+        eventType,
+        eventDate: parsedEventDate,
+        submissionId: submissionIdValue,
+        status: status || 'scheduled',
+        priority: priority || 'medium',
+        description: description || null,
+        location: location || null,
+        allDay: Boolean(allDay ?? false),
+        metadata: metadata || null,
+        reminders: reminders || null,
+        recurrence: recurrence || null,
+      })
+      .returning({
+        id: regulatoryCalendar.eventId,
+        title: regulatoryCalendar.title,
+        eventType: regulatoryCalendar.eventType,
+        eventDate: regulatoryCalendar.eventDate,
+        submissionId: regulatoryCalendar.submissionId,
+        status: regulatoryCalendar.status,
+        priority: regulatoryCalendar.priority,
+        description: regulatoryCalendar.description,
+        location: regulatoryCalendar.location,
+      });
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        ...created,
+        eventDate: created.eventDate?.toISOString?.() ?? created.eventDate,
+      },
+    });
+  } catch (error) {
+    console.error('Error creating calendar event:', error);
+    res.status(500).json({ success: false, error: 'Failed to create calendar event' });
+  }
 });
 
 // GET /search is served by regulatory-registry (mounted first at /api/regulatory).
 // This path is the intelligence summary search from RegulatoryIntelligenceService.
 router.get('/intelligence-search', async (req, res) => {
-  const { q, phase } = req.query;
-  await regulatoryService.initialize();
-  const results = await regulatoryService.getRegulatoryIntelligence(
-    (phase as string) || 'Phase 2',
-    q as string | undefined
-  );
-  res.json(results);
+  try {
+    const { q, phase } = req.query;
+    await regulatoryService.initialize();
+    const results = await regulatoryService.getRegulatoryIntelligence(
+      (phase as string) || 'Phase 2',
+      q as string | undefined
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Error in intelligence search:', error);
+    res.status(500).json({ error: 'Intelligence search failed' });
+  }
 });
 
 router.get('/regulatory/search', async (req, res) => {
-  const { q, phase } = req.query;
-  await regulatoryService.initialize();
-  const results = await regulatoryService.getRegulatoryIntelligence(
-    (phase as string) || 'Phase 2',
-    q as string | undefined
-  );
-  res.json(results);
+  try {
+    const { q, phase } = req.query;
+    await regulatoryService.initialize();
+    const results = await regulatoryService.getRegulatoryIntelligence(
+      (phase as string) || 'Phase 2',
+      q as string | undefined
+    );
+    res.json(results);
+  } catch (error) {
+    console.error('Error in regulatory search:', error);
+    res.status(500).json({ error: 'Regulatory search failed' });
+  }
 });
 
 router.get('/risk/:sectionId', async (req, res) => {
-  const { sectionId } = req.params;
-  await regulatoryService.initialize();
-  const analysis = await regulatoryService.analyzeProtocolCompliance(
-    `Section ${sectionId}`,
-    'Phase 2'
-  );
-  res.json({ sectionId, analysis });
+  try {
+    const { sectionId } = req.params;
+    await regulatoryService.initialize();
+    const analysis = await regulatoryService.analyzeProtocolCompliance(
+      `Section ${sectionId}`,
+      'Phase 2'
+    );
+    res.json({ sectionId, analysis });
+  } catch (error) {
+    console.error('Error in risk analysis:', error);
+    res.status(500).json({ error: 'Risk analysis failed' });
+  }
 });
 
 router.get('/regulatory/risk/:sectionId', async (req, res) => {
-  const { sectionId } = req.params;
-  await regulatoryService.initialize();
-  const analysis = await regulatoryService.analyzeProtocolCompliance(
-    `Section ${sectionId}`,
-    'Phase 2'
-  );
-  res.json({ sectionId, analysis });
+  try {
+    const { sectionId } = req.params;
+    await regulatoryService.initialize();
+    const analysis = await regulatoryService.analyzeProtocolCompliance(
+      `Section ${sectionId}`,
+      'Phase 2'
+    );
+    res.json({ sectionId, analysis });
+  } catch (error) {
+    console.error('Error in regulatory risk analysis:', error);
+    res.status(500).json({ error: 'Regulatory risk analysis failed' });
+  }
 });
 export default router;

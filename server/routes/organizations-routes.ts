@@ -23,7 +23,7 @@ function validateOrgOwnership(req: any, res: any, next: any) {
     : null;
   const userRole = req.user?.role || req.userRole;
 
-  if (userRole === 'platform_admin' || userRole === 'superadmin' || userRole === 'admin') {
+  if (userRole === 'platform_admin' || userRole === 'superadmin' || userRole === 'super_admin') {
     return next();
   }
 
@@ -50,7 +50,7 @@ router.get('/', async (req, res) => {
     const isAdmin =
       userRole === 'platform_admin' ||
       userRole === 'superadmin' ||
-      userRole === 'admin';
+      userRole === 'super_admin';
 
     let orgRows;
 

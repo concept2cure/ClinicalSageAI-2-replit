@@ -65,6 +65,11 @@ async function runDocxPythonIsolated(intent: ComputeIntent): Promise<ComputeOutp
       reject(new Error('docx-python worker timeout exceeded'));
     }, 20_000);
 
+    proc.on('error', err => {
+      clearTimeout(timeout);
+      reject(new Error(`docx-python worker failed to spawn: ${err.message}`));
+    });
+
     proc.on('exit', code => {
       clearTimeout(timeout);
       if (code === 0) return resolve();

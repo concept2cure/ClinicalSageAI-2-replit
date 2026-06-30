@@ -216,12 +216,14 @@ const searchRateLimiter = createRateLimitMiddleware(searchLimiter);
 const detailRateLimiter = createRateLimitMiddleware(detailLimiter);
 const analysisRateLimiter = createRateLimitMiddleware(analysisLimiter);
 
-// Clean up rate limit data periodically
-setInterval(() => {
+// Clean up rate limit data periodically.
+// unref() prevents this timer from keeping the process alive during shutdown.
+const rateLimitCleanupTimer = setInterval(() => {
   searchLimiter.cleanup();
   detailLimiter.cleanup();
   analysisLimiter.cleanup();
 }, 60000); // Clean every minute
+rateLimitCleanupTimer.unref();
 
 // Input sanitization utility
 const sanitizeInput = (input: any): any => {

@@ -266,7 +266,7 @@ export function sortContextRules(
     const ta = tier(a);
     const tb = tier(b);
     if (ta !== tb) return ta - tb;
-    return SEV[a.severity] - SEV[b.severity];
+    return (SEV[a.severity] ?? 9) - (SEV[b.severity] ?? 9);
   });
 }
 

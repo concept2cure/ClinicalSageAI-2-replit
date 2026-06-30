@@ -633,9 +633,12 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   /**
    * GET /api/audit/chain-monitor/status
    * Returns the current status of the background chain integrity monitor.
+   * SECURITY: Requires authentication — chain integrity data is sensitive.
    */
-  router.get('/audit/chain-monitor/status', async (_req: Request, res: Response) => {
+  router.get('/audit/chain-monitor/status', async (req: Request, res: Response) => {
     try {
+      const guard = requireAuthedOrgId(req, res);
+      if (!guard) return;
       const { getChainMonitorStatus } = await import('../services/audit/chainIntegrityMonitor.js');
       const status = getChainMonitorStatus();
       res.json({ success: true, data: status });
@@ -647,9 +650,12 @@ export function createAuditTrailRoutes(pool: Pool): Router {
   /**
    * POST /api/audit/chain-monitor/check
    * Trigger an on-demand chain integrity check.
+   * SECURITY: Requires authentication — triggering integrity checks is an admin action.
    */
-  router.post('/audit/chain-monitor/check', async (_req: Request, res: Response) => {
+  router.post('/audit/chain-monitor/check', async (req: Request, res: Response) => {
     try {
+      const guard = requireAuthedOrgId(req, res);
+      if (!guard) return;
       const { runOnDemandCheck } = await import('../services/audit/chainIntegrityMonitor.js');
       const status = await runOnDemandCheck();
       res.json({ success: true, data: status });

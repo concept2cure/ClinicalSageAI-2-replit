@@ -414,12 +414,15 @@ export class FHIRR4Connector implements DataConnector {
         if (query.dateRange?.to) params.append('date', `le${query.dateRange.to}`);
         break;
 
-      case 'Observation':
-        if (query.indication) params.set('code:text', query.indication);
-        if (query.keywords?.length) params.set('code:text', query.keywords.join(' '));
+      case 'Observation': {
+        const codeTerms: string[] = [];
+        if (query.indication) codeTerms.push(query.indication);
+        if (query.keywords?.length) codeTerms.push(query.keywords.join(' '));
+        if (codeTerms.length) params.set('code:text', codeTerms.join(' '));
         if (query.dateRange?.from) params.set('date', `ge${query.dateRange.from}`);
         if (query.dateRange?.to) params.append('date', `le${query.dateRange.to}`);
         break;
+      }
     }
 
     return params;

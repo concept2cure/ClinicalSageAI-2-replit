@@ -93,67 +93,83 @@ export function mountPlanRoutes(router: Router): void {
   // GET /api/ana-ri/plan/:planRunId — Fetch persisted goal plan run
   // ─────────────────────────────────────────────────────────────────────────
   router.get('/plan/:planRunId', async (req: Request, res: Response) => {
-    const planRun = await getGoalPlanRun(String(req.params.planRunId));
-    if (!planRun) {
-      return sendError(res, 404, 'Plan run not found', null, 'PLAN_NOT_FOUND');
+    try {
+      const planRun = await getGoalPlanRun(String(req.params.planRunId));
+      if (!planRun) {
+        return sendError(res, 404, 'Plan run not found', null, 'PLAN_NOT_FOUND');
+      }
+      return sendSuccess(res, planRun);
+    } catch (err) {
+      return sendError(res, 500, err instanceof Error ? err.message : String(err), null, 'PLAN_FETCH_ERROR');
     }
-    return sendSuccess(res, planRun);
   });
 
   // ─────────────────────────────────────────────────────────────────────────
   // POST /api/ana-ri/plan/:planRunId/advance — Advance step status
   // ─────────────────────────────────────────────────────────────────────────
   router.post('/plan/:planRunId/advance', async (req: Request, res: Response) => {
-    const { stepId, nextStatus } = req.body || {};
-    if (!stepId || !nextStatus) {
-      return sendError(res, 400, 'stepId and nextStatus are required', null, 'INVALID_INPUT');
-    }
-    const allowedStatuses = ['pending', 'in_progress', 'completed', 'blocked', 'replanned'] as const;
-    if (!allowedStatuses.includes(nextStatus)) {
-      return sendError(res, 400, 'Invalid nextStatus', null, 'INVALID_STATUS');
-    }
+    try {
+      const { stepId, nextStatus } = req.body || {};
+      if (!stepId || !nextStatus) {
+        return sendError(res, 400, 'stepId and nextStatus are required', null, 'INVALID_INPUT');
+      }
+      const allowedStatuses = ['pending', 'in_progress', 'completed', 'blocked', 'replanned'] as const;
+      if (!allowedStatuses.includes(nextStatus)) {
+        return sendError(res, 400, 'Invalid nextStatus', null, 'INVALID_STATUS');
+      }
 
-    const result = await advanceGoalPlanStep({
-      planRunId: String(req.params.planRunId),
-      stepId,
-      nextStatus,
-    });
-    if (!result.ok) {
-      return sendError(res, 400, result.message ?? 'Failed to advance plan step', null, 'PLAN_ADVANCE_FAILED');
+      const result = await advanceGoalPlanStep({
+        planRunId: String(req.params.planRunId),
+        stepId,
+        nextStatus,
+      });
+      if (!result.ok) {
+        return sendError(res, 400, result.message ?? 'Failed to advance plan step', null, 'PLAN_ADVANCE_FAILED');
+      }
+      return sendSuccess(res, { ok: true });
+    } catch (err) {
+      return sendError(res, 500, err instanceof Error ? err.message : String(err), null, 'PLAN_ADVANCE_ERROR');
     }
-    return sendSuccess(res, { ok: true });
   });
 
   // ─────────────────────────────────────────────────────────────────────────
   // POST /api/ana-ri/plan/:planRunId/execute-next — Execute next runnable step
   // ─────────────────────────────────────────────────────────────────────────
   router.post('/plan/:planRunId/execute-next', async (req: Request, res: Response) => {
-    const result = await executeNextGoalPlanStep(String(req.params.planRunId));
-    if (!result.ok) {
-      return sendError(res, 400, result.message ?? 'Failed to execute next plan step', null, 'PLAN_EXECUTION_FAILED');
+    try {
+      const result = await executeNextGoalPlanStep(String(req.params.planRunId));
+      if (!result.ok) {
+        return sendError(res, 400, result.message ?? 'Failed to execute next plan step', null, 'PLAN_EXECUTION_FAILED');
+      }
+      const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+      await recordProtocolEvent({
+        planRunId: String(req.params.planRunId),
+        organizationId: orgId ? Number(orgId) : null,
+        actorType: 'system',
+        actorId: 'kernel-runtime',
+        messageType: 'decision',
+        payload: {
+          decision: 'execute_next_step',
+          rationale: 'Automatically executed next dependency-satisfied step',
+          stepId: result.executedStepId,
+        },
+      });
+      return sendSuccess(res, result);
+    } catch (err) {
+      return sendError(res, 500, err instanceof Error ? err.message : String(err), null, 'PLAN_EXECUTION_ERROR');
     }
-    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    await recordProtocolEvent({
-      planRunId: String(req.params.planRunId),
-      organizationId: orgId ? Number(orgId) : null,
-      actorType: 'system',
-      actorId: 'kernel-runtime',
-      messageType: 'decision',
-      payload: {
-        decision: 'execute_next_step',
-        rationale: 'Automatically executed next dependency-satisfied step',
-        stepId: result.executedStepId,
-      },
-    });
-    return sendSuccess(res, result);
   });
 
   // ─────────────────────────────────────────────────────────────────────────
   // GET /api/ana-ri/plan/:planRunId/events — Step event audit trail
   // ─────────────────────────────────────────────────────────────────────────
   router.get('/plan/:planRunId/events', async (req: Request, res: Response) => {
-    const events = await listGoalPlanEvents(String(req.params.planRunId));
-    return sendSuccess(res, { events });
+    try {
+      const events = await listGoalPlanEvents(String(req.params.planRunId));
+      return sendSuccess(res, { events });
+    } catch (err) {
+      return sendError(res, 500, err instanceof Error ? err.message : String(err), null, 'PLAN_EVENTS_ERROR');
+    }
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -176,18 +192,26 @@ export function mountPlanRoutes(router: Router): void {
       return sendError(res, 400, validation.message ?? 'Invalid protocol event', null, 'INVALID_PROTOCOL_EVENT');
     }
 
-    const recorded = await recordProtocolEvent(event as any);
-    if (!recorded.ok) {
-      return sendError(res, 500, 'Failed to record protocol event', null, 'PROTOCOL_WRITE_FAILED');
+    try {
+      const recorded = await recordProtocolEvent(event as any);
+      if (!recorded.ok) {
+        return sendError(res, 500, 'Failed to record protocol event', null, 'PROTOCOL_WRITE_FAILED');
+      }
+      return sendSuccess(res, { ok: true });
+    } catch (err) {
+      return sendError(res, 500, err instanceof Error ? err.message : String(err), null, 'PROTOCOL_RECORD_ERROR');
     }
-    return sendSuccess(res, { ok: true });
   });
 
   // ─────────────────────────────────────────────────────────────────────────
   // GET /api/ana-ri/plan/:planRunId/protocol — List protocol events
   // ─────────────────────────────────────────────────────────────────────────
   router.get('/plan/:planRunId/protocol', async (req: Request, res: Response) => {
-    const events = await listProtocolEvents(String(req.params.planRunId));
-    return sendSuccess(res, { events });
+    try {
+      const events = await listProtocolEvents(String(req.params.planRunId));
+      return sendSuccess(res, { events });
+    } catch (err) {
+      return sendError(res, 500, err instanceof Error ? err.message : String(err), null, 'PROTOCOL_LIST_ERROR');
+    }
   });
 }

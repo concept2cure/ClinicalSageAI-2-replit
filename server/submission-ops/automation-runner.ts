@@ -46,7 +46,7 @@ export async function runAutomationSweep(
   packageDbId: number
 ): Promise<AutomationResult> {
   const now = new Date();
-  const hourWindow = `${now.getFullYear()}-${now.getMonth()}-${now.getDate()}-${now.getHours()}`;
+  const hourWindow = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}`;
   const idempotencyKey = `${orgId}_${projectId}_${packageDbId}_full_sweep_${hourWindow}`;
 
   // Check idempotency

@@ -536,21 +536,21 @@ class DocumentDataCenterService {
       // Category filter (supports multi-category)
       if (filters?.categories?.length) {
         conditions.push(
-          sql`${deviceDataCenter.categories} && ARRAY[${filters.categories.join(',')}]::text[]`
+          sql`${deviceDataCenter.categories} && ${filters.categories}::text[]`
         );
       }
 
       // Test standards filter
       if (filters?.testStandards?.length) {
         conditions.push(
-          sql`${deviceDataCenter.testStandards} && ARRAY[${filters.testStandards.join(',')}]::text[]`
+          sql`${deviceDataCenter.testStandards} && ${filters.testStandards}::text[]`
         );
       }
 
       // Components filter
       if (filters?.components?.length) {
         conditions.push(
-          sql`${deviceDataCenter.deviceComponents} && ARRAY[${filters.components.join(',')}]::text[]`
+          sql`${deviceDataCenter.deviceComponents} && ${filters.components}::text[]`
         );
       }
 

@@ -351,9 +351,8 @@ export async function createCheckoutSession(params: CreateCheckoutParams): Promi
   // Total = per-user × seats
   let unitAmount = perUserAmount * seatCount;
 
-  // Apply annual discount (on top of bundle discount)
   if (billingCycle === 'annual') {
-    unitAmount = Math.round(unitAmount * (1 - tierPricing.annualDiscountPct / 100));
+    unitAmount = Math.round(unitAmount * 12 * (1 - tierPricing.annualDiscountPct / 100));
   }
 
   // Ensure Stripe customer exists
@@ -428,8 +427,11 @@ export async function createCheckoutSession(params: CreateCheckoutParams): Promi
     tax_id_collection: { enabled: true },
   });
 
+  if (!session.url) {
+    throw new Error('Stripe checkout session did not return a URL');
+  }
   return {
-    url: session.url!,
+    url: session.url,
     sessionId: session.id,
   };
 }
@@ -490,7 +492,7 @@ export async function createDTCCheckoutSession(params: DTCCheckoutParams): Promi
   // Calculate price
   let unitAmount = dtcTier.baseMonthly;
   if (billingCycle === 'annual') {
-    unitAmount = Math.round(unitAmount * (1 - dtcTier.annualDiscountPct / 100));
+    unitAmount = Math.round(unitAmount * 12 * (1 - dtcTier.annualDiscountPct / 100));
   }
 
   const productId = await getOrCreateProduct(stripe, tier, 'dtc');
@@ -531,7 +533,10 @@ export async function createDTCCheckoutSession(params: DTCCheckoutParams): Promi
   }
 
   const session = await stripe.checkout.sessions.create(sessionConfig);
-  return { url: session.url!, sessionId: session.id };
+  if (!session.url) {
+    throw new Error('Stripe checkout session did not return a URL');
+  }
+  return { url: session.url, sessionId: session.id };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -692,7 +697,11 @@ export async function processWebhookEvent(event: Stripe.Event): Promise<void> {
  * subscriptions in this app have.
  */
 function getSubscriptionPeriodEnd(subscription: Stripe.Subscription): number {
-  return subscription.items.data[0].current_period_end;
+  const firstItem = subscription.items.data[0];
+  if (!firstItem) {
+    throw new Error(`Subscription ${subscription.id} has no items`);
+  }
+  return firstItem.current_period_end;
 }
 
 /**

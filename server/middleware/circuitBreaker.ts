@@ -89,17 +89,21 @@ export class CircuitBreaker {
       return this.allowSingleRequest(func);
     }
 
+    let timeoutHandle: NodeJS.Timeout | undefined;
     try {
       // Execute with timeout protection
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
+        timeoutHandle = setTimeout(() => {
           reject(new Error(`Operation timed out after ${this.options.maxTimeout}ms`));
         }, this.options.maxTimeout);
       });
 
       // Race between actual operation and timeout
-      return await Promise.race([func(), timeoutPromise]);
+      const result = await Promise.race([func(), timeoutPromise]);
+      clearTimeout(timeoutHandle);
+      return result;
     } catch (error) {
+      clearTimeout(timeoutHandle);
       // Record failure and potentially open circuit
       this.recordFailure(error);
       throw error;

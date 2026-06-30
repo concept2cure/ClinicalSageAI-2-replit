@@ -1168,7 +1168,7 @@ router.post(
         return res.status(result.status).json(result.data);
       }
 
-      logAuditEvent({
+      await logAuditEvent({
         category: 'compliance',
         severity: 'info',
         action: 'SAFETY_SIGNALS_INGESTED',

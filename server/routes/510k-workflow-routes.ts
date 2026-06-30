@@ -4,6 +4,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { and, eq, sql } from 'drizzle-orm';
 import { fda510kStageProgress, fda510kProjects } from '@shared/schema';
 import { getSecureOrgId } from '../utils/tenantContext';
+import { authMiddleware } from '../auth';
 import { TemplateMapper } from '../services/documentTemplateMapper';
 import { MemStorage } from '../storage';
 import FDA510kComplianceTracker from '../services/510kComplianceTracker';
@@ -18,8 +19,12 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
   const db = drizzle(pool);
 
   // POST /:projectId — save workflow data
-  router.post('/:projectId', async (req, res) => {
+  router.post('/:projectId', authMiddleware, async (req, res) => {
     const { projectId } = req.params;
+    const numericProjectId = parseInt(projectId);
+    if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid project ID' });
+    }
     const { stage, section, data, completedSteps, validationCheckpoints } = req.body;
 
     // SECURITY: derive org from the JWT, never from the request body, to prevent
@@ -303,18 +308,44 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
   });
 
   // GET /:projectId/stage-data — stage data for client persistence hydration
-  router.get('/:projectId/stage-data', async (req, res) => {
+  router.get('/:projectId/stage-data', authMiddleware, async (req, res) => {
     const { projectId } = req.params;
+    const numericProjectId = parseInt(projectId);
+    if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid project ID' });
+    }
+
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
+
     const stage = (req.query.stage as string) || 'default';
     const section = (req.query.section as string) || 'default';
 
     try {
+      // Verify the project belongs to the caller's org before returning data
+      const projectRows = await db
+        .select()
+        .from(fda510kProjects)
+        .where(
+          and(
+            eq(fda510kProjects.projectId, numericProjectId),
+            eq(fda510kProjects.organizationId, parseInt(organizationId))
+          )
+        );
+      // Allow stage-data reads for demo projects (>= 500) or when the project
+      // is confirmed to belong to this org.
+      if (numericProjectId < 500 && projectRows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Project not found' });
+      }
+
       const rows = await db
         .select()
         .from(fda510kStageProgress)
         .where(
           and(
-            eq(fda510kStageProgress.projectId, parseInt(projectId)),
+            eq(fda510kStageProgress.projectId, numericProjectId),
             eq(fda510kStageProgress.stageName, stage),
             eq(fda510kStageProgress.sectionName, section)
           )
@@ -337,7 +368,7 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
   });
 
   // GET / — list all 510k workflows
-  router.get('/', async (req, res) => {
+  router.get('/', authMiddleware, async (req, res) => {
     const organizationId = getSecureOrgId(req);
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
@@ -359,8 +390,12 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
   });
 
   // GET /:projectId — get 510k workflow data
-  router.get('/:projectId', async (req, res) => {
+  router.get('/:projectId', authMiddleware, async (req, res) => {
     const { projectId } = req.params;
+    const numericProjectId = parseInt(projectId);
+    if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid project ID' });
+    }
     const organizationId = getSecureOrgId(req);
 
     if (!organizationId) {
@@ -393,8 +428,12 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
   });
 
   // POST /:projectId/generate-document — generate 510k document
-  router.post('/:projectId/generate-document', async (req, res) => {
+  router.post('/:projectId/generate-document', authMiddleware, async (req, res) => {
     const { projectId } = req.params;
+    const numericProjectId = parseInt(projectId);
+    if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid project ID' });
+    }
     const organizationId = getSecureOrgId(req);
 
     if (!organizationId) {
@@ -460,8 +499,16 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
   });
 
   // GET /:projectId/audit-trail — audit trail for 510(k) workflow
-  router.get('/:projectId/audit-trail', async (req, res) => {
+  router.get('/:projectId/audit-trail', authMiddleware, async (req, res) => {
     const { projectId } = req.params;
+    const numericProjectId = parseInt(projectId);
+    if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid project ID' });
+    }
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
     const { stage, userId, startDate, endDate } = req.query;
 
     try {

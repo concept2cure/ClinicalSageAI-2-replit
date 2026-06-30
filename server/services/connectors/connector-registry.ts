@@ -86,7 +86,11 @@ function encrypt(text: string): string {
 }
 
 function decrypt(text: string): string {
-  const [ivHex, authTagHex, encryptedHex] = text.split(':');
+  const parts = text.split(':');
+  if (parts.length !== 3) {
+    throw new Error('Invalid encrypted credential format — expected iv:authTag:ciphertext');
+  }
+  const [ivHex, authTagHex, encryptedHex] = parts;
   const iv = Buffer.from(ivHex, 'hex');
   const authTag = Buffer.from(authTagHex, 'hex');
   const key = getDerivedKey(ENCRYPTION_KEY);

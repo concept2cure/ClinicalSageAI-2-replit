@@ -35,9 +35,10 @@ import {
   type ProjectArtifactCitationStatus,
 } from './citation-engine.js';
 
-const STALE_CONFIDENCE_FACTOR = parseFloat(
-  process.env.ANA_CITATION_READINESS_STALE_FACTOR ?? '1.0'
-);
+const STALE_CONFIDENCE_FACTOR = (() => {
+  const parsed = parseFloat(process.env.ANA_CITATION_READINESS_STALE_FACTOR ?? '1.0');
+  return Number.isFinite(parsed) ? parsed : 1.0;
+})();
 
 export interface CitationReadinessImpact {
   projectId: number;

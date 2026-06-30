@@ -321,6 +321,23 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
     const userId = getAuthedUserId(req);
     const organizationId = getAuthedOrgId(req);
 
+    // Validate stepNumber is a number in the expected range
+    const stepNum = Number(stepNumber);
+    if (!Number.isInteger(stepNum) || stepNum < 1 || stepNum > 7) {
+      return res.status(400).json({
+        success: false,
+        error: 'stepNumber must be an integer between 1 and 7',
+      });
+    }
+
+    // Validate stepData is present and is an object
+    if (!stepData || typeof stepData !== 'object') {
+      return res.status(400).json({
+        success: false,
+        error: 'stepData must be a non-null object',
+      });
+    }
+
     // Get current submission, gated by org. Foreign tenant ⇒ 404.
     const submission = await storage.getIndSubmission(submissionId);
     if (!submission || !assertSameOrg(submission, organizationId)) {
@@ -333,15 +350,16 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
     // Update step data. The JSON columns are untyped at the storage
     // boundary, so narrow them to indexable records here.
     const indStepData = (submission.indStepData || {}) as Record<string, any>;
-    indStepData[`step${stepNumber}`] = stepData;
+    indStepData[`step${stepNum}`] = stepData;
 
     // Update completion status
     const indStepsCompleted = (submission.indStepsCompleted || {}) as Record<string, any>;
-    indStepsCompleted[`step${stepNumber}`] = completed;
+    indStepsCompleted[`step${stepNum}`] = completed;
 
     // Check if all steps are completed
-    const allStepsCompleted = Object.keys(indStepsCompleted).every(
-      key => key.startsWith('step') && indStepsCompleted[key]
+    const stepKeys = Object.keys(indStepsCompleted).filter(key => key.startsWith('step'));
+    const allStepsCompleted = stepKeys.length > 0 && stepKeys.every(
+      key => indStepsCompleted[key]
     );
     
     // Update IND wizard status if all steps completed
@@ -360,7 +378,7 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
       lastModifiedBy: userId
     };
     
-    if (stepNumber === 7 && completed) {
+    if (stepNum === 7 && completed) {
       // Generate handoff data for eCTD
       updates.submissionSummary = generateSubmissionSummary(indStepData);
       updates.module2Data = extractModule2Data(indStepData);
@@ -385,7 +403,7 @@ router.post('/:submissionId/ind-step', async (req: Request, res: Response) => {
     
     const updatedSubmission = await storage.updateIndSubmission(submissionId, updates);
     
-    logger.info('Updated IND step', { submissionId, stepNumber, completed });
+    logger.info('Updated IND step', { submissionId, stepNumber: stepNum, completed });
     
     res.json({
       success: true,

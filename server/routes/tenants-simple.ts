@@ -228,13 +228,13 @@ router.patch('/:id', requireRole('super_admin', 'platform_admin'), async (req, r
     const result = await sql`
       UPDATE organizations
       SET
-        name = ${validatedData.name || sql`name`},
-        slug = ${validatedData.slug || sql`slug`},
-        domain = ${validatedData.domain || sql`domain`},
-        tier = ${validatedData.tier || sql`tier`},
-        max_users = ${validatedData.maxUsers || sql`max_users`},
-        max_projects = ${validatedData.maxProjects || sql`max_projects`},
-        max_storage = ${validatedData.maxStorage || sql`max_storage`},
+        name = ${validatedData.name ?? sql`name`},
+        slug = ${validatedData.slug ?? sql`slug`},
+        domain = ${validatedData.domain ?? sql`domain`},
+        tier = ${validatedData.tier ?? sql`tier`},
+        max_users = ${validatedData.maxUsers ?? sql`max_users`},
+        max_projects = ${validatedData.maxProjects ?? sql`max_projects`},
+        max_storage = ${validatedData.maxStorage ?? sql`max_storage`},
         updated_at = NOW()
       WHERE id = ${tenantId}
       RETURNING id, name, slug, domain, logo, tier, max_users as "maxUsers",
@@ -333,8 +333,10 @@ router.delete('/:id', requireRole('super_admin', 'platform_admin'), async (req, 
       });
     }
 
-    // Use transaction with postgres
-    await sql.begin(async sql => {
+    // Use transaction with postgres. The response is sent AFTER the
+    // transaction commits so the client never sees "success" on a
+    // rolled-back delete.
+    const orgName = await sql.begin(async sql => {
       // Check if organization exists
       const checkResult = await sql`SELECT id, name FROM organizations WHERE id = ${tenantId}`;
 
@@ -342,7 +344,7 @@ router.delete('/:id', requireRole('super_admin', 'platform_admin'), async (req, 
         throw new Error('Organization not found');
       }
 
-      const orgName = checkResult[0].name;
+      const deletedOrgName = checkResult[0].name;
 
       // Delete related data in the correct order to handle foreign key constraints
 
@@ -371,15 +373,20 @@ router.delete('/:id', requireRole('super_admin', 'platform_admin'), async (req, 
 
       // 4. Finally delete the organization itself
       await sql`DELETE FROM organizations WHERE id = ${tenantId}`;
-      log.debug(`Deleted organization ${tenantId}: ${orgName}`);
+      log.debug(`Deleted organization ${tenantId}: ${deletedOrgName}`);
 
-      res.json({
-        success: true,
-        message: `Organization "${orgName}" and all its data have been permanently deleted`,
-        deletedOrganizationId: tenantId,
-      });
+      return deletedOrgName;
+    });
+
+    res.json({
+      success: true,
+      message: `Organization "${orgName}" and all its data have been permanently deleted`,
+      deletedOrganizationId: tenantId,
     });
   } catch (error) {
+    if ((error as Error).message === 'Organization not found') {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
     log.error('Error deleting organization:', error);
     res.status(500).json({ error: 'Failed to delete organization' });
   }
@@ -396,11 +403,10 @@ router.post('/:id/api-key', requireRole('super_admin', 'platform_admin'), async 
       return res.status(400).json({ error: 'Invalid organization ID' });
     }
 
-    // Generate new API key
-    const newApiKey =
-      'trialsage-api-' +
-      Math.random().toString(36).substring(2, 15) +
-      Math.random().toString(36).substring(2, 15);
+    // Generate new API key using cryptographically secure randomness.
+    // Math.random() is predictable and MUST NOT be used for secrets.
+    const crypto = await import('crypto');
+    const newApiKey = 'trialsage-api-' + crypto.randomBytes(24).toString('base64url');
 
     // Update the organization with the new API key
     const result = await sql`

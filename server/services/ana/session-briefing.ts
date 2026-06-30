@@ -32,6 +32,7 @@ export interface SessionBriefingData {
 export interface BriefingRenderOptions {
   maxDeadlines?: number;
   maxDecisions?: number;
+  maxBlockers?: number;
 }
 
 /**
@@ -45,6 +46,7 @@ export function buildSessionBriefingBlock(
 ): string {
   const maxDeadlines = opts.maxDeadlines && opts.maxDeadlines > 0 ? opts.maxDeadlines : 5;
   const maxDecisions = opts.maxDecisions && opts.maxDecisions > 0 ? opts.maxDecisions : 5;
+  const maxBlockers = opts.maxBlockers && opts.maxBlockers > 0 ? opts.maxBlockers : 5;
 
   const overdue = data.deadlines.items.filter(i => i.bucket === 'overdue');
   const dueSoon = data.deadlines.items.filter(i => i.bucket === 'due_soon');
@@ -82,7 +84,7 @@ export function buildSessionBriefingBlock(
       .filter(Boolean)
       .join(', ');
     lines.push(`Open risks/blockers: ${counts}.`);
-    for (const b of blockers.slice(0, maxDeadlines)) {
+    for (const b of blockers.slice(0, maxBlockers)) {
       const sev = (b.severity ?? 'medium').toLowerCase();
       lines.push(`- [${sev}] ${b.title}`);
     }

@@ -128,9 +128,10 @@ function treatmentDescription(arm: Arm): string | null {
 function perArmSubjects(design: StudyDesign, index: number): number | null {
   const total = design.statisticalPlan?.plannedSampleSize;
   if (!total) return null;
+  const arms = design.arms ?? [];
   const ratio = design.randomization?.ratio;
-  if (!ratio || ratio.length !== design.arms.length) {
-    return Math.round(total / Math.max(1, design.arms.length));
+  if (!ratio || ratio.length !== arms.length) {
+    return Math.round(total / Math.max(1, arms.length));
   }
   const denom = ratio.reduce((a, b) => a + b, 0) || 1;
   return Math.round((total * ratio[index]) / denom);

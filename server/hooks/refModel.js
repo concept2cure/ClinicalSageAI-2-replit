@@ -179,17 +179,18 @@ export async function calculateRetentionDates(subtypeId, tenantId = null) {
       };
     }
 
-    // Calculate dates based on current date
-    const today = new Date();
+    // Calculate dates based on current date — each must start from
+    // a fresh copy of "now" to avoid cumulative drift from setMonth mutation.
+    const now = Date.now();
     const result = {
       periodic_review_date: retentionRule.review_interval
-        ? new Date(today.setMonth(today.getMonth() + retentionRule.review_interval))
+        ? new Date(new Date(now).setMonth(new Date(now).getMonth() + retentionRule.review_interval))
         : null,
       archive_date: retentionRule.archive_after
-        ? new Date(today.setMonth(today.getMonth() + retentionRule.archive_after))
+        ? new Date(new Date(now).setMonth(new Date(now).getMonth() + retentionRule.archive_after))
         : null,
       delete_date: retentionRule.delete_after
-        ? new Date(today.setMonth(today.getMonth() + retentionRule.delete_after))
+        ? new Date(new Date(now).setMonth(new Date(now).getMonth() + retentionRule.delete_after))
         : null,
     };
 

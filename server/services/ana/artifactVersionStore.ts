@@ -224,7 +224,7 @@ export async function upsertDocumentArtifactVersion(
       contentHash,
     };
   } catch (error) {
-    await client.query('ROLLBACK');
+    try { await client.query('ROLLBACK'); } catch { /* swallow rollback error; preserve original */ }
     throw error;
   } finally {
     client.release();

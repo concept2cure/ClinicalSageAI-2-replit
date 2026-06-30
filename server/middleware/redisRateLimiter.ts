@@ -229,6 +229,14 @@ async function checkRedisRateLimit(
     const count = (results[1]?.[1] as number) || 0;
 
     if (count >= maxRequests) {
+      // Rate limit exceeded — remove the entry we just added so rejected
+      // requests don't inflate the window and extend the block duration.
+      const member = results[2]?.[1];
+      // The zadd was the 3rd command; results[2] contains its reply.
+      // We added a unique member string, but the simplest cleanup is to
+      // remove the most recent entry by score (the one we just inserted).
+      await redisClient.zremrangebyscore(fullKey, now, now).catch(() => {});
+
       // Get the oldest entry to calculate retry time
       const oldest = await redisClient.zrange(fullKey, 0, 0, 'WITHSCORES');
       const oldestTime = oldest.length >= 2 ? parseInt(oldest[1], 10) : now;

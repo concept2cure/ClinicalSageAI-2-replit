@@ -55,8 +55,8 @@ router.post('/', requireAdmin, async (req: Request, res: Response) => {
     const organizationId = Number((req.body as { organizationId?: unknown })?.organizationId);
     const labelRaw = (req.body as { label?: unknown })?.label;
     const label = typeof labelRaw === 'string' && labelRaw.length > 0 ? labelRaw.slice(0, 200) : null;
-    if (!Number.isFinite(organizationId)) {
-      return res.status(400).json({ error: 'organizationId (integer) is required.' });
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(400).json({ error: 'organizationId (positive integer) is required.' });
     }
 
     const { token, tokenHash } = newToken();

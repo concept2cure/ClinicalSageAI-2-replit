@@ -221,7 +221,7 @@ export class SharePointConnector implements DataConnector {
   }
 
   async authenticate(credentials: ConnectorCredentials): Promise<void> {
-    const tenantId = (credentials as any).tenantId || credentials.customHeaders?.['X-Tenant-Id'];
+    const tenantId = credentials.baseUrl || (credentials as any).tenantId || credentials.customHeaders?.['X-Tenant-Id'];
     if (!tenantId) throw new Error('SharePoint requires tenantId (pass in customHeaders["X-Tenant-Id"] or as tenantId)');
     if (!credentials.clientId) throw new Error('SharePoint requires clientId');
     if (!credentials.clientSecret) throw new Error('SharePoint requires clientSecret');

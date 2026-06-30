@@ -535,23 +535,25 @@ export class ManufacturingService {
 
     try {
       let updateFields = 'status = $1, updated_at = NOW()';
-      const params: unknown[] = [status, batchId];
-      let paramIndex = 3;
+      const params: unknown[] = [status];
+      let paramIndex = 2;
 
       if (options?.actualStart) {
         updateFields += `, actual_start = $${paramIndex++}`;
-        params.splice(paramIndex - 2, 0, options.actualStart);
+        params.push(options.actualStart);
       }
 
       if (options?.actualEnd) {
         updateFields += `, actual_end = $${paramIndex++}`;
-        params.splice(paramIndex - 2, 0, options.actualEnd);
+        params.push(options.actualEnd);
       }
 
+      params.push(batchId);
+
       const result = await this.pool.query(
-        `UPDATE ${this.schema}.batch_execution_records 
+        `UPDATE ${this.schema}.batch_execution_records
          SET ${updateFields}
-         WHERE id = $2
+         WHERE id = $${paramIndex}
          RETURNING *`,
         params
       );

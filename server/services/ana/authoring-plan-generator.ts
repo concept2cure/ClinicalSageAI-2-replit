@@ -428,13 +428,17 @@ export function deriveAuthoringPlan(input: {
   const sectionContradictions: AuthoringPlanContradiction[] = [];
   for (const c of contradictions) {
     const inA =
-      c.artifactACtdSection === ctdSection ||
-      (c.artifactACtdSection ?? '').startsWith(ctdSection) ||
-      ctdSection.startsWith(c.artifactACtdSection ?? '');
+      c.artifactACtdSection != null && (
+        c.artifactACtdSection === ctdSection ||
+        c.artifactACtdSection.startsWith(ctdSection) ||
+        ctdSection.startsWith(c.artifactACtdSection)
+      );
     const inB =
-      c.artifactBCtdSection === ctdSection ||
-      (c.artifactBCtdSection ?? '').startsWith(ctdSection) ||
-      ctdSection.startsWith(c.artifactBCtdSection ?? '');
+      c.artifactBCtdSection != null && (
+        c.artifactBCtdSection === ctdSection ||
+        c.artifactBCtdSection.startsWith(ctdSection) ||
+        ctdSection.startsWith(c.artifactBCtdSection)
+      );
     if (!inA && !inB) continue;
     sectionContradictions.push({
       alertId: c.id,
@@ -993,8 +997,8 @@ export async function listAuthoringPlans(
     filters.push(`status = ANY($${params.length}::text[])`);
   }
   const where = `WHERE ${filters.join(' AND ')}`;
-  const limit = Math.max(1, Math.min(options.limit ?? 50, 200));
-  const offset = Math.max(0, options.offset ?? 0);
+  const limit = Math.max(1, Math.min(Number(options.limit) || 50, 200));
+  const offset = Math.max(0, Number(options.offset) || 0);
 
   try {
     const [rowsResult, countResult] = await Promise.all([

@@ -179,7 +179,7 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     // Parse the equipment requirements
     let equipmentRequirements = {};
     try {
-      equipmentRequirements = JSON.parse(equipmentResponse.choices[0].message.content);
+      equipmentRequirements = JSON.parse(equipmentResponse.content);
     } catch (error) {
       console.error('Error parsing equipment requirements JSON:', error);
     }
@@ -212,7 +212,7 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     });
 
     // Get the failure point analysis
-    const failurePointAnalysis = failurePointResponse.choices[0].message.content;
+    const failurePointAnalysis = failurePointResponse.content;
 
     // Generate draft validation protocol
     const validationPrompt = `Based on the formulation and scale-up strategy:
@@ -242,7 +242,7 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     });
 
     // Get the validation protocol
-    const validationProtocol = validationResponse.choices[0].message.content;
+    const validationProtocol = validationResponse.content;
 
     // Structure the results
     const translationResult = {
@@ -347,7 +347,7 @@ router.post('/upload', checkForOpenAIKey, upload.array('files', 5), async (req, 
         max_tokens: 1500,
       });
 
-      const extractedData = extractionResponse.choices[0].message.content;
+      const extractedData = extractionResponse.content;
 
       // Add processed file info
       processedFiles.push({

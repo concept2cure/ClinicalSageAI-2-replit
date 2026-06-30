@@ -10,6 +10,23 @@ import { executeRawQuery } from './execute';
 const logger = createScopedLogger('tenant-rls');
 
 /**
+ * Validate that a string is a safe SQL identifier (table or column name).
+ * Only allows lowercase letters, digits, and underscores — the standard
+ * Postgres unquoted identifier charset. Rejects anything else to prevent
+ * SQL injection when identifiers must be interpolated into DDL (which
+ * cannot use parameterized $1 placeholders).
+ */
+function assertSafeIdentifier(name: string): string {
+  if (!/^[a-z_][a-z0-9_]*$/.test(name)) {
+    throw new Error(
+      `Unsafe SQL identifier rejected: "${name}". ` +
+      'Only lowercase letters, digits, and underscores are allowed.'
+    );
+  }
+  return name;
+}
+
+/**
  * Create the tenant trigger function that automatically sets organization_id
  * on new records based on the current app.current_tenant_id setting.
  *
@@ -58,51 +75,46 @@ export async function createTenantTriggerFunction() {
  */
 export async function setupTableRls(tableName: string) {
   try {
-    logger.info(`Setting up RLS for table: ${tableName}`);
+    const safeName = assertSafeIdentifier(tableName);
+    logger.info(`Setting up RLS for table: ${safeName}`);
 
     // First check if the table has organization_id column
     const columnCheckResult = await executeRawQuery(`
-      SELECT column_name 
+      SELECT column_name
       FROM information_schema.columns
-      WHERE table_name = '${tableName}' AND column_name = 'organization_id';
+      WHERE table_name = '${safeName}' AND column_name = 'organization_id';
     `);
 
     // If organization_id column doesn't exist, skip this table
     if (columnCheckResult.rowCount === 0) {
-      logger.warn(`Table ${tableName} doesn't have organization_id column, skipping RLS setup`);
+      logger.warn(`Table ${safeName} doesn't have organization_id column, skipping RLS setup`);
       return false;
     }
 
     // Enable RLS on the table
     await executeRawQuery(`
-      -- Enable row-level security on the table
-      ALTER TABLE ${tableName} ENABLE ROW LEVEL SECURITY;
+      ALTER TABLE ${safeName} ENABLE ROW LEVEL SECURITY;
     `);
 
     // Create policy for select operations
     await executeRawQuery(`
-      -- Policy for read operations
-      DROP POLICY IF EXISTS ${tableName}_tenant_isolation_policy ON ${tableName};
-      
-      CREATE POLICY ${tableName}_tenant_isolation_policy ON ${tableName}
+      DROP POLICY IF EXISTS ${safeName}_tenant_isolation_policy ON ${safeName};
+
+      CREATE POLICY ${safeName}_tenant_isolation_policy ON ${safeName}
       FOR ALL
       USING (
-        -- Either the record belongs to the current tenant
         organization_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INTEGER
-        -- Or it's a special zero tenant (shared resources)
         OR organization_id = 0
-        -- Or super admin role is allowed to see all data
         OR current_setting('app.current_user_role', TRUE) = 'app_super_admin'
       );
     `);
 
     // Create the insert trigger to set organization_id automatically
     await executeRawQuery(`
-      -- Create trigger to set organization_id on insert
-      DROP TRIGGER IF EXISTS set_tenant_id_trigger ON ${tableName};
-      
+      DROP TRIGGER IF EXISTS set_tenant_id_trigger ON ${safeName};
+
       CREATE TRIGGER set_tenant_id_trigger
-      BEFORE INSERT ON ${tableName}
+      BEFORE INSERT ON ${safeName}
       FOR EACH ROW
       EXECUTE FUNCTION set_tenant_id();
     `);

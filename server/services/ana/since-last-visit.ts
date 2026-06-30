@@ -64,7 +64,13 @@ export function summarizeSinceLastVisit(
   now: Date = new Date()
 ): SinceLastVisitSummary {
   const sinceMs = toMs(input.since);
-  if (sinceMs == null) return { ...EMPTY_SUMMARY };
+  if (sinceMs == null) return {
+    since: '',
+    newlyOverdue: [],
+    newBlockers: [],
+    newContradictions: [],
+    counts: { newlyOverdue: 0, newBlockers: 0, newContradictions: 0, total: 0 },
+  };
   const nowMs = now.getTime();
 
   const newlyOverdue = input.radar.items

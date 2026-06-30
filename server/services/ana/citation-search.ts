@@ -158,9 +158,11 @@ export async function searchProjectCitations(
   }
   if (input.filters.ctdSectionPrefix) {
     const prefix = input.filters.ctdSectionPrefix;
-    params.push(prefix, prefix + '.%');
+    // Escape SQL LIKE wildcards in the prefix to prevent wildcard injection
+    const escapedPrefix = prefix.replace(/[%_\\]/g, '\\$&');
+    params.push(prefix, escapedPrefix + '.%');
     where.push(
-      `(ctd_section = $${params.length - 1} OR ctd_section LIKE $${params.length})`
+      `(ctd_section = $${params.length - 1} OR ctd_section LIKE $${params.length} ESCAPE '\\')`
     );
   }
 

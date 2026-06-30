@@ -143,8 +143,14 @@ router.post('/documents/:documentId/save', authMiddleware, async (req, res) => {
     return res.status(400).json({ error: 'Organization context required' });
   }
 
-  const clientWorkspaceId = resolveClientWorkspaceId(req);
-  const userId = resolveUserId(req);
+  let clientWorkspaceId: number;
+  let userId: number;
+  try {
+    clientWorkspaceId = resolveClientWorkspaceId(req);
+    userId = resolveUserId(req);
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message || 'Missing required context' });
+  }
   const parsed = saveSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });

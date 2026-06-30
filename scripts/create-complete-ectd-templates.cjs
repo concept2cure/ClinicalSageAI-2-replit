@@ -692,7 +692,8 @@ async function createTables() {
         template_data JSONB,
         organization_id VARCHAR(100) NOT NULL DEFAULT 'default',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(name, organization_id)
       );
     `);
     console.log('✅ Tables created successfully');

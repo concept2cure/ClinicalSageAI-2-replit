@@ -45,7 +45,11 @@ export interface PasswordPolicyResult {
 export function validatePasswordPolicy(password: string): PasswordPolicyResult {
   const errors: string[] = [];
 
-  if (!password || password.length < PASSWORD_MIN_LENGTH) {
+  if (!password) {
+    return { valid: false, errors: ['Password is required'] };
+  }
+
+  if (password.length < PASSWORD_MIN_LENGTH) {
     errors.push(`Password must be at least ${PASSWORD_MIN_LENGTH} characters`);
   }
 
@@ -92,7 +96,7 @@ export function validatePasswordPolicy(password: string): PasswordPolicyResult {
  */
 export async function checkPasswordHistory(
   userId: number,
-  newPasswordHash: string
+  newPassword: string
 ): Promise<boolean> {
   try {
     const result = await db
@@ -107,8 +111,7 @@ export async function checkPasswordHistory(
     const bcrypt = await import('bcryptjs');
 
     for (const oldHash of history.slice(0, PASSWORD_HISTORY_COUNT)) {
-      // NOTE: newPasswordHash should be the PLAINTEXT password for bcrypt.compare
-      if (await bcrypt.compare(newPasswordHash, oldHash)) {
+      if (await bcrypt.compare(newPassword, oldHash)) {
         return false; // Password was used recently
       }
     }
@@ -484,6 +487,7 @@ export async function createElectronicSignature(params: {
     }
 
     // Step 2: Generate cryptographic signature hash
+    const signedAt = new Date();
     const signaturePayload = JSON.stringify({
       documentId: params.documentId,
       versionId: params.versionId,
@@ -491,7 +495,7 @@ export async function createElectronicSignature(params: {
       signerEmail: params.signerEmail,
       signatureType: params.signatureType,
       signatureMeaning: params.signatureMeaning,
-      timestamp: new Date().toISOString(),
+      timestamp: signedAt.toISOString(),
     });
 
     const signatureHash = crypto
@@ -504,7 +508,7 @@ export async function createElectronicSignature(params: {
       signerPrintedName: params.signerName,
       signerTitle: params.signerTitle,
       signerEmail: params.signerEmail,
-      signatureDateTime: new Date().toISOString(),
+      signatureDateTime: signedAt.toISOString(),
       signatureMeaning: params.signatureMeaning,
       signaturePurpose: params.signaturePurpose,
       authenticationMethod: user.mfaEnabled ? 'two_factor' : 'password',
@@ -526,19 +530,19 @@ export async function createElectronicSignature(params: {
         signerTitle: params.signerTitle || '',
         signerEmail: params.signerEmail,
         authenticationMethod: user.mfaEnabled ? 'two_factor' : 'password',
-        authenticationTimestamp: new Date(),
+        authenticationTimestamp: signedAt,
         secondFactorVerified: user.mfaEnabled ? true : false,
         signatureHash,
         signatureMeaning: params.signatureMeaning,
         signatureManifest,
         isValid: true,
         verificationStatus: 'verified',
-        verificationDate: new Date(),
+        verificationDate: signedAt,
         complianceStatement: 'This electronic signature is the legally binding equivalent of a handwritten signature per 21 CFR Part 11.',
         legalDisclaimer: 'By signing electronically, the signer certifies that the information provided is accurate and complete to the best of their knowledge.',
         ipAddress: params.ipAddress || 'unknown',
         deviceInfo: params.deviceInfo || {},
-        signedAt: new Date(),
+        signedAt,
       })
       .returning({ id: electronicSignatures.id });
 

@@ -71,14 +71,42 @@ export async function gracefulShutdown(signal: string, ctx: ShutdownContext): Pr
 
   cleanupPerformance();
 
-  // Stop the audit chain integrity monitor before closing the DB pool —
-  // it queries through the pool on its 5-min cycle and would error if a
-  // check happened to fire mid-shutdown.
+  // Stop all scheduled job timers before closing the DB pool — they
+  // query through the pool on their cycles and would error if a tick
+  // happened to fire mid-shutdown.
   try {
     const { stopChainMonitor } = await import('../services/audit/chainIntegrityMonitor.js');
     stopChainMonitor();
   } catch (error: any) {
     console.warn('⚠️ Chain integrity monitor stop failed:', error.message);
+  }
+
+  try {
+    const { stopDriftSentinelSchedule } = await import('../jobs/driftSentinelSweep');
+    stopDriftSentinelSchedule();
+  } catch (error: any) {
+    console.warn('⚠️ Drift sentinel schedule stop failed:', error.message);
+  }
+
+  try {
+    const { stopScheduleOfEventsSweep } = await import('../jobs/scheduleOfEventsSweep');
+    stopScheduleOfEventsSweep();
+  } catch (error: any) {
+    console.warn('⚠️ Schedule-of-events sweep stop failed:', error.message);
+  }
+
+  // Stop all node-cron scheduled tasks (audit chain check, corpus
+  // ingestion, regulatory horizon scan, external intelligence sweep,
+  // periodic review). node-cron's getTasks() returns a Map of all
+  // registered tasks; stopping them prevents DB queries after pool close.
+  try {
+    const cron = await import('node-cron');
+    const tasks = cron.getTasks();
+    for (const [, task] of tasks) {
+      task.stop();
+    }
+  } catch (error: any) {
+    console.warn('⚠️ Cron task shutdown failed:', error.message);
   }
 
   try {

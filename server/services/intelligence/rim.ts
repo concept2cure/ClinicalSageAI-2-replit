@@ -356,8 +356,8 @@ function computeRIMScore(
   score -= highPatterns.length * 4;
 
   if (feedback && feedback.totalFeedback >= 5) {
-    if (feedback.acceptanceRate > 0.7) score += 5;
-    if (feedback.resolutionRate > 0.5) score += 3;
+    if (feedback.acceptanceRate > 70) score += 5;
+    if (feedback.resolutionRate > 50) score += 3;
   }
 
   return Math.max(0, Math.min(100, Math.round(score)));

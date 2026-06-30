@@ -883,7 +883,15 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction) 
   const referer = req.headers.referer;
 
   // At least one must be present and match an allowed origin
-  const source = origin || (referer ? new URL(referer).origin : null);
+  let refererOrigin: string | null = null;
+  if (referer) {
+    try {
+      refererOrigin = new URL(referer).origin;
+    } catch {
+      // Malformed Referer header — treat as absent
+    }
+  }
+  const source = origin || refererOrigin;
 
   if (!source) {
     // No origin/referer — could be server-to-server or curl; allow if has Bearer token

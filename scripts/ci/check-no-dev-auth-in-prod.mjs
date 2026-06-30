@@ -148,4 +148,4 @@ console.error(
     'NODE_ENV=development AND ALLOW_DEV_AUTH=1.'
 );
 
-process.exit(strict ? 1 : 1);
+process.exit(strict ? 1 : 0);

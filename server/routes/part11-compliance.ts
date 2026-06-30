@@ -339,7 +339,7 @@ async function verifySignerPassword(pool: Pool, signerId: string, password: stri
     }
 
     const bcrypt = await import('bcryptjs');
-    return bcrypt.compare(password, hash);
+    return await bcrypt.compare(password, hash);
   } catch (error) {
     console.error('[Part11] Password verification query failed:', (error as Error).message);
     return false;

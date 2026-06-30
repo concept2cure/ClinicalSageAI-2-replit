@@ -55,8 +55,9 @@ router.get('/tasks', (req, res) => {
 });
 
 router.post('/tasks', (req, res) => {
+  const { name, description, type, priority, assignee } = req.body || {};
   return sendSuccess(res, {
-    task: { id: Date.now(), ...req.body },
+    task: { id: Date.now(), name, description, type, priority, assignee },
   });
 });
 

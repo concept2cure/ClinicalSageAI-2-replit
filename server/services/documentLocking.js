@@ -339,8 +339,6 @@ setInterval(() => {
   }
   
   if (expiredLocks.length > 0) {
-    // Update database to clear expired locks
-    const [documentId, componentId] = expiredLocks[0].split('-');
     db.update(documentComponents)
       .set({
         isLocked: false,
@@ -348,10 +346,9 @@ setInterval(() => {
         lockedAt: null,
         lockReason: null
       })
-      .where(and(
-        isNull(documentComponents.lockedById),
-        sql`locked_at < NOW() - INTERVAL '30 minutes'`
-      ))
+      .where(
+        sql`locked_at < NOW() - INTERVAL '30 minutes' AND is_locked = true`
+      )
       .catch(err => console.error('Error clearing expired locks:', err));
   }
 }, 60000); // Check every minute

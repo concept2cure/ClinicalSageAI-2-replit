@@ -597,8 +597,16 @@ export async function loadPriorCitations(
       projectArtifacts
     );
 
-    return rows.map((r: any, i: number) => {
-      const match = enriched[i];
+    // Build a lookup from atom_id → enriched chunk so the index mapping
+    // stays correct even when the filter above removed rows (which makes
+    // `enriched` shorter than `rows`).
+    const enrichedByAtomId = new Map<string, (typeof enriched)[number]>();
+    for (const ec of enriched) enrichedByAtomId.set(ec.id, ec);
+
+    return rows.map((r: any) => {
+      const match = typeof r.atom_id === 'string' && r.atom_id
+        ? enrichedByAtomId.get(r.atom_id)
+        : undefined;
       return {
         ref: Number(r.rank),
         artifactId: match?.artifactId ?? null,
@@ -934,8 +942,8 @@ export function buildStreamingSystemPrompt(
     '',
     '%%ANSWER%%',
     '<prose answer with [SRC-n] inline citations>',
-    intent === 'rewrite' ? '%%REWRITE%%' : '',
-    intent === 'rewrite' ? '<the proposed new section content with [SRC-n] citations>' : '',
+    intent === 'rewrite' ? '%%REWRITE%%' : null,
+    intent === 'rewrite' ? '<the proposed new section content with [SRC-n] citations>' : null,
     '%%STRUCTURE%%',
     '{',
     '  "intent": "provenance" | "cross_evidence" | "rewrite" | "general",',
@@ -944,7 +952,7 @@ export function buildStreamingSystemPrompt(
     '  ]' + (intent === 'rewrite' ? ',' : ''),
     intent === 'rewrite'
       ? '  "rewriteMetadata": { "sectionCode": <string|null>, "targetAgency": <string|null>, "rationale": <string> }'
-      : '',
+      : null,
     '}',
     '%%END%%',
     '',
@@ -957,7 +965,7 @@ export function buildStreamingSystemPrompt(
     '6. Sentence case. No exclamations. Numbers over adjectives. Second person, direct.',
     '7. The %%STRUCTURE%% block is JSON — no markdown fences, no commentary inside it.',
   ]
-    .filter(line => line !== '')
+    .filter(line => line !== null)
     .join('\n');
 }
 

@@ -72,49 +72,53 @@ router.post('/validate', async (req, res) => {
     warnings: [] as string[],
   };
 
-  if (useFirecrawl) {
-    const quota = await getFirecrawlQuotaStatus(tenantId);
-    validation.quota = quota;
-    if (!quota.allowed) validation.blockers.push('quota_exhausted');
-
-    const pool = getPool();
-    const settingsRes = await pool.query(
-      `SELECT firecrawl_enabled, firecrawl_domain_allowlist_json, firecrawl_category_policy_json
-         FROM external_tool_settings WHERE tenant_id = $1`,
-      [tenantId]
-    );
-    const settings = settingsRes.rows[0] || {};
-    if (settings.firecrawl_enabled === false) validation.blockers.push('admin_disabled');
-    if (sampleUrl) {
-      const policy = evaluateFirecrawlPolicy({
-        enabled: settings.firecrawl_enabled !== false,
-        requestedUrl: sampleUrl,
-        domainAllowlist: settings.firecrawl_domain_allowlist_json || [],
-        categoryPolicy: settings.firecrawl_category_policy_json || {},
-      });
-      validation.sampleUrlPolicy = policy;
-      if (!policy.allowed) validation.blockers.push('policy_blocked');
-    } else {
-      validation.warnings.push('No sampleUrl provided; domain policy was not evaluated.');
-    }
-  }
-
   try {
-    const pool = getPool();
-    await pool.query(
-      `INSERT INTO external_tool_audit_log (tenant_id, actor_user_id, event_type, event_payload_json, created_at)
-       VALUES ($1,$2,'external_evidence_validate',$3,NOW())`,
-      [
-        tenantId,
-        Number((req as any).userId || 0) || null,
-        JSON.stringify({ useFirecrawl: Boolean(useFirecrawl), sampleUrl: sampleUrl || null, validation }),
-      ]
-    );
-  } catch {
-    // non-blocking
-  }
+    if (useFirecrawl) {
+      const quota = await getFirecrawlQuotaStatus(tenantId);
+      validation.quota = quota;
+      if (!quota.allowed) validation.blockers.push('quota_exhausted');
 
-  return res.json({ success: true, data: validation });
+      const pool = getPool();
+      const settingsRes = await pool.query(
+        `SELECT firecrawl_enabled, firecrawl_domain_allowlist_json, firecrawl_category_policy_json
+           FROM external_tool_settings WHERE tenant_id = $1`,
+        [tenantId]
+      );
+      const settings = settingsRes.rows[0] || {};
+      if (settings.firecrawl_enabled === false) validation.blockers.push('admin_disabled');
+      if (sampleUrl) {
+        const policy = evaluateFirecrawlPolicy({
+          enabled: settings.firecrawl_enabled !== false,
+          requestedUrl: sampleUrl,
+          domainAllowlist: settings.firecrawl_domain_allowlist_json || [],
+          categoryPolicy: settings.firecrawl_category_policy_json || {},
+        });
+        validation.sampleUrlPolicy = policy;
+        if (!policy.allowed) validation.blockers.push('policy_blocked');
+      } else {
+        validation.warnings.push('No sampleUrl provided; domain policy was not evaluated.');
+      }
+    }
+
+    try {
+      const pool = getPool();
+      await pool.query(
+        `INSERT INTO external_tool_audit_log (tenant_id, actor_user_id, event_type, event_payload_json, created_at)
+         VALUES ($1,$2,'external_evidence_validate',$3,NOW())`,
+        [
+          tenantId,
+          Number((req as any).userId || 0) || null,
+          JSON.stringify({ useFirecrawl: Boolean(useFirecrawl), sampleUrl: sampleUrl || null, validation }),
+        ]
+      );
+    } catch {
+      // non-blocking
+    }
+
+    return res.json({ success: true, data: validation });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: err?.message || 'Validation failed' } });
+  }
 });
 
 router.post('/draft-brief', async (req, res) => {
@@ -127,40 +131,44 @@ router.post('/draft-brief', async (req, res) => {
   if (!tenantId) {
     return res.status(400).json({ success: false, error: { code: 'INVALID_TENANT' } });
   }
-  const pool = getPool();
-  const docsRes = await pool.query(
-    `SELECT id, title, url, metadata_json, raw_markdown
-       FROM external_evidence_documents
-      WHERE tenant_id = $1
-        AND id = ANY($2::bigint[])
-      ORDER BY created_at DESC`,
-    [tenantId, evidenceDocumentIds]
-  );
+  try {
+    const pool = getPool();
+    const docsRes = await pool.query(
+      `SELECT id, title, url, metadata_json, raw_markdown
+         FROM external_evidence_documents
+        WHERE tenant_id = $1
+          AND id = ANY($2::bigint[])
+        ORDER BY created_at DESC`,
+      [tenantId, evidenceDocumentIds]
+    );
 
-  if (!docsRes.rows.length) {
-    return res.status(404).json({ success: false, error: { code: 'EVIDENCE_NOT_FOUND' } });
+    if (!docsRes.rows.length) {
+      return res.status(404).json({ success: false, error: { code: 'EVIDENCE_NOT_FOUND' } });
+    }
+    const briefPackage = buildRegulatoryEvidenceBriefPackage(docsRes.rows as any);
+    await pool.query(
+      `INSERT INTO external_tool_audit_log (tenant_id, actor_user_id, event_type, event_payload_json, created_at)
+       VALUES ($1,$2,'external_evidence_draft_brief',$3,NOW())`,
+      [
+        tenantId,
+        Number((req as any).userId || 0) || null,
+        JSON.stringify({ evidenceDocumentIds, generatedCount: docsRes.rows.length }),
+      ]
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        brief: briefPackage.markdown,
+        summary: briefPackage.summary,
+        sources: briefPackage.sources,
+        documentCount: briefPackage.summary.documentCount,
+        evidenceDocumentIds: briefPackage.sources.map(r => r.id),
+      },
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: { code: 'INTERNAL_ERROR', message: err?.message || 'Draft brief failed' } });
   }
-  const briefPackage = buildRegulatoryEvidenceBriefPackage(docsRes.rows as any);
-  await pool.query(
-    `INSERT INTO external_tool_audit_log (tenant_id, actor_user_id, event_type, event_payload_json, created_at)
-     VALUES ($1,$2,'external_evidence_draft_brief',$3,NOW())`,
-    [
-      tenantId,
-      Number((req as any).userId || 0) || null,
-      JSON.stringify({ evidenceDocumentIds, generatedCount: docsRes.rows.length }),
-    ]
-  );
-
-  return res.json({
-    success: true,
-    data: {
-      brief: briefPackage.markdown,
-      summary: briefPackage.summary,
-      sources: briefPackage.sources,
-      documentCount: briefPackage.summary.documentCount,
-      evidenceDocumentIds: briefPackage.sources.map(r => r.id),
-    },
-  });
 });
 
 export default router;

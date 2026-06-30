@@ -206,6 +206,9 @@ router.delete('/:id', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Organization context required' });
     }
     const userId = Number(req.userId);
+    if (!userId || isNaN(userId)) {
+      return res.status(401).json({ error: 'User context required' });
+    }
     const keyId = parseInt(String(req.params.id), 10);
 
     if (isNaN(keyId)) {

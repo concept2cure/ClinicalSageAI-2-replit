@@ -82,16 +82,18 @@ const createPerformanceMonitor = () => {
     },
 
     // Log performance metrics
-    logPerformance: (logger, operationName, context = {}) => {
-      const durationMs = this.endTimer(operationName);
-      if (durationMs >= 0) {
-        logger.info(`Operation ${operationName} completed in ${durationMs}ms`, {
-          ...context,
-          operationName,
-          durationMs,
-          performance: true,
-        });
-      }
+    logPerformance: function(logger, operationName, context = {}) {
+      const start = timers.get(operationName);
+      if (!start) return;
+      const hrtime = process.hrtime(start);
+      const durationMs = (hrtime[0] * 1000 + hrtime[1] / 1000000).toFixed(2);
+      timers.delete(operationName);
+      logger.info(`Operation ${operationName} completed in ${durationMs}ms`, {
+        ...context,
+        operationName,
+        durationMs,
+        performance: true,
+      });
     },
   };
 };

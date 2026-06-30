@@ -76,16 +76,10 @@ export async function revokeToken(token: string, reason = 'logout'): Promise<voi
   // Always write to memory (guaranteed)
   memoryBlacklist.add(hash);
   if (memoryBlacklist.size > 50000) {
-    // Trim oldest entries (Set iteration is insertion-order)
-    const iter = memoryBlacklist.values();
-    for (let i = 0; i < 10000; i++) iter.next();
-    const keep = new Set<string>();
-    for (const v of memoryBlacklist) keep.add(v);
-    // Actually trim by clearing and re-adding recent
+    const all = Array.from(memoryBlacklist);
     memoryBlacklist.clear();
-    let count = 0;
-    for (const v of keep) {
-      if (count++ >= 10000) memoryBlacklist.add(v);
+    for (let i = 10000; i < all.length; i++) {
+      memoryBlacklist.add(all[i]);
     }
   }
 

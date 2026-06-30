@@ -62,9 +62,10 @@ class DocumentOrchestrationService {
    */
   async orchestrateDocumentGeneration(projectId: string, userId: string, organizationId: string): Promise<any> {
     try {
-      // Keep projectId as number for database queries
       const projectIdNum = parseInt(projectId);
-      // Keep user and org IDs as strings to support UUIDs and other formats
+      if (isNaN(projectIdNum)) {
+        throw new Error(`Invalid project ID: ${projectId}`);
+      }
       if (!userId) {
         throw new Error('User context required');
       }
@@ -74,9 +75,14 @@ class DocumentOrchestrationService {
       const userIdStr = userId;
       const orgIdStr = organizationId;
 
-      // For database operations that expect numbers, convert when needed
       const userIdNum = parseInt(userIdStr);
+      if (isNaN(userIdNum)) {
+        throw new Error(`Invalid user ID: ${userIdStr}`);
+      }
       const orgIdNum = parseInt(orgIdStr);
+      if (isNaN(orgIdNum)) {
+        throw new Error(`Invalid organization ID: ${orgIdStr}`);
+      }
 
       // 1. Fetch project and all workflow data
       const project = await this.fetchProject(projectIdNum);

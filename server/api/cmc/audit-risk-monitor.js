@@ -173,7 +173,7 @@ router.post('/analyze', checkForOpenAIKey, auditMonitoringLimiter, async (req, r
     });
 
     // Get the inspection findings
-    const inspectionFindings = findingsResponse.choices[0].message.content;
+    const inspectionFindings = findingsResponse.content;
 
     // Generate simulated inspector questions
     const questionsPrompt = `Based on your risk analysis and findings for this ${documentType} document:
@@ -204,7 +204,7 @@ router.post('/analyze', checkForOpenAIKey, auditMonitoringLimiter, async (req, r
     });
 
     // Get the inspector questions
-    const inspectorQuestions = questionsResponse.choices[0].message.content;
+    const inspectorQuestions = questionsResponse.content;
 
     // Generate a remediation plan
     const remediationPrompt = `Based on the analysis and findings for this ${documentType} document:
@@ -236,7 +236,7 @@ router.post('/analyze', checkForOpenAIKey, auditMonitoringLimiter, async (req, r
     });
 
     // Get the remediation plan
-    const remediationPlan = remediationResponse.choices[0].message.content;
+    const remediationPlan = remediationResponse.content;
 
     // Structure the results
     const auditResult = {
@@ -374,7 +374,7 @@ router.post('/analyze-collection', checkForOpenAIKey, auditMonitoringLimiter, as
     });
 
     // Get the consistency matrix
-    const consistencyMatrix = consistencyResponse.choices[0].message.content;
+    const consistencyMatrix = consistencyResponse.content;
 
     // Generate a submission readiness assessment
     const readinessPrompt = `Based on your cross-document analysis and consistency matrix:
@@ -405,7 +405,7 @@ router.post('/analyze-collection', checkForOpenAIKey, auditMonitoringLimiter, as
     });
 
     // Get the readiness assessment
-    const readinessAssessment = readinessResponse.choices[0].message.content;
+    const readinessAssessment = readinessResponse.content;
 
     // Structure the results
     const collectionAuditResult = {
@@ -506,7 +506,7 @@ router.post(
       });
 
       // Get the simulated inspection questions
-      const inspectionQuestions = simulationResponse.choices[0].message.content;
+      const inspectionQuestions = simulationResponse.content;
 
       // Generate best practices for the inspection
       const bestPracticesPrompt = `For a ${healthAuthority || 'regulatory'} inspection ${inspectionFocus ? `focused on ${inspectionFocus}` : ''}:
@@ -535,7 +535,7 @@ router.post(
       });
 
       // Get the best practices
-      const inspectionBestPractices = bestPracticesResponse.choices[0].message.content;
+      const inspectionBestPractices = bestPracticesResponse.content;
 
       // Generate a unique simulation ID
       const simulationId = uuidv4();
@@ -642,7 +642,7 @@ router.post('/upload', checkForOpenAIKey, upload.single('document'), async (req,
       uploadId,
       fileInfo,
       documentMetadata: {
-        extractionResult: extractionResponse.choices[0].message.content,
+        extractionResult: extractionResponse.content,
         contentPreview: fileContent.substring(0, 1000) + (fileContent.length > 1000 ? '...' : ''),
       },
       uploadedAt: new Date().toISOString(),

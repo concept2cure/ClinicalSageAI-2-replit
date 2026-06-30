@@ -185,12 +185,24 @@ router.put('/:id', async (req, res) => {
       });
     }
 
+    // Only allow updating known mutable fields — never allow overwriting
+    // organizationId, id, or createdAt via mass assignment.
+    const { sourceType, sourceId, atomType, title, content, structuredData, tags, confidence, status } = req.body;
+    const updateData = {};
+    if (sourceType !== undefined) updateData.sourceType = sourceType;
+    if (sourceId !== undefined) updateData.sourceId = sourceId;
+    if (atomType !== undefined) updateData.atomType = atomType;
+    if (title !== undefined) updateData.title = title;
+    if (content !== undefined) updateData.content = content;
+    if (structuredData !== undefined) updateData.structuredData = structuredData;
+    if (tags !== undefined) updateData.tags = tags;
+    if (confidence !== undefined) updateData.confidence = confidence;
+    if (status !== undefined) updateData.status = status;
+    updateData.updatedAt = new Date();
+
     const [updatedAtom] = await db
       .update(lumenDataAtoms)
-      .set({
-        ...req.body,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(
         and(eq(lumenDataAtoms.id, id), eq(lumenDataAtoms.organizationId, Number(orgId)))
       )

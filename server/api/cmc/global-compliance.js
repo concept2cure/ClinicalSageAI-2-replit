@@ -180,7 +180,7 @@ router.post('/transform', checkForOpenAIKey, complianceLimiter, async (req, res)
       // Store the transformed content and change tracking log
       transformedContent[region] = {
         content: regionTransformedContent,
-        changeTrackingLog: changeTrackingResponse.choices[0].message.content,
+        changeTrackingLog: changeTrackingResponse.content,
       };
 
       // If including regional annexes is required, generate them
@@ -207,7 +207,7 @@ router.post('/transform', checkForOpenAIKey, complianceLimiter, async (req, res)
         });
 
         // Add annexes to the transformed content
-        transformedContent[region].annexes = annexResponse.choices[0].message.content;
+        transformedContent[region].annexes = annexResponse.content;
       }
     }
 
@@ -311,7 +311,7 @@ router.post('/upload', checkForOpenAIKey, upload.single('document'), async (req,
       uploadId,
       fileInfo,
       documentMetadata: {
-        extractionResult: extractionResponse.choices[0].message.content,
+        extractionResult: extractionResponse.content,
         contentPreview: fileContent.substring(0, 1000) + (fileContent.length > 1000 ? '...' : ''),
       },
       uploadedAt: new Date().toISOString(),
@@ -420,7 +420,7 @@ router.post('/compatibility-matrix', checkForOpenAIKey, complianceLimiter, async
     });
 
     // Get the regulatory requirements
-    const regulatoryRequirements = requirementsResponse.choices[0].message.content;
+    const regulatoryRequirements = requirementsResponse.content;
 
     // Generate a unique analysis ID
     const analysisId = uuidv4();

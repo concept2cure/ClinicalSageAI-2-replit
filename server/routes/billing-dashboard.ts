@@ -759,10 +759,13 @@ router.put('/seats', authenticateToken, requireRole('admin', 'owner'), async (re
     if (!userId) return res.status(401).json({ error: 'User context required' });
 
     const { seats, reason } = req.body ?? {};
+    if (seats == null || typeof seats !== 'number' || !Number.isFinite(seats) || seats < 0 || !Number.isInteger(seats)) {
+      return res.status(400).json({ error: 'seats must be a non-negative integer' });
+    }
     if (!reason || typeof reason !== 'string' || !reason.trim()) {
       return res.status(400).json({ error: 'A reason-for-change is required to change purchased seats' });
     }
-    const decision = await setSeatsPurchased(orgId, Number(seats), { userId }, reason);
+    const decision = await setSeatsPurchased(orgId, seats, { userId }, reason);
     res.json({ seats: decision });
   } catch (error) {
     const validation = (error as any)?.validation;
@@ -803,12 +806,15 @@ router.put('/weekly-limits/:metric', authenticateToken, requireRole('admin', 'ow
     if (!reason || typeof reason !== 'string' || !reason.trim()) {
       return res.status(400).json({ error: 'A reason-for-change is required to set a weekly usage limit' });
     }
+    if (weeklyLimit == null || typeof weeklyLimit !== 'number' || !Number.isFinite(weeklyLimit) || weeklyLimit < 0) {
+      return res.status(400).json({ error: 'weeklyLimit must be a non-negative number' });
+    }
 
     const saved = await setWeeklyLimit(
       orgId,
       {
         metric,
-        weeklyLimit: Number(weeklyLimit),
+        weeklyLimit,
         overageCapPct: overageCapPct == null ? 0 : Number(overageCapPct),
         overageHardCap: overageHardCap == null ? null : Number(overageHardCap),
         warnThresholdPct: warnThresholdPct == null ? 80 : Number(warnThresholdPct),

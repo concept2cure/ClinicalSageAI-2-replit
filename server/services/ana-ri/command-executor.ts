@@ -430,7 +430,7 @@ export async function createArtifact(
         },
         documentState: {
           hasContent: Boolean(params.content?.trim()),
-          hasEvidence: /\\[(KNOWN|INFERRED|MISSING)\\]/.test(params.content || ''),
+          hasEvidence: /\[(KNOWN|INFERRED|MISSING)\]/.test(params.content || ''),
           hasBeenReviewed: false,
           hasApproval: false,
           hasPlacement: Boolean(params.ctdSection),

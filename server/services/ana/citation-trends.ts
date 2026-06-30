@@ -69,6 +69,9 @@ export async function getProjectCitationTrend(
   const bucket: TrendBucket = options.bucket ?? 'day';
   const trunc = TRUNC_SQL[bucket];
   const interval = BUCKET_INTERVAL_SQL[bucket];
+  if (!trunc || !interval) {
+    throw new Error(`[citation-trends] invalid bucket value: ${bucket}`);
+  }
 
   const sql = `
     SELECT

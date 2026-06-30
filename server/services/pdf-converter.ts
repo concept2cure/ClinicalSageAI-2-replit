@@ -184,11 +184,18 @@ async function runPuppeteerFallback(html: string | undefined, timeout: number): 
   // Lazy import so this module loads in environments without puppeteer.
   const { renderHtmlToPdf } = await import('../export/renderers');
   const racePromise = renderHtmlToPdf(html);
-  const timer = new Promise<never>((_, reject) =>
-    setTimeout(() => reject(new Error(`Puppeteer fallback timed out after ${timeout}ms`)), timeout)
-  );
-  const buffer = (await Promise.race([racePromise, timer])) as Buffer;
-  return Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
+  let timerId: NodeJS.Timeout;
+  const timer = new Promise<never>((_, reject) => {
+    timerId = setTimeout(() => reject(new Error(`Puppeteer fallback timed out after ${timeout}ms`)), timeout);
+  });
+  try {
+    const buffer = (await Promise.race([racePromise, timer])) as Buffer;
+    clearTimeout(timerId!);
+    return Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
+  } catch (err) {
+    clearTimeout(timerId!);
+    throw err;
+  }
 }
 
 // ============================================================================

@@ -185,6 +185,8 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
         ? cerProjects.name
         : sortBy === 'targetSubmissionDate'
         ? cerProjects.dueDate
+        : sortBy === 'status'
+        ? cerProjects.status
         : cerProjects.createdAt;
     const orderByExpr = sortOrder === 'asc' ? asc(sortColumn) : desc(sortColumn);
     const offset = (page - 1) * limit;
@@ -242,12 +244,108 @@ router.get('/', validateQuery(queryParamsSchema), async (req: Request, res: Resp
 });
 
 /**
+ * GET /api/programs/stats/overview
+ * Get dashboard overview statistics
+ * NOTE: Must be registered BEFORE /:id to avoid route shadowing.
+ */
+router.get('/stats/overview', async (req: Request, res: Response) => {
+  try {
+    const tenantId = (req as any).tenantContext?.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context required' });
+    }
+
+    const [totals] = await db
+      .select({
+        totalPrograms: sql<number>`count(*)`,
+        activePrograms: sql<number>`count(*) filter (where ${cerProjects.status} = 'active')`,
+        submittedPrograms: sql<number>`count(*) filter (where ${cerProjects.status} = 'submitted')`,
+        approvedPrograms: sql<number>`count(*) filter (where ${cerProjects.status} = 'approved')`,
+      })
+      .from(cerProjects)
+      .where(eq(cerProjects.organizationId, Number(tenantId)));
+
+    const byTypeRows = await db
+      .select({
+        value: cerProjects.regulatoryContext,
+        count: sql<number>`count(*)`,
+      })
+      .from(cerProjects)
+      .where(eq(cerProjects.organizationId, Number(tenantId)))
+      .groupBy(cerProjects.regulatoryContext);
+
+    const byStatusRows = await db
+      .select({
+        value: cerProjects.status,
+        count: sql<number>`count(*)`,
+      })
+      .from(cerProjects)
+      .where(eq(cerProjects.organizationId, Number(tenantId)))
+      .groupBy(cerProjects.status);
+
+    const upcoming = await db
+      .select({
+        id: cerProjects.id,
+        name: cerProjects.name,
+        deadline: cerProjects.dueDate,
+      })
+      .from(cerProjects)
+      .where(
+        and(
+          eq(cerProjects.organizationId, Number(tenantId)),
+          sql`${cerProjects.dueDate} IS NOT NULL`,
+          sql`${cerProjects.dueDate} >= now()`
+        )
+      )
+      .orderBy(asc(cerProjects.dueDate))
+      .limit(5);
+
+    const byType = Object.fromEntries(
+      byTypeRows.map(row => [row.value || 'unknown', Number(row.count)])
+    );
+    const byStatus = Object.fromEntries(byStatusRows.map(row => [row.value, Number(row.count)]));
+
+    const upcomingDeadlines = upcoming.map(item => {
+      const daysRemaining = item.deadline
+        ? Math.max(0, Math.ceil((item.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+        : null;
+      return {
+        programId: String(item.id),
+        programName: item.name,
+        deadline: item.deadline,
+        daysRemaining,
+      };
+    });
+
+    const stats = {
+      totalPrograms: Number(totals?.totalPrograms ?? 0),
+      activePrograms: Number(totals?.activePrograms ?? 0),
+      submittedPrograms: Number(totals?.submittedPrograms ?? 0),
+      approvedPrograms: Number(totals?.approvedPrograms ?? 0),
+      byType,
+      byStatus,
+      upcomingDeadlines,
+    };
+
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch stats' },
+    });
+  }
+});
+
+/**
  * GET /api/programs/:id
  * Get a single program by ID
  */
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ success: false, error: 'Invalid program ID' });
+    }
     const tenantId = (req as any).tenantContext?.tenantId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
@@ -417,14 +515,21 @@ router.patch('/:id', validateBody(updateProgramSchema), async (req: Request, res
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ success: false, error: 'Invalid program ID' });
+    }
     const tenantId = (req as any).tenantContext?.tenantId;
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
-    await db
+    const result = await db
       .update(cerProjects)
       .set({ status: 'archived', updatedAt: new Date() })
-      .where(and(eq(cerProjects.id, id), eq(cerProjects.organizationId, Number(tenantId))));
+      .where(and(eq(cerProjects.id, id), eq(cerProjects.organizationId, Number(tenantId))))
+      .returning({ id: cerProjects.id });
+    if (result.length === 0) {
+      return res.status(404).json({ success: false, error: 'Program not found' });
+    }
     res.json({ success: true, message: 'Program archived successfully' });
   } catch (error) {
     res.status(500).json({
@@ -576,102 +681,6 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch activity' },
-    });
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ROUTES: Program Dashboard Stats
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * GET /api/programs/stats/overview
- * Get dashboard overview statistics
- */
-router.get('/stats/overview', async (req: Request, res: Response) => {
-  try {
-    const tenantId = (req as any).tenantContext?.tenantId;
-    if (!tenantId) {
-      return res.status(401).json({ error: 'Tenant context required' });
-    }
-
-    const [totals] = await db
-      .select({
-        totalPrograms: sql<number>`count(*)`,
-        activePrograms: sql<number>`count(*) filter (where ${cerProjects.status} = 'active')`,
-        submittedPrograms: sql<number>`count(*) filter (where ${cerProjects.status} = 'submitted')`,
-        approvedPrograms: sql<number>`count(*) filter (where ${cerProjects.status} = 'approved')`,
-      })
-      .from(cerProjects)
-      .where(eq(cerProjects.organizationId, Number(tenantId)));
-
-    const byTypeRows = await db
-      .select({
-        value: cerProjects.regulatoryContext,
-        count: sql<number>`count(*)`,
-      })
-      .from(cerProjects)
-      .where(eq(cerProjects.organizationId, Number(tenantId)))
-      .groupBy(cerProjects.regulatoryContext);
-
-    const byStatusRows = await db
-      .select({
-        value: cerProjects.status,
-        count: sql<number>`count(*)`,
-      })
-      .from(cerProjects)
-      .where(eq(cerProjects.organizationId, Number(tenantId)))
-      .groupBy(cerProjects.status);
-
-    const upcoming = await db
-      .select({
-        id: cerProjects.id,
-        name: cerProjects.name,
-        deadline: cerProjects.dueDate,
-      })
-      .from(cerProjects)
-      .where(
-        and(
-          eq(cerProjects.organizationId, Number(tenantId)),
-          sql`${cerProjects.dueDate} IS NOT NULL`,
-          sql`${cerProjects.dueDate} >= now()`
-        )
-      )
-      .orderBy(asc(cerProjects.dueDate))
-      .limit(5);
-
-    const byType = Object.fromEntries(
-      byTypeRows.map(row => [row.value || 'unknown', Number(row.count)])
-    );
-    const byStatus = Object.fromEntries(byStatusRows.map(row => [row.value, Number(row.count)]));
-
-    const upcomingDeadlines = upcoming.map(item => {
-      const daysRemaining = item.deadline
-        ? Math.max(0, Math.ceil((item.deadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-        : null;
-      return {
-        programId: String(item.id),
-        programName: item.name,
-        deadline: item.deadline,
-        daysRemaining,
-      };
-    });
-
-    const stats = {
-      totalPrograms: Number(totals?.totalPrograms ?? 0),
-      activePrograms: Number(totals?.activePrograms ?? 0),
-      submittedPrograms: Number(totals?.submittedPrograms ?? 0),
-      approvedPrograms: Number(totals?.approvedPrograms ?? 0),
-      byType,
-      byStatus,
-      upcomingDeadlines,
-    };
-
-    res.json({ success: true, data: stats });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch stats' },
     });
   }
 });

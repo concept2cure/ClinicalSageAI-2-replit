@@ -20,21 +20,29 @@ export function mountKernelRoutes(router: Router): void {
   // GET /api/ana-ri/kernel/metrics — Kernel observability summary
   // ─────────────────────────────────────────────────────────────────────────
   router.get('/kernel/metrics', async (req: Request, res: Response) => {
-    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    const windowDays = req.query.window_days ? Number(req.query.window_days) : 7;
-    const metrics = await getKernelMetrics({
-      organizationId: orgId ? Number(orgId) : null,
-      windowDays: Number.isFinite(windowDays) && windowDays > 0 ? windowDays : 7,
-    });
-    return sendSuccess(res, metrics);
+    try {
+      const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+      const windowDays = req.query.window_days ? Number(req.query.window_days) : 7;
+      const metrics = await getKernelMetrics({
+        organizationId: orgId ? Number(orgId) : null,
+        windowDays: Number.isFinite(windowDays) && windowDays > 0 ? windowDays : 7,
+      });
+      return sendSuccess(res, metrics);
+    } catch (err) {
+      return sendError(res, 500, err instanceof Error ? err.message : String(err), null, 'KERNEL_METRICS_ERROR');
+    }
   });
 
   // ─────────────────────────────────────────────────────────────────────────
   // GET /api/ana-ri/kernel/readiness — Beta launch readiness checks
   // ─────────────────────────────────────────────────────────────────────────
   router.get('/kernel/readiness', async (_req: Request, res: Response) => {
-    const readiness = await getKernelBetaReadiness();
-    return sendSuccess(res, readiness);
+    try {
+      const readiness = await getKernelBetaReadiness();
+      return sendSuccess(res, readiness);
+    } catch (err) {
+      return sendError(res, 500, err instanceof Error ? err.message : String(err), null, 'KERNEL_READINESS_ERROR');
+    }
   });
 
   // ─────────────────────────────────────────────────────────────────────────

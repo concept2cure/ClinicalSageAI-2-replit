@@ -159,18 +159,22 @@ function getTherapeuticArea(indication: string) {
 function calculateMatchScore(csr: any, indication: string, phase: string, studyType: string) {
   let score = 70; // Base score
 
+  const csrIndication = csr.indication ? csr.indication.toLowerCase() : '';
+  const csrPhase = csr.phase ? csr.phase.toLowerCase() : '';
+
   // Increase score for exact indication match
-  if (csr.indication.toLowerCase() === indication.toLowerCase()) {
+  if (csrIndication && csrIndication === indication.toLowerCase()) {
     score += 15;
   } else if (
-    csr.indication.toLowerCase().includes(indication.toLowerCase()) ||
-    indication.toLowerCase().includes(csr.indication.toLowerCase())
+    csrIndication &&
+    (csrIndication.includes(indication.toLowerCase()) ||
+    indication.toLowerCase().includes(csrIndication))
   ) {
     score += 10;
   }
 
   // Increase score for exact phase match
-  if (csr.phase.toLowerCase() === phase.replace('phase', 'Phase ').toLowerCase()) {
+  if (csrPhase && csrPhase === phase.replace('phase', 'Phase ').toLowerCase()) {
     score += 10;
   }
 
@@ -727,6 +731,7 @@ router.post('/analyze-file', upload.single('file'), async (req, res) => {
       text = `Extracted text from ${req.file.originalname}. In a real implementation, 
               we would use proper libraries for extraction from ${fileExtension} files.`;
     } else {
+      try { fs.unlinkSync(filePath); } catch { /* best-effort cleanup */ }
       return res.status(400).json({
         success: false,
         message: 'Unsupported file type. Please upload a .txt, .pdf, .doc, or .docx file',
@@ -745,6 +750,9 @@ router.post('/analyze-file', upload.single('file'), async (req, res) => {
     });
   } catch (error: any) {
     log.error('Error processing protocol file:', error);
+    if (req.file?.path) {
+      try { fs.unlinkSync(req.file.path); } catch { /* best-effort cleanup */ }
+    }
     return res.status(500).json({
       success: false,
       message: error.message || 'Failed to process protocol file',
@@ -787,6 +795,7 @@ router.post('/parse-file', upload.single('file'), async (req, res) => {
         extractedText = await extractTextFromPdf(pdfBuffer);
       } catch (pdfError) {
         log.error('PDF extraction error:', pdfError);
+        try { fs.unlinkSync(filePath); } catch { /* best-effort cleanup */ }
         return res.status(422).json({
           success: false,
           message: 'Could not extract text from the PDF file',
@@ -798,6 +807,7 @@ router.post('/parse-file', upload.single('file'), async (req, res) => {
         extractedText = await extractTextFromDocx(docBuffer);
       } catch (docError) {
         log.error('Document extraction error:', docError);
+        try { fs.unlinkSync(filePath); } catch { /* best-effort cleanup */ }
         return res.status(422).json({
           success: false,
           message: `Could not extract text from the ${fileExtension} file`,
@@ -808,6 +818,7 @@ router.post('/parse-file', upload.single('file'), async (req, res) => {
       try {
         extractedText = fs.readFileSync(filePath, 'utf8');
       } catch (readError) {
+        try { fs.unlinkSync(filePath); } catch { /* best-effort cleanup */ }
         return res.status(422).json({
           success: false,
           message: 'Could not read file content',
@@ -816,6 +827,7 @@ router.post('/parse-file', upload.single('file'), async (req, res) => {
     }
 
     if (!extractedText || extractedText.trim().length === 0) {
+      try { fs.unlinkSync(filePath); } catch { /* best-effort cleanup */ }
       return res.status(422).json({
         success: false,
         message: 'Could not extract text from the provided file',
@@ -835,6 +847,9 @@ router.post('/parse-file', upload.single('file'), async (req, res) => {
     res.json(protocolData);
   } catch (error) {
     log.error('Error parsing protocol file:', error);
+    if (req.file?.path) {
+      try { fs.unlinkSync(req.file.path); } catch { /* best-effort cleanup */ }
+    }
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : 'Failed to parse protocol file',
@@ -1005,6 +1020,17 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
+    // SECURITY: magic-byte signature + AV scan (fail-closed in prod) before use.
+    try {
+      await assertUploadSafe(req.file.path, req.file.mimetype, req.file.originalname);
+    } catch (err) {
+      if (err instanceof UploadSafetyError) {
+        try { fs.unlinkSync(req.file.path); } catch { /* best-effort cleanup */ }
+        return res.status(err.status).json({ success: false, ...err.body });
+      }
+      throw err;
+    }
+
     const filePath = req.file.path;
     const fileExtension = path.extname(req.file.originalname).toLowerCase();
 
@@ -1020,6 +1046,7 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
         text = await extractTextFromPdf(pdfBuffer);
       } catch (pdfError) {
         log.error('PDF extraction error:', pdfError);
+        try { fs.unlinkSync(filePath); } catch { /* best-effort cleanup */ }
         return res.status(422).json({
           success: false,
           message: 'Could not extract text from the PDF file',
@@ -1031,13 +1058,14 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
         text = await extractTextFromDocx(docBuffer);
       } catch (docError) {
         log.error('Document extraction error:', docError);
+        try { fs.unlinkSync(filePath); } catch { /* best-effort cleanup */ }
         return res.status(422).json({
           success: false,
           message: `Could not extract text from the ${fileExtension} file`,
         });
       }
     } else {
-      fs.unlinkSync(filePath); // Clean up the uploaded file
+      try { fs.unlinkSync(filePath); } catch { /* best-effort cleanup */ }
       return res.status(400).json({
         success: false,
         message: 'Unsupported file type. Please upload a .txt, .pdf, .doc, or .docx file',
@@ -1130,6 +1158,9 @@ router.post('/upload-and-optimize', upload.single('file'), async (req, res) => {
     });
   } catch (error: any) {
     log.error('Error processing and optimizing protocol file:', error);
+    if (req.file?.path) {
+      try { fs.unlinkSync(req.file.path); } catch { /* best-effort cleanup */ }
+    }
     return res.status(500).json({
       success: false,
       message: error.message || 'Failed to process and optimize protocol file',

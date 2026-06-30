@@ -97,7 +97,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 
   try {
-    const decoded = verifyJwtWithRotation(token) as { userId: string; email: string };
+    const decoded = verifyJwtWithRotation(token) as { userId: string; email: string; organizationId?: string };
     const user = await db
       .select()
       .from(users)
@@ -120,7 +120,7 @@ router.get('/', async (req: Request, res: Response) => {
       displayName: `${firstName} ${lastName}`.trim() || userData.email,
       role: 'user',
       roles: ['user'],
-      organizationId: '2',
+      organizationId: decoded.organizationId || userData.defaultOrganizationId?.toString() || '',
     });
   } catch (error) {
     res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
@@ -526,8 +526,24 @@ router.patch('/me/notifications', async (req: Request, res: Response) => {
     const decoded = verifyJwtWithRotation(token) as { userId: string };
     const userId = parseInt(decoded.userId);
 
-    const updates = req.body;
-    updates.updatedAt = new Date();
+    // Allowlist: only safe notification preference fields may be set.
+    // id, userId, createdAt, updatedAt, and metadata are never user-settable.
+    const ALLOWED_NOTIFICATION_FIELDS = [
+      'emailMentions', 'emailShares', 'emailApprovals', 'emailCompliance',
+      'emailSystem', 'emailDigest',
+      'inAppMentions', 'inAppShares', 'inAppApprovals', 'inAppCompliance',
+      'inAppSystem',
+      'toastEnabled', 'toastDuration', 'toastPosition',
+      'quietHoursEnabled', 'quietHoursStart', 'quietHoursEnd', 'timezone',
+      'autoFollowOnInteraction', 'soundEnabled',
+    ] as const;
+
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    for (const key of ALLOWED_NOTIFICATION_FIELDS) {
+      if (req.body[key] !== undefined) {
+        updates[key] = req.body[key];
+      }
+    }
 
     // Upsert notification preferences
     const existing = await db
@@ -745,10 +761,14 @@ router.post('/register', registerLimiter, async (req: Request, res: Response) =>
     });
   }
 
-  // Validate password strength
-  if (password.length < 8) {
+  // Enforce the same enterprise password policy (NIST 800-63B) as the
+  // main signup endpoint. The legacy 8-character minimum was a bypass
+  // that allowed weaker passwords than /api/auth/signup.
+  const { validatePasswordPolicy } = await import('../services/auth-security-service');
+  const policyResult = validatePasswordPolicy(password);
+  if (!policyResult.valid) {
     return res.status(400).json({
-      error: { code: 'VALIDATION_ERROR', message: 'Password must be at least 8 characters' },
+      error: { code: 'VALIDATION_ERROR', message: policyResult.errors[0] },
     });
   }
 

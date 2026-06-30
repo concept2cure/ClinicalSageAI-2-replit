@@ -191,7 +191,21 @@ export async function sealVerifiedVersion(
       }
     }
 
-    if (!artifactPk || !artifactExternalId) {
+    // When PK is known but external id is not, resolve it from the DB rather
+    // than falling through to the insert (which would create a duplicate).
+    if (artifactPk && !artifactExternalId) {
+      const foundExt = await client.query(
+        `SELECT artifact_id FROM concept2cure_artifacts
+          WHERE id = $1 AND organization_id = $2
+          LIMIT 1`,
+        [artifactPk, input.organizationId],
+      );
+      if (foundExt.rows.length > 0) {
+        artifactExternalId = foundExt.rows[0].artifact_id as string;
+      }
+    }
+
+    if (!artifactPk) {
       // TODO(build-1): When Build 1 persists the artifact, this fallback insert
       // is removed and `artifactPk`/`artifactExternalId` are required inputs.
       artifactExternalId = `artifact_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
@@ -286,7 +300,7 @@ export async function sealVerifiedVersion(
         input.organizationId,
         signaturePurpose,
         signaturePurpose,
-        manifestation.reasonForChange,
+        manifestation.meaning,
         input.userId,
         manifestation.printedName,
         input.signerEmail ?? '',

@@ -81,9 +81,17 @@ router.post('/start', async (req: Request, res: Response) => {
       });
     }
 
+    const docId = Number(documentId);
+    const tmplId = Number(templateId);
+    if (isNaN(docId) || isNaN(tmplId)) {
+      return res.status(400).json({
+        error: 'documentId and templateId must be valid numbers',
+      });
+    }
+
     const result = await approvalOrchestrator.startWorkflow({
-      documentId,
-      templateId,
+      documentId: docId,
+      templateId: tmplId,
       startedBy: user.userId,
       organizationId: user.organizationId,
       metadata,
@@ -112,6 +120,9 @@ router.post('/:id/approve', async (req: Request, res: Response) => {
 
   try {
     const approvalId = parseInt(String(req.params.id), 10);
+    if (isNaN(approvalId)) {
+      return res.status(400).json({ error: 'Invalid approval ID' });
+    }
     const { comments } = req.body;
 
     const result = await approvalOrchestrator.processApproval({
@@ -133,7 +144,8 @@ router.post('/:id/approve', async (req: Request, res: Response) => {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Approve error', { err: message });
-    return res.status(400).json({ error: message });
+    const status = /not found/i.test(message) ? 404 : 400;
+    return res.status(status).json({ error: message });
   }
 });
 
@@ -147,6 +159,9 @@ router.post('/:id/reject', async (req: Request, res: Response) => {
 
   try {
     const approvalId = parseInt(String(req.params.id), 10);
+    if (isNaN(approvalId)) {
+      return res.status(400).json({ error: 'Invalid approval ID' });
+    }
     const { comments } = req.body;
 
     if (!comments) {
@@ -170,7 +185,8 @@ router.post('/:id/reject', async (req: Request, res: Response) => {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Reject error', { err: message });
-    return res.status(400).json({ error: message });
+    const status = /not found/i.test(message) ? 404 : 400;
+    return res.status(status).json({ error: message });
   }
 });
 
@@ -184,6 +200,9 @@ router.post('/:id/delegate', async (req: Request, res: Response) => {
 
   try {
     const approvalId = parseInt(String(req.params.id), 10);
+    if (isNaN(approvalId)) {
+      return res.status(400).json({ error: 'Invalid approval ID' });
+    }
     const { delegateTo, reason } = req.body;
 
     if (!delegateTo) {
@@ -206,7 +225,8 @@ router.post('/:id/delegate', async (req: Request, res: Response) => {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Delegate error', { err: message });
-    return res.status(400).json({ error: message });
+    const status = /not found/i.test(message) ? 404 : 400;
+    return res.status(status).json({ error: message });
   }
 });
 
@@ -246,6 +266,9 @@ router.get('/:workflowId/status', async (req: Request, res: Response) => {
 
   try {
     const workflowId = parseInt(String(req.params.workflowId), 10);
+    if (isNaN(workflowId)) {
+      return res.status(400).json({ error: 'Invalid workflow ID' });
+    }
     const status = await approvalOrchestrator.getWorkflowStatus(workflowId);
 
     if (!status) {
@@ -271,6 +294,9 @@ router.get('/templates', async (req: Request, res: Response) => {
   try {
     const { moduleType } = req.query;
     const orgId = Number(user.organizationId);
+    if (isNaN(orgId)) {
+      return res.status(400).json({ error: 'Invalid organization ID' });
+    }
 
     let templates;
     if (moduleType) {
@@ -345,13 +371,24 @@ router.post('/templates', async (req: Request, res: Response) => {
       });
     }
 
+    if (typeof name !== 'string' || typeof moduleType !== 'string' || !Array.isArray(steps)) {
+      return res.status(400).json({
+        error: 'Invalid input: name and moduleType must be strings, steps must be an array',
+      });
+    }
+
+    const orgId = Number(user.organizationId);
+    if (isNaN(orgId)) {
+      return res.status(400).json({ error: 'Invalid organization ID' });
+    }
+
     // Create template
     const [template] = await (db.insert(workflowTemplates) as any)
       .values({
         name,
         description: description || '',
         moduleType,
-        organizationId: Number(user.organizationId),
+        organizationId: orgId,
         createdBy: user.userId,
         documentTypes: documentTypes || [],
       })

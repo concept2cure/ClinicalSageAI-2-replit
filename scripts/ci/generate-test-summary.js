@@ -5,7 +5,7 @@ function generateTestSummary() {
   let summary = '';
 
   // Backend test results
-  if (fs.existsSync('coverage/lcov-report/index.html')) {
+  if (fs.existsSync('coverage/coverage-summary.json')) {
     const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
     const total = coverage.total;
 
@@ -44,7 +44,7 @@ function generateTestSummary() {
     summary += `- **SEO Score**: ${Math.round(lighthouse.categories.seo.score * 100)}/100\n\n`;
   }
 
-  logger.info(summary);
+  console.log(summary);
 }
 
 generateTestSummary();

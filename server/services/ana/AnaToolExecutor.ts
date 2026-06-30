@@ -565,13 +565,13 @@ registerToolHandler('recall_rim_patterns', async (input, ctx) => {
 
 // RIM domain query — filter learned patterns by domain with optional confidence
 // and occurrence thresholds, sorted by occurrences descending. Tenant-scoped.
-registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string, unknown>) =>
+registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string, unknown>, ctx) =>
   runStatsTool('query_rim_patterns_by_domain', async () => {
     const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
-    const orgId = typeof input.orgId === 'number' ? input.orgId : 0;
+    const orgId = ctx?.organizationId ?? 0;
     const domain = typeof input.domain === 'string' ? input.domain.trim() : '';
     if (!orgId || !domain) {
-      throw new Error('orgId (number) and domain (string) are required.');
+      throw new Error('organizationId (from tenant context) and domain (string) are required.');
     }
     const minConfidence = typeof input.minConfidence === 'number' ? input.minConfidence : 0;
     const minOccurrences = typeof input.minOccurrences === 'number' ? input.minOccurrences : 0;
@@ -593,12 +593,12 @@ registerToolHandler('query_rim_patterns_by_domain', async (input: Record<string,
 );
 
 // RIM intelligence summary — aggregate domain counts, top patterns, date range.
-registerToolHandler('summarize_rim_intelligence', async (input: Record<string, unknown>) =>
+registerToolHandler('summarize_rim_intelligence', async (input: Record<string, unknown>, ctx) =>
   runStatsTool('summarize_rim_intelligence', async () => {
     const { getPatterns } = await import('../intelligence/rim-pattern-store.js');
-    const orgId = typeof input.orgId === 'number' ? input.orgId : 0;
+    const orgId = ctx?.organizationId ?? 0;
     if (!orgId) {
-      throw new Error('orgId (number) is required.');
+      throw new Error('organizationId (from tenant context) is required.');
     }
 
     const patterns = getPatterns({ orgId });
@@ -3380,8 +3380,11 @@ registerToolHandler('lookup_ich_guideline', async (input) => {
 
 // Check Regulatory Compliance
 registerToolHandler('check_regulatory_compliance', async (input) => {
-  const sectionContent = input.section_content as string;
-  const framework = input.regulatory_framework as string;
+  const sectionContent = typeof input.section_content === 'string' ? input.section_content : '';
+  const framework = typeof input.regulatory_framework === 'string' ? input.regulatory_framework : '';
+  if (!sectionContent || !framework) {
+    return JSON.stringify({ error: 'check_regulatory_compliance requires section_content and regulatory_framework (both strings).' });
+  }
   const sectionLength = sectionContent.length;
 
   // Basic structural compliance checks
@@ -4955,116 +4958,124 @@ registerToolHandler('reconcile_extracted_figures', async (input: Record<string, 
 // ─────────────────────────────────────────────────────────────────────────────
 
 registerToolHandler('generate_document', async (input: Record<string, unknown>) => {
-  const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
-  const builder = getMasterDocumentBuilder();
+  try {
+    const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
+    const builder = getMasterDocumentBuilder();
 
-  const documentType = input.document_type as string || 'csr';
-  const title = input.title as string || 'Untitled Document';
-  const sections = (input.sections as Array<{ number: string; title: string; content: string }>) || [];
-  const outputFormat = (input.output_format as string) || 'docx';
-  const agencies = (input.agencies as string[]) || ['FDA'];
-  const templatePath = input.template_path as string | undefined;
+    const documentType = input.document_type as string || 'csr';
+    const title = input.title as string || 'Untitled Document';
+    const sections = (input.sections as Array<{ number: string; title: string; content: string }>) || [];
+    const outputFormat = (input.output_format as string) || 'docx';
+    const agencies = (input.agencies as string[]) || ['FDA'];
+    const templatePath = input.template_path as string | undefined;
 
-  // Template mode: copy + unpack + string replace + XML inject
-  if (templatePath && input.replacements) {
+    // Template mode: copy + unpack + string replace + XML inject
+    if (templatePath && input.replacements) {
+      const result = await builder.buildFromTemplate({
+        templatePath,
+        replacements: input.replacements as Record<string, string>,
+        outputFormat: outputFormat as 'docx' | 'pdf',
+        documentTitle: title,
+      });
+      return JSON.stringify({
+        success: true,
+        outputPath: result.outputPath,
+        format: result.format,
+        sizeBytes: result.sizeBytes,
+        replacementsApplied: result.replacementsApplied,
+        buildDurationMs: result.buildDurationMs,
+        message: `Document generated: ${result.outputPath}`,
+      });
+    }
+
+    // Scratch mode: build from sections
+    if (sections.length > 0) {
+      const result = await builder.generateFromScratch({
+        documentType,
+        sections,
+        agencies,
+        outputFormat: outputFormat as 'docx' | 'pdf' | 'xml',
+        documentTitle: title,
+      });
+      return JSON.stringify({
+        success: true,
+        outputPath: result.outputPath,
+        format: result.format,
+        sizeBytes: result.sizeBytes,
+        sectionsGenerated: sections.length,
+        buildDurationMs: result.buildDurationMs,
+        message: `${documentType.toUpperCase()} document generated with ${sections.length} sections.`,
+      });
+    }
+
+    // eCTD backbone XML
+    if (documentType === 'ectd_backbone') {
+      const xml = await builder.generateEctdXml({
+        submissionType: 'original',
+        applicantName: (input.applicant as string) || 'Applicant',
+        productName: (input.product as string) || 'Product',
+        modules: [],
+      });
+      return JSON.stringify({ success: true, format: 'xml', content: xml, message: 'eCTD backbone XML generated.' });
+    }
+
+    // ICSR XML
+    if (documentType === 'icsr') {
+      const xml = await builder.generateIcsrXml({
+        safetyReportId: (input.safety_report_id as string) || `ICSR-${Date.now()}`,
+        reaction: (input.reaction as string) || 'Unknown',
+        drug: (input.drug as string) || 'Unknown',
+        seriousness: (input.seriousness as 'serious' | 'non-serious') || 'non-serious',
+      });
+      return JSON.stringify({ success: true, format: 'xml', content: xml, message: 'ICSR E2B(R3) XML generated.' });
+    }
+
+    return JSON.stringify({
+      success: false,
+      message: 'Please provide sections content or a template path to generate a document.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `generate_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('build_from_template', async (input: Record<string, unknown>) => {
+  try {
+    const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
+    const builder = getMasterDocumentBuilder();
+
+    const templatePath = input.template_path as string;
+    const replacements = input.replacements as Record<string, string> || {};
+    const xmlInjections = input.xml_injections as Array<{ position: string; xml: string; placeholder?: string }> || [];
+    const outputFormat = (input.output_format as string) || 'docx';
+    const documentTitle = input.document_title as string || 'Template Output';
+
     const result = await builder.buildFromTemplate({
       templatePath,
-      replacements: input.replacements as Record<string, string>,
+      replacements,
+      xmlInjections: xmlInjections.map(inj => ({
+        targetFile: 'word/document.xml',
+        position: inj.position as any,
+        xml: inj.xml,
+        placeholder: inj.placeholder,
+      })),
       outputFormat: outputFormat as 'docx' | 'pdf',
-      documentTitle: title,
+      documentTitle,
     });
+
     return JSON.stringify({
       success: true,
       outputPath: result.outputPath,
       format: result.format,
       sizeBytes: result.sizeBytes,
       replacementsApplied: result.replacementsApplied,
+      xmlInjectionsApplied: result.xmlInjectionsApplied,
       buildDurationMs: result.buildDurationMs,
-      message: `Document generated: ${result.outputPath}`,
+      message: `Template built: ${result.replacementsApplied} replacements, ${result.xmlInjectionsApplied} XML injections.`,
     });
+  } catch (err) {
+    return JSON.stringify({ error: `build_from_template failed: ${err instanceof Error ? err.message : String(err)}` });
   }
-
-  // Scratch mode: build from sections
-  if (sections.length > 0) {
-    const result = await builder.generateFromScratch({
-      documentType,
-      sections,
-      agencies,
-      outputFormat: outputFormat as 'docx' | 'pdf' | 'xml',
-      documentTitle: title,
-    });
-    return JSON.stringify({
-      success: true,
-      outputPath: result.outputPath,
-      format: result.format,
-      sizeBytes: result.sizeBytes,
-      sectionsGenerated: sections.length,
-      buildDurationMs: result.buildDurationMs,
-      message: `${documentType.toUpperCase()} document generated with ${sections.length} sections.`,
-    });
-  }
-
-  // eCTD backbone XML
-  if (documentType === 'ectd_backbone') {
-    const xml = await builder.generateEctdXml({
-      submissionType: 'original',
-      applicantName: (input.applicant as string) || 'Applicant',
-      productName: (input.product as string) || 'Product',
-      modules: [],
-    });
-    return JSON.stringify({ success: true, format: 'xml', content: xml, message: 'eCTD backbone XML generated.' });
-  }
-
-  // ICSR XML
-  if (documentType === 'icsr') {
-    const xml = await builder.generateIcsrXml({
-      safetyReportId: (input.safety_report_id as string) || `ICSR-${Date.now()}`,
-      reaction: (input.reaction as string) || 'Unknown',
-      drug: (input.drug as string) || 'Unknown',
-      seriousness: (input.seriousness as 'serious' | 'non-serious') || 'non-serious',
-    });
-    return JSON.stringify({ success: true, format: 'xml', content: xml, message: 'ICSR E2B(R3) XML generated.' });
-  }
-
-  return JSON.stringify({
-    success: false,
-    message: 'Please provide sections content or a template path to generate a document.',
-  });
-});
-
-registerToolHandler('build_from_template', async (input: Record<string, unknown>) => {
-  const { getMasterDocumentBuilder } = await import('../docx/masterDocumentBuilder.js');
-  const builder = getMasterDocumentBuilder();
-
-  const templatePath = input.template_path as string;
-  const replacements = input.replacements as Record<string, string> || {};
-  const xmlInjections = input.xml_injections as Array<{ position: string; xml: string; placeholder?: string }> || [];
-  const outputFormat = (input.output_format as string) || 'docx';
-  const documentTitle = input.document_title as string || 'Template Output';
-
-  const result = await builder.buildFromTemplate({
-    templatePath,
-    replacements,
-    xmlInjections: xmlInjections.map(inj => ({
-      targetFile: 'word/document.xml',
-      position: inj.position as any,
-      xml: inj.xml,
-      placeholder: inj.placeholder,
-    })),
-    outputFormat: outputFormat as 'docx' | 'pdf',
-    documentTitle,
-  });
-
-  return JSON.stringify({
-    success: true,
-    outputPath: result.outputPath,
-    format: result.format,
-    sizeBytes: result.sizeBytes,
-    replacementsApplied: result.replacementsApplied,
-    xmlInjectionsApplied: result.xmlInjectionsApplied,
-    buildDurationMs: result.buildDurationMs,
-    message: `Template built: ${result.replacementsApplied} replacements, ${result.xmlInjectionsApplied} XML injections.`,
-  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -9890,9 +9901,9 @@ registerToolHandler('finalize_committee_determination', async (input, ctx) => {
   try {
     // CITI training gate (read) before opening the transaction.
     const ct = await client.query(`SELECT committee_type FROM committee_agenda_items WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`, [agendaItemId, ctx.organizationId]);
-    if (ct.rows.length === 0) { client.release(); return JSON.stringify({ error: 'Agenda item not found.' }); }
+    if (ct.rows.length === 0) { return JSON.stringify({ error: 'Agenda item not found.' }); }
     const training = await getActorTrainingStatus(ctx.organizationId, ctx.userId, ct.rows[0].committee_type);
-    if (!training.trained) { client.release(); return JSON.stringify({ error: `Cannot finalize: ${training.reason}` }); }
+    if (!training.trained) { return JSON.stringify({ error: `Cannot finalize: ${training.reason}` }); }
 
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
@@ -12842,32 +12853,15 @@ export async function executeAgenticLoop(
 }
 
 /**
- * Get list of available tool names and their descriptions.
+ * Get list of available tool names and their registration status.
+ * Uses the actual handler registry so the list is always in sync with
+ * what the executor can dispatch — the previous hardcoded list drifted
+ * as new tools were added.
  */
 export function getAvailableTools(): Array<{ name: string; registered: boolean }> {
-  const allTools = [
-    'search_clinical_evidence',
-    'search_literature',
-    'lookup_fda_guidance',
-    'lookup_ich_guideline',
-    'check_regulatory_compliance',
-    'validate_cross_references',
-    'generate_citation',
-    'analyze_predicate_device',
-    'extract_document_structure',
-    'inspect_uploaded_document',
-    'read_uploaded_document',
-    'ocr_document_pages',
-    'read_spreadsheet',
-    'edit_spreadsheet',
-    'check_dossier_consistency',
-    'check_numerical_integrity',
-    'mine_precedents',
-  ];
-
-  return allTools.map(name => ({
+  return [...toolHandlers.keys()].map(name => ({
     name,
-    registered: toolHandlers.has(name),
+    registered: true,
   }));
 }
 
