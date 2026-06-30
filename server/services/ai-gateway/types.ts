@@ -55,6 +55,29 @@ export type RoutingStrategy =
   | 'explicit';       // Use the explicitly specified provider/model
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Effort Levels (Model/Effort Picker — Composer)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * User-facing "effort" the AnA Composer offers as a Fast/Balanced/Thorough
+ * segmented control. Effort is a calm, jargon-free abstraction over the
+ * gateway's {@link RoutingStrategy} — it never names a model and never exposes
+ * routing internals to the user.
+ */
+export type EffortLevel = 'fast' | 'balanced' | 'thorough';
+
+/**
+ * Effort → routing strategy. `fast` prefers the cheapest capable model,
+ * `thorough` the highest-quality, and `balanced` defers to task-based routing.
+ * The mapped strategies are all members of {@link RoutingStrategy}.
+ */
+export const EFFORT_TO_STRATEGY = {
+  fast: 'cost_optimized',
+  balanced: 'task_based',
+  thorough: 'quality_optimized',
+} as const satisfies Record<EffortLevel, RoutingStrategy>;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Request & Response Types
 // ─────────────────────────────────────────────────────────────────────────────
 
