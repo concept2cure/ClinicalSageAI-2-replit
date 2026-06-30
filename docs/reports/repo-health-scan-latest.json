@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-30T19:07:40.852Z",
+  "generatedAt": "2026-06-30T21:36:32.588Z",
   "git": {
-    "sha": "550e8d84c9d62beffa2cd2467fbfefda92608b76",
+    "sha": "d62ebac4e37e87d4689d6bca82e158fc92e4cd0c",
     "branch": "claude/translation-pmda-pipeline"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 233,
     "largeFilesByBytes": 24,
-    "largeFilesByLines": 72
+    "largeFilesByLines": 73
   },
   "findings": {
     "duplicateBasenames": [
@@ -121,7 +121,7 @@
       },
       {
         "basename": "types",
-        "count": 44,
+        "count": 45,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -166,6 +166,7 @@
           "server/services/translation/types.ts",
           "server/startup/types.ts",
           "services/proof/types.ts",
+          "services/regulatory/pyramids/types.ts",
           "shared/ivd/types.ts"
         ]
       },
@@ -2669,6 +2670,10 @@
         "lines": 1650
       },
       {
+        "file": "services/regulatory/globalPyramids.ts",
+        "lines": 1623
+      },
+      {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
         "lines": 1606
       },
@@ -2719,9 +2724,9 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 272,
+      "duplicateGroups": 273,
       "largeByBytes": 2,
-      "largeByLines": 7
+      "largeByLines": 8
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
