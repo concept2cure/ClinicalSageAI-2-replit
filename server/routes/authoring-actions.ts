@@ -220,6 +220,9 @@ router.get('/promotion-blockers/:projectId', async (req: Request, res: Response)
 
 router.get('/compare-versions/:projectId/:artifactId', async (req: Request, res: Response) => {
   try {
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { projectId, artifactId } = req.params;
 
     if (!projectId || !artifactId) {
@@ -565,7 +568,7 @@ router.post('/promote-to-review', async (req: Request, res: Response) => {
       if (isGovernedContractInvalidError(promoteErr) && promoteErr.governed) {
         return sendGovernedContractInvalid(res, promoteErr.governed);
       }
-      return res.json({
+      return res.status(500).json({
         promoted: false,
         reason: 'error',
         message: promoteErr?.message || 'Failed to promote artifact',
@@ -1240,11 +1243,10 @@ router.post('/correction-draft', async (req: Request, res: Response) => {
 // ACTION 7: Harmonize with linked sections — uses harmonize-engine
 router.post('/harmonize-sections', async (req: Request, res: Response) => {
   try {
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { projectId, sectionCodes, submissionType, productName } = req.body;
-    // Tenant context from verified auth middleware (non-failing here: decision
-    // recording below is best-effort and skips DB persistence without it).
-    const rawTenantId = Number((req as any).tenantId ?? (req as any).organizationId);
-    const orgId = Number.isFinite(rawTenantId) && rawTenantId > 0 ? rawTenantId : undefined;
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
     if (!sectionCodes || !Array.isArray(sectionCodes) || sectionCodes.length === 0) {
       return res.json({
@@ -1495,6 +1497,9 @@ router.get('/module-readiness/:projectId/:moduleCode', async (req: Request, res:
 // ACTION 10: Section evidence — uses EvidenceManagementService + gap analysis
 router.get('/section-evidence/:projectId/:sectionCode', async (req: Request, res: Response) => {
   try {
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { projectId, sectionCode } = req.params;
     if (!projectId) return res.status(400).json({ error: 'projectId is required' });
 
@@ -1597,6 +1602,9 @@ function deriveLinkedSections(sectionCode: string): string[] {
 // ACTION 11: Cross-section consistency check — combines harmonize + contradiction + linked sections
 router.post('/cross-section-consistency', async (req: Request, res: Response) => {
   try {
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { projectId, sectionCode, linkedSectionCodes, submissionType } = req.body;
     if (!projectId || !sectionCode) {
       return res.status(400).json({ error: 'projectId and sectionCode are required' });
@@ -1652,7 +1660,7 @@ router.post('/cross-section-consistency', async (req: Request, res: Response) =>
       );
       if (contradictionEngineService?.scanProject) {
         const scanResult = await contradictionEngineService.scanProject(
-          0,
+          orgId,
           Number(projectId)
         );
         contradictions = ((scanResult?.findings as any[]) || [])
@@ -2610,7 +2618,7 @@ router.get('/section-context/:projectId/:sectionCode', async (req: Request, res:
       );
       if (contradictionEngineService?.scanProject) {
         const scanResult = await contradictionEngineService.scanProject(
-          0,
+          orgId,
           Number(projectId)
         );
         // Filter to section-relevant contradictions
@@ -2653,6 +2661,9 @@ router.get('/section-context/:projectId/:sectionCode', async (req: Request, res:
  */
 router.get('/decisions/:projectId', async (req: Request, res: Response) => {
   try {
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { projectId } = req.params;
     const { kind, status, sectionCode, moduleCode, limit } = req.query;
 
@@ -2702,6 +2713,9 @@ router.get('/decisions/:projectId', async (req: Request, res: Response) => {
  */
 router.get('/decision/:decisionId', async (req: Request, res: Response) => {
   try {
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { decisionId } = req.params;
 
     const { decisionLifecycleService } = await import(
@@ -2731,6 +2745,9 @@ router.get('/decision/:decisionId', async (req: Request, res: Response) => {
  */
 router.post('/decision/:decisionId/confirm', async (req: Request, res: Response) => {
   try {
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { decisionId } = req.params;
     const { accepted, reason } = req.body;
     const userId = (req as any).userId || 'unknown';
@@ -2767,6 +2784,9 @@ router.post('/decision/:decisionId/confirm', async (req: Request, res: Response)
  */
 router.get('/decision-context/:projectId', async (req: Request, res: Response) => {
   try {
+    const orgId = requireTenantId(req, res);
+    if (orgId == null) return;
+
     const { projectId } = req.params;
     const { sectionCode, moduleCode, limit } = req.query;
 

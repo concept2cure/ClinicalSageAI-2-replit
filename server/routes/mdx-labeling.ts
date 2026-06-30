@@ -140,8 +140,8 @@ router.get('/labeling/:id', async (req: Request, res: Response) => {
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Labeling document');
     const [translations, symbols] = await Promise.all([
-      pool.query(`SELECT * FROM labeling_translations WHERE labeling_document_id = $1 ORDER BY language`, [id]),
-      pool.query(`SELECT * FROM labeling_symbols WHERE labeling_document_id = $1 ORDER BY symbol_code`, [id]),
+      pool.query(`SELECT * FROM labeling_translations WHERE labeling_document_id = $1 AND organization_id = $2 ORDER BY language`, [id, orgId]),
+      pool.query(`SELECT * FROM labeling_symbols WHERE labeling_document_id = $1 AND organization_id = $2 ORDER BY symbol_code`, [id, orgId]),
     ]);
     return ok(res, { ...rows[0], translations: translations.rows, symbols: symbols.rows });
   } catch (err) { return serverError(res, log, 'get', err); }

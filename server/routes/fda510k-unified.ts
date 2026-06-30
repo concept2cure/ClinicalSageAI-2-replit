@@ -267,7 +267,8 @@ mountSubRouters().catch(err => {
 // Apply error handler as last middleware
 router.use(errorHandler);
 
-// Cleanup rate limit map periodically (every 5 minutes)
+// Cleanup rate limit map periodically (every 5 minutes).
+// unref() prevents this timer from keeping the process alive during shutdown.
 setInterval(() => {
   const now = Date.now();
   const windowStart = now - RATE_LIMIT_WINDOW_MS;
@@ -276,6 +277,6 @@ setInterval(() => {
       rateLimitMap.delete(key);
     }
   });
-}, 5 * 60 * 1000);
+}, 5 * 60 * 1000).unref();
 
 export default router;

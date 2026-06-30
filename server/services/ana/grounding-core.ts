@@ -50,7 +50,7 @@ const CITATION_PATTERNS: RegExp[] = [
   /\bNCT\d{8}\b/, // trial id
   /\bdoi:\s*\S+/i,
   /\b(?:Section|§)\s*\d/i,
-  /\bp\.?\s?\d+\b/i, // p. 12  (page reference)
+  /\b(?:pp?\.)\s?\d+\b/i, // p. 12, pp. 5  (page reference — requires period to avoid matching p-values like p<0.05)
   /\b(?:Table|Figure|Appendix)\s*\d/i,
   /\bper\s+(?:the\s+)?(?:ICH|FDA|EMA|PMDA|guidance|protocol|SAP|CSR|label|monograph)\b/i,
   /\baccording to\b/i,

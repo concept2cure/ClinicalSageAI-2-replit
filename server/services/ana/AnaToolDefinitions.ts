@@ -8372,7 +8372,7 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   ...RIM_QUERY_TOOLS,
   // Live EU/global data: EUDAMED, EMA EPAR, EU CTIS. See euDataTools.ts.
   ...EU_DATA_TOOLS,
-  // CDISC SDTM/ADaM conformance + define.xml generation. See cdiscTools.ts.
+  // CDISC SDTM/ADaM conformance (per-dataset validation). See cdiscTools.ts.
   ...CDISC_TOOLS,
   // Live guidance ingestion: FDA guidance API, ICH guideline registry, freshness checks.
   // See guidanceIngestionTools.ts + ../regulatory-currency/guidance-ingestion-service.ts.
@@ -8381,12 +8381,10 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   ...SPL_SAFETY_TOOLS,
 ];
 
-// Defensive registry guard: v2's cdiscTools.ts currently re-registers
-// run_cdisc_pipeline / generate_define_xml, which also live in
-// EXTENDED_REGULATORY_TOOLS — producing duplicate tool names in the raw list.
-// Dedupe by name (first occurrence wins) so the ALL_ANA_TOOLS invariant holds
-// regardless of upstream double-registration. Remove once the duplicate is
-// resolved at source in the CDISC tools refactor.
+// Defensive registry guard: dedupe by name (first occurrence wins) so the
+// ALL_ANA_TOOLS invariant holds even if an upstream module accidentally
+// re-registers a tool name. The original cdiscTools.ts duplicates
+// (run_cdisc_pipeline / generate_define_xml) have been resolved at source.
 export const ALL_ANA_TOOLS: AnaTool[] = ALL_ANA_TOOLS_RAW.filter(
   (tool, index) => ALL_ANA_TOOLS_RAW.findIndex((t) => t.name === tool.name) === index,
 );

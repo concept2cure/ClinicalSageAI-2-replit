@@ -336,19 +336,19 @@ router.delete('/:projectId', async (req, res) => {
       return res.status(403).json({ error: 'No active license for this organization' });
     }
 
-    // Check if project exists
-    const [existingProject] = await db.select().from(projects).where(eq(projects.id, projectId));
+    // Check if project exists and belongs to this organization
+    const [existingProject] = await db.select().from(projects).where(
+      and(eq(projects.id, projectId), eq(projects.organizationId, organizationId))
+    );
 
     if (!existingProject) {
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    if (existingProject.organizationId !== organizationId) {
-      return res.status(403).json({ error: 'Access denied to this project' });
-    }
-
-    // Delete the project
-    await db.delete(projects).where(eq(projects.id, projectId));
+    // Delete the project (tenant-scoped)
+    await db.delete(projects).where(
+      and(eq(projects.id, projectId), eq(projects.organizationId, organizationId))
+    );
 
     try {
       const now = new Date();
@@ -418,14 +418,12 @@ router.patch('/:projectId', async (req, res) => {
       return res.status(400).json({ error: 'No valid fields provided for update' });
     }
 
-    const [existingProject] = await db.select().from(projects).where(eq(projects.id, projectId));
+    const [existingProject] = await db.select().from(projects).where(
+      and(eq(projects.id, projectId), eq(projects.organizationId, organizationId))
+    );
 
     if (!existingProject) {
       return res.status(404).json({ error: 'Project not found' });
-    }
-
-    if (existingProject.organizationId !== organizationId) {
-      return res.status(403).json({ error: 'Access denied to this project' });
     }
 
     const [updatedProject] = await db
@@ -434,7 +432,7 @@ router.patch('/:projectId', async (req, res) => {
         ...updates,
         updatedAt: new Date(),
       })
-      .where(eq(projects.id, projectId))
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)))
       .returning();
 
     try {

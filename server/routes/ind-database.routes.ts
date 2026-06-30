@@ -24,8 +24,11 @@ const DEFAULT_ORG_ID = 1;
  */
 router.get('/project', async (req, res) => {
   try {
-    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
-    
+    const organizationId = Number(req.user?.organizationId);
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
     // Get the most recent active project for this organization
     const projects = await db
       .select()
@@ -65,7 +68,10 @@ router.get('/project', async (req, res) => {
  */
 router.post('/project', async (req, res) => {
   try {
-    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
+    const organizationId = Number(req.user?.organizationId);
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
     const userId = req.user?.id != null ? Number(req.user.id) : undefined;
     const { projectData, stepData, currentStep, sections, cmcData, csrData } = req.body;
     
@@ -162,8 +168,11 @@ router.post('/project', async (req, res) => {
  */
 router.get('/wizard/data', async (req, res) => {
   try {
-    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
-    
+    const organizationId = Number(req.user?.organizationId);
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
     // Get projects
     const projects = await db
       .select()
@@ -230,8 +239,11 @@ router.post('/sections/:sectionId/generate', async (req, res) => {
   try {
     const { sectionId } = req.params;
     const { projectId, templateType = 'FDA', cmcData, csrData, indication, phase } = req.body;
-    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
-    
+    const organizationId = Number(req.user?.organizationId);
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
     // Get project if projectId provided
     let project = null;
     if (projectId) {
@@ -268,7 +280,10 @@ router.post('/sections/:sectionId/generate', async (req, res) => {
  */
 router.get('/templates', async (req, res) => {
   try {
-    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
+    const organizationId = Number(req.user?.organizationId);
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
     const { category, type, region } = req.query;
     
     const conditions = [
@@ -323,8 +338,11 @@ router.post('/templates/:templateId/use', async (req, res) => {
     const { templateId } = req.params;
     const { projectId } = req.body;
     const userId = req.user?.id != null ? Number(req.user.id) : undefined;
-    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
-    
+    const organizationId = Number(req.user?.organizationId);
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
     // Get template
     const templates = await db
       .select()
@@ -387,7 +405,10 @@ router.post('/workflow/save', async (req, res) => {
     if (userId === undefined) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    const organizationId = Number(req.user?.organizationId ?? DEFAULT_ORG_ID);
+    const organizationId = Number(req.user?.organizationId);
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
     const sessionId = req.sessionId || generateUUID();
     
     // Check if workflow exists

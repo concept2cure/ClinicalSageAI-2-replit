@@ -155,6 +155,7 @@ async function recomputeBoundDigestFromRun(
  *     (only the signatureId or an opaque error code).
  */
 router.post('/:submissionId/sign-release', async (req: Request, res: Response) => {
+  try {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
 
@@ -365,6 +366,14 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
     signatureId,
     signedAt: new Date().toISOString(),
   });
+  } catch (err) {
+    log.error('sign-release unhandled error', {
+      err: err instanceof Error ? err.message : String(err),
+    });
+    if (!res.headersSent) {
+      return res.status(500).json({ error: 'internal_error' });
+    }
+  }
 });
 
 export default router;

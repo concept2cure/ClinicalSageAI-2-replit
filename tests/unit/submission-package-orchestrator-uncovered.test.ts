@@ -465,10 +465,11 @@ describe('region-CHECK violation handling', () => {
         ])
       );
       // Persistence failures are still swallowed (not surfaced as failed steps).
-      // package.validate, however, now fails on its own merits (the fixture's
-      // package is not gateway-ready), so it is the one expected failed step.
+      // With skipValidation=true, package.validate gets status 'skipped'
+      // (not 'failed'), so NO steps should be failed — the test is purely
+      // about persistence failures being invisible to the step status.
       const failedKeys = result.run.steps.filter(s => s.status === 'failed').map(s => s.key);
-      expect(failedKeys).toEqual(['package.validate']);
+      expect(failedKeys).toEqual([]);
     } finally {
       warnSpy.mockRestore();
     }

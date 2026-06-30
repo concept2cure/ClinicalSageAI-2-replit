@@ -1978,7 +1978,8 @@ const autoDraftSessions = new Map<
   }
 >();
 
-// Clean up sessions older than 2 hours
+// Clean up sessions older than 2 hours.
+// unref() prevents this timer from keeping the process alive during shutdown.
 setInterval(() => {
   const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
   for (const [id, session] of autoDraftSessions) {
@@ -1986,7 +1987,7 @@ setInterval(() => {
       autoDraftSessions.delete(id);
     }
   }
-}, 30 * 60 * 1000);
+}, 30 * 60 * 1000).unref();
 
 /**
  * Detect document type from filename and extracted content.

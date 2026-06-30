@@ -132,7 +132,7 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const invitationId = parseInt(req.params.invitationId);
+    const invitationId = parseInt(req.params.invitationId, 10);
     if (isNaN(invitationId)) {
       return res.status(400).json({ error: 'Invalid invitation ID' });
     }
@@ -195,7 +195,7 @@ router.post('/invitations/:invitationId/decline', async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const invitationId = parseInt(req.params.invitationId);
+    const invitationId = parseInt(req.params.invitationId, 10);
     if (isNaN(invitationId)) {
       return res.status(400).json({ error: 'Invalid invitation ID' });
     }
@@ -249,7 +249,7 @@ router.get('/:tenantId', async (req, res) => {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    const tenantId = parseInt(req.params.tenantId);
+    const tenantId = parseInt(req.params.tenantId, 10);
     if (isNaN(tenantId)) {
       return res.status(400).json({ error: 'Invalid tenant ID' });
     }
@@ -578,14 +578,19 @@ router.patch('/:organizationId/:userId', async (req, res) => {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    const organizationId = parseInt(req.params.organizationId);
-    const userId = parseInt(req.params.userId);
+    const organizationId = parseInt(req.params.organizationId, 10);
+    const userId = parseInt(req.params.userId, 10);
 
     if (isNaN(organizationId) || isNaN(userId)) {
       return res.status(400).json({ error: 'Invalid organization ID or user ID' });
     }
 
     if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
+
+    const callerId = getCallerId(req);
+    if (callerId === userId) {
+      return res.status(400).json({ error: 'You cannot change your own role' });
+    }
 
     const validatedData = updateUserRoleSchema.parse(req.body);
 
@@ -624,14 +629,19 @@ router.delete('/:organizationId/:userId', async (req, res) => {
       return res.status(500).json({ error: 'Database connection not available' });
     }
 
-    const organizationId = parseInt(req.params.organizationId);
-    const userId = parseInt(req.params.userId);
+    const organizationId = parseInt(req.params.organizationId, 10);
+    const userId = parseInt(req.params.userId, 10);
 
     if (isNaN(organizationId) || isNaN(userId)) {
       return res.status(400).json({ error: 'Invalid organization ID or user ID' });
     }
 
     if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
+
+    const callerId = getCallerId(req);
+    if (callerId === userId) {
+      return res.status(400).json({ error: 'You cannot remove yourself from an organization' });
+    }
 
     const deleteQuery = `
       DELETE FROM organization_users

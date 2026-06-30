@@ -246,7 +246,9 @@ export function registerInlinePlatformFacadesRoutes({
 
   // Electronic-signature backend (21 CFR Part 11 — verify-password,
   // verify-mfa, sign). The portal-v2 ElectronicSignature UI calls these.
-  app.use('/api/esignature', esignatureRouter);
+  // SECURITY: authMiddleware required — e-signature endpoints must
+  // cryptographically verify the JWT, not just check req.userId presence.
+  app.use('/api/esignature', authMiddleware, esignatureRouter);
   console.log('✅ E-signature routes mounted (/api/esignature)');
 
   // Dossier section readiness derived from live concept2cure_artifacts

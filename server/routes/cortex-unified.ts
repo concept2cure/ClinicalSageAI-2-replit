@@ -1536,7 +1536,8 @@ mountSubRouters().catch(error => {
   logger.error('Failed to initialize Cortex unified router:', error);
 });
 
-// Cleanup interval for rate limiter
+// Cleanup interval for rate limiter.
+// unref() prevents this timer from keeping the process alive during shutdown.
 setInterval(() => {
   const now = Date.now();
   const windowStart = now - RATE_LIMIT_WINDOW_MS;
@@ -1545,7 +1546,7 @@ setInterval(() => {
       rateLimitMap.delete(key);
     }
   });
-}, 5 * 60 * 1000);
+}, 5 * 60 * 1000).unref();
 
 router.use(errorHandler);
 

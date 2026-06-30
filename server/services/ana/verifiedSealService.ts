@@ -397,7 +397,7 @@ export async function sealVerifiedVersion(
       sealedRecord,
     };
   } catch (error) {
-    await client.query('ROLLBACK');
+    await client.query('ROLLBACK').catch(() => {});
     throw error;
   } finally {
     client.release();

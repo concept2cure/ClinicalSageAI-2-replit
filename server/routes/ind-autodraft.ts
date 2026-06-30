@@ -22,6 +22,13 @@ import { Router, Request, Response } from 'express';
 
 const router = Router();
 
+function resolveOrgId(req: Request): number | null {
+  const r = req as any;
+  const raw = r.tenantContext?.organizationId ?? r.tenantId ?? r.user?.organizationId;
+  const n = raw == null ? NaN : Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 // ─── Section Definitions ────────────────────────────────────────────────────
 
 interface INDSection {
@@ -96,6 +103,7 @@ router.get('/sections', (_req: Request, res: Response) => {
 /** POST /api/ind-autodraft/generate-section — auto-draft a single IND section */
 router.post('/generate-section', async (req: Request, res: Response) => {
   try {
+    if (!resolveOrgId(req)) return res.status(401).json({ success: false, error: 'Authentication required' });
     const { sectionId, projectContext } = req.body;
     const section = IND_SECTIONS.find(s => s.id === sectionId);
     if (!section) return res.status(404).json({ success: false, error: 'Section not found' });
@@ -110,6 +118,7 @@ router.post('/generate-section', async (req: Request, res: Response) => {
 /** POST /api/ind-autodraft/generate-full — auto-draft entire IND (all sections) */
 router.post('/generate-full', async (req: Request, res: Response) => {
   try {
+    if (!resolveOrgId(req)) return res.status(401).json({ success: false, error: 'Authentication required' });
     const { projectContext } = req.body;
     const ctx = projectContext || {};
     const results: AutoDraftResult[] = [];

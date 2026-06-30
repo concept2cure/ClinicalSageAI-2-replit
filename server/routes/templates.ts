@@ -155,6 +155,9 @@ ectdTemplatesRouter.get('/', async (req: Request, res: Response) => {
 ectdTemplatesRouter.get('/:id', async (req: Request, res: Response) => {
   try {
     const templateId = req.params.id;
+    if (!Number.isFinite(Number(templateId))) {
+      return res.status(422).json({ error: 'Template id must be numeric' });
+    }
     const organizationId = getSecureOrgId(req);
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });

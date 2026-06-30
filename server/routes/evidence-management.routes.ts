@@ -245,7 +245,7 @@ router.post('/upload', upload.array('files', 5), async (req: Request, res: Respo
 
         // If no requirement was specified, try to auto-map
         if (!fda_requirement) {
-          await evidenceService.mapToFDARequirements(fileId, extractedData);
+          await evidenceService.mapToFDARequirements(fileId, extractedData, organizationId);
         }
 
         // Index in OpenSearch for governed full-text search (non-blocking)
@@ -322,12 +322,13 @@ router.get('/gap-analysis/:projectId', async (req: Request, res: Response) => {
 router.post('/generate-citations', async (req: Request, res: Response) => {
   try {
     const { fileIds, format = 'custom' } = req.body;
+    const organizationId = req.organizationId as number;
 
     if (!fileIds || !Array.isArray(fileIds)) {
       return res.status(400).json({ error: 'File IDs required' });
     }
 
-    const citations = await evidenceService.generateCitations(fileIds, format);
+    const citations = await evidenceService.generateCitations(fileIds, format, organizationId);
 
     res.json({
       success: true,
@@ -347,8 +348,9 @@ router.post('/generate-citations', async (req: Request, res: Response) => {
 router.post('/link-workflow', async (req: Request, res: Response) => {
   try {
     const { fileId, workflowStage, stageData } = req.body;
+    const organizationId = req.organizationId as number;
 
-    await evidenceService.linkToWorkflowStage(fileId, workflowStage, stageData || {});
+    await evidenceService.linkToWorkflowStage(fileId, workflowStage, stageData || {}, organizationId);
 
     res.json({
       success: true,
@@ -367,14 +369,18 @@ router.post('/link-workflow', async (req: Request, res: Response) => {
 router.get('/stage-evidence/:projectId/:stage', async (req: Request, res: Response) => {
   try {
     const projectId = String(req.params.projectId);
-    const stage = String(req.params.stage);
+    const organizationId = req.organizationId as number;
+    const stage = parseInt(String(req.params.stage), 10);
+    if (isNaN(stage)) {
+      return res.status(400).json({ error: 'Invalid stage number' });
+    }
 
-    const evidence = await evidenceService.getStageEvidence(projectId, parseInt(stage));
+    const evidence = await evidenceService.getStageEvidence(projectId, stage, organizationId);
 
     res.json({
       success: true,
       projectId,
-      stage: parseInt(stage),
+      stage,
       evidence,
       count: evidence.rows.length,
     });
@@ -392,8 +398,9 @@ router.post('/auto-populate/:formId', async (req: Request, res: Response) => {
   try {
     const formId = String(req.params.formId);
     const { projectId } = req.body;
+    const organizationId = req.organizationId as number;
 
-    const formData = await evidenceService.autoPopulateForm(formId, projectId);
+    const formData = await evidenceService.autoPopulateForm(formId, projectId, organizationId);
 
     res.json({
       success: true,
@@ -415,8 +422,9 @@ router.post('/review/submit/:fileId', async (req: Request, res: Response) => {
   try {
     const fileId = String(req.params.fileId);
     const { reviewerId } = req.body;
+    const organizationId = req.organizationId as number;
 
-    await evidenceService.submitForReview(fileId, reviewerId || 'system');
+    await evidenceService.submitForReview(fileId, reviewerId || 'system', organizationId);
 
     res.json({
       success: true,
@@ -436,8 +444,9 @@ router.post('/review/approve/:fileId', async (req: Request, res: Response) => {
   try {
     const fileId = String(req.params.fileId);
     const { reviewerId, comments } = req.body;
+    const organizationId = req.organizationId as number;
 
-    await evidenceService.approveEvidence(fileId, reviewerId || 'system', comments);
+    await evidenceService.approveEvidence(fileId, reviewerId || 'system', comments, organizationId);
 
     res.json({
       success: true,
@@ -457,12 +466,13 @@ router.post('/review/request-changes/:fileId', async (req: Request, res: Respons
   try {
     const fileId = String(req.params.fileId);
     const { reviewerId, comments } = req.body;
+    const organizationId = req.organizationId as number;
 
     if (!comments) {
       return res.status(400).json({ error: 'Comments required for change request' });
     }
 
-    await evidenceService.requestChanges(fileId, reviewerId || 'system', comments);
+    await evidenceService.requestChanges(fileId, reviewerId || 'system', comments, organizationId);
 
     res.json({
       success: true,

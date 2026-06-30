@@ -132,8 +132,10 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
       if (!organizationId) {
         return res.status(401).json({ error: 'Organization context required' });
       }
-      const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
-      const pageSize = Math.max(1, Math.min(100, parseInt(String(req.query.pageSize || '50'), 10)));
+      const rawPage = parseInt(String(req.query.page || '1'), 10);
+      const rawPageSize = parseInt(String(req.query.pageSize || '50'), 10);
+      const page = Math.max(1, Number.isFinite(rawPage) ? rawPage : 1);
+      const pageSize = Math.max(1, Math.min(100, Number.isFinite(rawPageSize) ? rawPageSize : 50));
       const offset = (page - 1) * pageSize;
 
       const countResult = await pool.query(
@@ -329,6 +331,9 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
   router.get('/ectd/templates/:id', async (req: Request, res: Response) => {
     try {
       const templateId = req.params.id;
+      if (!Number.isFinite(Number(templateId))) {
+        return res.status(422).json({ error: 'Template id must be numeric' });
+      }
       const organizationId = getSecureOrgId(req);
       if (!organizationId) {
         return res.status(401).json({ error: 'Organization context required' });
@@ -388,7 +393,7 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
   });
 
   // POST /api/v1/drafting/start_task — creates drafting task (DB-persisted)
-  router.post('/v1/drafting/start_task', async (req: Request, res: Response) => {
+  router.post('/v1/drafting/start_task', authMiddleware as any, async (req: Request, res: Response) => {
     try {
       const { project_id, ectd_section, document_title, template } = req.body;
 
@@ -441,7 +446,7 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
   });
 
   // GET /api/v1/drafting/task_status/:task_id — DB-backed with in-memory fallback
-  router.get('/v1/drafting/task_status/:task_id', async (req: Request, res: Response) => {
+  router.get('/v1/drafting/task_status/:task_id', authMiddleware as any, async (req: Request, res: Response) => {
     try {
       const task_id = String(req.params.task_id);
 
@@ -476,7 +481,7 @@ export function createMiscInlineRoutes(pool: Pool, authMiddleware: any): Router 
   });
 
   // POST /api/workflow/progression/create
-  router.post('/workflow/progression/create', async (req: Request, res: Response) => {
+  router.post('/workflow/progression/create', authMiddleware as any, async (req: Request, res: Response) => {
     try {
       const {
         sourceSubmissionId,

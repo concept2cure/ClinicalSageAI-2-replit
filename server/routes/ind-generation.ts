@@ -31,6 +31,13 @@ try {
 
 const router = Router();
 
+function resolveOrgId(req: Request): number | null {
+  const r = req as any;
+  const raw = r.tenantContext?.organizationId ?? r.tenantId ?? r.user?.organizationId;
+  const n = raw == null ? NaN : Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 // ─── GET /api/ind/structure ───────────────────────────────────────────────────
 
 router.get('/structure', (_req: Request, res: Response) => {
@@ -56,6 +63,7 @@ router.get('/structure', (_req: Request, res: Response) => {
 
 router.get('/device-status/:type/:projectId', async (req: Request, res: Response) => {
   try {
+    if (!resolveOrgId(req)) return res.status(401).json({ success: false, error: 'Authentication required' });
     const { type, projectId } = req.params;
     const deviceType = String(type).toUpperCase() as '510K' | 'PMA' | 'DE_NOVO' | 'CER';
 
@@ -113,6 +121,7 @@ router.get('/device-status/:type/:projectId', async (req: Request, res: Response
 
 router.get('/status/:projectId', async (req: Request, res: Response) => {
   try {
+    if (!resolveOrgId(req)) return res.status(401).json({ success: false, error: 'Authentication required' });
     const { projectId } = req.params;
 
     // Fetch project artifacts using the internal concept2cure API pattern
@@ -169,6 +178,7 @@ router.get('/status/:projectId', async (req: Request, res: Response) => {
 
 router.post('/generate-section', async (req: Request, res: Response) => {
   try {
+    if (!resolveOrgId(req)) return res.status(401).json({ success: false, error: 'Authentication required' });
     const { projectId, sectionCode, productName, indication, sponsor, phase } = req.body;
 
     const section = getSectionByCode(sectionCode);
@@ -255,6 +265,7 @@ router.post('/generate-section', async (req: Request, res: Response) => {
 
 router.post('/generate-form', async (req: Request, res: Response) => {
   try {
+    if (!resolveOrgId(req)) return res.status(401).json({ success: false, error: 'Authentication required' });
     const { formType, projectId, sponsorName, investigatorName, productName, indication, phase } = req.body;
 
     const builder = getMasterDocumentBuilder();
@@ -297,6 +308,7 @@ router.post('/generate-form', async (req: Request, res: Response) => {
 
 router.post('/assemble', async (req: Request, res: Response) => {
   try {
+    if (!resolveOrgId(req)) return res.status(401).json({ success: false, error: 'Authentication required' });
     const { projectId, sponsorName, productName } = req.body;
 
     // Fetch all artifacts via internal API

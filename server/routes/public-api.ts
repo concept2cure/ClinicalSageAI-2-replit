@@ -34,7 +34,8 @@ const log = createScopedLogger('public-api');
 // In-memory sliding window rate limiter per API key
 const rateLimitWindows = new Map<number, { count: number; resetAt: number }>();
 
-// Periodic cleanup of expired rate limit windows (every 5 minutes)
+// Periodic cleanup of expired rate limit windows (every 5 minutes).
+// unref() prevents this timer from keeping the process alive during shutdown.
 setInterval(() => {
   const now = Date.now();
   for (const [keyId, window] of rateLimitWindows) {
@@ -42,7 +43,7 @@ setInterval(() => {
       rateLimitWindows.delete(keyId);
     }
   }
-}, 300_000);
+}, 300_000).unref();
 
 const router = Router();
 

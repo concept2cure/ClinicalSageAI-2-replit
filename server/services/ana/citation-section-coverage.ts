@@ -217,7 +217,7 @@ export function deriveProjectSectionCoverage(
   // 'extra' rows: artifacts whose ctd_section isn't in the registry slice.
   for (const [section, bundles] of artifactsBySection) {
     if (registryByCode.has(section)) continue;
-    extraCount += bundles.length;
+    extraCount += 1;
     sections.push({
       ctdSection: section,
       state: 'extra',

@@ -246,19 +246,24 @@ router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Respon
 // GET /dtc-pricing — Get DTC pricing tiers (public, no auth)
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/dtc-pricing', async (_req: Request, res: Response) => {
-  const tiers = DTC_PRICING.map((p: any) => ({
-    name: p.name,
-    tier: p.tier,
-    priceMonthly: (p.baseMonthly ?? 0) / 100,
-    annualDiscountPct: p.annualDiscountPct,
-    maxUsers: p.maxUsers === -1 ? 'Unlimited' : p.maxUsers,
-    maxProjects: p.maxProjects === -1 ? 'Unlimited' : p.maxProjects,
-    maxStorageGB: p.maxStorageGB === -1 ? 'Unlimited' : p.maxStorageGB,
-    deepResearchCredits: p.deepResearchCredits === -1 ? 'Unlimited' : p.deepResearchCredits,
-    builderCredits: p.builderCredits === -1 ? 'Unlimited' : p.builderCredits,
-    trialDays: p.trialDays,
-  }));
-  res.json({ tiers });
+  try {
+    const tiers = DTC_PRICING.map((p: any) => ({
+      name: p.name,
+      tier: p.tier,
+      priceMonthly: (p.baseMonthly ?? 0) / 100,
+      annualDiscountPct: p.annualDiscountPct,
+      maxUsers: p.maxUsers === -1 ? 'Unlimited' : p.maxUsers,
+      maxProjects: p.maxProjects === -1 ? 'Unlimited' : p.maxProjects,
+      maxStorageGB: p.maxStorageGB === -1 ? 'Unlimited' : p.maxStorageGB,
+      deepResearchCredits: p.deepResearchCredits === -1 ? 'Unlimited' : p.deepResearchCredits,
+      builderCredits: p.builderCredits === -1 ? 'Unlimited' : p.builderCredits,
+      trialDays: p.trialDays,
+    }));
+    res.json({ tiers });
+  } catch (error) {
+    logger.error('DTC pricing error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to fetch DTC pricing' });
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

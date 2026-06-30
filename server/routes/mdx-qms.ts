@@ -330,6 +330,7 @@ router.post('/qms/documents/:id/retire', async (req: Request, res: Response) => 
   const orgId = getOrgId(req);
   const userId = getUserId(req);
   if (orgId === null) return orgRequired(res);
+  if (userId === null) return clientError(res, 401, 'User context required');
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : null;

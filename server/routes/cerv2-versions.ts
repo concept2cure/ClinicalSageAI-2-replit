@@ -34,6 +34,9 @@ router.get('/', authMiddleware, async (req: any, res) => {
 
     const limit = Math.min(Number(req.query.limit) || 50, 200);
     const sectionId = req.query.sectionId ? Number(req.query.sectionId) : undefined;
+    if (sectionId !== undefined && !Number.isFinite(sectionId)) {
+      return res.status(400).json({ error: 'Invalid sectionId query parameter' });
+    }
 
     const conditions = [eq(cerv2SectionVersions.organizationId, organizationId)];
     if (sectionId) {

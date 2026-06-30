@@ -1598,7 +1598,7 @@ router.post('/simulations', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('[regulatory-digital-twin] Simulation error:', error);
-    res.status(500).json({ error: 'Simulation failed', details: error.message });
+    res.status(500).json({ error: 'Simulation failed' });
   }
 });
 
@@ -1620,7 +1620,7 @@ router.get('/simulations/:id', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('[DigitalTwin] Failed to retrieve simulation:', error);
-    res.status(500).json({ error: 'Failed to retrieve simulation', details: error.message });
+    res.status(500).json({ error: 'Failed to retrieve simulation' });
   }
 });
 
@@ -1633,7 +1633,7 @@ router.get('/simulations', async (_req: Request, res: Response) => {
     res.json({ simulations, total: simulations.length, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
     console.error('[DigitalTwin] Failed to list simulations:', error);
-    res.status(500).json({ error: 'Failed to list simulations', details: error.message });
+    res.status(500).json({ error: 'Failed to list simulations' });
   }
 });
 
@@ -1643,6 +1643,9 @@ router.get('/simulations', async (_req: Request, res: Response) => {
 router.post('/predict-questions', async (req: Request, res: Response) => {
   try {
     const { submission, agencies } = req.body;
+    if (!submission || !submission.type) {
+      return res.status(400).json({ error: 'submission with type is required' });
+    }
     const twin = new RegulatoryDigitalTwin();
     const questions = await twin.predictReviewerQuestions(submission, agencies);
 
@@ -1658,7 +1661,8 @@ router.post('/predict-questions', async (req: Request, res: Response) => {
       _disclosure: SIMULATION_DISCLOSURE,
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('[DigitalTwin] predict-questions error:', error);
+    res.status(500).json({ error: 'Question prediction failed' });
   }
 });
 
@@ -1668,11 +1672,15 @@ router.post('/predict-questions', async (req: Request, res: Response) => {
 router.post('/rtf-assessment', (req: Request, res: Response) => {
   try {
     const { submission } = req.body;
+    if (!submission || !submission.type) {
+      return res.status(400).json({ error: 'submission with type is required' });
+    }
     const twin = new RegulatoryDigitalTwin();
     const assessment = twin.assessRTFRisk(submission);
     res.json({ ...assessment, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('[DigitalTwin] rtf-assessment error:', error);
+    res.status(500).json({ error: 'RTF assessment failed' });
   }
 });
 
@@ -1682,12 +1690,16 @@ router.post('/rtf-assessment', (req: Request, res: Response) => {
 router.post('/deficiency-prediction', (req: Request, res: Response) => {
   try {
     const { submission } = req.body;
+    if (!submission || !submission.type) {
+      return res.status(400).json({ error: 'submission with type is required' });
+    }
     const twin = new RegulatoryDigitalTwin();
     const rtfRisk = twin.assessRTFRisk(submission);
     const prediction = twin.predictDeficiencyLetter(submission, rtfRisk);
     res.json({ ...prediction, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('[DigitalTwin] deficiency-prediction error:', error);
+    res.status(500).json({ error: 'Deficiency prediction failed' });
   }
 });
 
@@ -1697,11 +1709,15 @@ router.post('/deficiency-prediction', (req: Request, res: Response) => {
 router.post('/advisory-committee', (req: Request, res: Response) => {
   try {
     const { submission, committeeType } = req.body;
+    if (!submission || !submission.type) {
+      return res.status(400).json({ error: 'submission with type is required' });
+    }
     const twin = new RegulatoryDigitalTwin();
     const simulation = twin.simulateAdvisoryCommittee(submission, committeeType);
     res.json({ ...simulation, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('[DigitalTwin] advisory-committee error:', error);
+    res.status(500).json({ error: 'Advisory committee simulation failed' });
   }
 });
 
@@ -1711,15 +1727,20 @@ router.post('/advisory-committee', (req: Request, res: Response) => {
 router.post('/monte-carlo-timing', (req: Request, res: Response) => {
   try {
     const { submission, targetDate, iterations } = req.body;
+    if (!submission || !submission.type) {
+      return res.status(400).json({ error: 'submission with type is required' });
+    }
     const twin = new RegulatoryDigitalTwin();
+    const safeIterations = Math.min(Math.max(iterations || 10000, 100), 50000);
     const result = twin.runMonteCarloTimingSimulation(
       submission,
       targetDate || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-      iterations || 10000
+      safeIterations
     );
     res.json({ ...result, _disclosure: SIMULATION_DISCLOSURE });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('[DigitalTwin] monte-carlo-timing error:', error);
+    res.status(500).json({ error: 'Monte Carlo timing simulation failed' });
   }
 });
 
@@ -1729,6 +1750,9 @@ router.post('/monte-carlo-timing', (req: Request, res: Response) => {
 router.post('/cross-agency', async (req: Request, res: Response) => {
   try {
     const { submission } = req.body;
+    if (!submission || !submission.type) {
+      return res.status(400).json({ error: 'submission with type is required' });
+    }
     const twin = new RegulatoryDigitalTwin();
     const comparison = await twin.runCrossAgencyComparison(submission);
 
@@ -1739,7 +1763,8 @@ router.post('/cross-agency', async (req: Request, res: Response) => {
       _disclosure: SIMULATION_DISCLOSURE,
     });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    console.error('[DigitalTwin] cross-agency error:', error);
+    res.status(500).json({ error: 'Cross-agency comparison failed' });
   }
 });
 

@@ -22,13 +22,14 @@ function getOrgId(req: Request): number {
     (req as any).tenantId ||
     (req as any).organizationId ||
     (req as any).user?.organizationId ||
-    1
+    0
   );
 }
 
 router.get('/letters', async (_req: Request, res: Response) => {
   try {
     const orgId = getOrgId(_req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Authentication required' });
     const letters = await store.query(orgId, 'letter');
     const questions = await store.query(orgId, 'question');
 
@@ -59,6 +60,7 @@ router.get('/letters', async (_req: Request, res: Response) => {
 router.get('/letters/:id', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Authentication required' });
     const letterId = req.params.id;
 
     const letters = await store.query(orgId, 'letter', (l: any) => l.letterId === letterId);
@@ -81,6 +83,7 @@ router.get('/letters/:id', async (req: Request, res: Response) => {
 router.get('/letters/:id/questions', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Authentication required' });
     const letterId = req.params.id;
 
     const letters = await store.query(orgId, 'letter', (l: any) => l.letterId === letterId);
@@ -104,7 +107,9 @@ router.get('/letters/:id/questions', async (req: Request, res: Response) => {
 router.post('/letters/:id/questions/:qid/assign', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Authentication required' });
     const questionDbId = parseInt(String(req.params.qid), 10);
+    if (!Number.isFinite(questionDbId) || questionDbId <= 0) return res.status(400).json({ success: false, error: 'Invalid question ID' });
 
     const question = await store.getById(questionDbId, orgId);
     if (!question)
@@ -128,7 +133,9 @@ router.post('/letters/:id/questions/:qid/assign', async (req: Request, res: Resp
 router.post('/letters/:id/questions/:qid/ai-draft', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Authentication required' });
     const questionDbId = parseInt(String(req.params.qid), 10);
+    if (!Number.isFinite(questionDbId) || questionDbId <= 0) return res.status(400).json({ success: false, error: 'Invalid question ID' });
 
     const question = await store.getById(questionDbId, orgId);
     if (!question)
@@ -154,7 +161,9 @@ router.post('/letters/:id/questions/:qid/ai-draft', async (req: Request, res: Re
 router.post('/letters/:id/questions/:qid/review', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Authentication required' });
     const questionDbId = parseInt(String(req.params.qid), 10);
+    if (!Number.isFinite(questionDbId) || questionDbId <= 0) return res.status(400).json({ success: false, error: 'Invalid question ID' });
 
     const question = await store.getById(questionDbId, orgId);
     if (!question)
@@ -183,7 +192,9 @@ router.post('/letters/:id/questions/:qid/review', async (req: Request, res: Resp
 router.post('/letters/:id/questions/:qid/approve', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Authentication required' });
     const questionDbId = parseInt(String(req.params.qid), 10);
+    if (!Number.isFinite(questionDbId) || questionDbId <= 0) return res.status(400).json({ success: false, error: 'Invalid question ID' });
 
     const question = await store.getById(questionDbId, orgId);
     if (!question)
@@ -202,6 +213,7 @@ router.post('/letters/:id/questions/:qid/approve', async (req: Request, res: Res
 router.get('/dashboard', async (_req: Request, res: Response) => {
   try {
     const orgId = getOrgId(_req);
+    if (!orgId) return res.status(401).json({ success: false, error: 'Authentication required' });
     const letters = await store.query(orgId, 'letter');
     const allQuestions = await store.query(orgId, 'question');
 

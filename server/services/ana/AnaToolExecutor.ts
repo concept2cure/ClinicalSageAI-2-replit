@@ -13984,18 +13984,12 @@ registerToolHandler('validate_adam_dataset', async (input: Record<string, unknow
   }, 'deterministic')
 );
 
-registerToolHandler('generate_define_xml', async (input: Record<string, unknown>) => {
-  try {
-    if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
-    const { generateDefineXml } = await import('../cdisc/define-xml.js');
-    const { xml, conformance } = generateDefineXml(input.spec as any);
-    return JSON.stringify({ status: 'generated', engine: 'deterministic', xml, conformance, instruction: 'Surface conformance errors (blocking) before warnings. Mechanical metadata only — not a full Pinnacle21/CDISC-CT rule engine.' });
-  } catch (err: any) {
-    const m = err?.message || 'unknown error';
-    if (/must be|required|non-?empty/i.test(m)) return JSON.stringify({ status: 'needs_parameters', message: m });
-    return JSON.stringify({ error: `generate_define_xml failed: ${m}` });
-  }
-});
+registerToolHandler('generate_define_xml', async (input: Record<string, unknown>) =>
+  runStatsTool('generate_define_xml', async () => {
+    const { generateDefineXml } = await import('../cdisc/cdisc-conformance-service.js');
+    return generateDefineXml(input as any);
+  }, 'deterministic')
+);
 
 // ── Bioequivalence & generic drug intelligence (server/services/bioequivalence/bioequivalence-knowledge) — deterministic. ──
 

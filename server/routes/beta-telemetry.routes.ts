@@ -48,50 +48,58 @@ async function persistTelemetry(record: Record<string, unknown>) {
 }
 
 router.post('/event', async (req, res) => {
-  const parsed = eventSchema.safeParse(req.body || {});
-  if (!parsed.success) {
-    return res.status(400).json({ ok: false, error: 'invalid_event_payload' });
-  }
-
-  const event = {
-    ...parsed.data,
-    createdAt: new Date().toISOString(),
-  };
-
-  inMemoryEvents.push(event);
-  if (inMemoryEvents.length > MAX_EVENTS) inMemoryEvents.shift();
-
   try {
-    await persistTelemetry(event);
-  } catch {
-    // fail-open for beta telemetry persistence
-  }
+    const parsed = eventSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ ok: false, error: 'invalid_event_payload' });
+    }
 
-  return res.status(202).json({ ok: true });
+    const event = {
+      ...parsed.data,
+      createdAt: new Date().toISOString(),
+    };
+
+    inMemoryEvents.push(event);
+    if (inMemoryEvents.length > MAX_EVENTS) inMemoryEvents.shift();
+
+    try {
+      await persistTelemetry(event);
+    } catch {
+      // fail-open for beta telemetry persistence
+    }
+
+    return res.status(202).json({ ok: true });
+  } catch {
+    return res.status(500).json({ ok: false, error: 'internal_error' });
+  }
 });
 
 router.post('/issue', async (req, res) => {
-  const parsed = issueSchema.safeParse(req.body || {});
-  if (!parsed.success) {
-    return res.status(400).json({ ok: false, error: 'invalid_issue_payload' });
-  }
-
-  const issue = {
-    type: 'issue',
-    ...parsed.data,
-    createdAt: parsed.data.createdAt || new Date().toISOString(),
-  };
-
-  inMemoryEvents.push(issue);
-  if (inMemoryEvents.length > MAX_EVENTS) inMemoryEvents.shift();
-
   try {
-    await persistTelemetry(issue);
-  } catch {
-    // fail-open for beta telemetry persistence
-  }
+    const parsed = issueSchema.safeParse(req.body || {});
+    if (!parsed.success) {
+      return res.status(400).json({ ok: false, error: 'invalid_issue_payload' });
+    }
 
-  return res.status(202).json({ ok: true });
+    const issue = {
+      type: 'issue',
+      ...parsed.data,
+      createdAt: parsed.data.createdAt || new Date().toISOString(),
+    };
+
+    inMemoryEvents.push(issue);
+    if (inMemoryEvents.length > MAX_EVENTS) inMemoryEvents.shift();
+
+    try {
+      await persistTelemetry(issue);
+    } catch {
+      // fail-open for beta telemetry persistence
+    }
+
+    return res.status(202).json({ ok: true });
+  } catch {
+    return res.status(500).json({ ok: false, error: 'internal_error' });
+  }
 });
 
 router.get('/events', (_req, res) => {

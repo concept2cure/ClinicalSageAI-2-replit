@@ -15,6 +15,9 @@ router.post('/upload',
   async (req, res) => {
     try {
       const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
+      if (!organizationId || !Number.isFinite(organizationId)) {
+        return res.status(403).json({ error: 'Valid tenant context required' });
+      }
       // SECURITY (21 CFR Part 11): the document author/actor must come from the
       // verified JWT, never from a client-supplied x-user-id header.
       const userId = String((req as any).user?.id ?? (req as any).user?.userId ?? '');
@@ -26,6 +29,15 @@ router.post('/upload',
         return res.status(400).json({ error: 'No file provided' });
       }
 
+      let manualTags: any[] = [];
+      if (req.body.tags) {
+        try {
+          manualTags = JSON.parse(req.body.tags);
+        } catch {
+          return res.status(400).json({ error: 'Invalid tags JSON' });
+        }
+      }
+
       const result = await documentDataCenterService.uploadDocument(
         organizationId,
         req.file,
@@ -33,7 +45,7 @@ router.post('/upload',
           deviceName: req.body.deviceName,
           deviceModel: req.body.deviceModel,
           category: req.body.category,
-          manualTags: req.body.tags ? JSON.parse(req.body.tags) : [],
+          manualTags,
           userId,
         }
       );
@@ -50,6 +62,9 @@ router.post('/upload',
 router.get('/files', async (req, res) => {
   try {
     const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
+    if (!organizationId || !Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Valid tenant context required' });
+    }
     const { search, category, standard, component } = req.query;
 
     // Build filter array from query params
@@ -81,6 +96,9 @@ router.get('/files', async (req, res) => {
 router.post('/search/deep', async (req, res) => {
   try {
     const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
+    if (!organizationId || !Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Valid tenant context required' });
+    }
     const { query, filters } = req.body;
 
     const result = await documentDataCenterService.deepSearch(
@@ -100,7 +118,13 @@ router.post('/search/deep', async (req, res) => {
 router.patch('/files/:id/tags', async (req, res) => {
   try {
     const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
+    if (!organizationId || !Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Valid tenant context required' });
+    }
     const documentId = parseInt(req.params.id);
+    if (isNaN(documentId)) {
+      return res.status(400).json({ error: 'Invalid document ID' });
+    }
     // SECURITY (21 CFR Part 11): the actor recorded against this tag mutation
     // must come from the verified JWT, never from a client-supplied header.
     const userId = String((req as any).user?.id ?? (req as any).user?.userId ?? '');
@@ -112,7 +136,11 @@ router.patch('/files/:id/tags', async (req, res) => {
       organizationId,
       documentId,
       {
-        ...req.body,
+        categories: req.body.categories,
+        testStandards: req.body.testStandards,
+        components: req.body.components,
+        tags: req.body.tags,
+        metadata: req.body.metadata,
         userId,
       }
     );
@@ -128,6 +156,9 @@ router.patch('/files/:id/tags', async (req, res) => {
 router.post('/citations', async (req, res) => {
   try {
     const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
+    if (!organizationId || !Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Valid tenant context required' });
+    }
     const { documentIds } = req.body;
 
     if (!documentIds || !Array.isArray(documentIds)) {
@@ -150,7 +181,10 @@ router.post('/citations', async (req, res) => {
 router.get('/stats', async (req, res) => {
   try {
     const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
-    
+    if (!organizationId || !Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Valid tenant context required' });
+    }
+
     const result = await documentDataCenterService.getStatistics(organizationId);
     
     res.json(result);
@@ -241,10 +275,19 @@ router.get('/components', async (req, res) => {
 router.delete('/file/:id', async (req, res) => {
   try {
     const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
+    if (!organizationId || !Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Valid tenant context required' });
+    }
+    const userId = String((req as any).user?.id ?? (req as any).user?.userId ?? '');
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
     const documentId = parseInt(req.params.id);
-    
-    // For now, return success (would implement actual delete)
-    res.json({ success: true, message: 'Document deleted successfully' });
+    if (isNaN(documentId)) {
+      return res.status(400).json({ error: 'Invalid document ID' });
+    }
+
+    res.status(501).json({ error: 'Document deletion not yet implemented' });
   } catch (error) {
     console.error('Error deleting document:', error);
     res.status(500).json({ error: 'Failed to delete document' });
@@ -255,8 +298,14 @@ router.delete('/file/:id', async (req, res) => {
 router.get('/file/:id', async (req, res) => {
   try {
     const organizationId = Number((req as any).user?.organizationId || (req as any).tenantId);
+    if (!organizationId || !Number.isFinite(organizationId)) {
+      return res.status(403).json({ error: 'Valid tenant context required' });
+    }
     const documentId = parseInt(req.params.id);
-    
+    if (isNaN(documentId)) {
+      return res.status(400).json({ error: 'Invalid document ID' });
+    }
+
     // Would implement actual file retrieval and streaming
     res.status(501).json({ error: 'File streaming not yet implemented' });
   } catch (error) {

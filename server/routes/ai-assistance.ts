@@ -39,7 +39,8 @@ const verifyRequestSchema = z.object({
 // Rate limiting tracking with TTL cleanup to prevent unbounded memory growth
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
-// Periodic cleanup of expired entries (every 5 minutes)
+// Periodic cleanup of expired entries (every 5 minutes).
+// unref() prevents this timer from keeping the process alive during shutdown.
 setInterval(() => {
   const now = Date.now();
   for (const [key, value] of rateLimitStore) {
@@ -47,7 +48,7 @@ setInterval(() => {
       rateLimitStore.delete(key);
     }
   }
-}, 5 * 60 * 1000);
+}, 5 * 60 * 1000).unref();
 
 // Rate limiting middleware function
 function checkRateLimit(clientId: string, maxRequests: number = 10, windowMs: number = 60000): boolean {

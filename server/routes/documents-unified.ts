@@ -210,7 +210,8 @@ mountSubRouters().catch(error => {
   logger.error('Failed to initialize documents unified router:', error);
 });
 
-// Cleanup interval for rate limiter
+// Cleanup interval for rate limiter.
+// unref() prevents this timer from keeping the process alive during shutdown.
 setInterval(
   () => {
     const now = Date.now();
@@ -222,7 +223,7 @@ setInterval(
     });
   },
   5 * 60 * 1000
-);
+).unref();
 
 router.use(errorHandler);
 

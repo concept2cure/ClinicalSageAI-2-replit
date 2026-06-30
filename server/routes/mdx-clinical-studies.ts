@@ -180,10 +180,10 @@ router.get('/clinical-studies/:id', async (req: Request, res: Response) => {
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Study');
     const [sites, deviations, aes, endpoints] = await Promise.all([
-      pool.query(`SELECT * FROM clinical_study_sites WHERE study_id = $1 ORDER BY site_number`, [id]),
-      pool.query(`SELECT * FROM clinical_study_deviations WHERE study_id = $1 ORDER BY deviation_date DESC LIMIT 50`, [id]),
-      pool.query(`SELECT * FROM clinical_study_aes WHERE study_id = $1 ORDER BY ae_date DESC LIMIT 50`, [id]),
-      pool.query(`SELECT * FROM clinical_study_endpoints WHERE study_id = $1 ORDER BY endpoint_kind, id`, [id]),
+      pool.query(`SELECT * FROM clinical_study_sites WHERE study_id = $1 AND organization_id = $2 ORDER BY site_number`, [id, orgId]),
+      pool.query(`SELECT * FROM clinical_study_deviations WHERE study_id = $1 AND organization_id = $2 ORDER BY deviation_date DESC LIMIT 50`, [id, orgId]),
+      pool.query(`SELECT * FROM clinical_study_aes WHERE study_id = $1 AND organization_id = $2 ORDER BY ae_date DESC LIMIT 50`, [id, orgId]),
+      pool.query(`SELECT * FROM clinical_study_endpoints WHERE study_id = $1 AND organization_id = $2 ORDER BY endpoint_kind, id`, [id, orgId]),
     ]);
     return ok(res, {
       ...rows[0],
@@ -654,22 +654,22 @@ router.get('/clinical-studies/:id/summary', async (req: Request, res: Response) 
   try {
     const study = await pool.query(
       `SELECT sample_size_planned, sample_size_enrolled, sample_size_analyzed
-         FROM clinical_studies WHERE id = $1`,
-      [id],
+         FROM clinical_studies WHERE id = $1 AND organization_id = $2`,
+      [id, orgId],
     );
     const sites = await pool.query<{ total: number; activated: number; enrolled_total: number }>(
       `SELECT COUNT(*)::int AS total,
               COUNT(*) FILTER (WHERE activated_at IS NOT NULL)::int AS activated,
               COALESCE(SUM(enrolled_count), 0)::int AS enrolled_total
-         FROM clinical_study_sites WHERE study_id = $1`,
-      [id],
+         FROM clinical_study_sites WHERE study_id = $1 AND organization_id = $2`,
+      [id, orgId],
     );
     const devs = await pool.query<{ total: number; major: number; open: number }>(
       `SELECT COUNT(*)::int AS total,
               COUNT(*) FILTER (WHERE category = 'major')::int AS major,
               COUNT(*) FILTER (WHERE resolved_at IS NULL)::int AS open
-         FROM clinical_study_deviations WHERE study_id = $1`,
-      [id],
+         FROM clinical_study_deviations WHERE study_id = $1 AND organization_id = $2`,
+      [id, orgId],
     );
     const aes = await pool.query<{
       total: number; serious: number; uade: number; device_related: number;
@@ -678,8 +678,8 @@ router.get('/clinical-studies/:id/summary', async (req: Request, res: Response) 
               COUNT(*) FILTER (WHERE serious = true)::int AS serious,
               COUNT(*) FILTER (WHERE unanticipated = true)::int AS uade,
               COUNT(*) FILTER (WHERE device_related IN ('possibly','probably','definitely','yes'))::int AS device_related
-         FROM clinical_study_aes WHERE study_id = $1`,
-      [id],
+         FROM clinical_study_aes WHERE study_id = $1 AND organization_id = $2`,
+      [id, orgId],
     );
     const endpoints = await pool.query<{
       total: number; met: number; not_met: number; primary_met: number;
@@ -688,8 +688,8 @@ router.get('/clinical-studies/:id/summary', async (req: Request, res: Response) 
               COUNT(*) FILTER (WHERE met = true)::int AS met,
               COUNT(*) FILTER (WHERE met = false)::int AS not_met,
               COUNT(*) FILTER (WHERE endpoint_kind = 'primary' AND met = true)::int AS primary_met
-         FROM clinical_study_endpoints WHERE study_id = $1`,
-      [id],
+         FROM clinical_study_endpoints WHERE study_id = $1 AND organization_id = $2`,
+      [id, orgId],
     );
     const planned = Number(study.rows[0]?.sample_size_planned ?? 0);
     const enrolled = Number(study.rows[0]?.sample_size_enrolled ?? 0);

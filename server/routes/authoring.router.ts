@@ -3047,15 +3047,16 @@ router.get('/docs/:docId/frozen', async (req: Request, res: Response) => {
 // GET all citations by doc (grouped)
 router.get('/docs/:docId/citations', async (req: Request, res: Response) => {
   try {
+    const tenantId = getTenantId(req);
     const { rows } = await pool.query(
       `
       SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.code, s.title
       FROM authoring_citations c
       JOIN authoring_sections s ON s.id=c.section_id
-      WHERE s.doc_id=$1
+      WHERE s.doc_id=$1 AND c.tenant_id=$2
       ORDER BY c.created_at ASC
     `,
-      [req.params.docId]
+      [req.params.docId, tenantId]
     );
     res.json(rows);
   } catch (e) {
@@ -3065,6 +3066,7 @@ router.get('/docs/:docId/citations', async (req: Request, res: Response) => {
 });
 router.post('/docs/:docId/send-to-packager', async (req: Request, res: Response) => {
   try {
+    const tenantId = getTenantId(req);
     const { seqId, path: relPath, title, fmt } = req.body || {};
     if (!seqId || !relPath) {
       return res.status(400).json({ error: 'seqId and path are required' });
@@ -3277,16 +3279,16 @@ async function logExport(
 }
 
 // Helper: list tokens for a whole doc (with section metadata)
-async function listDocTokens(docId: string | string[] | undefined) {
+async function listDocTokens(docId: string | string[] | undefined, tenantId?: number) {
   const result = await pool.query(
     `
     SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.id as section_id, s.section_number as section_code, s.title as section_title
     FROM authoring_citations c
     JOIN authoring_sections s ON s.id = c.section_id
-    WHERE s.document_id = $1
+    WHERE s.document_id = $1${tenantId ? ' AND c.tenant_id = $2' : ''}
     ORDER BY c.created_at ASC
   `,
-    [docId]
+    tenantId ? [docId, tenantId] : [docId]
   );
   return result.rows;
 }
@@ -3423,13 +3425,14 @@ router.delete('/export-history/:id', async (req: Request, res: Response) => {
 // Diff since latest export = tokens created/updated after export timestamp
 router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response) => {
   try {
+    const tenantId = getTenantId(req);
     const lastExportResult = await pool.query(
       `
       SELECT created_at FROM doc_exports
-      WHERE doc_id = $1
+      WHERE doc_id = $1 AND tenant_id = $2
       ORDER BY created_at DESC LIMIT 1
     `,
-      [req.params.docId]
+      [req.params.docId, tenantId]
     );
 
     if (((lastExportResult.rowCount ?? 0) === 0)) {
@@ -3437,7 +3440,7 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
     }
 
     const lastExport = lastExportResult.rows[0];
-    const tokens = await listDocTokens(req.params.docId);
+    const tokens = await listDocTokens(req.params.docId, tenantId);
     const t0 = new Date(lastExport.created_at).getTime();
     const changed = tokens.filter(t => new Date(t.created_at).getTime() > t0);
 
@@ -3455,11 +3458,12 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
 // Refresh ALL tokens in document (skips frozen)
 router.post('/docs/:docId/refresh-all', async (req: Request, res: Response) => {
   try {
+    const tenantId = getTenantId(req);
     const sectionsResult = await pool.query(
       `
-      SELECT id FROM authoring_sections WHERE document_id = $1
+      SELECT id FROM authoring_sections WHERE document_id = $1 AND tenant_id = $2
     `,
-      [req.params.docId]
+      [req.params.docId, tenantId]
     );
 
     let total = 0;
@@ -3547,8 +3551,8 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
     }
 
     // Get document locale
-    const docResult = await pool.query('SELECT locale FROM authoring_documents WHERE id = $1', [
-      req.params.docId,
+    const docResult = await pool.query('SELECT locale FROM authoring_documents WHERE id = $1 AND tenant_id = $2', [
+      req.params.docId, tenantId,
     ]);
 
     if (((docResult.rowCount ?? 0) === 0)) {
@@ -3564,8 +3568,8 @@ router.post('/docs/:docId/apply-template', async (req: Request, res: Response) =
 
     // Get existing sections
     const existingResult = await pool.query(
-      'SELECT id, code FROM authoring_sections WHERE document_id = $1',
-      [req.params.docId]
+      'SELECT id, code FROM authoring_sections WHERE document_id = $1 AND tenant_id = $2',
+      [req.params.docId, tenantId]
     );
 
     const existingMap = new Map(existingResult.rows.map(x => [x.code, x.id]));
@@ -3733,7 +3737,7 @@ router.post('/docs/:docId/seed-stability', async (req: Request, res: Response) =
       }
     });
 
-    process.on('error', (err: any) => {
+    childProcess.on('error', (err: any) => {
       console.error('Failed to start stability seeder:', err);
       res.status(500).json({
         success: false,
@@ -3799,6 +3803,7 @@ router.delete('/docs/:docId', async (req: Request, res: Response) => {
 // Body: { section_id, region?, reviewer_email? }
 router.post('/docs/:docId/checklist/compose', async (req: Request, res: Response) => {
   try {
+    const tenantId = getTenantId(req);
     const docId = req.params.docId;
     const { section_id, region, reviewer_email } = req.body || {};
     if (!section_id) return res.status(400).json({ error: 'section_id required' });
@@ -3810,8 +3815,8 @@ router.post('/docs/:docId/checklist/compose', async (req: Request, res: Response
     const existing = (
       await pool.query(
         `
-      SELECT checklist_id, doc_id, section_id, region, reviewer_email, status, created_at FROM doc_checklist WHERE doc_id=$1 AND section_id=$2 AND region=$3 LIMIT 1`,
-        [docId, section_id, regionTag]
+      SELECT checklist_id, doc_id, section_id, region, reviewer_email, status, created_at FROM doc_checklist WHERE doc_id=$1 AND section_id=$2 AND region=$3 AND tenant_id=$4 LIMIT 1`,
+        [docId, section_id, regionTag, tenantId]
       )
     ).rows[0];
     let checklistId = existing?.checklist_id;
@@ -3923,6 +3928,7 @@ router.post('/docs/:docId/checklist/compose', async (req: Request, res: Response
 // Get checklist (latest) for doc/section/region
 router.get('/docs/:docId/checklist', async (req: Request, res: Response) => {
   try {
+    const tenantId = getTenantId(req);
     const { section_id, region } = req.query;
     if (!section_id) return res.status(400).json({ error: 'section_id required' });
     const regionTag = (region || 'ICH').toString().toUpperCase();
@@ -3930,9 +3936,9 @@ router.get('/docs/:docId/checklist', async (req: Request, res: Response) => {
       await pool.query(
         `
       SELECT checklist_id, doc_id, section_id, region, reviewer_email, status, created_at FROM doc_checklist
-      WHERE doc_id=$1 AND section_id=$2 AND region=$3
+      WHERE doc_id=$1 AND section_id=$2 AND region=$3 AND tenant_id=$4
       ORDER BY created_at DESC LIMIT 1`,
-        [req.params.docId, section_id, regionTag]
+        [req.params.docId, section_id, regionTag, tenantId]
       )
     ).rows[0];
     if (!head) return res.json({ checklist: null, items: [] });
@@ -3952,6 +3958,7 @@ router.get('/docs/:docId/checklist', async (req: Request, res: Response) => {
 // Update checklist item
 router.patch('/checklist/items/:itemId', async (req: Request, res: Response) => {
   try {
+    const tenantId = getTenantId(req);
     const { status, comment, evidence_cite } = req.body || {};
     const rows = (
       await pool.query(
@@ -3962,8 +3969,9 @@ router.patch('/checklist/items/:itemId', async (req: Request, res: Response) => 
           evidence_cite = COALESCE($4,evidence_cite),
           updated_at = NOW()
       WHERE item_id=$1
+        AND checklist_id IN (SELECT checklist_id FROM doc_checklist WHERE tenant_id=$5)
       RETURNING *`,
-        [req.params.itemId, status || null, comment || null, evidence_cite || null]
+        [req.params.itemId, status || null, comment || null, evidence_cite || null, tenantId]
       )
     ).rows;
     if (!rows[0]) return res.status(404).json({ error: 'not found' });
@@ -4033,15 +4041,16 @@ router.post(
 // List CRs for a doc
 router.get('/docs/:docId/cr', async (req: Request, res: Response) => {
   try {
+    const tenantId = getTenantId(req);
     const rows = (
       await pool.query(
         `
       SELECT c.cr_id, c.doc_id, c.section_id, c.title, c.reason, c.apply_kind, c.patch_json, c.proposer_email, c.approver_email, c.status, c.resolved_at, c.created_at, s.code as section_code, s.title as section_title
       FROM doc_change_requests c
       LEFT JOIN authoring_sections s ON s.id = c.section_id
-      WHERE c.doc_id=$1
+      WHERE c.doc_id=$1 AND c.tenant_id=$2
       ORDER BY c.created_at DESC`,
-        [req.params.docId]
+        [req.params.docId, tenantId]
       )
     ).rows;
     res.json(rows);
@@ -4057,14 +4066,15 @@ router.post(
   requireAny(['QA', 'RA_CMC']),
   async (req: Request, res: Response) => {
     try {
+      const tenantId = getTenantId(req);
       const approver = ((req.headers as any)['x-user-email'] || 'user@local').toString();
       const rows = (
         await pool.query(
           `
       UPDATE doc_change_requests
       SET status='APPROVED', approver_email=$2, resolved_at=NOW()
-      WHERE cr_id=$1 AND status='OPEN' RETURNING *`,
-          [req.params.crId, approver]
+      WHERE cr_id=$1 AND status='OPEN' AND tenant_id=$3 RETURNING *`,
+          [req.params.crId, approver, tenantId]
         )
       ).rows;
       if (!rows[0]) return res.status(404).json({ error: 'Not found or not OPEN' });
@@ -4081,14 +4091,15 @@ router.post(
   requireAny(['QA', 'RA_CMC']),
   async (req: Request, res: Response) => {
     try {
+      const tenantId = getTenantId(req);
       const approver = ((req.headers as any)['x-user-email'] || 'user@local').toString();
       const rows = (
         await pool.query(
           `
       UPDATE doc_change_requests
       SET status='REJECTED', approver_email=$2, resolved_at=NOW()
-      WHERE cr_id=$1 AND status IN ('OPEN','APPROVED') RETURNING *`,
-          [req.params.crId, approver]
+      WHERE cr_id=$1 AND status IN ('OPEN','APPROVED') AND tenant_id=$3 RETURNING *`,
+          [req.params.crId, approver, tenantId]
         )
       ).rows;
       if (!rows[0]) return res.status(404).json({ error: 'Not found' });
@@ -4106,11 +4117,12 @@ router.post(
   requireAny(['RA_CMC', 'QA']),
   async (req: Request, res: Response) => {
     try {
+      const tenantId = getTenantId(req);
       // fetch CR + doc status
       const cr = (
         await pool.query(
-          `SELECT cr_id, doc_id, section_id, title, reason, apply_kind, patch_json, proposer_email, approver_email, status, resolved_at, created_at FROM doc_change_requests WHERE cr_id=$1`,
-          [req.params.crId]
+          `SELECT cr_id, doc_id, section_id, title, reason, apply_kind, patch_json, proposer_email, approver_email, status, resolved_at, created_at FROM doc_change_requests WHERE cr_id=$1 AND tenant_id=$2`,
+          [req.params.crId, tenantId]
         )
       ).rows[0];
       if (!cr) return res.status(404).json({ error: 'CR not found' });
@@ -4201,10 +4213,11 @@ router.post(
 
 router.get('/docs/:docId/permissions', async (req: Request, res: Response) => {
   try {
+    const tenantId = getTenantId(req);
     const rows = (
       await pool.query(
-        `SELECT id, doc_id, section_id, email, role, created_at FROM doc_permissions WHERE doc_id=$1 ORDER BY created_at DESC`,
-        [req.params.docId]
+        `SELECT id, doc_id, section_id, email, role, created_at FROM doc_permissions WHERE doc_id=$1 AND tenant_id=$2 ORDER BY created_at DESC`,
+        [req.params.docId, tenantId]
       )
     ).rows;
     res.json(rows);

@@ -161,9 +161,43 @@ const DEFINE_SPEC_SCHEMA = {
 export const GENERATE_DEFINE_XML: AnaTool = {
   name: 'generate_define_xml',
   description:
-    'Generate a CDISC define.xml v2.0 (ODM-based) document from a dataset spec (datasets, variables, codelists) for SDTM or ADaM. Runs structural conformance first and returns the XML plus the conformance findings. Covers mechanical metadata rules — NOT a full Pinnacle21/CDISC-CT rule engine. ' +
+    'Generate a CDISC define.xml 2.1 skeleton from dataset descriptors. Takes an array of datasets ' +
+    'with their variables (name, label, type, length, role) and a studyName, and produces a valid ' +
+    'define.xml 2.1 ODM document. Returns { xml, datasetCount, variableCount }. ' +
     DETERMINISTIC_NOTE,
-  input_schema: { type: 'object', properties: { spec: DEFINE_SPEC_SCHEMA }, required: ['spec'] },
+  input_schema: {
+    type: 'object',
+    properties: {
+      datasets: {
+        type: 'array',
+        description: 'Array of dataset descriptors to include in the define.xml',
+        items: {
+          type: 'object',
+          properties: {
+            domain: { type: 'string', description: 'Dataset domain code (e.g. DM, AE, ADSL)' },
+            label: { type: 'string', description: 'Human-readable dataset label' },
+            variables: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  label: { type: 'string' },
+                  type: { type: 'string', enum: ['Char', 'Num'] },
+                  length: { type: 'number' },
+                  role: { type: 'string' },
+                },
+                required: ['name'],
+              },
+            },
+          },
+          required: ['domain', 'variables'],
+        },
+      },
+      studyName: { type: 'string', description: 'Study name / identifier for the ODM wrapper.' },
+    },
+    required: ['datasets'],
+  },
 };
 
 export const CHECK_DATASET_CONFORMANCE: AnaTool = {

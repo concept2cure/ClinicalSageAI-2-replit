@@ -30,7 +30,7 @@ router.post('/', express.text({ type: '*/*', limit: '2mb' }), async (req, res) =
 
     return res.json({ success: true });
   } catch (err: any) {
-    return res.status(500).json(firecrawlError('internal_error', err?.message));
+    return res.status(500).json(firecrawlError('provider_error', err?.message));
   }
 });
 

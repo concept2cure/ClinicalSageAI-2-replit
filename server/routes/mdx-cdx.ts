@@ -129,8 +129,8 @@ router.get('/cdx/pairings/:id', async (req: Request, res: Response) => {
     );
     if (rows.length === 0) return notFoundInTenant(res, 'CDx pairing');
     const concordance = await pool.query(
-      `SELECT * FROM cdx_concordance_studies WHERE cdx_pairing_id = $1 ORDER BY id`,
-      [id],
+      `SELECT * FROM cdx_concordance_studies WHERE cdx_pairing_id = $1 AND organization_id = $2 ORDER BY id`,
+      [id, orgId],
     );
     return ok(res, { ...rows[0], concordance: concordance.rows });
   } catch (err) {

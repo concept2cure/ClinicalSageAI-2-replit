@@ -326,9 +326,15 @@ function renderFallbackPdf(html: string): Promise<Buffer> {
  */
 router.post('/:projectId/generate', async (req: Request, res: Response) => {
   const projectId = parseInt(String(req.params.projectId), 10);
-  if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
+  if (!Number.isFinite(projectId) || projectId <= 0) return res.status(400).json({ error: 'Valid project ID required' });
 
   try {
+    const user = (req as any).user;
+    const govOrgId = user?.organizationId ?? (req as any).tenantContext?.organizationId;
+    if (govOrgId == null || user?.id == null) {
+      return res.status(403).json({ error: 'Tenant context required for governed export' });
+    }
+
     const {
       submissionType = 'initial',
       projectName = 'IND Application',
@@ -446,13 +452,6 @@ router.post('/:projectId/generate', async (req: Request, res: Response) => {
     console.log(`[IND-PDF] Generated ${pdfBuffer.length} bytes → ${filepath}`);
 
     // Register governed export (fail-closed for regulated outputs).
-    // SECURITY: JWT-bound. The previous `|| 1` / `|| 0` fallback
-    // attributed exports to org 1 / user 0 when JWT was missing.
-    const user = (req as any).user;
-    const govOrgId = user?.organizationId ?? (req as any).tenantContext?.organizationId;
-    if (govOrgId == null || user?.id == null) {
-      return res.status(403).json({ error: 'Tenant context required for governed export' });
-    }
     await registerExportGovernanceQuick({
       organizationId: Number(govOrgId),
       projectId: Number(projectId) || 0,
@@ -498,9 +497,15 @@ router.post('/:projectId/generate', async (req: Request, res: Response) => {
  */
 router.post('/:projectId/section', async (req: Request, res: Response) => {
   const projectId = parseInt(String(req.params.projectId), 10);
-  if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
+  if (!Number.isFinite(projectId) || projectId <= 0) return res.status(400).json({ error: 'Valid project ID required' });
 
   try {
+    const secUser = (req as any).user;
+    const secOrgId = secUser?.organizationId ?? (req as any).tenantContext?.organizationId;
+    if (secOrgId == null || secUser?.id == null) {
+      return res.status(403).json({ error: 'Tenant context required for governed export' });
+    }
+
     const { sectionCode, projectName = 'IND Application' } = req.body;
     if (!sectionCode) return res.status(400).json({ error: 'sectionCode required' });
 
@@ -553,12 +558,6 @@ router.post('/:projectId/section', async (req: Request, res: Response) => {
     res.setHeader('Content-Length', String(pdfBuffer.length));
 
     // Register governed export (fail-closed for regulated outputs).
-    // SECURITY: JWT-bound — see the export above.
-    const secUser = (req as any).user;
-    const secOrgId = secUser?.organizationId ?? (req as any).tenantContext?.organizationId;
-    if (secOrgId == null || secUser?.id == null) {
-      return res.status(403).json({ error: 'Tenant context required for governed export' });
-    }
     await registerExportGovernanceQuick({
       organizationId: Number(secOrgId),
       projectId: Number(projectId) || 0,
@@ -585,6 +584,9 @@ router.post('/:projectId/section', async (req: Request, res: Response) => {
  * GET /:projectId/download/:filename — Download a previously generated PDF
  */
 router.get('/:projectId/download/:filename', async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (!user?.id) return res.status(401).json({ error: 'Authentication required' });
+
   try {
     const { filename } = req.params as { filename: string };
 
@@ -628,6 +630,9 @@ const upload = multer({
  * Body: multipart/form-data, field "file" (PDF)
  */
 router.post('/:projectId/extract', upload.single('file'), async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (!user?.id) return res.status(401).json({ error: 'Authentication required' });
+
   try {
     const { projectId } = req.params;
     if (!req.file) {
@@ -669,6 +674,9 @@ router.post('/:projectId/extract', upload.single('file'), async (req: Request, r
  *   sectionCode  — CTD section code (e.g. "2.7")
  */
 router.post('/:projectId/import-content', upload.single('file'), async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (!user?.id) return res.status(401).json({ error: 'Authentication required' });
+
   try {
     const { projectId } = req.params;
     const sectionCode = (req.body?.sectionCode as string) || '2';
@@ -760,6 +768,9 @@ const docxUpload = multer({
 });
 
 router.post('/convert/docx-to-pdf', docxUpload.single('file'), async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (!user?.id) return res.status(401).json({ error: 'Authentication required' });
+
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No DOCX file provided. Use field name "file".' });

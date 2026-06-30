@@ -152,7 +152,11 @@ router.post('/send-domain/conformance', limiter, requireRole(AUTHOR), (req: Requ
 
 /** List the modeled CDISC controlled-terminology codelists. */
 router.get('/controlled-terminology/codelists', limiter, requireRole(AUTHOR), (_req: Request, res: Response) => {
-  res.json({ codelists: listCodelists().map((code) => ({ code, ...getCodelist(code) })) });
+  try {
+    res.json({ codelists: listCodelists().map((code) => ({ code, ...getCodelist(code) })) });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /** Validate values against a CDISC controlled-terminology codelist. Body: { codelist, values }. */

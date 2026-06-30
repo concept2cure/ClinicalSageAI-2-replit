@@ -13,6 +13,12 @@ import { analyzeText, isApiKeyAvailable } from '../openai-service';
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
 
+function resolveUserId(req: any): number | null {
+  const raw = req.user?.id ?? req.userId;
+  const n = raw == null ? NaN : Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 type ExtractedDocument = {
   filename: string;
   mimeType: string;
@@ -966,6 +972,7 @@ router.get('/stats', async (req, res) => {
 
 router.post('/events', async (req, res) => {
   try {
+    if (!resolveUserId(req)) return res.status(401).json({ error: 'Authentication required' });
     const eventName = String(req.body?.eventName || '').trim() as KpiEventName;
     const projectIdRaw = req.body?.projectId ? String(req.body.projectId) : null;
     const projectId = projectIdRaw && isUuid(projectIdRaw) ? projectIdRaw : null;
@@ -1103,6 +1110,7 @@ Module Package ID: ${moduleId}
 // Create new project from template
 router.post('/template/:id/create', async (req, res) => {
   try {
+    if (!resolveUserId(req)) return res.status(401).json({ error: 'Authentication required' });
     const templateId = parseInt(String(req.params.id));
     const template = indTemplates[templateId as keyof typeof indTemplates];
 
@@ -1131,6 +1139,7 @@ router.post('/template/:id/create', async (req, res) => {
 
 router.post('/template/:id/create-with-documents', upload.array('files', 20), async (req, res) => {
   try {
+    if (!resolveUserId(req)) return res.status(401).json({ error: 'Authentication required' });
     const templateId = parseInt(String(req.params.id), 10);
     const template = indTemplates[templateId as keyof typeof indTemplates];
 
@@ -1187,6 +1196,12 @@ router.post('/template/:id/create-with-documents', upload.array('files', 20), as
       moduleDrafts
     );
 
+    // Evict oldest entries to prevent unbounded memory growth
+    if (generatedWorkflowArtifacts.size >= 100) {
+      const oldestKey = generatedWorkflowArtifacts.keys().next().value;
+      if (oldestKey) generatedWorkflowArtifacts.delete(oldestKey);
+    }
+
     generatedWorkflowArtifacts.set(projectId, {
       projectId,
       templateId,
@@ -1242,6 +1257,7 @@ router.post('/template/:id/create-with-documents', upload.array('files', 20), as
 
 router.get('/projects/:projectId/canvas', async (req, res) => {
   try {
+    if (!resolveUserId(req)) return res.status(401).json({ error: 'Authentication required' });
     const artifact = generatedWorkflowArtifacts.get(req.params.projectId);
     if (!artifact) {
       return res.status(404).json({ error: 'Project workflow artifact not found' });
@@ -1266,6 +1282,7 @@ router.get('/projects/:projectId/canvas', async (req, res) => {
 
 router.post('/projects/:projectId/review-actions', async (req, res) => {
   try {
+    if (!resolveUserId(req)) return res.status(401).json({ error: 'Authentication required' });
     const artifact = generatedWorkflowArtifacts.get(req.params.projectId);
     if (!artifact) {
       return res.status(404).json({ error: 'Project workflow artifact not found' });
@@ -1318,6 +1335,7 @@ router.post('/projects/:projectId/review-actions', async (req, res) => {
 
 router.get('/projects/:projectId/docx', async (req, res) => {
   try {
+    if (!resolveUserId(req)) return res.status(401).json({ error: 'Authentication required' });
     const artifact = generatedWorkflowArtifacts.get(req.params.projectId);
     if (!artifact) {
       return res.status(404).json({ error: 'Project workflow artifact not found' });

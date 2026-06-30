@@ -186,7 +186,7 @@ export class EvidenceManagementService {
   /**
    * Map file to FDA requirements based on content
    */
-  async mapToFDARequirements(fileId: string, extractedData: any) {
+  async mapToFDARequirements(fileId: string, extractedData: any, organizationId?: number) {
     const testType = extractedData.test_type;
     let requirement = null;
     let section = null;
@@ -219,6 +219,7 @@ export class EvidenceManagementService {
           extracted_data = ${JSON.stringify(extractedData)}::jsonb,
           updated_at = NOW()
         WHERE id = ${fileId}
+          ${organizationId != null ? sql`AND organization_id = ${organizationId}` : sql``}
       `);
     }
 
@@ -292,10 +293,11 @@ export class EvidenceManagementService {
   /**
    * Generate citations for document editor
    */
-  async generateCitations(fileIds: string[], format: 'apa' | 'ieee' | 'custom' = 'custom') {
+  async generateCitations(fileIds: string[], format: 'apa' | 'ieee' | 'custom' = 'custom', organizationId?: number) {
     const files = await db.execute(sql`
       SELECT * FROM device_data_center
       WHERE id = ANY(${fileIds})
+        ${organizationId != null ? sql`AND organization_id = ${organizationId}` : sql``}
     `);
 
     const citations = files.rows.map((file: any) => {
@@ -322,7 +324,7 @@ export class EvidenceManagementService {
   /**
    * Link file to workflow stage
    */
-  async linkToWorkflowStage(fileId: string, workflowStage: number, stageData: any) {
+  async linkToWorkflowStage(fileId: string, workflowStage: number, stageData: any, organizationId?: number) {
     await db.execute(sql`
       UPDATE device_data_center
       SET
@@ -330,13 +332,14 @@ export class EvidenceManagementService {
         workflow_data = ${JSON.stringify(stageData)}::jsonb,
         updated_at = NOW()
       WHERE id = ${fileId}
+        ${organizationId != null ? sql`AND organization_id = ${organizationId}` : sql``}
     `);
   }
 
   /**
    * Get evidence for specific workflow stage
    */
-  async getStageEvidence(projectId: string, stage: number) {
+  async getStageEvidence(projectId: string, stage: number, organizationId?: number) {
     const stageRequirements: { [key: number]: string[] } = {
       0: ['device_desc', 'labeling'],
       1: ['performance', 'biocompat'],
@@ -348,11 +351,13 @@ export class EvidenceManagementService {
     };
 
     const requirements = stageRequirements[stage] || [];
+    const orgFilter = organizationId != null ? sql`AND organization_id = ${organizationId}` : sql``;
 
     if (requirements.includes('all_evidence')) {
       return db.execute(sql`
         SELECT * FROM device_data_center
         WHERE project_id = ${projectId}
+          ${orgFilter}
         ORDER BY fda_requirement, created_at DESC
       `);
     }
@@ -362,6 +367,7 @@ export class EvidenceManagementService {
       WHERE
         project_id = ${projectId}
         AND fda_requirement = ANY(${requirements})
+        ${orgFilter}
       ORDER BY fda_requirement, created_at DESC
     `);
   }
@@ -369,7 +375,7 @@ export class EvidenceManagementService {
   /**
    * Auto-populate forms from evidence
    */
-  async autoPopulateForm(formId: string, projectId: string) {
+  async autoPopulateForm(formId: string, projectId: string, organizationId?: number) {
     // Get relevant evidence files
     const evidence = await db.execute(sql`
       SELECT
@@ -383,6 +389,7 @@ export class EvidenceManagementService {
         project_id = ${projectId}
         AND regulatory_status = 'approved'
         AND extracted_data IS NOT NULL
+        ${organizationId != null ? sql`AND organization_id = ${organizationId}` : sql``}
     `);
 
     // Map evidence to form fields
@@ -416,7 +423,7 @@ export class EvidenceManagementService {
   /**
    * Track evidence review workflow
    */
-  async submitForReview(fileId: string, reviewerId: string) {
+  async submitForReview(fileId: string, reviewerId: string, organizationId?: number) {
     await db.execute(sql`
       UPDATE device_data_center
       SET
@@ -425,13 +432,14 @@ export class EvidenceManagementService {
         review_requested_at = NOW(),
         regulatory_status = 'under_review'
       WHERE id = ${fileId}
+        ${organizationId != null ? sql`AND organization_id = ${organizationId}` : sql``}
     `);
   }
 
   /**
    * Approve evidence
    */
-  async approveEvidence(fileId: string, reviewerId: string, comments?: string) {
+  async approveEvidence(fileId: string, reviewerId: string, comments?: string, organizationId?: number) {
     await db.execute(sql`
       UPDATE device_data_center
       SET
@@ -448,13 +456,14 @@ export class EvidenceManagementService {
           },
         ])}::jsonb
       WHERE id = ${fileId}
+        ${organizationId != null ? sql`AND organization_id = ${organizationId}` : sql``}
     `);
   }
 
   /**
    * Request changes to evidence
    */
-  async requestChanges(fileId: string, reviewerId: string, comments: string) {
+  async requestChanges(fileId: string, reviewerId: string, comments: string, organizationId?: number) {
     await db.execute(sql`
       UPDATE device_data_center
       SET
@@ -470,6 +479,7 @@ export class EvidenceManagementService {
           },
         ])}::jsonb
       WHERE id = ${fileId}
+        ${organizationId != null ? sql`AND organization_id = ${organizationId}` : sql``}
     `);
   }
 

@@ -222,10 +222,17 @@ router.get('/session', async (req: Request, res: Response) => {
     };
 
     // Get user from database
+    const sessionUserId = parseInt(decoded.userId, 10);
+    if (Number.isNaN(sessionUserId)) {
+      return res.status(401).json({
+        authenticated: false,
+        error: { code: 'AUTH_006', message: 'Invalid token payload' },
+      });
+    }
     const user = await db
       .select()
       .from(users)
-      .where(eq(users.id, parseInt(decoded.userId)))
+      .where(eq(users.id, sessionUserId))
       .limit(1);
 
     if (!user.length) {
@@ -247,6 +254,12 @@ router.get('/session', async (req: Request, res: Response) => {
     let sessionRole = 'user';
     if (decoded.organizationId) {
       const orgId = parseInt(decoded.organizationId, 10);
+      if (Number.isNaN(orgId)) {
+        return res.status(401).json({
+          authenticated: false,
+          error: { code: 'AUTH_006', message: 'Invalid token payload' },
+        });
+      }
       const [sessionMembership] = await db
         .select({ role: organizationUsers.role })
         .from(organizationUsers)
@@ -1002,10 +1015,17 @@ router.post('/refresh', async (req: Request, res: Response) => {
     // instead of hardcoding organizationId: '2'. This prevents a refresh token
     // from granting access to an arbitrary tenant.
     if (!requireDb(res)) return;
+    const refreshUserId = parseInt(decoded.userId, 10);
+    if (Number.isNaN(refreshUserId)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid refresh token payload' },
+      });
+    }
     const refreshUser = await db
       .select()
       .from(users)
-      .where(eq(users.id, parseInt(decoded.userId)))
+      .where(eq(users.id, refreshUserId))
       .limit(1);
 
     if (!refreshUser.length) {
@@ -1111,10 +1131,17 @@ router.get('/me', async (req: Request, res: Response) => {
       organizationId?: string;
     };
 
+    const meUserId = parseInt(decoded.userId, 10);
+    if (Number.isNaN(meUserId)) {
+      return res.status(401).json({
+        error: { code: 'AUTH_006', message: 'Invalid token payload' },
+      });
+    }
+
     const user = await db
       .select()
       .from(users)
-      .where(eq(users.id, parseInt(decoded.userId)))
+      .where(eq(users.id, meUserId))
       .limit(1);
 
     if (!user.length) {
@@ -1132,14 +1159,23 @@ router.get('/me', async (req: Request, res: Response) => {
     const meDisplayName = (userData.name || '').trim() || userData.email;
 
     // Get role
+    let meOrgIdFromJwt: number | undefined;
+    if (decoded.organizationId) {
+      meOrgIdFromJwt = parseInt(decoded.organizationId, 10);
+      if (Number.isNaN(meOrgIdFromJwt)) {
+        return res.status(401).json({
+          error: { code: 'AUTH_006', message: 'Invalid token payload' },
+        });
+      }
+    }
     const [meMembership] = await db
       .select({ role: organizationUsers.role, organizationId: organizationUsers.organizationId })
       .from(organizationUsers)
       .where(
-        decoded.organizationId
+        meOrgIdFromJwt
           ? and(
               eq(organizationUsers.userId, userData.id),
-              eq(organizationUsers.organizationId, parseInt(decoded.organizationId, 10))
+              eq(organizationUsers.organizationId, meOrgIdFromJwt)
             )
           : eq(organizationUsers.userId, userData.id)
       )
@@ -1156,8 +1192,8 @@ router.get('/me', async (req: Request, res: Response) => {
 
     // Look up the actual organization name
     let meOrgName = 'Organization';
-    const meOrgIdNum = parseInt(meOrgId);
-    if (meOrgIdNum) {
+    const meOrgIdNum = meOrgId ? parseInt(meOrgId, 10) : NaN;
+    if (!Number.isNaN(meOrgIdNum) && meOrgIdNum) {
       const [meOrg] = await db
         .select({ name: organizations.name })
         .from(organizations)
@@ -1223,7 +1259,13 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    const userId = parseInt(challenge.userId);
+    const userId = parseInt(challenge.userId, 10);
+    if (Number.isNaN(userId)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'MFA_002', message: 'Invalid MFA challenge data' },
+      });
+    }
 
     // Verify the code — try email OTP first (default), then TOTP
     const verificationMethod = method || 'email';
@@ -1291,13 +1333,29 @@ router.post('/mfa/verify', mfaLimiter, async (req: Request, res: Response) => {
     // Fetch org name
     let mfaOrgName = 'Organization';
     if (challenge.organizationId) {
-      const [org] = await db
-        .select({ name: organizations.name })
-        .from(organizations)
-        .where(eq(organizations.id, parseInt(challenge.organizationId)))
-        .limit(1);
-      mfaOrgName = org?.name || 'Organization';
+      const mfaOrgIdNum = parseInt(challenge.organizationId, 10);
+      if (!Number.isNaN(mfaOrgIdNum)) {
+        const [org] = await db
+          .select({ name: organizations.name })
+          .from(organizations)
+          .where(eq(organizations.id, mfaOrgIdNum))
+          .limit(1);
+        mfaOrgName = org?.name || 'Organization';
+      }
     }
+
+    // Audit: session created after MFA verification. The login route
+    // recorded the MFA challenge; this records the session creation.
+    await auditAuthEvent({
+      action: 'user_login',
+      userId: challenge.userId,
+      tenantId: challenge.organizationId,
+      email: challenge.email,
+      outcome: 'success',
+      reason: `mfa_verified_${verificationMethod}`,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+    });
 
     res.json({
       success: true,
@@ -1354,7 +1412,13 @@ router.post('/mfa/resend', mfaLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    const userId = parseInt(challenge.userId);
+    const userId = parseInt(challenge.userId, 10);
+    if (Number.isNaN(userId)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'MFA_002', message: 'Invalid challenge data' },
+      });
+    }
 
     // Generate a new OTP and send it
     const otp = await emailOtpService.createEmailOtp(userId);
@@ -1402,7 +1466,14 @@ router.post('/mfa/setup', async (req: Request, res: Response) => {
 
     if (!requireDb(res)) return;
 
-    const result = await mfaService.generateSecret(parseInt(decoded.userId), decoded.email);
+    const mfaSetupUserId = parseInt(decoded.userId, 10);
+    if (Number.isNaN(mfaSetupUserId)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid token payload' },
+      });
+    }
+    const result = await mfaService.generateSecret(mfaSetupUserId, decoded.email);
 
     res.json({
       success: true,
@@ -1457,7 +1528,14 @@ router.post('/mfa/enable', async (req: Request, res: Response) => {
 
     if (!requireDb(res)) return;
 
-    const result = await mfaService.enableMfa(parseInt(decoded.userId), code);
+    const mfaEnableUserId = parseInt(decoded.userId, 10);
+    if (Number.isNaN(mfaEnableUserId)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid token payload' },
+      });
+    }
+    const result = await mfaService.enableMfa(mfaEnableUserId, code);
 
     if (!result.success) {
       return res.status(401).json({
@@ -1520,7 +1598,14 @@ router.post('/mfa/disable', async (req: Request, res: Response) => {
 
     if (!requireDb(res)) return;
 
-    const disabled = await mfaService.disableMfa(parseInt(decoded.userId), code);
+    const mfaDisableUserId = parseInt(decoded.userId, 10);
+    if (Number.isNaN(mfaDisableUserId)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid token payload' },
+      });
+    }
+    const disabled = await mfaService.disableMfa(mfaDisableUserId, code);
 
     if (!disabled) {
       return res.status(401).json({
@@ -1773,10 +1858,17 @@ router.post('/password/change', async (req: Request, res: Response) => {
 
     if (!requireDb(res)) return;
 
+    const pwChangeUserId = parseInt(decoded.userId, 10);
+    if (Number.isNaN(pwChangeUserId)) {
+      return res.status(401).json({
+        success: false,
+        error: { code: 'AUTH_006', message: 'Invalid token payload' },
+      });
+    }
     const [userData] = await db
       .select()
       .from(users)
-      .where(eq(users.id, parseInt(decoded.userId)))
+      .where(eq(users.id, pwChangeUserId))
       .limit(1);
 
     if (!userData) {

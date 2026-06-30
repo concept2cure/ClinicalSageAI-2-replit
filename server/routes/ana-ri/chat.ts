@@ -91,7 +91,8 @@ const logger = createScopedLogger('ana-ri-chat');
 const idempotencyCache = new Map<string, { response: any; timestamp: number }>();
 const IDEMPOTENCY_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-// Periodic cleanup every 10 minutes
+// Periodic cleanup every 10 minutes.
+// unref() prevents this timer from keeping the process alive during shutdown.
 setInterval(
   () => {
     const now = Date.now();
@@ -102,7 +103,7 @@ setInterval(
     }
   },
   10 * 60 * 1000
-);
+).unref();
 
 // Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
 // shape without needing to touch the original handler.

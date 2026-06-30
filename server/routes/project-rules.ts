@@ -197,195 +197,8 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
 }));
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /api/project-rules/:ruleId — Get single rule
-// ─────────────────────────────────────────────────────────────────────────────
-
-router.get('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
-  const tenantContext = getTenantContext(req);
-  if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-  const { organizationId } = tenantContext;
-
-  const result = await pool.query(
-    `SELECT id, rule_id, organization_id, name, description, scope, scope_project_id, scope_template_id, trigger_event, conditions, actions, priority, is_active, cooldown_minutes, max_executions, execution_count, success_count, failure_count, last_executed_at, last_result, is_built_in, tags, metadata, created_by_id, created_at, updated_at FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
-    [req.params.ruleId, organizationId]
-  );
-
-  if (result.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
-  res.json(result.rows[0]);
-}));
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PATCH /api/project-rules/:ruleId — Update rule
-// ─────────────────────────────────────────────────────────────────────────────
-
-router.patch('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
-  try {
-    const tenantContext = getTenantContext(req);
-    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-    const { organizationId } = tenantContext;
-
-    const data = updateRuleSchema.parse(req.body);
-
-    // Check rule exists and is not built-in
-    const existing = await pool.query(
-      `SELECT id, rule_id, is_built_in FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
-      [req.params.ruleId, organizationId]
-    );
-    if (existing.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
-
-    if (existing.rows[0].is_built_in) {
-      // Built-in rules can only toggle active/inactive
-      const allowedUpdates = ['isActive'];
-      const keys = Object.keys(data);
-      if (keys.some(k => !allowedUpdates.includes(k))) {
-        return res.status(400).json({ error: 'Built-in rules can only be enabled/disabled' });
-      }
-    }
-
-    // Build dynamic update
-    const setClauses: string[] = ['updated_at = NOW()'];
-    const values: any[] = [];
-    let paramIndex = 1;
-
-    const fieldMap: Record<string, string> = {
-      name: 'name',
-      description: 'description',
-      scope: 'scope',
-      scopeProjectId: 'scope_project_id',
-      scopeTemplateId: 'scope_template_id',
-      triggerEvent: 'trigger_event',
-      priority: 'priority',
-      isActive: 'is_active',
-      cooldownMinutes: 'cooldown_minutes',
-      maxExecutionsPerDay: 'max_executions_per_day',
-    };
-
-    for (const [key, dbCol] of Object.entries(fieldMap)) {
-      if ((data as any)[key] !== undefined) {
-        setClauses.push(`${dbCol} = $${paramIndex++}`);
-        values.push((data as any)[key]);
-      }
-    }
-
-    if (data.conditions !== undefined) {
-      setClauses.push(`conditions = $${paramIndex++}`);
-      values.push(JSON.stringify(data.conditions));
-    }
-    if (data.actions !== undefined) {
-      setClauses.push(`actions = $${paramIndex++}`);
-      values.push(JSON.stringify(data.actions));
-    }
-    if (data.tags !== undefined) {
-      setClauses.push(`tags = $${paramIndex++}`);
-      values.push(JSON.stringify(data.tags));
-    }
-    if (data.metadata !== undefined) {
-      setClauses.push(`metadata = $${paramIndex++}`);
-      values.push(JSON.stringify(data.metadata));
-    }
-
-    values.push(req.params.ruleId, organizationId);
-
-    const result = await pool.query(
-      `UPDATE project_rules SET ${setClauses.join(', ')} WHERE rule_id = $${paramIndex++} AND organization_id = $${paramIndex} RETURNING *`,
-      values
-    );
-
-    console.log(`[ProjectRules] Updated rule ${req.params.ruleId}`);
-    res.json(result.rows[0]);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid rule data', details: error.errors });
-    }
-    throw error;
-  }
-}));
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DELETE /api/project-rules/:ruleId — Delete (or soft-deactivate built-in)
-// ─────────────────────────────────────────────────────────────────────────────
-
-router.delete('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
-  const tenantContext = getTenantContext(req);
-  if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-  const { organizationId } = tenantContext;
-
-  const existing = await pool.query(
-    `SELECT id, rule_id, is_built_in FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
-    [req.params.ruleId, organizationId]
-  );
-  if (existing.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
-
-  if (existing.rows[0].is_built_in) {
-    // Soft deactivate built-in rules
-    await pool.query(
-      `UPDATE project_rules SET is_active = false, updated_at = NOW() WHERE rule_id = $1`,
-      [req.params.ruleId]
-    );
-    return res.json({ message: 'Built-in rule deactivated', ruleId: req.params.ruleId });
-  }
-
-  await pool.query(`DELETE FROM project_rules WHERE rule_id = $1 AND organization_id = $2`, [
-    req.params.ruleId,
-    organizationId,
-  ]);
-
-  console.log(`[ProjectRules] Deleted rule ${req.params.ruleId}`);
-  res.json({ message: 'Rule deleted', ruleId: req.params.ruleId });
-}));
-
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/project-rules/:ruleId/test — Dry-run a rule
-// ─────────────────────────────────────────────────────────────────────────────
-
-router.post('/:ruleId/test', asyncHandler(async (req: Request, res: Response) => {
-  try {
-    const tenantContext = getTenantContext(req);
-    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
-    const { organizationId } = tenantContext;
-
-    const testData = dryRunSchema.parse(req.body);
-
-    // Get the rule
-    const ruleResult = await pool.query(
-      `SELECT rule_id, name, conditions, actions FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
-      [req.params.ruleId, organizationId]
-    );
-    if (ruleResult.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
-
-    const row = ruleResult.rows[0];
-    const engine = getRulesEngine();
-
-    const result = await engine.dryRun(
-      {
-        conditions:
-          typeof row.conditions === 'string' ? JSON.parse(row.conditions) : row.conditions,
-        actions: typeof row.actions === 'string' ? JSON.parse(row.actions) : row.actions,
-      },
-      {
-        event: testData.event as RuleTriggerEvent,
-        organizationId,
-        projectId: testData.projectId,
-        timestamp: new Date(),
-        data: testData.data,
-      }
-    );
-
-    res.json({
-      ruleId: req.params.ruleId,
-      ruleName: row.name,
-      testResult: result,
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid test data', details: error.errors });
-    }
-    throw error;
-  }
-}));
-
-// ─────────────────────────────────────────────────────────────────────────────
 // GET /api/project-rules/executions — Execution log
+// IMPORTANT: Registered before /:ruleId so the literal path is not shadowed.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Alias: frontend calls /logs (shorthand)
@@ -453,6 +266,7 @@ router.get('/executions/log', asyncHandler(async (req: Request, res: Response) =
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/project-rules/templates — Built-in rule templates
+// IMPORTANT: Registered before /:ruleId so the literal path is not shadowed.
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Alias: frontend calls /templates (shorthand)
@@ -586,5 +400,193 @@ router.get('/templates/catalog', async (_req: Request, res: Response) => {
 
   res.json({ templates, total: templates.length });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/project-rules/:ruleId — Get single rule
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
+  const tenantContext = getTenantContext(req);
+  if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+  const { organizationId } = tenantContext;
+
+  const result = await pool.query(
+    `SELECT id, rule_id, organization_id, name, description, scope, scope_project_id, scope_template_id, trigger_event, conditions, actions, priority, is_active, cooldown_minutes, max_executions, execution_count, success_count, failure_count, last_executed_at, last_result, is_built_in, tags, metadata, created_by_id, created_at, updated_at FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+    [req.params.ruleId, organizationId]
+  );
+
+  if (result.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
+  res.json(result.rows[0]);
+}));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PATCH /api/project-rules/:ruleId — Update rule
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.patch('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const tenantContext = getTenantContext(req);
+    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+    const { organizationId } = tenantContext;
+
+    const data = updateRuleSchema.parse(req.body);
+
+    // Check rule exists and is not built-in
+    const existing = await pool.query(
+      `SELECT id, rule_id, is_built_in FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+      [req.params.ruleId, organizationId]
+    );
+    if (existing.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
+
+    if (existing.rows[0].is_built_in) {
+      // Built-in rules can only toggle active/inactive
+      const allowedUpdates = ['isActive'];
+      const keys = Object.keys(data);
+      if (keys.some(k => !allowedUpdates.includes(k))) {
+        return res.status(400).json({ error: 'Built-in rules can only be enabled/disabled' });
+      }
+    }
+
+    // Build dynamic update
+    const setClauses: string[] = ['updated_at = NOW()'];
+    const values: any[] = [];
+    let paramIndex = 1;
+
+    const fieldMap: Record<string, string> = {
+      name: 'name',
+      description: 'description',
+      scope: 'scope',
+      scopeProjectId: 'scope_project_id',
+      scopeTemplateId: 'scope_template_id',
+      triggerEvent: 'trigger_event',
+      priority: 'priority',
+      isActive: 'is_active',
+      cooldownMinutes: 'cooldown_minutes',
+      maxExecutionsPerDay: 'max_executions_per_day',
+    };
+
+    for (const [key, dbCol] of Object.entries(fieldMap)) {
+      if ((data as any)[key] !== undefined) {
+        setClauses.push(`${dbCol} = $${paramIndex++}`);
+        values.push((data as any)[key]);
+      }
+    }
+
+    if (data.conditions !== undefined) {
+      setClauses.push(`conditions = $${paramIndex++}`);
+      values.push(JSON.stringify(data.conditions));
+    }
+    if (data.actions !== undefined) {
+      setClauses.push(`actions = $${paramIndex++}`);
+      values.push(JSON.stringify(data.actions));
+    }
+    if (data.tags !== undefined) {
+      setClauses.push(`tags = $${paramIndex++}`);
+      values.push(JSON.stringify(data.tags));
+    }
+    if (data.metadata !== undefined) {
+      setClauses.push(`metadata = $${paramIndex++}`);
+      values.push(JSON.stringify(data.metadata));
+    }
+
+    values.push(req.params.ruleId, organizationId);
+
+    const result = await pool.query(
+      `UPDATE project_rules SET ${setClauses.join(', ')} WHERE rule_id = $${paramIndex++} AND organization_id = $${paramIndex} RETURNING *`,
+      values
+    );
+
+    console.log(`[ProjectRules] Updated rule ${req.params.ruleId}`);
+    res.json(result.rows[0]);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid rule data', details: error.errors });
+    }
+    throw error;
+  }
+}));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE /api/project-rules/:ruleId — Delete (or soft-deactivate built-in)
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.delete('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
+  const tenantContext = getTenantContext(req);
+  if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+  const { organizationId } = tenantContext;
+
+  const existing = await pool.query(
+    `SELECT id, rule_id, is_built_in FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+    [req.params.ruleId, organizationId]
+  );
+  if (existing.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
+
+  if (existing.rows[0].is_built_in) {
+    // Soft deactivate built-in rules (tenant-scoped)
+    await pool.query(
+      `UPDATE project_rules SET is_active = false, updated_at = NOW() WHERE rule_id = $1 AND organization_id = $2`,
+      [req.params.ruleId, organizationId]
+    );
+    return res.json({ message: 'Built-in rule deactivated', ruleId: req.params.ruleId });
+  }
+
+  await pool.query(`DELETE FROM project_rules WHERE rule_id = $1 AND organization_id = $2`, [
+    req.params.ruleId,
+    organizationId,
+  ]);
+
+  console.log(`[ProjectRules] Deleted rule ${req.params.ruleId}`);
+  res.json({ message: 'Rule deleted', ruleId: req.params.ruleId });
+}));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/project-rules/:ruleId/test — Dry-run a rule
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.post('/:ruleId/test', asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const tenantContext = getTenantContext(req);
+    if ('error' in tenantContext) return res.status(400).json({ error: tenantContext.error });
+    const { organizationId } = tenantContext;
+
+    const testData = dryRunSchema.parse(req.body);
+
+    // Get the rule
+    const ruleResult = await pool.query(
+      `SELECT rule_id, name, conditions, actions FROM project_rules WHERE rule_id = $1 AND organization_id = $2`,
+      [req.params.ruleId, organizationId]
+    );
+    if (ruleResult.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
+
+    const row = ruleResult.rows[0];
+    const engine = getRulesEngine();
+
+    const result = await engine.dryRun(
+      {
+        conditions:
+          typeof row.conditions === 'string' ? JSON.parse(row.conditions) : row.conditions,
+        actions: typeof row.actions === 'string' ? JSON.parse(row.actions) : row.actions,
+      },
+      {
+        event: testData.event as RuleTriggerEvent,
+        organizationId,
+        projectId: testData.projectId,
+        timestamp: new Date(),
+        data: testData.data,
+      }
+    );
+
+    res.json({
+      ruleId: req.params.ruleId,
+      ruleName: row.name,
+      testResult: result,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid test data', details: error.errors });
+    }
+    throw error;
+  }
+}));
 
 export default router;

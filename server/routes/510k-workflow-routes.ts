@@ -527,8 +527,16 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
   });
 
   // GET /:projectId/data-lineage — data lineage for 510(k) workflow
-  router.get('/:projectId/data-lineage', async (req, res) => {
+  router.get('/:projectId/data-lineage', authMiddleware, async (req, res) => {
     const { projectId } = req.params;
+    const numericProjectId = parseInt(projectId);
+    if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid project ID' });
+    }
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
 
     try {
       const lineage = await FDA510kComplianceTracker.getDataLineage(projectId);
@@ -540,8 +548,16 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
   });
 
   // GET /:projectId/versions — version history for 510(k) document
-  router.get('/:projectId/versions', async (req, res) => {
+  router.get('/:projectId/versions', authMiddleware, async (req, res) => {
     const { projectId } = req.params;
+    const numericProjectId = parseInt(projectId);
+    if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid project ID' });
+    }
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
     const { documentId } = req.query;
 
     try {
@@ -557,8 +573,16 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
   });
 
   // GET /:projectId/compliance-report — compliance report for 510(k) submission
-  router.get('/:projectId/compliance-report', async (req, res) => {
+  router.get('/:projectId/compliance-report', authMiddleware, async (req, res) => {
     const { projectId } = req.params;
+    const numericProjectId = parseInt(projectId);
+    if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
+      return res.status(400).json({ success: false, error: 'Invalid project ID' });
+    }
+    const organizationId = getSecureOrgId(req);
+    if (!organizationId) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
 
     try {
       const report = await FDA510kComplianceTracker.generateComplianceReport(projectId);
