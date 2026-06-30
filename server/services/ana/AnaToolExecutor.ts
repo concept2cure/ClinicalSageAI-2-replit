@@ -14447,3 +14447,243 @@ registerToolHandler('plan_essential_documents', async (input: Record<string, unk
     return planEssentialDocuments(input as any);
   }, 'deterministic')
 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 5 — Medical device & IVD regulatory handlers
+// 21 CFR 860/807/814, De Novo, FDA 510(k) Program (2014), EU MDR 2017/745 &
+// IVDR 2017/746, IMDRF. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_medical_device', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_medical_device', async () => {
+    const { classifyDevice } = await import('../medical-device/medical-device-knowledge.js');
+    return classifyDevice(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('select_device_pathway', async (input: Record<string, unknown>) =>
+  runStatsTool('select_device_pathway', async () => {
+    const { selectDevicePathway } = await import('../medical-device/medical-device-knowledge.js');
+    return selectDevicePathway(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_substantial_equivalence', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_substantial_equivalence', async () => {
+    const { assessSubstantialEquivalence } = await import('../medical-device/medical-device-knowledge.js');
+    return assessSubstantialEquivalence(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_device_clinical_evidence', async (input: Record<string, unknown>) =>
+  runStatsTool('design_device_clinical_evidence', async () => {
+    const { designDeviceClinicalEvidence } = await import('../medical-device/medical-device-knowledge.js');
+    return designDeviceClinicalEvidence(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_essential_principles', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_essential_principles', async () => {
+    const { assessEssentialPrinciples } = await import('../medical-device/medical-device-knowledge.js');
+    return assessEssentialPrinciples(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_device_submission', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_device_submission', async () => {
+    const { planDeviceSubmission } = await import('../medical-device/medical-device-knowledge.js');
+    return planDeviceSubmission(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 5 — Digital health, SaMD & AI/ML device handlers
+// IMDRF SaMD (N12/N41), FDA SaMD & PCCP (2024), GMLP (2021), FDA Premarket
+// Cybersecurity (2023) / Section 524B, 21 CFR 820. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_samd', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_samd', async () => {
+    const { classifySaMD } = await import('../digital-health/digital-health-knowledge.js');
+    return classifySaMD(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_ai_ml_device', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_ai_ml_device', async () => {
+    const { assessAIMLDevice } = await import('../digital-health/digital-health-knowledge.js');
+    return assessAIMLDevice(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_pccp', async (input: Record<string, unknown>) =>
+  runStatsTool('design_pccp', async () => {
+    const { designPCCP } = await import('../digital-health/digital-health-knowledge.js');
+    return designPCCP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_gmlp', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_gmlp', async () => {
+    const { assessGMLP } = await import('../digital-health/digital-health-knowledge.js');
+    return assessGMLP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_samd_clinical_validation', async (input: Record<string, unknown>) =>
+  runStatsTool('design_samd_clinical_validation', async () => {
+    const { designSaMDClinicalValidation } = await import('../digital-health/digital-health-knowledge.js');
+    return designSaMDClinicalValidation(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_device_cybersecurity', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_device_cybersecurity', async () => {
+    const { assessDeviceCybersecurity } = await import('../digital-health/digital-health-knowledge.js');
+    return assessDeviceCybersecurity(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 5 — Vaccine development handlers
+// FDA vaccine guidance, WHO TRS, ICH Q5A-Q5E, EMA vaccine guidelines,
+// 21 CFR 610, correlates-of-protection. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('design_vaccine_cmc', async (input: Record<string, unknown>) =>
+  runStatsTool('design_vaccine_cmc', async () => {
+    const { designVaccineCMC } = await import('../vaccine/vaccine-knowledge.js');
+    return designVaccineCMC(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_correlate_of_protection', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_correlate_of_protection', async () => {
+    const { assessCorrelateOfProtection } = await import('../vaccine/vaccine-knowledge.js');
+    return assessCorrelateOfProtection(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_vaccine_clinical_program', async (input: Record<string, unknown>) =>
+  runStatsTool('design_vaccine_clinical_program', async () => {
+    const { designVaccineClinicalProgram } = await import('../vaccine/vaccine-knowledge.js');
+    return designVaccineClinicalProgram(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_lot_consistency', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_lot_consistency', async () => {
+    const { assessLotConsistency } = await import('../vaccine/vaccine-knowledge.js');
+    return assessLotConsistency(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_vaccine_platform', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_vaccine_platform', async () => {
+    const { assessVaccinePlatform } = await import('../vaccine/vaccine-knowledge.js');
+    return assessVaccinePlatform(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_vaccine_special_populations', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_vaccine_special_populations', async () => {
+    const { planVaccineSpecialPopulations } = await import('../vaccine/vaccine-knowledge.js');
+    return planVaccineSpecialPopulations(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 5 — Structured benefit-risk handlers
+// FDA Benefit-Risk Framework (PDUFA VI/VII, 2023), EMA PrOACT-URL / effects
+// table, IMI PROTECT BRAT, ICH M4E(R2) §2.5.6, CIOMS IV. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('structure_benefit_risk_framework', async (input: Record<string, unknown>) =>
+  runStatsTool('structure_benefit_risk_framework', async () => {
+    const { structureBenefitRiskFramework } = await import('../benefit-risk/benefit-risk-knowledge.js');
+    return structureBenefitRiskFramework(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('build_effects_table', async (input: Record<string, unknown>) =>
+  runStatsTool('build_effects_table', async () => {
+    const { buildEffectsTable } = await import('../benefit-risk/benefit-risk-knowledge.js');
+    return buildEffectsTable(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_benefit_risk_balance', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_benefit_risk_balance', async () => {
+    const { assessBenefitRiskBalance } = await import('../benefit-risk/benefit-risk-knowledge.js');
+    return assessBenefitRiskBalance(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_value_tree', async (input: Record<string, unknown>) =>
+  runStatsTool('design_value_tree', async () => {
+    const { designValueTree } = await import('../benefit-risk/benefit-risk-knowledge.js');
+    return designValueTree(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_br_uncertainty', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_br_uncertainty', async () => {
+    const { assessBRUncertainty } = await import('../benefit-risk/benefit-risk-knowledge.js');
+    return assessBRUncertainty(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_br_communication', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_br_communication', async () => {
+    const { planBRCommunication } = await import('../benefit-risk/benefit-risk-knowledge.js');
+    return planBRCommunication(input as any);
+  }, 'deterministic')
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Wave 5 — Post-approval lifecycle (ICH Q12) handlers
+// ICH Q12, 21 CFR 314.70, FDA "Changes to an Approved NDA or ANDA", FDA
+// comparability protocols, EU variations framework. Deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('classify_post_approval_change', async (input: Record<string, unknown>) =>
+  runStatsTool('classify_post_approval_change', async () => {
+    const { classifyPostApprovalChange } = await import('../post-approval/post-approval-knowledge.js');
+    return classifyPostApprovalChange(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_established_conditions', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_established_conditions', async () => {
+    const { assessEstablishedConditions } = await import('../post-approval/post-approval-knowledge.js');
+    return assessEstablishedConditions(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('design_pacmp', async (input: Record<string, unknown>) =>
+  runStatsTool('design_pacmp', async () => {
+    const { designPACMP } = await import('../post-approval/post-approval-knowledge.js');
+    return designPACMP(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_annual_report', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_annual_report', async () => {
+    const { planAnnualReport } = await import('../post-approval/post-approval-knowledge.js');
+    return planAnnualReport(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('assess_postapproval_comparability', async (input: Record<string, unknown>) =>
+  runStatsTool('assess_postapproval_comparability', async () => {
+    const { assessPostApprovalComparability } = await import('../post-approval/post-approval-knowledge.js');
+    return assessPostApprovalComparability(input as any);
+  }, 'deterministic')
+);
+
+registerToolHandler('plan_lifecycle_management', async (input: Record<string, unknown>) =>
+  runStatsTool('plan_lifecycle_management', async () => {
+    const { planLifecycleManagement } = await import('../post-approval/post-approval-knowledge.js');
+    return planLifecycleManagement(input as any);
+  }, 'deterministic')
+);

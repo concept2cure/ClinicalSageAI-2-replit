@@ -59,6 +59,11 @@ import { NONCLINICAL_ADME_TOOLS } from './nonclinicalAdmeTools';
 import { BIOMARKER_TOOLS } from './biomarkerTools';
 import { RARE_DISEASE_TOOLS } from './rareDiseaseTools';
 import { GCP_OPERATIONS_TOOLS } from './gcpOperationsTools';
+import { MEDICAL_DEVICE_TOOLS } from './medicalDeviceTools';
+import { DIGITAL_HEALTH_TOOLS } from './digitalHealthTools';
+import { VACCINE_TOOLS } from './vaccineTools';
+import { BENEFIT_RISK_TOOLS } from './benefitRiskTools';
+import { POST_APPROVAL_TOOLS } from './postApprovalTools';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & Literature Tools
@@ -7666,6 +7671,21 @@ export const ALL_ANA_TOOLS: AnaTool[] = [
   // Wave 4 — GCP & clinical trial operations (risk-based monitoring, inspection
   // readiness, GCP compliance, informed consent, deviations, TMF). Deterministic.
   ...GCP_OPERATIONS_TOOLS,
+  // Wave 5 — Medical device & IVD regulatory (classification, pathway, substantial
+  // equivalence, clinical evidence, essential principles/GSPR, submission). Deterministic.
+  ...MEDICAL_DEVICE_TOOLS,
+  // Wave 5 — Digital health, SaMD & AI/ML devices (IMDRF SaMD class, AI/ML, PCCP,
+  // GMLP, SaMD clinical validation, premarket cybersecurity). Deterministic.
+  ...DIGITAL_HEALTH_TOOLS,
+  // Wave 5 — Vaccine development (CMC, correlate of protection, clinical program,
+  // lot consistency, platform technology, special populations). Deterministic.
+  ...VACCINE_TOOLS,
+  // Wave 5 — Structured benefit-risk (FDA BR framework, effects table, balance,
+  // value tree, uncertainty, communication). Deterministic.
+  ...BENEFIT_RISK_TOOLS,
+  // Wave 5 — Post-approval lifecycle / ICH Q12 (change classification, established
+  // conditions, PACMP, annual report, comparability, lifecycle plan). Deterministic.
+  ...POST_APPROVAL_TOOLS,
   // Inference self-awareness: classify a tool's output by determinism pedigree
   // (deterministic_registry / deterministic_query / external_api_live /
   // model_assisted) so AnA can weight bulletproof registry facts above
