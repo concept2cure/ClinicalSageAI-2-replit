@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-30T04:22:03.905Z",
+  "generatedAt": "2026-06-30T17:08:09.445Z",
   "git": {
-    "sha": "134fd81f608db331ba3867a050210ff30cd84c83",
+    "sha": "40b2f1ca5ace917e6ffa934128bdb90547d7ec1c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -968,12 +968,30 @@
         ]
       },
       {
+        "basename": "fixtures",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/biopharma/data/fixtures.ts",
+          "client/src/concept2cure/submission/_install/fixtures.ts",
+          "server/services/ana/se-discussion/fixtures.ts"
+        ]
+      },
+      {
         "basename": "health",
         "count": 3,
         "paths": [
           "server/routes/chat/health.ts",
           "server/routes/health.ts",
           "server/services/projects/schedule-of-events/health.ts"
+        ]
+      },
+      {
+        "basename": "helpers",
+        "count": 3,
+        "paths": [
+          "server/services/ana/verifiedSeal/helpers.ts",
+          "server/services/report-os/providers/helpers.ts",
+          "tests/e2e/helpers.ts"
         ]
       },
       {
@@ -1570,14 +1588,6 @@
         ]
       },
       {
-        "basename": "fixtures",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/biopharma/data/fixtures.ts",
-          "client/src/concept2cure/submission/_install/fixtures.ts"
-        ]
-      },
-      {
         "basename": "format",
         "count": 2,
         "paths": [
@@ -1639,14 +1649,6 @@
         "paths": [
           "server/routes/ha-interactions.ts",
           "shared/schema/ha-interactions.ts"
-        ]
-      },
-      {
-        "basename": "helpers",
-        "count": 2,
-        "paths": [
-          "server/services/report-os/providers/helpers.ts",
-          "tests/e2e/helpers.ts"
         ]
       },
       {
@@ -2293,11 +2295,11 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 805914
+        "bytes": 806336
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 732751
+        "bytes": 754868
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2305,7 +2307,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 439551
+        "bytes": 455824
       },
       {
         "file": "server/statistics-service.ts",
@@ -2387,7 +2389,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19363
+        "lines": 19370
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2395,11 +2397,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 14450
+        "lines": 14935
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 8066
+        "lines": 8330
       },
       {
         "file": "server/statistics-service.ts",
@@ -2531,7 +2533,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 1876
+        "lines": 1886
       },
       {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
@@ -2659,7 +2661,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 364,
+      "duplicateGroups": 366,
       "largeByBytes": 20,
       "largeByLines": 57
     },
