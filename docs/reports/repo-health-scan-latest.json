@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-07-01T03:30:53.091Z",
+  "generatedAt": "2026-06-30T23:01:29.426Z",
   "git": {
-    "sha": "1f2e328d78ad0fd9537aadc4b939d95adad58d86",
-    "branch": "concept2cure-v2"
+    "sha": "f9a83eb8ef88c74de74013a03da9154f69e5ce48",
+    "branch": "claude/codebase-architecture-review-eo6jc0"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 238,
+    "duplicateBasenames": 236,
     "largeFilesByBytes": 24,
     "largeFilesByLines": 73
   },
@@ -172,7 +172,7 @@
       },
       {
         "basename": "app",
-        "count": 42,
+        "count": 41,
         "paths": [
           "client/public/design-system/ui_kits/ana_ri/App.jsx",
           "client/public/design-system/ui_kits/ectd_coauthor/App.jsx",
@@ -188,7 +188,6 @@
           "client/src/concept2cure/mdx/App.tsx",
           "client/src/concept2cure/pdev/App.tsx",
           "client/src/concept2cure/quality/App.tsx",
-          "client/src/concept2cure/rbm/App.tsx",
           "client/src/concept2cure/risk/App.tsx",
           "client/src/concept2cure/submission/App.tsx",
           "client/src/concept2cure/tasking/App.tsx",
@@ -306,7 +305,7 @@
       },
       {
         "basename": "client",
-        "count": 15,
+        "count": 14,
         "paths": [
           "client/src/lib/api/client.ts",
           "server/integrations/citationjs/client.ts",
@@ -321,26 +320,7 @@
           "server/integrations/unstructured/client.ts",
           "server/integrations/vale/client.ts",
           "server/integrations/veeva-vault/client.ts",
-          "server/integrations/verapdf/client.ts",
-          "server/prisma/client.js"
-        ]
-      },
-      {
-        "basename": "nav",
-        "count": 12,
-        "paths": [
-          "client/src/concept2cure/biopharma/data/nav.ts",
-          "client/src/concept2cure/cmc/data/nav.ts",
-          "client/src/concept2cure/communication/data/nav.ts",
-          "client/src/concept2cure/labeling/data/nav.ts",
-          "client/src/concept2cure/mdx/data/nav.ts",
-          "client/src/concept2cure/pdev/data/nav.ts",
-          "client/src/concept2cure/rbm/data/nav.ts",
-          "client/src/concept2cure/risk/data/nav.ts",
-          "client/src/concept2cure/submission/data/nav.ts",
-          "client/src/concept2cure/tasking/data/nav.ts",
-          "design-system/ui_kits/mdx/data/nav.js",
-          "ui_kits/mdx/data/nav.js"
+          "server/integrations/verapdf/client.ts"
         ]
       },
       {
@@ -359,6 +339,23 @@
           "client/src/concept2cure/risk/shell/TopBar.tsx",
           "client/src/concept2cure/submission/shell/TopBar.tsx",
           "client/src/concept2cure/tasking/shell/TopBar.tsx"
+        ]
+      },
+      {
+        "basename": "nav",
+        "count": 11,
+        "paths": [
+          "client/src/concept2cure/biopharma/data/nav.ts",
+          "client/src/concept2cure/cmc/data/nav.ts",
+          "client/src/concept2cure/communication/data/nav.ts",
+          "client/src/concept2cure/labeling/data/nav.ts",
+          "client/src/concept2cure/mdx/data/nav.ts",
+          "client/src/concept2cure/pdev/data/nav.ts",
+          "client/src/concept2cure/risk/data/nav.ts",
+          "client/src/concept2cure/submission/data/nav.ts",
+          "client/src/concept2cure/tasking/data/nav.ts",
+          "design-system/ui_kits/mdx/data/nav.js",
+          "ui_kits/mdx/data/nav.js"
         ]
       },
       {
@@ -1516,6 +1513,14 @@
         ]
       },
       {
+        "basename": "env",
+        "count": 2,
+        "paths": [
+          "server/config/env.ts",
+          "server/startup/env.ts"
+        ]
+      },
+      {
         "basename": "environment",
         "count": 2,
         "paths": [
@@ -1569,14 +1574,6 @@
         "paths": [
           "server/routes/evidence-sufficiency.ts",
           "shared/schema/evidence-sufficiency.ts"
-        ]
-      },
-      {
-        "basename": "export-control",
-        "count": 2,
-        "paths": [
-          "server/routes/export-control.ts",
-          "shared/schema/export-control.ts"
         ]
       },
       {
@@ -1713,14 +1710,6 @@
         "paths": [
           "server/routes/ibc.ts",
           "shared/schema/ibc.ts"
-        ]
-      },
-      {
-        "basename": "invention-disclosure",
-        "count": 2,
-        "paths": [
-          "server/routes/invention-disclosure.ts",
-          "shared/schema/invention-disclosure.ts"
         ]
       },
       {
@@ -2100,14 +2089,6 @@
         ]
       },
       {
-        "basename": "research-agreements",
-        "count": 2,
-        "paths": [
-          "server/routes/research-agreements.ts",
-          "shared/schema/research-agreements.ts"
-        ]
-      },
-      {
         "basename": "research-compliance",
         "count": 2,
         "paths": [
@@ -2359,11 +2340,11 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 821945
+        "bytes": 806348
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 814860
+        "bytes": 781525
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2371,7 +2352,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 479170
+        "bytes": 464144
       },
       {
         "file": "server/statistics-service.ts",
@@ -2383,7 +2364,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 178361
+        "bytes": 178373
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2457,7 +2438,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19665
+        "lines": 19370
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2465,11 +2446,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 15912
+        "lines": 15360
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 8774
+        "lines": 8479
       },
       {
         "file": "server/statistics-service.ts",
@@ -2545,7 +2526,7 @@
       },
       {
         "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 2369
+        "lines": 2357
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2585,7 +2566,7 @@
       },
       {
         "file": "server/services/foresight-ai-engine.ts",
-        "lines": 2007
+        "lines": 2004
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2745,15 +2726,22 @@
       },
       {
         "file": "server/services/submission-twin-service.ts",
-        "lines": 1534
+        "lines": 1531
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 378,
+      "duplicateGroups": 376,
       "largeByBytes": 21,
       "largeByLines": 62
     },
@@ -2765,13 +2753,13 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 154,
+      "duplicateGroups": 152,
       "largeByBytes": 0,
       "largeByLines": 1
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 65,
+      "duplicateGroups": 62,
       "largeByBytes": 1,
       "largeByLines": 2
     },

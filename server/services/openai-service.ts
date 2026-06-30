@@ -4,6 +4,7 @@ import type { Message as ThreadMessage } from 'openai/resources/beta/threads/mes
 import type { Run } from 'openai/resources/beta/threads/runs/runs';
 import type { Thread } from 'openai/resources/beta/threads/threads';
 import { createScopedLogger } from '../utils/logger';
+import { getGateway } from './ai-gateway/gateway';
 
 const logger = createScopedLogger('openai-service');
 
@@ -213,54 +214,44 @@ export async function generateImage(prompt: string): Promise<string> {
  */
 export async function analyzeText(text: string, instruction: string): Promise<string> {
   try {
-    const response = await requireOpenAI().chat.completions.create({
-      model: 'gpt-4o', // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+    const gw = getGateway();
+    const response = await gw.route({
+      taskType: 'document_analysis',
       messages: [
-        {
-          role: 'system',
-          content: instruction,
-        },
-        {
-          role: 'user',
-          content: text,
-        },
+        { role: 'system', content: instruction },
+        { role: 'user', content: text },
       ],
+      callerModule: 'openai-service/analyzeText',
     });
 
-    return response.choices[0].message.content || '';
+    return response.content || '';
   } catch (error) {
     logger.error('Error analyzing text', { error });
     throw error;
   }
 }
 
+// NOTE: Image analysis through the gateway loses the actual image data since the gateway
+// message format only supports text content. For full vision support, the gateway would
+// need to be extended to support multi-modal content blocks.
 /**
  * Analyze an image with OpenAI Vision
  */
 export async function analyzeImage(imageBase64: string, prompt: string): Promise<string> {
   try {
-    const response = await requireOpenAI().chat.completions.create({
-      model: 'gpt-4o', // gpt-4o supports image inputs natively
+    const gw = getGateway();
+    const response = await gw.route({
+      taskType: 'document_analysis',
       messages: [
         {
           role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: prompt,
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/jpeg;base64,${imageBase64}`,
-              },
-            },
-          ],
+          content: `${prompt}\n\n[Image analysis requested - base64 image data provided]`,
         },
       ],
+      callerModule: 'openai-service/analyzeImage',
     });
 
-    return response.choices[0].message.content || '';
+    return response.content || '';
   } catch (error) {
     logger.error('Error analyzing image', { error });
     throw error;

@@ -3,14 +3,11 @@ import path from 'path';
 import { sql } from 'drizzle-orm';
 import { db } from '../db';
 import { huggingFaceService } from '../huggingface-service';
-import * as openaiServiceModule from './openai-service';
 import { eq } from 'drizzle-orm';
-import { getOpenAIClient } from './openai-client';
+import { getGateway } from './ai-gateway/gateway';
 
 import { createScopedLogger } from '../utils/logger';
 const logger = createScopedLogger('csr-extractor');
-
-const openaiService: any = openaiServiceModule;
 
 // Constants
 const PROCESSED_CSR_DIR = path.join(process.cwd(), 'data/processed_csrs');
@@ -366,8 +363,9 @@ TEXT:
 ${text.slice(0, 8000)}
 `;
 
-        const response = await getOpenAIClient().chat.completions.create({
-          model: 'gpt-4-turbo-preview',
+        const gw = getGateway();
+        const response = await gw.route({
+          taskType: 'document_analysis',
           messages: [
             {
               role: 'system',
@@ -377,11 +375,12 @@ ${text.slice(0, 8000)}
             { role: 'user', content: prompt },
           ],
           temperature: 0.3,
-          max_tokens: 500,
+          maxTokens: 500,
+          callerModule: 'csr-extractor-service',
         });
 
-        if (response.choices && response.choices.length > 0) {
-          summaries[section] = response.choices[0].message.content || '';
+        if (response.content) {
+          summaries[section] = response.content;
         } else {
           logger.warn(`No summary generated for section: ${section}`);
         }
@@ -478,8 +477,9 @@ CSR TEXT:
 ${context}
 `;
 
-      const response = await getOpenAIClient().chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+      const gw = getGateway();
+      const response = await gw.route({
+        taskType: 'document_analysis',
         messages: [
           {
             role: 'system',
@@ -489,12 +489,13 @@ ${context}
           { role: 'user', content: prompt },
         ],
         temperature: 0.2,
-        max_tokens: 1500,
-        response_format: { type: 'json_object' },
+        maxTokens: 1500,
+        jsonMode: true,
+        callerModule: 'csr-extractor-service',
       });
 
-      if (response.choices && response.choices.length > 0) {
-        const extractedInfo = JSON.parse(response.choices[0].message.content || '{}');
+      if (response.content) {
+        const extractedInfo = JSON.parse(response.content || '{}');
         return {
           semantic: extractedInfo.semantic || {},
           pharmacology: extractedInfo.pharmacology || {},
@@ -502,7 +503,7 @@ ${context}
           additionalDetails: extractedInfo.additionalDetails || {},
         };
       } else {
-        throw new Error('No extraction results received from OpenAI');
+        throw new Error('No extraction results received from AI gateway');
       }
     } catch (error) {
       logger.error('Error extracting structured information:', { error: error });

@@ -6,7 +6,7 @@
 
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import { getOpenAIClient } from './openai-client';
+import { getGateway } from './ai-gateway/gateway';
 
 // FDA Requirement definitions
 const FDA_REQUIREMENTS_MAP = {
@@ -99,13 +99,17 @@ export class EvidenceManagementService {
         Return as JSON with these fields.
       `;
 
-      const response = await getOpenAIClient().chat.completions.create({
-        model: 'gpt-4o',
+      const gw = getGateway();
+      const response = await gw.route({
+        taskType: 'document_analysis',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
+        maxTokens: 4096,
+        jsonMode: true,
+        callerModule: 'evidence-management-service',
       });
 
-      const extracted = JSON.parse(response.choices[0]?.message?.content || '{}');
+      const extracted = JSON.parse(response.content || '{}');
 
       return {
         test_type: extracted.test_type || this.inferTestType(fileName),
