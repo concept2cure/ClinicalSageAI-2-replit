@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-30T21:59:28.137Z",
+  "generatedAt": "2026-06-30T22:26:58.093Z",
   "git": {
-    "sha": "f51897e058d03977140977d7dd2f76cfa72650f9",
+    "sha": "16e92456fe4f42e6c5c0c1fea7b2dc88b2af3475",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 235,
+    "duplicateBasenames": 238,
     "largeFilesByBytes": 24,
     "largeFilesByLines": 73
   },
@@ -1570,6 +1570,14 @@
         ]
       },
       {
+        "basename": "export-control",
+        "count": 2,
+        "paths": [
+          "server/routes/export-control.ts",
+          "shared/schema/export-control.ts"
+        ]
+      },
+      {
         "basename": "fda510kservice",
         "count": 2,
         "paths": [
@@ -1703,6 +1711,14 @@
         "paths": [
           "server/routes/ibc.ts",
           "shared/schema/ibc.ts"
+        ]
+      },
+      {
+        "basename": "invention-disclosure",
+        "count": 2,
+        "paths": [
+          "server/routes/invention-disclosure.ts",
+          "shared/schema/invention-disclosure.ts"
         ]
       },
       {
@@ -2082,6 +2098,14 @@
         ]
       },
       {
+        "basename": "research-agreements",
+        "count": 2,
+        "paths": [
+          "server/routes/research-agreements.ts",
+          "shared/schema/research-agreements.ts"
+        ]
+      },
+      {
         "basename": "research-compliance",
         "count": 2,
         "paths": [
@@ -2337,7 +2361,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 781525
+        "bytes": 798959
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2345,7 +2369,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 464144
+        "bytes": 473216
       },
       {
         "file": "server/statistics-service.ts",
@@ -2439,11 +2463,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 15360
+        "lines": 15582
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 8479
+        "lines": 8628
       },
       {
         "file": "server/statistics-service.ts",
@@ -2727,7 +2751,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 375,
+      "duplicateGroups": 378,
       "largeByBytes": 21,
       "largeByLines": 62
     },
@@ -2745,7 +2769,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 62,
+      "duplicateGroups": 65,
       "largeByBytes": 1,
       "largeByLines": 2
     },
