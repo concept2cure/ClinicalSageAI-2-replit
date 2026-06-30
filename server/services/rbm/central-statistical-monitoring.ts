@@ -132,3 +132,61 @@ export function detectSiteOutliers(
   const rank: Record<Severity, number> = { critical: 0, high: 1, medium: 2, low: 3 };
   return findings.sort((a, b) => rank[a.severity] - rank[b.severity] || b.score - a.score);
 }
+
+// ── Patient Profiles (CluePoints-style patient-level anomaly detection) ────────
+
+export interface PatientMetric {
+  subjectId: string;
+  siteId: string | null;
+  metrics: Record<string, number | null>;
+}
+
+export type PatientStatus = 'normal' | 'review' | 'flagged';
+
+export interface PatientAnomaly {
+  subjectId: string;
+  siteId: string | null;
+  anomalyScore: number;       // max |robust z| across dimensions
+  topDimension: string | null;
+  status: PatientStatus;
+}
+
+/** Patient anomaly status from an absolute aggregate score. */
+export function patientStatusFromScore(absScore: number): PatientStatus {
+  if (absScore >= 4.5) return 'flagged';
+  if (absScore >= 3.5) return 'review';
+  return 'normal';
+}
+
+/**
+ * Score a patient cohort: for each numeric metric present across >= MIN_COHORT
+ * patients, score every patient against the cohort; a patient's anomaly score is
+ * the largest |robust z| across dimensions (atypical in EITHER direction — the
+ * CluePoints Patient-Profiles idea). Returns one entry per patient.
+ */
+export function scorePatientCohort(patients: PatientMetric[]): PatientAnomaly[] {
+  const dims = new Set<string>();
+  for (const p of patients) for (const k of Object.keys(p.metrics)) dims.add(k);
+
+  const best = patients.map(() => ({ score: 0, dim: null as string | null }));
+  for (const dim of dims) {
+    const present = patients
+      .map((p, i) => ({ i, v: p.metrics[dim] }))
+      .filter((x): x is { i: number; v: number } => typeof x.v === 'number' && Number.isFinite(x.v));
+    if (present.length < MIN_COHORT) continue;
+    const scores = scoreCohort(present.map(p => p.v));
+    for (let k = 0; k < present.length; k++) {
+      const abs = Math.abs(scores[k].score);
+      const slot = best[present[k].i];
+      if (abs > Math.abs(slot.score)) { slot.score = scores[k].score; slot.dim = dim; }
+    }
+  }
+
+  return patients.map((p, i) => ({
+    subjectId: p.subjectId,
+    siteId: p.siteId,
+    anomalyScore: Math.round(Math.abs(best[i].score) * 1000) / 1000,
+    topDimension: best[i].dim,
+    status: patientStatusFromScore(Math.abs(best[i].score)),
+  }));
+}

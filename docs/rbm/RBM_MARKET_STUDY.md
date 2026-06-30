@@ -181,7 +181,8 @@ Patient Profiles, and integrated issue/action tracking.
 | **Central Statistical Monitoring (SMART)** | `central-statistical-monitoring.ts` — robust modified-z (Iglewicz–Hoaglin) cross-site outlier detection → `central_stat` signals | **Added (this study)** |
 | **SPOT (Site Profile & Oversight)** | `GET /api/mdx/rbm-site-oversight/:programId` — per-site risk + tier + drivers + open-signal counts | **Added (this study)** |
 | Issue / action tracking | `rbm_monitoring_plans` + `rbm_monitoring_actions` | Shipped |
-| Patient Profiles | — patient-level anomaly profiles | Backlog (Phase 3) |
+| **Patient Profiles** | `rbm_patient_profiles` + `scorePatientCohort` (patient-level robust-z anomaly detection) → `scan_patient_profiles` AnA tool | **Added (this study)** |
+| Governed sign-off (21 CFR Part 11) | reason-for-change **approval** endpoints for assessments + plans (`…/approve`) | **Added (this study)** |
 
 **What we copied and added in this pass.** A deterministic CSM engine that scores
 each site against the study cohort with a robust modified z-score (falling back

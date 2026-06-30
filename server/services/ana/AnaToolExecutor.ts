@@ -2845,6 +2845,36 @@ registerToolHandler('run_central_monitoring', async (input, ctx) => {
   });
 });
 
+// Patient Profiles — patient-level cohort anomaly detection.
+registerToolHandler('scan_patient_profiles', async (input, ctx) => {
+  const programId = typeof input.programId === 'string' ? input.programId : undefined;
+  const orgId = ctx?.organizationId ?? null;
+  if (!programId || !RBM_UUID_RE.test(programId) || orgId == null) {
+    return JSON.stringify({ source: 'AnA RBM', error: 'A valid programId (UUID) and organization context are required.' });
+  }
+  const { getPool } = await import('../../db.js');
+  const { scorePatientCohort, MIN_COHORT } = await import('../rbm/central-statistical-monitoring.js');
+  const { rows } = await getPool().query(
+    `SELECT subject_id, site_id, metrics FROM rbm_patient_profiles
+       WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
+    [orgId, programId],
+  );
+  const cohort = rows.map((r: any) => ({
+    subjectId: r.subject_id,
+    siteId: r.site_id ?? null,
+    metrics: (r.metrics && typeof r.metrics === 'object') ? r.metrics : {},
+  }));
+  const scored = scorePatientCohort(cohort);
+  return JSON.stringify({
+    source: 'AnA RBM Patient Profiles',
+    cohortSize: cohort.length,
+    note: cohort.length < MIN_COHORT ? `Need at least ${MIN_COHORT} subjects for cohort statistics.` : undefined,
+    flagged: scored.filter((s: any) => s.status === 'flagged'),
+    review: scored.filter((s: any) => s.status === 'review'),
+    hint: 'Persist scores via POST /api/mdx/rbm-patient-profiles/score.',
+  });
+});
+
 // Regulatory-pathway advisor — drug/biologic/device/IVD routes (FDA & EU).
 registerToolHandler('advise_regulatory_pathway', async (input) => {
   const pathway = typeof input.pathway === 'string' ? input.pathway : undefined;

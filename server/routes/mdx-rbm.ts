@@ -59,13 +59,23 @@ import {
   type KriDirection,
 } from '../services/rbm/rbm-engine';
 import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
-import { detectSiteOutliers, type SiteMetric } from '../services/rbm/central-statistical-monitoring';
+import {
+  detectSiteOutliers, scorePatientCohort,
+  type SiteMetric, type PatientMetric,
+} from '../services/rbm/central-statistical-monitoring';
 
 const router = Router();
 const log = createScopedLogger('mdx-rbm');
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
+  if (raw === undefined || raw === null) return null;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
+  return Number.isFinite(n) ? n : null;
+}
+
+function getUserId(req: Request): number | null {
+  const raw = (req as any).user?.id;
   if (raw === undefined || raw === null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : raw;
   return Number.isFinite(n) ? n : null;
@@ -897,6 +907,157 @@ router.get('/rbm-site-oversight/:programId', async (req, res) => {
     );
     return ok(res, rows, { count: rows.length });
   } catch (err) { return serverError(res, log, 'site-oversight', err); }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// PATIENT PROFILES (CluePoints-style patient-level anomaly detection)
+// ════════════════════════════════════════════════════════════════════════════
+
+const PATIENT_STATUS = ['normal', 'review', 'flagged'] as const;
+
+const patientListQuery = z.object({
+  program_id: z.string().regex(UUID_RE).optional(),
+  status: z.enum(PATIENT_STATUS).optional(),
+});
+
+router.get('/rbm-patient-profiles', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const parsed = patientListQuery.safeParse(req.query);
+  if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
+  const filters = [`organization_id = $1`, `deleted_at IS NULL`];
+  const args: unknown[] = [orgId];
+  if (parsed.data.program_id) { args.push(parsed.data.program_id); filters.push(`program_id = $${args.length}`); }
+  if (parsed.data.status) { args.push(parsed.data.status); filters.push(`status = $${args.length}`); }
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM rbm_patient_profiles WHERE ${filters.join(' AND ')}
+        ORDER BY anomaly_score DESC NULLS LAST, subject_id`,
+      args,
+    );
+    return ok(res, rows, { count: rows.length });
+  } catch (err) { return serverError(res, log, 'list-patients', err); }
+});
+
+const upsertPatientBody = z.object({
+  programId: z.string().regex(UUID_RE),
+  subjectId: z.string().min(1).max(120),
+  siteId: z.string().max(120).optional().nullable(),
+  metrics: z.record(z.number()).default({}),
+});
+
+router.post('/rbm-patient-profiles', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const parsed = upsertPatientBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  const p = parsed.data;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO rbm_patient_profiles (organization_id, program_id, site_id, subject_id, metrics)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (organization_id, program_id, subject_id)
+       DO UPDATE SET site_id = EXCLUDED.site_id, metrics = EXCLUDED.metrics, updated_at = NOW()
+       RETURNING *`,
+      [orgId, p.programId, p.siteId ?? null, p.subjectId, JSON.stringify(p.metrics)],
+    );
+    return created(res, rows[0]);
+  } catch (err) { return serverError(res, log, 'upsert-patient', err); }
+});
+
+/** Run patient-level anomaly scoring across the program's cohort. */
+router.post('/rbm-patient-profiles/score', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const parsed = seedProgramBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  const { programId } = parsed.data;
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, subject_id, site_id, metrics FROM rbm_patient_profiles
+        WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
+      [orgId, programId],
+    );
+    const cohort: PatientMetric[] = rows.map((r: any) => ({
+      subjectId: r.subject_id,
+      siteId: r.site_id ?? null,
+      metrics: (r.metrics && typeof r.metrics === 'object') ? r.metrics : {},
+    }));
+    const scored = scorePatientCohort(cohort);
+    const byId = new Map(rows.map((r: any, i: number) => [r.id, scored[i]]));
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const r of rows) {
+        const s = byId.get(r.id)!;
+        await client.query(
+          `UPDATE rbm_patient_profiles
+              SET anomaly_score = $1, top_dimension = $2, status = $3, scored_at = NOW(), updated_at = NOW()
+            WHERE id = $4 AND organization_id = $5`,
+          [s.anomalyScore, s.topDimension, s.status, r.id, orgId],
+        );
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => {});
+      throw err;
+    } finally {
+      client.release();
+    }
+    const flagged = scored.filter(s => s.status === 'flagged').length;
+    const review = scored.filter(s => s.status === 'review').length;
+    return ok(res, scored, { cohortSize: cohort.length, flagged, review });
+  } catch (err) { return serverError(res, log, 'score-patients', err); }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// GOVERNED APPROVAL (reason-for-change; 21 CFR Part 11 audit via /api/mdx)
+// ════════════════════════════════════════════════════════════════════════════
+
+const approveBody = z.object({ reason: z.string().min(3).max(2000) });
+
+/** Approve + activate a risk assessment, capturing the reason for change. */
+router.post('/rbm-assessments/:id/approve', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = numericId(req.params.id);
+  if (id === null) return clientError(res, 422, 'id must be numeric');
+  const parsed = approveBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'A reason for change is required', parsed.error.flatten().fieldErrors);
+  try {
+    const { rows } = await pool.query(
+      `UPDATE rbm_risk_assessments
+          SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
+              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
+        WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
+        RETURNING *`,
+      [getUserId(req), parsed.data.reason, id, orgId],
+    );
+    if (rows.length === 0) return notFoundInTenant(res, 'Risk assessment');
+    return ok(res, rows[0]);
+  } catch (err) { return serverError(res, log, 'approve-assessment', err); }
+});
+
+/** Approve + activate a monitoring plan, capturing the reason for change. */
+router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = numericId(req.params.id);
+  if (id === null) return clientError(res, 422, 'id must be numeric');
+  const parsed = approveBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'A reason for change is required', parsed.error.flatten().fieldErrors);
+  try {
+    const { rows } = await pool.query(
+      `UPDATE rbm_monitoring_plans
+          SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
+              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
+        WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
+        RETURNING *`,
+      [getUserId(req), parsed.data.reason, id, orgId],
+    );
+    if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
+    return ok(res, rows[0]);
+  } catch (err) { return serverError(res, log, 'approve-plan', err); }
 });
 
 // ════════════════════════════════════════════════════════════════════════════

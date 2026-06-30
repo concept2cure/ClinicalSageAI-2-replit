@@ -137,6 +137,19 @@ export interface RbmSiteOversight {
   [key: string]: unknown;
 }
 
+export interface RbmPatientProfile {
+  id: number;
+  program_id: string | null;
+  site_id: string | null;
+  subject_id: string;
+  metrics: Record<string, number>;
+  anomaly_score: string | null;
+  top_dimension: string | null;
+  status: 'normal' | 'review' | 'flagged';
+  scored_at: string | null;
+  [key: string]: unknown;
+}
+
 export interface RbmPlan {
   id: number;
   program_id: string | null;
@@ -307,6 +320,15 @@ class RbmService {
   // Central statistical monitoring (CluePoints SMART-style) + SPOT oversight
   runCentralMonitoring(programId: string) { return this.request<{ findings: unknown[]; signals: RbmSignal[] }>('POST', `${this.baseUrl}/rbm-central-monitoring/run`, { programId }); }
   listSiteOversight(programId: string) { return this.list<RbmSiteOversight>(`rbm-site-oversight/${programId}`, {}); }
+
+  // Patient Profiles (patient-level anomaly detection)
+  listPatientProfiles(programId?: string, status?: string) { return this.list<RbmPatientProfile>('rbm-patient-profiles', { program_id: programId, status }); }
+  upsertPatientProfile(body: { programId: string; subjectId: string; siteId?: string | null; metrics?: Record<string, number> }) { return this.request<RbmPatientProfile>('POST', `${this.baseUrl}/rbm-patient-profiles`, body); }
+  scorePatients(programId: string) { return this.request<unknown[]>('POST', `${this.baseUrl}/rbm-patient-profiles/score`, { programId }); }
+
+  // Governed approval (reason-for-change)
+  approveAssessment(id: number, reason: string) { return this.request<RbmAssessment>('POST', `${this.baseUrl}/rbm-assessments/${id}/approve`, { reason }); }
+  approvePlan(id: number, reason: string) { return this.request<RbmPlan>('POST', `${this.baseUrl}/rbm-monitoring-plans/${id}/approve`, { reason }); }
 
   // Plans + actions
   listPlans(programId?: string) { return this.list<RbmPlan>('rbm-monitoring-plans', { program_id: programId }); }

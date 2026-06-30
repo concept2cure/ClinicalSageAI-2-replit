@@ -742,6 +742,21 @@ export const RUN_CENTRAL_MONITORING: AnaTool = {
   },
 };
 
+export const SCAN_PATIENT_PROFILES: AnaTool = {
+  name: 'scan_patient_profiles',
+  description:
+    'Runs patient-level anomaly detection (CluePoints Patient-Profiles style) across a program\'s subject ' +
+    'cohort: scores each subject against the cohort on every recorded metric with a robust modified z-score ' +
+    'and flags atypical patients (review / flagged). Use to prioritize subjects for medical/safety review.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID.' },
+    },
+    required: ['programId'],
+  },
+};
+
 export const ADVISE_REGULATORY_PATHWAY: AnaTool = {
   name: 'advise_regulatory_pathway',
   description:
@@ -7890,6 +7905,7 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   GENERATE_RBM_PLAN,
   PRIORITIZE_MONITORING_QUERIES,
   RUN_CENTRAL_MONITORING,
+  SCAN_PATIENT_PROFILES,
   ADVISE_GCP,
   REVIEW_INFORMED_CONSENT,
   ADVISE_COA_SELECTION,

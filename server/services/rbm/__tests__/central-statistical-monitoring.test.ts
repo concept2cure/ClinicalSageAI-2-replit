@@ -5,7 +5,9 @@
 
 import { describe, it, expect } from 'vitest';
 import {
-  scoreCohort, severityFromScore, detectSiteOutliers, MIN_COHORT, type SiteMetric,
+  scoreCohort, severityFromScore, detectSiteOutliers, MIN_COHORT,
+  scorePatientCohort, patientStatusFromScore,
+  type SiteMetric, type PatientMetric,
 } from '../central-statistical-monitoring';
 
 describe('scoreCohort', () => {
@@ -62,5 +64,40 @@ describe('detectSiteOutliers', () => {
       { siteId: '5', siteNumber: 'S5', metrics: { composite: 5 } }, // low outlier = good
     ];
     expect(detectSiteOutliers(c, ['composite'])).toEqual([]);
+  });
+});
+
+describe('patientStatusFromScore', () => {
+  it('maps |score| to a patient status', () => {
+    expect(patientStatusFromScore(5)).toBe('flagged');
+    expect(patientStatusFromScore(4)).toBe('review');
+    expect(patientStatusFromScore(1)).toBe('normal');
+  });
+});
+
+describe('scorePatientCohort', () => {
+  const cohort: PatientMetric[] = [
+    { subjectId: 'P1', siteId: 'S1', metrics: { queries: 2, deviations: 0 } },
+    { subjectId: 'P2', siteId: 'S1', metrics: { queries: 3, deviations: 1 } },
+    { subjectId: 'P3', siteId: 'S2', metrics: { queries: 2, deviations: 0 } },
+    { subjectId: 'P4', siteId: 'S2', metrics: { queries: 3, deviations: 0 } },
+    { subjectId: 'P5', siteId: 'S3', metrics: { queries: 40, deviations: 0 } }, // atypical
+  ];
+  it('flags the atypical patient and returns one entry per subject', () => {
+    const out = scorePatientCohort(cohort);
+    expect(out.length).toBe(cohort.length);
+    const p5 = out.find(o => o.subjectId === 'P5')!;
+    expect(p5.status).toBe('flagged');
+    expect(p5.topDimension).toBe('queries');
+    expect(p5.anomalyScore).toBeGreaterThan(4.5);
+    const p1 = out.find(o => o.subjectId === 'P1')!;
+    expect(p1.status).toBe('normal');
+  });
+  it('ignores dimensions present in fewer than the minimum cohort', () => {
+    const sparse: PatientMetric[] = cohort.map((p, i) =>
+      i === 0 ? { ...p, metrics: { ...p.metrics, rare: 999 } } : p);
+    const out = scorePatientCohort(sparse);
+    // `rare` appears once (< MIN_COHORT) so it must not drive a flag.
+    expect(out.find(o => o.subjectId === 'P1')!.topDimension).not.toBe('rare');
   });
 });

@@ -18336,6 +18336,33 @@ export const rbmKriValues = pgTable(
 );
 export type RbmKriValue = InferSelectModel<typeof rbmKriValues>;
 
+export const rbmPatientProfiles = pgTable(
+  'rbm_patient_profiles',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    siteId:         text('site_id'),
+    subjectId:      text('subject_id').notNull(),
+    metrics:        jsonb('metrics').default('{}').notNull(),
+    anomalyScore:   numeric('anomaly_score', { precision: 8, scale: 3 }),
+    topDimension:   text('top_dimension'),
+    status:         text('status').default('normal').notNull(),
+    detail:         text('detail'),
+    scoredAt:       timestamp('scored_at', { withTimezone: true }),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:      timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_patient_profiles_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_patient_profiles_org_program_idx').on(table.organizationId, table.programId),
+    statusIdx:     index('rbm_patient_profiles_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type RbmPatientProfile = InferSelectModel<typeof rbmPatientProfiles>;
+
 export const rbmQtls = pgTable(
   'rbm_qtls',
   {

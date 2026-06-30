@@ -12,7 +12,9 @@ export const RBM_NAV: RbmNavItem[] = [
   { id: 'kris',      label: 'Key risk indicators' },
   { id: 'qtls',      label: 'Quality tolerance limits' },
   { id: 'signals',   label: 'Central monitoring' },
+  { id: 'patients',  label: 'Patient profiles' },
   { id: 'sites',     label: 'Site risk' },
+  { id: 'oversight', label: 'Site oversight' },
   { id: 'plan',      label: 'Monitoring plan' },
 ];
 
@@ -104,5 +106,15 @@ export const RBM_SUGGESTIONS: Record<string, string[]> = {
     'Generate a risk-based monitoring plan from the assessment',
     'Recommend a monitoring strategy for this risk level',
     'Turn the critical risks into monitoring actions',
+  ],
+  patients: [
+    'Scan the patient cohort for atypical subjects',
+    'Which patients are flagged for medical or safety review',
+    'Explain why a flagged patient is an anomaly',
+  ],
+  oversight: [
+    'Show the site oversight profile ranked by risk',
+    'Which sites carry the most open high-severity signals',
+    'Summarize what each enhanced-tier site needs',
   ],
 };

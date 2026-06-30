@@ -26,6 +26,7 @@ import rbmService, {
   type RbmSignalCreate,
   type RbmSiteRisk,
   type RbmSiteOversight,
+  type RbmPatientProfile,
   type RbmPlan,
   type RbmPlanCreate,
   type RbmAction,
@@ -281,6 +282,39 @@ export function useRecomputeSiteRisk(programId: string | null) {
   const invalidate = useInvalidateProgram(programId);
   return useMutation<unknown[], Error, void>({
     mutationFn: () => rbmService.recomputeSiteRisk(programId ?? ''),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRbmPatientProfiles(programId: string | null, status?: string) {
+  return useQuery<RbmPatientProfile[]>({
+    queryKey: [...rbmQueryKeys.all, 'patients', programId ?? '', status ?? ''] as const,
+    queryFn: () => rbmService.listPatientProfiles(programId ?? undefined, status),
+    enabled: enabledUuid(programId),
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useScoreRbmPatients(programId: string | null) {
+  const invalidate = useInvalidateProgram(programId);
+  return useMutation<unknown[], Error, void>({
+    mutationFn: () => rbmService.scorePatients(programId ?? ''),
+    onSuccess: invalidate,
+  });
+}
+
+export function useApproveRbmAssessment(programId: string | null) {
+  const invalidate = useInvalidateProgram(programId);
+  return useMutation<unknown, Error, { id: number; reason: string }>({
+    mutationFn: ({ id, reason }) => rbmService.approveAssessment(id, reason),
+    onSuccess: invalidate,
+  });
+}
+
+export function useApproveRbmPlan(programId: string | null) {
+  const invalidate = useInvalidateProgram(programId);
+  return useMutation<unknown, Error, { id: number; reason: string }>({
+    mutationFn: ({ id, reason }) => rbmService.approvePlan(id, reason),
     onSuccess: invalidate,
   });
 }

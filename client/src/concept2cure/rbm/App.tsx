@@ -18,8 +18,9 @@ import * as React from 'react';
 import { useProjects } from '../hooks/useProjects';
 import {
   useRbmSummary, useRbmItems, useRbmKris, useRbmQtls, useRbmSignals,
-  useRbmSiteRisk, useRbmPlans,
+  useRbmSiteRisk, useRbmPlans, useRbmSiteOversight, useRbmPatientProfiles,
   useSeedRbmAssessment, useSeedRbmKris, useSeedRbmQtls, useRecomputeSiteRisk,
+  useRunCentralMonitoring, useScoreRbmPatients,
 } from '../hooks/useRbm';
 import {
   RBM_NAV, HERE_LABEL_RBM, RBM_CATEGORY_LABEL, RBM_ITEM_STATUS_LABEL,
@@ -212,11 +213,17 @@ function Qtls({ programId }: { programId: string | null }) {
 
 function Signals({ programId }: { programId: string | null }) {
   const { data: signals = [], isLoading } = useRbmSignals(programId);
+  const runCsm = useRunCentralMonitoring(programId);
   if (!programId) return <StateRow>Select a study.</StateRow>;
-  if (isLoading) return <StateRow>Loading…</StateRow>;
-  if (signals.length === 0) return <StateRow>No central-monitoring signals. Signals appear as KRIs/QTLs breach or statistical monitoring runs.</StateRow>;
+  const runBtn = (
+    <div><PrimaryBtn onClick={() => runCsm.mutate()} disabled={runCsm.isPending}>{runCsm.isPending ? 'Running…' : 'Run central statistical monitoring'}</PrimaryBtn></div>
+  );
+  if (isLoading) return <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{runBtn}<StateRow>Loading…</StateRow></div>;
+  if (signals.length === 0) return <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>{runBtn}<StateRow>No central-monitoring signals. Run central statistical monitoring to flag outlier sites, or signals appear as KRIs/QTLs breach.</StateRow></div>;
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {runBtn}
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead><tr><Th>Signal</Th><Th>Source</Th><Th>Severity</Th><Th>Status</Th><Th>Detected</Th></tr></thead>
       <tbody>
         {signals.map((sig) => (
@@ -229,7 +236,8 @@ function Signals({ programId }: { programId: string | null }) {
           </tr>
         ))}
       </tbody>
-    </table>
+      </table>
+    </div>
   );
 }
 
@@ -285,6 +293,61 @@ function Plan({ programId }: { programId: string | null }) {
   );
 }
 
+function Oversight({ programId }: { programId: string | null }) {
+  const { data: rows = [], isLoading } = useRbmSiteOversight(programId);
+  if (!programId) return <StateRow>Select a study.</StateRow>;
+  if (isLoading) return <StateRow>Loading…</StateRow>;
+  if (rows.length === 0) return <StateRow>No site oversight yet. Recompute site risk first (Site risk surface).</StateRow>;
+  return (
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <thead><tr><Th>Site</Th><Th>Composite risk</Th><Th>Tier</Th><Th>Drivers</Th><Th>Open signals</Th><Th>High severity</Th></tr></thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.site_id ?? r.site_number ?? Math.random()}>
+            <Td><div style={{ fontWeight: 600 }}>{r.site_number ?? r.site_id ?? '—'}</div>{r.site_name && <div style={{ color: 'var(--text-400,#777)', fontSize: 12 }}>{r.site_name}</div>}</Td>
+            <Td>{r.composite_risk ?? '—'}</Td>
+            <Td><Chip tone={tierTone(r.monitoring_tier)}>{RBM_TIER_LABEL[r.monitoring_tier] ?? r.monitoring_tier}</Chip></Td>
+            <Td>{Array.isArray(r.drivers) && r.drivers.length ? r.drivers.join(', ') : '—'}</Td>
+            <Td>{r.open_signals}</Td>
+            <Td>{r.high_signals > 0 ? <Chip tone="err">{r.high_signals}</Chip> : '0'}</Td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function patientTone(s: string): Tone { return s === 'flagged' ? 'err' : s === 'review' ? 'warn' : 'ok'; }
+
+function Patients({ programId }: { programId: string | null }) {
+  const { data: patients = [], isLoading } = useRbmPatientProfiles(programId);
+  const score = useScoreRbmPatients(programId);
+  if (!programId) return <StateRow>Select a study.</StateRow>;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div><PrimaryBtn onClick={() => score.mutate()} disabled={score.isPending}>{score.isPending ? 'Scoring…' : 'Scan cohort for anomalies'}</PrimaryBtn></div>
+      {isLoading ? <StateRow>Loading…</StateRow> : patients.length === 0 ? (
+        <StateRow>No patient profiles yet. Load subject-level metrics, then scan the cohort for atypical patients.</StateRow>
+      ) : (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead><tr><Th>Subject</Th><Th>Site</Th><Th>Anomaly score</Th><Th>Top dimension</Th><Th>Status</Th></tr></thead>
+          <tbody>
+            {patients.map((p) => (
+              <tr key={p.id}>
+                <Td><span style={{ fontWeight: 600 }}>{p.subject_id}</span></Td>
+                <Td>{p.site_id ?? '—'}</Td>
+                <Td>{p.anomaly_score ?? '—'}</Td>
+                <Td>{p.top_dimension ?? '—'}</Td>
+                <Td><Chip tone={patientTone(p.status)}>{p.status}</Chip></Td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 // ── Shell ─────────────────────────────────────────────────────────────────────
 
 export function RbmApp({ activeProjectId, initialNav = 'overview' }: RbmAppProps) {
@@ -313,7 +376,9 @@ export function RbmApp({ activeProjectId, initialNav = 'overview' }: RbmAppProps
     case 'kris':    surface = <Kris programId={projectId} />; break;
     case 'qtls':    surface = <Qtls programId={projectId} />; break;
     case 'signals': surface = <Signals programId={projectId} />; break;
+    case 'patients': surface = <Patients programId={projectId} />; break;
     case 'sites':   surface = <Sites programId={projectId} />; break;
+    case 'oversight': surface = <Oversight programId={projectId} />; break;
     case 'plan':    surface = <Plan programId={projectId} />; break;
     case 'overview':
     default:        surface = <Overview programId={projectId} />;
