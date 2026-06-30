@@ -1,8 +1,10 @@
-# AnA Document Studio — Design Advisory for Claude Design
+# Concept2Cure — Product Design Advisory for Claude Design
+
+> **Two parts.** **Part I** (sections 1–15 + Appendices A–L) is a deep dive on the **AnA Document Studio** surface and its 17 regulatory-authoring workstreams. **Part II** (after the appendices) is a **codebase-wide design survey of the entire client application** — the shared UI system, the app shell, every regulatory module, and the global UX systems (i18n/theming/responsive/a11y) — produced from a read-only sweep of ~529 client source files by a 6-agent survey team. If you want the whole-product picture first, jump to **Part II → "System-wide themes."**
 
 **Audience:** Claude Design (UI/UX designer) and the Concept2Cure product team
 **Author:** Claude Code (implementation engineer)
-**Scope:** Everything a designer needs to know about the AnA Document Studio surface and the 17 regulatory-authoring workstreams built on top of it — current state, design system constraints, every UI surface, the interaction model, the compliance/accessibility rules that are non-negotiable, and a prioritized set of design recommendations.
+**Scope:** Part I — everything a designer needs about the AnA Document Studio surface and its 17 workstreams (state, design-system constraints, every UI surface, the interaction model, the non-negotiable compliance/accessibility rules, prioritized recommendations). **Part II — the whole product: the shared design system, the application shell, all device + drug regulatory modules, the cross-cutting workflow surfaces, and the global UX systems, each with grounded design debt + recommendations, plus a codebase-wide priority roadmap.**
 **Status of the work:** Built, hardened to release grade, composed onto one integration branch, rebased onto current product trunk, and CI-verified for everything in our ownership. Ships **dark** behind feature flags. Nothing is live for users yet — this is the moment to get the visual/UX layer right before pilot enablement.
 
 > **How to read this:** Sections 1–5 are orientation. Section 6 is the exhaustive surface inventory (your build map). Sections 7–11 are the rules the UI **must** obey (regulated product). Section 12 is my recommendations — the part where I'm asking for your judgment. Section 13 is the practical handoff.
@@ -711,3 +713,332 @@ Deeper, more concrete versions of §12, with suggested directions.
 ---
 
 *Prepared for Claude Design. Every string, prop, `data-status` value, and class name above is pulled from the live implementation in `client/src/concept2cure/components/ana/` — questions on any of it can be answered directly against the code. The compliance and accessibility rules in §8–§11 and Appendices D/E/K are load-bearing for a 21 CFR Part 11 regulated product: please treat them as constraints and ping engineering before relaxing any of them. Everything in §12 and Appendix L is yours to shape — and the `data-status` contract in Appendix A is the lever that makes a coherent redesign tractable.*
+
+---
+---
+
+# Part II — The whole product (codebase-wide design survey)
+
+> Part I covered the AnA Document Studio in depth. Part II zooms out to the **entire client application** (~338 `.tsx` + ~191 `.ts` files), produced from a **read-only sweep** by a six-agent survey team across: the shared UI design system, the application shell/navigation, the medical-device (MDX) modules, the drug/biopharma + CMC + submission + PDEV modules, the cross-cutting workflow surfaces (auth, projects, tasking, quality, risk, insights, authoring), and the global UX systems (i18n, theming, responsive, accessibility). Every claim below is grounded in real files. The point of Part II is to give Claude Design a **map of the whole product and the system-wide design problems**, not just the newest surface.
+
+## System-wide themes (read this first)
+
+Six independent surveys converged on the **same handful of issues**. These are the highest-leverage things to fix because they recur in *every* module — solving them once improves the entire product.
+
+### Theme 1 — Token fragmentation is the #1 design-system problem (flagged by 4 of 6 surveys)
+There are **three-plus overlapping token namespaces**: (a) the intended OKLCH semantic scale in `concept2cure/design/claude-design.css` (`--bg-000…500`, `--text-100…500`, `--accent-main-100` = `#d97757`), **duplicated** near-identically in `design-system/colors_and_type.css`; (b) a `--shadcn-*` HSL bridge defined only in `index.css` that Tailwind consumes via `hsl(var(--shadcn-*))` (historically brittle — a code comment records a 2026-04-29 regression); (c) a **legacy** `client/src/styles/theme.css` that redefines `:root` twice with conflicting values (`--color-bg`, Poppins/Lora fonts). So `bg-primary` resolves token → Tailwind → `--shadcn-primary` → OKLCH/HSL — a real source of "why won't my color theme." **One source of truth + a documented bridge is the single highest-leverage fix in the codebase.**
+
+### Theme 2 — There is no shared chrome; every module re-implements the frame
+Each domain (`mdx`, `pdev`, `biopharma`, `cmc`, `submission`, `tasking`, `risk`, `quality`, `labeling`, `communication`, `intelligence`, `authoring`) ships **its own** `shell/TopBar.tsx`, its own `app.css` className namespace (`pdev-*`, `bp-*`, `cmc-*`, `sub-*`, `mdx`…), and **its own icon set** (≥5 bespoke `icons.tsx` registries; auth/insights use `lucide-react`; AnA uses CSS-module + sized `I.*`). The app shell itself is a **2,357-line `ZenApp.tsx` god-component** with a ~110-value `layoutMode` state machine and manual URL sync. There is no persistent cross-surface chrome (breadcrumb / project switcher / command palette / notifications). **Result: at least three visual lineages** (shadcn/Tailwind `stone-*` · the CSS-token domain shells · the AnA CSS-modules system).
+
+### Theme 3 — Governed-action UX is fragmented across ≥4 patterns for the same Part 11 obligation
+The same legal obligation (a governed, audited mutation) is expressed four different ways: **`EsignModal`** (`_shared/`, the gold standard — §11.50 meaning + §11.100 identity + §11.200 re-auth, focus-trapped, signed manifest), **`PdevConfirmDialog`** (reason-for-change + typed confirm word), **mdx `ApprovalCard`** (meaning + password, but a stub with `Math.random()`/`setSigned`), and **Authoring's reason scrim**. Worse, **focus-trap is inconsistent**: `EsignModal` and `CmcDialog` trap + restore focus correctly, but PDEV's confirm dialog and every `pdev-sheet`, plus most domain dialogs, set `role="dialog"` **without a trap or focus-return** — and there is **no shared focus-trap utility anywhere in the codebase** (`FocusTrap`/`focus-trap`: 0 hits). On a Part 11 product this is both a compliance and an accessibility gap.
+
+### Theme 4 — The right shared abstractions exist, but they're off-token
+`statesV2.tsx` (a complete accessible Loading/Empty/Error/Blocked/Skeleton/Progress library with `DataStateWrapper<T>`) and `workspace-primitives.tsx` (the self-declared "ONE approved layout set") are exactly the abstractions a designer wants — but **every color in them is hard-coded** `gray/blue/stone/emerald/amber`, so they're off-brand and dark-mode-incapable. Bringing these two files on-token would instantly give the **whole app** brand-correct, themeable empty/error/loading/header states.
+
+### Theme 5 — World-class i18n infrastructure that is ~unwired
+The i18n stack (i18next, namespaced bundles, faithful en/de/fr/ja incl. Japanese 和暦/年度 formatters, a CI `locale-integrity` test) is excellent — but **only 9 of 338 `.tsx` files use it**, `i18n/format.ts` is imported by **0** files while **27 files call raw `toLocaleDateString`**, and dark/regulated copy is **English-only regardless of UI language**. For an EMA/PMDA product, **localized legal/e-sign/audit/verdict copy is a real exposure** — and it's an adoption gap, not a build gap.
+
+### Theme 6 — Declared-but-unreachable capabilities
+**Dark mode**: full dark tokens exist and `ProjectContext` has `theme` + `setTheme` — but `setTheme` never applies `.dark`/`data-theme` to the DOM and has **zero callers**; the app is light-only today. **High-contrast**: `high-contrast.css` is a nuclear `*{color:black!important}` with no toggle wiring it in. **License-gated UI**: `LAYOUT_MODULE_MAP` is all `'core'` so UI entitlement gating is inert. **Tenant-aware flags**: `featureFlags.ts` is an in-memory singleton that can't do the per-org rollout its own descriptions promise. Each is either finish-it or remove-it.
+
+### Theme 7 — Honesty (fixture-vs-live) and color-never-alone are applied unevenly
+The AnA surfaces and `tasking/state.tsx` and submission `state.tsx` are rigorous about pairing every verdict with icon + text label and about distinguishing sample data from live (510(k)/IVD show a fixture-vs-live banner). But PMA/CER/biopharma fall back to fixtures more silently, and several `status-pill`/severity-dot patterns (mdx SE verdicts, PDEV severity dots) lean on color/glyph **without** a text label. For a reviewer-grade regulated product these need parity with the AnA standard.
+
+## The shared UI design system & component primitives
+
+### What's in this area
+The shared layer lives almost entirely in `client/src/components/ui/` (~76 files). The top-level `client/src/components/` holds only `ui/` and `i18n/` in this worktree.
+
+| Group | Files | Notes |
+|---|---|---|
+| **Radix-backed primitives** | `dialog`, `dropdown-menu`, `popover`, `tooltip`, `toast`+`toaster`, `select`, `tabs`, `accordion`, `alert-dialog`, `sheet`, `drawer` (vaul), `checkbox/switch/radio-group/slider/toggle/menubar/navigation-menu/context-menu/hover-card/scroll-area/separator/avatar/progress` | Standard shadcn/Radix wrappers via `cva` + `cn` |
+| **Form stack** | `form.tsx` (react-hook-form + `FormField/FormControl/FormMessage`), `input`, `textarea`, `label`, `input-otp`, `file-upload*` | `form.tsx` wires `aria-describedby`/`aria-invalid` correctly |
+| **Data/layout** | `table`, `card`, `sidebar` (large), `chart`, `pagination`, `breadcrumb`, `command`, `calendar`, `container`, `layout`, `resizable` | |
+| **Status/feedback** | `badge`, `status-badge`, `alert`, `skeleton`, `spinner`, `statesV2`, `progress`, `alarm` | |
+| **Governed kit** | `workspace-primitives.tsx` | Self-declared "ONE approved set of layout components" for core workflow surfaces: `WorkspaceHeader`, `WorkspaceHeaderRich`, `PageTitleHeader`, `WorkspaceCanvas`, `SectionPanel`, `WorkspaceTabBar`, `WorkspaceStatusBadge` + `WORKFLOW_STATUS_CONFIG` |
+| **Domain helpers** | `regulatory-tooltip.jsx` (glossary of IND/NDA/BLA/eCTD terms with `21 CFR` citations), `database-aware.jsx`, `editor.jsx`, `error-boundary.jsx` | |
+
+There is **no governed registry/Storybook**: a single `button.stories.tsx` exists. `index.ts` barrel-exports ~48 primitives but omits `statesV2`, `workspace-primitives`, `status-badge`, `spinner`, and the `.jsx` files — so the barrel is not an enforced surface.
+
+### Token system (three namespaces — the key finding)
+Tokens are CSS custom properties, well-documented but **fractured across three namespaces**:
+1. **OKLCH semantic + raw Claude scales** — `--background/--foreground/--primary/--muted/--card/--border/--ring`, `--bg-000..500`, `--text-100..500`, `--accent-main-100` (`#d97757`, brand orange), `--success/--warning/--error`, `--radius*`, `--space-*`, `--dur-*`, `--ease`, `--font-sans` (Styrene B) / `--font-serif` (Tiempos Text) / `--font-mono`. Defined **twice**: in `design-system/colors_and_type.css` (canonical) and a near-identical copy at `concept2cure/design/claude-design.css` (both ~257 declarations).
+2. **`--shadcn-*`** — `tailwind.config.ts` maps every color to `hsl(var(--shadcn-background))`. These 38 vars exist **only in `index.css`**, an HSL bridge. A code comment records an "Audit 2026-04-29 found var(--border) resolving to an HSL" regression — the bridge is load-bearing and historically brittle.
+3. **`--accent-000/--dur/--err/--ok` shim** in `index.css`, aliasing short names for the Projects prototype CSS.
+
+So `bg-primary` resolves token → Tailwind → `--shadcn-primary` → OKLCH/HSL — a real source of "why isn't my color theming." Type: dense by design (13px body, 10px uppercase meta), commercial Klim fonts declared `src: local()` only (silent fallback to Lora/Source Serif if not installed).
+
+### Theming, forms, dialogs, tables, toasts
+- **Light/dark** fully specified (`.dark`/`[data-theme="dark"]`), but dark works only for primitives using semantic tokens.
+- **Token adoption is inconsistent.** `badge`, `toast`, `input`, `table`, `form`, `tooltip` use tokens correctly. But **`dialog.tsx` hard-codes `border-gray-200 bg-white`/`text-gray-500`** — won't render in dark mode.
+- **`statesV2.tsx`** is the strongest artifact: a complete accessible state library (`LoadingState`, `EmptyState`, `ErrorState`, `NoResultsState`, `BlockedState`, `MissingConfigurationState`, skeletons, `ProgressIndicator`, generic `DataStateWrapper<T>`). Right pattern — but every color is hard-coded `gray/blue/red`, focus rings on `blue-600`, fully off-token/off-brand.
+- **Toasts** token-correct except a stray `red-300/400` in destructive `ToastClose`.
+- **`status-badge.tsx`** hard-codes `green/amber/red-100`, only 3 statuses — a **third** competing badge system (with `badge.tsx` and `WorkspaceStatusBadge`).
+
+### Accessibility & compliance posture
+Strong at primitive level (Radix gives focus traps/roving tabindex/aria for dialogs/menus/tabs/tooltips; `form.tsx` wires `aria-invalid`/`aria-describedby`; `statesV2` uses `role=status/alert`, `aria-live`, `aria-busy`, `sr-only`, `role=progressbar`, focus management). Concerns: (1) the global `[role=switch]` override in `index.css` paints on/off **green vs red with `!important`** — color-only + contrast risk on a regulated surface; (2) `status-badge.tsx` is color-only; (3) `statesV2` blue focus rings diverge from `--ring`. **No e-signature/audit primitive exists in the shared layer** — those patterns live in feature code, not the design system.
+
+### Design debt / opportunities (prioritized)
+1. **Collapse the three token namespaces.** One source of truth (`colors_and_type.css`), delete the duplicate `claude-design.css`, document the `--shadcn-*` HSL bridge. Highest leverage.
+2. **De-duplicate `.jsx`/`.tsx` primitives.** 11 ship both (`alert`, `button`, `card`, `tabs`, `dropdown-menu`, `progress`, `radio-group`, `textarea`, `collapsible`, `file-upload`, `file-uploader`) plus `button/` and `card/` sub-dirs — competing implementations, no clear winner.
+3. **Bring `statesV2` and `workspace-primitives` onto tokens** — both are the right abstractions but hard-code Tailwind classes; on-token they'd instantly give the whole app brand-correct dark-mode-capable empty/error/loading/header states.
+4. **Token-ize `dialog.tsx`** so modals theme correctly.
+5. **Unify the three badge systems** into one status component with mandatory icon+label (never color-alone).
+6. **Replace the `!important` green/red switch override.**
+7. **Stand up a governed registry** (extend Storybook; make `index.ts` the enforced import surface).
+## The application shell, navigation & frame
+
+### What's in this area
+| Surface / file | Role |
+|---|---|
+| `client/src/App.jsx` → `main.tsx` | Global provider tree: Query → i18n → FileContext → Language → Tenant → lazy `ZenRouter`. |
+| `concept2cure/router/ZenRouter.tsx` | wouter `<Switch>`. Auth gate (`usePortalAuth`), login/signup/reset, legacy-alias redirects, `ProtectedZenApp` catch-all wrapping `ZenApp` in `ProjectProvider`. Framer `PageTransition`. |
+| `concept2cure/ZenApp.tsx` (**2,357 lines**) | The de-facto shell controller: ~40 `useState`, the `layoutMode` state machine, deep-link parsing, URL sync, license/intelligence wiring, a ladder of early-`return` full-viewport surfaces. |
+| `concept2cure/zen-app-constants.ts` | `LayoutMode` union (**~110 modes**), `ToolPanel` registry, three nav-id↔layout maps, industry modes. |
+| `router/projectModuleRoutePolicy.ts` / `approvedRoutePolicy.ts` / `zenRouteNormalization.ts` | shell-embed vs standalone decision; external-testing allowlist; ~30 dead modes collapse to `projects`/`documents`/`vault`. |
+| Domain routes (`mdx`,`pdev`,`cmc`,`biopharma`,`intelligence`,`authoring`,`quality`,`labeling`,`risk`,`tasking`,`communication`,`submission`) | Each ships its **own** `shell/TopBar.tsx` — self-contained full-screen apps, not children of a shared frame. |
+| `components/concept2cure-home/` | Phase-1 "home" (rail, briefing, composer, dashboard tiles); `data.tsx` owns `NAV_ITEMS`/`MODULES` + flag-gated `visibleNavItems()`/`visibleModules()`. |
+| `components/ana/` | The `<Ana>` chat shell — canonical full-viewport surface for `project-home`, `regulatory-workspace`, `deep-research`. |
+| `_shared/` | `EsignModal.tsx` (governed re-auth), `useC2cAction.ts` (governed mutations + idempotency + high-risk e-sign gate), `ProgramSubTabs.tsx`. |
+| Contexts | `ProjectContext` (reducer store + `UIState`), `DocumentModeContext`, root `TenantContext`, `LanguageContext`, `FileContext`, `EvidenceGraphContext`. |
+
+### Navigation model & layout modes
+There is **no shared persistent chrome**. The "frame" is a `layoutMode` state machine inside `ZenApp`: a string union drives a cascade of early returns, each rendering an entire surface. The legacy "ZenSidebar + module frame" is gone (comments forbid routing to it). Navigation flows through one funnel, `handleAnaPanelNavigate(path)` (~250 lines), resolving a nav id to a domain layoutMode, an MDX deep-link hash (`BUNDLE_MDX_HASH`), an AnA intent message (`BUNDLE_INTENTS`), a settings section, a guided-stage request, or a `SIDEBAR_NAV_TO_LAYOUT` fallback. Project-scoped layouts pass through `requireActiveProject()`.
+
+### Routing
+Two-layer: URL routing (wouter) is thin (login + single `ProtectedZenApp` catch-all). Real routing is **state-based** inside `ZenApp`; URL↔state sync is manual via `window.history.replaceState` + several `useEffect`s. Deep links: `/project/:id/:module`, `?nav=`, `?panel=`, `?projectId=`. `evaluateApprovedRoute` adds redirect/hidden only when `externalTestingMode` is on.
+
+### Module embedding (`EMBED_MODULES_IN_SHELL`, default-on)
+`getProjectModuleRoutePolicy` parses project-module URLs; `shouldRenderInShell` makes `ZenApp` render the module **in place**. "In shell": `ectd`→`<ClaudeEctdCoauthor>`, `510k`/`pma`/`cer`→`<MdxRoute>` with hash, undesigned (`ind`,`cmc`) redirect to the project chat shell.
+
+### License / entitlement gating
+`hooks/useLicense.ts` → `useLicenseGating()` fetches `/api/module-subscriptions/enabled`, exposes `canAccessLayoutMode`/`canAccessModule` vs `LAYOUT_MODULE_MAP`. **But after Batch-4 nearly every mode resolves to `'core'` (always accessible)** — UI license gating is largely inert; enforcement is effectively server-side, not reflected in shell visibility.
+
+### Feature-flag-driven visibility
+`flags/featureFlags.ts` is a plain in-memory singleton (no persistence, no per-org resolution — `setFeatureEnabled` mutates the singleton). Real UI gating today: `EMBED_MODULES_IN_SHELL` and `ENABLE_PDEV_SURFACE` (home `data.tsx` hides PDEV rail/launcher when off; ZenApp re-checks before `<PdevRoute>`).
+
+### Global providers / contexts
+Order outer→inner: Query → i18n → FileContext → Language → Tenant → router → ProjectProvider. `ProjectContext` is a full reducer store but **parallels** ZenApp's ~40 local hooks for the same project/active-ID/UIState concerns.
+
+### Design debt / opportunities (prioritized)
+1. **The shell is a 2,357-line god-component state machine.** `layoutMode` (~110 values, many dead) + 20-branch early-return ladder + manual `history.replaceState` is the single highest risk to navigation correctness and to any redesign. Treat the nav model as a flat surface-router, not a layered IA.
+2. **No shared persistent chrome.** Every domain ships its own `shell/TopBar.tsx`; CMC's already diverges (own breadcrumb vocabulary, density toggle, inline-styled project picker). Unify into one shell TopBar contract (breadcrumb, project switcher, command palette, notifications).
+3. **Two competing state stores** (`ProjectContext` vs ZenApp local hooks) model the same active-project/sidebar concerns — pick one.
+4. **License gating is hollowed out** (`LAYOUT_MODULE_MAP` all `'core'`); if entitlement-scoped visibility is a product requirement, the shell doesn't express it.
+5. **Feature flags are not tenant-aware** — a singleton can't support the per-org rollout the flag descriptions promise.
+6. **Dead layout modes leak into the type system** (~30 demoted + "type-safety-only" modes); prune so the navigable set is legible.
+7. **Embedded `MdxRoute` is hash-string-coupled** (`#k510`/`#pma`/`#cer`/`#vault`/`#admin` scattered across several call sites) — a fragile untyped contract an IA change will trip on.
+## Medical-device (MDX) regulatory modules — 510(k), CER, PMA, IVDR
+
+The device side lives in two cooperating areas: the **MDX pathway surfaces** (`client/src/concept2cure/mdx/`), a router-driven workbench with one surface per pathway; and the **AnA Document Studio device affordances** (`client/src/concept2cure/components/ana/`), a set of flag-gated authoring/verification panels that drive document generation. `mdx/App.tsx` switches on a `pathway` key (`k510` / `pma` / `cer` / `ivd`) to mount the matching surface; every surface is wrapped in **`PathwayPanes`** (`surfaces/pathway/PathwayPanes.tsx`), which is the shared regulated chrome.
+
+### Surfaces and what each is for
+
+| Surface (file) | Pathway | Core screens / patterns |
+|---|---|---|
+| `K510Surface.tsx` | 510(k) | 7-stage strip · predicate-search table (similarity bars, multi-select) · substantial-equivalence matrix (single + multi-predicate grid) · eSTAR section list with blocker count + official-eSTAR readiness gate |
+| `CerSurface.tsx` | CER (EU MDR Art. 61) | Safety-signals table (FAERS/MAUDE/Eudamed) · literature-corpus bar chart by year · CER section list · AnA "generation plan" |
+| `PmaSurface.tsx` | PMA | 10-phase progress grid · 4 trial-KPI cards · 6 PMA module cards |
+| `IvdSurface.tsx` | IVDR | 7-stage strip · Annex VIII classification table · analytical-validation tracker · clinical-performance 2×2 (sens/spec/PPV/NPV) · GSPR (Annex I) compliance matrix |
+| `PreSubManager.tsx` | 510(k) Q-Sub | KPI strip · filter row · list/detail two-pane with Questions/Timeline/Commitments tabs, commitments linking into eSTAR sections |
+| `ProjectHome.tsx` | all | Per-program dashboard: governance roles, tasks, milestone timeline |
+
+The shared `PathwayPanes` adds five sub-tabs to **every** pathway: **Workspace · Audit trail · Correspondence (agency/NB queries) · Approvals (pending e-sign) · Files**, plus a `DossierDrawer` (Document/Attachments/Activity) with a contentEditable autosave editor.
+
+### AnA Document Studio device affordances (`components/ana/`)
+These are the document-generation + compliance-check surfaces, gated by `ENABLE_ANA_DOCUMENT_STUDIO`:
+- **`SEComparisonTable.tsx`** — reviewer-grade 510(k) SE table; semantic `<table>`, scoped headers, verdict pill pairs icon+colour+text label (`Equivalent` / `Discussion required` / `Not equivalent` / `Predicate safety signal` / `Pending`).
+- **`GsprConformityAffordance.tsx`** + `gsprConformityMatrix.ts` — EU MDR Annex I GSPR matrix authoring; "Author GSPR conformity matrix" builds an authoring plan and hands it to AnA which runs `author_docx_native` then auto-runs `verify_docx_against_source`.
+- **`PerAuthoringPanel.tsx`** + `perAuthoring.ts` — IVDR PER (Annex XIII) authoring with "Author PER and verify."
+- **`cdxConcordance.ts`** — companion-diagnostic claim concordance (verbatim drug-label vs device-IFU diff).
+
+### Primary journeys
+1. **510(k):** select program → walk stage strip → multi-select predicates → review/export SE matrix (CSV) → check eSTAR section blockers → export draft package or (if ready) generate official FDA eSTAR.
+2. **CER/IVDR:** triage safety signals + literature → review section/GSPR status → author CER/PER via AnA with a verify loop before any seal/export.
+3. **Cross-cutting:** any surface → Approvals tab → e-sign a section; or Correspondence → "Draft response with AnA" (hands off to `AnaDrafter`).
+
+### Regulated surfaces (non-negotiable UX)
+- **Approvals / e-sign** (`ApprovalCard` in PathwayPanes): meaning-of-signature input + password re-entry, gated submit (`pwd.length >= 6 && meaning`), cites 21 CFR §11.50/§11.70/§11.100(b). This is a governed action.
+- **Audit trail**: hash-chained (SHA-256, prev/this), tamper-evident banner, signed export, role + IP captured.
+- **Official eSTAR generation** (`K510Surface`): disabled-with-reason gate driven by `useEstarReadiness`; routes through a governed export plane.
+- **Document export gating**: SE/GSPR/PER all enforce an **honesty contract** — `sample` / `not_assessed` provenance suppresses seal/export and shows the reason in text.
+
+### UX/UI patterns
+Consistent reusable patterns: `section-hdr`, `stage-strip`/`phases`, `panel` + `panel-hdr` + `tb-btn` actions, `status-pill`, the `estar-row`/section list, match/readiness bars, and the `AskAnaChip`/AnA-action buttons threaded through every table. Verdicts are color **plus** glyph plus text (the `ana/` components do this rigorously; the `mdx/` surfaces are weaker — see debt).
+
+### State coverage
+- **Empty states:** good in `CerSurface` (no-signals, no-literature) and attachments/activity drawers.
+- **Loading/error:** `K510Surface` and `IvdSurface` show explicit "configuring for your tenant / showing canonical example" banners distinguishing fixture data from live — a strong honesty pattern. CER/PMA fall back to fixtures more silently.
+- **Missing:** no skeletons (only `· loading…` text); PMA/CER lack the fixture-vs-live banner that 510k/IVD have.
+
+### Design system usage & divergence
+The `ana/` components use CSS Modules (`styles.module.css`) and an `I.*` icon set with `size` props; the `mdx/` surfaces use a global class system (`app.css`, `pathway-tabs.css`) and a **different** `I.*` icon set (glyph nodes, no size prop). The two icon registries and two styling systems are the biggest inconsistency. The `mdx/` surfaces also carry a large amount of **inline `style={{…}}`** (banners, table cells, the entire CER "generation plan" panel, the hard-coded accent button) rather than tokenized classes.
+
+### Design debt / opportunities (prioritized)
+1. **Verdict accessibility parity.** `SEComparisonTable`/`GsprConformity` pair icon+text+colour correctly; the `mdx/` surface `status-pill`s and SE-matrix verdicts (`se-verdict same/equivalent/different`) lean on colour/glyph without text labels. Bring them to the `ana/` standard — non-negotiable for a reviewer-grade SE table.
+2. **Unify the two icon sets and styling systems** (`ana/` CSS-Modules+sized icons vs `mdx/` global-CSS+glyph icons) so device work has one visual language.
+3. **Inline-style cleanup → tokens.** The repeated banner block (duplicated verbatim in `K510Surface` and `IvdSurface`) and the CER generation-plan rows should become shared tokenized components.
+4. **CER is under-built vs siblings.** `CerSurface`'s header comment flags that the intended 7-tab CerWorkbench (Equivalence/GSPR/Lit/Signals/PMS/Generator) "is not present in this kit drop"; the generation-plan panel is hard-coded sample copy. This is the weakest device surface and the one most visibly placeholder.
+5. **Loading affordances.** Replace `· loading…` text with proper skeletons across predicate/SE/eSTAR/GSPR tables.
+6. **E-sign realism.** `ApprovalCard` uses `Math.random()` for the witness-packet number and `setSigned(true)` with no real submit — a designer should spec the real governed-confirmation + reason-for-change flow, since this is the most compliance-sensitive control in the area.
+7. **Fixture-vs-live honesty banner** should be extended to PMA and CER (currently only 510k/IVD), so no surface ever presents example records as tenant data.
+## Drug & biopharma modules — IND/eCTD/CSR, CMC, and the PDEV lifecycle
+
+This area spans four sibling React/TS apps under `client/src/concept2cure/`: **biopharma** (pathway/lifecycle command center), **cmc** (Module 3 authoring), **submission** (ESG/CESP gateway transmittals), and **pdev** (the IND-program activity lifecycle — by far the most built-out and the regulated heart of the drug side). Each is a self-contained shell (Rail + TopBar + optional TabBar + surface router + persistent AnA dock) with its own `app.css`, `icons.tsx`, and `data/nav.ts`. They share idioms but **not a component library** — every shell, dock, and icon set is re-implemented per module.
+
+| Module | Key surfaces | Purpose |
+|---|---|---|
+| **PDEV** | `Overview`, `Workstream` (drill), `ActivityDetail` (6-tab sheet), `Assembly` (IND eCTD readiness + compile), `FdaStream`, `Contradictions`, `AiDraftWorkbench`, `EvidencePicker`, `ConfirmDialog` | IND-program lifecycle: 4 workstreams (CMC/nonclinical/clinical/regulatory) × 5 stages, 14 activity states, governed mutations |
+| **biopharma** | `Overview`, `IndSurface`, `Pathway` (NDA/BLA/MAA/JNDA), `LifecycleSurface`, `MeetingsSurface`, `PvSurface`, `OrphanSurface`, `PediatricSurface`; `SurfaceComposer`, `bits` | Per-pathway "conversation-first" surfaces; many cards **fixture-backed (`SamplePill`)** pending endpoints |
+| **cmc** | `Overview`, `Specifications`, `Stability`, `Batch`, `Change` (impact simulator), `Blueprint`, `Global`, `Copilot`; `CmcDialog` | Module 3 authoring with live `/api/cmc/*`; governed approval via shared `EsignModal` |
+| **submission** | `Overview`, `Transmittals`, `Validation` (pre-flight); `state.tsx` | FDA ESG / EMA CESP / EUDAMED / PMDA transmittal + ACK1/2/3 chain + pre-flight findings |
+
+### Primary journeys
+1. **PDEV IND lifecycle (the spine):** pick IND program → `Overview` readiness card + workstream rollup → workstream → `Workstream` stage-stepper + filterable activity grid/list → activity → `ActivityDetail` 6-tab sheet (State · Documents · Evidence · Workflow · Provenance · Audit) → change state / attach evidence / run approval chain / generate AI draft, **each routed through `PdevConfirmDialog`** → `Assembly` → **Compile IND** (gated). Side flows: `FdaStream`, `Contradictions`.
+2. **CMC authoring:** project → `Specifications/Stability/Batch` table → create/edit in `CmcDialog` → **approve via `EsignModal`** (full Part 11). `Change` is a stateless impact simulator.
+3. **Submission transmit:** `Overview` triage queue → `Validation` clear findings → transmit, watch ACK chain.
+
+### Patterns
+- **Stepper/dashboard/drill/tabbed-detail** is the PDEV signature: readiness card with % + progress bar → workstream-strip of clickable cards → numbered-node stage stepper → activity grid/list (density-adaptive, persisted `localStorage['pdev.viewMode']`) → filter chips → overlay `pdev-sheet` with tab row. The strongest reusable pattern in the area.
+- **SurfaceComposer** (biopharma): greeting + state line + drag-drop AnA composer + 4 starters + "Today" queue + collapsed reference dashboard.
+- **Governed-action confirm**: two *distinct* patterns — PDEV `PdevConfirmDialog` (reason-for-change textarea w/ live count/min, typed confirm word, "Governed action · audit-logged" eyebrow; tuned per action: `minReason` 10/30, confirmWord `yes`/`yes-transmit`) and CMC/shared `EsignModal` (full Part-11 e-sign: meaning, reason, password/MFA re-auth, signed manifest w/ hash).
+- **Status/verdict**: PDEV `statePillTone()` maps 14 states→8 tones; submission `state.tsx` deliberately pairs tone+label+icon and gives ACK cells `aria-label`s so meaning is **never color-only**.
+
+### State coverage
+- **PDEV strong** — explicit `pdev-loading-state` (`aria-busy`), `pdev-empty-state`, `pdev-page-error`, per-tab empties, honest "project linkage required" gate for AI draft/compile.
+- **submission/cmc**: shared `Loading`(role=status)/`ErrorState`(role=alert)/`Empty`.
+- **biopharma weakest** — most dashboards are `FIXTURE_*` with a `SamplePill`; `IndSurface` degrades to a sample queue; no real loading/error for fixture cards. Don't mistake these for finished data surfaces.
+
+### Accessibility & compliance
+- **Regulated (non-negotiable):** `PdevConfirmDialog` (every PDEV mutation → server SHA-256 audit-chain w/ reason verbatim), `Assembly` **Compile IND** (force-compile needs 30-char reason + `yes-transmit`, "Most consequential action · audit-flagged"), `ActivityDetail` Workflow approve/reject, `EsignModal` (CMC approvals/batch release), submission transmit gating.
+- **Focus management inconsistent.** `CmcDialog` is gold (trap, initial focus, Esc, **return-focus-to-trigger**, `aria-modal`, labelled). But `PdevConfirmDialog` and every `pdev-sheet` set `role="dialog" aria-modal` **without a focus trap or focus-return** — only `autoFocus` on the first field. For audit-logged dialogs this is the highest-priority gap.
+- Color-only risk: PDEV `pdev-sev-dot tone-*` and `pdev-mini-fill ok/err` rely on color; severity dots in `Contradictions`/`Assembly` lack text labels.
+
+### Design debt / opportunities
+1. **Add a real focus trap + focus-return to every PDEV `role=dialog`** (confirm + all sheets); reuse `CmcDialog`'s contract — a Part-11/WCAG blocker on audit-logged actions.
+2. **Unify the two governed-action dialogs** (`PdevConfirmDialog` reason-for-change vs `EsignModal` e-sign) into one governed-action component family with variants.
+3. **Replace CMC's inline-styled AnA dock** (App.tsx ~199-240) with the class-based dock; consolidate four near-identical dock implementations.
+4. **Promote the PDEV dashboard→stepper→drill→tabbed-sheet pattern into a shared kit** — biopharma cards + CMC tables would benefit.
+5. **Make biopharma's sample-vs-live boundary unmistakable at the page level** (not just per-card `SamplePill`).
+6. **Tokenize readiness thresholds + severity tones** (80/50 cutoffs, `tone-warn/err` dots re-derived per module) and pair every severity dot with a text label.
+## Cross-cutting workflow surfaces — auth, projects, tasking, quality, risk, insights, authoring
+
+These horizontal features split into two visual lineages: **auth + insights** (shadcn `@/components/ui` + Tailwind `stone-*`, `lucide-react`, `framer-motion`) and **the workstream shells** (tasking, risk, quality, labeling, intelligence, communication, projects, authoring — raw CSS classes over `--text-*/--bg-*/--border/--accent-*` with per-module inline-SVG icon sets). The seam between those lineages is the biggest design debt here.
+
+| Surface | Files | Purpose | Regulated |
+|---|---|---|---|
+| **Auth / MFA** | `auth/ZenLogin`, `ZenSignup`, `passwordPolicy`, `loginLockout` | Sign-in, 6-digit + recovery-code MFA, forgot/reset, gated request-access | **Yes** |
+| **Projects** | `projects/ProjectDetail` + `ProjectHeader/Workstreams/Thread/Drafts/Aside` | Single-project hub: workstream rollups, AnA thread, drafts, team/evidence/activity | partial |
+| **Tasking** | `tasking/App`, `Overview/Board/List/state` | Org-scoped AI work queue: KPIs, kanban, list; mine/everyone + density | no |
+| **Quality / QMP** | `quality/SopRegister`, `App`, `data`, `hooks` | Controlled-document register, lifecycle, periodic review, read-and-understood training | **Yes** |
+| **Risk** | `risk/App`, `Overview/Register/Matrix/Controls/RiskDialog` | ISO 14971 register + 5×5 severity×probability matrix (pre/post-control) | partial |
+| **Insights** | `insights/InsightsSurface`, `charts/*` | Scope-aware Report-OS catalog → run list → rendered report; read-only | no |
+| **Intelligence** | `intelligence/App`, `Protocol/Cmc/Biostat/Reports` | Read-only analysis; all mutation deep-links to Authoring | no |
+| **Communication** | `communication/App`, `ReviewQueue/Approvals/AuditTimeline` | Org handoff hub: review queue, **e-sign approvals**, **Part 11 audit trail** | **Yes** |
+| **Labeling** | `labeling/App`, `Overview/Documents/Translations/Symbols` | Labeling docs, translations, symbol library | partial |
+| **Authoring** | `authoring/App`, `shell/conversation/artifact/workbench` | **The governed editor** — conversation + workbench over one doc model | **Yes** |
+| **Shared e-sign** | `_shared/components/EsignModal.tsx` | The single 21 CFR Part 11 e-signature gate (§11.50/100/200) | **Yes** |
+
+### Primary journeys
+1. Sign in → MFA → workspace (lockout after 5 attempts, 12-char reset policy).
+2. Open a project (`ProjectDetail`) → workstream completion rollups → workstream/draft → project-grounded AnA.
+3. Author a section (`AuthoringApp`): OutlineTree → draft-with-AnA → select text → strengthen/tighten/cite/regenerate (`SelectionToolbar`) → **"Send for review"** captures a Part 11 reason-for-change.
+4. Govern a document (`SopRegister`): every lifecycle action (approve/revise/retire/record training) is an **AnA prompt** — no direct mutation; AnA owns the audit path.
+5. Approve work (`CommApprovals`): org-wide queue → Approve/Reject → `EsignModal` re-auths + signs → immutable in `CommAuditTimeline`.
+
+### Patterns
+- **Shared shell chrome** (`.shell/.rail/.topbar/.tabbar/.ana-seam`, originated in `mdx/app.css`) reused near-identically by tasking, risk, labeling, communication, quality. Rail + TopBar + TabBar + surface router + collapsible AnA dock (**⌘\**), persisting `anaOpen/density/owner` to localStorage.
+- **AnA-as-action-bus**: Quality and Intelligence never mutate locally — they pass NL prompts via `onAsk`. Authoring streams a *local demo* rewrite engine but routes the *governed* "send for review" to the real audited API.
+- **Tables** dominate (approvals, audit, SOP register, drafts). Risk uses a 5×5 heatmap; insights uses a chart library (`ForecastBand`, `CalibrationPlot`, `ReadinessRing`, `TrendLine`) with `useReducedMotion` + `DataTableFallback`.
+- **Status chips** (`tasking/state.tsx`) are the model: tone + text label + icon, color never sole signal; `dueInfo` always carries a word.
+- **Governed modals**: `EsignModal` (full focus trap, `aria-modal`, focus restore, Esc, `role=alert` errors, signed-manifest) and Authoring's inline reason-for-change scrim (10-char min).
+
+### State coverage
+- **Strong**: tasking, communication, insights (honest per-branch copy), `ProjectDetail`.
+- **Gaps**: Authoring uses inline-styled one-off empties (`au-empty`); `ProjectDetail` hand-rolls loading/error with inline styles. Auth's only loading signal is button spinners.
+
+### Accessibility & compliance
+- **Gold standard — `EsignModal`**: §11.50 meaning radiogroup, §11.100 bound identity, §11.200 password (+TOTP) re-auth per event, credentials never stored, full keyboard/focus discipline, immutable signed manifest. Reuse everywhere a governed mutation occurs.
+- **Audit trail** (`CommAuditTimeline`) read-only/immutable with actor/action/target/**reason**.
+- **Authoring's "Send for review"** forces ≥10-char reason + Part 11 snapshot+ledger write — but the editor's streaming rewrite/regenerate/confidence-bump engine is a **local demo** (`AUTH_REWRITES`, fabricated "confidence rose"). AI mutations not yet backed by the audited route must be visibly labeled drafts, never committed changes — a compliance risk.
+- **Color-never-alone** enforced in tasking chips + risk matrix (cells carry band word + score + count). Verify the same in `risk/Register`, `labeling`, insights legends.
+- **Auth**: MFA inputs handle paste/backspace/focus-advance with `autoComplete="one-time-code"`; the dev-only **Demo Access** button must stay `import.meta.env.DEV`-gated (already amber).
+
+### Design debt / opportunities
+1. **Unify the two visual lineages** — pull auth+insights (shadcn `stone-*`) into the token system or formally bless the split.
+2. **One governed-mutation component** — `EsignModal` (e-sign) and Authoring's reason scrim are two bars for the same Part 11 obligation; standardize and route Authoring/Quality/SOP through it.
+3. **Make AI-edit provenance unmistakable in Authoring** (draft/uncommitted treatment; gate "committed" language behind the audited route).
+4. **Consolidate per-module icon sets** (tasking/risk/quality/labeling/intelligence/authoring each ship a bespoke `icons.tsx`; auth uses lucide).
+5. **Standardize empty/loading/error** — adopt tasking's `state.tsx` in Authoring + `ProjectDetail`.
+6. **Resolve scope-model confusion** — org-scoped (tasking/communication) vs project-scoped (risk/labeling) share chrome + a `mine/everyone` toggle that's inert in some; make scope explicit in the TopBar.
+7. **Insights "Ask AnA" is unwired** (`onAsk` optional, no backend) — wire or hide the dead affordance.
+## Global UX systems — internationalization, theming, responsiveness & accessibility posture
+
+### The i18n system
+Stack: **i18next + react-i18next + http-backend + browser-languagedetector** (`client/src/i18n/index.ts`), single-source registry in `i18n/languages.ts`. 18 locales *declared*; only **en/de/fr/ja** have reviewer-quality bundles (e.g. `ja/common.json` ships real Japanese: 保存, キャンセル, 表示密度). Strings keyed hierarchically by namespace (`common/auth/home/settings`), ICU `{{interpolation}}`, served as static JSON lazy-loaded from `client/public/locales/{lng}/{ns}.json`.
+
+| Concern | State |
+|---|---|
+| Detection | `localStorage('c2c.language')` → `navigator` → `en`; account `preferences.language` after auth |
+| Integrity guardrails | `locale-integrity.test.ts` enforces key/placeholder/markup parity **and** server AnA-overlay sync — a genuine strength |
+| `<html lang>`/`dir` | Synced on `languageChanged` |
+| RTL | **Not supported in practice** — every `LanguageDef.dir='ltr'`; no ar/he registered, no logical-property CSS audit |
+| Date/number | `Intl` helpers in `i18n/format.ts` incl. bespoke **Japanese era (和暦)** + **fiscal-year (年度)** formatters for PMDA/MHLW |
+
+**Critical gaps:** (1) `i18n/format.ts` (the correct path) is imported by **0 files**, while **27 files call raw `toLocaleDateString`/`toLocaleString`** — dates/numbers don't follow the UI language. (2) Only **9 of 338 `.tsx` files** use `useTranslation`/`useLanguage` — infra is excellent but **almost entirely unwired**; most UI strings are hard-coded English. (3) `client/src/locales/*` is a vestigial second copy distinct from live `client/public/locales/*` — a drift trap.
+
+### Implications for a regulated multi-region product
+- **Label-text expansion:** de/fr bundles run ~15–25% larger than English; Japanese larger still. Fixed-width chips/buttons/single-line headers will truncate — spec min-widths and wrapping against the **longest** locale.
+- **Legal/regulatory copy:** with most strings hard-coded English, **legal notices, e-sign attestations, audit-reason prompts, and verdict language are English-only regardless of UI language** — a real EMA/PMDA exposure. These governed strings must be migrated into i18n **first** and translation-reviewed, not machine-translated.
+
+### Theming / token application
+**Three overlapping token systems** (the biggest design-system liability):
+1. `concept2cure/design/claude-design.css` — the **intended** OKLCH scale (`--bg-000…500`, `--text-100…500`, `--accent-main-100`=#d97757, `--ink/--border/--canvas`).
+2. `client/src/styles/theme.css` — a **legacy** parallel set (`--color-bg`, `--font-heading: Poppins`, `--font-base: Lora`) that **redefines `:root` twice** with conflicting values.
+3. Tailwind (`tailwind.config.ts`, `darkMode:['class']`) consuming `--shadcn-*`.
+
+**Light/dark:** dark tokens exist (`.dark, [data-theme="dark"]`) and `ProjectContext` carries `theme:'light'|'dark'|'system'` + `setTheme` — but **`setTheme` only mutates state; it never applies `.dark`/`data-theme` to the DOM, and has zero callers.** Dark mode is **declared but unreachable** — no toggle, no system listener. The app is light-only today.
+
+### Responsive strategy
+**No coherent strategy** — ad-hoc, CSS-module-local. Breakpoints scattered (`max-width` 1100/1000/1280/1160/1080/1024/960/820/760/560/480 each once or twice), no shared scale, almost no Tailwind `sm:/md:/lg:`. Desktop-first for a wide regulatory workstation (sensible for the audience), but no documented breakpoint tokens; mobile/tablet coverage incidental.
+
+### App-wide accessibility posture
+**Strengths:** `aria-*` in 181 files, `role=` in 126, `aria-live` in 33, `sr-only` in 28, `:focus-visible` in `index.css` + modules. **`prefers-reduced-motion: reduce` honored in 26 media blocks** — strong motion discipline. `LanguageSwitcher` exemplary (native `<select>`, per-`<option> lang`, translated `aria-label`). The locale-integrity test prevents raw-key leakage.
+**Gaps:** (1) **Dialog focus management is thin** — `role="dialog"` in 26 files but **no focus-trap utility anywhere** (`FocusTrap`/`focus-trap`: 0 hits); dialogs likely don't trap/restore focus reliably. (2) **`useToast` in only 6 files** — sparse, likely supplemented by one-offs. (3) **`high-contrast.css`** is a blunt `*{color:black!important;background:white!important}` — obliterates status/verdict color, and **no toggle wires it in**. (4) Dark mode unreachable → no dark-contrast verification path. (5) Hard-coded English strings are an AT gap for non-English screen-reader users.
+
+### Highest-value global opportunities
+1. **Wire the i18n layer that already exists** — route the 27 raw `toLocaleDateString` callers through `i18n/format.ts`; migrate hard-coded strings starting with **regulated copy** (e-sign attestations, audit-reason prompts, verdicts). Infra + CI guardrails are done; adoption is the gap.
+2. **Collapse three token systems into one** — `claude-design.css` authoritative, deprecate `theme.css` + its duplicate `:root`, align Tailwind/shadcn vars.
+3. **Either finish or remove dark mode** — wire `setTheme` to set `data-theme`/`.dark` + system listener + toggle + contrast-audit, or delete the dead tokens.
+4. **Add a shared focus-trap + standardized dialog primitive** (trap, restore, `DialogTitle`-labelled) and converge all dialogs onto it — non-negotiable for a Part 11 product.
+5. **Define a real breakpoint token scale**; spec layouts against the longest locale.
+6. **Replace the nuclear `high-contrast.css`** with a token-based high-contrast theme that preserves status/verdict semantics, wired to an a11y settings control.
+
+## Codebase-wide design priorities (a roadmap)
+
+Synthesized from all six surveys, ordered by leverage. P0 items unblock everything else; do them first.
+
+### P0 — Foundations (one fix improves every module)
+1. **Collapse the token system to one source of truth.** Make `claude-design.css` (OKLCH) authoritative; delete the duplicate `colors_and_type.css` copy and the legacy `theme.css` double-`:root`; **document the `--shadcn-*` HSL bridge** so designers know `bg-primary` ≠ `--primary` directly. Everything downstream (dark mode, theming, brand correctness) depends on this.
+2. **Build one shared focus-trap + one governed-dialog primitive.** Generalize `EsignModal`/`CmcDialog`'s contract (trap, restore, `DialogTitle`-labelled, Esc, `role=alert` errors) and converge **every** `role="dialog"` onto it. This closes the Part-11/WCAG focus gap across PDEV, mdx, authoring, and the shared `dialog.tsx`.
+3. **Define one governed-action component family.** A single visual+interaction language for "audited mutation," with variants for reason-for-change (PDEV) and full e-sign (CMC/AnA/communication). Today there are four.
+
+### P1 — One product, one design language
+4. **Bring `statesV2` and `workspace-primitives` on-token** → instant brand-correct, dark-capable empty/loading/error/header states app-wide.
+5. **One shell chrome + one icon system.** Replace the per-module `TopBar`/icon registries with a single shell contract (breadcrumb, project switcher, command palette, notifications, AnA dock) and one icon set. Treat `ZenApp`'s `layoutMode` as a flat surface-router and prune the ~30 dead modes.
+6. **Unify the three badge systems** (`badge`, `status-badge`, `WorkspaceStatusBadge`) into one status component with mandatory icon + text label (never color-alone), driven by one `WORKFLOW_STATUS_CONFIG`.
+7. **Token-ize `dialog.tsx`** and replace the `!important` green/red `[role=switch]` override with non-color-only states.
+
+### P2 — Reach, correctness, polish
+8. **Finish or remove dark mode** — wire `setTheme` to the DOM + a system-preference listener + a toggle + a dark contrast audit, or delete the dead tokens.
+9. **Wire the i18n layer that already exists** — route the 27 raw `toLocaleDateString` callers through `i18n/format.ts`; migrate hard-coded strings into namespaced bundles **starting with regulated copy** (e-sign attestations, audit-reason prompts, verdicts, legal notices). Spec all fixed-width UI against the **longest** locale to prevent de/fr/ja truncation.
+10. **Define a breakpoint token scale** and consolidate the 10+ one-off media queries (desktop-first is correct for the audience; the lack of a documented scale is the issue).
+11. **Token-based high-contrast theme** that preserves status/verdict semantics, wired to an accessibility settings control (retire the nuclear `high-contrast.css`).
+12. **Make fixture-vs-live + color-never-alone universal** — extend the 510(k)/IVD honesty banner to PMA/CER/biopharma, and bring every `status-pill`/severity dot to the AnA icon+text+color standard.
+13. **Standardize empty/loading/error adoption** — replace inline-styled one-offs in Authoring, `ProjectDetail`, and the mdx surfaces with `statesV2` (once it's on-token), and adopt real skeletons over `· loading…` text.
+
+---
+
+*Part II prepared by a read-only six-agent survey of the client codebase. Every file path, component, token, and class name is real and can be verified directly. The seven themes above are the cross-cutting design problems; the roadmap orders them by leverage. The single most valuable place to start is **P0.1 (token consolidation)** — it is upstream of dark mode, theming, brand correctness, and most of the visual-consistency debt in every module. As with Part I, the compliance and accessibility items (the governed-dialog focus-trap gap in P0.2, the regulated-copy localization in P2.9, color-never-alone in P2.12) are load-bearing for a 21 CFR Part 11 / multi-region regulated product — treat them as constraints, not polish.*
