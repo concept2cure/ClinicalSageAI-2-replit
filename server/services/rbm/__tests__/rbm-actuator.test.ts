@@ -1,0 +1,159 @@
+/**
+ * RBM actuator — write + engine-inference unit tests.
+ *
+ * Uses a scripted mock Exec (records SQL + args, returns canned rows per call)
+ * so the inference (risk score/band, KRI/QTL status, secondary limit, plan
+ * strategy) and the tenant-scoping invariant (organization_id on every write)
+ * are verified without a database.
+ */
+
+import { describe, it, expect } from 'vitest';
+import {
+  addCtqFactor, defineKri, recordKriReading, setQtl, raiseSignal, triageSignal,
+  draftPlan, createAction, updateAction, approveAssessment, inferSecondaryLimit,
+  type Exec,
+} from '../rbm-actuator';
+
+function mockExec(script: any[][]) {
+  const calls: { sql: string; args: unknown[] }[] = [];
+  let i = 0;
+  const exec: Exec = {
+    async query(sql: string, args: unknown[]) {
+      calls.push({ sql, args });
+      const rows = script[i] ?? [];
+      i += 1;
+      return { rows };
+    },
+  };
+  return { exec, calls };
+}
+
+const ORG = 42;
+
+describe('rbm-actuator — inference', () => {
+  it('addCtqFactor infers risk score and criticality from the band', async () => {
+    const { exec, calls } = mockExec([[{ id: 1 }]]);
+    const out = await addCtqFactor(exec, ORG, { programId: 'p', ctqFactor: 'Dosing errors', likelihood: 5, impact: 4 });
+    expect(out.inferred.riskScore).toBe(20);
+    expect(out.inferred.band).toBe('high');
+    expect(out.inferred.isCritical).toBe(true);
+    // tenant scope: organization_id is the first bound arg on the insert.
+    expect(calls[0].args[0]).toBe(ORG);
+    // score (20) and is_critical (true) are persisted.
+    expect(calls[0].args).toContain(20);
+    expect(calls[0].args).toContain(true);
+  });
+
+  it('addCtqFactor leaves a low-risk item non-critical', async () => {
+    const { exec } = mockExec([[{ id: 2 }]]);
+    const out = await addCtqFactor(exec, ORG, { programId: 'p', ctqFactor: 'Minor typo', likelihood: 1, impact: 2 });
+    expect(out.inferred.riskScore).toBe(2);
+    expect(out.inferred.band).toBe('low');
+    expect(out.inferred.isCritical).toBe(false);
+  });
+
+  it('addCtqFactor honors an explicit isCritical override', async () => {
+    const { exec } = mockExec([[{ id: 3 }]]);
+    const out = await addCtqFactor(exec, ORG, { programId: 'p', ctqFactor: 'x', likelihood: 1, impact: 1, isCritical: true });
+    expect(out.inferred.isCritical).toBe(true);
+  });
+
+  it('defineKri infers amber status from value vs thresholds (higher worse)', async () => {
+    const { exec } = mockExec([[{ id: 5 }]]);
+    const out = await defineKri(exec, ORG, {
+      programId: 'p', name: 'Screen-failure rate', direction: 'higher_worse',
+      thresholdAmber: 20, thresholdRed: 50, currentValue: 40,
+    });
+    expect(out.inferred.status).toBe('amber');
+  });
+
+  it('setQtl infers the 75% secondary limit and approaching status', async () => {
+    const { exec } = mockExec([[{ id: 7 }]]);
+    const out = await setQtl(exec, ORG, { programId: 'p', parameter: 'IPD rate', threshold: 10, currentValue: 8 });
+    expect(out.inferred.secondaryLimit).toBe(7.5);
+    expect(out.inferred.status).toBe('approaching');
+  });
+
+  it('inferSecondaryLimit is null without a threshold', () => {
+    expect(inferSecondaryLimit(null)).toBeNull();
+    expect(inferSecondaryLimit(100)).toBe(75);
+  });
+
+  it('recordKriReading resolves by id, computes status, and writes value + KRI update', async () => {
+    const { exec, calls } = mockExec([
+      [{ id: 9, direction: 'higher_worse', threshold_amber: 20, threshold_red: 50 }], // SELECT kri
+      [{ id: 900, value: 55, status: 'red' }], // INSERT value
+      [], // UPDATE kri
+    ]);
+    const out = await recordKriReading(exec, ORG, { kriId: 9, value: 55 });
+    expect(out.resolved).toBe(true);
+    if (out.resolved) {
+      expect(out.inferred.status).toBe('red');
+      expect(out.kriId).toBe(9);
+    }
+    expect(calls).toHaveLength(3);
+    expect(calls[0].args).toContain(ORG); // SELECT scoped to tenant
+  });
+
+  it('recordKriReading returns unresolved when the KRI is not found', async () => {
+    const { exec } = mockExec([[]]);
+    const out = await recordKriReading(exec, ORG, { kriId: 999, value: 1 });
+    expect(out.resolved).toBe(false);
+  });
+
+  it('draftPlan infers strategy from the assessment overall risk', async () => {
+    const { exec } = mockExec([
+      [{ overall_risk: 'high' }], // SELECT assessment
+      [{ id: 11, strategy: 'hybrid' }], // INSERT plan
+    ]);
+    const out = await draftPlan(exec, ORG, { programId: 'p' });
+    // defaultPlanStrategy('high') → 'hybrid'
+    expect(out.inferred.strategy).toBe('hybrid');
+    expect(out.inferred.fromOverallRisk).toBe('high');
+  });
+
+  it('draftPlan falls back to risk_based when no assessment exists', async () => {
+    const { exec } = mockExec([[], [{ id: 12 }]]);
+    const out = await draftPlan(exec, ORG, { programId: 'p' });
+    expect(out.inferred.strategy).toBe('risk_based');
+  });
+
+  it('raiseSignal defaults source=manual, severity=medium and scopes to tenant', async () => {
+    const { exec, calls } = mockExec([[{ id: 13 }]]);
+    await raiseSignal(exec, ORG, { programId: 'p', title: 'Odd lab pattern' });
+    expect(calls[0].args[0]).toBe(ORG);
+    expect(calls[0].args).toContain('manual');
+    expect(calls[0].args).toContain('medium');
+  });
+
+  it('triageSignal reports no_fields when nothing changes', async () => {
+    const { exec } = mockExec([]);
+    const out = await triageSignal(exec, ORG, { signalId: 1 });
+    expect(out.updated).toBe(false);
+  });
+
+  it('createAction refuses when the plan is not in-tenant', async () => {
+    const { exec } = mockExec([[]]); // ownership SELECT returns nothing
+    const out = await createAction(exec, ORG, { planId: 1, description: 'do it' });
+    expect(out.created).toBe(false);
+  });
+
+  it('updateAction with no fields is a no-op', async () => {
+    const { exec } = mockExec([]);
+    const out = await updateAction(exec, ORG, { actionId: 1 });
+    expect(out.updated).toBe(false);
+  });
+
+  it('approveAssessment writes reason + approver and scopes to tenant', async () => {
+    const { exec, calls } = mockExec([[{ id: 1, status: 'active' }]]);
+    const row = await approveAssessment(exec, ORG, 7, 1, 'Risk review complete');
+    expect(row).toEqual({ id: 1, status: 'active' });
+    expect(calls[0].args).toEqual([7, 'Risk review complete', 1, ORG]);
+  });
+
+  it('approveAssessment returns null when not found in tenant', async () => {
+    const { exec } = mockExec([[]]);
+    const row = await approveAssessment(exec, ORG, 7, 999, 'reason');
+    expect(row).toBeNull();
+  });
+});
