@@ -977,6 +977,45 @@ const rules: AuditRule[] = [
       return null;
     },
   },
+
+  /* ════════════════════════════════════════════════════════════════════════
+   *  Practical Feasibility
+   * ════════════════════════════════════════════════════════════════════════ */
+
+  {
+    id: rid('enrollment_timeline_feasibility'),
+    dimension: 'practical_feasibility',
+    title: 'Enrollment timeline feasibility concerns',
+    question:
+      'The study enrollment appears to have taken significantly longer than planned. ' +
+      'How did extended enrollment affect data quality, protocol currency, and the ' +
+      'relevance of the comparator arm?',
+    check(answers) {
+      const plannedMonths = toNumber(answers.planned_enrollment_duration_months);
+      const actualMonths = toNumber(answers.actual_enrollment_duration_months);
+      if (plannedMonths && actualMonths && actualMonths > plannedMonths * 1.5) {
+        return makeFinding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          `Actual enrollment duration (${actualMonths} months) exceeded the planned ` +
+          `duration (${plannedMonths} months) by more than 50%. Prolonged enrollment ` +
+          'can introduce temporal confounding, changes in standard of care, protocol ' +
+          'amendments, and site fatigue that affect data quality and interpretability.',
+          'ICH E3 Section 9 requires documentation of the study timeline including ' +
+          'start, enrollment, and completion dates. Significant deviations from the ' +
+          'planned timeline should be explained and their impact assessed.',
+          'ICH E3 Section 9; ICH E9 Section 3.5; FDA Guidance: Enhancing the ' +
+          'Diversity of Clinical Trial Populations (2020)',
+          'Document the reasons for extended enrollment (e.g., slow recruitment, ' +
+          'protocol amendments, COVID impact). Assess whether the prolonged timeline ' +
+          'introduced changes in standard of care, diagnostic criteria, or patient ' +
+          'characteristics that could affect the interpretation of results. Consider ' +
+          'time-trend analyses to evaluate temporal effects on the primary endpoint.',
+          ['planned_enrollment_duration_months', 'actual_enrollment_duration_months'],
+        );
+      }
+      return null;
+    },
+  },
 ];
 
 /* ─── Factory ──────────────────────────────────────────────────────────── */
