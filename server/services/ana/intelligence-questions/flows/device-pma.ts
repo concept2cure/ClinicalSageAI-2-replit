@@ -937,6 +937,17 @@ export function createDevicePmaFlow(): FlowDefinition {
             helpText: 'Per ICH E9(R1), the estimand framework should guide the approach to intercurrent events and missing data.',
           },
         ],
+        issueChecks: [
+          {
+            id: 'primary_endpoint_not_met',
+            condition: { field: 'primary_endpoint_met', operator: 'eq', value: false },
+            severity: 'critical',
+            title: 'Primary Endpoint Not Met',
+            message:
+              'Failure to meet the primary endpoint significantly weakens the evidentiary basis for PMA approval. FDA may require additional studies or expanded analyses. Consider whether secondary endpoints, subgroup analyses, or a modified indication could support the benefit-risk determination.',
+            reference: '21 CFR 814.20(b)(3)(vi); ICH E9',
+          },
+        ],
         defaultNext: 'pma_clinical_safety',
       },
 
