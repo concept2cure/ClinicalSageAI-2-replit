@@ -1,22 +1,13 @@
 /**
- * Advisory Committee Briefing Document flow definition for the AnA
- * Intelligence Questioning system.
+ * Briefing Book (Advisory Committee Briefing Document) flow definition
+ * for the AnA Intelligence Questioning system.
  *
- * Guides pharma/biotech sponsors through the preparation of an FDA
- * Advisory Committee Briefing Document — the single most important
- * document a sponsor presents to an advisory committee. Covers meeting
- * context, product overview, nonclinical summary, clinical program,
- * benefit-risk framework, and voting question strategy.
+ * Guides pharma/biotech sponsors through preparation of an Advisory
+ * Committee briefing document covering meeting context, product and
+ * indication overview, nonclinical summary, clinical program overview,
+ * benefit-risk framework, and voting questions & strategy.
  *
- * 17 nodes, 7 sections, 103 fields, 13 issue checks with branching
- * for advisory committee type (ODAC, AADPAC, CDRH panel), pre-approval
- * vs. post-approval meeting purpose, and pediatric-focused meetings.
- *
- * Regulatory foundation: 21 CFR Part 14 (Public Hearing Before the
- * FDA), FDA Guidance "Convening Advisory Committee Meetings" (2023),
- * FDA Guidance "Procedures for Meetings of the FDA Advisory Committees"
- * (2017), and PDUFA VII commitment letter provisions on advisory
- * committee processes.
+ * 16 nodes · 80+ fields · 6 sections · 12+ issue checks
  *
  * @module server/services/ana/intelligence-questions/flows/briefing-book
  */
@@ -27,1357 +18,1073 @@ export function createBriefingBookFlow(): FlowDefinition {
   return {
     id: 'briefing-book-v1',
     category: 'briefing_book',
-    name: 'Advisory Committee Briefing Document',
+    name: 'Advisory Committee Briefing Book',
     description:
-      'Comprehensive questionnaire for preparing an FDA Advisory Committee Briefing Document covering meeting context, product and indication overview, nonclinical summary, clinical program, benefit-risk framework, and voting question strategy per 21 CFR Part 14 and FDA Advisory Committee guidance.',
+      'Comprehensive questionnaire for preparing an Advisory Committee Briefing Document, covering meeting context, product and indication overview, nonclinical summary, clinical program results, benefit-risk framework, and voting questions & strategy per FDA Advisory Committee guidance and 21 CFR Part 14.',
     clientTypes: ['pharma', 'biotech'],
-    entryNode: 'meeting_context',
-    estimatedMinutes: 50,
+    entryNode: 'meeting_details',
+    estimatedMinutes: 60,
 
     /* ─── Sections ──────────────────────────────────────────────────────── */
 
     sections: [
       {
-        id: 'meeting_context_section',
+        id: 'meeting_context',
         label: 'Meeting Context',
-        nodeIds: ['meeting_context', 'meeting_logistics', 'meeting_logistics_postapproval', 'meeting_logistics_pediatric'],
+        nodeIds: ['meeting_details', 'committee_selection'],
       },
       {
-        id: 'product_indication_section',
+        id: 'product_indication',
         label: 'Product & Indication Overview',
-        nodeIds: ['product_overview', 'competitive_landscape'],
+        nodeIds: ['product_overview', 'indication_and_epidemiology', 'competitive_landscape'],
       },
       {
-        id: 'nonclinical_section',
+        id: 'nonclinical',
         label: 'Nonclinical Summary',
-        nodeIds: ['nonclinical_pharmacology', 'nonclinical_toxicology'],
+        nodeIds: ['nonclinical_overview'],
       },
       {
-        id: 'clinical_program_section',
+        id: 'clinical_program',
         label: 'Clinical Program Overview',
-        nodeIds: ['clinical_development', 'efficacy_data', 'safety_data', 'special_populations'],
+        nodeIds: ['clinical_program_summary', 'efficacy_results', 'safety_summary', 'safety_update'],
       },
       {
-        id: 'benefit_risk_section',
+        id: 'benefit_risk',
         label: 'Benefit-Risk Framework',
-        nodeIds: ['benefit_risk_assessment', 'risk_management'],
+        nodeIds: ['benefit_risk_assessment', 'risk_management_plan', 'post_marketing_commitments'],
       },
       {
-        id: 'voting_strategy_section',
+        id: 'voting_strategy',
         label: 'Voting Questions & Strategy',
-        nodeIds: ['voting_questions'],
-      },
-      {
-        id: 'presentation_planning_section',
-        label: 'Presentation & Post-Meeting Planning',
-        nodeIds: ['presentation_strategy', 'post_meeting_planning'],
+        nodeIds: ['voting_questions', 'presentation_strategy', 'final_review'],
       },
     ],
 
     /* ─── Nodes ─────────────────────────────────────────────────────────── */
 
     nodes: [
-
-      /* ================================================================
-       * Section 1 — Meeting Context
-       * ================================================================ */
+      /* ================================================================ */
+      /*  Section 1 — Meeting Context                                     */
+      /* ================================================================ */
 
       {
-        id: 'meeting_context',
-        section: 'Meeting Context',
+        id: 'meeting_details',
+        section: 'meeting_context',
         question:
-          'Let\'s begin the Advisory Committee Briefing Document questionnaire. What type of advisory committee meeting is this, and what is the meeting purpose?',
+          'Let\'s begin with the Advisory Committee meeting context. What type of meeting is this, and what is the regulatory purpose?',
         guidance:
-          'Under 21 CFR Part 14, FDA advisory committees provide independent expert advice on regulatory decisions. The type of committee determines the review division, panel composition, and procedural requirements. FDA Guidance "Convening Advisory Committee Meetings" (2023) describes the criteria the Agency uses to decide whether to convene an advisory committee — sponsors should understand this framework to anticipate whether a meeting is likely. PDUFA VII commitments require FDA to provide sponsors with draft voting questions at least 3 weeks before the meeting and to share the FDA briefing document at least 2 business days before.',
-        provideExpertFeedback: true,
+          'Per 21 CFR Part 14 and the Federal Advisory Committee Act (FACA, 5 USC Appendix 2), FDA Advisory Committee meetings are public proceedings where external experts provide recommendations to the Agency. The sponsor\'s briefing document is typically submitted 30-55 days before the meeting per PDUFA commitments and FDA\'s "Guidance for Industry: Advisory Committee Meetings — Preparation and Public Availability of Information Given to Advisory Committee Members" (2008). The briefing document is made public at least two business days before the meeting.',
         fields: [
           {
-            id: 'committee_type',
-            label: 'Advisory Committee',
-            type: 'select',
-            required: true,
-            options: [
-              {
-                value: 'odac',
-                label: 'ODAC — Oncologic Drugs Advisory Committee',
-                description: 'Reviews oncology drug applications; managed by CDER\'s Office of Oncologic Diseases.',
-              },
-              {
-                value: 'aadpac',
-                label: 'AADPAC — Anesthetic and Analgesic Drug Products Advisory Committee',
-                description: 'Reviews anesthetics, analgesics, and addiction medicine products.',
-              },
-              {
-                value: 'cdrh_panel',
-                label: 'CDRH Panel — Medical Devices Advisory Committee Panel',
-                description: 'Various device panels (Orthopedic, Cardiovascular, Neurological, etc.) under CDRH.',
-              },
-              {
-                value: 'aac',
-                label: 'AAC — Antimicrobial Advisory Committee',
-                description: 'Reviews anti-infective, antiviral, and antimicrobial drug products.',
-              },
-              {
-                value: 'emdac',
-                label: 'EMDAC — Endocrinologic and Metabolic Drugs Advisory Committee',
-                description: 'Reviews endocrine and metabolic products including diabetes therapies.',
-              },
-              {
-                value: 'pcns_ac',
-                label: 'PCNS-AC — Psychopharmacologic / CNS Drugs Advisory Committee',
-                description: 'Reviews psychopharmacologic and central nervous system drugs.',
-              },
-              {
-                value: 'crdac',
-                label: 'CRDAC — Cardiovascular and Renal Drugs Advisory Committee',
-                description: 'Reviews cardiovascular and renal drug products.',
-              },
-              {
-                value: 'gaac',
-                label: 'GAAC — Gastrointestinal Drugs Advisory Committee',
-                description: 'Reviews gastrointestinal drug products.',
-              },
-              {
-                value: 'dac',
-                label: 'DAC — Dermatologic and Ophthalmic Drugs Advisory Committee',
-                description: 'Reviews dermatologic and ophthalmic drug products.',
-              },
-              {
-                value: 'pdac',
-                label: 'PDAC — Pulmonary-Allergy Drugs Advisory Committee',
-                description: 'Reviews pulmonary and allergy drug products.',
-              },
-              {
-                value: 'arthac',
-                label: 'ArthAC — Arthritis Advisory Committee',
-                description: 'Reviews drugs for arthritis and related rheumatologic conditions.',
-              },
-              {
-                value: 'vrbpac',
-                label: 'VRBPAC — Vaccines and Related Biological Products Advisory Committee',
-                description: 'Reviews vaccine products; managed by CBER.',
-              },
-              {
-                value: 'other',
-                label: 'Other Advisory Committee',
-                description: 'Any other FDA advisory committee or joint committee meeting.',
-              },
-            ],
-          },
-          {
-            id: 'cdrh_panel_type',
-            label: 'CDRH Panel Subtype',
-            type: 'select',
-            visibleWhen: { field: 'committee_type', operator: 'eq', value: 'cdrh_panel' },
-            options: [
-              { value: 'ortho', label: 'Orthopedic and Rehabilitation Devices Panel' },
-              { value: 'cardio', label: 'Circulatory System Devices Panel' },
-              { value: 'neuro', label: 'Neurological Devices Panel' },
-              { value: 'general_plastic', label: 'General and Plastic Surgery Devices Panel' },
-              { value: 'ophthalmic', label: 'Ophthalmic Devices Panel' },
-              { value: 'molecular_clinical', label: 'Molecular and Clinical Genetics Panel' },
-              { value: 'other_panel', label: 'Other Panel' },
-            ],
-          },
-          {
-            id: 'meeting_purpose',
+            id: 'meeting_type',
             label: 'Meeting Purpose',
             type: 'select',
             required: true,
             options: [
-              {
-                value: 'pre_approval',
-                label: 'Pre-Approval — Review of pending application',
-                description: 'Advisory committee convened to discuss a pending NDA, BLA, or PMA before FDA\'s action date.',
-              },
-              {
-                value: 'post_approval',
-                label: 'Post-Approval — Safety or efficacy review',
-                description: 'Post-marketing safety signal review, confirmatory trial results, or labeling change.',
-              },
-              {
-                value: 'accelerated_conversion',
-                label: 'Accelerated Approval — Confirmatory evidence review',
-                description: 'Review of confirmatory trial data for a product granted accelerated approval under 21 CFR 314 Subpart H / 601 Subpart E.',
-              },
-              {
-                value: 'pediatric_focused',
-                label: 'Pediatric-Focused — Pediatric study plan or extrapolation review',
-                description: 'Meeting focused on pediatric development, extrapolation approaches, or Pediatric Research Equity Act (PREA) requirements.',
-              },
-              {
-                value: 'risk_evaluation',
-                label: 'Risk Evaluation — REMS or safety issue',
-                description: 'Advisory committee convened to discuss REMS requirements or emerging safety concerns.',
-              },
+              { value: 'pre_approval', label: 'Pre-Approval (Original NDA/BLA)', description: 'Advisory Committee meeting before initial marketing approval' },
+              { value: 'supplemental', label: 'Supplemental Application (sNDA/sBLA)', description: 'New indication, formulation, or population' },
+              { value: 'post_approval_safety', label: 'Post-Approval Safety Review', description: 'Safety signal evaluation after marketing' },
+              { value: 'pediatric', label: 'Pediatric-Focused Meeting', description: 'PREA-required pediatric data review' },
+              { value: 'rems_review', label: 'REMS Review', description: 'Risk Evaluation and Mitigation Strategy assessment' },
+              { value: 'citizen_petition', label: 'Citizen Petition / Policy', description: 'FDA-requested advisory on policy or regulatory matter' },
             ],
-          },
-          {
-            id: 'application_type',
-            label: 'Application Type',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'nda', label: 'NDA — New Drug Application' },
-              { value: 'bla', label: 'BLA — Biologics License Application' },
-              { value: 'snda', label: 'sNDA — Supplemental NDA' },
-              { value: 'sbla', label: 'sBLA — Supplemental BLA' },
-              { value: 'pma', label: 'PMA — Premarket Approval (Device)' },
-              { value: 'hde', label: 'HDE — Humanitarian Device Exemption' },
-              { value: 'not_application_specific', label: 'Not Application-Specific (safety review, etc.)' },
-            ],
-          },
-          {
-            id: 'application_number',
-            label: 'Application Number (if assigned)',
-            type: 'text',
-            placeholder: 'e.g., NDA 214787 or BLA 761222',
-            helpText: 'Enter the NDA, BLA, or PMA number if already assigned by FDA.',
-          },
-          {
-            id: 'pdufa_action_date',
-            label: 'PDUFA Action Date',
-            type: 'date',
-            helpText: 'Per PDUFA VII, the advisory committee meeting should be scheduled to allow FDA sufficient time to consider the committee\'s advice before the action date. FDA typically schedules meetings 1-3 months before the PDUFA date.',
-            visibleWhen: { field: 'meeting_purpose', operator: 'in', value: ['pre_approval', 'accelerated_conversion'] },
           },
           {
             id: 'meeting_date',
-            label: 'Advisory Committee Meeting Date (actual or anticipated)',
+            label: 'Scheduled Meeting Date',
             type: 'date',
             required: true,
+          },
+          {
+            id: 'briefing_document_due_date',
+            label: 'Briefing Document Submission Deadline',
+            type: 'date',
+            required: true,
+            helpText: 'Per PDUFA commitments, the sponsor briefing document is typically due 30-55 days before the meeting. Confirm the exact deadline with your FDA project manager.',
+          },
+          {
+            id: 'application_number',
+            label: 'Application Number (NDA/BLA/sNDA/sBLA)',
+            type: 'text',
+            placeholder: 'e.g., NDA 214787 or BLA 761248',
+            required: true,
+          },
+          {
+            id: 'product_name',
+            label: 'Product Name (Proprietary and Generic)',
+            type: 'text',
+            placeholder: 'e.g., BRAND NAME (generic name)',
+            required: true,
+          },
+          {
+            id: 'sponsor_name',
+            label: 'Sponsor Name',
+            type: 'text',
+            placeholder: 'e.g., Acme Therapeutics, Inc.',
+            required: true,
+          },
+          {
+            id: 'fda_review_division',
+            label: 'FDA Review Division',
+            type: 'text',
+            placeholder: 'e.g., Division of Oncology Products 1, CDER',
+            helpText: 'Identify the review division to align your briefing document with their expectations and prior precedents.',
+          },
+        ],
+        defaultNext: 'committee_selection',
+      },
+
+      {
+        id: 'committee_selection',
+        section: 'meeting_context',
+        question:
+          'Which Advisory Committee will convene, and what is the composition of the panel? Understanding the committee helps tailor the briefing document.',
+        guidance:
+          'FDA has multiple Advisory Committees under CDER, CBER, and CDRH per 21 CFR Part 14.100. Each committee has specific therapeutic expertise. The Oncologic Drugs Advisory Committee (ODAC) reviews oncology products; the Anesthetic and Analgesic Drug Products Advisory Committee (AADPAC) covers pain; the Cardiovascular and Renal Drugs Advisory Committee (CRDAC) handles CV drugs. CDRH panels review devices. Knowing the committee allows you to anticipate the types of questions panelists may ask and tailor the briefing document accordingly.',
+        fields: [
+          {
+            id: 'advisory_committee',
+            label: 'Advisory Committee',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'odac', label: 'ODAC — Oncologic Drugs Advisory Committee' },
+              { value: 'aadpac', label: 'AADPAC — Anesthetic and Analgesic Drug Products AC' },
+              { value: 'crdac', label: 'CRDAC — Cardiovascular and Renal Drugs AC' },
+              { value: 'emdac', label: 'EMDAC — Endocrinologic and Metabolic Drugs AC' },
+              { value: 'pcns', label: 'PCNS — Psychopharmacologic Drugs AC' },
+              { value: 'amdac', label: 'AMDAC — Antimicrobial Drugs AC' },
+              { value: 'gastrointestinal', label: 'GIDAC — Gastrointestinal Drugs AC' },
+              { value: 'dermatologic', label: 'DDMAC — Dermatologic and Ophthalmic Drugs AC' },
+              { value: 'pulmonary_allergy', label: 'PADAC — Pulmonary-Allergy Drugs AC' },
+              { value: 'vaccines_related', label: 'VRBPAC — Vaccines and Related Biological Products AC' },
+              { value: 'blood_products', label: 'Blood Products Advisory Committee' },
+              { value: 'cdrh_panel', label: 'CDRH Device Panel (specify below)' },
+              { value: 'joint', label: 'Joint Advisory Committee Meeting' },
+              { value: 'other', label: 'Other' },
+            ],
+          },
+          {
+            id: 'cdrh_panel_name',
+            label: 'CDRH Panel Name',
+            type: 'text',
+            placeholder: 'e.g., Circulatory System Devices Panel',
+            visibleWhen: { field: 'advisory_committee', operator: 'eq', value: 'cdrh_panel' },
+          },
+          {
+            id: 'joint_committee_details',
+            label: 'Joint Committee Details',
+            type: 'textarea',
+            placeholder: 'e.g., Joint ODAC and CRDAC meeting to review cardiovascular safety of oncology drug',
+            visibleWhen: { field: 'advisory_committee', operator: 'eq', value: 'joint' },
+          },
+          {
+            id: 'prior_ac_meetings',
+            label: 'Any Prior Advisory Committee Meetings for This Product?',
+            type: 'yes_no',
+            helpText: 'If a prior AC meeting was held, the briefing document should address how prior committee feedback has been incorporated.',
+          },
+          {
+            id: 'prior_ac_outcome_summary',
+            label: 'Prior AC Meeting Outcome Summary',
+            type: 'textarea',
+            placeholder: 'e.g., Prior ODAC meeting on [date] voted 8-4 in favor of approval but raised concerns about hepatotoxicity signal. FDA issued a Complete Response Letter requesting additional safety data.',
+            visibleWhen: { field: 'prior_ac_meetings', operator: 'eq', value: true },
+          },
+          {
+            id: 'fda_briefing_document_expected',
+            label: 'Has FDA Indicated They Will Publish Their Own Briefing Document?',
+            type: 'yes_no',
+            helpText: 'FDA typically publishes its own briefing document 1-2 business days before the meeting. Anticipating FDA\'s framing helps prepare the sponsor\'s presentation strategy.',
+          },
+          {
+            id: 'patient_representative_expected',
+            label: 'Is a Patient Representative Expected on the Panel?',
+            type: 'yes_no',
+            helpText: 'Patient representatives bring a unique perspective. Consider including a patient-focused benefit narrative in your briefing document.',
           },
         ],
         branches: [
           {
-            when: { field: 'meeting_purpose', operator: 'eq', value: 'pediatric_focused' },
-            goto: 'meeting_logistics_pediatric',
+            when: { field: 'meeting_type', operator: 'eq', value: 'pediatric' },
+            goto: 'product_overview',
           },
           {
-            when: { field: 'meeting_purpose', operator: 'eq', value: 'post_approval' },
-            goto: 'meeting_logistics_postapproval',
-          },
-        ],
-        defaultNext: 'meeting_logistics',
-      },
-
-      /* ── Meeting Logistics (pre-approval / general) ─────────────────── */
-
-      {
-        id: 'meeting_logistics',
-        section: 'Meeting Context',
-        question:
-          'What are the logistical details and procedural considerations for this advisory committee meeting?',
-        guidance:
-          'Per 21 CFR 14.25, advisory committee meetings are open to the public unless the Commissioner determines that a portion should be closed under 5 USC 552b (Government in the Sunshine Act). The sponsor\'s briefing document is typically due to FDA 4 weeks before the meeting date, and FDA publishes it on the Federal Register at least 2 business days before the meeting per PDUFA VII commitments. The open public hearing (OPH) segment allows external stakeholders (patients, advocacy groups, competitors) to present, which can significantly influence committee votes.',
-        fields: [
-          {
-            id: 'briefing_doc_due_date',
-            label: 'Sponsor Briefing Document Due Date',
-            type: 'date',
-            required: true,
-            helpText: 'Typically 4 weeks before the advisory committee meeting. FDA may request earlier submission.',
-          },
-          {
-            id: 'fda_questions_received',
-            label: 'Has FDA shared draft voting questions or discussion topics?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per PDUFA VII, FDA commits to providing sponsors with draft voting/discussion questions at least 3 weeks before the meeting.',
-          },
-          {
-            id: 'fda_draft_questions_text',
-            label: 'FDA Draft Questions (paste or summarize)',
-            type: 'textarea',
-            visibleWhen: { field: 'fda_questions_received', operator: 'eq', value: true },
-            placeholder: 'Enter the draft voting and discussion questions provided by FDA...',
-            validation: { maxLength: 5000 },
-          },
-          {
-            id: 'sponsor_presentation_time',
-            label: 'Anticipated Sponsor Presentation Time (minutes)',
-            type: 'number',
-            placeholder: '60',
-            helpText: 'Sponsor presentations typically range from 45 to 90 minutes, depending on the complexity of the application.',
-            validation: { min: 15, max: 180 },
-          },
-          {
-            id: 'key_presenters',
-            label: 'Key Sponsor Presenters',
-            type: 'textarea',
-            placeholder: 'List the presenters and their roles (e.g., Lead clinician, biostatistician, safety medical officer, CMO)...',
-            required: true,
-            validation: { minLength: 10, maxLength: 3000 },
-          },
-          {
-            id: 'open_public_hearing_speakers',
-            label: 'Are patient advocacy groups or other speakers expected at the Open Public Hearing?',
-            type: 'yes_no',
-            helpText: 'Patient and advocacy organization testimony during the OPH can influence committee voting. Sponsors often coordinate (but cannot script) patient advocates.',
-          },
-          {
-            id: 'oph_speaker_details',
-            label: 'OPH Speaker Details',
-            type: 'textarea',
-            visibleWhen: { field: 'open_public_hearing_speakers', operator: 'eq', value: true },
-            placeholder: 'Describe expected OPH speakers and their perspectives...',
-          },
-          {
-            id: 'committee_roster_reviewed',
-            label: 'Has the committee roster been reviewed?',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'known_coi_concerns',
-            label: 'Any known conflict-of-interest concerns among committee members?',
-            type: 'textarea',
-            placeholder: 'Describe any known COIs that may lead to recusals or waivers per 18 USC 208(b)(3)...',
-          },
-          {
-            id: 'prior_similar_votes',
-            label: 'Has this committee voted on a similar product or class in the past 5 years?',
-            type: 'yes_no',
-          },
-          {
-            id: 'prior_vote_details',
-            label: 'Prior Vote Details',
-            type: 'textarea',
-            visibleWhen: { field: 'prior_similar_votes', operator: 'eq', value: true },
-            placeholder: 'Describe the prior vote: product name, vote outcome (e.g., 8Y-4N), key concerns raised, and how your product addresses them...',
-            validation: { maxLength: 3000 },
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'fda_questions_not_received',
-            condition: { field: 'fda_questions_received', operator: 'eq', value: false },
-            severity: 'warning',
-            title: 'FDA Draft Questions Not Yet Received',
-            message:
-              'Per PDUFA VII, FDA commits to providing draft voting/discussion questions at least 3 weeks before the advisory committee meeting. If you have not received them, follow up with the review division promptly — the briefing document should be structured to anticipate and address the voting questions.',
-            reference: 'PDUFA VII commitment letter; 21 CFR 14.22(d)',
+            when: { field: 'advisory_committee', operator: 'eq', value: 'cdrh_panel' },
+            goto: 'product_overview',
           },
         ],
         defaultNext: 'product_overview',
       },
 
-      /* ── Meeting Logistics — Post-Approval Branch ───────────────────── */
-
-      {
-        id: 'meeting_logistics_postapproval',
-        section: 'Meeting Context',
-        question:
-          'For this post-approval advisory committee meeting, what is the specific safety or efficacy concern driving the review?',
-        guidance:
-          'Post-approval advisory committee meetings are typically convened when FDA identifies a significant safety signal, a confirmatory trial fails to verify clinical benefit, or there is a need to re-evaluate the benefit-risk balance. Under 21 CFR 14.1(b), FDA may convene an advisory committee at any time to obtain expert advice. For accelerated approval products, FDORA (2022) strengthened FDA\'s authority to require post-marketing studies and to initiate withdrawal proceedings if confirmatory trials are not conducted with due diligence.',
-        fields: [
-          {
-            id: 'post_approval_trigger',
-            label: 'What triggered this post-approval advisory committee meeting?',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'safety_signal', label: 'New safety signal or adverse event reports' },
-              { value: 'confirmatory_failure', label: 'Confirmatory trial did not verify clinical benefit' },
-              { value: 'label_change', label: 'Proposed major labeling change' },
-              { value: 'rems_modification', label: 'REMS modification or assessment' },
-              { value: 'class_wide_review', label: 'Class-wide safety review' },
-              { value: 'fda_initiated', label: 'FDA-initiated benefit-risk re-evaluation' },
-            ],
-          },
-          {
-            id: 'years_on_market',
-            label: 'Years on Market',
-            type: 'number',
-            placeholder: 'e.g., 3',
-            validation: { min: 0, max: 50 },
-          },
-          {
-            id: 'post_market_safety_data_summary',
-            label: 'Summary of Post-Marketing Safety Data',
-            type: 'textarea',
-            required: true,
-            placeholder: 'Describe the post-marketing safety experience including FAERS data, PSUR/PBRER findings, and any signals of concern...',
-            validation: { minLength: 50, maxLength: 5000 },
-          },
-          {
-            id: 'current_label_warnings',
-            label: 'Current Label Warnings & Precautions (relevant sections)',
-            type: 'textarea',
-            placeholder: 'Summarize the current Boxed Warning, Warnings and Precautions, and any Contraindications relevant to the safety concern...',
-          },
-          {
-            id: 'estimated_patient_exposure',
-            label: 'Estimated Cumulative Patient Exposure Post-Approval',
-            type: 'text',
-            placeholder: 'e.g., 500,000 patients treated worldwide',
-            helpText: 'Post-marketing exposure estimates help contextualize the reporting rate of safety signals.',
-          },
-        ],
-        defaultNext: 'product_overview',
-      },
-
-      /* ── Meeting Logistics — Pediatric-Focused Branch ───────────────── */
-
-      {
-        id: 'meeting_logistics_pediatric',
-        section: 'Meeting Context',
-        question:
-          'For this pediatric-focused advisory committee meeting, what is the pediatric development context?',
-        guidance:
-          'Pediatric advisory committee meetings are governed by the Pediatric Research Equity Act (PREA, 21 USC 355c) and the Best Pharmaceuticals for Children Act (BPCA, 21 USC 355a). Per PREA, sponsors must submit pediatric study plans (iPSPs) and conduct studies in all relevant pediatric age groups unless granted a waiver or deferral. FDA Guidance "Pediatric Study Plans: Content of and Process for Submitting Initial Pediatric Study Plans and Agreed Initial Pediatric Study Plans" (2020) outlines the requirements. Extrapolation of efficacy from adult data (per FDA Guidance "Leveraging Existing Clinical Data for Extrapolation to Pediatric Uses," 2022) is a key discussion topic at many pediatric advisory committees.',
-        fields: [
-          {
-            id: 'pediatric_age_groups',
-            label: 'Pediatric Age Groups Under Discussion',
-            type: 'multi_select',
-            required: true,
-            options: [
-              { value: 'neonates', label: 'Neonates (birth to < 28 days)' },
-              { value: 'infants', label: 'Infants (28 days to < 24 months)' },
-              { value: 'children_2_11', label: 'Children (2 to < 12 years)' },
-              { value: 'adolescents', label: 'Adolescents (12 to < 17 years)' },
-            ],
-          },
-          {
-            id: 'extrapolation_approach',
-            label: 'Is efficacy extrapolation from adult data being proposed?',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'extrapolation_justification',
-            label: 'Extrapolation Justification',
-            type: 'textarea',
-            visibleWhen: { field: 'extrapolation_approach', operator: 'eq', value: true },
-            placeholder: 'Describe the scientific basis for extrapolation: similar disease, similar drug response, exposure-response relationship...',
-            validation: { minLength: 50, maxLength: 5000 },
-          },
-          {
-            id: 'pediatric_formulation',
-            label: 'Is an age-appropriate formulation available?',
-            type: 'yes_no',
-            helpText: 'FDA expects sponsors to develop age-appropriate formulations for each target age group. Lack of a suitable formulation can complicate pediatric development.',
-          },
-          {
-            id: 'prea_status',
-            label: 'PREA Status',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'ipsp_agreed', label: 'iPSP agreed with FDA' },
-              { value: 'ipsp_submitted', label: 'iPSP submitted, not yet agreed' },
-              { value: 'deferral_granted', label: 'Pediatric study deferral granted' },
-              { value: 'waiver_granted', label: 'Full or partial waiver granted' },
-              { value: 'studies_complete', label: 'Pediatric studies completed' },
-            ],
-          },
-        ],
-        defaultNext: 'product_overview',
-      },
-
-      /* ================================================================
-       * Section 2 — Product & Indication Overview
-       * ================================================================ */
+      /* ================================================================ */
+      /*  Section 2 — Product & Indication Overview                       */
+      /* ================================================================ */
 
       {
         id: 'product_overview',
-        section: 'Product & Indication Overview',
+        section: 'product_indication',
         question:
-          'Provide an overview of the product and its proposed indication for the briefing document.',
+          'Provide a concise overview of the product for the Advisory Committee. This section sets the stage for the entire briefing document.',
         guidance:
-          'The product overview section of the briefing document should concisely describe the mechanism of action, pharmacologic class, proposed indication, and where the product fits in the current treatment landscape. Advisory committee members need sufficient background to evaluate benefit-risk — many may not be specialists in the specific disease area. Per 21 CFR Part 14 and FDA advisory committee procedures, the briefing document should clearly articulate the unmet medical need and the clinical rationale for the product.',
+          'The product overview section of the briefing document should provide a clear, concise summary that a non-specialist panelist can understand. Per FDA guidance on AC briefing documents, include the mechanism of action, formulation, dosing regimen, and the specific regulatory action being sought. For biologics, briefly describe the manufacturing process. Reference the product label (if approved) or proposed labeling.',
+        provideExpertFeedback: true,
         fields: [
           {
-            id: 'product_name_generic',
-            label: 'Generic (INN) Name',
+            id: 'drug_generic_name',
+            label: 'Generic / INN Name',
             type: 'text',
+            placeholder: 'e.g., pembrolizumab',
             required: true,
-            placeholder: 'e.g., Pembrolizumab',
           },
           {
-            id: 'product_name_trade',
-            label: 'Proposed Trade Name',
+            id: 'drug_brand_name',
+            label: 'Proprietary (Brand) Name',
             type: 'text',
-            placeholder: 'e.g., Keytruda',
+            placeholder: 'e.g., KEYTRUDA',
           },
           {
-            id: 'product_class',
-            label: 'Pharmacologic / Product Class',
-            type: 'text',
+            id: 'product_type',
+            label: 'Product Type',
+            type: 'select',
             required: true,
-            placeholder: 'e.g., PD-1 blocking antibody, selective serotonin reuptake inhibitor',
+            options: [
+              { value: 'small_molecule', label: 'Small Molecule' },
+              { value: 'monoclonal_antibody', label: 'Monoclonal Antibody' },
+              { value: 'adc', label: 'Antibody-Drug Conjugate (ADC)' },
+              { value: 'bispecific', label: 'Bispecific Antibody' },
+              { value: 'gene_therapy', label: 'Gene Therapy' },
+              { value: 'cell_therapy', label: 'Cell Therapy (CAR-T, TCR, etc.)' },
+              { value: 'vaccine', label: 'Vaccine' },
+              { value: 'peptide', label: 'Peptide' },
+              { value: 'oligonucleotide', label: 'Oligonucleotide (ASO/siRNA)' },
+              { value: 'biosimilar', label: 'Biosimilar' },
+              { value: 'combination_product', label: 'Combination Product' },
+              { value: 'medical_device', label: 'Medical Device' },
+            ],
           },
           {
             id: 'mechanism_of_action',
-            label: 'Mechanism of Action (brief)',
+            label: 'Mechanism of Action (Brief)',
             type: 'textarea',
+            placeholder: 'e.g., Humanized IgG4 monoclonal antibody that binds PD-1 receptor, blocking PD-L1 and PD-L2 interaction, thereby restoring anti-tumor T-cell immunity.',
             required: true,
-            placeholder: 'Describe the mechanism of action in 2-3 sentences for a general scientific audience...',
-            validation: { minLength: 20, maxLength: 2000 },
+            validation: { minLength: 30 },
           },
+          {
+            id: 'dosing_regimen',
+            label: 'Proposed / Approved Dosing Regimen',
+            type: 'textarea',
+            placeholder: 'e.g., 200 mg IV Q3W or 400 mg IV Q6W until disease progression, unacceptable toxicity, or up to 24 months.',
+            required: true,
+          },
+          {
+            id: 'regulatory_action_sought',
+            label: 'Specific Regulatory Action Being Sought',
+            type: 'textarea',
+            placeholder: 'e.g., Approval of original BLA for treatment of adult patients with unresectable or metastatic melanoma. OR: Supplemental NDA for expansion to first-line NSCLC.',
+            required: true,
+            validation: { minLength: 20 },
+          },
+          {
+            id: 'expedited_designations',
+            label: 'Expedited Program Designations',
+            type: 'multi_select',
+            options: [
+              { value: 'fast_track', label: 'Fast Track' },
+              { value: 'breakthrough', label: 'Breakthrough Therapy' },
+              { value: 'priority_review', label: 'Priority Review' },
+              { value: 'accelerated_approval', label: 'Accelerated Approval' },
+              { value: 'rmat', label: 'RMAT (Regenerative Medicine Advanced Therapy)' },
+              { value: 'orphan', label: 'Orphan Drug Designation' },
+              { value: 'none', label: 'None' },
+            ],
+          },
+        ],
+        defaultNext: 'indication_and_epidemiology',
+      },
+
+      {
+        id: 'indication_and_epidemiology',
+        section: 'product_indication',
+        question:
+          'Describe the target indication, disease epidemiology, and unmet medical need. This establishes why this product matters.',
+        guidance:
+          'The Advisory Committee must understand the disease burden and current treatment landscape. Present incidence and prevalence data with authoritative sources (NCI SEER, WHO, CDC). Describe the current standard of care and its limitations. Quantify the unmet need — mortality rates, lack of therapeutic options, treatment-related toxicity burden. For rare diseases, emphasize orphan disease considerations. This section should make a compelling case for why a new therapy is needed.',
+        fields: [
           {
             id: 'proposed_indication',
-            label: 'Proposed Indication Statement',
+            label: 'Proposed Indication (Exact Wording)',
             type: 'textarea',
+            placeholder: 'e.g., Treatment of adult patients with locally advanced or metastatic urothelial carcinoma who have disease progression during or following platinum-containing chemotherapy.',
             required: true,
-            placeholder: 'e.g., For the treatment of adult patients with unresectable or metastatic melanoma...',
-            validation: { minLength: 20, maxLength: 2000 },
           },
           {
-            id: 'dosage_form_route',
-            label: 'Dosage Form and Route of Administration',
-            type: 'text',
+            id: 'disease_epidemiology',
+            label: 'Disease Epidemiology (Incidence/Prevalence)',
+            type: 'textarea',
+            placeholder: 'e.g., Approximately 83,000 new cases and 17,000 deaths annually in the US (ACS 2024). 5-year survival rate for metastatic disease is 5-8%.',
             required: true,
-            placeholder: 'e.g., 200 mg IV infusion every 3 weeks',
+            validation: { minLength: 30 },
+          },
+          {
+            id: 'current_standard_of_care',
+            label: 'Current Standard of Care',
+            type: 'textarea',
+            placeholder: 'e.g., First-line: Gemcitabine + cisplatin. Second-line: Limited options — single-agent chemotherapy with ORR <15% and median OS of 7-9 months.',
+            required: true,
           },
           {
             id: 'unmet_medical_need',
-            label: 'Unmet Medical Need',
+            label: 'Unmet Medical Need Statement',
             type: 'textarea',
+            placeholder: 'e.g., Patients who progress on platinum-based chemotherapy have limited treatment options with poor response rates and significant toxicity. No approved targeted therapies exist for this population.',
             required: true,
-            placeholder: 'Describe the current treatment landscape gaps, limitations of existing therapies, and the clinical need this product addresses...',
-            validation: { minLength: 50, maxLength: 3000 },
+            validation: { minLength: 30 },
           },
           {
-            id: 'disease_background',
-            label: 'Disease Background & Epidemiology',
-            type: 'textarea',
-            required: true,
-            placeholder: 'Incidence, prevalence, natural history, mortality/morbidity, affected populations...',
-            validation: { minLength: 50, maxLength: 5000 },
+            id: 'patient_population_size',
+            label: 'Estimated US Patient Population (Annual)',
+            type: 'text',
+            placeholder: 'e.g., ~15,000 patients annually would be eligible for the proposed indication',
           },
           {
-            id: 'regulatory_designations',
-            label: 'Regulatory Designations',
-            type: 'multi_select',
-            options: [
-              { value: 'breakthrough', label: 'Breakthrough Therapy' },
-              { value: 'fast_track', label: 'Fast Track' },
-              { value: 'priority_review', label: 'Priority Review' },
-              { value: 'accelerated_approval', label: 'Accelerated Approval' },
-              { value: 'orphan_drug', label: 'Orphan Drug Designation' },
-              { value: 'rmat', label: 'RMAT — Regenerative Medicine Advanced Therapy' },
-              { value: 'qidp', label: 'QIDP — Qualified Infectious Disease Product' },
-              { value: 'none', label: 'No Special Designations' },
-            ],
+            id: 'pediatric_relevance',
+            label: 'Is this indication relevant to pediatric populations?',
+            type: 'yes_no',
+            helpText: 'If a pediatric-focused AC meeting, this section should include pediatric-specific epidemiology and development history per PREA.',
           },
         ],
         defaultNext: 'competitive_landscape',
       },
 
-      /* ── Competitive Landscape ──────────────────────────────────────── */
-
       {
         id: 'competitive_landscape',
-        section: 'Product & Indication Overview',
+        section: 'product_indication',
         question:
-          'Describe the competitive landscape and how this product is differentiated from existing and emerging therapies.',
+          'Describe the competitive landscape. What approved and investigational therapies exist, and how does this product differentiate?',
         guidance:
-          'Advisory committee members will compare your product against available alternatives. The briefing document should include a clear comparison table showing approved therapies, their efficacy and safety profiles, and where your product offers improvement. Per FDA advisory committee best practices, a strong competitive landscape section anticipates the "why do we need another [drug class]?" question that committees frequently ask. Include both approved and late-stage pipeline competitors.',
+          'Advisory Committee members will want to understand where this product fits relative to existing and emerging therapies. Include all approved therapies for the same indication with their efficacy and safety profiles. Identify key competitors in late-stage clinical development. Present a differentiation narrative — how does this product offer a meaningful improvement over available options? This context is critical for the benefit-risk discussion.',
         fields: [
           {
             id: 'approved_therapies',
-            label: 'Currently Approved Therapies for this Indication',
+            label: 'Currently Approved Therapies for This Indication',
             type: 'textarea',
+            placeholder: 'e.g., 1. Drug A (Brand): Approved 2019, ORR 22%, mOS 10.3 months, Key toxicities: nephrotoxicity, neuropathy.\n2. Drug B (Brand): Approved 2021, ORR 28%, mOS 12.1 months, Key toxicities: immune-related AEs.',
             required: true,
-            placeholder: 'List approved therapies, their efficacy benchmarks, and key limitations...',
-            validation: { minLength: 30, maxLength: 5000 },
           },
           {
-            id: 'pipeline_competitors',
-            label: 'Late-Stage Pipeline Competitors',
+            id: 'investigational_therapies',
+            label: 'Key Investigational Therapies in Late-Stage Development',
             type: 'textarea',
-            placeholder: 'Describe any Phase 3 or filed competitors that the committee may be aware of...',
-            validation: { maxLength: 5000 },
+            placeholder: 'e.g., Competitor X: Phase 3 (NCT01234567), estimated completion Q4 2025. Competitor Y: Phase 2/3, accelerated approval pathway.',
           },
           {
-            id: 'differentiation_summary',
-            label: 'Key Differentiators',
+            id: 'differentiation_narrative',
+            label: 'Product Differentiation Narrative',
             type: 'textarea',
+            placeholder: 'e.g., Novel mechanism targeting [X] with potential for improved efficacy in [subgroup]. Oral formulation vs. IV standard of care. Favorable safety profile with no dose-limiting myelosuppression.',
             required: true,
-            placeholder: 'How is this product differentiated? Consider efficacy, safety, dosing convenience, mechanism, patient subgroups...',
-            validation: { minLength: 30, maxLength: 3000 },
+            validation: { minLength: 30 },
           },
           {
-            id: 'treatment_guidelines',
-            label: 'Relevant Treatment Guidelines',
-            type: 'textarea',
-            placeholder: 'List relevant NCCN, AHA/ACC, IDSA, or other society guidelines and where this product would fit...',
-            validation: { maxLength: 3000 },
+            id: 'head_to_head_data',
+            label: 'Is Head-to-Head Data Available vs. Standard of Care?',
+            type: 'select',
+            options: [
+              { value: 'yes_superiority', label: 'Yes — Superiority trial completed' },
+              { value: 'yes_non_inferiority', label: 'Yes — Non-inferiority trial completed' },
+              { value: 'indirect_comparison', label: 'No — Indirect/Cross-trial comparison only' },
+              { value: 'single_arm', label: 'No — Single-arm study (no comparator)' },
+            ],
+            helpText: 'The absence of head-to-head comparative data is frequently raised by Advisory Committee members. Prepare cross-trial comparison analyses if direct data is unavailable.',
           },
         ],
+        defaultNext: 'nonclinical_overview',
         issueChecks: [
           {
             id: 'incomplete_competitive_landscape',
-            condition: { field: 'approved_therapies', operator: 'eq', value: '' },
+            condition: { field: 'investigational_therapies', operator: 'eq', value: '' },
             severity: 'warning',
             title: 'Incomplete Competitive Landscape',
             message:
-              'Advisory committee members will expect a thorough comparison against approved alternatives. Failing to present the competitive landscape risks appearing to avoid unfavorable comparisons and undermines credibility with the committee.',
-            reference: 'FDA Guidance "Procedures for Meetings of the FDA Advisory Committees" (2017)',
+              'Advisory Committee members expect a comprehensive view of the therapeutic landscape, including late-stage investigational therapies. Omitting competitive pipeline data may invite challenging questions about the product\'s relative positioning. Review ClinicalTrials.gov for relevant Phase 2/3 competitors.',
+            reference: 'FDA Guidance: Advisory Committee Meetings (2008)',
           },
         ],
-        defaultNext: 'nonclinical_pharmacology',
       },
 
-      /* ================================================================
-       * Section 3 — Nonclinical Summary
-       * ================================================================ */
+      /* ================================================================ */
+      /*  Section 3 — Nonclinical Summary                                 */
+      /* ================================================================ */
 
       {
-        id: 'nonclinical_pharmacology',
-        section: 'Nonclinical Summary',
+        id: 'nonclinical_overview',
+        section: 'nonclinical',
         question:
-          'Summarize the nonclinical pharmacology and pharmacokinetics data to be presented in the briefing document.',
+          'Provide a high-level nonclinical summary for the Advisory Committee. Focus on findings relevant to the clinical benefit-risk assessment.',
         guidance:
-          'The nonclinical section of an advisory committee briefing document is typically concise — committee members focus primarily on clinical data. However, key nonclinical findings that inform clinical safety (e.g., carcinogenicity signals, reproductive toxicity, off-target pharmacology) must be highlighted because committee members will ask about them. Per ICH M4S, the nonclinical overview should be organized by primary pharmacodynamics, secondary pharmacodynamics, safety pharmacology, pharmacokinetics, and toxicology.',
+          'The nonclinical section of the briefing document should be concise — the Advisory Committee is primarily interested in clinical data. Focus on: (1) mechanism of action validation from animal models, (2) key toxicology findings that inform clinical safety monitoring, (3) carcinogenicity, reproductive toxicity, and genotoxicity findings, and (4) any nonclinical findings that remain unexplained or are relevant to long-term safety. Reference ICH M3(R2) and the IND nonclinical package.',
         fields: [
           {
-            id: 'primary_pharmacodynamics',
-            label: 'Primary Pharmacodynamic Findings',
+            id: 'pharmacology_summary',
+            label: 'Primary Pharmacology Summary',
             type: 'textarea',
-            required: true,
-            placeholder: 'Summarize key in vitro and in vivo pharmacology studies demonstrating mechanism and efficacy...',
-            validation: { minLength: 30, maxLength: 5000 },
-          },
-          {
-            id: 'safety_pharmacology',
-            label: 'Safety Pharmacology Findings',
-            type: 'textarea',
-            placeholder: 'Summarize cardiovascular (hERG, telemetry), CNS, respiratory safety pharmacology results...',
-            validation: { maxLength: 5000 },
-          },
-          {
-            id: 'nonclinical_pk',
-            label: 'Nonclinical Pharmacokinetics Summary',
-            type: 'textarea',
-            placeholder: 'ADME characteristics, species comparisons, human-relevant exposures...',
-            validation: { maxLength: 5000 },
-          },
-          {
-            id: 'nonclinical_findings_clinical_relevance',
-            label: 'Are there nonclinical findings with potential clinical relevance?',
-            type: 'yes_no',
+            placeholder: 'e.g., In vitro and in vivo studies demonstrated dose-dependent target inhibition. Xenograft models showed 60-80% tumor growth inhibition at clinically relevant exposures.',
             required: true,
           },
           {
-            id: 'nonclinical_findings_details',
-            label: 'Clinically Relevant Nonclinical Findings',
+            id: 'key_toxicology_findings',
+            label: 'Key Toxicology Findings Relevant to Clinical Safety',
             type: 'textarea',
-            visibleWhen: { field: 'nonclinical_findings_clinical_relevance', operator: 'eq', value: true },
-            placeholder: 'Describe findings and their clinical implications (e.g., target organ toxicity, carcinogenicity signals, reproductive effects)...',
-            validation: { minLength: 30, maxLength: 5000 },
-          },
-        ],
-        defaultNext: 'nonclinical_toxicology',
-      },
-
-      /* ── Nonclinical Toxicology ─────────────────────────────────────── */
-
-      {
-        id: 'nonclinical_toxicology',
-        section: 'Nonclinical Summary',
-        question:
-          'Summarize the toxicology program findings relevant to the briefing document.',
-        guidance:
-          'Per ICH S9 (nonclinical evaluation of anticancer pharmaceuticals) and ICH M3(R2) (nonclinical safety studies), the toxicology summary should focus on findings that translate to clinical safety monitoring requirements. Advisory committees pay particular attention to carcinogenicity study results (ICH S1A/S1B), reproductive and developmental toxicity (ICH S5(R3)), and genotoxicity (ICH S2(R1)). Highlight the safety margins (exposure multiples at NOAEL vs. clinical exposure) for all key toxicity findings.',
-        fields: [
-          {
-            id: 'repeat_dose_tox_summary',
-            label: 'Repeat-Dose Toxicity Summary',
-            type: 'textarea',
+            placeholder: 'e.g., Target organ toxicity: hepatotoxicity (reversible, rat/dog) and myelosuppression (rat). NOAEL: 30 mg/kg/day in dog. Safety margins: >10x at proposed clinical dose.',
             required: true,
-            placeholder: 'Key findings from repeat-dose studies: target organs, NOAELs, exposure margins vs. clinical dose...',
-            validation: { minLength: 30, maxLength: 5000 },
+            validation: { minLength: 30 },
           },
           {
-            id: 'carcinogenicity_status',
-            label: 'Carcinogenicity Assessment Status',
+            id: 'carcinogenicity_findings',
+            label: 'Carcinogenicity Assessment',
             type: 'select',
-            required: true,
             options: [
-              { value: 'studies_complete_negative', label: 'Studies completed — no carcinogenic signal' },
-              { value: 'studies_complete_positive', label: 'Studies completed — carcinogenic signal identified' },
-              { value: 'studies_ongoing', label: 'Studies ongoing (results not yet available)' },
-              { value: 'waiver_granted', label: 'Waiver granted by FDA' },
-              { value: 'not_required', label: 'Not required (e.g., ICH S9 for anticancer agents)' },
+              { value: 'completed_negative', label: 'Completed — No carcinogenic potential identified' },
+              { value: 'completed_positive', label: 'Completed — Findings identified (describe below)' },
+              { value: 'in_progress', label: 'In progress' },
+              { value: 'waived', label: 'Waived with scientific justification' },
+              { value: 'not_required', label: 'Not required (biologic per ICH S6(R1))' },
             ],
           },
           {
-            id: 'reproductive_tox_summary',
-            label: 'Reproductive & Developmental Toxicity',
+            id: 'carcinogenicity_details',
+            label: 'Carcinogenicity Findings Details',
             type: 'textarea',
-            placeholder: 'Summarize fertility, embryo-fetal development, and pre-/post-natal development study findings...',
-            validation: { maxLength: 5000 },
+            visibleWhen: { field: 'carcinogenicity_findings', operator: 'eq', value: 'completed_positive' },
           },
           {
-            id: 'genotoxicity_summary',
-            label: 'Genotoxicity Battery Results',
+            id: 'reproductive_toxicity_summary',
+            label: 'Reproductive and Developmental Toxicity Summary',
             type: 'textarea',
-            placeholder: 'Ames test, in vitro chromosomal aberration, in vivo micronucleus — results summary...',
-            validation: { maxLength: 3000 },
+            placeholder: 'e.g., Embryo-fetal development studies showed teratogenicity at maternally toxic doses in rabbits. Product is contraindicated in pregnancy. Pregnancy testing required per labeling.',
+          },
+          {
+            id: 'nonclinical_concerns_unresolved',
+            label: 'Any Unresolved Nonclinical Concerns?',
+            type: 'textarea',
+            placeholder: 'e.g., Phospholipidosis observed in rat at high doses — clinical significance uncertain. Monitoring plan in place.',
+            helpText: 'Advisory Committee members and FDA reviewers will probe any unresolved nonclinical findings. Proactively address these in the briefing document.',
           },
         ],
-        defaultNext: 'clinical_development',
+        defaultNext: 'clinical_program_summary',
       },
 
-      /* ================================================================
-       * Section 4 — Clinical Program Overview
-       * ================================================================ */
+      /* ================================================================ */
+      /*  Section 4 — Clinical Program Overview                           */
+      /* ================================================================ */
 
       {
-        id: 'clinical_development',
-        section: 'Clinical Program Overview',
+        id: 'clinical_program_summary',
+        section: 'clinical_program',
         question:
-          'Provide an overview of the clinical development program supporting this application.',
+          'Provide an overview of the clinical development program. How many studies, what phases, and what is the total patient exposure?',
         guidance:
-          'The clinical program overview is the backbone of the briefing document. Advisory committee members need to understand the breadth of clinical evidence, the study designs, and how the program addresses the benefit-risk questions. Per ICH E1A (population exposure), the size and duration of the safety database should be justified. FDA\'s Guidance "Integrated Summary of Effectiveness" (1988, still current) describes how to organize clinical evidence. Include a clinical development program timeline/schematic — this visual aid is highly valued by committee members.',
-        provideExpertFeedback: true,
+          'The clinical program overview should give the Advisory Committee a roadmap of all clinical studies that support the application. Present the studies in a tabular format: study number, phase, design, population, N enrolled, key endpoints. Highlight the pivotal study(ies). Total patient exposure data (patient-years) is critical for the safety database assessment per ICH E1. For NDA/BLA submissions, FDA expects at least 1,500 patients exposed and 300-600 patients for 6 months per ICH E1.',
         fields: [
           {
-            id: 'total_patients_exposed',
-            label: 'Total Number of Patients Exposed to Drug',
+            id: 'total_studies_in_program',
+            label: 'Total Number of Clinical Studies in the Program',
             type: 'number',
             required: true,
-            helpText: 'Per ICH E1A, at least 1,500 patients should be exposed for non-life-threatening conditions, with 300-600 for 6 months and 100 for 12 months.',
             validation: { min: 1 },
           },
           {
-            id: 'num_pivotal_trials',
-            label: 'Number of Pivotal Trials',
+            id: 'pivotal_study_identifiers',
+            label: 'Pivotal Study Identifier(s)',
+            type: 'text',
+            placeholder: 'e.g., Study ABC-301 (Phase 3) and Study ABC-201 (Phase 2)',
+            required: true,
+          },
+          {
+            id: 'total_patients_exposed',
+            label: 'Total Patients Exposed to Study Drug',
             type: 'number',
             required: true,
-            validation: { min: 1, max: 20 },
+            validation: { min: 1 },
+            helpText: 'Per ICH E1, FDA expects at least 1,500 patients exposed for chronic-use drugs, with at least 300-600 exposed for 6 months and 100 for 12 months.',
           },
           {
-            id: 'pivotal_trial_designs',
-            label: 'Pivotal Trial Design(s)',
+            id: 'total_patient_years',
+            label: 'Total Patient-Years of Exposure',
+            type: 'text',
+            placeholder: 'e.g., 2,450 patient-years',
+          },
+          {
+            id: 'clinical_program_overview',
+            label: 'Clinical Program Overview (Study Listing)',
             type: 'textarea',
+            placeholder: 'e.g., Phase 1: ABC-101 (dose escalation, N=45), ABC-102 (food effect, N=24). Phase 2: ABC-201 (single-arm, N=120). Phase 3: ABC-301 (randomized, N=650).',
             required: true,
-            placeholder: 'For each pivotal trial: study design (randomized, double-blind, etc.), comparator, primary endpoint, sample size, key inclusion/exclusion criteria...',
-            validation: { minLength: 50, maxLength: 10000 },
+            validation: { minLength: 50 },
           },
           {
-            id: 'supportive_trial_summary',
-            label: 'Supportive Studies Summary',
+            id: 'pivotal_study_design',
+            label: 'Pivotal Study Design Summary',
             type: 'textarea',
-            placeholder: 'Describe Phase 1, Phase 2, dose-finding, and other supportive studies...',
-            validation: { maxLength: 10000 },
-          },
-          {
-            id: 'primary_endpoint_type',
-            label: 'Primary Endpoint Category',
-            type: 'select',
+            placeholder: 'e.g., Randomized, double-blind, placebo-controlled, multicenter Phase 3 study in patients with [indication]. 2:1 randomization. Primary endpoint: PFS by BICR per RECIST v1.1. Key secondary: OS, ORR, DOR.',
             required: true,
-            options: [
-              { value: 'clinical_outcome', label: 'Clinical Outcome (e.g., overall survival, event-free survival)' },
-              { value: 'surrogate_validated', label: 'Validated Surrogate Endpoint (e.g., HbA1c, blood pressure)' },
-              { value: 'surrogate_reasonably_likely', label: 'Reasonably Likely Surrogate (for accelerated approval, e.g., ORR, pCR)' },
-              { value: 'patient_reported', label: 'Patient-Reported Outcome (PRO)' },
-              { value: 'composite', label: 'Composite Endpoint' },
-            ],
+            validation: { minLength: 50 },
           },
           {
-            id: 'statistical_analysis_approach',
-            label: 'Statistical Analysis Approach',
+            id: 'study_population_demographics',
+            label: 'Key Demographics of Study Population',
             type: 'textarea',
-            placeholder: 'Describe the primary statistical methods, multiplicity adjustments, interim analyses, and alpha allocation strategy...',
-            validation: { maxLength: 5000 },
+            placeholder: 'e.g., Median age 62 (range 28-84). 55% male. 72% White, 12% Black, 8% Asian. ECOG PS 0-1. Prior lines of therapy: median 1 (range 0-4).',
           },
         ],
-        defaultNext: 'efficacy_data',
+        defaultNext: 'efficacy_results',
+        provideExpertFeedback: true,
       },
 
-      /* ── Efficacy Data ──────────────────────────────────────────────── */
-
       {
-        id: 'efficacy_data',
-        section: 'Clinical Program Overview',
+        id: 'efficacy_results',
+        section: 'clinical_program',
         question:
-          'Summarize the efficacy results from the clinical program.',
+          'Present the key efficacy results from the pivotal study(ies). This is the core of the briefing document.',
         guidance:
-          'Present efficacy results clearly and transparently — advisory committees respond negatively to perceived "spin." Per FDA Guidance "Integrated Summary of Effectiveness," results should be presented by study, with the primary analysis first, followed by sensitivity analyses and subgroup analyses. Forest plots of subgroup effects are expected. Present the primary endpoint results with exact p-values and confidence intervals — do not simply state "statistically significant." If the product received Breakthrough Therapy designation, explain how the efficacy data met the "substantial improvement" threshold.',
+          'Present efficacy results with precision and transparency. Include the primary endpoint with the pre-specified statistical analysis, all key secondary endpoints, and pre-specified subgroup analyses. For time-to-event endpoints, include Kaplan-Meier curves, hazard ratios with confidence intervals, and median values. For response endpoints, include confirmed response rates, duration of response, and time to response. FDA will scrutinize the statistical analysis plan — ensure consistency between the SAP and the results presented. Address any multiplicity-adjusted analyses.',
         fields: [
           {
-            id: 'primary_efficacy_results',
-            label: 'Primary Endpoint Results',
+            id: 'primary_endpoint_result',
+            label: 'Primary Endpoint Result',
             type: 'textarea',
+            placeholder: 'e.g., Median PFS: 12.3 months (drug) vs. 6.1 months (control). HR = 0.52 (95% CI: 0.42-0.64), p < 0.0001. Pre-specified statistical significance boundary crossed at interim analysis.',
             required: true,
-            placeholder: 'For each pivotal trial: treatment effect (HR, OR, mean difference), 95% CI, p-value, clinical significance...',
-            validation: { minLength: 50, maxLength: 10000 },
+            validation: { minLength: 30 },
           },
           {
-            id: 'secondary_endpoint_results',
-            label: 'Key Secondary Endpoint Results',
-            type: 'textarea',
-            placeholder: 'Summarize results for key secondary and exploratory endpoints...',
-            validation: { maxLength: 10000 },
-          },
-          {
-            id: 'subgroup_analyses_performed',
-            label: 'Were pre-specified subgroup analyses performed?',
+            id: 'primary_endpoint_met',
+            label: 'Was the Primary Endpoint Met?',
             type: 'yes_no',
             required: true,
           },
           {
-            id: 'subgroup_analysis_results',
-            label: 'Subgroup Analysis Results',
+            id: 'key_secondary_endpoints',
+            label: 'Key Secondary Endpoint Results',
             type: 'textarea',
-            visibleWhen: { field: 'subgroup_analyses_performed', operator: 'eq', value: true },
-            placeholder: 'Describe subgroup analyses: age, sex, race/ethnicity, disease severity, biomarker status, geographic region. Note any subgroups with inconsistent treatment effects...',
-            validation: { minLength: 30, maxLength: 10000 },
+            placeholder: 'e.g., OS: Median not reached vs. 18.2 months, HR = 0.71 (95% CI: 0.55-0.92). ORR: 45% vs. 18% (p < 0.001). Median DOR: 14.5 months vs. 8.2 months.',
+            required: true,
           },
           {
-            id: 'duration_of_response',
-            label: 'Duration of Response / Durability Data',
+            id: 'subgroup_analyses',
+            label: 'Pre-Specified Subgroup Analyses',
             type: 'textarea',
-            placeholder: 'Median duration of response, Kaplan-Meier curves, landmark analyses...',
-            validation: { maxLength: 5000 },
+            placeholder: 'e.g., Consistent benefit across age, sex, race, ECOG PS, and prior therapy subgroups. Biomarker-high subgroup: HR = 0.35; biomarker-low: HR = 0.78. Forest plot included.',
+            helpText: 'Pre-specified subgroup analyses are expected in the briefing document. Identify any subgroups with inconsistent treatment effect.',
           },
-        ],
-        issueChecks: [
           {
-            id: 'missing_subgroup_efficacy_data',
-            condition: { field: 'subgroup_analyses_performed', operator: 'eq', value: false },
-            severity: 'critical',
-            title: 'Missing Subgroup Efficacy Data',
-            message:
-              'Advisory committees expect pre-specified subgroup efficacy analyses (age, sex, race/ethnicity, disease severity, biomarker status). Missing subgroup data will raise concerns about generalizability and may prompt unfavorable questions. FDA reviewers routinely include forest plots of subgroup effects in their briefing documents.',
-            reference: 'ICH E9 "Statistical Principles for Clinical Trials"; FDA Guidance "Evaluation of Sex-Specific Data in Medical Device Clinical Studies" (2014)',
+            id: 'patient_reported_outcomes',
+            label: 'Patient-Reported Outcomes (PROs)',
+            type: 'textarea',
+            placeholder: 'e.g., EORTC QLQ-C30 Global Health Status: Mean change from baseline +5.2 (drug) vs. -2.1 (control). Time to deterioration: significantly delayed (HR = 0.65, p = 0.003).',
+            helpText: 'PRO data is increasingly important at Advisory Committee meetings and for FDA labeling decisions.',
+          },
+          {
+            id: 'surrogate_vs_clinical_endpoint',
+            label: 'If Using a Surrogate Endpoint, What Is the Basis for Its Reasonableness?',
+            type: 'textarea',
+            placeholder: 'e.g., PFS has been accepted by FDA as a surrogate for OS in this setting based on meta-analyses by [reference]. Prior approvals in this indication (Drug X, Drug Y) used PFS as the primary endpoint.',
+            helpText: 'For accelerated approval based on a surrogate endpoint (21 USC 356), provide evidence that the surrogate is reasonably likely to predict clinical benefit.',
           },
         ],
-        defaultNext: 'safety_data',
+        defaultNext: 'safety_summary',
       },
 
-      /* ── Safety Data ────────────────────────────────────────────────── */
-
       {
-        id: 'safety_data',
-        section: 'Clinical Program Overview',
+        id: 'safety_summary',
+        section: 'clinical_program',
         question:
-          'Summarize the safety data from the clinical program.',
+          'Present the integrated safety summary. Advisory Committee members will focus heavily on the safety profile.',
         guidance:
-          'The safety presentation is often the most scrutinized section of the briefing document. Per ICH E2E (pharmacovigilance planning), present the safety database size, exposure duration, and completeness. Organize by common adverse events, serious adverse events (SAEs), adverse events leading to discontinuation, deaths, and adverse events of special interest (AESIs). FDA expects exposure-adjusted incidence rates for fair comparisons. FDA Guidance "Premarketing Risk Assessment" (2005) outlines expectations for safety database size and duration. Advisory committees frequently ask about specific organ system toxicities, dose-response relationships for adverse events, and events observed only at higher doses or with longer exposure.',
+          'The safety section is often the most scrutinized part of the briefing document. Present an integrated safety summary across all studies per ICH E2C(R2). Include: overall AE rates (all grades and Grade ≥3), serious adverse events (SAEs), discontinuations due to AEs, dose modifications, and deaths. Present treatment-emergent adverse events (TEAEs) in tabular format for the pivotal study (drug vs. control). Highlight adverse events of special interest (AESIs) with incidence, time to onset, management, and resolution. Address any deaths on study drug.',
         provideExpertFeedback: true,
         fields: [
           {
-            id: 'safety_database_size',
-            label: 'Safety Database Size',
-            type: 'textarea',
-            required: true,
-            placeholder: 'Number of patients exposed by dose level and duration (e.g., 1,500 patients at proposed dose, 600 for >= 6 months, 100 for >= 12 months per ICH E1A)...',
-            validation: { minLength: 30, maxLength: 5000 },
-          },
-          {
-            id: 'common_aes',
-            label: 'Most Common Adverse Events (>= 5%)',
-            type: 'textarea',
-            required: true,
-            placeholder: 'List the most common AEs with incidence rates in treatment vs. comparator arms...',
-            validation: { minLength: 30, maxLength: 10000 },
-          },
-          {
-            id: 'serious_aes',
-            label: 'Serious Adverse Events Summary',
-            type: 'textarea',
-            required: true,
-            placeholder: 'SAE types, incidence rates, causality assessments, outcomes...',
-            validation: { minLength: 30, maxLength: 10000 },
-          },
-          {
-            id: 'deaths_summary',
-            label: 'Deaths in Clinical Program',
-            type: 'textarea',
-            required: true,
-            placeholder: 'Number of deaths by treatment arm, causes, relationship to study drug, narratives for drug-related deaths...',
-            validation: { minLength: 10, maxLength: 10000 },
-          },
-          {
-            id: 'aes_leading_to_discontinuation',
-            label: 'Adverse Events Leading to Discontinuation',
-            type: 'textarea',
-            placeholder: 'Types and rates of AEs leading to treatment discontinuation...',
-            validation: { maxLength: 5000 },
-          },
-          {
-            id: 'aesi_identified',
-            label: 'Have Adverse Events of Special Interest (AESIs) been identified?',
-            type: 'yes_no',
+            id: 'overall_safety_database_size',
+            label: 'Overall Safety Database Size',
+            type: 'text',
+            placeholder: 'e.g., N=2,150 patients across 8 studies; 1,425 patient-years of exposure',
             required: true,
           },
           {
-            id: 'aesi_details',
-            label: 'AESI Details',
+            id: 'common_adverse_events',
+            label: 'Most Common Adverse Events (≥10% Incidence)',
             type: 'textarea',
-            visibleWhen: { field: 'aesi_identified', operator: 'eq', value: true },
-            placeholder: 'List each AESI with: definition, incidence, time to onset, management strategy, outcome...',
-            validation: { minLength: 30, maxLength: 10000 },
+            placeholder: 'e.g., Fatigue (38% vs. 25%), nausea (32% vs. 18%), diarrhea (28% vs. 15%), rash (22% vs. 5%), arthralgia (18% vs. 12%).',
+            required: true,
           },
           {
-            id: 'safety_update_available',
-            label: 'Is an updated safety dataset (120-day safety update) available?',
-            type: 'yes_no',
+            id: 'grade_3_plus_events',
+            label: 'Grade ≥3 Adverse Events',
+            type: 'textarea',
+            placeholder: 'e.g., Overall Grade ≥3 TEAE rate: 45% (drug) vs. 32% (control). Most common Grade ≥3: neutropenia (12%), hepatotoxicity (8%), hypertension (6%).',
             required: true,
-            helpText: 'Per 21 CFR 314.50(d)(5)(vi)(b), a 120-day safety update must be submitted 120 days after the NDA/BLA submission date. This updated data should be incorporated into the briefing document if available.',
+          },
+          {
+            id: 'serious_adverse_events',
+            label: 'Serious Adverse Events (SAEs)',
+            type: 'textarea',
+            placeholder: 'e.g., SAE rate: 28% (drug) vs. 20% (control). Most common SAEs: pneumonia (5%), febrile neutropenia (3%), hepatic failure (2%).',
+            required: true,
+          },
+          {
+            id: 'discontinuation_rate',
+            label: 'Discontinuation Due to Adverse Events',
+            type: 'text',
+            placeholder: 'e.g., 15% (drug) vs. 8% (control)',
+            required: true,
+          },
+          {
+            id: 'deaths_on_treatment',
+            label: 'Deaths on Treatment',
+            type: 'textarea',
+            placeholder: 'e.g., 12 deaths on drug arm (3 treatment-related: 1 hepatic failure, 1 cardiac arrest, 1 pneumonitis) vs. 8 deaths on control (1 treatment-related).',
+            required: true,
+          },
+          {
+            id: 'adverse_events_of_special_interest',
+            label: 'Adverse Events of Special Interest (AESIs)',
+            type: 'textarea',
+            placeholder: 'e.g., Hepatotoxicity (AESI): 15% any grade, 8% Grade ≥3. Median time to onset: 6 weeks. Management: dose hold per protocol. Resolution: 85% resolved within 4 weeks of dose hold. 2% required permanent discontinuation.',
+            required: true,
+            validation: { minLength: 30 },
           },
         ],
+        defaultNext: 'safety_update',
+      },
+
+      {
+        id: 'safety_update',
+        section: 'clinical_program',
+        question:
+          'Has there been any safety update since the NDA/BLA submission? Post-submission safety data must be presented.',
+        guidance:
+          'FDA regulations require the applicant to submit any new safety information that becomes available after the NDA/BLA submission and before the Advisory Committee meeting. Per 21 CFR 314.81(b)(1) and FDA guidance, a 120-Day Safety Update is required for NDA submissions. For the briefing document, include: updated exposure data, any new safety signals, any new SUSARs, and updated benefit-risk assessment. Advisory Committee members will specifically ask whether any new safety concerns have emerged.',
+        fields: [
+          {
+            id: 'safety_update_available',
+            label: 'Is a Post-Submission Safety Update Available?',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'safety_update_data_cutoff',
+            label: 'Safety Update Data Cutoff Date',
+            type: 'date',
+            visibleWhen: { field: 'safety_update_available', operator: 'eq', value: true },
+          },
+          {
+            id: 'safety_update_summary',
+            label: 'Safety Update Summary',
+            type: 'textarea',
+            placeholder: 'e.g., 120-Day Safety Update (data cutoff: [date]): Additional 350 patients exposed since NDA submission. No new safety signals identified. Updated AE table included in Appendix. Two new SUSARs reported (1 hepatic failure, 1 interstitial lung disease) — both resolved.',
+            visibleWhen: { field: 'safety_update_available', operator: 'eq', value: true },
+            validation: { minLength: 30 },
+          },
+          {
+            id: 'new_safety_signals',
+            label: 'Any New Safety Signals Since Submission?',
+            type: 'yes_no',
+            visibleWhen: { field: 'safety_update_available', operator: 'eq', value: true },
+          },
+          {
+            id: 'new_safety_signal_details',
+            label: 'New Safety Signal Details',
+            type: 'textarea',
+            visibleWhen: { field: 'new_safety_signals', operator: 'eq', value: true },
+          },
+        ],
+        defaultNext: 'benefit_risk_assessment',
         issueChecks: [
           {
             id: 'missing_safety_update',
             condition: { field: 'safety_update_available', operator: 'eq', value: false },
-            severity: 'warning',
-            title: 'Missing Safety Update',
+            severity: 'critical',
+            title: 'Missing Post-Submission Safety Update',
             message:
-              'A 120-day safety update is required per 21 CFR 314.50(d)(5)(vi)(b) and should be incorporated into the briefing document. Advisory committees expect the most current safety data. FDA\'s briefing document will include any additional safety information — presenting outdated data risks a credibility gap.',
-            reference: '21 CFR 314.50(d)(5)(vi)(b); PDUFA VII commitment on safety update requirements',
+              'A post-submission safety update is expected for the Advisory Committee briefing document. Per 21 CFR 314.81(b)(1), NDA applicants must provide a 120-Day Safety Update. Advisory Committee members will ask about any new safety information since the application was submitted. Failure to present updated safety data undermines credibility.',
+            reference: '21 CFR 314.81(b)(1); FDA Guidance: Advisory Committee Meetings (2008)',
           },
         ],
-        defaultNext: 'special_populations',
       },
 
-      /* ── Special Populations ────────────────────────────────────────── */
-
-      {
-        id: 'special_populations',
-        section: 'Clinical Program Overview',
-        question:
-          'Describe the data in special populations and any population-specific considerations.',
-        guidance:
-          'Advisory committees routinely ask about data in special populations per ICH E7 (elderly), ICH E11 (pediatric), and FDA Guidance "Pharmacokinetics in Patients with Impaired Renal/Hepatic Function" (2020). Subgroup analyses by demographic characteristics are expected per 21 CFR 314.50(d)(5)(v). The 2014 FDA Action Plan to Enhance the Collection and Availability of Demographic Subgroup Data requires thorough evaluation of efficacy and safety across age, sex, and race/ethnicity.',
-        fields: [
-          {
-            id: 'elderly_data',
-            label: 'Geriatric Population Data (>= 65 years)',
-            type: 'textarea',
-            placeholder: 'Number of elderly patients, efficacy and safety in this subgroup, dosage adjustments...',
-            validation: { maxLength: 5000 },
-          },
-          {
-            id: 'pediatric_data',
-            label: 'Pediatric Population Data',
-            type: 'textarea',
-            placeholder: 'Pediatric studies completed or planned, results if available, PREA compliance...',
-            validation: { maxLength: 5000 },
-          },
-          {
-            id: 'renal_impairment_data',
-            label: 'Renal Impairment Data',
-            type: 'textarea',
-            placeholder: 'PK/safety data in mild/moderate/severe renal impairment and ESRD...',
-            validation: { maxLength: 5000 },
-          },
-          {
-            id: 'hepatic_impairment_data',
-            label: 'Hepatic Impairment Data',
-            type: 'textarea',
-            placeholder: 'PK/safety data in mild (Child-Pugh A), moderate (B), and severe (C) hepatic impairment...',
-            validation: { maxLength: 5000 },
-          },
-          {
-            id: 'pregnancy_lactation_data',
-            label: 'Pregnancy and Lactation Data',
-            type: 'textarea',
-            placeholder: 'Available human and animal data, pregnancy registry plans, lactation considerations per FDA PLLR requirements...',
-            validation: { maxLength: 5000 },
-          },
-          {
-            id: 'racial_ethnic_diversity',
-            label: 'Racial/Ethnic Diversity in Clinical Trials',
-            type: 'textarea',
-            required: true,
-            placeholder: 'Enrollment by race/ethnicity, any differences in efficacy or safety across racial/ethnic subgroups...',
-            validation: { minLength: 20, maxLength: 5000 },
-            helpText: 'FDA Guidance "Enhancing the Diversity of Clinical Trial Populations" (2020) and FDORA Section 3601 require sponsors to demonstrate diverse enrollment and analyze subgroup effects.',
-          },
-        ],
-        defaultNext: 'benefit_risk_assessment',
-      },
-
-      /* ================================================================
-       * Section 5 — Benefit-Risk Framework
-       * ================================================================ */
+      /* ================================================================ */
+      /*  Section 5 — Benefit-Risk Framework                              */
+      /* ================================================================ */
 
       {
         id: 'benefit_risk_assessment',
-        section: 'Benefit-Risk Framework',
+        section: 'benefit_risk',
         question:
-          'Present the structured benefit-risk assessment for the advisory committee.',
+          'Present the benefit-risk assessment. This is the most critical section of the briefing document — the Advisory Committee\'s vote hinges on this analysis.',
         guidance:
-          'The benefit-risk framework is the centerpiece of the briefing document and directly informs the committee\'s voting. FDA uses the Benefit-Risk Framework described in PDUFA VI and VII commitments, structured around: (1) Analysis of Condition, (2) Current Treatment Options, (3) Benefit, (4) Risk, and (5) Risk Management. The framework is documented in FDA\'s "Benefit-Risk Assessment in Drug Regulatory Decision-Making" (2018). The sponsor\'s benefit-risk assessment should mirror FDA\'s framework to facilitate comparison with FDA\'s own briefing document. A clear, balanced, and transparent benefit-risk summary is critical — committees are skeptical of presentations that appear to minimize risks or overstate benefits.',
+          'FDA uses the Benefit-Risk Framework described in the PDUFA VI commitment letter and the "Benefit-Risk Assessment in Drug Regulatory Decision-Making" (Draft Revision, 2023). The framework evaluates five dimensions: (1) Analysis of Condition, (2) Current Treatment Options, (3) Benefit, (4) Risk, and (5) Risk Management. Present a structured benefit-risk summary table. For each dimension, provide a concise evidence-based assessment. The benefit-risk conclusion should directly support the regulatory action being sought.',
+        provideExpertFeedback: true,
         fields: [
           {
             id: 'benefit_summary',
             label: 'Summary of Benefits',
             type: 'textarea',
+            placeholder: 'e.g., Statistically significant and clinically meaningful improvement in PFS (HR 0.52). Confirmed ORR of 45% with durable responses (median DOR 14.5 months). Consistent benefit across pre-specified subgroups. Improved patient-reported quality of life.',
             required: true,
-            placeholder: 'Key efficacy benefits: magnitude and clinical meaningfulness of treatment effect, effect on patient-relevant outcomes, consistency across studies and subgroups...',
-            validation: { minLength: 50, maxLength: 10000 },
+            validation: { minLength: 50 },
           },
           {
             id: 'risk_summary',
             label: 'Summary of Risks',
             type: 'textarea',
+            placeholder: 'e.g., Manageable safety profile with known class effects. Key risks: hepatotoxicity (Grade ≥3 in 8%, manageable with dose modification), neutropenia (12%). 2 treatment-related deaths (0.3%). No new or unexpected safety signals.',
             required: true,
-            placeholder: 'Key safety risks: most clinically significant adverse events, severity, reversibility, risk factors, dose-dependency, long-term concerns...',
-            validation: { minLength: 50, maxLength: 10000 },
+            validation: { minLength: 50 },
           },
           {
             id: 'benefit_risk_conclusion',
             label: 'Benefit-Risk Conclusion',
             type: 'textarea',
+            placeholder: 'e.g., The benefits of [product] — significant and durable improvement in progression-free survival, overall survival trend, and quality of life — outweigh the identified risks, which are manageable with appropriate monitoring and dose modification. The benefit-risk profile supports approval for the proposed indication.',
             required: true,
-            placeholder: 'Your overall benefit-risk assessment: why do the benefits outweigh the risks for the proposed indication and population?',
-            validation: { minLength: 50, maxLength: 5000 },
+            validation: { minLength: 50 },
           },
           {
-            id: 'uncertainties',
-            label: 'Key Uncertainties and Data Gaps',
-            type: 'textarea',
-            required: true,
-            placeholder: 'Acknowledge key uncertainties: limited long-term data, small subgroups, surrogate vs. clinical endpoint, potential for off-label use...',
-            validation: { minLength: 30, maxLength: 5000 },
-          },
-          {
-            id: 'has_benefit_risk_table',
-            label: 'Have you prepared a structured benefit-risk summary table?',
+            id: 'benefit_risk_table_prepared',
+            label: 'Has a Structured Benefit-Risk Summary Table Been Prepared (per FDA PDUFA VI Framework)?',
             type: 'yes_no',
             required: true,
-            helpText: 'FDA recommends using the PDUFA Benefit-Risk Framework table format with dimensions: Analysis of Condition, Current Treatment Options, Benefit, Risk, and Risk Management.',
+            helpText: 'FDA\'s Benefit-Risk Framework (PDUFA VI) recommends a structured summary table with five dimensions: Analysis of Condition, Current Treatment Options, Benefit, Risk, and Risk Management.',
+          },
+          {
+            id: 'uncertainty_factors',
+            label: 'Key Uncertainties and Limitations',
+            type: 'textarea',
+            placeholder: 'e.g., Overall survival data immature (median follow-up 18 months). Limited data in patients >75 years. No head-to-head comparison with recently approved competitor.',
+            required: true,
           },
         ],
+        defaultNext: 'risk_management_plan',
         issueChecks: [
           {
-            id: 'no_clear_benefit_risk_summary',
-            condition: { field: 'has_benefit_risk_table', operator: 'eq', value: false },
+            id: 'no_benefit_risk_table',
+            condition: { field: 'benefit_risk_table_prepared', operator: 'eq', value: false },
             severity: 'critical',
-            title: 'No Clear Benefit-Risk Summary',
+            title: 'No Structured Benefit-Risk Summary Table',
             message:
-              'A structured benefit-risk summary table using the PDUFA framework is expected in every advisory committee briefing document. Without it, the committee lacks a clear framework to evaluate the product and FDA\'s own briefing document will include one — creating a gap the committee will notice.',
-            reference: 'FDA "Benefit-Risk Assessment in Drug Regulatory Decision-Making" (2018); PDUFA VII commitments',
-          },
-          {
-            id: 'benefit_risk_conclusion_too_short',
-            condition: { field: 'benefit_risk_conclusion', operator: 'lt', value: 100 },
-            severity: 'warning',
-            title: 'Benefit-Risk Conclusion May Be Insufficient',
-            message:
-              'The benefit-risk conclusion should be a thorough, balanced assessment addressing why benefits outweigh risks. A brief statement may appear dismissive to advisory committee members who are evaluating a nuanced benefit-risk trade-off.',
+              'FDA\'s PDUFA VI Benefit-Risk Framework recommends a structured benefit-risk summary table. Advisory Committee members rely on this table to frame their evaluation. The absence of a clear, structured benefit-risk summary is a significant gap in the briefing document.',
+            reference: 'PDUFA VI Commitment Letter; FDA Benefit-Risk Framework (2023)',
           },
         ],
-        defaultNext: 'risk_management',
       },
 
-      /* ── Risk Management ────────────────────────────────────────────── */
-
       {
-        id: 'risk_management',
-        section: 'Benefit-Risk Framework',
+        id: 'risk_management_plan',
+        section: 'benefit_risk',
         question:
-          'Describe the risk management and mitigation strategies to be presented to the advisory committee.',
+          'What risk management and mitigation strategies are proposed? Include REMS, labeling, and monitoring plans.',
         guidance:
-          'Risk management is the fifth dimension of FDA\'s Benefit-Risk Framework. Per 21 USC 355-1, FDA may require a Risk Evaluation and Mitigation Strategy (REMS) if it determines that a REMS is necessary to ensure the benefits outweigh the risks. Advisory committees frequently vote on whether a REMS should be required. Even if a formal REMS is not proposed, the sponsor should present a comprehensive pharmacovigilance plan, labeling strategies to mitigate risks, and any voluntary risk minimization activities. FDA Guidance "Format and Content of Proposed REMS" (2009, updated 2019) provides the framework.',
+          'Risk management strategies should demonstrate that identified risks can be effectively managed in clinical practice. Consider: (1) Labeling — boxed warnings, contraindications, warnings and precautions, (2) REMS — if required per 21 USC 355-1, describe the REMS elements (Medication Guide, Communication Plan, ETASU), (3) Monitoring recommendations in the label, (4) Dose modification guidelines, and (5) Post-marketing surveillance commitments. Advisory Committee members want assurance that risks can be managed outside of clinical trial settings.',
         fields: [
           {
-            id: 'rems_proposed',
-            label: 'Is a REMS proposed or anticipated?',
-            type: 'select',
+            id: 'proposed_labeling_risk_communications',
+            label: 'Proposed Labeling Risk Communications',
+            type: 'multi_select',
             required: true,
             options: [
-              { value: 'proposed_by_sponsor', label: 'Yes — REMS proposed by sponsor' },
-              { value: 'requested_by_fda', label: 'Yes — REMS requested by FDA' },
-              { value: 'not_proposed', label: 'No — REMS not proposed or required' },
-              { value: 'under_discussion', label: 'Under discussion with FDA' },
+              { value: 'boxed_warning', label: 'Boxed Warning' },
+              { value: 'contraindication', label: 'Contraindication' },
+              { value: 'warnings_precautions', label: 'Warnings and Precautions' },
+              { value: 'adverse_reactions', label: 'Adverse Reactions Section' },
+              { value: 'medication_guide', label: 'Medication Guide' },
+              { value: 'patient_counseling', label: 'Patient Counseling Information' },
             ],
           },
           {
-            id: 'rems_elements',
-            label: 'REMS Elements',
-            type: 'multi_select',
-            visibleWhen: { field: 'rems_proposed', operator: 'in', value: ['proposed_by_sponsor', 'requested_by_fda', 'under_discussion'] },
+            id: 'rems_required',
+            label: 'Is a REMS Required or Proposed?',
+            type: 'select',
             options: [
-              { value: 'medication_guide', label: 'Medication Guide' },
-              { value: 'communication_plan', label: 'Communication Plan' },
-              { value: 'etasu', label: 'Elements to Assure Safe Use (ETASU)' },
-              { value: 'implementation_system', label: 'Implementation System' },
-              { value: 'timetable_assessment', label: 'Timetable for Assessment' },
+              { value: 'yes_with_etasu', label: 'Yes — REMS with ETASU (Elements to Assure Safe Use)' },
+              { value: 'yes_medication_guide', label: 'Yes — REMS with Medication Guide only' },
+              { value: 'yes_communication_plan', label: 'Yes — REMS with Communication Plan' },
+              { value: 'no', label: 'No REMS required' },
+              { value: 'under_discussion', label: 'Under discussion with FDA' },
+            ],
+            helpText: 'Per 21 USC 355-1 (FDAAA), FDA may require a REMS if necessary to ensure the benefits outweigh the risks.',
+          },
+          {
+            id: 'rems_details',
+            label: 'REMS Details',
+            type: 'textarea',
+            visibleWhen: { field: 'rems_required', operator: 'in', value: ['yes_with_etasu', 'yes_medication_guide', 'yes_communication_plan'] },
+          },
+          {
+            id: 'monitoring_recommendations',
+            label: 'Proposed Monitoring Recommendations (Labeling)',
+            type: 'textarea',
+            placeholder: 'e.g., LFTs at baseline, Q2W for first 3 months, then monthly. ECG at baseline and as clinically indicated. CBC with differential weekly for first 8 weeks.',
+            required: true,
+          },
+          {
+            id: 'dose_modification_guidelines',
+            label: 'Dose Modification Guidelines for Key AEs',
+            type: 'textarea',
+            placeholder: 'e.g., Hepatotoxicity: Grade 2 ALT — hold until Grade ≤1, resume at reduced dose. Grade 3 ALT — hold, may resume at reduced dose if resolved within 4 weeks. Grade 4 — permanent discontinuation.',
+            required: true,
+          },
+        ],
+        defaultNext: 'post_marketing_commitments',
+      },
+
+      {
+        id: 'post_marketing_commitments',
+        section: 'benefit_risk',
+        question:
+          'What post-marketing commitments and studies are planned or required? Advisory Committee members often recommend specific PMCs.',
+        guidance:
+          'Post-marketing commitments (PMCs) and post-marketing requirements (PMRs) are distinct. PMRs are required by statute (FDAAA 2007, 21 USC 355(o)(3)) or regulation, while PMCs are agreed upon but not legally required. For accelerated approvals, a confirmatory trial is required per 21 USC 356. Present planned post-marketing studies, pharmacovigilance plans, and any commitments discussed with FDA. Advisory Committee members frequently recommend additional studies or registry requirements.',
+        fields: [
+          {
+            id: 'post_marketing_studies_planned',
+            label: 'Planned Post-Marketing Studies',
+            type: 'textarea',
+            placeholder: 'e.g., PMR 1: Confirmatory Phase 3 OS study (ABC-401) — enrollment ongoing, estimated completion 2027. PMR 2: Hepatic safety registry (N=5,000) — 5-year observational study. PMC 1: Renal impairment PK study.',
+            required: true,
+          },
+          {
+            id: 'confirmatory_trial_required',
+            label: 'Is a Confirmatory Trial Required (Accelerated Approval)?',
+            type: 'yes_no',
+            helpText: 'If seeking accelerated approval under 21 USC 356, a confirmatory trial to verify clinical benefit is required as a PMR.',
+          },
+          {
+            id: 'confirmatory_trial_status',
+            label: 'Confirmatory Trial Status',
+            type: 'select',
+            visibleWhen: { field: 'confirmatory_trial_required', operator: 'eq', value: true },
+            options: [
+              { value: 'enrolling', label: 'Currently Enrolling' },
+              { value: 'completed', label: 'Completed — Results Pending' },
+              { value: 'planned', label: 'Planned — Not Yet Initiated' },
+              { value: 'results_available', label: 'Results Available' },
             ],
           },
           {
             id: 'pharmacovigilance_plan',
             label: 'Pharmacovigilance Plan Summary',
             type: 'textarea',
-            required: true,
-            placeholder: 'Describe the post-marketing surveillance strategy: routine pharmacovigilance, enhanced monitoring, signal detection methods, PSUR/PBRER schedule...',
-            validation: { minLength: 30, maxLength: 5000 },
+            placeholder: 'e.g., Enhanced pharmacovigilance: active surveillance for hepatotoxicity and cardiac events. Signal detection methodology: Bayesian analysis with quarterly review. Aggregate safety reports: DSURs annually.',
           },
           {
-            id: 'post_marketing_studies_planned',
-            label: 'Post-Marketing Commitments and Studies Planned',
+            id: 'real_world_evidence_plan',
+            label: 'Real-World Evidence (RWE) Generation Plan',
             type: 'textarea',
-            placeholder: 'Describe any planned PMR/PMC studies: long-term safety study, outcomes trial, pediatric studies, specific safety endpoint studies...',
-            validation: { maxLength: 5000 },
-          },
-          {
-            id: 'labeling_risk_mitigation',
-            label: 'Labeling-Based Risk Mitigation Measures',
-            type: 'textarea',
-            placeholder: 'Describe proposed Boxed Warning, Contraindications, Warnings and Precautions, or other label-based risk mitigation...',
-            validation: { maxLength: 5000 },
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'no_risk_management_strategy',
-            condition: { field: 'pharmacovigilance_plan', operator: 'eq', value: '' },
-            severity: 'critical',
-            title: 'No Risk Management Strategy',
-            message:
-              'Every advisory committee briefing document must include a clear risk management and pharmacovigilance strategy. Advisory committees expect to see how the sponsor will monitor and mitigate risks post-approval. This is the fifth dimension of FDA\'s Benefit-Risk Framework and a frequent voting topic.',
-            reference: '21 USC 355-1; FDA "Benefit-Risk Assessment in Drug Regulatory Decision-Making" (2018)',
-          },
-          {
-            id: 'no_post_marketing_plan',
-            condition: { field: 'post_marketing_studies_planned', operator: 'eq', value: '' },
-            severity: 'warning',
-            title: 'No Post-Marketing Plan Presented',
-            message:
-              'Advisory committees frequently ask about planned post-marketing studies, especially for products with limited long-term data, surrogate endpoints, or identified safety signals. Presenting a robust post-marketing plan demonstrates commitment to continued characterization of the product\'s benefit-risk profile.',
-            reference: '21 CFR 314.81(b)(2)(vii); FDORA Section 3611 (post-marketing study requirements)',
+            placeholder: 'e.g., Partnership with [health system/registry] for RWE generation. Electronic health record data analysis to assess real-world outcomes.',
+            helpText: 'RWE plans demonstrate commitment to long-term safety and effectiveness monitoring and are viewed favorably by Advisory Committee members.',
           },
         ],
         defaultNext: 'voting_questions',
+        issueChecks: [
+          {
+            id: 'no_post_marketing_plan',
+            condition: { field: 'pharmacovigilance_plan', operator: 'eq', value: '' },
+            severity: 'warning',
+            title: 'No Post-Marketing Pharmacovigilance Plan Presented',
+            message:
+              'A pharmacovigilance plan should be presented in the briefing document, especially for products with identified safety signals. Advisory Committee members frequently ask about post-marketing surveillance commitments. Demonstrating proactive safety monitoring builds confidence in the sponsor\'s safety commitment.',
+            reference: 'FDAAA 2007; ICH E2E',
+          },
+        ],
       },
 
-      /* ================================================================
-       * Section 6 — Voting Questions & Strategy
-       * ================================================================ */
+      /* ================================================================ */
+      /*  Section 6 — Voting Questions & Strategy                         */
+      /* ================================================================ */
 
       {
         id: 'voting_questions',
-        section: 'Voting Questions & Strategy',
+        section: 'voting_strategy',
         question:
-          'Provide the proposed or anticipated voting questions and discuss how they align with the product\'s label claims.',
+          'What are the proposed voting questions for the Advisory Committee? These must be aligned with the regulatory action sought and the proposed labeling claims.',
         guidance:
-          'Voting questions are the most consequential element of the advisory committee meeting. Per 21 CFR 14.22(d), the committee chair is responsible for putting questions to a vote. PDUFA VII commits FDA to providing draft voting/discussion questions to sponsors at least 3 weeks before the meeting. Sponsors typically negotiate the wording with FDA — overly broad questions (e.g., "Do the benefits outweigh the risks?") without specificity to the proposed indication can lead to ambiguous votes. Well-crafted questions should be answerable with "yes" or "no" and directly map to the proposed label claims. Discussion questions (not voted on) are used to explore specific concerns. The voting question wording often predicts the outcome — careful strategic alignment is essential.',
+          'FDA develops the voting questions in consultation with the sponsor and the Advisory Committee chair. Per 21 CFR Part 14 and FDA\'s guidance, voting questions should be clear, specific, and answerable by the committee. Questions typically address: (1) whether the efficacy data support approval, (2) whether the safety profile is acceptable, and (3) whether the benefit-risk assessment favors approval. For supplemental applications, questions may focus on the specific new indication. The sponsor should anticipate the questions and prepare responses. Misalignment between voting questions and label claims is a common pitfall.',
         fields: [
           {
-            id: 'voting_questions_text',
-            label: 'Proposed Voting Questions',
+            id: 'proposed_voting_questions',
+            label: 'Proposed/Anticipated Voting Questions',
             type: 'textarea',
+            placeholder: 'e.g., 1. Has the applicant provided substantial evidence of effectiveness of [product] for [indication]?\n2. Has the applicant provided sufficient evidence of the safety of [product] for [indication]?\n3. Do the benefits of [product] outweigh its risks for the proposed indication?',
             required: true,
-            placeholder: 'List each voting question. Example:\n1. Has the applicant provided sufficient evidence of effectiveness of [drug] for [indication]?\n2. Has the applicant provided sufficient evidence of safety of [drug] for [indication]?\n3. Do the benefits of [drug] outweigh its risks for [specific indication in specific population]?',
-            validation: { minLength: 30, maxLength: 10000 },
+            validation: { minLength: 50 },
           },
           {
-            id: 'discussion_questions_text',
-            label: 'Proposed Discussion Questions (not voted on)',
+            id: 'discussion_questions_anticipated',
+            label: 'Anticipated Discussion Questions',
             type: 'textarea',
-            placeholder: 'List discussion questions that explore specific issues without requiring a formal vote...',
-            validation: { maxLength: 10000 },
+            placeholder: 'e.g., 1. Please discuss the adequacy of the safety database for the proposed indication.\n2. Please discuss the appropriateness of PFS as the primary endpoint in this setting.\n3. Please discuss any additional post-marketing studies that should be required.',
           },
           {
-            id: 'voting_questions_aligned_with_label',
-            label: 'Are the voting questions aligned with the proposed labeling claims?',
+            id: 'voting_question_alignment',
+            label: 'Are Voting Questions Aligned with Proposed Label Claims?',
             type: 'yes_no',
             required: true,
-            helpText: 'Voting questions should directly reflect the proposed indication, population, and dosing regimen in the proposed labeling. Misalignment between voting questions and label claims creates risk.',
+            helpText: 'Voting questions should directly map to the proposed indication statement and key labeling claims. Misalignment can lead to a favorable vote but unfavorable labeling outcome.',
           },
           {
-            id: 'alignment_concerns',
-            label: 'Describe Alignment Concerns',
-            type: 'textarea',
-            visibleWhen: { field: 'voting_questions_aligned_with_label', operator: 'eq', value: false },
-            placeholder: 'What are the specific areas of misalignment between voting questions and proposed label claims?',
-            validation: { minLength: 20, maxLength: 5000 },
-          },
-          {
-            id: 'voting_question_scope',
-            label: 'Are the voting questions specific enough to the proposed population and indication?',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'specific', label: 'Yes — questions reference specific indication, population, and dosing' },
-              { value: 'somewhat_broad', label: 'Somewhat broad — questions could be more specific' },
-              { value: 'too_broad', label: 'Too broad — questions do not reference specific population or indication' },
-            ],
-          },
-          {
-            id: 'anticipated_vote_outcome',
-            label: 'Anticipated Vote Outcome',
-            type: 'select',
-            options: [
-              { value: 'strongly_favorable', label: 'Strongly favorable (> 75% yes expected)' },
-              { value: 'moderately_favorable', label: 'Moderately favorable (50-75% yes expected)' },
-              { value: 'uncertain', label: 'Uncertain (close vote expected)' },
-              { value: 'challenging', label: 'Challenging (< 50% yes expected)' },
-            ],
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'voting_not_aligned_with_label',
-            condition: { field: 'voting_questions_aligned_with_label', operator: 'eq', value: false },
-            severity: 'critical',
-            title: 'Voting Questions Not Aligned with Label Claims',
-            message:
-              'Misalignment between advisory committee voting questions and proposed labeling claims is a significant strategic risk. If the committee votes favorably on questions that do not match the proposed label, the vote may not support the label claims. Conversely, if questions are broader than the label, an unfavorable vote could undermine an approvable narrower indication. Work with the FDA review team to align question wording with the proposed indication statement.',
-            reference: '21 CFR 14.22(d); PDUFA VII advisory committee process commitments',
-          },
-          {
-            id: 'voting_questions_too_broad',
-            condition: { field: 'voting_question_scope', operator: 'eq', value: 'too_broad' },
-            severity: 'warning',
-            title: 'Voting Questions Too Broad',
-            message:
-              'Overly broad voting questions (e.g., "Do the benefits outweigh the risks?") without reference to the specific indication, population, and dosing regimen create ambiguity. Broad questions make it easier for committee members to vote "no" based on concerns about off-label use, uncharacterized populations, or hypothetical risks. Request more specific question wording from FDA.',
-            reference: 'FDA Guidance "Procedures for Meetings of the FDA Advisory Committees" (2017)',
+            id: 'challenging_questions_prepared',
+            label: 'Have Responses to Challenging Questions Been Prepared?',
+            type: 'yes_no',
+            helpText: 'Prepare backup slides and responses for tough questions: immature OS data, subgroup heterogeneity, safety signals, lack of comparator data, surrogate endpoint validity, etc.',
           },
         ],
         defaultNext: 'presentation_strategy',
+        issueChecks: [
+          {
+            id: 'voting_questions_not_aligned',
+            condition: { field: 'voting_question_alignment', operator: 'eq', value: false },
+            severity: 'critical',
+            title: 'Voting Questions Not Aligned with Label Claims',
+            message:
+              'Voting questions that do not align with the proposed labeling claims can result in a situation where the committee votes favorably but FDA cannot support the proposed label. Ensure each voting question directly maps to a specific indication statement or labeling claim. Discuss voting question alignment with FDA before the briefing document is finalized.',
+            reference: '21 CFR Part 14; FDA Guidance: Advisory Committee Meetings (2008)',
+          },
+        ],
       },
-
-      /* ── Presentation Strategy ──────────────────────────────────────── */
 
       {
         id: 'presentation_strategy',
-        section: 'Presentation & Post-Meeting Planning',
+        section: 'voting_strategy',
         question:
-          'What is the overall presentation strategy for the advisory committee meeting?',
+          'What is the presentation strategy for the Advisory Committee meeting? The oral presentation must complement the briefing document.',
         guidance:
-          'A successful advisory committee presentation requires strategic planning beyond the briefing document content. The sponsor presentation typically includes: opening remarks by the sponsor\'s CMO or VP of Regulatory, a clinical overview by the lead clinician, a safety presentation by the safety medical officer, and a benefit-risk summary. Key Opinion Leaders (KOLs) may present on disease background or interpret clinical data. Mock advisory committee panels ("murder boards") are standard practice — these rehearsals with external experts simulate committee questioning and identify weak points. Per FDA procedure, sponsors may not communicate with committee members outside the meeting, but public domain materials (publications, presentations at medical meetings) can influence member preparation.',
+          'The sponsor typically has 60-90 minutes for their presentation at the Advisory Committee meeting. The presentation should be structured, rehearsed, and focused on the key messages from the briefing document. Per FDA guidance, presenters should include the lead clinician, lead statistician, and lead safety scientist. Consider including a KOL or patient advocate. Backup slides for anticipated questions are essential. The open public hearing allows patients and advocacy groups to speak — coordinate supportive testimony if appropriate.',
         fields: [
           {
-            id: 'mock_adcom_conducted',
-            label: 'Has a mock advisory committee panel ("murder board") been conducted?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Mock advisory committees with external experts (former FDA officials, KOLs, biostatisticians) are critical for rehearsal and identifying vulnerabilities in the presentation.',
+            id: 'presentation_duration',
+            label: 'Allocated Presentation Time',
+            type: 'select',
+            options: [
+              { value: '60_min', label: '60 Minutes' },
+              { value: '75_min', label: '75 Minutes' },
+              { value: '90_min', label: '90 Minutes' },
+              { value: 'tbd', label: 'To Be Determined' },
+            ],
           },
           {
-            id: 'mock_adcom_findings',
-            label: 'Key Findings from Mock Advisory Committee',
+            id: 'key_presenters',
+            label: 'Key Presenters and Their Roles',
             type: 'textarea',
-            visibleWhen: { field: 'mock_adcom_conducted', operator: 'eq', value: true },
-            placeholder: 'What were the primary concerns raised? What questions were most difficult to answer? What presentation adjustments were recommended?',
-            validation: { maxLength: 5000 },
-          },
-          {
-            id: 'anticipated_fda_concerns',
-            label: 'Anticipated FDA Concerns in Their Briefing Document',
-            type: 'textarea',
+            placeholder: 'e.g., 1. Dr. Smith (VP Clinical Development) — Clinical overview, 20 min\n2. Dr. Jones (Lead Statistician) — Efficacy results, 15 min\n3. Dr. Lee (VP Safety) — Safety and benefit-risk, 20 min',
             required: true,
-            placeholder: 'Based on FDA interactions and review issues, what concerns do you expect FDA to highlight in their briefing document?',
-            validation: { minLength: 30, maxLength: 5000 },
           },
           {
             id: 'kol_involvement',
-            label: 'Will KOLs participate in the sponsor presentation?',
+            label: 'Will a Key Opinion Leader (KOL) Present?',
             type: 'yes_no',
+            helpText: 'A KOL can provide clinical context and credibility. Ensure the KOL is not a current Advisory Committee member and disclose any financial relationships.',
           },
           {
-            id: 'kol_details',
-            label: 'KOL Presentation Details',
-            type: 'textarea',
-            visibleWhen: { field: 'kol_involvement', operator: 'eq', value: true },
-            placeholder: 'Describe which KOLs will present, their roles, and what they will cover...',
-            validation: { maxLength: 3000 },
+            id: 'patient_testimony_planned',
+            label: 'Is Patient/Advocacy Testimony Planned for Open Public Hearing?',
+            type: 'yes_no',
+            helpText: 'Patient and advocacy group testimony during the open public hearing can be powerful. Coordinate with patient advocacy organizations well in advance.',
           },
           {
             id: 'backup_slides_prepared',
-            label: 'Have backup slides been prepared for anticipated committee questions?',
+            label: 'Number of Backup Slides Prepared',
+            type: 'number',
+            placeholder: 'e.g., 40',
+            helpText: 'Typical Advisory Committee presentations include 30-50 backup slides covering anticipated questions on subgroups, safety signals, methodology, and competitive context.',
+          },
+          {
+            id: 'mock_ac_conducted',
+            label: 'Has a Mock Advisory Committee Been Conducted?',
             type: 'yes_no',
-            helpText: 'Best practice is to prepare 50-100 backup slides covering anticipated questions, subgroup analyses, safety data cuts, and sensitivity analyses.',
-          },
-          {
-            id: 'difficult_questions_preparation',
-            label: 'Top 5 Most Difficult Anticipated Questions',
-            type: 'textarea',
-            required: true,
-            placeholder: 'List the 5 most challenging questions the committee is likely to ask and your prepared responses...',
-            validation: { minLength: 50, maxLength: 10000 },
+            helpText: 'A mock Advisory Committee with external experts simulating the panel is strongly recommended. It identifies weaknesses in the presentation and briefing document.',
           },
         ],
-        issueChecks: [
-          {
-            id: 'no_mock_adcom',
-            condition: { field: 'mock_adcom_conducted', operator: 'eq', value: false },
-            severity: 'warning',
-            title: 'No Mock Advisory Committee Conducted',
-            message:
-              'Mock advisory committee panels ("murder boards") are considered essential best practice for advisory committee preparation. Without a rehearsal, the sponsor team may be unprepared for challenging committee questions, leading to poor responses that damage credibility. Industry standard is to conduct at least one mock panel 4-6 weeks before the meeting date.',
-            reference: 'FDA Guidance "Procedures for Meetings of the FDA Advisory Committees" (2017); industry best practice',
-          },
-          {
-            id: 'no_backup_slides',
-            condition: { field: 'backup_slides_prepared', operator: 'eq', value: false },
-            severity: 'info',
-            title: 'No Backup Slides Prepared',
-            message:
-              'Best practice is to prepare 50-100 backup slides covering anticipated committee questions, additional subgroup analyses, safety data cuts, and sensitivity analyses. Without backup slides, the sponsor team may be unable to respond to committee questions with data, relying instead on verbal answers that carry less weight.',
-          },
-        ],
-        defaultNext: 'post_meeting_planning',
+        defaultNext: 'final_review',
       },
 
-      /* ── Post-Meeting Planning ──────────────────────────────────────── */
-
       {
-        id: 'post_meeting_planning',
-        section: 'Presentation & Post-Meeting Planning',
+        id: 'final_review',
+        section: 'voting_strategy',
         question:
-          'What are the plans for post-meeting activities and communication?',
+          'Final review — confirm readiness of the briefing document package and identify any remaining gaps.',
         guidance:
-          'Advisory committee votes are non-binding per 21 CFR 14.5 — FDA makes the final regulatory decision. However, a negative vote significantly impacts the likelihood of approval and may require additional clinical evidence or label modifications. Post-meeting strategy should address both favorable and unfavorable vote scenarios. Per PDUFA VII, FDA must communicate the advisory committee\'s recommendations and their impact on the review timeline. A post-meeting docket submission (21 CFR 10.30) may be used to provide additional information or correct factual inaccuracies from the meeting. Investor and public communications require careful coordination per SEC regulations.',
+          'Before submitting the briefing document, conduct a comprehensive quality review. Per FDA guidance, the briefing document should be a standalone document that does not require committee members to reference the NDA/BLA. All data tables should be self-explanatory with clear headers, footnotes, and data cutoff dates. Ensure consistency between the briefing document, the oral presentation, and the proposed labeling. Confirm that all FDA feedback from pre-meeting communications has been addressed.',
         fields: [
           {
-            id: 'favorable_vote_plan',
-            label: 'Plan if Vote is Favorable',
-            type: 'textarea',
-            required: true,
-            placeholder: 'Post-meeting actions: timeline to PDUFA date, investor communications, launch preparation, KOL engagement...',
-            validation: { minLength: 20, maxLength: 5000 },
-          },
-          {
-            id: 'unfavorable_vote_plan',
-            label: 'Contingency Plan if Vote is Unfavorable',
-            type: 'textarea',
-            required: true,
-            placeholder: 'Contingency actions: FDA meeting request, additional data generation, label narrowing, docket submission, investor communications...',
-            validation: { minLength: 20, maxLength: 5000 },
-          },
-          {
-            id: 'split_vote_plan',
-            label: 'Plan for Split Vote (close to 50/50)',
-            type: 'textarea',
-            placeholder: 'Strategy for a close or split vote: how to interpret committee commentary, whether to submit additional information to the docket...',
-            validation: { maxLength: 5000 },
-          },
-          {
-            id: 'docket_submission_planned',
-            label: 'Is a post-meeting docket submission planned?',
+            id: 'document_qc_complete',
+            label: 'Has a Comprehensive QC Review of the Briefing Document Been Completed?',
             type: 'yes_no',
-            helpText: 'Per 21 CFR 10.30, sponsors may submit written comments to the meeting docket after the advisory committee meeting. This is often used to address factual corrections or provide additional data.',
+            required: true,
           },
           {
-            id: 'communications_plan',
-            label: 'External Communications Plan',
+            id: 'legal_review_complete',
+            label: 'Has Legal Review Been Completed?',
+            type: 'yes_no',
+            required: true,
+            helpText: 'Legal review should cover promotional claims, off-label implications, and consistency with approved labeling (if applicable).',
+          },
+          {
+            id: 'medical_review_complete',
+            label: 'Has Medical/Scientific Review Been Completed?',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'data_consistency_verified',
+            label: 'Has Data Consistency Been Verified Across All Sections?',
+            type: 'yes_no',
+            required: true,
+            helpText: 'Verify that all efficacy numbers, safety data, and patient counts are consistent throughout the document. Inconsistencies undermine credibility.',
+          },
+          {
+            id: 'fda_pre_meeting_feedback_addressed',
+            label: 'Has All FDA Pre-Meeting Feedback Been Addressed?',
+            type: 'yes_no',
+          },
+          {
+            id: 'remaining_gaps',
+            label: 'Remaining Gaps or Concerns',
             type: 'textarea',
-            placeholder: 'Describe the plan for press releases, investor calls, medical affairs communications, and social media monitoring around the meeting date...',
-            validation: { maxLength: 5000 },
+            placeholder: 'List any remaining gaps, outstanding data, or unresolved concerns that need to be addressed before submission.',
+          },
+          {
+            id: 'submission_readiness',
+            label: 'Overall Submission Readiness Assessment',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'ready', label: 'Ready for Submission' },
+              { value: 'minor_revisions', label: 'Minor Revisions Needed' },
+              { value: 'major_revisions', label: 'Major Revisions Needed' },
+              { value: 'not_ready', label: 'Not Ready — Significant Gaps' },
+            ],
           },
         ],
         defaultNext: null,
         issueChecks: [
           {
-            id: 'no_unfavorable_contingency',
-            condition: { field: 'unfavorable_vote_plan', operator: 'eq', value: '' },
-            severity: 'warning',
-            title: 'Missing Contingency Plan for Unfavorable Vote',
+            id: 'document_not_qc_reviewed',
+            condition: { field: 'document_qc_complete', operator: 'eq', value: false },
+            severity: 'critical',
+            title: 'Briefing Document QC Not Complete',
             message:
-              'A contingency plan for an unfavorable advisory committee vote is essential for investor communications and regulatory strategy. Per SEC Regulation FD, material non-public information about advisory committee outcomes must be disclosed promptly. Companies should have pre-drafted communications for all vote scenarios to ensure timely and accurate public disclosure.',
-            reference: '21 CFR 14.5, SEC Regulation FD, FDA PDUFA VII Commitments',
+              'A comprehensive quality control review of the briefing document is essential before submission. Data inconsistencies, typographical errors, and formatting issues in a public document undermine sponsor credibility with the Advisory Committee.',
+          },
+          {
+            id: 'not_submission_ready',
+            condition: { field: 'submission_readiness', operator: 'in', value: ['major_revisions', 'not_ready'] },
+            severity: 'critical',
+            title: 'Briefing Document Not Ready for Submission',
+            message:
+              'The briefing document requires significant additional work before it can be submitted. Given the fixed Advisory Committee date, develop a remediation plan with clear timelines. Consider requesting a meeting postponement with FDA if critical gaps cannot be addressed in time.',
           },
         ],
       },
