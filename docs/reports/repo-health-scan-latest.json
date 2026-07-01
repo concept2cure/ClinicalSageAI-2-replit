@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-01T04:44:01.127Z",
+  "generatedAt": "2026-07-01T04:44:56.843Z",
   "git": {
-    "sha": "0f32795c5617e249720505eb6a1d6d2b4aa82c16",
+    "sha": "f6f04bea20f9972efdfd72ea04d91c500d096513",
     "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
@@ -10,7 +10,7 @@
   },
   "summary": {
     "duplicateBasenames": 239,
-    "largeFilesByBytes": 28,
+    "largeFilesByBytes": 29,
     "largeFilesByLines": 83
   },
   "findings": {
@@ -2484,6 +2484,10 @@
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
         "bytes": 105877
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
+        "bytes": 104369
       }
     ],
     "largeFilesByLines": [
@@ -2628,6 +2632,10 @@
         "lines": 2068
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
+        "lines": 2059
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 2020
       },
@@ -2760,10 +2768,6 @@
         "lines": 1678
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
-        "lines": 1677
-      },
-      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
       },
@@ -2821,12 +2825,19 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 388,
-      "largeByBytes": 25,
+      "largeByBytes": 26,
       "largeByLines": 72
     },
     {

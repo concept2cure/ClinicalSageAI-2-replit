@@ -54,7 +54,12 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
       {
         id: 'narrative_composition',
         label: 'Narrative Composition',
-        nodeIds: ['narrative_composition', 'narrative_finalization'],
+        nodeIds: ['narrative_composition'],
+      },
+      {
+        id: 'regulatory_reporting',
+        label: 'Regulatory Reporting',
+        nodeIds: ['narrative_finalization'],
       },
     ],
 
@@ -239,6 +244,26 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
           },
         ],
         defaultNext: 'study_context',
+        issueChecks: [
+          {
+            id: 'unexpected_susar_expedited',
+            condition: { field: 'is_susar', operator: 'eq', value: true },
+            severity: 'critical',
+            title: 'SUSAR — Expedited Reporting Required',
+            message:
+              'Suspected Unexpected Serious Adverse Reactions (SUSARs) require expedited reporting per ICH E2A and EU Regulation 536/2014 Article 42. Fatal or life-threatening SUSARs must be reported within 7 calendar days (initial) with a follow-up within 8 additional days. All other SUSARs must be reported within 15 calendar days. Ensure the narrative is finalized within the applicable regulatory timeline.',
+            reference: 'ICH E2A, EU Regulation 536/2014 Art. 42, 21 CFR 312.32',
+          },
+          {
+            id: 'death_case_narrative',
+            condition: { field: 'event_seriousness_criteria', operator: 'contains', value: 'death' },
+            severity: 'critical',
+            title: 'Death Case — Comprehensive Narrative Required',
+            message:
+              'Per ICH E3 Section 12.3.2, all death cases require detailed individual narratives in the CSR regardless of the investigator\'s causality assessment. The narrative must include cause of death, contributing factors, autopsy findings (if available), and an independent sponsor assessment of causality.',
+            reference: 'ICH E3 Section 12.3.2, ICH E2B(R3)',
+          },
+        ],
       },
 
       {
@@ -246,6 +271,8 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
         section: 'case_overview',
         question:
           'Provide the study treatment context at the time of the adverse event, including treatment arm, blinding status, dosing, and route of administration.',
+        guidance:
+          'Per ICH E3 Section 12.3, each safety narrative must document the study drug exposure context including treatment arm assignment, dose at event onset, duration of exposure, and blinding status. For blinded studies, the narrative should maintain the blind unless unblinding was required for patient safety per ICH E6(R2) Section 3.3.3. The temporal relationship between drug exposure and event onset is a key element of causality assessment per the WHO-UMC system.',
         fields: [
           {
             id: 'treatment_arm',
@@ -1040,9 +1067,11 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
 
       {
         id: 'narrative_finalization',
-        section: 'narrative_composition',
+        section: 'regulatory_reporting',
         question:
           'Complete the finalization steps for the safety narrative, including medical review, quality checks, regulatory deadlines, and any outstanding follow-up items.',
+        guidance:
+          'Per ICH E6(R2) and 21 CFR 312.32, safety narratives must undergo medical review and quality control before submission. Expedited IND safety reports (7-day and 15-day) have strict regulatory timelines. The narrative must be consistent with the safety database entries and CIOMS/MedWatch forms. FDA expects narratives to be included in IND annual reports (21 CFR 312.33), CSR appendices (ICH E3), and NDA/BLA safety summaries (ICH M4E). Ensure all follow-up information is incorporated before finalization.',
         fields: [
           {
             id: 'medical_review_completed',
@@ -1104,6 +1133,26 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
           },
         ],
         defaultNext: null,
+        issueChecks: [
+          {
+            id: 'medical_review_missing',
+            condition: { field: 'medical_review_completed', operator: 'eq', value: false },
+            severity: 'warning',
+            title: 'Medical Review Not Completed',
+            message:
+              'Per ICH E6(R2) Section 4.11, the sponsor\'s medical officer must review all safety reports. Individual patient safety narratives should be reviewed by a qualified physician before inclusion in the CSR or submission to regulatory authorities. Ensure medical sign-off is obtained before finalizing the narrative.',
+            reference: 'ICH E6(R2) Section 4.11, ICH E3 Section 12.3',
+          },
+          {
+            id: 'quality_check_missing',
+            condition: { field: 'quality_check_completed', operator: 'eq', value: false },
+            severity: 'warning',
+            title: 'Quality Check Not Completed',
+            message:
+              'Safety narratives should undergo a quality control review to verify accuracy of dates, MedDRA coding, consistency between narrative text and the safety database, and completeness of required elements per CIOMS VI guidance. Discrepancies between the narrative and the safety database can trigger regulatory queries.',
+            reference: 'CIOMS VI Working Group Report, ICH E2B(R3)',
+          },
+        ],
       },
     ],
   };
