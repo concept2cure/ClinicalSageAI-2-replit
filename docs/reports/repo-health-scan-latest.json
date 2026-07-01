@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-30T22:26:58.093Z",
+  "generatedAt": "2026-07-01T03:30:53.091Z",
   "git": {
-    "sha": "16e92456fe4f42e6c5c0c1fea7b2dc88b2af3475",
+    "sha": "1f2e328d78ad0fd9537aadc4b939d95adad58d86",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -172,7 +172,7 @@
       },
       {
         "basename": "app",
-        "count": 41,
+        "count": 42,
         "paths": [
           "client/public/design-system/ui_kits/ana_ri/App.jsx",
           "client/public/design-system/ui_kits/ectd_coauthor/App.jsx",
@@ -188,6 +188,7 @@
           "client/src/concept2cure/mdx/App.tsx",
           "client/src/concept2cure/pdev/App.tsx",
           "client/src/concept2cure/quality/App.tsx",
+          "client/src/concept2cure/rbm/App.tsx",
           "client/src/concept2cure/risk/App.tsx",
           "client/src/concept2cure/submission/App.tsx",
           "client/src/concept2cure/tasking/App.tsx",
@@ -325,6 +326,24 @@
         ]
       },
       {
+        "basename": "nav",
+        "count": 12,
+        "paths": [
+          "client/src/concept2cure/biopharma/data/nav.ts",
+          "client/src/concept2cure/cmc/data/nav.ts",
+          "client/src/concept2cure/communication/data/nav.ts",
+          "client/src/concept2cure/labeling/data/nav.ts",
+          "client/src/concept2cure/mdx/data/nav.ts",
+          "client/src/concept2cure/pdev/data/nav.ts",
+          "client/src/concept2cure/rbm/data/nav.ts",
+          "client/src/concept2cure/risk/data/nav.ts",
+          "client/src/concept2cure/submission/data/nav.ts",
+          "client/src/concept2cure/tasking/data/nav.ts",
+          "design-system/ui_kits/mdx/data/nav.js",
+          "ui_kits/mdx/data/nav.js"
+        ]
+      },
+      {
         "basename": "topbar",
         "count": 12,
         "paths": [
@@ -340,23 +359,6 @@
           "client/src/concept2cure/risk/shell/TopBar.tsx",
           "client/src/concept2cure/submission/shell/TopBar.tsx",
           "client/src/concept2cure/tasking/shell/TopBar.tsx"
-        ]
-      },
-      {
-        "basename": "nav",
-        "count": 11,
-        "paths": [
-          "client/src/concept2cure/biopharma/data/nav.ts",
-          "client/src/concept2cure/cmc/data/nav.ts",
-          "client/src/concept2cure/communication/data/nav.ts",
-          "client/src/concept2cure/labeling/data/nav.ts",
-          "client/src/concept2cure/mdx/data/nav.ts",
-          "client/src/concept2cure/pdev/data/nav.ts",
-          "client/src/concept2cure/risk/data/nav.ts",
-          "client/src/concept2cure/submission/data/nav.ts",
-          "client/src/concept2cure/tasking/data/nav.ts",
-          "design-system/ui_kits/mdx/data/nav.js",
-          "ui_kits/mdx/data/nav.js"
         ]
       },
       {
@@ -2357,11 +2359,11 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 806336
+        "bytes": 821945
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 798959
+        "bytes": 814860
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2369,7 +2371,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 473216
+        "bytes": 479170
       },
       {
         "file": "server/statistics-service.ts",
@@ -2455,7 +2457,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19370
+        "lines": 19665
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2463,11 +2465,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 15582
+        "lines": 15912
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 8628
+        "lines": 8774
       },
       {
         "file": "server/statistics-service.ts",
@@ -2543,7 +2545,7 @@
       },
       {
         "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 2357
+        "lines": 2369
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2763,7 +2765,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 152,
+      "duplicateGroups": 154,
       "largeByBytes": 0,
       "largeByLines": 1
     },
