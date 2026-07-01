@@ -65,7 +65,12 @@ export function createBriefingBookFlow(): FlowDefinition {
       {
         id: 'voting_strategy_section',
         label: 'Voting Questions & Strategy',
-        nodeIds: ['voting_questions', 'presentation_strategy', 'post_meeting_planning'],
+        nodeIds: ['voting_questions'],
+      },
+      {
+        id: 'presentation_planning_section',
+        label: 'Presentation & Post-Meeting Planning',
+        nodeIds: ['presentation_strategy', 'post_meeting_planning'],
       },
     ],
 
@@ -1237,7 +1242,7 @@ export function createBriefingBookFlow(): FlowDefinition {
 
       {
         id: 'presentation_strategy',
-        section: 'Voting Questions & Strategy',
+        section: 'Presentation & Post-Meeting Planning',
         question:
           'What is the overall presentation strategy for the advisory committee meeting?',
         guidance:
@@ -1320,7 +1325,7 @@ export function createBriefingBookFlow(): FlowDefinition {
 
       {
         id: 'post_meeting_planning',
-        section: 'Voting Questions & Strategy',
+        section: 'Presentation & Post-Meeting Planning',
         question:
           'What are the plans for post-meeting activities and communication?',
         guidance:
@@ -1364,6 +1369,17 @@ export function createBriefingBookFlow(): FlowDefinition {
           },
         ],
         defaultNext: null,
+        issueChecks: [
+          {
+            id: 'no_unfavorable_contingency',
+            condition: { field: 'unfavorable_vote_plan', operator: 'eq', value: '' },
+            severity: 'warning',
+            title: 'Missing Contingency Plan for Unfavorable Vote',
+            message:
+              'A contingency plan for an unfavorable advisory committee vote is essential for investor communications and regulatory strategy. Per SEC Regulation FD, material non-public information about advisory committee outcomes must be disclosed promptly. Companies should have pre-drafted communications for all vote scenarios to ensure timely and accurate public disclosure.',
+            reference: '21 CFR 14.5, SEC Regulation FD, FDA PDUFA VII Commitments',
+          },
+        ],
       },
     ],
   };

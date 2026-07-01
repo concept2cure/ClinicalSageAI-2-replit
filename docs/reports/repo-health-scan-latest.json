@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-01T04:44:56.843Z",
+  "generatedAt": "2026-07-01T04:45:41.689Z",
   "git": {
-    "sha": "f6f04bea20f9972efdfd72ea04d91c500d096513",
+    "sha": "d6f703ce2444cbacf144ce071b705b02199d237a",
     "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
@@ -2825,14 +2825,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
