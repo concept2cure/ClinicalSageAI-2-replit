@@ -2907,6 +2907,234 @@ registerToolHandler('get_rbm_attention', async (input, ctx) => {
   return JSON.stringify({ source: 'AnA RBM Attention', count: items.length, items });
 });
 
+// ── RBM actuation handlers (writes; conversation replaces forms) ──────────────
+// Tenant scope comes from ctx.organizationId (server context), never model input.
+// Each infers the derived fields (score/band/status/secondary-limit/strategy) via
+// server/services/rbm/rbm-actuator.ts. Missing required inputs return a prompt so
+// the model asks a short follow-up instead of guessing.
+const rbmStr = (v: unknown): string | undefined => (typeof v === 'string' && v.length > 0 ? v : undefined);
+const rbmNum = (v: unknown): number | undefined =>
+  typeof v === 'number' && Number.isFinite(v)
+    ? v
+    : typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))
+      ? Number(v)
+      : undefined;
+const rbmBool = (v: unknown): boolean | undefined => (typeof v === 'boolean' ? v : undefined);
+const rbmErr = (msg: string) => JSON.stringify({ source: 'AnA RBM', error: msg });
+
+registerToolHandler('add_ctq_factor', async (input, ctx) => {
+  const orgId = ctx?.organizationId ?? null;
+  const programId = rbmStr(input.programId);
+  const ctqFactor = rbmStr(input.ctqFactor);
+  const likelihood = rbmNum(input.likelihood);
+  const impact = rbmNum(input.impact);
+  if (orgId == null) return rbmErr('Organization context required.');
+  if (!programId || !RBM_UUID_RE.test(programId)) return rbmErr('A valid programId (UUID) is required.');
+  if (!ctqFactor) return rbmErr('Ask the user what the risk / critical-to-quality factor is.');
+  if (likelihood == null || impact == null) return rbmErr('Ask the user to rate likelihood and impact (1–5).');
+  const { getPool } = await import('../../db.js');
+  const { addCtqFactor } = await import('../rbm/rbm-actuator.js');
+  const out = await addCtqFactor(getPool(), orgId, {
+    programId, ctqFactor, likelihood, impact,
+    category: rbmStr(input.category) as any,
+    riskDescription: rbmStr(input.riskDescription) ?? null,
+    detectability: rbmNum(input.detectability) ?? null,
+    mitigation: rbmStr(input.mitigation) ?? null,
+    isCritical: rbmBool(input.isCritical),
+  });
+  return JSON.stringify({ source: 'AnA RBM · add_ctq_factor', ...out });
+});
+
+registerToolHandler('define_kri', async (input, ctx) => {
+  const orgId = ctx?.organizationId ?? null;
+  const programId = rbmStr(input.programId);
+  const name = rbmStr(input.name);
+  if (orgId == null) return rbmErr('Organization context required.');
+  if (!programId || !RBM_UUID_RE.test(programId)) return rbmErr('A valid programId (UUID) is required.');
+  if (!name) return rbmErr('Ask the user for the KRI name.');
+  const { getPool } = await import('../../db.js');
+  const { defineKri } = await import('../rbm/rbm-actuator.js');
+  const out = await defineKri(getPool(), orgId, {
+    programId, name,
+    direction: rbmStr(input.direction) as any,
+    thresholdAmber: rbmNum(input.thresholdAmber) ?? null,
+    thresholdRed: rbmNum(input.thresholdRed) ?? null,
+    unit: rbmStr(input.unit) ?? null,
+    dataSource: rbmStr(input.dataSource),
+    metricDefinition: rbmStr(input.metricDefinition) ?? null,
+    currentValue: rbmNum(input.currentValue) ?? null,
+  });
+  return JSON.stringify({ source: 'AnA RBM · define_kri', ...out });
+});
+
+registerToolHandler('record_kri_reading', async (input, ctx) => {
+  const orgId = ctx?.organizationId ?? null;
+  const programId = rbmStr(input.programId);
+  const value = rbmNum(input.value);
+  const kriId = rbmNum(input.kriId);
+  const kriName = rbmStr(input.kriName);
+  if (orgId == null) return rbmErr('Organization context required.');
+  if (value == null) return rbmErr('Ask the user for the reading value.');
+  if (kriId == null && !(kriName && programId && RBM_UUID_RE.test(programId))) {
+    return rbmErr('Identify the KRI by kriId, or by kriName plus a valid programId.');
+  }
+  const { getPool } = await import('../../db.js');
+  const { recordKriReading } = await import('../rbm/rbm-actuator.js');
+  const out = await recordKriReading(getPool(), orgId, {
+    kriId: kriId ?? null, kriName: kriName ?? null, programId: programId ?? null, value,
+    observedAt: rbmStr(input.observedAt) ?? null, note: rbmStr(input.note) ?? null,
+  });
+  if (!out.resolved) return rbmErr('No matching KRI found — check the id or name, or define the KRI first.');
+  return JSON.stringify({ source: 'AnA RBM · record_kri_reading', ...out });
+});
+
+registerToolHandler('set_qtl', async (input, ctx) => {
+  const orgId = ctx?.organizationId ?? null;
+  const programId = rbmStr(input.programId);
+  const parameter = rbmStr(input.parameter);
+  if (orgId == null) return rbmErr('Organization context required.');
+  if (!programId || !RBM_UUID_RE.test(programId)) return rbmErr('A valid programId (UUID) is required.');
+  if (!parameter) return rbmErr('Ask the user for the QTL parameter.');
+  const { getPool } = await import('../../db.js');
+  const { setQtl } = await import('../rbm/rbm-actuator.js');
+  const out = await setQtl(getPool(), orgId, {
+    programId, parameter,
+    rationale: rbmStr(input.rationale) ?? null,
+    threshold: rbmNum(input.threshold) ?? null,
+    secondaryLimit: rbmNum(input.secondaryLimit) ?? null,
+    currentValue: rbmNum(input.currentValue) ?? null,
+  });
+  return JSON.stringify({ source: 'AnA RBM · set_qtl', ...out });
+});
+
+registerToolHandler('raise_monitoring_signal', async (input, ctx) => {
+  const orgId = ctx?.organizationId ?? null;
+  const programId = rbmStr(input.programId);
+  const title = rbmStr(input.title);
+  if (orgId == null) return rbmErr('Organization context required.');
+  if (!programId || !RBM_UUID_RE.test(programId)) return rbmErr('A valid programId (UUID) is required.');
+  if (!title) return rbmErr('Ask the user for a short signal title.');
+  const { getPool } = await import('../../db.js');
+  const { raiseSignal } = await import('../rbm/rbm-actuator.js');
+  const out = await raiseSignal(getPool(), orgId, {
+    programId, title,
+    severity: rbmStr(input.severity) as any,
+    siteId: rbmStr(input.siteId) ?? null,
+    signalType: rbmStr(input.signalType) ?? null,
+    detail: rbmStr(input.detail) ?? null,
+  });
+  return JSON.stringify({ source: 'AnA RBM · raise_monitoring_signal', ...out });
+});
+
+registerToolHandler('triage_signal', async (input, ctx) => {
+  const orgId = ctx?.organizationId ?? null;
+  const signalId = rbmNum(input.signalId);
+  if (orgId == null) return rbmErr('Organization context required.');
+  if (signalId == null) return rbmErr('Ask which signal to triage (signalId).');
+  const { getPool } = await import('../../db.js');
+  const { triageSignal } = await import('../rbm/rbm-actuator.js');
+  const out = await triageSignal(getPool(), orgId, {
+    signalId,
+    status: rbmStr(input.status) as any,
+    severity: rbmStr(input.severity) as any,
+    resolutionNotes: rbmStr(input.resolutionNotes) ?? null,
+    detail: rbmStr(input.detail) ?? null,
+  });
+  if (!out.updated && out.reason === 'not_found') return rbmErr('Signal not found in this tenant.');
+  if (!out.updated) return rbmErr('Provide at least one field to change (status, severity, or notes).');
+  return JSON.stringify({ source: 'AnA RBM · triage_signal', ...out });
+});
+
+registerToolHandler('draft_monitoring_plan', async (input, ctx) => {
+  const orgId = ctx?.organizationId ?? null;
+  const programId = rbmStr(input.programId);
+  if (orgId == null) return rbmErr('Organization context required.');
+  if (!programId || !RBM_UUID_RE.test(programId)) return rbmErr('A valid programId (UUID) is required.');
+  const { getPool } = await import('../../db.js');
+  const { draftPlan } = await import('../rbm/rbm-actuator.js');
+  const out = await draftPlan(getPool(), orgId, {
+    programId,
+    title: rbmStr(input.title),
+    strategy: rbmStr(input.strategy) as any,
+    assessmentId: rbmNum(input.assessmentId) ?? null,
+  });
+  return JSON.stringify({ source: 'AnA RBM · draft_monitoring_plan', ...out });
+});
+
+registerToolHandler('create_monitoring_action', async (input, ctx) => {
+  const orgId = ctx?.organizationId ?? null;
+  const planId = rbmNum(input.planId);
+  const description = rbmStr(input.description);
+  if (orgId == null) return rbmErr('Organization context required.');
+  if (planId == null) return rbmErr('Ask which plan the action belongs to (planId).');
+  if (!description) return rbmErr('Ask the user what the action is.');
+  const { getPool } = await import('../../db.js');
+  const { createAction } = await import('../rbm/rbm-actuator.js');
+  const out = await createAction(getPool(), orgId, {
+    planId, description,
+    actionType: rbmStr(input.actionType) as any,
+    priority: rbmStr(input.priority) as any,
+    dueDate: rbmStr(input.dueDate) ?? null,
+    riskItemId: rbmNum(input.riskItemId) ?? null,
+    signalId: rbmNum(input.signalId) ?? null,
+    owner: rbmNum(input.owner) ?? null,
+  });
+  if (!out.created) return rbmErr('Monitoring plan not found in this tenant.');
+  return JSON.stringify({ source: 'AnA RBM · create_monitoring_action', ...out });
+});
+
+registerToolHandler('update_monitoring_action', async (input, ctx) => {
+  const orgId = ctx?.organizationId ?? null;
+  const actionId = rbmNum(input.actionId);
+  if (orgId == null) return rbmErr('Organization context required.');
+  if (actionId == null) return rbmErr('Ask which action to update (actionId).');
+  const { getPool } = await import('../../db.js');
+  const { updateAction } = await import('../rbm/rbm-actuator.js');
+  const out = await updateAction(getPool(), orgId, {
+    actionId,
+    status: rbmStr(input.status) as any,
+    priority: rbmStr(input.priority) as any,
+    description: rbmStr(input.description),
+    dueDate: rbmStr(input.dueDate) ?? null,
+    owner: rbmNum(input.owner) ?? null,
+  });
+  if (!out.updated && out.reason === 'not_found') return rbmErr('Action not found in this tenant.');
+  if (!out.updated) return rbmErr('Provide at least one field to change.');
+  return JSON.stringify({ source: 'AnA RBM · update_monitoring_action', ...out });
+});
+
+registerToolHandler('approve_rbm_assessment', async (input, ctx) => {
+  const orgId = ctx?.organizationId ?? null;
+  const assessmentId = rbmNum(input.assessmentId);
+  const reason = rbmStr(input.reason);
+  if (orgId == null) return rbmErr('Organization context required.');
+  if (assessmentId == null) return rbmErr('Ask which assessment to approve (assessmentId).');
+  if (!reason || reason.trim().length < 3) {
+    return rbmErr('A reason for change is required for this governed (21 CFR Part 11) approval — ask the user.');
+  }
+  const { getPool } = await import('../../db.js');
+  const { approveAssessment } = await import('../rbm/rbm-actuator.js');
+  const row = await approveAssessment(getPool(), orgId, ctx?.userId ?? null, assessmentId, reason.trim());
+  if (!row) return rbmErr('Assessment not found in this tenant.');
+  return JSON.stringify({ source: 'AnA RBM · approve_rbm_assessment', governed: true, assessment: row });
+});
+
+registerToolHandler('approve_rbm_plan', async (input, ctx) => {
+  const orgId = ctx?.organizationId ?? null;
+  const planId = rbmNum(input.planId);
+  const reason = rbmStr(input.reason);
+  if (orgId == null) return rbmErr('Organization context required.');
+  if (planId == null) return rbmErr('Ask which plan to approve (planId).');
+  if (!reason || reason.trim().length < 3) {
+    return rbmErr('A reason for change is required for this governed (21 CFR Part 11) approval — ask the user.');
+  }
+  const { getPool } = await import('../../db.js');
+  const { approvePlan } = await import('../rbm/rbm-actuator.js');
+  const row = await approvePlan(getPool(), orgId, ctx?.userId ?? null, planId, reason.trim());
+  if (!row) return rbmErr('Monitoring plan not found in this tenant.');
+  return JSON.stringify({ source: 'AnA RBM · approve_rbm_plan', governed: true, plan: row });
+});
+
 // Regulatory-pathway advisor — drug/biologic/device/IVD routes (FDA & EU).
 registerToolHandler('advise_regulatory_pathway', async (input) => {
   const pathway = typeof input.pathway === 'string' ? input.pathway : undefined;

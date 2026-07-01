@@ -784,6 +784,229 @@ export const GET_RBM_ATTENTION: AnaTool = {
   },
 };
 
+// ── RBM actuation tools (conversation replaces forms) ─────────────────────────
+// These WRITE. Each asks the user only for the primitives a monitor actually
+// knows and infers the derived fields (risk score + criticality, KRI/QTL status,
+// the QTL secondary limit, the plan strategy). Tenant scope (organization_id) is
+// injected from server context in the handler — never from these inputs. When a
+// required field is missing, the model should ASK a short follow-up rather than
+// guess. Backed by server/services/rbm/rbm-actuator.ts.
+
+export const ADD_CTQ_FACTOR: AnaTool = {
+  name: 'add_ctq_factor',
+  description:
+    'Adds a Critical-to-Quality (CtQ) factor to a program\'s risk assessment (RACT). Ask the user for the ' +
+    'factor and its likelihood (1–5) and impact (1–5); infer the risk score (likelihood×impact) and, unless ' +
+    'told otherwise, mark it critical when the score falls in the high band. Optionally capture category, a ' +
+    'risk description and the planned mitigation. Use when the user describes a new risk to the study.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID.' },
+      ctqFactor: { type: 'string', description: 'The critical-to-quality factor / risk name.' },
+      likelihood: { type: 'number', description: 'Likelihood 1 (rare) – 5 (almost certain).' },
+      impact: { type: 'number', description: 'Impact 1 (negligible) – 5 (critical).' },
+      category: { type: 'string', enum: ['safety', 'efficacy', 'data_integrity', 'compliance', 'operational'], description: 'Risk category (default operational).' },
+      riskDescription: { type: 'string', description: 'What could go wrong and why it matters.' },
+      detectability: { type: 'number', description: 'Optional detectability 1–5.' },
+      mitigation: { type: 'string', description: 'Planned mitigation / control.' },
+      isCritical: { type: 'boolean', description: 'Override the inferred criticality.' },
+    },
+    required: ['programId', 'ctqFactor', 'likelihood', 'impact'],
+  },
+};
+
+export const DEFINE_KRI: AnaTool = {
+  name: 'define_kri',
+  description:
+    'Defines a Key Risk Indicator (KRI) for a program. Ask for the indicator name, whether higher or lower is ' +
+    'worse (direction), and the amber/red thresholds; infer the green/amber/red status from the current value ' +
+    'if one is given. Use when the user wants to start tracking a new central-monitoring metric.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID.' },
+      name: { type: 'string', description: 'KRI name, e.g. "Screen-failure rate".' },
+      direction: { type: 'string', enum: ['higher_worse', 'lower_worse'], description: 'Whether a higher or lower value is worse.' },
+      thresholdAmber: { type: 'number', description: 'Amber (warning) threshold.' },
+      thresholdRed: { type: 'number', description: 'Red (action) threshold.' },
+      unit: { type: 'string', description: 'Unit, e.g. "%", "days".' },
+      dataSource: { type: 'string', enum: ['edc', 'ctms', 'site_intel', 'central_stats', 'manual'], description: 'Where the value comes from (default manual).' },
+      metricDefinition: { type: 'string', description: 'How the metric is calculated.' },
+      currentValue: { type: 'number', description: 'Current value, if known.' },
+    },
+    required: ['programId', 'name'],
+  },
+};
+
+export const RECORD_KRI_READING: AnaTool = {
+  name: 'record_kri_reading',
+  description:
+    'Records a new reading for an existing KRI and recomputes its status. Identify the KRI by id, or by name ' +
+    'within the program (so the user can say "log screen-failure rate at 34%"). Ask for the value; infer the ' +
+    'resulting green/amber/red status from the KRI\'s thresholds and direction.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID (needed to resolve a KRI by name).' },
+      kriId: { type: 'number', description: 'KRI id, if known.' },
+      kriName: { type: 'string', description: 'KRI name to match within the program, if the id is unknown.' },
+      value: { type: 'number', description: 'The observed value.' },
+      observedAt: { type: 'string', description: 'ISO timestamp of the observation (default now).' },
+      note: { type: 'string', description: 'Optional note about the reading.' },
+    },
+    required: ['programId', 'value'],
+  },
+};
+
+export const SET_QTL: AnaTool = {
+  name: 'set_qtl',
+  description:
+    'Defines a Quality Tolerance Limit (QTL) for a program. Ask for the parameter, its primary threshold and a ' +
+    'rationale; infer the secondary early-warning limit (75% of the threshold) when not given, and the ' +
+    'within/approaching/breached status from the current value. Use for study-level tolerance governance.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID.' },
+      parameter: { type: 'string', description: 'The QTL parameter, e.g. "Important protocol deviation rate".' },
+      threshold: { type: 'number', description: 'Primary tolerance threshold.' },
+      rationale: { type: 'string', description: 'Documented rationale for the limit (required by RBQM).' },
+      secondaryLimit: { type: 'number', description: 'Override the inferred early-warning limit.' },
+      currentValue: { type: 'number', description: 'Current value, if known.' },
+    },
+    required: ['programId', 'parameter'],
+  },
+};
+
+export const RAISE_MONITORING_SIGNAL: AnaTool = {
+  name: 'raise_monitoring_signal',
+  description:
+    'Raises a central-monitoring signal for triage. Ask for a short title and the severity (low/medium/high/' +
+    'critical); optionally the site and a detail. Use when the user reports something to investigate that isn\'t ' +
+    'already flagged by the automated detectors.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID.' },
+      title: { type: 'string', description: 'Short signal title.' },
+      severity: { type: 'string', enum: ['low', 'medium', 'high', 'critical'], description: 'Severity (default medium).' },
+      siteId: { type: 'string', description: 'Site id/number the signal concerns, if any.' },
+      signalType: { type: 'string', description: 'Optional signal type/category.' },
+      detail: { type: 'string', description: 'What was observed.' },
+    },
+    required: ['programId', 'title'],
+  },
+};
+
+export const TRIAGE_SIGNAL: AnaTool = {
+  name: 'triage_signal',
+  description:
+    'Triages an existing central-monitoring signal: move its status (new → triaged → investigating → resolved / ' +
+    'dismissed), adjust severity, or attach resolution notes. Ask which signal (by id) and the new state.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      signalId: { type: 'number', description: 'Signal id.' },
+      status: { type: 'string', enum: ['new', 'triaged', 'investigating', 'resolved', 'dismissed'], description: 'New status.' },
+      severity: { type: 'string', enum: ['low', 'medium', 'high', 'critical'], description: 'Revised severity.' },
+      resolutionNotes: { type: 'string', description: 'Notes on the investigation / resolution.' },
+    },
+    required: ['signalId'],
+  },
+};
+
+export const DRAFT_MONITORING_PLAN: AnaTool = {
+  name: 'draft_monitoring_plan',
+  description:
+    'Creates a monitoring plan for a program. Infer the strategy (centralized / risk-based / hybrid) from the ' +
+    'program\'s assessment overall risk when not specified. The plan starts as a draft and must be approved ' +
+    '(governed) before it is active. Follow with create_monitoring_action to populate the actions.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'Program (project) UUID.' },
+      title: { type: 'string', description: 'Plan title (default "Risk-based monitoring plan").' },
+      strategy: { type: 'string', enum: ['centralized', 'risk_based', 'on_site', 'hybrid'], description: 'Override the inferred strategy.' },
+      assessmentId: { type: 'number', description: 'Assessment id to bind the plan to, if known.' },
+    },
+    required: ['programId'],
+  },
+};
+
+export const CREATE_MONITORING_ACTION: AnaTool = {
+  name: 'create_monitoring_action',
+  description:
+    'Adds a monitoring action (issue / CAPA / site visit / query / escalation) to a plan. Ask for the plan, a ' +
+    'description, and the priority; optionally a due date and the linked risk item or signal. Use to turn a ' +
+    'risk or signal into a tracked action.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      planId: { type: 'number', description: 'Monitoring plan id.' },
+      description: { type: 'string', description: 'What needs to be done.' },
+      actionType: { type: 'string', enum: ['issue', 'capa', 'site_visit', 'query', 'escalation'], description: 'Action type (default issue).' },
+      priority: { type: 'string', enum: ['low', 'medium', 'high'], description: 'Priority (default medium).' },
+      dueDate: { type: 'string', description: 'Due date YYYY-MM-DD.' },
+      riskItemId: { type: 'number', description: 'Linked CtQ risk item id, if any.' },
+      signalId: { type: 'number', description: 'Linked signal id, if any.' },
+      owner: { type: 'number', description: 'Owner user id, if assigned.' },
+    },
+    required: ['planId', 'description'],
+  },
+};
+
+export const UPDATE_MONITORING_ACTION: AnaTool = {
+  name: 'update_monitoring_action',
+  description:
+    'Updates a monitoring action — most often to move its status (open → in_progress → done) or reassign / ' +
+    'reprioritize it. Ask which action (by id) and what changed.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      actionId: { type: 'number', description: 'Action id.' },
+      status: { type: 'string', enum: ['open', 'in_progress', 'done'], description: 'New status.' },
+      priority: { type: 'string', enum: ['low', 'medium', 'high'], description: 'Revised priority.' },
+      description: { type: 'string', description: 'Revised description.' },
+      dueDate: { type: 'string', description: 'Revised due date YYYY-MM-DD.' },
+      owner: { type: 'number', description: 'Reassign to user id.' },
+    },
+    required: ['actionId'],
+  },
+};
+
+export const APPROVE_RBM_ASSESSMENT: AnaTool = {
+  name: 'approve_rbm_assessment',
+  description:
+    'Approves and activates a risk assessment — a GOVERNED (21 CFR Part 11) action. You MUST obtain an explicit ' +
+    'reason-for-change from the user before calling; the approval is attributed to the signed-in user. Do not ' +
+    'infer or fabricate the reason. Confirm intent, then approve.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      assessmentId: { type: 'number', description: 'Assessment id to approve.' },
+      reason: { type: 'string', description: 'The user-supplied reason for change (required, non-empty).' },
+    },
+    required: ['assessmentId', 'reason'],
+  },
+};
+
+export const APPROVE_RBM_PLAN: AnaTool = {
+  name: 'approve_rbm_plan',
+  description:
+    'Approves and activates a monitoring plan — a GOVERNED (21 CFR Part 11) action. You MUST obtain an explicit ' +
+    'reason-for-change from the user before calling; the approval is attributed to the signed-in user. Do not ' +
+    'infer or fabricate the reason. Confirm intent, then approve.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      planId: { type: 'number', description: 'Monitoring plan id to approve.' },
+      reason: { type: 'string', description: 'The user-supplied reason for change (required, non-empty).' },
+    },
+    required: ['planId', 'reason'],
+  },
+};
+
 export const ADVISE_REGULATORY_PATHWAY: AnaTool = {
   name: 'advise_regulatory_pathway',
   description:
@@ -7935,6 +8158,18 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   SCAN_PATIENT_PROFILES,
   GENERATE_RBM_REPORT,
   GET_RBM_ATTENTION,
+  // RBM actuation (conversation replaces forms) — see rbm-actuator.ts.
+  ADD_CTQ_FACTOR,
+  DEFINE_KRI,
+  RECORD_KRI_READING,
+  SET_QTL,
+  RAISE_MONITORING_SIGNAL,
+  TRIAGE_SIGNAL,
+  DRAFT_MONITORING_PLAN,
+  CREATE_MONITORING_ACTION,
+  UPDATE_MONITORING_ACTION,
+  APPROVE_RBM_ASSESSMENT,
+  APPROVE_RBM_PLAN,
   ADVISE_GCP,
   REVIEW_INFORMED_CONSENT,
   ADVISE_COA_SELECTION,
