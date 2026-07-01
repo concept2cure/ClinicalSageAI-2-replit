@@ -15935,6 +15935,20 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
 
   try {
     const result = startFlow(category, engineCtx);
+    /* Audit log — fire-and-forget, never block the response. Records who started
+       which flow, when (21 CFR Part 11 §11.10(e) traceability for the questioning
+       session that feeds document authoring). */
+    try {
+      const { auditLog } = await import('../auditService.js');
+      auditLog({
+        tenantId:   ctx?.organizationId ?? null,
+        userId:     ctx?.userId ?? null,
+        action:     'INTELLIGENCE_FLOW_STARTED',
+        resource:   'intelligence_flow',
+        resourceId: String(result.state.flowId),
+        details: { flowCategory: category, documentType, projectId: engineCtx.projectId },
+      });
+    } catch { /* never block the tool response on audit failure */ }
     return JSON.stringify({
       status: 'intelligence_question',
       flowState: result.state,
@@ -15966,6 +15980,27 @@ registerToolHandler('answer_intelligence_question', async (input, ctx) => {
   try {
     const result = advanceFlow(flowState, nodeId, answers, engineCtx);
     if (result.completeEvent) {
+      /* Audit log on flow completion — captures the completed questioning
+         session (who/what/when + issue posture) that will drive downstream
+         document generation. Fire-and-forget; never blocks. */
+      try {
+        const { auditLog } = await import('../auditService.js');
+        const issues = result.state.issues || [];
+        auditLog({
+          tenantId:   ctx?.organizationId ?? null,
+          userId:     ctx?.userId ?? null,
+          action:     'INTELLIGENCE_FLOW_COMPLETED',
+          resource:   'intelligence_flow',
+          resourceId: String(result.state.flowId),
+          details: {
+            flowCategory:   result.state.flowCategory,
+            completedNodes: result.state.completedNodes.length,
+            criticalIssues: issues.filter((i: any) => i.severity === 'critical').length,
+            warnings:       issues.filter((i: any) => i.severity === 'warning').length,
+            projectId:      engineCtx.projectId,
+          },
+        });
+      } catch { /* never block the tool response on audit failure */ }
       return JSON.stringify({
         status: 'intelligence_flow_complete',
         flowState: result.state,
@@ -16000,14 +16035,34 @@ registerToolHandler('list_intelligence_flows', async (_input, ctx) => {
 // War Game Simulation
 // ─────────────────────────────────────────────────────────────────────────────
 
-registerToolHandler('start_war_game', async (input, _ctx) => {
+registerToolHandler('start_war_game', async (input, ctx) => {
   try {
     const { runWarGame } = await import('./intelligence-questions/war-game/engine.js');
+    const category = String(input.war_game_category || '') as import('./intelligence-questions/war-game/types.js').WarGameCategory;
     const report = runWarGame(
-      String(input.war_game_category || '') as import('./intelligence-questions/war-game/types.js').WarGameCategory,
+      category,
       String(input.source_flow_id || ''),
       (input.answers || {}) as Record<string, Record<string, unknown>>,
     );
+    /* Audit log the adversarial audit run — records who ran which War Game and
+       the resulting readiness posture (score/assessment). Fire-and-forget. */
+    try {
+      const { auditLog } = await import('../auditService.js');
+      auditLog({
+        tenantId:   ctx?.organizationId ?? null,
+        userId:     ctx?.userId ?? null,
+        action:     'WAR_GAME_RUN',
+        resource:   'war_game_report',
+        resourceId: String((report as any)?.id || input.source_flow_id || category),
+        details: {
+          category,
+          sourceFlowId:      String(input.source_flow_id || ''),
+          overallScore:      (report as any)?.overallScore,
+          overallAssessment: (report as any)?.overallAssessment,
+          findingCount:      Array.isArray((report as any)?.findings) ? (report as any).findings.length : undefined,
+        },
+      });
+    } catch { /* never block the tool response on audit failure */ }
     return JSON.stringify({
       success: true,
       war_game_report: report,
