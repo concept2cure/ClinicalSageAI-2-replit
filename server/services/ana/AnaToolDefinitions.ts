@@ -7961,6 +7961,38 @@ const LIST_INTELLIGENCE_FLOWS: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// War Game Simulation Tool
+// ─────────────────────────────────────────────────────────────────────────────
+
+const START_WAR_GAME: AnaTool = {
+  name: 'start_war_game',
+  description:
+    'Simulate an FDA auditor review of collected intelligence data. Pressure-tests the document ' +
+    'against regulatory requirements and produces an advisory report with findings and remediation ' +
+    'recommendations. Use this after completing an intelligence questioning flow to war-game the ' +
+    'document before submission.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      war_game_category: {
+        type: 'string',
+        enum: ['protocol', 'ind', 'csr', '510k', 'cer', 'sop'],
+        description: 'The type of document to war-game.',
+      },
+      source_flow_id: {
+        type: 'string',
+        description: 'The flow ID of the completed intelligence questionnaire to audit.',
+      },
+      answers: {
+        type: 'object',
+        description: 'The collected answers from the intelligence flow.',
+      },
+    },
+    required: ['war_game_category', 'source_flow_id', 'answers'],
+  },
+};
+
 const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   RECONCILE_DOSSIER_NUMBERS,
   GENERATE_SCHEDULE_OF_EVENTS,
@@ -8743,6 +8775,8 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   START_INTELLIGENCE_FLOW,
   ANSWER_INTELLIGENCE_QUESTION,
   LIST_INTELLIGENCE_FLOWS,
+  // War Game Simulation — FDA auditor pressure-testing of intelligence flow output
+  START_WAR_GAME,
 ];
 
 // Defensive registry guard: v2's cdiscTools.ts currently re-registers

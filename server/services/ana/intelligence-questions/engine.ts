@@ -403,11 +403,79 @@ function buildSuggestedActions(
         { label: 'Generate Literature Search Protocol', actionType: 'generate_lit_search', description: 'Create the systematic literature search protocol' },
       );
       break;
+    case 'nda_submission':
+      actions.push(
+        { label: 'Generate NDA Module 2 Summaries', actionType: 'generate_nda_module2', description: 'Draft the Quality Overall Summary, Nonclinical Overview, and Clinical Overview' },
+        { label: 'Assemble eCTD Submission', actionType: 'assemble_ectd', description: 'Assemble the electronic Common Technical Document for NDA filing' },
+      );
+      break;
+    case 'bla_submission':
+      actions.push(
+        { label: 'Generate BLA Module 2 Summaries', actionType: 'generate_bla_module2', description: 'Draft the Quality Overall Summary and Clinical Overview for the BLA' },
+        { label: 'Assemble BLA eCTD', actionType: 'assemble_bla_ectd', description: 'Assemble the electronic Common Technical Document for BLA filing' },
+      );
+      break;
+    case 'device_pma':
+      actions.push(
+        { label: 'Generate PMA Summary', actionType: 'generate_pma_summary', description: 'Create the PMA summary of safety and effectiveness' },
+        { label: 'Draft Panel Package', actionType: 'generate_panel_package', description: 'Generate the advisory panel submission package' },
+      );
+      break;
+    case 'cmc_specification':
+      actions.push(
+        { label: 'Generate CMC Module 3', actionType: 'generate_cmc_module3', description: 'Draft the CTD Module 3 Quality section from collected specifications' },
+        { label: 'Generate Specification Table', actionType: 'generate_spec_table', description: 'Create the drug substance and drug product specification tables' },
+      );
+      break;
+    case 'risk_management':
+      actions.push(
+        { label: 'Generate Risk Management Report', actionType: 'generate_risk_report', description: 'Create the risk management report per ISO 14971' },
+        { label: 'Generate Risk-Benefit Analysis', actionType: 'generate_risk_benefit', description: 'Draft the risk-benefit analysis summary' },
+      );
+      break;
+    case 'safety_narrative':
+      actions.push(
+        { label: 'Generate Safety Narrative', actionType: 'generate_safety_narrative', description: 'Create the patient safety narrative from collected case data' },
+        { label: 'Generate Narrative Summary Table', actionType: 'generate_narrative_table', description: 'Create the tabular listing of serious adverse events' },
+      );
+      break;
+    case 'labeling':
+      actions.push(
+        { label: 'Generate USPI Draft', actionType: 'generate_uspi', description: 'Draft the United States Prescribing Information (USPI) document' },
+        { label: 'Generate Medication Guide', actionType: 'generate_med_guide', description: 'Create the patient Medication Guide' },
+      );
+      break;
+    case 'briefing_book':
+      actions.push(
+        { label: 'Generate Briefing Document', actionType: 'generate_briefing', description: 'Create the advisory committee briefing document' },
+        { label: 'Generate Slide Deck Outline', actionType: 'generate_slide_outline', description: 'Draft the presentation outline for the advisory committee meeting' },
+      );
+      break;
+    case 'stability_study':
+      actions.push(
+        { label: 'Generate Stability Report', actionType: 'generate_stability_report', description: 'Create the stability study report per ICH Q1A(R2)' },
+        { label: 'Generate Stability Protocol', actionType: 'generate_stability_protocol', description: 'Draft the stability study protocol for regulatory submission' },
+      );
+      break;
+    case 'project_setup':
+      actions.push(
+        { label: 'Launch Project Dashboard', actionType: 'launch_dashboard', description: 'Initialize the project dashboard with configured settings' },
+        { label: 'Generate Regulatory Strategy Memo', actionType: 'generate_reg_strategy', description: 'Create a regulatory strategy memorandum from the project configuration' },
+      );
+      break;
     default:
       actions.push(
         { label: 'Generate Document', actionType: 'generate_document', description: 'Generate the document from collected information' },
       );
   }
+
+  // Every completed flow offers a War Game simulation — pressure-test the
+  // document against FDA auditor scrutiny before proceeding to generation.
+  actions.push({
+    label: 'Run FDA War Game',
+    actionType: 'start_war_game',
+    description: 'Pressure-test this document against FDA auditor scrutiny',
+  });
 
   return actions;
 }

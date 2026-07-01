@@ -362,6 +362,16 @@ export function Ana({
     [chat]
   );
 
+  const handleWarGameRemediate = useCallback(
+    (findingId: string, findingTitle: string) => {
+      void chat.send(
+        `Please help me address this war game finding: "${findingTitle}" (finding ID: ${findingId}). ` +
+        `What specific changes should I make to resolve this issue and strengthen my submission?`
+      );
+    },
+    [chat]
+  );
+
   // Auto-send a handed-off draft from the home composer. `externalMessage` is
   // the legacy alias (AnaPersistentPanel); `initialMessage` wins if both set.
   // Guarded with a ref so remounts (React strict-mode, router re-mount) can't
@@ -551,6 +561,7 @@ export function Ana({
         intelligenceQuestion: m.intelligenceQuestion,
         intelligenceFlowState: m.intelligenceFlowState,
         intelligenceFlowComplete: m.intelligenceFlowComplete,
+        warGameReport: m.warGameReport,
         };
       }),
     [chat.messages]
@@ -998,6 +1009,7 @@ export function Ana({
           onSafetyNarrative={handleSafetyNarrative}
           onIntelligenceAnswer={handleIntelligenceAnswer}
           onIntelligenceAction={handleIntelligenceAction}
+          onWarGameRemediate={handleWarGameRemediate}
         />
       )}
       {view === 'projects' && (

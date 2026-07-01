@@ -27,6 +27,7 @@ const DEFAULT_SUGGESTIONS: ReadonlyArray<{ Ico: typeof I.file; label: string }> 
   { Ico: I.flask, label: 'Start IND submission' },
   { Ico: I.clip, label: 'Submission readiness' },
   { Ico: I.globe, label: 'Create an SOP' },
+  { Ico: I.sparkles, label: 'Run FDA War Game' },
 ];
 
 export interface EmptySuggestion {

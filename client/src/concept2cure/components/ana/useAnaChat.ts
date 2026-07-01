@@ -436,6 +436,34 @@ export interface AnaChatMessage {
   intelligenceFlowState?: import('../../../../../shared/types/intelligence-questions.js').FlowState;
   /** Intelligence flow completion — summary + suggested actions. */
   intelligenceFlowComplete?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceFlowCompleteEvent;
+  /**
+   * War Game report — FDA auditor simulation results. Rendered as a rich
+   * advisory report component inline in the message thread.
+   */
+  warGameReport?: {
+    id: string;
+    category: string;
+    sourceFlowId: string;
+    timestamp: string;
+    overallScore: number;
+    overallAssessment: 'audit_ready' | 'needs_work' | 'significant_gaps' | 'not_ready';
+    findings: Array<{
+      id: string;
+      dimension: string;
+      severity: 'info' | 'warning' | 'critical';
+      title: string;
+      question: string;
+      observation: string;
+      requirement: string;
+      reference: string;
+      recommendation: string;
+      relatedFields: string[];
+    }>;
+    dimensionScores: Record<string, { score: number; findingCount: number }>;
+    executiveSummary: string;
+    topPriorities: string[];
+    regulatoryRiskLevel: 'low' | 'moderate' | 'high' | 'critical';
+  };
 }
 
 export interface UseAnaChatOptions {
@@ -1042,6 +1070,17 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   prev.map(m =>
                     m.id === assistantId
                       ? { ...m, intelligenceFlowComplete: completion, intelligenceFlowState: flowState, intelligenceQuestion: undefined }
+                      : m
+                  )
+                );
+              }
+            } else if (event.type === 'war_game_report') {
+              const report = event.report;
+              if (report) {
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? { ...m, warGameReport: report }
                       : m
                   )
                 );

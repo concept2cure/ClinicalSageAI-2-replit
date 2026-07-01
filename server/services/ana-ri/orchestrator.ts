@@ -572,7 +572,10 @@ When a user asks to create, build, draft, or develop a regulatory document (prot
 
 Available document types: protocol, csr, ind, sop, 510k, cer, clinical study report, IND submission, standard operating procedure, premarket notification, clinical evaluation report.
 
-Do NOT try to ask these questions yourself in free text — always use the intelligence flow tool so the client renders structured form widgets. When suggesting workflows, mention you can "walk through a guided questionnaire" for any of these document types.`;
+Do NOT try to ask these questions yourself in free text — always use the intelligence flow tool so the client renders structured form widgets. When suggesting workflows, mention you can "walk through a guided questionnaire" for any of these document types.
+
+## WAR GAME SIMULATION
+When a user asks you to "run a war game", "pressure test", "audit simulation", "FDA review simulation", "stress test", or similar, use the start_war_game tool with the collected intelligence data from the most recent completed flow. If no flow has been completed yet, guide the user to complete a questionnaire first by starting an intelligence flow for the relevant document type. You can also proactively suggest running a war game after completing an intelligence flow by saying something like "Would you like me to run an FDA War Game simulation to pressure-test this [document type] before submission?" The war game simulates what real FDA auditors would ask and produces an advisory report with scored findings and remediation recommendations.`;
 
   // 8f. Inject proactive intelligence surfacing protocol + intelligence usage directives + citation protocol
   systemPrompt += `

@@ -18,6 +18,7 @@ import type { EffortLevel } from './ModelEffortPicker';
 import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
 import { Message, type ExecutedActionChip, type ToolCallView } from './Message';
 import { IntelligenceQuestionWidget } from './IntelligenceQuestionWidget';
+import { WarGameReport } from './WarGameReport';
 import type { MessageAttachment } from './useAnaChat';
 import type { PendingSignoff } from './useGovernedAction';
 import styles from './styles.module.css';
@@ -68,6 +69,8 @@ export interface ChatMessageView {
   intelligenceFlowState?: import('../../../../../shared/types/intelligence-questions.js').FlowState;
   /** Intelligence flow completion event. */
   intelligenceFlowComplete?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceFlowCompleteEvent;
+  /** War Game report — FDA auditor simulation results. */
+  warGameReport?: import('./useAnaChat').AnaChatMessage['warGameReport'];
 }
 
 export interface ChatViewProps {
@@ -100,6 +103,8 @@ export interface ChatViewProps {
   onIntelligenceAnswer?: (flowState: any, nodeId: string, answers: Record<string, unknown>) => void;
   /** Called when the user clicks a suggested action after flow completion. */
   onIntelligenceAction?: (actionType: string) => void;
+  /** Called when the user clicks "Remediate" on a war game finding. */
+  onWarGameRemediate?: (findingId: string, findingTitle: string) => void;
 }
 
 export function ChatView({
@@ -124,6 +129,7 @@ export function ChatView({
   onSafetyNarrative,
   onIntelligenceAnswer,
   onIntelligenceAction,
+  onWarGameRemediate,
 }: ChatViewProps) {
   const [draft, setDraft] = useState('');
   // Attachments the composer hands up at send time, consumed by `send`.
@@ -219,6 +225,16 @@ export function ChatView({
                   onAnswer={onIntelligenceAnswer}
                   onAction={onIntelligenceAction}
                   isStreaming={isStreaming}
+                />
+              )}
+              {m.warGameReport && (
+                <WarGameReport
+                  report={m.warGameReport}
+                  onDismiss={() => {/* war game report remains visible until dismissed */}}
+                  onRemediate={(findingId) => {
+                    const finding = m.warGameReport?.findings.find(f => f.id === findingId);
+                    onWarGameRemediate?.(findingId, finding?.title || findingId);
+                  }}
                 />
               )}
             </div>

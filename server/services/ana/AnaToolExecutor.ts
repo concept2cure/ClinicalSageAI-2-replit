@@ -15995,3 +15995,26 @@ registerToolHandler('list_intelligence_flows', async (_input, ctx) => {
   const flows = getAvailableFlows(engineCtx);
   return JSON.stringify({ flows });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// War Game Simulation
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('start_war_game', async (input, _ctx) => {
+  try {
+    const { runWarGame } = await import('./intelligence-questions/war-game/engine.js');
+    const report = runWarGame(
+      String(input.war_game_category || ''),
+      String(input.source_flow_id || ''),
+      (input.answers || {}) as Record<string, Record<string, unknown>>,
+    );
+    return JSON.stringify({
+      success: true,
+      war_game_report: report,
+    });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: err?.message || 'Failed to run war game simulation',
+    });
+  }
+});

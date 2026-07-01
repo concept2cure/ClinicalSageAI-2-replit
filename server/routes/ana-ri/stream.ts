@@ -776,6 +776,15 @@ router.post('/stream', async (req: Request, res: Response) => {
                   })}\n\n`
                 );
               }
+              // War Game report — forward to client as a dedicated SSE event
+              if (parsed?.war_game_report) {
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'war_game_report',
+                    report: parsed.war_game_report,
+                  })}\n\n`
+                );
+              }
               if (parsed && parsed.status === 'generated' && typeof parsed.content === 'string' && parsed.content.length > 0) {
                 const draftTitle: string = parsed.title || 'Generated document';
                 // Record for durable version-history persistence in post-processing.
