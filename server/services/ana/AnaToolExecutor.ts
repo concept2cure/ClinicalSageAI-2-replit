@@ -15909,3 +15909,89 @@ registerToolHandler('plan_lifecycle_management', async (input: Record<string, un
     return planLifecycleManagement(input as any);
   }, 'deterministic')
 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Intelligence Questioning Engine
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('start_intelligence_flow', async (input, ctx) => {
+  const { resolveFlowCategory } = await import('./intelligence-questions/flows/index.js');
+  const { startFlow } = await import('./intelligence-questions/engine.js');
+
+  const documentType = String(input.document_type || '');
+  const category = resolveFlowCategory(documentType);
+  if (!category) {
+    return JSON.stringify({
+      error: `No intelligence flow found for document type: "${documentType}". Use list_intelligence_flows to see available flows.`,
+    });
+  }
+
+  const engineCtx = {
+    organizationId: ctx?.organizationId ?? null,
+    userId: ctx?.userId ?? null,
+    projectId: ctx?.projectId ? String(ctx.projectId) : null,
+    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+  };
+
+  try {
+    const result = startFlow(category, engineCtx);
+    return JSON.stringify({
+      status: 'intelligence_question',
+      flowState: result.state,
+      question: result.event,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: err?.message || 'Failed to start intelligence flow' });
+  }
+});
+
+registerToolHandler('answer_intelligence_question', async (input, ctx) => {
+  const { advanceFlow } = await import('./intelligence-questions/engine.js');
+
+  const flowState = input.flow_state as any;
+  const nodeId = String(input.node_id || '');
+  const answers = (input.answers || {}) as Record<string, unknown>;
+
+  if (!flowState || !nodeId) {
+    return JSON.stringify({ error: 'flow_state and node_id are required' });
+  }
+
+  const engineCtx = {
+    organizationId: ctx?.organizationId ?? null,
+    userId: ctx?.userId ?? null,
+    projectId: ctx?.projectId ? String(ctx.projectId) : null,
+    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+  };
+
+  try {
+    const result = advanceFlow(flowState, nodeId, answers, engineCtx);
+    if (result.completeEvent) {
+      return JSON.stringify({
+        status: 'intelligence_flow_complete',
+        flowState: result.state,
+        completion: result.completeEvent,
+      });
+    }
+    return JSON.stringify({
+      status: 'intelligence_question',
+      flowState: result.state,
+      question: result.event,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: err?.message || 'Failed to advance intelligence flow' });
+  }
+});
+
+registerToolHandler('list_intelligence_flows', async (_input, ctx) => {
+  const { getAvailableFlows } = await import('./intelligence-questions/flows/index.js');
+
+  const engineCtx = {
+    organizationId: ctx?.organizationId ?? null,
+    userId: ctx?.userId ?? null,
+    projectId: ctx?.projectId ? String(ctx.projectId) : null,
+    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+  };
+
+  const flows = getAvailableFlows(engineCtx);
+  return JSON.stringify({ flows });
+});

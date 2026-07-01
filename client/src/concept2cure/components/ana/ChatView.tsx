@@ -17,6 +17,7 @@ import { Composer, type ComposerReadyAttachment } from './Composer';
 import type { EffortLevel } from './ModelEffortPicker';
 import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
 import { Message, type ExecutedActionChip, type ToolCallView } from './Message';
+import { IntelligenceQuestionWidget } from './IntelligenceQuestionWidget';
 import type { MessageAttachment } from './useAnaChat';
 import type { PendingSignoff } from './useGovernedAction';
 import styles from './styles.module.css';
@@ -61,6 +62,12 @@ export interface ChatMessageView {
   pendingSignoffs?: PendingSignoff[];
   /** When this turn was sent (ms epoch) — relative timestamp source. */
   sentAt?: number;
+  /** Intelligence questioning flow — current question event. */
+  intelligenceQuestion?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceQuestionEvent;
+  /** Flow state for submitting answers back. */
+  intelligenceFlowState?: import('../../../../../shared/types/intelligence-questions.js').FlowState;
+  /** Intelligence flow completion event. */
+  intelligenceFlowComplete?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceFlowCompleteEvent;
 }
 
 export interface ChatViewProps {
@@ -89,6 +96,10 @@ export interface ChatViewProps {
   onModelOverrideChange?: (modelId: string | null) => void;
   /** Guided Safety Narrative submit (E5). Forwarded to the composer's affordance. */
   onSafetyNarrative?: (payload: SafetyNarrativeSubmit) => void;
+  /** Called when the user submits an intelligence question answer. */
+  onIntelligenceAnswer?: (flowState: any, nodeId: string, answers: Record<string, unknown>) => void;
+  /** Called when the user clicks a suggested action after flow completion. */
+  onIntelligenceAction?: (actionType: string) => void;
 }
 
 export function ChatView({
@@ -111,6 +122,8 @@ export function ChatView({
   modelOverride,
   onModelOverrideChange,
   onSafetyNarrative,
+  onIntelligenceAnswer,
+  onIntelligenceAction,
 }: ChatViewProps) {
   const [draft, setDraft] = useState('');
   // Attachments the composer hands up at send time, consumed by `send`.
@@ -163,41 +176,52 @@ export function ChatView({
       <div className={styles.chatScroll} ref={scrollerRef} onScroll={handleScroll}>
         <div className={styles.chatThread}>
           {messages.map(m => (
-            <Message
-              key={m.id}
-              role={m.role}
-              text={m.text}
-              attachments={m.attachments}
-              html={m.html}
-              streaming={m.streaming}
-              statusPhase={m.statusPhase}
-              latencyMs={m.latencyMs}
-              fallback={m.fallback}
-              stopped={m.stopped}
-              executedActions={m.executedActions}
-              detectedLens={m.detectedLens}
-              suggestedActions={m.suggestedActions}
-              suggestedActionLabels={suggestedActionLabels}
-              thinking={m.thinking}
-              evidence={m.evidence}
-              groundingSources={m.groundingSources}
-              warnings={m.warnings}
-              toolCalls={m.toolCalls}
-              pendingSignoffs={m.pendingSignoffs}
-              sentAt={m.sentAt}
-              onSuggestedAction={onSuggestedAction}
-              onCopy={onCopy ? () => onCopy(m.id, m.text) : undefined}
-              onRetry={onRetry ? () => onRetry(m.id) : undefined}
-              onFeedback={onFeedback ? pos => onFeedback(m.id, pos) : undefined}
-              onActionClick={
-                onActionClick ? action => onActionClick(m.id, action) : undefined
-              }
-              onEditRegenerate={
-                onEditRegenerate && m.role === 'user'
-                  ? nt => onEditRegenerate(m.id, nt)
-                  : undefined
-              }
-            />
+            <div key={m.id}>
+              <Message
+                role={m.role}
+                text={m.text}
+                attachments={m.attachments}
+                html={m.html}
+                streaming={m.streaming}
+                statusPhase={m.statusPhase}
+                latencyMs={m.latencyMs}
+                fallback={m.fallback}
+                stopped={m.stopped}
+                executedActions={m.executedActions}
+                detectedLens={m.detectedLens}
+                suggestedActions={m.suggestedActions}
+                suggestedActionLabels={suggestedActionLabels}
+                thinking={m.thinking}
+                evidence={m.evidence}
+                groundingSources={m.groundingSources}
+                warnings={m.warnings}
+                toolCalls={m.toolCalls}
+                pendingSignoffs={m.pendingSignoffs}
+                sentAt={m.sentAt}
+                onSuggestedAction={onSuggestedAction}
+                onCopy={onCopy ? () => onCopy(m.id, m.text) : undefined}
+                onRetry={onRetry ? () => onRetry(m.id) : undefined}
+                onFeedback={onFeedback ? pos => onFeedback(m.id, pos) : undefined}
+                onActionClick={
+                  onActionClick ? action => onActionClick(m.id, action) : undefined
+                }
+                onEditRegenerate={
+                  onEditRegenerate && m.role === 'user'
+                    ? nt => onEditRegenerate(m.id, nt)
+                    : undefined
+                }
+              />
+              {(m.intelligenceQuestion || m.intelligenceFlowComplete) && (
+                <IntelligenceQuestionWidget
+                  question={m.intelligenceQuestion}
+                  flowState={m.intelligenceFlowState}
+                  completion={m.intelligenceFlowComplete}
+                  onAnswer={onIntelligenceAnswer}
+                  onAction={onIntelligenceAction}
+                  isStreaming={isStreaming}
+                />
+              )}
+            </div>
           ))}
           <div ref={endRef} />
         </div>

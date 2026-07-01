@@ -7896,6 +7896,71 @@ export const RECONCILE_DOSSIER_NUMBERS: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Intelligence Questioning Engine Tools
+// ─────────────────────────────────────────────────────────────────────────────
+
+const START_INTELLIGENCE_FLOW: AnaTool = {
+  name: 'start_intelligence_flow',
+  description:
+    'Start an intelligence questioning flow for a regulatory document type. ' +
+    'When a user wants to build a protocol, CSR, IND, SOP, 510(k), CER, or other regulatory document, ' +
+    'invoke this tool to launch the guided questioning flow. The engine will return structured questions ' +
+    'that the user answers step by step, with branching logic, validation, and regulatory issue detection.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_type: {
+        type: 'string',
+        description:
+          'The type of regulatory document to build. Examples: "protocol", "csr", "ind", "sop", "510k", "cer", ' +
+          '"clinical protocol", "clinical study report", "IND submission", "standard operating procedure".',
+      },
+    },
+    required: ['document_type'],
+  },
+};
+
+const ANSWER_INTELLIGENCE_QUESTION: AnaTool = {
+  name: 'answer_intelligence_question',
+  description:
+    'Submit an answer to the current intelligence question in an active flow. ' +
+    'The engine validates the answer, runs issue checks, and advances to the next question ' +
+    'or completes the flow with a structured output.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      flow_id: {
+        type: 'string',
+        description: 'The flow ID returned by start_intelligence_flow.',
+      },
+      node_id: {
+        type: 'string',
+        description: 'The ID of the question node being answered.',
+      },
+      answers: {
+        type: 'object',
+        description:
+          'Map of field IDs to their values. Keys are the field IDs from the question node, ' +
+          'values are the user\'s answers (strings, numbers, booleans, or arrays for multi-select).',
+      },
+    },
+    required: ['flow_id', 'node_id', 'answers'],
+  },
+};
+
+const LIST_INTELLIGENCE_FLOWS: AnaTool = {
+  name: 'list_intelligence_flows',
+  description:
+    'List all available intelligence questioning flows for the current client context. ' +
+    'Returns flow categories, names, descriptions, and estimated completion times.',
+  input_schema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+};
+
 const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   RECONCILE_DOSSIER_NUMBERS,
   GENERATE_SCHEDULE_OF_EVENTS,
@@ -8674,6 +8739,10 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   ...GUIDANCE_INGESTION_TOOLS,
   // SPL generation + PSUR/DSUR safety-report structure. See splSafetyTools.ts.
   ...SPL_SAFETY_TOOLS,
+  // Intelligence Questioning Engine — guided flows for document generation
+  START_INTELLIGENCE_FLOW,
+  ANSWER_INTELLIGENCE_QUESTION,
+  LIST_INTELLIGENCE_FLOWS,
 ];
 
 // Defensive registry guard: v2's cdiscTools.ts currently re-registers

@@ -171,6 +171,46 @@ router.post('/stream', async (req: Request, res: Response) => {
     // Resolve context
     const { orgId, userId } = extractRequestContext(req);
 
+    // ── Intelligence answer fast-path ──────────────────────────────────
+    // When the client submits a structured intelligence flow answer, skip
+    // the full AI pipeline and call the tool handler directly.
+    const INTELLIGENCE_ANSWER_PREFIX = '[INTELLIGENCE_ANSWER]';
+    if (typeof message === 'string' && message.startsWith(INTELLIGENCE_ANSWER_PREFIX)) {
+      try {
+        const payload = JSON.parse(message.slice(INTELLIGENCE_ANSWER_PREFIX.length));
+        const handler = getToolHandler('answer_intelligence_question');
+        if (!handler) throw new Error('answer_intelligence_question handler not registered');
+        const streamProjectId = project_id || resolveProjectIdFromBody(req.body);
+        const resultStr = await handler(payload, {
+          organizationId: orgId,
+          userId: userId || null,
+          projectId: streamProjectId ? Number(streamProjectId) || null : null,
+        });
+        const parsed = JSON.parse(resultStr);
+        if (parsed?.status === 'intelligence_question' && parsed.question) {
+          res.write(`data: ${JSON.stringify({ type: 'intelligence_question', question: parsed.question, flowState: parsed.flowState })}\n\n`);
+          res.write(`data: ${JSON.stringify({ type: 'text', content: `**${parsed.question.node.question}**\n\n${parsed.question.node.guidance || ''}` })}\n\n`);
+        } else if (parsed?.status === 'intelligence_flow_complete' && parsed.completion) {
+          res.write(`data: ${JSON.stringify({ type: 'intelligence_flow_complete', completion: parsed.completion, flowState: parsed.flowState })}\n\n`);
+          res.write(`data: ${JSON.stringify({ type: 'text', content: parsed.completion.summary })}\n\n`);
+        } else if (parsed?.error) {
+          res.write(`data: ${JSON.stringify({ type: 'text', content: `Error: ${parsed.error}` })}\n\n`);
+        }
+        res.write(`data: ${JSON.stringify({ type: 'done', latencyMs: Date.now() - streamPhaseStart })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'post_done' })}\n\n`);
+        stopKeepalive();
+        res.end();
+        return;
+      } catch (err: any) {
+        res.write(`data: ${JSON.stringify({ type: 'text', content: `Error processing intelligence answer: ${err?.message}` })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'done', latencyMs: Date.now() - streamPhaseStart })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'post_done' })}\n\n`);
+        stopKeepalive();
+        res.end();
+        return;
+      }
+    }
+
     const validatedLens: IntentLens | undefined =
       intent_lens && VALID_LENSES.has(intent_lens as IntentLens)
         ? (intent_lens as IntentLens)
@@ -717,6 +757,24 @@ router.post('/stream', async (req: Request, res: Response) => {
                   if (collectedProvenance.length >= PROVENANCE_CAP) break;
                   if (p && typeof p === 'object') collectedProvenance.push(p as ProvenanceRecord);
                 }
+              }
+              if (parsed?.status === 'intelligence_question' && parsed.question) {
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'intelligence_question',
+                    question: parsed.question,
+                    flowState: parsed.flowState,
+                  })}\n\n`
+                );
+              }
+              if (parsed?.status === 'intelligence_flow_complete' && parsed.completion) {
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'intelligence_flow_complete',
+                    completion: parsed.completion,
+                    flowState: parsed.flowState,
+                  })}\n\n`
+                );
               }
               if (parsed && parsed.status === 'generated' && typeof parsed.content === 'string' && parsed.content.length > 0) {
                 const draftTitle: string = parsed.title || 'Generated document';

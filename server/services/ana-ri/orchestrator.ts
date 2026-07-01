@@ -564,6 +564,16 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     }
   }
 
+  // 8e2. Intelligence Questioning Engine — instruct AnA to use the flow tools
+  systemPrompt += `
+
+## INTELLIGENCE QUESTIONING FLOWS
+When a user asks to create, build, draft, or develop a regulatory document (protocol, CSR, IND, SOP, 510(k), CER, etc.), invoke the \`start_intelligence_flow\` tool with the document type. This launches a guided questioning flow that collects structured information through step-by-step questions with validation and regulatory issue detection.
+
+Available document types: protocol, csr, ind, sop, 510k, cer, clinical study report, IND submission, standard operating procedure, premarket notification, clinical evaluation report.
+
+Do NOT try to ask these questions yourself in free text — always use the intelligence flow tool so the client renders structured form widgets. When suggesting workflows, mention you can "walk through a guided questionnaire" for any of these document types.`;
+
   // 8f. Inject proactive intelligence surfacing protocol + intelligence usage directives + citation protocol
   systemPrompt += `
 
