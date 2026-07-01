@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-06-30T23:01:29.426Z",
+  "generatedAt": "2026-07-01T03:38:23.092Z",
   "git": {
-    "sha": "f9a83eb8ef88c74de74013a03da9154f69e5ce48",
+    "sha": "153473075a641b199aba2ee60bab9235026f13d3",
     "branch": "claude/codebase-architecture-review-eo6jc0"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 236,
+    "duplicateBasenames": 239,
     "largeFilesByBytes": 24,
     "largeFilesByLines": 73
   },
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 98,
+        "count": 99,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -116,6 +116,7 @@
           "shared/regulatory/index.ts",
           "shared/schema/index.ts",
           "shared/types/generated/index.ts",
+          "tests/fixtures/index.ts",
           "tests/resolution/drivers/index.ts"
         ]
       },
@@ -172,7 +173,7 @@
       },
       {
         "basename": "app",
-        "count": 41,
+        "count": 42,
         "paths": [
           "client/public/design-system/ui_kits/ana_ri/App.jsx",
           "client/public/design-system/ui_kits/ectd_coauthor/App.jsx",
@@ -188,6 +189,7 @@
           "client/src/concept2cure/mdx/App.tsx",
           "client/src/concept2cure/pdev/App.tsx",
           "client/src/concept2cure/quality/App.tsx",
+          "client/src/concept2cure/rbm/App.tsx",
           "client/src/concept2cure/risk/App.tsx",
           "client/src/concept2cure/submission/App.tsx",
           "client/src/concept2cure/tasking/App.tsx",
@@ -324,6 +326,24 @@
         ]
       },
       {
+        "basename": "nav",
+        "count": 12,
+        "paths": [
+          "client/src/concept2cure/biopharma/data/nav.ts",
+          "client/src/concept2cure/cmc/data/nav.ts",
+          "client/src/concept2cure/communication/data/nav.ts",
+          "client/src/concept2cure/labeling/data/nav.ts",
+          "client/src/concept2cure/mdx/data/nav.ts",
+          "client/src/concept2cure/pdev/data/nav.ts",
+          "client/src/concept2cure/rbm/data/nav.ts",
+          "client/src/concept2cure/risk/data/nav.ts",
+          "client/src/concept2cure/submission/data/nav.ts",
+          "client/src/concept2cure/tasking/data/nav.ts",
+          "design-system/ui_kits/mdx/data/nav.js",
+          "ui_kits/mdx/data/nav.js"
+        ]
+      },
+      {
         "basename": "topbar",
         "count": 12,
         "paths": [
@@ -339,23 +359,6 @@
           "client/src/concept2cure/risk/shell/TopBar.tsx",
           "client/src/concept2cure/submission/shell/TopBar.tsx",
           "client/src/concept2cure/tasking/shell/TopBar.tsx"
-        ]
-      },
-      {
-        "basename": "nav",
-        "count": 11,
-        "paths": [
-          "client/src/concept2cure/biopharma/data/nav.ts",
-          "client/src/concept2cure/cmc/data/nav.ts",
-          "client/src/concept2cure/communication/data/nav.ts",
-          "client/src/concept2cure/labeling/data/nav.ts",
-          "client/src/concept2cure/mdx/data/nav.ts",
-          "client/src/concept2cure/pdev/data/nav.ts",
-          "client/src/concept2cure/risk/data/nav.ts",
-          "client/src/concept2cure/submission/data/nav.ts",
-          "client/src/concept2cure/tasking/data/nav.ts",
-          "design-system/ui_kits/mdx/data/nav.js",
-          "ui_kits/mdx/data/nav.js"
         ]
       },
       {
@@ -1577,6 +1580,14 @@
         ]
       },
       {
+        "basename": "export-control",
+        "count": 2,
+        "paths": [
+          "server/routes/export-control.ts",
+          "shared/schema/export-control.ts"
+        ]
+      },
+      {
         "basename": "fda510kservice",
         "count": 2,
         "paths": [
@@ -1710,6 +1721,14 @@
         "paths": [
           "server/routes/ibc.ts",
           "shared/schema/ibc.ts"
+        ]
+      },
+      {
+        "basename": "invention-disclosure",
+        "count": 2,
+        "paths": [
+          "server/routes/invention-disclosure.ts",
+          "shared/schema/invention-disclosure.ts"
         ]
       },
       {
@@ -2089,6 +2108,14 @@
         ]
       },
       {
+        "basename": "research-agreements",
+        "count": 2,
+        "paths": [
+          "server/routes/research-agreements.ts",
+          "shared/schema/research-agreements.ts"
+        ]
+      },
+      {
         "basename": "research-compliance",
         "count": 2,
         "paths": [
@@ -2340,11 +2367,11 @@
     "largeFilesByBytes": [
       {
         "file": "shared/schema.ts",
-        "bytes": 806348
+        "bytes": 821957
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 781525
+        "bytes": 814860
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2352,7 +2379,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 464144
+        "bytes": 479170
       },
       {
         "file": "server/statistics-service.ts",
@@ -2438,7 +2465,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19370
+        "lines": 19665
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2446,11 +2473,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 15360
+        "lines": 15912
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 8479
+        "lines": 8774
       },
       {
         "file": "server/statistics-service.ts",
@@ -2526,7 +2553,7 @@
       },
       {
         "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 2357
+        "lines": 2369
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2741,25 +2768,25 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 376,
+      "duplicateGroups": 379,
       "largeByBytes": 21,
       "largeByLines": 62
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 273,
+      "duplicateGroups": 274,
       "largeByBytes": 2,
       "largeByLines": 8
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 152,
+      "duplicateGroups": 154,
       "largeByBytes": 0,
       "largeByLines": 1
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 62,
+      "duplicateGroups": 65,
       "largeByBytes": 1,
       "largeByLines": 2
     },
