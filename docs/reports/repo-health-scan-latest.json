@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-01T04:54:29.918Z",
+  "generatedAt": "2026-07-01T05:05:53.264Z",
   "git": {
-    "sha": "2fb1ed5cc35436d95657ffffd6b236372f7fa5a6",
+    "sha": "3b456196a0cdca5b07826681dbdcbe656ee37100",
     "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 239,
     "largeFilesByBytes": 29,
-    "largeFilesByLines": 84
+    "largeFilesByLines": 83
   },
   "findings": {
     "duplicateBasenames": [
@@ -2820,10 +2820,6 @@
         "lines": 1546
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
-        "lines": 1545
-      },
-      {
         "file": "server/services/submission-twin-service.ts",
         "lines": 1534
       }
@@ -2835,7 +2831,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 388,
       "largeByBytes": 26,
-      "largeByLines": 73
+      "largeByLines": 72
     },
     {
       "owner": "Unassigned (TBD)",

@@ -1,14 +1,12 @@
 /**
- * Product Labeling flow definition for the AnA Intelligence Questioning system.
+ * Drug / Device Labeling flow — AnA Intelligence Questions.
  *
- * Guides sponsors through a comprehensive labeling questionnaire covering
- * prescription drugs (USPI per 21 CFR 201.57 PLR format), OTC drugs
- * (Drug Facts per 21 CFR 201.66), biologics/biosimilars, and medical
- * devices (21 CFR 801). Addresses all required sections, safety
- * information, patient labeling, safety communications, and regulatory
- * formatting requirements.
+ * Covers prescription drug labeling (USPI per 21 CFR 201.56-57 PLR format),
+ * OTC Drug Facts (21 CFR 201.66), device labeling (21 CFR 801),
+ * biosimilar-specific labeling (BPCI Act), and patient-facing materials
+ * (Medication Guides per 21 CFR 208, Instructions for Use).
  *
- * 20 nodes · 90+ fields · 8 sections · 14 issue checks
+ * 18 question nodes · 80+ fields · 7 sections · 12+ issue checks
  *
  * @module server/services/ana/intelligence-questions/flows/labeling
  */
@@ -19,1522 +17,1306 @@ export function createLabelingFlow(): FlowDefinition {
   return {
     id: 'labeling-v1',
     category: 'labeling',
-    name: 'Product Labeling',
+    name: 'Drug / Device Labeling',
     description:
-      'Comprehensive labeling questionnaire for drugs (USPI per 21 CFR 201.57 PLR format) and medical devices (21 CFR 801), covering all required sections, safety information, and regulatory formatting requirements.',
+      'Comprehensive labeling questionnaire for prescription drugs (USPI), OTC products, biologics, biosimilars, and medical devices. Aligns with 21 CFR 201/801, PLR format, and SPL submission requirements.',
     clientTypes: [],
-    entryNode: 'labeling_overview',
     estimatedMinutes: 40,
+    entryNode: 'product_regulatory_context',
 
-    /* ─── Sections ──────────────────────────────────────────────────────── */
-
+    /* ================================================================
+     *  SECTIONS
+     * ================================================================ */
     sections: [
       {
-        id: 'labeling_overview',
-        label: 'Labeling Overview',
-        nodeIds: ['labeling_overview', 'labeling_format'],
+        id: 'product_regulatory_context',
+        label: 'Product & Regulatory Context',
+        nodeIds: ['product_regulatory_context', 'labeling_format_selection'],
       },
       {
-        id: 'highlights',
-        label: 'Highlights Section',
-        nodeIds: ['highlights_boxed_warning', 'highlights_summary'],
+        id: 'prescribing_info_structure',
+        label: 'Prescribing Information Structure',
+        nodeIds: ['plr_highlights', 'full_prescribing_info_toc'],
       },
       {
-        id: 'fpi',
-        label: 'Full Prescribing Information',
-        nodeIds: ['fpi_indications', 'fpi_dosage', 'fpi_safety', 'fpi_clinical_studies'],
+        id: 'clinical_pharmacology',
+        label: 'Clinical Pharmacology',
+        nodeIds: ['mechanism_and_pk', 'drug_interaction_studies'],
       },
       {
-        id: 'specific_populations',
-        label: 'Use in Specific Populations',
-        nodeIds: ['specific_pops_pregnancy', 'specific_pops_other'],
+        id: 'indications_usage',
+        label: 'Indications & Usage',
+        nodeIds: ['indications_and_usage', 'dosage_and_administration'],
       },
       {
-        id: 'device_labeling',
-        label: 'Device Labeling',
-        nodeIds: ['device_label_content', 'device_ifu'],
+        id: 'warnings_precautions',
+        label: 'Warnings & Precautions',
+        nodeIds: [
+          'boxed_warning_assessment',
+          'warnings_precautions_detail',
+          'adverse_reactions',
+          'contraindications',
+        ],
       },
       {
         id: 'patient_labeling',
         label: 'Patient Labeling',
-        nodeIds: ['patient_med_guide', 'patient_counseling'],
+        nodeIds: [
+          'specific_populations',
+          'patient_counseling_info',
+          'medication_guide_assessment',
+          'otc_drug_facts',
+        ],
       },
       {
-        id: 'safety_communication',
-        label: 'Safety Communication',
-        nodeIds: ['safety_letters', 'safety_post_marketing'],
-      },
-      {
-        id: 'regulatory_review',
-        label: 'Regulatory Review',
-        nodeIds: ['reg_review_fda', 'reg_review_promotional'],
+        id: 'device_labeling',
+        label: 'Device-Specific Labeling',
+        nodeIds: ['device_labeling_801', 'device_ifu_content', 'device_udi_symbols'],
       },
     ],
 
-    /* ─── Nodes ─────────────────────────────────────────────────────────── */
-
+    /* ================================================================
+     *  NODES
+     * ================================================================ */
     nodes: [
-      /* ══════════════════════════════════════════════════════════════════ */
-      /*  Section 1 — Labeling Overview                                   */
-      /* ══════════════════════════════════════════════════════════════════ */
-
+      /* ─────────────────────────────────────────────────────────────
+       *  SECTION 1 — Product & Regulatory Context
+       * ───────────────────────────────────────────────────────────── */
       {
-        id: 'labeling_overview',
-        section: 'labeling_overview',
+        id: 'product_regulatory_context',
+        section: 'Product & Regulatory Context',
         question:
-          'Let\'s begin with the product labeling overview. What type of product is this, and what is the purpose of this labeling effort?',
+          'Let\'s start by identifying the product and its regulatory pathway so we can tailor the labeling questionnaire.',
         guidance:
-          'FDA labeling requirements differ by product category. Prescription drugs follow 21 CFR 201.57 (Physician Labeling Rule, PLR) and must use the structured format with Highlights, Full Prescribing Information, and Patient Labeling. OTC drugs require the standardized Drug Facts format per 21 CFR 201.66. Biologics follow the same PLR format as prescription drugs but may have additional considerations (e.g., biosimilar-specific labeling per the BPCIA). Medical devices are labeled per 21 CFR 801 and include Instructions for Use (IFU). Reference: FDA Guidance "Labeling for Human Prescription Drug and Biological Products — Implementing the PLR Content and Format Requirements" (2013).',
+          'The labeling format depends on the product type and regulatory classification. Prescription drugs follow the PLR format (21 CFR 201.56-57), OTC drugs use the Drug Facts format (21 CFR 201.66), biologics follow PLR with additional biosimilar considerations under the BPCI Act, and devices follow 21 CFR 801.',
+        provideExpertFeedback: true,
         fields: [
+          {
+            id: 'product_name',
+            label: 'Product Name (Proprietary / Trade Name)',
+            type: 'text',
+            placeholder: 'e.g., Keytruda, Eliquis, Accu-Chek Guide',
+            required: true,
+          },
+          {
+            id: 'nonproprietary_name',
+            label: 'Established / Nonproprietary Name (INN/USAN)',
+            type: 'text',
+            placeholder: 'e.g., pembrolizumab, apixaban',
+            helpText: 'Required for drugs and biologics; enter N/A for devices.',
+          },
           {
             id: 'product_type',
             label: 'Product Type',
             type: 'select',
             required: true,
             options: [
-              { value: 'prescription_drug', label: 'Prescription Drug (Rx)', description: 'Labeled per 21 CFR 201.57 PLR format' },
-              { value: 'otc_drug', label: 'Over-the-Counter Drug (OTC)', description: 'Drug Facts format per 21 CFR 201.66' },
-              { value: 'biologic', label: 'Biologic (BLA product)', description: 'PLR format; additional biosimilar considerations if applicable' },
-              { value: 'medical_device', label: 'Medical Device', description: 'Labeled per 21 CFR 801; includes IFU' },
+              { value: 'rx_drug', label: 'Prescription Drug (NDA)' },
+              { value: 'otc_drug', label: 'OTC Drug (NDA/ANDA/OTC Monograph)' },
+              { value: 'biologic', label: 'Biologic (BLA)' },
+              { value: 'biosimilar', label: 'Biosimilar (351(k) BLA)', description: 'Includes interchangeable biosimilars' },
+              { value: 'medical_device', label: 'Medical Device (510(k)/PMA/De Novo)' },
+              { value: 'ivd', label: 'In Vitro Diagnostic Device' },
+              { value: 'combination', label: 'Drug-Device Combination Product' },
             ],
           },
           {
-            id: 'is_biosimilar',
-            label: 'Is this a biosimilar or interchangeable biologic?',
-            type: 'yes_no',
-            required: true,
-            visibleWhen: {
-              field: 'product_type',
-              operator: 'eq',
-              value: 'biologic',
-            },
-            helpText:
-              'Biosimilars are licensed under Section 351(k) of the PHS Act (BPCIA). Labeling must include the proper suffix and may not extrapolate all indications from the reference product without supporting data. See FDA Guidance "Labeling for Biosimilar Products" (2018).',
+            id: 'application_number',
+            label: 'Application Number (NDA / BLA / 510(k) / PMA)',
+            type: 'text',
+            placeholder: 'e.g., NDA 210259, BLA 125514, K201234',
+            helpText: 'Leave blank if not yet assigned.',
           },
           {
-            id: 'labeling_purpose',
-            label: 'Labeling Purpose',
+            id: 'submission_type',
+            label: 'Is this an initial labeling submission or a supplement / revision?',
             type: 'select',
             required: true,
             options: [
-              { value: 'original', label: 'Original Labeling (new approval)' },
-              { value: 'revision', label: 'Labeling Revision (post-approval change)' },
-              { value: 'supplement', label: 'Labeling Supplement (sNDA/sBLA)', description: 'Per 21 CFR 314.70 / 21 CFR 601.12' },
-              { value: 'annual_update', label: 'Annual Report Labeling Update' },
+              { value: 'initial', label: 'Initial Labeling (Original Application)' },
+              { value: 'supplement', label: 'Labeling Supplement (sNDA/sBLA)' },
+              { value: 'annual_report', label: 'Annual Report Change' },
+              { value: 'cbefn', label: 'Changes Being Effected (CBE/CBE-30)' },
+              { value: 'revision', label: 'Device Labeling Revision' },
             ],
           },
           {
-            id: 'product_name_proprietary',
-            label: 'Proprietary (Brand) Name',
-            type: 'text',
-            placeholder: 'e.g., Keytruda',
-            required: true,
-          },
-          {
-            id: 'product_name_established',
-            label: 'Established (Generic) Name',
-            type: 'text',
-            placeholder: 'e.g., pembrolizumab',
-            required: true,
-          },
-          {
-            id: 'current_labeling_version',
-            label: 'Current Labeling Version / Revision Date',
-            type: 'text',
-            placeholder: 'e.g., Version 15, revised 03/2025',
-            helpText:
-              'Per 21 CFR 201.57(a)(4), the date of the most recent revision must appear in the Highlights section. Track version numbers for internal change control.',
-          },
-          {
-            id: 'nda_bla_anda_number',
-            label: 'NDA / BLA / ANDA / 510(k) Number',
-            type: 'text',
-            placeholder: 'e.g., NDA 215498, BLA 761045, K212345',
-            required: true,
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'otc_no_drug_facts',
-            condition: { field: 'product_type', operator: 'eq', value: 'otc_drug' },
-            severity: 'critical',
-            title: 'OTC Drug Requires Drug Facts Format',
-            message:
-              'OTC drugs must use the standardized Drug Facts labeling format per 21 CFR 201.66. This format is mandatory and differs substantially from the PLR format used for prescription drugs. Ensure all required Drug Facts elements are addressed: Active Ingredient, Purpose, Uses, Warnings, Directions, Other Information, Inactive Ingredients.',
-            reference: '21 CFR 201.66; FDA OTC Drug Facts Labeling Final Rule (1999)',
-          },
-        ],
-        defaultNext: 'labeling_format',
-      },
-
-      {
-        id: 'labeling_format',
-        section: 'labeling_overview',
-        question:
-          'Provide details about the labeling format and compliance status. Is the labeling in PLR format (for drugs/biologics) or does it follow 21 CFR 801 (for devices)?',
-        guidance:
-          'The Physician Labeling Rule (PLR, 21 CFR 201.56 and 201.57) requires prescription drug labeling to be organized into specific sections with standardized headers. The Highlights section must appear first, followed by a Table of Contents and then Full Prescribing Information. The PLR format was phased in starting June 2006; products approved before June 2001 may use the older format but FDA encourages conversion. For devices, 21 CFR 801 governs general labeling requirements, and 21 CFR 809 covers IVDs. Reference: FDA Guidance "Physician Labeling Rule" (2013); FDA Guidance "Guidelines for the Format and Content of the Nonclinical Pharmacology/Toxicology Section" as it relates to labeling claims.',
-        fields: [
-          {
-            id: 'plr_compliant',
-            label: 'Is the labeling in PLR format (21 CFR 201.57)?',
-            type: 'yes_no',
-            required: true,
-            visibleWhen: {
-              field: 'product_type',
-              operator: 'in',
-              value: ['prescription_drug', 'biologic'],
-            },
-            helpText:
-              'Products approved after June 30, 2006 must use PLR format. Products approved between June 2001 and June 2006 must convert upon the first labeling supplement.',
-          },
-          {
-            id: 'drug_facts_compliant',
-            label: 'Does the label comply with Drug Facts format (21 CFR 201.66)?',
-            type: 'yes_no',
-            required: true,
-            visibleWhen: {
-              field: 'product_type',
-              operator: 'eq',
-              value: 'otc_drug',
-            },
-          },
-          {
-            id: 'device_labeling_standard',
-            label: 'Device Labeling Standard',
+            id: 'therapeutic_area',
+            label: 'Therapeutic Area / Indication Category',
             type: 'select',
-            visibleWhen: {
-              field: 'product_type',
-              operator: 'eq',
-              value: 'medical_device',
-            },
             options: [
-              { value: 'cfr_801', label: '21 CFR 801 — General Device Labeling' },
-              { value: 'cfr_809', label: '21 CFR 809 — In Vitro Diagnostic (IVD) Labeling' },
-              { value: 'cfr_801_809', label: 'Both 21 CFR 801 and 809' },
+              { value: 'oncology', label: 'Oncology' },
+              { value: 'cardiology', label: 'Cardiovascular' },
+              { value: 'neurology', label: 'Neurology / Psychiatry' },
+              { value: 'immunology', label: 'Immunology / Rheumatology' },
+              { value: 'infectious_disease', label: 'Infectious Disease' },
+              { value: 'endocrinology', label: 'Endocrinology / Metabolic' },
+              { value: 'respiratory', label: 'Respiratory' },
+              { value: 'gastroenterology', label: 'Gastroenterology' },
+              { value: 'dermatology', label: 'Dermatology' },
+              { value: 'ophthalmology', label: 'Ophthalmology' },
+              { value: 'rare_disease', label: 'Rare Disease / Orphan' },
+              { value: 'other', label: 'Other' },
             ],
           },
           {
-            id: 'spl_submission',
-            label: 'Will this labeling be submitted as Structured Product Labeling (SPL)?',
+            id: 'rems_required',
+            label: 'Is a Risk Evaluation and Mitigation Strategy (REMS) required?',
             type: 'yes_no',
-            required: true,
-            helpText:
-              'Per FDA Electronic Submissions Gateway requirements, labeling for human drugs and biologics must be submitted in SPL (XML) format. SPL is defined by HL7 standards and submitted via the FDA ESG. Reference: FDA Guidance "Providing Regulatory Submissions in Electronic Format — Human Pharmaceutical Product Applications and Related Submissions Using the eCTD Specifications" (2022).',
+            helpText: 'REMS programs may require Medication Guides, Communication Plans, ETASU, or other elements.',
           },
           {
-            id: 'dailymed_listing',
-            label: 'Is the product currently listed on DailyMed/National Drug Code Directory?',
-            type: 'yes_no',
-            helpText:
-              'DailyMed (https://dailymed.nlm.nih.gov) is the official source for FDA-approved labeling. Product listing is required under 21 CFR 207 (drug listing) and 21 CFR 807 (device listing).',
-          },
-          {
-            id: 'biosimilar_suffix',
-            label: 'Biosimilar Nonproprietary Name Suffix',
+            id: 'reference_product',
+            label: 'Reference Product (for Biosimilar)',
             type: 'text',
-            placeholder: 'e.g., -axxs (as in bevacizumab-axxs)',
-            visibleWhen: {
-              field: 'is_biosimilar',
-              operator: 'eq',
-              value: true,
-            },
-            helpText:
-              'Per FDA Guidance "Nonproprietary Naming of Biological Products" (2017), biosimilars must include a unique four-letter suffix appended with a hyphen to the core name (e.g., adalimumab-atto). The suffix is assigned by FDA.',
+            placeholder: 'e.g., Humira (adalimumab)',
+            helpText: 'Required under BPCI Act 351(k). Include brand name and INN of the reference biologic.',
+            visibleWhen: { field: 'product_type', operator: 'eq', value: 'biosimilar' },
           },
           {
-            id: 'interchangeability_status',
-            label: 'Has interchangeability been granted?',
-            type: 'select',
-            visibleWhen: {
-              field: 'is_biosimilar',
-              operator: 'eq',
-              value: true,
-            },
-            options: [
-              { value: 'granted', label: 'Yes — Interchangeable designation granted' },
-              { value: 'under_review', label: 'Under review' },
-              { value: 'not_sought', label: 'Not sought' },
-            ],
-            helpText:
-              'Interchangeable biosimilars (Section 351(k)(4) PHS Act) may be substituted at the pharmacy without prescriber intervention. The labeling must reflect this designation. Reference: FDA Guidance "Considerations in Demonstrating Interchangeability With a Reference Product" (2019).',
+            id: 'interchangeable_designation',
+            label: 'Has interchangeability been demonstrated?',
+            type: 'yes_no',
+            helpText: 'Interchangeable biosimilars carry specific labeling language per FDA guidance.',
+            visibleWhen: { field: 'product_type', operator: 'eq', value: 'biosimilar' },
           },
         ],
         branches: [
           {
-            when: { field: 'product_type', operator: 'eq', value: 'medical_device' },
-            goto: 'device_label_content',
+            when: { field: 'product_type', operator: 'in', value: ['medical_device', 'ivd'] },
+            goto: 'device_labeling_801',
           },
           {
             when: { field: 'product_type', operator: 'eq', value: 'otc_drug' },
-            goto: 'patient_med_guide',
+            goto: 'otc_drug_facts',
           },
         ],
-        defaultNext: 'highlights_boxed_warning',
-        provideExpertFeedback: true,
+        defaultNext: 'labeling_format_selection',
       },
 
-      /* ══════════════════════════════════════════════════════════════════ */
-      /*  Section 2 — Highlights Section (drugs/biologics only)           */
-      /* ══════════════════════════════════════════════════════════════════ */
-
+      /* ── Node 2: Labeling Format Selection ──────────────────────── */
       {
-        id: 'highlights_boxed_warning',
-        section: 'highlights',
+        id: 'labeling_format_selection',
+        section: 'Product & Regulatory Context',
         question:
-          'The Highlights section is the first part of the USPI. Does this product have a Boxed Warning, and what are the key safety signals that must be prominently displayed?',
+          'Which labeling format and submission standard will you use?',
         guidance:
-          'Per 21 CFR 201.57(c)(1), the Highlights section must begin with any Boxed Warning. A Boxed Warning is required when there is an adverse reaction so serious in proportion to the potential benefit that it is essential that it be considered in assessing whether to use the drug (21 CFR 201.57(c)(1)). The decision to require a boxed warning is made by FDA. Per 21 CFR 201.57(c)(1), the boxed warning must summarize the risk, the population affected, and relevant safety information. Recent FDA guidance also recommends bold formatting for critical safety text. Reference: FDA Guidance "Warnings and Precautions, Contraindications, and Boxed Warning Sections of Labeling" (2011).',
+          'All prescription drug and biologic labeling must follow the Physician Labeling Rule (PLR) format per 21 CFR 201.56(d) and 201.57. Labeling content is submitted electronically in Structured Product Labeling (SPL) XML format to the FDA\'s DailyMed system. Biosimilar labeling follows the same PLR format with modifications per FDA\'s "Labeling for Biosimilar Products" guidance.',
         fields: [
           {
-            id: 'has_boxed_warning',
-            label: 'Does this product have a Boxed Warning?',
+            id: 'plr_format_confirmed',
+            label: 'Confirm PLR format will be used (21 CFR 201.56-57)',
             type: 'yes_no',
             required: true,
-            helpText:
-              'Boxed Warnings (colloquially "Black Box Warnings") are the strongest safety warning FDA can require in labeling. They indicate a serious or life-threatening risk. Examples include REMS-associated products, teratogenic drugs, drugs with narrow therapeutic index, and products with known organ toxicity.',
+            helpText: 'The PLR format is mandatory for all NDA/BLA labeling approved after June 30, 2006.',
+          },
+          {
+            id: 'spl_submission_planned',
+            label: 'Will labeling be submitted in SPL XML format?',
+            type: 'yes_no',
+            required: true,
+            helpText: 'Electronic SPL submission to FDA DailyMed is required. See FDA SPL guidance and HL7 SPL standard.',
+          },
+          {
+            id: 'spl_tool',
+            label: 'SPL authoring tool',
+            type: 'select',
+            options: [
+              { value: 'fda_spl_editor', label: 'FDA SPL Editor' },
+              { value: 'globalsubmit', label: 'GlobalSubmit' },
+              { value: 'docubridge', label: 'DocuBridge SPL Module' },
+              { value: 'custom', label: 'Custom / In-house SPL tool' },
+              { value: 'other', label: 'Other' },
+            ],
+          },
+          {
+            id: 'labeling_languages',
+            label: 'Labeling languages',
+            type: 'multi_select',
+            options: [
+              { value: 'english', label: 'English' },
+              { value: 'spanish', label: 'Spanish' },
+              { value: 'french', label: 'French (Canadian market)' },
+              { value: 'other', label: 'Other' },
+            ],
+            helpText: 'FDA requires English. Additional languages may be needed for territories or global filings.',
+          },
+          {
+            id: 'previous_labeling_version',
+            label: 'Previous labeling version number (if supplement)',
+            type: 'text',
+            placeholder: 'e.g., Version 12, Rev. 3',
+            visibleWhen: { field: 'submission_type', operator: 'in', value: ['supplement', 'cbefn', 'annual_report'] },
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'no_spl_submission',
+            condition: { field: 'spl_submission_planned', operator: 'eq', value: 'no' },
+            severity: 'critical',
+            title: 'SPL Electronic Submission Required',
+            message:
+              'FDA requires all labeling to be submitted electronically in Structured Product Labeling (SPL) XML format. Failure to submit in SPL format will result in a Refuse to File determination.',
+            reference: '21 CFR 314.50(l)(1); FDA Guidance: Providing Regulatory Submissions in Electronic Format — Content of Labeling',
+          },
+        ],
+        defaultNext: 'plr_highlights',
+      },
+
+      /* ─────────────────────────────────────────────────────────────
+       *  SECTION 2 — Prescribing Information Structure
+       * ───────────────────────────────────────────────────────────── */
+      {
+        id: 'plr_highlights',
+        section: 'Prescribing Information Structure',
+        question:
+          'Let\'s build the Highlights of Prescribing Information section — the concise summary that opens the USPI.',
+        guidance:
+          'Per 21 CFR 201.57(a), Highlights must include: Boxed Warning (if any), Recent Major Changes, Indications and Usage, Dosage and Administration, Dosage Forms and Strengths, Contraindications, Warnings and Precautions, and Adverse Reactions summaries. It must also include the initial U.S. approval year and a toll-free number for adverse event reporting.',
+        provideExpertFeedback: true,
+        fields: [
+          {
+            id: 'initial_us_approval_year',
+            label: 'Initial U.S. Approval Year',
+            type: 'number',
+            required: true,
+            placeholder: 'e.g., 2014',
+            helpText: 'The year the drug was first approved in the United States.',
+            validation: { min: 1900, max: 2030 },
+          },
+          {
+            id: 'recent_major_changes',
+            label: 'Recent Major Changes (within last 12 months)',
+            type: 'textarea',
+            placeholder: 'List each section changed and the month/year, e.g.:\n- Indications and Usage (1.1): 03/2025\n- Warnings and Precautions (5.2): 06/2025',
+            helpText: 'Per 21 CFR 201.57(a)(4), list sections with substantive labeling changes within the past year. Include section number and date of change.',
+          },
+          {
+            id: 'highlights_limitations',
+            label: 'Limitations Statement',
+            type: 'textarea',
+            helpText: 'Standard text: "These highlights do not include all the information needed to use [PRODUCT] safely and effectively. See full prescribing information for [PRODUCT]."',
+            placeholder: 'Customize if needed, or leave blank for standard language.',
+          },
+          {
+            id: 'dosage_forms_summary',
+            label: 'Dosage Forms and Strengths (for Highlights)',
+            type: 'textarea',
+            required: true,
+            placeholder: 'e.g., Tablets: 5 mg, 10 mg, 20 mg\nInjection: 100 mg/mL in single-dose vials',
+          },
+          {
+            id: 'adverse_event_reporting_number',
+            label: 'Toll-Free Adverse Event Reporting Number',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g., 1-800-XXX-XXXX',
+            helpText: 'Required in Highlights per 21 CFR 201.57(a)(11). Must also reference MedWatch (1-800-FDA-1088).',
+          },
+        ],
+        defaultNext: 'full_prescribing_info_toc',
+      },
+
+      /* ── Node 4: Full Prescribing Info Table of Contents ─────────── */
+      {
+        id: 'full_prescribing_info_toc',
+        section: 'Prescribing Information Structure',
+        question:
+          'Which sections of Full Prescribing Information (FPI) will the labeling include?',
+        guidance:
+          'Per 21 CFR 201.57(c), FPI sections are numbered 1 through 17. Not all sections are required for every product — include only those relevant. Sections 9 (Drug Abuse and Dependence) and 16 (How Supplied / Storage and Handling) are commonly included. Section 11 (Description) and Section 12 (Clinical Pharmacology) are always required.',
+        fields: [
+          {
+            id: 'fpi_sections_included',
+            label: 'FPI Sections to Include',
+            type: 'multi_select',
+            required: true,
+            options: [
+              { value: '1', label: '1 — Indications and Usage' },
+              { value: '2', label: '2 — Dosage and Administration' },
+              { value: '3', label: '3 — Dosage Forms and Strengths' },
+              { value: '4', label: '4 — Contraindications' },
+              { value: '5', label: '5 — Warnings and Precautions' },
+              { value: '6', label: '6 — Adverse Reactions' },
+              { value: '7', label: '7 — Drug Interactions' },
+              { value: '8', label: '8 — Use in Specific Populations' },
+              { value: '9', label: '9 — Drug Abuse and Dependence' },
+              { value: '10', label: '10 — Overdosage' },
+              { value: '11', label: '11 — Description' },
+              { value: '12', label: '12 — Clinical Pharmacology' },
+              { value: '13', label: '13 — Nonclinical Toxicology' },
+              { value: '14', label: '14 — Clinical Studies' },
+              { value: '15', label: '15 — References' },
+              { value: '16', label: '16 — How Supplied / Storage and Handling' },
+              { value: '17', label: '17 — Patient Counseling Information' },
+            ],
+          },
+          {
+            id: 'fpi_numbering_convention',
+            label: 'Subsection numbering convention',
+            type: 'select',
+            options: [
+              { value: 'standard_plr', label: 'Standard PLR Numbering (1.1, 5.1, etc.)' },
+              { value: 'custom', label: 'Custom Subsection Numbering' },
+            ],
+            helpText: 'Standard PLR numbering is strongly recommended per 21 CFR 201.57(d).',
+          },
+        ],
+        defaultNext: 'mechanism_and_pk',
+      },
+
+      /* ─────────────────────────────────────────────────────────────
+       *  SECTION 3 — Clinical Pharmacology
+       * ───────────────────────────────────────────────────────────── */
+      {
+        id: 'mechanism_and_pk',
+        section: 'Clinical Pharmacology',
+        question:
+          'Describe the mechanism of action and key pharmacokinetic parameters for the Clinical Pharmacology section (Section 12).',
+        guidance:
+          'Per 21 CFR 201.57(c)(12), the Clinical Pharmacology section must include: (i) Mechanism of Action, (ii) Pharmacodynamics, and (iii) Pharmacokinetics (absorption, distribution, metabolism, elimination). Include relevant parameters: Cmax, Tmax, AUC, t½, bioavailability, protein binding, and clearance.',
+        fields: [
+          {
+            id: 'mechanism_of_action',
+            label: 'Mechanism of Action',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Describe the known or proposed mechanism by which the drug produces its pharmacological effect.',
+          },
+          {
+            id: 'pharmacodynamics_summary',
+            label: 'Pharmacodynamics Summary',
+            type: 'textarea',
+            placeholder: 'Include exposure-response relationships, QTc prolongation data, or other PD effects.',
+          },
+          {
+            id: 'absorption_bioavailability',
+            label: 'Absorption / Bioavailability',
+            type: 'textarea',
+            placeholder: 'e.g., Oral bioavailability ~50%; Tmax 1-2 hours; food effect: AUC increased 20% with high-fat meal.',
+          },
+          {
+            id: 'distribution_protein_binding',
+            label: 'Distribution / Protein Binding',
+            type: 'textarea',
+            placeholder: 'e.g., Vd = 70 L; 95% bound to plasma proteins (primarily albumin).',
+          },
+          {
+            id: 'metabolism_enzymes',
+            label: 'Metabolism / Enzymes Involved',
+            type: 'textarea',
+            placeholder: 'e.g., Primarily metabolized by CYP3A4; minor contribution from CYP2D6.',
+          },
+          {
+            id: 'elimination_half_life',
+            label: 'Elimination / Half-Life',
+            type: 'textarea',
+            placeholder: 'e.g., t½ = 12 hours; ~80% excreted renally (60% unchanged); 15% in feces.',
+          },
+          {
+            id: 'special_pk_populations',
+            label: 'PK in Special Populations (hepatic/renal impairment, age, weight)',
+            type: 'textarea',
+            placeholder: 'Summarize PK differences in hepatic/renal impairment, elderly, pediatric, obese patients.',
+          },
+        ],
+        defaultNext: 'drug_interaction_studies',
+      },
+
+      /* ── Node 6: Drug Interaction Studies ───────────────────────── */
+      {
+        id: 'drug_interaction_studies',
+        section: 'Clinical Pharmacology',
+        question:
+          'What drug-drug interaction studies have been conducted?',
+        guidance:
+          'Per 21 CFR 201.57(c)(7), the Drug Interactions section must describe clinically significant interactions. Include both clinical DDI studies and in-vitro assessments (CYP inhibition/induction, transporter interactions). Reference FDA DDI guidance (2020) for study expectations.',
+        fields: [
+          {
+            id: 'ddi_studies_conducted',
+            label: 'Have dedicated DDI studies been conducted?',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'cyp_inhibition_profile',
+            label: 'CYP Inhibition / Induction Profile',
+            type: 'textarea',
+            placeholder: 'e.g., In vitro: inhibits CYP2D6 (IC50 = 5 µM); no clinically significant inhibition of CYP1A2, CYP2C9, CYP2C19, CYP3A4.',
+          },
+          {
+            id: 'transporter_interactions',
+            label: 'Transporter Interactions (P-gp, BCRP, OATP, etc.)',
+            type: 'textarea',
+            placeholder: 'e.g., Substrate of P-gp and BCRP. Inhibits OATP1B1 at clinically relevant concentrations.',
+          },
+          {
+            id: 'clinically_significant_ddis',
+            label: 'Clinically Significant Drug Interactions',
+            type: 'textarea',
+            placeholder: 'List drugs/drug classes with clinically meaningful interactions and recommended actions (dose adjustment, avoidance, monitoring).',
+          },
+          {
+            id: 'food_effect',
+            label: 'Food Effect',
+            type: 'textarea',
+            placeholder: 'Describe the effect of food on absorption. Include recommendations for administration with/without food.',
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'no_ddi_studies',
+            condition: { field: 'ddi_studies_conducted', operator: 'eq', value: 'no' },
+            severity: 'warning',
+            title: 'No Dedicated DDI Studies Conducted',
+            message:
+              'FDA expects dedicated drug-drug interaction studies for most NDA/BLA products. Absence of DDI data may result in an Information Request or labeling deficiency. Consider in-vitro CYP/transporter assessments at minimum.',
+            reference: 'FDA Guidance: In Vitro Drug Interaction Studies — Cytochrome P450 Enzyme- and Transporter-Mediated Drug Interactions (January 2020)',
+          },
+        ],
+        defaultNext: 'indications_and_usage',
+      },
+
+      /* ─────────────────────────────────────────────────────────────
+       *  SECTION 4 — Indications & Usage
+       * ───────────────────────────────────────────────────────────── */
+      {
+        id: 'indications_and_usage',
+        section: 'Indications & Usage',
+        question:
+          'Define the Indications and Usage section — this is the core of the labeling.',
+        guidance:
+          'Per 21 CFR 201.57(c)(2), state each indication concisely. Include the specific patient population, disease/condition, and any limitations of use. For oncology products, specify tumor type, biomarker requirements, and line of therapy. Biosimilar labeling should reference the licensed conditions of use per the BPCI Act but may use different language per FDA biosimilar labeling guidance.',
+        provideExpertFeedback: true,
+        fields: [
+          {
+            id: 'indications_list',
+            label: 'Indications (list each separately)',
+            type: 'textarea',
+            required: true,
+            placeholder: 'e.g., 1. Treatment of adult patients with metastatic non-small cell lung cancer (NSCLC) whose tumors express PD-L1 (TPS ≥1%) as determined by an FDA-approved test.\n2. First-line treatment of ...',
+          },
+          {
+            id: 'limitations_of_use',
+            label: 'Limitations of Use',
+            type: 'textarea',
+            placeholder: 'e.g., Not indicated for treatment of patients with EGFR or ALK genomic tumor aberrations.',
+          },
+          {
+            id: 'companion_diagnostic',
+            label: 'Is a companion diagnostic required?',
+            type: 'yes_no',
+            helpText: 'If yes, include the name of the FDA-approved companion diagnostic test in the Indications section.',
+          },
+          {
+            id: 'companion_diagnostic_name',
+            label: 'Companion Diagnostic Test Name',
+            type: 'text',
+            placeholder: 'e.g., Dako PD-L1 IHC 22C3 pharmDx',
+            visibleWhen: { field: 'companion_diagnostic', operator: 'eq', value: 'yes' },
+          },
+          {
+            id: 'orphan_designation',
+            label: 'Does the product have Orphan Drug designation?',
+            type: 'yes_no',
+            helpText: 'Orphan designation may affect labeling scope and market exclusivity claims.',
+          },
+          {
+            id: 'accelerated_approval',
+            label: 'Is this an accelerated approval based on a surrogate endpoint?',
+            type: 'yes_no',
+            helpText: 'If yes, the labeling must include a limitation statement noting that continued approval may be contingent on confirmatory trials.',
+          },
+          {
+            id: 'biosimilar_indication_carveout',
+            label: 'Are any reference product indications being carved out?',
+            type: 'yes_no',
+            helpText: 'Under 351(k), biosimilars may exclude protected indications from labeling (indication carve-out).',
+            visibleWhen: { field: 'product_type', operator: 'eq', value: 'biosimilar' },
+          },
+        ],
+        defaultNext: 'dosage_and_administration',
+      },
+
+      /* ── Node 8: Dosage and Administration ──────────────────────── */
+      {
+        id: 'dosage_and_administration',
+        section: 'Indications & Usage',
+        question:
+          'Detail the Dosage and Administration section.',
+        guidance:
+          'Per 21 CFR 201.57(c)(3), include recommended dosage, route, frequency, duration, and dose modifications. Provide dosing for each indication separately if different. Include reconstitution/dilution instructions for injectables, and dose adjustments for hepatic/renal impairment, drug interactions, and adverse reactions.',
+        fields: [
+          {
+            id: 'recommended_dosage',
+            label: 'Recommended Dosage (for each indication)',
+            type: 'textarea',
+            required: true,
+            placeholder: 'e.g., 200 mg IV every 3 weeks until disease progression or unacceptable toxicity.\nFor Indication 2: 400 mg IV every 6 weeks.',
+          },
+          {
+            id: 'route_of_administration',
+            label: 'Route of Administration',
+            type: 'multi_select',
+            required: true,
+            options: [
+              { value: 'oral', label: 'Oral' },
+              { value: 'iv', label: 'Intravenous (IV)' },
+              { value: 'sc', label: 'Subcutaneous (SC)' },
+              { value: 'im', label: 'Intramuscular (IM)' },
+              { value: 'topical', label: 'Topical' },
+              { value: 'inhalation', label: 'Inhalation' },
+              { value: 'ophthalmic', label: 'Ophthalmic' },
+              { value: 'other', label: 'Other' },
+            ],
+          },
+          {
+            id: 'dose_modifications',
+            label: 'Dose Modifications for Adverse Reactions / Organ Impairment',
+            type: 'textarea',
+            placeholder: 'Describe dose reduction steps, hold criteria, and discontinuation criteria.',
+          },
+          {
+            id: 'preparation_instructions',
+            label: 'Preparation and Administration Instructions',
+            type: 'textarea',
+            placeholder: 'e.g., Reconstitute with 2.3 mL Sterile Water for Injection. Dilute in 0.9% NaCl to final concentration of 1-10 mg/mL. Infuse over 30 minutes.',
+          },
+          {
+            id: 'missed_dose_instructions',
+            label: 'Missed Dose Instructions',
+            type: 'textarea',
+            placeholder: 'e.g., If a dose is missed, administer as soon as possible; do not wait until the next planned dose.',
+          },
+        ],
+        defaultNext: 'boxed_warning_assessment',
+      },
+
+      /* ─────────────────────────────────────────────────────────────
+       *  SECTION 5 — Warnings & Precautions
+       * ───────────────────────────────────────────────────────────── */
+      {
+        id: 'boxed_warning_assessment',
+        section: 'Warnings & Precautions',
+        question:
+          'Does the product require a Boxed Warning ("Black Box Warning")?',
+        guidance:
+          'Per 21 CFR 201.57(c)(1), a Boxed Warning is reserved for serious risks that are important enough to be highlighted for prescribers. FDA determines the need for a Boxed Warning. Common triggers include: serious or life-threatening adverse reactions, contraindications that could be fatal, and safety concerns requiring specific monitoring. All products with REMS should evaluate whether a Boxed Warning is warranted.',
+        fields: [
+          {
+            id: 'boxed_warning_required',
+            label: 'Is a Boxed Warning required?',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'yes', label: 'Yes — Boxed Warning is required' },
+              { value: 'no', label: 'No — No Boxed Warning' },
+              { value: 'under_discussion', label: 'Under discussion with FDA' },
+            ],
           },
           {
             id: 'boxed_warning_text',
             label: 'Boxed Warning Text',
             type: 'textarea',
-            required: true,
-            visibleWhen: {
-              field: 'has_boxed_warning',
-              operator: 'eq',
-              value: true,
-            },
-            placeholder:
-              'e.g., WARNING: SERIOUS INFECTIONS AND MALIGNANCIES\nSerious infections leading to hospitalization or death, including tuberculosis...',
-            validation: { minLength: 50 },
-            helpText:
-              'Include the complete boxed warning text as it will appear in labeling. The warning must be concise and clinically actionable.',
+            placeholder: 'WARNING: [SERIOUS RISK]\nSee full prescribing information for complete boxed warning.\n• [Key point 1]\n• [Key point 2]',
+            visibleWhen: { field: 'boxed_warning_required', operator: 'in', value: ['yes', 'under_discussion'] },
           },
           {
-            id: 'boxed_warning_basis',
-            label: 'What is the basis for the Boxed Warning?',
-            type: 'multi_select',
-            visibleWhen: {
-              field: 'has_boxed_warning',
-              operator: 'eq',
-              value: true,
-            },
+            id: 'boxed_warning_evidence_basis',
+            label: 'Evidence basis for Boxed Warning',
+            type: 'select',
             options: [
-              { value: 'clinical_trials', label: 'Clinical trial data' },
-              { value: 'post_marketing', label: 'Post-marketing surveillance' },
-              { value: 'class_effect', label: 'Class effect (applies to drug class)' },
-              { value: 'rems_required', label: 'Associated with REMS requirement' },
-              { value: 'animal_data', label: 'Animal data (e.g., teratogenicity)' },
+              { value: 'clinical_trial', label: 'Clinical trial data' },
+              { value: 'postmarket', label: 'Post-marketing safety data' },
+              { value: 'class_effect', label: 'Class effect (based on related drugs)' },
+              { value: 'animal_data', label: 'Animal/nonclinical data' },
+              { value: 'combination', label: 'Multiple evidence sources' },
             ],
-          },
-          {
-            id: 'life_threatening_risk',
-            label: 'Does this product carry a risk of a life-threatening adverse reaction?',
-            type: 'yes_no',
-            required: true,
-            helpText:
-              'If yes and no boxed warning exists, FDA may require one. Life-threatening risks include hepatotoxicity, cardiac arrhythmia, anaphylaxis, and serious bleeding events.',
-          },
-          {
-            id: 'initial_us_approval_year',
-            label: 'Initial U.S. Approval Year',
-            type: 'text',
-            required: true,
-            placeholder: 'e.g., 2014',
-            helpText:
-              'Per 21 CFR 201.57(a)(4), the year of initial FDA approval must appear in the Highlights section. This helps prescribers identify how long the product has been marketed.',
-            validation: {
-              pattern: '^(19|20)\\d{2}$',
-              patternMessage: 'Enter a valid four-digit year (e.g., 2014).',
-            },
-          },
-          {
-            id: 'recent_major_changes',
-            label: 'Recent Major Changes (within last year)',
-            type: 'multi_select',
-            options: [
-              { value: 'boxed_warning', label: 'Boxed Warning' },
-              { value: 'indications', label: 'Indications and Usage' },
-              { value: 'dosage', label: 'Dosage and Administration' },
-              { value: 'contraindications', label: 'Contraindications' },
-              { value: 'warnings', label: 'Warnings and Precautions' },
-            ],
-            helpText:
-              'Per 21 CFR 201.57(a)(5), the Highlights section must list the sections that have had major changes within the past year, with the date of each change.',
+            visibleWhen: { field: 'boxed_warning_required', operator: 'in', value: ['yes', 'under_discussion'] },
           },
         ],
         issueChecks: [
           {
-            id: 'no_boxed_warning_life_threat',
-            condition: { field: 'life_threatening_risk', operator: 'eq', value: true },
-            severity: 'critical',
-            title: 'Life-Threatening Risk Without Boxed Warning Review',
-            message:
-              'The product carries a life-threatening risk. If no Boxed Warning is currently required, confirm with FDA whether one should be added. Products with life-threatening adverse reactions typically require a Boxed Warning per 21 CFR 201.57(c)(1). Failure to include a required boxed warning may result in FDA enforcement action.',
-            reference: '21 CFR 201.57(c)(1); FDA Guidance "Warnings and Precautions" (2011)',
-          },
-        ],
-        defaultNext: 'highlights_summary',
-        provideExpertFeedback: true,
-      },
-
-      {
-        id: 'highlights_summary',
-        section: 'highlights',
-        question:
-          'Provide the summary content for each required Highlights subsection. These brief summaries direct prescribers to the relevant Full Prescribing Information sections.',
-        guidance:
-          'Per 21 CFR 201.57(a), the Highlights section must contain concise summaries of: Indications and Usage, Dosage and Administration, Dosage Forms and Strengths, Contraindications, Warnings and Precautions, Adverse Reactions, Drug Interactions, and Use in Specific Populations. Each summary must include a cross-reference to the corresponding FPI section number. The Highlights section must not exceed one half of a full prescribing information page in length. Reference: 21 CFR 201.57(a); FDA PLR Guidance (2013).',
-        fields: [
-          {
-            id: 'highlights_indications',
-            label: 'Indications and Usage — Highlights Summary',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., [PRODUCT] is a [pharmacologic class] indicated for [indication]. (1.1)',
-            validation: { maxLength: 500 },
-          },
-          {
-            id: 'highlights_dosage',
-            label: 'Dosage and Administration — Highlights Summary',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., Recommended dosage: [X mg] administered [route] every [interval]. (2.1)',
-            validation: { maxLength: 500 },
-          },
-          {
-            id: 'highlights_dosage_forms',
-            label: 'Dosage Forms and Strengths',
-            type: 'textarea',
-            required: true,
-            placeholder: 'e.g., Tablets: 100 mg, 200 mg (3)',
-          },
-          {
-            id: 'highlights_contraindications',
-            label: 'Contraindications — Highlights Summary',
-            type: 'textarea',
-            required: true,
-            placeholder: 'e.g., Known severe hypersensitivity to [PRODUCT] or any component. (4)',
-          },
-          {
-            id: 'highlights_warnings',
-            label: 'Warnings and Precautions — Highlights Summary',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., Hepatotoxicity: Monitor liver function tests. Discontinue if ALT >5x ULN. (5.1)',
-          },
-          {
-            id: 'highlights_adverse_reactions',
-            label: 'Adverse Reactions — Highlights Summary',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., Most common adverse reactions (>=20%): nausea, fatigue, diarrhea. (6.1)',
-          },
-          {
-            id: 'highlights_drug_interactions',
-            label: 'Drug Interactions — Highlights Summary',
-            type: 'textarea',
-            placeholder: 'e.g., Strong CYP3A4 inhibitors: Reduce [PRODUCT] dose. (7.1)',
-          },
-          {
-            id: 'highlights_specific_pops',
-            label: 'Use in Specific Populations — Highlights Summary',
-            type: 'textarea',
-            placeholder: 'e.g., Lactation: Advise not to breastfeed. (8.2)',
-          },
-        ],
-        defaultNext: 'fpi_indications',
-      },
-
-      /* ══════════════════════════════════════════════════════════════════ */
-      /*  Section 3 — Full Prescribing Information (drugs/biologics)      */
-      /* ══════════════════════════════════════════════════════════════════ */
-
-      {
-        id: 'fpi_indications',
-        section: 'fpi',
-        question:
-          'Provide the full Indications and Usage section (Section 1 of the FPI). This must describe each approved indication precisely, including any limitations of use.',
-        guidance:
-          'Per 21 CFR 201.57(c)(2), the Indications and Usage section must state each approved indication, the population(s) for which the drug is indicated, and any limitations of use. The indication statement must be consistent with the clinical evidence. Limitations of use may include: not indicated for a specific population, no data in a subgroup, or accelerated approval conditions. For accelerated approval products, include the statement that continued approval may be contingent on confirmatory trials per 21 CFR 314.510/601.41. Reference: FDA Guidance "Indications and Usage Section of Labeling" (2018); ICH M4E(R2).',
-        fields: [
-          {
-            id: 'approved_indication_statement',
-            label: 'Approved Indication Statement',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., [PRODUCT] is a [pharmacologic class] indicated for the treatment of adult patients with [disease/condition] who have [specific criteria].',
-            validation: { minLength: 50 },
-          },
-          {
-            id: 'additional_indications',
-            label: 'Additional Approved Indications (if any)',
-            type: 'textarea',
-            placeholder:
-              'List each additional indication with its subsection number (e.g., 1.2, 1.3).',
-          },
-          {
-            id: 'limitation_of_use',
-            label: 'Limitations of Use',
-            type: 'textarea',
-            placeholder:
-              'e.g., [PRODUCT] is not indicated for use as adjunctive therapy with [drug class].',
-            helpText:
-              'Limitations of use clarify what the drug is NOT indicated for, or describe conditions under which the indication applies. Per 21 CFR 201.57(c)(2)(ii), these limitations must be based on clinical data or pharmacologic considerations.',
-          },
-          {
-            id: 'accelerated_approval',
-            label: 'Was this indication granted under Accelerated Approval?',
-            type: 'yes_no',
-            required: true,
-            helpText:
-              'Products approved under Accelerated Approval (21 CFR 314.510 / 21 CFR 601.41) must include a statement that continued approval may be contingent on verification and description of clinical benefit in confirmatory trials.',
-          },
-          {
-            id: 'approved_age_groups',
-            label: 'Approved Age Groups',
-            type: 'multi_select',
-            required: true,
-            options: [
-              { value: 'adults', label: 'Adults (>=18 years)' },
-              { value: 'adolescents', label: 'Adolescents (12-17 years)' },
-              { value: 'children', label: 'Children (2-11 years)' },
-              { value: 'infants', label: 'Infants (1 month-2 years)' },
-              { value: 'neonates', label: 'Neonates (<1 month)' },
-            ],
-          },
-          {
-            id: 'clinical_benefit_data',
-            label: 'Clinical Benefit Data Supporting Indication',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'Briefly describe the clinical evidence supporting each indication (e.g., study type, population, primary endpoint, key result).',
-            validation: { minLength: 100 },
-          },
-        ],
-        defaultNext: 'fpi_dosage',
-        provideExpertFeedback: true,
-      },
-
-      {
-        id: 'fpi_dosage',
-        section: 'fpi',
-        question:
-          'Provide the Dosage and Administration section (Section 2 of the FPI). Include all recommended dosages, dose modifications, preparation instructions, and administration details.',
-        guidance:
-          'Per 21 CFR 201.57(c)(3), the Dosage and Administration section must provide the recommended dose, route, frequency, and duration for each approved indication. It must also include dose modifications for hepatic/renal impairment, adverse reactions, and drug interactions. Preparation and reconstitution instructions are required for injectable products. Administration instructions must be specific enough for safe use. Reference: 21 CFR 201.57(c)(3); FDA Guidance "Dosage and Administration Section of Labeling" (2018).',
-        fields: [
-          {
-            id: 'recommended_dosage',
-            label: 'Recommended Dosage',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., The recommended dosage of [PRODUCT] is 200 mg administered orally once daily with food.',
-            validation: { minLength: 30 },
-          },
-          {
-            id: 'dose_modification_renal',
-            label: 'Dose Modifications — Renal Impairment',
-            type: 'textarea',
-            placeholder:
-              'e.g., Mild (CrCl 60-89 mL/min): No adjustment. Moderate (CrCl 30-59): Reduce to 100 mg. Severe (CrCl <30): Not recommended.',
-            helpText:
-              'Per FDA Guidance "Pharmacokinetics in Patients with Impaired Renal Function" (2020), labeling should include dosing recommendations for mild, moderate, and severe renal impairment, and ESRD/dialysis if studied.',
-          },
-          {
-            id: 'dose_modification_hepatic',
-            label: 'Dose Modifications — Hepatic Impairment',
-            type: 'textarea',
-            placeholder:
-              'e.g., Child-Pugh A: No adjustment. Child-Pugh B: Reduce to 100 mg. Child-Pugh C: Avoid use.',
-            helpText:
-              'Per FDA Guidance "Pharmacokinetics in Patients with Impaired Hepatic Function" (2020) and ICH E7, hepatic dosing should be categorized by Child-Pugh classification.',
-          },
-          {
-            id: 'dose_modification_ae',
-            label: 'Dose Modifications — Adverse Reaction-Based',
-            type: 'textarea',
-            placeholder:
-              'e.g., For Grade 3 neutropenia: Withhold until recovery to Grade <=1, then resume at reduced dose of 150 mg.',
-          },
-          {
-            id: 'preparation_instructions',
-            label: 'Preparation / Reconstitution Instructions',
-            type: 'textarea',
-            placeholder:
-              'e.g., Reconstitute each vial with 10 mL Sterile Water for Injection. Swirl gently; do not shake. The reconstituted solution should be clear and colorless to pale yellow.',
-            helpText:
-              'Required for products that need reconstitution, dilution, or compounding before administration. Must include diluent type, volume, compatibility, stability after reconstitution, and visual inspection criteria.',
-          },
-          {
-            id: 'administration_instructions',
-            label: 'Administration Instructions',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., Administer as an intravenous infusion over 30 minutes. Do not administer as an IV push or bolus.',
-            helpText:
-              'Include route, rate, infusion duration, injection site, and any special precautions (e.g., use of in-line filter, PVC-free tubing).',
-          },
-          {
-            id: 'missed_dose_guidance',
-            label: 'Missed Dose Guidance',
-            type: 'textarea',
-            placeholder:
-              'e.g., If a dose is missed, administer as soon as possible within 12 hours. If more than 12 hours have elapsed, skip the missed dose and resume the regular schedule.',
-          },
-        ],
-        defaultNext: 'fpi_safety',
-      },
-
-      {
-        id: 'fpi_safety',
-        section: 'fpi',
-        question:
-          'Provide the safety information for the Full Prescribing Information, including Contraindications (Section 4), Warnings and Precautions (Section 5), Adverse Reactions (Section 6), and Drug Interactions (Section 7).',
-        guidance:
-          'These sections constitute the core safety information in the USPI. Per 21 CFR 201.57(c)(5), Contraindications must list situations where the drug must NOT be used because the risk clearly outweighs any benefit. Per 21 CFR 201.57(c)(6), Warnings and Precautions must describe clinically significant adverse reactions and safety hazards, with practical guidance for monitoring and management. Per 21 CFR 201.57(c)(7), Adverse Reactions must present adverse event data from clinical trials and post-marketing experience. Per 21 CFR 201.57(c)(8), Drug Interactions must describe clinically meaningful interactions. Reference: FDA Guidance "Adverse Reactions Section of Labeling" (2019); ICH E2C(R2) for post-marketing data integration.',
-        fields: [
-          {
-            id: 'contraindications',
-            label: 'Contraindications (Section 4)',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., [PRODUCT] is contraindicated in patients with known severe hypersensitivity to [active ingredient] or any excipient.',
-            validation: { minLength: 30 },
-          },
-          {
-            id: 'contraindication_basis',
-            label: 'Basis for Each Contraindication',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., Hypersensitivity: Based on post-marketing reports of anaphylaxis (n=12 reports, FAERS database). Concomitant strong CYP3A4 inducer: Based on PK interaction study (Study ABC-101).',
-            helpText:
-              'Per 21 CFR 201.57(c)(5), each contraindication must be based on specific clinical or pharmacologic evidence. Avoid listing contraindications without supporting data.',
-          },
-          {
-            id: 'warnings_precautions',
-            label: 'Warnings and Precautions (Section 5) — List Each Warning',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., 5.1 Hepatotoxicity: Fatal and serious hepatotoxicity has occurred. Monitor LFTs monthly for the first 6 months.\n5.2 QT Prolongation: Avoid in patients with baseline QTcF >470 ms.',
-            validation: { minLength: 100 },
-            helpText:
-              'Organize by subsection (5.1, 5.2, etc.). Each warning should describe the risk, population at risk, monitoring recommendations, and management (dose modification or discontinuation criteria). Per 21 CFR 201.57(c)(6), warnings must include actionable clinical guidance.',
-          },
-          {
-            id: 'adverse_reactions_clinical_trials',
-            label: 'Adverse Reactions — Clinical Trials Experience (Section 6.1)',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., In pooled Phase 2/3 trials (N=1,200), the most common adverse reactions (>=10%) were: nausea (32%), fatigue (28%), diarrhea (22%), rash (15%). Serious adverse reactions occurred in 18% of patients.',
-            validation: { minLength: 100 },
-            helpText:
-              'Present adverse reactions by frequency (very common >=10%, common >=1%, uncommon >=0.1%, rare >=0.01%). Include the safety population size, study design, and comparison to placebo/active control. Reference: ICH E3 Section 12; FDA Guidance "Adverse Reactions Section" (2019).',
-          },
-          {
-            id: 'adverse_reactions_post_marketing',
-            label: 'Adverse Reactions — Post-marketing Experience (Section 6.2)',
-            type: 'textarea',
-            placeholder:
-              'e.g., The following adverse reactions have been identified during post-approval use: Stevens-Johnson syndrome, interstitial lung disease. Because these reactions are reported voluntarily, frequency cannot be reliably estimated.',
-            helpText:
-              'Per 21 CFR 201.57(c)(7), post-marketing adverse reactions should include a statement about the limitations of voluntary reporting. Include only events where a causal relationship is reasonably established.',
-          },
-          {
-            id: 'drug_interactions',
-            label: 'Drug Interactions (Section 7)',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., 7.1 Strong CYP3A4 Inhibitors: Concomitant use increases [PRODUCT] exposure by 3-fold. Reduce dose to 50 mg.\n7.2 Strong CYP3A4 Inducers: Concomitant use decreases exposure by 80%. Avoid concomitant use.',
-            validation: { minLength: 50 },
-            helpText:
-              'Per 21 CFR 201.57(c)(8), describe each clinically significant drug interaction with the clinical consequence, mechanism, and management recommendation. Reference: FDA Guidance "Clinical Drug Interaction Studies" (2020); FDA Drug Interaction Table (updated annually).',
-          },
-          {
-            id: 'overdosage',
-            label: 'Overdosage (Section 10)',
-            type: 'textarea',
-            placeholder:
-              'e.g., In clinical trials, overdoses up to 600 mg (3x recommended dose) were reported. Symptoms included nausea and vomiting. No specific antidote exists. Treatment is supportive.',
-            helpText:
-              'Per 21 CFR 201.57(c)(11), describe signs/symptoms of overdose, laboratory findings, treatment including use of antidotes, and whether the drug is dialyzable.',
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'missing_drug_interaction_data',
-            condition: { field: 'drug_interactions', operator: 'eq', value: '' },
+            id: 'rems_no_boxed_warning',
+            condition: { field: 'boxed_warning_required', operator: 'eq', value: 'no' },
             severity: 'warning',
-            title: 'Drug Interaction Information Missing',
+            title: 'REMS Required but No Boxed Warning',
             message:
-              'The Drug Interactions section (Section 7) is a required component of the USPI per 21 CFR 201.57(c)(8). Missing drug interaction data may lead to a Refuse to File determination or an Information Request from FDA.',
-            reference: '21 CFR 201.57(c)(8); FDA Guidance "Clinical Drug Interaction Studies" (2020)',
+              'This product requires a REMS program, but no Boxed Warning is planned. While REMS and Boxed Warnings are independent requirements, most REMS products carry a Boxed Warning. Confirm with FDA whether a Boxed Warning is needed.',
+            reference: '21 CFR 201.57(c)(1); FDA Guidance: REMS Integration with Labeling',
           },
         ],
-        defaultNext: 'fpi_clinical_studies',
-        provideExpertFeedback: true,
+        defaultNext: 'warnings_precautions_detail',
       },
 
+      /* ── Node 10: Warnings & Precautions Detail ─────────────────── */
       {
-        id: 'fpi_clinical_studies',
-        section: 'fpi',
+        id: 'warnings_precautions_detail',
+        section: 'Warnings & Precautions',
         question:
-          'Provide the Clinical Studies section (Section 14 of the FPI). Describe the trials that support each approved indication, including study design, demographics, endpoints, and results.',
+          'Detail the Warnings and Precautions section (Section 5). List each warning as a separate subsection.',
         guidance:
-          'Per 21 CFR 201.57(c)(15), the Clinical Studies section must describe each adequate and well-controlled study that supports an approved indication. Include study design, patient population, demographics, primary and key secondary endpoints, and results with effect sizes and statistical significance. For oncology products, include Kaplan-Meier curves or hazard ratios as appropriate. For products with supplemental indications, present studies chronologically or by indication. Reference: ICH E3; FDA Guidance "Clinical Studies Section of Labeling" (2018).',
-        fields: [
-          {
-            id: 'pivotal_trial_description',
-            label: 'Pivotal Clinical Trial Description',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., Study ABC-301 was a randomized, double-blind, placebo-controlled Phase 3 trial in 450 patients with moderate-to-severe [disease].',
-            validation: { minLength: 100 },
-          },
-          {
-            id: 'trial_demographics',
-            label: 'Study Demographics',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., Median age: 62 years (range 28-84). Male: 55%. White: 72%, Asian: 18%, Black/African American: 7%.',
-          },
-          {
-            id: 'primary_endpoint',
-            label: 'Primary Endpoint and Results',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., The primary endpoint was overall response rate (ORR) per RECIST v1.1 by BICR. ORR was 45% (95% CI: 38-52%) vs 12% placebo (p<0.001).',
-            validation: { minLength: 50 },
-          },
-          {
-            id: 'secondary_endpoints',
-            label: 'Key Secondary Endpoints and Results',
-            type: 'textarea',
-            placeholder:
-              'e.g., Median PFS: 12.3 months vs 5.8 months (HR 0.52, 95% CI: 0.40-0.68, p<0.001). Median OS: Not reached vs 18.7 months (HR 0.69, 95% CI: 0.51-0.93, p=0.014).',
-          },
-          {
-            id: 'additional_studies',
-            label: 'Additional Supportive Studies',
-            type: 'textarea',
-            placeholder: 'Describe any additional studies (e.g., dose-ranging, supportive Phase 2, open-label extension) referenced in the labeling.',
-          },
-        ],
-        defaultNext: 'specific_pops_pregnancy',
+          'Per 21 CFR 201.57(c)(6), Warnings and Precautions must describe clinically significant adverse reactions (including severity and expected incidence), steps to prevent or mitigate harm, and monitoring recommendations. Organize by subsection (5.1, 5.2, etc.) with descriptive headings. Include laboratory abnormalities requiring monitoring and any contraindicated co-medications.',
         provideExpertFeedback: true,
-      },
-
-      /* ══════════════════════════════════════════════════════════════════ */
-      /*  Section 4 — Use in Specific Populations                        */
-      /* ══════════════════════════════════════════════════════════════════ */
-
-      {
-        id: 'specific_pops_pregnancy',
-        section: 'specific_populations',
-        question:
-          'Provide information for the Use in Specific Populations sections, starting with pregnancy (Section 8.1) and lactation (Section 8.2). Note: The PLLR (Pregnancy and Lactation Labeling Rule) eliminated letter categories (A/B/C/D/X) and replaced them with descriptive summaries.',
-        guidance:
-          'The Pregnancy and Lactation Labeling Rule (PLLR, 79 FR 72064, effective June 30, 2015) fundamentally changed pregnancy labeling for prescription drugs. The former ABCDX letter categories were replaced with three subsections under Section 8: (8.1) Pregnancy, (8.2) Lactation, and (8.3) Females and Males of Reproductive Potential. Each subsection must include: a risk summary, clinical considerations, and data (human and/or animal). All prescription drugs approved after June 30, 2015 must use the PLLR format. Products approved before June 30, 2001 must convert by June 30, 2020. Reference: 21 CFR 201.57(c)(9)(i); FDA Guidance "Pregnancy, Lactation, and Reproductive Potential: Labeling for Human Prescription Drugs — Content and Format" (2020).',
         fields: [
           {
-            id: 'pllr_format_used',
-            label: 'Is pregnancy labeling in PLLR format (descriptive, not letter categories)?',
+            id: 'warnings_subsections',
+            label: 'Warnings and Precautions Subsections',
+            type: 'textarea',
+            required: true,
+            placeholder: 'List each warning subsection with heading and summary, e.g.:\n5.1 Immune-Mediated Pneumonitis\n5.2 Immune-Mediated Colitis\n5.3 Hepatotoxicity\n5.4 Embryo-Fetal Toxicity',
+          },
+          {
+            id: 'monitoring_requirements',
+            label: 'Required Monitoring / Laboratory Tests',
+            type: 'textarea',
+            placeholder: 'e.g., Monitor liver function tests at baseline and periodically during treatment. Monitor blood glucose in diabetic patients.',
+          },
+          {
+            id: 'hypersensitivity_warning',
+            label: 'Does the product carry a hypersensitivity / anaphylaxis warning?',
             type: 'yes_no',
-            required: true,
-            helpText:
-              'All products approved after June 30, 2015 MUST use the PLLR descriptive format. Products still using A/B/C/D/X categories are non-compliant and must be updated.',
           },
+          {
+            id: 'embryo_fetal_toxicity',
+            label: 'Is there an embryo-fetal toxicity warning?',
+            type: 'yes_no',
+            helpText: 'If yes, include pregnancy testing requirements and contraception recommendations.',
+          },
+          {
+            id: 'driving_machinery_warning',
+            label: 'Warnings regarding driving or operating machinery?',
+            type: 'yes_no',
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'missing_hypersensitivity',
+            condition: { field: 'hypersensitivity_warning', operator: 'eq', value: 'no' },
+            severity: 'warning',
+            title: 'No Hypersensitivity Warning',
+            message:
+              'Consider whether a hypersensitivity / anaphylaxis warning is appropriate. Most biologic products and many small molecules include this warning even if incidence is low.',
+            reference: '21 CFR 201.57(c)(6)',
+          },
+        ],
+        defaultNext: 'adverse_reactions',
+      },
+
+      /* ── Node 11: Adverse Reactions ─────────────────────────────── */
+      {
+        id: 'adverse_reactions',
+        section: 'Warnings & Precautions',
+        question:
+          'Describe the Adverse Reactions section (Section 6).',
+        guidance:
+          'Per 21 CFR 201.57(c)(7), list adverse reactions from clinical trials (Section 6.1) and post-marketing experience (Section 6.2, if applicable). Include adverse reactions occurring in ≥1-5% of patients (depending on program size) and serious adverse reactions regardless of incidence. Present in tabular format with incidence rates for treatment vs. control groups.',
+        fields: [
+          {
+            id: 'clinical_trial_experience_summary',
+            label: 'Clinical Trial Experience Summary (6.1)',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Describe the safety database: total patients exposed, median duration, key demographics. Then list common adverse reactions by system organ class.',
+          },
+          {
+            id: 'safety_database_size',
+            label: 'Total patients exposed in safety database',
+            type: 'number',
+            required: true,
+            helpText: 'Total unique patients who received the product across all clinical trials included in the safety analysis.',
+            validation: { min: 0 },
+          },
+          {
+            id: 'most_common_ars',
+            label: 'Most Common Adverse Reactions (≥10%)',
+            type: 'textarea',
+            required: true,
+            placeholder: 'e.g., Fatigue (38%), nausea (24%), rash (20%), diarrhea (18%), pruritus (17%)',
+          },
+          {
+            id: 'serious_ars',
+            label: 'Serious Adverse Reactions',
+            type: 'textarea',
+            placeholder: 'List serious adverse reactions including incidence, e.g., pneumonitis (3.4%), colitis (1.7%), hepatitis (0.7%)',
+          },
+          {
+            id: 'discontinuation_due_to_ars',
+            label: 'Discontinuation Rate Due to Adverse Reactions',
+            type: 'text',
+            placeholder: 'e.g., 12% of patients discontinued due to adverse reactions',
+          },
+          {
+            id: 'postmarket_experience',
+            label: 'Post-Marketing Experience (6.2)',
+            type: 'textarea',
+            placeholder: 'If applicable, list adverse reactions identified during post-approval use. Note that these are reported voluntarily and frequency cannot be reliably determined.',
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'missing_adverse_reporting',
+            condition: { field: 'clinical_trial_experience_summary', operator: 'eq', value: '' },
+            severity: 'critical',
+            title: 'Missing Clinical Trial Adverse Reaction Data',
+            message:
+              'The Adverse Reactions section (6.1) requires a summary of the clinical trial safety database. This is a mandatory PLR section and cannot be left empty.',
+            reference: '21 CFR 201.57(c)(7)',
+          },
+          {
+            id: 'small_safety_database',
+            condition: { field: 'safety_database_size', operator: 'lt', value: 300 },
+            severity: 'warning',
+            title: 'Small Safety Database',
+            message:
+              'The safety database includes fewer than 300 patients. FDA typically expects a minimum of 300-600 patients with 6 months of exposure (ICH E1) for chronic use drugs. Consider whether additional safety data collection is needed before labeling finalization.',
+            reference: 'ICH E1: The Extent of Population Exposure to Assess Clinical Safety',
+          },
+        ],
+        defaultNext: 'contraindications',
+      },
+
+      /* ── Node 12: Contraindications ─────────────────────────────── */
+      {
+        id: 'contraindications',
+        section: 'Warnings & Precautions',
+        question:
+          'Define the Contraindications section (Section 4).',
+        guidance:
+          'Per 21 CFR 201.57(c)(5), contraindications should only list situations where the risk clearly outweighs any possible benefit. Do not confuse with Warnings and Precautions. Contraindications typically include known hypersensitivity to the active ingredient, co-administration of specific drugs, and specific disease states where the product must not be used.',
+        fields: [
+          {
+            id: 'contraindications_list',
+            label: 'Contraindications',
+            type: 'textarea',
+            required: true,
+            placeholder: 'List each contraindication, e.g.:\n4.1 Known severe hypersensitivity to [drug] or any component of the formulation.\n4.2 Concomitant use with [drug X] due to risk of [serious event].',
+          },
+          {
+            id: 'contraindication_count',
+            label: 'Number of contraindications',
+            type: 'number',
+            required: true,
+            validation: { min: 0 },
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'zero_contraindications',
+            condition: { field: 'contraindication_count', operator: 'eq', value: 0 },
+            severity: 'info',
+            title: 'No Contraindications Listed',
+            message:
+              'No contraindications have been identified. While some products genuinely have "None" for contraindications, confirm this is intentional. At minimum, consider whether known hypersensitivity to the active ingredient should be listed.',
+            reference: '21 CFR 201.57(c)(5)',
+          },
+        ],
+        defaultNext: 'specific_populations',
+      },
+
+      /* ─────────────────────────────────────────────────────────────
+       *  SECTION 6 — Patient Labeling
+       * ───────────────────────────────────────────────────────────── */
+      {
+        id: 'specific_populations',
+        section: 'Patient Labeling',
+        question:
+          'Address Use in Specific Populations (Section 8).',
+        guidance:
+          'Per 21 CFR 201.57(c)(9) and the Pregnancy and Lactation Labeling Rule (PLLR, 2015), Section 8 must include: 8.1 Pregnancy (including lactation risk summary and data), 8.2 Lactation, 8.3 Females and Males of Reproductive Potential, 8.4 Pediatric Use, and 8.5 Geriatric Use. The old pregnancy letter categories (A/B/C/D/X) have been replaced by the PLLR narrative format.',
+        fields: [
           {
             id: 'pregnancy_risk_summary',
-            label: 'Pregnancy Risk Summary (Section 8.1)',
+            label: 'Pregnancy Risk Summary (8.1)',
             type: 'textarea',
             required: true,
-            placeholder:
-              'e.g., Based on animal data, [PRODUCT] may cause fetal harm when administered to a pregnant woman. In animal reproduction studies, administration of [PRODUCT] to pregnant rats during organogenesis resulted in [findings] at exposures approximately [X]-fold the human exposure at the recommended dose.',
-            validation: { minLength: 50 },
+            placeholder: 'Based on [findings from animal studies / mechanism of action / human data], [drug] can cause fetal harm when administered to a pregnant woman...',
           },
           {
-            id: 'pregnancy_clinical_considerations',
-            label: 'Pregnancy — Clinical Considerations',
-            type: 'textarea',
-            placeholder:
-              'e.g., Disease-associated maternal and/or embryo/fetal risk: Women with [disease] may be at increased risk for [complications]. Advise females of reproductive potential to use effective contraception during treatment and for [X] weeks after the last dose.',
-          },
-          {
-            id: 'pregnancy_data',
-            label: 'Pregnancy — Data (Human and/or Animal)',
-            type: 'textarea',
-            placeholder:
-              'e.g., Human Data: No adequate human data. Animal Data: In embryo-fetal development studies in rats, oral doses of [X] mg/kg/day resulted in [skeletal malformations/reduced fetal weight/resorptions] at exposures [Y]-fold the human AUC.',
+            id: 'pregnancy_human_data',
+            label: 'Human Data Available for Pregnancy?',
+            type: 'yes_no',
           },
           {
             id: 'lactation_risk_summary',
-            label: 'Lactation Risk Summary (Section 8.2)',
+            label: 'Lactation Risk Summary (8.2)',
             type: 'textarea',
             required: true,
-            placeholder:
-              'e.g., There are no data on the presence of [PRODUCT] or its metabolites in human milk, the effects on the breastfed infant, or the effects on milk production.',
-          },
-          {
-            id: 'lactation_recommendation',
-            label: 'Lactation Clinical Recommendation',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'advise_not_breastfeed', label: 'Advise not to breastfeed during treatment' },
-              { value: 'breastfeed_caution', label: 'Use caution; weigh benefit vs risk' },
-              { value: 'compatible', label: 'Compatible with breastfeeding' },
-              { value: 'insufficient_data', label: 'Insufficient data to make recommendation' },
-            ],
+            placeholder: 'Describe whether the drug is present in human milk, effects on the breastfed infant, and effects on milk production.',
           },
           {
             id: 'reproductive_potential',
-            label: 'Females and Males of Reproductive Potential (Section 8.3)',
+            label: 'Females and Males of Reproductive Potential (8.3)',
             type: 'textarea',
-            placeholder:
-              'e.g., Contraception — Females: Advise females of reproductive potential to use effective contraception during treatment and for 6 months after the last dose. Infertility — Males: Based on animal studies, [PRODUCT] may impair male fertility.',
-            helpText:
-              'Per PLLR, this section addresses pregnancy testing recommendations, contraception requirements, and effects on fertility for both sexes.',
+            placeholder: 'Include pregnancy testing requirements, contraception recommendations, and infertility information.',
           },
-        ],
-        issueChecks: [
-          {
-            id: 'pllr_not_used',
-            condition: { field: 'pllr_format_used', operator: 'eq', value: false },
-            severity: 'critical',
-            title: 'PLLR Format Not Used for Pregnancy Labeling',
-            message:
-              'The Pregnancy and Lactation Labeling Rule (PLLR, 79 FR 72064) requires all prescription drugs approved after June 30, 2015 to use the descriptive format. Products approved before 2001 must have converted by June 30, 2020. Using the legacy A/B/C/D/X letter categories is non-compliant and FDA will require conversion during any labeling supplement review.',
-            reference: '21 CFR 201.57(c)(9); PLLR Final Rule (79 FR 72064, Dec 4, 2014)',
-          },
-        ],
-        defaultNext: 'specific_pops_other',
-        provideExpertFeedback: true,
-      },
-
-      {
-        id: 'specific_pops_other',
-        section: 'specific_populations',
-        question:
-          'Provide information for the remaining Use in Specific Populations subsections: Pediatric Use (8.4), Geriatric Use (8.5), Renal Impairment (8.6), and Hepatic Impairment (8.7).',
-        guidance:
-          'Per 21 CFR 201.57(c)(9), each special population subsection must describe the available data (or lack thereof), any differences in safety/efficacy, and dosing recommendations. Pediatric Use (8.4) must reference the pediatric studies conducted per PREA (Pediatric Research Equity Act) or any FDA-granted waivers/deferrals. Geriatric Use (8.5) must describe the extent of geriatric exposure in clinical trials and any age-related differences. Renal and hepatic impairment sections must provide dosing guidance based on PK studies per FDA Guidances on organ impairment (2020). Reference: 21 CFR 201.57(c)(9)(iv)-(vii); FDA Guidance "E7 Studies in Support of Special Populations: Geriatrics" (ICH E7).',
-        fields: [
           {
             id: 'pediatric_use',
-            label: 'Pediatric Use (Section 8.4)',
+            label: 'Pediatric Use (8.4)',
             type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., The safety and effectiveness of [PRODUCT] have been established in pediatric patients aged 12 years and older. Use in this age group is supported by evidence from [study], with additional PK data in adolescents.',
+            placeholder: 'Describe established safety/effectiveness in pediatric populations, or state that it has not been established. Include age ranges studied.',
           },
           {
-            id: 'pediatric_studies_status',
-            label: 'Pediatric Study Status (PREA/PRV)',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'completed', label: 'Pediatric studies completed' },
-              { value: 'deferred', label: 'Pediatric studies deferred (PREA deferral granted)' },
-              { value: 'waived', label: 'Pediatric studies waived (PREA waiver granted)' },
-              { value: 'ongoing', label: 'Pediatric studies ongoing (PMR/PMC)' },
-              { value: 'not_applicable', label: 'Not applicable (adult-only disease)' },
-            ],
-            helpText:
-              'Per PREA (21 USC 355c), all NDA/BLA applicants must submit pediatric study plans unless a waiver or deferral is granted. FDA tracks pediatric study requirements as PMRs.',
+            id: 'pediatric_studies_conducted',
+            label: 'Have pediatric studies been conducted?',
+            type: 'yes_no',
           },
           {
             id: 'geriatric_use',
-            label: 'Geriatric Use (Section 8.5)',
+            label: 'Geriatric Use (8.5)',
             type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., Of the 1,200 patients in clinical trials, 35% were >=65 years and 12% were >=75 years. No overall differences in safety or effectiveness were observed between older and younger patients.',
-            helpText:
-              'Per ICH E7 and 21 CFR 201.57(c)(9)(v), describe the number and proportion of geriatric subjects in clinical trials and any differences observed. State whether dosage adjustment is needed.',
+            placeholder: 'Describe the number of patients aged ≥65 in clinical studies. Note any differences in safety or effectiveness compared to younger patients.',
           },
           {
-            id: 'renal_impairment',
-            label: 'Renal Impairment (Section 8.6)',
-            type: 'textarea',
-            placeholder:
-              'e.g., In a dedicated renal impairment PK study, [PRODUCT] AUC increased by 40% in patients with severe renal impairment (eGFR 15-29 mL/min/1.73m2). No dose adjustment for mild-to-moderate impairment.',
-            helpText:
-              'Per FDA Guidance on Renal Impairment PK Studies (2020), include data categorized by eGFR or CrCl. Provide dosing recommendations for each severity category.',
+            id: 'geriatric_patients_studied',
+            label: 'Number of patients aged ≥65 included in clinical studies',
+            type: 'number',
+            validation: { min: 0 },
           },
           {
             id: 'hepatic_impairment',
-            label: 'Hepatic Impairment (Section 8.7)',
+            label: 'Hepatic Impairment (8.6)',
             type: 'textarea',
-            placeholder:
-              'e.g., In a dedicated hepatic impairment PK study using Child-Pugh classification, no dose adjustment is needed for mild (Child-Pugh A) impairment. Use with caution in moderate (Child-Pugh B). Avoid in severe (Child-Pugh C).',
-            helpText:
-              'Per FDA Guidance on Hepatic Impairment PK Studies (2020) and ICH E7, categorize by Child-Pugh A/B/C and provide specific dosing guidance.',
+            placeholder: 'Describe dosing recommendations for patients with hepatic impairment (Child-Pugh A, B, C).',
+          },
+          {
+            id: 'renal_impairment',
+            label: 'Renal Impairment (8.7)',
+            type: 'textarea',
+            placeholder: 'Describe dosing recommendations for patients with renal impairment (mild, moderate, severe, ESRD).',
           },
         ],
         issueChecks: [
           {
-            id: 'pediatric_section_incomplete',
-            condition: { field: 'pediatric_studies_status', operator: 'eq', value: 'deferred' },
+            id: 'no_pregnancy_data',
+            condition: { field: 'pregnancy_human_data', operator: 'eq', value: 'no' },
             severity: 'warning',
-            title: 'Pediatric Studies Deferred — Labeling Must Reflect Deferral',
+            title: 'No Human Pregnancy Data Available',
             message:
-              'When pediatric studies are deferred under PREA, the Pediatric Use section must include a statement that the studies have been deferred, the deferral date, and the expected completion timeline. Failure to meet PREA PMR deadlines may result in FDA enforcement action per FDARA Section 505B(e).',
-            reference: 'PREA (21 USC 355c); FDARA Section 505B(e); FDA PREA Guidance (2020)',
+              'No human pregnancy data is available. The PLLR requires a narrative risk summary even without human data. Include animal reproductive toxicology data and mechanism-based risk assessment. Consider whether a pregnancy registry should be established.',
+            reference: 'FDA PLLR Final Rule (December 2014); 21 CFR 201.57(c)(9)(i)',
+          },
+          {
+            id: 'missing_pediatric_section',
+            condition: { field: 'pediatric_studies_conducted', operator: 'eq', value: 'no' },
+            severity: 'info',
+            title: 'No Pediatric Studies Conducted',
+            message:
+              'No pediatric studies have been conducted. Under PREA (Pediatric Research Equity Act), pediatric studies are generally required unless a waiver or deferral has been granted. Include a statement that safety and effectiveness have not been established in pediatric patients.',
+            reference: '21 CFR 314.55 (PREA); 21 CFR 201.57(c)(9)(iv)',
+          },
+          {
+            id: 'missing_geriatric_section',
+            condition: { field: 'geriatric_patients_studied', operator: 'lt', value: 100 },
+            severity: 'warning',
+            title: 'Limited Geriatric Data',
+            message:
+              'Fewer than 100 patients aged ≥65 were included in clinical studies. ICH E7 recommends a meaningful representation of elderly patients. The labeling should clearly state the number of geriatric patients studied and whether differences were observed.',
+            reference: 'ICH E7: Studies in Support of Special Populations — Geriatrics; 21 CFR 201.57(c)(9)(v)',
           },
         ],
-        defaultNext: 'patient_med_guide',
+        defaultNext: 'patient_counseling_info',
       },
 
-      /* ══════════════════════════════════════════════════════════════════ */
-      /*  Section 5 — Device Labeling (devices only)                     */
-      /* ══════════════════════════════════════════════════════════════════ */
-
+      /* ── Node 14: Patient Counseling Information ────────────────── */
       {
-        id: 'device_label_content',
-        section: 'device_labeling',
+        id: 'patient_counseling_info',
+        section: 'Patient Labeling',
         question:
-          'Provide the required device labeling content per 21 CFR 801. Medical device labels must include specific information for safe and effective use.',
+          'Define the Patient Counseling Information section (Section 17).',
         guidance:
-          'Per 21 CFR 801.1, device labeling encompasses the label itself and all accompanying materials (IFU, patient guides, quick reference cards). 21 CFR 801.5 requires adequate directions for use. 21 CFR 801.109 allows prescription device labeling to omit patient-directed information if the device is for professional use only. The UDI (Unique Device Identifier) rule (21 CFR 801.20) requires UDI on device labels and packages for Class II and III devices. Symbols used on medical device labeling should conform to ISO 15223-1 "Medical devices — Symbols to be used with information to be supplied by the manufacturer." Reference: 21 CFR 801; FDA Guidance "Unique Device Identification: Policy Regarding Compliance Dates for Class I and Unclassified Devices" (2018); ISO 15223-1:2021.',
+          'Per 21 CFR 201.57(c)(18), this section provides key messages for healthcare providers to communicate to patients. Include advice on important safety precautions, common side effects to report, storage requirements, and whether a patient labeling document (Medication Guide, PPI, or IFU) is provided.',
         fields: [
           {
-            id: 'device_class',
+            id: 'counseling_topics',
+            label: 'Key Counseling Topics',
+            type: 'textarea',
+            required: true,
+            placeholder: 'e.g.,\n• Signs and symptoms of serious allergic reactions\n• Need for regular blood tests\n• Embryo-fetal toxicity and contraception requirements\n• Report symptoms of liver injury',
+          },
+          {
+            id: 'patient_labeling_type',
+            label: 'Type of Patient Labeling',
+            type: 'multi_select',
+            options: [
+              { value: 'medication_guide', label: 'Medication Guide (21 CFR 208)' },
+              { value: 'ppi', label: 'Patient Package Insert' },
+              { value: 'ifu', label: 'Instructions for Use (IFU)' },
+              { value: 'none', label: 'None' },
+            ],
+          },
+          {
+            id: 'patient_material_reading_level',
+            label: 'Patient material reading level',
+            type: 'select',
+            options: [
+              { value: '6th_grade', label: '6th grade level or below' },
+              { value: '8th_grade', label: '7th-8th grade level' },
+              { value: 'high_school', label: 'High school level' },
+              { value: 'not_assessed', label: 'Not yet assessed' },
+            ],
+            helpText: 'FDA recommends patient materials be written at a 6th-8th grade reading level.',
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'high_literacy_patient_material',
+            condition: { field: 'patient_material_reading_level', operator: 'eq', value: 'high_school' },
+            severity: 'warning',
+            title: 'Patient Material Reading Level Too High',
+            message:
+              'Patient-facing materials are written at a high school reading level. FDA recommends a 6th-8th grade reading level to ensure broad comprehension. Consider revising for readability.',
+            reference: 'FDA Guidance: Medication Guides — Distribution Requirements and Inclusion in REMS (2011)',
+          },
+        ],
+        defaultNext: 'medication_guide_assessment',
+      },
+
+      /* ── Node 15: Medication Guide Assessment ───────────────────── */
+      {
+        id: 'medication_guide_assessment',
+        section: 'Patient Labeling',
+        question:
+          'Is a Medication Guide required for this product?',
+        guidance:
+          'Per 21 CFR 208, a Medication Guide is required when: (1) patient labeling could help prevent serious adverse effects, (2) the product has serious risks relative to benefits that patients should know about, or (3) patient adherence to directions for use is critical. All products with REMS that include a Medication Guide element must have one. The Medication Guide must be written in patient-friendly language.',
+        fields: [
+          {
+            id: 'medication_guide_required',
+            label: 'Is a Medication Guide required?',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'medication_guide_status',
+            label: 'Medication Guide status',
+            type: 'select',
+            visibleWhen: { field: 'medication_guide_required', operator: 'eq', value: 'yes' },
+            options: [
+              { value: 'drafted', label: 'Drafted — awaiting FDA review' },
+              { value: 'fda_approved', label: 'FDA-approved content' },
+              { value: 'under_revision', label: 'Under revision' },
+              { value: 'not_started', label: 'Not yet started' },
+            ],
+          },
+          {
+            id: 'medication_guide_topics',
+            label: 'Key topics covered in the Medication Guide',
+            type: 'textarea',
+            visibleWhen: { field: 'medication_guide_required', operator: 'eq', value: 'yes' },
+            placeholder: 'e.g., What is [DRUG]? Who should not take [DRUG]? What are the possible side effects? How should I store [DRUG]?',
+          },
+          {
+            id: 'med_guide_distribution_plan',
+            label: 'Distribution plan for the Medication Guide',
+            type: 'select',
+            visibleWhen: { field: 'medication_guide_required', operator: 'eq', value: 'yes' },
+            options: [
+              { value: 'with_each_dispensing', label: 'With each dispensing (standard)' },
+              { value: 'rems_distribution', label: 'Through REMS distribution system' },
+              { value: 'other', label: 'Other distribution method' },
+            ],
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'rems_no_medication_guide',
+            condition: { field: 'medication_guide_required', operator: 'eq', value: 'no' },
+            severity: 'warning',
+            title: 'REMS Product Without Medication Guide',
+            message:
+              'This product has a REMS requirement but no Medication Guide is planned. Many REMS programs include a Medication Guide as a required element. Verify with FDA whether a Medication Guide is needed as part of the REMS.',
+            reference: '21 CFR 208; FDA REMS Guidance',
+          },
+        ],
+        defaultNext: null,
+      },
+
+      /* ── Node 16: OTC Drug Facts (conditional) ──────────────────── */
+      {
+        id: 'otc_drug_facts',
+        section: 'Patient Labeling',
+        question:
+          'Complete the OTC Drug Facts labeling (21 CFR 201.66).',
+        guidance:
+          'OTC products must display a "Drug Facts" panel in a standardized format per 21 CFR 201.66. This replaces the PLR format for OTC products. The Drug Facts panel must include: Active ingredient(s), Purpose, Uses, Warnings (including allergy alert, stomach bleeding warning if applicable), Directions, Other information, Inactive ingredients, and Questions? phone number.',
+        fields: [
+          {
+            id: 'otc_active_ingredients',
+            label: 'Active Ingredient(s) and Strength',
+            type: 'textarea',
+            required: true,
+            placeholder: 'e.g., Ibuprofen 200 mg (NSAID*)\n*nonsteroidal anti-inflammatory drug',
+          },
+          {
+            id: 'otc_purpose',
+            label: 'Purpose',
+            type: 'textarea',
+            required: true,
+            placeholder: 'e.g., Pain reliever/Fever reducer',
+          },
+          {
+            id: 'otc_uses',
+            label: 'Uses',
+            type: 'textarea',
+            required: true,
+            placeholder: 'e.g., Temporarily relieves minor aches and pains due to: headache, muscular aches, minor pain of arthritis, toothache, backache, the common cold, menstrual cramps. Temporarily reduces fever.',
+          },
+          {
+            id: 'otc_warnings',
+            label: 'Warnings',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Include: Allergy alert, Stomach bleeding warning (for NSAIDs), Heart attack and stroke warning (for NSAIDs), Do not use, Ask a doctor before use if, Ask a doctor or pharmacist before use if, When using this product, Stop use and ask a doctor if, Pregnancy/breastfeeding warning, Keep out of reach of children.',
+          },
+          {
+            id: 'otc_directions',
+            label: 'Directions',
+            type: 'textarea',
+            required: true,
+            placeholder: 'e.g., Adults and children 12 years and over: take 1 tablet every 4 to 6 hours while symptoms persist. Do not exceed 3 tablets in 24 hours unless directed by a doctor.',
+          },
+          {
+            id: 'otc_inactive_ingredients',
+            label: 'Inactive Ingredients',
+            type: 'textarea',
+            required: true,
+            placeholder: 'List all inactive ingredients in alphabetical order.',
+          },
+          {
+            id: 'otc_questions_number',
+            label: 'Questions? Phone Number',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g., 1-800-XXX-XXXX',
+          },
+        ],
+        defaultNext: null,
+      },
+
+      /* ─────────────────────────────────────────────────────────────
+       *  SECTION 7 — Device-Specific Labeling (conditional branch)
+       * ───────────────────────────────────────────────────────────── */
+      {
+        id: 'device_labeling_801',
+        section: 'Device-Specific Labeling',
+        question:
+          'Let\'s address device labeling requirements under 21 CFR 801.',
+        guidance:
+          'Medical device labeling is governed by 21 CFR 801 (general), 21 CFR 809 (IVDs), and 21 CFR 830 (UDI). Device labeling must include: device description, indications for use, contraindications, warnings and precautions, adverse events, directions for use (including assembly and operating instructions), and sterilization information if applicable.',
+        provideExpertFeedback: true,
+        fields: [
+          {
+            id: 'device_classification',
             label: 'Device Classification',
             type: 'select',
             required: true,
             options: [
               { value: 'class_i', label: 'Class I (General Controls)' },
-              { value: 'class_ii', label: 'Class II (Special Controls / 510(k))' },
+              { value: 'class_ii', label: 'Class II (Special Controls — 510(k))' },
               { value: 'class_iii', label: 'Class III (PMA)' },
+              { value: 'ivd', label: 'In Vitro Diagnostic (IVD)' },
             ],
           },
           {
-            id: 'device_name',
-            label: 'Device Trade Name',
-            type: 'text',
+            id: 'device_description',
+            label: 'Device Description',
+            type: 'textarea',
             required: true,
-            placeholder: 'e.g., CardioMonitor Pro 3000',
+            placeholder: 'Physical description, materials, components, accessories, dimensions, operating principles.',
           },
           {
-            id: 'device_common_name',
-            label: 'Device Common / Generic Name',
-            type: 'text',
-            required: true,
-            placeholder: 'e.g., Electrocardiograph, single channel',
-            helpText: 'The common name as listed in the FDA Product Classification database (21 CFR 801.1(d)).',
-          },
-          {
-            id: 'intended_use',
+            id: 'device_intended_use',
             label: 'Intended Use / Indications for Use',
             type: 'textarea',
             required: true,
-            placeholder:
-              'e.g., The [Device Name] is intended for use in the non-invasive measurement of [parameter] in adult and pediatric patients in clinical settings.',
-            validation: { minLength: 50 },
+            placeholder: 'The specific use for which the device is intended, as cleared/approved by FDA.',
           },
           {
-            id: 'udi_on_label',
-            label: 'Is a UDI (Unique Device Identifier) included on the label?',
-            type: 'yes_no',
+            id: 'device_contraindications',
+            label: 'Contraindications',
+            type: 'textarea',
+            placeholder: 'Conditions or situations where the device should not be used.',
+          },
+          {
+            id: 'device_warnings_precautions',
+            label: 'Warnings and Precautions',
+            type: 'textarea',
             required: true,
-            helpText:
-              'Per 21 CFR 801.20, most medical devices must bear a UDI on the device label and packages. The UDI must include a Device Identifier (DI) issued by an FDA-accredited issuing agency (GS1, HIBCC, or ICCBBA) and a Production Identifier (PI) with lot number, expiration date, manufacturing date, and serial number as applicable.',
+            placeholder: 'Hazards, risks, or unsafe practices associated with device use.',
           },
           {
-            id: 'symbols_iso_15223',
-            label: 'Are label symbols compliant with ISO 15223-1?',
+            id: 'device_sterile',
+            label: 'Is the device provided sterile?',
             type: 'yes_no',
-            required: true,
-            helpText:
-              'ISO 15223-1 defines internationally recognized symbols for medical device labeling (e.g., "use by," "lot number," "sterilization method," "single use"). Per FDA recognition of ISO 15223-1, these symbols may be used without adjacent text if they appear in the symbol glossary provided with the device.',
           },
           {
-            id: 'mr_safety_labeling',
-            label: 'MR Safety Labeling',
-            type: 'select',
-            options: [
-              { value: 'mr_safe', label: 'MR Safe', description: 'No known hazards in all MR environments' },
-              { value: 'mr_conditional', label: 'MR Conditional', description: 'Safe under specific MR conditions; conditions must be listed' },
-              { value: 'mr_unsafe', label: 'MR Unsafe', description: 'Poses known hazards in all MR environments' },
-              { value: 'not_applicable', label: 'Not applicable (no implantable/metallic components)' },
-            ],
-            helpText:
-              'Per ASTM F2503-20 and FDA Guidance "Establishing Safety and Compatibility of Passive Implants in the Magnetic Resonance (MR) Environment" (2014), implantable and metallic devices must include MR safety labeling using the standardized MR Safe / MR Conditional / MR Unsafe icons.',
+            id: 'device_single_use',
+            label: 'Is the device single-use?',
+            type: 'yes_no',
+            helpText: 'Single-use devices must clearly state "Single Use Only" or "Do Not Reuse" on the label.',
           },
           {
-            id: 'sterilization_labeling',
-            label: 'Sterilization Status on Label',
-            type: 'select',
-            options: [
-              { value: 'sterile_eo', label: 'Sterile — Ethylene Oxide (EO)' },
-              { value: 'sterile_radiation', label: 'Sterile — Radiation' },
-              { value: 'sterile_steam', label: 'Sterile — Steam (autoclave)' },
-              { value: 'sterile_aseptic', label: 'Sterile — Aseptic processing' },
-              { value: 'non_sterile', label: 'Non-sterile' },
-              { value: 'not_applicable', label: 'Not applicable' },
-            ],
-            helpText:
-              'Per ISO 11607-1 and 21 CFR 801.1, sterile devices must indicate the sterilization method using the appropriate ISO 15223-1 symbol.',
+            id: 'device_home_use',
+            label: 'Is the device intended for home use (lay user)?',
+            type: 'yes_no',
+            helpText: 'Home-use devices require additional labeling considerations per FDA guidance on home-use labeling.',
+          },
+          {
+            id: 'device_software_controlled',
+            label: 'Does the device contain software (SaMD/SiMD)?',
+            type: 'yes_no',
+            helpText: 'Software-controlled devices may require additional labeling about cybersecurity, updates, and version information.',
           },
         ],
         issueChecks: [
           {
-            id: 'device_no_udi',
-            condition: { field: 'udi_on_label', operator: 'eq', value: false },
+            id: 'home_use_labeling',
+            condition: { field: 'device_home_use', operator: 'eq', value: 'yes' },
             severity: 'warning',
-            title: 'Device Missing UDI on Label',
+            title: 'Home-Use Device — Additional Labeling Required',
             message:
-              'Per the FDA UDI Rule (21 CFR 801.20), most Class II and Class III medical devices must bear a Unique Device Identifier on the label and device packages. Non-compliance may result in FDA Warning Letter or import refusal. Check if a UDI exception or alternative placement applies under 21 CFR 801.45.',
-            reference: '21 CFR 801.20; 21 CFR 801.45; FDA UDI Guidance (2018)',
-          },
-          {
-            id: 'device_symbols_not_compliant',
-            condition: { field: 'symbols_iso_15223', operator: 'eq', value: false },
-            severity: 'warning',
-            title: 'Label Symbols Not ISO 15223-1 Compliant',
-            message:
-              'Medical device label symbols should conform to ISO 15223-1 to ensure international recognition and reduce labeling errors. FDA recognizes ISO 15223-1 and recommends its use. Non-standard symbols require adjacent explanatory text.',
-            reference: 'ISO 15223-1:2021; FDA Recognized Consensus Standards Database',
+              'Devices intended for home use by lay users require labeling written at a lower reading level, with clear illustrations, and must address patient self-testing / self-care scenarios. Review FDA guidance on medical device home-use labeling.',
+            reference: '21 CFR 801.4; FDA Guidance: Medical Device Home-Use Initiative (2023)',
           },
         ],
-        defaultNext: 'device_ifu',
-        provideExpertFeedback: true,
+        defaultNext: 'device_ifu_content',
       },
 
+      /* ── Node 18: Device Instructions for Use ───────────────────── */
       {
-        id: 'device_ifu',
-        section: 'device_labeling',
+        id: 'device_ifu_content',
+        section: 'Device-Specific Labeling',
         question:
-          'Provide details about the Instructions for Use (IFU) and patient-directed labeling for the device.',
+          'Detail the Instructions for Use (IFU) content.',
         guidance:
-          'Per 21 CFR 801.5, device labeling must include adequate directions for use by the intended user (healthcare professional and/or patient). The IFU is the primary vehicle for conveying safe and effective use. For implantable devices, patient labeling (e.g., patient implant cards) is required per 21 CFR 801.57. IVD devices have additional labeling requirements under 21 CFR 809.10. Device labeling must also include warnings, precautions, storage conditions, and any applicable contraindications. Reference: 21 CFR 801.5; 21 CFR 801.109; 21 CFR 809.10; FDA Guidance "Instructions for Use — Patient Labeling for Medical Devices" (2001).',
+          'The IFU must provide step-by-step directions for safe and effective use, including patient preparation, device setup/assembly, operation, maintenance, cleaning/disinfection, troubleshooting, and disposal. For IVDs, include specimen collection, assay procedure, results interpretation, and quality control requirements per 21 CFR 809.10.',
         fields: [
           {
-            id: 'ifu_user_type',
-            label: 'Intended User of the IFU',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'professional_only', label: 'Healthcare professional only (Rx device, 21 CFR 801.109)' },
-              { value: 'patient_use', label: 'Patient / lay user (OTC device)' },
-              { value: 'both', label: 'Both professional and patient versions' },
-            ],
-          },
-          {
-            id: 'ifu_content_summary',
-            label: 'IFU Content Summary — Key Sections Included',
-            type: 'multi_select',
-            required: true,
-            options: [
-              { value: 'intended_use', label: 'Intended Use / Indications' },
-              { value: 'contraindications', label: 'Contraindications' },
-              { value: 'warnings', label: 'Warnings and Precautions' },
-              { value: 'setup', label: 'Device Setup / Assembly' },
-              { value: 'operation', label: 'Operation / Procedure Steps' },
-              { value: 'maintenance', label: 'Maintenance / Cleaning / Reprocessing' },
-              { value: 'troubleshooting', label: 'Troubleshooting' },
-              { value: 'storage', label: 'Storage and Handling' },
-              { value: 'disposal', label: 'Disposal / End of Life' },
-              { value: 'specifications', label: 'Technical Specifications' },
-              { value: 'emf_compliance', label: 'EMC / Electromagnetic Compatibility (IEC 60601-1-2)' },
-            ],
-          },
-          {
-            id: 'patient_implant_card',
-            label: 'Is a patient implant card required and included?',
-            type: 'yes_no',
-            helpText:
-              'Per 21 CFR 801.57, manufacturers of certain implantable devices must provide patient implant cards containing the device name, model/serial number, manufacturer information, and any conditions for MR safety.',
-          },
-          {
-            id: 'ifu_languages',
-            label: 'Languages Provided in the IFU',
-            type: 'multi_select',
-            options: [
-              { value: 'english', label: 'English' },
-              { value: 'spanish', label: 'Spanish' },
-              { value: 'french', label: 'French' },
-              { value: 'german', label: 'German' },
-              { value: 'chinese', label: 'Chinese' },
-              { value: 'japanese', label: 'Japanese' },
-              { value: 'other', label: 'Other' },
-            ],
-            helpText:
-              'For EU marketing, IFU must be provided in the official language(s) of the Member State(s) where the device is marketed per EU MDR Article 10(11). US FDA does not mandate non-English labeling but recommends it for patient-use devices in areas with significant non-English-speaking populations.',
-          },
-          {
-            id: 'electronic_ifu',
-            label: 'Is the IFU provided electronically (eIFU)?',
-            type: 'yes_no',
-            helpText:
-              'Per FDA Guidance "Use of Electronic Labeling for Medical Devices" (2001) and EU MDR Regulation (EU) 2021/2226 on eIFU, electronic IFU may be permissible for professional-use devices if specific conditions are met. The device must indicate on the label that the IFU is available electronically.',
-          },
-        ],
-        defaultNext: 'patient_med_guide',
-      },
-
-      /* ══════════════════════════════════════════════════════════════════ */
-      /*  Section 6 — Patient Labeling                                   */
-      /* ══════════════════════════════════════════════════════════════════ */
-
-      {
-        id: 'patient_med_guide',
-        section: 'patient_labeling',
-        question:
-          'Does this product require a Medication Guide, Patient Package Insert, or other patient-directed labeling? Address patient labeling requirements per 21 CFR Part 208.',
-        guidance:
-          'Per 21 CFR Part 208, a Medication Guide is required when FDA determines that: (1) patient labeling could help prevent serious adverse effects, (2) the product has serious risks relative to benefits that patients should know about, or (3) patient adherence to directions for use is crucial to the drug\'s effectiveness. Products with REMS that include a Medication Guide as an element to assure safe use must distribute the guide with each dispensing. OTC products may require a Consumer Medicine Information (CMI) sheet. Reference: 21 CFR Part 208; FDA Guidance "Medication Guides — Distribution Requirements and Inclusion in REMS" (2011); FDA Guidance "Useful Written Consumer Medication Information (CMI)" (2006).',
-        fields: [
-          {
-            id: 'medication_guide_required',
-            label: 'Is a Medication Guide required (21 CFR Part 208)?',
-            type: 'yes_no',
-            required: true,
-            helpText:
-              'FDA requires Medication Guides for products with specific safety concerns. Check the FDA Medication Guides webpage for the current list. If the product has a REMS with a Medication Guide element, it must be distributed with each dispensing per 21 CFR 208.24.',
-          },
-          {
-            id: 'rems_includes_med_guide',
-            label: 'Is there a REMS that requires a Medication Guide as an ETASU?',
-            type: 'yes_no',
-            required: true,
-            helpText:
-              'REMS (Risk Evaluation and Mitigation Strategy) may include a Medication Guide as an Element to Assure Safe Use (ETASU) per 21 USC 355-1(e). If yes, distribution and documentation requirements apply.',
-          },
-          {
-            id: 'medication_guide_content',
-            label: 'Medication Guide Content Summary',
+            id: 'ifu_patient_preparation',
+            label: 'Patient Preparation (if applicable)',
             type: 'textarea',
-            visibleWhen: {
-              field: 'medication_guide_required',
-              operator: 'eq',
-              value: true,
-            },
-            placeholder:
-              'Summarize the key information included in the Medication Guide: What is [PRODUCT]? What are the important safety warnings? Who should not take [PRODUCT]? What are the possible side effects?',
-            validation: { minLength: 50 },
+            placeholder: 'e.g., Clean the application site with alcohol wipe. Allow to dry completely.',
           },
           {
-            id: 'patient_package_insert',
-            label: 'Is a Patient Package Insert (PPI) included?',
+            id: 'ifu_setup_instructions',
+            label: 'Device Setup / Assembly Instructions',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Step-by-step assembly and setup instructions. Include illustrations reference if applicable.',
+          },
+          {
+            id: 'ifu_operating_instructions',
+            label: 'Operating Instructions',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Step-by-step use instructions. Include critical steps and expected outputs.',
+          },
+          {
+            id: 'ifu_maintenance',
+            label: 'Maintenance, Cleaning, and Disinfection',
+            type: 'textarea',
+            placeholder: 'Cleaning procedures, disinfection methods, reprocessing instructions (if reusable).',
+          },
+          {
+            id: 'ifu_troubleshooting',
+            label: 'Troubleshooting / Error Messages',
+            type: 'textarea',
+            placeholder: 'Common error conditions and corrective actions.',
+          },
+          {
+            id: 'ifu_disposal',
+            label: 'Disposal Instructions',
+            type: 'textarea',
+            placeholder: 'Safe disposal instructions, including biohazard considerations if applicable.',
+          },
+          {
+            id: 'ivd_specimen_requirements',
+            label: 'Specimen Collection and Handling Requirements (IVD only)',
+            type: 'textarea',
+            placeholder: 'Specimen types, collection containers, transport conditions, stability requirements.',
+            visibleWhen: { field: 'product_type', operator: 'eq', value: 'ivd' },
+          },
+          {
+            id: 'ivd_performance_characteristics',
+            label: 'Performance Characteristics (IVD only)',
+            type: 'textarea',
+            placeholder: 'Sensitivity, specificity, accuracy, precision, linearity, analytical measurement range, interfering substances.',
+            visibleWhen: { field: 'product_type', operator: 'eq', value: 'ivd' },
+          },
+        ],
+        defaultNext: 'device_udi_symbols',
+      },
+
+      /* ── Node 19: Device UDI and Symbols ────────────────────────── */
+      {
+        id: 'device_udi_symbols',
+        section: 'Device-Specific Labeling',
+        question:
+          'Address UDI compliance and standardized symbols on device labeling.',
+        guidance:
+          'Per 21 CFR 830, all medical devices must bear a Unique Device Identifier (UDI) on their label. The UDI consists of a Device Identifier (DI) and Production Identifier (PI). Labels should use standardized symbols per FDA-recognized standards (ISO 15223-1, IEC 60417) and include a symbol glossary if symbols are used without adjacent text.',
+        fields: [
+          {
+            id: 'udi_compliance',
+            label: 'Is the device UDI-compliant?',
             type: 'yes_no',
-            helpText:
-              'PPIs are FDA-approved patient labeling typically included for specific drug classes (e.g., oral contraceptives, estrogen products). Unlike Medication Guides, PPIs are part of the approved product labeling.',
+            required: true,
+            helpText: 'UDI is required for all devices except certain exemptions (21 CFR 830.30).',
           },
           {
-            id: 'pictograms_included',
-            label: 'Are pictograms / visual aids included in patient labeling?',
-            type: 'yes_no',
-            helpText:
-              'FDA encourages the use of pictograms in patient labeling to improve comprehension, especially for patients with limited literacy. Per USP <17> Prescription Container Labeling, pictograms should meet established readability standards.',
-          },
-          {
-            id: 'readability_testing',
-            label: 'Has readability/comprehension testing been conducted on patient labeling?',
+            id: 'udi_issuing_agency',
+            label: 'UDI Issuing Agency',
             type: 'select',
             options: [
-              { value: 'completed', label: 'Yes — Testing completed' },
-              { value: 'planned', label: 'Planned but not yet conducted' },
-              { value: 'not_planned', label: 'Not planned' },
-              { value: 'not_applicable', label: 'Not applicable' },
-            ],
-            helpText:
-              'FDA Guidance "Medication Guides" (2011) recommends readability testing of patient labeling to ensure comprehension at a 6th-to-8th grade reading level.',
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'no_med_guide_with_rems',
-            condition: { field: 'rems_includes_med_guide', operator: 'eq', value: true },
-            severity: 'critical',
-            title: 'REMS Requires Medication Guide Distribution',
-            message:
-              'When a REMS includes a Medication Guide as an Element to Assure Safe Use (ETASU), the guide must be distributed to every patient with each dispensing. Failure to distribute constitutes a REMS violation, which may result in FDA enforcement action including Warning Letters, civil monetary penalties, and product seizure per 21 USC 355-1(i).',
-            reference: '21 CFR Part 208; 21 USC 355-1(e); FDA REMS Guidance (2019)',
-          },
-        ],
-        defaultNext: 'patient_counseling',
-      },
-
-      {
-        id: 'patient_counseling',
-        section: 'patient_labeling',
-        question:
-          'Provide the Patient Counseling Information section (Section 17 of the USPI). This section guides healthcare providers on what to discuss with patients.',
-        guidance:
-          'Per 21 CFR 201.57(c)(18), the Patient Counseling Information section must advise healthcare providers of information to convey to patients for safe and effective use. This includes: administration instructions, dosing schedule, missed dose instructions, storage conditions, potential adverse reactions to report, food/drug interactions, and referral to the Medication Guide or PPI if applicable. This section should be practical and patient-oriented. Reference: 21 CFR 201.57(c)(18); FDA Guidance "Patient Counseling Information Section of Labeling" (2018).',
-        fields: [
-          {
-            id: 'patient_counseling_info',
-            label: 'Patient Counseling Information Summary',
-            type: 'textarea',
-            required: true,
-            placeholder:
-              'e.g., Advise patients to: (1) Report symptoms of hepatotoxicity (jaundice, dark urine, fatigue). (2) Take with food. (3) Use effective contraception during treatment. (4) Read the Medication Guide before starting treatment.',
-            validation: { minLength: 50 },
-          },
-          {
-            id: 'med_guide_reference',
-            label: 'Does Section 17 reference the Medication Guide / PPI?',
-            type: 'yes_no',
-            helpText:
-              'Per 21 CFR 201.57(c)(18), if a Medication Guide or PPI exists, Section 17 must instruct the healthcare provider to discuss the contents with the patient and ensure they receive a copy.',
-          },
-          {
-            id: 'multilingual_patient_labeling',
-            label: 'Is patient labeling available in languages other than English?',
-            type: 'yes_no',
-            helpText:
-              'While FDA does not require non-English patient labeling for US marketing, providing Spanish and other language versions is recommended for health literacy and equity. Many states require Spanish-language pharmacy labeling.',
-          },
-          {
-            id: 'key_counseling_topics',
-            label: 'Key Counseling Topics Covered',
-            type: 'multi_select',
-            options: [
-              { value: 'administration', label: 'Administration instructions' },
-              { value: 'storage', label: 'Storage and handling' },
-              { value: 'adverse_reactions', label: 'Signs/symptoms of serious adverse reactions' },
-              { value: 'drug_interactions', label: 'Concomitant medications to avoid' },
-              { value: 'food_interactions', label: 'Food interactions' },
-              { value: 'contraception', label: 'Contraception requirements' },
-              { value: 'pregnancy', label: 'Pregnancy reporting' },
-              { value: 'driving', label: 'Driving / operating machinery' },
-              { value: 'alcohol', label: 'Alcohol use' },
-              { value: 'missed_dose', label: 'Missed dose instructions' },
+              { value: 'gs1', label: 'GS1' },
+              { value: 'hibcc', label: 'HIBCC' },
+              { value: 'iccbba', label: 'ICCBBA' },
             ],
           },
-        ],
-        issueChecks: [
           {
-            id: 'no_patient_counseling',
-            condition: { field: 'patient_counseling_info', operator: 'eq', value: '' },
-            severity: 'warning',
-            title: 'Patient Counseling Information Missing',
-            message:
-              'Section 17 (Patient Counseling Information) is a required section of the USPI per 21 CFR 201.57(c)(18). This section must advise healthcare providers on what information to convey to patients. Missing patient counseling information may result in a labeling deficiency finding during FDA review.',
-            reference: '21 CFR 201.57(c)(18)',
-          },
-        ],
-        defaultNext: 'safety_letters',
-      },
-
-      /* ══════════════════════════════════════════════════════════════════ */
-      /*  Section 7 — Safety Communication                               */
-      /* ══════════════════════════════════════════════════════════════════ */
-
-      {
-        id: 'safety_letters',
-        section: 'safety_communication',
-        question:
-          'Has or will the company issue any safety communications related to this product? Address Dear Healthcare Provider letters, safety labeling changes, and risk communication strategies.',
-        guidance:
-          'Safety communications include Dear Healthcare Professional (DHCP) letters (also called "Dear Doctor" letters), FDA Drug Safety Communications, and company-initiated safety alerts. DHCP letters are regulated under 21 CFR 200.5 and FDA Guidance "Dear Health Care Provider Letters: Improving Communication of Important Safety Information" (2014). Safety Labeling Changes (SLCs) are submitted as CBE-0 supplements per 21 CFR 314.70(c)(6)(iii) for drugs or 21 CFR 601.12(f)(1) for biologics when new safety information emerges. MedWatch reporting is required under 21 CFR 314.80 (drugs) / 21 CFR 600.80 (biologics) / 21 CFR 803 (devices). Reference: FDA Guidance "DHCP Letters" (2014); 21 CFR 314.70(c)(6)(iii).',
-        fields: [
-          {
-            id: 'dhcp_letter_issued',
-            label: 'Has a Dear Healthcare Provider (DHCP) letter been issued for this product?',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'dhcp_letter_topic',
-            label: 'DHCP Letter Topic(s)',
-            type: 'textarea',
-            visibleWhen: {
-              field: 'dhcp_letter_issued',
-              operator: 'eq',
-              value: true,
-            },
-            placeholder:
-              'e.g., October 2024: DHCP letter regarding risk of serious hepatotoxicity — recommended enhanced LFT monitoring.',
-          },
-          {
-            id: 'safety_labeling_change',
-            label: 'Has a Safety Labeling Change (SLC) been submitted as CBE-0?',
-            type: 'yes_no',
-            required: true,
-            helpText:
-              'Per 21 CFR 314.70(c)(6)(iii), a CBE-0 supplement may be submitted to add or strengthen a contraindication, warning, precaution, or adverse reaction based on new safety data. CBE-0 changes take effect immediately upon submission, without waiting for FDA approval.',
-          },
-          {
-            id: 'slc_description',
-            label: 'Safety Labeling Change Description',
-            type: 'textarea',
-            visibleWhen: {
-              field: 'safety_labeling_change',
-              operator: 'eq',
-              value: true,
-            },
-            placeholder:
-              'e.g., Added new Warning (5.7): Progressive multifocal leukoencephalopathy (PML). Updated Adverse Reactions (6.2) with post-marketing PML cases.',
-          },
-          {
-            id: 'fda_drug_safety_communication',
-            label: 'Has FDA issued a Drug Safety Communication about this product?',
-            type: 'yes_no',
-          },
-          {
-            id: 'risk_communication_strategy',
-            label: 'Risk Communication Strategy',
-            type: 'multi_select',
-            options: [
-              { value: 'dhcp_letter', label: 'Dear Healthcare Provider letter' },
-              { value: 'med_guide_update', label: 'Updated Medication Guide' },
-              { value: 'rems_modification', label: 'REMS modification' },
-              { value: 'patient_alert', label: 'Patient safety alert' },
-              { value: 'professional_education', label: 'Healthcare professional education materials' },
-              { value: 'press_release', label: 'Press release' },
-              { value: 'medwatch', label: 'MedWatch safety alert' },
-              { value: 'none', label: 'No additional risk communication planned' },
-            ],
-          },
-        ],
-        defaultNext: 'safety_post_marketing',
-      },
-
-      {
-        id: 'safety_post_marketing',
-        section: 'safety_communication',
-        question:
-          'Describe the post-marketing safety surveillance and reporting obligations for this product. Address MedWatch reporting, PSUR/PBRER submissions, and any signal detection activities.',
-        guidance:
-          'Post-marketing safety surveillance is mandatory under 21 CFR 314.80 (drugs), 21 CFR 600.80 (biologics), and 21 CFR 803 (devices). Serious and unexpected adverse experiences must be reported to FDA within 15 calendar days (expedited reports). Annual safety reports are required. For marketed drugs with international presence, Periodic Benefit-Risk Evaluation Reports (PBRERs, per ICH E2C(R2)) harmonize post-marketing safety reporting across regions. Signal detection using FAERS (FDA Adverse Event Reporting System) data is expected as part of pharmacovigilance obligations. Reference: 21 CFR 314.80; 21 CFR 600.80; 21 CFR 803; ICH E2C(R2); ICH E2E.',
-        fields: [
-          {
-            id: 'medwatch_reporting_current',
-            label: 'Are MedWatch/safety reporting systems in place and active?',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'post_marketing_commitments',
-            label: 'Post-Marketing Requirements (PMRs) or Commitments (PMCs) Related to Labeling',
-            type: 'textarea',
-            placeholder:
-              'e.g., PMR 12345-1: Conduct a long-term cardiovascular outcomes trial (CVOT) and update labeling with results by 2027. PMC 12345-2: Submit pediatric PK study results and update Section 8.4.',
-            helpText:
-              'PMRs are legally required studies/clinical trials (per FDAAA Section 505(o)(3)). PMCs are studies the sponsor has agreed to conduct. Both may trigger labeling updates upon completion.',
-          },
-          {
-            id: 'signal_detection_method',
-            label: 'Signal Detection Methodology',
-            type: 'multi_select',
-            options: [
-              { value: 'faers_review', label: 'FAERS database review' },
-              { value: 'literature_monitoring', label: 'Scientific literature monitoring' },
-              { value: 'disproportionality', label: 'Disproportionality analysis (PRR/ROR/EBGM)' },
-              { value: 'active_surveillance', label: 'Active surveillance (Sentinel, registries)' },
-              { value: 'solicited_reports', label: 'Solicited reports (patient support programs)' },
-              { value: 'social_media', label: 'Social media / digital monitoring' },
-            ],
-            helpText:
-              'Per ICH E2E, sponsors must have a systematic approach to signal detection. FDA uses the Sentinel System for active surveillance. Sponsors should complement passive (FAERS) reporting with active methods.',
-          },
-          {
-            id: 'pbrer_submission',
-            label: 'Are PSUR/PBRER submissions current?',
+            id: 'gudid_listing_status',
+            label: 'GUDID Listing Status',
             type: 'select',
             options: [
-              { value: 'current', label: 'Yes — Current with reporting schedule' },
-              { value: 'overdue', label: 'Overdue' },
-              { value: 'not_applicable', label: 'Not applicable (US-only marketing)' },
+              { value: 'listed', label: 'Listed in GUDID' },
+              { value: 'pending', label: 'Pending submission' },
+              { value: 'not_submitted', label: 'Not yet submitted' },
             ],
-            helpText:
-              'Per ICH E2C(R2), PBRERs should be submitted at defined intervals (typically every 6 months for the first 2 years post-approval, then annually). PBRERs are required by EMA and other regulatory authorities; FDA accepts them as IND annual report supplements.',
+            helpText: 'UDI device information must be submitted to the FDA Global Unique Device Identification Database (GUDID).',
           },
-        ],
-        issueChecks: [
           {
-            id: 'no_medwatch_reporting',
-            condition: { field: 'medwatch_reporting_current', operator: 'eq', value: false },
-            severity: 'critical',
-            title: 'MedWatch / Safety Reporting Not Active',
-            message:
-              'Post-marketing adverse experience reporting is a legal requirement under 21 CFR 314.80 (drugs), 21 CFR 600.80 (biologics), and 21 CFR 803 (devices). Failure to report serious adverse events within 15 calendar days can result in FDA Warning Letter, consent decree, or product withdrawal. Ensure pharmacovigilance systems are functional immediately.',
-            reference: '21 CFR 314.80; 21 CFR 600.80; 21 CFR 803; FDAAA Section 505(o)',
+            id: 'symbols_standard',
+            label: 'Standardized Symbols Used',
+            type: 'multi_select',
+            options: [
+              { value: 'iso_15223', label: 'ISO 15223-1 (Medical Device Symbols)' },
+              { value: 'iec_60417', label: 'IEC 60417 (Graphical Symbols)' },
+              { value: 'iso_7000', label: 'ISO 7000 (Graphical Symbols for Equipment)' },
+              { value: 'astm_d7298', label: 'ASTM D7298 (Symbols in Healthcare)' },
+            ],
           },
-        ],
-        defaultNext: 'reg_review_fda',
-        provideExpertFeedback: true,
-      },
-
-      /* ══════════════════════════════════════════════════════════════════ */
-      /*  Section 8 — Regulatory Review                                  */
-      /* ══════════════════════════════════════════════════════════════════ */
-
-      {
-        id: 'reg_review_fda',
-        section: 'regulatory_review',
-        question:
-          'Provide information about the FDA labeling review process, negotiation history, and any advisory committee input reflected in the labeling.',
-        guidance:
-          'FDA labeling is negotiated between the sponsor and the review division during the NDA/BLA review process. The Office of Prescription Drug Promotion (OPDP, formerly DDMAC) reviews promotional materials for consistency with approved labeling. The Division of Drug Information (DDI) provides public-facing labeling information. Advisory committee (AdCom) recommendations may influence labeling language, particularly for boxed warnings, REMS requirements, and indication scope. Per 21 CFR 314.105(c), FDA must approve labeling as part of the application approval. Reference: 21 CFR 314.105(c); FDA MAPP 7400.8 (Labeling Review); FDA Guidance "Questions and Answers on FDA\'s Adverse Event Reporting System (FAERS)" (2019).',
-        fields: [
           {
-            id: 'review_division',
-            label: 'FDA Review Division',
+            id: 'symbol_glossary_included',
+            label: 'Is a symbol glossary included in the labeling?',
+            type: 'yes_no',
+            helpText: 'Per 21 CFR 801.15(c)(2), if symbols are used without adjacent explanatory text, a glossary must be included in the labeling or available via a toll-free number or website.',
+          },
+          {
+            id: 'labeling_expiration_info',
+            label: 'Expiration Date / Shelf Life on Label',
             type: 'text',
-            required: true,
-            placeholder:
-              'e.g., Division of Oncology 1, Office of Oncologic Diseases, CDER',
-            helpText:
-              'Identify the specific review division within CDER, CBER, or CDRH that reviewed/will review the labeling. The review division determines the therapeutic expertise applied to labeling negotiations.',
+            placeholder: 'e.g., 24 months from date of manufacture; Use By date in YYYY-MM format.',
           },
           {
-            id: 'labeling_negotiation_history',
-            label: 'Labeling Negotiation History — Key FDA Feedback Points',
-            type: 'textarea',
-            placeholder:
-              'e.g., FDA requested strengthening of the hepatotoxicity warning (W&P 5.3) during the PDUFA review cycle. FDA-requested addition of a Boxed Warning was negotiated to a Warnings and Precautions subsection based on low event rate.',
-            helpText:
-              'Document key labeling positions FDA took during the review and how they were resolved. This history informs future supplement strategies.',
-          },
-          {
-            id: 'advisory_committee_input',
-            label: 'Were Advisory Committee (AdCom) recommendations reflected in labeling?',
+            id: 'lot_serial_tracking',
+            label: 'Lot / Serial Number on Label',
             type: 'select',
-            required: true,
             options: [
-              { value: 'yes_reflected', label: 'Yes — AdCom recommendations incorporated' },
-              { value: 'partially', label: 'Partially — Some recommendations incorporated' },
-              { value: 'no_adcom', label: 'No Advisory Committee meeting held' },
-              { value: 'not_applicable', label: 'Not applicable' },
+              { value: 'lot_only', label: 'Lot number only' },
+              { value: 'serial_only', label: 'Serial number only' },
+              { value: 'both', label: 'Both lot and serial number' },
             ],
-          },
-          {
-            id: 'adcom_labeling_impact',
-            label: 'Describe AdCom Impact on Labeling (if applicable)',
-            type: 'textarea',
-            visibleWhen: {
-              field: 'advisory_committee_input',
-              operator: 'in',
-              value: ['yes_reflected', 'partially'],
-            },
-            placeholder:
-              'e.g., AdCom voted 8-4 in favor of approval but recommended a Boxed Warning for cardiovascular risk and mandatory REMS with Medication Guide. Both recommendations were incorporated into final labeling.',
-          },
-          {
-            id: 'labeling_supplements_planned',
-            label: 'Labeling Supplements Planned',
-            type: 'textarea',
-            placeholder:
-              'e.g., sNDA for new indication (NSCLC first-line) planned Q3 2026. sBLA for pediatric expansion planned Q1 2027. CBE-30 for updated clinical pharmacology data planned Q4 2026.',
-            helpText:
-              'Labeling supplements are submitted per 21 CFR 314.70 (drugs) or 21 CFR 601.12 (biologics). Types include: Prior Approval (PA) supplements for new indications; CBE-30 for moderate changes; CBE-0 for safety labeling changes.',
-          },
-        ],
-        defaultNext: 'reg_review_promotional',
-        provideExpertFeedback: true,
-      },
-
-      {
-        id: 'reg_review_promotional',
-        section: 'regulatory_review',
-        question:
-          'Address promotional materials consistency with approved labeling, OPDP/APLB review, and any post-approval labeling commitments.',
-        guidance:
-          'All promotional materials must be consistent with and not broader than the approved labeling. OPDP (Office of Prescription Drug Promotion) within CDER reviews prescription drug promotional materials under 21 CFR 202.1. APLB (Advertising and Promotional Labeling Branch) within CBER reviews biologic promotional materials. CDRH reviews device promotional materials. Promotional materials that are false or misleading, or that broaden the indication beyond approved labeling, may result in Warning Letters (formerly "untitled letters") or enforcement action. Pre-approval promotional materials (pre-launch) are prohibited under 21 CFR 312.7. Reference: 21 CFR 202.1; 21 CFR 312.7; FDA Guidance "Presenting Risk Information in Prescription Drug and Medical Device Promotion" (2009).',
-        fields: [
-          {
-            id: 'promotional_consistency_review',
-            label: 'Have promotional materials been reviewed for consistency with approved labeling?',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'opdp_aplb_submissions',
-            label: 'OPDP/APLB Submissions — Promotional Materials Submitted',
-            type: 'multi_select',
-            options: [
-              { value: 'launch_materials', label: 'Launch promotional materials (Form FDA 2253)' },
-              { value: 'sales_aid', label: 'Sales aid / detail piece' },
-              { value: 'journal_ad', label: 'Journal advertisement' },
-              { value: 'direct_consumer', label: 'Direct-to-consumer (DTC) advertising' },
-              { value: 'website', label: 'Product website' },
-              { value: 'social_media', label: 'Social media content' },
-              { value: 'medical_education', label: 'Medical education materials' },
-              { value: 'none_yet', label: 'No materials submitted yet' },
-            ],
-            helpText:
-              'Per 21 CFR 314.81(b)(3)(i), promotional materials for prescription drugs must be submitted to OPDP at the time of initial dissemination using Form FDA 2253. CBER requires submission to APLB.',
-          },
-          {
-            id: 'opdp_warning_letters',
-            label: 'Has OPDP/APLB issued any Warning/Untitled Letters for this product\'s promotion?',
-            type: 'yes_no',
-            helpText:
-              'OPDP Warning Letters require immediate cessation of the violative promotion and corrective action. Untitled Letters address less serious violations. Both are publicly available on the FDA OPDP Warning Letters webpage.',
-          },
-          {
-            id: 'opdp_warning_details',
-            label: 'OPDP/APLB Warning Letter Details',
-            type: 'textarea',
-            visibleWhen: {
-              field: 'opdp_warning_letters',
-              operator: 'eq',
-              value: true,
-            },
-            placeholder:
-              'e.g., OPDP Warning Letter dated March 2025 regarding broadening of indication in sales aid. Corrective action: Cease dissemination, send corrective DHCP letter.',
-          },
-          {
-            id: 'risk_information_presentation',
-            label: 'How is risk information presented in promotional materials?',
-            type: 'multi_select',
-            options: [
-              { value: 'fair_balance', label: 'Fair balance of benefit and risk per 21 CFR 202.1(e)(5)' },
-              { value: 'brief_summary', label: 'Brief summary (print ads)' },
-              { value: 'major_statement', label: 'Major statement (broadcast ads)' },
-              { value: 'adequate_provision', label: 'Adequate provision (broadcast ads)' },
-              { value: 'isi', label: 'Important Safety Information (ISI) — digital/web' },
-            ],
-            helpText:
-              'Per 21 CFR 202.1, promotional materials must present fair balance of benefit and risk. Print ads require a brief summary; broadcast ads require a major statement plus adequate provision for the full labeling.',
-          },
-          {
-            id: 'post_approval_labeling_commitments',
-            label: 'Any Remaining Post-Approval Labeling Commitments?',
-            type: 'textarea',
-            placeholder:
-              'e.g., Commitment to update labeling with final OS data from Study XYZ-301 by Q2 2027. Commitment to submit revised Medication Guide with simplified language by Q4 2026.',
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'promotional_not_reviewed',
-            condition: { field: 'promotional_consistency_review', operator: 'eq', value: false },
-            severity: 'warning',
-            title: 'Promotional Materials Not Reviewed for Labeling Consistency',
-            message:
-              'All promotional materials must be consistent with approved labeling per 21 CFR 202.1 and not be false or misleading under Section 502(a) of the FD&C Act. Promotional materials that broaden indications, minimize risks, or make unsupported superiority claims may result in OPDP Warning Letters and required corrective action. Conduct a promotional review committee (PRC) review before dissemination.',
-            reference: '21 CFR 202.1; Section 502(a) FD&C Act; FDA OPDP Guidance (2009)',
-          },
-          {
-            id: 'opdp_warning_exists',
-            condition: { field: 'opdp_warning_letters', operator: 'eq', value: true },
-            severity: 'critical',
-            title: 'OPDP/APLB Warning Letter on File',
-            message:
-              'An OPDP or APLB Warning Letter indicates FDA found promotional materials to be violative (false, misleading, lacking fair balance, or broadening the indication). This may trigger heightened FDA scrutiny of all subsequent promotional materials and require corrective action including corrective DHCP letters and cessation of violative promotion.',
-            reference: '21 CFR 202.1; FD&C Act Sections 301(a), 502(a), 502(n)',
           },
         ],
         defaultNext: null,
