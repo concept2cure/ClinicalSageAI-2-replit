@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-01T05:05:53.264Z",
+  "generatedAt": "2026-07-01T15:51:28.906Z",
   "git": {
-    "sha": "3b456196a0cdca5b07826681dbdcbe656ee37100",
+    "sha": "b5cc02fb37965156ae2d4b4a5cc64c2e452659a3",
     "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
@@ -2387,7 +2387,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 483677
+        "bytes": 483786
       },
       {
         "file": "server/statistics-service.ts",
@@ -2677,7 +2677,7 @@
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1875
+        "lines": 1877
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",

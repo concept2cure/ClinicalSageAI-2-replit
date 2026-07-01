@@ -236,3 +236,64 @@ export interface IntelligenceAnswerPayload {
   nodeId: string;
   answers: Record<string, unknown>;
 }
+
+/* ─── War Game types (shared with client for report rendering) ─────── */
+
+export type WarGameCategory =
+  | 'protocol'
+  | 'ind'
+  | 'csr'
+  | '510k'
+  | 'cer'
+  | 'sop'
+  | 'nda'
+  | 'bla'
+  | 'pma'
+  | 'cmc'
+  | 'risk_management'
+  | 'safety_narrative'
+  | 'labeling'
+  | 'briefing_book'
+  | 'stability';
+
+export type AuditDimension =
+  | 'completeness'
+  | 'consistency'
+  | 'regulatory_alignment'
+  | 'scientific_rigor'
+  | 'practical_feasibility'
+  | 'documentation'
+  | 'risk_identification';
+
+export interface WarGameFinding {
+  id: string;
+  dimension: AuditDimension;
+  severity: IssueSeverity;
+  title: string;
+  question: string;
+  observation: string;
+  requirement: string;
+  reference: string;
+  recommendation: string;
+  relatedFields: string[];
+}
+
+export interface WarGameReport {
+  id: string;
+  category: WarGameCategory;
+  sourceFlowId: string;
+  timestamp: string;
+  overallScore: number;
+  overallAssessment: 'audit_ready' | 'needs_work' | 'significant_gaps' | 'not_ready';
+  findings: WarGameFinding[];
+  dimensionScores: Record<AuditDimension, { score: number; findingCount: number }>;
+  executiveSummary: string;
+  topPriorities: string[];
+  regulatoryRiskLevel: 'low' | 'moderate' | 'high' | 'critical';
+}
+
+export interface RiskScoreResult {
+  score: number;
+  level: 'low' | 'moderate' | 'high' | 'critical';
+  breakdown: { critical: number; warning: number; info: number };
+}
