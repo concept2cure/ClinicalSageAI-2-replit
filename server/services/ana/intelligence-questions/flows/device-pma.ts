@@ -8,7 +8,7 @@
  * biocompatibility, clinical evidence, software & cybersecurity,
  * labeling & human factors, and post-market surveillance per 21 CFR 814.
  *
- * 22 nodes · 90+ fields · 8 sections · 14 issue checks
+ * 22 nodes · 124 fields · 8 sections · 14 issue checks
  *
  * @module server/services/ana/intelligence-questions/flows/device-pma
  */
@@ -47,7 +47,7 @@ export function createDevicePmaFlow(): FlowDefinition {
       {
         id: 'preclinical_biocompatibility',
         label: 'Preclinical Testing & Biocompatibility',
-        nodeIds: ['pma_bench_testing', 'pma_biocompatibility', 'pma_animal_studies'],
+        nodeIds: ['pma_bench_testing', 'pma_biocompatibility', 'pma_animal_studies', 'pma_electrical_safety'],
       },
       {
         id: 'clinical_evidence',
@@ -763,6 +763,55 @@ export function createDevicePmaFlow(): FlowDefinition {
             type: 'yes_no',
             visibleWhen: { field: 'animal_studies_conducted', operator: 'eq', value: true },
             helpText: 'GLP compliance per 21 CFR Part 58 is expected for pivotal animal studies supporting a PMA.',
+          },
+        ],
+        branches: [
+          {
+            when: { field: 'is_active_device', operator: 'eq', value: true },
+            goto: 'pma_electrical_safety',
+          },
+          {
+            when: { field: 'contains_software', operator: 'eq', value: true },
+            goto: 'pma_software_lifecycle',
+          },
+        ],
+        defaultNext: 'pma_clinical_study',
+      },
+
+      {
+        id: 'pma_electrical_safety',
+        section: 'Preclinical Testing & Biocompatibility',
+        question:
+          'Describe the electrical safety and electromagnetic compatibility testing for this active device.',
+        guidance:
+          'Per IEC 60601-1:2005+A1+A2 (Medical Electrical Equipment — General Requirements for Basic Safety and Essential Performance), all active medical devices must demonstrate electrical safety. IEC 60601-1-2:2014+A1:2020 (EMC) requires electromagnetic compatibility testing including radiated and conducted emissions, electrostatic discharge immunity, and RF immunity. Particular standards (IEC 60601-1-X and IEC 60601-2-X series) apply to specific device types. For battery-powered implantable devices, IEC 60601-1-11 (home healthcare) and wireless coexistence testing per ANSI C63.27 may also apply.',
+        fields: [
+          {
+            id: 'iec_60601_complete',
+            label: 'IEC 60601-1 General Safety Testing Completed',
+            type: 'yes_no',
+            required: true,
+            helpText: 'Per IEC 60601-1:2005+A1+A2, testing covers protection against electric shock, mechanical hazards, unwanted radiation, excessive temperatures, and accuracy of controls.',
+          },
+          {
+            id: 'emc_complete',
+            label: 'IEC 60601-1-2 EMC Testing Completed',
+            type: 'yes_no',
+            required: true,
+            helpText: 'Per IEC 60601-1-2:2014+A1:2020, EMC testing includes emissions (radiated, conducted) and immunity (ESD, radiated RF, electrical fast transient, surge, conducted RF, power frequency magnetic field, voltage dips/interruptions).',
+          },
+          {
+            id: 'particular_standards',
+            label: 'Applicable Particular Standards (IEC 60601-2-X)',
+            type: 'textarea',
+            placeholder: 'e.g., IEC 60601-2-27 (ECG monitoring), IEC 60601-2-47 (ambulatory ECG), IEC 60601-2-25 (electrocardiographs).',
+            helpText: 'List any applicable particular IEC 60601-2-X standards for the specific device type.',
+          },
+          {
+            id: 'wireless_coexistence',
+            label: 'Wireless Coexistence Testing',
+            type: 'yes_no',
+            helpText: 'Per ANSI C63.27 and FDA Guidance "Radio Frequency Wireless Technology in Medical Devices" (2013), wireless-enabled devices require coexistence testing.',
           },
         ],
         branches: [
@@ -1493,6 +1542,26 @@ export function createDevicePmaFlow(): FlowDefinition {
             label: 'Advisory Panel Meeting Expected',
             type: 'yes_no',
             helpText: 'Per 21 CFR 814.44 and FD&C Act Section 515(c)(3), advisory panel review is common for novel Class III devices.',
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'no_mdr_reporting_plan',
+            condition: { field: 'mdr_reporting_plan', operator: 'eq', value: false },
+            severity: 'warning',
+            title: 'No MDR Reporting Plan',
+            message:
+              'Medical Device Reporting per 21 CFR 803 is a mandatory post-market requirement. Manufacturers must have procedures in place to report device-related deaths, serious injuries, and malfunctions. Failure to report is a violation subject to enforcement action.',
+            reference: '21 CFR 803; 21 CFR 814.84',
+          },
+          {
+            id: 'no_qsub_meeting',
+            condition: { field: 'qsub_meeting_held', operator: 'eq', value: false },
+            severity: 'warning',
+            title: 'No Pre-Submission Meeting with FDA',
+            message:
+              'A Pre-Submission (Q-Sub) meeting with FDA is strongly recommended before filing a PMA for a Class III device. Without FDA feedback on study design and data requirements, there is a risk of a major deficiency letter or additional information request that could significantly delay approval.',
+            reference: 'FDA Guidance: Requests for Feedback and Meetings for Medical Device Submissions: The Q-Submission Program (2023)',
           },
         ],
         defaultNext: null,

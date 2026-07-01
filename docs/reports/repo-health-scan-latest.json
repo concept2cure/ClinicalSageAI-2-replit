@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-01T04:36:13.509Z",
+  "generatedAt": "2026-07-01T04:41:54.843Z",
   "git": {
-    "sha": "75d575bd64d5291edf4786f71c1f9e1db06db2ec",
+    "sha": "2589da2f39c526558c01c0179da0aeab71ea3216",
     "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 239,
     "largeFilesByBytes": 28,
-    "largeFilesByLines": 82
+    "largeFilesByLines": 83
   },
   "findings": {
     "duplicateBasenames": [
@@ -2379,7 +2379,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 819494
+        "bytes": 819566
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2454,16 +2454,16 @@
         "bytes": 115960
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+        "bytes": 114943
+      },
+      {
         "file": "server/services/intelligent-report-engine.ts",
         "bytes": 114705
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
-      },
-      {
-        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
-        "bytes": 111611
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
@@ -2475,7 +2475,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
-        "bytes": 107999
+        "bytes": 108007
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
@@ -2580,10 +2580,6 @@
         "lines": 2419
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
-        "lines": 2404
-      },
-      {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "lines": 2379
       },
@@ -2594,6 +2590,10 @@
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "lines": 2340
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+        "lines": 2327
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
@@ -2658,6 +2658,10 @@
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1927
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+        "lines": 1888
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2788,8 +2792,8 @@
         "lines": 1600
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
-        "lines": 1567
+        "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
+        "lines": 1572
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
@@ -2830,7 +2834,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 388,
       "largeByBytes": 25,
-      "largeByLines": 71
+      "largeByLines": 72
     },
     {
       "owner": "Unassigned (TBD)",
