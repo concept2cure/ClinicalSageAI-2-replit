@@ -7977,7 +7977,7 @@ const START_WAR_GAME: AnaTool = {
     properties: {
       war_game_category: {
         type: 'string',
-        enum: ['protocol', 'ind', 'csr', '510k', 'cer', 'sop'],
+        enum: ['protocol', 'ind', 'csr', '510k', 'cer', 'sop', 'nda', 'bla', 'pma', 'cmc', 'risk_management', 'safety_narrative', 'labeling', 'briefing_book', 'stability'],
         description: 'The type of document to war-game.',
       },
       source_flow_id: {

@@ -11,6 +11,15 @@ import { createCsrAuditor } from './csr-auditor.js';
 import { createDevice510kAuditor } from './device-510k-auditor.js';
 import { createCerAuditor } from './cer-auditor.js';
 import { createSopAuditor } from './sop-auditor.js';
+import { createNdaAuditor } from './nda-auditor.js';
+import { createBlaAuditor } from './bla-auditor.js';
+import { createPmaAuditor } from './pma-auditor.js';
+import { createCmcAuditor } from './cmc-auditor.js';
+import { createRiskManagementAuditor } from './risk-management-auditor.js';
+import { createSafetyNarrativeAuditor } from './safety-narrative-auditor.js';
+import { createLabelingAuditor } from './labeling-auditor.js';
+import { createBriefingBookAuditor } from './briefing-book-auditor.js';
+import { createStabilityAuditor } from './stability-auditor.js';
 
 const AUDITOR_REGISTRY: Record<WarGameCategory, () => WarGameAuditor> = {
   protocol: createProtocolAuditor,
@@ -19,6 +28,15 @@ const AUDITOR_REGISTRY: Record<WarGameCategory, () => WarGameAuditor> = {
   '510k': createDevice510kAuditor,
   cer: createCerAuditor,
   sop: createSopAuditor,
+  nda: createNdaAuditor,
+  bla: createBlaAuditor,
+  pma: createPmaAuditor,
+  cmc: createCmcAuditor,
+  risk_management: createRiskManagementAuditor,
+  safety_narrative: createSafetyNarrativeAuditor,
+  labeling: createLabelingAuditor,
+  briefing_book: createBriefingBookAuditor,
+  stability: createStabilityAuditor,
 };
 
 export function getAuditor(category: WarGameCategory): WarGameAuditor {

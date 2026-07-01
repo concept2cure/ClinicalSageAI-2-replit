@@ -22,11 +22,11 @@ const AGENCIES = ['FDA', 'EMA', 'PMDA', 'Health Canada', 'MHRA', 'ICH'] as const
 
 const DEFAULT_SUGGESTIONS: ReadonlyArray<{ Ico: typeof I.file; label: string }> = [
   { Ico: I.sparkles, label: 'Build a clinical protocol' },
-  { Ico: I.file, label: 'Draft CTD Section 2.5' },
+  { Ico: I.file, label: 'Draft NDA submission' },
   { Ico: I.search, label: 'Find 510(k) predicates' },
   { Ico: I.flask, label: 'Start IND submission' },
-  { Ico: I.clip, label: 'Submission readiness' },
-  { Ico: I.globe, label: 'Create an SOP' },
+  { Ico: I.clip, label: 'Prepare BLA package' },
+  { Ico: I.globe, label: 'Create drug labeling' },
   { Ico: I.sparkles, label: 'Run FDA War Game' },
 ];
 

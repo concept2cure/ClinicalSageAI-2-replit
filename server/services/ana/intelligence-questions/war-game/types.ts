@@ -9,7 +9,22 @@
 
 import type { FlowCategory, IssueSeverity } from '../../../../../shared/types/intelligence-questions.js';
 
-export type WarGameCategory = 'protocol' | 'ind' | 'csr' | '510k' | 'cer' | 'sop';
+export type WarGameCategory =
+  | 'protocol'
+  | 'ind'
+  | 'csr'
+  | '510k'
+  | 'cer'
+  | 'sop'
+  | 'nda'
+  | 'bla'
+  | 'pma'
+  | 'cmc'
+  | 'risk_management'
+  | 'safety_narrative'
+  | 'labeling'
+  | 'briefing_book'
+  | 'stability';
 
 export type AuditDimension =
   | 'completeness'
