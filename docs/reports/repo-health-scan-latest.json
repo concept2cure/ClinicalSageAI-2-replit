@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-01T04:47:54.775Z",
+  "generatedAt": "2026-07-01T04:50:43.661Z",
   "git": {
-    "sha": "d437000d095b893d8426c7d67f7a4273b0eb80de",
+    "sha": "cef327969a904730b894167e64c5d01ebd465a4c",
     "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
@@ -2439,7 +2439,7 @@
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
-        "bytes": 123712
+        "bytes": 127662
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2576,10 +2576,6 @@
         "lines": 2501
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
-        "lines": 2452
-      },
-      {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "lines": 2419
       },
@@ -2598,6 +2594,10 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "lines": 2327
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "lines": 2278
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",

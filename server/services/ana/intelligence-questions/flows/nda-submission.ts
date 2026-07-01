@@ -1,14 +1,18 @@
 /**
- * NDA (New Drug Application) Submission flow definition for the AnA
- * Intelligence Questioning system.
+ * NDA (New Drug Application) Submission flow definition for the
+ * AnA Intelligence Questioning system.
  *
- * Guides pharma/biotech sponsors through a comprehensive NDA questionnaire
- * covering all CTD modules, clinical data packages, manufacturing, labeling,
- * REMS, post-marketing commitments, advisory committee readiness, and
- * submission strategy per 21 CFR 314.
+ * Guides pharma/biotech sponsors through a comprehensive NDA submission
+ * questionnaire covering application overview, drug product information,
+ * nonclinical pharmacology & toxicology, clinical pharmacology, clinical
+ * efficacy, clinical safety, CTD module structure, labeling & REMS,
+ * post-marketing commitments, and review & submission readiness.
  *
- * This is one of the deepest flows in the system — an NDA is a massive
- * regulatory undertaking that typically runs 100,000+ pages in eCTD format.
+ * 23 nodes · 130+ fields · 10 sections · 20+ issue checks
+ *
+ * Regulatory framework: 21 CFR 314 (NDA regulations), ICH CTD (M4),
+ * ICH efficacy guidelines (E1, E4, E9), ICH safety guidelines (S1–S5),
+ * FDA Guidance documents for industry, PDUFA, PREA, FDAAA.
  *
  * @module server/services/ana/intelligence-questions/flows/nda-submission
  */
@@ -21,148 +25,130 @@ export function createNdaSubmissionFlow(): FlowDefinition {
     category: 'nda_submission',
     name: 'NDA Submission',
     description:
-      'Comprehensive New Drug Application questionnaire covering all CTD modules, clinical data packages, manufacturing, labeling, and post-marketing commitments per 21 CFR 314.',
+      'Comprehensive New Drug Application (NDA) submission questionnaire covering application type (505(b)(1)/505(b)(2)), drug product information, nonclinical pharmacology & toxicology, clinical pharmacology, efficacy, safety, CTD/eCTD structure, labeling & REMS, post-marketing commitments, and submission readiness for FDA marketing approval under 21 CFR 314.',
     clientTypes: ['pharma', 'biotech'],
-    entryNode: 'nda_overview',
-    estimatedMinutes: 60,
+    entryNode: 'app_type',
+    estimatedMinutes: 90,
 
     /* ─── Sections ──────────────────────────────────────────────────────── */
 
     sections: [
       {
-        id: 'nda_overview_section',
-        label: 'NDA Overview',
-        nodeIds: ['nda_overview', 'nda_designations'],
+        id: 'app_overview',
+        label: 'Application Overview',
+        nodeIds: ['app_type', 'sponsor_info'],
       },
       {
-        id: 'module_1_admin',
-        label: 'Module 1 — Administrative',
-        nodeIds: ['admin_forms', 'patent_exclusivity'],
+        id: 'drug_product_info',
+        label: 'Drug Product Information',
+        nodeIds: ['drug_description', 'formulation_dosage'],
       },
       {
-        id: 'module_25_clinical_overview',
-        label: 'Module 2.5 — Clinical Overview',
-        nodeIds: ['clinical_dev_program', 'clinical_pharmacology', 'benefit_risk'],
+        id: 'nonclinical',
+        label: 'Nonclinical Pharmacology & Toxicology',
+        nodeIds: ['nonclinical_overview', 'carcinogenicity_repro'],
       },
       {
-        id: 'module_27_clinical_summary',
-        label: 'Module 2.7 — Clinical Summary',
-        nodeIds: ['biopharm_pk_summary', 'efficacy_safety_tables', 'literature_references'],
+        id: 'clinical_pharm',
+        label: 'Clinical Pharmacology',
+        nodeIds: ['pk_summary', 'ddi_assessment', 'special_pops_pk'],
       },
       {
-        id: 'module_3_quality',
-        label: 'Module 3 — Quality / CMC',
-        nodeIds: ['drug_substance', 'drug_product', 'facilities_adventitious'],
+        id: 'clinical_efficacy',
+        label: 'Clinical Efficacy',
+        nodeIds: ['efficacy_overview', 'pivotal_studies', 'endpoint_analysis'],
       },
       {
-        id: 'module_4_nonclinical',
-        label: 'Module 4 — Nonclinical',
-        nodeIds: ['pharmacology_pk', 'toxicology_program'],
+        id: 'clinical_safety',
+        label: 'Clinical Safety',
+        nodeIds: ['safety_database', 'adverse_events', 'deaths_serious_ae'],
       },
       {
-        id: 'module_5_clinical',
-        label: 'Module 5 — Clinical Study Reports',
-        nodeIds: ['pivotal_studies', 'supportive_studies', 'integrated_summaries'],
+        id: 'ctd_structure',
+        label: 'CTD Module Structure',
+        nodeIds: ['ctd_organization', 'ectd_submission'],
       },
       {
-        id: 'labeling_section',
-        label: 'Labeling',
-        nodeIds: ['uspi_content', 'medication_guide'],
+        id: 'labeling_rems',
+        label: 'Labeling & REMS',
+        nodeIds: ['labeling_content', 'rems_evaluation'],
       },
       {
-        id: 'rems_section',
-        label: 'REMS Assessment',
-        nodeIds: ['rems_determination', 'rems_elements'],
-      },
-      {
-        id: 'post_marketing_section',
+        id: 'post_marketing',
         label: 'Post-Marketing Commitments',
-        nodeIds: ['pmc_pmr', 'pediatric_pharmacovigilance'],
+        nodeIds: ['pmc_pme', 'pediatric_commitments'],
       },
       {
-        id: 'advisory_committee_section',
-        label: 'Advisory Committee',
-        nodeIds: ['adcom_planning', 'adcom_preparation'],
-      },
-      {
-        id: 'submission_strategy_section',
-        label: 'Submission Timeline & Strategy',
-        nodeIds: ['pre_nda_meeting', 'submission_planning', 'review_management'],
+        id: 'review_submission',
+        label: 'Review & Submission',
+        nodeIds: ['submission_readiness', 'final_review'],
       },
     ],
 
     /* ─── Nodes ─────────────────────────────────────────────────────────── */
 
     nodes: [
-
-      /* ================================================================
-       * Section 1 — NDA Overview
-       * ================================================================ */
+      /* ================================================================ */
+      /*  Section 1 — Application Overview                                */
+      /* ================================================================ */
 
       {
-        id: 'nda_overview',
-        section: 'NDA Overview',
+        id: 'app_type',
+        section: 'app_overview',
         question:
-          'Let\'s begin the NDA submission questionnaire. What type of NDA are you filing, and what is the application status?',
+          'Let\'s begin with the NDA application type. Is this a 505(b)(1) new molecular entity, a 505(b)(2) application relying on a listed drug, or a supplement to an existing NDA? The application pathway determines the evidentiary requirements.',
         guidance:
-          'Under 21 CFR 314.50, an NDA must contain full reports of investigations showing whether the drug is safe and effective. A 505(b)(1) NDA relies entirely on the applicant\'s own data. A 505(b)(2) application (21 USC 355(b)(2)) relies in part on FDA\'s prior findings of safety and efficacy for a listed drug — this pathway is governed by FDA Guidance "Applications Covered by Section 505(b)(2)" (October 1999, updated 2023). A 505(j) ANDA is for generic drugs under 21 CFR 314.94. The submission type determines the review pathway, user fee structure, and required content.',
+          'Per 21 CFR 314.50, an NDA must contain full reports of investigations showing the drug is safe and effective. A 505(b)(1) NDA (full NDA) requires the applicant to provide all safety and efficacy data. A 505(b)(2) NDA (21 CFR 314.54) permits reliance on FDA\'s previous findings of safety and/or effectiveness for a listed drug, reducing the need for de novo studies — but requires a right-of-reference or published literature. NDA supplements (21 CFR 314.70) cover changes to an approved NDA such as new indications, formulation changes, or labeling updates. Expedited programs (Priority Review, Accelerated Approval under 21 CFR 314.500, Fast Track, Breakthrough Therapy) affect review timelines and may impose additional post-marketing requirements.',
         fields: [
           {
             id: 'nda_type',
-            label: 'NDA Type',
+            label: 'NDA Application Type',
             type: 'select',
             required: true,
             options: [
               {
                 value: '505b1',
-                label: '505(b)(1) — Full NDA',
-                description: 'Applicant-generated data for new molecular entity or new indication.',
+                label: '505(b)(1) — Full NDA (New Molecular Entity)',
+                description: 'Complete safety and efficacy data package; no reliance on listed drug findings',
               },
               {
                 value: '505b2',
-                label: '505(b)(2) — Partial NDA',
-                description: 'Relies in part on published literature or FDA findings for a listed drug.',
+                label: '505(b)(2) — NDA with Listed Drug Reliance',
+                description: 'Per 21 CFR 314.54, partial reliance on FDA\'s prior findings for a listed drug',
               },
               {
-                value: '505j',
-                label: '505(j) — ANDA (Generic)',
-                description: 'Abbreviated NDA for generic copy of a Reference Listed Drug.',
+                value: 'supplement',
+                label: 'NDA Supplement (sNDA)',
+                description: '21 CFR 314.70 — change to an approved NDA (new indication, formulation, labeling)',
               },
             ],
+            helpText:
+              'The application type dictates the scope of data required. 505(b)(2) applicants must identify the listed drug and provide a bridge (e.g., bioequivalence or clinical study) per 21 CFR 314.54.',
           },
           {
-            id: 'application_number',
-            label: 'Application Number (if assigned)',
-            type: 'text',
-            placeholder: 'e.g., NDA 214787',
-            helpText: 'Leave blank for original submissions that have not yet received an NDA number.',
-          },
-          {
-            id: 'submission_type',
-            label: 'Submission Type',
+            id: 'supplement_type',
+            label: 'Supplement Type',
             type: 'select',
-            required: true,
+            visibleWhen: { field: 'nda_type', operator: 'eq', value: 'supplement' },
             options: [
-              { value: 'original', label: 'Original NDA' },
-              { value: 'efficacy_supplement', label: 'Efficacy Supplement (sNDA — new indication)' },
-              { value: 'manufacturing_supplement', label: 'Manufacturing Supplement (CBE / Prior Approval)' },
-              { value: 'labeling_supplement', label: 'Labeling Supplement' },
-              { value: 'annual_report', label: 'Annual Report (21 CFR 314.81(b)(2))' },
+              { value: 'new_indication', label: 'New Indication / Use' },
+              { value: 'new_dosage_form', label: 'New Dosage Form or Route' },
+              { value: 'new_strength', label: 'New Strength' },
+              { value: 'labeling_change', label: 'Labeling Change' },
+              { value: 'manufacturing_change', label: 'Manufacturing Change' },
+              { value: 'efficacy_supplement', label: 'Efficacy Supplement' },
             ],
+            helpText: 'Per 21 CFR 314.70, supplements are classified by the type and significance of the proposed change.',
           },
           {
-            id: 'drug_name_generic',
-            label: 'Generic (INN) Name',
-            type: 'text',
-            placeholder: 'e.g., Semaglutide',
-            required: true,
-          },
-          {
-            id: 'proposed_trade_name',
-            label: 'Proposed Trade Name',
-            type: 'text',
-            placeholder: 'e.g., Ozempic',
-            helpText: 'Per FDA Guidance "Best Practices in Developing Proprietary Names for Drugs" (2020), trade names must be cleared by CDER\'s Division of Medication Error Prevention and Analysis (DMEPA) before approval.',
+            id: 'listed_drug_info',
+            label: 'Listed Drug / Reference Listed Drug (RLD) Information',
+            type: 'textarea',
+            visibleWhen: { field: 'nda_type', operator: 'eq', value: '505b2' },
+            placeholder:
+              'e.g., Reference Listed Drug: Drugname Tablets (NDA 012345), Holder: Pharma Corp. Basis of reliance: safety data from approved RLD; new clinical efficacy study conducted for proposed indication.',
+            helpText:
+              'Per 21 CFR 314.54, 505(b)(2) applicants must identify the listed drug and describe the basis of reliance on FDA\'s previous findings. Paragraph IV patent certifications may be required per 21 CFR 314.50(i).',
           },
           {
             id: 'therapeutic_area',
@@ -171,1007 +157,192 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             required: true,
             options: [
               { value: 'oncology', label: 'Oncology' },
-              { value: 'cardiovascular', label: 'Cardiovascular' },
-              { value: 'cns', label: 'Central Nervous System' },
+              { value: 'cardiology', label: 'Cardiology' },
+              { value: 'neurology', label: 'Neurology' },
               { value: 'infectious_disease', label: 'Infectious Disease' },
-              { value: 'metabolic', label: 'Metabolic / Endocrine' },
-              { value: 'immunology', label: 'Immunology / Inflammation' },
-              { value: 'respiratory', label: 'Respiratory' },
-              { value: 'gastroenterology', label: 'Gastroenterology' },
-              { value: 'dermatology', label: 'Dermatology' },
-              { value: 'rare_disease', label: 'Rare Disease' },
+              { value: 'endocrine', label: 'Endocrine / Metabolic' },
+              { value: 'immunology', label: 'Immunology / Rheumatology' },
+              { value: 'rare_disease', label: 'Rare Disease / Orphan' },
               { value: 'other', label: 'Other' },
             ],
           },
           {
-            id: 'indication_statement',
-            label: 'Proposed Indication Statement',
-            type: 'textarea',
-            placeholder: 'e.g., For the treatment of adults with moderately to severely active rheumatoid arthritis who have had an inadequate response to one or more TNF blockers.',
-            required: true,
-            validation: { minLength: 20, maxLength: 2000 },
+            id: 'accelerated_pathway',
+            label: 'Expedited Program Designations',
+            type: 'multi_select',
+            options: [
+              {
+                value: 'priority_review',
+                label: 'Priority Review',
+                description: 'PDUFA 6-month review target vs. standard 10-month',
+              },
+              {
+                value: 'accelerated_approval',
+                label: 'Accelerated Approval (21 CFR 314.500–314.560)',
+                description: 'Approval based on surrogate endpoint; confirmatory study required',
+              },
+              {
+                value: 'fast_track',
+                label: 'Fast Track Designation',
+                description: 'Serious condition with unmet need; rolling review eligible',
+              },
+              {
+                value: 'breakthrough',
+                label: 'Breakthrough Therapy Designation',
+                description: 'Substantial improvement over existing therapies; intensive FDA guidance',
+              },
+            ],
+            helpText:
+              'Expedited programs affect review timelines and post-marketing obligations. Accelerated Approval (21 CFR 314.510) requires a confirmatory post-marketing study. Priority Review sets a 6-month PDUFA goal date.',
           },
           {
-            id: 'is_biologic',
-            label: 'Is this product a biologic (protein, antibody, vaccine)?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Biologics are typically filed as BLAs under 42 USC 262. However, certain protein products transitioned to the BLA pathway under BPCIA (March 2020). If this product is a biologic, some Module 3 requirements differ.',
+            id: 'application_number',
+            label: 'Existing NDA Application Number',
+            type: 'text',
+            placeholder: 'e.g., NDA 214567',
+            visibleWhen: { field: 'nda_type', operator: 'eq', value: 'supplement' },
+            helpText: 'The approved NDA number for the supplement.',
           },
         ],
         branches: [
           {
             when: { field: 'nda_type', operator: 'eq', value: '505b2' },
-            goto: 'nda_505b2_bridging',
+            goto: 'sponsor_info',
           },
         ],
-        defaultNext: 'nda_designations',
-        issueChecks: [
-          {
-            id: 'trade_name_not_cleared',
-            condition: { field: 'proposed_trade_name', operator: 'eq', value: '' },
-            severity: 'info',
-            title: 'Trade Name Not Yet Proposed',
-            message:
-              'CDER\'s DMEPA requires trade name review and clearance before NDA approval. Consider submitting a proprietary name request early — the review process typically takes 180 days.',
-            reference: 'FDA Guidance "Best Practices in Developing Proprietary Names for Drugs" (2020)',
-          },
-        ],
-        provideExpertFeedback: true,
+        defaultNext: 'sponsor_info',
       },
 
-      /* ── 505(b)(2) Bridging Questions (branch node) ──────────────── */
-
       {
-        id: 'nda_505b2_bridging',
-        section: 'NDA Overview',
+        id: 'sponsor_info',
+        section: 'app_overview',
         question:
-          'For 505(b)(2) applications, we need to establish the right of reference and bridging strategy. Please provide the reference listed drug (RLD) and bridging study details.',
+          'Provide sponsor details. Per 21 CFR 314.50(a), the NDA must identify the applicant, responsible contact, and confirm PDUFA user fee payment.',
         guidance:
-          'Under 505(b)(2) (21 USC 355(b)(2)), the applicant may rely on FDA\'s prior findings of safety/effectiveness for a listed drug, plus published literature. Per FDA Guidance "Determining Whether to Submit an ANDA or a 505(b)(2) Application" (2019), you must identify the Reference Listed Drug (RLD) and demonstrate a scientific bridge (bioequivalence, comparative clinical studies, or literature) to the RLD. A right-of-reference letter (21 CFR 314.50(g)) from the RLD holder is required if relying on their proprietary data.',
+          'Per 21 CFR 314.50(a), the NDA cover letter must include the applicant name, address, NDA number (if supplement), and a responsible contact person. PDUFA user fees (21 CFR 314.50(l)) must be paid before FDA will file the application. The Prescription Drug User Fee Act (PDUFA) goal date establishes the FDA review timeline (10 months standard, 6 months priority review from the filing date, which is typically 60 days after receipt).',
         fields: [
           {
-            id: 'reference_listed_drug',
-            label: 'Reference Listed Drug (RLD)',
+            id: 'sponsor_name',
+            label: 'Sponsor / Applicant Name (Legal Entity)',
             type: 'text',
-            placeholder: 'e.g., Ambien (zolpidem tartrate) tablets, NDA 019908',
+            placeholder: 'e.g., Acme Therapeutics, Inc.',
             required: true,
-            helpText: 'Identify the RLD from the FDA Orange Book (Approved Drug Products with Therapeutic Equivalence Evaluations).',
+            helpText: 'Full legal entity name as it will appear on Form FDA 356h and the approval letter.',
           },
           {
-            id: 'has_right_of_reference',
-            label: 'Do you have a right-of-reference letter from the RLD holder?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per 21 CFR 314.50(g), if relying on proprietary data owned by the RLD holder, a written authorization (right-of-reference letter) is required.',
-          },
-          {
-            id: 'bridging_strategy',
-            label: 'Bridging Strategy',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'bioequivalence', label: 'Bioequivalence Study' },
-              { value: 'comparative_clinical', label: 'Comparative Clinical Study' },
-              { value: 'literature', label: 'Published Literature Only' },
-              { value: 'combination', label: 'Combination (BE + literature + new studies)' },
-            ],
-          },
-          {
-            id: 'bridging_study_summary',
-            label: 'Bridging Study Summary',
+            id: 'sponsor_address',
+            label: 'Sponsor Address',
             type: 'textarea',
-            placeholder: 'Describe the bridging studies conducted or planned to link to the RLD...',
+            placeholder: '123 Pharma Blvd, Suite 400, Cambridge, MA 02142',
             required: true,
           },
           {
-            id: 'differences_from_rld',
-            label: 'Differences from the RLD',
-            type: 'multi_select',
-            options: [
-              { value: 'dosage_form', label: 'Different Dosage Form' },
-              { value: 'route', label: 'Different Route of Administration' },
-              { value: 'strength', label: 'Different Strength' },
-              { value: 'indication', label: 'Different / New Indication' },
-              { value: 'formulation', label: 'Different Formulation (same dosage form)' },
-              { value: 'population', label: 'Different Patient Population' },
-              { value: 'regimen', label: 'Different Dosing Regimen' },
-            ],
-          },
-        ],
-        defaultNext: 'nda_designations',
-        issueChecks: [
-          {
-            id: '505b2_no_right_of_reference',
-            condition: { field: 'has_right_of_reference', operator: 'eq', value: false },
-            severity: 'critical',
-            title: 'No Right-of-Reference Letter',
-            message:
-              'A 505(b)(2) application relying on proprietary RLD data without a right-of-reference letter will be refused to file. You may only rely on publicly available data (published literature, FDA\'s prior findings from the summary basis of approval) without this letter. Reassess whether the available public data is sufficient to support your application.',
-            reference: '21 CFR 314.50(g); FDA Guidance "Applications Covered by Section 505(b)(2)" (October 1999)',
-          },
-        ],
-        provideExpertFeedback: true,
-      },
-
-      {
-        id: 'nda_designations',
-        section: 'NDA Overview',
-        question:
-          'Does this product have any special FDA designations, and are you requesting priority review?',
-        guidance:
-          'Special designations can accelerate review and provide regulatory advantages. Priority Review (21 CFR 314.101(a)) shortens the review clock from 10 months to 6 months for drugs offering a significant improvement. Breakthrough Therapy (21 USC 356(a)) provides intensive FDA guidance. Fast Track (21 USC 356(b)) allows rolling submission. Orphan Drug (21 USC 360bb) provides 7-year market exclusivity. Accelerated Approval (21 CFR 314 Subpart H) allows approval based on a surrogate endpoint.',
-        fields: [
-          {
-            id: 'priority_review_requested',
-            label: 'Priority Review Requested',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per PDUFA VII (2022-2027), Priority Review shortens the target action date to 6 months from filing vs. 10 months for Standard Review.',
-          },
-          {
-            id: 'priority_review_basis',
-            label: 'Basis for Priority Review Request',
-            type: 'select',
-            visibleWhen: { field: 'priority_review_requested', operator: 'eq', value: true },
-            options: [
-              { value: 'serious_condition', label: 'Significant improvement for serious condition' },
-              { value: 'unmet_need', label: 'Addresses unmet medical need' },
-              { value: 'prv', label: 'Priority Review Voucher (PRV) being redeemed' },
-              { value: 'other', label: 'Other basis' },
-            ],
-          },
-          {
-            id: 'orphan_drug_designation',
-            label: 'Orphan Drug Designation',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per the Orphan Drug Act (21 USC 360bb), orphan designation provides 7-year market exclusivity, tax credits for clinical research, and eligibility for OOPD grants.',
-          },
-          {
-            id: 'orphan_designation_number',
-            label: 'Orphan Designation Number',
+            id: 'regulatory_contact',
+            label: 'Regulatory Contact Person',
             type: 'text',
-            placeholder: 'e.g., DES 21-1234',
-            visibleWhen: { field: 'orphan_drug_designation', operator: 'eq', value: true },
-          },
-          {
-            id: 'breakthrough_therapy',
-            label: 'Breakthrough Therapy Designation',
-            type: 'yes_no',
+            placeholder: 'e.g., Jane Smith, VP Regulatory Affairs',
             required: true,
           },
           {
-            id: 'fast_track',
-            label: 'Fast Track Designation',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'accelerated_approval',
-            label: 'Seeking Accelerated Approval (Subpart H)?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per 21 CFR 314 Subpart H, accelerated approval allows use of a surrogate endpoint reasonably likely to predict clinical benefit. Post-marketing confirmatory studies will be required.',
-          },
-          {
-            id: 'accelerated_approval_endpoint',
-            label: 'Surrogate Endpoint for Accelerated Approval',
-            type: 'textarea',
-            placeholder: 'e.g., Objective response rate (ORR) as assessed by independent central review using RECIST v1.1',
-            visibleWhen: { field: 'accelerated_approval', operator: 'eq', value: true },
-          },
-          {
-            id: 'rems_anticipated',
-            label: 'Is a REMS Anticipated?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per 21 USC 355-1, FDA can require a Risk Evaluation and Mitigation Strategy if necessary to ensure benefits outweigh risks.',
-          },
-        ],
-        branches: [
-          {
-            when: { field: 'therapeutic_area', operator: 'eq', value: 'oncology' },
-            goto: 'nda_oncology_pathway',
-          },
-          {
-            when: { field: 'orphan_drug_designation', operator: 'eq', value: true },
-            goto: 'nda_orphan_specifics',
-          },
-        ],
-        defaultNext: 'admin_forms',
-        issueChecks: [
-          {
-            id: 'priority_review_no_basis',
-            condition: { field: 'priority_review_requested', operator: 'eq', value: true },
-            severity: 'info',
-            title: 'Priority Review Request Noted',
-            message:
-              'Priority Review requests must be accompanied by data demonstrating a significant improvement in safety or effectiveness over available therapy. Ensure the clinical data package clearly articulates the comparative advantage.',
-            reference: 'PDUFA VII Goal Letters; 21 CFR 314.101(a)',
-          },
-          {
-            id: 'rolling_without_fast_track',
-            condition: { field: 'fast_track', operator: 'eq', value: false },
-            severity: 'warning',
-            title: 'Rolling Submission Requires Fast Track',
-            message:
-              'Only products with Fast Track designation are eligible for rolling submission (21 USC 356(b)(2)). Without this designation, the complete NDA must be submitted at once.',
-            reference: '21 USC 356(b)(2)',
-          },
-        ],
-        provideExpertFeedback: true,
-      },
-
-      /* ── Oncology Pathway Branch ─────────────────────────────────── */
-
-      {
-        id: 'nda_oncology_pathway',
-        section: 'NDA Overview',
-        question:
-          'For oncology applications, let\'s address specific accelerated approval and surrogate endpoint considerations.',
-        guidance:
-          'Oncology drugs frequently use the accelerated approval pathway (21 CFR 314 Subpart H). FDA\'s Oncology Center of Excellence (OCE) reviews oncology applications. Per FDA Guidance "Clinical Trial Endpoints for the Approval of Cancer Drugs and Biologics" (2018), acceptable surrogate endpoints include ORR, DFS, and PFS. Under the FDORA (2022) amendments, sponsors must demonstrate due diligence in completing confirmatory trials.',
-        fields: [
-          {
-            id: 'oncology_review_division',
-            label: 'Anticipated Review Division',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'oce_dhot1', label: 'OCE — Division of Hematology Oncology Toxicology 1' },
-              { value: 'oce_dhot2', label: 'OCE — Division of Hematology Oncology Toxicology 2' },
-              { value: 'oce_oncology1', label: 'OCE — Division of Oncology 1' },
-              { value: 'oce_oncology2', label: 'OCE — Division of Oncology 2' },
-              { value: 'oce_oncology3', label: 'OCE — Division of Oncology 3' },
-              { value: 'unknown', label: 'Not Yet Determined' },
-            ],
-          },
-          {
-            id: 'surrogate_endpoint_type',
-            label: 'Surrogate Endpoint Type',
-            type: 'select',
-            options: [
-              { value: 'orr', label: 'Objective Response Rate (ORR)' },
-              { value: 'pfs', label: 'Progression-Free Survival (PFS)' },
-              { value: 'dfs', label: 'Disease-Free Survival (DFS)' },
-              { value: 'mrd', label: 'Minimal Residual Disease (MRD)' },
-              { value: 'pcr', label: 'Pathologic Complete Response (pCR)' },
-              { value: 'os', label: 'Overall Survival (OS) — full approval endpoint' },
-              { value: 'other', label: 'Other' },
-            ],
-          },
-          {
-            id: 'companion_diagnostic',
-            label: 'Is a companion diagnostic required?',
-            type: 'yes_no',
-            helpText: 'Per FDA Guidance "In Vitro Companion Diagnostic Devices" (2014), if the drug targets a specific biomarker, a companion diagnostic must be approved or cleared contemporaneously.',
-          },
-          {
-            id: 'companion_dx_status',
-            label: 'Companion Diagnostic Development Status',
-            type: 'select',
-            visibleWhen: { field: 'companion_diagnostic', operator: 'eq', value: true },
-            options: [
-              { value: 'approved', label: 'Already FDA-approved/cleared' },
-              { value: 'pma_submitted', label: 'PMA submitted' },
-              { value: 'in_development', label: 'In development' },
-              { value: 'ldt', label: 'Lab-developed test (LDT) — not yet PMA-approved' },
-            ],
-          },
-          {
-            id: 'confirmatory_trial_plan',
-            label: 'Confirmatory Trial Plan (for accelerated approval)',
-            type: 'textarea',
-            placeholder: 'Describe the planned confirmatory trial(s) to verify clinical benefit. Per FDORA 2022 amendments, sponsors must initiate confirmatory trials prior to or shortly after accelerated approval.',
-            visibleWhen: { field: 'accelerated_approval', operator: 'eq', value: true },
-          },
-        ],
-        defaultNext: 'admin_forms',
-        provideExpertFeedback: true,
-      },
-
-      /* ── Orphan Drug Specifics Branch ────────────────────────────── */
-
-      {
-        id: 'nda_orphan_specifics',
-        section: 'NDA Overview',
-        question:
-          'For orphan drug applications, let\'s address the specific exclusivity and waiver considerations.',
-        guidance:
-          'The Orphan Drug Act (21 USC 360bb) provides 7-year market exclusivity from date of approval, tax credits for qualified clinical testing expenses, and waiver of PDUFA user fees. Per 21 CFR 316.34, exclusivity applies to the same drug for the same rare disease. FDA\'s Office of Orphan Products Development (OOPD) administers the program. Note that orphan exclusivity does not prevent approval of a clinically superior product (21 CFR 316.3(b)(14)).',
-        fields: [
-          {
-            id: 'orphan_disease_prevalence',
-            label: 'Disease Prevalence in the US',
+            id: 'contact_email',
+            label: 'Contact Email',
             type: 'text',
-            placeholder: 'e.g., Fewer than 200,000 affected individuals',
+            placeholder: 'e.g., regulatory@acmetherapeutics.com',
             required: true,
-            helpText: 'Per 21 USC 360bb(a)(2), orphan drug designation requires prevalence fewer than 200,000 persons or a demonstration that costs of development cannot be recovered.',
+            validation: {
+              pattern: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',
+              patternMessage: 'Please enter a valid email address.',
+            },
           },
           {
-            id: 'orphan_user_fee_waiver',
-            label: 'Requesting PDUFA User Fee Waiver?',
+            id: 'contact_phone',
+            label: 'Contact Phone',
+            type: 'text',
+            placeholder: 'e.g., (617) 555-0100',
+          },
+          {
+            id: 'user_fee_paid',
+            label: 'PDUFA User Fee Paid',
             type: 'yes_no',
             required: true,
-            helpText: 'Orphan products are eligible for a waiver of PDUFA user fees (21 CFR 316.46).',
+            helpText:
+              'Per PDUFA (21 USC 379h) and 21 CFR 314.50(l), the application fee must be paid at the time of NDA submission. FDA will not file an application without fee payment or a valid waiver/reduction.',
           },
           {
-            id: 'orphan_pediatric_waiver',
-            label: 'Requesting PREA Waiver Based on Orphan Status?',
-            type: 'yes_no',
-            helpText: 'Under FDARA (2017), orphan drug products may be eligible for partial waivers of pediatric study requirements if the rare disease does not occur in the pediatric population.',
-          },
-          {
-            id: 'orphan_natural_history',
-            label: 'Natural History Study Available?',
-            type: 'yes_no',
-            helpText: 'For rare diseases, natural history data are often critical for interpreting clinical trial results and may serve as an external control per FDA Guidance "Rare Diseases: Natural History Studies for Drug Development" (2019).',
-          },
-          {
-            id: 'orphan_clinical_trial_design',
-            label: 'Special Clinical Trial Design Considerations',
-            type: 'textarea',
-            placeholder: 'e.g., Single-arm trial with historical control due to small patient population. Adaptive design with enrichment strategy.',
-            helpText: 'Per FDA Guidance "Rare Diseases: Common Issues in Drug Development" (2019), FDA recognizes that standard trial designs may not be feasible for rare diseases.',
-          },
-        ],
-        defaultNext: 'admin_forms',
-        provideExpertFeedback: true,
-      },
-
-      /* ================================================================
-       * Section 2 — Module 1: Administrative
-       * ================================================================ */
-
-      {
-        id: 'admin_forms',
-        section: 'Module 1 — Administrative',
-        question:
-          'Let\'s address the Module 1 administrative requirements. Please confirm the status of required forms and documents.',
-        guidance:
-          'Module 1 of the CTD contains region-specific administrative information. For US NDAs, Form FDA 356h (Application to Market a New Drug, Biologic, or Antibiotic Drug for Human Use) is the cover form per 21 CFR 314.50(a). The comprehensive table of contents must follow the eCTD v4.0 format per FDA Guidance "Providing Regulatory Submissions in Electronic Format — Certain Human Pharmaceutical Product Applications and Related Submissions" (2023). The environmental assessment is required per 21 CFR 25 unless a categorical exclusion applies.',
-        fields: [
-          {
-            id: 'form_356h_prepared',
-            label: 'Form FDA 356h Prepared',
-            type: 'yes_no',
-            required: true,
-            helpText: 'This is the mandatory cover form for all NDA submissions per 21 CFR 314.50(a).',
-          },
-          {
-            id: 'ectd_version',
-            label: 'eCTD Publishing Version',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'ectd_v4', label: 'eCTD v4.0 (current standard)' },
-              { value: 'ectd_v3', label: 'eCTD v3.2.2 (legacy — contact FDA)' },
-            ],
-          },
-          {
-            id: 'comprehensive_toc',
-            label: 'Comprehensive Table of Contents Complete',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'environmental_assessment',
-            label: 'Environmental Assessment Status',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'ea_submitted', label: 'Environmental Assessment (EA) Submitted' },
-              { value: 'categorical_exclusion', label: 'Categorical Exclusion Claimed (21 CFR 25.31)' },
-              { value: 'not_prepared', label: 'Not Yet Prepared' },
-            ],
-          },
-          {
-            id: 'debarment_certification',
-            label: 'Debarment Certification Included',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per 21 CFR 314.50(l), the NDA must include a certification that no person who was debarred under 21 USC 335a(a) or (b) was involved in the application.',
-          },
-          {
-            id: 'field_copy_certification',
-            label: 'Field Copy Certification',
-            type: 'yes_no',
-            helpText: 'Certification per 21 CFR 314.50(e)(2)(iii) regarding the accuracy and completeness of the application.',
-          },
-          {
-            id: 'user_fee_pdufa',
-            label: 'PDUFA User Fee Payment Status',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'paid', label: 'Paid — fee confirmation letter available' },
-              { value: 'waiver_granted', label: 'Fee Waiver Granted (orphan/small business)' },
-              { value: 'pending', label: 'Payment Pending' },
-              { value: 'not_paid', label: 'Not Yet Paid' },
-            ],
-          },
-        ],
-        defaultNext: 'patent_exclusivity',
-        issueChecks: [
-          {
-            id: 'user_fee_not_paid',
-            condition: { field: 'user_fee_pdufa', operator: 'eq', value: 'not_paid' },
-            severity: 'critical',
-            title: 'PDUFA User Fee Not Paid',
-            message:
-              'Per 21 USC 379h, an NDA will not be received (refused to file) until the PDUFA user fee is paid or a fee waiver is granted. The FY2026 application fee exceeds $4 million. Ensure payment before submission.',
-            reference: '21 USC 379h; PDUFA VII Commitment Letter',
-          },
-          {
-            id: 'env_assessment_missing',
-            condition: { field: 'environmental_assessment', operator: 'eq', value: 'not_prepared' },
-            severity: 'warning',
-            title: 'Environmental Assessment Missing',
-            message:
-              'Per 21 CFR 25.15, an environmental assessment or claim of categorical exclusion must accompany the NDA. Most drugs qualify for a categorical exclusion under 21 CFR 25.31(e) — confirm eligibility.',
-            reference: '21 CFR 25.15; 21 CFR 25.31',
-          },
-        ],
-      },
-
-      {
-        id: 'patent_exclusivity',
-        section: 'Module 1 — Administrative',
-        question:
-          'Provide patent and exclusivity information for the Orange Book listing.',
-        guidance:
-          'Per 21 CFR 314.53, the applicant must submit patent information for each patent that claims the drug substance, drug product, or method of use within 30 days of NDA approval. This information is listed in the FDA Orange Book (Approved Drug Products with Therapeutic Equivalence Evaluations). Patent certifications (Paragraphs I-IV) are required for 505(b)(2) and ANDA applications per 21 CFR 314.50(i) and 21 CFR 314.94(a)(12). Exclusivity claims must be documented at the time of submission.',
-        fields: [
-          {
-            id: 'patents_to_list',
-            label: 'Number of Patents for Orange Book Listing',
-            type: 'number',
-            required: true,
-            validation: { min: 0, max: 50 },
-            helpText: 'Per 21 CFR 314.53, list all patents claiming the drug substance, drug product, or approved method of use.',
-          },
-          {
-            id: 'patent_types',
-            label: 'Patent Types',
-            type: 'multi_select',
-            options: [
-              { value: 'drug_substance', label: 'Drug Substance Patent' },
-              { value: 'drug_product', label: 'Drug Product (Formulation) Patent' },
-              { value: 'method_of_use', label: 'Method of Use Patent' },
-            ],
-            visibleWhen: { field: 'patents_to_list', operator: 'gt', value: 0 },
-          },
-          {
-            id: 'patent_certification',
-            label: 'Patent Certification Type (for 505(b)(2) / ANDA only)',
-            type: 'select',
-            visibleWhen: { field: 'nda_type', operator: 'in', value: ['505b2', '505j'] },
-            options: [
-              { value: 'paragraph_i', label: 'Paragraph I — No patent information filed' },
-              { value: 'paragraph_ii', label: 'Paragraph II — Patent has expired' },
-              { value: 'paragraph_iii', label: 'Paragraph III — Will not seek approval until patent expires' },
-              { value: 'paragraph_iv', label: 'Paragraph IV — Patent is invalid or will not be infringed' },
-            ],
-            helpText: 'Per 21 CFR 314.50(i), each patent listed in the Orange Book for the RLD requires a certification.',
-          },
-          {
-            id: 'exclusivity_claims',
-            label: 'Exclusivity Claims',
-            type: 'multi_select',
-            options: [
-              { value: 'nce_5yr', label: '5-Year NCE Exclusivity (new chemical entity — 21 CFR 314.108(b)(2))' },
-              { value: 'three_yr', label: '3-Year Exclusivity (new clinical investigations — 21 CFR 314.108(b)(4))' },
-              { value: 'pediatric_6mo', label: '6-Month Pediatric Exclusivity (BPCA — 21 USC 355a)' },
-              { value: 'orphan_7yr', label: '7-Year Orphan Drug Exclusivity (21 USC 360cc)' },
-              { value: 'cgp', label: 'Competitive Generic Therapy (CGT) 180-Day Exclusivity' },
-              { value: 'none', label: 'No Exclusivity Claim' },
-            ],
-          },
-          {
-            id: 'patent_expiry_date',
-            label: 'Earliest Patent Expiry Date',
+            id: 'pdufa_goal_date',
+            label: 'PDUFA Goal Date (if known)',
             type: 'date',
-            visibleWhen: { field: 'patents_to_list', operator: 'gt', value: 0 },
-            helpText: 'Include any pediatric exclusivity extensions or patent term adjustments under 35 USC 156.',
+            visibleWhen: { field: 'user_fee_paid', operator: 'eq', value: true },
+            helpText:
+              'The PDUFA goal date is set by FDA after filing (Day 60). Standard review: 10 months from receipt. Priority review: 6 months from receipt.',
           },
         ],
-        defaultNext: 'clinical_dev_program',
+        defaultNext: 'drug_description',
         issueChecks: [
           {
-            id: 'paragraph_iv_30month_stay',
-            condition: { field: 'patent_certification', operator: 'eq', value: 'paragraph_iv' },
-            severity: 'info',
-            title: 'Paragraph IV Certification — 30-Month Stay Implications',
-            message:
-              'A Paragraph IV certification triggers a 45-day notice requirement to the patent holder and NDA holder per 21 USC 355(j)(2)(B). The patent holder may sue within 45 days, triggering an automatic 30-month stay of FDA approval (21 USC 355(j)(5)(B)(iii)). Ensure litigation counsel is engaged and a Paragraph IV notice letter is prepared.',
-            reference: '21 USC 355(j)(2)(B); 21 CFR 314.95',
-          },
-        ],
-      },
-
-      /* ================================================================
-       * Section 3 — Module 2.5: Clinical Overview
-       * ================================================================ */
-
-      {
-        id: 'clinical_dev_program',
-        section: 'Module 2.5 — Clinical Overview',
-        question:
-          'Provide an overview of the clinical development program that supports this NDA.',
-        guidance:
-          'Module 2.5 (ICH M4E(R2)) requires a Clinical Overview that critically analyzes the clinical data from all studies. This is a narrative assessment, not a data listing — it should synthesize the biopharmaceutic, clinical pharmacology, efficacy, and safety data into a coherent benefit-risk story. Per ICH E1 (Population Exposure), at least 1,500 patients should be exposed for short-term treatments and at least 300-600 for one year for chronic use.',
-        fields: [
-          {
-            id: 'total_clinical_studies',
-            label: 'Total Number of Clinical Studies in the NDA',
-            type: 'number',
-            required: true,
-            validation: { min: 1, max: 500 },
-            helpText: 'Include all Phase 1, 2, and 3 studies across the entire clinical development program.',
-          },
-          {
-            id: 'total_patients_exposed',
-            label: 'Total Patients Exposed to the Drug',
-            type: 'number',
-            required: true,
-            validation: { min: 1 },
-            helpText: 'Per ICH E1, the safety database typically requires at least 1,500 patients for short-term treatment indications. For chronic use, 300-600 patients exposed for 6 months and 100 for 12 months.',
-          },
-          {
-            id: 'development_duration_years',
-            label: 'Clinical Development Duration (Years)',
-            type: 'number',
-            validation: { min: 0, max: 30 },
-            placeholder: 'e.g., 8',
-          },
-          {
-            id: 'ind_number',
-            label: 'IND Number(s)',
-            type: 'text',
-            placeholder: 'e.g., IND 123456, IND 789012',
-            required: true,
-          },
-          {
-            id: 'clinical_overview_author',
-            label: 'Clinical Overview Author',
-            type: 'text',
-            placeholder: 'e.g., Dr. Jane Smith, MD, PhD — VP Clinical Development',
-            helpText: 'Per ICH M4(R4), the author of the clinical overview must be identified and should be a qualified expert.',
-          },
-          {
-            id: 'biopharmaceutic_classification',
-            label: 'BCS Classification (Biopharmaceutics Classification System)',
-            type: 'select',
-            options: [
-              { value: 'bcs_i', label: 'BCS Class I — High solubility, high permeability' },
-              { value: 'bcs_ii', label: 'BCS Class II — Low solubility, high permeability' },
-              { value: 'bcs_iii', label: 'BCS Class III — High solubility, low permeability' },
-              { value: 'bcs_iv', label: 'BCS Class IV — Low solubility, low permeability' },
-              { value: 'na', label: 'Not applicable (biologic or non-oral route)' },
-            ],
-            helpText: 'Per FDA Guidance "Waiver of In Vivo Bioavailability and Bioequivalence Studies for Immediate-Release Solid Oral Dosage Forms Based on a BCS" (2017).',
-          },
-        ],
-        defaultNext: 'clinical_pharmacology',
-        issueChecks: [
-          {
-            id: 'safety_db_too_small',
-            condition: { field: 'total_patients_exposed', operator: 'lt', value: 1500 },
-            severity: 'warning',
-            title: 'Safety Database May Be Insufficient',
-            message:
-              'ICH E1 recommends a safety database of at least 1,500 patients for non-life-threatening indications. A database below this threshold may trigger a refuse-to-file action or a Complete Response Letter requesting additional safety data. Ensure justification is provided if the safety database is smaller than recommended.',
-            reference: 'ICH E1 "The Extent of Population Exposure to Assess Clinical Safety"',
-          },
-        ],
-        provideExpertFeedback: true,
-      },
-
-      {
-        id: 'clinical_pharmacology',
-        section: 'Module 2.5 — Clinical Overview',
-        question:
-          'Describe the clinical pharmacology data package, including PK/PD, drug interactions, and special populations.',
-        guidance:
-          'The clinical pharmacology section (Module 2.7.2 and supporting Module 5 studies) is critical for labeling and dosing recommendations. Per ICH E14 (2005, R3 2017) and FDA Guidance "E14 and S7B: Clinical and Nonclinical Evaluation of QT/QTc Interval Prolongation" (2017), a thorough QT/QTc study or concentration-QTc analysis is required. FDA Guidance "Population Pharmacokinetics" (2022) and "Drug Interaction Studies" (2020) describe expectations for PK/PD characterization and DDI assessments.',
-        fields: [
-          {
-            id: 'pk_characterization',
-            label: 'PK Characterization Complete',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Absorption, distribution, metabolism, and excretion (ADME) should be fully characterized.',
-          },
-          {
-            id: 'population_pk_model',
-            label: 'Population PK Model Developed',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per FDA Guidance "Population Pharmacokinetics" (2022), a popPK model integrating data across studies is expected.',
-          },
-          {
-            id: 'exposure_response',
-            label: 'Exposure-Response Analysis Complete',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per FDA Guidance "Exposure-Response Relationships — Study Design, Data Analysis, and Regulatory Applications" (2003), E-R analysis is expected for efficacy and safety endpoints.',
-          },
-          {
-            id: 'ddi_studies',
-            label: 'Drug-Drug Interaction Studies',
-            type: 'multi_select',
-            required: true,
-            options: [
-              { value: 'cyp_inhibition', label: 'CYP Inhibition Studies (in vitro)' },
-              { value: 'cyp_induction', label: 'CYP Induction Studies (in vitro)' },
-              { value: 'transporter', label: 'Transporter Studies (P-gp, BCRP, OATP, etc.)' },
-              { value: 'clinical_ddi', label: 'Clinical DDI Studies' },
-              { value: 'pbpk', label: 'PBPK Modeling for DDI Prediction' },
-            ],
-            helpText: 'Per FDA Guidance "In Vitro Drug Interaction Studies — Cytochrome P450 Enzyme- and Transporter-Mediated Drug Interactions" (2020) and "Clinical Drug Interaction Studies" (2020).',
-          },
-          {
-            id: 'qtc_assessment',
-            label: 'QTc Assessment Completed',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'tqt_study', label: 'Dedicated TQT Study (ICH E14)' },
-              { value: 'concentration_qtc', label: 'Concentration-QTc Analysis (ICH E14 Q&A R3)' },
-              { value: 'both', label: 'Both TQT Study and C-QTc Analysis' },
-              { value: 'not_completed', label: 'Not Completed' },
-            ],
-          },
-          {
-            id: 'special_populations',
-            label: 'Special Population Studies Conducted',
-            type: 'multi_select',
-            options: [
-              { value: 'hepatic', label: 'Hepatic Impairment (FDA Guidance 2020)' },
-              { value: 'renal', label: 'Renal Impairment (FDA Guidance 2020)' },
-              { value: 'pediatric', label: 'Pediatric PK' },
-              { value: 'geriatric', label: 'Geriatric (ICH E7)' },
-              { value: 'pregnancy', label: 'Pregnancy / Lactation' },
-              { value: 'race_ethnicity', label: 'Race/Ethnicity (ICH E5)' },
-              { value: 'food_effect', label: 'Food Effect Study' },
-            ],
-          },
-        ],
-        defaultNext: 'benefit_risk',
-        issueChecks: [
-          {
-            id: 'no_qtc_assessment',
-            condition: { field: 'qtc_assessment', operator: 'eq', value: 'not_completed' },
+            id: 'pdufa_fee_not_paid',
+            condition: { field: 'user_fee_paid', operator: 'eq', value: false },
             severity: 'critical',
-            title: 'QTc Assessment Not Completed',
+            title: 'PDUFA User Fee Required',
             message:
-              'Per ICH E14 and FDA Guidance "E14 and S7B Clinical and Nonclinical Evaluation of QT/QTc Interval Prolongation" (2017), a thorough QTc assessment is required for virtually all new drugs. This is a refuse-to-file issue. Either a dedicated TQT study or a concentration-QTc analysis from Phase 1/2 ECG data must be provided.',
-            reference: 'ICH E14(R3); FDA Guidance "E14 and S7B" (2017)',
+              'The Prescription Drug User Fee must be paid at the time of NDA submission. FDA will refuse to file the application without fee payment per 21 CFR 314.50(l) and 21 USC 379h. Fee waivers may be available for small businesses or orphan products under certain conditions.',
+            reference: '21 CFR 314.50(l); PDUFA (21 USC 379h)',
           },
         ],
       },
 
-      {
-        id: 'benefit_risk',
-        section: 'Module 2.5 — Clinical Overview',
-        question:
-          'Present the benefit-risk assessment for the proposed indication.',
-        guidance:
-          'The benefit-risk assessment is the capstone of Module 2.5 and is central to FDA\'s review. Per FDA\'s Benefit-Risk Framework (Structured Approach, 2018), the assessment should address: (1) Analysis of Condition — severity, unmet medical need; (2) Current Treatment Options — approved therapies and their limitations; (3) Benefit — clinical efficacy, effect size, durability; (4) Risk — safety profile, adverse events, serious risks; (5) Risk Management — REMS, contraindications, warnings. The benefit-risk assessment directly informs the labeling.',
-        fields: [
-          {
-            id: 'disease_severity',
-            label: 'Disease Severity Classification',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'life_threatening', label: 'Life-Threatening / Immediately Life-Threatening' },
-              { value: 'serious', label: 'Serious Condition (as defined in 21 CFR 312.300)' },
-              { value: 'chronic_debilitating', label: 'Chronic / Debilitating but Not Life-Threatening' },
-              { value: 'symptomatic', label: 'Symptomatic / Quality-of-Life Condition' },
-            ],
-          },
-          {
-            id: 'unmet_need',
-            label: 'Unmet Medical Need Statement',
-            type: 'textarea',
-            required: true,
-            placeholder: 'Describe the unmet medical need and why existing therapies are inadequate...',
-            validation: { minLength: 50, maxLength: 3000 },
-          },
-          {
-            id: 'current_treatments',
-            label: 'Current Standard of Care',
-            type: 'textarea',
-            required: true,
-            placeholder: 'List currently approved treatments for this indication and their limitations...',
-          },
-          {
-            id: 'efficacy_magnitude',
-            label: 'Magnitude of Efficacy Benefit',
-            type: 'textarea',
-            required: true,
-            placeholder: 'Summarize the primary efficacy results (e.g., hazard ratio, response rate, absolute risk reduction) and their clinical significance...',
-          },
-          {
-            id: 'key_safety_risks',
-            label: 'Key Safety Risks',
-            type: 'textarea',
-            required: true,
-            placeholder: 'Summarize the most important safety findings, including dose-limiting toxicities, serious adverse events, and any deaths on treatment...',
-          },
-          {
-            id: 'benefit_risk_conclusion',
-            label: 'Benefit-Risk Conclusion',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'favorable', label: 'Favorable — Benefits clearly outweigh risks' },
-              { value: 'favorable_with_mitigation', label: 'Favorable with Risk Mitigation (REMS or labeling restrictions)' },
-              { value: 'marginal', label: 'Marginal — Benefits modestly outweigh risks' },
-              { value: 'uncertain', label: 'Uncertain — Additional data may be needed' },
-            ],
-          },
-        ],
-        defaultNext: 'biopharm_pk_summary',
-        provideExpertFeedback: true,
-      },
-
-      /* ================================================================
-       * Section 4 — Module 2.7: Clinical Summary
-       * ================================================================ */
+      /* ================================================================ */
+      /*  Section 2 — Drug Product Information                            */
+      /* ================================================================ */
 
       {
-        id: 'biopharm_pk_summary',
-        section: 'Module 2.7 — Clinical Summary',
+        id: 'drug_description',
+        section: 'drug_product_info',
         question:
-          'Provide the biopharmaceutic and pharmacokinetic study summaries for Module 2.7.',
+          'Provide detailed drug product information. Per 21 CFR 314.50(d)(1), the NDA must contain a full description of the drug substance, its mechanism of action, dosage form, route, and all proposed strengths.',
         guidance:
-          'Module 2.7.1 (ICH M4E(R2)) requires a Summary of Biopharmaceutic Studies and Associated Analytical Methods. Module 2.7.2 requires a Summary of Clinical Pharmacology Studies. These are tabular summaries with cross-references to the full study reports in Module 5. Per ICH E3, each study should be summarized with design, objectives, key results, and conclusions.',
+          'Per 21 CFR 314.50(d)(1), the NDA must include a full description of the drug including: chemical name and structure, established (generic) name, proposed brand name, mechanism of action, dosage form, route of administration, and all strengths for which approval is sought. For 505(b)(2) applications, therapeutic equivalence rating (per the Orange Book) relative to the reference listed drug must be addressed. The drug substance should be fully characterized at the NDA stage including polymorphism, chirality, and impurity profile.',
         fields: [
           {
-            id: 'bioavailability_studies_count',
-            label: 'Number of Bioavailability Studies',
-            type: 'number',
-            validation: { min: 0, max: 50 },
-            required: true,
-          },
-          {
-            id: 'bioequivalence_studies_count',
-            label: 'Number of Bioequivalence Studies',
-            type: 'number',
-            validation: { min: 0, max: 50 },
-          },
-          {
-            id: 'formulation_changes',
-            label: 'Were there formulation changes during development?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'If the clinical formulation differs from the to-be-marketed formulation, a bridging bioequivalence study is typically required.',
-          },
-          {
-            id: 'formulation_bridge_study',
-            label: 'Bridging Study Between Clinical and Commercial Formulations',
-            type: 'yes_no',
-            visibleWhen: { field: 'formulation_changes', operator: 'eq', value: true },
-            helpText: 'Per FDA Guidance "SUPAC-MR: Modified Release Solid Oral Dosage Forms" (1997) and "SUPAC-IR" (1995), changes in formulation may require bioequivalence bridging.',
-          },
-          {
-            id: 'pk_studies_count',
-            label: 'Total PK Studies',
-            type: 'number',
-            required: true,
-            validation: { min: 0, max: 100 },
-          },
-          {
-            id: 'pk_summary_complete',
-            label: 'PK Tabular Summary (Module 2.7.2) Complete',
-            type: 'yes_no',
-            required: true,
-          },
-        ],
-        defaultNext: 'efficacy_safety_tables',
-      },
-
-      {
-        id: 'efficacy_safety_tables',
-        section: 'Module 2.7 — Clinical Summary',
-        question:
-          'Describe the status of the clinical efficacy and safety tabular summaries.',
-        guidance:
-          'Module 2.7.3 (Summary of Clinical Efficacy) must include tabular summaries of efficacy data per ICH M4E(R2): patient demographics, primary/secondary endpoint results, and subgroup analyses. Module 2.7.4 (Summary of Clinical Safety) must include tabular summaries of adverse events, serious adverse events, deaths, and laboratory findings per ICH E3 and ICH M4E(R2). The safety tables should follow the MedDRA dictionary for AE coding.',
-        fields: [
-          {
-            id: 'efficacy_tables_complete',
-            label: 'Module 2.7.3 — Efficacy Tabular Summary Complete',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'safety_tables_complete',
-            label: 'Module 2.7.4 — Safety Tabular Summary Complete',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'meddra_version',
-            label: 'MedDRA Version Used for AE Coding',
+            id: 'generic_name',
+            label: 'Generic Name (INN/USAN)',
             type: 'text',
-            placeholder: 'e.g., MedDRA v26.1',
+            placeholder: 'e.g., acmetinib',
             required: true,
+            helpText: 'International Nonproprietary Name (INN) or United States Adopted Name (USAN). This must be assigned before NDA approval.',
           },
           {
-            id: 'ae_tables_included',
-            label: 'AE Tables Included',
-            type: 'multi_select',
-            required: true,
-            options: [
-              { value: 'teae_overview', label: 'TEAE Overview Table' },
-              { value: 'ae_by_soc', label: 'AEs by System Organ Class' },
-              { value: 'ae_by_severity', label: 'AEs by Severity Grade' },
-              { value: 'drug_related_ae', label: 'Drug-Related AEs' },
-              { value: 'sae_table', label: 'Serious Adverse Events Table' },
-              { value: 'deaths', label: 'Deaths Listing' },
-              { value: 'discontinuation_ae', label: 'AEs Leading to Discontinuation' },
-              { value: 'lab_abnormalities', label: 'Laboratory Abnormalities' },
-              { value: 'vital_signs', label: 'Vital Signs Changes' },
-              { value: 'ecg_findings', label: 'ECG Findings' },
-            ],
-          },
-          {
-            id: 'deaths_on_study',
-            label: 'Number of Deaths in the Clinical Program',
-            type: 'number',
-            required: true,
-            validation: { min: 0 },
-          },
-          {
-            id: 'deaths_narratives_complete',
-            label: 'Death Narratives Complete',
-            type: 'yes_no',
-            visibleWhen: { field: 'deaths_on_study', operator: 'gt', value: 0 },
-            helpText: 'Per ICH E3, individual patient narratives must be provided for all deaths, and a summary attribution assessment is required.',
-          },
-        ],
-        defaultNext: 'literature_references',
-      },
-
-      {
-        id: 'literature_references',
-        section: 'Module 2.7 — Clinical Summary',
-        question:
-          'Provide information about the literature references and Module 2.7.6 requirements.',
-        guidance:
-          'Module 2.7.5 (References) must include all literature cited in the clinical overview and clinical summaries. Module 2.7.6 (Synopses of Individual Studies) requires a synopsis for each clinical study following the ICH E3 synopsis format. For 505(b)(2) applications, published literature supporting safety/efficacy must be included in full per 21 CFR 314.50(d)(1).',
-        fields: [
-          {
-            id: 'total_literature_references',
-            label: 'Total Literature References',
-            type: 'number',
-            validation: { min: 0, max: 5000 },
-          },
-          {
-            id: 'study_synopses_complete',
-            label: 'ICH E3 Synopses Complete for All Studies',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'literature_for_505b2',
-            label: 'Published Literature Included for 505(b)(2) Reliance',
-            type: 'yes_no',
-            visibleWhen: { field: 'nda_type', operator: 'eq', value: '505b2' },
-            helpText: 'For 505(b)(2), full copies of published reports relied upon for safety/efficacy must be included per 21 CFR 314.50(d)(1).',
-          },
-          {
-            id: 'datasets_submitted',
-            label: 'Electronic Datasets Submitted in CDISC Format',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'sdtm_adam', label: 'SDTM + ADaM Datasets (FDA required format)' },
-              { value: 'sdtm_only', label: 'SDTM Only' },
-              { value: 'legacy', label: 'Legacy Format (pre-CDISC)' },
-              { value: 'not_ready', label: 'Not Yet Prepared' },
-            ],
-            helpText: 'Per FDA Guidance "Study Data Standards Resources" (updated annually), CDISC SDTM and ADaM datasets are required for NDA submissions. SEND datasets are required for nonclinical studies.',
-          },
-          {
-            id: 'define_xml_version',
-            label: 'Define-XML Version',
-            type: 'select',
-            options: [
-              { value: 'v2_1', label: 'Define-XML v2.1' },
-              { value: 'v2_0', label: 'Define-XML v2.0' },
-              { value: 'not_prepared', label: 'Not Yet Prepared' },
-            ],
-          },
-        ],
-        defaultNext: 'drug_substance',
-      },
-
-      /* ================================================================
-       * Section 5 — Module 3: Quality / CMC
-       * ================================================================ */
-
-      {
-        id: 'drug_substance',
-        section: 'Module 3 — Quality / CMC',
-        question:
-          'Describe the drug substance (Module 3.2.S) information.',
-        guidance:
-          'Module 3.2.S covers the drug substance per ICH Q7 (GMP for Active Pharmaceutical Ingredients), ICH Q11 (Development and Manufacture of Drug Substances), and ICH Q6A/Q6B (Specifications for chemical/biotechnological substances). The drug substance section must include characterization, manufacturing process description, specification justification, and stability data per ICH Q1A(R2).',
-        fields: [
-          {
-            id: 'drug_substance_name',
-            label: 'Drug Substance Name (USAN / INN)',
+            id: 'proposed_brand_name',
+            label: 'Proposed Brand (Trade) Name',
             type: 'text',
-            required: true,
+            placeholder: 'e.g., Acmexor',
+            helpText:
+              'FDA\'s Division of Medication Error Prevention and Analysis (DMEPA) reviews proposed proprietary names for potential medication errors. Submit early for review.',
           },
           {
-            id: 'chemical_structure_characterized',
-            label: 'Chemical Structure Fully Characterized',
-            type: 'yes_no',
+            id: 'active_ingredient',
+            label: 'Active Ingredient Description',
+            type: 'textarea',
+            placeholder:
+              'e.g., Acmetinib hydrochloride, a selective tyrosine kinase inhibitor targeting EGFR exon 20 insertions. Molecular formula: C25H28ClFN4O3·HCl, MW = 527.4. White to off-white crystalline powder.',
             required: true,
+            validation: { minLength: 30 },
           },
           {
-            id: 'manufacturing_process_validated',
-            label: 'Manufacturing Process Validated',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ICH Q7, the commercial manufacturing process must be validated. Process validation data per FDA Guidance "Process Validation: General Principles and Practices" (2011) should be included or cross-referenced.',
-          },
-          {
-            id: 'ds_specification_set',
-            label: 'Drug Substance Specification Set per ICH Q6A/Q6B',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'ds_stability_data',
-            label: 'Drug Substance Stability Data Available',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'full_ich', label: 'Full ICH Q1A(R2) Stability Data (long-term + accelerated)' },
-              { value: 'partial', label: 'Partial Stability Data (ongoing studies)' },
-              { value: 'minimal', label: 'Minimal Data — Additional Studies Needed' },
-            ],
-          },
-          {
-            id: 'ds_impurity_profile',
-            label: 'Impurity Profile Characterized per ICH Q3A(R2)',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Impurity limits per ICH Q3A(R2) — identification threshold: 0.10% for dose >2g/day; qualification threshold: 0.15% for dose >2g/day.',
-          },
-          {
-            id: 'genotoxic_impurities',
-            label: 'Genotoxic Impurities Assessed per ICH M7(R2)',
-            type: 'yes_no',
-            required: true,
-            helpText: 'ICH M7(R2) requires assessment and control of mutagenic impurities in pharmaceuticals with acceptable intake limits (typically 1.5 μg/day for lifetime exposure).',
-          },
-          {
-            id: 'ds_manufacturer',
-            label: 'Drug Substance Manufacturer',
+            id: 'molecular_target',
+            label: 'Molecular Target',
             type: 'text',
-            placeholder: 'e.g., Lonza AG, Visp, Switzerland',
-            required: true,
+            placeholder: 'e.g., EGFR (epidermal growth factor receptor) with selectivity for exon 20 insertion mutations',
           },
-        ],
-        defaultNext: 'drug_product',
-      },
-
-      {
-        id: 'drug_product',
-        section: 'Module 3 — Quality / CMC',
-        question:
-          'Describe the drug product (Module 3.2.P) information.',
-        guidance:
-          'Module 3.2.P covers the drug product per ICH Q8(R2) (Pharmaceutical Development), ICH Q9 (Quality Risk Management), and ICH Q10 (Pharmaceutical Quality System). The section must include formulation, manufacturing process, specifications, stability, and container-closure system information. Per ICH Q1A(R2), stability data supporting the proposed shelf life must be provided. Per ICH Q3B(R2), degradation impurities must be qualified.',
-        fields: [
+          {
+            id: 'mechanism_of_action',
+            label: 'Mechanism of Action',
+            type: 'textarea',
+            placeholder:
+              'e.g., Acmetinib selectively and irreversibly inhibits EGFR with exon 20 insertion mutations (IC50 = 5 nM), blocking downstream RAS/RAF/MEK/ERK and PI3K/AKT signaling. >100-fold selectivity over wild-type EGFR minimizes on-target toxicity.',
+            required: true,
+            validation: { minLength: 50 },
+          },
           {
             id: 'dosage_form',
             label: 'Dosage Form',
@@ -1180,181 +351,187 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             options: [
               { value: 'tablet', label: 'Tablet' },
               { value: 'capsule', label: 'Capsule' },
-              { value: 'solution_injection', label: 'Solution for Injection' },
-              { value: 'lyophilized', label: 'Lyophilized Powder for Reconstitution' },
-              { value: 'suspension', label: 'Suspension' },
+              { value: 'injection', label: 'Solution for Injection' },
+              { value: 'infusion', label: 'Solution for Infusion' },
+              { value: 'topical', label: 'Topical (Cream/Ointment/Gel)' },
+              { value: 'inhaled', label: 'Inhaled (Powder/Solution)' },
               { value: 'patch', label: 'Transdermal Patch' },
-              { value: 'inhaler', label: 'Inhaler (MDI / DPI)' },
-              { value: 'prefilled_syringe', label: 'Prefilled Syringe' },
-              { value: 'autoinjector', label: 'Autoinjector' },
+              { value: 'other', label: 'Other' },
+            ],
+          },
+          {
+            id: 'route_of_administration',
+            label: 'Route of Administration',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'oral', label: 'Oral' },
+              { value: 'iv', label: 'Intravenous (IV)' },
+              { value: 'sc', label: 'Subcutaneous (SC)' },
+              { value: 'im', label: 'Intramuscular (IM)' },
+              { value: 'topical', label: 'Topical' },
+              { value: 'inhaled', label: 'Inhaled' },
+              { value: 'intrathecal', label: 'Intrathecal' },
               { value: 'other', label: 'Other' },
             ],
           },
           {
             id: 'strengths',
-            label: 'Strengths to be Marketed',
+            label: 'Proposed Strength(s)',
             type: 'text',
+            placeholder: 'e.g., 25 mg, 50 mg, 100 mg film-coated tablets',
             required: true,
-            placeholder: 'e.g., 25 mg, 50 mg, 100 mg',
+            helpText: 'List all strengths for which approval is sought. Each strength requires separate bioequivalence or clinical justification.',
           },
           {
-            id: 'dp_manufacturing_validated',
-            label: 'Drug Product Manufacturing Process Validated',
+            id: 'therapeutic_equivalence',
+            label: 'Therapeutic Equivalence Rating (Orange Book)',
+            type: 'select',
+            visibleWhen: { field: 'nda_type', operator: 'eq', value: '505b2' },
+            options: [
+              {
+                value: 'AB',
+                label: 'AB — Therapeutically Equivalent (meets bioequivalence)',
+                description: 'Substitutable at the pharmacy level',
+              },
+              {
+                value: 'BX',
+                label: 'BX — Not Therapeutically Equivalent (insufficient data)',
+                description: 'Not substitutable; may need additional studies',
+              },
+              {
+                value: 'not_determined',
+                label: 'Not Yet Determined',
+                description: 'TE evaluation pending FDA assessment',
+              },
+            ],
+            helpText:
+              'Per the Orange Book (Approved Drug Products with Therapeutic Equivalence Evaluations), 505(b)(2) products may receive an AB rating if bioequivalence to the RLD is demonstrated.',
+          },
+        ],
+        defaultNext: 'formulation_dosage',
+        provideExpertFeedback: true,
+      },
+
+      {
+        id: 'formulation_dosage',
+        section: 'drug_product_info',
+        question:
+          'Provide detailed CMC information: quantitative composition, manufacturing, specifications, and stability data for the drug product.',
+        guidance:
+          'Per 21 CFR 314.50(d)(1) and ICH M4Q (CTD Module 3 — Quality), the NDA must include comprehensive CMC data including quantitative composition, excipient justification, manufacturing process description, batch analysis data, specifications, and stability. At the NDA stage, full ICH Q1A(R2) stability data (typically 12-24 months long-term and 6 months accelerated) is expected. Manufacturing sites must be identified and compliant with cGMP (21 CFR Parts 210/211). Container closure system suitability must be demonstrated.',
+        fields: [
+          {
+            id: 'quantitative_composition',
+            label: 'Quantitative Composition (per dosage unit)',
+            type: 'textarea',
+            placeholder:
+              'e.g., Acmetinib HCl: 50 mg (equivalent to 42 mg free base)\nMicrocrystalline cellulose: 120 mg\nCroscarmellose sodium: 15 mg\nMagnesium stearate: 2 mg\nFilm coat (Opadry II): 6 mg\nTotal tablet weight: 193 mg',
+            required: true,
+          },
+          {
+            id: 'excipient_safety',
+            label: 'All excipients listed in FDA Inactive Ingredients Guide (IIG) for proposed route and dose?',
             type: 'yes_no',
             required: true,
+            helpText:
+              'Novel excipients (not in the FDA IIG database) require separate safety justification and may trigger additional nonclinical studies or a Type IV DMF.',
           },
           {
-            id: 'dp_specification_set',
-            label: 'Drug Product Specifications per ICH Q6A/Q6B',
-            type: 'yes_no',
+            id: 'manufacturing_sites',
+            label: 'Manufacturing Site(s) — Drug Substance and Drug Product',
+            type: 'textarea',
+            placeholder:
+              'e.g., Drug Substance: Lonza AG, Basel, Switzerland (FDA EIR 2024)\nDrug Product: Patheon, Cincinnati, OH (FDA EIR 2025)\nPackaging: Anderson Packaging, Rockford, IL',
+            required: true,
+            helpText:
+              'All manufacturing, testing, and packaging sites must be listed. FDA may conduct pre-approval inspections (PAI) per 21 CFR 211.',
+          },
+          {
+            id: 'batch_analysis',
+            label: 'Batch Analysis Summary (pivotal/commercial scale)',
+            type: 'textarea',
+            placeholder:
+              'e.g., Three pivotal-scale batches (Batch 001, 002, 003) manufactured at proposed commercial site. All batches met specifications for assay (99.2-100.1%), related substances (total <0.5%), dissolution (Q=85% at 30 min), content uniformity (AV <5.0), and microbial limits.',
+            required: true,
+            validation: { minLength: 50 },
+          },
+          {
+            id: 'specifications_summary',
+            label: 'Proposed Commercial Specifications Summary',
+            type: 'textarea',
+            placeholder:
+              'e.g., Appearance, identification (HPLC RT, IR), assay (98.0-102.0%), related substances (individual ≤0.3%, total ≤1.0%), dissolution (Q=80% at 30 min, USP Apparatus II), content uniformity (USP <905>), water content (≤0.5%), microbial limits (USP <61>/<62>).',
             required: true,
           },
           {
-            id: 'dp_stability_data',
-            label: 'Drug Product Stability Data',
+            id: 'stability_data_duration',
+            label: 'Long-Term Stability Data Available',
             type: 'select',
             required: true,
             options: [
-              { value: 'full_ich', label: 'Full ICH Q1A(R2) Stability Data — supports proposed shelf life' },
-              { value: 'partial', label: 'Partial Data — shelf life extrapolation needed (ICH Q1E)' },
-              { value: 'insufficient', label: 'Insufficient — additional data needed before approval' },
+              { value: '6mo', label: '6 months', flagsIssue: true },
+              { value: '12mo', label: '12 months' },
+              { value: '18mo', label: '18 months' },
+              { value: '24mo', label: '24 months' },
+              { value: '36mo', label: '36 months or more' },
             ],
-          },
-          {
-            id: 'proposed_shelf_life',
-            label: 'Proposed Shelf Life',
-            type: 'text',
-            placeholder: 'e.g., 24 months at 25°C/60% RH',
-            required: true,
+            helpText:
+              'Per ICH Q1A(R2), NDA stability data should include at least 12 months long-term (25°C/60% RH) and 6 months accelerated (40°C/75% RH) data at the time of submission. Proposed shelf life should not exceed twice the long-term data period or the accelerated data period, whichever is shorter.',
           },
           {
             id: 'container_closure',
-            label: 'Container-Closure System',
-            type: 'text',
-            placeholder: 'e.g., HDPE bottle with child-resistant closure, 30-count',
+            label: 'Container Closure System Description',
+            type: 'textarea',
+            placeholder:
+              'e.g., 30-count HDPE bottle with polypropylene child-resistant cap and induction seal. Desiccant canister included. Extractables/leachables (E&L) study completed per USP <1663>/<1664>.',
             required: true,
           },
           {
-            id: 'dp_manufacturer',
-            label: 'Drug Product Manufacturing Site',
-            type: 'text',
-            placeholder: 'e.g., Patheon, Inc., Cincinnati, OH',
-            required: true,
+            id: 'controlled_substance',
+            label: 'Is the drug product a controlled substance under the Controlled Substances Act?',
+            type: 'yes_no',
+            helpText:
+              'If yes, DEA scheduling is required before marketing. The scheduling recommendation is included in the NDA review and coordinated between FDA and DEA (21 USC 811-812).',
           },
         ],
-        defaultNext: 'facilities_adventitious',
-      },
-
-      {
-        id: 'facilities_adventitious',
-        section: 'Module 3 — Quality / CMC',
-        question:
-          'Provide information about manufacturing facilities and, for biologics, adventitious agents assessment.',
-        guidance:
-          'All manufacturing, testing, and packaging sites must be listed in Module 3.2.R (Regional Information) with their FDA Establishment Identifier (FEI) numbers. Per 21 CFR 314.50(d)(1), facilities must be registered with FDA and inspected. For biologics or products derived from biological sources, adventitious agents (viruses, TSE agents, mycoplasma) must be addressed per ICH Q5A(R2) "Viral Safety Evaluation" and ICH Q5D "Cell Substrates."',
-        fields: [
+        defaultNext: 'nonclinical_overview',
+        issueChecks: [
           {
-            id: 'total_manufacturing_sites',
-            label: 'Total Manufacturing / Testing Sites',
-            type: 'number',
-            required: true,
-            validation: { min: 1, max: 50 },
-          },
-          {
-            id: 'all_sites_registered',
-            label: 'All Sites FDA-Registered with FEI Numbers',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'pre_approval_inspection_expected',
-            label: 'Pre-Approval Inspection (PAI) Expected',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per FDA MAPP 5014.1, PAI is typically conducted for NDA manufacturing sites. FDA\'s Office of Pharmaceutical Quality (OPQ) conducts PAI assessments.',
-          },
-          {
-            id: 'gmp_status',
-            label: 'Current GMP Status of All Sites',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'all_compliant', label: 'All Sites GMP-Compliant (no outstanding 483s)' },
-              { value: 'minor_483', label: 'Minor FDA 483 Observations Outstanding' },
-              { value: 'warning_letter', label: 'Warning Letter or Import Alert Active' },
-              { value: 'not_inspected', label: 'Not Yet FDA-Inspected' },
-            ],
-          },
-          {
-            id: 'adventitious_agents_applicable',
-            label: 'Adventitious Agents Assessment Applicable',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Required for biologics and any product derived from biological sources (e.g., animal-derived excipients, cell-culture-based products).',
-          },
-          {
-            id: 'viral_safety_evaluation',
-            label: 'Viral Safety Evaluation per ICH Q5A(R2) Complete',
-            type: 'yes_no',
-            visibleWhen: { field: 'adventitious_agents_applicable', operator: 'eq', value: true },
-          },
-          {
-            id: 'cell_bank_characterization',
-            label: 'Cell Bank Characterization per ICH Q5D Complete',
-            type: 'yes_no',
-            visibleWhen: { field: 'is_biologic', operator: 'eq', value: true },
-            helpText: 'For biological products, Master Cell Bank (MCB) and Working Cell Bank (WCB) must be characterized per ICH Q5D.',
+            id: 'limited_stability_data',
+            condition: { field: 'stability_data_duration', operator: 'eq', value: '6mo' },
+            severity: 'warning',
+            title: 'Limited Stability Data',
+            message:
+              'Only 6 months of long-term stability data may be insufficient to support the proposed shelf life at NDA submission. Per ICH Q1A(R2), the proposed shelf life should be supported by data from at least 12 months of long-term stability testing. FDA may issue a Refuse to File if stability data are inadequate.',
+            reference: 'ICH Q1A(R2); 21 CFR 314.50(d)(1)',
           },
         ],
-        defaultNext: 'pharmacology_pk',
       },
 
-      /* ================================================================
-       * Section 6 — Module 4: Nonclinical
-       * ================================================================ */
+      /* ================================================================ */
+      /*  Section 3 — Nonclinical Pharmacology & Toxicology               */
+      /* ================================================================ */
 
       {
-        id: 'pharmacology_pk',
-        section: 'Module 4 — Nonclinical',
+        id: 'nonclinical_overview',
+        section: 'nonclinical',
         question:
-          'Describe the nonclinical pharmacology and pharmacokinetic studies supporting the NDA.',
+          'Provide a summary of the nonclinical pharmacology and toxicology program supporting this NDA. At the NDA stage, the complete nonclinical package per ICH M3(R2) should be available.',
         guidance:
-          'Module 4 (ICH M4S(R2)) covers the nonclinical data. Section 4.2.1 (Primary Pharmacodynamics) describes the mechanism of action and in vitro/in vivo efficacy. Section 4.2.2 (Secondary Pharmacodynamics) covers off-target effects. Section 4.2.3 (Safety Pharmacology) must address cardiovascular (ICH S7A/S7B), CNS, and respiratory systems. Section 4.2.4 covers nonclinical PK (ADME). Per ICH S7B, an hERG assay and in vivo QT study are expected.',
+          'Per ICH M3(R2) "Nonclinical Safety Studies for the Conduct of Human Clinical Trials and Marketing Authorization" and 21 CFR 314.50(d)(2), the NDA must include full reports of all nonclinical studies. The nonclinical overview (CTD Module 2.4) should integrate pharmacology (primary, secondary, safety), pharmacokinetics (ADME), and toxicology (single-dose, repeat-dose, genotoxicity, carcinogenicity, reproductive toxicology, and special toxicology). Per ICH S7A/S7B, safety pharmacology (cardiovascular, CNS, respiratory) must be complete. The Module 2.4 Nonclinical Overview and Module 2.6 Nonclinical Written and Tabulated Summaries should follow ICH M4S format.',
         fields: [
           {
-            id: 'primary_pharmacology_complete',
-            label: 'Primary Pharmacology Studies Complete',
-            type: 'yes_no',
+            id: 'pharmacology_summary',
+            label: 'Nonclinical Pharmacology Summary (primary and secondary)',
+            type: 'textarea',
+            placeholder:
+              'e.g., Primary pharmacodynamics: selective EGFR exon 20 insertion inhibitor (IC50 = 5 nM). In vivo efficacy demonstrated in PDX models with >80% TGI at 30 mg/kg QD. Secondary pharmacodynamics: selectivity panel (60+ kinases) showed no significant off-target activity at 10 uM. No CNS penetration (brain/plasma ratio <0.05).',
             required: true,
+            validation: { minLength: 100 },
           },
           {
-            id: 'secondary_pharmacology_complete',
-            label: 'Secondary Pharmacology (Off-Target Screen) Complete',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'safety_pharmacology_core_battery',
-            label: 'Core Safety Pharmacology Battery Complete',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ICH S7A, the core battery includes cardiovascular (hERG + in vivo telemetry), CNS (Irwin test / FOB), and respiratory function studies.',
-          },
-          {
-            id: 'herg_assay',
-            label: 'hERG Assay Conducted',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ICH S7B, an in vitro hERG (IKr) assay is required to assess QT prolongation risk.',
-          },
-          {
-            id: 'nonclinical_pk_complete',
-            label: 'Nonclinical PK (ADME) Complete',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'species_used_nonclinical',
+            id: 'species_studied',
             label: 'Species Used in Nonclinical Program',
             type: 'multi_select',
             required: true,
@@ -1363,957 +540,1695 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'rat', label: 'Rat' },
               { value: 'rabbit', label: 'Rabbit' },
               { value: 'dog', label: 'Dog' },
-              { value: 'cynomolgus', label: 'Cynomolgus Monkey' },
+              { value: 'monkey', label: 'Cynomolgus Monkey' },
               { value: 'minipig', label: 'Minipig' },
-              { value: 'other', label: 'Other' },
             ],
+            helpText:
+              'Per ICH M3(R2), toxicology studies must be conducted in at least two species (one rodent, one non-rodent) for small molecules. For biologics (ICH S6(R1)), one pharmacologically relevant species may suffice.',
           },
           {
-            id: 'environmental_risk_assessment',
-            label: 'Environmental Risk Assessment (ERA) Completed',
+            id: 'pivotal_tox_studies',
+            label: 'Pivotal Toxicology Studies Summary',
+            type: 'textarea',
+            placeholder:
+              'e.g., 28-day GLP rat study (NOAEL 100 mg/kg/day), 28-day GLP dog study (NOAEL 30 mg/kg/day), 26-week GLP rat study (NOAEL 60 mg/kg/day), 39-week GLP dog study (NOAEL 15 mg/kg/day). Target organ toxicities: liver (reversible ALT elevation in dog at ≥60 mg/kg), GI (emesis in dog at ≥30 mg/kg). All findings reversible within 4-week recovery period.',
+            required: true,
+            validation: { minLength: 100 },
+          },
+          {
+            id: 'noael_summary',
+            label: 'NOAEL Summary (most sensitive species)',
+            type: 'text',
+            placeholder: 'e.g., NOAEL: 15 mg/kg/day (dog, 39-week study); exposure margin at MRHD: 3.2x (based on AUC)',
+            required: true,
+          },
+          {
+            id: 'safety_pharmacology',
+            label: 'ICH S7A Core Battery Safety Pharmacology Completed (CV, CNS, Respiratory)',
             type: 'yes_no',
-            helpText: 'Per 21 CFR 25, an ERA may be required unless a categorical exclusion applies. The ERA evaluates potential environmental impact of manufacturing and patient excretion.',
+            required: true,
+            helpText:
+              'ICH S7A core battery covers cardiovascular (including hERG per S7B), central nervous system (Irwin/FOB), and respiratory (plethysmography) endpoints. These must be complete for the NDA.',
+          },
+          {
+            id: 'genetic_tox_battery',
+            label: 'ICH S2(R1) Genetic Toxicology Battery Completed',
+            type: 'yes_no',
+            required: true,
+            helpText:
+              'Standard battery: (1) bacterial reverse mutation (Ames test), (2) in vitro chromosomal aberration or micronucleus assay, (3) in vivo micronucleus or equivalent. All three tests must be negative for a clean genotoxicity profile.',
+          },
+          {
+            id: 'has_target_organ_tox',
+            label: 'Were target organ toxicities identified in nonclinical studies?',
+            type: 'yes_no',
+          },
+          {
+            id: 'target_organs',
+            label: 'Target Organ Toxicity Description',
+            type: 'textarea',
+            placeholder:
+              'e.g., Liver: reversible ALT/AST elevation at ≥60 mg/kg in dog (exposure margin 1.5x at MRHD). Kidney: tubular basophilia in rat at ≥200 mg/kg (exposure margin 8x). All findings were reversible after a 4-week recovery period.',
+            visibleWhen: { field: 'has_target_organ_tox', operator: 'eq', value: true },
           },
         ],
-        defaultNext: 'toxicology_program',
-      },
-
-      {
-        id: 'toxicology_program',
-        section: 'Module 4 — Nonclinical',
-        question:
-          'Describe the nonclinical toxicology program supporting the NDA.',
-        guidance:
-          'The toxicology section (Module 4.2.3) must include single-dose, repeat-dose (duration per ICH M3(R2) — typically 6 months in rodents, 9 months in non-rodents for chronic use), genotoxicity (ICH S2(R1)), carcinogenicity (ICH S1A/S1B — required for products used > 6 months or with concern), reproductive toxicity (ICH S5(R3) — fertility, embryo-fetal development, pre/postnatal development), and local tolerance. Phototoxicity (ICH S10) should be assessed if the drug absorbs UV/visible light.',
-        fields: [
-          {
-            id: 'single_dose_tox',
-            label: 'Single-Dose Toxicology Complete',
-            type: 'yes_no',
-          },
-          {
-            id: 'repeat_dose_tox_rodent',
-            label: 'Repeat-Dose Toxicology — Rodent (duration)',
-            type: 'select',
-            required: true,
-            options: [
-              { value: '1_month', label: '1 Month' },
-              { value: '3_month', label: '3 Months' },
-              { value: '6_month', label: '6 Months' },
-              { value: 'not_conducted', label: 'Not Conducted' },
-            ],
-          },
-          {
-            id: 'repeat_dose_tox_non_rodent',
-            label: 'Repeat-Dose Toxicology — Non-Rodent (duration)',
-            type: 'select',
-            required: true,
-            options: [
-              { value: '1_month', label: '1 Month' },
-              { value: '3_month', label: '3 Months' },
-              { value: '9_month', label: '9 Months' },
-              { value: 'not_conducted', label: 'Not Conducted' },
-            ],
-          },
-          {
-            id: 'genotoxicity_battery',
-            label: 'Genotoxicity Battery Complete (ICH S2(R1))',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Standard battery: Ames test (bacterial reverse mutation), in vitro chromosomal aberration or micronucleus, and in vivo micronucleus.',
-          },
-          {
-            id: 'carcinogenicity_studies',
-            label: 'Carcinogenicity Studies',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'completed', label: 'Completed (2-year rodent + Tg.rasH2 or p53+/-)' },
-              { value: 'waiver_granted', label: 'Waiver Granted (ICH S1A — duration < 6 months)' },
-              { value: 'ongoing', label: 'Ongoing — Data Expected Before Approval' },
-              { value: 'not_initiated', label: 'Not Initiated' },
-            ],
-          },
-          {
-            id: 'reproductive_tox',
-            label: 'Reproductive Toxicology Studies per ICH S5(R3)',
-            type: 'multi_select',
-            required: true,
-            options: [
-              { value: 'fertility', label: 'Fertility and Early Embryonic Development (Segment I)' },
-              { value: 'efd', label: 'Embryo-Fetal Development (Segment II)' },
-              { value: 'ppnd', label: 'Pre/Postnatal Development (Segment III)' },
-              { value: 'juvenile', label: 'Juvenile Animal Toxicology' },
-              { value: 'none', label: 'None Conducted' },
-            ],
-          },
-          {
-            id: 'indication_chronicity',
-            label: 'Is this a chronic-use indication (> 6 months treatment)?',
-            type: 'yes_no',
-            required: true,
-          },
-        ],
-        defaultNext: 'pivotal_studies',
+        defaultNext: 'carcinogenicity_repro',
         issueChecks: [
           {
-            id: 'no_carcinogenicity_chronic',
-            condition: { field: 'carcinogenicity_studies', operator: 'eq', value: 'not_initiated' },
+            id: 'genotox_battery_required',
+            condition: { field: 'genetic_tox_battery', operator: 'eq', value: false },
             severity: 'critical',
-            title: 'No Carcinogenicity Data for Chronic Indication',
+            title: 'Genotoxicity Battery Required',
             message:
-              'Per ICH S1A, carcinogenicity studies are required for drugs intended for continuous use > 6 months. FDA will not approve an NDA for a chronic indication without carcinogenicity data or a scientifically justified waiver. This is a refuse-to-file issue.',
-            reference: 'ICH S1A "Need for Carcinogenicity Studies of Pharmaceuticals"; ICH S1B(R1)',
-          },
-          {
-            id: 'missing_reproductive_tox',
-            condition: { field: 'reproductive_tox', operator: 'contains', value: 'none' },
-            severity: 'critical',
-            title: 'Missing Reproductive Toxicology Studies',
-            message:
-              'Per ICH S5(R3), reproductive and developmental toxicity studies are required for all drugs to be used in women of childbearing potential. At minimum, fertility (Segment I) and embryo-fetal development (Segment II) studies are expected before NDA submission. This is a refuse-to-file issue.',
-            reference: 'ICH S5(R3) "Detection of Reproductive and Developmental Toxicity"',
-          },
-          {
-            id: 'no_chronic_tox_data',
-            condition: { field: 'repeat_dose_tox_rodent', operator: 'in', value: ['1_month', 'not_conducted'] },
-            severity: 'critical',
-            title: 'Insufficient Chronic Toxicity Duration',
-            message:
-              'Per ICH M3(R2), repeat-dose toxicity study duration must equal or exceed the intended clinical treatment duration. For chronic use, 6-month rodent and 9-month non-rodent studies are required. Current data appears insufficient for the proposed indication.',
-            reference: 'ICH M3(R2) Table 1; FDA Guidance "Nonclinical Safety Evaluation of Drug Products" (2016)',
+              'The complete ICH S2(R1) genotoxicity battery must be completed before NDA submission. Missing genotoxicity data is a major deficiency that will result in a Refuse to File or Complete Response Letter. The standard battery includes Ames test, in vitro chromosomal aberration or micronucleus, and in vivo micronucleus assay.',
+            reference: 'ICH S2(R1); ICH M3(R2); 21 CFR 314.50(d)(2)',
           },
         ],
       },
 
-      /* ================================================================
-       * Section 7 — Module 5: Clinical Study Reports
-       * ================================================================ */
-
       {
-        id: 'pivotal_studies',
-        section: 'Module 5 — Clinical Study Reports',
+        id: 'carcinogenicity_repro',
+        section: 'nonclinical',
         question:
-          'Describe the pivotal clinical studies that form the primary evidence for this NDA.',
+          'Describe the carcinogenicity and reproductive toxicology studies. These are critical for NDA labeling and risk assessment.',
         guidance:
-          'Per 21 CFR 314.126, FDA generally requires evidence from adequate and well-controlled investigations — typically two pivotal trials demonstrating effectiveness. Under certain circumstances (e.g., large multicenter trial with robust results, rare disease), a single pivotal trial may suffice per FDA Guidance "Providing Clinical Evidence of Effectiveness for Human Drug and Biological Products" (1998). Each pivotal study report must follow the ICH E3 format.',
+          'Per ICH S1A/S1B, carcinogenicity studies are required for drugs intended for chronic use (≥6 months continuous or intermittent for chronic/recurrent conditions). ICH S1B(R1) allows alternatives to the traditional 2-year rat bioassay (e.g., p53+/- transgenic mouse model or rasH2 model). Per ICH S5(R3), the complete reproductive toxicology battery (fertility and early embryonic development, embryo-fetal development, pre- and postnatal development) must be completed before NDA submission. Teratogenicity signals have direct implications for REMS evaluation, Pregnancy Category assignment (now under PLLR framework per 21 CFR 201.57(c)(9)), and boxed warning consideration.',
         fields: [
           {
-            id: 'number_pivotal_studies',
-            label: 'Number of Pivotal (Phase 3) Studies',
-            type: 'number',
-            required: true,
-            validation: { min: 0, max: 20 },
-          },
-          {
-            id: 'pivotal_study_designs',
-            label: 'Pivotal Study Design(s)',
-            type: 'multi_select',
+            id: 'carcinogenicity_status',
+            label: 'Carcinogenicity Study Status',
+            type: 'select',
             required: true,
             options: [
-              { value: 'rct_parallel', label: 'Randomized Controlled — Parallel Group' },
-              { value: 'rct_crossover', label: 'Randomized Controlled — Crossover' },
-              { value: 'single_arm', label: 'Single-Arm (for accelerated approval)' },
-              { value: 'non_inferiority', label: 'Non-Inferiority' },
-              { value: 'superiority', label: 'Superiority' },
-              { value: 'adaptive', label: 'Adaptive Design' },
-              { value: 'platform', label: 'Platform / Master Protocol' },
-              { value: 'external_control', label: 'External / Historical Control' },
+              { value: 'completed', label: 'Completed — 2-year rodent and/or transgenic mouse model' },
+              { value: 'ongoing', label: 'Ongoing — data expected before approval' },
+              { value: 'waived', label: 'Waived — with scientific justification to FDA' },
+              { value: 'planned', label: 'Planned — post-marketing commitment' },
             ],
           },
           {
-            id: 'primary_endpoint',
-            label: 'Primary Endpoint(s)',
+            id: 'carcinogenicity_findings',
+            label: 'Carcinogenicity Study Findings',
             type: 'textarea',
-            required: true,
-            placeholder: 'e.g., Overall Survival (OS) with a hazard ratio target of <0.75 vs. standard of care; co-primary endpoints of ACR20 response rate and change in HAQ-DI from baseline at Week 24',
+            placeholder:
+              'e.g., 2-year rat study: no carcinogenicity signal at doses up to 100 mg/kg/day (exposure margin 5x MRHD). 26-week rasH2 transgenic mouse study: negative at all dose levels tested.',
+            visibleWhen: { field: 'carcinogenicity_status', operator: 'eq', value: 'completed' },
           },
           {
-            id: 'primary_endpoint_met',
-            label: 'Primary Endpoint(s) Met',
+            id: 'repro_tox_status',
+            label: 'Reproductive Toxicology Program Status',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'completed', label: 'Completed — all ICH S5(R3) segments' },
+              { value: 'ongoing', label: 'Ongoing — some segments still in progress' },
+              { value: 'planned', label: 'Planned — not yet initiated' },
+            ],
+          },
+          {
+            id: 'repro_tox_segments',
+            label: 'Reproductive Toxicology Segments Completed',
+            type: 'multi_select',
+            visibleWhen: { field: 'repro_tox_status', operator: 'in', value: ['completed', 'ongoing'] },
+            options: [
+              { value: 'fertility', label: 'Segment I — Fertility and Early Embryonic Development' },
+              { value: 'efd', label: 'Segment II — Embryo-Fetal Development (EFD)' },
+              { value: 'pre_postnatal', label: 'Segment III — Pre- and Postnatal Development (PPND)' },
+            ],
+          },
+          {
+            id: 'teratogenicity_signal',
+            label: 'Was a teratogenicity signal identified in reproductive toxicology studies?',
             type: 'yes_no',
             required: true,
           },
           {
-            id: 'pivotal_total_enrollment',
-            label: 'Total Enrollment Across Pivotal Studies',
+            id: 'pregnancy_category_proposed',
+            label: 'Proposed Pregnancy/Lactation Labeling (PLLR)',
+            type: 'select',
+            options: [
+              {
+                value: 'contraindicated',
+                label: 'Contraindicated in Pregnancy',
+                description: 'Teratogenicity demonstrated; pregnancy test and contraception required',
+              },
+              {
+                value: 'caution',
+                label: 'Use with Caution — Risk Cannot Be Ruled Out',
+                description: 'Insufficient human data; animal data concerning',
+              },
+              {
+                value: 'no_data',
+                label: 'No Adequate Data in Pregnant Women',
+                description: 'Animal reproduction studies conducted; results described in labeling',
+              },
+            ],
+            helpText:
+              'The PLLR framework (21 CFR 201.57(c)(9)) replaced pregnancy categories (A, B, C, D, X) with descriptive labeling including risk summary, clinical considerations, and supporting data.',
+          },
+          {
+            id: 'juvenile_animal_studies',
+            label: 'Juvenile Animal Studies',
+            type: 'select',
+            options: [
+              { value: 'completed', label: 'Completed' },
+              { value: 'planned', label: 'Planned (post-marketing or PREA commitment)' },
+              { value: 'not_needed', label: 'Not Needed (adult-only indication)' },
+              { value: 'waived', label: 'Waived (with justification)' },
+            ],
+            helpText:
+              'Per FDA Guidance "Nonclinical Safety Evaluation of Pediatric Drug Products" (2006) and ICH S11, juvenile animal studies are needed when pediatric use is anticipated and developing organ systems may be uniquely affected.',
+          },
+        ],
+        defaultNext: 'pk_summary',
+        provideExpertFeedback: true,
+        issueChecks: [
+          {
+            id: 'teratogenicity_rems_needed',
+            condition: { field: 'teratogenicity_signal', operator: 'eq', value: true },
+            severity: 'critical',
+            title: 'Teratogenicity Signal Requires REMS Evaluation',
+            message:
+              'A teratogenicity signal in reproductive toxicology studies requires evaluation for a REMS with Elements to Assure Safe Use (ETASU) such as pregnancy testing, contraception requirements, and restricted distribution programs (see thalidomide/lenalidomide REMS precedents). Pregnancy must be listed as a contraindication in labeling, and a Medication Guide is likely required.',
+            reference: '21 CFR 314.50; 21 USC 355-1; 21 CFR 201.57(c)(9)',
+          },
+        ],
+      },
+
+      /* ================================================================ */
+      /*  Section 4 — Clinical Pharmacology                               */
+      /* ================================================================ */
+
+      {
+        id: 'pk_summary',
+        section: 'clinical_pharm',
+        question:
+          'Summarize the clinical pharmacology program. Describe the human PK profile, ADME characterization, dose-response relationships, and PK/PD modeling.',
+        guidance:
+          'Per 21 CFR 314.50(d)(3) and ICH E4 "Dose Response Information to Support Drug Registration," the NDA must include a thorough characterization of the drug\'s clinical pharmacology. The Clinical Pharmacology and Biopharmaceutics (CP&B) section should cover: human ADME, absolute and/or relative bioavailability, dose proportionality, food effect, PK in target population, exposure-response (E-R) analysis, population PK (popPK) modeling, and PBPK modeling if applicable. The exposure-response analysis should link drug exposure (AUC, Cmax, Ctrough) to both efficacy and safety endpoints to support the proposed dosing regimen.',
+        fields: [
+          {
+            id: 'human_pk_summary',
+            label: 'Human PK Summary (ADME characterization)',
+            type: 'textarea',
+            placeholder:
+              'e.g., Absorption: rapidly absorbed (Tmax = 2-3 hr), absolute bioavailability = 62%. Distribution: Vd = 85 L, protein binding 97% (primarily albumin). Metabolism: primarily CYP3A4 (78%), minor CYP2D6 (12%). Excretion: 65% fecal (30% unchanged), 25% renal (10% unchanged). Mass balance study completed with [14C]-labeled compound.',
+            required: true,
+            validation: { minLength: 100 },
+          },
+          {
+            id: 'bioavailability',
+            label: 'Bioavailability (absolute or relative)',
+            type: 'text',
+            placeholder: 'e.g., Absolute bioavailability: 62% (90% CI: 55-69%)',
+          },
+          {
+            id: 'half_life',
+            label: 'Terminal Elimination Half-Life',
+            type: 'text',
+            placeholder: 'e.g., t1/2 = 14.5 hours (range: 10-22 hr), supporting once-daily dosing',
+            required: true,
+          },
+          {
+            id: 'dose_proportionality',
+            label: 'Dose Proportionality',
+            type: 'select',
+            options: [
+              { value: 'linear', label: 'Linear / Dose-Proportional PK' },
+              { value: 'non_linear', label: 'Non-Linear PK (saturation, autoinduction, or capacity-limited)' },
+              { value: 'partially_linear', label: 'Partially Linear (linear within therapeutic range, non-linear at higher doses)' },
+            ],
+            helpText:
+              'Dose proportionality assessment is critical for justifying the proposed dose range and any dose adjustment recommendations in labeling.',
+          },
+          {
+            id: 'food_effect',
+            label: 'Food Effect Study Results',
+            type: 'select',
+            options: [
+              { value: 'no_effect', label: 'No Clinically Meaningful Food Effect' },
+              { value: 'increased_exposure', label: 'Increased Exposure with Food (high-fat meal)' },
+              { value: 'decreased_exposure', label: 'Decreased Exposure with Food' },
+              { value: 'not_studied', label: 'Not Studied (parenteral product)' },
+            ],
+            helpText:
+              'Per FDA Guidance "Food-Effect Bioavailability and Fed Bioequivalence Studies" (2022), food effect determines the dosing instructions in labeling (take with/without food, etc.).',
+          },
+          {
+            id: 'accumulation_ratio',
+            label: 'Accumulation Ratio at Steady State',
+            type: 'text',
+            placeholder: 'e.g., AUC accumulation ratio = 1.8 at steady state (Day 15) with QD dosing',
+          },
+          {
+            id: 'pk_in_target_population',
+            label: 'PK in Target Patient Population',
+            type: 'textarea',
+            placeholder:
+              'e.g., Population PK analysis in cancer patients (N=450) showed no clinically significant differences in CL/F compared to healthy volunteers after adjusting for body weight and albumin.',
+          },
+          {
+            id: 'pk_pd_relationship',
+            label: 'PK/PD and Exposure-Response Analysis',
+            type: 'textarea',
+            placeholder:
+              'e.g., Exposure-response analysis: AUCss correlated with ORR (p<0.001). E-R modeling supports 100 mg QD as the dose achieving ≥90% target coverage in >95% of patients. Exposure-safety: higher Cmax associated with increased Grade ≥3 rash (logistic regression, p=0.02).',
+            required: true,
+            validation: { minLength: 50 },
+            helpText:
+              'Per FDA Guidance "Exposure-Response Relationships — Study Design, Data Analysis, and Regulatory Applications" (2003) and ICH E4, E-R analysis should be provided to support dose selection and labeling recommendations.',
+          },
+          {
+            id: 'popPK_model',
+            label: 'Population PK (popPK) or PBPK Model Developed',
+            type: 'yes_no',
+            helpText:
+              'PopPK and PBPK models are increasingly expected by FDA to support dosing in special populations, predict drug interactions, and justify dose modifications. FDA Guidances on PBPK Analysis (2018/2020) provide framework.',
+          },
+        ],
+        defaultNext: 'ddi_assessment',
+      },
+
+      {
+        id: 'ddi_assessment',
+        section: 'clinical_pharm',
+        question:
+          'Describe the drug-drug interaction (DDI) assessment. Both in vitro and clinical DDI studies should be complete for the NDA.',
+        guidance:
+          'Per FDA Guidance "In Vitro Drug Interaction Studies — Cytochrome P450 Enzyme- and Transporter-Mediated Drug Interactions" (January 2020) and "Clinical Drug Interaction Studies" (January 2020), the NDA must include a comprehensive DDI assessment. In vitro: CYP reaction phenotyping (substrate identification), CYP inhibition (reversible and TDI), CYP induction (PXR/CAR activation and mRNA), and transporter interactions (P-gp, BCRP, OATP1B1/1B3, OCT2, OAT1/3, MATE1/2-K). Clinical DDI studies should follow the FDA DDI Decision Trees (Figures 1-7 of the 2020 guidance). Results directly impact labeling (contraindications, dose adjustments, interaction tables).',
+        fields: [
+          {
+            id: 'cyp_substrate',
+            label: 'CYP Enzyme(s) — Drug is a Substrate of',
+            type: 'multi_select',
+            options: [
+              { value: '3A4', label: 'CYP3A4' },
+              { value: '2D6', label: 'CYP2D6' },
+              { value: '2C9', label: 'CYP2C9' },
+              { value: '2C19', label: 'CYP2C19' },
+              { value: '2C8', label: 'CYP2C8' },
+              { value: '1A2', label: 'CYP1A2' },
+              { value: '2B6', label: 'CYP2B6' },
+            ],
+          },
+          {
+            id: 'cyp_inhibitor',
+            label: 'CYP Enzyme(s) — Drug is an Inhibitor of',
+            type: 'multi_select',
+            options: [
+              { value: '3A4', label: 'CYP3A4' },
+              { value: '2D6', label: 'CYP2D6' },
+              { value: '2C9', label: 'CYP2C9' },
+              { value: '2C19', label: 'CYP2C19' },
+              { value: '2C8', label: 'CYP2C8' },
+              { value: '1A2', label: 'CYP1A2' },
+              { value: '2B6', label: 'CYP2B6' },
+            ],
+          },
+          {
+            id: 'cyp_inducer',
+            label: 'CYP Enzyme(s) — Drug is an Inducer of',
+            type: 'multi_select',
+            options: [
+              { value: '3A4', label: 'CYP3A4' },
+              { value: '2D6', label: 'CYP2D6' },
+              { value: '2C9', label: 'CYP2C9' },
+              { value: '2C19', label: 'CYP2C19' },
+              { value: '2C8', label: 'CYP2C8' },
+              { value: '1A2', label: 'CYP1A2' },
+              { value: '2B6', label: 'CYP2B6' },
+            ],
+          },
+          {
+            id: 'transporter_substrate',
+            label: 'Transporter Interactions — Drug is a Substrate/Inhibitor of',
+            type: 'multi_select',
+            options: [
+              { value: 'pgp', label: 'P-glycoprotein (P-gp / MDR1)' },
+              { value: 'bcrp', label: 'BCRP' },
+              { value: 'oatp1b1', label: 'OATP1B1' },
+              { value: 'oatp1b3', label: 'OATP1B3' },
+              { value: 'oct2', label: 'OCT2' },
+              { value: 'oat1', label: 'OAT1' },
+              { value: 'oat3', label: 'OAT3' },
+              { value: 'mate1', label: 'MATE1' },
+            ],
+          },
+          {
+            id: 'clinical_ddi_completed',
+            label: 'Clinical DDI Studies Completed',
+            type: 'yes_no',
+            required: true,
+            helpText:
+              'At the NDA stage, all clinical DDI studies triggered by in vitro results should be completed. These results are incorporated into the Drug Interactions section (Section 7) of labeling per 21 CFR 201.57.',
+          },
+          {
+            id: 'clinical_ddi_summary',
+            label: 'Clinical DDI Study Results Summary',
+            type: 'textarea',
+            placeholder:
+              'e.g., Strong CYP3A4 inhibitor (itraconazole): 3.5-fold increase in AUC — dose reduction required. Strong CYP3A4 inducer (rifampin): 78% decrease in AUC — co-administration contraindicated. CYP2D6 inhibition: no clinically significant effect on dextromethorphan PK. P-gp inhibition: 1.6-fold increase in digoxin AUC — monitoring recommended.',
+            visibleWhen: { field: 'clinical_ddi_completed', operator: 'eq', value: true },
+          },
+          {
+            id: 'ddi_labeling_impact',
+            label: 'DDI Impact on Labeling (dose adjustments, contraindications)',
+            type: 'textarea',
+            placeholder:
+              'e.g., Contraindicated with strong CYP3A4 inducers. Dose reduction to 50 mg with strong CYP3A4 inhibitors. Avoid concomitant use with sensitive CYP3A4 substrates with narrow therapeutic index. Monitor digoxin levels with co-administration.',
+          },
+        ],
+        defaultNext: 'special_pops_pk',
+        issueChecks: [
+          {
+            id: 'clinical_ddi_not_completed',
+            condition: { field: 'clinical_ddi_completed', operator: 'eq', value: false },
+            severity: 'warning',
+            title: 'Clinical DDI Studies Expected',
+            message:
+              'Clinical drug-drug interaction studies should be completed before NDA submission. Missing DDI data may result in labeling limitations, post-marketing requirements, or a Complete Response Letter. Per the FDA DDI Guidance (2020), clinical studies are required when in vitro results indicate potential for clinically relevant interactions.',
+            reference: 'FDA Guidance: Clinical Drug Interaction Studies (January 2020); FDA Guidance: In Vitro Drug Interaction Studies (January 2020)',
+          },
+        ],
+      },
+
+      {
+        id: 'special_pops_pk',
+        section: 'clinical_pharm',
+        question:
+          'Describe the PK assessments in special populations: renal impairment, hepatic impairment, geriatric patients, and other intrinsic factors.',
+        guidance:
+          'Per FDA Guidance "Pharmacokinetics in Patients with Impaired Renal Function" (2020) and "Pharmacokinetics in Patients with Impaired Hepatic Function" (2003), dedicated PK studies are generally required for drugs with significant renal or hepatic clearance. Geriatric PK assessment is expected per ICH E7. Analysis by sex, race/ethnicity, and body weight should be included per the ICH E5 framework and FDA Guidance on Collection of Race and Ethnicity Data in Clinical Trials (2016). These data directly inform the Use in Specific Populations section of labeling (21 CFR 201.57(c)(9)).',
+        fields: [
+          {
+            id: 'renal_impairment_study',
+            label: 'Renal Impairment Study',
+            type: 'select',
+            options: [
+              { value: 'completed', label: 'Dedicated PK Study Completed (mild/moderate/severe/ESRD)' },
+              { value: 'planned', label: 'Planned Before Approval' },
+              { value: 'not_needed', label: 'Not Needed — Minimal Renal Elimination (<30%)' },
+              { value: 'pop_pk', label: 'Assessed via Population PK Analysis' },
+            ],
+          },
+          {
+            id: 'hepatic_impairment_study',
+            label: 'Hepatic Impairment Study',
+            type: 'select',
+            options: [
+              { value: 'completed', label: 'Dedicated PK Study Completed (Child-Pugh A/B/C)' },
+              { value: 'planned', label: 'Planned Before Approval' },
+              { value: 'not_needed', label: 'Not Needed — Minimal Hepatic Metabolism' },
+              { value: 'pop_pk', label: 'Assessed via Population PK Analysis' },
+            ],
+          },
+          {
+            id: 'geriatric_pk',
+            label: 'Geriatric PK Assessment',
+            type: 'select',
+            options: [
+              { value: 'adequate_data', label: 'Adequate Data from Clinical Trials and/or PopPK' },
+              { value: 'planned', label: 'Additional Assessment Planned' },
+              { value: 'not_needed', label: 'Not Needed (pediatric-only indication)' },
+            ],
+            helpText:
+              'Per ICH E7, clinical trials should include adequate representation of patients ≥65 years. PopPK analysis should evaluate age as a covariate.',
+          },
+          {
+            id: 'sex_based_analysis',
+            label: 'Sex-Based PK/PD Analysis Completed',
+            type: 'yes_no',
+            helpText:
+              'Per FDA Guidance and ICH E1/E7, sponsors should analyze PK and safety data by sex. Any sex-based differences should be reflected in labeling.',
+          },
+          {
+            id: 'race_ethnicity_analysis',
+            label: 'Race/Ethnicity PK Analysis Completed',
+            type: 'yes_no',
+            helpText:
+              'Per ICH E5 and FDA Guidance on Collection of Race and Ethnicity Data (2016), ethnic factors that may influence drug response should be evaluated. Consider CYP2D6/2C19 polymorphism prevalence across populations.',
+          },
+          {
+            id: 'body_weight_effect',
+            label: 'Body Weight Effect on PK',
+            type: 'select',
+            options: [
+              { value: 'no_effect', label: 'No Clinically Meaningful Effect' },
+              { value: 'dose_adjust', label: 'Dose Adjustment Recommended by Body Weight' },
+              { value: 'not_studied', label: 'Not Studied / Under Evaluation' },
+            ],
+          },
+        ],
+        defaultNext: 'efficacy_overview',
+      },
+
+      /* ================================================================ */
+      /*  Section 5 — Clinical Efficacy                                   */
+      /* ================================================================ */
+
+      {
+        id: 'efficacy_overview',
+        section: 'clinical_efficacy',
+        question:
+          'Provide an overview of the clinical efficacy program. How many studies were conducted, what phases are complete, and what is the proposed indication?',
+        guidance:
+          'Per 21 CFR 314.50(d)(5) and ICH E9 "Statistical Principles for Clinical Trials," the NDA must contain adequate and well-controlled clinical investigations (as defined in 21 CFR 314.126) demonstrating the drug is effective for the proposed indication. FDA generally expects substantial evidence from at least one adequate and well-controlled Phase 3 study (two is preferred for most indications). For oncology, FDA may accept a single pivotal trial with compelling results. Surrogate endpoints may support Accelerated Approval (21 CFR 314.510) but require confirmatory studies. The clinical overview (CTD Module 2.5) and clinical summary (CTD Module 2.7) should integrate all efficacy data per ICH M4E.',
+        fields: [
+          {
+            id: 'total_efficacy_studies',
+            label: 'Total Number of Efficacy Studies in the NDA',
             type: 'number',
             required: true,
             validation: { min: 1 },
+            helpText: 'Include all clinical studies contributing to the efficacy assessment, from Phase 1 (dose-finding/PK) through pivotal Phase 3.',
           },
           {
-            id: 'statistical_analysis_plan',
-            label: 'Statistical Analysis Plan Pre-Specified',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ICH E9(R1), the statistical analysis plan must be pre-specified and finalized before database lock.',
-          },
-          {
-            id: 'multiplicity_controlled',
-            label: 'Multiplicity Controlled (if multiple endpoints)',
-            type: 'yes_no',
-            helpText: 'Per ICH E9(R1), multiplicity must be controlled using methods such as hierarchical testing, gatekeeping, or Bonferroni correction.',
-          },
-          {
-            id: 'pivotal_csr_status',
-            label: 'Pivotal Study CSR Status',
-            type: 'select',
+            id: 'study_phases_completed',
+            label: 'Study Phases Completed',
+            type: 'multi_select',
             required: true,
             options: [
-              { value: 'final', label: 'Final CSR(s) Complete (ICH E3 format)' },
-              { value: 'draft', label: 'Draft CSR — Finalization in Progress' },
-              { value: 'not_started', label: 'CSR Writing Not Yet Started' },
+              { value: 'phase1', label: 'Phase 1 (PK/safety/dose-finding)' },
+              { value: 'phase2', label: 'Phase 2 (proof-of-concept/dose-ranging)' },
+              { value: 'phase3', label: 'Phase 3 (pivotal confirmatory)' },
             ],
           },
-        ],
-        defaultNext: 'supportive_studies',
-        issueChecks: [
           {
-            id: 'insufficient_pivotal_studies',
-            condition: { field: 'number_pivotal_studies', operator: 'lt', value: 2 },
-            severity: 'critical',
-            title: 'Fewer Than Two Adequate, Well-Controlled Studies',
-            message:
-              'Per 21 CFR 314.126 and FDA Guidance "Providing Clinical Evidence of Effectiveness" (1998), FDA generally requires at least two adequate and well-controlled investigations to demonstrate substantial evidence of effectiveness. A single pivotal study may be acceptable if the trial is large, multicenter, and provides a particularly robust and compelling demonstration of efficacy (p < 0.001), or for rare diseases. Prepare a strong justification if relying on a single pivotal study.',
-            reference: '21 CFR 314.126; 21 USC 355(d)',
+            id: 'pivotal_study_count',
+            label: 'Number of Pivotal Studies',
+            type: 'number',
+            required: true,
+            validation: { min: 1 },
+            helpText:
+              'FDA generally expects two adequate and well-controlled studies, though a single pivotal study may suffice with strong evidence (large effect size, high statistical significance, consistency across subgroups) per FDA Guidance "Providing Clinical Evidence of Effectiveness for Human Drug and Biological Products" (1998).',
+          },
+          {
+            id: 'indication_statement',
+            label: 'Proposed Indication Statement',
+            type: 'textarea',
+            placeholder:
+              'e.g., Acmetinib is indicated for the treatment of adult patients with locally advanced or metastatic non-small cell lung cancer (NSCLC) with epidermal growth factor receptor (EGFR) exon 20 insertion mutations, as detected by an FDA-approved test, who have progressed on or after platinum-based chemotherapy.',
+            required: true,
+            validation: { minLength: 50 },
+            helpText:
+              'The indication statement should be specific and mirror the language in the proposed USPI Indications and Usage section per 21 CFR 201.57(c)(2).',
+          },
+          {
+            id: 'is_oncology',
+            label: 'Is this an oncology indication?',
+            type: 'yes_no',
+            helpText:
+              'Oncology NDAs are reviewed by CDER\'s Office of Oncologic Diseases and may have different endpoint requirements (e.g., ORR, PFS, OS per FDA oncology guidance documents).',
+          },
+          {
+            id: 'oncology_tumor_type',
+            label: 'Oncology Tumor Type',
+            type: 'select',
+            visibleWhen: { field: 'is_oncology', operator: 'eq', value: true },
+            options: [
+              { value: 'solid_tumor', label: 'Solid Tumor' },
+              { value: 'hematologic', label: 'Hematologic Malignancy' },
+              { value: 'cns', label: 'CNS Tumor' },
+              { value: 'multiple', label: 'Multiple Tumor Types (tissue-agnostic)' },
+            ],
+          },
+          {
+            id: 'uses_surrogate_endpoint',
+            label: 'Is approval sought based on a surrogate endpoint?',
+            type: 'yes_no',
+            helpText:
+              'Per 21 CFR 314.510, FDA may grant accelerated approval based on a surrogate endpoint reasonably likely to predict clinical benefit. A confirmatory study demonstrating clinical benefit is required post-approval (21 CFR 314.530).',
+          },
+          {
+            id: 'surrogate_endpoint_description',
+            label: 'Surrogate Endpoint Description and Justification',
+            type: 'textarea',
+            placeholder:
+              'e.g., Objective response rate (ORR) by RECIST v1.1 as assessed by independent central review (IRC). ORR is an established surrogate endpoint in oncology for accelerated approval per FDA Table of Surrogate Endpoints.',
+            visibleWhen: { field: 'uses_surrogate_endpoint', operator: 'eq', value: true },
           },
         ],
+        branches: [
+          {
+            when: { field: 'is_oncology', operator: 'eq', value: true },
+            goto: 'pivotal_studies',
+          },
+        ],
+        defaultNext: 'pivotal_studies',
         provideExpertFeedback: true,
       },
 
       {
-        id: 'supportive_studies',
-        section: 'Module 5 — Clinical Study Reports',
+        id: 'pivotal_studies',
+        section: 'clinical_efficacy',
         question:
-          'Describe the supportive clinical studies included in the NDA.',
+          'Provide detailed information about the pivotal clinical trial(s). Study design, enrollment, endpoints, and results are critical for the efficacy assessment.',
         guidance:
-          'Supportive studies (Phase 1, Phase 2, dose-finding, PK/PD, and special population studies) provide context for the pivotal trial results. Per ICH M4E(R2), Module 5.3 should include: 5.3.1 — biopharmaceutic studies; 5.3.2 — PK studies; 5.3.3 — PK/PD studies; 5.3.4 — efficacy studies; 5.3.5 — safety studies; 5.3.6 — post-marketing reports (if applicable). Dose-finding studies (Phase 2) are particularly important for justifying the dose selected for Phase 3.',
+          'Per 21 CFR 314.126 "Adequate and Well-Controlled Studies," pivotal studies must use one of the following designs: (1) placebo-controlled, (2) dose-comparison, (3) active-controlled, (4) no-treatment controlled, or (5) historical-controlled (rarely sufficient alone). Randomization, blinding, and pre-specified statistical analysis plans are essential per ICH E9 "Statistical Principles for Clinical Trials." ICH E9(R1) introduces the estimand framework to precisely define what treatment effect is being estimated. For non-inferiority designs, the non-inferiority margin must be justified per ICH E10 "Choice of Control Group and Related Issues." FDA expects the primary efficacy analysis to be based on the intent-to-treat (ITT) population.',
         fields: [
           {
-            id: 'phase1_studies_count',
-            label: 'Number of Phase 1 Studies',
-            type: 'number',
-            required: true,
-            validation: { min: 0, max: 100 },
-          },
-          {
-            id: 'phase2_studies_count',
-            label: 'Number of Phase 2 Studies',
-            type: 'number',
-            required: true,
-            validation: { min: 0, max: 50 },
-          },
-          {
-            id: 'dose_finding_adequate',
-            label: 'Dose-Finding (Phase 2) Data Adequate to Justify Phase 3 Dose',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'supportive_efficacy_studies',
-            label: 'Number of Supportive Efficacy Studies',
-            type: 'number',
-            validation: { min: 0, max: 50 },
-          },
-          {
-            id: 'special_population_studies',
-            label: 'Special Population Studies Included',
-            type: 'multi_select',
-            options: [
-              { value: 'hepatic', label: 'Hepatic Impairment' },
-              { value: 'renal', label: 'Renal Impairment' },
-              { value: 'pediatric', label: 'Pediatric' },
-              { value: 'geriatric', label: 'Geriatric' },
-              { value: 'pregnant', label: 'Pregnant / Lactating' },
-              { value: 'race_ethnicity', label: 'Race / Ethnicity Bridge Studies' },
-              { value: 'none', label: 'None' },
-            ],
-          },
-          {
-            id: 'all_csr_complete',
-            label: 'All Supportive Study CSRs Complete (ICH E3)',
-            type: 'yes_no',
-            required: true,
-          },
-        ],
-        defaultNext: 'integrated_summaries',
-      },
-
-      {
-        id: 'integrated_summaries',
-        section: 'Module 5 — Clinical Study Reports',
-        question:
-          'Describe the Integrated Summary of Safety (ISS) and Integrated Summary of Efficacy (ISE).',
-        guidance:
-          'The ISS and ISE are unique to US NDA submissions (not required in the ICH CTD but expected by FDA). Per FDA Guidance "Integrated Summary of Effectiveness" (2015), the ISE should integrate efficacy data across all studies. The ISS (per FDA Guidance "Premarketing Risk Assessment" (2005)) should pool safety data across all studies and include a 120-Day Safety Update per 21 CFR 314.50(d)(5)(vi)(b). The safety update covers all AEs occurring after the NDA data cutoff.',
-        fields: [
-          {
-            id: 'iss_complete',
-            label: 'Integrated Summary of Safety (ISS) Complete',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'ise_complete',
-            label: 'Integrated Summary of Efficacy (ISE) Complete',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'safety_database_size',
-            label: 'Total Safety Database Size (patients exposed)',
-            type: 'number',
-            required: true,
-            validation: { min: 1 },
-            helpText: 'Per ICH E1, the safety database should include at least 1,500 patients for short-term treatment. For chronic use, at least 300-600 patients for 6 months and 100 for 12 months.',
-          },
-          {
-            id: 'safety_update_120day',
-            label: '120-Day Safety Update Planned',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per 21 CFR 314.50(d)(5)(vi)(b), a 120-day safety update report must be submitted 4 months after NDA filing. This report covers new safety data accumulated after the original NDA data cutoff date.',
-          },
-          {
-            id: 'safety_update_cutoff',
-            label: 'NDA Safety Data Cutoff Date',
-            type: 'date',
-          },
-          {
-            id: 'integrated_safety_pooling_strategy',
-            label: 'Safety Data Pooling Strategy',
+            id: 'pivotal_study_design',
+            label: 'Pivotal Study Design',
             type: 'select',
             required: true,
             options: [
-              { value: 'all_exposed', label: 'All Patients Exposed to Study Drug' },
-              { value: 'phase23_only', label: 'Phase 2/3 Controlled Studies Only' },
-              { value: 'pivotal_only', label: 'Pivotal Studies Only' },
-              { value: 'multiple_pools', label: 'Multiple Pools (recommended by FDA)' },
+              { value: 'randomized_controlled', label: 'Randomized Controlled Trial (RCT)' },
+              { value: 'single_arm', label: 'Single-Arm Trial (typically for accelerated approval)' },
+              { value: 'crossover', label: 'Crossover Design' },
+              { value: 'non_inferiority', label: 'Non-Inferiority Trial' },
+              { value: 'adaptive', label: 'Adaptive Design (per FDA Guidance 2019)' },
             ],
           },
+          {
+            id: 'control_type',
+            label: 'Control Group Type',
+            type: 'select',
+            visibleWhen: { field: 'pivotal_study_design', operator: 'in', value: ['randomized_controlled', 'non_inferiority'] },
+            options: [
+              { value: 'placebo', label: 'Placebo Control' },
+              { value: 'active', label: 'Active Comparator' },
+              { value: 'historical', label: 'Historical Control' },
+              { value: 'none', label: 'No Control (add-on design)' },
+            ],
+          },
+          {
+            id: 'blinding',
+            label: 'Blinding',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'double_blind', label: 'Double-Blind' },
+              { value: 'single_blind', label: 'Single-Blind' },
+              { value: 'open_label', label: 'Open-Label' },
+            ],
+          },
+          {
+            id: 'pivotal_enrollment',
+            label: 'Total Enrollment in Pivotal Study',
+            type: 'number',
+            required: true,
+            validation: { min: 10 },
+          },
+          {
+            id: 'primary_endpoint',
+            label: 'Primary Efficacy Endpoint',
+            type: 'textarea',
+            placeholder:
+              'e.g., Progression-free survival (PFS) as assessed by BICR per RECIST v1.1; or Overall survival (OS) with stratified log-rank test.',
+            required: true,
+            validation: { minLength: 30 },
+          },
+          {
+            id: 'primary_endpoint_met',
+            label: 'Was the Primary Endpoint Met?',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'effect_size',
+            label: 'Effect Size / Treatment Difference',
+            type: 'textarea',
+            placeholder:
+              'e.g., Median PFS: 12.5 months (drug) vs 6.8 months (control); HR = 0.52 (95% CI: 0.40-0.68). Absolute PFS improvement: 5.7 months. ORR: 58% vs 22% (p<0.0001).',
+            required: true,
+          },
+          {
+            id: 'p_value_or_ci',
+            label: 'P-Value and/or Confidence Interval',
+            type: 'text',
+            placeholder: 'e.g., HR 0.52, 95% CI: 0.40-0.68, p<0.0001 (stratified log-rank)',
+            required: true,
+          },
+          {
+            id: 'secondary_endpoints',
+            label: 'Key Secondary Endpoints and Results',
+            type: 'textarea',
+            placeholder:
+              'e.g., OS: median 24.5 vs 18.2 months (HR 0.72, 95% CI: 0.55-0.94, p=0.015). ORR: 58% vs 22%. Duration of response: median 11.2 months.',
+          },
+          {
+            id: 'statistical_analysis_plan',
+            label: 'Statistical Analysis Plan Summary',
+            type: 'textarea',
+            placeholder:
+              'e.g., Primary analysis: stratified log-rank test for PFS. Stratification factors: ECOG PS (0 vs 1), prior therapy lines (1 vs ≥2), brain metastases (yes/no). Alpha controlled at 0.05 two-sided. Multiplicity adjustment for key secondary endpoints via hierarchical testing procedure.',
+            required: true,
+            validation: { minLength: 50 },
+          },
+          {
+            id: 'subgroup_analyses',
+            label: 'Pre-Specified Subgroup Analyses',
+            type: 'textarea',
+            placeholder:
+              'e.g., Forest plot of PFS HR by age (<65/≥65), sex, ECOG PS, prior lines, brain metastases, geographic region, mutation subtype. Consistent treatment effect observed across all pre-specified subgroups.',
+          },
+          {
+            id: 'multicenter',
+            label: 'Was the pivotal study multicenter?',
+            type: 'yes_no',
+          },
+          {
+            id: 'number_of_sites',
+            label: 'Number of Clinical Sites',
+            type: 'number',
+            visibleWhen: { field: 'multicenter', operator: 'eq', value: true },
+          },
         ],
-        defaultNext: 'uspi_content',
+        defaultNext: 'endpoint_analysis',
         issueChecks: [
           {
-            id: 'no_iss',
-            condition: { field: 'iss_complete', operator: 'eq', value: false },
+            id: 'primary_endpoint_not_met',
+            condition: { field: 'primary_endpoint_met', operator: 'eq', value: false },
             severity: 'critical',
-            title: 'Integrated Summary of Safety Not Complete',
+            title: 'Primary Endpoint Not Met — NDA Approvability Concern',
             message:
-              'The ISS is a critical component of the NDA and its absence will result in a refuse-to-file determination. The ISS should integrate safety data across all clinical studies with standardized MedDRA coding, pooled AE tables, and exposure-adjusted incidence rates.',
-            reference: 'FDA Guidance "Premarketing Risk Assessment" (2005); 21 CFR 314.50(d)(5)',
+              'The primary efficacy endpoint was not met in the pivotal study. This is a fundamental approvability concern. Per 21 CFR 314.126, substantial evidence of effectiveness requires demonstration of a treatment effect in adequate and well-controlled studies. If the primary endpoint was not met, the NDA will likely receive a Complete Response Letter unless there are compelling alternative analyses (e.g., a highly significant secondary endpoint with clinical meaningfulness).',
+            reference: '21 CFR 314.126; ICH E9; FDA Guidance: Providing Clinical Evidence of Effectiveness (1998)',
           },
         ],
       },
 
-      /* ================================================================
-       * Section 8 — Labeling
-       * ================================================================ */
-
       {
-        id: 'uspi_content',
-        section: 'Labeling',
+        id: 'endpoint_analysis',
+        section: 'clinical_efficacy',
         question:
-          'Describe the proposed US Prescribing Information (USPI) content.',
+          'Provide additional endpoint analysis details, including regulatory endpoint classification, subgroup consistency, and benefit-risk assessment.',
         guidance:
-          'The USPI must be in Physician Labeling Rule (PLR) format per 21 CFR 201.56 and 201.57. The structured format includes Highlights, Full Prescribing Information table of contents, and 17 numbered sections. Per FDA Guidance "Labeling for Human Prescription Drug and Biological Products — Determining Established Pharmacologic Class for Use in the Highlights" (2009), the Highlights section must include the most important prescribing information. Boxed warnings (21 CFR 201.57(c)(1)) are reserved for the most serious risks.',
+          'Per FDA Guidance "Clinical Trial Endpoints for the Approval of Cancer Drugs and Biologics" (2018) and ICH E9(R1) "Estimands and Sensitivity Analysis in Clinical Trials," the regulatory endpoint must be clinically meaningful or a validated surrogate. For oncology: OS is the gold standard; PFS and ORR may support regular or accelerated approval depending on the context. Independent review committee (IRC/BICR) assessment is typically required for endpoint assessment in open-label oncology trials. The benefit-risk framework per PDUFA VI (Structured Benefit-Risk Assessment) should weigh the magnitude of clinical benefit against the safety profile in the context of the treated disease and available alternatives.',
         fields: [
           {
-            id: 'uspi_plr_format',
-            label: 'USPI in PLR Format (21 CFR 201.56/201.57)',
-            type: 'yes_no',
+            id: 'regulatory_endpoint_type',
+            label: 'Regulatory Endpoint Classification',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'os', label: 'Overall Survival (OS)' },
+              { value: 'pfs', label: 'Progression-Free Survival (PFS)' },
+              { value: 'orr', label: 'Objective Response Rate (ORR)' },
+              { value: 'dfs', label: 'Disease-Free Survival (DFS)' },
+              { value: 'efs', label: 'Event-Free Survival (EFS)' },
+              { value: 'composite', label: 'Composite Endpoint' },
+              { value: 'patient_reported', label: 'Patient-Reported Outcome (PRO)' },
+              { value: 'biomarker_surrogate', label: 'Biomarker / Surrogate Endpoint' },
+            ],
+          },
+          {
+            id: 'endpoint_assessment_method',
+            label: 'Endpoint Assessment Methodology',
+            type: 'textarea',
+            placeholder:
+              'e.g., PFS assessed by blinded independent central review (BICR) per RECIST v1.1. CT/MRI scans every 6 weeks for 48 weeks, then every 12 weeks. Concordance between investigator and BICR assessments: 89%. Sensitivity analysis using investigator assessment confirmed the primary result.',
             required: true,
           },
           {
-            id: 'highlights_section_complete',
-            label: 'Highlights Section Complete',
+            id: 'independent_review',
+            label: 'Was an independent review committee (IRC/BICR) used?',
             type: 'yes_no',
+            visibleWhen: { field: 'is_oncology', operator: 'eq', value: true },
+            helpText:
+              'For oncology trials, FDA generally expects BICR-assessed endpoints in open-label studies per FDA Guidance "Clinical Trial Endpoints for the Approval of Cancer Drugs and Biologics" (2018).',
+          },
+          {
+            id: 'irc_concordance',
+            label: 'IRC/BICR and Investigator Concordance',
+            type: 'textarea',
+            placeholder:
+              'e.g., BICR-assessed ORR: 58% (95% CI: 51-65%). Investigator-assessed ORR: 62%. Concordance rate: 89%. Discordant cases primarily due to timing of progression calls.',
+            visibleWhen: { field: 'independent_review', operator: 'eq', value: true },
+          },
+          {
+            id: 'pre_specified_subgroups',
+            label: 'Pre-Specified Subgroup Analyses Summary',
+            type: 'textarea',
+            placeholder:
+              'e.g., Forest plot: treatment effect consistent across all pre-specified subgroups (age, sex, ECOG PS, prior therapy, geographic region, biomarker status). No subgroup showed a treatment interaction (all interaction p-values > 0.10).',
+          },
+          {
+            id: 'consistency_across_subgroups',
+            label: 'Was the treatment effect consistent across subgroups?',
+            type: 'yes_no',
+          },
+          {
+            id: 'benefit_risk_summary',
+            label: 'Benefit-Risk Assessment Summary',
+            type: 'textarea',
+            placeholder:
+              'e.g., Benefit: clinically meaningful and statistically significant improvement in PFS (HR 0.52, 5.7-month improvement) with durable responses (median DOR 11.2 months). Risk: manageable safety profile with Grade ≥3 AEs in 35% (primarily rash, diarrhea, paronychia). No new safety signals compared to established EGFR inhibitors. Favorable benefit-risk in the context of limited treatment options for EGFR exon 20 insertion NSCLC.',
+            required: true,
+            validation: { minLength: 100 },
+          },
+        ],
+        branches: [
+          {
+            when: { field: 'accelerated_pathway', operator: 'contains', value: 'accelerated_approval' },
+            goto: 'safety_database',
+          },
+        ],
+        defaultNext: 'safety_database',
+        provideExpertFeedback: true,
+      },
+
+      /* ================================================================ */
+      /*  Section 6 — Clinical Safety                                     */
+      /* ================================================================ */
+
+      {
+        id: 'safety_database',
+        section: 'clinical_safety',
+        question:
+          'Describe the overall safety database. Per ICH E1, the NDA safety database must be adequate to characterize the safety profile for the proposed indication and patient population.',
+        guidance:
+          'Per ICH E1 "The Extent of Population Exposure to Assess Clinical Safety for Drugs Intended for Long-Term Treatment of Non-Life-Threatening Conditions" and 21 CFR 314.50(d)(5)(vi), the NDA safety database should include: (a) ≥1,500 patients exposed to the drug at any dose, (b) ≥300-600 patients exposed for 6 months, and (c) ≥100 patients exposed for 12 months (for chronic-use drugs). ICH E1(A) "The Extent of Population Exposure to Assess Clinical Safety" provides additional guidance. An integrated safety summary (ISS) pooling all studies is expected. The safety update cutoff date should be as recent as possible, typically within 4 months of NDA submission.',
+        fields: [
+          {
+            id: 'total_exposed',
+            label: 'Total Patients Exposed to Drug (any dose, all studies)',
+            type: 'number',
+            required: true,
+            validation: { min: 100 },
+          },
+          {
+            id: 'exposure_duration_6mo',
+            label: 'Patients Exposed for ≥6 Months',
+            type: 'number',
             required: true,
           },
           {
-            id: 'boxed_warning_proposed',
-            label: 'Boxed Warning Proposed',
+            id: 'exposure_duration_12mo',
+            label: 'Patients Exposed for ≥12 Months',
+            type: 'number',
+            required: true,
+          },
+          {
+            id: 'safety_database_adequate',
+            label: 'Does the safety database meet ICH E1 thresholds?',
             type: 'yes_no',
             required: true,
-            helpText: 'Per 21 CFR 201.57(c)(1), a boxed warning is required when an adverse reaction is so serious relative to the drug\'s benefit that it is essential to consider in the drug\'s use, or when a serious adverse reaction can be prevented or reduced by appropriate use.',
+            helpText:
+              'ICH E1: ≥1,500 total exposed, ≥300-600 for 6 months, ≥100 for 12 months (chronic-use). Lower thresholds may be acceptable for life-threatening conditions, orphan indications, or accelerated approval.',
+          },
+          {
+            id: 'controlled_trial_patients',
+            label: 'Patients in Controlled Trials (drug arm)',
+            type: 'number',
+            required: true,
+          },
+          {
+            id: 'total_patient_years',
+            label: 'Total Patient-Years of Exposure',
+            type: 'number',
+          },
+          {
+            id: 'safety_update_cutoff',
+            label: 'Safety Data Cutoff Date',
+            type: 'date',
+            required: true,
+            helpText:
+              'The safety update should be as current as possible. FDA typically expects a 120-day Safety Update Report (21 CFR 314.50(d)(5)(vi)(b)) submitted 120 days after NDA submission.',
+          },
+          {
+            id: 'integrated_safety_summary',
+            label: 'Integrated Safety Summary (ISS) Prepared',
+            type: 'yes_no',
+            required: true,
+            helpText:
+              'The ISS pools safety data across all studies and is a critical component of the NDA. It should be structured per ICH E2C(R2) "Periodic Benefit-Risk Evaluation Report" format.',
+          },
+        ],
+        defaultNext: 'adverse_events',
+        issueChecks: [
+          {
+            id: 'safety_database_below_e1',
+            condition: { field: 'total_exposed', operator: 'lt', value: 1500 },
+            severity: 'warning',
+            title: 'Safety Database Below ICH E1 Recommendation',
+            message:
+              'The total number of patients exposed is below the ICH E1 recommendation of ≥1,500 patients. For non-life-threatening chronic conditions, this may result in a request for additional safety data or a post-marketing requirement. For life-threatening conditions, orphan drugs, or accelerated approval, lower thresholds may be acceptable with adequate justification.',
+            reference: 'ICH E1; ICH E1(A); 21 CFR 314.50(d)(5)(vi)',
+          },
+          {
+            id: 'insufficient_long_term_exposure',
+            condition: { field: 'exposure_duration_12mo', operator: 'lt', value: 300 },
+            severity: 'critical',
+            title: 'Insufficient Long-Term Exposure Data',
+            message:
+              'Fewer than 300 patients have ≥12-month exposure data. Per ICH E1(A), adequate long-term exposure is essential to identify adverse reactions that may emerge with chronic use (e.g., carcinogenicity signals, organ toxicity, immune-mediated reactions). FDA may require post-marketing studies to supplement the database.',
+            reference: 'ICH E1(A); 21 CFR 314.50(d)(5)(vi)',
+          },
+        ],
+      },
+
+      {
+        id: 'adverse_events',
+        section: 'clinical_safety',
+        question:
+          'Describe the adverse event profile, including the most common AEs, dose-response relationships, and any anticipated labeling implications.',
+        guidance:
+          'Per 21 CFR 314.50(d)(5)(vi) and ICH E2C(R2), the NDA must include a comprehensive analysis of adverse events. Common AEs (occurring in ≥5-10% of patients and more frequent than control) should be tabulated by system organ class (SOC) and preferred term (MedDRA). Grade ≥3 events (CTCAE v5.0) should be separately analyzed. Dose-response relationships for toxicity should be described. Special safety topics (hepatotoxicity per FDA Guidance "Drug-Induced Liver Injury" (2009), cardiovascular risk per ICH E14, nephrotoxicity, infections, etc.) require dedicated analyses. If a boxed warning is anticipated, the proposed text should be included per 21 CFR 201.57(c)(1).',
+        fields: [
+          {
+            id: 'most_common_aes',
+            label: 'Most Common Adverse Events (≥10% incidence)',
+            type: 'textarea',
+            placeholder:
+              'e.g., Rash (45% any grade, 12% Grade ≥3), Diarrhea (38%, 5% Grade ≥3), Paronychia (28%, 3% Grade ≥3), Stomatitis (22%, 2% Grade ≥3), Fatigue (20%, 3% Grade ≥3), Nausea (18%, 1% Grade ≥3), AST elevation (15%, 4% Grade ≥3), Decreased appetite (14%, 1% Grade ≥3).',
+            required: true,
+            validation: { minLength: 100 },
+          },
+          {
+            id: 'grade_3_4_events',
+            label: 'Grade ≥3 Adverse Events Summary',
+            type: 'textarea',
+            placeholder:
+              'e.g., Overall Grade ≥3 AE rate: 35% (drug) vs 28% (control). Most common Grade ≥3: rash (12%), diarrhea (5%), AST/ALT elevation (4%), infection (3%). Grade 5 AEs: 2% (drug) vs 1.5% (control).',
+            required: true,
+          },
+          {
+            id: 'dose_response_toxicity',
+            label: 'Is there a dose-response relationship for toxicity?',
+            type: 'yes_no',
+          },
+          {
+            id: 'dose_limiting_toxicities',
+            label: 'Dose-Limiting Toxicities Description',
+            type: 'textarea',
+            placeholder:
+              'e.g., Dose-limiting toxicities at 200 mg QD: Grade 3 rash (DLT rate 33%), Grade 3 diarrhea (DLT rate 17%). MTD/RP2D established at 100 mg QD based on Phase 1 dose-escalation data.',
+            visibleWhen: { field: 'dose_response_toxicity', operator: 'eq', value: true },
+          },
+          {
+            id: 'treatment_discontinuation_rate',
+            label: 'Treatment Discontinuation Rate Due to AEs',
+            type: 'text',
+            placeholder: 'e.g., 12% drug vs 8% control; most common reasons: rash (3%), hepatotoxicity (2%)',
+            required: true,
+          },
+          {
+            id: 'dose_modification_rate',
+            label: 'Dose Modification Rate (interruption + reduction)',
+            type: 'text',
+            placeholder: 'e.g., Dose interruption: 35%, Dose reduction: 18%, Median time to first dose modification: 2.1 months',
+          },
+          {
+            id: 'special_safety_topics',
+            label: 'Special Safety Topics Requiring Dedicated Analysis',
+            type: 'multi_select',
+            options: [
+              { value: 'hepatotox', label: 'Hepatotoxicity (Hy\'s Law / DILI)' },
+              { value: 'cardiotox', label: 'Cardiotoxicity (QTc, LVEF, Heart Failure)' },
+              { value: 'nephrotox', label: 'Nephrotoxicity' },
+              { value: 'neuro', label: 'Neurotoxicity (peripheral neuropathy, CNS effects)' },
+              { value: 'infection', label: 'Infections (opportunistic, reactivation)' },
+              { value: 'bleeding', label: 'Bleeding / Hemorrhagic Events' },
+              { value: 'qt_prolongation', label: 'QT Prolongation' },
+              { value: 'cytokine_release', label: 'Cytokine Release Syndrome (CRS)' },
+              { value: 'immunogenicity', label: 'Immunogenicity (ADA)' },
+            ],
+            helpText:
+              'Dedicated safety analyses are required for each identified risk. FDA Guidance documents exist for hepatotoxicity (DILI Guidance 2009), QTc (ICH E14), and immunogenicity (FDA Guidance 2014).',
+          },
+          {
+            id: 'boxed_warning_anticipated',
+            label: 'Is a Boxed Warning anticipated?',
+            type: 'yes_no',
           },
           {
             id: 'boxed_warning_text',
             label: 'Proposed Boxed Warning Text',
             type: 'textarea',
-            visibleWhen: { field: 'boxed_warning_proposed', operator: 'eq', value: true },
-            placeholder: 'Enter the proposed boxed warning text...',
+            placeholder:
+              'e.g., WARNING: HEPATOTOXICITY\nSevere and fatal hepatotoxicity has occurred. Monitor liver function tests prior to and during treatment. Withhold, reduce dose, or permanently discontinue based on severity. [See Warnings and Precautions (5.1)]',
+            visibleWhen: { field: 'boxed_warning_anticipated', operator: 'eq', value: true },
           },
+        ],
+        defaultNext: 'deaths_serious_ae',
+        issueChecks: [
           {
-            id: 'contraindications',
-            label: 'Proposed Contraindications',
-            type: 'textarea',
-            placeholder: 'e.g., Known hypersensitivity to the active ingredient or any excipient. Concomitant use with strong CYP3A4 inhibitors.',
-            required: true,
+            id: 'boxed_warning_labeling_impact',
+            condition: { field: 'boxed_warning_anticipated', operator: 'eq', value: true },
+            severity: 'info',
+            title: 'Boxed Warning Impact on Labeling and REMS',
+            message:
+              'An anticipated boxed warning has significant regulatory implications: (1) the boxed warning is the most prominent safety communication in labeling per 21 CFR 201.57(c)(1), (2) FDA may require a REMS (with Medication Guide as a minimum element) when a boxed warning is warranted, (3) payer coverage and formulary positioning may be affected. Coordinate with FDA on the exact boxed warning language during the review process.',
+            reference: '21 CFR 201.57(c)(1); 21 USC 355-1',
           },
+        ],
+      },
+
+      {
+        id: 'deaths_serious_ae',
+        section: 'clinical_safety',
+        question:
+          'Provide a detailed analysis of deaths, serious adverse events (SAEs), and safety narratives in the clinical program.',
+        guidance:
+          'Per 21 CFR 314.50(d)(5)(vi)(b) and ICH E2D "Post-Approval Safety Data Management," all deaths and serious adverse events must be thoroughly analyzed. For each death, a narrative should describe the patient, the event, the temporal relationship to drug exposure, and the investigator\'s and sponsor\'s causality assessment. Per ICH E2A, SAEs include: death, life-threatening events, hospitalization (or prolongation), persistent disability, congenital anomaly, and important medical events. The integrated safety summary should present deaths and SAEs by treatment group with rate comparisons (drug vs. control) and patient-year-adjusted incidence rates.',
+        fields: [
           {
-            id: 'warnings_precautions_count',
-            label: 'Number of Warnings & Precautions Sections',
+            id: 'deaths_in_program',
+            label: 'Total Deaths in Clinical Program (all causes)',
             type: 'number',
             required: true,
-            validation: { min: 0, max: 30 },
           },
           {
-            id: 'adverse_reactions_table',
-            label: 'Adverse Reactions Table Prepared',
+            id: 'deaths_drug_related',
+            label: 'Deaths Assessed as Drug-Related',
+            type: 'number',
+          },
+          {
+            id: 'death_narratives_prepared',
+            label: 'Individual Death Narratives Prepared',
             type: 'yes_no',
-            required: true,
-            helpText: 'Per 21 CFR 201.57(c)(7), labeling must include a table of adverse reactions occurring at an incidence > 2% (or other appropriate threshold) vs. comparator.',
+            visibleWhen: { field: 'deaths_in_program', operator: 'gt', value: 0 },
+            helpText:
+              'Per 21 CFR 314.50(d)(5)(vi)(b), individual patient narratives for all deaths (and other serious or significant AEs) must be included in the NDA. Each narrative should describe demographics, medical history, dosing, event description, management, outcome, and causality assessment.',
           },
           {
-            id: 'drug_interactions_section',
-            label: 'Drug Interactions Section Complete',
-            type: 'yes_no',
+            id: 'sae_summary',
+            label: 'SAE Summary (by system organ class)',
+            type: 'textarea',
+            placeholder:
+              'e.g., Overall SAE rate: 25% (drug) vs 18% (control). Most common SAEs: pneumonia (4%), hepatic failure (2%), GI hemorrhage (1.5%), cardiac arrest (0.5%). SAE rate adjusted for patient-years: 0.45 events/patient-year (drug) vs 0.32 (control).',
+            required: true,
+            validation: { minLength: 50 },
+          },
+          {
+            id: 'sae_rate_drug_vs_control',
+            label: 'SAE Rate: Drug vs. Control',
+            type: 'text',
+            placeholder: 'e.g., Drug: 25% (0.45/patient-year) vs. Control: 18% (0.32/patient-year)',
+          },
+          {
+            id: 'withdrawal_due_to_ae',
+            label: 'Withdrawal/Discontinuation Due to AEs (drug vs. control)',
+            type: 'text',
+            placeholder: 'e.g., Drug: 12% vs. Control: 8%. Most common reasons: hepatotoxicity (3%), rash (2%), diarrhea (1%)',
             required: true,
           },
           {
-            id: 'specific_populations',
-            label: 'Use in Specific Populations Sections Drafted',
+            id: 'safety_signal_management',
+            label: 'Safety Signal Management Plan',
+            type: 'textarea',
+            placeholder:
+              'e.g., Hepatotoxicity management: ALT/AST monitoring at baseline, Q2W for first 3 months, then monthly. Dose modification algorithm for ALT >3x ULN, >5x ULN, >10x ULN. Rechallenge permitted for Grade 2 events after resolution. Permanent discontinuation for Hy\'s Law cases.',
+          },
+        ],
+        defaultNext: 'ctd_organization',
+        issueChecks: [
+          {
+            id: 'drug_related_deaths',
+            condition: { field: 'deaths_drug_related', operator: 'gt', value: 0 },
+            severity: 'warning',
+            title: 'Drug-Related Deaths Require Thorough Analysis',
+            message:
+              'One or more deaths have been assessed as drug-related. Thorough analysis is required including: (1) individual patient narratives for each case, (2) comparison of death rates with control arm, (3) temporal relationship analysis, (4) risk factor identification, and (5) proposed risk mitigation measures. Drug-related deaths will be closely scrutinized by the FDA review team and may impact labeling (boxed warning, contraindications) and REMS requirements.',
+            reference: '21 CFR 314.50(d)(5)(vi)(b); ICH E2A; ICH E2D',
+          },
+        ],
+      },
+
+      /* ================================================================ */
+      /*  Section 7 — CTD Module Structure                                */
+      /* ================================================================ */
+
+      {
+        id: 'ctd_organization',
+        section: 'ctd_structure',
+        question:
+          'Describe the CTD/eCTD organization for this NDA. All NDA submissions must be in eCTD format per FDA requirements.',
+        guidance:
+          'Per ICH M4 "Organization of the Common Technical Document for the Registration of Pharmaceuticals for Human Use" and 21 CFR 314.50(a), NDA submissions must follow the CTD structure: Module 1 (Regional Administrative Information), Module 2 (CTD Summaries), Module 3 (Quality/CMC), Module 4 (Nonclinical Study Reports), Module 5 (Clinical Study Reports). The FDA eCTD mandate (effective since May 2017) requires all NDA submissions to be in eCTD electronic format. Module 2 summaries (Quality Overall Summary, Nonclinical Overview, Nonclinical Written/Tabulated Summaries, Clinical Overview, Clinical Summary) are critical review documents that must be complete and well-organized.',
+        fields: [
+          {
+            id: 'ctd_format',
+            label: 'Submission Format',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'ectd_v4', label: 'eCTD v4.0 (ICH M8 — current standard)' },
+              { value: 'ectd_v3', label: 'eCTD v3.2.2 (transitional)' },
+              { value: 'paper', label: 'Paper Submission', flagsIssue: true },
+            ],
+          },
+          {
+            id: 'publishing_tool',
+            label: 'eCTD Publishing Tool',
+            type: 'select',
+            options: [
+              { value: 'global_submit', label: 'Global Submit (IQVIA)' },
+              { value: 'lorenz', label: 'Lorenz docuBridge' },
+              { value: 'isi_toolbox', label: 'ISI Toolbox' },
+              { value: 'other', label: 'Other Publishing Tool' },
+            ],
+          },
+          {
+            id: 'module_2_summaries',
+            label: 'Module 2 Summaries Completed',
             type: 'multi_select',
             required: true,
             options: [
-              { value: 'pregnancy', label: 'Pregnancy (8.1) — PLLR format required per 79 FR 72064' },
-              { value: 'lactation', label: 'Lactation (8.2)' },
-              { value: 'females_males_repro', label: 'Females and Males of Reproductive Potential (8.3)' },
-              { value: 'pediatric', label: 'Pediatric Use (8.4)' },
-              { value: 'geriatric', label: 'Geriatric Use (8.5)' },
-              { value: 'hepatic', label: 'Hepatic Impairment (8.6)' },
-              { value: 'renal', label: 'Renal Impairment (8.7)' },
+              { value: 'quality_overall', label: 'Module 2.3 — Quality Overall Summary (QOS)' },
+              { value: 'nonclinical_overview', label: 'Module 2.4 — Nonclinical Overview' },
+              { value: 'nonclinical_summary', label: 'Module 2.6 — Nonclinical Written and Tabulated Summaries' },
+              { value: 'clinical_overview', label: 'Module 2.5 — Clinical Overview' },
+              { value: 'clinical_summary', label: 'Module 2.7 — Clinical Summary' },
             ],
+            helpText:
+              'All Module 2 summaries must be completed for the NDA. These are the primary review documents used by FDA reviewers. Incomplete Module 2 documents may result in a Refuse to File.',
+          },
+          {
+            id: 'module_2_completed',
+            label: 'Are all Module 2 summaries finalized?',
+            type: 'yes_no',
+          },
+          {
+            id: 'module_3_included',
+            label: 'Module 3 (Quality/CMC) Included',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'cross_reference_list',
+            label: 'Cross-References to Previously Submitted Documents',
+            type: 'textarea',
+            placeholder:
+              'e.g., IND 123456 — cross-referenced for Phase 1/2 study reports (Study ABC-001, ABC-002). DMF 12345 — drug substance manufacturing (Type II DMF held by supplier).',
           },
         ],
-        defaultNext: 'medication_guide',
+        defaultNext: 'ectd_submission',
         issueChecks: [
           {
-            id: 'not_plr_format',
-            condition: { field: 'uspi_plr_format', operator: 'eq', value: false },
+            id: 'paper_submission_not_allowed',
+            condition: { field: 'ctd_format', operator: 'eq', value: 'paper' },
             severity: 'critical',
-            title: 'Labeling Not in PLR Format',
+            title: 'eCTD Submission Required',
             message:
-              'Per 21 CFR 201.56 and 201.57, all new NDA labeling must be in the Physician Labeling Rule (PLR) structured format. Non-PLR labeling will be rejected. The PLR format includes Highlights, Full Prescribing Information TOC, and 17 standardized sections.',
-            reference: '21 CFR 201.56; 21 CFR 201.57; 71 FR 3922 (January 24, 2006)',
+              'Paper NDA submissions are no longer accepted by FDA. Per the eCTD mandate (effective May 5, 2017), all NDAs, ANDAs, BLAs, and amendments/supplements must be submitted in eCTD format. Failure to submit in eCTD format will result in a Refuse to Receive.',
+            reference: 'FDA eCTD Mandate (21 CFR 314.50(a)); ICH M8',
           },
         ],
       },
 
       {
-        id: 'medication_guide',
-        section: 'Labeling',
+        id: 'ectd_submission',
+        section: 'ctd_structure',
         question:
-          'Is a Medication Guide or patient labeling required for this product?',
+          'Provide eCTD technical details including sequence numbering, datasets, and validation status.',
         guidance:
-          'Per 21 CFR 208, a Medication Guide is required when FDA determines that: (1) the drug poses a serious and significant public health concern requiring distribution of patient information; (2) patient labeling could help prevent serious adverse effects; or (3) the drug is important to health and patient adherence is crucial. Per FDA Guidance "Medication Guides — Distribution Requirements and Inclusion in REMS" (2011), the Med Guide must be written at a 6th-8th grade reading level.',
+          'Per FDA Technical Specifications Documents and the FDA Data Standards Catalog, NDA submissions must include study datasets in CDISC format (SDTM for tabulation datasets, ADaM for analysis datasets). The define.xml file per CDISC Define-XML v2.0 must accompany all datasets. Reviewer\'s Guides for each study dataset are expected per FDA Guidance "Study Data Technical Conformance Guide" (2023). The eCTD submission must pass the FDA\'s eSubmitter validation (ESG gateway) before FDA will accept the submission. All sequence numbers must follow the FDA Comprehensive Table of Contents (CTOCh) and CDER/CBER numbering conventions.',
         fields: [
           {
-            id: 'medication_guide_required',
-            label: 'Medication Guide Required',
-            type: 'yes_no',
+            id: 'ectd_sequence_number',
+            label: 'eCTD Sequence Number',
+            type: 'text',
+            placeholder: 'e.g., 0000 (for original NDA submission)',
             required: true,
           },
           {
-            id: 'medication_guide_reason',
-            label: 'Reason for Medication Guide',
+            id: 'submission_type',
+            label: 'Submission Type',
             type: 'select',
-            visibleWhen: { field: 'medication_guide_required', operator: 'eq', value: true },
             options: [
-              { value: 'serious_risk', label: 'Serious and significant public health concern' },
-              { value: 'patient_labeling_prevents_ae', label: 'Patient labeling could prevent serious adverse effects' },
-              { value: 'adherence_critical', label: 'Patient adherence is crucial to efficacy' },
-              { value: 'rems_component', label: 'Required as part of REMS' },
+              { value: 'original', label: 'Original NDA' },
+              { value: 'amendment', label: 'Pre-Filing Amendment' },
+              { value: 'supplement', label: 'Supplement (sNDA)' },
             ],
           },
           {
-            id: 'medication_guide_drafted',
-            label: 'Medication Guide Drafted',
+            id: 'regional_module',
+            label: 'Module 1 Regional Administrative Information Complete',
             type: 'yes_no',
-            visibleWhen: { field: 'medication_guide_required', operator: 'eq', value: true },
+            helpText:
+              'Module 1 includes Form FDA 356h, patent information (Form 3542a), financial disclosure (21 CFR 54), debarment certification, and other administrative documents.',
           },
           {
-            id: 'patient_counseling_info',
-            label: 'Patient Counseling Information Section (Section 17) Drafted',
+            id: 'datasets_format',
+            label: 'Study Data Format',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'cdisc_adam', label: 'CDISC ADaM + SDTM (FDA-required standard)' },
+              { value: 'cdisc_sdtm', label: 'CDISC SDTM Only (tabulation only)' },
+              { value: 'legacy', label: 'Legacy / Non-CDISC Format', flagsIssue: true },
+            ],
+            helpText:
+              'Per the FDA Data Standards Catalog (updated annually), NDA study data must be submitted in CDISC standards: SDTM for tabulation datasets and ADaM for analysis datasets. SAS Transport (XPT) v5 format is required.',
+          },
+          {
+            id: 'define_xml_included',
+            label: 'Define.xml Files Included (CDISC Define-XML v2.0)',
+            type: 'yes_no',
+            helpText:
+              'Define.xml is a machine-readable metadata file describing the structure and content of submitted datasets. It is required per the FDA Study Data Technical Conformance Guide (2023).',
+          },
+          {
+            id: 'sas_transport_files',
+            label: 'SAS Transport (XPT v5) Files Prepared',
+            type: 'yes_no',
+            helpText:
+              'Per the FDA Data Standards Catalog, all datasets must be in SAS Transport File Format (XPT v5). Dataset size limit: 5 GB per file.',
+          },
+          {
+            id: 'reviewer_guides',
+            label: 'Reviewer\'s Guides Prepared for Each Study',
             type: 'yes_no',
             required: true,
-            helpText: 'Per 21 CFR 201.57(c)(18), Section 17 must include information for safe and effective use of the drug.',
+            helpText:
+              'Per FDA Guidance "Study Data Technical Conformance Guide" (2023), a Reviewer\'s Guide (RG) must accompany each study dataset submission. The RG describes dataset structure, key variables, deviations from CDISC standards, and analysis methods.',
           },
           {
-            id: 'instructions_for_use',
-            label: 'Instructions for Use (IFU) Required',
+            id: 'esub_validation_passed',
+            label: 'eSub/eCTD Validation Passed (FDA ESG gateway)',
             type: 'yes_no',
-            helpText: 'IFU is typically required for devices or delivery systems (inhalers, autoinjectors, prefilled syringes) per 21 CFR 801.',
+            required: true,
+            helpText:
+              'The FDA Electronic Submissions Gateway (ESG) performs automated validation of eCTD submissions. Validation errors must be resolved before FDA will accept the submission. Run a pre-submission validation using the FDA eCTD Validation Criteria document.',
           },
         ],
-        defaultNext: 'rems_determination',
+        defaultNext: 'labeling_content',
         issueChecks: [
           {
-            id: 'no_med_guide_serious_risk',
-            condition: { field: 'medication_guide_required', operator: 'eq', value: false },
+            id: 'legacy_datasets_not_accepted',
+            condition: { field: 'datasets_format', operator: 'eq', value: 'legacy' },
             severity: 'warning',
-            title: 'No Medication Guide for Drug with Potential Serious Risks',
+            title: 'CDISC Standards Required',
             message:
-              'Per 21 CFR 208, FDA may require a Medication Guide if the drug poses serious and significant public health concerns. If this product has a boxed warning, REMS, or serious adverse reactions, FDA is likely to require a Medication Guide. Reassess this determination.',
-            reference: '21 CFR 208; FDA Guidance "Medication Guides" (2011)',
+              'Non-CDISC (legacy) data formats are no longer accepted for NDAs per the FDA Data Standards Catalog. Study data must be submitted in CDISC SDTM (tabulation) and ADaM (analysis) formats in SAS Transport XPT v5 files. Conversion to CDISC standards should be initiated immediately to avoid submission delays.',
+            reference: 'FDA Data Standards Catalog; FDA Study Data Technical Conformance Guide (2023)',
+          },
+          {
+            id: 'esub_validation_required',
+            condition: { field: 'esub_validation_passed', operator: 'eq', value: false },
+            severity: 'critical',
+            title: 'eSub Validation Must Pass',
+            message:
+              'The eCTD submission must pass FDA Electronic Submissions Gateway (ESG) validation before acceptance. Common validation failures include: incorrect file naming, PDF bookmark errors, missing M1 documents, file size limits exceeded, and lifecycle sequencing errors. Resolve all validation errors before submission.',
+            reference: 'FDA eCTD Guidance; FDA eCTD Validation Criteria; 21 CFR 314.50(a)',
           },
         ],
       },
 
-      /* ================================================================
-       * Section 9 — REMS Assessment
-       * ================================================================ */
+      /* ================================================================ */
+      /*  Section 8 — Labeling & REMS                                     */
+      /* ================================================================ */
 
       {
-        id: 'rems_determination',
-        section: 'REMS Assessment',
+        id: 'labeling_content',
+        section: 'labeling_rems',
         question:
-          'Let\'s assess whether a REMS (Risk Evaluation and Mitigation Strategy) is needed and, if so, what elements are proposed.',
+          'Describe the proposed labeling content. The draft USPI (United States Prescribing Information) must be included in the NDA per 21 CFR 201.56-201.57.',
         guidance:
-          'Per 21 USC 355-1 (FDAAA 2007, as amended by FDASIA 2012 and FDORA 2022), FDA can require a REMS if necessary to ensure that the benefits of the drug outweigh the risks. FDA considers: (1) the estimated size of the population likely to use the drug; (2) the seriousness of the known or potential adverse events; (3) the expected benefit of the drug; (4) the expected or actual duration of treatment; (5) the seriousness of the disease or condition. A REMS may include a Medication Guide, Communication Plan, Elements to Assure Safe Use (ETASU), and/or an Implementation System.',
+          'Per 21 CFR 201.56 and 21 CFR 201.57, the USPI must follow the Physician Labeling Rule (PLR) format with standardized sections: Highlights, Full Prescribing Information (FPI) table of contents, boxed warning (if applicable), Indications and Usage, Dosage and Administration, Dosage Forms and Strengths, Contraindications, Warnings and Precautions, Adverse Reactions, Drug Interactions, Use in Specific Populations, Description, Clinical Pharmacology, Nonclinical Toxicology, Clinical Studies, References, How Supplied/Storage and Handling, and Patient Counseling Information. A Medication Guide (21 CFR Part 208) may be required if the product has serious risks that could be mitigated by patient education. Patient package inserts may also be required.',
+        fields: [
+          {
+            id: 'uspi_draft_complete',
+            label: 'USPI (Prescribing Information) Draft Complete',
+            type: 'yes_no',
+            required: true,
+            helpText:
+              'The proposed USPI must be submitted with the NDA. FDA negotiates labeling during the review cycle, but a complete draft following the PLR format (21 CFR 201.57) must be included at submission.',
+          },
+          {
+            id: 'indications_usage',
+            label: 'Proposed Indications and Usage (Section 1)',
+            type: 'textarea',
+            placeholder:
+              'e.g., ACMEXOR (acmetinib) is indicated for the treatment of adult patients with locally advanced or metastatic non-small cell lung cancer (NSCLC) with epidermal growth factor receptor (EGFR) exon 20 insertion mutations, as detected by an FDA-approved test, who have progressed on or after platinum-based chemotherapy.',
+            required: true,
+            validation: { minLength: 50 },
+          },
+          {
+            id: 'dosage_administration',
+            label: 'Proposed Dosage and Administration (Section 2)',
+            type: 'textarea',
+            placeholder:
+              'e.g., The recommended dosage is 100 mg taken orally once daily with or without food until disease progression or unacceptable toxicity. Dose modifications for adverse reactions: Grade 3 rash — interrupt until ≤Grade 1, then resume at 75 mg. Hepatic impairment: reduce to 75 mg for moderate (Child-Pugh B); not recommended for severe (Child-Pugh C).',
+            required: true,
+          },
+          {
+            id: 'contraindications',
+            label: 'Proposed Contraindications (Section 4)',
+            type: 'textarea',
+            placeholder:
+              'e.g., Known hypersensitivity to acmetinib or any excipient. Co-administration with strong CYP3A4 inducers (e.g., rifampin, phenytoin, carbamazepine, St. John\'s wort).',
+          },
+          {
+            id: 'warnings_precautions',
+            label: 'Proposed Warnings and Precautions (Section 5)',
+            type: 'textarea',
+            placeholder:
+              'e.g., 5.1 Hepatotoxicity: ALT/AST elevations observed in 15% of patients (Grade ≥3 in 4%). Monitor LFTs at baseline and periodically. 5.2 Dermatologic Reactions: Rash in 45%, severe in 12%. 5.3 Embryo-Fetal Toxicity: Can cause fetal harm based on animal data.',
+            required: true,
+            validation: { minLength: 50 },
+          },
+          {
+            id: 'adverse_reactions_section',
+            label: 'Adverse Reactions Section (Section 6) Prepared',
+            type: 'yes_no',
+            required: true,
+            helpText:
+              'Section 6 presents AE data from clinical trials. Per 21 CFR 201.57(c)(7), include: common AEs table (≥10%), Grade ≥3 table, AEs leading to discontinuation, and selected AEs requiring monitoring.',
+          },
+          {
+            id: 'drug_interactions_section',
+            label: 'Drug Interactions Section (Section 7) Prepared',
+            type: 'yes_no',
+            required: true,
+            helpText:
+              'Per 21 CFR 201.57(c)(8), describe clinically significant interactions including effect on and by CYP enzymes/transporters, dose adjustments, and contraindicated combinations.',
+          },
+          {
+            id: 'use_in_specific_populations',
+            label: 'Use in Specific Populations (Section 8) Content',
+            type: 'textarea',
+            placeholder:
+              'e.g., 8.1 Pregnancy: can cause fetal harm. Advise pregnant women of potential risk. 8.2 Lactation: advise not to breastfeed. 8.3 Females and Males of Reproductive Potential: verify pregnancy status; use effective contraception. 8.4 Pediatric Use: safety and efficacy not established. 8.5 Geriatric Use: no overall differences in safety/efficacy in patients ≥65. 8.6 Renal Impairment: no dose adjustment for mild/moderate. 8.7 Hepatic Impairment: dose reduction for moderate (Child-Pugh B).',
+            required: true,
+          },
+          {
+            id: 'patient_labeling',
+            label: 'Patient Package Insert / Patient Information Prepared',
+            type: 'yes_no',
+          },
+          {
+            id: 'medication_guide_needed',
+            label: 'Medication Guide Required (21 CFR Part 208)',
+            type: 'yes_no',
+            helpText:
+              'Per 21 CFR Part 208, a Medication Guide is required when: (1) the product has serious risks relative to benefits, (2) patient adherence is crucial, or (3) there are important instructions for safe use. Products with boxed warnings typically require a Medication Guide.',
+          },
+        ],
+        defaultNext: 'rems_evaluation',
+        issueChecks: [
+          {
+            id: 'uspi_not_complete',
+            condition: { field: 'uspi_draft_complete', operator: 'eq', value: false },
+            severity: 'warning',
+            title: 'USPI Draft Should Be Complete',
+            message:
+              'A complete draft USPI in PLR format (21 CFR 201.57) must be submitted with the NDA. An incomplete USPI may result in a Refuse to File action. The draft should include all standardized sections with data from the clinical development program. FDA will negotiate final labeling language during the review cycle.',
+            reference: '21 CFR 201.56; 21 CFR 201.57',
+          },
+        ],
+      },
+
+      {
+        id: 'rems_evaluation',
+        section: 'labeling_rems',
+        question:
+          'Has the need for a Risk Evaluation and Mitigation Strategy (REMS) been assessed? If REMS is required, describe the proposed elements.',
+        guidance:
+          'Per 21 USC 355-1 (FDAAA Section 901) and FDA Guidance "Format and Content of Proposed Risk Evaluation and Mitigation Strategies (REMS), REMS Assessments, and Proposed REMS Modifications" (2009), FDA may require a REMS if it determines that a REMS is necessary to ensure the benefits outweigh the risks. REMS elements may include: (1) Medication Guide and/or Patient Package Insert, (2) Communication Plan (Dear Healthcare Provider letters, educational materials), (3) Elements to Assure Safe Use (ETASU) — prescriber certification, patient enrollment, pharmacy certification, restricted distribution. REMS with ETASU are the most restrictive and are required for drugs with the most serious safety concerns (e.g., thalidomide/lenalidomide, isotretinoin, opioids).',
         fields: [
           {
             id: 'rems_required',
-            label: 'Is a REMS Required or Anticipated?',
+            label: 'REMS Assessment',
             type: 'select',
             required: true,
             options: [
-              { value: 'required_fda', label: 'Yes — FDA Has Required a REMS' },
-              { value: 'anticipated', label: 'Yes — Sponsor Anticipates REMS Will Be Required' },
-              { value: 'voluntary', label: 'Voluntary REMS Proposed by Sponsor' },
-              { value: 'not_required', label: 'No REMS Required' },
+              { value: 'yes', label: 'Yes — REMS Required' },
+              { value: 'likely', label: 'Likely — Under Discussion with FDA' },
+              { value: 'no', label: 'No — REMS Not Required' },
+              { value: 'under_discussion', label: 'Under Discussion — Awaiting FDA Guidance' },
             ],
           },
           {
             id: 'rems_elements',
-            label: 'REMS Elements',
+            label: 'Proposed REMS Elements',
             type: 'multi_select',
-            visibleWhen: { field: 'rems_required', operator: 'in', value: ['required_fda', 'anticipated', 'voluntary'] },
+            visibleWhen: { field: 'rems_required', operator: 'in', value: ['yes', 'likely'] },
             options: [
               { value: 'medication_guide', label: 'Medication Guide' },
-              { value: 'communication_plan', label: 'Communication Plan (Dear HCP Letter, training)' },
+              { value: 'communication_plan', label: 'Communication Plan (healthcare provider education)' },
               { value: 'etasu', label: 'Elements to Assure Safe Use (ETASU)' },
               { value: 'implementation_system', label: 'Implementation System' },
             ],
           },
           {
-            id: 'etasu_details',
-            label: 'ETASU Requirements',
-            type: 'multi_select',
+            id: 'etasu_description',
+            label: 'ETASU Description (if applicable)',
+            type: 'textarea',
+            placeholder:
+              'e.g., Prescriber certification required (complete online training module). Patients must sign a Patient-Prescriber Agreement form acknowledging risks. Pharmacy must be certified in the REMS program. Drug dispensed only to certified pharmacies. Pregnancy testing required before each cycle for WOCBP.',
             visibleWhen: { field: 'rems_elements', operator: 'contains', value: 'etasu' },
-            options: [
-              { value: 'prescriber_certification', label: 'Prescriber Certification / Training' },
-              { value: 'pharmacy_certification', label: 'Pharmacy Certification' },
-              { value: 'patient_enrollment', label: 'Patient Enrollment in Registry' },
-              { value: 'dispensing_restrictions', label: 'Dispensing Restrictions (e.g., specialty pharmacy only)' },
-              { value: 'lab_monitoring', label: 'Required Laboratory Monitoring' },
-              { value: 'pregnancy_testing', label: 'Pregnancy Testing Requirements' },
-            ],
           },
           {
             id: 'rems_assessment_timeline',
-            label: 'REMS Assessment Timeline',
-            type: 'select',
-            visibleWhen: { field: 'rems_required', operator: 'in', value: ['required_fda', 'anticipated', 'voluntary'] },
-            options: [
-              { value: '18_months', label: '18 Months After Approval' },
-              { value: '3_years', label: '3 Years After Approval' },
-              { value: '7_years', label: '7 Years After Approval' },
-              { value: 'custom', label: 'Custom Timeline Per FDA Agreement' },
-            ],
-            helpText: 'Per 21 USC 355-1(g), the REMS timetable must specify assessments at 18 months, 3 years, and 7 years after approval.',
+            label: 'REMS Assessment and Reporting Timeline',
+            type: 'text',
+            placeholder: 'e.g., REMS assessments due at 18 months, 3 years, and 7 years post-approval',
+            helpText: 'Per 21 USC 355-1(g), REMS assessments must be submitted at 18 months, 3 years, and 7 years after initial REMS approval, or as otherwise specified by FDA.',
+          },
+          {
+            id: 'prior_rems_experience',
+            label: 'Does the sponsor have prior experience managing a REMS program?',
+            type: 'yes_no',
+          },
+          {
+            id: 'rems_comparable_products',
+            label: 'Comparable Products with REMS (for benchmarking)',
+            type: 'textarea',
+            placeholder:
+              'e.g., Lenalidomide (Revlimid REMS), Isotretinoin (iPLEDGE REMS), Opioids (Class-Wide REMS). Benchmark elements include: patient enrollment, prescriber certification, pregnancy prevention program.',
           },
         ],
-        defaultNext: 'rems_elements',
+        defaultNext: 'pmc_pme',
         issueChecks: [
           {
-            id: 'no_rems_with_boxed_warning',
-            condition: { field: 'rems_required', operator: 'eq', value: 'not_required' },
+            id: 'rems_elements_missing',
+            condition: { field: 'rems_required', operator: 'eq', value: 'yes' },
             severity: 'critical',
-            title: 'No REMS Assessment for Potential Serious Risk Drug',
+            title: 'REMS Elements Must Be Defined',
             message:
-              'If this drug has a proposed boxed warning, FDA will almost certainly require a REMS or at minimum a thorough REMS assessment discussion. Per 21 USC 355-1, drugs with serious safety risks that cannot be managed through labeling alone require REMS. Review whether a REMS is necessary.',
+              'REMS has been identified as required, but the specific REMS elements must be fully defined before NDA submission. Per 21 USC 355-1, the proposed REMS document must include: a description of each element, implementation timeline, timetable for REMS assessments, and proposed metrics for evaluating REMS effectiveness. Coordinate with FDA\'s Office of Surveillance and Epidemiology (OSE) on REMS design.',
             reference: '21 USC 355-1; FDAAA Section 901',
           },
         ],
       },
 
+      /* ================================================================ */
+      /*  Section 9 — Post-Marketing Commitments                         */
+      /* ================================================================ */
+
       {
-        id: 'rems_elements',
-        section: 'REMS Assessment',
+        id: 'pmc_pme',
+        section: 'post_marketing',
         question:
-          'Provide additional REMS implementation details and comparison with similar REMS programs.',
+          'Describe post-marketing commitments (PMCs) and post-marketing requirements (PMEs). For accelerated approval, a confirmatory study is required.',
         guidance:
-          'FDA maintains a publicly available REMS database at fda.gov/drugs/rems. When proposing or preparing for a REMS, it is highly informative to review REMS programs for drugs in the same therapeutic class or with similar risk profiles. Per FDA Guidance "Format and Content of Proposed Risk Evaluation and Mitigation Strategies" (2009), the REMS submission should include a proposed REMS document, REMS supporting document, and proposed timetable for submission of REMS assessments.',
+          'Per 21 CFR 314.81 "Other Post-Marketing Reports" and FDAAA Section 505(o)(3), FDA may require post-marketing studies or clinical trials to assess a known or potential serious risk, to assess signals of serious risk, or to identify unexpected serious risks. For drugs approved under Accelerated Approval (21 CFR 314.510), a confirmatory study demonstrating clinical benefit is required per 21 CFR 314.530. FDA may withdraw accelerated approval if the confirmatory study fails to verify clinical benefit. Post-marketing commitments are agreed-upon studies; post-marketing requirements are mandatory per FDAAA. Periodic Safety Update Reports (PSURs) per ICH E2C(R2) or Periodic Adverse Drug Experience Reports (PADERs) per 21 CFR 314.80 are required.',
         fields: [
           {
-            id: 'similar_rems_programs',
-            label: 'Similar REMS Programs Reviewed',
-            type: 'textarea',
-            placeholder: 'e.g., iPLEDGE (isotretinoin), Clozapine REMS, Thalomid REMS — describe similarities and differences...',
+            id: 'confirmatory_study_planned',
+            label: 'Confirmatory Post-Approval Study Planned',
+            type: 'yes_no',
           },
           {
-            id: 'rems_it_system',
-            label: 'REMS IT System / Platform',
+            id: 'confirmatory_study_design',
+            label: 'Confirmatory Study Design',
+            type: 'textarea',
+            placeholder:
+              'e.g., Phase 3 randomized, double-blind, placebo-controlled study of acmetinib vs. standard of care in first-line NSCLC with EGFR exon 20 insertions. Primary endpoint: OS. Target enrollment: 450 patients. Estimated completion: Q4 2028.',
+            visibleWhen: { field: 'confirmatory_study_planned', operator: 'eq', value: true },
+          },
+          {
+            id: 'accelerated_approval_conditions',
+            label: 'Accelerated Approval Conditions',
+            type: 'textarea',
+            placeholder:
+              'e.g., This NDA seeks accelerated approval based on ORR (surrogate endpoint). Confirmatory study (Study XYZ-003) is ongoing with OS as the primary endpoint. Enrollment complete; interim analysis planned at 60% OS events. Final OS analysis expected Q2 2028.',
+            visibleWhen: { field: 'accelerated_pathway', operator: 'contains', value: 'accelerated_approval' },
+          },
+          {
+            id: 'pmc_list',
+            label: 'Post-Marketing Commitments (PMCs) — Agreed-Upon Studies',
+            type: 'textarea',
+            placeholder:
+              'e.g., PMC 1: Long-term safety registry (5,000 patients, 5 years). PMC 2: QTc definitive study (per ICH E14). PMC 3: Renal impairment PK study (Child-Pugh classification).',
+          },
+          {
+            id: 'pme_list',
+            label: 'Post-Marketing Requirements (PMEs) — Mandatory Studies',
+            type: 'textarea',
+            placeholder:
+              'e.g., PMR 1: Confirmatory OS study (21 CFR 314.530). PMR 2: Pediatric studies per iPSP (PREA). PMR 3: REMS assessment at 18 months.',
+          },
+          {
+            id: 'phase_4_studies',
+            label: 'Planned Phase 4 Studies',
+            type: 'textarea',
+            placeholder:
+              'e.g., Phase 4 real-world evidence study evaluating effectiveness in community oncology settings. Registry study for long-term safety in >5,000 patients.',
+          },
+          {
+            id: 'signal_detection_plan',
+            label: 'Post-Marketing Safety Signal Detection Plan',
+            type: 'textarea',
+            placeholder:
+              'e.g., Routine pharmacovigilance: ICSR processing via Argus Safety with MedDRA coding. Signal detection: quarterly disproportionality analysis (PRR, ROR) on spontaneous AE database. FAERS data mining. Periodic review of literature reports. Sentinel System active surveillance planned.',
+            required: true,
+          },
+          {
+            id: 'periodic_safety_reports',
+            label: 'Periodic Safety Report Type',
             type: 'select',
+            required: true,
             options: [
-              { value: 'vendor_platform', label: 'Third-Party Vendor REMS Platform' },
-              { value: 'proprietary', label: 'Proprietary / In-House System' },
-              { value: 'shared_system', label: 'Shared System REMS (class-wide)' },
-              { value: 'not_applicable', label: 'Not Applicable' },
-              { value: 'tbd', label: 'To Be Determined' },
+              { value: 'psur', label: 'PSUR / PBRER (ICH E2C(R2))' },
+              { value: 'pader', label: 'PADER (21 CFR 314.80)' },
+              { value: 'dsur', label: 'DSUR (ICH E2F — for ongoing studies)' },
             ],
-          },
-          {
-            id: 'rems_modification_authority',
-            label: 'REMS Modification Authority per FDORA',
-            type: 'textarea',
-            placeholder: 'Under FDORA (2022), describe plans for potential REMS modification requests or sunset provisions...',
-            helpText: 'FDORA (2022) amended the REMS provisions to add requirements for FDA to evaluate whether REMS elements remain appropriate and to streamline modification processes.',
-          },
-          {
-            id: 'rems_burden_assessment',
-            label: 'REMS Burden on Patient Access',
-            type: 'textarea',
-            placeholder: 'Describe any anticipated impact on patient access, healthcare provider burden, and pharmacy distribution...',
-            helpText: 'Per 21 USC 355-1(f)(2), REMS elements must not be unduly burdensome on patient access to the drug.',
+            helpText:
+              'For marketed products, PADERs are required per 21 CFR 314.80 (quarterly for first 3 years, then annually). PBRERs (ICH E2C(R2)) may be submitted in lieu of PADERs if agreed upon with FDA.',
           },
         ],
-        defaultNext: 'pmc_pmr',
-      },
-
-      /* ================================================================
-       * Section 10 — Post-Marketing Commitments
-       * ================================================================ */
-
-      {
-        id: 'pmc_pmr',
-        section: 'Post-Marketing Commitments',
-        question:
-          'Describe any anticipated post-marketing commitments (PMCs) and post-marketing requirements (PMRs).',
-        guidance:
-          'PMRs are studies required by statute or regulation (e.g., 505(o)(3) safety studies, accelerated approval confirmatory trials, PREA pediatric studies). PMCs are studies agreed to but not required by statute. Per 21 CFR 314.81(b)(2)(vii), annual reports must include PMC/PMR status updates. For accelerated approval products, per FDORA (2022) amendments, sponsors must demonstrate due diligence in completing confirmatory trials — FDA can expedite withdrawal if confirmatory studies are not completed.',
-        fields: [
+        defaultNext: 'pediatric_commitments',
+        provideExpertFeedback: true,
+        issueChecks: [
           {
-            id: 'pmr_anticipated',
-            label: 'Post-Marketing Requirements (PMRs) Anticipated',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'pmr_types',
-            label: 'Types of PMRs',
-            type: 'multi_select',
-            visibleWhen: { field: 'pmr_anticipated', operator: 'eq', value: true },
-            options: [
-              { value: '505o3_safety', label: '505(o)(3) Safety Study' },
-              { value: 'confirmatory_accel', label: 'Confirmatory Trial (Accelerated Approval)' },
-              { value: 'prea_pediatric', label: 'PREA Pediatric Study' },
-              { value: 'rems_assessment', label: 'REMS Assessment Study' },
-              { value: 'animal_rule', label: 'Animal Rule Post-Marketing Study' },
-              { value: 'ddi_study', label: 'Drug Interaction Study' },
-            ],
-          },
-          {
-            id: 'pmc_anticipated',
-            label: 'Post-Marketing Commitments (PMCs) Anticipated',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'pmc_description',
-            label: 'PMC Description',
-            type: 'textarea',
-            visibleWhen: { field: 'pmc_anticipated', operator: 'eq', value: true },
-            placeholder: 'Describe anticipated PMCs (e.g., additional drug interaction studies, real-world evidence generation, registry studies)...',
-          },
-          {
-            id: 'phase4_studies_planned',
-            label: 'Phase 4 Studies Planned',
-            type: 'number',
-            validation: { min: 0, max: 50 },
-          },
-          {
-            id: 'dsur_commitment',
-            label: 'DSUR (Development Safety Update Report) Commitment Ongoing',
-            type: 'yes_no',
-            helpText: 'Per ICH E2F, DSURs are submitted annually during clinical development. Post-approval, PSURs/PBRERs (ICH E2C(R2)) replace DSURs.',
+            id: 'accelerated_approval_no_confirmatory',
+            condition: { field: 'confirmatory_study_planned', operator: 'eq', value: false },
+            severity: 'critical',
+            title: 'Confirmatory Study Required for Accelerated Approval',
+            message:
+              'If this NDA seeks accelerated approval (21 CFR 314.510), a confirmatory post-marketing study demonstrating clinical benefit is mandatory per 21 CFR 314.530. Per FDORA 2022 amendments, FDA has enhanced authority to require that confirmatory studies are underway prior to accelerated approval and to withdraw approval on an expedited timeline if studies fail to verify clinical benefit. The confirmatory study protocol should be agreed upon with FDA before NDA submission.',
+            reference: '21 CFR 314.510; 21 CFR 314.530; FDORA 2022',
           },
         ],
-        defaultNext: 'pediatric_pharmacovigilance',
       },
 
       {
-        id: 'pediatric_pharmacovigilance',
-        section: 'Post-Marketing Commitments',
+        id: 'pediatric_commitments',
+        section: 'post_marketing',
         question:
-          'Address pediatric study requirements and pharmacovigilance plans.',
+          'Address the pediatric development strategy. PREA requirements apply to most NDAs, and the initial Pediatric Study Plan (iPSP) should be submitted.',
         guidance:
-          'The Pediatric Research Equity Act (PREA, 21 USC 355c) requires pediatric studies for all new active ingredients, new indications, new dosage forms, and new routes of administration, unless a waiver or deferral is granted. Per FDA Guidance "Qualifying for Pediatric Exclusivity Under the Best Pharmaceuticals for Children Act" (BPCA, 21 USC 355a), a Written Request from FDA can trigger pediatric studies for 6-month exclusivity. Post-marketing pharmacovigilance per ICH E2E and FDA Guidance "Good Pharmacovigilance Practices" (2005) should be planned.',
+          'Per the Pediatric Research Equity Act (PREA, 21 USC 355c, as amended by FDARA 2017), sponsors of new drugs must submit an initial Pediatric Study Plan (iPSP) no later than 60 days after the End-of-Phase 2 (EOP2) meeting or equivalent timepoint. The iPSP should outline the planned pediatric studies, including age groups, formulation, and study design. Orphan-designated drugs are exempt from PREA. Pediatric exclusivity (21 USC 355a, BPCA) provides 6 months of additional market exclusivity if FDA-issued Written Requests for pediatric studies are fulfilled. Per ICH E11(R1), age-appropriate formulations and juvenile animal studies (ICH S11) must be considered.',
         fields: [
           {
             id: 'prea_applicable',
-            label: 'PREA Applicable to This Product',
-            type: 'yes_no',
+            label: 'PREA Applicability',
+            type: 'select',
             required: true,
+            options: [
+              { value: 'yes', label: 'Yes — PREA Applies (disease relevant to pediatric patients)' },
+              { value: 'orphan_exempt', label: 'Exempt — Orphan Drug Designation' },
+              { value: 'waiver', label: 'PREA Waiver Granted or Requested' },
+              { value: 'deferral', label: 'PREA Deferral Granted or Requested' },
+            ],
           },
           {
-            id: 'pediatric_study_status',
-            label: 'Pediatric Study Status',
-            type: 'select',
-            visibleWhen: { field: 'prea_applicable', operator: 'eq', value: true },
-            options: [
-              { value: 'completed', label: 'Pediatric Studies Completed' },
-              { value: 'deferred', label: 'Deferral Granted (studies to be completed post-approval)' },
-              { value: 'waiver_full', label: 'Full Waiver Granted' },
-              { value: 'waiver_partial', label: 'Partial Waiver (some age groups)' },
-              { value: 'not_addressed', label: 'Not Yet Addressed' },
-            ],
+            id: 'ipsp_submitted',
+            label: 'Initial Pediatric Study Plan (iPSP) Submitted to FDA',
+            type: 'yes_no',
+            visibleWhen: { field: 'prea_applicable', operator: 'eq', value: 'yes' },
+            helpText:
+              'Per FDARA 2017, the iPSP should be submitted no later than 60 days after the EOP2 meeting request. FDA provides feedback within 90 days, and the agreed-upon iPSP forms the basis for PREA commitments.',
+          },
+          {
+            id: 'pediatric_studies_planned',
+            label: 'Planned Pediatric Studies',
+            type: 'textarea',
+            placeholder:
+              'e.g., Phase 1/2 dose-finding study in pediatric patients (aged 6-17 years) with EGFR mutation-positive NSCLC. Planned enrollment: 30 patients. PK-guided dose selection with adult PK bridging. Initiation: 2027.',
+            visibleWhen: { field: 'prea_applicable', operator: 'eq', value: 'yes' },
           },
           {
             id: 'pediatric_formulation',
-            label: 'Pediatric Formulation Developed',
+            label: 'Pediatric Formulation Development Planned',
             type: 'yes_no',
-            visibleWhen: { field: 'prea_applicable', operator: 'eq', value: true },
-            helpText: 'Per FDA Guidance "General Clinical Pharmacology Considerations for Pediatric Studies" (2022), an age-appropriate formulation is required.',
+            visibleWhen: { field: 'prea_applicable', operator: 'eq', value: 'yes' },
+            helpText:
+              'Per ICH E11(R1) and FDA Guidance on Pediatric Formulations, an age-appropriate formulation (e.g., oral solution, mini-tablets, dispersible tablets) may be required for younger age groups.',
+          },
+          {
+            id: 'pediatric_exclusivity_eligible',
+            label: 'Pediatric Exclusivity (505A) Eligibility',
+            type: 'yes_no',
+            helpText:
+              'Per BPCA (21 USC 355a), pediatric exclusivity provides 6 months of additional market exclusivity if FDA-issued Written Requests are fulfilled. This applies to NMEs with remaining patent life or marketing exclusivity.',
           },
           {
             id: 'bpca_written_request',
-            label: 'BPCA Written Request Received',
+            label: 'Has FDA Issued a Written Request (WR) Under BPCA?',
             type: 'yes_no',
-            helpText: 'Per 21 USC 355a, if FDA issues a Written Request for pediatric studies, completion confers 6 months of additional exclusivity (added to existing patents/exclusivities).',
-          },
-          {
-            id: 'pharmacovigilance_plan',
-            label: 'Post-Marketing Pharmacovigilance Plan',
-            type: 'multi_select',
-            required: true,
-            options: [
-              { value: 'adr_reporting', label: 'Routine ADR Reporting (MedWatch / FAERS)' },
-              { value: 'psur', label: 'PSUR / PBRER (ICH E2C(R2))' },
-              { value: 'signal_detection', label: 'Active Signal Detection Program' },
-              { value: 'registry', label: 'Patient Registry' },
-              { value: 'pregnancy_registry', label: 'Pregnancy Exposure Registry' },
-              { value: 'sentinel', label: 'Sentinel System Monitoring' },
-              { value: 'observational', label: 'Observational Post-Marketing Safety Study' },
-            ],
-          },
-          {
-            id: 'risk_management_plan',
-            label: 'Risk Management Plan (RMP) Prepared',
-            type: 'yes_no',
-            helpText: 'While RMPs are an EU requirement (EMA), preparing a pharmacovigilance plan for the US that addresses key safety concerns is best practice per ICH E2E.',
+            helpText:
+              'A Written Request from FDA specifies the pediatric studies needed to obtain pediatric exclusivity. It is separate from PREA obligations.',
           },
         ],
-        defaultNext: 'adcom_planning',
+        defaultNext: 'submission_readiness',
         issueChecks: [
           {
-            id: 'no_pediatric_no_waiver',
-            condition: { field: 'pediatric_study_status', operator: 'eq', value: 'not_addressed' },
+            id: 'ipsp_not_submitted',
+            condition: { field: 'ipsp_submitted', operator: 'eq', value: false },
             severity: 'warning',
-            title: 'Pediatric Requirements Not Addressed',
+            title: 'iPSP Should Be Submitted',
             message:
-              'PREA (21 USC 355c) requires pediatric studies unless a waiver or deferral is obtained. Failure to address pediatric requirements may result in a refuse-to-file determination. Engage FDA early to discuss pediatric development plans — a Pediatric Study Plan (PSP) must be submitted per 21 USC 355c(e).',
-            reference: 'PREA (21 USC 355c); FDA Guidance "Pediatric Study Plans" (2020)',
+              'PREA applies to this product, but the initial Pediatric Study Plan (iPSP) has not been submitted to FDA. Per FDARA 2017, the iPSP should be submitted no later than 60 days after the EOP2 meeting request. Failure to submit the iPSP may delay NDA approval, as FDA may require pediatric study commitments as a condition of approval.',
+            reference: 'PREA (21 USC 355c); FDARA 2017; FDA Guidance: Pediatric Study Plans (2020)',
           },
         ],
       },
 
-      /* ================================================================
-       * Section 11 — Advisory Committee
-       * ================================================================ */
+      /* ================================================================ */
+      /*  Section 10 — Review & Submission                                */
+      /* ================================================================ */
 
       {
-        id: 'adcom_planning',
-        section: 'Advisory Committee',
+        id: 'submission_readiness',
+        section: 'review_submission',
         question:
-          'Is an FDA Advisory Committee meeting expected for this NDA, and what is the preparation status?',
+          'Assess submission readiness. Has a Pre-NDA meeting been held, is patent information prepared, and are all regulatory prerequisites in place?',
         guidance:
-          'Per 21 CFR Part 14, FDA may convene an advisory committee to obtain independent expert advice. Advisory committees are common for: first-in-class drugs, drugs with novel mechanisms of action, products with significant safety concerns, drugs for serious or life-threatening conditions, and applications where FDA seeks broader stakeholder input. The relevant advisory committee depends on the therapeutic area (e.g., ODAC for oncology, CDER advisory committees for other areas). FDA typically decides whether to convene an AdCom within 90 days of filing.',
-        fields: [
-          {
-            id: 'adcom_expected',
-            label: 'Advisory Committee Meeting Expected',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'confirmed', label: 'Yes — FDA Has Confirmed AdCom' },
-              { value: 'likely', label: 'Likely — First-in-Class or Novel MOA' },
-              { value: 'possible', label: 'Possible — Safety Concerns May Trigger' },
-              { value: 'unlikely', label: 'Unlikely — Well-Characterized Drug Class' },
-            ],
-          },
-          {
-            id: 'relevant_committee',
-            label: 'Relevant Advisory Committee',
-            type: 'select',
-            visibleWhen: { field: 'adcom_expected', operator: 'in', value: ['confirmed', 'likely', 'possible'] },
-            options: [
-              { value: 'odac', label: 'Oncologic Drugs Advisory Committee (ODAC)' },
-              { value: 'cardrenal', label: 'Cardiovascular and Renal Drugs Advisory Committee' },
-              { value: 'psychopharm', label: 'Psychopharmacologic Drugs Advisory Committee' },
-              { value: 'amdac', label: 'Antimicrobial Drugs Advisory Committee' },
-              { value: 'emdac', label: 'Endocrinologic and Metabolic Drugs Advisory Committee' },
-              { value: 'gastrointestinal', label: 'Gastrointestinal Drugs Advisory Committee' },
-              { value: 'pulmonary', label: 'Pulmonary-Allergy Drugs Advisory Committee' },
-              { value: 'arthritis', label: 'Arthritis Advisory Committee' },
-              { value: 'dermatologic', label: 'Dermatologic and Ophthalmic Drugs Advisory Committee' },
-              { value: 'other', label: 'Other' },
-            ],
-          },
-          {
-            id: 'novel_mechanism',
-            label: 'Is This a First-in-Class or Novel Mechanism of Action?',
-            type: 'yes_no',
-            required: true,
-          },
-          {
-            id: 'prior_adcom_precedents',
-            label: 'Prior AdCom Precedents for Similar Drugs',
-            type: 'textarea',
-            placeholder: 'Describe any prior advisory committee meetings for drugs in the same class or for the same indication, and their outcomes...',
-            helpText: 'Reviewing prior AdCom transcripts and FDA briefing documents for similar drugs provides invaluable insight into FDA thinking and potential concerns.',
-          },
-        ],
-        defaultNext: 'adcom_preparation',
-        issueChecks: [
-          {
-            id: 'adcom_novel_moa_not_planned',
-            condition: { field: 'adcom_expected', operator: 'eq', value: 'unlikely' },
-            severity: 'warning',
-            title: 'AdCom May Be Required for Novel Drug',
-            message:
-              'For first-in-class drugs or products with novel mechanisms of action, FDA frequently convenes an advisory committee. If this product has a novel MOA, prepare for the possibility of an AdCom even if one is not currently expected. Budget 3-6 months for AdCom preparation.',
-            reference: '21 CFR Part 14; FDA MAPP 4000.4',
-          },
-        ],
-        provideExpertFeedback: true,
-      },
-
-      {
-        id: 'adcom_preparation',
-        section: 'Advisory Committee',
-        question:
-          'What is the status of advisory committee preparation materials?',
-        guidance:
-          'If an AdCom is expected, preparation is a major undertaking. The sponsor must prepare a comprehensive briefing document (typically 100-200 pages) submitted to FDA 60 days before the meeting. FDA will prepare its own briefing document and questions for the committee. Key preparation activities include: identifying anticipated FDA concerns, preparing responses to likely questions, developing a compelling benefit-risk presentation, and engaging a KOL consultant panel for mock advisory committee rehearsals.',
-        fields: [
-          {
-            id: 'briefing_document_status',
-            label: 'Sponsor Briefing Document Status',
-            type: 'select',
-            options: [
-              { value: 'final', label: 'Final — Ready for Submission' },
-              { value: 'draft', label: 'In Draft' },
-              { value: 'outline', label: 'Outline Only' },
-              { value: 'not_started', label: 'Not Started' },
-              { value: 'not_applicable', label: 'Not Applicable (no AdCom expected)' },
-            ],
-          },
-          {
-            id: 'anticipated_concerns',
-            label: 'Anticipated FDA / Committee Concerns',
-            type: 'textarea',
-            placeholder: 'List the top 3-5 concerns you expect FDA or committee members to raise...',
-          },
-          {
-            id: 'proposed_adcom_questions',
-            label: 'Proposed Discussion Questions',
-            type: 'textarea',
-            placeholder: 'Draft 2-3 proposed discussion questions that frame the benefit-risk discussion favorably...',
-            helpText: 'FDA drafts the final questions, but sponsors can propose questions during the pre-AdCom meeting.',
-          },
-          {
-            id: 'mock_adcom_planned',
-            label: 'Mock Advisory Committee Rehearsal Planned',
-            type: 'yes_no',
-            helpText: 'Best practice: conduct at least one mock AdCom with external KOL panelists 4-6 weeks before the actual meeting.',
-          },
-          {
-            id: 'patient_advocacy',
-            label: 'Patient Advocacy / Open Public Hearing Preparation',
-            type: 'yes_no',
-            helpText: 'AdCom meetings include an Open Public Hearing where patients and advocates can provide testimony. Coordinating supportive patient testimony is common practice.',
-          },
-        ],
-        defaultNext: 'pre_nda_meeting',
-      },
-
-      /* ================================================================
-       * Section 12 — Submission Timeline & Strategy
-       * ================================================================ */
-
-      {
-        id: 'pre_nda_meeting',
-        section: 'Submission Timeline & Strategy',
-        question:
-          'Have you held or do you plan to hold a Pre-NDA (Type B) meeting with FDA?',
-        guidance:
-          'Per FDA Guidance "Formal Meetings Between the FDA and Sponsors or Applicants of PDUFA Products" (2017) and FDA MAPP 4000.2, a Pre-NDA meeting (Type B meeting) is strongly recommended before NDA submission. The meeting request should be submitted at least 3 months before the desired meeting date. The briefing document is due 30 days before the meeting. Key topics include: NDA content and format, clinical data presentation, statistical analysis plans, labeling, and CMC readiness.',
+          'Per 21 CFR 314.50(h) and 21 CFR 314.53, NDA applicants must submit patent information (Form FDA 3542a) for each drug substance and drug product patent. Patent certifications per 21 CFR 314.50(i) are required for 505(b)(2) applications (Paragraph I-IV certifications). Exclusivity claims (5-year NCE, 3-year clinical data, orphan 7-year, pediatric 6-month extension) should be identified. A Pre-NDA meeting (Type B, per FDA Guidance "Formal Meetings" (2017)) is strongly recommended to discuss filing strategy, labeling issues, REMS, and data requirements. Advisory Committee (AdCom) preparation may be needed if FDA refers the NDA to an advisory committee per 21 CFR 14.',
         fields: [
           {
             id: 'pre_nda_meeting_held',
-            label: 'Pre-NDA Meeting Held or Planned',
-            type: 'select',
+            label: 'Pre-NDA Meeting (Type B) Held with FDA',
+            type: 'yes_no',
+            helpText:
+              'A Pre-NDA meeting is strongly recommended per FDA Guidance "Formal Meetings Between the FDA and Sponsors" (2017). Topics include: agreement on NDA content and format, labeling discussions, REMS requirements, and any outstanding data requests.',
+          },
+          {
+            id: 'fda_feedback_addressed',
+            label: 'Summary of FDA Pre-NDA Meeting Feedback',
+            type: 'textarea',
+            placeholder:
+              'e.g., FDA agreed with the proposed eCTD structure. Requested additional subgroup analysis by biomarker status. Recommended boxed warning language for hepatotoxicity. Agreed that pediatric studies can be deferred per PREA.',
+            visibleWhen: { field: 'pre_nda_meeting_held', operator: 'eq', value: true },
+          },
+          {
+            id: 'advisory_committee_anticipated',
+            label: 'Advisory Committee (AdCom) Meeting Anticipated',
+            type: 'yes_no',
+            helpText:
+              'FDA may convene an advisory committee meeting per 21 CFR Part 14. AdCom meetings are more likely for NMEs, novel mechanisms, controversial benefit-risk profiles, or first-in-class products. Prepare briefing documents, question responses, and presentation materials.',
+          },
+          {
+            id: 'adcom_preparation',
+            label: 'AdCom Preparation Status',
+            type: 'textarea',
+            placeholder:
+              'e.g., Briefing document outline prepared. Key topics identified: benefit-risk in 2nd line, hepatotoxicity management, comparability to existing therapies. KOL consultants identified for panel preparation.',
+            visibleWhen: { field: 'advisory_committee_anticipated', operator: 'eq', value: true },
+          },
+          {
+            id: 'patent_info_prepared',
+            label: 'Patent Information Prepared (Form FDA 3542a)',
+            type: 'yes_no',
             required: true,
+            helpText:
+              'Per 21 CFR 314.53, patent information (drug substance, drug product, method-of-use patents) must be submitted on Form FDA 3542a. This information is published in the Orange Book upon approval.',
+          },
+          {
+            id: 'exclusivity_claims',
+            label: 'Exclusivity Claims',
+            type: 'multi_select',
             options: [
-              { value: 'held', label: 'Meeting Held — FDA Feedback Received' },
-              { value: 'scheduled', label: 'Meeting Scheduled' },
-              { value: 'requested', label: 'Meeting Requested — Pending FDA Response' },
-              { value: 'not_planned', label: 'Not Planned' },
+              { value: 'nce_5yr', label: '5-Year NCE Exclusivity (21 USC 355(c)(3)(E)(ii))' },
+              { value: '3yr_clinical', label: '3-Year Clinical Data Exclusivity (21 USC 355(c)(3)(E)(iii))' },
+              { value: 'orphan_7yr', label: '7-Year Orphan Drug Exclusivity (21 USC 360bb)' },
+              { value: 'pediatric_6mo', label: '6-Month Pediatric Exclusivity (21 USC 355a)' },
+              { value: 'none', label: 'No Exclusivity Claims' },
             ],
+            helpText:
+              'NCE exclusivity (5 years) applies to drugs containing an active moiety never previously approved. Clinical data exclusivity (3 years) applies to supplements with new clinical studies. Orphan exclusivity (7 years) applies to drugs with orphan designation.',
           },
           {
-            id: 'pre_nda_meeting_date',
-            label: 'Pre-NDA Meeting Date',
-            type: 'date',
-            visibleWhen: { field: 'pre_nda_meeting_held', operator: 'in', value: ['held', 'scheduled'] },
+            id: 'patent_certifications',
+            label: 'Patent Certifications (for 505(b)(2) applications)',
+            type: 'select',
+            options: [
+              { value: 'paragraph_i', label: 'Paragraph I — No patent listed' },
+              { value: 'paragraph_ii', label: 'Paragraph II — Patent has expired' },
+              { value: 'paragraph_iii', label: 'Paragraph III — Patent will expire (date)' },
+              { value: 'paragraph_iv', label: 'Paragraph IV — Patent is invalid or not infringed' },
+              { value: 'not_applicable', label: 'Not Applicable (505(b)(1) NDA)' },
+            ],
+            helpText:
+              'Per 21 CFR 314.50(i), 505(b)(2) applicants must certify to each patent listed in the Orange Book for the reference listed drug. Paragraph IV certifications trigger a 45-day notice to the patent holder and may result in patent litigation with a 30-month stay.',
           },
           {
-            id: 'fda_feedback_summary',
-            label: 'Key FDA Feedback from Pre-NDA Meeting',
-            type: 'textarea',
-            visibleWhen: { field: 'pre_nda_meeting_held', operator: 'eq', value: 'held' },
-            placeholder: 'Summarize the key FDA feedback and agreements from the Pre-NDA meeting...',
-          },
-          {
-            id: 'fda_review_division',
-            label: 'Assigned FDA Review Division',
-            type: 'text',
-            placeholder: 'e.g., Division of Rheumatology and Transplant Medicine (DRTM)',
-            helpText: 'The review division is typically confirmed during or after the Pre-NDA meeting. See FDA organizational structure at fda.gov.',
-          },
-          {
-            id: 'review_division_prior_interactions',
-            label: 'Prior Interactions with This Review Division',
-            type: 'textarea',
-            placeholder: 'Describe any prior IND interactions, End-of-Phase 2 meetings, or other communications with this division...',
+            id: 'orange_book_listing',
+            label: 'Orange Book Listing Information Prepared',
+            type: 'yes_no',
+            helpText:
+              'Upon NDA approval, patent and exclusivity information is published in the Orange Book. Ensure all relevant patents and exclusivity claims are accurately listed per 21 CFR 314.53.',
           },
         ],
-        defaultNext: 'submission_planning',
-        issueChecks: [
-          {
-            id: 'no_pre_nda_meeting',
-            condition: { field: 'pre_nda_meeting_held', operator: 'eq', value: 'not_planned' },
-            severity: 'warning',
-            title: 'No Pre-NDA Meeting Planned',
-            message:
-              'A Pre-NDA meeting (Type B) is strongly recommended by FDA and widely considered best practice. This meeting provides an opportunity to discuss NDA format, content, statistical analysis strategy, and any outstanding FDA concerns before submission. Proceeding without a Pre-NDA meeting increases the risk of refuse-to-file actions or unexpected Complete Response Letters.',
-            reference: 'FDA Guidance "Formal Meetings Between the FDA and Sponsors" (2017); FDA MAPP 4000.2',
-          },
-        ],
-        provideExpertFeedback: true,
+        defaultNext: 'final_review',
       },
 
       {
-        id: 'submission_planning',
-        section: 'Submission Timeline & Strategy',
+        id: 'final_review',
+        section: 'review_submission',
         question:
-          'Provide the NDA submission timeline and strategy details.',
+          'Complete the final submission checklist. All administrative documents must be included per 21 CFR 314.50.',
         guidance:
-          'NDA submission planning requires coordination across CMC, clinical, regulatory, labeling, and publishing teams. Per PDUFA VII timelines, FDA has 60 days from receipt to make a filing decision (21 CFR 314.101). The review clock starts from the filing date — 10 months for Standard Review, 6 months for Priority Review. Rolling submission (21 USC 356(b)(2)) is available only to Fast Track products and allows sequential module submission. The eCTD must be published per FDA Guidance "eCTD Specifications" (2023).',
+          'Per 21 CFR 314.50, the NDA must include: Form FDA 356h (Application Form), financial disclosure information (21 CFR Part 54), debarment certification (21 CFR 314.50(a)(5)(iv)), field copy certification, environmental assessment or categorical exclusion (21 CFR Part 25), and a cover letter. The field copy certification confirms that a complete copy of Section 11 (case report tabulations/forms for serious AEs and study dropouts) has been provided. Financial disclosure (21 CFR 54) requires disclosure of financial interests of clinical investigators. The environmental assessment usually qualifies for categorical exclusion per 21 CFR 25.31(a). The target submission date should account for the 60-day filing period and PDUFA review clock.',
         fields: [
+          {
+            id: 'form_fda_356h_complete',
+            label: 'Form FDA 356h (Application Form) Complete',
+            type: 'yes_no',
+            required: true,
+            helpText:
+              'Form FDA 356h is the official NDA application form. It must be signed by the applicant or authorized representative and identifies all NDA components.',
+          },
+          {
+            id: 'financial_disclosure',
+            label: 'Financial Disclosure (21 CFR Part 54) Complete',
+            type: 'yes_no',
+            required: true,
+            helpText:
+              'Per 21 CFR 54.4, applicants must submit financial disclosure or certification for all clinical investigators who conducted covered clinical studies. Investigators with disclosable financial interests must be identified.',
+          },
+          {
+            id: 'debarment_certification',
+            label: 'Debarment Certification (21 CFR 314.50(a)(5)(iv)) Complete',
+            type: 'yes_no',
+            required: true,
+            helpText:
+              'The applicant must certify that no debarred person (as defined by 21 USC 335a) was involved in the development of the drug. Check the FDA Debarment List.',
+          },
+          {
+            id: 'field_copy_certification',
+            label: 'Field Copy Certification Complete',
+            type: 'yes_no',
+            required: true,
+            helpText:
+              'The field copy certification confirms that a complete copy of the NDA Section 11 (case report tabulations/forms) is available for FDA district office review if needed for pre-approval inspections.',
+          },
+          {
+            id: 'environmental_assessment',
+            label: 'Environmental Assessment or Categorical Exclusion',
+            type: 'select',
+            required: true,
+            options: [
+              {
+                value: 'categorical_exclusion',
+                label: 'Categorical Exclusion (21 CFR 25.31(a))',
+                description: 'Most NDAs qualify for categorical exclusion',
+              },
+              {
+                value: 'ea_prepared',
+                label: 'Environmental Assessment (EA) Prepared',
+                description: 'Required if categorical exclusion does not apply',
+              },
+              {
+                value: 'not_addressed',
+                label: 'Not Yet Addressed',
+                flagsIssue: true,
+              },
+            ],
+          },
+          {
+            id: 'cover_letter_prepared',
+            label: 'NDA Cover Letter Prepared',
+            type: 'yes_no',
+            required: true,
+            helpText:
+              'The cover letter should identify the NDA, list all components, reference any pre-NDA meeting agreements, and highlight any special considerations (expedited pathways, breakthrough designation, etc.).',
+          },
           {
             id: 'target_submission_date',
             label: 'Target NDA Submission Date',
@@ -2321,130 +2236,41 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             required: true,
           },
           {
-            id: 'rolling_submission',
-            label: 'Rolling Submission Planned',
-            type: 'yes_no',
-            helpText: 'Rolling submission is available only with Fast Track designation per 21 USC 356(b)(2). Modules can be submitted as they are completed.',
-          },
-          {
-            id: 'rolling_submission_schedule',
-            label: 'Rolling Submission Schedule',
-            type: 'textarea',
-            visibleWhen: { field: 'rolling_submission', operator: 'eq', value: true },
-            placeholder: 'e.g., Module 3 (CMC) — Q1 2026; Module 4 (Nonclinical) — Q2 2026; Module 5 (Clinical) — Q3 2026; Module 1 (Administrative) — Q4 2026',
-          },
-          {
-            id: 'ectd_publishing_status',
-            label: 'eCTD Publishing Status',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'complete', label: 'eCTD Publishing Complete — Ready for ESG Submission' },
-              { value: 'in_progress', label: 'eCTD Publishing In Progress' },
-              { value: 'not_started', label: 'eCTD Publishing Not Yet Started' },
-            ],
-          },
-          {
-            id: 'ectd_publishing_vendor',
-            label: 'eCTD Publishing Vendor / Tool',
-            type: 'text',
-            placeholder: 'e.g., Lorenz DocuBridge, IQVIA RIMSmart, Veeva Vault RIM',
-          },
-          {
-            id: 'submission_readiness_assessment',
-            label: 'Submission Readiness Assessment Complete',
-            type: 'yes_no',
-            helpText: 'Best practice: conduct a formal submission readiness assessment 90-120 days before the target date to identify gaps across all CTD modules.',
-          },
-          {
-            id: 'estimated_page_count',
-            label: 'Estimated Total NDA Page Count',
-            type: 'number',
-            placeholder: 'e.g., 120000',
-            validation: { min: 1000 },
-            helpText: 'A typical NDA ranges from 50,000 to 200,000+ pages in eCTD format.',
-          },
-        ],
-        defaultNext: 'review_management',
-        issueChecks: [
-          {
-            id: 'rolling_without_fast_track_strategy',
-            condition: { field: 'rolling_submission', operator: 'eq', value: true },
-            severity: 'warning',
-            title: 'Rolling Submission — Verify Fast Track Eligibility',
-            message:
-              'Rolling submission is a benefit of Fast Track designation only. Confirm that Fast Track designation has been granted before planning a rolling submission strategy. If Fast Track is not granted, the complete NDA must be submitted at once.',
-            reference: '21 USC 356(b)(2)',
-          },
-        ],
-      },
-
-      {
-        id: 'review_management',
-        section: 'Submission Timeline & Strategy',
-        question:
-          'Finally, let\'s address FDA review management and anticipated post-submission activities.',
-        guidance:
-          'After NDA submission, the 60-day filing review period begins (21 CFR 314.101). If filed, the PDUFA action date is set (10 months standard, 6 months priority from filing date). During the review cycle, expect: mid-cycle communication (FDA may schedule), discipline review questions (clinical, CMC, pharm-tox, biostatistics), a pre-approval inspection (PAI), and a potential advisory committee meeting. The sponsor should maintain a "war room" team to respond to FDA questions within 24-48 hours. An FDA Complete Response Letter (CRL) is issued if the NDA cannot be approved as submitted.',
-        fields: [
-          {
-            id: 'expected_pdufa_date',
-            label: 'Expected PDUFA Action Date',
+            id: 'pdufa_date_target',
+            label: 'Anticipated PDUFA Goal Date',
             type: 'date',
-            helpText: 'Calculate: Filing date + 10 months (Standard) or + 6 months (Priority).',
+            helpText:
+              'PDUFA goal date = filing date + 10 months (standard review) or 6 months (priority review). Filing date is typically 60 days after receipt.',
           },
           {
-            id: 'review_team_readiness',
-            label: 'Review-Cycle Response Team in Place',
-            type: 'yes_no',
-            required: true,
-            helpText: 'A cross-functional team (regulatory, clinical, CMC, biostatistics, labeling, safety) should be ready to respond to FDA questions during the review cycle.',
-          },
-          {
-            id: 'anticipated_information_requests',
-            label: 'Anticipated FDA Information Request Areas',
-            type: 'multi_select',
-            options: [
-              { value: 'clinical_efficacy', label: 'Clinical Efficacy Questions' },
-              { value: 'clinical_safety', label: 'Clinical Safety Questions' },
-              { value: 'biostatistics', label: 'Biostatistics Questions' },
-              { value: 'cmc', label: 'CMC / Quality Questions' },
-              { value: 'labeling', label: 'Labeling Negotiations' },
-              { value: 'clinical_pharm', label: 'Clinical Pharmacology' },
-              { value: 'nonclinical', label: 'Nonclinical / Toxicology' },
-              { value: 'rems', label: 'REMS Negotiations' },
-            ],
-          },
-          {
-            id: 'launch_readiness',
-            label: 'Commercial Launch Readiness Activities',
-            type: 'multi_select',
-            options: [
-              { value: 'manufacturing_scale', label: 'Commercial-Scale Manufacturing Validated' },
-              { value: 'supply_chain', label: 'Supply Chain Established' },
-              { value: 'sales_force', label: 'Sales Force Trained' },
-              { value: 'distribution', label: 'Distribution Network Ready' },
-              { value: 'payer_contracts', label: 'Payer / PBM Contracts Negotiated' },
-              { value: 'medical_affairs', label: 'Medical Affairs / MSL Plan' },
-              { value: 'patient_support', label: 'Patient Support / Hub Services Program' },
-            ],
-            helpText: 'Commercial readiness activities should be aligned with the expected PDUFA date — typically 6-12 months of lead time is needed.',
-          },
-          {
-            id: 'crl_contingency',
-            label: 'Complete Response Letter (CRL) Contingency Plan',
-            type: 'yes_no',
-            helpText: 'Best practice: prepare a CRL contingency plan outlining potential resubmission timelines and additional studies if FDA issues a CRL.',
-          },
-          {
-            id: 'additional_notes',
-            label: 'Additional Strategic Considerations',
+            id: 'submission_notes',
+            label: 'Additional Submission Notes or Considerations',
             type: 'textarea',
-            placeholder: 'Any additional considerations for the NDA submission strategy...',
+            placeholder:
+              'e.g., Rolling submission planned under Fast Track designation. First module to be submitted Q1 2027 with complete eCTD expected Q3 2027. Companion diagnostic (CDx) NDA submitted in parallel to CDRH.',
           },
         ],
         defaultNext: null,
-        provideExpertFeedback: true,
+        issueChecks: [
+          {
+            id: 'form_356h_required',
+            condition: { field: 'form_fda_356h_complete', operator: 'eq', value: false },
+            severity: 'critical',
+            title: 'Form FDA 356h Required',
+            message:
+              'Form FDA 356h (Application to Market a New Drug, Biologic, or Antibiotic Drug for Human Use) is a mandatory NDA component. The signed form must be included as the first document in Module 1 of the eCTD submission. FDA will issue a Refuse to Receive if Form 356h is missing.',
+            reference: '21 CFR 314.50(a)',
+          },
+          {
+            id: 'financial_disclosure_required',
+            condition: { field: 'financial_disclosure', operator: 'eq', value: false },
+            severity: 'critical',
+            title: 'Financial Disclosure Required',
+            message:
+              'Financial disclosure information (Form FDA 3454/3455) must be submitted per 21 CFR Part 54. The applicant must certify or disclose financial interests of all clinical investigators who conducted covered studies. Failure to submit financial disclosure will result in a Refuse to File.',
+            reference: '21 CFR 54',
+          },
+        ],
       },
     ],
   };
