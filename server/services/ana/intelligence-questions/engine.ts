@@ -20,7 +20,7 @@ import type {
 } from './types.js';
 import type { FlowEngineContext, FlowStepResult } from './types.js';
 import { getFlowDefinition } from './flows/index.js';
-import { runIssueChecks } from './issue-detector.js';
+import { runIssueChecks, runCrossNodeAnalysis } from './issue-detector.js';
 import { validateAnswers } from './validators.js';
 
 /* ─── Public API ─────────────────────────────────────────────────────── */
@@ -106,9 +106,15 @@ export function advanceFlow(
   // Store answers
   const updatedAnswers = { ...state.answers, [nodeId]: answers };
 
-  // Run issue checks
+  // Run issue checks (node-level + cross-node cumulative)
   const newIssues = runIssueChecks(currentNode, answers);
   const allIssues = [...state.issues, ...newIssues];
+
+  // Run cross-node analysis with the updated state
+  const crossNodeState: FlowState = { ...state, answers: updatedAnswers, issues: allIssues };
+  const crossNodeIssues = runCrossNodeAnalysis(crossNodeState, definition);
+  allIssues.push(...crossNodeIssues);
+  newIssues.push(...crossNodeIssues);
 
   // Mark node complete
   const completedNodes = [...state.completedNodes, nodeId];
