@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-01T04:45:41.689Z",
+  "generatedAt": "2026-07-01T04:47:42.686Z",
   "git": {
-    "sha": "d6f703ce2444cbacf144ce071b705b02199d237a",
+    "sha": "f51f5cb879963aaef058aaaf297eca19ba34409d",
     "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
@@ -2728,6 +2728,10 @@
         "lines": 1815
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
+        "lines": 1813
+      },
+      {
         "file": "server/services/precedent-engine.ts",
         "lines": 1798
       },
@@ -2794,10 +2798,6 @@
       {
         "file": "shared/schema/csr-knowledge-db.ts",
         "lines": 1600
-      },
-      {
-        "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
-        "lines": 1572
       },
       {
         "file": "server/routes/cortex-unified.ts",

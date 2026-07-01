@@ -10,7 +10,7 @@
  * Branching logic handles death cases and SUSAR-specific paths.  Issue checks
  * flag missing or incomplete data that could delay regulatory submissions.
  *
- * 14 nodes · 65+ fields · 5 sections · 9 issue checks
+ * 14 nodes · 96 fields · 6 sections · 10 issue checks
  *
  * @module server/services/ana/intelligence-questions/flows/safety-narrative
  */

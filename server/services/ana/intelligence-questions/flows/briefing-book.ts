@@ -8,9 +8,9 @@
  * context, product overview, nonclinical summary, clinical program,
  * benefit-risk framework, and voting question strategy.
  *
- * 16 nodes, 6 sections, 75+ fields with branching for advisory
- * committee type (ODAC, AADPAC, CDRH panel), pre-approval vs.
- * post-approval meeting purpose, and pediatric-focused meetings.
+ * 17 nodes, 7 sections, 103 fields, 13 issue checks with branching
+ * for advisory committee type (ODAC, AADPAC, CDRH panel), pre-approval
+ * vs. post-approval meeting purpose, and pediatric-focused meetings.
  *
  * Regulatory foundation: 21 CFR Part 14 (Public Hearing Before the
  * FDA), FDA Guidance "Convening Advisory Committee Meetings" (2023),
