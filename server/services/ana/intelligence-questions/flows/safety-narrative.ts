@@ -2,16 +2,15 @@
  * Safety Narrative flow definition for the AnA Intelligence Questioning system.
  *
  * Guides the user through collection of all data needed to write individual
- * patient safety narratives per ICH E3 §12.3.  Covers narrative type
- * identification, patient demographics and medical history, detailed event
- * description with MedDRA coding, clinical course and treatment, causality
- * assessment (including Naranjo and WHO-UMC criteria), and regulatory
- * reporting requirements (IND Safety Reports, CIOMS forms, aggregate
- * context).  Branching logic handles death, pregnancy, and AESI-specific
- * paths.  Issue checks flag missing or incomplete data that could delay
- * regulatory submissions.
+ * patient safety narratives for serious adverse events per ICH E3 Section 12.3.
+ * Covers case identification, event classification, patient history, event
+ * description with MedDRA coding, clinical course and interventions, causality
+ * assessment (including Naranjo, WHO-UMC, and clinical judgment), and narrative
+ * composition for clinical study report appendices and regulatory submissions.
+ * Branching logic handles death cases and SUSAR-specific paths.  Issue checks
+ * flag missing or incomplete data that could delay regulatory submissions.
  *
- * 15 nodes, 75+ fields, 6 sections, 12 issue checks.
+ * 14 nodes · 65+ fields · 5 sections · 9 issue checks
  *
  * @module server/services/ana/intelligence-questions/flows/safety-narrative
  */
@@ -24,218 +23,301 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
     category: 'safety_narrative',
     name: 'Safety Narrative',
     description:
-      'Guided questionnaire for assembling individual patient safety narratives per ICH E3 §12.3. Covers narrative classification, patient profile, event description with MedDRA coding, clinical course, causality assessment (Naranjo, WHO-UMC), and regulatory reporting (IND Safety Reports per 21 CFR 312.32, CIOMS forms). Branching handles death, pregnancy, and AESI-specific paths.',
+      'Guided questionnaire for assembling individual patient safety narratives per ICH E3 Section 12.3. Covers case identification, event classification, patient history, event description with MedDRA coding, interventions and outcomes, causality assessment, and narrative composition for serious adverse events in clinical study reports.',
     clientTypes: ['pharma', 'biotech'],
-    entryNode: 'narrative_overview',
-    estimatedMinutes: 20,
+    entryNode: 'case_identification',
+    estimatedMinutes: 40,
 
     /* ─── Sections ──────────────────────────────────────────────────────── */
 
     sections: [
       {
-        id: 'narrative_overview',
-        label: 'Narrative Overview',
-        nodeIds: ['narrative_overview', 'study_identification'],
+        id: 'case_overview',
+        label: 'Case Overview',
+        nodeIds: ['case_identification', 'event_classification', 'study_context'],
       },
       {
-        id: 'patient_profile',
-        label: 'Patient Profile',
-        nodeIds: ['patient_demographics', 'medical_history'],
+        id: 'patient_history',
+        label: 'Patient History & Context',
+        nodeIds: ['medical_history', 'concomitant_medications', 'death_case_details', 'susar_details'],
       },
       {
-        id: 'event_description',
-        label: 'Event Description',
-        nodeIds: ['event_identification', 'event_details', 'study_drug_exposure'],
+        id: 'event_timeline',
+        label: 'Event Description & Timeline',
+        nodeIds: ['event_description', 'event_timeline_details', 'interventions_outcomes'],
       },
       {
-        id: 'clinical_course',
-        label: 'Clinical Course',
-        nodeIds: ['event_treatment', 'hospitalization_details', 'outcome_resolution'],
-      },
-      {
-        id: 'causality_assessment',
+        id: 'causality_assessment_section',
         label: 'Causality Assessment',
-        nodeIds: ['investigator_causality', 'sponsor_causality'],
+        nodeIds: ['causality_assessment', 'causality_factors'],
       },
       {
-        id: 'regulatory_reporting',
-        label: 'Regulatory Reporting',
-        nodeIds: ['expedited_reporting', 'cioms_completion', 'narrative_draft'],
+        id: 'narrative_composition',
+        label: 'Narrative Composition',
+        nodeIds: ['narrative_composition', 'narrative_finalization'],
       },
     ],
 
     /* ─── Nodes ─────────────────────────────────────────────────────────── */
 
     nodes: [
-      /* ══════════════════════════════════════════════════════════════════
-       *  Section 1 — Narrative Overview
-       * ══════════════════════════════════════════════════════════════════ */
+      /* ================================================================ */
+      /* ── Section 1: Case Overview ─────────────────────────────────── */
+      /* ================================================================ */
 
       {
-        id: 'narrative_overview',
-        section: 'narrative_overview',
+        id: 'case_identification',
+        section: 'case_overview',
         question:
-          'What type of safety narrative is being prepared, and what are the seriousness criteria?',
+          'Provide the case identification details for this safety narrative, including the case number, subject identifier, study number, and reporting dates.',
         guidance:
-          'Per ICH E3 Section 12.3.2, individual patient narratives are required for all deaths (regardless of causality), all SAEs assessed as drug-related, all AEs leading to study drug discontinuation, and other events of regulatory significance. Per ICH E2A Section II, seriousness criteria are defined as: death, life-threatening, hospitalization or prolongation of hospitalization, persistent or significant disability/incapacity, congenital anomaly/birth defect, or other medically important event. 21 CFR 312.32(a) provides the US regulatory definition of serious adverse event.',
+          'Per ICH E2B(R3) and ICH E3 Section 12.3, individual case narratives must clearly identify the case, subject, study, and investigational product. The reporting date and date of initial awareness establish the regulatory reporting timeline. Use blinded subject identifiers to maintain study integrity.',
         fields: [
           {
-            id: 'narrative_type',
-            label: 'Narrative Type',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'death', label: 'Death' },
-              { value: 'sae', label: 'Serious Adverse Event (SAE)' },
-              { value: 'aesi', label: 'Adverse Event of Special Interest (AESI)' },
-              { value: 'ae_discontinuation', label: 'AE Leading to Discontinuation' },
-              { value: 'pregnancy', label: 'Pregnancy Exposure' },
-            ],
-          },
-          {
-            id: 'event_classification',
-            label: 'Event Classification',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'serious', label: 'Serious' },
-              { value: 'non_serious', label: 'Non-Serious' },
-            ],
-            helpText: 'Per ICH E2A, an event is serious if it meets any of the seriousness criteria below.',
-          },
-          {
-            id: 'seriousness_criteria',
-            label: 'Seriousness Criteria Met',
-            type: 'multi_select',
-            required: true,
-            options: [
-              { value: 'death', label: 'Results in Death' },
-              { value: 'life_threatening', label: 'Life-Threatening' },
-              { value: 'hospitalization', label: 'Requires or Prolongs Hospitalization' },
-              { value: 'disability', label: 'Persistent or Significant Disability/Incapacity' },
-              { value: 'congenital_anomaly', label: 'Congenital Anomaly/Birth Defect' },
-              { value: 'medically_significant', label: 'Other Medically Significant Event' },
-            ],
-            helpText: 'Per ICH E2A Section II and 21 CFR 312.32(a), select all applicable seriousness criteria. Multiple criteria may apply to a single event.',
-          },
-          {
-            id: 'initial_or_followup',
-            label: 'Report Type',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'initial', label: 'Initial Report' },
-              { value: 'followup', label: 'Follow-Up Report' },
-              { value: 'final', label: 'Final Report' },
-            ],
-          },
-          {
-            id: 'date_sponsor_aware',
-            label: 'Date Sponsor First Became Aware',
-            type: 'date',
-            required: true,
-            helpText: 'Per 21 CFR 312.32(c)(1), the clock for expedited reporting begins on the date the sponsor first learns of the event.',
-          },
-        ],
-        defaultNext: 'study_identification',
-        issueChecks: [
-          {
-            id: 'death_narrative_required',
-            condition: {
-              field: 'narrative_type',
-              operator: 'eq',
-              value: 'death',
-            },
-            severity: 'critical',
-            title: 'Death Narrative — Complete Documentation Required',
-            message:
-              'Per ICH E3 Section 12.3.2, ALL deaths must be individually narrativized regardless of the investigator\'s causality assessment. The narrative must include complete demographics, medical history, study drug exposure, a detailed timeline of the terminal event, interventions, autopsy findings (if available), and both investigator and sponsor causality assessments. Per 21 CFR 312.32(c)(1)(i), fatal and life-threatening suspected adverse reactions require IND Safety Report submission within 7 calendar days of sponsor awareness.',
-            reference: 'ICH E3 Section 12.3.2; 21 CFR 312.32(c)(1)(i)',
-          },
-        ],
-      },
-
-      {
-        id: 'study_identification',
-        section: 'narrative_overview',
-        question:
-          'Identify the study, site, and subject for this narrative.',
-        guidance:
-          'Per ICH E3 Section 14.3, each narrative must clearly identify the protocol number, study site, and subject. The subject identifier should be the unique randomization or screening number assigned per the protocol. Per ICH E2B(R3) Section 2.12, the study registration number (e.g., NCT number) should also be documented to enable cross-referencing with ClinicalTrials.gov. CIOMS-I form Item 1 requires the same identification data.',
-        fields: [
-          {
-            id: 'protocol_number',
-            label: 'Protocol Number',
+            id: 'case_number',
+            label: 'Case Number',
             type: 'text',
-            placeholder: 'e.g., ABC-2025-001',
             required: true,
-          },
-          {
-            id: 'study_title',
-            label: 'Study Title (Abbreviated)',
-            type: 'text',
-            placeholder: 'e.g., Phase 3 Study of Drug X in Advanced NSCLC',
-            required: true,
-            validation: { minLength: 10, maxLength: 300 },
-          },
-          {
-            id: 'clinical_trial_registration',
-            label: 'Clinical Trial Registration Number',
-            type: 'text',
-            placeholder: 'e.g., NCT04123456',
-            helpText: 'Per ICH E2B(R3), the study registration number aids cross-referencing.',
-          },
-          {
-            id: 'site_number',
-            label: 'Site Number',
-            type: 'text',
-            placeholder: 'e.g., Site 101',
-            required: true,
-          },
-          {
-            id: 'site_country',
-            label: 'Site Country',
-            type: 'country_select',
-            required: true,
-            helpText: 'Relevant for determining applicable regulatory reporting requirements (e.g., EMA, FDA, PMDA).',
+            placeholder: 'e.g., SAE-2025-0001',
           },
           {
             id: 'subject_id',
             label: 'Subject Identifier',
             type: 'text',
-            placeholder: 'e.g., 101-001',
             required: true,
-            helpText: 'Use the unique subject number assigned per the protocol. Do not include patient names per ICH E2B(R3) privacy requirements.',
+            placeholder: 'e.g., SUBJ-001-0042',
+            helpText: 'Use blinded subject identifier only.',
           },
+          {
+            id: 'study_number',
+            label: 'Study Number',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g., PROTO-2025-001',
+          },
+          {
+            id: 'study_phase',
+            label: 'Study Phase',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'phase_1', label: 'Phase 1' },
+              { value: 'phase_2', label: 'Phase 2' },
+              { value: 'phase_3', label: 'Phase 3' },
+              { value: 'phase_4', label: 'Phase 4' },
+            ],
+          },
+          {
+            id: 'investigational_product',
+            label: 'Investigational Product',
+            type: 'text',
+            required: true,
+            placeholder: 'Drug name and dose',
+          },
+          {
+            id: 'reporting_date',
+            label: 'Reporting Date',
+            type: 'date',
+            required: true,
+          },
+          {
+            id: 'initial_awareness_date',
+            label: 'Date of Initial Awareness',
+            type: 'date',
+            required: true,
+          },
+          {
+            id: 'report_type',
+            label: 'Report Type',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'initial', label: 'Initial' },
+              { value: 'follow_up', label: 'Follow-Up' },
+              { value: 'final', label: 'Final' },
+            ],
+          },
+        ],
+        defaultNext: 'event_classification',
+      },
+
+      {
+        id: 'event_classification',
+        section: 'case_overview',
+        question:
+          'Classify the adverse event using standardized MedDRA terminology, seriousness criteria, and case type.',
+        guidance:
+          'Per ICH E2A, seriousness criteria include death, life-threatening, hospitalization or prolonged hospitalization, persistent or significant disability/incapacity, congenital anomaly/birth defect, and other medically important events. All adverse events must be coded using MedDRA Preferred Terms and System Organ Classes per ICH E2B(R3). The expectedness assessment is based on the current Investigator Brochure or Reference Safety Information.',
+        fields: [
+          {
+            id: 'event_term_verbatim',
+            label: 'Event Term (Verbatim)',
+            type: 'text',
+            required: true,
+            placeholder: 'Verbatim term as reported by investigator',
+          },
+          {
+            id: 'event_term_meddra_pt',
+            label: 'MedDRA Preferred Term',
+            type: 'text',
+            required: true,
+            placeholder: 'MedDRA Preferred Term',
+            helpText: 'Use current MedDRA version for coding.',
+          },
+          {
+            id: 'event_term_meddra_soc',
+            label: 'MedDRA System Organ Class',
+            type: 'text',
+            required: true,
+            placeholder: 'MedDRA System Organ Class',
+          },
+          {
+            id: 'event_seriousness_criteria',
+            label: 'Seriousness Criteria',
+            type: 'multi_select',
+            required: true,
+            options: [
+              { value: 'death', label: 'Results in Death' },
+              { value: 'life_threatening', label: 'Life-Threatening' },
+              { value: 'hospitalization', label: 'Requires Hospitalization' },
+              { value: 'prolonged_hospitalization', label: 'Prolongs Hospitalization' },
+              { value: 'disability', label: 'Persistent or Significant Disability' },
+              { value: 'congenital_anomaly', label: 'Congenital Anomaly/Birth Defect' },
+              { value: 'other_medically_important', label: 'Other Medically Important' },
+            ],
+          },
+          {
+            id: 'event_outcome',
+            label: 'Event Outcome',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'fatal', label: 'Fatal' },
+              { value: 'not_recovered', label: 'Not Recovered/Not Resolved' },
+              { value: 'recovering', label: 'Recovering/Resolving' },
+              { value: 'recovered_with_sequelae', label: 'Recovered with Sequelae' },
+              { value: 'recovered', label: 'Recovered/Resolved' },
+              { value: 'unknown', label: 'Unknown' },
+            ],
+          },
+          {
+            id: 'case_type',
+            label: 'Case Type',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'death_case', label: 'Death Case' },
+              { value: 'non_fatal_sae', label: 'Non-Fatal SAE' },
+              { value: 'susar', label: 'SUSAR' },
+              { value: 'non_susar', label: 'Non-SUSAR' },
+            ],
+          },
+          {
+            id: 'expectedness',
+            label: 'Expectedness',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'expected', label: 'Expected' },
+              { value: 'unexpected', label: 'Unexpected' },
+            ],
+          },
+          {
+            id: 'is_susar',
+            label: 'Is this a SUSAR?',
+            type: 'yes_no',
+          },
+        ],
+        branches: [
+          {
+            when: { field: 'case_type', operator: 'eq', value: 'death_case' },
+            goto: 'death_case_details',
+          },
+          {
+            when: { field: 'is_susar', operator: 'eq', value: true },
+            goto: 'susar_details',
+          },
+        ],
+        defaultNext: 'study_context',
+      },
+
+      {
+        id: 'study_context',
+        section: 'case_overview',
+        question:
+          'Provide the study treatment context at the time of the adverse event, including treatment arm, blinding status, dosing, and route of administration.',
+        fields: [
           {
             id: 'treatment_arm',
             label: 'Treatment Arm',
             type: 'text',
-            placeholder: 'e.g., Drug X 200 mg QD',
             required: true,
+            placeholder: 'e.g., Drug X 100mg QD',
           },
           {
-            id: 'blinded_at_time_of_event',
-            label: 'Was the Study Blinded at Time of Event?',
-            type: 'yes_no',
+            id: 'blinding_status',
+            label: 'Blinding Status',
+            type: 'select',
             required: true,
-            helpText: 'Per ICH E2A Section IV, unblinding for expedited reporting should follow the sponsor\'s pre-defined procedures.',
+            options: [
+              { value: 'blinded', label: 'Blinded' },
+              { value: 'unblinded', label: 'Unblinded' },
+              { value: 'open_label', label: 'Open-Label' },
+            ],
+          },
+          {
+            id: 'randomization_date',
+            label: 'Randomization Date',
+            type: 'date',
+          },
+          {
+            id: 'dose_at_event_onset',
+            label: 'Dose at Event Onset',
+            type: 'text',
+            placeholder: 'Dose and frequency at time of event',
+          },
+          {
+            id: 'route_of_administration',
+            label: 'Route of Administration',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'oral', label: 'Oral' },
+              { value: 'intravenous', label: 'Intravenous' },
+              { value: 'subcutaneous', label: 'Subcutaneous' },
+              { value: 'intramuscular', label: 'Intramuscular' },
+              { value: 'topical', label: 'Topical' },
+              { value: 'inhaled', label: 'Inhaled' },
+              { value: 'other', label: 'Other' },
+            ],
+          },
+          {
+            id: 'duration_of_treatment_before_event',
+            label: 'Duration of Treatment Before Event',
+            type: 'text',
+            placeholder: 'e.g., 42 days',
+          },
+          {
+            id: 'protocol_defined_sae_criteria',
+            label: 'Protocol-Defined SAE Criteria',
+            type: 'yes_no',
+            helpText: 'Was this SAE specifically defined in the protocol as an event of interest?',
           },
         ],
-        defaultNext: 'patient_demographics',
+        defaultNext: 'medical_history',
       },
 
-      /* ══════════════════════════════════════════════════════════════════
-       *  Section 2 — Patient Profile
-       * ══════════════════════════════════════════════════════════════════ */
+      /* ================================================================ */
+      /* ── Section 2: Patient History & Context ─────────────────────── */
+      /* ================================================================ */
 
       {
-        id: 'patient_demographics',
-        section: 'patient_profile',
+        id: 'medical_history',
+        section: 'patient_history',
         question:
-          'Provide the patient\'s demographic information and baseline characteristics.',
+          'Document the patient\'s demographic information, relevant medical history, baseline laboratory values, and other pertinent clinical context.',
         guidance:
-          'Per ICH E3 Section 14.3 and ICH E2B(R3) Section 2.1, each narrative must document the patient\'s age, sex, race/ethnicity, weight, and height. These data are essential for contextualizing the event, assessing dose-weight relationships, and enabling pharmacovigilance signal detection across demographic subgroups. Per CIOMS-I form requirements, age (not date of birth) should be reported for privacy.',
+          'Per ICH E3 Section 12.3.1, the patient context is essential for causality assessment. Document conditions relevant to the event, pre-existing conditions, surgical history, and known allergies. Baseline laboratory values should be included when relevant to the adverse event under evaluation.',
         fields: [
           {
             id: 'age',
@@ -256,459 +338,384 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             ],
           },
           {
-            id: 'race',
-            label: 'Race',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'white', label: 'White' },
-              { value: 'black', label: 'Black or African American' },
-              { value: 'asian', label: 'Asian' },
-              { value: 'native_american', label: 'American Indian or Alaska Native' },
-              { value: 'pacific_islander', label: 'Native Hawaiian or Other Pacific Islander' },
-              { value: 'multiracial', label: 'Multiracial' },
-              { value: 'other', label: 'Other' },
-              { value: 'not_reported', label: 'Not Reported' },
-            ],
-            helpText: 'Per FDA Guidance "Collection of Race and Ethnicity Data in Clinical Trials" (2005, updated 2016), use OMB categories.',
+            id: 'race_ethnicity',
+            label: 'Race/Ethnicity',
+            type: 'text',
+            placeholder: 'As reported by subject',
           },
-          {
-            id: 'ethnicity',
-            label: 'Ethnicity',
-            type: 'select',
-            options: [
-              { value: 'hispanic_latino', label: 'Hispanic or Latino' },
-              { value: 'not_hispanic_latino', label: 'Not Hispanic or Latino' },
-              { value: 'not_reported', label: 'Not Reported' },
-            ],
-          },
-          {
-            id: 'weight_kg',
-            label: 'Weight (kg)',
-            type: 'number',
-            validation: { min: 1, max: 500 },
-          },
-          {
-            id: 'height_cm',
-            label: 'Height (cm)',
-            type: 'number',
-            validation: { min: 20, max: 300 },
-          },
-          {
-            id: 'baseline_disease_status',
-            label: 'Baseline Disease Status',
-            type: 'textarea',
-            placeholder: 'e.g., Stage IIIB NSCLC, ECOG PS 1, EGFR exon 19 deletion positive',
-            required: true,
-            helpText: 'Describe the baseline disease status and key prognostic factors at study entry.',
-            validation: { minLength: 20, maxLength: 2000 },
-          },
-          {
-            id: 'baseline_lab_values',
-            label: 'Relevant Baseline Laboratory Values',
-            type: 'textarea',
-            placeholder: 'e.g., ALT 22 U/L, AST 18 U/L, Creatinine 0.9 mg/dL, ANC 4.2 x 10^9/L',
-            helpText: 'Include lab values relevant to the adverse event (e.g., liver function tests for hepatotoxicity, renal function for nephrotoxicity).',
-          },
-        ],
-        defaultNext: 'medical_history',
-      },
-
-      {
-        id: 'medical_history',
-        section: 'patient_profile',
-        question:
-          'Document the patient\'s relevant medical history and concomitant medications.',
-        guidance:
-          'Per ICH E3 Section 14.3 and ICH E2B(R3) Section 2.8, the narrative must include relevant medical history, comorbidities, and concomitant medications. Medical history is critical for assessing whether the event is attributable to the study drug, an underlying condition, or a concomitant medication. Per WHO-UMC causality criteria, the availability of alternative explanations directly impacts the causality assessment. Medications should be documented with dose, route, indication, and start/stop dates.',
-        provideExpertFeedback: true,
-        fields: [
           {
             id: 'relevant_medical_history',
             label: 'Relevant Medical History',
             type: 'textarea',
-            placeholder: 'e.g., Hypertension (diagnosed 2018), Type 2 diabetes (diagnosed 2020), prior appendectomy (2015)',
             required: true,
-            validation: { minLength: 10, maxLength: 5000 },
-            helpText: 'Include conditions relevant to the adverse event, risk factors, and prior episodes of similar events.',
+            placeholder: 'List all relevant past and current medical conditions with dates of onset',
+            helpText: 'Include conditions relevant to the event, pre-existing conditions, surgical history, and known allergies.',
           },
           {
-            id: 'comorbidities',
-            label: 'Active Comorbidities at Time of Event',
+            id: 'baseline_lab_values',
+            label: 'Baseline Laboratory Values',
             type: 'textarea',
-            placeholder: 'e.g., Controlled hypertension, chronic kidney disease stage 2, obesity (BMI 32)',
-            helpText: 'Per ICH E2B(R3) Section 2.8.1, document active medical conditions at the time of the event.',
+            placeholder: 'Relevant baseline laboratory values',
           },
           {
-            id: 'allergies',
-            label: 'Known Allergies',
+            id: 'relevant_family_history',
+            label: 'Relevant Family History',
             type: 'textarea',
-            placeholder: 'e.g., Penicillin (rash), sulfonamides (anaphylaxis), NKDA',
+            placeholder: 'Relevant family medical history',
           },
           {
-            id: 'concomitant_medications',
-            label: 'Concomitant Medications',
-            type: 'textarea',
-            placeholder: 'Drug name | Dose | Route | Indication | Start date | Stop date\ne.g., Metformin | 1000 mg BID | PO | Type 2 DM | 01-Mar-2020 | Ongoing',
-            required: true,
-            validation: { minLength: 5, maxLength: 5000 },
-            helpText: 'Per ICH E2B(R3) Section 2.9, document all concomitant medications with dose, route, indication, and start/stop dates. Include OTC medications and herbal supplements.',
+            id: 'pregnancy_status',
+            label: 'Pregnancy Status',
+            type: 'select',
+            options: [
+              { value: 'not_pregnant', label: 'Not Pregnant' },
+              { value: 'pregnant', label: 'Pregnant' },
+              { value: 'unknown', label: 'Unknown' },
+              { value: 'not_applicable', label: 'Not Applicable' },
+            ],
           },
           {
-            id: 'prior_study_drug_exposure',
-            label: 'Prior Exposure to Same or Similar Drug Class',
+            id: 'smoking_alcohol_status',
+            label: 'Smoking, Alcohol, and Substance Use',
             type: 'textarea',
-            placeholder: 'e.g., Prior treatment with similar TKI (Drug Y) 2019-2020, discontinued due to rash',
-            helpText: 'Previous exposure to the same drug class may inform the causality assessment.',
+            placeholder: 'Smoking, alcohol, and substance use history',
           },
         ],
-        defaultNext: 'event_identification',
+        defaultNext: 'concomitant_medications',
+        issueChecks: [
+          {
+            id: 'incomplete_medical_history',
+            condition: {
+              field: 'relevant_medical_history',
+              operator: 'eq',
+              value: '',
+            },
+            severity: 'critical',
+            title: 'Incomplete Medical History',
+            message:
+              'A complete relevant medical history is essential for causality assessment. ICH E2B(R3) requires documentation of relevant past and concurrent medical conditions.',
+            reference: 'ICH E2B(R3) Section B.1.7',
+          },
+        ],
+      },
+
+      {
+        id: 'concomitant_medications',
+        section: 'patient_history',
+        question:
+          'List all concomitant medications the subject was taking at the time of the event, including prescription drugs, over-the-counter medications, and supplements.',
+        provideExpertFeedback: true,
+        fields: [
+          {
+            id: 'concomitant_medications_list',
+            label: 'Concomitant Medications List',
+            type: 'textarea',
+            required: true,
+            placeholder: 'List all concomitant medications with dose, route, dates of use, and indication',
+          },
+          {
+            id: 'number_of_concomitant_meds',
+            label: 'Number of Concomitant Medications',
+            type: 'number',
+            required: true,
+            validation: { min: 0 },
+          },
+          {
+            id: 'medications_potentially_causative',
+            label: 'Potentially Causative Medications',
+            type: 'textarea',
+            placeholder: 'List any concomitant medications that could be alternative causes',
+          },
+          {
+            id: 'herbal_otc_supplements',
+            label: 'Herbal/OTC/Supplements',
+            type: 'textarea',
+            placeholder: 'Herbal medicines, OTC drugs, supplements',
+          },
+          {
+            id: 'medications_started_after_event',
+            label: 'Medications Started After Event',
+            type: 'textarea',
+            placeholder: 'Medications started to treat the event',
+          },
+        ],
+        defaultNext: 'event_description',
         issueChecks: [
           {
             id: 'missing_concomitant_meds',
             condition: {
-              field: 'concomitant_medications',
+              field: 'number_of_concomitant_meds',
               operator: 'eq',
-              value: '',
+              value: 0,
             },
             severity: 'warning',
-            title: 'No Concomitant Medication Documentation',
+            title: 'No Concomitant Medications Reported',
             message:
-              'Concomitant medications have not been documented. Per ICH E2B(R3) Section 2.9 and CIOMS-I form requirements, all concomitant medications (including OTC and herbal) must be recorded to enable proper causality assessment. Missing medication data is a common deficiency identified by FDA during review of IND Safety Reports.',
-            reference: 'ICH E2B(R3) Section 2.9; CIOMS-I Form Requirements',
-          },
-        ],
-      },
-
-      /* ══════════════════════════════════════════════════════════════════
-       *  Section 3 — Event Description
-       * ══════════════════════════════════════════════════════════════════ */
-
-      {
-        id: 'event_identification',
-        section: 'event_description',
-        question:
-          'Identify the adverse event using standardized terminology and classification.',
-        guidance:
-          'Per ICH E2B(R3) Section 2.13 and ICH E3 Section 12.1, adverse events must be coded using the Medical Dictionary for Regulatory Activities (MedDRA). The Preferred Term (PT) and System Organ Class (SOC) are mandatory. Per ICH M1 (MedDRA), use the Lowest Level Term (LLT) for the verbatim term and the PT for the standardized coding. For oncology trials, severity should be graded using CTCAE v5.0 per NCI Common Terminology Criteria.',
-        fields: [
-          {
-            id: 'event_verbatim_term',
-            label: 'Verbatim Event Term (as reported by investigator)',
-            type: 'text',
-            placeholder: 'e.g., Severe chest pain with shortness of breath',
-            required: true,
-          },
-          {
-            id: 'meddra_preferred_term',
-            label: 'MedDRA Preferred Term (PT)',
-            type: 'text',
-            placeholder: 'e.g., Acute myocardial infarction',
-            required: true,
-            helpText: 'Per ICH M1 (MedDRA), the PT is the standardized term used for regulatory reporting.',
-          },
-          {
-            id: 'meddra_soc',
-            label: 'MedDRA System Organ Class (SOC)',
-            type: 'text',
-            placeholder: 'e.g., Cardiac disorders',
-            required: true,
-            helpText: 'The primary SOC to which the PT is assigned per MedDRA hierarchy.',
-          },
-          {
-            id: 'meddra_llt',
-            label: 'MedDRA Lowest Level Term (LLT)',
-            type: 'text',
-            placeholder: 'e.g., Chest pain severe with dyspnea',
-            helpText: 'The LLT closest to the verbatim term reported by the investigator.',
-          },
-          {
-            id: 'meddra_version',
-            label: 'MedDRA Version',
-            type: 'text',
-            placeholder: 'e.g., MedDRA v26.1',
-            required: true,
-          },
-          {
-            id: 'severity_grade',
-            label: 'Severity Grade',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'grade_1', label: 'Grade 1 — Mild' },
-              { value: 'grade_2', label: 'Grade 2 — Moderate' },
-              { value: 'grade_3', label: 'Grade 3 — Severe' },
-              { value: 'grade_4', label: 'Grade 4 — Life-Threatening' },
-              { value: 'grade_5', label: 'Grade 5 — Death' },
-            ],
-            helpText: 'Per NCI CTCAE v5.0. For non-oncology studies, use the severity scale defined in the protocol.',
-          },
-          {
-            id: 'severity_grading_scale',
-            label: 'Grading Scale Used',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'ctcae_v5', label: 'CTCAE v5.0' },
-              { value: 'ctcae_v4', label: 'CTCAE v4.03' },
-              { value: 'protocol_specific', label: 'Protocol-Specific Scale' },
-              { value: 'mild_moderate_severe', label: 'Mild/Moderate/Severe (ICH E2A)' },
-            ],
-          },
-        ],
-        defaultNext: 'event_details',
-        issueChecks: [
-          {
-            id: 'missing_meddra_coding',
-            condition: {
-              field: 'meddra_preferred_term',
-              operator: 'eq',
-              value: '',
-            },
-            severity: 'warning',
-            title: 'Missing MedDRA Coding',
-            message:
-              'The adverse event has not been coded using MedDRA terminology. Per ICH E2B(R3) Section 2.13 and ICH E3 Section 12.1, all adverse events must be coded using MedDRA Preferred Terms. Uncoded events cannot be properly aggregated for signal detection and may delay regulatory submissions.',
-            reference: 'ICH E2B(R3) Section 2.13; ICH M1 (MedDRA)',
-          },
-          {
-            id: 'missing_soc_coding',
-            condition: {
-              field: 'meddra_soc',
-              operator: 'eq',
-              value: '',
-            },
-            severity: 'warning',
-            title: 'Missing MedDRA System Organ Class',
-            message:
-              'The MedDRA System Organ Class (SOC) has not been provided. Per ICH E2B(R3) Section 2.13 and ICH E3 Section 12.1, adverse events must be classified by SOC for proper tabulation in the CSR safety tables. SOC classification is also required for aggregate signal detection in periodic safety reports per ICH E2C(R2).',
-            reference: 'ICH E2B(R3) Section 2.13; ICH E2C(R2)',
+              'It is unusual for a clinical trial subject to report zero concomitant medications. Confirm this is accurate and not a documentation gap.',
+            reference: 'ICH E3 Section 12.3',
           },
         ],
       },
 
       {
-        id: 'event_details',
-        section: 'event_description',
+        id: 'death_case_details',
+        section: 'patient_history',
         question:
-          'Provide the detailed clinical description and temporal relationship of the event.',
+          'Provide additional details specific to this death case, including date and cause of death, autopsy information, and causality assessments.',
         guidance:
-          'Per ICH E3 Section 14.3, the narrative must include a detailed clinical description of the event, the date of onset, duration, and temporal relationship to study drug administration. The temporal relationship is one of the key criteria in both the Naranjo algorithm and WHO-UMC causality assessment system. Per ICH E2A Section III, document whether the event occurred during treatment, during a dose escalation, or during follow-up.',
-        provideExpertFeedback: true,
+          'Per ICH E3, all death cases require comprehensive narratives regardless of the investigator\'s causality assessment. Autopsy results, when available, provide critical information for understanding the cause of death and its potential relationship to the study drug.',
         fields: [
           {
-            id: 'event_onset_date',
-            label: 'Event Onset Date',
+            id: 'date_of_death',
+            label: 'Date of Death',
             type: 'date',
             required: true,
           },
           {
-            id: 'event_duration_days',
-            label: 'Event Duration (days)',
-            type: 'number',
-            validation: { min: 0 },
-            helpText: 'From onset to resolution or last assessment. Enter 0 if event is ongoing.',
+            id: 'primary_cause_of_death',
+            label: 'Primary Cause of Death',
+            type: 'text',
+            required: true,
           },
           {
-            id: 'study_day_of_onset',
-            label: 'Study Day at Onset',
-            type: 'number',
-            validation: { min: 1 },
-            helpText: 'Day relative to first dose of study drug (Day 1 = first dose).',
-          },
-          {
-            id: 'detailed_description',
-            label: 'Detailed Clinical Description',
+            id: 'contributing_causes',
+            label: 'Contributing Causes of Death',
             type: 'textarea',
-            placeholder: 'Provide a chronological narrative of the event including presenting symptoms, signs, diagnostic workup, findings, and clinical course.',
-            required: true,
-            validation: { minLength: 50, maxLength: 10000 },
-            helpText: 'Per ICH E3 Section 14.3, the narrative should be written in a clear chronological format, presenting the clinical facts without editorial interpretation of causality.',
           },
           {
-            id: 'temporal_relationship',
-            label: 'Temporal Relationship to Study Drug',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'during_treatment', label: 'During Active Treatment' },
-              { value: 'dose_escalation', label: 'During Dose Escalation' },
-              { value: 'within_5_halflives', label: 'Within 5 Half-Lives After Last Dose' },
-              { value: 'followup_period', label: 'During Post-Treatment Follow-Up' },
-              { value: 'before_first_dose', label: 'Before First Dose (screening)' },
-            ],
-            helpText: 'The temporal relationship is a key criterion in the Naranjo algorithm (Question 1) and WHO-UMC system.',
-          },
-          {
-            id: 'time_from_last_dose',
-            label: 'Time from Last Dose to Event Onset',
-            type: 'text',
-            placeholder: 'e.g., 3 hours, 2 days, 1 week',
-            helpText: 'Document the interval between the last dose and event onset. Critical for assessing temporal plausibility.',
-          },
-        ],
-        branches: [
-          {
-            when: { field: 'narrative_type', operator: 'eq', value: 'death' },
-            goto: 'study_drug_exposure',
-          },
-          {
-            when: { field: 'narrative_type', operator: 'eq', value: 'pregnancy' },
-            goto: 'study_drug_exposure',
-          },
-          {
-            when: { field: 'narrative_type', operator: 'eq', value: 'aesi' },
-            goto: 'study_drug_exposure',
-          },
-        ],
-        defaultNext: 'study_drug_exposure',
-      },
-
-      {
-        id: 'study_drug_exposure',
-        section: 'event_description',
-        question:
-          'Document the study drug exposure details and action taken.',
-        guidance:
-          'Per ICH E3 Section 14.3 and ICH E2B(R3) Section 2.12, the narrative must document the dose of study drug at the time of the event, cumulative exposure, the date of the last dose, and the action taken with the study drug. Per ICH E2A Section III.B, the action taken with study drug (dose reduced, interrupted, discontinued, not changed) is essential for interpreting the clinical significance and for dechallenge/rechallenge assessment.',
-        fields: [
-          {
-            id: 'dose_at_event',
-            label: 'Dose at Time of Event',
-            type: 'text',
-            placeholder: 'e.g., 200 mg once daily',
+            id: 'autopsy_performed',
+            label: 'Autopsy Performed',
+            type: 'yes_no',
             required: true,
           },
           {
-            id: 'cumulative_dose',
-            label: 'Cumulative Dose Received',
-            type: 'text',
-            placeholder: 'e.g., 5600 mg total (28 days x 200 mg)',
-            helpText: 'Total cumulative dose from first dose to event onset.',
-          },
-          {
-            id: 'first_dose_date',
-            label: 'Date of First Dose',
-            type: 'date',
-            required: true,
-          },
-          {
-            id: 'last_dose_date',
-            label: 'Date of Last Dose Before Event',
-            type: 'date',
-            required: true,
-          },
-          {
-            id: 'action_taken',
-            label: 'Action Taken with Study Drug',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'dose_not_changed', label: 'Dose Not Changed' },
-              { value: 'dose_reduced', label: 'Dose Reduced' },
-              { value: 'drug_interrupted', label: 'Drug Interrupted (temporary hold)' },
-              { value: 'drug_discontinued', label: 'Drug Permanently Discontinued' },
-              { value: 'not_applicable', label: 'Not Applicable (event before first dose)' },
-              { value: 'unknown', label: 'Unknown' },
-            ],
-            helpText: 'Per ICH E2A Section III.B, the action taken with study drug informs the dechallenge assessment.',
-          },
-          {
-            id: 'dose_reduction_details',
-            label: 'Dose Reduction Details',
+            id: 'autopsy_results',
+            label: 'Autopsy Results',
             type: 'textarea',
-            placeholder: 'e.g., Dose reduced from 200 mg to 150 mg QD on Study Day 15',
             visibleWhen: {
-              field: 'action_taken',
+              field: 'autopsy_performed',
               operator: 'eq',
-              value: 'dose_reduced',
+              value: true,
             },
           },
           {
-            id: 'interruption_dates',
-            label: 'Drug Interruption Dates',
-            type: 'text',
-            placeholder: 'e.g., Held from Day 14 to Day 21',
-            visibleWhen: {
-              field: 'action_taken',
-              operator: 'in',
-              value: ['drug_interrupted', 'dose_reduced'],
-            },
-          },
-        ],
-        branches: [
-          {
-            when: { field: 'narrative_type', operator: 'eq', value: 'death' },
-            goto: 'event_treatment',
-          },
-          {
-            when: { field: 'narrative_type', operator: 'eq', value: 'pregnancy' },
-            goto: 'event_treatment',
-          },
-          {
-            when: { field: 'narrative_type', operator: 'eq', value: 'aesi' },
-            goto: 'event_treatment',
-          },
-        ],
-        defaultNext: 'event_treatment',
-        issueChecks: [
-          {
-            id: 'action_taken_unknown',
-            condition: {
-              field: 'action_taken',
-              operator: 'eq',
-              value: 'unknown',
-            },
-            severity: 'warning',
-            title: 'Action Taken with Study Drug Unknown',
-            message:
-              'The action taken with the study drug is documented as unknown. Per ICH E2B(R3) Section 2.12.5 and CIOMS-I form requirements, the action taken (dose reduced, interrupted, discontinued, or not changed) must be recorded for every SAE. This information is critical for dechallenge assessment and for regulatory reviewers evaluating drug-event causality.',
-            reference: 'ICH E2B(R3) Section 2.12.5; CIOMS-I Form',
-          },
-        ],
-      },
-
-      /* ══════════════════════════════════════════════════════════════════
-       *  Section 4 — Clinical Course
-       * ══════════════════════════════════════════════════════════════════ */
-
-      {
-        id: 'event_treatment',
-        section: 'clinical_course',
-        question:
-          'What treatments and interventions were administered for the adverse event?',
-        guidance:
-          'Per ICH E3 Section 14.3, the narrative must document all treatments administered for the adverse event, including medications (with dose, route, and duration), procedures, and supportive care. Per ICH E2B(R3) Section 2.10, treatment of the reaction should be documented with start/stop dates. This information is essential for understanding the clinical course and may support or refute causality (e.g., response to specific antidote suggests drug-related etiology).',
-        fields: [
-          {
-            id: 'medications_for_event',
-            label: 'Medications Used to Treat the Event',
-            type: 'textarea',
-            placeholder: 'Drug name | Dose | Route | Start date | Stop date\ne.g., Epinephrine | 0.3 mg | IM | 15-Jan-2025 | 15-Jan-2025',
-            helpText: 'Per ICH E2B(R3) Section 2.10, document all medications used to treat the adverse event.',
-          },
-          {
-            id: 'procedures_performed',
-            label: 'Procedures Performed',
-            type: 'textarea',
-            placeholder: 'e.g., Chest CT performed on Day 15, bronchoscopy with BAL on Day 16, percutaneous coronary intervention on Day 17',
-          },
-          {
-            id: 'supportive_care',
-            label: 'Supportive Care Provided',
-            type: 'textarea',
-            placeholder: 'e.g., IV fluids, supplemental oxygen via nasal cannula, continuous cardiac monitoring',
-          },
-          {
-            id: 'icu_admission',
-            label: 'Was ICU Admission Required?',
+            id: 'death_certificate_obtained',
+            label: 'Death Certificate Obtained',
             type: 'yes_no',
           },
           {
-            id: 'icu_duration_days',
-            label: 'ICU Duration (days)',
-            type: 'number',
-            validation: { min: 1 },
+            id: 'relationship_to_study_drug_investigator',
+            label: 'Investigator Assessment of Relationship to Study Drug',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'related', label: 'Related' },
+              { value: 'possibly_related', label: 'Possibly Related' },
+              { value: 'unlikely_related', label: 'Unlikely Related' },
+              { value: 'not_related', label: 'Not Related' },
+            ],
+          },
+          {
+            id: 'relationship_to_study_drug_sponsor',
+            label: 'Sponsor Assessment of Relationship to Study Drug',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'related', label: 'Related' },
+              { value: 'possibly_related', label: 'Possibly Related' },
+              { value: 'unlikely_related', label: 'Unlikely Related' },
+              { value: 'not_related', label: 'Not Related' },
+            ],
+          },
+        ],
+        defaultNext: 'study_context',
+      },
+
+      {
+        id: 'susar_details',
+        section: 'patient_history',
+        question:
+          'Provide details specific to this Suspected Unexpected Serious Adverse Reaction (SUSAR), including reporting timeline, regulatory notifications, and unblinding status.',
+        fields: [
+          {
+            id: 'susar_report_date',
+            label: 'SUSAR Report Date',
+            type: 'date',
+            required: true,
+          },
+          {
+            id: 'susar_regulatory_authority',
+            label: 'Regulatory Authority',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g., FDA, EMA, PMDA',
+          },
+          {
+            id: 'expedited_reporting_timeline',
+            label: 'Expedited Reporting Timeline',
+            type: 'select',
+            required: true,
+            helpText: '7-day for fatal/life-threatening; 15-day for others.',
+            options: [
+              { value: '7_day', label: '7-Day Report' },
+              { value: '15_day', label: '15-Day Report' },
+            ],
+          },
+          {
+            id: 'irb_ec_notification_date',
+            label: 'IRB/EC Notification Date',
+            type: 'date',
+          },
+          {
+            id: 'data_lock_point',
+            label: 'Data Lock Point',
+            type: 'date',
+          },
+          {
+            id: 'dsmb_notification',
+            label: 'DSMB Notification',
+            type: 'yes_no',
+          },
+          {
+            id: 'unblinding_performed',
+            label: 'Unblinding Performed',
+            type: 'yes_no',
+            helpText: 'Was the treatment assignment unblinded for this report?',
+          },
+          {
+            id: 'ib_update_required',
+            label: 'IB Update Required',
+            type: 'yes_no',
+            helpText: 'Does the Investigator Brochure safety information need updating?',
+          },
+        ],
+        defaultNext: 'study_context',
+      },
+
+      /* ================================================================ */
+      /* ── Section 3: Event Description & Timeline ──────────────────── */
+      /* ================================================================ */
+
+      {
+        id: 'event_description',
+        section: 'event_timeline',
+        question:
+          'Provide a detailed chronological description of the adverse event, including onset date and time, time-to-onset from first dose, severity grade, and event duration.',
+        guidance:
+          'Per ICH E3 Section 12.3, the narrative should present a factual, chronological account of the event from onset through resolution or last follow-up. The temporal relationship between drug administration and event onset is a critical factor in causality assessment.',
+        provideExpertFeedback: true,
+        fields: [
+          {
+            id: 'event_narrative_description',
+            label: 'Event Narrative Description',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Provide a detailed chronological description of the event including onset symptoms, progression, and clinical course',
+            validation: { minLength: 100 },
+          },
+          {
+            id: 'onset_date',
+            label: 'Onset Date',
+            type: 'date',
+            required: true,
+          },
+          {
+            id: 'onset_time',
+            label: 'Onset Time',
+            type: 'text',
+            placeholder: 'HH:MM if known',
+          },
+          {
+            id: 'time_to_onset',
+            label: 'Time to Onset',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g., 14 days after first dose',
+            helpText: 'Time from first dose of study drug to event onset.',
+          },
+          {
+            id: 'event_severity_grade',
+            label: 'Event Severity Grade',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'mild', label: 'Mild' },
+              { value: 'moderate', label: 'Moderate' },
+              { value: 'severe', label: 'Severe' },
+              { value: 'life_threatening', label: 'Life-Threatening' },
+              { value: 'fatal', label: 'Fatal' },
+            ],
+          },
+          {
+            id: 'event_duration',
+            label: 'Event Duration',
+            type: 'text',
+            placeholder: 'e.g., 7 days',
+          },
+        ],
+        defaultNext: 'event_timeline_details',
+        issueChecks: [
+          {
+            id: 'time_to_onset_missing',
+            condition: {
+              field: 'time_to_onset',
+              operator: 'eq',
+              value: '',
+            },
+            severity: 'critical',
+            title: 'Time-to-Onset Not Documented',
+            message:
+              'The temporal relationship between drug administration and event onset is critical for causality assessment. This must be documented.',
+            reference: 'ICH E2B(R3) Section B.2.i.4',
+          },
+        ],
+      },
+
+      {
+        id: 'event_timeline_details',
+        section: 'event_timeline',
+        question:
+          'Provide supporting clinical data observed during the event, including laboratory values, vital signs, diagnostic procedures, hospitalization details, and ICU admission status.',
+        fields: [
+          {
+            id: 'key_lab_values_during_event',
+            label: 'Key Laboratory Values During Event',
+            type: 'textarea',
+            placeholder: 'Relevant laboratory values during the event with dates',
+          },
+          {
+            id: 'key_vital_signs',
+            label: 'Key Vital Signs',
+            type: 'textarea',
+            placeholder: 'Relevant vital signs during the event',
+          },
+          {
+            id: 'diagnostic_procedures',
+            label: 'Diagnostic Procedures',
+            type: 'textarea',
+            placeholder: 'Imaging, biopsies, ECGs, other diagnostic tests performed',
+          },
+          {
+            id: 'hospitalization_dates',
+            label: 'Hospitalization Dates',
+            type: 'text',
+            placeholder: 'Admission and discharge dates if applicable',
+            visibleWhen: {
+              field: 'event_seriousness_criteria',
+              operator: 'contains',
+              value: 'hospitalization',
+            },
+          },
+          {
+            id: 'icu_admission',
+            label: 'ICU Admission',
+            type: 'yes_no',
+          },
+          {
+            id: 'icu_duration',
+            label: 'ICU Duration',
+            type: 'text',
+            placeholder: 'Duration of ICU stay',
             visibleWhen: {
               field: 'icu_admission',
               operator: 'eq',
@@ -716,299 +723,126 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
             },
           },
         ],
-        defaultNext: 'hospitalization_details',
+        defaultNext: 'interventions_outcomes',
       },
 
       {
-        id: 'hospitalization_details',
-        section: 'clinical_course',
+        id: 'interventions_outcomes',
+        section: 'event_timeline',
         question:
-          'Provide hospitalization and clinical course timeline details.',
-        guidance:
-          'Per ICH E2A Section II, hospitalization (or prolongation of existing hospitalization) is one of the seriousness criteria for SAEs. Per ICH E3 Section 14.3, the narrative should include admission and discharge dates, key findings during hospitalization, and the clinical course timeline. The timeline should present a clear day-by-day or milestone-based progression to enable the reviewer to understand the evolution of the event.',
+          'Document the actions taken with the study drug, dechallenge and rechallenge results, treatment administered for the event, and the event outcome.',
         fields: [
           {
-            id: 'hospitalized',
-            label: 'Was the Patient Hospitalized for This Event?',
+            id: 'study_drug_action',
+            label: 'Action Taken with Study Drug',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'dose_not_changed', label: 'Dose Not Changed' },
+              { value: 'dose_reduced', label: 'Dose Reduced' },
+              { value: 'drug_interrupted', label: 'Drug Interrupted' },
+              { value: 'drug_withdrawn', label: 'Drug Withdrawn' },
+              { value: 'not_applicable', label: 'Not Applicable' },
+            ],
+          },
+          {
+            id: 'dechallenge_result',
+            label: 'Dechallenge Result',
+            type: 'select',
+            required: true,
+            helpText: 'What happened when the study drug was stopped or reduced?',
+            options: [
+              { value: 'positive_resolved', label: 'Positive — Event Resolved' },
+              { value: 'positive_improved', label: 'Positive — Event Improved' },
+              { value: 'negative_no_change', label: 'Negative — No Change' },
+              { value: 'not_applicable', label: 'Not Applicable' },
+            ],
+          },
+          {
+            id: 'rechallenge_performed',
+            label: 'Rechallenge Performed',
             type: 'yes_no',
             required: true,
           },
           {
-            id: 'admission_date',
-            label: 'Hospital Admission Date',
-            type: 'date',
-            visibleWhen: {
-              field: 'hospitalized',
-              operator: 'eq',
-              value: true,
-            },
-          },
-          {
-            id: 'discharge_date',
-            label: 'Hospital Discharge Date',
-            type: 'date',
-            visibleWhen: {
-              field: 'hospitalized',
-              operator: 'eq',
-              value: true,
-            },
-          },
-          {
-            id: 'hospitalization_duration_days',
-            label: 'Hospitalization Duration (days)',
-            type: 'number',
-            validation: { min: 1 },
-            visibleWhen: {
-              field: 'hospitalized',
-              operator: 'eq',
-              value: true,
-            },
-          },
-          {
-            id: 'clinical_course_timeline',
-            label: 'Clinical Course Timeline',
-            type: 'textarea',
-            placeholder: 'Day 1: Presented with fever 39.2C and rigors...\nDay 2: Blood cultures positive for...\nDay 3: Started on IV antibiotics...\nDay 7: Afebrile, clinically improved...',
-            required: true,
-            validation: { minLength: 30, maxLength: 10000 },
-            helpText: 'Per ICH E3 Section 14.3, provide a chronological timeline of the clinical course from event onset to outcome.',
-          },
-          {
-            id: 'dechallenge_info',
-            label: 'Dechallenge Information',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'positive', label: 'Positive Dechallenge (event improved/resolved after drug stopped)' },
-              { value: 'negative', label: 'Negative Dechallenge (event persisted after drug stopped)' },
-              { value: 'not_applicable', label: 'Not Applicable (drug not stopped)' },
-              { value: 'unknown', label: 'Unknown' },
-            ],
-            helpText: 'Per Naranjo algorithm Question 3 and WHO-UMC criteria, positive dechallenge supports a causal relationship.',
-          },
-          {
-            id: 'rechallenge_info',
-            label: 'Rechallenge Information',
+            id: 'rechallenge_result',
+            label: 'Rechallenge Result',
             type: 'select',
             options: [
-              { value: 'positive', label: 'Positive Rechallenge (event recurred on re-exposure)' },
-              { value: 'negative', label: 'Negative Rechallenge (event did not recur on re-exposure)' },
-              { value: 'not_done', label: 'Rechallenge Not Done' },
+              { value: 'positive_recurred', label: 'Positive — Event Recurred' },
+              { value: 'negative_no_recurrence', label: 'Negative — No Recurrence' },
               { value: 'not_applicable', label: 'Not Applicable' },
             ],
-            helpText: 'Per Naranjo algorithm Question 4, positive rechallenge is strong evidence of causal relationship. However, rechallenge may be unethical for serious events.',
-          },
-        ],
-        branches: [
-          {
-            when: { field: 'narrative_type', operator: 'eq', value: 'death' },
-            goto: 'outcome_resolution',
+            visibleWhen: {
+              field: 'rechallenge_performed',
+              operator: 'eq',
+              value: true,
+            },
           },
           {
-            when: { field: 'narrative_type', operator: 'eq', value: 'pregnancy' },
-            goto: 'outcome_resolution',
+            id: 'treatment_for_event',
+            label: 'Treatment for Event',
+            type: 'textarea',
+            placeholder: 'Medications and procedures used to treat the event',
+          },
+          {
+            id: 'event_resolution_date',
+            label: 'Event Resolution Date',
+            type: 'date',
+          },
+          {
+            id: 'sequelae_description',
+            label: 'Sequelae Description',
+            type: 'textarea',
+            placeholder: 'Describe any residual effects or sequelae',
           },
         ],
-        defaultNext: 'outcome_resolution',
+        defaultNext: 'causality_assessment',
         issueChecks: [
           {
             id: 'no_dechallenge_info',
             condition: {
-              field: 'dechallenge_info',
+              field: 'dechallenge_result',
               operator: 'eq',
-              value: 'unknown',
+              value: 'not_applicable',
             },
             severity: 'info',
-            title: 'Dechallenge Information Not Available',
+            title: 'No Dechallenge Information',
             message:
-              'Dechallenge information is unknown. Per the Naranjo algorithm (Question 3) and WHO-UMC causality criteria, dechallenge data (whether the event improved or resolved after the study drug was stopped) is an important factor in causality assessment. Efforts should be made to obtain this information from the investigator site if possible.',
-            reference: 'Naranjo Algorithm; WHO-UMC Causality Assessment System',
+              'Dechallenge information (response to drug withdrawal) is valuable for causality assessment. If the drug was stopped, document the clinical response.',
+            reference: 'FDA CIOMS Form Guidance',
+          },
+          {
+            id: 'no_rechallenge_info',
+            condition: {
+              field: 'rechallenge_performed',
+              operator: 'eq',
+              value: false,
+            },
+            severity: 'info',
+            title: 'No Rechallenge Information',
+            message:
+              'Rechallenge data, when available, provides strong evidence for or against causality. Document the rationale if rechallenge was not performed.',
+            reference: 'ICH E2B(R3) Section B.4',
           },
         ],
       },
 
+      /* ================================================================ */
+      /* ── Section 4: Causality Assessment ──────────────────────────── */
+      /* ================================================================ */
+
       {
-        id: 'outcome_resolution',
-        section: 'clinical_course',
+        id: 'causality_assessment',
+        section: 'causality_assessment_section',
         question:
-          'What was the outcome of the adverse event?',
+          'Provide the investigator and sponsor causality assessments, assessment method used, and a detailed rationale for the determination.',
         guidance:
-          'Per ICH E2B(R3) Section 2.13.6 and ICH E3 Section 14.3, the outcome must be documented using standardized categories: recovered/resolved, recovering/resolving, not recovered/not resolved, recovered with sequelae, fatal, or unknown. Per CIOMS-I form Item 13, the outcome at the time of last observation must be recorded. For death cases, autopsy findings and cause of death must be documented. For pregnancy cases, document the pregnancy outcome.',
+          'Causality assessment is a critical component of every safety narrative. Both the investigator and sponsor must independently assess the causal relationship between the study drug and the event. Standardized methods such as WHO-UMC, Naranjo algorithm, or Bayesian approaches provide a structured framework for consistent assessment.',
         provideExpertFeedback: true,
         fields: [
           {
-            id: 'outcome',
-            label: 'Event Outcome',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'resolved', label: 'Recovered/Resolved' },
-              { value: 'resolving', label: 'Recovering/Resolving' },
-              { value: 'not_resolved', label: 'Not Recovered/Not Resolved' },
-              { value: 'resolved_with_sequelae', label: 'Recovered with Sequelae' },
-              { value: 'fatal', label: 'Fatal' },
-              { value: 'unknown', label: 'Unknown' },
-            ],
-            helpText: 'Per ICH E2B(R3) Section 2.13.6 and CIOMS-I form, select the outcome at the time of the most recent assessment.',
-          },
-          {
-            id: 'resolution_date',
-            label: 'Resolution Date',
-            type: 'date',
-            visibleWhen: {
-              field: 'outcome',
-              operator: 'in',
-              value: ['resolved', 'resolved_with_sequelae'],
-            },
-          },
-          {
-            id: 'sequelae_description',
-            label: 'Description of Sequelae',
-            type: 'textarea',
-            placeholder: 'e.g., Residual peripheral neuropathy Grade 1 at last follow-up',
-            visibleWhen: {
-              field: 'outcome',
-              operator: 'eq',
-              value: 'resolved_with_sequelae',
-            },
-          },
-          {
-            id: 'cause_of_death',
-            label: 'Cause of Death',
-            type: 'textarea',
-            placeholder: 'e.g., Acute myocardial infarction per death certificate',
-            visibleWhen: {
-              field: 'outcome',
-              operator: 'eq',
-              value: 'fatal',
-            },
-            helpText: 'Per ICH E3 Section 12.3.2, document the primary and contributing causes of death as listed on the death certificate.',
-          },
-          {
-            id: 'autopsy_performed',
-            label: 'Was an Autopsy Performed?',
-            type: 'yes_no',
-            visibleWhen: {
-              field: 'outcome',
-              operator: 'eq',
-              value: 'fatal',
-            },
-          },
-          {
-            id: 'autopsy_findings',
-            label: 'Autopsy Findings',
-            type: 'textarea',
-            placeholder: 'Summarize key autopsy findings relevant to the cause of death and potential drug relationship.',
-            visibleWhen: {
-              field: 'autopsy_performed',
-              operator: 'eq',
-              value: true,
-            },
-            helpText: 'Per ICH E3 Section 12.3.2, autopsy findings should be documented when available, as they may clarify the cause of death and drug relationship.',
-          },
-          {
-            id: 'contributing_factors_death',
-            label: 'Contributing Factors to Death',
-            type: 'textarea',
-            placeholder: 'e.g., Progressive disease, comorbid heart failure, hospital-acquired pneumonia',
-            visibleWhen: {
-              field: 'outcome',
-              operator: 'eq',
-              value: 'fatal',
-            },
-          },
-          {
-            id: 'pregnancy_outcome',
-            label: 'Pregnancy Outcome',
-            type: 'select',
-            visibleWhen: {
-              field: 'narrative_type',
-              operator: 'eq',
-              value: 'pregnancy',
-            },
-            options: [
-              { value: 'live_birth_normal', label: 'Live Birth — Normal' },
-              { value: 'live_birth_abnormal', label: 'Live Birth — Congenital Anomaly' },
-              { value: 'spontaneous_abortion', label: 'Spontaneous Abortion' },
-              { value: 'elective_termination', label: 'Elective Termination' },
-              { value: 'stillbirth', label: 'Stillbirth' },
-              { value: 'ectopic', label: 'Ectopic Pregnancy' },
-              { value: 'ongoing', label: 'Pregnancy Ongoing' },
-              { value: 'unknown', label: 'Unknown' },
-            ],
-            helpText: 'Per FDA Guidance "Pregnant Women: Scientific and Ethical Considerations for Inclusion in Clinical Trials" (2018) and ICH E2B(R3), pregnancy outcomes must be followed to completion.',
-          },
-          {
-            id: 'pregnancy_followup_plan',
-            label: 'Pregnancy Follow-Up Plan',
-            type: 'textarea',
-            placeholder: 'e.g., Follow-up planned at delivery and at 12 months of age for infant assessment',
-            visibleWhen: {
-              field: 'narrative_type',
-              operator: 'eq',
-              value: 'pregnancy',
-            },
-            helpText: 'Per ICH E2B(R3) and most protocols, pregnancy outcomes must be tracked to completion with infant follow-up.',
-          },
-          {
-            id: 'aesi_criteria_met',
-            label: 'AESI Pre-Defined Criteria Met',
-            type: 'textarea',
-            placeholder: 'Describe which pre-defined AESI criteria were met and the supporting evidence',
-            visibleWhen: {
-              field: 'narrative_type',
-              operator: 'eq',
-              value: 'aesi',
-            },
-            helpText: 'Per the protocol-defined AESI criteria, document which specific criteria were satisfied and the evidence supporting classification as an AESI.',
-          },
-        ],
-        defaultNext: 'investigator_causality',
-        issueChecks: [
-          {
-            id: 'missing_outcome',
-            condition: {
-              field: 'outcome',
-              operator: 'eq',
-              value: 'unknown',
-            },
-            severity: 'warning',
-            title: 'Event Outcome Unknown',
-            message:
-              'The outcome of the adverse event is unknown. Per ICH E2B(R3) Section 2.13.6 and CIOMS-I form requirements, every effort should be made to obtain the final outcome. Regulatory authorities may request follow-up information. Consider issuing a follow-up query to the investigator site.',
-            reference: 'ICH E2B(R3) Section 2.13.6; CIOMS-I Form',
-          },
-          {
-            id: 'pregnancy_no_followup',
-            condition: {
-              field: 'pregnancy_followup_plan',
-              operator: 'eq',
-              value: '',
-            },
-            severity: 'critical',
-            title: 'Pregnancy Case Without Follow-Up Plan',
-            message:
-              'A pregnancy exposure has been reported without a documented follow-up plan. Per ICH E2B(R3) and FDA Guidance "Pregnant Women: Scientific and Ethical Considerations for Inclusion in Clinical Trials" (2018), all pregnancy cases must be followed to outcome (delivery or termination) and infants should be assessed for congenital anomalies. Missing pregnancy follow-up is a common FDA inspection finding and may result in a Form FDA 483 observation.',
-            reference: 'ICH E2B(R3); FDA Guidance: Pregnant Women in Clinical Trials (2018)',
-          },
-        ],
-      },
-
-      /* ══════════════════════════════════════════════════════════════════
-       *  Section 5 — Causality Assessment
-       * ══════════════════════════════════════════════════════════════════ */
-
-      {
-        id: 'investigator_causality',
-        section: 'causality_assessment',
-        question:
-          'What is the investigator\'s causality assessment, and what reasoning supports it?',
-        guidance:
-          'Per ICH E2A Section III.C and 21 CFR 312.32, the investigator\'s causality assessment is a critical component of the safety narrative. The investigator must assess whether there is a "reasonable possibility" that the drug caused the event (per FDA\'s definition in 21 CFR 312.32(a)). Per ICH E2B(R3) Section 2.13.8, the categories are: related, possibly related, unlikely related, or not related. The Naranjo algorithm provides a standardized scoring system (definite ≥9, probable 5-8, possible 1-4, doubtful ≤0). The WHO-UMC system uses: certain, probable/likely, possible, unlikely, conditional/unclassified, unassessable/unclassifiable.',
-        provideExpertFeedback: true,
-        fields: [
-          {
-            id: 'investigator_assessment',
+            id: 'investigator_causality',
             label: 'Investigator Causality Assessment',
             type: 'select',
             required: true,
@@ -1017,92 +851,11 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
               { value: 'possibly_related', label: 'Possibly Related' },
               { value: 'unlikely_related', label: 'Unlikely Related' },
               { value: 'not_related', label: 'Not Related' },
+              { value: 'not_assessable', label: 'Not Assessable' },
             ],
-            helpText: 'Per ICH E2A Section III.C, the investigator must assess whether there is a reasonable possibility that the drug caused the event.',
           },
           {
-            id: 'investigator_reasoning',
-            label: 'Investigator\'s Causality Reasoning',
-            type: 'textarea',
-            placeholder: 'Describe the investigator\'s rationale for the causality assessment, including temporal relationship, biologic plausibility, dechallenge/rechallenge results, and alternative explanations considered.',
-            required: true,
-            validation: { minLength: 30, maxLength: 5000 },
-          },
-          {
-            id: 'temporal_relationship_assessment',
-            label: 'Temporal Relationship',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'compatible', label: 'Compatible (reasonable time to onset)' },
-              { value: 'incompatible', label: 'Incompatible (onset before exposure or too remote)' },
-              { value: 'uncertain', label: 'Uncertain' },
-            ],
-            helpText: 'Naranjo Question 1: Did the adverse event appear after the suspected drug was administered?',
-          },
-          {
-            id: 'biologic_plausibility',
-            label: 'Biologic Plausibility',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'plausible', label: 'Plausible (known mechanism or pharmacology)' },
-              { value: 'possible', label: 'Possible (theoretical mechanism)' },
-              { value: 'not_plausible', label: 'Not Biologically Plausible' },
-              { value: 'unknown', label: 'Unknown' },
-            ],
-            helpText: 'Is there a known pharmacological mechanism by which the drug could cause this event?',
-          },
-          {
-            id: 'known_class_effect',
-            label: 'Known Drug Class Effect?',
-            type: 'yes_no',
-            helpText: 'Is this event a known effect of the pharmacological class? Per Naranjo Question 2 and WHO-UMC criteria.',
-          },
-          {
-            id: 'alternative_explanations',
-            label: 'Alternative Explanations Considered',
-            type: 'textarea',
-            placeholder: 'e.g., Underlying disease progression, concomitant medication effect, pre-existing condition, intercurrent illness',
-            required: true,
-            helpText: 'Per Naranjo Question 5 and WHO-UMC criteria, document whether the event could be attributed to alternative causes.',
-          },
-          {
-            id: 'naranjo_score',
-            label: 'Naranjo Algorithm Score',
-            type: 'number',
-            validation: { min: -4, max: 13 },
-            helpText: 'Definite ≥9; Probable 5-8; Possible 1-4; Doubtful ≤0. Score based on 10 questions assessing temporal relationship, pattern recognition, dechallenge, rechallenge, alternative causes, placebo response, drug levels, dose-response, prior experience, and objective evidence.',
-          },
-        ],
-        defaultNext: 'sponsor_causality',
-        issueChecks: [
-          {
-            id: 'missing_causality_assessment',
-            condition: {
-              field: 'investigator_assessment',
-              operator: 'eq',
-              value: '',
-            },
-            severity: 'critical',
-            title: 'Missing Investigator Causality Assessment',
-            message:
-              'The investigator\'s causality assessment has not been provided. Per ICH E2A Section III.C and 21 CFR 312.32, the investigator\'s assessment of reasonable possibility of causal relationship is mandatory for all SAEs and is the trigger for determining whether an event meets the definition of a suspected adverse reaction requiring expedited reporting. The narrative cannot be finalized without this assessment.',
-            reference: 'ICH E2A Section III.C; 21 CFR 312.32(a)',
-          },
-        ],
-      },
-
-      {
-        id: 'sponsor_causality',
-        section: 'causality_assessment',
-        question:
-          'Provide the sponsor\'s causality assessment and the WHO-UMC classification.',
-        guidance:
-          'Per 21 CFR 312.32(a), the sponsor must make an independent assessment of whether there is a "reasonable possibility" that the drug caused the event. The sponsor\'s assessment may differ from the investigator\'s. Per FDA Guidance "Safety Reporting Requirements for INDs and BA/BE Studies" (2012), the sponsor should consider the totality of evidence, including the investigator\'s assessment, drug mechanism of action, preclinical data, and experience across the development program. The WHO-UMC system provides a standardized framework accepted globally by regulatory authorities.',
-        fields: [
-          {
-            id: 'sponsor_assessment',
+            id: 'sponsor_causality',
             label: 'Sponsor Causality Assessment',
             type: 'select',
             required: true,
@@ -1111,301 +864,246 @@ export function createSafetyNarrativeFlow(): FlowDefinition {
               { value: 'possibly_related', label: 'Possibly Related' },
               { value: 'unlikely_related', label: 'Unlikely Related' },
               { value: 'not_related', label: 'Not Related' },
+              { value: 'not_assessable', label: 'Not Assessable' },
             ],
-            helpText: 'Per 21 CFR 312.32, the sponsor must independently assess causality. The sponsor\'s assessment determines expedited reporting obligations.',
           },
           {
-            id: 'sponsor_reasoning',
-            label: 'Sponsor\'s Causality Reasoning',
-            type: 'textarea',
-            placeholder: 'Describe the sponsor\'s rationale, including any differences from the investigator\'s assessment and program-level data considered.',
-            required: true,
-            validation: { minLength: 30, maxLength: 5000 },
-          },
-          {
-            id: 'who_umc_classification',
-            label: 'WHO-UMC Causality Classification',
+            id: 'causality_assessment_method',
+            label: 'Causality Assessment Method',
             type: 'select',
             required: true,
             options: [
-              { value: 'certain', label: 'Certain' },
-              { value: 'probable_likely', label: 'Probable/Likely' },
-              { value: 'possible', label: 'Possible' },
-              { value: 'unlikely', label: 'Unlikely' },
-              { value: 'conditional_unclassified', label: 'Conditional/Unclassified' },
-              { value: 'unassessable', label: 'Unassessable/Unclassifiable' },
+              { value: 'who_umc', label: 'WHO-UMC System' },
+              { value: 'naranjo', label: 'Naranjo Algorithm' },
+              { value: 'bayesian', label: 'Bayesian Approach' },
+              { value: 'clinical_judgment', label: 'Clinical Judgment' },
+              { value: 'company_algorithm', label: 'Company Algorithm' },
             ],
-            helpText: 'The WHO-UMC system is the internationally accepted causality assessment framework. Per WHO-UMC, "Certain" requires: plausible time relationship, no alternative explanation, positive dechallenge, and definitive pharmacological/phenomenological evidence.',
           },
           {
-            id: 'causality_differs_from_investigator',
-            label: 'Does Sponsor Assessment Differ from Investigator?',
-            type: 'yes_no',
-            required: true,
+            id: 'causality_score',
+            label: 'Causality Score',
+            type: 'text',
+            placeholder: 'Score or category if using a standardized method',
           },
           {
-            id: 'discrepancy_justification',
-            label: 'Justification for Discrepant Assessment',
+            id: 'primary_causality_rationale',
+            label: 'Primary Causality Rationale',
             type: 'textarea',
-            placeholder: 'Explain why the sponsor\'s assessment differs from the investigator\'s, citing specific evidence.',
-            visibleWhen: {
-              field: 'causality_differs_from_investigator',
-              operator: 'eq',
-              value: true,
-            },
-            helpText: 'Per 21 CFR 312.32 and FDA Guidance (2012), when the sponsor downgrades the investigator\'s causality assessment, the justification must be well-documented and scientifically supported.',
+            required: true,
+            placeholder: 'Provide detailed rationale for the causality assessment including temporal relationship, biological plausibility, dechallenge/rechallenge results, and alternative explanations',
           },
         ],
-        defaultNext: 'expedited_reporting',
+        defaultNext: 'causality_factors',
         issueChecks: [
           {
-            id: 'causality_discrepancy',
+            id: 'missing_causality',
             condition: {
-              field: 'causality_differs_from_investigator',
+              field: 'sponsor_causality',
               operator: 'eq',
-              value: true,
-            },
-            severity: 'warning',
-            title: 'Sponsor-Investigator Causality Discrepancy',
-            message:
-              'The sponsor\'s causality assessment differs from the investigator\'s assessment. Per 21 CFR 312.32(a) and FDA Guidance "Safety Reporting Requirements for INDs and BA/BE Studies" (2012), when the sponsor disagrees with the investigator\'s causality assessment (particularly when downgrading from related to not related), the justification must be scientifically robust and well-documented. FDA has issued Warning Letters citing inadequate justification for sponsor disagreement with investigator causality.',
-            reference: '21 CFR 312.32(a); FDA Guidance: Safety Reporting Requirements for INDs (2012)',
-          },
-        ],
-      },
-
-      /* ══════════════════════════════════════════════════════════════════
-       *  Section 6 — Regulatory Reporting
-       * ══════════════════════════════════════════════════════════════════ */
-
-      {
-        id: 'expedited_reporting',
-        section: 'regulatory_reporting',
-        question:
-          'Determine whether this event requires expedited regulatory reporting.',
-        guidance:
-          'Per 21 CFR 312.32(c)(1), IND Safety Reports must be submitted to FDA within 15 calendar days for serious, unexpected, suspected adverse reactions, and within 7 calendar days for fatal or life-threatening events. Per ICH E2A Section IV, expedited reporting to regulatory authorities and ethics committees is required for serious, unexpected adverse drug reactions. Per EU Clinical Trials Regulation (EU) No 536/2014 Article 42, SUSARs must be reported to EudraVigilance within 15 days (7 days for fatal/life-threatening). The reporting clock starts when the sponsor first becomes aware of the event meeting reporting criteria.',
-        fields: [
-          {
-            id: 'meets_expedited_criteria',
-            label: 'Does This Event Meet Expedited Reporting Criteria?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per 21 CFR 312.32(c)(1), expedited reporting is required for serious, unexpected, and suspected adverse reactions (i.e., SAEs that are both unexpected and reasonably possibly related to the drug).',
-          },
-          {
-            id: 'reporting_timeframe',
-            label: 'Reporting Timeframe',
-            type: 'select',
-            required: true,
-            options: [
-              { value: '7_day', label: '7-Day Report (fatal or life-threatening)' },
-              { value: '15_day', label: '15-Day Report (serious, unexpected, suspected)' },
-              { value: 'annual_report', label: 'Annual Report Only (expected or not related)' },
-              { value: 'not_applicable', label: 'Not Applicable' },
-            ],
-            helpText: 'Per 21 CFR 312.32(c)(1)(i), fatal and life-threatening suspected adverse reactions require a 7-day report. Per 21 CFR 312.32(c)(1)(ii), other serious, unexpected, suspected adverse reactions require a 15-day report.',
-          },
-          {
-            id: 'expected_or_unexpected',
-            label: 'Is This Event Expected or Unexpected?',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'expected', label: 'Expected (listed in Investigator Brochure / Reference Safety Information)' },
-              { value: 'unexpected', label: 'Unexpected (not listed or more severe/specific than listed)' },
-              { value: 'uncertain', label: 'Uncertain — Requires Medical Review' },
-            ],
-            helpText: 'Per ICH E2A Section II and 21 CFR 312.32(a), an event is "unexpected" if it is not listed in the current Investigator Brochure (IB) or Reference Safety Information (RSI) in terms of nature, severity, or specificity.',
-          },
-          {
-            id: 'date_initial_report_submitted',
-            label: 'Date Initial Report Submitted to Regulatory Authority',
-            type: 'date',
-            helpText: 'Per 21 CFR 312.32, document the date the IND Safety Report was submitted. Compare with the "Date Sponsor Became Aware" to verify compliance with reporting timelines.',
-          },
-          {
-            id: 'regulatory_authorities_notified',
-            label: 'Regulatory Authorities Notified',
-            type: 'multi_select',
-            options: [
-              { value: 'fda', label: 'FDA (US)' },
-              { value: 'ema', label: 'EMA (EU)' },
-              { value: 'pmda', label: 'PMDA (Japan)' },
-              { value: 'health_canada', label: 'Health Canada' },
-              { value: 'mhra', label: 'MHRA (UK)' },
-              { value: 'tga', label: 'TGA (Australia)' },
-              { value: 'other', label: 'Other National Authority' },
-            ],
-            helpText: 'Per ICH E2A Section IV, all regulatory authorities where the IND/CTA is active must be notified.',
-          },
-          {
-            id: 'irb_ec_notified',
-            label: 'Were All IRBs/Ethics Committees Notified?',
-            type: 'yes_no',
-            helpText: 'Per 21 CFR 312.32(c)(1)(iii) and ICH E6(R2) Section 4.11.1, the sponsor must notify all participating investigators and their IRBs/ECs of IND Safety Reports.',
-          },
-        ],
-        defaultNext: 'cioms_completion',
-        issueChecks: [
-          {
-            id: 'sae_reporting_delay',
-            condition: {
-              field: 'date_initial_report_submitted',
-              operator: 'eq',
-              value: '',
+              value: 'not_assessable',
             },
             severity: 'critical',
-            title: 'SAE Reporting Potentially Delayed',
+            title: 'Missing Causality Assessment',
             message:
-              'No initial report submission date has been documented. Per 21 CFR 312.32(c)(1), IND Safety Reports for serious, unexpected, suspected adverse reactions must be submitted within 15 calendar days (7 days for fatal/life-threatening events) of the sponsor first becoming aware. Late reporting may result in FDA Warning Letters, clinical holds, or enforcement actions. Per FDA Compliance Program 7348.810, late safety reports are a common inspection finding.',
-            reference: '21 CFR 312.32(c)(1); FDA Compliance Program 7348.810',
+              'A causality assessment is required for all serious adverse events. Regulatory authorities require the sponsor to provide an assessment of the causal relationship between the study drug and the event.',
+            reference: 'ICH E2A Section III.B',
           },
         ],
       },
 
       {
-        id: 'cioms_completion',
-        section: 'regulatory_reporting',
+        id: 'causality_factors',
+        section: 'causality_assessment_section',
         question:
-          'Document the CIOMS form completion status and cross-references to similar events.',
-        guidance:
-          'The CIOMS-I form (Council for International Organizations of Medical Sciences Form I) is the internationally accepted format for expedited safety reporting, adopted by ICH and incorporated into MedWatch Form FDA 3500A. Per ICH E2B(R3), the information in the CIOMS form maps directly to the Individual Case Safety Report (ICSR) data elements submitted to regulatory databases (FAERS, EudraVigilance). Cross-referencing with similar events in the study enables the sponsor to identify potential safety signals per ICH E2C(R2) (Periodic Benefit-Risk Evaluation Report).',
+          'Evaluate the specific factors that inform the causality assessment, including temporal plausibility, pharmacological effects, dose-response relationship, biological plausibility, alternative explanations, and literature evidence.',
         fields: [
           {
-            id: 'cioms_form_completed',
-            label: 'CIOMS Form / MedWatch 3500A Completed?',
+            id: 'temporal_relationship_plausible',
+            label: 'Temporal Relationship Plausible',
             type: 'yes_no',
             required: true,
           },
           {
-            id: 'cioms_form_date',
-            label: 'Date CIOMS Form Completed',
-            type: 'date',
+            id: 'known_pharmacological_effect',
+            label: 'Known Pharmacological Effect',
+            type: 'yes_no',
+          },
+          {
+            id: 'dose_response_relationship',
+            label: 'Dose-Response Relationship',
+            type: 'yes_no',
+          },
+          {
+            id: 'biological_plausibility',
+            label: 'Biological Plausibility',
+            type: 'textarea',
+            placeholder: 'Is the event biologically plausible given the drug mechanism of action?',
+          },
+          {
+            id: 'alternative_explanations',
+            label: 'Alternative Explanations',
+            type: 'textarea',
+            required: true,
+            placeholder: 'List alternative causes: underlying disease, concomitant medications, medical history',
+          },
+          {
+            id: 'similar_cases_in_literature',
+            label: 'Similar Cases in Literature',
+            type: 'yes_no',
+          },
+          {
+            id: 'literature_references',
+            label: 'Literature References',
+            type: 'textarea',
+            placeholder: 'Cite relevant published case reports or safety signals',
             visibleWhen: {
-              field: 'cioms_form_completed',
+              field: 'similar_cases_in_literature',
               operator: 'eq',
               value: true,
             },
           },
           {
-            id: 'e2b_submission',
-            label: 'E2B(R3) Electronic Submission Made?',
+            id: 'class_effect_known',
+            label: 'Class Effect Known',
             type: 'yes_no',
-            helpText: 'Per ICH E2B(R3), electronic ICSR submission is required for most regulatory authorities (FAERS for FDA, EudraVigilance for EMA).',
-          },
-          {
-            id: 'similar_events_in_study',
-            label: 'Number of Similar Events in This Study',
-            type: 'number',
-            validation: { min: 0 },
-            helpText: 'Document the number of events with the same or related MedDRA PTs observed in this study to provide aggregate context.',
-          },
-          {
-            id: 'similar_events_description',
-            label: 'Description of Similar Events',
-            type: 'textarea',
-            placeholder: 'e.g., 3 other cases of hepatotoxicity (Grade 2: n=2, Grade 3: n=1) observed across treatment arms; all resolved on dose interruption.',
-            visibleWhen: {
-              field: 'similar_events_in_study',
-              operator: 'gt',
-              value: 0,
-            },
-            helpText: 'Per ICH E2C(R2), aggregate analysis of similar events is important for signal detection.',
-          },
-          {
-            id: 'aggregate_analysis_context',
-            label: 'Aggregate Analysis Context',
-            type: 'textarea',
-            placeholder: 'Describe the overall incidence of this event type in the study, comparison to the control arm, and whether the event is consistent with the known safety profile of the drug.',
-            helpText: 'Per ICH E2C(R2) and ICH E3 Section 12.2, place the individual event in the context of the overall study safety data.',
+            helpText: 'Is this event known to be associated with this class of drugs?',
           },
         ],
-        defaultNext: 'narrative_draft',
+        defaultNext: 'narrative_composition',
       },
 
+      /* ================================================================ */
+      /* ── Section 5: Narrative Composition ─────────────────────────── */
+      /* ================================================================ */
+
       {
-        id: 'narrative_draft',
-        section: 'regulatory_reporting',
+        id: 'narrative_composition',
+        section: 'narrative_composition',
         question:
-          'Provide the draft narrative text and finalization details.',
+          'Compose the draft narrative text, selecting the appropriate format and sections to include. Ensure the narrative is a factual, chronological account written in the third person.',
         guidance:
-          'Per ICH E3 Section 14.3, the narrative should be a concise, factual account that integrates all the information collected in previous sections into a coherent clinical story. The narrative should follow a standard structure: (1) patient identification and demographics, (2) relevant medical history, (3) study drug exposure, (4) event description with timeline, (5) treatment and clinical course, (6) outcome, (7) causality assessment. Per FDA Reviewer Guidance, narratives should present facts without editorial bias and should be written in past tense. The narrative should be suitable for inclusion in the CSR per ICH E3 Section 14.3 and in IND Safety Reports per 21 CFR 312.32.',
-        provideExpertFeedback: true,
+          'Per ICH E3 Section 12.3 and CIOMS form guidance, the safety narrative should be a concise, factual, chronological account of the event. The narrative should present clinical facts without editorial interpretation of causality. Use the third person and past tense. Include all relevant sections: patient demographics, medical history, drug exposure, event description, laboratory data, treatment actions, outcome, and causality discussion.',
         fields: [
           {
-            id: 'narrative_text_draft',
-            label: 'Draft Narrative Text',
-            type: 'textarea',
-            placeholder: 'Subject [ID] was a [age]-year-old [sex] [race] patient with [baseline disease status] who was enrolled in Study [protocol number] at Site [site number]. The patient received [study drug] [dose] starting on [date]. On Study Day [X] ([date]), the patient developed [event description]...',
-            required: true,
-            validation: { minLength: 100, maxLength: 20000 },
-            helpText: 'Per ICH E3 Section 14.3, write a concise, factual, chronological narrative. Present clinical facts without editorial interpretation of causality.',
-          },
-          {
-            id: 'narrative_reviewed_by',
-            label: 'Narrative Reviewed By',
-            type: 'text',
-            placeholder: 'e.g., Dr. Jane Smith, Medical Monitor',
-            helpText: 'Document the medical reviewer who approved the narrative content.',
-          },
-          {
-            id: 'narrative_review_date',
-            label: 'Narrative Review Date',
-            type: 'date',
-          },
-          {
-            id: 'narrative_status',
-            label: 'Narrative Status',
+            id: 'narrative_format',
+            label: 'Narrative Format',
             type: 'select',
             required: true,
             options: [
-              { value: 'draft', label: 'Draft — Pending Medical Review' },
-              { value: 'under_review', label: 'Under Medical Review' },
-              { value: 'approved', label: 'Approved / Finalized' },
-              { value: 'revision_needed', label: 'Revision Needed' },
+              { value: 'cioms_format', label: 'CIOMS Format' },
+              { value: 'csr_appendix_format', label: 'CSR Appendix Format' },
+              { value: 'regulatory_authority_format', label: 'Regulatory Authority Format' },
+              { value: 'company_template', label: 'Company Template' },
             ],
           },
           {
-            id: 'cross_reference_csr_section',
-            label: 'CSR Section Cross-Reference',
-            type: 'text',
-            placeholder: 'e.g., CSR Section 14.3.2, Appendix 16.3.7',
-            helpText: 'Per ICH E3, safety narratives are typically included in Section 14.3 of the CSR with supporting data in Appendix 16.3.',
+            id: 'narrative_sections_included',
+            label: 'Narrative Sections Included',
+            type: 'multi_select',
+            required: true,
+            options: [
+              { value: 'patient_demographics', label: 'Patient Demographics' },
+              { value: 'medical_history', label: 'Medical History' },
+              { value: 'drug_exposure', label: 'Drug Exposure' },
+              { value: 'event_description', label: 'Event Description' },
+              { value: 'lab_data', label: 'Laboratory Data' },
+              { value: 'treatment_actions', label: 'Treatment Actions' },
+              { value: 'outcome', label: 'Outcome' },
+              { value: 'causality_discussion', label: 'Causality Discussion' },
+            ],
           },
           {
-            id: 'additional_documents_attached',
-            label: 'Additional Documents Attached',
+            id: 'narrative_draft',
+            label: 'Draft Narrative Text',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Enter the complete draft narrative text. The narrative should be a factual, chronological account written in the third person.',
+            validation: { minLength: 200 },
+          },
+          {
+            id: 'blinding_maintained',
+            label: 'Blinding Maintained in Narrative',
+            type: 'yes_no',
+            helpText: 'Has the treatment blind been maintained in the narrative text?',
+          },
+          {
+            id: 'meddra_version_used',
+            label: 'MedDRA Version Used',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g., MedDRA v27.0',
+          },
+        ],
+        defaultNext: 'narrative_finalization',
+      },
+
+      {
+        id: 'narrative_finalization',
+        section: 'narrative_composition',
+        question:
+          'Complete the finalization steps for the safety narrative, including medical review, quality checks, regulatory deadlines, and any outstanding follow-up items.',
+        fields: [
+          {
+            id: 'medical_review_completed',
+            label: 'Medical Review Completed',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'medical_reviewer_name',
+            label: 'Medical Reviewer Name',
+            type: 'text',
+            placeholder: 'Name and title of medical reviewer',
+            visibleWhen: {
+              field: 'medical_review_completed',
+              operator: 'eq',
+              value: true,
+            },
+          },
+          {
+            id: 'quality_check_completed',
+            label: 'Quality Check Completed',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'regulatory_submission_deadline',
+            label: 'Regulatory Submission Deadline',
+            type: 'date',
+            required: true,
+          },
+          {
+            id: 'narrative_attachments',
+            label: 'Narrative Attachments',
             type: 'multi_select',
             options: [
+              { value: 'source_documents', label: 'Source Documents' },
               { value: 'lab_reports', label: 'Laboratory Reports' },
-              { value: 'imaging_reports', label: 'Imaging/Radiology Reports' },
-              { value: 'discharge_summary', label: 'Hospital Discharge Summary' },
               { value: 'autopsy_report', label: 'Autopsy Report' },
-              { value: 'ecg_reports', label: 'ECG Reports' },
-              { value: 'death_certificate', label: 'Death Certificate' },
-              { value: 'pathology_report', label: 'Pathology Report' },
-              { value: 'other', label: 'Other Supporting Documents' },
+              { value: 'discharge_summary', label: 'Discharge Summary' },
+              { value: 'ecg_tracings', label: 'ECG Tracings' },
+              { value: 'imaging_reports', label: 'Imaging Reports' },
+              { value: 'none', label: 'None' },
             ],
-            helpText: 'Per ICH E3 Section 14.3 and Appendix 16.3, supporting documents should be referenced in the narrative and included in the CSR appendices.',
+          },
+          {
+            id: 'additional_follow_up_needed',
+            label: 'Additional Follow-Up Needed',
+            type: 'yes_no',
+          },
+          {
+            id: 'follow_up_items',
+            label: 'Follow-Up Items',
+            type: 'textarea',
+            visibleWhen: {
+              field: 'additional_follow_up_needed',
+              operator: 'eq',
+              value: true,
+            },
           },
         ],
         defaultNext: null,
-        issueChecks: [
-          {
-            id: 'narrative_not_finalized',
-            condition: {
-              field: 'narrative_status',
-              operator: 'in',
-              value: ['draft', 'revision_needed'],
-            },
-            severity: 'warning',
-            title: 'Narrative Not Yet Finalized',
-            message:
-              'The safety narrative has not been finalized. Per ICH E3 Section 14.3, all patient narratives must be medically reviewed and approved prior to CSR submission. For events requiring expedited reporting per 21 CFR 312.32, the initial narrative should be completed and submitted with the IND Safety Report even if follow-up information is pending. Ensure medical review is completed before the CSR database lock.',
-            reference: 'ICH E3 Section 14.3; 21 CFR 312.32',
-          },
-        ],
       },
     ],
   };

@@ -887,6 +887,12 @@ export function createCerReportFlow(): FlowDefinition {
             visibleWhen: { field: 'additional_clinical_evidence_needed', operator: 'eq', value: true },
           },
         ],
+        branches: [
+          {
+            when: { field: 'additional_clinical_evidence_needed', operator: 'eq', value: true },
+            goto: 'cer_update_history',
+          },
+        ],
         issueChecks: [
           {
             id: 'cer_update_overdue_implant_check',
@@ -896,6 +902,55 @@ export function createCerReportFlow(): FlowDefinition {
             message:
               'EU MDR requires annual CER updates for implantable devices and Class III devices. If this device is implantable or Class III, ensure the update schedule is set to annual.',
             reference: 'EU MDR Article 61(11)',
+          },
+        ],
+        defaultNext: 'medical_alternatives',
+      },
+
+      {
+        id: 'cer_update_history',
+        section: 'Risk-Benefit Analysis',
+        question:
+          'Document the CER update history and any changes since the last evaluation.',
+        guidance:
+          'The CER is a living document that must be updated regularly. Each update should document what new data was reviewed, whether conclusions changed, and any new risks or benefits identified. This history demonstrates ongoing clinical evaluation compliance to the Notified Body.',
+        fields: [
+          {
+            id: 'previous_cer_versions',
+            label: 'Number of Previous CER Versions',
+            type: 'number',
+            validation: { min: 0 },
+          },
+          {
+            id: 'changes_since_last_update',
+            label: 'Significant Changes Since Last CER Update',
+            type: 'textarea',
+            required: true,
+            helpText: 'Summarize new clinical data, new vigilance data, regulatory changes, or design changes since last CER',
+          },
+          {
+            id: 'conclusion_changes',
+            label: 'Did Conclusions Change from Previous CER?',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'conclusion_change_details',
+            label: 'Details of Conclusion Changes',
+            type: 'textarea',
+            visibleWhen: { field: 'conclusion_changes', operator: 'eq', value: true },
+          },
+          {
+            id: 'new_safety_signals',
+            label: 'New Safety Signals Identified Since Last CER',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'new_safety_signal_details',
+            label: 'Safety Signal Details and Mitigations',
+            type: 'textarea',
+            visibleWhen: { field: 'new_safety_signals', operator: 'eq', value: true },
           },
         ],
         defaultNext: 'medical_alternatives',
@@ -1355,6 +1410,157 @@ export function createCerReportFlow(): FlowDefinition {
             title: 'No Post-Market Clinical Data Included',
             message:
               'If the device is already on the market, the CER should include analysis of post-market clinical data. If no post-market data is available, explain why (e.g. new device not yet marketed).',
+          },
+        ],
+        branches: [
+          {
+            when: { field: 'is_implantable', operator: 'eq', value: true },
+            goto: 'implant_long_term',
+          },
+        ],
+        defaultNext: 'evaluator_qualifications',
+      },
+
+      {
+        id: 'implant_long_term',
+        section: 'PMCF & Evaluator',
+        question:
+          'For this implantable device, describe the long-term clinical follow-up requirements and data.',
+        guidance:
+          'Implantable devices have specific requirements under EU MDR for long-term clinical follow-up. The expected lifetime of the device must be supported by clinical data with adequate follow-up duration. PMCF studies for implants should include long-term safety endpoints such as device survival, revision rates, and late complications. The CER must be updated annually for implantable devices per EU MDR Article 61(11).',
+        fields: [
+          {
+            id: 'expected_implant_lifetime',
+            label: 'Expected Implant Lifetime (years)',
+            type: 'number',
+            required: true,
+            validation: { min: 0 },
+          },
+          {
+            id: 'longest_clinical_follow_up',
+            label: 'Longest Clinical Follow-Up Available (months)',
+            type: 'number',
+            required: true,
+            validation: { min: 0 },
+          },
+          {
+            id: 'long_term_safety_endpoints',
+            label: 'Long-Term Safety Endpoints Tracked',
+            type: 'multi_select',
+            required: true,
+            options: [
+              { value: 'device_survival', label: 'Device Survival / Implant Retention' },
+              { value: 'revision_rate', label: 'Revision / Re-operation Rate' },
+              { value: 'late_complications', label: 'Late Complications' },
+              { value: 'migration', label: 'Migration / Displacement' },
+              { value: 'material_degradation', label: 'Material Degradation / Wear' },
+              { value: 'infection', label: 'Late Infection Rate' },
+              { value: 'patient_outcomes', label: 'Patient-Reported Outcomes' },
+            ],
+          },
+          {
+            id: 'registry_participation',
+            label: 'National/International Registry Participation',
+            type: 'yes_no',
+            helpText: 'e.g. National Joint Registry, SCAAR, MAUDE database',
+          },
+          {
+            id: 'registry_name',
+            label: 'Registry Name',
+            type: 'text',
+            visibleWhen: { field: 'registry_participation', operator: 'eq', value: true },
+          },
+          {
+            id: 'explant_analysis_program',
+            label: 'Explant / Retrieval Analysis Program in Place',
+            type: 'yes_no',
+            helpText: 'Systematic analysis of explanted devices to identify failure modes',
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'implant_cer_annual_check',
+            condition: { field: 'cer_update_schedule', operator: 'neq', value: 'annual' },
+            severity: 'critical',
+            title: 'Implantable Device Requires Annual CER Update',
+            message:
+              'EU MDR requires that the CER for implantable devices be updated at least annually. A non-annual update schedule for an implantable device is non-compliant.',
+            reference: 'EU MDR Article 61(11)',
+          },
+        ],
+        defaultNext: 'evaluator_qualifications',
+      },
+
+      {
+        id: 'vigilance_analysis',
+        section: 'PMCF & Evaluator',
+        question:
+          'Provide a detailed analysis of the vigilance data and safety signals.',
+        guidance:
+          'When significant vigilance data exists, the CER must include a thorough analysis of serious incident reports, field safety corrective actions, and trend analyses. This section should identify root causes, assess the adequacy of corrective actions, and determine whether the overall benefit-risk profile remains acceptable. Reference EU MDR Articles 87-92 and MEDDEV 2.12-1 for vigilance reporting requirements.',
+        fields: [
+          {
+            id: 'vigilance_data_period',
+            label: 'Vigilance Data Analysis Period',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g. January 2020 — December 2025',
+          },
+          {
+            id: 'serious_incidents_analysis',
+            label: 'Serious Incident Analysis',
+            type: 'textarea',
+            required: true,
+            helpText: 'Categorize and analyze serious incidents by type, root cause, and outcome',
+          },
+          {
+            id: 'incident_rate_per_device',
+            label: 'Incident Rate (per devices distributed)',
+            type: 'text',
+            required: true,
+            placeholder: 'e.g. 0.001% serious incident rate',
+          },
+          {
+            id: 'root_cause_categories',
+            label: 'Root Cause Categories',
+            type: 'multi_select',
+            options: [
+              { value: 'design', label: 'Design-Related' },
+              { value: 'manufacturing', label: 'Manufacturing-Related' },
+              { value: 'use_error', label: 'Use Error' },
+              { value: 'maintenance', label: 'Maintenance / Service' },
+              { value: 'material', label: 'Material-Related' },
+              { value: 'software', label: 'Software-Related' },
+              { value: 'unknown', label: 'Unknown / Under Investigation' },
+            ],
+          },
+          {
+            id: 'corrective_actions_effective',
+            label: 'Corrective Actions Effective',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'benefit_risk_still_acceptable',
+            label: 'Benefit-Risk Ratio Still Acceptable After Vigilance Analysis',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'competent_authority_interactions',
+            label: 'Competent Authority Interactions Regarding Vigilance',
+            type: 'textarea',
+            helpText: 'Describe any interactions with competent authorities regarding reported incidents',
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'benefit_risk_no_longer_acceptable',
+            condition: { field: 'benefit_risk_still_acceptable', operator: 'eq', value: false },
+            severity: 'critical',
+            title: 'Benefit-Risk No Longer Acceptable After Vigilance Review',
+            message:
+              'If the vigilance analysis suggests the benefit-risk ratio is no longer acceptable, this is a fundamental issue that must be resolved before the CER can support continued CE marking. Immediate corrective action is required.',
           },
         ],
         defaultNext: 'evaluator_qualifications',

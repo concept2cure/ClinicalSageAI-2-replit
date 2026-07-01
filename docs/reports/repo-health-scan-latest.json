@@ -1,23 +1,23 @@
 {
-  "generatedAt": "2026-07-01T03:30:53.091Z",
+  "generatedAt": "2026-07-01T04:36:13.509Z",
   "git": {
-    "sha": "1f2e328d78ad0fd9537aadc4b939d95adad58d86",
-    "branch": "concept2cure-v2"
+    "sha": "75d575bd64d5291edf4786f71c1f9e1db06db2ec",
+    "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 238,
-    "largeFilesByBytes": 24,
-    "largeFilesByLines": 73
+    "duplicateBasenames": 239,
+    "largeFilesByBytes": 28,
+    "largeFilesByLines": 82
   },
   "findings": {
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 98,
+        "count": 100,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -56,6 +56,8 @@
           "server/services/ana-biostats/index.ts",
           "server/services/ana-ri/index.ts",
           "server/services/ana/index.ts",
+          "server/services/ana/intelligence-questions/flows/index.ts",
+          "server/services/ana/intelligence-questions/war-game/auditors/index.ts",
           "server/services/ana/therapeutic-area-profiles/index.ts",
           "server/services/automation/index.ts",
           "server/services/biostatistics-judgment/index.ts",
@@ -121,7 +123,7 @@
       },
       {
         "basename": "types",
-        "count": 45,
+        "count": 47,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -136,6 +138,8 @@
           "server/services/ai-governance/classification/types.ts",
           "server/services/ana-advisory/types.ts",
           "server/services/ana-biostats/types.ts",
+          "server/services/ana/intelligence-questions/types.ts",
+          "server/services/ana/intelligence-questions/war-game/types.ts",
           "server/services/ana/therapeutic-area-profiles/types.ts",
           "server/services/biostatistics-judgment/types.ts",
           "server/services/biostats-signal-engine/types.ts",
@@ -697,6 +701,16 @@
         ]
       },
       {
+        "basename": "engine",
+        "count": 4,
+        "paths": [
+          "server/services/ana/intelligence-questions/engine.ts",
+          "server/services/ana/intelligence-questions/war-game/engine.ts",
+          "server/services/biostats-signal-engine/engine.ts",
+          "server/services/rules-engine/engine.ts"
+        ]
+      },
+      {
         "basename": "hooks",
         "count": 4,
         "paths": [
@@ -1075,6 +1089,15 @@
         ]
       },
       {
+        "basename": "protocol-development",
+        "count": 3,
+        "paths": [
+          "server/routes/protocol-development.ts",
+          "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+          "shared/schema/protocol-development.ts"
+        ]
+      },
+      {
         "basename": "resolution",
         "count": 3,
         "paths": [
@@ -1090,6 +1113,15 @@
           "server/routes/rim.ts",
           "server/services/intelligence/rim.ts",
           "shared/schema/rim.ts"
+        ]
+      },
+      {
+        "basename": "safety-narrative",
+        "count": 3,
+        "paths": [
+          "server/routes/safety-narrative.ts",
+          "server/services/ana/intelligence-questions/flows/safety-narrative.ts",
+          "server/services/ana/safety-narrative.ts"
         ]
       },
       {
@@ -1505,14 +1537,6 @@
         "paths": [
           "server/routes/effort-certification.ts",
           "shared/schema/effort-certification.ts"
-        ]
-      },
-      {
-        "basename": "engine",
-        "count": 2,
-        "paths": [
-          "server/services/biostats-signal-engine/engine.ts",
-          "server/services/rules-engine/engine.ts"
         ]
       },
       {
@@ -1956,14 +1980,6 @@
         ]
       },
       {
-        "basename": "protocol-development",
-        "count": 2,
-        "paths": [
-          "server/routes/protocol-development.ts",
-          "shared/schema/protocol-development.ts"
-        ]
-      },
-      {
         "basename": "protocol-deviations",
         "count": 2,
         "paths": [
@@ -2124,6 +2140,14 @@
         ]
       },
       {
+        "basename": "risk-management",
+        "count": 2,
+        "paths": [
+          "server/services/ana/intelligence-questions/flows/risk-management.ts",
+          "server/services/ana/risk-management.ts"
+        ]
+      },
+      {
         "basename": "rolebasedaccess",
         "count": 2,
         "paths": [
@@ -2137,14 +2161,6 @@
         "paths": [
           "server/eval/doc-quality/run-eval.ts",
           "server/eval/rag/run-eval.ts"
-        ]
-      },
-      {
-        "basename": "safety-narrative",
-        "count": 2,
-        "paths": [
-          "server/routes/safety-narrative.ts",
-          "server/services/ana/safety-narrative.ts"
         ]
       },
       {
@@ -2363,7 +2379,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 814860
+        "bytes": 819494
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2371,7 +2387,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 479170
+        "bytes": 483677
       },
       {
         "file": "server/statistics-service.ts",
@@ -2422,8 +2438,16 @@
         "bytes": 132966
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "bytes": 123712
+      },
+      {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 117471
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "bytes": 116241
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2438,12 +2462,20 @@
         "bytes": 114269
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+        "bytes": 111611
+      },
+      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 109447
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "bytes": 108892
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+        "bytes": 107999
       },
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
@@ -2465,11 +2497,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 15912
+        "lines": 16021
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 8774
+        "lines": 8877
       },
       {
         "file": "server/statistics-service.ts",
@@ -2532,12 +2564,24 @@
         "lines": 2559
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "lines": 2504
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2501
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "lines": 2452
+      },
+      {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "lines": 2419
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+        "lines": 2404
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
@@ -2584,8 +2628,16 @@
         "lines": 2068
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
+        "lines": 2020
+      },
+      {
         "file": "server/services/foresight-ai-engine.ts",
         "lines": 2007
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+        "lines": 2003
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2612,6 +2664,10 @@
         "lines": 1886
       },
       {
+        "file": "server/services/ana-ri/orchestrator.ts",
+        "lines": 1875
+      },
+      {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
       },
@@ -2622,10 +2678,6 @@
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
         "lines": 1864
-      },
-      {
-        "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1862
       },
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
@@ -2704,6 +2756,10 @@
         "lines": 1678
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
+        "lines": 1677
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
       },
@@ -2732,12 +2788,24 @@
         "lines": 1600
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+        "lines": 1567
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+        "lines": 1561
+      },
+      {
         "file": "server/routes/cortex-unified.ts",
         "lines": 1553
       },
       {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
         "lines": 1550
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/sop-development.ts",
+        "lines": 1549
       },
       {
         "file": "server/routes/ivdr-routes.ts",
@@ -2749,13 +2817,20 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 378,
-      "largeByBytes": 21,
-      "largeByLines": 62
+      "duplicateGroups": 388,
+      "largeByBytes": 25,
+      "largeByLines": 71
     },
     {
       "owner": "Unassigned (TBD)",

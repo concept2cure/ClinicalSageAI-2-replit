@@ -1,12 +1,12 @@
 /**
- * Risk Management Plan flow definition for the AnA Intelligence
+ * Risk Management flow definition for the AnA Intelligence
  * Questioning system.
  *
  * Guides the user through a comprehensive risk management questionnaire
- * covering hazard identification, risk analysis, risk evaluation, risk
- * control, residual risk assessment, production & post-production
- * monitoring, and risk management review per ISO 14971:2019 (devices)
- * and ICH Q9 (pharmaceuticals).
+ * covering product scope, hazard identification, risk analysis &
+ * evaluation, risk control, residual risk & benefit-risk assessment,
+ * and risk management review per ISO 14971:2019 (medical devices) and
+ * ICH Q9 (pharmaceuticals).
  *
  * @module server/services/ana/intelligence-questions/flows/risk-management
  */
@@ -17,1269 +17,1159 @@ export function createRiskManagementFlow(): FlowDefinition {
   return {
     id: 'risk-management-v1',
     category: 'risk_management',
-    name: 'Risk Management Plan',
+    name: 'Risk Management',
     description:
-      'Risk management questionnaire covering hazard identification, risk analysis, risk evaluation, risk control, and residual risk assessment per ISO 14971:2019 (devices) and ICH Q9 (pharmaceuticals).',
+      'Comprehensive risk management questionnaire aligned with ISO 14971:2019 and ICH Q9(R1), covering hazard identification, risk analysis, risk evaluation, risk control, residual risk assessment, benefit-risk analysis, and post-production monitoring for medical devices and pharmaceuticals.',
     clientTypes: [],
-    entryNode: 'rm_overview',
-    estimatedMinutes: 35,
+    entryNode: 'product_scope',
+    estimatedMinutes: 55,
 
-    /* ─── Sections ──────────────────────────────────────────────────────── */
+    /* ================================================================ */
+    /*  Sections                                                        */
+    /* ================================================================ */
 
     sections: [
       {
-        id: 'rm_overview_section',
-        label: 'Risk Management Overview',
-        nodeIds: ['rm_overview', 'rm_plan_scope'],
+        id: 'product_scope_section',
+        label: 'Product & Scope',
+        nodeIds: ['product_scope', 'regulatory_context', 'product_type_branching'],
       },
       {
-        id: 'hazard_identification_section',
+        id: 'hazard_identification',
         label: 'Hazard Identification',
-        nodeIds: ['hazard_identification_device', 'hazard_identification_pharma', 'hazard_identification_common'],
+        nodeIds: ['device_hazards', 'pharma_hazards', 'samd_hazards'],
       },
       {
-        id: 'risk_analysis_section',
-        label: 'Risk Analysis',
-        nodeIds: ['risk_estimation', 'risk_matrix_definition'],
+        id: 'risk_analysis',
+        label: 'Risk Analysis & Evaluation',
+        nodeIds: ['risk_estimation', 'risk_evaluation', 'risk_acceptability'],
       },
       {
-        id: 'risk_evaluation_section',
-        label: 'Risk Evaluation',
-        nodeIds: ['individual_risk_eval', 'overall_risk_eval'],
-      },
-      {
-        id: 'risk_control_section',
+        id: 'risk_control',
         label: 'Risk Control',
-        nodeIds: ['risk_control_measures', 'risk_control_verification', 'residual_risk_assessment'],
+        nodeIds: ['risk_controls', 'control_verification', 'control_implementation'],
       },
       {
-        id: 'production_postproduction_section',
-        label: 'Production & Post-Production',
-        nodeIds: ['production_monitoring', 'post_production_info', 'capa_integration'],
+        id: 'residual_risk',
+        label: 'Residual Risk & Benefit-Risk',
+        nodeIds: ['residual_risk', 'benefit_risk_analysis'],
       },
       {
-        id: 'rm_review_section',
+        id: 'risk_review',
         label: 'Risk Management Review',
-        nodeIds: ['rm_report', 'rm_file_review', 'management_approval'],
+        nodeIds: ['risk_management_review', 'post_production_monitoring'],
       },
     ],
 
-    /* ─── Nodes ─────────────────────────────────────────────────────────── */
+    /* ================================================================ */
+    /*  Nodes                                                           */
+    /* ================================================================ */
 
     nodes: [
-      /* ── 1. Risk Management Overview ─────────────────────────────── */
+      /* ── Product & Scope ───────────────────────────────────────── */
 
       {
-        id: 'rm_overview',
-        section: 'Risk Management Overview',
+        id: 'product_scope',
+        section: 'product_scope_section',
         question:
-          'Let\'s begin the risk management plan. What type of product is this, and who is leading the risk management activities?',
+          'Let’s begin by identifying the product under risk management. What is the product name, its description, intended use, and the intended patient population?',
         guidance:
-          'ISO 14971:2019 clause 4.1 requires top management to ensure a risk management process is established. ICH Q9 Section 1 defines risk management as a systematic process for the assessment, control, communication, and review of risks to quality. The applicable standard depends on product type: ISO 14971:2019 for medical devices and IVDs, ICH Q9 for pharmaceuticals, and both for combination products.',
+          'ISO 14971:2019 Section 4.1 requires top management to ensure that adequate resources are provided for the risk management process. The intended use and reasonably foreseeable misuse must be clearly documented as the foundation for hazard identification.',
         fields: [
-          {
-            id: 'product_type',
-            label: 'Product Type',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'medical_device', label: 'Medical Device' },
-              { value: 'pharmaceutical', label: 'Pharmaceutical' },
-              { value: 'combination_product', label: 'Combination Product' },
-              { value: 'IVD', label: 'In Vitro Diagnostic (IVD)' },
-            ],
-          },
           {
             id: 'product_name',
             label: 'Product Name',
             type: 'text',
             required: true,
-            placeholder: 'e.g. CardioStim Pulse Generator',
+            placeholder: 'e.g. CardioStim Pulse Generator Model X',
           },
           {
-            id: 'applicable_standard',
-            label: 'Applicable Risk Management Standard',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'iso_14971', label: 'ISO 14971:2019 — Application of Risk Management to Medical Devices' },
-              { value: 'ich_q9', label: 'ICH Q9 — Quality Risk Management' },
-              { value: 'both', label: 'Both ISO 14971:2019 and ICH Q9' },
-            ],
-          },
-          {
-            id: 'rm_plan_established',
-            label: 'Has a risk management plan been established?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ISO 14971:2019 clause 4.4, a risk management plan shall be established for each medical device',
-          },
-          {
-            id: 'rm_team_lead',
-            label: 'Risk Management Team Lead',
-            type: 'text',
-            required: true,
-            placeholder: 'Name and title of the responsible individual',
-          },
-          {
-            id: 'team_composition',
-            label: 'Team Composition Description',
+            id: 'product_description',
+            label: 'Product Description',
             type: 'textarea',
             required: true,
-            helpText: 'Describe the cross-functional team members including their roles and expertise (e.g., engineering, clinical, quality, regulatory)',
-            validation: { minLength: 20 },
-          },
-        ],
-        branches: [
-          {
-            when: { field: 'product_type', operator: 'eq', value: 'medical_device' },
-            goto: 'rm_plan_scope',
+            placeholder: 'Provide a concise description of the product, its technology, and key components',
           },
           {
-            when: { field: 'product_type', operator: 'eq', value: 'IVD' },
-            goto: 'rm_plan_scope',
-          },
-          {
-            when: { field: 'product_type', operator: 'eq', value: 'pharmaceutical' },
-            goto: 'rm_plan_scope',
-          },
-          {
-            when: { field: 'product_type', operator: 'eq', value: 'combination_product' },
-            goto: 'rm_plan_scope',
-          },
-        ],
-        defaultNext: 'rm_plan_scope',
-      },
-
-      {
-        id: 'rm_plan_scope',
-        section: 'Risk Management Overview',
-        question:
-          'Define the scope and risk acceptability approach for this risk management plan.',
-        guidance:
-          'ISO 14971:2019 clause 4.4 requires the risk management plan to include the scope, assignment of responsibilities, criteria for risk acceptability, verification activities, and activities for collection and review of production and post-production information. ICH Q9 Section 4 emphasizes that the level of effort, formality, and documentation should be commensurate with the level of risk.',
-        fields: [
-          {
-            id: 'rm_plan_scope_description',
-            label: 'Risk Management Plan Scope',
+            id: 'intended_use',
+            label: 'Intended Use',
             type: 'textarea',
             required: true,
-            helpText: 'Describe the scope of the risk management plan including product boundaries, lifecycle phases covered, and exclusions',
-            validation: { minLength: 30 },
+            placeholder: 'Describe the intended medical purpose, clinical indication, and conditions of use',
           },
           {
-            id: 'lifecycle_stage',
+            id: 'patient_population',
+            label: 'Intended Patient Population',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Describe the target patient population including age, condition, and any contraindications',
+          },
+          {
+            id: 'product_lifecycle_stage',
             label: 'Product Lifecycle Stage',
             type: 'select',
-            required: true,
             options: [
-              { value: 'design', label: 'Design' },
-              { value: 'development', label: 'Development' },
+              { value: 'concept', label: 'Concept' },
+              { value: 'design_development', label: 'Design & Development' },
+              { value: 'verification_validation', label: 'Verification & Validation' },
               { value: 'production', label: 'Production' },
               { value: 'post_production', label: 'Post-Production' },
             ],
           },
+        ],
+        defaultNext: 'regulatory_context',
+      },
+
+      {
+        id: 'regulatory_context',
+        section: 'product_scope_section',
+        question:
+          'What are the target regulatory markets, applicable standards, and does a prior risk management file exist for this product?',
+        guidance:
+          'The applicable regulatory framework varies by market. ISO 14971:2019 is the international standard for medical device risk management. ICH Q9(R1) governs quality risk management for pharmaceuticals. IEC 62366 addresses usability engineering. Identifying all applicable standards upfront ensures comprehensive coverage.',
+        fields: [
           {
-            id: 'risk_acceptability_approach',
-            label: 'Risk Acceptability Criteria Approach',
-            type: 'select',
-            required: true,
+            id: 'target_markets',
+            label: 'Target Regulatory Markets',
+            type: 'multi_select',
             options: [
-              {
-                value: 'ALARP',
-                label: 'ALARP (As Low As Reasonably Practicable)',
-                description: 'Risks reduced to a level as low as reasonably practicable, commonly used in ISO 14971',
-              },
-              {
-                value: 'risk_matrix',
-                label: 'Risk Matrix',
-                description: 'Probability x severity matrix with defined acceptability regions',
-              },
-              {
-                value: 'risk_benefit',
-                label: 'Risk-Benefit Analysis',
-                description: 'Risks weighed against expected clinical benefits',
-              },
+              { value: 'us', label: 'United States (FDA)' },
+              { value: 'eu', label: 'European Union (MDR/IVDR)' },
+              { value: 'japan', label: 'Japan (PMDA)' },
+              { value: 'china', label: 'China (NMPA)' },
+              { value: 'canada', label: 'Canada (Health Canada)' },
+              { value: 'australia', label: 'Australia (TGA)' },
+              { value: 'other', label: 'Other' },
             ],
           },
           {
-            id: 'risk_matrix_defined',
-            label: 'Has a risk acceptability matrix been defined?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ISO 14971:2019 clause 4.4 (c), the risk management plan shall include criteria for risk acceptability based on the manufacturer\'s policy',
+            id: 'applicable_standards',
+            label: 'Applicable Standards',
+            type: 'multi_select',
+            options: [
+              { value: 'iso_14971', label: 'ISO 14971:2019 — Risk Management for Medical Devices' },
+              { value: 'ich_q9', label: 'ICH Q9(R1) — Quality Risk Management' },
+              { value: 'iec_62366', label: 'IEC 62366 — Usability Engineering' },
+              { value: 'iso_13485', label: 'ISO 13485 — Quality Management Systems' },
+              { value: 'iec_60601', label: 'IEC 60601 — Medical Electrical Equipment' },
+              { value: 'iso_10993', label: 'ISO 10993 — Biological Evaluation' },
+              { value: 'other_standard', label: 'Other Standard' },
+            ],
           },
           {
-            id: 'intended_use_statement',
-            label: 'Intended Use / Intended Purpose Statement',
-            type: 'textarea',
-            required: true,
-            helpText: 'Per ISO 14971:2019 clause 5.2, the manufacturer shall document the intended use and reasonably foreseeable misuse of the medical device',
-            validation: { minLength: 20 },
+            id: 'prior_risk_file_exists',
+            label: 'Does a prior risk management file exist for this product?',
+            type: 'yes_no',
+          },
+          {
+            id: 'prior_risk_file_date',
+            label: 'Date of Prior Risk Management File',
+            type: 'date',
+            visibleWhen: { field: 'prior_risk_file_exists', operator: 'eq', value: true },
+          },
+          {
+            id: 'product_category',
+            label: 'Product Category',
+            type: 'select',
+            options: [
+              { value: 'medical_device', label: 'Medical Device' },
+              { value: 'pharmaceutical', label: 'Pharmaceutical' },
+              { value: 'combination_product', label: 'Combination Product' },
+              { value: 'samd', label: 'Software as a Medical Device (SaMD)' },
+            ],
           },
         ],
-        issueChecks: [
+        defaultNext: 'product_type_branching',
+      },
+
+      {
+        id: 'product_type_branching',
+        section: 'product_scope_section',
+        question:
+          'Provide additional product characteristics that will determine the appropriate hazard identification approach.',
+        guidance:
+          'The device class, drug formulation type, SaMD classification, or combination product lead constituent determines which regulatory requirements and hazard identification methods are most relevant.',
+        fields: [
           {
-            id: 'no_risk_acceptability_criteria',
-            condition: { field: 'risk_matrix_defined', operator: 'eq', value: false },
-            severity: 'critical',
-            title: 'No Risk Acceptability Criteria Defined',
-            message:
-              'ISO 14971:2019 clause 4.4 (c) requires the risk management plan to include criteria for risk acceptability. Without defined acceptability criteria, risk evaluation cannot be performed consistently. This is a mandatory element of the risk management plan.',
-            reference: 'ISO 14971:2019, Clause 4.4 (c)',
+            id: 'device_class',
+            label: 'Device Classification',
+            type: 'select',
+            visibleWhen: { field: 'product_category', operator: 'in', value: ['medical_device', 'combination_product', 'samd'] },
+            options: [
+              { value: 'class_i', label: 'Class I' },
+              { value: 'class_ii', label: 'Class II' },
+              { value: 'class_iii', label: 'Class III' },
+            ],
+          },
+          {
+            id: 'drug_formulation_type',
+            label: 'Drug Formulation Type',
+            type: 'select',
+            visibleWhen: { field: 'product_category', operator: 'eq', value: 'pharmaceutical' },
+            options: [
+              { value: 'oral_solid', label: 'Oral Solid' },
+              { value: 'injectable', label: 'Injectable' },
+              { value: 'topical', label: 'Topical' },
+              { value: 'inhaled', label: 'Inhaled' },
+              { value: 'implant', label: 'Implant' },
+              { value: 'other', label: 'Other' },
+            ],
+          },
+          {
+            id: 'samd_classification',
+            label: 'SaMD Classification (IMDRF)',
+            type: 'select',
+            visibleWhen: { field: 'product_category', operator: 'eq', value: 'samd' },
+            options: [
+              { value: 'class_a', label: 'Class A' },
+              { value: 'class_b', label: 'Class B' },
+              { value: 'class_c', label: 'Class C' },
+            ],
+          },
+          {
+            id: 'combination_product_lead',
+            label: 'Combination Product Lead Constituent',
+            type: 'select',
+            visibleWhen: { field: 'product_category', operator: 'eq', value: 'combination_product' },
+            options: [
+              { value: 'device_led', label: 'Device-Led' },
+              { value: 'drug_led', label: 'Drug-Led' },
+              { value: 'biologic_led', label: 'Biologic-Led' },
+            ],
+          },
+          {
+            id: 'has_software_component',
+            label: 'Does the product contain a software component?',
+            type: 'yes_no',
+          },
+          {
+            id: 'has_sterile_component',
+            label: 'Does the product contain a sterile component?',
+            type: 'yes_no',
           },
         ],
         branches: [
           {
-            when: { field: 'product_type', operator: 'in', value: ['medical_device', 'IVD'] },
-            goto: 'hazard_identification_device',
+            when: { field: 'product_category', operator: 'eq', value: 'samd' },
+            goto: 'samd_hazards',
           },
           {
-            when: { field: 'product_type', operator: 'eq', value: 'pharmaceutical' },
-            goto: 'hazard_identification_pharma',
-          },
-          {
-            when: { field: 'product_type', operator: 'eq', value: 'combination_product' },
-            goto: 'hazard_identification_device',
+            when: { field: 'product_category', operator: 'eq', value: 'pharmaceutical' },
+            goto: 'pharma_hazards',
           },
         ],
-        defaultNext: 'hazard_identification_device',
-        provideExpertFeedback: true,
+        defaultNext: 'device_hazards',
       },
 
-      /* ── 2. Hazard Identification ────────────────────────────────── */
+      /* ── Hazard Identification ─────────────────────────────────── */
 
       {
-        id: 'hazard_identification_device',
-        section: 'Hazard Identification',
+        id: 'device_hazards',
+        section: 'hazard_identification',
         question:
-          'Describe the hazard identification process for this device. Which methods were used and what hazard categories were identified?',
+          'Identify hazards for this medical device. Which hazard identification methods were used and what hazard categories were identified?',
         guidance:
-          'ISO 14971:2019 clause 5.4 requires systematic identification of hazards in both normal and fault conditions. IEC 62366-1 use error analysis should be included for devices with a user interface. FMEA per IEC 60812 and FTA per IEC 61025 are the most commonly used analytical methods. Annex C of ISO 14971:2019 provides example hazards and hazardous situations to consider.',
+          'ISO 14971:2019 Annex C provides a comprehensive list of example hazards and hazardous situations to consider, organized by energy type, biological, environmental, and use-related categories. Systematic identification should cover both normal and fault conditions.',
+        provideExpertFeedback: true,
         fields: [
           {
-            id: 'hazard_methods',
+            id: 'hazard_identification_methods',
             label: 'Hazard Identification Methods Used',
             type: 'multi_select',
             required: true,
             options: [
-              { value: 'fmea', label: 'FMEA (Failure Mode and Effects Analysis)' },
-              { value: 'fta', label: 'FTA (Fault Tree Analysis)' },
-              { value: 'hazop', label: 'HAZOP (Hazard and Operability Study)' },
-              { value: 'pha', label: 'PHA (Preliminary Hazard Analysis)' },
-              { value: 'drbfm', label: 'DRBFM (Design Review Based on Failure Mode)' },
-              { value: 'use_error_analysis', label: 'Use Error Analysis (per IEC 62366-1)' },
+              { value: 'preliminary_hazard_analysis', label: 'Preliminary Hazard Analysis (PHA)' },
+              { value: 'fmea', label: 'Failure Mode and Effects Analysis (FMEA)' },
+              { value: 'fault_tree', label: 'Fault Tree Analysis (FTA)' },
+              { value: 'hazop', label: 'Hazard and Operability Study (HAZOP)' },
+              { value: 'use_related_risk_analysis', label: 'Use-Related Risk Analysis' },
+              { value: 'iec_60601_analysis', label: 'IEC 60601 Series Analysis' },
+              { value: 'other_method', label: 'Other Method' },
             ],
           },
           {
-            id: 'number_hazards_identified',
-            label: 'Number of Hazards Identified',
-            type: 'number',
-            required: true,
-            validation: { min: 0 },
-          },
-          {
-            id: 'top_hazard_categories',
-            label: 'Top Hazard Categories Identified',
+            id: 'energy_hazards',
+            label: 'Energy Hazards Identified',
             type: 'multi_select',
-            required: true,
             options: [
-              { value: 'energy', label: 'Energy Hazards (electrical, thermal, mechanical, radiation)' },
-              { value: 'biological', label: 'Biological Hazards (biocompatibility, infection, bioburden)' },
-              { value: 'chemical', label: 'Chemical Hazards (residues, degradation products, leachables)' },
-              { value: 'operational', label: 'Operational Hazards (use errors, maintenance, deployment)' },
-              { value: 'information', label: 'Information Hazards (labeling, instructions, warnings)' },
+              { value: 'electrical', label: 'Electrical' },
+              { value: 'thermal', label: 'Thermal' },
+              { value: 'mechanical', label: 'Mechanical' },
+              { value: 'radiation', label: 'Radiation' },
+              { value: 'chemical', label: 'Chemical' },
+              { value: 'biological', label: 'Biological' },
+              { value: 'none_identified', label: 'None Identified' },
             ],
-            helpText: 'Per ISO 14971:2019 Annex C — examples of hazards and contributing factors',
           },
           {
-            id: 'foreseeable_misuse_described',
-            label: 'Have foreseeable misuse scenarios been described?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'ISO 14971:2019 clause 5.2 requires consideration of reasonably foreseeable misuse',
+            id: 'information_hazards',
+            label: 'Information Hazards Identified',
+            type: 'multi_select',
+            options: [
+              { value: 'labeling_errors', label: 'Labeling Errors' },
+              { value: 'incorrect_ifu', label: 'Incorrect Instructions for Use' },
+              { value: 'software_display_errors', label: 'Software Display Errors' },
+              { value: 'alarm_failures', label: 'Alarm Failures' },
+              { value: 'training_gaps', label: 'Training Gaps' },
+              { value: 'none_identified', label: 'None Identified' },
+            ],
           },
           {
-            id: 'use_environment_considerations',
-            label: 'Use Environment Considerations',
-            type: 'textarea',
-            required: true,
-            helpText: 'Describe environmental factors that could contribute to hazardous situations (e.g., EMI, temperature, humidity, lighting)',
-            validation: { minLength: 15 },
+            id: 'biological_hazards',
+            label: 'Biological Hazards Identified',
+            type: 'multi_select',
+            options: [
+              { value: 'biocompatibility', label: 'Biocompatibility' },
+              { value: 'infection_risk', label: 'Infection Risk' },
+              { value: 'pyrogens', label: 'Pyrogens' },
+              { value: 'degradation_products', label: 'Degradation Products' },
+              { value: 'none_identified', label: 'None Identified' },
+            ],
           },
           {
-            id: 'patient_population_vulnerabilities',
-            label: 'Have patient population vulnerabilities been described?',
-            type: 'textarea',
-            required: true,
-            helpText: 'Consider pediatric, geriatric, immunocompromised, or other vulnerable populations per ISO 14971:2019 clause 5.2',
-            validation: { minLength: 15 },
+            id: 'use_error_hazards',
+            label: 'Use Error Hazards Identified',
+            type: 'multi_select',
+            options: [
+              { value: 'incorrect_assembly', label: 'Incorrect Assembly' },
+              { value: 'misuse', label: 'Misuse' },
+              { value: 'use_without_training', label: 'Use Without Training' },
+              { value: 'off_label_use', label: 'Off-Label Use' },
+              { value: 'none_identified', label: 'None Identified' },
+            ],
+          },
+          {
+            id: 'hazard_count_estimate',
+            label: 'Total Number of Hazards Identified',
+            type: 'number',
+            helpText: 'Enter the total number of individual hazards identified across all categories',
+            validation: { min: 1 },
           },
         ],
         issueChecks: [
           {
-            id: 'no_fmea_device',
-            condition: { field: 'hazard_methods', operator: 'not_in', value: ['fmea'] },
+            id: 'incomplete_hazard_energy',
+            condition: { field: 'energy_hazards', operator: 'contains', value: 'none_identified' },
             severity: 'warning',
-            title: 'FMEA Not Included in Hazard Identification',
+            title: 'No Energy Hazards Identified',
             message:
-              'FMEA is the most widely expected hazard analysis method for medical devices. While ISO 14971:2019 does not mandate a specific method, regulatory reviewers (FDA, Notified Bodies) routinely expect FMEA as a primary risk analysis technique. Consider including FMEA or documenting the rationale for using alternative methods.',
-            reference: 'ISO 14971:2019, Clause 5.4; IEC 60812',
-          },
-        ],
-        defaultNext: 'hazard_identification_common',
-      },
-
-      {
-        id: 'hazard_identification_pharma',
-        section: 'Hazard Identification',
-        question:
-          'Describe the hazard identification process for this pharmaceutical product. Which quality risk management methods were used?',
-        guidance:
-          'ICH Q9 Section 5 outlines risk management tools applicable to pharmaceutical operations. FMEA, HACCP, and Fishbone diagrams are commonly used for manufacturing process risks. ICH Q9 Annex I provides a detailed overview of risk management methods. The distinction between patient safety hazards and product quality hazards should be clearly documented.',
-        fields: [
-          {
-            id: 'pharma_hazard_methods',
-            label: 'Hazard Identification Methods Used',
-            type: 'multi_select',
-            required: true,
-            options: [
-              { value: 'fmea', label: 'FMEA (Failure Mode and Effects Analysis)' },
-              { value: 'haccp', label: 'HACCP (Hazard Analysis and Critical Control Points)' },
-              { value: 'pha', label: 'PHA (Preliminary Hazard Analysis)' },
-              { value: 'fishbone_diagram', label: 'Fishbone (Ishikawa) Diagram' },
-              { value: 'what_if_analysis', label: 'What-If Analysis' },
-            ],
-            helpText: 'Per ICH Q9 Annex I — overview of risk management methods',
-          },
-          {
-            id: 'quality_risk_areas',
-            label: 'Quality Risk Areas Identified',
-            type: 'multi_select',
-            required: true,
-            options: [
-              { value: 'supply_chain', label: 'Supply Chain' },
-              { value: 'manufacturing', label: 'Manufacturing Process' },
-              { value: 'distribution', label: 'Distribution and Storage' },
-              { value: 'clinical', label: 'Clinical / Patient Safety' },
-            ],
-          },
-          {
-            id: 'critical_quality_attributes',
-            label: 'Critical Quality Attributes (CQAs) at Risk',
-            type: 'textarea',
-            required: true,
-            helpText: 'Per ICH Q8, identify CQAs that could be impacted by identified hazards (e.g., potency, purity, dissolution, sterility)',
-            validation: { minLength: 15 },
-          },
-          {
-            id: 'process_parameters_affecting_cqas',
-            label: 'Process Parameters Affecting CQAs',
-            type: 'textarea',
-            required: true,
-            helpText: 'Describe critical process parameters (CPPs) linked to CQAs per ICH Q8/Q9/Q10 framework',
-            validation: { minLength: 15 },
-          },
-          {
-            id: 'patient_safety_vs_quality_hazards',
-            label: 'Patient Safety Hazards vs Product Quality Hazards',
-            type: 'textarea',
-            required: true,
-            helpText: 'ICH Q9 Section 1 distinguishes risks to the patient from risks to product quality; document both categories',
-            validation: { minLength: 15 },
-          },
-        ],
-        defaultNext: 'hazard_identification_common',
-      },
-
-      {
-        id: 'hazard_identification_common',
-        section: 'Hazard Identification',
-        question:
-          'Summarize the identified hazards, hazardous situations, and potential harms.',
-        guidance:
-          'ISO 14971:2019 clause 5.5 requires identification of hazardous situations arising from each hazard. The sequence of events leading from a hazard through a hazardous situation to harm must be documented. Literature review and field experience data should be used to support hazard identification completeness per ISO 14971:2019 clause 5.4.',
-        fields: [
-          {
-            id: 'identified_hazards_summary',
-            label: 'Identified Hazards Summary',
-            type: 'textarea',
-            required: true,
-            helpText: 'Provide a summary of all identified hazards organized by category',
-            validation: { minLength: 30 },
-          },
-          {
-            id: 'hazardous_situations',
-            label: 'Hazardous Situations Derived from Hazards',
-            type: 'textarea',
-            required: true,
-            helpText: 'Per ISO 14971:2019 clause 5.5, describe the hazardous situations that can arise from each hazard, including combinations of hazards',
-            validation: { minLength: 30 },
-          },
-          {
-            id: 'harm_descriptions',
-            label: 'Harm Descriptions for Each Hazardous Situation',
-            type: 'textarea',
-            required: true,
-            helpText: 'Document the potential harms that could result from each hazardous situation, including severity estimates',
-            validation: { minLength: 30 },
-          },
-          {
-            id: 'sequence_of_events_analysis',
-            label: 'Sequence of Events Analysis',
-            type: 'textarea',
-            required: true,
-            helpText: 'Describe the foreseeable sequence of events from hazard → hazardous situation → harm per ISO 14971:2019 Figure 1',
-            validation: { minLength: 20 },
-          },
-          {
-            id: 'literature_field_data_used',
-            label: 'Was published literature or field data used for hazard identification?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'ISO 14971:2019 clause 5.4 recommends use of available data including predicate device experience, complaint databases, and published literature',
+              'Most medical devices involve at least one energy hazard. Please verify this is accurate.',
+            reference: 'ISO 14971:2019 Annex C.2',
           },
         ],
         defaultNext: 'risk_estimation',
-        provideExpertFeedback: true,
       },
 
-      /* ── 3. Risk Analysis ────────────────────────────────────────── */
+      {
+        id: 'pharma_hazards',
+        section: 'hazard_identification',
+        question:
+          'Identify hazards for this pharmaceutical product. Which quality risk management methods were used and what hazard categories were identified?',
+        guidance:
+          'ICH Q9(R1) provides a framework for quality risk management in the pharmaceutical lifecycle. Annex I of ICH Q9 describes risk management methods including FMEA, FTA, HACCP, and preliminary hazard analysis. Hazards should be categorized across quality, patient safety, manufacturing, and supply chain dimensions.',
+        fields: [
+          {
+            id: 'hazard_identification_methods',
+            label: 'Hazard Identification Methods Used',
+            type: 'multi_select',
+            required: true,
+            options: [
+              { value: 'ich_q9_tools', label: 'ICH Q9 Risk Management Tools' },
+              { value: 'fmea', label: 'Failure Mode and Effects Analysis (FMEA)' },
+              { value: 'fta', label: 'Fault Tree Analysis (FTA)' },
+              { value: 'haccp', label: 'Hazard Analysis and Critical Control Points (HACCP)' },
+              { value: 'what_if_analysis', label: 'What-If Analysis' },
+              { value: 'other_method', label: 'Other Method' },
+            ],
+          },
+          {
+            id: 'quality_hazards',
+            label: 'Quality Hazards Identified',
+            type: 'multi_select',
+            options: [
+              { value: 'impurities', label: 'Impurities' },
+              { value: 'degradation', label: 'Degradation' },
+              { value: 'contamination', label: 'Contamination' },
+              { value: 'cross_contamination', label: 'Cross-Contamination' },
+              { value: 'potency_variation', label: 'Potency Variation' },
+              { value: 'sterility_failure', label: 'Sterility Failure' },
+              { value: 'none_identified', label: 'None Identified' },
+            ],
+          },
+          {
+            id: 'patient_safety_hazards',
+            label: 'Patient Safety Hazards Identified',
+            type: 'multi_select',
+            options: [
+              { value: 'adverse_drug_reactions', label: 'Adverse Drug Reactions' },
+              { value: 'drug_interactions', label: 'Drug Interactions' },
+              { value: 'dosing_errors', label: 'Dosing Errors' },
+              { value: 'medication_errors', label: 'Medication Errors' },
+              { value: 'abuse_potential', label: 'Abuse Potential' },
+              { value: 'none_identified', label: 'None Identified' },
+            ],
+          },
+          {
+            id: 'manufacturing_hazards',
+            label: 'Manufacturing Hazards Identified',
+            type: 'multi_select',
+            options: [
+              { value: 'process_deviations', label: 'Process Deviations' },
+              { value: 'equipment_failure', label: 'Equipment Failure' },
+              { value: 'raw_material_variability', label: 'Raw Material Variability' },
+              { value: 'environmental_factors', label: 'Environmental Factors' },
+              { value: 'human_error', label: 'Human Error' },
+              { value: 'none_identified', label: 'None Identified' },
+            ],
+          },
+          {
+            id: 'supply_chain_hazards',
+            label: 'Supply Chain Hazards Identified',
+            type: 'multi_select',
+            options: [
+              { value: 'supplier_failure', label: 'Supplier Failure' },
+              { value: 'cold_chain_breach', label: 'Cold Chain Breach' },
+              { value: 'counterfeit_risk', label: 'Counterfeit Risk' },
+              { value: 'shortage_risk', label: 'Shortage Risk' },
+              { value: 'none_identified', label: 'None Identified' },
+            ],
+          },
+        ],
+        defaultNext: 'risk_estimation',
+      },
+
+      {
+        id: 'samd_hazards',
+        section: 'hazard_identification',
+        question:
+          'Identify hazards for this Software as a Medical Device (SaMD). Which hazard identification methods were used and what hazard categories were identified?',
+        guidance:
+          'SaMD hazard identification should follow IEC 62304 for software lifecycle processes and incorporate FDA guidance on SaMD clinical evaluation. Hazards unique to SaMD include algorithm errors, cybersecurity threats, interoperability failures, and clinical decision support risks. Threat modeling per AAMI TIR57 should be considered.',
+        fields: [
+          {
+            id: 'hazard_identification_methods',
+            label: 'Hazard Identification Methods Used',
+            type: 'multi_select',
+            required: true,
+            options: [
+              { value: 'software_fmea', label: 'Software FMEA' },
+              { value: 'threat_modeling', label: 'Threat Modeling' },
+              { value: 'use_case_analysis', label: 'Use Case Analysis' },
+              { value: 'data_flow_analysis', label: 'Data Flow Analysis' },
+              { value: 'other_method', label: 'Other Method' },
+            ],
+          },
+          {
+            id: 'algorithm_hazards',
+            label: 'Algorithm Hazards Identified',
+            type: 'multi_select',
+            options: [
+              { value: 'incorrect_output', label: 'Incorrect Output' },
+              { value: 'delayed_output', label: 'Delayed Output' },
+              { value: 'false_positive', label: 'False Positive' },
+              { value: 'false_negative', label: 'False Negative' },
+              { value: 'bias_in_training_data', label: 'Bias in Training Data' },
+              { value: 'model_drift', label: 'Model Drift' },
+              { value: 'none_identified', label: 'None Identified' },
+            ],
+          },
+          {
+            id: 'cybersecurity_hazards',
+            label: 'Cybersecurity Hazards Identified',
+            type: 'multi_select',
+            options: [
+              { value: 'unauthorized_access', label: 'Unauthorized Access' },
+              { value: 'data_breach', label: 'Data Breach' },
+              { value: 'ransomware', label: 'Ransomware' },
+              { value: 'denial_of_service', label: 'Denial of Service' },
+              { value: 'data_integrity_loss', label: 'Data Integrity Loss' },
+              { value: 'none_identified', label: 'None Identified' },
+            ],
+          },
+          {
+            id: 'interoperability_hazards',
+            label: 'Interoperability Hazards Identified',
+            type: 'multi_select',
+            options: [
+              { value: 'ehr_integration_errors', label: 'EHR Integration Errors' },
+              { value: 'data_format_mismatch', label: 'Data Format Mismatch' },
+              { value: 'network_failure', label: 'Network Failure' },
+              { value: 'api_failures', label: 'API Failures' },
+              { value: 'none_identified', label: 'None Identified' },
+            ],
+          },
+          {
+            id: 'clinical_decision_hazards',
+            label: 'Clinical Decision Hazards Identified',
+            type: 'multi_select',
+            options: [
+              { value: 'over_reliance_on_algorithm', label: 'Over-Reliance on Algorithm' },
+              { value: 'alert_fatigue', label: 'Alert Fatigue' },
+              { value: 'delayed_treatment', label: 'Delayed Treatment' },
+              { value: 'incorrect_diagnosis', label: 'Incorrect Diagnosis' },
+              { value: 'none_identified', label: 'None Identified' },
+            ],
+          },
+        ],
+        defaultNext: 'risk_estimation',
+      },
+
+      /* ── Risk Analysis & Evaluation ────────────────────────────── */
 
       {
         id: 'risk_estimation',
-        section: 'Risk Analysis',
+        section: 'risk_analysis',
         question:
-          'Describe the risk estimation methodology and how probability and severity of harm are determined.',
+          'Describe the risk estimation methodology. How are severity and probability of harm determined?',
         guidance:
-          'ISO 14971:2019 clause 5.5 requires estimation of risk(s) for each identified hazardous situation using the probability of occurrence of harm and the severity of that harm. ICH Q9 Section 4.2 similarly requires risk estimation as part of risk assessment. The estimation may be qualitative, semi-quantitative, or quantitative depending on available data and the nature of the risk.',
+          'ISO 14971:2019 Section 5 requires estimation of risk(s) for each identified hazardous situation using the probability of occurrence of harm and the severity of that harm. The estimation may be qualitative, semi-quantitative, or quantitative depending on available data.',
         fields: [
           {
-            id: 'estimation_methodology',
-            label: 'Risk Estimation Methodology',
+            id: 'severity_scale',
+            label: 'Severity Scale',
             type: 'select',
-            required: true,
             options: [
-              { value: 'qualitative', label: 'Qualitative (descriptive categories)' },
-              { value: 'semi_quantitative', label: 'Semi-Quantitative (ordinal scales / RPN)' },
-              { value: 'quantitative', label: 'Quantitative (probabilistic / numerical)' },
+              { value: 'three_level', label: '3-Level Scale' },
+              { value: 'five_level', label: '5-Level Scale' },
+              { value: 'custom', label: 'Custom Scale' },
             ],
           },
           {
-            id: 'probability_basis',
-            label: 'Probability Estimation Basis',
+            id: 'probability_scale',
+            label: 'Probability Scale',
+            type: 'select',
+            options: [
+              { value: 'qualitative_3', label: 'Qualitative (3 levels)' },
+              { value: 'qualitative_5', label: 'Qualitative (5 levels)' },
+              { value: 'semi_quantitative', label: 'Semi-Quantitative' },
+              { value: 'quantitative', label: 'Quantitative' },
+            ],
+          },
+          {
+            id: 'risk_matrix_type',
+            label: 'Risk Matrix Type',
+            type: 'select',
+            options: [
+              { value: '3x3', label: '3×3 Matrix' },
+              { value: '5x5', label: '5×5 Matrix' },
+              { value: 'custom_matrix', label: 'Custom Matrix' },
+            ],
+          },
+          {
+            id: 'highest_severity_identified',
+            label: 'Highest Severity Level Identified',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'negligible', label: 'Negligible' },
+              { value: 'minor', label: 'Minor' },
+              { value: 'serious', label: 'Serious' },
+              { value: 'critical', label: 'Critical' },
+              { value: 'catastrophic', label: 'Catastrophic' },
+            ],
+          },
+          {
+            id: 'highest_probability_identified',
+            label: 'Highest Probability Level Identified',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'incredible', label: 'Incredible' },
+              { value: 'improbable', label: 'Improbable' },
+              { value: 'remote', label: 'Remote' },
+              { value: 'occasional', label: 'Occasional' },
+              { value: 'probable', label: 'Probable' },
+              { value: 'frequent', label: 'Frequent' },
+            ],
+          },
+          {
+            id: 'number_of_risks_analyzed',
+            label: 'Number of Risks Analyzed',
+            type: 'number',
+            required: true,
+            validation: { min: 1 },
+          },
+          {
+            id: 'risk_estimation_method',
+            label: 'Risk Estimation Method Description',
+            type: 'textarea',
+            placeholder: 'Describe how severity and probability were estimated, including data sources and rationale',
+          },
+        ],
+        defaultNext: 'risk_evaluation',
+      },
+
+      {
+        id: 'risk_evaluation',
+        section: 'risk_analysis',
+        question:
+          'How were risks evaluated against acceptability criteria? What is the threshold for acceptable risk?',
+        guidance:
+          'ISO 14971:2019 Section 6 requires each estimated risk to be evaluated using the criteria for risk acceptability defined in the risk management plan. Risks that are not acceptable require risk control measures. The ALARP (As Low As Reasonably Practicable) principle is commonly applied.',
+        provideExpertFeedback: true,
+        fields: [
+          {
+            id: 'risk_acceptability_criteria',
+            label: 'Risk Acceptability Criteria',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'iso_14971_annex_d', label: 'ISO 14971 Annex D Guidance' },
+              { value: 'ich_q9_alarp', label: 'ICH Q9 ALARP Principle' },
+              { value: 'custom_criteria', label: 'Custom Criteria' },
+            ],
+          },
+          {
+            id: 'acceptable_risk_threshold',
+            label: 'Acceptable Risk Threshold',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Define the boundary between acceptable and unacceptable risk, including severity/probability combinations',
+          },
+          {
+            id: 'number_of_unacceptable_risks',
+            label: 'Number of Unacceptable Risks',
+            type: 'number',
+            required: true,
+            validation: { min: 0 },
+          },
+          {
+            id: 'risk_benefit_analysis_needed',
+            label: 'Is a risk-benefit analysis needed for any risks?',
+            type: 'yes_no',
+          },
+          {
+            id: 'benefit_risk_methodology',
+            label: 'Benefit-Risk Methodology',
+            type: 'textarea',
+            visibleWhen: { field: 'risk_benefit_analysis_needed', operator: 'eq', value: true },
+          },
+        ],
+        defaultNext: 'risk_acceptability',
+      },
+
+      {
+        id: 'risk_acceptability',
+        section: 'risk_analysis',
+        question:
+          'Are all risks acceptable after evaluation? Provide ALARP demonstration and residual risk justification details.',
+        guidance:
+          'ISO 14971:2019 Section 7.4 requires that residual risks be evaluated and that the ALARP principle be demonstrated. If risks remain unacceptable, the manufacturer must either implement further risk controls or perform a benefit-risk analysis.',
+        fields: [
+          {
+            id: 'all_risks_acceptable_after_eval',
+            label: 'Are all risks acceptable after evaluation?',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'unacceptable_risk_list',
+            label: 'List of Unacceptable Risks',
+            type: 'textarea',
+            visibleWhen: { field: 'all_risks_acceptable_after_eval', operator: 'eq', value: false },
+            placeholder: 'List each unacceptable risk with its hazard, severity, probability, and current risk level',
+          },
+          {
+            id: 'alarp_demonstration',
+            label: 'ALARP Demonstration',
+            type: 'textarea',
+            helpText: 'Demonstrate that risks have been reduced As Low As Reasonably Practicable. Describe the analysis showing further risk reduction is impracticable or disproportionate.',
+          },
+          {
+            id: 'residual_risk_justification_approach',
+            label: 'Residual Risk Justification Approach',
+            type: 'select',
+            options: [
+              { value: 'benefit_risk_analysis', label: 'Benefit-Risk Analysis' },
+              { value: 'state_of_art_comparison', label: 'State of the Art Comparison' },
+              { value: 'standards_compliance', label: 'Standards Compliance' },
+              { value: 'combination_approach', label: 'Combination Approach' },
+            ],
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'alarp_not_demonstrated',
+            condition: { field: 'alarp_demonstration', operator: 'eq', value: '' },
+            severity: 'warning',
+            title: 'ALARP Not Demonstrated',
+            message:
+              'The ALARP principle requires documentation that risks have been reduced as far as reasonably practicable. Please provide this justification.',
+            reference: 'ISO 14971:2019 Section 7.4',
+          },
+        ],
+        defaultNext: 'risk_controls',
+      },
+
+      /* ── Risk Control ──────────────────────────────────────────── */
+
+      {
+        id: 'risk_controls',
+        section: 'risk_control',
+        question:
+          'Describe the risk control measures identified. How were risk control options analyzed per the ISO 14971 priority order?',
+        guidance:
+          'ISO 14971:2019 Section 7 specifies the priority order for risk control options: (a) inherent safety by design, (b) protective measures in the medical device itself or in the manufacturing process, and (c) information for safety. Each risk control measure must be verified for implementation and effectiveness.',
+        fields: [
+          {
+            id: 'control_option_analysis',
+            label: 'Risk Control Option Analysis',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Describe how risk control options were analyzed per the priority order: inherent safety by design, protective measures, information for safety',
+          },
+          {
+            id: 'inherent_safety_measures',
+            label: 'Inherent Safety by Design Measures',
+            type: 'textarea',
+            helpText: 'Describe design changes that eliminate or reduce hazards at the source (highest priority per ISO 14971)',
+          },
+          {
+            id: 'protective_measures',
+            label: 'Protective Measures',
+            type: 'textarea',
+            helpText: 'Describe guards, barriers, alarms, interlocks, or process controls implemented',
+          },
+          {
+            id: 'information_for_safety',
+            label: 'Information for Safety',
+            type: 'textarea',
+            helpText: 'Describe warnings, contraindications, precautions, and training materials provided',
+          },
+          {
+            id: 'number_of_controls_identified',
+            label: 'Number of Risk Control Measures Identified',
+            type: 'number',
+            required: true,
+            validation: { min: 1 },
+          },
+          {
+            id: 'controls_introduce_new_risks',
+            label: 'Do any risk control measures introduce new risks?',
+            type: 'yes_no',
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'no_inherent_safety',
+            condition: { field: 'inherent_safety_measures', operator: 'eq', value: '' },
+            severity: 'info',
+            title: 'No Inherent Safety Measures',
+            message:
+              'ISO 14971 prioritizes inherent safety by design as the most effective risk control. Consider whether design changes could eliminate hazards.',
+            reference: 'ISO 14971:2019 Section 7.1',
+          },
+        ],
+        defaultNext: 'control_verification',
+      },
+
+      {
+        id: 'control_verification',
+        section: 'risk_control',
+        question:
+          'How were risk control measures verified for implementation and effectiveness?',
+        guidance:
+          'ISO 14971:2019 Section 7.3 requires verification that each risk control measure has been implemented in the final design and is effective in reducing risk. Verification should include testing, inspection, analysis, or review of design history. A traceability matrix linking hazards to controls to verification evidence is best practice.',
+        provideExpertFeedback: true,
+        fields: [
+          {
+            id: 'verification_methods',
+            label: 'Verification Methods Used',
             type: 'multi_select',
             required: true,
             options: [
-              { value: 'field_data', label: 'Field Data / Post-Market Experience' },
-              { value: 'literature', label: 'Published Literature' },
-              { value: 'expert_judgment', label: 'Expert Judgment' },
-              { value: 'testing', label: 'Testing / Experimental Data' },
+              { value: 'testing', label: 'Testing' },
+              { value: 'inspection', label: 'Inspection' },
+              { value: 'analysis', label: 'Analysis' },
+              { value: 'review_of_design_history', label: 'Review of Design History' },
+              { value: 'clinical_evaluation', label: 'Clinical Evaluation' },
+              { value: 'usability_testing', label: 'Usability Testing' },
             ],
           },
           {
-            id: 'probability_categories',
-            label: 'Number of Probability Categories Defined',
-            type: 'number',
-            required: true,
-            helpText: 'Typically 4-6 levels (e.g., Incredible, Remote, Occasional, Probable, Frequent)',
-            validation: { min: 2, max: 10 },
-          },
-          {
-            id: 'severity_categories',
-            label: 'Number of Severity Categories Defined',
-            type: 'number',
-            required: true,
-            helpText: 'Typically 4-5 levels (e.g., Negligible, Minor, Serious, Critical, Catastrophic)',
-            validation: { min: 2, max: 10 },
-          },
-          {
-            id: 'rpn_used',
-            label: 'Is a Risk Priority Number (RPN) used?',
-            type: 'yes_no',
-            visibleWhen: { field: 'estimation_methodology', operator: 'in', value: ['semi_quantitative', 'quantitative'] },
-            helpText: 'RPN = Severity x Occurrence x Detection; commonly used in FMEA but not required by ISO 14971',
-          },
-          {
-            id: 'systematic_random_failure',
-            label: 'Has analysis distinguished between systematic and random failures?',
-            type: 'yes_no',
-            visibleWhen: { field: 'product_type', operator: 'in', value: ['medical_device', 'IVD'] },
-            helpText: 'ISO 14971:2019 clause 5.5 Note 3 — probability estimation should consider both systematic and random failure modes',
-          },
-        ],
-        defaultNext: 'risk_matrix_definition',
-      },
-
-      {
-        id: 'risk_matrix_definition',
-        section: 'Risk Analysis',
-        question:
-          'Define the risk matrix structure and acceptability regions.',
-        guidance:
-          'ISO 14971:2019 clause 4.4 (c) requires criteria for risk acceptability to be defined in the risk management plan. The risk matrix should clearly delineate acceptable, ALARP (as low as reasonably practicable), and unacceptable risk regions. ISO/TR 24971:2020 provides guidance on risk matrix design and common pitfalls.',
-        fields: [
-          {
-            id: 'risk_matrix_dimensions',
-            label: 'Risk Matrix Dimensions',
-            type: 'text',
-            required: true,
-            placeholder: 'e.g. 5x5 (5 probability levels x 5 severity levels)',
-          },
-          {
-            id: 'num_probability_levels',
-            label: 'Number of Probability Levels',
-            type: 'number',
-            required: true,
-            validation: { min: 2, max: 10 },
-          },
-          {
-            id: 'num_severity_levels',
-            label: 'Number of Severity Levels',
-            type: 'number',
-            required: true,
-            validation: { min: 2, max: 10 },
-          },
-          {
-            id: 'acceptable_region_defined',
-            label: 'Acceptable Risk Region Defined',
+            id: 'all_controls_verified',
+            label: 'Have all risk control measures been verified?',
             type: 'yes_no',
             required: true,
           },
           {
-            id: 'alarp_region_defined',
-            label: 'ALARP (As Low As Reasonably Practicable) Region Defined',
-            type: 'yes_no',
-            helpText: 'Per ISO 14971:2019 clause 7.4, risks in the ALARP region require further risk-benefit analysis',
+            id: 'unverified_controls',
+            label: 'List of Unverified Controls',
+            type: 'textarea',
+            visibleWhen: { field: 'all_controls_verified', operator: 'eq', value: false },
           },
           {
-            id: 'unacceptable_region_defined',
-            label: 'Unacceptable Risk Region Defined',
+            id: 'verification_evidence_documented',
+            label: 'Is verification evidence documented?',
             type: 'yes_no',
             required: true,
           },
           {
-            id: 'risk_matrix_described',
-            label: 'Has the risk matrix been uploaded or documented?',
+            id: 'traceability_matrix_exists',
+            label: 'Does a traceability matrix exist (hazard → control → verification)?',
             type: 'yes_no',
-            required: true,
-            helpText: 'The risk matrix with all regions should be documented in the risk management plan',
-          },
-          {
-            id: 'detectability_included',
-            label: 'Is detectability included (for RPN calculation)?',
-            type: 'yes_no',
-            helpText: 'Detectability is used in FMEA-style RPN calculations but is not part of ISO 14971 risk estimation',
           },
         ],
         issueChecks: [
           {
-            id: 'risk_matrix_not_documented',
-            condition: { field: 'risk_matrix_described', operator: 'eq', value: false },
+            id: 'no_control_verification',
+            condition: { field: 'all_controls_verified', operator: 'eq', value: false },
             severity: 'critical',
-            title: 'Risk Matrix Not Documented',
+            title: 'Unverified Risk Controls',
             message:
-              'The risk evaluation matrix is a fundamental element of the risk management plan. Without a documented risk matrix, risk evaluation decisions cannot be consistently applied across the product lifecycle. ISO 14971:2019 clause 4.4 (c) requires documented criteria for risk acceptability.',
-            reference: 'ISO 14971:2019, Clause 4.4 (c); ISO/TR 24971:2020, Clause 5.4',
-          },
-        ],
-        defaultNext: 'individual_risk_eval',
-      },
-
-      /* ── 4. Risk Evaluation ──────────────────────────────────────── */
-
-      {
-        id: 'individual_risk_eval',
-        section: 'Risk Evaluation',
-        question:
-          'Summarize the results of individual risk evaluation. How many risks fall into each acceptability region?',
-        guidance:
-          'ISO 14971:2019 clause 5.5 requires each risk to be evaluated against the established acceptability criteria. Risks in the unacceptable region must be reduced through risk control measures. ISO 14971:2019 clause 5.4 requires comparison with the state of the art when determining risk acceptability.',
-        fields: [
-          {
-            id: 'total_risks_evaluated',
-            label: 'Total Number of Risks Evaluated',
-            type: 'number',
-            required: true,
-            validation: { min: 0 },
+              'All risk control measures must be verified for implementation and effectiveness before the product is released. Unverified controls represent uncontrolled risks.',
+            reference: 'ISO 14971:2019 Section 7.3',
           },
           {
-            id: 'risks_in_acceptable_region',
-            label: 'Risks in Acceptable Region',
-            type: 'number',
-            required: true,
-            validation: { min: 0 },
-          },
-          {
-            id: 'risks_in_alarp_region',
-            label: 'Risks in ALARP Region',
-            type: 'number',
-            required: true,
-            validation: { min: 0 },
-          },
-          {
-            id: 'risks_in_unacceptable_region',
-            label: 'Risks in Unacceptable Region',
-            type: 'number',
-            required: true,
-            validation: { min: 0 },
-          },
-          {
-            id: 'risk_benefit_analysis_required',
-            label: 'Is individual risk-benefit analysis required for any risks?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ISO 14971:2019 clause 7.4, risk-benefit analysis is required when residual risk exceeds acceptability criteria after all practicable risk controls',
-          },
-          {
-            id: 'state_of_art_comparison',
-            label: 'Has comparison with the state of the art been completed?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'ISO 14971:2019 clause 5.4 — risk acceptability should consider the generally acknowledged state of the art',
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'risk_benefit_required_not_done',
-            condition: { field: 'risk_benefit_analysis_required', operator: 'eq', value: true },
+            id: 'no_verification_evidence',
+            condition: { field: 'verification_evidence_documented', operator: 'eq', value: false },
             severity: 'warning',
-            title: 'Individual Risk-Benefit Analysis Required',
+            title: 'Verification Evidence Not Documented',
             message:
-              'When individual risks exceed the acceptability criteria and cannot be further reduced, ISO 14971:2019 clause 7.4 requires a risk-benefit analysis. Ensure that each risk requiring risk-benefit analysis is documented with the clinical benefits that outweigh the residual risk.',
-            reference: 'ISO 14971:2019, Clause 7.4',
+              'Verification activities must be documented in the risk management file. Ensure test reports and analysis records are maintained.',
+            reference: 'ISO 14971:2019 Section 7.3',
           },
         ],
-        defaultNext: 'overall_risk_eval',
+        defaultNext: 'control_implementation',
       },
 
       {
-        id: 'overall_risk_eval',
-        section: 'Risk Evaluation',
+        id: 'control_implementation',
+        section: 'risk_control',
         question:
-          'Assess the overall residual risk for the product.',
+          'What is the current implementation status of the risk control measures?',
         guidance:
-          'ISO 14971:2019 clause 8 requires evaluation of the overall residual risk taking into account contributions from all individual residual risks. If the overall residual risk is not judged acceptable, a benefit-risk analysis shall determine if the medical benefits outweigh the overall residual risk. ICH Q9 Section 4.3 similarly requires overall risk evaluation.',
+          'Tracking implementation status ensures that all identified risk controls are actually incorporated into the product design, manufacturing process, or labeling before release. Any required design or manufacturing changes must be managed through the design control process.',
         fields: [
           {
-            id: 'overall_residual_risk_method',
-            label: 'Overall Residual Risk Evaluation Method',
+            id: 'implementation_status',
+            label: 'Implementation Status',
             type: 'select',
             required: true,
             options: [
-              { value: 'qualitative_review', label: 'Qualitative Review by Expert Panel' },
-              { value: 'aggregate_analysis', label: 'Aggregate Risk Analysis / Risk Index' },
-              { value: 'fault_tree', label: 'Fault Tree / Event Tree Analysis' },
-              { value: 'clinical_evidence', label: 'Clinical Evidence Review' },
-              { value: 'combined', label: 'Combined Methods' },
+              { value: 'not_started', label: 'Not Started' },
+              { value: 'in_progress', label: 'In Progress' },
+              { value: 'partially_implemented', label: 'Partially Implemented' },
+              { value: 'fully_implemented', label: 'Fully Implemented' },
             ],
           },
           {
-            id: 'overall_risk_acceptable',
+            id: 'implementation_timeline',
+            label: 'Implementation Timeline',
+            type: 'text',
+            placeholder: 'e.g., Q3 2025',
+          },
+          {
+            id: 'responsible_person',
+            label: 'Responsible Person',
+            type: 'text',
+            required: true,
+            placeholder: 'Name and title of person responsible for implementation',
+          },
+          {
+            id: 'design_changes_required',
+            label: 'Are design changes required?',
+            type: 'yes_no',
+          },
+          {
+            id: 'design_change_description',
+            label: 'Design Change Description',
+            type: 'textarea',
+            visibleWhen: { field: 'design_changes_required', operator: 'eq', value: true },
+          },
+          {
+            id: 'manufacturing_changes_required',
+            label: 'Are manufacturing changes required?',
+            type: 'yes_no',
+          },
+          {
+            id: 'manufacturing_change_description',
+            label: 'Manufacturing Change Description',
+            type: 'textarea',
+            visibleWhen: { field: 'manufacturing_changes_required', operator: 'eq', value: true },
+          },
+        ],
+        defaultNext: 'residual_risk',
+      },
+
+      /* ── Residual Risk & Benefit-Risk ──────────────────────────── */
+
+      {
+        id: 'residual_risk',
+        section: 'residual_risk',
+        question:
+          'Assess the overall residual risk. Are all individual residual risks documented and acceptable?',
+        guidance:
+          'ISO 14971:2019 Section 8 requires evaluation of the overall residual risk, taking into account contributions from all individual residual risks. Residual risks that cannot be further reduced must be communicated through labeling, instructions for use, training materials, or contraindications.',
+        fields: [
+          {
+            id: 'overall_residual_risk_acceptable',
             label: 'Is the overall residual risk acceptable?',
             type: 'yes_no',
             required: true,
-            helpText: 'Per ISO 14971:2019 clause 8 — the overall residual risk must be evaluated and judged acceptable',
           },
           {
-            id: 'overall_benefit_risk_analysis',
-            label: 'Has a benefit-risk analysis been performed for the overall residual risk?',
+            id: 'residual_risk_summary',
+            label: 'Residual Risk Summary',
+            type: 'textarea',
+            required: true,
+            placeholder: 'Summarize the overall residual risk, including the basis for the acceptability determination',
+          },
+          {
+            id: 'individual_residual_risks_documented',
+            label: 'Are all individual residual risks documented?',
             type: 'yes_no',
             required: true,
-            helpText: 'ISO 14971:2019 clause 8 — required when overall residual risk is not initially judged acceptable',
           },
           {
-            id: 'benefit_risk_summary',
-            label: 'Benefit-Risk Analysis Summary',
-            type: 'textarea',
-            visibleWhen: { field: 'overall_benefit_risk_analysis', operator: 'eq', value: true },
-            helpText: 'Summarize the medical benefits that outweigh the overall residual risk',
-            validation: { minLength: 20 },
-          },
-          {
-            id: 'risk_communication_plan',
-            label: 'Risk Communication Plan',
-            type: 'textarea',
-            required: true,
-            helpText: 'Per ICH Q9 Section 4.4 and ISO 14971:2019 clause 9, describe how risk information is communicated to stakeholders',
-            validation: { minLength: 15 },
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'overall_risk_not_acceptable',
-            condition: { field: 'overall_risk_acceptable', operator: 'eq', value: false },
-            severity: 'critical',
-            title: 'Overall Residual Risk Not Acceptable',
-            message:
-              'ISO 14971:2019 clause 8 requires that the overall residual risk be judged acceptable. If the overall residual risk is not acceptable, a benefit-risk analysis must demonstrate that the medical benefits outweigh the residual risk. Without acceptable overall risk or a favorable benefit-risk determination, the product cannot proceed to market.',
-            reference: 'ISO 14971:2019, Clause 8',
-          },
-        ],
-        defaultNext: 'risk_control_measures',
-        provideExpertFeedback: true,
-      },
-
-      /* ── 5. Risk Control ─────────────────────────────────────────── */
-
-      {
-        id: 'risk_control_measures',
-        section: 'Risk Control',
-        question:
-          'Describe the risk control measures implemented. What priority order was followed?',
-        guidance:
-          'ISO 14971:2019 clause 7.1 specifies the priority order for risk control options: (a) inherent safety by design, (b) protective measures in the medical device itself or in the manufacturing process, and (c) information for safety. Risk control measures shall be implemented and each measure shall be verified. New hazards or hazardous situations introduced by risk controls must be identified and analyzed.',
-        fields: [
-          {
-            id: 'risk_control_priority',
-            label: 'Risk Control Option Priority Applied',
-            type: 'multi_select',
+            id: 'highest_residual_risk_level',
+            label: 'Highest Residual Risk Level',
+            type: 'select',
             required: true,
             options: [
-              {
-                value: 'inherent_safety_by_design',
-                label: '(a) Inherent Safety by Design',
-                description: 'Eliminate hazards or reduce associated risks by design choices',
-              },
-              {
-                value: 'protective_measures',
-                label: '(b) Protective Measures',
-                description: 'Guards, barriers, alarms, interlocks in the device or manufacturing process',
-              },
-              {
-                value: 'information_for_safety',
-                label: '(c) Information for Safety',
-                description: 'Labeling, instructions for use, training materials, warnings',
-              },
+              { value: 'negligible', label: 'Negligible' },
+              { value: 'acceptable', label: 'Acceptable' },
+              { value: 'tolerable_with_benefit', label: 'Tolerable with Benefit' },
+              { value: 'unacceptable', label: 'Unacceptable' },
             ],
-            helpText: 'Per ISO 14971:2019 clause 7.1, these options shall be used in the priority order listed',
           },
           {
-            id: 'num_risk_controls',
-            label: 'Number of Risk Control Measures Implemented',
+            id: 'number_of_residual_risks',
+            label: 'Number of Residual Risks',
             type: 'number',
             required: true,
             validation: { min: 0 },
           },
           {
-            id: 'design_changes',
-            label: 'Design Changes for Inherent Safety',
-            type: 'textarea',
-            helpText: 'Describe design modifications made to eliminate hazards or reduce risks at the source',
-          },
-          {
-            id: 'protective_measures_added',
-            label: 'Protective Measures Added',
-            type: 'textarea',
-            helpText: 'Describe protective measures such as guards, barriers, alarms, interlocks, or process controls',
-          },
-          {
-            id: 'information_for_safety_measures',
-            label: 'Information for Safety (Labeling, Training, IFU)',
-            type: 'textarea',
-            helpText: 'Describe safety information provided through labeling, training materials, and instructions for use',
-          },
-          {
-            id: 'new_hazards_from_controls',
-            label: 'Have new hazards been introduced by risk control measures?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ISO 14971:2019 clause 7.3, the risk management process shall determine whether new hazards or hazardous situations are introduced by each risk control measure',
+            id: 'residual_risk_communication',
+            label: 'Residual Risk Communication Methods',
+            type: 'multi_select',
+            options: [
+              { value: 'ifu_warnings', label: 'IFU Warnings' },
+              { value: 'labeling', label: 'Labeling' },
+              { value: 'training_materials', label: 'Training Materials' },
+              { value: 'contraindications', label: 'Contraindications' },
+              { value: 'not_applicable', label: 'Not Applicable' },
+            ],
           },
         ],
         issueChecks: [
           {
-            id: 'new_hazards_introduced',
-            condition: { field: 'new_hazards_from_controls', operator: 'eq', value: true },
-            severity: 'warning',
-            title: 'New Hazards Introduced by Risk Control Measures',
+            id: 'unacceptable_residual_risk',
+            condition: { field: 'highest_residual_risk_level', operator: 'eq', value: 'unacceptable' },
+            severity: 'critical',
+            title: 'Unacceptable Residual Risk',
             message:
-              'ISO 14971:2019 clause 7.3 requires that when risk control measures introduce new hazards or hazardous situations, the associated risks shall be estimated and evaluated. Ensure all newly introduced hazards have been analyzed and added to the risk management file with their own risk controls.',
-            reference: 'ISO 14971:2019, Clause 7.3',
+              'Products with unacceptable residual risk cannot be released to market. Additional risk control measures must be identified, or a benefit-risk analysis must demonstrate that benefits outweigh the residual risks.',
+            reference: 'ISO 14971:2019 Section 8',
           },
         ],
-        defaultNext: 'risk_control_verification',
+        defaultNext: 'benefit_risk_analysis',
       },
 
       {
-        id: 'risk_control_verification',
-        section: 'Risk Control',
+        id: 'benefit_risk_analysis',
+        section: 'residual_risk',
         question:
-          'Describe the verification of risk control measure implementation and effectiveness.',
+          'Provide the benefit-risk analysis. What clinical benefits does the product offer and how do they compare to the residual risks?',
         guidance:
-          'ISO 14971:2019 clause 7.2 requires verification that risk control measures have been implemented as planned and are effective. This includes both implementation verification (was the control put in place?) and effectiveness verification (does the control actually reduce risk?). Traceability from hazard to control to verification should be maintained.',
+          'ISO 14971:2019 Section 8 requires that when the overall residual risk is not initially judged acceptable, a benefit-risk analysis must demonstrate that the medical benefits outweigh the residual risks. The analysis should be based on clinical data, literature, and comparison with comparable products.',
         fields: [
           {
-            id: 'verification_completed',
-            label: 'Has risk control verification been completed?',
-            type: 'yes_no',
+            id: 'benefits_identified',
+            label: 'Clinical Benefits Identified',
+            type: 'textarea',
             required: true,
-            helpText: 'Per ISO 14971:2019 clause 7.2, each risk control measure shall be verified',
+            placeholder: 'List all clinical benefits of the product',
           },
           {
-            id: 'verification_method',
-            label: 'Verification Method',
-            type: 'multi_select',
+            id: 'benefit_risk_methodology_used',
+            label: 'Benefit-Risk Methodology Used',
+            type: 'select',
             required: true,
             options: [
-              { value: 'testing', label: 'Testing (bench, simulated use, clinical)' },
-              { value: 'inspection', label: 'Inspection / Review' },
-              { value: 'analysis', label: 'Analysis (analytical models, FMEA re-evaluation)' },
+              { value: 'qualitative_comparison', label: 'Qualitative Comparison' },
+              { value: 'quantitative_analysis', label: 'Quantitative Analysis' },
+              { value: 'structured_framework', label: 'Structured Framework' },
+              { value: 'published_literature', label: 'Published Literature' },
             ],
           },
           {
-            id: 'effectiveness_confirmed',
-            label: 'Risk control effectiveness confirmed?',
-            type: 'yes_no',
+            id: 'benefit_risk_conclusion',
+            label: 'Benefit-Risk Conclusion',
+            type: 'select',
             required: true,
-            helpText: 'Has objective evidence demonstrated that the risk controls reduce risk as intended?',
+            options: [
+              { value: 'benefits_outweigh_risks', label: 'Benefits Outweigh Risks' },
+              { value: 'risks_outweigh_benefits', label: 'Risks Outweigh Benefits' },
+              { value: 'inconclusive', label: 'Inconclusive' },
+            ],
           },
           {
-            id: 'traceability_matrix_available',
-            label: 'Is a traceability matrix (risk → control → verification) available?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ISO 14971:2019 clause 4.4 (d), verification activities for risk control measures shall be planned',
+            id: 'supporting_clinical_data',
+            label: 'Supporting Clinical Data',
+            type: 'textarea',
+            placeholder: 'Describe the clinical data supporting the benefit-risk conclusion, including study references and key endpoints',
           },
           {
-            id: 'implementation_verification_completed',
-            label: 'Implementation verification completed?',
+            id: 'comparable_products_considered',
+            label: 'Were comparable products considered?',
             type: 'yes_no',
-            required: true,
-            helpText: 'Confirm that each risk control measure has been correctly implemented in the design, manufacturing process, or labeling',
+          },
+          {
+            id: 'comparable_product_risk_profile',
+            label: 'Comparable Product Risk Profile',
+            type: 'textarea',
+            visibleWhen: { field: 'comparable_products_considered', operator: 'eq', value: true },
           },
         ],
         issueChecks: [
           {
-            id: 'risk_controls_not_verified',
-            condition: { field: 'verification_completed', operator: 'eq', value: false },
+            id: 'risks_outweigh_benefits',
+            condition: { field: 'benefit_risk_conclusion', operator: 'eq', value: 'risks_outweigh_benefits' },
             severity: 'critical',
-            title: 'Risk Control Measures Not Verified',
+            title: 'Negative Benefit-Risk Conclusion',
             message:
-              'ISO 14971:2019 clause 7.2 requires verification that each risk control measure has been implemented and is effective. Unverified risk controls cannot be relied upon to reduce risk. This is a mandatory element that must be completed before the risk management report can be finalized.',
-            reference: 'ISO 14971:2019, Clause 7.2',
+              'A determination that risks outweigh benefits prevents product release. The risk management process must be revisited to identify additional risk controls.',
+            reference: 'ISO 14971:2019 Section 8',
           },
         ],
-        defaultNext: 'residual_risk_assessment',
+        defaultNext: 'risk_management_review',
       },
 
+      /* ── Risk Management Review ────────────────────────────────── */
+
       {
-        id: 'residual_risk_assessment',
-        section: 'Risk Control',
+        id: 'risk_management_review',
+        section: 'risk_review',
         question:
-          'Assess the residual risks remaining after implementation of all risk control measures.',
+          'Provide details on the risk management review. Is the risk management plan and file complete?',
         guidance:
-          'ISO 14971:2019 clause 7.4 requires evaluation of residual risk after risk control measures have been applied. Each residual risk shall be evaluated against the risk acceptability criteria. If any residual risk or the overall residual risk is not judged acceptable, a risk-benefit analysis shall be performed. Residual risks that remain must be disclosed through appropriate labeling per ISO 14971:2019 clause 7.4.',
+          'ISO 14971:2019 Section 9 requires that the risk management process be reviewed before the product is released. The review must confirm that the risk management plan has been appropriately implemented, the overall residual risk is acceptable, and methods are in place to collect post-production information.',
         fields: [
           {
-            id: 'all_residual_risks_identified',
-            label: 'Have all residual risks been identified?',
+            id: 'risk_management_plan_complete',
+            label: 'Is the risk management plan complete?',
             type: 'yes_no',
             required: true,
           },
           {
-            id: 'residual_risks_within_limits',
-            label: 'Are all residual risks within acceptable limits?',
+            id: 'risk_management_file_complete',
+            label: 'Is the risk management file complete?',
             type: 'yes_no',
             required: true,
-            helpText: 'Per ISO 14971:2019 clause 7.4 — each residual risk must meet the acceptability criteria',
           },
           {
-            id: 'residual_risk_benefit_analysis',
-            label: 'Has a residual risk-benefit analysis been conducted?',
-            type: 'yes_no',
+            id: 'review_participants',
+            label: 'Review Participants',
+            type: 'textarea',
             required: true,
-            helpText: 'Required per ISO 14971:2019 clause 7.4 when residual risks exceed the acceptability criteria',
+            placeholder: 'List names, titles, and qualifications of review team members',
           },
           {
-            id: 'residual_risks_in_labeling',
-            label: 'Have residual risks been disclosed in product labeling?',
-            type: 'yes_no',
+            id: 'review_date',
+            label: 'Review Date',
+            type: 'date',
             required: true,
-            helpText: 'Per ISO 14971:2019 clause 7.4 Note 2 — information for safety about significant residual risks should be included in the accompanying documentation',
           },
           {
-            id: 'cumulative_residual_risk_acceptable',
-            label: 'Is the cumulative residual risk acceptable?',
+            id: 'all_planned_activities_completed',
+            label: 'Have all planned risk management activities been completed?',
             type: 'yes_no',
             required: true,
-            helpText: 'The aggregate effect of all individual residual risks must be considered per ISO 14971:2019 clause 8',
+          },
+          {
+            id: 'outstanding_actions',
+            label: 'Outstanding Actions',
+            type: 'textarea',
+            visibleWhen: { field: 'all_planned_activities_completed', operator: 'eq', value: false },
+          },
+          {
+            id: 'risk_management_report_generated',
+            label: 'Has the risk management report been generated?',
+            type: 'yes_no',
           },
         ],
         issueChecks: [
           {
-            id: 'residual_risks_not_identified',
-            condition: { field: 'all_residual_risks_identified', operator: 'eq', value: false },
-            severity: 'critical',
-            title: 'Residual Risks Not Fully Identified',
-            message:
-              'ISO 14971:2019 clause 7.4 requires that residual risk associated with each hazardous situation be evaluated. Incomplete identification of residual risks means the risk management file is not complete and the overall residual risk evaluation (clause 8) cannot be reliably performed.',
-            reference: 'ISO 14971:2019, Clause 7.4',
-          },
-        ],
-        defaultNext: 'production_monitoring',
-        provideExpertFeedback: true,
-      },
-
-      /* ── 6. Production & Post-Production ─────────────────────────── */
-
-      {
-        id: 'production_monitoring',
-        section: 'Production & Post-Production',
-        question:
-          'Describe the production risk monitoring plan and trending activities.',
-        guidance:
-          'ISO 14971:2019 clause 9 requires the manufacturer to establish, document, implement, and maintain a system for collecting and reviewing production and post-production information. ICH Q9 Section 4.4 emphasizes continuous review and monitoring of risk management outputs throughout the product lifecycle.',
-        fields: [
-          {
-            id: 'production_monitoring_plan',
-            label: 'Has a production risk monitoring plan been established?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ISO 14971:2019 clause 9, a process for collecting and reviewing production information relevant to safety shall be established',
-          },
-          {
-            id: 'process_monitoring_parameters',
-            label: 'Process Monitoring Parameters',
-            type: 'textarea',
-            required: true,
-            helpText: 'Identify key process parameters monitored for risk-related deviations (e.g., dimensional checks, functional tests, environmental monitoring)',
-            validation: { minLength: 15 },
-          },
-          {
-            id: 'trend_analysis_performed',
-            label: 'Is trend analysis performed?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Systematic trending of non-conformances, deviations, and quality data to detect emerging risk signals',
-          },
-          {
-            id: 'risk_based_sampling',
-            label: 'Risk-Based Sampling Plan',
-            type: 'textarea',
-            helpText: 'Describe how risk levels inform inspection and testing sample sizes during production',
-          },
-          {
-            id: 'production_nonconformance_tracking',
-            label: 'Production Non-Conformance Tracking',
-            type: 'textarea',
-            required: true,
-            helpText: 'Describe the system for tracking and evaluating production non-conformances for risk management impact',
-            validation: { minLength: 15 },
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'no_production_monitoring',
-            condition: { field: 'production_monitoring_plan', operator: 'eq', value: false },
+            id: 'incomplete_rm_file',
+            condition: { field: 'risk_management_file_complete', operator: 'eq', value: false },
             severity: 'warning',
-            title: 'No Production Risk Monitoring Plan',
+            title: 'Incomplete Risk Management File',
             message:
-              'ISO 14971:2019 clause 9 requires a system for collecting and reviewing production and post-production information relevant to the safety of the medical device. The absence of production monitoring could result in undetected emerging risks during manufacturing.',
-            reference: 'ISO 14971:2019, Clause 9',
+              'The risk management file must be complete before the risk management review. Ensure all required documents (risk management plan, risk analysis, risk evaluation, risk control records, residual risk evaluation, risk management report) are included.',
+            reference: 'ISO 14971:2019 Section 3, ISO/TR 24971:2020',
           },
         ],
-        defaultNext: 'post_production_info',
+        defaultNext: 'post_production_monitoring',
       },
 
       {
-        id: 'post_production_info',
-        section: 'Production & Post-Production',
+        id: 'post_production_monitoring',
+        section: 'risk_review',
         question:
-          'Describe the post-production information collection and review process.',
+          'Describe the post-production monitoring process. How will production and post-production information be collected and reviewed?',
         guidance:
-          'ISO 14971:2019 clause 9 requires systematic collection and review of post-production information including complaints, vigilance reports, recalls, and literature. For devices, 21 CFR 803 (Medical Device Reporting) defines mandatory adverse event reporting. For pharmaceuticals, ICH E2 series defines pharmacovigilance reporting requirements.',
+          'ISO 14971:2019 Section 10 requires establishment and maintenance of a process to collect and review production and post-production information relevant to the safety of the product. This includes complaint handling, vigilance reporting, literature review, and post-market clinical follow-up.',
         fields: [
           {
-            id: 'post_production_sources',
+            id: 'post_production_process_established',
+            label: 'Has a post-production monitoring process been established?',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'monitoring_sources',
             label: 'Post-Production Information Sources',
             type: 'multi_select',
-            required: true,
             options: [
-              { value: 'complaints', label: 'Customer Complaints' },
-              { value: 'vigilance', label: 'Vigilance / Adverse Event Reports' },
-              { value: 'literature', label: 'Published Literature Monitoring' },
-              { value: 'recalls', label: 'Recall and Field Safety Corrective Action Data' },
+              { value: 'complaint_handling', label: 'Complaint Handling' },
+              { value: 'vigilance_reporting', label: 'Vigilance Reporting' },
+              { value: 'literature_review', label: 'Literature Review' },
+              { value: 'post_market_clinical_follow_up', label: 'Post-Market Clinical Follow-Up' },
+              { value: 'real_world_evidence', label: 'Real-World Evidence' },
+              { value: 'registry_data', label: 'Registry Data' },
+              { value: 'not_yet_established', label: 'Not Yet Established' },
             ],
           },
           {
-            id: 'complaint_analysis_integration',
-            label: 'Is complaint analysis integrated with risk management?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Complaints should be evaluated for risk management impact per ISO 14971:2019 clause 9',
-          },
-          {
-            id: 'signal_detection_methodology',
-            label: 'Signal Detection Methodology',
-            type: 'textarea',
-            required: true,
-            helpText: 'Describe the methods used to detect safety signals from post-production data (e.g., statistical trending, threshold-based alerts)',
-            validation: { minLength: 15 },
-          },
-          {
-            id: 'fsca_threshold',
-            label: 'Field Safety Corrective Action (FSCA) Threshold',
-            type: 'textarea',
-            required: true,
-            helpText: 'Define criteria that would trigger a field safety corrective action or product recall',
-            validation: { minLength: 15 },
-          },
-          {
-            id: 'regulatory_reporting_met',
-            label: 'Are regulatory reporting requirements met?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per 21 CFR 803 for devices (MDR) or ICH E2 series for pharmaceuticals (ICSR, PSUR/PBRER)',
-          },
-        ],
-        defaultNext: 'capa_integration',
-      },
-
-      {
-        id: 'capa_integration',
-        section: 'Production & Post-Production',
-        question:
-          'Describe how CAPA (Corrective and Preventive Action) integrates with risk management activities.',
-        guidance:
-          'ISO 14971:2019 clause 9 requires that post-production information be evaluated for relevance to safety and that the risk management file be updated accordingly. The CAPA system (per ISO 13485 clause 8.5.2/8.5.3 for devices, or ICH Q10 Section 3 for pharmaceuticals) should be tightly integrated with risk management to ensure that new risks trigger reassessment and that risk controls are updated.',
-        fields: [
-          {
-            id: 'capa_integrated',
-            label: 'Is the CAPA system integrated with risk management?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ISO 13485:2016 clause 8.5.2 — corrective actions should include risk management updates',
-          },
-          {
-            id: 'risk_reassessment_triggers',
-            label: 'Are risk reassessment triggers defined?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Define events that trigger a re-evaluation of the risk management file (e.g., design changes, new complaint trends, regulatory changes)',
-          },
-          {
-            id: 'rm_file_update_frequency',
-            label: 'Risk Management File Update Frequency',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'event_driven', label: 'Event-Driven (upon triggers)' },
-              { value: 'quarterly', label: 'Quarterly' },
-              { value: 'semi_annual', label: 'Semi-Annual' },
-              { value: 'annual', label: 'Annual' },
-              { value: 'event_plus_periodic', label: 'Event-Driven + Periodic Review' },
-            ],
-          },
-          {
-            id: 'new_risk_identification_process',
-            label: 'New Risk Identification Process',
-            type: 'textarea',
-            required: true,
-            helpText: 'Describe the process for identifying and documenting newly discovered risks from post-market experience',
-            validation: { minLength: 15 },
-          },
-          {
-            id: 'management_of_change',
-            label: 'Management of Change Procedure',
-            type: 'textarea',
-            required: true,
-            helpText: 'Describe how changes to the product, process, or use conditions trigger risk management updates per ISO 14971:2019 clause 9',
-            validation: { minLength: 15 },
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'no_capa_integration',
-            condition: { field: 'capa_integrated', operator: 'eq', value: false },
-            severity: 'warning',
-            title: 'CAPA System Not Integrated with Risk Management',
-            message:
-              'ISO 13485:2016 clause 8.5.2 requires that corrective actions be appropriate to the effects of the nonconformities encountered, and ICH Q10 Section 3 requires a CAPA system linked to quality risk management. Without CAPA-risk management integration, corrective actions may not adequately address underlying risks.',
-            reference: 'ISO 13485:2016, Clause 8.5.2; ICH Q10, Section 3',
-          },
-        ],
-        defaultNext: 'rm_report',
-      },
-
-      /* ── 7. Risk Management Review ───────────────────────────────── */
-
-      {
-        id: 'rm_report',
-        section: 'Risk Management Review',
-        question:
-          'Describe the status and completeness of the risk management report.',
-        guidance:
-          'ISO 14971:2019 clause 8 requires a risk management report that documents the results of the risk management process. The report shall confirm that the risk management plan has been appropriately implemented, the overall residual risk is acceptable, appropriate methods are in place to collect relevant production and post-production information, and the risk management file is complete.',
-        fields: [
-          {
-            id: 'rm_report_complete',
-            label: 'Is the risk management report complete?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ISO 14971:2019 clause 8, the risk management report shall review the risk management file',
-          },
-          {
-            id: 'report_covers_requirements',
-            label: 'Does the report cover all applicable standard requirements?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Confirm that the report addresses all requirements of ISO 14971:2019 clause 8 and/or ICH Q9 as applicable',
-          },
-          {
-            id: 'rm_plan_objectives_met',
-            label: 'Have risk management plan objectives been met?',
+            id: 'feedback_loop_to_risk_management',
+            label: 'Is there a feedback loop from post-production to risk management?',
             type: 'yes_no',
             required: true,
           },
           {
-            id: 'residual_risk_acceptability_statement',
-            label: 'Residual Risk Acceptability Statement',
-            type: 'textarea',
-            required: true,
-            helpText: 'Provide the formal statement on acceptability of the overall residual risk per ISO 14971:2019 clause 8',
-            validation: { minLength: 20 },
-          },
-          {
-            id: 'production_postproduction_provisions',
-            label: 'Are production and post-production monitoring provisions confirmed?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ISO 14971:2019 clause 8, the report shall confirm that methods for obtaining relevant production and post-production information are in place',
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'rm_report_incomplete',
-            condition: { field: 'rm_report_complete', operator: 'eq', value: false },
-            severity: 'warning',
-            title: 'Risk Management Report Incomplete',
-            message:
-              'ISO 14971:2019 clause 8 requires a completed risk management report before the product can be released to market. The report must confirm that the risk management plan has been appropriately implemented and the overall residual risk is acceptable. An incomplete report indicates the risk management process has not been finalized.',
-            reference: 'ISO 14971:2019, Clause 8',
-          },
-        ],
-        defaultNext: 'rm_file_review',
-      },
-
-      {
-        id: 'rm_file_review',
-        section: 'Risk Management Review',
-        question:
-          'Review the risk management file for completeness. Which elements are present?',
-        guidance:
-          'ISO 14971:2019 clause 4.5 defines the risk management file as the set of records and documents produced by the risk management process. The file shall be traceable to each hazard, hazardous situation, risk estimate, risk control measure, and verification. A gap analysis identifies any missing elements that must be completed before the file can be considered ready for regulatory submission or audit.',
-        fields: [
-          {
-            id: 'rm_file_contents',
-            label: 'Risk Management File Contents',
-            type: 'multi_select',
-            required: true,
-            options: [
-              { value: 'rm_plan', label: 'Risk Management Plan' },
-              { value: 'risk_analysis_records', label: 'Risk Analysis Records' },
-              { value: 'risk_evaluation_records', label: 'Risk Evaluation Records' },
-              { value: 'risk_control_records', label: 'Risk Control Records' },
-              { value: 'residual_risk_evaluation', label: 'Residual Risk Evaluation' },
-              { value: 'production_monitoring_plan', label: 'Production and Post-Production Monitoring Plan' },
-            ],
-          },
-          {
-            id: 'file_completeness',
-            label: 'File Completeness Assessment',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'complete', label: 'Complete — all elements present and finalized' },
-              { value: 'partial', label: 'Partial — some elements still in progress' },
-              { value: 'not_started', label: 'Not Started — file assembly not yet begun' },
-            ],
-          },
-          {
-            id: 'gap_analysis_performed',
-            label: 'Has a gap analysis been performed?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Identify any missing or incomplete elements required by ISO 14971:2019 or ICH Q9',
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'file_completeness_not_assessed',
-            condition: { field: 'file_completeness', operator: 'in', value: ['partial', 'not_started'] },
-            severity: 'warning',
-            title: 'Risk Management File Not Complete',
-            message:
-              'The risk management file is not fully complete. ISO 14971:2019 clause 4.5 requires a complete risk management file that provides traceability for each identified hazard to risk analysis, risk evaluation, risk control implementation and verification, and assessment of residual risk. Ensure all elements are finalized before regulatory submission.',
-            reference: 'ISO 14971:2019, Clause 4.5',
-          },
-        ],
-        defaultNext: 'management_approval',
-      },
-
-      {
-        id: 'management_approval',
-        section: 'Risk Management Review',
-        question:
-          'Provide details on management review and approval of the risk management activities.',
-        guidance:
-          'ISO 14971:2019 clause 4.1 requires top management to ensure adequate resources and assign qualified personnel for risk management. ISO 14971:2019 clause 4.2 requires management to define and document a policy for determining acceptable risk. Regular management review of risk management effectiveness ensures continued suitability and identifies opportunities for improvement.',
-        fields: [
-          {
-            id: 'management_review_conducted',
-            label: 'Has a management review of risk management been conducted?',
-            type: 'yes_no',
-            required: true,
-            helpText: 'Per ISO 14971:2019 clause 4.1, top management shall ensure the adequacy of the risk management process',
-          },
-          {
-            id: 'management_review_date',
-            label: 'Management Review Date',
-            type: 'date',
-            visibleWhen: { field: 'management_review_conducted', operator: 'eq', value: true },
-          },
-          {
-            id: 'approval_authority',
-            label: 'Approval Authority',
-            type: 'text',
-            required: true,
-            helpText: 'Name and title of the individual with authority to approve the risk management report',
-          },
-          {
-            id: 'periodic_review_schedule',
-            label: 'Periodic Review Schedule',
+            id: 'post_production_review_frequency',
+            label: 'Post-Production Review Frequency',
             type: 'select',
             required: true,
             options: [
               { value: 'quarterly', label: 'Quarterly' },
               { value: 'semi_annual', label: 'Semi-Annual' },
               { value: 'annual', label: 'Annual' },
-              { value: 'biennial', label: 'Biennial (Every 2 Years)' },
+              { value: 'event_driven', label: 'Event-Driven' },
             ],
           },
           {
-            id: 'next_review_date',
-            label: 'Next Scheduled Review Date',
-            type: 'date',
-            required: true,
+            id: 'trend_analysis_planned',
+            label: 'Is trend analysis planned?',
+            type: 'yes_no',
           },
           {
-            id: 'rm_effectiveness_metrics',
-            label: 'Are risk management effectiveness metrics defined?',
+            id: 'capa_integration',
+            label: 'Is CAPA integrated with the risk management process?',
             type: 'yes_no',
-            required: true,
-            helpText: 'Metrics to evaluate the effectiveness of the risk management process (e.g., risk reduction trends, time to risk control implementation, post-market risk event rates)',
           },
         ],
         issueChecks: [
           {
-            id: 'no_management_review',
-            condition: { field: 'management_review_conducted', operator: 'eq', value: false },
+            id: 'no_post_production',
+            condition: { field: 'post_production_process_established', operator: 'eq', value: false },
             severity: 'critical',
-            title: 'No Management Review Conducted',
+            title: 'No Post-Production Information Process',
             message:
-              'ISO 14971:2019 clause 4.1 requires top management to ensure the suitability and effectiveness of the risk management process. A management review provides documented evidence of top management engagement and is routinely verified during regulatory audits and inspections.',
-            reference: 'ISO 14971:2019, Clause 4.1; ISO 13485:2016, Clause 5.6',
+              'ISO 14971:2019 Section 10 requires establishment and maintenance of a process to collect and review post-production information. This is mandatory and must be in place before product release.',
+            reference: 'ISO 14971:2019 Section 10',
           },
         ],
         defaultNext: null,

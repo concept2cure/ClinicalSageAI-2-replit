@@ -30,7 +30,7 @@ export function createDevice510kFlow(): FlowDefinition {
       {
         id: 'device_info',
         label: 'Device Information',
-        nodeIds: ['device_basics', 'device_classification'],
+        nodeIds: ['device_basics', 'device_classification', 'device_materials'],
       },
       {
         id: 'predicate',
@@ -40,7 +40,7 @@ export function createDevice510kFlow(): FlowDefinition {
       {
         id: 'testing',
         label: 'Testing',
-        nodeIds: ['performance_testing', 'standards_testing', 'biocompatibility'],
+        nodeIds: ['performance_testing', 'standards_testing', 'biocompatibility', 'emc_testing_detail', 'biocompat_detail'],
       },
       {
         id: 'clinical',
@@ -50,7 +50,7 @@ export function createDevice510kFlow(): FlowDefinition {
       {
         id: 'submission_prep_section',
         label: 'Submission Preparation',
-        nodeIds: ['submission_prep'],
+        nodeIds: ['submission_prep', 'quality_system_info'],
       },
       {
         id: 'software_doc',
@@ -70,7 +70,7 @@ export function createDevice510kFlow(): FlowDefinition {
       {
         id: 'risk_postmarket',
         label: 'Risk Management & Post-Market',
-        nodeIds: ['risk_management', 'post_market_surveillance'],
+        nodeIds: ['risk_management', 'post_market_surveillance', 'implant_specific'],
       },
     ],
 
@@ -235,6 +235,75 @@ export function createDevice510kFlow(): FlowDefinition {
             message:
               'Class III devices typically require PMA, not 510(k). Verify that a 510(k) pathway is available for this device type. Only certain Class III preamendment devices can use the 510(k) pathway.',
             reference: '21 CFR 860.3',
+          },
+        ],
+        defaultNext: 'device_materials',
+      },
+
+      {
+        id: 'device_materials',
+        section: 'Device Information',
+        question:
+          'Describe the materials and components used in this device.',
+        guidance:
+          'A comprehensive materials list is required for the 510(k) submission, particularly for patient-contacting devices. Material specifications are critical for biocompatibility evaluation (ISO 10993-1), predicate comparison, and sterilization compatibility. Include all materials that contact the patient or are critical to device function.',
+        fields: [
+          {
+            id: 'patient_contacting_materials',
+            label: 'Patient-Contacting Materials',
+            type: 'textarea',
+            required: true,
+            helpText: 'List all materials that directly or indirectly contact the patient (e.g. stainless steel 316L, silicone, PEEK, titanium alloy)',
+          },
+          {
+            id: 'non_contacting_materials',
+            label: 'Non-Patient-Contacting Materials',
+            type: 'textarea',
+            helpText: 'List structural and housing materials that do not contact the patient',
+          },
+          {
+            id: 'material_specifications',
+            label: 'Material Specifications / Standards',
+            type: 'textarea',
+            helpText: 'Reference applicable ASTM/ISO material standards (e.g. ASTM F138, ASTM F2026)',
+          },
+          {
+            id: 'latex_free',
+            label: 'Is the device latex-free?',
+            type: 'yes_no',
+            required: true,
+            helpText: 'Latex must be declared per FDA labeling requirements if present',
+          },
+          {
+            id: 'contains_dehp',
+            label: 'Does the device contain DEHP or other phthalates?',
+            type: 'yes_no',
+            helpText: 'DEHP and phthalates require labeling per 21 CFR 801.437',
+          },
+          {
+            id: 'mri_compatibility',
+            label: 'MRI Compatibility',
+            type: 'select',
+            options: [
+              { value: 'not_applicable', label: 'Not Applicable' },
+              { value: 'mr_safe', label: 'MR Safe' },
+              { value: 'mr_conditional', label: 'MR Conditional' },
+              { value: 'mr_unsafe', label: 'MR Unsafe' },
+              { value: 'not_tested', label: 'Not Tested' },
+            ],
+            helpText: 'Per ASTM F2503 — MRI labeling is required for implants',
+          },
+          {
+            id: 'reprocessing_method',
+            label: 'Reprocessing Method (if reusable)',
+            type: 'select',
+            options: [
+              { value: 'not_applicable', label: 'Not Applicable (Single-Use)' },
+              { value: 'autoclave', label: 'Autoclave / Steam' },
+              { value: 'manual_cleaning', label: 'Manual Cleaning + Disinfection' },
+              { value: 'automated_washer', label: 'Automated Washer/Disinfector' },
+              { value: 'low_temp_sterilization', label: 'Low-Temperature Sterilization' },
+            ],
           },
         ],
         defaultNext: 'predicate_info',
@@ -583,6 +652,162 @@ export function createDevice510kFlow(): FlowDefinition {
         ],
         branches: [
           {
+            when: { field: 'is_electronic', operator: 'eq', value: true },
+            goto: 'emc_testing_detail',
+          },
+          {
+            when: { field: 'contact_duration', operator: 'in', value: ['prolonged', 'permanent'] },
+            goto: 'biocompat_detail',
+          },
+          {
+            when: { field: 'contains_software', operator: 'eq', value: true },
+            goto: 'software_classification',
+          },
+          {
+            when: { field: 'is_sterile', operator: 'eq', value: true },
+            goto: 'sterilization',
+          },
+        ],
+        defaultNext: 'labeling',
+      },
+
+      {
+        id: 'emc_testing_detail',
+        section: 'Testing',
+        question:
+          'Provide details on electromagnetic compatibility (EMC) testing for this electronic device.',
+        guidance:
+          'Electronic medical devices must demonstrate electromagnetic compatibility per IEC 60601-1-2. This includes emissions testing (to ensure the device does not interfere with other equipment) and immunity testing (to ensure the device operates safely in the presence of electromagnetic disturbances). The 4th edition of IEC 60601-1-2 (2014) requires a risk-based EMC assessment.',
+        fields: [
+          {
+            id: 'emc_standard_edition',
+            label: 'IEC 60601-1-2 Edition Applied',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'edition_4', label: '4th Edition (2014) — Required for new submissions' },
+              { value: 'edition_3', label: '3rd Edition (2007) — Legacy' },
+            ],
+          },
+          {
+            id: 'emissions_testing_completed',
+            label: 'Emissions Testing Completed',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'immunity_testing_completed',
+            label: 'Immunity Testing Completed',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'intended_electromagnetic_environment',
+            label: 'Intended Electromagnetic Environment',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'professional_healthcare', label: 'Professional Healthcare Facility' },
+              { value: 'home_healthcare', label: 'Home Healthcare Environment' },
+              { value: 'special', label: 'Special Environment (e.g. MRI room, ambulance)' },
+            ],
+          },
+          {
+            id: 'wireless_technology',
+            label: 'Wireless Technology Used',
+            type: 'multi_select',
+            options: [
+              { value: 'bluetooth', label: 'Bluetooth / BLE' },
+              { value: 'wifi', label: 'Wi-Fi' },
+              { value: 'cellular', label: 'Cellular (4G/5G)' },
+              { value: 'nfc', label: 'NFC' },
+              { value: 'rfid', label: 'RFID' },
+              { value: 'zigbee', label: 'Zigbee / Z-Wave' },
+              { value: 'none', label: 'None' },
+            ],
+          },
+          {
+            id: 'emc_risk_assessment',
+            label: 'EMC Risk Assessment Completed (per 4th Edition)',
+            type: 'yes_no',
+            helpText: 'The 4th edition requires a risk-based approach to EMC testing',
+          },
+          {
+            id: 'esd_protection',
+            label: 'ESD Protection Level',
+            type: 'text',
+            placeholder: 'e.g. ±8kV contact, ±15kV air',
+          },
+        ],
+        branches: [
+          {
+            when: { field: 'contains_software', operator: 'eq', value: true },
+            goto: 'software_classification',
+          },
+          {
+            when: { field: 'is_sterile', operator: 'eq', value: true },
+            goto: 'sterilization',
+          },
+        ],
+        defaultNext: 'labeling',
+      },
+
+      {
+        id: 'biocompat_detail',
+        section: 'Testing',
+        question:
+          'Provide detailed biocompatibility information for this extended-contact device.',
+        guidance:
+          'Devices with prolonged (>24 hours) or permanent contact require an expanded biological evaluation per ISO 10993-1 Table A.1. This typically includes systemic toxicity, subacute/subchronic toxicity, genotoxicity, and (for implants) implantation studies. FDA\'s 2020 guidance emphasizes using chemical characterization (ISO 10993-18) as a risk-based approach before conducting animal studies.',
+        fields: [
+          {
+            id: 'biological_evaluation_plan',
+            label: 'Biological Evaluation Plan (BEP) Prepared',
+            type: 'yes_no',
+            required: true,
+            helpText: 'Documented plan per ISO 10993-1 describing the biological evaluation strategy',
+          },
+          {
+            id: 'chemical_characterization_results',
+            label: 'Chemical Characterization Results Summary',
+            type: 'textarea',
+            required: true,
+            helpText: 'Per ISO 10993-18 — extractables/leachables testing results and toxicological risk assessment',
+          },
+          {
+            id: 'toxicological_risk_assessment',
+            label: 'Toxicological Risk Assessment Completed',
+            type: 'yes_no',
+            required: true,
+            helpText: 'Comparison of extractable/leachable levels to established Tolerable Intake/Tolerable Contact levels',
+          },
+          {
+            id: 'animal_testing_justified',
+            label: 'Animal Testing Justified or Waived',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'required_completed', label: 'Required and Completed' },
+              { value: 'required_planned', label: 'Required — Planned' },
+              { value: 'waived_chemical', label: 'Waived Based on Chemical Characterization' },
+              { value: 'waived_predicate', label: 'Waived Based on Predicate Equivalence' },
+            ],
+          },
+          {
+            id: 'biocompat_summary_report',
+            label: 'Biocompatibility Summary Report Prepared',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'same_materials_as_predicate',
+            label: 'Same Materials as Predicate Device',
+            type: 'yes_no',
+            helpText: 'If materials are identical to the predicate, biocompatibility data from the predicate may be leveraged',
+          },
+        ],
+        branches: [
+          {
             when: { field: 'contains_software', operator: 'eq', value: true },
             goto: 'software_classification',
           },
@@ -743,6 +968,76 @@ export function createDevice510kFlow(): FlowDefinition {
             message:
               'As of October 2023, FDA requires all 510(k) submissions in eSTAR format. Submissions not in eSTAR format will be placed on Refuse to Accept (RTA).',
             reference: 'FDA: eSTAR Requirement (October 2023)',
+          },
+        ],
+        branches: [
+          {
+            when: { field: 'contains_software', operator: 'eq', value: true },
+            goto: 'software_classification',
+          },
+          {
+            when: { field: 'is_sterile', operator: 'eq', value: true },
+            goto: 'sterilization',
+          },
+        ],
+        defaultNext: 'quality_system_info',
+      },
+
+      {
+        id: 'quality_system_info',
+        section: 'Submission Preparation',
+        question:
+          'Describe the quality management system and design controls for this device.',
+        guidance:
+          'While the 510(k) submission does not require a full QMS audit, FDA may request evidence of design controls per 21 CFR 820.30 and quality system compliance. Design control documentation including design inputs, outputs, verification, validation, and design review records should be available. ISO 13485 certification demonstrates QMS compliance.',
+        fields: [
+          {
+            id: 'iso_13485_certified',
+            label: 'ISO 13485 Certified',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'iso_13485_registrar',
+            label: 'ISO 13485 Registrar / Certification Body',
+            type: 'text',
+            visibleWhen: { field: 'iso_13485_certified', operator: 'eq', value: true },
+          },
+          {
+            id: 'design_controls_21cfr820',
+            label: 'Design Controls per 21 CFR 820.30 Documented',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'design_history_file',
+            label: 'Design History File (DHF) Available',
+            type: 'yes_no',
+            required: true,
+            helpText: 'The DHF contains all design control records for the device',
+          },
+          {
+            id: 'design_verification_completed',
+            label: 'Design Verification Completed',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'design_validation_completed',
+            label: 'Design Validation Completed',
+            type: 'yes_no',
+            required: true,
+          },
+          {
+            id: 'design_transfer_completed',
+            label: 'Design Transfer to Manufacturing Completed',
+            type: 'yes_no',
+          },
+          {
+            id: 'supplier_controls',
+            label: 'Supplier Controls Established',
+            type: 'yes_no',
+            helpText: 'Per 21 CFR 820.50 — purchasing controls for critical suppliers',
           },
         ],
         branches: [
@@ -1488,6 +1783,101 @@ export function createDevice510kFlow(): FlowDefinition {
             label: 'Field Service and Maintenance Plan',
             type: 'yes_no',
             helpText: 'For devices requiring installation, calibration, or periodic maintenance',
+          },
+        ],
+        branches: [
+          {
+            when: { field: 'is_implant', operator: 'eq', value: true },
+            goto: 'implant_specific',
+          },
+        ],
+        defaultNext: null,
+      },
+
+      {
+        id: 'implant_specific',
+        section: 'Risk Management & Post-Market',
+        question:
+          'For this implantable device, provide additional information required by FDA.',
+        guidance:
+          'Implantable devices face heightened scrutiny from FDA and require additional documentation. This includes fatigue testing, corrosion testing (for metallic implants), MRI safety assessment, explant analysis protocols, and patient implant cards. Long-term biocompatibility and mechanical performance must be demonstrated for the expected implant duration.',
+        fields: [
+          {
+            id: 'expected_implant_duration',
+            label: 'Expected Implant Duration',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'temporary', label: 'Temporary (< 30 days)' },
+              { value: 'short_term', label: 'Short-Term (30 days - 1 year)' },
+              { value: 'long_term', label: 'Long-Term (1 - 10 years)' },
+              { value: 'permanent', label: 'Permanent (> 10 years / lifetime)' },
+            ],
+          },
+          {
+            id: 'fatigue_testing',
+            label: 'Fatigue / Durability Testing Completed',
+            type: 'yes_no',
+            required: true,
+            helpText: 'Mechanical fatigue testing simulating expected in-vivo loading conditions',
+          },
+          {
+            id: 'fatigue_cycles',
+            label: 'Number of Fatigue Cycles Tested',
+            type: 'number',
+            visibleWhen: { field: 'fatigue_testing', operator: 'eq', value: true },
+            helpText: 'e.g. 10 million cycles for orthopedic implants',
+          },
+          {
+            id: 'corrosion_testing',
+            label: 'Corrosion Testing Completed',
+            type: 'yes_no',
+            helpText: 'Per ASTM F2129 (pitting/crevice corrosion) for metallic implants',
+          },
+          {
+            id: 'wear_testing',
+            label: 'Wear / Debris Testing Completed',
+            type: 'yes_no',
+            helpText: 'For articulating implants — wear particle characterization',
+          },
+          {
+            id: 'patient_implant_card',
+            label: 'Patient Implant Card Prepared',
+            type: 'yes_no',
+            required: true,
+            helpText: 'Required for implantable devices to provide to patients',
+          },
+          {
+            id: 'explant_retrieval_program',
+            label: 'Explant / Retrieval Analysis Program',
+            type: 'yes_no',
+            helpText: 'Program to systematically analyze explanted devices',
+          },
+          {
+            id: 'mri_safety_testing',
+            label: 'MRI Safety Testing Completed (ASTM F2052, F2213, F2182)',
+            type: 'yes_no',
+            required: true,
+            helpText: 'Magnetically induced displacement, torque, and RF heating tests',
+          },
+        ],
+        issueChecks: [
+          {
+            id: 'implant_no_fatigue_check',
+            condition: { field: 'fatigue_testing', operator: 'eq', value: false },
+            severity: 'critical',
+            title: 'Implant Without Fatigue Testing',
+            message:
+              'Implantable devices typically require fatigue/durability testing to demonstrate mechanical performance over the expected implant duration. FDA will likely request this data.',
+          },
+          {
+            id: 'implant_no_mri_check',
+            condition: { field: 'mri_safety_testing', operator: 'eq', value: false },
+            severity: 'warning',
+            title: 'Implant Without MRI Safety Testing',
+            message:
+              'MRI safety testing and labeling is expected for most implantable devices per ASTM F2503. Patients and clinicians need to know MRI compatibility status.',
+            reference: 'ASTM F2503',
           },
         ],
         defaultNext: null,

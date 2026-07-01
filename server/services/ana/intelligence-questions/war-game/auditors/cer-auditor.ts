@@ -1,1020 +1,864 @@
 /**
- * CER (Clinical Evaluation Report) War Game Auditor
+ * CER War Game Auditor
  *
- * Simulates Notified Body and EU MDR reviewer scrutiny of a Clinical
- * Evaluation Report. Examines equivalence assessment, literature search
- * methodology, clinical data analysis, GSPR mapping, PMCF planning,
- * and evaluator qualifications per EU MDR and MEDDEV 2.7/1 Rev 4.
+ * Simulates a Notified Body / EU MDR reviewer scrutinising a
+ * Clinical Evaluation Report.  Every rule is phrased as a question
+ * a Notified Body assessor would ask during a technical documentation
+ * review under EU MDR 2017/745.
  *
  * @module server/services/ana/intelligence-questions/war-game/auditors/cer-auditor
  */
-import type { WarGameAuditor, AuditRule, WarGameFinding } from '../types.js';
+
+import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
 
-function isEmpty(val: unknown): boolean {
-  if (val == null) return true;
-  if (typeof val === 'string') return val.trim() === '';
-  if (Array.isArray(val)) return val.length === 0;
+const rid = (suffix: string) => 'cer_' + suffix;
+
+/** Truthy-but-empty guard -- treats whitespace-only strings as missing. */
+function isBlank(v: unknown): boolean {
+  if (v == null) return true;
+  if (typeof v === 'string' && v.trim() === '') return true;
+  if (Array.isArray(v) && v.length === 0) return true;
   return false;
 }
 
-function includes(val: unknown, search: string): boolean {
-  if (typeof val === 'string') return val.toLowerCase().includes(search.toLowerCase());
-  if (Array.isArray(val)) return val.includes(search);
-  return false;
+/** Safe string coercion. */
+function str(v: unknown): string {
+  return typeof v === 'string' ? v.trim() : '';
+}
+
+/** Safe number coercion, returns NaN for non-numeric. */
+function num(v: unknown): number {
+  if (typeof v === 'number') return v;
+  if (typeof v === 'string') return Number(v);
+  return NaN;
 }
 
 /* ------------------------------------------------------------------ */
 /*  Rules                                                             */
 /* ------------------------------------------------------------------ */
 
-function buildRules(): AuditRule[] {
-  return [
-    /* ── Equivalence Assessment (1-6) ──────────────────────────── */
-    {
-      id: 'cer_001',
-      dimension: 'scientific_rigor',
-      title: 'No equivalent device identified',
-      question:
-        'If you are claiming equivalence, how can the CER proceed without identifying the equivalent device?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.equivalent_device)) {
-          return {
-            id: 'cer_001',
-            dimension: 'scientific_rigor',
-            severity: 'critical',
-            title: 'No equivalent device identified',
-            question:
-              'If you are claiming equivalence, how can the CER proceed without identifying the equivalent device?',
-            observation:
-              'No equivalent device has been identified for the equivalence route.',
-            requirement:
-              'When claiming equivalence, the CER must identify and fully describe the equivalent device, including its regulatory status.',
-            reference: 'EU MDR Annex XIV, MEDDEV 2.7/1 Section 5',
-            recommendation:
-              'Identify the equivalent device and provide its name, manufacturer, regulatory status, and intended purpose. If not claiming equivalence, ensure sufficient clinical data from the subject device.',
-            relatedFields: [
-              'equivalent_device',
-              'equivalence_justification',
-              'clinical_technical_biological_equivalence',
-            ],
-          };
-        }
-        return null;
-      },
+const rules: AuditRule[] = [
+  /* 1 -- Device identification */
+  {
+    id: rid('device_identification'),
+    dimension: 'completeness',
+    title: 'Device identification & description',
+    question:
+      'Per Annex XIV Part A Section 1 of EU MDR 2017/745, the CER shall include a description of the device and its intended purpose. Can the manufacturer confirm that the device name, description, and intended purpose are fully specified?',
+    check(answers) {
+      if (isBlank(answers.device_name) || isBlank(answers.device_description) || isBlank(answers.intended_purpose)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation:
+            'One or more of the following are missing or incomplete: device name, device description, intended purpose.',
+          requirement:
+            'EU MDR Annex XIV Part A Section 1 requires clear identification of the device, including trade name, model/size variants, and a precise statement of intended purpose.',
+          reference: 'EU MDR 2017/745 Annex XIV Part A, Section 1; MEDDEV 2.7/1 Rev 4 Section 7',
+          recommendation:
+            'Provide the full device description covering design, materials, and functional principles, and state the intended purpose verbatim as declared in the technical documentation.',
+          relatedFields: ['device_name', 'device_description', 'intended_purpose'],
+        };
+      }
+      return null;
     },
-    {
-      id: 'cer_002',
-      dimension: 'scientific_rigor',
-      title: 'Equivalence justification inadequate',
-      question:
-        'How does a brief equivalence justification adequately demonstrate clinical, technical, and biological equivalence?',
-      check(answers): WarGameFinding | null {
-        const justification = answers.equivalence_justification;
-        if (
-          typeof justification === 'string' &&
-          justification.trim().length > 0 &&
-          justification.trim().length < 100
-        ) {
-          return {
-            id: 'cer_002',
-            dimension: 'scientific_rigor',
-            severity: 'warning',
-            title: 'Equivalence justification inadequate',
-            question:
-              'How does a brief equivalence justification adequately demonstrate clinical, technical, and biological equivalence?',
-            observation:
-              'The equivalence justification is too short to adequately support the equivalence claim.',
-            requirement:
-              'The equivalence justification must provide a detailed comparison of clinical, technical, and biological characteristics.',
-            reference: 'MEDDEV 2.7/1 Rev 4 Section 5.3',
-            recommendation:
-              'Expand the equivalence justification to include a detailed comparison of clinical, technical, and biological characteristics, with explicit rationale for any differences.',
-            relatedFields: [
-              'equivalence_justification',
-              'equivalent_device',
-              'clinical_technical_biological_equivalence',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_003',
-      dimension: 'consistency',
-      title: 'Clinical/technical/biological equivalence not all addressed',
-      question:
-        'EU MDR requires demonstration of clinical, technical, AND biological equivalence. Have all three pillars been addressed?',
-      check(answers): WarGameFinding | null {
-        if (
-          !isEmpty(answers.equivalent_device) &&
-          isEmpty(answers.clinical_technical_biological_equivalence)
-        ) {
-          return {
-            id: 'cer_003',
-            dimension: 'consistency',
-            severity: 'critical',
-            title:
-              'Clinical/technical/biological equivalence not all addressed',
-            question:
-              'EU MDR requires demonstration of clinical, technical, AND biological equivalence. Have all three pillars been addressed?',
-            observation:
-              'An equivalent device is identified but the three pillars of equivalence (clinical, technical, biological) have not been fully addressed.',
-            requirement:
-              'All three pillars of equivalence must be individually demonstrated and documented.',
-            reference: 'EU MDR Article 61(5)',
-            recommendation:
-              'Document each pillar of equivalence separately: clinical equivalence (intended purpose, clinical condition, severity), technical equivalence (design, specifications, materials, surfaces), and biological equivalence (biocompatibility, tissue contact).',
-            relatedFields: [
-              'clinical_technical_biological_equivalence',
-              'equivalent_device',
-              'equivalence_justification',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_004',
-      dimension: 'regulatory_alignment',
-      title: 'Equivalence with competitor device without contract',
-      question:
-        'Under EU MDR, you must demonstrate access to the competitor\'s technical documentation to claim equivalence. Can you provide evidence of such access?',
-      check(answers): WarGameFinding | null {
-        if (
-          !isEmpty(answers.equivalent_device) &&
-          !isEmpty(answers.manufacturer_name) &&
-          !includes(answers.equivalent_device, String(answers.manufacturer_name))
-        ) {
-          return {
-            id: 'cer_004',
-            dimension: 'regulatory_alignment',
-            severity: 'critical',
-            title: 'Equivalence with competitor device without contract',
-            question:
-              'Under EU MDR, you must demonstrate access to the competitor\'s technical documentation to claim equivalence. Can you provide evidence of such access?',
-            observation:
-              'The equivalent device appears to be from a different manufacturer, which under EU MDR requires a contract granting access to technical documentation.',
-            requirement:
-              'Under EU MDR Article 61(5), claiming equivalence with a competitor device requires a contract with that manufacturer to access their technical documentation.',
-            reference: 'EU MDR Article 61(5)',
-            recommendation:
-              'Either establish a contractual agreement with the equivalent device manufacturer for access to technical documentation, or select an equivalent device from your own portfolio, or generate sufficient clinical data from the subject device.',
-            relatedFields: [
-              'equivalent_device',
-              'manufacturer_name',
-              'equivalence_justification',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_005',
-      dimension: 'documentation',
-      title: 'No state of the art analysis',
-      question:
-        'How can the CER evaluate benefit-risk without an analysis of the current state of the art?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.state_of_the_art_analysis)) {
-          return {
-            id: 'cer_005',
-            dimension: 'documentation',
-            severity: 'warning',
-            title: 'No state of the art analysis',
-            question:
-              'How can the CER evaluate benefit-risk without an analysis of the current state of the art?',
-            observation:
-              'No state of the art analysis has been provided.',
-            requirement:
-              'The CER must include an analysis of the current state of the art to contextualize the device benefits and risks.',
-            reference: 'MEDDEV 2.7/1 Section 7',
-            recommendation:
-              'Provide a state of the art analysis covering alternative treatments, current clinical practice, available technologies, and relevant standards and guidelines.',
-            relatedFields: [
-              'state_of_the_art_analysis',
-              'benefit_risk_determination',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_006',
-      dimension: 'completeness',
-      title: 'Device description inadequate',
-      question:
-        'Is the device description sufficient for the Notified Body to understand the device scope, design, and intended purpose?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.device_description)) {
-          return {
-            id: 'cer_006',
-            dimension: 'completeness',
-            severity: 'critical',
-            title: 'Device description inadequate',
-            question:
-              'Is the device description sufficient for the Notified Body to understand the device scope, design, and intended purpose?',
-            observation:
-              'The device description is missing or inadequate.',
-            requirement:
-              'The CER must include a comprehensive device description covering design, materials, intended purpose, and principles of operation.',
-            reference: 'EU MDR Annex II',
-            recommendation:
-              'Provide a detailed device description including device name, intended purpose, design, materials, dimensions, accessories, variants, and principles of operation.',
-            relatedFields: [
-              'device_description',
-              'device_name',
-              'intended_purpose',
-            ],
-          };
-        }
-        return null;
-      },
-    },
+  },
 
-    /* ── Literature Search (7-13) ──────────────────────────────── */
-    {
-      id: 'cer_007',
-      dimension: 'scientific_rigor',
-      title: 'No literature search strategy defined',
-      question:
-        'Without a defined literature search strategy, how can the CER demonstrate a systematic and reproducible approach to evidence identification?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.literature_search_strategy)) {
-          return {
-            id: 'cer_007',
-            dimension: 'scientific_rigor',
-            severity: 'critical',
-            title: 'No literature search strategy defined',
-            question:
-              'Without a defined literature search strategy, how can the CER demonstrate a systematic and reproducible approach to evidence identification?',
-            observation:
-              'No literature search strategy has been defined.',
-            requirement:
-              'The CER must include a documented, systematic literature search strategy that is reproducible and comprehensive.',
-            reference: 'MEDDEV 2.7/1 Section 8',
-            recommendation:
-              'Define a literature search strategy including search terms, Boolean operators, databases, date ranges, language filters, and inclusion/exclusion criteria. The strategy should be documented as a protocol before execution.',
-            relatedFields: [
-              'literature_search_strategy',
-              'literature_databases',
-              'inclusion_exclusion_criteria',
-            ],
-          };
-        }
-        return null;
-      },
+  /* 2 -- MDR device classification */
+  {
+    id: rid('device_classification'),
+    dimension: 'regulatory_alignment',
+    title: 'MDR risk class declaration',
+    question:
+      'Under Annex VIII of EU MDR 2017/745, has the manufacturer declared the device risk class and confirmed the applicable classification rule(s)?',
+    check(answers) {
+      const cls = str(answers.device_class_mdr).toLowerCase().replace(/\s/g, '');
+      if (isBlank(cls) || !['i', 'iia', 'iib', 'iii'].includes(cls)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation:
+            `Device class "${str(answers.device_class_mdr) || '(not provided)'}" does not correspond to a valid EU MDR Annex VIII classification (I, IIa, IIb, III).`,
+          requirement:
+            'The CER must state the device classification under MDR Annex VIII and identify the applicable classification rule(s). MEDDEV 2.7/1 Rev 4 Section 7 requires this.',
+          reference: 'EU MDR 2017/745 Annex VIII; MEDDEV 2.7/1 Rev 4 Section 7',
+          recommendation:
+            'State the classification rule number (e.g., Rule 11) and resulting class. For up-classified devices, justify the classification rationale.',
+          relatedFields: ['device_class_mdr'],
+        };
+      }
+      return null;
     },
-    {
-      id: 'cer_008',
-      dimension: 'completeness',
-      title: 'Insufficient databases searched',
-      question:
-        'MEDDEV 2.7/1 recommends searching MEDLINE, Embase, and the Cochrane Library at minimum. Have sufficient databases been searched?',
-      check(answers): WarGameFinding | null {
-        const dbs = answers.literature_databases;
-        if (isEmpty(dbs)) {
-          return {
-            id: 'cer_008',
-            dimension: 'completeness',
-            severity: 'warning',
-            title: 'Insufficient databases searched',
-            question:
-              'MEDDEV 2.7/1 recommends searching MEDLINE, Embase, and the Cochrane Library at minimum. Have sufficient databases been searched?',
-            observation:
-              'The literature databases searched have not been specified.',
-            requirement:
-              'At minimum, MEDLINE, Embase, and the Cochrane Library should be searched. Additional specialty databases may be required depending on the device type.',
-            reference: 'MEDDEV 2.7/1 Section 8.3',
-            recommendation:
-              'Search at minimum MEDLINE (via PubMed), Embase, and the Cochrane Library. Consider additional databases such as CINAHL, Web of Science, or specialty databases relevant to the device area.',
-            relatedFields: [
-              'literature_databases',
-              'literature_search_strategy',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_009',
-      dimension: 'documentation',
-      title: 'No inclusion/exclusion criteria for literature',
-      question:
-        'Without defined inclusion and exclusion criteria, how can the literature selection be justified as objective and reproducible?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.inclusion_exclusion_criteria)) {
-          return {
-            id: 'cer_009',
-            dimension: 'documentation',
-            severity: 'warning',
-            title: 'No inclusion/exclusion criteria for literature',
-            question:
-              'Without defined inclusion and exclusion criteria, how can the literature selection be justified as objective and reproducible?',
-            observation:
-              'No inclusion and exclusion criteria for literature selection have been defined.',
-            requirement:
-              'Pre-defined inclusion and exclusion criteria are required for systematic, reproducible literature selection.',
-            reference: 'MEDDEV 2.7/1 Section 8.4',
-            recommendation:
-              'Define clear inclusion and exclusion criteria covering study type, population, language, date range, endpoint relevance, and quality thresholds. Apply these criteria consistently and document the selection process.',
-            relatedFields: [
-              'inclusion_exclusion_criteria',
-              'literature_search_strategy',
-              'appraisal_methodology',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_010',
-      dimension: 'scientific_rigor',
-      title: 'Literature search date range too narrow',
-      question:
-        'A search window of fewer than 5 years may miss important clinical evidence. Is this sufficient?',
-      check(answers): WarGameFinding | null {
-        const range = answers.search_date_range;
-        if (typeof range === 'string' && range.trim().length > 0) {
-          const years = range.match(/\d{4}/g);
-          if (years && years.length >= 2) {
-            const span = parseInt(years[years.length - 1], 10) - parseInt(years[0], 10);
-            if (span < 5) {
-              return {
-                id: 'cer_010',
-                dimension: 'scientific_rigor',
-                severity: 'warning',
-                title: 'Literature search date range too narrow',
-                question:
-                  'A search window of fewer than 5 years may miss important clinical evidence. Is this sufficient?',
-                observation: `The search date range spans approximately ${span} years, which may be insufficient.`,
-                requirement:
-                  'The literature search should cover a sufficient time period to capture all relevant clinical evidence, typically at least 5-10 years.',
-                reference: 'MEDDEV 2.7/1 Section 8.2',
-                recommendation:
-                  'Expand the search date range to at least 5-10 years, or provide justification for the narrower range based on the technology lifecycle or recent market introduction.',
-                relatedFields: [
-                  'search_date_range',
-                  'literature_search_strategy',
-                ],
-              };
-            }
-          }
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_011',
-      dimension: 'consistency',
-      title: 'Very few articles appraised relative to articles identified',
-      question:
-        'A very low appraisal rate suggests overly aggressive exclusion. Can you justify why fewer than 10% of identified articles were appraised?',
-      check(answers): WarGameFinding | null {
-        const total = Number(answers.total_articles_identified);
-        const appraised = Number(answers.articles_appraised);
-        if (
-          total > 0 &&
-          appraised > 0 &&
-          appraised / total < 0.1
-        ) {
-          return {
-            id: 'cer_011',
-            dimension: 'consistency',
-            severity: 'warning',
-            title:
-              'Very few articles appraised relative to articles identified',
-            question:
-              'A very low appraisal rate suggests overly aggressive exclusion. Can you justify why fewer than 10% of identified articles were appraised?',
-            observation: `Only ${appraised} of ${total} identified articles (${Math.round((appraised / total) * 100)}%) were appraised, suggesting potentially aggressive exclusion.`,
-            requirement:
-              'The selection and exclusion process must be transparent, justified, and not biased toward favorable outcomes.',
-            reference: 'MEDDEV 2.7/1 Section 9',
-            recommendation:
-              'Review the exclusion rationale and ensure it is documented and justified. If the rate is appropriate, provide a clear PRISMA-style flow diagram showing the screening and exclusion process.',
-            relatedFields: [
-              'articles_appraised',
-              'total_articles_identified',
-              'inclusion_exclusion_criteria',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_012',
-      dimension: 'documentation',
-      title: 'No appraisal methodology defined',
-      question:
-        'Without a defined appraisal methodology, how can the quality and relevance of the appraised literature be evaluated?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.appraisal_methodology)) {
-          return {
-            id: 'cer_012',
-            dimension: 'documentation',
-            severity: 'warning',
-            title: 'No appraisal methodology defined',
-            question:
-              'Without a defined appraisal methodology, how can the quality and relevance of the appraised literature be evaluated?',
-            observation:
-              'No literature appraisal methodology has been defined.',
-            requirement:
-              'A defined appraisal methodology is required to systematically assess the methodological quality, relevance, and contribution of each appraised article.',
-            reference: 'MEDDEV 2.7/1 Section 9.1',
-            recommendation:
-              'Define and document the appraisal methodology, including quality scoring criteria, relevance assessment, and weighting of evidence. Consider using validated tools such as the Oxford CEBM levels of evidence.',
-            relatedFields: [
-              'appraisal_methodology',
-              'articles_appraised',
-              'clinical_data_summary',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_013',
-      dimension: 'completeness',
-      title: 'No total articles count',
-      question:
-        'Without reporting the total number of articles identified, the comprehensiveness of the search cannot be assessed.',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.total_articles_identified)) {
-          return {
-            id: 'cer_013',
-            dimension: 'completeness',
-            severity: 'info',
-            title: 'No total articles count',
-            question:
-              'Without reporting the total number of articles identified, the comprehensiveness of the search cannot be assessed.',
-            observation:
-              'The total number of articles identified in the literature search has not been reported.',
-            requirement:
-              'The literature search results must include the total number of articles identified at each stage of the screening process.',
-            reference: 'MEDDEV 2.7/1 Appendix',
-            recommendation:
-              'Document the total number of articles identified by each database, after deduplication, and at each stage of screening. Present using a PRISMA flow diagram.',
-            relatedFields: [
-              'total_articles_identified',
-              'articles_appraised',
-              'literature_search_strategy',
-            ],
-          };
-        }
-        return null;
-      },
-    },
+  },
 
-    /* ── Clinical Data & GSPR (14-20) ──────────────────────────── */
-    {
-      id: 'cer_014',
-      dimension: 'completeness',
-      title: 'Clinical data summary missing',
-      question:
-        'Without a clinical data summary, how can the CER draw conclusions about the safety and performance of the device?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.clinical_data_summary)) {
-          return {
-            id: 'cer_014',
-            dimension: 'completeness',
-            severity: 'critical',
-            title: 'Clinical data summary missing',
-            question:
-              'Without a clinical data summary, how can the CER draw conclusions about the safety and performance of the device?',
-            observation:
-              'No clinical data summary has been provided.',
-            requirement:
-              'The CER must include a comprehensive summary of all clinical data, including data from the subject device, equivalent devices, and the literature.',
-            reference: 'MEDDEV 2.7/1 Section 10',
-            recommendation:
-              'Provide a clinical data summary that synthesizes findings from all data sources, evaluates the totality of evidence, and draws conclusions about safety and performance.',
-            relatedFields: [
-              'clinical_data_summary',
-              'articles_appraised',
-              'benefit_risk_determination',
-            ],
-          };
-        }
-        return null;
-      },
+  /* 3 -- Clinical claims */
+  {
+    id: rid('clinical_claims'),
+    dimension: 'scientific_rigor',
+    title: 'Clinical claims substantiation',
+    question:
+      'MEDDEV 2.7/1 Rev 4 Section 9 requires that all clinical claims be identified and evaluated. Has the manufacturer listed every clinical claim made for the device and indicated the corresponding clinical evidence?',
+    check(answers) {
+      if (isBlank(answers.clinical_claims)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation: 'No clinical claims have been provided.',
+          requirement:
+            'The CER must explicitly list all clinical claims (safety, performance, clinical benefit) and map each claim to the supporting clinical evidence per MEDDEV 2.7/1 Rev 4 Section 9.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 9; EU MDR Article 61(1)',
+          recommendation:
+            'Tabulate every clinical claim together with the type and strength of evidence supporting it. Include any claims implied in the IFU or promotional material.',
+          relatedFields: ['clinical_claims'],
+        };
+      }
+      return null;
     },
-    {
-      id: 'cer_015',
-      dimension: 'regulatory_alignment',
-      title: 'GSPR list not defined',
-      question:
-        'Without a GSPR list, how can the CER demonstrate that all applicable general safety and performance requirements have been addressed?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.gspr_list)) {
-          return {
-            id: 'cer_015',
-            dimension: 'regulatory_alignment',
-            severity: 'critical',
-            title: 'GSPR list not defined',
-            question:
-              'Without a GSPR list, how can the CER demonstrate that all applicable general safety and performance requirements have been addressed?',
-            observation:
-              'No GSPR (General Safety and Performance Requirements) list has been defined.',
-            requirement:
-              'The CER must identify all applicable GSPRs from EU MDR Annex I and demonstrate conformity with each.',
-            reference: 'EU MDR Annex I',
-            recommendation:
-              'Create a GSPR checklist identifying all applicable requirements from EU MDR Annex I, and for each requirement specify how conformity is demonstrated (by clinical evidence, testing, standards, etc.).',
-            relatedFields: [
-              'gspr_list',
-              'gspr_clinical_evidence_mapping',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_016',
-      dimension: 'regulatory_alignment',
-      title: 'GSPR not mapped to clinical evidence',
-      question:
-        'The GSPRs that require clinical evidence have not been mapped. How will you demonstrate that clinical evidence supports each applicable requirement?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.gspr_clinical_evidence_mapping)) {
-          return {
-            id: 'cer_016',
-            dimension: 'regulatory_alignment',
-            severity: 'critical',
-            title: 'GSPR not mapped to clinical evidence',
-            question:
-              'The GSPRs that require clinical evidence have not been mapped. How will you demonstrate that clinical evidence supports each applicable requirement?',
-            observation:
-              'GSPRs have not been mapped to the clinical evidence that supports conformity.',
-            requirement:
-              'Each GSPR that requires clinical evidence must be mapped to the specific clinical data that demonstrates conformity.',
-            reference: 'EU MDR Article 61(1)',
-            recommendation:
-              'Create a mapping table linking each clinically relevant GSPR to the specific clinical evidence (literature, clinical investigation, PMS data) that demonstrates conformity.',
-            relatedFields: [
-              'gspr_clinical_evidence_mapping',
-              'gspr_list',
-              'clinical_data_summary',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_017',
-      dimension: 'scientific_rigor',
-      title: 'Benefit-risk determination missing',
-      question:
-        'The CER must conclude with a benefit-risk determination. Without it, how can the overall acceptability of the device be assessed?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.benefit_risk_determination)) {
-          return {
-            id: 'cer_017',
-            dimension: 'scientific_rigor',
-            severity: 'critical',
-            title: 'Benefit-risk determination missing',
-            question:
-              'The CER must conclude with a benefit-risk determination. Without it, how can the overall acceptability of the device be assessed?',
-            observation:
-              'No benefit-risk determination has been provided.',
-            requirement:
-              'The CER must include a benefit-risk determination that weighs the clinical benefits against the residual risks in the context of the state of the art.',
-            reference: 'EU MDR Annex I Section 1, MEDDEV 2.7/1 Section 11',
-            recommendation:
-              'Provide a structured benefit-risk analysis that identifies and quantifies benefits, identifies and characterizes risks, compares against the state of the art, and reaches a clear conclusion on acceptability.',
-            relatedFields: [
-              'benefit_risk_determination',
-              'residual_risk_acceptability',
-              'state_of_the_art_analysis',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_018',
-      dimension: 'risk_identification',
-      title: 'Residual risk acceptability not addressed',
-      question:
-        'Have residual risks been evaluated against the benefit-risk criteria? The acceptability of residual risks must be explicitly stated.',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.residual_risk_acceptability)) {
-          return {
-            id: 'cer_018',
-            dimension: 'risk_identification',
-            severity: 'warning',
-            title: 'Residual risk acceptability not addressed',
-            question:
-              'Have residual risks been evaluated against the benefit-risk criteria? The acceptability of residual risks must be explicitly stated.',
-            observation:
-              'The acceptability of residual risks has not been addressed.',
-            requirement:
-              'Residual risks must be evaluated against defined acceptability criteria and their acceptability explicitly documented.',
-            reference: 'ISO 14971, EU MDR Annex I',
-            recommendation:
-              'Document the evaluation of each residual risk against the acceptability criteria defined in the risk management plan, and provide an explicit statement of overall residual risk acceptability.',
-            relatedFields: [
-              'residual_risk_acceptability',
-              'benefit_risk_determination',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_019',
-      dimension: 'completeness',
-      title: 'No intended purpose stated',
-      question:
-        'The intended purpose is fundamental to the CER scope. How can the evaluation proceed without it?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.intended_purpose)) {
-          return {
-            id: 'cer_019',
-            dimension: 'completeness',
-            severity: 'critical',
-            title: 'No intended purpose stated',
-            question:
-              'The intended purpose is fundamental to the CER scope. How can the evaluation proceed without it?',
-            observation:
-              'No intended purpose has been stated for the device.',
-            requirement:
-              'The intended purpose must be clearly defined as it determines the scope of the clinical evaluation and the applicable GSPRs.',
-            reference: 'EU MDR Article 2(12)',
-            recommendation:
-              'Define the intended purpose clearly, including the medical condition, target patient population, intended user, clinical benefit, and use environment.',
-            relatedFields: [
-              'intended_purpose',
-              'device_description',
-              'indications_for_use',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_020',
-      dimension: 'documentation',
-      title: 'No UDI-DI assigned',
-      question:
-        'Has a UDI-DI been assigned to the device? This is a regulatory requirement under EU MDR.',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.udi_di)) {
-          return {
-            id: 'cer_020',
-            dimension: 'documentation',
-            severity: 'warning',
-            title: 'No UDI-DI assigned',
-            question:
-              'Has a UDI-DI been assigned to the device? This is a regulatory requirement under EU MDR.',
-            observation:
-              'No UDI-DI (Unique Device Identifier - Device Identifier) has been assigned.',
-            requirement:
-              'EU MDR requires all devices to have a UDI-DI assigned by an authorized issuing entity and registered in EUDAMED.',
-            reference: 'EU MDR Article 27',
-            recommendation:
-              'Obtain a UDI-DI from an authorized issuing entity (GS1, HIBCC, ICCBBA, or IFA) and ensure it is included in EUDAMED registration.',
-            relatedFields: ['udi_di', 'device_name'],
-          };
-        }
-        return null;
-      },
-    },
+  },
 
-    /* ── PMCF Planning (21-25) ─────────────────────────────────── */
-    {
-      id: 'cer_021',
-      dimension: 'regulatory_alignment',
-      title: 'No PMCF plan',
-      question:
-        'EU MDR requires a Post-Market Clinical Follow-up plan for all devices. Where is the PMCF plan?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.pmcf_plan)) {
-          return {
-            id: 'cer_021',
-            dimension: 'regulatory_alignment',
-            severity: 'critical',
-            title: 'No PMCF plan',
-            question:
-              'EU MDR requires a Post-Market Clinical Follow-up plan for all devices. Where is the PMCF plan?',
-            observation:
-              'No Post-Market Clinical Follow-up (PMCF) plan has been provided.',
-            requirement:
-              'EU MDR requires a PMCF plan for all devices. The plan must be part of the clinical evaluation and PMS system.',
-            reference: 'EU MDR Article 61(11), Annex XIV Part B',
-            recommendation:
-              'Develop a PMCF plan that specifies the objectives, methods (studies, registries, surveys), endpoints, timelines, and how results will feed back into the CER and risk management.',
-            relatedFields: [
-              'pmcf_plan',
-              'pmcf_study_types',
-              'pmcf_endpoints',
-            ],
-          };
-        }
-        return null;
-      },
+  /* 4 -- Equivalence device identification */
+  {
+    id: rid('equivalence_device'),
+    dimension: 'regulatory_alignment',
+    title: 'Equivalent device identification',
+    question:
+      'If claiming equivalence under EU MDR Article 61(5) and Annex XIV Part A Section 3, has the manufacturer identified the equivalent device and provided sufficient detail for assessment?',
+    check(answers) {
+      const eqDevice = str(answers.equivalent_device);
+      // Trigger if they name an equivalent device but provide no demonstration
+      if (!isBlank(answers.equivalent_device) && isBlank(answers.equivalence_demonstration)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation:
+            `An equivalent device ("${eqDevice}") is named but the equivalence demonstration is absent or inadequate.`,
+          requirement:
+            'EU MDR Annex XIV Part A Section 3 requires demonstration of equivalence across three pillars: technical, biological, and clinical characteristics. For Class III and implantable devices, Article 61(5) further requires a contract with the equivalent device manufacturer granting access to technical documentation.',
+          reference: 'EU MDR 2017/745 Article 61(5); Annex XIV Part A Section 3; MDCG 2020-5',
+          recommendation:
+            'Provide a detailed three-column equivalence comparison (technical, biological, clinical) per MDCG 2020-5 guidance. If the equivalent device is from another manufacturer, include evidence of a contractual agreement or justify why direct clinical data is sufficient.',
+          relatedFields: ['equivalent_device', 'equivalence_demonstration'],
+        };
+      }
+      // If higher-risk device but no equivalence and no clinical investigations
+      const cls = str(answers.device_class_mdr).toLowerCase().replace(/\s/g, '');
+      if ((cls === 'iii' || cls === 'iib') && isBlank(eqDevice) && isBlank(answers.clinical_investigations)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation:
+            'No equivalent device is identified and no clinical investigation data is referenced for a higher-risk device.',
+          requirement:
+            'For Class III and implantable devices, EU MDR Article 61(4) requires clinical investigations unless reliance on equivalence or other clinical data can be duly justified per Article 61(10).',
+          reference: 'EU MDR 2017/745 Article 61(4)(10); MDCG 2020-6',
+          recommendation:
+            'Either identify an equivalent device with full three-pillar demonstration, provide clinical investigation data, or document a robust justification under Article 61(10) referencing MDCG 2020-6.',
+          relatedFields: ['equivalent_device', 'clinical_investigations', 'device_class_mdr'],
+        };
+      }
+      return null;
     },
-    {
-      id: 'cer_022',
-      dimension: 'completeness',
-      title: 'PMCF study types not defined',
-      question:
-        'What types of PMCF activities are planned? Without defined study types, the PMCF plan lacks specificity.',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.pmcf_study_types)) {
-          return {
-            id: 'cer_022',
-            dimension: 'completeness',
-            severity: 'warning',
-            title: 'PMCF study types not defined',
-            question:
-              'What types of PMCF activities are planned? Without defined study types, the PMCF plan lacks specificity.',
-            observation:
-              'The types of PMCF studies or activities have not been specified.',
-            requirement:
-              'The PMCF plan must specify the types of activities planned, such as clinical investigations, registries, surveys, or literature reviews.',
-            reference: 'MEDDEV 2.12/2 Rev 2',
-            recommendation:
-              'Define the PMCF study types (e.g., PMCF study per Article 74, registry, structured literature review, complaint analysis, survey) and justify the selection based on identified gaps in clinical evidence.',
-            relatedFields: [
-              'pmcf_study_types',
-              'pmcf_plan',
-              'pmcf_endpoints',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_023',
-      dimension: 'scientific_rigor',
-      title: 'PMCF endpoints not defined',
-      question:
-        'Without defined endpoints, how will PMCF activities generate meaningful data to update the clinical evaluation?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.pmcf_endpoints)) {
-          return {
-            id: 'cer_023',
-            dimension: 'scientific_rigor',
-            severity: 'warning',
-            title: 'PMCF endpoints not defined',
-            question:
-              'Without defined endpoints, how will PMCF activities generate meaningful data to update the clinical evaluation?',
-            observation:
-              'No PMCF endpoints have been defined.',
-            requirement:
-              'PMCF endpoints must be clearly defined to ensure the post-market activities generate actionable data.',
-            reference: 'EU MDR Annex XIV Part B',
-            recommendation:
-              'Define specific, measurable PMCF endpoints including safety endpoints (adverse events, complications), performance endpoints (clinical outcomes, device reliability), and any endpoints addressing residual uncertainties identified in the CER.',
-            relatedFields: [
-              'pmcf_endpoints',
-              'pmcf_plan',
-              'pmcf_study_types',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_024',
-      dimension: 'consistency',
-      title: 'No update frequency for CER',
-      question:
-        'EU MDR requires at least annual CER updates for Class III and implantable devices. Has the update frequency been defined?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.update_frequency)) {
-          return {
-            id: 'cer_024',
-            dimension: 'consistency',
-            severity: 'warning',
-            title: 'No update frequency for CER',
-            question:
-              'EU MDR requires at least annual CER updates for Class III and implantable devices. Has the update frequency been defined?',
-            observation:
-              'The CER update frequency has not been defined.',
-            requirement:
-              'EU MDR requires the CER to be updated regularly. Class III and implantable devices require at least annual updates; other devices at least every 2-5 years.',
-            reference: 'EU MDR Article 61(11)',
-            recommendation:
-              'Define the CER update frequency based on the device classification: at least annually for Class III and implantable devices, and at an appropriate interval for other device classes. Document triggers for ad-hoc updates.',
-            relatedFields: [
-              'update_frequency',
-              'device_classification',
-              'pmcf_plan',
-            ],
-          };
-        }
-        return null;
-      },
-    },
-    {
-      id: 'cer_025',
-      dimension: 'documentation',
-      title: 'No reference to previous CER',
-      question:
-        'Is this the first CER for this device? If not, where is the reference to the previous version and a summary of changes?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.previous_cer_reference)) {
-          return {
-            id: 'cer_025',
-            dimension: 'documentation',
-            severity: 'info',
-            title: 'No reference to previous CER',
-            question:
-              'Is this the first CER for this device? If not, where is the reference to the previous version and a summary of changes?',
-            observation:
-              'No reference to a previous CER has been provided.',
-            requirement:
-              'If the device has been on the market, the CER should reference prior versions and summarize changes, new data, and conclusions since the last evaluation.',
-            reference: 'MEDDEV 2.7/1 Section 6',
-            recommendation:
-              'If this is an update, reference the previous CER version and provide a summary of new clinical data, changes in the state of the art, and any updated conclusions. If this is the first CER, explicitly state so.',
-            relatedFields: [
-              'previous_cer_reference',
-              'update_frequency',
-            ],
-          };
-        }
-        return null;
-      },
-    },
+  },
 
-    /* ── Evaluator & Documentation (26-30) ─────────────────────── */
-    {
-      id: 'cer_026',
-      dimension: 'regulatory_alignment',
-      title: 'Evaluator qualifications not specified',
-      question:
-        'EU MDR requires CER evaluators to have documented qualifications. Who performed this evaluation and what are their qualifications?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.evaluator_qualifications)) {
-          return {
-            id: 'cer_026',
-            dimension: 'regulatory_alignment',
-            severity: 'critical',
-            title: 'Evaluator qualifications not specified',
-            question:
-              'EU MDR requires CER evaluators to have documented qualifications. Who performed this evaluation and what are their qualifications?',
-            observation:
-              'The CER evaluator qualifications have not been specified.',
-            requirement:
-              'The CER evaluator must have documented qualifications including relevant medical/scientific degree and at least 5 years of professional experience in the relevant device field.',
-            reference: 'EU MDR Article 61(3), MEDDEV 2.7/1 Section 6.4',
-            recommendation:
-              'Document the evaluator qualifications including education, professional experience, publications, and specific expertise relevant to the device under evaluation. Attach the evaluator CV.',
-            relatedFields: [
-              'evaluator_qualifications',
-              'evaluator_name',
-              'evaluator_cv_available',
-            ],
-          };
-        }
-        return null;
-      },
+  /* 5 -- Equivalence three-pillar demonstration */
+  {
+    id: rid('equivalence_three_pillars'),
+    dimension: 'scientific_rigor',
+    title: 'Three-pillar equivalence demonstration',
+    question:
+      'Per MDCG 2020-5 and Annex XIV Part A Section 3, has the manufacturer demonstrated equivalence across technical, biological, and clinical characteristics with sufficient granularity?',
+    check(answers) {
+      const demo = str(answers.equivalence_demonstration).toLowerCase();
+      if (isBlank(answers.equivalent_device) || isBlank(demo)) return null;
+      const hasTechnical = /technical/i.test(demo);
+      const hasBiological = /biolog/i.test(demo);
+      const hasClinical = /clinical/i.test(demo);
+      if (!hasTechnical || !hasBiological || !hasClinical) {
+        const missing: string[] = [];
+        if (!hasTechnical) missing.push('technical');
+        if (!hasBiological) missing.push('biological');
+        if (!hasClinical) missing.push('clinical');
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation:
+            `The equivalence demonstration appears to be missing the following pillar(s): ${missing.join(', ')}.`,
+          requirement:
+            'MDCG 2020-5 requires a side-by-side comparison across all three pillars. Technical characteristics include design, specifications, physicochemical properties; biological characteristics cover biocompatibility; clinical characteristics cover clinical condition, site, population, and clinical performance.',
+          reference: 'EU MDR 2017/745 Annex XIV Part A Section 3; MDCG 2020-5',
+          recommendation:
+            'Complete the equivalence table addressing each pillar. For each difference identified, justify why it does not affect safety and clinical performance.',
+          relatedFields: ['equivalence_demonstration', 'equivalent_device'],
+        };
+      }
+      return null;
     },
-    {
-      id: 'cer_027',
-      dimension: 'documentation',
-      title: 'Evaluator CV not available',
-      question:
-        'The evaluator CV is required to verify qualifications. Is it available for Notified Body review?',
-      check(answers): WarGameFinding | null {
-        if (!answers.evaluator_cv_available) {
-          return {
-            id: 'cer_027',
-            dimension: 'documentation',
-            severity: 'warning',
-            title: 'Evaluator CV not available',
-            question:
-              'The evaluator CV is required to verify qualifications. Is it available for Notified Body review?',
-            observation:
-              'The evaluator CV has not been made available.',
-            requirement:
-              'The evaluator CV must be available as part of the technical documentation for Notified Body review.',
-            reference: 'EU MDR Article 61(3)',
-            recommendation:
-              'Ensure the evaluator CV is included in or referenced from the CER, documenting relevant education, training, professional experience, and publications.',
-            relatedFields: [
-              'evaluator_cv_available',
-              'evaluator_name',
-              'evaluator_qualifications',
-            ],
-          };
-        }
-        return null;
-      },
+  },
+
+  /* 6 -- Literature search protocol */
+  {
+    id: rid('lit_search_protocol'),
+    dimension: 'scientific_rigor',
+    title: 'Systematic literature search protocol',
+    question:
+      'MEDDEV 2.7/1 Rev 4 Section 8 requires a defined literature search protocol. Has the manufacturer documented the search strategy, including databases, search terms, and inclusion/exclusion criteria?',
+    check(answers) {
+      if (isBlank(answers.literature_search_protocol)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation: 'No literature search protocol has been provided or referenced.',
+          requirement:
+            'A systematic, reproducible literature search protocol is mandated by MEDDEV 2.7/1 Rev 4 Section 8. It must define databases searched, search strings, date ranges, and inclusion/exclusion criteria.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Sections 8 & Appendix A9',
+          recommendation:
+            'Provide a standalone literature search protocol or reference one within the CER. Include a PRISMA-style flow diagram showing the screening and selection process.',
+          relatedFields: ['literature_search_protocol'],
+        };
+      }
+      return null;
     },
-    {
-      id: 'cer_028',
-      dimension: 'completeness',
-      title: 'Manufacturer name missing',
-      question:
-        'The manufacturer name is a fundamental element of the technical documentation. Why is it missing?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.manufacturer_name)) {
-          return {
-            id: 'cer_028',
-            dimension: 'completeness',
-            severity: 'warning',
-            title: 'Manufacturer name missing',
-            question:
-              'The manufacturer name is a fundamental element of the technical documentation. Why is it missing?',
-            observation:
-              'The manufacturer name has not been specified.',
-            requirement:
-              'The technical documentation, including the CER, must identify the legal manufacturer.',
-            reference: 'EU MDR Annex II',
-            recommendation:
-              'Include the full legal manufacturer name, address, and Single Registration Number (SRN) if available.',
-            relatedFields: ['manufacturer_name', 'device_name'],
-          };
-        }
-        return null;
-      },
+  },
+
+  /* 7 -- Literature databases */
+  {
+    id: rid('lit_databases'),
+    dimension: 'completeness',
+    title: 'Literature database coverage',
+    question:
+      'Per MEDDEV 2.7/1 Rev 4, the literature search shall cover relevant databases such as PubMed/MEDLINE, Embase, and the Cochrane Library. Which databases were searched?',
+    check(answers) {
+      const dbs = str(answers.literature_databases).toLowerCase();
+      if (isBlank(dbs)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation: 'No databases have been specified for the literature search.',
+          requirement:
+            'MEDDEV 2.7/1 Rev 4 Section 8 expects multiple databases to be searched to ensure comprehensive coverage. At minimum PubMed/MEDLINE is expected; Embase and Cochrane are strongly recommended.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 8.3',
+          recommendation:
+            'Specify all databases searched. If fewer than two major databases were used, justify why the search is still considered comprehensive.',
+          relatedFields: ['literature_databases'],
+        };
+      }
+      const hasPubmed = /pubmed|medline/i.test(dbs);
+      if (!hasPubmed) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation: 'PubMed/MEDLINE does not appear among the databases searched.',
+          requirement:
+            'PubMed/MEDLINE is the primary biomedical literature database and its omission would be questioned by a Notified Body reviewer.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 8.3',
+          recommendation:
+            'Include PubMed/MEDLINE in the literature search. If intentionally excluded, provide a documented justification.',
+          relatedFields: ['literature_databases'],
+        };
+      }
+      return null;
     },
-    {
-      id: 'cer_029',
-      dimension: 'regulatory_alignment',
-      title: 'Notified Body not identified',
-      question:
-        'For Class IIa and above devices, a Notified Body must be involved. Has the Notified Body been identified?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.notified_body)) {
-          return {
-            id: 'cer_029',
-            dimension: 'regulatory_alignment',
-            severity: 'warning',
-            title: 'Notified Body not identified',
-            question:
-              'For Class IIa and above devices, a Notified Body must be involved. Has the Notified Body been identified?',
-            observation:
-              'No Notified Body has been identified.',
-            requirement:
-              'Devices classified as Class IIa, IIb, or III under EU MDR require conformity assessment by a designated Notified Body.',
-            reference: 'EU MDR Article 52',
-            recommendation:
-              'Identify the Notified Body, including their name and EU identification number. If the device is Class I, confirm that no Notified Body involvement is required.',
-            relatedFields: [
-              'notified_body',
-              'device_classification',
-            ],
-          };
-        }
-        return null;
-      },
+  },
+
+  /* 8 -- Search date range */
+  {
+    id: rid('search_date_range'),
+    dimension: 'completeness',
+    title: 'Literature search date range',
+    question:
+      'What date range does the literature search cover, and is it current enough to satisfy the requirement for up-to-date clinical evidence per MEDDEV 2.7/1 Rev 4?',
+    check(answers) {
+      if (isBlank(answers.search_date_range)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation: 'The date range for the literature search has not been specified.',
+          requirement:
+            'MEDDEV 2.7/1 Rev 4 Section 8 requires the date range to be stated. The search should be current -- typically within the last 12 months of CER finalisation.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 8',
+          recommendation:
+            'State the start and end dates of the literature search. If the search is older than 12 months, perform an update search or justify currency.',
+          relatedFields: ['search_date_range'],
+        };
+      }
+      return null;
     },
-    {
-      id: 'cer_030',
-      dimension: 'regulatory_alignment',
-      title: 'Device classification not specified',
-      question:
-        'Without a device classification, the applicable regulatory requirements cannot be determined. What is the device classification?',
-      check(answers): WarGameFinding | null {
-        if (isEmpty(answers.device_classification)) {
-          return {
-            id: 'cer_030',
-            dimension: 'regulatory_alignment',
-            severity: 'critical',
-            title: 'Device classification not specified',
-            question:
-              'Without a device classification, the applicable regulatory requirements cannot be determined. What is the device classification?',
-            observation:
-              'The device classification under EU MDR has not been specified.',
-            requirement:
-              'The device must be classified according to EU MDR Annex VIII classification rules to determine the applicable conformity assessment route.',
-            reference: 'EU MDR Article 51, Annex VIII',
-            recommendation:
-              'Classify the device according to EU MDR Annex VIII classification rules and document the applicable rule(s), resulting classification (I, IIa, IIb, III), and rationale.',
-            relatedFields: [
-              'device_classification',
-              'notified_body',
-              'intended_purpose',
-            ],
-          };
-        }
-        return null;
-      },
+  },
+
+  /* 9 -- Article appraisal pipeline */
+  {
+    id: rid('article_appraisal'),
+    dimension: 'scientific_rigor',
+    title: 'Literature appraisal and selection transparency',
+    question:
+      'Per MEDDEV 2.7/1 Rev 4 Section 8.4, have all identified articles been appraised for methodological quality and relevance? Can the manufacturer account for the screening funnel (found -> appraised -> included)?',
+    check(answers) {
+      const found = num(answers.total_articles_found);
+      const appraised = num(answers.articles_appraised);
+      const included = num(answers.articles_included);
+
+      if (isNaN(found) || isNaN(appraised) || isNaN(included)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation:
+            'The article counts (found / appraised / included) are incomplete or not provided, preventing verification of the screening funnel.',
+          requirement:
+            'A transparent appraisal process with article counts at each stage is required per MEDDEV 2.7/1 Rev 4 Section 8.4. A PRISMA-style diagram is recommended.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Sections 8.4 and Appendix A9',
+          recommendation:
+            'Provide total counts at each stage: articles identified, screened, appraised for quality, and included in the evaluation. Include reasons for exclusion.',
+          relatedFields: ['total_articles_found', 'articles_appraised', 'articles_included'],
+        };
+      }
+
+      if (included > appraised || appraised > found) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation:
+            `The article funnel is inconsistent: found=${found}, appraised=${appraised}, included=${included}. Included articles cannot exceed appraised, and appraised cannot exceed found.`,
+          requirement:
+            'The screening funnel must be logically consistent per MEDDEV 2.7/1 Rev 4 Section 8.4.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 8.4',
+          recommendation:
+            'Review and correct the article counts. Ensure the PRISMA flow diagram is consistent with the numbers reported in the CER.',
+          relatedFields: ['total_articles_found', 'articles_appraised', 'articles_included'],
+        };
+      }
+
+      if (found > 0 && included / found < 0.01) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'info',
+          title: this.title,
+          question: this.question,
+          observation:
+            `Only ${included} of ${found} articles were included (<1%). While a low inclusion rate may be justified, a Notified Body may question whether relevant evidence has been excluded.`,
+          requirement:
+            'MEDDEV 2.7/1 Rev 4 Section 8.4 requires justification of exclusion criteria and assurance that relevant data was not systematically excluded.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 8.4',
+          recommendation:
+            'Verify that exclusion criteria are not overly restrictive. Provide a rationale for articles excluded at each stage.',
+          relatedFields: ['total_articles_found', 'articles_included'],
+        };
+      }
+
+      return null;
     },
-  ];
-}
+  },
+
+  /* 10 -- Clinical investigation data */
+  {
+    id: rid('clinical_investigation_data'),
+    dimension: 'completeness',
+    title: 'Clinical investigation data',
+    question:
+      'EU MDR Article 61(3) requires that clinical investigations are considered as a source of clinical data. Has the manufacturer included data from clinical investigations conducted with the device under evaluation?',
+    check(answers) {
+      const cls = str(answers.device_class_mdr).toLowerCase().replace(/\s/g, '');
+      if ((cls === 'iii' || cls === 'iib') && isBlank(answers.clinical_investigations) && isBlank(answers.equivalent_device)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation:
+            'No clinical investigation data is provided for a higher-risk device (Class IIb/III), and no equivalence route is pursued.',
+          requirement:
+            'For Class III and implantable devices, EU MDR Article 61(4) requires clinical investigations unless equivalence per Article 61(5) is demonstrated or a justified exception under Article 61(10) applies.',
+          reference: 'EU MDR 2017/745 Article 61(3)(4)(10); MDCG 2020-6',
+          recommendation:
+            'Include clinical investigation data, pursue a fully documented equivalence route, or provide a detailed justification under Article 61(10) with reference to MDCG 2020-6.',
+          relatedFields: ['clinical_investigations', 'device_class_mdr', 'equivalent_device'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 11 -- Post-market data sources */
+  {
+    id: rid('pms_data_sources'),
+    dimension: 'completeness',
+    title: 'Post-market surveillance data integration',
+    question:
+      'MEDDEV 2.7/1 Rev 4 Section 8.5 requires integration of post-market surveillance (PMS) data into the CER. Has the manufacturer identified and incorporated relevant PMS data sources?',
+    check(answers) {
+      if (isBlank(answers.post_market_data_sources)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation: 'No post-market data sources have been identified.',
+          requirement:
+            'The CER must integrate available PMS data including complaint records, vigilance reports, PMS reports, PMCF data, and field safety corrective actions per MEDDEV 2.7/1 Rev 4 Section 8.5 and EU MDR Article 83.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 8.5; EU MDR Article 83-86',
+          recommendation:
+            'List all PMS data sources consulted (e.g., complaint database, vigilance database, PMCF study results, customer feedback). Summarise the key findings and their impact on the benefit-risk assessment.',
+          relatedFields: ['post_market_data_sources'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 12 -- PMCF plan */
+  {
+    id: rid('pmcf_plan'),
+    dimension: 'regulatory_alignment',
+    title: 'PMCF plan reference and adequacy',
+    question:
+      'EU MDR Annex XIV Part B mandates a Post-Market Clinical Follow-up (PMCF) plan. Does the CER reference a PMCF plan, and does it adequately address residual risks and long-term safety?',
+    check(answers) {
+      if (isBlank(answers.pmcf_plan_reference)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation: 'No PMCF plan is referenced in the CER.',
+          requirement:
+            'EU MDR Annex XIV Part B requires a PMCF plan as part of the clinical evaluation. The plan must specify methods, objectives, milestones, and evaluation criteria. MDCG 2020-7 and MDCG 2020-8 provide further guidance.',
+          reference: 'EU MDR 2017/745 Annex XIV Part B; MDCG 2020-7; MDCG 2020-8',
+          recommendation:
+            'Reference or include a PMCF plan that addresses: objectives, study design/methodology, sample size rationale, milestones, analysis plan, and how PMCF data will feed back into the CER update cycle.',
+          relatedFields: ['pmcf_plan_reference'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 13 -- Vigilance data */
+  {
+    id: rid('vigilance_data'),
+    dimension: 'risk_identification',
+    title: 'Vigilance data summary',
+    question:
+      'Has the manufacturer reviewed relevant vigilance data (e.g., EUDAMED, MAUDE, BfArM, MHRA) for the device and similar devices, and summarised findings in the CER as required by MEDDEV 2.7/1 Rev 4 Section 8.5?',
+    check(answers) {
+      if (isBlank(answers.vigilance_data_summary)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation: 'No vigilance data summary has been provided.',
+          requirement:
+            'The CER shall include a review of available vigilance data for the subject device and equivalent/similar devices. This includes serious incidents, field safety corrective actions, and trends per MEDDEV 2.7/1 Rev 4 Section 8.5.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 8.5; EU MDR Articles 87-92',
+          recommendation:
+            'Search relevant vigilance databases (EUDAMED when available, FDA MAUDE, BfArM, MHRA). Summarise incident types, frequencies, and any trends. Discuss their impact on the benefit-risk determination.',
+          relatedFields: ['vigilance_data_summary'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 14 -- Risk analysis cross-reference */
+  {
+    id: rid('risk_analysis_ref'),
+    dimension: 'consistency',
+    title: 'Risk management file cross-reference',
+    question:
+      'MEDDEV 2.7/1 Rev 4 Section 10 requires that the CER be consistent with the risk management file (ISO 14971). Is the risk analysis referenced, and are residual risks addressed in the clinical evaluation?',
+    check(answers) {
+      if (isBlank(answers.risk_analysis_reference)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation: 'No reference to the risk analysis or risk management file has been provided.',
+          requirement:
+            'The CER must cross-reference the risk management file and confirm that residual risks identified in the risk analysis are acceptable in light of the clinical evidence. This is required by MEDDEV 2.7/1 Rev 4 Section 10 and EU MDR Annex I GSPR 1-8.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 10; ISO 14971:2019; EU MDR Annex I',
+          recommendation:
+            'Reference the risk management file (document ID and version). Discuss how clinical evidence supports the acceptability of residual risks identified therein.',
+          relatedFields: ['risk_analysis_reference'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 15 -- GSPR mapping */
+  {
+    id: rid('gspr_mapping'),
+    dimension: 'regulatory_alignment',
+    title: 'General Safety and Performance Requirements (GSPR) mapping',
+    question:
+      'EU MDR Annex I defines the General Safety and Performance Requirements. Has the CER mapped clinical evidence to the applicable GSPRs, demonstrating that each is fulfilled?',
+    check(answers) {
+      if (isBlank(answers.gspr_mapping)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation: 'No GSPR mapping or checklist has been provided.',
+          requirement:
+            'EU MDR Annex II Section 4(a) requires that the technical documentation include a GSPR checklist mapping each requirement to the relevant evidence. The CER should reference this mapping and provide the clinical evidence component.',
+          reference: 'EU MDR 2017/745 Annex I, Annex II Section 4(a); MDCG 2021-24',
+          recommendation:
+            'Provide a GSPR checklist mapping relevant requirements (especially GSPRs 1, 2, 3, 5, 6, 7, 8, 14, 22, 23) to the clinical evidence presented in the CER. Follow MDCG 2021-24 format.',
+          relatedFields: ['gspr_mapping'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 16 -- Benefit-risk conclusion */
+  {
+    id: rid('benefit_risk'),
+    dimension: 'scientific_rigor',
+    title: 'Benefit-risk determination',
+    question:
+      'EU MDR Article 61(1) requires that the clinical evaluation demonstrate conformity with the relevant GSPRs, confirming that the benefits outweigh the residual risks. Has the manufacturer provided a clear benefit-risk conclusion?',
+    check(answers) {
+      if (isBlank(answers.benefit_risk_conclusion)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation: 'No benefit-risk conclusion has been documented.',
+          requirement:
+            'The CER must conclude with an explicit benefit-risk determination per EU MDR Article 61(1) and MEDDEV 2.7/1 Rev 4 Section 10. The analysis must weigh the clinical benefits against residual risks in the context of the state of the art.',
+          reference: 'EU MDR 2017/745 Article 61(1); MEDDEV 2.7/1 Rev 4 Section 10',
+          recommendation:
+            'Provide a structured benefit-risk analysis that explicitly lists benefits, residual risks, risk mitigation measures, and concludes whether the benefit-risk profile is acceptable in the context of the state of the art.',
+          relatedFields: ['benefit_risk_conclusion'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 17 -- Residual risks */
+  {
+    id: rid('residual_risks'),
+    dimension: 'risk_identification',
+    title: 'Residual risk disclosure',
+    question:
+      'Per EU MDR Annex I GSPR 2, residual risks must be acceptable and communicated in the IFU. Has the manufacturer listed residual risks and confirmed they are acceptable in light of clinical evidence?',
+    check(answers) {
+      if (isBlank(answers.residual_risks)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation: 'Residual risks have not been listed or discussed in the CER.',
+          requirement:
+            'EU MDR Annex I GSPR 2 requires that residual risks be deemed acceptable when weighed against clinical benefits and that they are communicated to users. MEDDEV 2.7/1 Rev 4 Section 10 requires the CER to address residual risks.',
+          reference: 'EU MDR Annex I GSPR 2; MEDDEV 2.7/1 Rev 4 Section 10; ISO 14971:2019',
+          recommendation:
+            'List all identified residual risks, their clinical significance, and confirm their acceptability with reference to clinical evidence. Ensure alignment with the risk management file.',
+          relatedFields: ['residual_risks', 'risk_analysis_reference'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 18 -- State of the art */
+  {
+    id: rid('state_of_art'),
+    dimension: 'scientific_rigor',
+    title: 'State-of-the-art comparison',
+    question:
+      'MEDDEV 2.7/1 Rev 4 Section 9 requires a summary of the current knowledge and state of the art for the medical condition and available treatments. Has this been provided?',
+    check(answers) {
+      if (isBlank(answers.state_of_art_summary)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation: 'No state-of-the-art summary has been provided.',
+          requirement:
+            'The CER must include a critical evaluation of the current knowledge/state of the art relevant to the device, including alternative treatments, benchmark performance data, and clinical guidelines per MEDDEV 2.7/1 Rev 4 Section 9.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 9; EU MDR Article 61(1)',
+          recommendation:
+            'Provide a state-of-the-art review covering: the medical condition or purpose, existing treatment options, accepted clinical benchmarks, and relevant clinical guidelines. Position the device within this landscape.',
+          relatedFields: ['state_of_art_summary'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 19 -- CER update frequency */
+  {
+    id: rid('update_frequency'),
+    dimension: 'regulatory_alignment',
+    title: 'CER update schedule',
+    question:
+      'EU MDR Article 61(11) requires that the clinical evaluation and its documentation be updated throughout the device lifecycle. Has the manufacturer defined an update frequency for the CER?',
+    check(answers) {
+      if (isBlank(answers.cer_update_frequency)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation: 'No CER update frequency has been specified.',
+          requirement:
+            'EU MDR Article 61(11) mandates that the clinical evaluation and CER be updated throughout the device lifecycle. For Class III and implantable devices, MDCG 2020-13 recommends at least annual updates; for lower classes, the interval should be justified.',
+          reference: 'EU MDR 2017/745 Article 61(11); MDCG 2020-13',
+          recommendation:
+            'State the planned CER update frequency. For Class III/implantable devices, commit to annual updates. For Class I/IIa/IIb, justify the chosen interval (typically not exceeding 2-5 years depending on risk class and novelty).',
+          relatedFields: ['cer_update_frequency', 'device_class_mdr'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 20 -- Clinical evidence level */
+  {
+    id: rid('evidence_level'),
+    dimension: 'scientific_rigor',
+    title: 'Level of clinical evidence',
+    question:
+      'Has the manufacturer characterised the level of clinical evidence (e.g., per the evidence hierarchy in MEDDEV 2.7/1 Rev 4 Appendix A3) and assessed whether it is sufficient for the device risk class?',
+    check(answers) {
+      if (isBlank(answers.clinical_evidence_level)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation: 'The level of clinical evidence has not been characterised.',
+          requirement:
+            'MEDDEV 2.7/1 Rev 4 Appendix A3 provides a hierarchy of evidence. The CER should grade the available evidence and assess sufficiency relative to the device risk class and intended claims.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Appendix A3; EU MDR Article 61',
+          recommendation:
+            'Classify the available clinical evidence using a recognised hierarchy (e.g., RCTs, cohort studies, case series). For higher-risk devices, higher-quality evidence is expected. If only lower-level evidence is available, justify its sufficiency.',
+          relatedFields: ['clinical_evidence_level', 'device_class_mdr'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 21 -- Unmet clinical needs */
+  {
+    id: rid('unmet_clinical_needs'),
+    dimension: 'practical_feasibility',
+    title: 'Unmet clinical needs and device positioning',
+    question:
+      'Has the manufacturer described any unmet clinical needs that the device addresses, and how these relate to the benefit-risk profile?',
+    check(answers) {
+      if (isBlank(answers.unmet_clinical_needs)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'info',
+          title: this.title,
+          question: this.question,
+          observation: 'No discussion of unmet clinical needs has been provided.',
+          requirement:
+            'While not explicitly mandated, MEDDEV 2.7/1 Rev 4 and Notified Body expectations include a discussion of the clinical context, including unmet needs that justify the device. This strengthens the benefit-risk determination.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 9; EU MDR Recital 1',
+          recommendation:
+            'Describe the unmet clinical need or gap in current treatment that the device is intended to address. This contextualises the benefit-risk assessment and strengthens the clinical rationale.',
+          relatedFields: ['unmet_clinical_needs'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 22 -- Benefit-risk vs residual risks consistency */
+  {
+    id: rid('benefit_risk_vs_residual_risks'),
+    dimension: 'consistency',
+    title: 'Benefit-risk and residual risk alignment',
+    question:
+      'Does the benefit-risk conclusion explicitly address the residual risks identified in the risk management file? A Notified Body reviewer would expect cross-referencing between these sections.',
+    check(answers) {
+      if (!isBlank(answers.benefit_risk_conclusion) && isBlank(answers.residual_risks)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation:
+            'A benefit-risk conclusion is provided but residual risks are not separately listed, raising questions about whether all residual risks have been considered in the benefit-risk determination.',
+          requirement:
+            'MEDDEV 2.7/1 Rev 4 Section 10 requires that the benefit-risk analysis explicitly consider all residual risks. The CER should demonstrate traceability between the risk management file and the clinical evaluation.',
+          reference: 'MEDDEV 2.7/1 Rev 4 Section 10; ISO 14971:2019 Section 8',
+          recommendation:
+            'List the residual risks separately and address each within the benefit-risk conclusion. Show that clinical evidence supports the acceptability of each residual risk.',
+          relatedFields: ['benefit_risk_conclusion', 'residual_risks', 'risk_analysis_reference'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 23 -- MEDDEV 2.7/1 Rev 4 structural completeness */
+  {
+    id: rid('meddev_structure'),
+    dimension: 'documentation',
+    title: 'MEDDEV 2.7/1 Rev 4 structural compliance',
+    question:
+      'Does the CER follow the structure outlined in MEDDEV 2.7/1 Rev 4 (Sections 7-12)? A Notified Body reviewer will verify that all mandated sections are present and adequately addressed.',
+    check(answers) {
+      const requiredFields: Array<{ field: string; label: string }> = [
+        { field: 'device_description', label: 'Device description (Section 7)' },
+        { field: 'clinical_claims', label: 'Clinical claims (Section 9)' },
+        { field: 'literature_search_protocol', label: 'Literature search protocol (Section 8)' },
+        { field: 'state_of_art_summary', label: 'State of the art (Section 9)' },
+        { field: 'benefit_risk_conclusion', label: 'Benefit-risk conclusion (Section 10)' },
+      ];
+      const missing = requiredFields.filter(f => isBlank(answers[f.field]));
+      if (missing.length >= 3) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation:
+            `The following key CER sections appear to be missing or inadequate: ${missing.map(m => m.label).join('; ')}.`,
+          requirement:
+            'MEDDEV 2.7/1 Rev 4 requires the CER to contain: scope (Section 7), clinical background and state of the art (Section 9), literature search methodology (Section 8), clinical data appraisal (Section 8), analysis of clinical data (Section 9), and conclusions including benefit-risk (Section 10).',
+          reference: 'MEDDEV 2.7/1 Rev 4 Sections 7-12',
+          recommendation:
+            'Restructure the CER to follow MEDDEV 2.7/1 Rev 4 explicitly. Address each missing section. Consider using the MEDDEV template as a framework.',
+          relatedFields: missing.map(m => m.field),
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 24 -- PMCF and CER update cycle linkage */
+  {
+    id: rid('pmcf_cer_linkage'),
+    dimension: 'consistency',
+    title: 'PMCF-CER feedback loop',
+    question:
+      'Per MDCG 2020-7 and EU MDR Annex XIV Part B, the PMCF plan should specify how its results feed back into the CER update. Is this linkage documented?',
+    check(answers) {
+      if (!isBlank(answers.pmcf_plan_reference) && isBlank(answers.cer_update_frequency)) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'warning',
+          title: this.title,
+          question: this.question,
+          observation:
+            'A PMCF plan is referenced but no CER update frequency is stated. A Notified Body reviewer would question how PMCF findings trigger CER revision.',
+          requirement:
+            'EU MDR Article 61(11) and Annex XIV Part B require a documented feedback loop between PMCF activities and the CER. MDCG 2020-7 expects the PMCF plan to specify CER update triggers.',
+          reference: 'EU MDR Annex XIV Part B; MDCG 2020-7; MDCG 2020-8',
+          recommendation:
+            'Define the CER update frequency and specify trigger criteria (e.g., new PMCF data, safety signal, significant literature findings) that would prompt an unscheduled CER update.',
+          relatedFields: ['pmcf_plan_reference', 'cer_update_frequency'],
+        };
+      }
+      return null;
+    },
+  },
+
+  /* 25 -- Clinical evidence sufficiency for class III */
+  {
+    id: rid('class_iii_evidence_sufficiency'),
+    dimension: 'regulatory_alignment',
+    title: 'Clinical evidence sufficiency for high-risk devices',
+    question:
+      'For Class III and implantable devices, EU MDR Article 61(4) sets a higher bar for clinical evidence. Is the quantum of evidence proportionate to the device risk class?',
+    check(answers) {
+      const cls = str(answers.device_class_mdr).toLowerCase().replace(/\s/g, '');
+      if (cls !== 'iii') return null;
+
+      const hasInvestigations = !isBlank(answers.clinical_investigations);
+      const hasEquivalence = !isBlank(answers.equivalent_device) && !isBlank(answers.equivalence_demonstration);
+      const evidenceLevel = str(answers.clinical_evidence_level).toLowerCase();
+      const hasHighEvidence = /rct|randomis|randomiz|controlled trial|cohort/i.test(evidenceLevel);
+
+      if (!hasInvestigations && !hasEquivalence && !hasHighEvidence) {
+        return {
+          id: this.id,
+          dimension: this.dimension,
+          severity: 'critical',
+          title: this.title,
+          question: this.question,
+          observation:
+            'Class III device with no clinical investigation data, no equivalence demonstration, and no indication of high-level clinical evidence. This is unlikely to satisfy Article 61(4) requirements.',
+          requirement:
+            'EU MDR Article 61(4) requires Class III and implantable devices to undergo clinical investigations, except where reliance on existing clinical data from equivalence or other robust sources is duly justified per Article 61(5) or 61(10).',
+          reference: 'EU MDR 2017/745 Article 61(4)(5)(10); MDCG 2020-6',
+          recommendation:
+            'Conduct a clinical investigation, establish device equivalence with full three-pillar demonstration, or provide a thorough justification under Article 61(10) supported by high-quality clinical evidence.',
+          relatedFields: ['clinical_investigations', 'equivalent_device', 'equivalence_demonstration', 'clinical_evidence_level', 'device_class_mdr'],
+        };
+      }
+      return null;
+    },
+  },
+];
 
 /* ------------------------------------------------------------------ */
 /*  Factory                                                           */
@@ -1023,9 +867,9 @@ function buildRules(): AuditRule[] {
 export function createCerAuditor(): WarGameAuditor {
   return {
     category: 'cer',
-    name: 'Clinical Evaluation Report Auditor',
+    name: 'EU MDR Clinical Evaluation Report Auditor',
     description:
-      'Simulates Notified Body and EU MDR reviewer scrutiny of a Clinical Evaluation Report, examining equivalence assessment, literature search methodology, clinical data analysis, GSPR mapping, PMCF planning, and evaluator qualifications per EU MDR and MEDDEV 2.7/1 Rev 4.',
-    rules: buildRules(),
+      'Simulates a Notified Body reviewer scrutinising a Clinical Evaluation Report under EU MDR 2017/745, MEDDEV 2.7/1 Rev 4, Annex XIV, and relevant MDCG guidance documents.',
+    rules,
   };
 }

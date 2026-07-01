@@ -1234,7 +1234,7 @@ export function createIndSubmissionFlow(): FlowDefinition {
         branches: [
           {
             when: { field: 'ind_type_selection', operator: 'eq', value: 'emergency' },
-            goto: null,
+            goto: 'ind_review',
           },
         ],
         defaultNext: 'drug_substance_characterization',

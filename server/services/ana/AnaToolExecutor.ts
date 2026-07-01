@@ -16004,7 +16004,7 @@ registerToolHandler('start_war_game', async (input, _ctx) => {
   try {
     const { runWarGame } = await import('./intelligence-questions/war-game/engine.js');
     const report = runWarGame(
-      String(input.war_game_category || ''),
+      String(input.war_game_category || '') as import('./intelligence-questions/war-game/types.js').WarGameCategory,
       String(input.source_flow_id || ''),
       (input.answers || {}) as Record<string, Record<string, unknown>>,
     );

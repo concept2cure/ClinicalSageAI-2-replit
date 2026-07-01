@@ -1,978 +1,749 @@
 /**
- * IND Submission War Game Auditor
+ * IND (Investigational New Drug) War Game Auditor.
  *
- * Simulates FDA reviewer scrutiny of an Investigational New Drug application.
- * Rules cover CMC completeness, nonclinical package adequacy, clinical plan
- * quality, regulatory history, and submission format compliance.
+ * Simulates FDA CDER reviewer scrutiny of an IND submission per
+ * 21 CFR 312, ICH M3/S6/S9, and relevant FDA guidance documents.
  *
  * @module server/services/ana/intelligence-questions/war-game/auditors/ind-auditor
  */
 
-import type { WarGameAuditor, AuditRule, WarGameFinding } from '../types.js';
+import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
 
-/* ─── Helpers ──────────────────────────────────────────────────────────── */
+const rid = (suffix: string) => 'ind_' + suffix;
 
-function isEmpty(val: unknown): boolean {
-  if (val === null || val === undefined) return true;
-  if (typeof val === 'string') return val.trim().length === 0;
-  if (Array.isArray(val)) return val.length === 0;
+/* ─── Helper utilities ────────────────────────────────────────────────── */
+
+function isBlank(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (typeof value === 'string') return value.trim().length === 0;
   return false;
 }
 
-function includes(val: unknown, search: string): boolean {
-  if (typeof val === 'string') return val.toLowerCase().includes(search.toLowerCase());
-  if (Array.isArray(val)) return val.some((v) => includes(v, search));
-  return false;
+function asString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
 }
 
-/* ─── CMC Completeness (ind_001 – ind_007) ─────────────────────────────── */
+function asBool(value: unknown): boolean | null {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const v = value.trim().toLowerCase();
+    if (v === 'yes' || v === 'true') return true;
+    if (v === 'no' || v === 'false') return false;
+  }
+  return null;
+}
 
-const cmcRules: AuditRule[] = [
-  {
-    id: 'ind_001',
-    dimension: 'completeness',
-    title: 'No drug substance manufacturer identified',
-    question:
-      'Who is the manufacturer of the drug substance, and have they been qualified under current Good Manufacturing Practice?',
-    check(answers) {
-      if (isEmpty(answers.drug_substance_manufacturer)) {
-        return {
-          id: 'ind_001',
-          dimension: 'completeness',
-          severity: 'critical',
-          title: 'No drug substance manufacturer identified',
-          question:
-            'Who is the manufacturer of the drug substance, and have they been qualified under current Good Manufacturing Practice?',
-          observation:
-            'The application does not identify a manufacturer for the drug substance. FDA reviewers in the Office of Pharmaceutical Quality will require this information before allowing clinical trials to proceed.',
-          requirement:
-            'Per 21 CFR 312.23(a)(7), the IND must include a description of the drug substance including the name and address of its manufacturer. The Chemistry, Manufacturing, and Controls (CMC) section is incomplete without manufacturer identification.',
-          reference: '21 CFR 312.23(a)(7)(i); FDA Guidance for Industry: Content and Format of INDs for Phase 1 Studies (2015)',
-          recommendation:
-            'Identify the drug substance manufacturer, including facility name, address, and any applicable establishment registration or Drug Master File (DMF) reference. Provide evidence of GMP qualification or a letter of authorization from the DMF holder.',
-          relatedFields: ['drug_substance_manufacturer', 'gmp_compliance', 'drug_master_file'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_002',
-    dimension: 'completeness',
-    title: 'No stability data available',
-    question:
-      'What stability data support the proposed shelf life and storage conditions of the drug product to be used in clinical trials?',
-    check(answers) {
-      if (answers.stability_data_available === false || answers.stability_data_available === 'no' || isEmpty(answers.stability_data_available)) {
-        return {
-          id: 'ind_002',
-          dimension: 'completeness',
-          severity: 'critical',
-          title: 'No stability data available',
-          question:
-            'What stability data support the proposed shelf life and storage conditions of the drug product to be used in clinical trials?',
-          observation:
-            'The sponsor has not provided stability data for the drug product. Without these data, FDA cannot assess whether the investigational product will maintain its identity, strength, quality, and purity through the duration of the proposed clinical trial.',
-          requirement:
-            'Per 21 CFR 312.23(a)(7)(iv)(b), the IND must provide brief stability information. ICH Q1A(R2) outlines the required stability testing conditions. At minimum, Phase 1 INDs should include preliminary stability data under proposed storage conditions.',
-          reference: '21 CFR 312.23(a)(7)(iv)(b); ICH Q1A(R2) Stability Testing of New Drug Substances and Products',
-          recommendation:
-            'Provide available accelerated and real-time stability data, even if limited. Include at minimum 1-3 months of data under proposed storage conditions. Define container-closure system and storage conditions. If stability studies are ongoing, provide a commitment to submit updated data.',
-          relatedFields: ['stability_data_available', 'formulation_type', 'dosage_form'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_003',
-    dimension: 'completeness',
-    title: 'No Drug Master File reference',
-    question:
-      'Has a Drug Master File been filed for the drug substance or any excipient used in the formulation, and has a Letter of Authorization been provided?',
-    check(answers) {
-      if (isEmpty(answers.drug_master_file) && !isEmpty(answers.drug_substance_manufacturer)) {
-        return {
-          id: 'ind_003',
-          dimension: 'completeness',
-          severity: 'warning',
-          title: 'No Drug Master File reference',
-          question:
-            'Has a Drug Master File been filed for the drug substance or any excipient used in the formulation, and has a Letter of Authorization been provided?',
-          observation:
-            'No Drug Master File (DMF) reference has been provided. While a DMF is not strictly required for an IND, its absence means all manufacturing, processing, and quality information must be included directly in the application.',
-          requirement:
-            'Per 21 CFR 314.420, a DMF may be submitted to support an IND. If the drug substance manufacturer holds a DMF, a Letter of Authorization should be included so FDA can cross-reference confidential manufacturing information.',
-          reference: '21 CFR 314.420; FDA Guidance for Industry: Drug Master Files (2019)',
-          recommendation:
-            'Determine whether the drug substance manufacturer holds an active DMF with FDA. If so, obtain a Letter of Authorization and include the DMF number. If no DMF exists, ensure all required CMC information is provided directly in the IND application per 21 CFR 312.23(a)(7).',
-          relatedFields: ['drug_master_file', 'drug_substance_manufacturer', 'gmp_compliance'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_004',
-    dimension: 'regulatory_alignment',
-    title: 'GMP non-compliance for drug product manufacturer',
-    question:
-      'Is the drug product manufactured in compliance with current Good Manufacturing Practice (cGMP), and has the facility been inspected by FDA?',
-    check(answers) {
-      if (answers.gmp_compliance === false || answers.gmp_compliance === 'no') {
-        return {
-          id: 'ind_004',
-          dimension: 'regulatory_alignment',
-          severity: 'critical',
-          title: 'GMP non-compliance for drug product manufacturer',
-          question:
-            'Is the drug product manufactured in compliance with current Good Manufacturing Practice (cGMP), and has the facility been inspected by FDA?',
-          observation:
-            'The sponsor has indicated that the drug product is not manufactured under cGMP conditions. This is a significant regulatory concern that may result in a clinical hold.',
-          requirement:
-            'Per 21 CFR 211 and 21 CFR 312.23(a)(7), the investigational drug must be manufactured under conditions that ensure its safety, identity, strength, quality, and purity. Phase 1 drugs require compliance with Phase-appropriate cGMP as described in FDA Guidance.',
-          reference:
-            '21 CFR 211; 21 CFR 312.23(a)(7); FDA Guidance for Industry: CGMP for Phase 1 Investigational Drugs (2008)',
-          recommendation:
-            'Ensure the manufacturing facility meets Phase-appropriate cGMP requirements. If the facility has not been inspected, provide documentation of internal quality systems, SOPs, and equipment qualification. Consider using a contract manufacturing organization (CMO) with established GMP compliance.',
-          relatedFields: ['gmp_compliance', 'drug_product_manufacturer', 'manufacturing_facility'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_005',
-    dimension: 'regulatory_alignment',
-    title: 'No environmental assessment or exemption claim',
-    question:
-      'Has an environmental assessment been prepared, or does the investigational drug qualify for a categorical exclusion under 21 CFR 25?',
-    check(answers) {
-      if (isEmpty(answers.environmental_assessment)) {
-        return {
-          id: 'ind_005',
-          dimension: 'regulatory_alignment',
-          severity: 'warning',
-          title: 'No environmental assessment or exemption claim',
-          question:
-            'Has an environmental assessment been prepared, or does the investigational drug qualify for a categorical exclusion under 21 CFR 25?',
-          observation:
-            'The application does not address the environmental impact of the investigational drug. While most INDs qualify for categorical exclusion, the claim must still be explicitly stated.',
-          requirement:
-            'Per 21 CFR 25.15(a), each IND must include either an environmental assessment or a claim of categorical exclusion under 21 CFR 25.31. Failure to address this requirement may result in an administrative deficiency notice.',
-          reference: '21 CFR 25.15(a); 21 CFR 25.31; 21 CFR 25.40',
-          recommendation:
-            'Include a statement claiming categorical exclusion under 21 CFR 25.31(e) for clinical investigations, or prepare a full environmental assessment if the drug or its manufacturing process may significantly affect the environment. Most Phase 1 INDs qualify for categorical exclusion.',
-          relatedFields: ['environmental_assessment', 'formulation_type', 'route_of_administration'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_006',
-    dimension: 'completeness',
-    title: 'Missing dosage form specification',
-    question:
-      'What is the dosage form of the investigational drug product, and how does it relate to the proposed route of administration?',
-    check(answers) {
-      if (isEmpty(answers.dosage_form)) {
-        return {
-          id: 'ind_006',
-          dimension: 'completeness',
-          severity: 'critical',
-          title: 'Missing dosage form specification',
-          question:
-            'What is the dosage form of the investigational drug product, and how does it relate to the proposed route of administration?',
-          observation:
-            'The dosage form has not been specified. This is a fundamental element of the CMC section and is required for FDA to evaluate the drug product description, manufacturing process, and controls.',
-          requirement:
-            'Per 21 CFR 312.23(a)(7)(iv)(a), the IND must include a list of all components used in the manufacture of the drug product, a quantitative composition, and the dosage form. The dosage form must be consistent with the proposed route of administration.',
-          reference: '21 CFR 312.23(a)(7)(iv)(a); FDA Guidance for Industry: Content and Format of INDs for Phase 1 Studies (2015)',
-          recommendation:
-            'Specify the dosage form (e.g., tablet, capsule, injection, solution for infusion) and ensure it is appropriate for the stated route of administration. Include quantitative composition and describe the manufacturing process.',
-          relatedFields: ['dosage_form', 'formulation_type', 'route_of_administration'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_007',
-    dimension: 'completeness',
-    title: 'Route of administration not specified',
-    question:
-      'What is the proposed route of administration, and has the nonclinical program adequately evaluated toxicity via this route?',
-    check(answers) {
-      if (isEmpty(answers.route_of_administration)) {
-        return {
-          id: 'ind_007',
-          dimension: 'completeness',
-          severity: 'critical',
-          title: 'Route of administration not specified',
-          question:
-            'What is the proposed route of administration, and has the nonclinical program adequately evaluated toxicity via this route?',
-          observation:
-            'The route of administration has not been defined. Without this information, FDA cannot assess whether the nonclinical studies used a relevant route, whether the dosage form is appropriate, or whether the safety monitoring plan is adequate.',
-          requirement:
-            'Per 21 CFR 312.23(a)(7)(iv)(a), the IND must specify the route of administration. ICH M3(R2) requires that nonclinical studies use a route relevant to the proposed clinical use.',
-          reference: '21 CFR 312.23(a)(7)(iv)(a); ICH M3(R2) Section 4',
-          recommendation:
-            'Specify the route of administration (e.g., oral, intravenous, subcutaneous, intramuscular, topical). Ensure nonclinical toxicology studies employed the same or a scientifically justified alternative route. Update the dosage form and formulation information accordingly.',
-          relatedFields: ['route_of_administration', 'dosage_form', 'nonclinical_studies_completed', 'species_used'],
-        };
-      }
-      return null;
-    },
-  },
-];
+function finding(
+  id: string,
+  dimension: AuditDimension,
+  severity: WarGameFinding['severity'],
+  title: string,
+  question: string,
+  observation: string,
+  requirement: string,
+  reference: string,
+  recommendation: string,
+  relatedFields: string[],
+): WarGameFinding {
+  return { id, dimension, severity, title, question, observation, requirement, reference, recommendation, relatedFields };
+}
 
-/* ─── Nonclinical Package (ind_008 – ind_015) ─────────────────────────── */
+/* ─── Audit rules ─────────────────────────────────────────────────────── */
 
-const nonclinicalRules: AuditRule[] = [
+const rules: AuditRule[] = [
+  /* ── 1. Drug substance identification ── (completeness) ───────────────── */
   {
-    id: 'ind_008',
-    dimension: 'regulatory_alignment',
-    title: 'Non-GLP nonclinical studies',
-    question:
-      'Were the pivotal nonclinical safety studies conducted in compliance with Good Laboratory Practice (GLP) per 21 CFR Part 58?',
-    check(answers) {
-      if (answers.glp_compliance === false || answers.glp_compliance === 'no') {
-        return {
-          id: 'ind_008',
-          dimension: 'regulatory_alignment',
-          severity: 'critical',
-          title: 'Non-GLP nonclinical studies',
-          question:
-            'Were the pivotal nonclinical safety studies conducted in compliance with Good Laboratory Practice (GLP) per 21 CFR Part 58?',
-          observation:
-            'The pivotal nonclinical safety studies were not conducted under GLP conditions. FDA requires GLP compliance for studies intended to support the safety of an investigational drug in humans.',
-          requirement:
-            'Per 21 CFR 312.23(a)(8)(iii), nonclinical studies must be conducted in compliance with 21 CFR Part 58 (GLP). Non-GLP studies are acceptable only for pharmacology/screening studies, not for pivotal toxicology studies that support initial clinical dosing.',
-          reference: '21 CFR 312.23(a)(8)(iii); 21 CFR Part 58; ICH M3(R2) Section 1',
-          recommendation:
-            'Conduct pivotal repeat-dose toxicology studies under GLP conditions. If non-GLP studies are being submitted, clearly identify them as such and provide a rationale. Any deviations from GLP must be documented and their impact on data integrity assessed.',
-          relatedFields: ['glp_compliance', 'nonclinical_studies_completed', 'toxicology_findings_summary'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_009',
-    dimension: 'scientific_rigor',
-    title: 'No NOAEL established',
-    question:
-      'What is the No Observed Adverse Effect Level (NOAEL) from the pivotal toxicology studies, and how was it used to derive the maximum recommended starting dose?',
-    check(answers) {
-      if (isEmpty(answers.noael)) {
-        return {
-          id: 'ind_009',
-          dimension: 'scientific_rigor',
-          severity: 'critical',
-          title: 'No NOAEL established',
-          question:
-            'What is the No Observed Adverse Effect Level (NOAEL) from the pivotal toxicology studies, and how was it used to derive the maximum recommended starting dose?',
-          observation:
-            'No NOAEL has been established from the nonclinical toxicology program. The NOAEL is the primary basis for calculating the maximum recommended starting dose (MRSD) in first-in-human studies.',
-          requirement:
-            'Per FDA Guidance for Industry: Estimating the Maximum Safe Starting Dose in Initial Clinical Trials for Therapeutics in Adult Healthy Volunteers (2005), the NOAEL from the most appropriate animal species must be identified and converted to a human equivalent dose (HED) using body surface area scaling.',
-          reference:
-            'FDA Guidance: Estimating the Maximum Safe Starting Dose in Initial Clinical Trials (2005); ICH M3(R2) Section 7; ICH S9 (for anticancer drugs)',
-          recommendation:
-            'Identify the NOAEL from the most sensitive species in the pivotal toxicology program. Calculate the HED using appropriate allometric scaling factors. Apply a safety factor (typically 10-fold) to derive the MRSD. Document the complete dose derivation with all assumptions.',
-          relatedFields: ['noael', 'starting_dose_justification', 'species_used', 'toxicology_findings_summary'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_010',
-    dimension: 'scientific_rigor',
-    title: 'Single species toxicology program',
-    question:
-      'Have toxicology studies been conducted in two relevant species (one rodent and one non-rodent), and if not, what is the scientific justification for a single-species program?',
-    check(answers) {
-      if (!isEmpty(answers.species_used)) {
-        const speciesVal = String(answers.species_used).toLowerCase();
-        const speciesList = speciesVal.split(/[,;/]+/).map((s) => s.trim()).filter(Boolean);
-        if (speciesList.length < 2 && !includes(speciesVal, 'two') && !includes(speciesVal, '2 species')) {
-          return {
-            id: 'ind_010',
-            dimension: 'scientific_rigor',
-            severity: 'warning',
-            title: 'Single species toxicology program',
-            question:
-              'Have toxicology studies been conducted in two relevant species (one rodent and one non-rodent), and if not, what is the scientific justification for a single-species program?',
-            observation:
-              'The nonclinical program appears to include toxicology studies in only a single species. ICH M3(R2) generally requires repeat-dose toxicity studies in two mammalian species (one rodent and one non-rodent) to support clinical trials.',
-            requirement:
-              'ICH M3(R2) Section 5 requires repeat-dose toxicity studies in two species. A single-species approach is acceptable only with scientific justification (e.g., biologics where only one species is pharmacologically relevant, or when supported by pre-IND FDA agreement).',
-            reference: 'ICH M3(R2) Sections 5 and 10; ICH S6(R1) for biotechnology-derived products',
-            recommendation:
-              'If only one species was used, provide scientific justification (e.g., species-specific pharmacology for biologics). Consider conducting studies in a second relevant species before advancing beyond Phase 1. Document any FDA pre-IND agreement regarding single-species approach.',
-            relatedFields: ['species_used', 'nonclinical_studies_completed', 'mechanism_of_action', 'pre_ind_meeting_held'],
-          };
-        }
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_011',
-    dimension: 'scientific_rigor',
-    title: 'No carcinogenicity assessment for chronic therapy',
-    question:
-      'Is carcinogenicity testing required based on the duration of proposed clinical use, and if so, has it been completed or appropriately deferred?',
-    check(answers) {
-      if (
-        (answers.carcinogenicity_required === true || answers.carcinogenicity_required === 'yes') &&
-        !isEmpty(answers.proposed_indication)
-      ) {
-        const indication = String(answers.proposed_indication).toLowerCase();
-        const chronicConditions = ['chronic', 'long-term', 'maintenance', 'prophylaxis', 'prevention'];
-        const isChronicUse = chronicConditions.some((c) => indication.includes(c));
-        if (isChronicUse) {
-          return {
-            id: 'ind_011',
-            dimension: 'scientific_rigor',
-            severity: 'warning',
-            title: 'No carcinogenicity assessment for chronic therapy',
-            question:
-              'Is carcinogenicity testing required based on the duration of proposed clinical use, and if so, has it been completed or appropriately deferred?',
-            observation:
-              'The sponsor has indicated that carcinogenicity testing is required, and the proposed indication suggests chronic or long-term use. ICH S1A requires carcinogenicity assessment for drugs intended for continuous use of six months or more.',
-            requirement:
-              'Per ICH S1A, carcinogenicity studies are required for drugs intended for at least 6 months of continuous use. Per ICH M3(R2), these studies should be completed before filing an NDA but are not required for IND submission. However, any available genotoxicity or structural alerts should be discussed.',
-            reference: 'ICH S1A Guideline on the Need for Carcinogenicity Studies; ICH S1B(R1); ICH M3(R2) Section 8',
-            recommendation:
-              'Acknowledge the carcinogenicity requirement in the IND. Provide a timeline for completing carcinogenicity studies. Include results of genotoxicity testing (Ames test, chromosomal aberration) and discuss any structural alerts. If the drug class has known carcinogenicity signals, provide risk assessment.',
-            relatedFields: ['carcinogenicity_required', 'proposed_indication', 'genotoxicity_completed', 'therapeutic_class'],
-          };
-        }
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_012',
+    id: rid('drug_substance'),
     dimension: 'completeness',
-    title: 'No genotoxicity studies completed',
+    title: 'Drug substance not identified',
     question:
-      'Have standard battery genotoxicity studies (Ames, in vitro chromosomal aberration, and in vivo micronucleus) been completed?',
+      'The IND application must identify the drug substance per 21 CFR 312.23(a)(7). ' +
+      'What is the active pharmaceutical ingredient, and where is its characterization data?',
     check(answers) {
-      if (answers.genotoxicity_completed === false || answers.genotoxicity_completed === 'no') {
-        return {
-          id: 'ind_012',
-          dimension: 'completeness',
-          severity: 'critical',
-          title: 'No genotoxicity studies completed',
-          question:
-            'Have standard battery genotoxicity studies (Ames, in vitro chromosomal aberration, and in vivo micronucleus) been completed?',
-          observation:
-            'Genotoxicity studies have not been completed. The standard battery of genotoxicity tests is required before initiating clinical trials under ICH guidance.',
-          requirement:
-            'Per ICH S2(R1) and ICH M3(R2) Section 6, a standard genotoxicity battery (bacterial reverse mutation assay, in vitro cytogenetic assay or mouse lymphoma assay, and in vivo test for chromosomal damage) must be completed before first-in-human exposure. For short-duration Phase 1 studies, at minimum the in vitro tests should be completed.',
-          reference: 'ICH S2(R1) Guidance on Genotoxicity Testing; ICH M3(R2) Section 6; 21 CFR 312.23(a)(8)',
-          recommendation:
-            'Complete at minimum the in vitro components of the genotoxicity battery (Ames test and chromosomal aberration or mouse lymphoma assay) before IND submission. The in vivo micronucleus test should be completed before initiating repeat-dose clinical studies. Submit results with full study reports or adequate summaries.',
-          relatedFields: ['genotoxicity_completed', 'nonclinical_studies_completed', 'carcinogenicity_required'],
-        };
+      if (isBlank(answers.drug_substance)) {
+        return finding(
+          this.id, this.dimension, 'critical', this.title, this.question,
+          'No drug substance has been specified in the submission.',
+          '21 CFR 312.23(a)(7) requires full identification of the drug substance including its physical, chemical, and biological characteristics.',
+          '21 CFR 312.23(a)(7)(i); ICH Q6A/Q6B',
+          'Provide the drug substance identity, including structural formula (or biological characterization for biologics), molecular weight, physicochemical properties, and specification limits.',
+          ['drug_substance', 'drug_name'],
+        );
       }
       return null;
     },
   },
-  {
-    id: 'ind_013',
-    dimension: 'completeness',
-    title: 'Insufficient pharmacology summary',
-    question:
-      'Does the pharmacology summary adequately describe the primary pharmacodynamic effects, secondary pharmacology, and safety pharmacology (cardiovascular, respiratory, CNS) of the investigational drug?',
-    check(answers) {
-      if (isEmpty(answers.pharmacology_summary)) {
-        return {
-          id: 'ind_013',
-          dimension: 'completeness',
-          severity: 'warning',
-          title: 'Insufficient pharmacology summary',
-          question:
-            'Does the pharmacology summary adequately describe the primary pharmacodynamic effects, secondary pharmacology, and safety pharmacology (cardiovascular, respiratory, CNS) of the investigational drug?',
-          observation:
-            'No pharmacology summary has been provided. FDA reviewers expect a concise summary of primary pharmacodynamic activity and safety pharmacology (core battery) findings to evaluate the drug\'s benefit-risk profile.',
-          requirement:
-            'Per 21 CFR 312.23(a)(8) and ICH S7A, the IND must include pharmacology information including primary pharmacodynamics and safety pharmacology (hERG, cardiovascular telemetry, respiratory function, CNS assessment). ICH S7B addresses proarrhythmic risk evaluation.',
-          reference: '21 CFR 312.23(a)(8); ICH S7A Safety Pharmacology Studies; ICH S7B Non-Clinical Evaluation of QT/QTc Prolongation',
-          recommendation:
-            'Provide a pharmacology summary covering: (1) primary pharmacodynamic studies demonstrating mechanism of action; (2) safety pharmacology core battery (cardiovascular including hERG and in vivo telemetry, respiratory, CNS); (3) secondary pharmacology screen. Include dose-response relationships and relevance to proposed clinical doses.',
-          relatedFields: ['pharmacology_summary', 'mechanism_of_action', 'therapeutic_class'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_014',
-    dimension: 'completeness',
-    title: 'No PK summary provided',
-    question:
-      'What are the absorption, distribution, metabolism, and excretion (ADME) characteristics of the drug, and how do they inform dose selection and clinical pharmacology planning?',
-    check(answers) {
-      if (isEmpty(answers.pk_summary)) {
-        return {
-          id: 'ind_014',
-          dimension: 'completeness',
-          severity: 'warning',
-          title: 'No PK summary provided',
-          question:
-            'What are the absorption, distribution, metabolism, and excretion (ADME) characteristics of the drug, and how do they inform dose selection and clinical pharmacology planning?',
-          observation:
-            'No pharmacokinetic summary has been provided. ADME information is essential for understanding drug disposition, predicting human pharmacokinetics, and informing clinical dose selection.',
-          requirement:
-            'Per 21 CFR 312.23(a)(8) and ICH M3(R2) Section 4, the IND must include available pharmacokinetic data. For first-in-human studies, PK data from at least one animal species should be available to support human dose projections.',
-          reference: '21 CFR 312.23(a)(8)(i); ICH M3(R2) Section 4; FDA Guidance: Safety Testing of Drug Metabolites (2020)',
-          recommendation:
-            'Provide a PK summary including: (1) single-dose and repeat-dose PK parameters (Cmax, AUC, t1/2, clearance, volume of distribution) in relevant species; (2) in vitro metabolism data (CYP identification, metabolite profiling); (3) protein binding data; (4) allometric scaling or PBPK modeling to predict human PK parameters.',
-          relatedFields: ['pk_summary', 'starting_dose_justification', 'noael', 'mechanism_of_action'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_015',
-    dimension: 'documentation',
-    title: 'Toxicology findings not adequately summarized',
-    question:
-      'Are the nonclinical toxicology findings clearly summarized with target organ identification, dose-response relationships, and reversibility assessment?',
-    check(answers) {
-      if (isEmpty(answers.toxicology_findings_summary) && !isEmpty(answers.nonclinical_studies_completed)) {
-        return {
-          id: 'ind_015',
-          dimension: 'documentation',
-          severity: 'warning',
-          title: 'Toxicology findings not adequately summarized',
-          question:
-            'Are the nonclinical toxicology findings clearly summarized with target organ identification, dose-response relationships, and reversibility assessment?',
-          observation:
-            'Nonclinical studies have been completed, but no toxicology findings summary has been provided. FDA reviewers in the Pharmacology/Toxicology division require a clear integrated summary to evaluate human risk.',
-          requirement:
-            'Per 21 CFR 312.23(a)(8), the IND must include adequate information about pharmacological and toxicological studies to permit an evaluation of whether the drug is reasonably safe for initial testing in humans. An integrated summary of toxicological findings is expected.',
-          reference:
-            '21 CFR 312.23(a)(8); ICH M4S(R2) Common Technical Document — Nonclinical Overview; FDA Reviewer Guidance: Integration of Toxicology Findings',
-          recommendation:
-            'Provide an integrated summary of toxicology findings including: (1) target organs of toxicity; (2) dose-response relationships for key findings; (3) reversibility or progression of findings during recovery periods; (4) relationship of findings to expected human exposures; (5) NOAEL determination for each study. Include tabular summaries of study designs and findings across all completed studies.',
-          relatedFields: ['toxicology_findings_summary', 'nonclinical_studies_completed', 'noael', 'species_used'],
-        };
-      }
-      return null;
-    },
-  },
-];
 
-/* ─── Clinical Plan (ind_016 – ind_022) ────────────────────────────────── */
-
-const clinicalPlanRules: AuditRule[] = [
+  /* ── 2. Formulation / route consistency ── (consistency) ──────────────── */
   {
-    id: 'ind_016',
-    dimension: 'scientific_rigor',
-    title: 'First-in-human with inadequate starting dose justification',
-    question:
-      'How was the proposed starting dose derived from nonclinical data, and does the justification follow FDA guidance for maximum recommended starting dose calculation?',
-    check(answers) {
-      if (
-        (answers.first_in_human === true || answers.first_in_human === 'yes') &&
-        isEmpty(answers.starting_dose_justification)
-      ) {
-        return {
-          id: 'ind_016',
-          dimension: 'scientific_rigor',
-          severity: 'critical',
-          title: 'First-in-human with inadequate starting dose justification',
-          question:
-            'How was the proposed starting dose derived from nonclinical data, and does the justification follow FDA guidance for maximum recommended starting dose calculation?',
-          observation:
-            'This is a first-in-human study, but no starting dose justification has been provided. The absence of a rigorous dose derivation is one of the most common reasons for FDA clinical holds on Phase 1 INDs.',
-          requirement:
-            'Per FDA Guidance: Estimating the Maximum Safe Starting Dose in Initial Clinical Trials (2005), the starting dose must be derived from the NOAEL in the most appropriate animal species, converted to a human equivalent dose (HED) using allometric scaling, and divided by a safety factor (typically 10x). For biologics, additional PK/PD modeling may be required.',
-          reference:
-            'FDA Guidance: Estimating the Maximum Safe Starting Dose in Initial Clinical Trials for Therapeutics in Adult Healthy Volunteers (2005); 21 CFR 312.42(b)(1)(i)',
-          recommendation:
-            'Provide a complete starting dose justification including: (1) NOAEL from the most sensitive species; (2) HED calculation with body surface area scaling factors; (3) safety margin (typically at least 10-fold); (4) consideration of pharmacologically active dose (PAD); (5) MABEL approach if applicable (especially for biologics). The starting dose should be the lower of NOAEL/10 and PAD/10.',
-          relatedFields: ['first_in_human', 'starting_dose_justification', 'noael', 'dose_escalation_scheme'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_017',
-    dimension: 'scientific_rigor',
-    title: 'No dose escalation scheme for Phase 1',
-    question:
-      'What dose escalation scheme will be used, and what decision rules govern dose escalation, de-escalation, and stopping?',
-    check(answers) {
-      const phase = String(answers.proposed_phase ?? '').toLowerCase();
-      const isPhase1 = includes(phase, '1') || includes(phase, 'i');
-      if (isPhase1 && isEmpty(answers.dose_escalation_scheme)) {
-        return {
-          id: 'ind_017',
-          dimension: 'scientific_rigor',
-          severity: 'critical',
-          title: 'No dose escalation scheme for Phase 1',
-          question:
-            'What dose escalation scheme will be used, and what decision rules govern dose escalation, de-escalation, and stopping?',
-          observation:
-            'This is a Phase 1 study with no dose escalation scheme described. FDA expects a clearly defined escalation method with pre-specified decision rules for dose-limiting toxicity (DLT) evaluation.',
-          requirement:
-            'Per 21 CFR 312.23(a)(6), the IND must include a protocol with a description of the dose escalation plan. FDA Guidance on adaptive designs and the Project Optimus initiative emphasize the need for well-justified escalation strategies and stopping rules.',
-          reference:
-            '21 CFR 312.23(a)(6); FDA Project Optimus (Dose Optimization); FDA Guidance: Adaptive Designs for Clinical Trials (2019)',
-          recommendation:
-            'Define a dose escalation scheme such as 3+3, modified Fibonacci, accelerated titration, Bayesian optimal interval (BOIN), or continual reassessment method (CRM). Specify: (1) DLT definition and evaluation window; (2) escalation decision rules; (3) de-escalation criteria; (4) stopping rules for safety; (5) maximum tolerated dose (MTD) determination criteria; (6) number of subjects per cohort.',
-          relatedFields: ['dose_escalation_scheme', 'proposed_phase', 'starting_dose_justification', 'safety_monitoring_plan'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_018',
-    dimension: 'practical_feasibility',
-    title: 'Large planned enrollment for initial IND',
-    question:
-      'Is the proposed enrollment size appropriate for the study phase, and does it reflect the available safety data to support exposure of this number of subjects?',
-    check(answers) {
-      const enrollment = Number(answers.planned_enrollment);
-      const phase = String(answers.proposed_phase ?? '').toLowerCase();
-      const isPhase1 = includes(phase, '1') || includes(phase, 'i');
-      const indType = String(answers.ind_type ?? '').toLowerCase();
-      if (isPhase1 && indType === 'initial' && !isNaN(enrollment) && enrollment > 100) {
-        return {
-          id: 'ind_018',
-          dimension: 'practical_feasibility',
-          severity: 'warning',
-          title: 'Large planned enrollment for initial IND',
-          question:
-            'Is the proposed enrollment size appropriate for the study phase, and does it reflect the available safety data to support exposure of this number of subjects?',
-          observation:
-            `The initial Phase 1 IND proposes enrollment of ${enrollment} subjects, which is unusually large for an initial Phase 1 study. FDA may question whether the nonclinical safety package supports this level of human exposure at this stage of development.`,
-          requirement:
-            'Per 21 CFR 312.42(b)(1), FDA may place a clinical hold if human subjects would be exposed to an unreasonable and significant risk. ICH M3(R2) Table 1 specifies the nonclinical support required based on the number of subjects and duration of dosing.',
-          reference: '21 CFR 312.42(b)(1); ICH M3(R2) Table 1; ICH E8(R1) General Considerations for Clinical Studies',
-          recommendation:
-            'Justify the proposed enrollment size with a statistical rationale (e.g., number of dose cohorts, subjects per cohort, expansion cohorts). Ensure the nonclinical safety package supports the duration and extent of proposed exposure per ICH M3(R2) Table 1. Consider staging the study with interim safety reviews.',
-          relatedFields: ['planned_enrollment', 'proposed_phase', 'ind_type', 'nonclinical_studies_completed'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_019',
-    dimension: 'risk_identification',
-    title: 'No safety monitoring plan',
-    question:
-      'What safety monitoring procedures are in place to protect clinical trial subjects, including stopping rules, SAE reporting, and DSMB oversight?',
-    check(answers) {
-      if (isEmpty(answers.safety_monitoring_plan)) {
-        return {
-          id: 'ind_019',
-          dimension: 'risk_identification',
-          severity: 'critical',
-          title: 'No safety monitoring plan',
-          question:
-            'What safety monitoring procedures are in place to protect clinical trial subjects, including stopping rules, SAE reporting, and DSMB oversight?',
-          observation:
-            'No safety monitoring plan has been described. This is a fundamental deficiency that may trigger a clinical hold, as FDA must be satisfied that subjects will not be exposed to unreasonable risk.',
-          requirement:
-            'Per 21 CFR 312.23(a)(6)(iii), the protocol must include provisions for monitoring clinical trials. 21 CFR 312.32 requires expedited reporting of serious adverse events. FDA Guidance on Safety Reporting Requirements specifies IND safety reporting obligations.',
-          reference:
-            '21 CFR 312.23(a)(6)(iii); 21 CFR 312.32; FDA Guidance: Safety Reporting Requirements for INDs (2015); ICH E6(R2) Section 5.18',
-          recommendation:
-            'Develop a comprehensive safety monitoring plan including: (1) dose-limiting toxicity criteria; (2) stopping rules for individual subjects and the study overall; (3) SAE and SUSAR reporting procedures and timelines; (4) Data Safety Monitoring Board (DSMB) charter if applicable; (5) protocol-specified safety assessments and their frequency; (6) provisions for unblinding in emergencies.',
-          relatedFields: ['safety_monitoring_plan', 'proposed_phase', 'first_in_human', 'dose_escalation_scheme'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_020',
-    dimension: 'regulatory_alignment',
-    title: 'No pediatric study plan when required',
-    question:
-      'Has a Pediatric Study Plan been submitted or has a deferral/waiver been requested, as required under the Pediatric Research Equity Act (PREA)?',
-    check(answers) {
-      if (isEmpty(answers.pediatric_study_plan)) {
-        const indication = String(answers.proposed_indication ?? '').toLowerCase();
-        const adultOnlyConditions = ['erectile dysfunction', 'menopause', 'alzheimer', 'prostate cancer'];
-        const likelyAdultOnly = adultOnlyConditions.some((c) => indication.includes(c));
-        if (!likelyAdultOnly && !isEmpty(answers.proposed_indication)) {
-          return {
-            id: 'ind_020',
-            dimension: 'regulatory_alignment',
-            severity: 'warning',
-            title: 'No pediatric study plan when required',
-            question:
-              'Has a Pediatric Study Plan been submitted or has a deferral/waiver been requested, as required under the Pediatric Research Equity Act (PREA)?',
-            observation:
-              'No pediatric study plan has been provided. Under PREA, sponsors must submit a Pediatric Study Plan (PSP) for drugs that are intended to treat conditions that occur in pediatric populations, unless a waiver or deferral is granted.',
-            requirement:
-              'Per Section 505B of the FD&C Act (PREA) and FDA Guidance: Pediatric Study Plans (2020), sponsors must submit an initial PSP no later than 60 days after the end-of-Phase 2 meeting or before submitting the NDA. Early engagement on pediatric development is recommended.',
-            reference:
-              'FD&C Act Section 505B (PREA); FDA Guidance: Pediatric Study Plans — Content of and Process for Submitting Initial Pediatric Study Plans and Amended Initial Pediatric Study Plans (2020)',
-            recommendation:
-              'Assess whether the proposed indication is relevant to pediatric populations. If so, develop a Pediatric Study Plan and consider submitting it early. If the condition does not occur in pediatric populations, request a full waiver. If pediatric studies should be deferred, request a deferral with a proposed timeline.',
-            relatedFields: ['pediatric_study_plan', 'proposed_indication', 'proposed_phase'],
-          };
-        }
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_021',
-    dimension: 'completeness',
-    title: 'Missing proposed indication',
-    question:
-      'What is the proposed clinical indication for the investigational drug, and what is the unmet medical need it addresses?',
-    check(answers) {
-      if (isEmpty(answers.proposed_indication)) {
-        return {
-          id: 'ind_021',
-          dimension: 'completeness',
-          severity: 'critical',
-          title: 'Missing proposed indication',
-          question:
-            'What is the proposed clinical indication for the investigational drug, and what is the unmet medical need it addresses?',
-          observation:
-            'The proposed clinical indication has not been specified. This is a foundational element of the IND that informs the entire regulatory assessment, including nonclinical requirements, clinical trial design, and benefit-risk evaluation.',
-          requirement:
-            'Per 21 CFR 312.23(a)(3), the IND must include a comprehensive investigator\'s brochure containing a summary of the proposed clinical indication. The indication determines the applicable FDA review division and the nonclinical/clinical requirements per ICH M3(R2).',
-          reference: '21 CFR 312.23(a)(3); 21 CFR 312.23(a)(6)(i); ICH M3(R2) Table 1',
-          recommendation:
-            'Clearly state the proposed clinical indication, target patient population, and unmet medical need. This information drives the entire regulatory strategy, including: review division assignment, nonclinical study requirements, clinical endpoint selection, and comparator considerations.',
-          relatedFields: ['proposed_indication', 'mechanism_of_action', 'therapeutic_class', 'proposed_phase'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_022',
-    dimension: 'documentation',
-    title: 'Proposed protocol title missing or vague',
-    question:
-      'Does the protocol have a clear, descriptive title that identifies the study phase, drug, indication, and study design?',
-    check(answers) {
-      if (isEmpty(answers.proposed_protocol_title)) {
-        return {
-          id: 'ind_022',
-          dimension: 'documentation',
-          severity: 'info',
-          title: 'Proposed protocol title missing or vague',
-          question:
-            'Does the protocol have a clear, descriptive title that identifies the study phase, drug, indication, and study design?',
-          observation:
-            'No proposed protocol title has been provided. While not a ground for clinical hold, a missing or poorly written title suggests incomplete protocol development and may indicate broader deficiencies.',
-          requirement:
-            'Per 21 CFR 312.23(a)(6)(i), the IND protocol must include a title and statement of purpose. ICH E6(R2) Section 6.1 specifies that the protocol should include a descriptive title.',
-          reference: '21 CFR 312.23(a)(6)(i); ICH E6(R2) Section 6.1',
-          recommendation:
-            'Provide a descriptive protocol title that includes: (1) study phase; (2) study design (e.g., randomized, double-blind, placebo-controlled); (3) drug name; (4) proposed indication or target population; (5) primary objective (e.g., safety, PK, efficacy). Example: "A Phase 1, Randomized, Double-Blind, Placebo-Controlled, Single Ascending Dose Study of [Drug Name] in Healthy Adult Volunteers."',
-          relatedFields: ['proposed_protocol_title', 'proposed_phase', 'proposed_indication', 'drug_name'],
-        };
-      }
-      return null;
-    },
-  },
-];
-
-/* ─── Regulatory History (ind_023 – ind_027) ───────────────────────────── */
-
-const regulatoryHistoryRules: AuditRule[] = [
-  {
-    id: 'ind_023',
-    dimension: 'risk_identification',
-    title: 'Previous clinical hold not addressed',
-    question:
-      'Has the sponsor received a previous clinical hold, and if so, have all deficiencies identified in the clinical hold letter been adequately resolved?',
-    check(answers) {
-      if (!isEmpty(answers.clinical_hold_history) && !includes(answers.clinical_hold_history, 'none') && !includes(answers.clinical_hold_history, 'n/a')) {
-        return {
-          id: 'ind_023',
-          dimension: 'risk_identification',
-          severity: 'critical',
-          title: 'Previous clinical hold not addressed',
-          question:
-            'Has the sponsor received a previous clinical hold, and if so, have all deficiencies identified in the clinical hold letter been adequately resolved?',
-          observation:
-            'The sponsor reports a history of clinical holds. FDA will closely scrutinize the current submission to verify that all previously identified deficiencies have been resolved. Unresolved clinical hold issues are grounds for continued or renewed holds.',
-          requirement:
-            'Per 21 CFR 312.42(e), a clinical hold may be imposed if any of the criteria in 312.42(b) are met. To resume clinical investigations, the sponsor must respond to the clinical hold letter and receive FDA notification that the hold is lifted (21 CFR 312.42(d)).',
-          reference: '21 CFR 312.42(b)-(e); FDA Guidance: Clinical Holds of INDs (2023)',
-          recommendation:
-            'Provide a detailed cross-reference to the previous clinical hold letter and the sponsor\'s complete response. Document how each deficiency was resolved. Include any new data (nonclinical, CMC, clinical) generated to address FDA concerns. If this is a new IND related to a previously held IND, explicitly address all prior concerns.',
-          relatedFields: ['clinical_hold_history', 'previous_ind_numbers', 'fda_feedback_summary'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_024',
-    dimension: 'practical_feasibility',
-    title: 'Pre-IND meeting not held for novel mechanism',
-    question:
-      'Has a pre-IND meeting (Type B meeting) been held with FDA, particularly for a drug with a novel mechanism of action?',
-    check(answers) {
-      if (
-        (answers.pre_ind_meeting_held === false || answers.pre_ind_meeting_held === 'no') &&
-        !isEmpty(answers.mechanism_of_action)
-      ) {
-        const moa = String(answers.mechanism_of_action).toLowerCase();
-        const novelIndicators = ['novel', 'first-in-class', 'new mechanism', 'unprecedented', 'unique', 'first in class'];
-        const isNovel = novelIndicators.some((n) => moa.includes(n));
-        if (isNovel) {
-          return {
-            id: 'ind_024',
-            dimension: 'practical_feasibility',
-            severity: 'warning',
-            title: 'Pre-IND meeting not held for novel mechanism',
-            question:
-              'Has a pre-IND meeting (Type B meeting) been held with FDA, particularly for a drug with a novel mechanism of action?',
-            observation:
-              'No pre-IND meeting has been held, despite the drug appearing to have a novel mechanism of action. Pre-IND meetings are strongly recommended for first-in-class compounds to align on nonclinical and clinical development strategy.',
-            requirement:
-              'Per FDA Guidance: Formal Meetings Between FDA and Sponsors or Applicants (2017), sponsors may request a pre-IND meeting (Type B) to discuss the planned IND content, nonclinical study design, and first-in-human trial design. While not required, these meetings can prevent clinical holds.',
-            reference:
-              'FDA Guidance: Formal Meetings Between FDA and Sponsors or Applicants of PDUFAct Products (2017); 21 CFR 312.82',
-            recommendation:
-              'Strongly consider requesting a pre-IND meeting (Type B, 60-day timeline) before submitting the IND. Prepare a comprehensive meeting package addressing: (1) nonclinical development plan; (2) CMC strategy; (3) proposed Phase 1 study design; (4) biomarker strategy; (5) any novel safety concerns. This is particularly important for first-in-class mechanisms where there is no regulatory precedent.',
-            relatedFields: ['pre_ind_meeting_held', 'mechanism_of_action', 'fda_feedback_summary', 'first_in_human'],
-          };
-        }
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_025',
+    id: rid('formulation_route'),
     dimension: 'consistency',
-    title: 'No FDA feedback summary when pre-IND meeting was held',
+    title: 'Formulation-route mismatch or missing data',
     question:
-      'If a pre-IND meeting was held, has the FDA feedback been summarized and have all FDA recommendations been addressed in the IND?',
+      'Per 21 CFR 312.23(a)(7)(iv)(a), the composition, manufacture, and control of the drug product must be described. ' +
+      'Is the formulation type consistent with the proposed route of administration?',
     check(answers) {
-      if (
-        (answers.pre_ind_meeting_held === true || answers.pre_ind_meeting_held === 'yes') &&
-        isEmpty(answers.fda_feedback_summary)
-      ) {
-        return {
-          id: 'ind_025',
-          dimension: 'consistency',
-          severity: 'warning',
-          title: 'No FDA feedback summary when pre-IND meeting was held',
-          question:
-            'If a pre-IND meeting was held, has the FDA feedback been summarized and have all FDA recommendations been addressed in the IND?',
-          observation:
-            'A pre-IND meeting was held but no FDA feedback summary has been provided. This creates a significant gap because FDA reviewers will compare the IND submission against the advice given in the pre-IND meeting. Inconsistencies may delay review.',
-          requirement:
-            'Per FDA Guidance: Formal Meetings Between FDA and Sponsors or Applicants (2017), the official meeting minutes issued by FDA represent the formal record. Sponsors are expected to address all FDA recommendations in the subsequent IND submission.',
-          reference:
-            'FDA Guidance: Formal Meetings Between FDA and Sponsors or Applicants of PDUFAct Products (2017); 21 CFR 312.82',
-          recommendation:
-            'Include a summary of FDA feedback from the pre-IND meeting and cross-reference how each recommendation has been addressed in the IND. If the sponsor deviated from FDA advice, provide a clear scientific rationale. Include the meeting date, FDA meeting number, and key agreements.',
-          relatedFields: ['fda_feedback_summary', 'pre_ind_meeting_held', 'previous_ind_numbers'],
-        };
+      const formulation = asString(answers.formulation_type).toLowerCase();
+      const route = asString(answers.route_of_administration).toLowerCase();
+      if (isBlank(answers.formulation_type) || isBlank(answers.route_of_administration)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'Formulation type or route of administration has not been specified.',
+          'The IND must describe the drug product composition and intended route of administration.',
+          '21 CFR 312.23(a)(7)(iv)(a)',
+          'Specify both the dosage form/formulation type and the route of administration, and ensure they are pharmacologically compatible.',
+          ['formulation_type', 'route_of_administration'],
+        );
+      }
+      // Detect obvious mismatches
+      const oralForms = ['tablet', 'capsule', 'oral solution', 'oral suspension', 'syrup'];
+      const injectableForms = ['injection', 'infusion', 'lyophilized', 'solution for injection'];
+      const isOralForm = oralForms.some((f) => formulation.includes(f));
+      const isInjectableForm = injectableForms.some((f) => formulation.includes(f));
+      if (isOralForm && route.includes('intravenous')) {
+        return finding(
+          this.id, this.dimension, 'critical', 'Formulation-route mismatch detected', this.question,
+          `Oral dosage form "${formulation}" is inconsistent with intravenous route of administration.`,
+          'The drug product formulation must be appropriate for the intended route per 21 CFR 312.23(a)(7).',
+          '21 CFR 312.23(a)(7)(iv)(a); FDA Guidance for Industry: Sterile Drug Products Produced by Aseptic Processing',
+          'Reconcile the formulation type with the proposed route. An IV route requires a sterile injectable formulation.',
+          ['formulation_type', 'route_of_administration'],
+        );
+      }
+      if (isInjectableForm && route === 'oral') {
+        return finding(
+          this.id, this.dimension, 'critical', 'Formulation-route mismatch detected', this.question,
+          `Injectable formulation "${formulation}" is inconsistent with oral route of administration.`,
+          'The drug product formulation must be appropriate for the intended route.',
+          '21 CFR 312.23(a)(7)(iv)(a)',
+          'Reconcile the formulation type with the proposed route. An oral route requires an orally bioavailable dosage form.',
+          ['formulation_type', 'route_of_administration'],
+        );
       }
       return null;
     },
   },
-  {
-    id: 'ind_026',
-    dimension: 'documentation',
-    title: 'Amendment without adequate justification for changes',
-    question:
-      'Does this IND amendment clearly describe what has changed from the original submission and provide a rationale for each change?',
-    check(answers) {
-      const indType = String(answers.ind_type ?? '').toLowerCase();
-      if (indType === 'amendment') {
-        const hasJustification =
-          !isEmpty(answers.fda_feedback_summary) ||
-          !isEmpty(answers.related_submissions);
-        if (!hasJustification) {
-          return {
-            id: 'ind_026',
-            dimension: 'documentation',
-            severity: 'warning',
-            title: 'Amendment without adequate justification for changes',
-            question:
-              'Does this IND amendment clearly describe what has changed from the original submission and provide a rationale for each change?',
-            observation:
-              'This is an IND amendment but does not include adequate justification for the proposed changes. Amendments without clear change narratives create confusion and may delay FDA review.',
-            requirement:
-              'Per 21 CFR 312.31, IND amendments must be submitted for protocol amendments, new investigators, and changes in CMC information. Each amendment should clearly identify what has changed, why, and reference the relevant section of the original IND.',
-            reference: '21 CFR 312.30; 21 CFR 312.31; 21 CFR 312.32',
-            recommendation:
-              'Include a cover letter that summarizes all changes made in this amendment. For protocol amendments, provide a tracked-changes version. For CMC amendments, describe the nature of the change and its impact on drug product quality. Cross-reference the original IND sections being modified and provide a rationale for each change.',
-            relatedFields: ['ind_type', 'related_submissions', 'fda_feedback_summary', 'previous_ind_numbers'],
-          };
-        }
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_027',
-    dimension: 'documentation',
-    title: 'Related submissions not cross-referenced',
-    question:
-      'Are all related regulatory submissions (other INDs, DMFs, NDAs, BLAs) properly cross-referenced to provide FDA with a complete regulatory history?',
-    check(answers) {
-      if (
-        isEmpty(answers.related_submissions) &&
-        !isEmpty(answers.previous_ind_numbers)
-      ) {
-        return {
-          id: 'ind_027',
-          dimension: 'documentation',
-          severity: 'info',
-          title: 'Related submissions not cross-referenced',
-          question:
-            'Are all related regulatory submissions (other INDs, DMFs, NDAs, BLAs) properly cross-referenced to provide FDA with a complete regulatory history?',
-          observation:
-            'Previous IND numbers are referenced but no related submissions have been cross-referenced. FDA reviewers benefit from a complete regulatory history including any related INDs, DMFs, NDAs, or BLAs.',
-          requirement:
-            'Per 21 CFR 312.23(a)(1), the IND cover sheet (Form FDA 1571) requires listing of related IND and NDA/BLA numbers. Cross-referencing related submissions ensures consistency and allows FDA to access relevant information from other applications.',
-          reference: '21 CFR 312.23(a)(1); Form FDA 1571 Instructions',
-          recommendation:
-            'List all related regulatory submissions including: (1) other INDs for the same drug substance; (2) DMFs for the drug substance or excipients; (3) any NDAs or BLAs under development; (4) INDs for related compounds in the same pharmacological class. Include application numbers and cross-reference letters where applicable.',
-          relatedFields: ['related_submissions', 'previous_ind_numbers', 'drug_master_file'],
-        };
-      }
-      return null;
-    },
-  },
-];
 
-/* ─── Submission Quality (ind_028 – ind_030) ───────────────────────────── */
-
-const submissionQualityRules: AuditRule[] = [
+  /* ── 3. Nonclinical studies completeness ── (regulatory_alignment) ────── */
   {
-    id: 'ind_028',
-    dimension: 'completeness',
-    title: 'Sponsor contact information incomplete',
-    question:
-      'Is the sponsor\'s contact information complete, including name, address, telephone number, and a designated agent for communication with FDA?',
-    check(answers) {
-      const missingFields: string[] = [];
-      if (isEmpty(answers.sponsor_name)) missingFields.push('sponsor name');
-      if (isEmpty(answers.sponsor_contact)) missingFields.push('sponsor contact');
-      if (isEmpty(answers.sponsor_address)) missingFields.push('sponsor address');
-      if (missingFields.length > 0) {
-        return {
-          id: 'ind_028',
-          dimension: 'completeness',
-          severity: 'warning',
-          title: 'Sponsor contact information incomplete',
-          question:
-            'Is the sponsor\'s contact information complete, including name, address, telephone number, and a designated agent for communication with FDA?',
-          observation:
-            `The following sponsor information is missing: ${missingFields.join(', ')}. Incomplete sponsor information can delay IND processing and is an administrative deficiency.`,
-          requirement:
-            'Per 21 CFR 312.23(a)(1), Form FDA 1571 requires the sponsor\'s name, address, telephone number, and the name of the person responsible for monitoring the conduct and progress of the investigation. The sponsor must designate a contact person for FDA communications.',
-          reference: '21 CFR 312.23(a)(1); 21 CFR 312.50; 21 CFR 312.52; Form FDA 1571',
-          recommendation:
-            'Complete all sponsor identification fields on Form FDA 1571. Identify a U.S. agent if the sponsor is a foreign entity. Designate a qualified individual as the sponsor\'s representative for FDA communication, including 24-hour contact information for safety reporting.',
-          relatedFields: ['sponsor_name', 'sponsor_contact', 'sponsor_address'],
-        };
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_029',
-    dimension: 'risk_identification',
-    title: 'Research IND without academic institution safeguards',
-    question:
-      'For a research (non-commercial) IND, are appropriate institutional safeguards in place, including IRB oversight, qualified investigators, and adequate resources for the proposed study?',
-    check(answers) {
-      const submissionType = String(answers.submission_type ?? '').toLowerCase();
-      if (submissionType === 'research') {
-        const hasInstitutionalSafeguards =
-          !isEmpty(answers.safety_monitoring_plan) && !isEmpty(answers.sponsor_contact);
-        if (!hasInstitutionalSafeguards) {
-          return {
-            id: 'ind_029',
-            dimension: 'risk_identification',
-            severity: 'warning',
-            title: 'Research IND without academic institution safeguards',
-            question:
-              'For a research (non-commercial) IND, are appropriate institutional safeguards in place, including IRB oversight, qualified investigators, and adequate resources for the proposed study?',
-            observation:
-              'This is a research (non-commercial) IND, but the submission does not demonstrate adequate institutional safeguards. Sponsor-investigators at academic institutions may have limited experience with IND regulatory obligations, which increases the risk of non-compliance.',
-            requirement:
-              'Per 21 CFR 312.3(b), a sponsor-investigator holds both sponsor and investigator responsibilities. This includes compliance with 21 CFR 312 Subpart D (sponsor responsibilities) and Subpart E (investigator responsibilities). FDA Guidance on Investigator-Sponsored INDs outlines specific expectations.',
-            reference:
-              '21 CFR 312.3(b); 21 CFR 312 Subparts D and E; FDA Guidance: Investigator Responsibilities — Protecting the Rights, Safety, and Welfare of Study Subjects (2009)',
-            recommendation:
-              'Ensure the sponsor-investigator has: (1) IRB approval from the responsible institution; (2) adequate facilities and qualified staff; (3) a safety monitoring plan with independent oversight; (4) systems for adverse event reporting within FDA-mandated timelines; (5) financial resources to complete the study; (6) a qualified individual to serve as medical monitor if the sponsor-investigator is also the sole investigator.',
-            relatedFields: ['submission_type', 'sponsor_contact', 'safety_monitoring_plan', 'sponsor_name'],
-          };
-        }
-      }
-      return null;
-    },
-  },
-  {
-    id: 'ind_030',
+    id: rid('nonclinical_complete'),
     dimension: 'regulatory_alignment',
-    title: 'Orphan drug designation claimed without supporting documentation',
+    title: 'Nonclinical safety package incomplete',
     question:
-      'If orphan drug designation has been claimed, has the sponsor provided the FDA-issued designation letter and demonstrated that the orphan condition prevalence criteria are met?',
+      'ICH M3(R2) requires that nonclinical safety studies be completed before first-in-human dosing. ' +
+      'Have the nonclinical pharmacology and toxicology studies been completed per the applicable ICH guidance?',
     check(answers) {
-      if (
-        (answers.orphan_drug_designation === true || answers.orphan_drug_designation === 'yes') &&
-        isEmpty(answers.proposed_indication)
-      ) {
-        return {
-          id: 'ind_030',
-          dimension: 'regulatory_alignment',
-          severity: 'warning',
-          title: 'Orphan drug designation claimed without supporting documentation',
-          question:
-            'If orphan drug designation has been claimed, has the sponsor provided the FDA-issued designation letter and demonstrated that the orphan condition prevalence criteria are met?',
-          observation:
-            'Orphan drug designation has been claimed, but the proposed indication has not been specified. Without a clearly defined rare disease indication, FDA cannot verify orphan drug eligibility or its potential regulatory benefits.',
-          requirement:
-            'Per 21 CFR Part 316, orphan drug designation requires that the disease or condition affect fewer than 200,000 persons in the United States. The sponsor must provide the orphan drug designation request number or approval letter. Designation does not guarantee approval and is specific to the indication.',
-          reference:
-            '21 CFR Part 316; FD&C Act Section 526; FDA Guidance: Qualifying for Pediatric Exclusivity Under the Best Pharmaceuticals for Children Act (if both apply)',
-          recommendation:
-            'Provide the FDA-issued orphan drug designation letter and number. Clearly define the rare disease indication for which designation was granted. Include prevalence data supporting the orphan disease criteria. Note that orphan designation provides incentives including tax credits, protocol assistance, and 7 years of marketing exclusivity upon approval.',
-          relatedFields: ['orphan_drug_designation', 'proposed_indication', 'therapeutic_class'],
-        };
+      const complete = asBool(answers.nonclinical_studies_complete);
+      if (complete === false) {
+        return finding(
+          this.id, this.dimension, 'critical', this.title, this.question,
+          'The sponsor indicates that nonclinical studies have not been completed.',
+          'Per ICH M3(R2) and 21 CFR 312.23(a)(8), adequate pharmacology and toxicology data must support the safety of the proposed clinical investigation.',
+          'ICH M3(R2) Section 4; 21 CFR 312.23(a)(8); FDA Guidance: Content and Format of INDs for Phase 1 Studies',
+          'Complete all required nonclinical studies before proceeding. For Phase 1, this typically includes single- and repeat-dose toxicity, safety pharmacology (core battery), and genotoxicity studies.',
+          ['nonclinical_studies_complete', 'toxicology_species', 'genotoxicity_studies'],
+        );
+      }
+      if (complete === null) {
+        return finding(
+          this.id, this.dimension, 'warning', 'Nonclinical study status not specified', this.question,
+          'The submission does not confirm whether nonclinical studies have been completed.',
+          'The IND must include a summary of nonclinical study status.',
+          'ICH M3(R2); 21 CFR 312.23(a)(8)',
+          'Confirm the status of all nonclinical studies and provide a cross-reference table mapping each ICH M3(R2) requirement to the corresponding study report.',
+          ['nonclinical_studies_complete'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 4. Toxicology species selection ── (scientific_rigor) ────────────── */
+  {
+    id: rid('tox_species'),
+    dimension: 'scientific_rigor',
+    title: 'Toxicology species selection not justified',
+    question:
+      'ICH S6(R1) and ICH M3(R2) require toxicology studies in pharmacologically relevant species. ' +
+      'What species were used in the pivotal toxicology studies, and what is the scientific justification for their selection?',
+    check(answers) {
+      if (isBlank(answers.toxicology_species)) {
+        return finding(
+          this.id, this.dimension, 'critical', this.title, this.question,
+          'No toxicology species have been identified. The reviewer cannot assess whether the nonclinical safety package uses pharmacologically relevant species.',
+          'Toxicology studies must be conducted in species that are pharmacologically responsive to the drug candidate. For small molecules, one rodent and one non-rodent species are typically required. For biologics, ICH S6(R1) mandates relevant species.',
+          'ICH M3(R2) Section 3; ICH S6(R1) Section 2; 21 CFR 312.23(a)(8)',
+          'Identify the toxicology species used and provide a scientific rationale (e.g., target homology data, in vitro cross-reactivity results) demonstrating pharmacological relevance.',
+          ['toxicology_species', 'mechanism_of_action', 'nonclinical_studies_complete'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 5. Genotoxicity studies ── (regulatory_alignment) ────────────────── */
+  {
+    id: rid('genotoxicity'),
+    dimension: 'regulatory_alignment',
+    title: 'Genotoxicity studies not addressed',
+    question:
+      'ICH S2(R1) requires a standard battery of genotoxicity tests before Phase 1. ' +
+      'Has the sponsor conducted the Ames test, an in vitro chromosomal aberration assay, and an in vivo micronucleus study?',
+    check(answers) {
+      if (isBlank(answers.genotoxicity_studies)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'The submission does not address genotoxicity study status. FDA reviewers will expect the ICH S2(R1) standard battery to be completed or a justified deviation.',
+          'ICH S2(R1) requires a bacterial reverse mutation assay plus two mammalian cell assays (or one in vitro and one in vivo) before initial clinical trials.',
+          'ICH S2(R1); ICH M3(R2) Section 7; 21 CFR 312.23(a)(8)',
+          'Describe the genotoxicity battery conducted (or planned), including assay type, test article concentration ranges, and study outcomes. If any study is deferred, provide the scientific rationale.',
+          ['genotoxicity_studies', 'nonclinical_studies_complete'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 6. Carcinogenicity assessment ── (risk_identification) ───────────── */
+  {
+    id: rid('carcinogenicity'),
+    dimension: 'risk_identification',
+    title: 'Carcinogenicity risk assessment absent',
+    question:
+      'Per ICH S1A, a carcinogenicity assessment is required for drugs intended for chronic use (> 6 months) or drugs with cause for concern. ' +
+      'Has the sponsor addressed whether carcinogenicity studies are required, and if so, what is the plan?',
+    check(answers) {
+      const required = asBool(answers.carcinogenicity_required);
+      if (required === null) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'The sponsor has not addressed whether carcinogenicity studies are required. This will raise questions during FDA review of the nonclinical safety package.',
+          'ICH S1A requires sponsors to determine the need for carcinogenicity studies based on treatment duration, patient population, and mechanism of action.',
+          'ICH S1A; ICH S1B(R1); 21 CFR 312.23(a)(8)',
+          'Provide a carcinogenicity risk assessment addressing ICH S1A criteria. If studies are not required for the initial phase, document the rationale and planned timeline.',
+          ['carcinogenicity_required', 'phase', 'indication'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 7. Starting dose rationale ── (scientific_rigor) ─────────────────── */
+  {
+    id: rid('starting_dose'),
+    dimension: 'scientific_rigor',
+    title: 'Starting dose rationale insufficient',
+    question:
+      'FDA Guidance for Industry: Estimating the Maximum Safe Starting Dose requires a systematic approach ' +
+      'using NOAEL-based HED calculations. What is the basis for the proposed starting dose, and how was the human equivalent dose derived?',
+    check(answers) {
+      if (isBlank(answers.starting_dose_rationale)) {
+        return finding(
+          this.id, this.dimension, 'critical', this.title, this.question,
+          'No starting dose rationale has been provided. This is a critical deficiency that will likely result in a clinical hold under 21 CFR 312.42(b)(1)(iv).',
+          'The starting dose must be justified based on NOAEL from the most sensitive relevant species, converted to human equivalent dose (HED) using appropriate body surface area scaling, and incorporating a safety margin (typically 1/10 HED for small molecules).',
+          'FDA Guidance: Estimating the Maximum Safe Starting Dose in Initial Clinical Trials for Therapeutics in Adult Healthy Volunteers (2005); ICH S9 (for oncology); 21 CFR 312.23(a)(8)',
+          'Provide a complete starting dose justification including: (1) NOAEL from pivotal toxicology studies, (2) species and study duration, (3) HED calculation with body surface area conversion factors, (4) safety margin applied, (5) rationale for safety margin selection. For oncology, ICH S9 allows alternative approaches such as HNSTD-based calculations.',
+          ['starting_dose_rationale', 'dose_escalation_scheme', 'toxicology_species'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 8. Dose escalation scheme ── (practical_feasibility) ─────────────── */
+  {
+    id: rid('dose_escalation'),
+    dimension: 'practical_feasibility',
+    title: 'Dose escalation scheme not defined',
+    question:
+      'For Phase 1 dose-escalation studies, what scheme will be used (e.g., modified Fibonacci, 3+3, accelerated titration, BOIN)? ' +
+      'How are dose-limiting toxicities defined, and what are the stopping rules?',
+    check(answers) {
+      const phase = asString(answers.phase).toLowerCase();
+      if ((phase.includes('1') || phase === '') && isBlank(answers.dose_escalation_scheme)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'No dose escalation scheme has been specified for what appears to be a Phase 1 study. FDA reviewers will require a clear escalation methodology to assess subject safety.',
+          'A dose escalation design with pre-specified DLT definitions and stopping rules is expected for first-in-human studies.',
+          'FDA Guidance: Estimating the Maximum Safe Starting Dose (2005); FDA Guidance for Industry: Adaptive Design Clinical Trials (2019)',
+          'Define the dose escalation scheme, including: (1) escalation methodology, (2) DLT definitions with grading criteria per CTCAE, (3) DLT evaluation window, (4) dose increment rationale, (5) stopping rules for safety.',
+          ['dose_escalation_scheme', 'starting_dose_rationale', 'phase'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 9. GMP compliance ── (regulatory_alignment) ──────────────────────── */
+  {
+    id: rid('gmp_compliance'),
+    dimension: 'regulatory_alignment',
+    title: 'GMP compliance status unclear',
+    question:
+      '21 CFR 312.23(a)(7)(iv)(b) requires that the drug product be manufactured in compliance with CGMP. ' +
+      'Is the manufacturing site operating under current Good Manufacturing Practice regulations?',
+    check(answers) {
+      const gmp = asBool(answers.gmp_compliance);
+      if (gmp === false) {
+        return finding(
+          this.id, this.dimension, 'critical', this.title, this.question,
+          'The sponsor indicates the manufacturing site is NOT GMP-compliant. This is a fundamental deficiency that will prevent IND acceptance.',
+          'Drug products for use in clinical investigations must be manufactured in compliance with CGMP per 21 CFR 211 and 21 CFR 312.23(a)(7)(iv)(b).',
+          '21 CFR 312.23(a)(7)(iv)(b); 21 CFR 211; FDA Guidance: CGMP for Phase 1 Investigational Drugs (2008)',
+          'The manufacturing site must achieve GMP compliance before the drug product can be used in clinical trials. For Phase 1, FDA Guidance on CGMP for Phase 1 Investigational Drugs provides a risk-based framework with some flexibility, but fundamental GMP elements must be in place.',
+          ['gmp_compliance', 'manufacturing_site'],
+        );
+      }
+      if (gmp === null) {
+        return finding(
+          this.id, this.dimension, 'warning', 'GMP compliance not confirmed', this.question,
+          'GMP compliance status has not been confirmed in the submission.',
+          'GMP compliance is required for clinical trial material per 21 CFR 211.',
+          '21 CFR 312.23(a)(7)(iv)(b); 21 CFR 211',
+          'Confirm GMP compliance status and provide the manufacturing site address, most recent inspection date, and any outstanding FDA observations (Form 483 items).',
+          ['gmp_compliance', 'manufacturing_site'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 10. Manufacturing site identification ── (documentation) ─────────── */
+  {
+    id: rid('manufacturing_site'),
+    dimension: 'documentation',
+    title: 'Manufacturing site not identified',
+    question:
+      '21 CFR 312.23(a)(7) requires the IND to identify the manufacturing facility. ' +
+      'Where is the drug product manufactured, and has the site been inspected by FDA?',
+    check(answers) {
+      if (isBlank(answers.manufacturing_site)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'No manufacturing site has been identified. The IND must include the name and address of the manufacturer.',
+          '21 CFR 312.23(a)(7) requires identification of the manufacturing establishment and the name of the manufacturer.',
+          '21 CFR 312.23(a)(7); FDA Form 1571 Item 10',
+          'Provide the full name and address of each manufacturing facility involved in drug substance and drug product manufacturing, testing, and packaging.',
+          ['manufacturing_site', 'gmp_compliance'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 11. Stability data ── (scientific_rigor) ─────────────────────────── */
+  {
+    id: rid('stability_data'),
+    dimension: 'scientific_rigor',
+    title: 'Stability data not available',
+    question:
+      'ICH Q1A(R2) establishes the requirements for stability testing. What stability data support the proposed ' +
+      'shelf life and storage conditions for the investigational drug product?',
+    check(answers) {
+      const available = asBool(answers.stability_data_available);
+      if (available === false) {
+        return finding(
+          this.id, this.dimension, 'critical', this.title, this.question,
+          'The sponsor indicates no stability data are available. Without stability data, there is no assurance that the investigational product retains identity, strength, quality, and purity throughout the clinical study.',
+          'Sufficient stability data must be submitted to support the proposed storage conditions and retest/expiry dating per ICH Q1A(R2) and 21 CFR 312.23(a)(7).',
+          'ICH Q1A(R2); ICH Q5C (for biologics); 21 CFR 312.23(a)(7)(iv)(b); FDA Guidance: INDs for Phase 1 Studies of Drugs',
+          'Initiate stability studies under ICH conditions (25C/60% RH long-term; 40C/75% RH accelerated). For Phase 1 INDs, a minimum of 1-month accelerated and available real-time data may suffice, but a commitment to ongoing stability testing must be included.',
+          ['stability_data_available', 'drug_product_description'],
+        );
+      }
+      if (available === null) {
+        return finding(
+          this.id, this.dimension, 'warning', 'Stability data status not addressed', this.question,
+          'The submission does not address whether stability data are available for the investigational product.',
+          'Stability data are required to support the clinical use period.',
+          'ICH Q1A(R2); 21 CFR 312.23(a)(7)',
+          'Confirm availability of stability data, including conditions tested, time points, and results summary.',
+          ['stability_data_available'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 12. Impurity profile ── (scientific_rigor) ───────────────────────── */
+  {
+    id: rid('impurity_profile'),
+    dimension: 'scientific_rigor',
+    title: 'Impurity profile not characterized',
+    question:
+      'ICH Q3A(R2) and Q3B(R2) require identification, qualification, and control of impurities. ' +
+      'Has a comprehensive impurity profile been established for both drug substance and drug product?',
+    check(answers) {
+      if (isBlank(answers.impurity_profile)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'No impurity profile information has been provided. FDA CMC reviewers will scrutinize the absence of impurity characterization data.',
+          'ICH Q3A(R2) (drug substance) and Q3B(R2) (drug product) require reporting, identification, and qualification of impurities above specified thresholds.',
+          'ICH Q3A(R2); ICH Q3B(R2); ICH Q3D (elemental impurities); ICH M7 (mutagenic impurities); 21 CFR 312.23(a)(7)',
+          'Provide an impurity profile including: (1) process-related impurities, (2) degradation products, (3) residual solvents (ICH Q3C), (4) elemental impurities (ICH Q3D), and (5) mutagenic impurity assessment per ICH M7. Include specification limits and analytical methods.',
+          ['impurity_profile', 'drug_substance', 'drug_product_description'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 13. Sponsor identification ── (documentation) ────────────────────── */
+  {
+    id: rid('sponsor_name'),
+    dimension: 'documentation',
+    title: 'Sponsor not identified',
+    question:
+      'Form FDA 1571 requires identification of the sponsor. Who is the sponsor of this IND, and is the sponsor a US entity or does it have a US agent?',
+    check(answers) {
+      if (isBlank(answers.sponsor_name)) {
+        return finding(
+          this.id, this.dimension, 'critical', this.title, this.question,
+          'No sponsor name has been provided. The IND cannot be filed without a sponsor per 21 CFR 312.23(a)(1).',
+          'The sponsor must be identified on Form FDA 1571, including name, address, and telephone number. Foreign sponsors must designate a US agent per 21 CFR 312.23(a)(1)(v).',
+          '21 CFR 312.23(a)(1); FDA Form 1571',
+          'Provide the sponsor name, address, and contact information. If the sponsor is a foreign entity, identify the US agent.',
+          ['sponsor_name', 'ind_number'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 14. Investigator qualifications ── (regulatory_alignment) ────────── */
+  {
+    id: rid('investigator_quals'),
+    dimension: 'regulatory_alignment',
+    title: 'Investigator qualifications not documented',
+    question:
+      '21 CFR 312.53 requires Form FDA 1572 with a signed statement from each investigator. ' +
+      'Are investigator qualifications (CV, training, experience) documented and does the principal investigator meet 21 CFR 312.53 requirements?',
+    check(answers) {
+      if (isBlank(answers.investigator_qualifications)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'Investigator qualifications have not been described. Form FDA 1572 and supporting CVs are required for each participating investigator.',
+          'Per 21 CFR 312.53(c)(4), the sponsor must select investigators qualified by training and experience to investigate the drug. Form FDA 1572 must include a CV and a statement of the investigator\'s qualifications.',
+          '21 CFR 312.53; 21 CFR 312.23(a)(6)(iii)(b); FDA Form 1572',
+          'Provide investigator qualifications including relevant therapeutic area experience, GCP training certification, and clinical trial experience. Ensure Form 1572 is completed for each site.',
+          ['investigator_qualifications', 'irb_approval_status'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 15. IRB approval status ── (regulatory_alignment) ────────────────── */
+  {
+    id: rid('irb_approval'),
+    dimension: 'regulatory_alignment',
+    title: 'IRB approval status not confirmed',
+    question:
+      '21 CFR 312.23(a)(1)(ix) requires that the IND contain a statement that an IRB has been identified. ' +
+      'What is the current status of IRB review and approval at each proposed clinical site?',
+    check(answers) {
+      const status = asString(answers.irb_approval_status).toLowerCase();
+      if (isBlank(answers.irb_approval_status)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'IRB approval status has not been specified. While IRB approval is not required at IND submission, the FDA must be informed of the IRB status before subjects are enrolled.',
+          '21 CFR 56 requires IRB review and approval before initiation of research involving human subjects. 21 CFR 312.23(a)(1)(ix) requires a commitment to obtain IRB approval.',
+          '21 CFR 312.23(a)(1)(ix); 21 CFR 56; 21 CFR 312.66',
+          'Specify IRB approval status (pending, submitted, approved) and identify the reviewing IRB. If using a central IRB, confirm the arrangement. Include the IRB name, address, and FWA number.',
+          ['irb_approval_status', 'investigator_qualifications'],
+        );
+      }
+      if (status.includes('denied') || status.includes('rejected')) {
+        return finding(
+          this.id, this.dimension, 'critical', 'IRB approval denied', this.question,
+          'The submission indicates IRB approval has been denied or rejected. This is a significant barrier to initiating clinical investigations.',
+          'Clinical studies may not proceed without IRB approval per 21 CFR 56.',
+          '21 CFR 56; 21 CFR 312.66',
+          'Address the IRB\'s concerns and resubmit. Provide details of the IRB\'s objections and the sponsor\'s plan to remediate.',
+          ['irb_approval_status'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 16. Informed consent ── (documentation) ──────────────────────────── */
+  {
+    id: rid('informed_consent'),
+    dimension: 'documentation',
+    title: 'Informed consent draft not provided',
+    question:
+      'Per 21 CFR 50, informed consent must include all elements described in 21 CFR 50.25. ' +
+      'Has a draft informed consent form been prepared, and does it include the eight required basic elements?',
+    check(answers) {
+      const consent = asBool(answers.informed_consent_draft);
+      if (consent === false || isBlank(answers.informed_consent_draft)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'An informed consent draft has not been provided or has not been prepared. While not required for IND submission, the informed consent form is a critical study document that must comply with 21 CFR 50.25.',
+          '21 CFR 50.25 specifies eight basic elements and six additional elements of informed consent that must be included where applicable.',
+          '21 CFR 50.25; 21 CFR 50.27; FDA Guidance: Informed Consent (2014)',
+          'Prepare a draft informed consent form that includes all 21 CFR 50.25(a) basic elements: (1) purpose, (2) procedures, (3) risks, (4) benefits, (5) alternatives, (6) confidentiality, (7) compensation for injury, (8) contacts and voluntary participation statement.',
+          ['informed_consent_draft', 'irb_approval_status'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 17. Clinical hold history ── (risk_identification) ───────────────── */
+  {
+    id: rid('clinical_hold_history'),
+    dimension: 'risk_identification',
+    title: 'Clinical hold history not disclosed',
+    question:
+      'Per 21 CFR 312.42, FDA may impose a clinical hold for safety concerns or protocol deficiencies. ' +
+      'Has this drug or related compounds been subject to a prior clinical hold, and if so, have all hold conditions been resolved?',
+    check(answers) {
+      const history = asString(answers.clinical_hold_history).toLowerCase();
+      if (isBlank(answers.clinical_hold_history)) {
+        return finding(
+          this.id, this.dimension, 'info', this.title, this.question,
+          'Clinical hold history has not been addressed. Full transparency regarding any prior clinical holds on this IND or related INDs is expected.',
+          'Sponsors should disclose any prior clinical holds and their resolution in the IND submission.',
+          '21 CFR 312.42; 21 CFR 312.23(a)(5)',
+          'State whether the drug, related compounds, or the sponsor has been subject to any prior clinical holds. If yes, provide the hold date, basis, and documentation of resolution.',
+          ['clinical_hold_history', 'previous_human_experience'],
+        );
+      }
+      if (history.includes('yes') || history.includes('hold') || history.includes('placed')) {
+        return finding(
+          this.id, this.dimension, 'warning', 'Prior clinical hold identified', this.question,
+          'The submission indicates a prior clinical hold exists. FDA will closely scrutinize whether all hold conditions have been satisfactorily addressed.',
+          'All clinical hold conditions must be resolved before the study may proceed per 21 CFR 312.42(e).',
+          '21 CFR 312.42(e); FDA Guidance: Clinical Holds (1998)',
+          'Provide complete documentation of the prior clinical hold including: (1) hold date and basis, (2) sponsor response, (3) FDA feedback and resolution date, (4) any modifications made to address the hold conditions.',
+          ['clinical_hold_history', 'safety_database_size'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 18. Mechanism of action ── (scientific_rigor) ────────────────────── */
+  {
+    id: rid('mechanism_of_action'),
+    dimension: 'scientific_rigor',
+    title: 'Mechanism of action not described',
+    question:
+      'What is the proposed mechanism of action, and how does the pharmacology support the intended indication? ' +
+      'Is there a clear molecular or biological rationale connecting the drug target to the disease pathophysiology?',
+    check(answers) {
+      if (isBlank(answers.mechanism_of_action)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'No mechanism of action has been described. The scientific rationale for the proposed clinical investigation depends on a clear understanding of how the drug is expected to produce its therapeutic effect.',
+          '21 CFR 312.23(a)(8) requires a section describing the pharmacological effects and mechanism of action of the drug in animals.',
+          '21 CFR 312.23(a)(8); ICH M3(R2)',
+          'Describe the mechanism of action including: (1) molecular target, (2) target validation data, (3) relationship between target modulation and disease pathophysiology, (4) any biomarker strategy for confirming target engagement in clinical studies.',
+          ['mechanism_of_action', 'indication', 'therapeutic_area'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 19. Pharmacology summary ── (completeness) ──────────────────────── */
+  {
+    id: rid('pharmacology_summary'),
+    dimension: 'completeness',
+    title: 'Pharmacology summary incomplete or missing',
+    question:
+      '21 CFR 312.23(a)(8) requires an integrated summary of the pharmacological effects and mechanism of action. ' +
+      'Has the sponsor provided a pharmacology summary including primary and secondary pharmacodynamics and safety pharmacology?',
+    check(answers) {
+      if (isBlank(answers.pharmacology_summary)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'No pharmacology summary has been provided. Section 312.23(a)(8) requires an adequate summary of pharmacological effects.',
+          'An integrated summary covering primary pharmacology, secondary pharmacology, and safety pharmacology (ICH S7A core battery: cardiovascular, respiratory, CNS) is expected.',
+          '21 CFR 312.23(a)(8); ICH S7A; ICH S7B (QT/hERG)',
+          'Provide a pharmacology summary including: (1) primary pharmacodynamics (in vitro and in vivo efficacy), (2) secondary pharmacodynamics (off-target activity screening), (3) safety pharmacology per ICH S7A core battery, (4) hERG/QT assessment per ICH S7B if applicable.',
+          ['pharmacology_summary', 'mechanism_of_action', 'nonclinical_studies_complete'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 20. Drug product description ── (completeness) ───────────────────── */
+  {
+    id: rid('drug_product_description'),
+    dimension: 'completeness',
+    title: 'Drug product description inadequate',
+    question:
+      '21 CFR 312.23(a)(7)(iv)(a) requires a description of the drug product including its components, composition, and specifications. ' +
+      'Has a complete drug product description been provided?',
+    check(answers) {
+      if (isBlank(answers.drug_product_description)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'No drug product description has been provided. FDA CMC reviewers require a clear description of the finished dosage form.',
+          '21 CFR 312.23(a)(7)(iv)(a) requires the composition of the drug product, including identity and quantity of each ingredient.',
+          '21 CFR 312.23(a)(7)(iv)(a)',
+          'Provide a drug product description including: (1) dosage form, (2) unit dose composition (active and inactive ingredients with quantities), (3) container closure system, (4) release specifications, (5) description of manufacturing process.',
+          ['drug_product_description', 'formulation_type', 'drug_substance'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 21. Previous human experience ── (risk_identification) ───────────── */
+  {
+    id: rid('previous_human_experience'),
+    dimension: 'risk_identification',
+    title: 'Previous human experience not summarized',
+    question:
+      '21 CFR 312.23(a)(5) requires information from prior human experience with the investigational drug. ' +
+      'Has the drug or related compounds been administered to humans previously, and if so, what safety and efficacy signals were observed?',
+    check(answers) {
+      if (isBlank(answers.previous_human_experience)) {
+        return finding(
+          this.id, this.dimension, 'info', this.title, this.question,
+          'No information on previous human experience has been provided. If this is a first-in-human study, an explicit statement to that effect is expected.',
+          '21 CFR 312.23(a)(5) requires a summary of previous human experience, including prior clinical trials, foreign marketing experience, and any adverse events.',
+          '21 CFR 312.23(a)(5)',
+          'If prior human experience exists (e.g., foreign clinical studies, compassionate use), summarize the safety and efficacy data. If this is first-in-human, state so explicitly and cross-reference the nonclinical data supporting safety.',
+          ['previous_human_experience', 'safety_database_size', 'clinical_hold_history'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 22. Safety database size ── (practical_feasibility) ──────────────── */
+  {
+    id: rid('safety_database'),
+    dimension: 'practical_feasibility',
+    title: 'Safety database size not specified',
+    question:
+      'For INDs with prior human experience, what is the size of the existing safety database? ' +
+      'Is the safety database adequate to support the proposed phase of development per ICH E1 guidance?',
+    check(answers) {
+      if (!isBlank(answers.previous_human_experience) && isBlank(answers.safety_database_size)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'Prior human experience is referenced but the safety database size is not quantified. Reviewers need to assess whether the existing safety data are sufficient.',
+          'ICH E1 provides guidance on the size of the safety database needed to support different phases of clinical development.',
+          'ICH E1; 21 CFR 312.23(a)(5)',
+          'Quantify the safety database: number of subjects exposed, dose ranges, duration of exposure, and a summary of adverse events by system organ class and severity.',
+          ['safety_database_size', 'previous_human_experience'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 23. Phase specification ── (consistency) ─────────────────────────── */
+  {
+    id: rid('phase_specified'),
+    dimension: 'consistency',
+    title: 'Phase of clinical investigation not specified',
+    question:
+      '21 CFR 312.23(a)(3)(iv) requires identification of the phase of the proposed clinical investigation. ' +
+      'What phase is this IND application supporting, and is the nonclinical and CMC data package appropriate for that phase?',
+    check(answers) {
+      if (isBlank(answers.phase)) {
+        return finding(
+          this.id, this.dimension, 'critical', this.title, this.question,
+          'The phase of clinical investigation has not been specified. This is required information for Form FDA 1571 and determines the regulatory expectations for the supporting data package.',
+          '21 CFR 312.23(a)(3)(iv) and Form 1571 require identification of the phase of clinical study.',
+          '21 CFR 312.23(a)(3)(iv); FDA Form 1571 Item 11',
+          'Specify the phase (Phase 1, Phase 1/2, Phase 2, Phase 3) and ensure that the CMC, nonclinical, and clinical sections are consistent with phase-appropriate regulatory expectations per ICH M3(R2) Table 1.',
+          ['phase', 'nonclinical_studies_complete', 'gmp_compliance'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 24. Indication ── (completeness) ─────────────────────────────────── */
+  {
+    id: rid('indication'),
+    dimension: 'completeness',
+    title: 'Indication not defined',
+    question:
+      'What is the proposed indication for the investigational drug? Is there a clear unmet medical need, and how does this molecule fit within the existing therapeutic landscape?',
+    check(answers) {
+      if (isBlank(answers.indication)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'No indication has been specified. While FDA does not formally "approve" indications at the IND stage, a clearly defined target indication is essential for assessing the adequacy of the nonclinical and clinical plans.',
+          '21 CFR 312.23(a)(3)(ii) requires a description of the objectives and planned duration of the proposed clinical investigation.',
+          '21 CFR 312.23(a)(3)(ii)',
+          'Define the specific indication, including the target patient population and disease stage. Provide context on the unmet medical need and the current standard of care.',
+          ['indication', 'therapeutic_area', 'mechanism_of_action'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 25. Drug name identification ── (documentation) ──────────────────── */
+  {
+    id: rid('drug_name'),
+    dimension: 'documentation',
+    title: 'Drug name not provided',
+    question:
+      'Form FDA 1571 Item 4 requires the name of the investigational drug. ' +
+      'Has the sponsor provided the drug name (proprietary and/or code name) and the established/USAN name if available?',
+    check(answers) {
+      if (isBlank(answers.drug_name)) {
+        return finding(
+          this.id, this.dimension, 'warning', this.title, this.question,
+          'No drug name has been provided. The IND filing requires identification of the drug by name.',
+          'Form 1571 requires the drug name, including any proprietary name, code designation, and chemical name.',
+          'FDA Form 1571 Item 4; 21 CFR 312.23(a)(7)',
+          'Provide the drug name including: (1) sponsor code designation, (2) USAN/INN name if assigned, (3) chemical name, and (4) any proprietary name if applicable.',
+          ['drug_name', 'drug_substance'],
+        );
+      }
+      return null;
+    },
+  },
+
+  /* ── 26. IND number ── (documentation) ────────────────────────────────── */
+  {
+    id: rid('ind_number'),
+    dimension: 'documentation',
+    title: 'IND number not assigned or missing',
+    question:
+      'Has an IND number been assigned by FDA, and is this an original IND, a protocol amendment, or an IND amendment? ' +
+      'Cross-reference any prior IND submissions for this compound.',
+    check(answers) {
+      if (isBlank(answers.ind_number)) {
+        return finding(
+          this.id, this.dimension, 'info', this.title, this.question,
+          'No IND number has been provided. For an original IND submission this is expected (FDA assigns the number upon receipt). For amendments, the existing IND number must be referenced.',
+          'For original INDs, an IND number will be assigned by FDA. For subsequent submissions, the assigned IND number must be referenced.',
+          '21 CFR 312.23(a)(1); FDA Form 1571 Item 3',
+          'If this is an original IND, indicate "To Be Assigned." If an IND number has been previously assigned, include it on all correspondence and submissions.',
+          ['ind_number', 'sponsor_name'],
+        );
       }
       return null;
     },
   },
 ];
 
-/* ─── Public factory ───────────────────────────────────────────────────── */
+/* ─── Factory ─────────────────────────────────────────────────────────── */
 
 export function createIndAuditor(): WarGameAuditor {
   return {
     category: 'ind',
-    name: 'IND Submission Auditor',
+    name: 'FDA CDER IND Reviewer',
     description:
-      'Simulates FDA Office of New Drugs reviewer scrutiny of an Investigational New Drug application, examining CMC data, nonclinical package, clinical plan, and submission quality.',
-    rules: [
-      ...cmcRules,
-      ...nonclinicalRules,
-      ...clinicalPlanRules,
-      ...regulatoryHistoryRules,
-      ...submissionQualityRules,
-    ],
+      'Simulates an FDA CDER reviewer scrutinizing an Investigational New Drug (IND) application ' +
+      'per 21 CFR 312, ICH M3/S6/S9, and FDA guidance documents. Evaluates CMC adequacy, ' +
+      'nonclinical safety package, starting dose justification, investigator qualifications, ' +
+      'IRB oversight, and clinical hold risk factors.',
+    rules,
   };
 }

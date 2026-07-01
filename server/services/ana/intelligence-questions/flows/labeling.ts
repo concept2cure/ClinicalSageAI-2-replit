@@ -957,7 +957,7 @@ export function createLabelingFlow(): FlowDefinition {
         issueChecks: [
           {
             id: 'no_pregnancy_data',
-            condition: { field: 'pregnancy_data_source', operator: 'includes', value: 'no_data' },
+            condition: { field: 'pregnancy_data_source', operator: 'contains', value: 'no_data' },
             severity: 'warning',
             title: 'No Pregnancy Data Available',
             message:
