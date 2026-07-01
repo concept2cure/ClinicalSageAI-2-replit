@@ -1,13 +1,11 @@
 /**
  * Project Setup flow definition for the AnA Intelligence Questioning system.
  *
- * Guides the user through initial project configuration and regulatory
- * strategy definition, covering project identification, product type,
- * target indications, regulatory pathway selection, target markets,
- * development phase, key milestones, and team structure.
+ * Guides users through platform project configuration and onboarding,
+ * covering organization and project identity, product and regulatory
+ * scope, team and roles, and initial configuration.
  *
- * 8 nodes, 4 sections, 50+ fields with branching for product type
- * (drug, biologic, device, combination) and regulatory pathway.
+ * 10 nodes · 48 fields · 4 sections · 6 issue checks
  *
  * @module server/services/ana/intelligence-questions/flows/project-setup
  */
@@ -20,76 +18,192 @@ export function createProjectSetupFlow(): FlowDefinition {
     category: 'project_setup',
     name: 'Project Setup',
     description:
-      'Initial project configuration and regulatory strategy definition covering project identification, product classification, target indications, regulatory pathway, target markets, development phase, milestones, and team structure.',
+      'Platform project configuration and onboarding questionnaire covering organization and project identity, product and regulatory scope, team and roles, and initial configuration settings.',
     clientTypes: [],
-    entryNode: 'project_identification',
-    estimatedMinutes: 25,
+    entryNode: 'organization_info',
+    estimatedMinutes: 20,
 
     /* ─── Sections ──────────────────────────────────────────────────────── */
 
     sections: [
       {
-        id: 'project_info',
-        label: 'Project Information',
-        nodeIds: ['project_identification', 'product_classification'],
+        id: 'org_project',
+        label: 'Organization & Project Identity',
+        nodeIds: ['organization_info', 'project_identity'],
       },
       {
-        id: 'regulatory_strategy',
-        label: 'Regulatory Strategy',
-        nodeIds: [
-          'target_indications',
-          'regulatory_pathway',
-          'drug_pathway_details',
-          'device_pathway_details',
-          'biologic_pathway_details',
-        ],
+        id: 'product_regulatory',
+        label: 'Product & Regulatory Scope',
+        nodeIds: ['product_details', 'regulatory_targets', 'medtech_regulatory', 'multi_country_setup'],
       },
       {
-        id: 'markets_phase',
-        label: 'Markets & Development',
-        nodeIds: ['target_markets'],
+        id: 'team_roles',
+        label: 'Team & Roles',
+        nodeIds: ['team_assignment', 'external_partners'],
       },
       {
-        id: 'planning',
-        label: 'Milestones & Team',
-        nodeIds: ['milestones', 'team_structure'],
+        id: 'initial_config',
+        label: 'Initial Configuration',
+        nodeIds: ['project_preferences', 'final_confirmation'],
       },
     ],
 
     /* ─── Nodes ─────────────────────────────────────────────────────────── */
 
     nodes: [
-      /* ────────────────────────────────────────────────────────────────── */
-      /*  Section 1 — Project Information                                 */
-      /* ────────────────────────────────────────────────────────────────── */
+      /* ================================================================ */
+      /*  Section 1 — Organization & Project Identity                     */
+      /* ================================================================ */
 
       {
-        id: 'project_identification',
-        section: 'Project Information',
+        id: 'organization_info',
+        section: 'org_project',
         question:
-          'Let\'s set up this project. What is the project name, internal code, and a brief description of the product being developed?',
+          'Let\'s set up your project. First, confirm your organization details and the type of company.',
         guidance:
-          'A clear project name and description help align all team members on the product vision and scope. The internal code is used for tracking across systems. The therapeutic area and product description should capture enough detail to guide downstream regulatory and development decisions.',
+          'Accurate organization information ensures correct regulatory mapping, document templates, and compliance workflows. The organization type (pharma, biotech, medtech) determines which regulatory frameworks and document types are available throughout the platform.',
+        fields: [
+          {
+            id: 'organization_name',
+            label: 'Organization Name',
+            type: 'text',
+            placeholder: 'e.g., Acme Therapeutics, Inc.',
+            required: true,
+          },
+          {
+            id: 'organization_type',
+            label: 'Organization Type',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'pharma', label: 'Pharmaceutical Company' },
+              { value: 'biotech', label: 'Biotechnology Company' },
+              { value: 'medtech', label: 'Medical Device Company' },
+              { value: 'cro', label: 'Contract Research Organization (CRO)' },
+              { value: 'cdmo', label: 'Contract Development and Manufacturing Organization (CDMO)' },
+              { value: 'academic', label: 'Academic / Research Institution' },
+              { value: 'government', label: 'Government Agency' },
+            ],
+          },
+          {
+            id: 'organization_size',
+            label: 'Organization Size',
+            type: 'select',
+            options: [
+              { value: 'startup', label: 'Startup (< 50 employees)' },
+              { value: 'small', label: 'Small (50-200 employees)' },
+              { value: 'mid', label: 'Mid-Size (200-1,000 employees)' },
+              { value: 'large', label: 'Large (1,000-10,000 employees)' },
+              { value: 'enterprise', label: 'Enterprise (> 10,000 employees)' },
+            ],
+          },
+          {
+            id: 'headquarters_country',
+            label: 'Headquarters Country',
+            type: 'country_select',
+            required: true,
+          },
+        ],
+        defaultNext: 'project_identity',
+      },
+
+      {
+        id: 'project_identity',
+        section: 'org_project',
+        question:
+          'Define the project. What is the project name, internal code, and what phase or stage is it in?',
+        guidance:
+          'A well-defined project identity ensures all team members and platform workflows reference the same product and development stage. The project code should follow your organization\'s naming convention. The development phase determines which document types and regulatory activities are most relevant.',
         fields: [
           {
             id: 'project_name',
             label: 'Project Name',
             type: 'text',
+            placeholder: 'e.g., Project Atlas — ABC-1234 Phase 3 Program',
             required: true,
-            placeholder: 'e.g. Project Atlas — Atorvastatin Extended-Release',
           },
           {
             id: 'project_code',
             label: 'Internal Project Code',
             type: 'text',
-            placeholder: 'e.g. ATL-2025-001',
+            placeholder: 'e.g., PRJ-2024-042',
           },
           {
             id: 'project_description',
-            label: 'Product / Project Description',
+            label: 'Project Description',
             type: 'textarea',
+            placeholder: 'Brief description of the project scope and objectives',
             required: true,
-            placeholder: 'Describe the product being developed, its intended use, and the unmet medical need it addresses',
+            validation: { minLength: 20 },
+          },
+          {
+            id: 'development_phase',
+            label: 'Development Phase / Stage',
+            type: 'select',
+            required: true,
+            options: [
+              { value: 'discovery', label: 'Discovery / Preclinical' },
+              { value: 'ind_enabling', label: 'IND-Enabling / Pre-CTA' },
+              { value: 'phase_1', label: 'Phase 1 Clinical' },
+              { value: 'phase_2', label: 'Phase 2 Clinical' },
+              { value: 'phase_3', label: 'Phase 3 Clinical / Pivotal' },
+              { value: 'nda_bla_filing', label: 'NDA/BLA/MAA Filing' },
+              { value: 'post_approval', label: 'Post-Approval / Life Cycle Management' },
+              { value: 'device_design', label: 'Device Design & Development' },
+              { value: 'device_submission', label: 'Device Submission (510(k) / PMA / De Novo)' },
+              { value: 'device_post_market', label: 'Device Post-Market' },
+            ],
+          },
+          {
+            id: 'target_submission_date',
+            label: 'Target Submission Date',
+            type: 'date',
+            helpText: 'The target date for the primary regulatory submission (IND, NDA, 510(k), etc.).',
+          },
+          {
+            id: 'project_priority',
+            label: 'Project Priority',
+            type: 'select',
+            options: [
+              { value: 'critical', label: 'Critical — Top priority' },
+              { value: 'high', label: 'High' },
+              { value: 'standard', label: 'Standard' },
+              { value: 'low', label: 'Low — Long-term / exploratory' },
+            ],
+          },
+        ],
+        defaultNext: 'product_details',
+        issueChecks: [
+          {
+            id: 'submission_date_in_past',
+            condition: { field: 'target_submission_date', operator: 'lt', value: '2026-07-01' },
+            severity: 'warning',
+            title: 'Target Submission Date Is in the Past',
+            message:
+              'The target submission date appears to be in the past. Please verify the date. If the submission has already occurred, consider selecting "Post-Approval / Life Cycle Management" as the development phase.',
+          },
+        ],
+      },
+
+      /* ================================================================ */
+      /*  Section 2 — Product & Regulatory Scope                          */
+      /* ================================================================ */
+
+      {
+        id: 'product_details',
+        section: 'product_regulatory',
+        question:
+          'Tell us about the product. What is the therapeutic area, product type, and route of administration?',
+        guidance:
+          'Product information drives intelligent defaults throughout the platform — from document templates to regulatory pathway recommendations. The therapeutic area helps map to appropriate FDA review divisions, ICH guidelines, and competitive intelligence sources.',
+        provideExpertFeedback: true,
+        fields: [
+          {
+            id: 'product_name',
+            label: 'Product Name (Generic / Code)',
+            type: 'text',
+            placeholder: 'e.g., ABC-1234 (remdesivir)',
+            required: true,
           },
           {
             id: 'therapeutic_area',
@@ -98,782 +212,515 @@ export function createProjectSetupFlow(): FlowDefinition {
             required: true,
             options: [
               { value: 'oncology', label: 'Oncology' },
-              { value: 'cardiology', label: 'Cardiology' },
-              { value: 'neurology', label: 'Neurology' },
               { value: 'immunology', label: 'Immunology / Inflammation' },
+              { value: 'neurology', label: 'Neurology / Psychiatry' },
+              { value: 'cardiovascular', label: 'Cardiovascular' },
               { value: 'infectious_disease', label: 'Infectious Disease' },
-              { value: 'endocrinology', label: 'Endocrinology / Metabolic' },
+              { value: 'metabolic', label: 'Metabolic / Endocrinology' },
               { value: 'respiratory', label: 'Respiratory' },
-              { value: 'gastroenterology', label: 'Gastroenterology' },
-              { value: 'dermatology', label: 'Dermatology' },
-              { value: 'ophthalmology', label: 'Ophthalmology' },
               { value: 'rare_disease', label: 'Rare Disease / Orphan' },
+              { value: 'hematology', label: 'Hematology' },
+              { value: 'ophthalmology', label: 'Ophthalmology' },
+              { value: 'dermatology', label: 'Dermatology' },
+              { value: 'gastroenterology', label: 'Gastroenterology' },
               { value: 'gene_cell_therapy', label: 'Gene / Cell Therapy' },
+              { value: 'medical_device', label: 'Medical Device' },
               { value: 'other', label: 'Other' },
             ],
           },
-          {
-            id: 'sponsor_organization',
-            label: 'Sponsor Organization',
-            type: 'text',
-            required: true,
-            placeholder: 'Legal name of the sponsoring organization',
-          },
-          {
-            id: 'project_start_date',
-            label: 'Project Start Date',
-            type: 'date',
-          },
-        ],
-        defaultNext: 'product_classification',
-      },
-
-      {
-        id: 'product_classification',
-        section: 'Project Information',
-        question:
-          'What type of product is being developed? This determines the applicable regulatory framework and submission requirements.',
-        guidance:
-          'Product classification is fundamental to regulatory strategy. Drugs follow 21 CFR 314 (NDA) or 505(b)(2) pathways. Biologics follow 21 CFR 601 (BLA). Medical devices follow 21 CFR 807 (510(k)) or 21 CFR 814 (PMA). Combination products are assigned to a primary mode of action (PMOA) center per 21 CFR 3.2. The classification determines which FDA center has jurisdiction and which regulations apply.',
-        provideExpertFeedback: true,
-        fields: [
           {
             id: 'product_type',
             label: 'Product Type',
             type: 'select',
             required: true,
             options: [
-              { value: 'drug', label: 'Drug (Small Molecule)' },
-              { value: 'biologic', label: 'Biologic (Protein, Antibody, Vaccine)' },
-              { value: 'medical_device', label: 'Medical Device' },
-              { value: 'combination', label: 'Combination Product' },
-              { value: 'cell_therapy', label: 'Cell Therapy' },
-              { value: 'gene_therapy', label: 'Gene Therapy' },
-              { value: 'diagnostic', label: 'In Vitro Diagnostic (IVD)' },
-            ],
-          },
-          {
-            id: 'drug_substance_type',
-            label: 'Drug Substance Type',
-            type: 'select',
-            visibleWhen: { field: 'product_type', operator: 'eq', value: 'drug' },
-            options: [
-              { value: 'nce', label: 'New Chemical Entity (NCE)' },
-              { value: 'known_substance', label: 'Known Active Substance' },
-              { value: 'generic', label: 'Generic (ANDA)' },
-              { value: 'otc_switch', label: 'Rx-to-OTC Switch' },
-            ],
-          },
-          {
-            id: 'biologic_type',
-            label: 'Biologic Type',
-            type: 'select',
-            visibleWhen: { field: 'product_type', operator: 'in', value: ['biologic', 'cell_therapy', 'gene_therapy'] },
-            options: [
+              { value: 'small_molecule', label: 'Small Molecule' },
               { value: 'monoclonal_antibody', label: 'Monoclonal Antibody' },
-              { value: 'recombinant_protein', label: 'Recombinant Protein' },
+              { value: 'adc', label: 'Antibody-Drug Conjugate (ADC)' },
+              { value: 'bispecific', label: 'Bispecific Antibody' },
+              { value: 'gene_therapy', label: 'Gene Therapy' },
+              { value: 'cell_therapy', label: 'Cell Therapy' },
               { value: 'vaccine', label: 'Vaccine' },
-              { value: 'blood_product', label: 'Blood / Plasma Product' },
+              { value: 'peptide', label: 'Peptide' },
+              { value: 'oligonucleotide', label: 'Oligonucleotide' },
               { value: 'biosimilar', label: 'Biosimilar' },
-              { value: 'aav_vector', label: 'AAV Vector (Gene Therapy)' },
-              { value: 'car_t', label: 'CAR-T Cell Therapy' },
-              { value: 'mrna', label: 'mRNA Therapeutic' },
+              { value: 'medical_device', label: 'Medical Device' },
+              { value: 'combination_product', label: 'Drug-Device Combination' },
+              { value: 'diagnostic', label: 'Diagnostic / IVD' },
               { value: 'other', label: 'Other' },
             ],
           },
           {
-            id: 'device_class',
-            label: 'Device Classification',
-            type: 'select',
-            visibleWhen: { field: 'product_type', operator: 'in', value: ['medical_device', 'diagnostic'] },
-            options: [
-              { value: 'class_i', label: 'Class I (General Controls)' },
-              { value: 'class_ii', label: 'Class II (Special Controls)' },
-              { value: 'class_iii', label: 'Class III (Premarket Approval)' },
-            ],
+            id: 'indication',
+            label: 'Target Indication',
+            type: 'text',
+            placeholder: 'e.g., Locally advanced or metastatic non-small cell lung cancer (NSCLC)',
           },
           {
-            id: 'combination_pmoa',
-            label: 'Primary Mode of Action (PMOA)',
+            id: 'route_of_administration',
+            label: 'Route of Administration',
             type: 'select',
-            visibleWhen: { field: 'product_type', operator: 'eq', value: 'combination' },
-            helpText: 'The PMOA determines which FDA center has primary jurisdiction per 21 CFR 3.2.',
             options: [
-              { value: 'drug', label: 'Drug PMOA (CDER Lead)' },
-              { value: 'biologic', label: 'Biologic PMOA (CBER Lead)' },
-              { value: 'device', label: 'Device PMOA (CDRH Lead)' },
+              { value: 'oral', label: 'Oral' },
+              { value: 'iv', label: 'Intravenous (IV)' },
+              { value: 'sc', label: 'Subcutaneous (SC)' },
+              { value: 'im', label: 'Intramuscular (IM)' },
+              { value: 'topical', label: 'Topical' },
+              { value: 'inhaled', label: 'Inhaled' },
+              { value: 'intrathecal', label: 'Intrathecal' },
+              { value: 'ophthalmic', label: 'Ophthalmic' },
+              { value: 'implant', label: 'Implant' },
+              { value: 'na_device', label: 'N/A (Device)' },
+              { value: 'other', label: 'Other' },
             ],
-          },
-          {
-            id: 'innovation_designation',
-            label: 'Innovation / Expedited Designations Sought',
-            type: 'multi_select',
-            helpText: 'Select any expedited programs or special designations being pursued.',
-            options: [
-              { value: 'fast_track', label: 'Fast Track' },
-              { value: 'breakthrough', label: 'Breakthrough Therapy' },
-              { value: 'accelerated_approval', label: 'Accelerated Approval' },
-              { value: 'priority_review', label: 'Priority Review' },
-              { value: 'orphan_drug', label: 'Orphan Drug Designation' },
-              { value: 'rmat', label: 'RMAT (Regenerative Medicine)' },
-              { value: 'prime', label: 'PRIME (EMA)' },
-              { value: 'sakigake', label: 'SAKIGAKE (Japan)' },
-              { value: 'none', label: 'None' },
-            ],
+            visibleWhen: { field: 'product_type', operator: 'neq', value: 'medical_device' },
           },
         ],
         branches: [
           {
-            when: { field: 'product_type', operator: 'eq', value: 'drug' },
-            goto: 'target_indications',
-          },
-          {
-            when: { field: 'product_type', operator: 'in', value: ['biologic', 'cell_therapy', 'gene_therapy'] },
-            goto: 'target_indications',
+            when: { field: 'organization_type', operator: 'eq', value: 'medtech' },
+            goto: 'medtech_regulatory',
           },
           {
             when: { field: 'product_type', operator: 'in', value: ['medical_device', 'diagnostic'] },
-            goto: 'target_indications',
-          },
-          {
-            when: { field: 'product_type', operator: 'eq', value: 'combination' },
-            goto: 'target_indications',
+            goto: 'medtech_regulatory',
           },
         ],
-        defaultNext: 'target_indications',
+        defaultNext: 'regulatory_targets',
+        issueChecks: [
+          {
+            id: 'missing_therapeutic_area',
+            condition: { field: 'therapeutic_area', operator: 'eq', value: 'other' },
+            severity: 'info',
+            title: 'Therapeutic Area Not Specified',
+            message:
+              'Selecting a specific therapeutic area enables the platform to provide more relevant document templates, regulatory guidance, and competitive intelligence. Consider selecting the most appropriate therapeutic area for your product.',
+          },
+        ],
       },
 
-      /* ────────────────────────────────────────────────────────────────── */
-      /*  Section 2 — Regulatory Strategy                                 */
-      /* ────────────────────────────────────────────────────────────────── */
-
       {
-        id: 'target_indications',
-        section: 'Regulatory Strategy',
+        id: 'regulatory_targets',
+        section: 'product_regulatory',
         question:
-          'What are the target indications and patient population for this product?',
+          'What are the regulatory targets for this project? Select the agencies and submission types you are planning.',
         guidance:
-          'Clearly defining the target indication(s) and patient population is critical for regulatory strategy, clinical trial design, and commercial planning. The primary indication drives the initial filing, while secondary indications may support lifecycle management. Patient population details (age, disease stage, biomarker status) influence trial design, labeling, and post-market requirements.',
+          'Identifying target regulatory agencies early ensures the platform configures the correct document templates, formatting requirements, and compliance checks. Multi-country submissions require coordination of timelines and may benefit from harmonized CTD (Common Technical Document) preparation per ICH M4.',
         fields: [
           {
-            id: 'primary_indication',
-            label: 'Primary Indication',
-            type: 'text',
+            id: 'primary_regulatory_agency',
+            label: 'Primary Regulatory Agency',
+            type: 'agency_select',
             required: true,
-            placeholder: 'e.g. Treatment of HER2-positive metastatic breast cancer',
           },
           {
-            id: 'secondary_indications',
-            label: 'Secondary / Future Indications',
-            type: 'textarea',
-            placeholder: 'List additional indications planned for lifecycle management',
-          },
-          {
-            id: 'target_population',
-            label: 'Target Patient Population',
-            type: 'textarea',
-            required: true,
-            placeholder: 'e.g. Adult patients (18+) with confirmed HER2-positive status who have failed prior trastuzumab therapy',
-          },
-          {
-            id: 'population_age_group',
-            label: 'Age Group',
-            type: 'multi_select',
+            id: 'submission_type',
+            label: 'Primary Submission Type',
+            type: 'select',
             required: true,
             options: [
-              { value: 'neonatal', label: 'Neonatal (0-28 days)' },
-              { value: 'pediatric', label: 'Pediatric (1 month - 17 years)' },
-              { value: 'adult', label: 'Adult (18-64 years)' },
-              { value: 'geriatric', label: 'Geriatric (65+ years)' },
+              { value: 'ind', label: 'IND (Investigational New Drug)' },
+              { value: 'nda', label: 'NDA (New Drug Application)' },
+              { value: 'bla', label: 'BLA (Biologics License Application)' },
+              { value: 'anda', label: 'ANDA (Abbreviated New Drug Application)' },
+              { value: '510k', label: '510(k) Premarket Notification' },
+              { value: 'pma', label: 'PMA (Premarket Approval)' },
+              { value: 'de_novo', label: 'De Novo Classification Request' },
+              { value: 'maa', label: 'MAA (Marketing Authorization Application — EU)' },
+              { value: 'cta', label: 'CTA (Clinical Trial Application — EU/UK)' },
+              { value: 'jnda', label: 'JNDA (Japan New Drug Application)' },
+              { value: 'other', label: 'Other' },
             ],
           },
           {
-            id: 'unmet_medical_need',
-            label: 'Unmet Medical Need',
-            type: 'textarea',
-            required: true,
-            placeholder: 'Describe the current treatment landscape and the unmet need this product addresses',
-            helpText: 'This supports expedited designation requests and regulatory interactions.',
-          },
-          {
-            id: 'companion_diagnostic',
-            label: 'Companion Diagnostic Required',
+            id: 'multi_country_submission',
+            label: 'Is This a Multi-Country Submission?',
             type: 'yes_no',
-            helpText: 'Will a companion diagnostic (CDx) be required for patient selection?',
+            helpText: 'Multi-country submissions require harmonized document packages. The ICH Common Technical Document (CTD) format is accepted by FDA, EMA, PMDA, Health Canada, TGA, and many other agencies.',
           },
           {
-            id: 'companion_diagnostic_details',
-            label: 'Companion Diagnostic Details',
-            type: 'textarea',
-            visibleWhen: { field: 'companion_diagnostic', operator: 'eq', value: true },
-            placeholder: 'Describe the CDx (biomarker, test type, development partner)',
-          },
-        ],
-        defaultNext: 'regulatory_pathway',
-      },
-
-      {
-        id: 'regulatory_pathway',
-        section: 'Regulatory Strategy',
-        question:
-          'What regulatory pathway will be used for the initial submission? This determines the data package requirements.',
-        guidance:
-          'The regulatory pathway defines the type and extent of data required for approval. For drugs: 505(b)(1) requires full NDA with complete clinical data; 505(b)(2) allows reliance on published literature or FDA findings of safety/efficacy. For devices: 510(k) requires substantial equivalence to a predicate; PMA requires full safety and effectiveness data. For biologics: BLA (351(a)) or biosimilar (351(k)). The choice of pathway significantly impacts development timelines, costs, and data requirements.',
-        provideExpertFeedback: true,
-        fields: [
-          {
-            id: 'primary_pathway',
-            label: 'Primary Regulatory Pathway',
-            type: 'select',
-            required: true,
-            options: [
-              { value: '505b1', label: '505(b)(1) — Full NDA' },
-              { value: '505b2', label: '505(b)(2) — NDA with Literature Reference' },
-              { value: 'anda', label: 'ANDA — Abbreviated NDA (Generic)' },
-              { value: '510k', label: '510(k) — Premarket Notification' },
-              { value: 'de_novo', label: 'De Novo Classification' },
-              { value: 'pma', label: 'PMA — Premarket Approval' },
-              { value: 'bla_351a', label: 'BLA 351(a) — Original Biologic' },
-              { value: 'bla_351k', label: 'BLA 351(k) — Biosimilar' },
-              { value: 'eua', label: 'EUA — Emergency Use Authorization' },
-            ],
-          },
-          {
-            id: 'fda_center',
-            label: 'FDA Center',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'cder', label: 'CDER (Center for Drug Evaluation and Research)' },
-              { value: 'cber', label: 'CBER (Center for Biologics Evaluation and Research)' },
-              { value: 'cdrh', label: 'CDRH (Center for Devices and Radiological Health)' },
-              { value: 'ocp', label: 'OCP (Office of Combination Products)' },
-            ],
-          },
-          {
-            id: 'pre_submission_meetings',
-            label: 'Pre-Submission Meetings Planned',
+            id: 'additional_agencies',
+            label: 'Additional Regulatory Agencies',
             type: 'multi_select',
-            helpText: 'Select all planned FDA interactions.',
+            visibleWhen: { field: 'multi_country_submission', operator: 'eq', value: true },
             options: [
-              { value: 'pre_ind', label: 'Pre-IND Meeting' },
-              { value: 'eop1', label: 'End-of-Phase 1 Meeting' },
-              { value: 'eop2', label: 'End-of-Phase 2 Meeting' },
-              { value: 'pre_nda', label: 'Pre-NDA / Pre-BLA Meeting' },
-              { value: 'pre_sub', label: 'Pre-Submission (Device)' },
-              { value: 'type_a', label: 'Type A Meeting' },
-              { value: 'type_b', label: 'Type B Meeting' },
-              { value: 'type_c', label: 'Type C Meeting' },
+              { value: 'ema', label: 'EMA (European Medicines Agency)' },
+              { value: 'pmda', label: 'PMDA (Japan)' },
+              { value: 'nmpa', label: 'NMPA (China)' },
+              { value: 'health_canada', label: 'Health Canada' },
+              { value: 'tga', label: 'TGA (Australia)' },
+              { value: 'mhra', label: 'MHRA (United Kingdom)' },
+              { value: 'anvisa', label: 'ANVISA (Brazil)' },
+              { value: 'cdsco', label: 'CDSCO (India)' },
+              { value: 'who', label: 'WHO Prequalification' },
             ],
           },
           {
-            id: 'reference_product',
-            label: 'Reference Listed Drug / Predicate Device',
-            type: 'text',
-            placeholder: 'e.g. Lipitor (NDA 020702) or Predicate Device K123456',
-            helpText: 'Required for 505(b)(2), ANDA, 510(k), and biosimilar applications.',
-          },
-          {
-            id: 'pediatric_requirements',
-            label: 'Pediatric Study Requirements',
-            type: 'select',
-            required: true,
-            helpText: 'PREA requires pediatric studies unless a waiver or deferral is granted.',
-            options: [
-              { value: 'psp_required', label: 'Pediatric Study Plan (PSP) Required' },
-              { value: 'waiver', label: 'Pediatric Waiver Sought' },
-              { value: 'deferral', label: 'Pediatric Deferral Sought' },
-              { value: 'not_applicable', label: 'Not Applicable' },
-            ],
+            id: 'ctd_format',
+            label: 'Using ICH CTD Format?',
+            type: 'yes_no',
+            helpText: 'The ICH Common Technical Document (M4) format is the standard for all major regulatory submissions worldwide.',
           },
         ],
         branches: [
           {
-            when: { field: 'primary_pathway', operator: 'in', value: ['505b1', '505b2', 'anda'] },
-            goto: 'drug_pathway_details',
-          },
-          {
-            when: { field: 'primary_pathway', operator: 'in', value: ['510k', 'de_novo', 'pma'] },
-            goto: 'device_pathway_details',
-          },
-          {
-            when: { field: 'primary_pathway', operator: 'in', value: ['bla_351a', 'bla_351k'] },
-            goto: 'biologic_pathway_details',
+            when: { field: 'multi_country_submission', operator: 'eq', value: true },
+            goto: 'multi_country_setup',
           },
         ],
-        defaultNext: 'target_markets',
+        defaultNext: 'team_assignment',
+        issueChecks: [
+          {
+            id: 'no_regulatory_target',
+            condition: { field: 'submission_type', operator: 'eq', value: 'other' },
+            severity: 'warning',
+            title: 'No Standard Regulatory Target Selected',
+            message:
+              'Selecting a specific submission type enables the platform to provide tailored document templates, formatting requirements, and regulatory intelligence. If your submission type is not listed, contact support for assistance with custom configurations.',
+          },
+        ],
       },
 
-      /* ────────────────────────────────────────────────────────────────── */
-      /*  Branch nodes — Pathway-specific details                         */
-      /* ────────────────────────────────────────────────────────────────── */
-
       {
-        id: 'drug_pathway_details',
-        section: 'Regulatory Strategy',
+        id: 'medtech_regulatory',
+        section: 'product_regulatory',
         question:
-          'Let\'s capture the drug-specific regulatory details for this submission pathway.',
+          'This is a medical device project. Provide device-specific regulatory information.',
         guidance:
-          'Drug submissions under 505(b)(1) require complete reports of safety and effectiveness studies. 505(b)(2) applications can rely on FDA findings of safety and effectiveness for the reference listed drug (RLD) and may require bridging studies. ANDA submissions require bioequivalence data. Consider whether any special protocol assessments (SPAs) are needed for pivotal trials.',
-        provideExpertFeedback: true,
+          'Medical device submissions follow distinct pathways: 510(k) for substantial equivalence to a predicate device (21 CFR 807), PMA for Class III devices (21 CFR 814), and De Novo for novel low-to-moderate risk devices (21 CFR 860). Device classification determines the regulatory pathway and required documentation. In the EU, the Medical Device Regulation (EU 2017/745) applies with Notified Body assessment.',
         fields: [
           {
-            id: 'nda_type',
-            label: 'NDA Type',
+            id: 'device_class',
+            label: 'Device Classification (US)',
             type: 'select',
             required: true,
             options: [
-              { value: 'original', label: 'Original NDA' },
-              { value: 'efficacy_supplement', label: 'Efficacy Supplement (sNDA)' },
-              { value: 'new_formulation', label: 'New Formulation' },
-              { value: 'new_indication', label: 'New Indication' },
+              { value: 'class_i', label: 'Class I — General Controls' },
+              { value: 'class_ii', label: 'Class II — General + Special Controls' },
+              { value: 'class_iii', label: 'Class III — Premarket Approval Required' },
+              { value: 'not_classified', label: 'Not Yet Classified' },
             ],
           },
           {
-            id: 'rld_information',
-            label: 'Reference Listed Drug (RLD)',
-            type: 'textarea',
-            placeholder: 'Name, NDA number, applicant, approved indications',
-            helpText: 'Required for 505(b)(2) and ANDA pathways.',
-          },
-          {
-            id: 'bridging_studies',
-            label: 'Bridging Studies Required',
-            type: 'multi_select',
-            helpText: 'Select studies needed to bridge to the RLD.',
+            id: 'device_submission_pathway',
+            label: 'Submission Pathway',
+            type: 'select',
+            required: true,
             options: [
-              { value: 'bioequivalence', label: 'Bioequivalence Study' },
-              { value: 'comparative_pk', label: 'Comparative PK Study' },
-              { value: 'clinical_efficacy', label: 'Clinical Efficacy Study' },
-              { value: 'clinical_safety', label: 'Clinical Safety Study' },
-              { value: 'nonclinical_bridge', label: 'Nonclinical Bridging Study' },
-              { value: 'none', label: 'None Required' },
+              { value: '510k_traditional', label: '510(k) — Traditional' },
+              { value: '510k_special', label: '510(k) — Special' },
+              { value: '510k_abbreviated', label: '510(k) — Abbreviated' },
+              { value: 'pma', label: 'PMA (Premarket Approval)' },
+              { value: 'de_novo', label: 'De Novo Classification Request' },
+              { value: 'hde', label: 'HDE (Humanitarian Device Exemption)' },
+              { value: 'eua', label: 'Emergency Use Authorization (EUA)' },
             ],
           },
-          {
-            id: 'spa_planned',
-            label: 'Special Protocol Assessment (SPA)',
-            type: 'yes_no',
-            helpText: 'Will an SPA be sought for the pivotal trial design, endpoints, or statistical analysis?',
-          },
-          {
-            id: 'patent_exclusivity',
-            label: 'Patent / Exclusivity Considerations',
-            type: 'multi_select',
-            helpText: 'Select applicable exclusivity provisions.',
-            options: [
-              { value: 'nce_5year', label: '5-Year NCE Exclusivity' },
-              { value: 'clinical_3year', label: '3-Year Clinical Investigation Exclusivity' },
-              { value: 'orphan_7year', label: '7-Year Orphan Drug Exclusivity' },
-              { value: 'pediatric_6month', label: '6-Month Pediatric Exclusivity' },
-              { value: 'patent_challenge', label: 'Patent Challenge (PIV)' },
-              { value: 'none', label: 'None / Not Assessed' },
-            ],
-          },
-        ],
-        defaultNext: 'target_markets',
-      },
-
-      {
-        id: 'device_pathway_details',
-        section: 'Regulatory Strategy',
-        question:
-          'Let\'s capture the device-specific regulatory details for this submission pathway.',
-        guidance:
-          '510(k) submissions require demonstration of substantial equivalence to a legally marketed predicate device. PMA applications require valid scientific evidence of safety and effectiveness. De Novo classification is for novel devices with no predicate that present low-to-moderate risk. Design controls (21 CFR 820.30) and risk management (ISO 14971) apply to all device pathways.',
-        provideExpertFeedback: true,
-        fields: [
           {
             id: 'predicate_device',
             label: 'Predicate Device (for 510(k))',
-            type: 'textarea',
-            placeholder: 'Device name, 510(k) number, manufacturer',
-            helpText: 'Identify the predicate device and basis for substantial equivalence.',
-          },
-          {
-            id: 'device_classification_panel',
-            label: 'Classification Panel',
             type: 'text',
-            placeholder: 'e.g. Cardiovascular, Orthopedic',
-            helpText: 'FDA classification panel and product code (21 CFR 862-892).',
+            placeholder: 'e.g., K123456 — Brand Name by Manufacturer',
+            visibleWhen: { field: 'device_submission_pathway', operator: 'in', value: ['510k_traditional', '510k_special', '510k_abbreviated'] },
           },
           {
             id: 'product_code',
             label: 'FDA Product Code',
             type: 'text',
-            placeholder: 'e.g. DXY, QAS',
+            placeholder: 'e.g., QAS (Class II, Cardiovascular)',
           },
           {
-            id: 'performance_standards',
-            label: 'Applicable Standards',
-            type: 'multi_select',
-            helpText: 'Select consensus standards to be used in the submission.',
-            options: [
-              { value: 'iso_13485', label: 'ISO 13485 (QMS)' },
-              { value: 'iso_14971', label: 'ISO 14971 (Risk Management)' },
-              { value: 'iec_60601', label: 'IEC 60601 (Electrical Safety)' },
-              { value: 'iec_62304', label: 'IEC 62304 (Software Lifecycle)' },
-              { value: 'iso_10993', label: 'ISO 10993 (Biocompatibility)' },
-              { value: 'iec_62366', label: 'IEC 62366 (Usability)' },
-            ],
-          },
-          {
-            id: 'clinical_data_required',
-            label: 'Clinical Data Required',
+            id: 'eu_mdr_class',
+            label: 'EU MDR Classification',
             type: 'select',
-            required: true,
             options: [
-              { value: 'yes_pivotal', label: 'Yes — Pivotal Clinical Study' },
-              { value: 'yes_literature', label: 'Yes — Clinical Literature' },
-              { value: 'bench_only', label: 'No — Bench Testing Only' },
-              { value: 'tbd', label: 'To Be Determined' },
+              { value: 'class_i', label: 'Class I' },
+              { value: 'class_iia', label: 'Class IIa' },
+              { value: 'class_iib', label: 'Class IIb' },
+              { value: 'class_iii', label: 'Class III' },
+              { value: 'na', label: 'Not applicable / No EU filing planned' },
             ],
           },
           {
-            id: 'software_level_of_concern',
-            label: 'Software Level of Concern',
-            type: 'select',
-            helpText: 'If the device includes software, specify the level of concern per FDA guidance.',
-            options: [
-              { value: 'minor', label: 'Minor' },
-              { value: 'moderate', label: 'Moderate' },
-              { value: 'major', label: 'Major' },
-              { value: 'not_applicable', label: 'Not Applicable (No Software)' },
-            ],
+            id: 'notified_body',
+            label: 'Notified Body (EU)',
+            type: 'text',
+            placeholder: 'e.g., BSI, TUV SUD, Dekra',
+            visibleWhen: { field: 'eu_mdr_class', operator: 'neq', value: 'na' },
           },
         ],
-        defaultNext: 'target_markets',
+        defaultNext: 'team_assignment',
       },
 
       {
-        id: 'biologic_pathway_details',
-        section: 'Regulatory Strategy',
+        id: 'multi_country_setup',
+        section: 'product_regulatory',
         question:
-          'Let\'s capture the biologic-specific regulatory details for this BLA submission.',
+          'For multi-country submissions, let\'s define the submission timeline and coordination strategy.',
         guidance:
-          'BLA submissions under 351(a) require full reports of clinical investigation. Biosimilar applications under 351(k) require demonstration of biosimilarity (analytical, functional, animal, and clinical studies) to the reference product. CBER regulates most biologics, though some therapeutic proteins are regulated by CDER. Consider lot release requirements, post-marketing commitments, and REMS obligations.',
-        provideExpertFeedback: true,
+          'Multi-country submissions benefit from a coordinated regulatory strategy. Consider whether to use a simultaneous global filing approach or a sequential (rolling) strategy starting with the primary market. The ICH CTD format (M4) provides a harmonized document structure accepted by all ICH member agencies. Regional differences in Module 1 (administrative information) and certain Module 3 (CMC) requirements must be addressed.',
         fields: [
-          {
-            id: 'reference_biologic',
-            label: 'Reference Biologic (for 351(k))',
-            type: 'textarea',
-            placeholder: 'Product name, BLA number, applicant',
-            helpText: 'Required for biosimilar applications. Identify the reference product.',
-          },
-          {
-            id: 'manufacturing_platform',
-            label: 'Manufacturing Platform',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'cho', label: 'CHO Cell Culture' },
-              { value: 'e_coli', label: 'E. coli Expression' },
-              { value: 'yeast', label: 'Yeast Expression' },
-              { value: 'insect_cell', label: 'Insect Cell / Baculovirus' },
-              { value: 'human_cell', label: 'Human Cell Line' },
-              { value: 'plant_based', label: 'Plant-Based' },
-              { value: 'cell_free', label: 'Cell-Free Synthesis' },
-              { value: 'other', label: 'Other' },
-            ],
-          },
-          {
-            id: 'comparability_studies',
-            label: 'Comparability Studies Needed',
-            type: 'multi_select',
-            helpText: 'Select studies required for demonstrating comparability or biosimilarity.',
-            options: [
-              { value: 'analytical', label: 'Analytical Characterization' },
-              { value: 'functional', label: 'Functional Assays' },
-              { value: 'animal_pk', label: 'Animal PK Studies' },
-              { value: 'animal_tox', label: 'Animal Toxicology' },
-              { value: 'clinical_pk', label: 'Clinical PK/PD Study' },
-              { value: 'clinical_efficacy', label: 'Clinical Efficacy Study' },
-              { value: 'immunogenicity', label: 'Immunogenicity Assessment' },
-            ],
-          },
-          {
-            id: 'interchangeability',
-            label: 'Interchangeability Designation Sought',
-            type: 'yes_no',
-            helpText: 'Will interchangeability be sought (requires switching study data)?',
-          },
-          {
-            id: 'lot_release',
-            label: 'CBER Lot Release Required',
-            type: 'yes_no',
-            helpText: 'Some biologics require CBER lot release testing before distribution.',
-          },
-          {
-            id: 'rems_required',
-            label: 'REMS Required',
-            type: 'select',
-            helpText: 'Risk Evaluation and Mitigation Strategy requirements.',
-            options: [
-              { value: 'yes', label: 'Yes — REMS Required' },
-              { value: 'under_evaluation', label: 'Under Evaluation' },
-              { value: 'no', label: 'No' },
-            ],
-          },
-        ],
-        defaultNext: 'target_markets',
-      },
-
-      /* ────────────────────────────────────────────────────────────────── */
-      /*  Section 3 — Markets & Development                               */
-      /* ────────────────────────────────────────────────────────────────── */
-
-      {
-        id: 'target_markets',
-        section: 'Markets & Development',
-        question:
-          'Which markets are targeted for this product, and what is the current development phase?',
-        guidance:
-          'Target markets determine which regulatory agencies will review the application and influence the development strategy. Global development programs may leverage ICH guidelines for harmonized submissions. The development phase indicates the maturity of the program and determines near-term milestones. Consider whether simultaneous submissions or rolling reviews are planned.',
-        fields: [
-          {
-            id: 'target_regulatory_markets',
-            label: 'Target Regulatory Markets',
-            type: 'multi_select',
-            required: true,
-            options: [
-              { value: 'us_fda', label: 'United States (FDA)' },
-              { value: 'eu_ema', label: 'European Union (EMA)' },
-              { value: 'japan_pmda', label: 'Japan (PMDA)' },
-              { value: 'china_nmpa', label: 'China (NMPA)' },
-              { value: 'canada_hc', label: 'Canada (Health Canada)' },
-              { value: 'uk_mhra', label: 'United Kingdom (MHRA)' },
-              { value: 'australia_tga', label: 'Australia (TGA)' },
-              { value: 'brazil_anvisa', label: 'Brazil (ANVISA)' },
-              { value: 'india_cdsco', label: 'India (CDSCO)' },
-              { value: 'korea_mfds', label: 'South Korea (MFDS)' },
-              { value: 'who_pq', label: 'WHO Prequalification' },
-              { value: 'other', label: 'Other' },
-            ],
-          },
           {
             id: 'filing_strategy',
-            label: 'Filing Strategy',
+            label: 'Multi-Country Filing Strategy',
             type: 'select',
             required: true,
             options: [
-              { value: 'sequential', label: 'Sequential Filing (US First)' },
               { value: 'simultaneous', label: 'Simultaneous Global Filing' },
-              { value: 'rolling', label: 'Rolling Submission (US)' },
-              { value: 'phased', label: 'Phased Regional Filing' },
+              { value: 'sequential', label: 'Sequential (Rolling) — Start with Primary Market' },
+              { value: 'staggered', label: 'Staggered — Primary + Key Markets Within 6 Months' },
             ],
           },
           {
-            id: 'development_phase',
-            label: 'Current Development Phase',
-            type: 'select',
+            id: 'primary_market',
+            label: 'Primary Market (First Filing)',
+            type: 'country_select',
             required: true,
-            options: [
-              { value: 'discovery', label: 'Discovery / Lead Optimization' },
-              { value: 'preclinical', label: 'Preclinical / IND-Enabling' },
-              { value: 'phase_1', label: 'Phase 1' },
-              { value: 'phase_1_2', label: 'Phase 1/2' },
-              { value: 'phase_2', label: 'Phase 2' },
-              { value: 'phase_2_3', label: 'Phase 2/3' },
-              { value: 'phase_3', label: 'Phase 3' },
-              { value: 'nda_bla_filing', label: 'NDA/BLA Filing' },
-              { value: 'under_review', label: 'Under Regulatory Review' },
-              { value: 'approved', label: 'Approved (Lifecycle Management)' },
-            ],
           },
           {
-            id: 'global_development_plan',
-            label: 'Global Development Plan (GDP)',
-            type: 'select',
-            helpText: 'Is there a unified global development plan or separate regional strategies?',
-            options: [
-              { value: 'unified', label: 'Unified Global Plan' },
-              { value: 'regional', label: 'Separate Regional Plans' },
-              { value: 'hybrid', label: 'Hybrid (Core + Regional Adaptations)' },
-              { value: 'not_established', label: 'Not Yet Established' },
-            ],
-          },
-          {
-            id: 'market_exclusivity_strategy',
-            label: 'Market Exclusivity Strategy',
+            id: 'filing_timeline_overview',
+            label: 'Filing Timeline Overview',
             type: 'textarea',
-            placeholder: 'Describe the IP and market exclusivity strategy (patents, data exclusivity, orphan designation)',
+            placeholder: 'e.g., US FDA: Q2 2026. EU EMA: Q3 2026 (centralized procedure). Japan PMDA: Q4 2026.',
+            required: true,
+          },
+          {
+            id: 'local_agent_required',
+            label: 'Are Local Regulatory Agents/Representatives Required?',
+            type: 'yes_no',
+            helpText: 'Many countries require a local authorized representative or regulatory agent for foreign sponsors.',
+          },
+          {
+            id: 'translation_needs',
+            label: 'Translation Requirements',
+            type: 'textarea',
+            placeholder: 'e.g., Japanese translation required for PMDA submission. EU — English accepted for centralized procedure. China — Chinese translation for all modules.',
           },
         ],
-        defaultNext: 'milestones',
+        defaultNext: 'team_assignment',
       },
 
-      /* ────────────────────────────────────────────────────────────────── */
-      /*  Section 4 — Milestones & Team                                   */
-      /* ────────────────────────────────────────────────────────────────── */
+      /* ================================================================ */
+      /*  Section 3 — Team & Roles                                        */
+      /* ================================================================ */
 
       {
-        id: 'milestones',
-        section: 'Milestones & Team',
+        id: 'team_assignment',
+        section: 'team_roles',
         question:
-          'What are the key development and regulatory milestones for this project?',
+          'Assign the core project team. Who is leading this project and what are the key roles?',
         guidance:
-          'Defining milestones early ensures alignment between development, regulatory, and commercial teams. Key milestones typically include IND/CTA filing, first patient enrolled, database lock, NDA/BLA/MAA submission, and target approval date. For devices, milestones include 510(k)/PMA submission, IDE approval, and design freeze. Include go/no-go decision points.',
-        fields: [
-          {
-            id: 'ind_cta_target',
-            label: 'IND / CTA Filing Target',
-            type: 'date',
-            helpText: 'Target date for Investigational New Drug or Clinical Trial Application.',
-          },
-          {
-            id: 'fpi_target',
-            label: 'First Patient In (FPI) Target',
-            type: 'date',
-            helpText: 'Target date for first patient enrolled in the pivotal study.',
-          },
-          {
-            id: 'database_lock_target',
-            label: 'Database Lock Target',
-            type: 'date',
-          },
-          {
-            id: 'submission_target',
-            label: 'NDA / BLA / 510(k) Submission Target',
-            type: 'date',
-            required: true,
-            helpText: 'Target date for regulatory submission.',
-          },
-          {
-            id: 'approval_target',
-            label: 'Target Approval Date',
-            type: 'date',
-            helpText: 'Expected approval date based on review timelines (standard or priority).',
-          },
-          {
-            id: 'launch_target',
-            label: 'Commercial Launch Target',
-            type: 'date',
-          },
-          {
-            id: 'go_no_go_decisions',
-            label: 'Go / No-Go Decision Points',
-            type: 'textarea',
-            placeholder: 'Describe key decision gates (e.g., Phase 2 futility analysis, interim analysis)',
-            helpText: 'Identify decision points where the program could advance, pivot, or terminate.',
-          },
-          {
-            id: 'critical_path_risks',
-            label: 'Critical Path Risks',
-            type: 'textarea',
-            placeholder: 'Identify major risks that could delay the timeline',
-            helpText: 'e.g., CMC scale-up challenges, enrollment delays, regulatory hold risks',
-          },
-        ],
-        issueChecks: [
-          {
-            id: 'no_submission_date',
-            condition: { field: 'submission_target', operator: 'eq', value: '' },
-            severity: 'warning',
-            title: 'No Submission Target Date',
-            message:
-              'A target submission date is essential for project planning, resource allocation, and alignment with commercial objectives. Define a realistic submission target based on the development phase and anticipated data availability.',
-          },
-        ],
-        defaultNext: 'team_structure',
-      },
-
-      {
-        id: 'team_structure',
-        section: 'Milestones & Team',
-        question:
-          'Define the core project team structure, key roles, and external partnerships.',
-        guidance:
-          'A well-defined team structure ensures accountability and clear communication channels. For regulatory submissions, identify the regulatory lead, medical monitor, CMC lead, and project manager at minimum. External partnerships (CROs, CMOs, regulatory consultants) should be documented. The governance structure should define escalation paths and decision-making authority.',
+          'A well-defined project team ensures accountability and efficient communication. The project lead has overall responsibility for project delivery. Assign functional leads for regulatory, clinical, CMC, and other relevant areas. Platform access permissions will be configured based on these role assignments.',
         fields: [
           {
             id: 'project_lead',
-            label: 'Project Lead / Program Director',
+            label: 'Project Lead / Program Manager',
             type: 'text',
+            placeholder: 'e.g., Jane Smith, VP Regulatory Affairs',
             required: true,
-            placeholder: 'Name and title',
+          },
+          {
+            id: 'project_lead_email',
+            label: 'Project Lead Email',
+            type: 'text',
+            placeholder: 'e.g., jsmith@acmetherapeutics.com',
+            required: true,
           },
           {
             id: 'regulatory_lead',
-            label: 'Regulatory Affairs Lead',
+            label: 'Regulatory Lead',
             type: 'text',
-            required: true,
-            placeholder: 'Name and title',
+            placeholder: 'e.g., John Doe, Director Regulatory Affairs',
           },
           {
-            id: 'medical_lead',
-            label: 'Medical / Clinical Lead',
+            id: 'clinical_lead',
+            label: 'Clinical Lead',
             type: 'text',
-            placeholder: 'Name and title',
+            placeholder: 'e.g., Dr. Sarah Johnson, VP Clinical Development',
           },
           {
             id: 'cmc_lead',
             label: 'CMC / Manufacturing Lead',
             type: 'text',
-            placeholder: 'Name and title',
+            placeholder: 'e.g., Mike Chen, Director CMC',
           },
           {
-            id: 'core_team_functions',
-            label: 'Core Team Functions Represented',
-            type: 'multi_select',
-            required: true,
-            helpText: 'Select all functional areas represented on the core project team.',
-            options: [
-              { value: 'regulatory_affairs', label: 'Regulatory Affairs' },
-              { value: 'clinical_development', label: 'Clinical Development' },
-              { value: 'clinical_operations', label: 'Clinical Operations' },
-              { value: 'medical_affairs', label: 'Medical Affairs' },
-              { value: 'cmc', label: 'CMC / Manufacturing' },
-              { value: 'quality', label: 'Quality Assurance' },
-              { value: 'nonclinical', label: 'Nonclinical / Toxicology' },
-              { value: 'biostatistics', label: 'Biostatistics' },
-              { value: 'data_management', label: 'Data Management' },
-              { value: 'pharmacovigilance', label: 'Pharmacovigilance' },
-              { value: 'commercial', label: 'Commercial / Marketing' },
-              { value: 'legal_ip', label: 'Legal / IP' },
-              { value: 'finance', label: 'Finance' },
-            ],
+            id: 'quality_lead',
+            label: 'Quality Assurance Lead',
+            type: 'text',
+            placeholder: 'e.g., Lisa Park, QA Manager',
           },
           {
-            id: 'external_partners',
-            label: 'External Partners',
-            type: 'multi_select',
-            helpText: 'Select types of external partnerships supporting this project.',
-            options: [
-              { value: 'cro', label: 'CRO (Contract Research Organization)' },
-              { value: 'cmo', label: 'CMO (Contract Manufacturing Organization)' },
-              { value: 'cdmo', label: 'CDMO (Contract Development & Manufacturing)' },
-              { value: 'regulatory_consultant', label: 'Regulatory Consultant' },
-              { value: 'central_lab', label: 'Central Laboratory' },
-              { value: 'bioanalytical_lab', label: 'Bioanalytical Laboratory' },
-              { value: 'packaging', label: 'Packaging / Labeling' },
-              { value: 'medical_writing', label: 'Medical Writing' },
-              { value: 'none', label: 'None' },
-            ],
+            id: 'team_size',
+            label: 'Estimated Total Team Size',
+            type: 'number',
+            placeholder: 'e.g., 12',
+            validation: { min: 1 },
+          },
+        ],
+        defaultNext: 'external_partners',
+        issueChecks: [
+          {
+            id: 'no_project_lead',
+            condition: { field: 'project_lead', operator: 'eq', value: '' },
+            severity: 'critical',
+            title: 'No Project Lead Assigned',
+            message:
+              'Every project must have a designated project lead who is accountable for project delivery, timeline management, and stakeholder communication. Assign a project lead before proceeding.',
+          },
+        ],
+      },
+
+      {
+        id: 'external_partners',
+        section: 'team_roles',
+        question:
+          'Are there external partners involved in this project (CROs, CMOs, consultants)?',
+        guidance:
+          'External partners such as CROs, CDMOs, and regulatory consultants are common in pharmaceutical development. Identifying these partners early helps configure appropriate access permissions, document sharing workflows, and communication channels within the platform.',
+        fields: [
+          {
+            id: 'external_partners_involved',
+            label: 'Are External Partners Involved?',
+            type: 'yes_no',
           },
           {
-            id: 'governance_structure',
-            label: 'Governance Structure',
+            id: 'cro_partner',
+            label: 'CRO Partner(s)',
+            type: 'text',
+            placeholder: 'e.g., IQVIA, Covance, Parexel',
+            visibleWhen: { field: 'external_partners_involved', operator: 'eq', value: true },
+          },
+          {
+            id: 'cdmo_partner',
+            label: 'CDMO / Manufacturing Partner(s)',
+            type: 'text',
+            placeholder: 'e.g., Lonza, Catalent, Samsung Biologics',
+            visibleWhen: { field: 'external_partners_involved', operator: 'eq', value: true },
+          },
+          {
+            id: 'regulatory_consultant',
+            label: 'Regulatory Consultant(s)',
+            type: 'text',
+            placeholder: 'e.g., Regulatory Solutions Inc.',
+            visibleWhen: { field: 'external_partners_involved', operator: 'eq', value: true },
+          },
+          {
+            id: 'partner_access_level',
+            label: 'Default Partner Access Level',
             type: 'select',
-            required: true,
-            helpText: 'Define the governance and decision-making framework.',
+            visibleWhen: { field: 'external_partners_involved', operator: 'eq', value: true },
             options: [
-              { value: 'steering_committee', label: 'Steering Committee + Project Team' },
-              { value: 'matrix', label: 'Matrix Organization' },
-              { value: 'dedicated', label: 'Dedicated Project Team' },
-              { value: 'alliance', label: 'Alliance Management (Co-Development)' },
+              { value: 'view_only', label: 'View Only — Can view assigned documents' },
+              { value: 'contributor', label: 'Contributor — Can edit assigned sections' },
+              { value: 'full_access', label: 'Full Access — Same as internal team' },
+            ],
+          },
+        ],
+        defaultNext: 'project_preferences',
+      },
+
+      /* ================================================================ */
+      /*  Section 4 — Initial Configuration                               */
+      /* ================================================================ */
+
+      {
+        id: 'project_preferences',
+        section: 'initial_config',
+        question:
+          'Set your project preferences and configure initial platform settings.',
+        guidance:
+          'These preferences configure the platform behavior for your project. Notification settings control how team members receive updates. Document naming conventions ensure consistency across all project deliverables. The project timezone determines scheduling and deadline management.',
+        fields: [
+          {
+            id: 'notification_preference',
+            label: 'Notification Preference',
+            type: 'select',
+            options: [
+              { value: 'all', label: 'All Notifications' },
+              { value: 'critical_only', label: 'Critical Only (deadlines, issues, reviews)' },
+              { value: 'daily_digest', label: 'Daily Digest' },
+              { value: 'weekly_digest', label: 'Weekly Digest' },
             ],
           },
           {
-            id: 'meeting_cadence',
-            label: 'Core Team Meeting Cadence',
+            id: 'document_naming_convention',
+            label: 'Document Naming Convention',
             type: 'select',
             options: [
-              { value: 'weekly', label: 'Weekly' },
-              { value: 'biweekly', label: 'Biweekly' },
-              { value: 'monthly', label: 'Monthly' },
-              { value: 'as_needed', label: 'As Needed' },
+              { value: 'ctd', label: 'ICH CTD Numbering (e.g., m2-25-clinical-overview)' },
+              { value: 'project_code', label: 'Project Code Prefix (e.g., ABC1234-DOC-001)' },
+              { value: 'custom', label: 'Custom Convention' },
             ],
+          },
+          {
+            id: 'custom_naming_convention',
+            label: 'Custom Naming Convention',
+            type: 'text',
+            placeholder: 'e.g., [PROJECT]-[TYPE]-[SEQ]-[VERSION]',
+            visibleWhen: { field: 'document_naming_convention', operator: 'eq', value: 'custom' },
+          },
+          {
+            id: 'project_timezone',
+            label: 'Project Timezone',
+            type: 'select',
+            options: [
+              { value: 'est', label: 'US Eastern (ET)' },
+              { value: 'cst', label: 'US Central (CT)' },
+              { value: 'pst', label: 'US Pacific (PT)' },
+              { value: 'gmt', label: 'GMT / UTC' },
+              { value: 'cet', label: 'Central European (CET)' },
+              { value: 'jst', label: 'Japan Standard (JST)' },
+              { value: 'cst_china', label: 'China Standard (CST)' },
+            ],
+          },
+          {
+            id: 'enable_ai_assistance',
+            label: 'Enable AI-Assisted Document Intelligence',
+            type: 'yes_no',
+            helpText: 'When enabled, the platform provides AI-powered regulatory guidance, document drafting assistance, and compliance checking throughout the project.',
+          },
+          {
+            id: 'milestone_tracking',
+            label: 'Enable Milestone Tracking',
+            type: 'yes_no',
+            helpText: 'Milestone tracking provides automated deadline management, progress dashboards, and critical path analysis.',
+          },
+        ],
+        defaultNext: 'final_confirmation',
+      },
+
+      {
+        id: 'final_confirmation',
+        section: 'initial_config',
+        question:
+          'Review your project setup and confirm. The project will be created with the settings you have provided.',
+        guidance:
+          'Review all project settings before confirming. Once the project is created, you can modify these settings in the project administration panel. The platform will automatically configure document templates, workflows, and compliance checks based on your selections.',
+        fields: [
+          {
+            id: 'setup_confirmation',
+            label: 'I confirm the project information above is correct and I am ready to create this project.',
+            type: 'checkbox',
+            required: true,
+          },
+          {
+            id: 'initial_documents_to_create',
+            label: 'Which Documents Should the Platform Prepare First?',
+            type: 'multi_select',
+            options: [
+              { value: 'project_plan', label: 'Regulatory Project Plan' },
+              { value: 'submission_timeline', label: 'Submission Timeline' },
+              { value: 'document_list', label: 'Document Requirements List' },
+              { value: 'team_charter', label: 'Team Charter / RACI Matrix' },
+              { value: 'risk_register', label: 'Regulatory Risk Register' },
+            ],
+          },
+          {
+            id: 'additional_notes',
+            label: 'Additional Notes or Special Requirements',
+            type: 'textarea',
+            placeholder: 'Any additional information, special requirements, or notes for project setup...',
           },
         ],
         defaultNext: null,

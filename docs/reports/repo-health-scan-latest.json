@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-01T04:41:54.843Z",
+  "generatedAt": "2026-07-01T04:44:01.127Z",
   "git": {
-    "sha": "2589da2f39c526558c01c0179da0aeab71ea3216",
+    "sha": "0f32795c5617e249720505eb6a1d6d2b4aa82c16",
     "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
@@ -2796,10 +2796,6 @@
         "lines": 1572
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
-        "lines": 1561
-      },
-      {
         "file": "server/routes/cortex-unified.ts",
         "lines": 1553
       },
@@ -2818,17 +2814,14 @@
       {
         "file": "server/services/submission-twin-service.ts",
         "lines": 1534
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+        "lines": 1513
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

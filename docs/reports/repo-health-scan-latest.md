@@ -1,18 +1,14 @@
 # Repo Health Scan
 
-Generated: 2026-07-01T04:41:54.843Z
+Generated: 2026-07-01T04:44:01.127Z
 Branch: claude/ana-intelligence-questions-8q3xjj
-SHA: 2589da2f39c526558c01c0179da0aeab71ea3216
+SHA: 0f32795c5617e249720505eb6a1d6d2b4aa82c16
 
 ## Summary
 
 - Duplicate basenames: 239
 - Files over byte threshold: 28
 - Files over line threshold: 83
-- Baseline: docs/reports/repo-health-scan-latest.json
-- Delta duplicate basenames: 0
-- Delta files over byte threshold: 0
-- Delta files over line threshold: 0
 
 ## Owner Summary
 
