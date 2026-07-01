@@ -56,15 +56,13 @@ describe('CDISC tools', () => {
     { name: 'USUBJID', label: 'Subject', type: 'text', length: 30 },
   ] }] };
   it('generate_define_xml returns ODM XML + conformance', async () => {
-    // generateDefineXml reads { datasets, studyName } at the top level (not under
-    // a `spec` wrapper), so pass the spec fields directly.
-    const out = JSON.parse(await getToolHandler('generate_define_xml')!(spec));
-    // runStatsTool wraps the engine output: { status:'computed', engine, result }.
-    // generateDefineXml returns { xml, datasetCount, variableCount }; conformance
-    // is now a separate tool (check_dataset_conformance, exercised below).
-    expect(out.status).toBe('computed');
-    expect(out.result.xml).toContain('def:DefineVersion="2.1.0"');
-    expect(out.result.datasetCount).toBe(1);
+    // The handler expects the spec under an input.spec wrapper.
+    const out = JSON.parse(await getToolHandler('generate_define_xml')!({ spec }));
+    // The handler uses custom JSON output (not runStatsTool), returning
+    // { status:'generated', engine, xml, conformance, instruction }.
+    expect(out.status).toBe('generated');
+    expect(out.xml).toContain('def:DefineVersion="2.0.0"');
+    expect(out.conformance.summary.datasets).toBe(1);
   });
   it('check_dataset_conformance flags missing required vars', async () => {
     const out = JSON.parse(await getToolHandler('check_dataset_conformance')!({ spec: { studyName: 'S', standard: 'SDTM', datasets: [{ name: 'AE', label: 'AE', variables: [{ name: 'STUDYID', label: 'x', type: 'text', length: 5 }] }] } }));

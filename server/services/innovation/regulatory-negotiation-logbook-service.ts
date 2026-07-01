@@ -17,6 +17,7 @@ import { Pool } from 'pg';
 import { ai } from '../../lib/unified-ai-client';
 // TODO(gateway-migration): getOpenAIClient is used only for embeddings here (openai.embeddings.create).
 // The AI gateway does not yet support embedding calls; migrate when an embedding gateway is available.
+// eslint-disable-next-line no-restricted-imports
 import { getOpenAIClient } from '../openai-client';
 import crypto from 'crypto';
 

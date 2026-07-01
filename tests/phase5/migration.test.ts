@@ -38,6 +38,7 @@ describe.skipIf(SKIP_MIGRATION_TESTS)('Phase 5: Intelligent Document System Migr
     // it was handed, not the unit-test pool mock registered globally in
     // tests/setup.ts. Pull the real driver so `new Pool()` is a constructor.
     const { Pool } = await vi.importActual<typeof import('pg')>('pg');
+    // eslint-disable-next-line no-restricted-syntax -- integration test needs real pg driver
     pool = new Pool({ connectionString, connectionTimeoutMillis: 5000 });
     
     // Check if schema exists first

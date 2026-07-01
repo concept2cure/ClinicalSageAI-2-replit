@@ -57,6 +57,7 @@ if (runIntegration) {
       throw new Error('Missing TEST_DATABASE_URL or DATABASE_URL for integration tests.');
     }
 
+    // eslint-disable-next-line no-restricted-syntax -- integration test needs its own connection
     testPool = new Pool({
       connectionString,
     });

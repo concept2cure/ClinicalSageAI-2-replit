@@ -1,6 +1,7 @@
 import pg from 'pg';
 const { Pool } = pg;
 
+// eslint-disable-next-line no-restricted-syntax -- standalone migration script; runs outside the server process
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });

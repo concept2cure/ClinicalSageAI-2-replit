@@ -92,6 +92,7 @@ describeIfDb('RLS policy — integration', () => {
 
   beforeAll(async () => {
     try {
+      // eslint-disable-next-line no-restricted-syntax -- integration test needs its own connection
       pool = new Pool({ connectionString: databaseUrl });
       client = await pool.connect();
 

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 const { Pool } = pg;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// eslint-disable-next-line no-restricted-syntax -- standalone CLI script; runs outside the server process
 const pool = new Pool({
   connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,

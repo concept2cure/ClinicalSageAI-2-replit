@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports -- Assistants API requires direct OpenAI SDK
 import OpenAI from 'openai';
 import type { Assistant } from 'openai/resources/beta/assistants';
 import type { Message as ThreadMessage } from 'openai/resources/beta/threads/messages';

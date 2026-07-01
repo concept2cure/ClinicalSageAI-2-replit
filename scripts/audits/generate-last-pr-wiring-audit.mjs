@@ -36,7 +36,7 @@ export function parseArgs(argv) {
 }
 
 function getMergedPrs(limit) {
-  const raw = run(`git log --merges --oneline --grep='Merge pull request #' -n ${limit}`);
+  const raw = run(`git log --merges --oneline --extended-regexp --grep='Merge (pull request |PR )?#[0-9]+' -n ${limit}`);
   if (!raw) return [];
 
   return raw.split('\n').map((line) => {
@@ -103,11 +103,11 @@ export function buildReport({ date, limit, results }) {
   return `# Last ${limit} PR Wiring Audit (${date})
 
 ## Scope
-- Audits the latest **${limit} merged pull requests** reachable from \`HEAD\` using merge commits matching \`Merge pull request #...\`.
+- Audits the latest **${limit} merged pull requests** reachable from \`HEAD\` using merge commits matching \`Merge [pull request |PR ]#...\`.
 - Evaluates structural merge/wiring signals: PR-side commit lineage, changed-file presence at current \`HEAD\`, test-file involvement, and downstream touches.
 
 ## Method
-1. Enumerate PR merges: \`git log --merges --oneline --grep='Merge pull request #' -n ${limit}\`.
+1. Enumerate PR merges: \`git log --merges --oneline --extended-regexp --grep='Merge (pull request |PR )?#[0-9]+' -n ${limit}\`.
 2. For each merge commit, collect:
    - PR branch commit count (\`git rev-list --count <merge>^1..<merge>^2\`),
    - changed files (\`git diff --name-only <merge>^1 <merge>\`),

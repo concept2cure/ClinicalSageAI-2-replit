@@ -14,6 +14,7 @@
  * @see server/lib/unified-ai-client.ts — Claude-first unified client
  * @see server/services/ai-gateway/gateway.ts — Multi-provider gateway
  */
+// eslint-disable-next-line no-restricted-imports -- Wrapper file: direct SDK import required
 import OpenAI from 'openai';
 
 let _client: OpenAI | null = null;

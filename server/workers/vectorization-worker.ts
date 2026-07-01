@@ -12,6 +12,7 @@
  * - Progress tracking and error logging
  */
 
+// eslint-disable-next-line no-restricted-imports -- Embeddings require OpenAI SDK; gateway lacks embedding support
 import { getOpenAIClient } from '../services/openai-client';
 import pdfParse from '../utils/pdfParse';
 import { pool } from '../db';

@@ -20,6 +20,7 @@
  * @see server/lib/unified-ai-client.ts — High-level Claude-first API
  * @see server/services/ai-gateway/gateway.ts — Multi-provider gateway
  */
+// eslint-disable-next-line no-restricted-imports -- Wrapper file: direct SDK import required
 import Anthropic from '@anthropic-ai/sdk';
 
 let _client: Anthropic | null = null;

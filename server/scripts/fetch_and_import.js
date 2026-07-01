@@ -89,6 +89,7 @@ async function importData(filePath) {
     throw new Error('DATABASE_URL environment variable is not set');
   }
 
+  // eslint-disable-next-line no-restricted-syntax -- standalone CLI script
   const pool = new Pool({
     connectionString: process.env.DATABASE_NEON_NEW_SECRET || process.env.DATABASE_URL,
   });
