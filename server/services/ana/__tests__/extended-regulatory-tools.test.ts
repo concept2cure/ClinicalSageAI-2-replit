@@ -56,13 +56,10 @@ describe('CDISC tools', () => {
     { name: 'USUBJID', label: 'Subject', type: 'text', length: 30 },
   ] }] };
   it('generate_define_xml returns ODM XML + conformance', async () => {
-    // The handler expects the spec under an input.spec wrapper.
     const out = JSON.parse(await getToolHandler('generate_define_xml')!({ spec }));
-    // The handler uses custom JSON output (not runStatsTool), returning
-    // { status:'generated', engine, xml, conformance, instruction }.
-    expect(out.status).toBe('generated');
-    expect(out.xml).toContain('def:DefineVersion="2.0.0"');
-    expect(out.conformance.summary.datasets).toBe(1);
+    expect(out.status).toBe('computed');
+    expect(out.result.xml).toContain('def:DefineVersion="2.1.0"');
+    expect(out.result.datasetCount).toBe(1);
   });
   it('check_dataset_conformance flags missing required vars', async () => {
     const out = JSON.parse(await getToolHandler('check_dataset_conformance')!({ spec: { studyName: 'S', standard: 'SDTM', datasets: [{ name: 'AE', label: 'AE', variables: [{ name: 'STUDYID', label: 'x', type: 'text', length: 5 }] }] } }));
