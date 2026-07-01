@@ -1,580 +1,1097 @@
 /**
  * SOP War Game Auditor
  *
- * Simulates FDA inspector scrutiny of a Standard Operating Procedure
- * and its supporting quality system elements. Examines document control,
- * training adequacy, 21 CFR Part 11 compliance, CAPA integration,
- * and audit readiness.
+ * Simulates an FDA GCP/GMP inspector scrutinizing a Standard Operating
+ * Procedure during a facility inspection. Each rule represents a question
+ * a seasoned FDA field investigator would ask when reviewing SOPs against
+ * 21 CFR 211 (cGMP), 21 CFR 820 (QSR), ICH E6(R2) (GCP), and
+ * 21 CFR Part 11 (electronic records).
  *
  * @module server/services/ana/intelligence-questions/war-game/auditors/sop-auditor
  */
 
-import type { WarGameAuditor, AuditRule, WarGameFinding } from '../types.js';
+import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
 
-/* ------------------------------------------------------------------ */
-/*  Helpers                                                            */
-/* ------------------------------------------------------------------ */
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
+/** Returns true when the value is null, undefined, empty string, or empty array. */
 function isEmpty(val: unknown): boolean {
-  if (val === undefined || val === null || val === '') return true;
-  if (Array.isArray(val) && val.length === 0) return true;
+  if (val == null) return true;
+  if (typeof val === 'string') return val.trim() === '';
+  if (Array.isArray(val)) return val.length === 0;
   return false;
 }
 
+/** Case-insensitive substring / array-includes check. */
 function includes(val: unknown, search: string): boolean {
   if (typeof val === 'string') return val.toLowerCase().includes(search.toLowerCase());
-  if (Array.isArray(val)) return val.some((v) => String(v).toLowerCase() === search.toLowerCase());
+  if (Array.isArray(val)) return val.some((v) => String(v).toLowerCase().includes(search.toLowerCase()));
   return false;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Auditor factory                                                    */
-/* ------------------------------------------------------------------ */
+/** Coerce a value to a trimmed string (empty string when nullish). */
+function str(val: unknown): string {
+  if (val == null) return '';
+  return String(val).trim();
+}
+
+/** Coerce a value to a number (NaN-safe). */
+function num(val: unknown): number {
+  if (val == null) return 0;
+  const n = Number(val);
+  return Number.isNaN(n) ? 0 : n;
+}
+
+/** Prefixed rule ID for SOP auditor. */
+const rid = (suffix: string) => 'sop_' + suffix;
+
+// ---------------------------------------------------------------------------
+// Auditor factory
+// ---------------------------------------------------------------------------
 
 export function createSopAuditor(): WarGameAuditor {
   const rules: AuditRule[] = [
-    /* ============================================================== */
-    /*  DOCUMENT CONTROL  (sop_001 – sop_004)                         */
-    /* ============================================================== */
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_001 — completeness: Missing SOP title
+    // ───────────────────────────────────────────────────────────────────────
     {
-      id: 'sop_001',
-      dimension: 'documentation',
-      title: 'No Version Control Methodology',
-      question:
-        'How do you ensure only current versions of this SOP are in use at all operational sites, and that obsolete versions have been physically retrieved or electronically deactivated?',
-      check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.version_control_method)) return null;
-        return {
-          id: 'sop_001',
-          dimension: 'documentation',
-          severity: 'critical',
-          title: 'No Version Control Methodology',
-          question:
-            'How do you ensure only current versions of this SOP are in use at all operational sites, and that obsolete versions have been physically retrieved or electronically deactivated?',
-          observation:
-            'No version control methodology has been defined for this SOP. Without a documented version control process, there is no assurance that personnel are operating from the current approved revision. During inspection, the inability to demonstrate version control is a frequent source of FDA 483 observations.',
-          requirement:
-            'A documented version control system must ensure that only the current approved version of each SOP is available for use, and that previous versions are archived with full revision history.',
-          reference: '21 CFR 211.186; ICH Q10 Section 2.4',
-          recommendation:
-            'Implement a formal version control methodology — ideally within a validated document management system — that includes sequential version numbering, effective dates, obsolescence procedures, and controlled copy distribution.',
-          relatedFields: ['version_control_method', 'controlled_copy_distribution', 'dms_system'],
-        };
-      },
-    },
-    {
-      id: 'sop_002',
-      dimension: 'regulatory_alignment',
-      title: 'Paper-Based DMS for GxP SOPs',
-      question:
-        'Your document management system for GxP-regulated SOPs appears to be paper-based. How do you maintain audit trails, prevent unauthorized changes, and ensure document integrity in a paper-only system?',
-      check(answers): WarGameFinding | null {
-        if (answers.dms_system !== 'paper_based') return null;
-        if (answers.gxp_classification === 'non_gxp') return null;
-        return {
-          id: 'sop_002',
-          dimension: 'regulatory_alignment',
-          severity: 'warning',
-          title: 'Paper-Based Document Management for GxP SOPs',
-          question:
-            'Your document management system for GxP-regulated SOPs appears to be paper-based. How do you maintain audit trails, prevent unauthorized changes, and ensure document integrity in a paper-only system?',
-          observation:
-            'A paper-based document management system is being used for GxP-classified SOPs. While not explicitly prohibited, paper-based systems present significant compliance risks around audit trail integrity, unauthorized access, version control, and disaster recovery. Modern regulatory expectations strongly favor electronic systems with built-in controls.',
-          requirement:
-            'GxP document management systems must ensure data integrity, provide audit trails, control access, and comply with applicable electronic records regulations when electronic systems are used.',
-          reference: '21 CFR Part 11; EU Annex 11',
-          recommendation:
-            'Transition to a validated electronic document management system (eDMS) that provides automated version control, electronic signatures, audit trails, and role-based access controls. If paper must be retained as the interim system, implement compensating controls including sign-out logs, controlled copy registers, and periodic reconciliation.',
-          relatedFields: ['dms_system', 'gxp_classification', 'audit_trail_required', 'electronic_signatures'],
-        };
-      },
-    },
-    {
-      id: 'sop_003',
+      id: rid('001'),
       dimension: 'completeness',
-      title: 'No Document Numbering Convention',
+      title: 'SOP title is missing or inadequate',
       question:
-        'What numbering convention do you use to uniquely identify each SOP and its revisions? Can you show me the documented scheme?',
+        'This SOP has no descriptive title. Per 21 CFR 211.186, every batch production and control record must be identifiable. How do your personnel locate and reference this procedure?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.document_numbering_convention)) return null;
+        const title = str(answers.sop_title);
+        if (title.length >= 10) return null;
         return {
-          id: 'sop_003',
+          id: rid('001'),
           dimension: 'completeness',
-          severity: 'warning',
-          title: 'No Document Numbering Convention Defined',
+          severity: 'critical',
+          title: 'SOP title is missing or inadequate',
           question:
-            'What numbering convention do you use to uniquely identify each SOP and its revisions? Can you show me the documented scheme?',
+            'This SOP has no descriptive title. Per 21 CFR 211.186, every batch production and control record must be identifiable. How do your personnel locate and reference this procedure?',
           observation:
-            'No document numbering convention has been established. Without a standardized numbering scheme, documents cannot be reliably identified, referenced, or retrieved. This gap makes cross-referencing between SOPs unreliable and complicates regulatory submissions and inspection responses.',
+            `The SOP title is ${title.length === 0 ? 'blank' : `only ${title.length} characters ("${title}")`}. ` +
+            'A clear, descriptive title is essential for document control, cross-referencing, and training records.',
           requirement:
-            'All batch production and control records must be uniquely identified. By extension, the SOP system governing those records must itself be unambiguously identifiable through a documented numbering convention.',
-          reference: '21 CFR 211.186',
+            '21 CFR 211.186 requires that records be identifiable. ICH E6(R2) Section 5.5.3 requires that SOPs be documented, ' +
+            'and an identifiable title is the baseline for any document control system.',
+          reference: '21 CFR 211.186; ICH E6(R2) Section 5.5.3',
           recommendation:
-            'Establish and document a numbering convention that encodes department, document type, sequence number, and revision level (e.g., QA-SOP-001-R03). Include the convention in a master SOP-on-SOPs document and train all authors on its use.',
-          relatedFields: ['document_numbering_convention', 'sop_number'],
-        };
-      },
-    },
-    {
-      id: 'sop_004',
-      dimension: 'risk_identification',
-      title: 'No Archiving Method Defined',
-      question:
-        'How are superseded and retired SOPs archived? If I asked to see the version that was effective two years ago, could you retrieve it, and how long would that take?',
-      check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.archiving_method)) return null;
-        return {
-          id: 'sop_004',
-          dimension: 'risk_identification',
-          severity: 'warning',
-          title: 'No Archiving Method Defined',
-          question:
-            'How are superseded and retired SOPs archived? If I asked to see the version that was effective two years ago, could you retrieve it, and how long would that take?',
-          observation:
-            'No archiving method has been defined for superseded or retired SOP versions. During an FDA inspection, investigators frequently request historical versions of procedures to reconstruct the conditions under which a batch was manufactured or a study was conducted. Inability to produce these records can escalate to a Warning Letter.',
-          requirement:
-            'Records must be retained for at least the required regulatory period and be readily retrievable. Archiving procedures must ensure document integrity and prevent loss or degradation.',
-          reference: '21 CFR 211.180',
-          recommendation:
-            'Define a formal archiving method — electronic or physical — that ensures superseded versions are retained with full metadata (effective dates, approval signatures, reason for supersession) and are retrievable within a defined timeframe. Document the archiving SOP and include it in your document control system.',
-          relatedFields: ['archiving_method', 'retrieval_procedures', 'record_retention_period'],
+            'Assign a descriptive title that identifies the process, department, and scope. ' +
+            'Example: "Standard Operating Procedure for Environmental Monitoring in Aseptic Manufacturing Areas".',
+          relatedFields: ['sop_title'],
         };
       },
     },
 
-    /* ============================================================== */
-    /*  TRAINING REQUIREMENTS  (sop_005 – sop_008)                    */
-    /* ============================================================== */
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_002 — documentation: Missing SOP number
+    // ───────────────────────────────────────────────────────────────────────
     {
-      id: 'sop_005',
-      dimension: 'regulatory_alignment',
-      title: 'GxP SOP Without Training Requirement',
-      question:
-        'This SOP is classified as GxP, yet training is not required. How do you ensure that personnel performing these regulated activities are qualified and competent?',
-      check(answers): WarGameFinding | null {
-        if (answers.gxp_classification === 'non_gxp') return null;
-        if (answers.training_required !== false) return null;
-        return {
-          id: 'sop_005',
-          dimension: 'regulatory_alignment',
-          severity: 'critical',
-          title: 'GxP SOP Without Mandatory Training',
-          question:
-            'This SOP is classified as GxP, yet training is not required. How do you ensure that personnel performing these regulated activities are qualified and competent?',
-          observation:
-            'A GxP-classified SOP has been configured without a mandatory training requirement. FDA expects all personnel performing GxP activities to be trained on the applicable procedures before they execute those tasks. This gap represents a direct regulatory exposure — an inspector finding untrained personnel performing GxP operations will issue a 483 observation and may question the validity of work performed.',
-          requirement:
-            'Each person engaged in GxP operations shall have education, training, and experience to perform assigned functions. Training shall be conducted by qualified individuals and documented.',
-          reference: '21 CFR 211.25; 21 CFR 820.25',
-          recommendation:
-            'Enable mandatory training for all GxP-classified SOPs. Define the training curriculum, establish read-and-understand or hands-on training requirements as appropriate, and ensure training completion is documented before personnel are authorized to perform the procedure.',
-          relatedFields: ['training_required', 'gxp_classification', 'training_methods', 'competency_assessment_method'],
-        };
-      },
-    },
-    {
-      id: 'sop_006',
-      dimension: 'completeness',
-      title: 'No Competency Assessment Method',
-      question:
-        'How do you verify that personnel have not only read the SOP, but actually understand and can correctly perform the procedures it describes?',
-      check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.competency_assessment_method)) return null;
-        return {
-          id: 'sop_006',
-          dimension: 'completeness',
-          severity: 'warning',
-          title: 'No Competency Assessment Method Defined',
-          question:
-            'How do you verify that personnel have not only read the SOP, but actually understand and can correctly perform the procedures it describes?',
-          observation:
-            'No competency assessment method has been defined. Training without competency verification provides no assurance that personnel can actually perform the procedure correctly. Mere signature on a training log ("read and understood") is increasingly viewed by regulators as insufficient evidence of competency.',
-          requirement:
-            'Training effectiveness must be periodically evaluated, and personnel competency must be assessed to ensure that procedures are understood and can be followed.',
-          reference: 'ICH Q10 Section 1.8',
-          recommendation:
-            'Define a competency assessment method appropriate to the SOP complexity — written assessment, practical demonstration, observed task performance, or a combination. Document passing criteria, remediation procedures for failures, and the frequency of ongoing competency reassessment.',
-          relatedFields: ['competency_assessment_method', 'assessment_types', 'passing_criteria', 'ongoing_competency_frequency'],
-        };
-      },
-    },
-    {
-      id: 'sop_007',
-      dimension: 'practical_feasibility',
-      title: 'Excessive Training Timeline for GxP SOP',
-      question:
-        'You have allowed 30 days for initial training on a GxP SOP. During that window, are personnel performing the procedure without being trained? How do you manage the compliance gap?',
-      check(answers): WarGameFinding | null {
-        if (answers.initial_training_timeline !== '30_days') return null;
-        if (answers.gxp_classification === 'non_gxp') return null;
-        return {
-          id: 'sop_007',
-          dimension: 'practical_feasibility',
-          severity: 'warning',
-          title: 'Excessive Training Timeline for GxP SOP',
-          question:
-            'You have allowed 30 days for initial training on a GxP SOP. During that window, are personnel performing the procedure without being trained? How do you manage the compliance gap?',
-          observation:
-            'A 30-day training timeline has been set for a GxP-classified SOP. This extended window creates a period during which personnel may be performing regulated activities without confirmed training, representing both a compliance risk and a data integrity concern. Any work performed by untrained personnel during this gap may be called into question.',
-          requirement:
-            'Personnel performing GxP operations must be trained before they execute those tasks. The training timeline must be commensurate with the regulatory risk of the activity.',
-          reference: '21 CFR 211.25',
-          recommendation:
-            'Reduce the initial training timeline for GxP SOPs to 7-14 days maximum. For critical SOPs, require training completion before the effective date. Implement a system that prevents untrained personnel from performing the procedure until training is documented as complete.',
-          relatedFields: ['initial_training_timeline', 'gxp_classification', 'training_methods'],
-        };
-      },
-    },
-    {
-      id: 'sop_008',
+      id: rid('002'),
       dimension: 'documentation',
-      title: 'Spreadsheet-Based Training Records for GxP',
+      title: 'No SOP document number assigned',
       question:
-        'You are maintaining training records in a spreadsheet for a GxP SOP. Can you demonstrate that this spreadsheet has an audit trail, access controls, and backup procedures that meet 21 CFR Part 11 requirements?',
+        'I do not see a document control number on this SOP. Under 21 CFR 820.40, how does your document control system track this procedure without a unique identifier?',
       check(answers): WarGameFinding | null {
-        if (answers.training_records_system !== 'spreadsheet') return null;
-        if (answers.gxp_classification === 'non_gxp') return null;
+        if (!isEmpty(answers.sop_number)) return null;
         return {
-          id: 'sop_008',
+          id: rid('002'),
           dimension: 'documentation',
-          severity: 'warning',
-          title: 'Spreadsheet-Based Training Records for GxP SOP',
+          severity: 'critical',
+          title: 'No SOP document number assigned',
           question:
-            'You are maintaining training records in a spreadsheet for a GxP SOP. Can you demonstrate that this spreadsheet has an audit trail, access controls, and backup procedures that meet 21 CFR Part 11 requirements?',
+            'I do not see a document control number on this SOP. Under 21 CFR 820.40, how does your document control system track this procedure without a unique identifier?',
           observation:
-            'Spreadsheet-based training records lack the audit trail and access controls required for GxP compliance. Spreadsheets can be modified without attribution, do not inherently support electronic signatures, and are prone to accidental data loss. FDA investigators routinely cite spreadsheet-based GxP records as a data integrity weakness.',
+            'The SOP lacks a unique document number. Without a document control number, there is no way to ensure that ' +
+            'personnel are using the current approved version, and the document cannot be properly tracked in the quality system.',
           requirement:
-            'Electronic records used for GxP purposes must include audit trails that capture who made changes, when, and why. Access must be limited to authorized individuals.',
-          reference: '21 CFR Part 11',
+            '21 CFR 820.40(a) requires that each manufacturer establish and maintain procedures to control all documents. ' +
+            'Documents must be identified with a unique identifier. 21 CFR 211.186 also requires record identification.',
+          reference: '21 CFR 820.40(a); 21 CFR 211.186',
           recommendation:
-            'Migrate training records to a validated Learning Management System (LMS) or Quality Management System (QMS) with built-in audit trails, role-based access, electronic signatures, and automated compliance reporting. In the interim, implement compensating controls for the spreadsheet including version tracking, access restrictions, and periodic reconciliation against paper records.',
-          relatedFields: ['training_records_system', 'gxp_classification', 'audit_trail_required', 'data_integrity_alcoa'],
+            'Assign a unique document number following your site document numbering convention (e.g., SOP-QA-001). ' +
+            'Ensure the number is displayed in the header or footer of every page.',
+          relatedFields: ['sop_number'],
         };
       },
     },
 
-    /* ============================================================== */
-    /*  21 CFR PART 11 COMPLIANCE  (sop_009 – sop_011)                */
-    /* ============================================================== */
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_003 — regulatory_alignment: No applicable regulations cited
+    // ───────────────────────────────────────────────────────────────────────
     {
-      id: 'sop_009',
+      id: rid('003'),
       dimension: 'regulatory_alignment',
-      title: 'Electronic Signatures Without Part 11 Compliance',
+      title: 'No applicable regulations referenced',
       question:
-        'You have enabled electronic signatures for this SOP, but 21 CFR Part 11 is not listed among applicable regulations. Has your organization submitted the required certification to FDA, and how are you ensuring the signatures are legally binding?',
+        'This SOP does not reference any applicable regulations. During our inspection we need to understand which regulatory requirements this procedure is intended to satisfy. What is the regulatory basis for this SOP?',
       check(answers): WarGameFinding | null {
-        if (answers.electronic_signatures !== true) return null;
-        if (includes(answers.applicable_regulations, '21_cfr_11')) return null;
+        if (!isEmpty(answers.applicable_regulations)) return null;
         return {
-          id: 'sop_009',
+          id: rid('003'),
           dimension: 'regulatory_alignment',
           severity: 'critical',
-          title: 'Electronic Signatures Without 21 CFR Part 11 Coverage',
+          title: 'No applicable regulations referenced',
           question:
-            'You have enabled electronic signatures for this SOP, but 21 CFR Part 11 is not listed among applicable regulations. Has your organization submitted the required certification to FDA, and how are you ensuring the signatures are legally binding?',
+            'This SOP does not reference any applicable regulations. During our inspection we need to understand which regulatory requirements this procedure is intended to satisfy. What is the regulatory basis for this SOP?',
           observation:
-            'Electronic signatures are enabled but 21 CFR Part 11 has not been identified as an applicable regulation. Under Part 11, electronic signatures used in GxP records must meet specific requirements for uniqueness, traceability, and non-repudiation. Organizations using electronic signatures must also certify to FDA that their electronic signatures are intended to be the legally binding equivalent of handwritten signatures.',
+            'The applicable regulations field is empty. SOPs must be traceable to the regulatory requirements they fulfill. ' +
+            'Without this traceability, it is impossible to verify that the procedure adequately addresses all applicable regulatory obligations.',
           requirement:
-            'Electronic signatures that are intended to be equivalent to handwritten signatures must comply with 21 CFR Part 11, including certification to FDA, unique user identification, and system validation.',
-          reference: '21 CFR Part 11',
+            '21 CFR 211.22(d) requires written procedures for production and process controls. 21 CFR 820.20(a) requires a quality policy ' +
+            'that includes compliance with applicable regulatory requirements. Each SOP should reference the specific regulations it implements.',
+          reference: '21 CFR 211.22(d); 21 CFR 820.20(a); ICH E6(R2) Section 5.1.1',
           recommendation:
-            'Add 21 CFR Part 11 to the applicable regulations for this SOP. Ensure the electronic signature system has been validated, that each user has a unique, non-transferable credential, and that the organization has submitted its Part 11 certification letter to FDA.',
-          relatedFields: ['electronic_signatures', 'applicable_regulations', 'cfr_part_11_scope'],
+            'Add a "Regulatory References" section listing all applicable regulations (e.g., 21 CFR 211, 21 CFR 820, ICH E6(R2), ' +
+            '21 CFR Part 11) and the specific sections this SOP addresses.',
+          relatedFields: ['applicable_regulations'],
         };
       },
     },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_004 — completeness: No purpose statement
+    // ───────────────────────────────────────────────────────────────────────
     {
-      id: 'sop_010',
-      dimension: 'risk_identification',
-      title: 'No Audit Trail for GxP SOP',
+      id: rid('004'),
+      dimension: 'completeness',
+      title: 'Purpose statement missing or insufficient',
       question:
-        'This is a GxP-regulated SOP, but audit trail has not been enabled. If a change were made to a record governed by this procedure, how would you detect and investigate it?',
+        'The purpose of this SOP is not clearly stated. Per 21 CFR 820.40, procedures must be adequate for their intended use. How do you demonstrate adequacy without a defined purpose?',
       check(answers): WarGameFinding | null {
-        if (answers.audit_trail_required !== false) return null;
-        if (answers.gxp_classification === 'non_gxp') return null;
+        const purpose = str(answers.purpose_statement);
+        if (purpose.length >= 30) return null;
         return {
-          id: 'sop_010',
+          id: rid('004'),
+          dimension: 'completeness',
+          severity: 'warning',
+          title: 'Purpose statement missing or insufficient',
+          question:
+            'The purpose of this SOP is not clearly stated. Per 21 CFR 820.40, procedures must be adequate for their intended use. How do you demonstrate adequacy without a defined purpose?',
+          observation:
+            `The purpose statement is ${purpose.length === 0 ? 'missing entirely' : `only ${purpose.length} characters`}. ` +
+            'A well-defined purpose statement establishes the intent, applicability, and expected outcome of the procedure.',
+          requirement:
+            '21 CFR 820.40 requires procedures to be adequate for their intended purpose. ' +
+            'ICH E6(R2) Section 5.1.1 requires the sponsor to implement a system to manage quality, including documented procedures with clear objectives.',
+          reference: '21 CFR 820.40; ICH E6(R2) Section 5.1.1',
+          recommendation:
+            'Write a purpose statement that clearly defines: (1) the objective of the procedure, ' +
+            '(2) the regulatory requirement it satisfies, and (3) the expected outcome when the procedure is correctly followed.',
+          relatedFields: ['purpose_statement'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_005 — documentation: No document owner assigned
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('005'),
+      dimension: 'documentation',
+      title: 'No document owner designated',
+      question:
+        'Who is the designated owner of this SOP? Under 21 CFR 211.22, the quality unit has responsibility for approving procedures. Show me the document ownership assignment.',
+      check(answers): WarGameFinding | null {
+        if (!isEmpty(answers.document_owner)) return null;
+        return {
+          id: rid('005'),
+          dimension: 'documentation',
+          severity: 'warning',
+          title: 'No document owner designated',
+          question:
+            'Who is the designated owner of this SOP? Under 21 CFR 211.22, the quality unit has responsibility for approving procedures. Show me the document ownership assignment.',
+          observation:
+            'No document owner has been designated. Without a responsible owner, periodic reviews may be missed, ' +
+            'training may not be assigned to appropriate personnel, and accountability for content accuracy is unclear.',
+          requirement:
+            '21 CFR 211.22 assigns the quality control unit responsibility for approving or rejecting procedures. ' +
+            '21 CFR 820.40(a) requires designated individuals to review and approve documents. A document owner ensures ongoing maintenance.',
+          reference: '21 CFR 211.22; 21 CFR 820.40(a)',
+          recommendation:
+            'Assign a document owner (typically a subject matter expert or department manager) who is responsible for ' +
+            'content accuracy, periodic review, and coordinating revisions through the change control process.',
+          relatedFields: ['document_owner'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_006 — completeness: No roles and responsibilities defined
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('006'),
+      dimension: 'completeness',
+      title: 'Roles and responsibilities not defined',
+      question:
+        'This SOP does not define who is responsible for performing each step. Per ICH E6(R2), responsibilities must be clearly assigned. Who performs this procedure, who supervises, and who approves?',
+      check(answers): WarGameFinding | null {
+        if (!isEmpty(answers.roles_responsibilities)) return null;
+        return {
+          id: rid('006'),
+          dimension: 'completeness',
+          severity: 'critical',
+          title: 'Roles and responsibilities not defined',
+          question:
+            'This SOP does not define who is responsible for performing each step. Per ICH E6(R2), responsibilities must be clearly assigned. Who performs this procedure, who supervises, and who approves?',
+          observation:
+            'The roles and responsibilities section is empty. Without clearly defined roles, ' +
+            'there is no accountability for execution, verification, or approval of the process described in this SOP.',
+          requirement:
+            'ICH E6(R2) Section 5.1.1 requires that responsibilities be clearly assigned. ' +
+            '21 CFR 211.25 requires that each person engaged in activities shall have the education, training, and experience to perform assigned functions. ' +
+            'Responsibility assignment is the prerequisite for verifying qualified personnel execute each step.',
+          reference: 'ICH E6(R2) Section 5.1.1; 21 CFR 211.25; 21 CFR 820.20(b)(1)',
+          recommendation:
+            'Add a Roles and Responsibilities section that specifies: the performing role, the reviewing/verifying role, ' +
+            'the approving role, and the Quality Assurance oversight role for this procedure.',
+          relatedFields: ['roles_responsibilities'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_007 — completeness: No procedure steps documented
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('007'),
+      dimension: 'completeness',
+      title: 'Procedure steps not documented',
+      question:
+        'I see no step-by-step procedure in this SOP. Under 21 CFR 211.100, written procedures must be established and followed. Where are the operational steps your personnel are expected to execute?',
+      check(answers): WarGameFinding | null {
+        const steps = str(answers.procedure_steps);
+        if (steps.length >= 50) return null;
+        return {
+          id: rid('007'),
+          dimension: 'completeness',
+          severity: 'critical',
+          title: 'Procedure steps not documented',
+          question:
+            'I see no step-by-step procedure in this SOP. Under 21 CFR 211.100, written procedures must be established and followed. Where are the operational steps your personnel are expected to execute?',
+          observation:
+            `The procedure steps section is ${steps.length === 0 ? 'empty' : `only ${steps.length} characters, which is insufficient for an operational procedure`}. ` +
+            'An SOP without detailed, sequential steps cannot serve its fundamental purpose as a controlled document.',
+          requirement:
+            '21 CFR 211.100(a) requires written procedures for production and process control designed to assure that drug products have the identity, strength, quality, and purity they purport to possess. ' +
+            '21 CFR 820.75 requires documented procedures for process validation.',
+          reference: '21 CFR 211.100(a); 21 CFR 820.75; ICH E6(R2) Section 5.5.3',
+          recommendation:
+            'Document every step of the procedure in sequential order. Each step should be actionable, include acceptance criteria where applicable, ' +
+            'and specify the responsible role. Use numbered steps with sufficient detail that a trained operator can execute the procedure consistently.',
+          relatedFields: ['procedure_steps'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_008 — risk_identification: No deviation handling procedure
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('008'),
+      dimension: 'risk_identification',
+      title: 'No deviation handling procedure referenced',
+      question:
+        'What happens when personnel deviate from this SOP? I see no deviation handling instructions. Per 21 CFR 211.192, any unexplained discrepancy must be investigated. Show me your deviation process.',
+      check(answers): WarGameFinding | null {
+        if (!isEmpty(answers.deviation_handling)) return null;
+        return {
+          id: rid('008'),
           dimension: 'risk_identification',
           severity: 'critical',
-          title: 'No Audit Trail Required for GxP SOP',
+          title: 'No deviation handling procedure referenced',
           question:
-            'This is a GxP-regulated SOP, but audit trail has not been enabled. If a change were made to a record governed by this procedure, how would you detect and investigate it?',
+            'What happens when personnel deviate from this SOP? I see no deviation handling instructions. Per 21 CFR 211.192, any unexplained discrepancy must be investigated. Show me your deviation process.',
           observation:
-            'Audit trail functionality has not been required for a GxP-classified SOP. Without an audit trail, there is no mechanism to detect unauthorized modifications, reconstruct the sequence of events, or demonstrate data integrity during an inspection. This is one of the most commonly cited deficiencies in FDA Warning Letters related to data integrity.',
+            'The SOP does not describe or reference a deviation handling process. ' +
+            'When personnel cannot follow a procedure as written, there must be a defined path for documenting, investigating, and resolving the deviation.',
           requirement:
-            'Computer systems used for GxP purposes must generate accurate and complete audit trails that are computer-generated, time-stamped, and not alterable by the operator. The audit trail must capture the identity of the person making the change, the date/time, the old value, and the new value.',
-          reference: '21 CFR 11.10(e); EU Annex 11 Section 9',
+            '21 CFR 211.192 requires investigation of any unexplained discrepancy or the failure of a batch or any of its components to meet specifications. ' +
+            '21 CFR 820.90(a) requires procedures for controlling nonconforming product. Deviation handling is a foundational element of both cGMP and QSR compliance.',
+          reference: '21 CFR 211.192; 21 CFR 820.90(a); ICH E6(R2) Section 5.20.1',
           recommendation:
-            'Enable audit trail requirements for all GxP-classified SOPs. Ensure the supporting electronic systems generate audit trails that capture who, what, when, and why for every data modification. Conduct a retrospective review to assess whether data integrity has been compromised during the period without audit trail.',
-          relatedFields: ['audit_trail_required', 'gxp_classification', 'data_integrity_alcoa', 'electronic_signatures'],
+            'Add a Deviation Handling section that either describes the deviation process or references the site deviation SOP. ' +
+            'Include instructions for immediate actions, documentation requirements, notification thresholds, and timelines for investigation.',
+          relatedFields: ['deviation_handling'],
         };
       },
     },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_009 — regulatory_alignment: No CAPA reference
+    // ───────────────────────────────────────────────────────────────────────
     {
-      id: 'sop_011',
+      id: rid('009'),
+      dimension: 'regulatory_alignment',
+      title: 'No CAPA reference in SOP',
+      question:
+        'This SOP makes no reference to your CAPA system. Per 21 CFR 820.90, you are required to establish procedures for corrective and preventive action. How are systemic failures from this process captured and remediated?',
+      check(answers): WarGameFinding | null {
+        if (!isEmpty(answers.capa_reference)) return null;
+        return {
+          id: rid('009'),
+          dimension: 'regulatory_alignment',
+          severity: 'warning',
+          title: 'No CAPA reference in SOP',
+          question:
+            'This SOP makes no reference to your CAPA system. Per 21 CFR 820.90, you are required to establish procedures for corrective and preventive action. How are systemic failures from this process captured and remediated?',
+          observation:
+            'The SOP does not reference the site CAPA system. Deviations, out-of-specification results, and recurring issues identified during execution of this procedure ' +
+            'may require corrective and preventive action, and personnel need clear direction on when and how to escalate to CAPA.',
+          requirement:
+            '21 CFR 820.90 requires procedures for corrective and preventive action, including analyzing processes and investigating the cause of nonconformities. ' +
+            '21 CFR 211.192 requires investigation of discrepancies. The CAPA system must be linked to operational SOPs.',
+          reference: '21 CFR 820.90; 21 CFR 211.192',
+          recommendation:
+            'Add a cross-reference to the site CAPA SOP. Define the criteria for escalating a deviation to a CAPA ' +
+            '(e.g., repeat deviations, product impact, patient safety implications) and the responsible roles for initiation.',
+          relatedFields: ['capa_reference'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_010 — completeness: No training requirements specified
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('010'),
+      dimension: 'completeness',
+      title: 'Training requirements not specified',
+      question:
+        'This SOP does not specify training requirements. Under 21 CFR 211.25, personnel must be trained before performing GMP activities. What training is required before an operator can execute this procedure?',
+      check(answers): WarGameFinding | null {
+        if (!isEmpty(answers.training_requirements)) return null;
+        return {
+          id: rid('010'),
+          dimension: 'completeness',
+          severity: 'critical',
+          title: 'Training requirements not specified',
+          question:
+            'This SOP does not specify training requirements. Under 21 CFR 211.25, personnel must be trained before performing GMP activities. What training is required before an operator can execute this procedure?',
+          observation:
+            'No training requirements are defined. Without specified training prerequisites, there is no assurance that personnel executing this procedure ' +
+            'have the necessary knowledge and skills, creating risk to product quality and patient safety.',
+          requirement:
+            '21 CFR 211.25(a) requires that each person engaged in manufacture, processing, packing, or holding of a drug product shall have education, training, and experience. ' +
+            '21 CFR 820.25(b) requires that training be documented. ICH E6(R2) Section 5.2.1 requires that qualified individuals perform trial-related duties.',
+          reference: '21 CFR 211.25(a); 21 CFR 820.25(b); ICH E6(R2) Section 5.2.1',
+          recommendation:
+            'Define training prerequisites including: required read-and-understand of this SOP, any prerequisite SOPs, ' +
+            'hands-on demonstration requirements, initial qualification criteria, and retraining frequency.',
+          relatedFields: ['training_requirements'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_011 — scientific_rigor: No competency assessment method
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('011'),
+      dimension: 'scientific_rigor',
+      title: 'No competency assessment defined',
+      question:
+        'How do you verify that personnel are competent to perform this procedure? 21 CFR 820.25 requires that training effectiveness be assessed. Show me your competency evaluation records.',
+      check(answers): WarGameFinding | null {
+        if (!isEmpty(answers.competency_assessment)) return null;
+        return {
+          id: rid('011'),
+          dimension: 'scientific_rigor',
+          severity: 'warning',
+          title: 'No competency assessment defined',
+          question:
+            'How do you verify that personnel are competent to perform this procedure? 21 CFR 820.25 requires that training effectiveness be assessed. Show me your competency evaluation records.',
+          observation:
+            'The SOP does not define a competency assessment method. Reading an SOP alone does not demonstrate competency. ' +
+            'Without a practical assessment, there is no evidence that trained personnel can correctly execute the procedure.',
+          requirement:
+            '21 CFR 820.25(b) requires that training be documented and shall include verification of training effectiveness. ' +
+            'ICH E6(R2) Section 5.2.1 requires that individuals be qualified by education, training, and experience.',
+          reference: '21 CFR 820.25(b); ICH E6(R2) Section 5.2.1',
+          recommendation:
+            'Define a competency assessment method appropriate to the procedure complexity: written exam, practical demonstration, ' +
+            'observed performance, or a combination. Include pass/fail criteria, documentation requirements, and reassessment frequency.',
+          relatedFields: ['competency_assessment'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_012 — consistency: Training method not specified
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('012'),
       dimension: 'consistency',
-      title: 'ALCOA+ Data Integrity Principles Not Addressed',
+      title: 'Training method not specified',
       question:
-        'Does this SOP address ALCOA+ data integrity principles? How do you ensure that records generated under this procedure are Attributable, Legible, Contemporaneous, Original, and Accurate?',
+        'What training method is used for this SOP — read-and-understand, classroom, on-the-job, or practical demonstration? Per 21 CFR 211.25 training must be appropriate to the function performed.',
       check(answers): WarGameFinding | null {
-        if (answers.data_integrity_alcoa !== false) return null;
+        if (!isEmpty(answers.training_method)) return null;
+        if (isEmpty(answers.training_requirements)) return null;
         return {
-          id: 'sop_011',
+          id: rid('012'),
           dimension: 'consistency',
           severity: 'warning',
-          title: 'ALCOA+ Data Integrity Principles Not Addressed',
+          title: 'Training method not specified despite training requirements',
           question:
-            'Does this SOP address ALCOA+ data integrity principles? How do you ensure that records generated under this procedure are Attributable, Legible, Contemporaneous, Original, and Accurate?',
+            'What training method is used for this SOP — read-and-understand, classroom, on-the-job, or practical demonstration? Per 21 CFR 211.25 training must be appropriate to the function performed.',
           observation:
-            'ALCOA+ data integrity principles have not been addressed in this SOP. Since FDA issued its Data Integrity and Compliance guidance, inspectors routinely assess whether organizations have embedded ALCOA+ principles into their procedural framework. Failure to address data integrity at the SOP level suggests a systemic gap in the quality system.',
+            'Training requirements are listed but the training method is not defined. ' +
+            'Different procedures require different training modalities; a complex aseptic gowning procedure requires hands-on training, ' +
+            'not just a read-and-understand.',
           requirement:
-            'Data integrity controls should be embedded into SOPs to ensure that all data and records are Attributable, Legible, Contemporaneous, Original, Accurate, Complete, Consistent, Enduring, and Available throughout the record retention period.',
-          reference: 'FDA Data Integrity and Compliance With Drug CGMP Guidance (2018)',
+            '21 CFR 211.25(a) requires training in the particular operations performed and in cGMP as applicable. ' +
+            'The training method must be commensurate with the complexity and risk of the procedure.',
+          reference: '21 CFR 211.25(a); 21 CFR 820.25(a)',
           recommendation:
-            'Incorporate ALCOA+ principles into the SOP by including specific instructions for how data should be recorded, reviewed, and retained. Add a data integrity section that addresses each ALCOA+ element in the context of this procedure. Train personnel on data integrity expectations.',
-          relatedFields: ['data_integrity_alcoa', 'audit_trail_required', 'gxp_classification'],
+            'Specify the training delivery method: read-and-understand, instructor-led classroom, on-the-job training with qualified trainer, ' +
+            'practical demonstration, or simulation. Match the modality to the procedure complexity and GMP criticality.',
+          relatedFields: ['training_method', 'training_requirements'],
         };
       },
     },
 
-    /* ============================================================== */
-    /*  AUDIT & CAPA  (sop_012 – sop_016)                             */
-    /* ============================================================== */
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_013 — documentation: No version history maintained
+    // ───────────────────────────────────────────────────────────────────────
     {
-      id: 'sop_012',
-      dimension: 'risk_identification',
-      title: 'No Mock Audit Program',
+      id: rid('013'),
+      dimension: 'documentation',
+      title: 'No version history maintained',
       question:
-        'Do you conduct mock audits or self-inspections to assess SOP compliance before a regulatory inspection? Show me your schedule and the results of your last mock audit.',
+        'Where is the revision history for this SOP? Per 21 CFR 820.40, document changes must be reviewed and approved. I need to see what was changed, when, and by whom for every revision.',
       check(answers): WarGameFinding | null {
-        if (answers.mock_audit_schedule !== 'none') return null;
+        if (!isEmpty(answers.version_history)) return null;
         return {
-          id: 'sop_012',
-          dimension: 'risk_identification',
-          severity: 'warning',
-          title: 'No Mock Audit Program Established',
+          id: rid('013'),
+          dimension: 'documentation',
+          severity: 'critical',
+          title: 'No version history maintained',
           question:
-            'Do you conduct mock audits or self-inspections to assess SOP compliance before a regulatory inspection? Show me your schedule and the results of your last mock audit.',
+            'Where is the revision history for this SOP? Per 21 CFR 820.40, document changes must be reviewed and approved. I need to see what was changed, when, and by whom for every revision.',
           observation:
-            'No mock audit or self-inspection program has been established. Organizations that do not periodically test their own inspection readiness are frequently caught off guard by FDA findings. Mock audits identify gaps in SOP compliance, training effectiveness, and documentation practices before they become regulatory citations.',
+            'The SOP has no version history. Without a revision log, it is impossible to trace what was changed between versions, ' +
+            'the reason for the change, who authored and approved each revision, and whether affected personnel were retrained.',
           requirement:
-            'While not explicitly mandated, industry best practice and FDA inspection preparedness guidance strongly recommend periodic self-inspections and mock audits as part of a robust quality system.',
-          reference: 'FDA Inspection Best Practices; ICH Q10 Section 3.2',
+            '21 CFR 820.40(b) requires that changes to documents be reviewed and approved by the same function/organization that performed the original review. ' +
+            'The approved changes must be communicated to appropriate personnel in a timely manner. A revision history is the primary evidence of compliance.',
+          reference: '21 CFR 820.40(b); 21 CFR 211.186',
           recommendation:
-            'Establish a mock audit program with defined frequency (at minimum annually, more frequently for high-risk areas). Use experienced quality professionals or external consultants to simulate inspection conditions. Document findings, track corrective actions, and trend results over time to measure quality system maturity.',
-          relatedFields: ['mock_audit_schedule', 'inspection_readiness_score', 'previous_audit_findings', 'documentation_review_checklist'],
+            'Add a revision history table documenting: version number, effective date, description of changes, author, and approver for each revision. ' +
+            'Reference the change control record number that authorized each revision.',
+          relatedFields: ['version_history'],
         };
       },
     },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_014 — regulatory_alignment: No change control process
+    // ───────────────────────────────────────────────────────────────────────
     {
-      id: 'sop_013',
+      id: rid('014'),
       dimension: 'regulatory_alignment',
-      title: 'No CAPA Process Defined',
+      title: 'No change control process referenced',
       question:
-        'How do you ensure corrective and preventive actions are taken when SOP deviations occur? Show me the link between your deviation system and your CAPA process.',
+        'How are changes to this SOP controlled? 21 CFR 820.40 requires procedures for document changes. I see no reference to a change control process. Is this a controlled document?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.corrective_action_triggers) && !isEmpty(answers.capa_linkage)) return null;
+        if (!isEmpty(answers.change_control_process)) return null;
         return {
-          id: 'sop_013',
+          id: rid('014'),
           dimension: 'regulatory_alignment',
           severity: 'critical',
-          title: 'No CAPA Process Defined for SOP Deviations',
+          title: 'No change control process referenced',
           question:
-            'How do you ensure corrective and preventive actions are taken when SOP deviations occur? Show me the link between your deviation system and your CAPA process.',
+            'How are changes to this SOP controlled? 21 CFR 820.40 requires procedures for document changes. I see no reference to a change control process. Is this a controlled document?',
           observation:
-            'No corrective and preventive action (CAPA) process has been defined, or the linkage between deviations and CAPA is missing. Without a functioning CAPA system, the organization cannot systematically address the root causes of SOP non-compliance, and the same failures will recur. FDA considers the absence of an effective CAPA system a significant quality system deficiency.',
+            'The SOP does not reference or describe a change control process. Without formal change control, ' +
+            'modifications to the procedure could be made without proper review, approval, impact assessment, or retraining.',
           requirement:
-            'A CAPA system must be established to identify, investigate, and correct quality problems. The system must include procedures for identifying action needed, implementing corrective and preventive actions, and verifying or validating effectiveness.',
-          reference: '21 CFR 820.90; ICH Q10 Section 3.2',
+            '21 CFR 820.40 requires document change controls including review and approval by appropriate personnel. ' +
+            '21 CFR 211.100 requires that written procedures shall be followed and that any changes be drafted, reviewed, and approved. ' +
+            '21 CFR Part 11.10(e) requires audit trails for electronic records to document changes.',
+          reference: '21 CFR 820.40; 21 CFR 211.100; 21 CFR Part 11.10(e)',
           recommendation:
-            'Define a comprehensive CAPA process that is triggered by SOP deviations, audit findings, complaints, and trend analysis. Ensure clear linkage between the deviation management system and CAPA initiation criteria. Document root cause analysis methodology, action tracking, effectiveness verification timelines, and escalation criteria.',
-          relatedFields: ['corrective_action_triggers', 'capa_linkage', 'preventive_action_methodology', 'root_cause_analysis_method', 'capa_escalation_criteria'],
+            'Reference the site change control SOP and describe the process for initiating, reviewing, approving, and implementing changes to this document. ' +
+            'Include requirements for impact assessment, affected document updates, and retraining.',
+          relatedFields: ['change_control_process'],
         };
       },
     },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_015 — documentation: No approval workflow defined
+    // ───────────────────────────────────────────────────────────────────────
     {
-      id: 'sop_014',
-      dimension: 'completeness',
-      title: 'No Deviation Handling Process',
+      id: rid('015'),
+      dimension: 'documentation',
+      title: 'No approval workflow defined',
       question:
-        'What happens when someone deviates from this SOP? Walk me through your deviation classification, investigation, and resolution process.',
+        'Who approved this SOP and through what workflow? Per 21 CFR 820.40(a), documents must be reviewed and approved by designated individuals. Show me your approval chain.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.deviation_classification)) return null;
+        if (!isEmpty(answers.approval_workflow)) return null;
         return {
-          id: 'sop_014',
-          dimension: 'completeness',
+          id: rid('015'),
+          dimension: 'documentation',
           severity: 'critical',
-          title: 'No Deviation Handling Process Defined',
+          title: 'No approval workflow defined',
           question:
-            'What happens when someone deviates from this SOP? Walk me through your deviation classification, investigation, and resolution process.',
+            'Who approved this SOP and through what workflow? Per 21 CFR 820.40(a), documents must be reviewed and approved by designated individuals. Show me your approval chain.',
           observation:
-            'No deviation classification or handling process has been defined. Every quality system must have a mechanism for detecting, classifying, investigating, and resolving deviations from approved procedures. The absence of this process means deviations may go unreported and uninvestigated, creating a systemic quality and safety risk.',
+            'No approval workflow is defined. SOPs must go through formal review and approval before they become effective. ' +
+            'Without a defined workflow, there is no evidence that qualified individuals have reviewed the procedure for accuracy, completeness, and regulatory compliance.',
           requirement:
-            'Any unexplained discrepancy or the failure of a batch or any of its components to meet any of its specifications shall be thoroughly investigated. By extension, deviations from approved SOPs must be documented, classified by severity, investigated, and resolved.',
-          reference: '21 CFR 211.192; ICH Q10',
+            '21 CFR 820.40(a) requires that each manufacturer designate individuals to review and approve all documents before issuance. ' +
+            '21 CFR 211.22(c) requires the quality control unit to approve procedures impacting drug product quality.',
+          reference: '21 CFR 820.40(a); 21 CFR 211.22(c)',
           recommendation:
-            'Establish a deviation management process that includes: classification criteria (minor, major, critical), investigation timelines for each severity level, root cause analysis requirements, CAPA linkage, trending, and approval authority. Train all personnel on when and how to report deviations.',
-          relatedFields: ['deviation_classification', 'minor_deviation_timeline', 'major_deviation_timeline', 'critical_deviation_timeline', 'investigation_requirements', 'deviation_approval_authority'],
+            'Define the approval workflow specifying: the author/drafter, subject matter expert reviewer(s), QA reviewer, and final approver. ' +
+            'For electronic systems, ensure the workflow complies with 21 CFR Part 11 requirements for electronic signatures.',
+          relatedFields: ['approval_workflow'],
         };
       },
     },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_016 — consistency: No effective date
+    // ───────────────────────────────────────────────────────────────────────
     {
-      id: 'sop_015',
-      dimension: 'practical_feasibility',
-      title: 'No Root Cause Analysis Method',
+      id: rid('016'),
+      dimension: 'consistency',
+      title: 'No effective date on SOP',
       question:
-        'When a deviation or CAPA is initiated, what root cause analysis methodology do you use? How do you ensure you are addressing the true root cause rather than just the symptoms?',
+        'When did this SOP become effective? I see no effective date. How do you know that the version in use at the time of a specific batch was the current approved version?',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.root_cause_analysis_method)) return null;
+        if (!isEmpty(answers.effective_date)) return null;
         return {
-          id: 'sop_015',
+          id: rid('016'),
+          dimension: 'consistency',
+          severity: 'critical',
+          title: 'No effective date on SOP',
+          question:
+            'When did this SOP become effective? I see no effective date. How do you know that the version in use at the time of a specific batch was the current approved version?',
+          observation:
+            'The SOP has no effective date. Without an effective date, it is impossible to determine whether this version was in effect ' +
+            'during a particular manufacturing event, making retrospective investigations and batch record reviews unreliable.',
+          requirement:
+            '21 CFR 820.40 requires that documents be available at locations of use and that obsolete documents be promptly removed. ' +
+            'An effective date is essential for document control and compliance verification during inspections.',
+          reference: '21 CFR 820.40; 21 CFR 211.186',
+          recommendation:
+            'Add an effective date that indicates when this version of the SOP was approved and became the current controlled version. ' +
+            'The effective date should be set after all approvals and training have been completed.',
+          relatedFields: ['effective_date'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_017 — regulatory_alignment: No review cycle defined
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('017'),
+      dimension: 'regulatory_alignment',
+      title: 'No periodic review cycle established',
+      question:
+        'How often is this SOP reviewed for continued adequacy? 21 CFR 820.40 requires periodic review. What is your review cycle, and can you show me evidence that the last review was conducted on schedule?',
+      check(answers): WarGameFinding | null {
+        if (!isEmpty(answers.review_cycle)) return null;
+        return {
+          id: rid('017'),
+          dimension: 'regulatory_alignment',
+          severity: 'warning',
+          title: 'No periodic review cycle established',
+          question:
+            'How often is this SOP reviewed for continued adequacy? 21 CFR 820.40 requires periodic review. What is your review cycle, and can you show me evidence that the last review was conducted on schedule?',
+          observation:
+            'No periodic review cycle is defined. SOPs can become outdated as regulations change, processes evolve, or equipment is replaced. ' +
+            'Without a review cycle, there is no mechanism to ensure the SOP remains current and accurate.',
+          requirement:
+            '21 CFR 820.40 implicitly requires periodic review through its requirement for document adequacy. ' +
+            'ICH E6(R2) Section 5.1.1 requires that the sponsor implement systems to ensure the quality of every aspect of the trial, ' +
+            'which includes keeping procedures current. Industry standard is a review cycle of no more than 2-3 years.',
+          reference: '21 CFR 820.40; ICH E6(R2) Section 5.1.1',
+          recommendation:
+            'Establish a periodic review cycle (typically every 2 years for GMP SOPs, annually for high-risk procedures). ' +
+            'Document the review date, reviewer, and outcome (no change needed, revision initiated, or SOP retired).',
+          relatedFields: ['review_cycle'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_018 — completeness: No definitions section
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('018'),
+      dimension: 'completeness',
+      title: 'No definitions or abbreviations section',
+      question:
+        'This SOP has no definitions section. How do you ensure that all personnel interpreting this procedure understand terms the same way? Ambiguous terminology causes deviations.',
+      check(answers): WarGameFinding | null {
+        const defs = answers.definitions_included;
+        if (defs === true || str(defs) === 'true' || str(defs) === 'yes') return null;
+        if (!isEmpty(defs) && str(defs).length >= 20) return null;
+        return {
+          id: rid('018'),
+          dimension: 'completeness',
+          severity: 'info',
+          title: 'No definitions or abbreviations section',
+          question:
+            'This SOP has no definitions section. How do you ensure that all personnel interpreting this procedure understand terms the same way? Ambiguous terminology causes deviations.',
+          observation:
+            'The SOP does not include a definitions or abbreviations section. Technical terms, acronyms, and process-specific language ' +
+            'may be interpreted differently by different personnel, leading to inconsistent execution.',
+          requirement:
+            'ICH E6(R2) and cGMP best practices call for clear, unambiguous procedures. ' +
+            'A definitions section reduces the risk of misinterpretation, particularly for multi-disciplinary or multi-site SOPs.',
+          reference: 'ICH E6(R2); 21 CFR 211.100; FDA Guidance on Quality Systems Approach',
+          recommendation:
+            'Add a Definitions and Abbreviations section that defines all technical terms, abbreviations, and acronyms used in the SOP. ' +
+            'Consider referencing a site-level glossary for commonly used terms.',
+          relatedFields: ['definitions_included'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_019 — documentation: No record retention period defined
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('019'),
+      dimension: 'documentation',
+      title: 'Record retention period not defined',
+      question:
+        'What is the record retention period for documents generated by this procedure? 21 CFR 211.180 requires records to be retained for at least one year after the expiry date of the batch. Where is your retention schedule?',
+      check(answers): WarGameFinding | null {
+        if (!isEmpty(answers.record_retention_period)) return null;
+        return {
+          id: rid('019'),
+          dimension: 'documentation',
+          severity: 'warning',
+          title: 'Record retention period not defined',
+          question:
+            'What is the record retention period for documents generated by this procedure? 21 CFR 211.180 requires records to be retained for at least one year after the expiry date of the batch. Where is your retention schedule?',
+          observation:
+            'The SOP does not specify a record retention period for the records generated during its execution. ' +
+            'Records destroyed prematurely cannot support regulatory inspections, investigations, or product complaints.',
+          requirement:
+            '21 CFR 211.180(a) requires that records for drug products be retained for at least one year after the expiry date of the batch. ' +
+            '21 CFR 820.184 requires that device records be retained for the design and expected life of the device, but no less than two years from product release. ' +
+            'ICH E6(R2) Section 4.9.5 requires essential documents to be retained for at least two years after the last approval of a marketing application.',
+          reference: '21 CFR 211.180(a); 21 CFR 820.184; ICH E6(R2) Section 4.9.5',
+          recommendation:
+            'Define the retention period for all records generated by this SOP. Reference the site record retention schedule and ensure the period meets the longest applicable regulatory requirement.',
+          relatedFields: ['record_retention_period'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_020 — risk_identification: No risk assessment referenced
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('020'),
+      dimension: 'risk_identification',
+      title: 'No risk assessment referenced',
+      question:
+        'Has a risk assessment been performed for the process described in this SOP? ICH Q9 requires a systematic approach to quality risk management. Show me the risk assessment that supports this procedure.',
+      check(answers): WarGameFinding | null {
+        if (!isEmpty(answers.risk_assessment_reference)) return null;
+        return {
+          id: rid('020'),
+          dimension: 'risk_identification',
+          severity: 'warning',
+          title: 'No risk assessment referenced',
+          question:
+            'Has a risk assessment been performed for the process described in this SOP? ICH Q9 requires a systematic approach to quality risk management. Show me the risk assessment that supports this procedure.',
+          observation:
+            'The SOP does not reference a risk assessment (e.g., FMEA, HACCP, fault tree analysis) for the process it describes. ' +
+            'Without a documented risk assessment, critical process parameters and risk mitigation measures may not be adequately identified.',
+          requirement:
+            'ICH Q9 establishes the framework for quality risk management in pharmaceutical manufacturing. ' +
+            '21 CFR 820.30(g) requires risk analysis for device design. ICH E6(R2) Section 5.0 requires risk-based approaches to clinical trial quality.',
+          reference: 'ICH Q9; 21 CFR 820.30(g); ICH E6(R2) Section 5.0',
+          recommendation:
+            'Perform and document a process risk assessment using an appropriate methodology (FMEA, HACCP, fishbone diagram). ' +
+            'Reference the risk assessment document number in the SOP and ensure control measures identified in the risk assessment are reflected in the procedure steps.',
+          relatedFields: ['risk_assessment_reference'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_021 — consistency: No distribution list
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('021'),
+      dimension: 'consistency',
+      title: 'No distribution list defined',
+      question:
+        'Who receives controlled copies of this SOP? Per 21 CFR 820.40, documents must be available at all locations of use. Without a distribution list, how do you ensure obsolete copies are retrieved?',
+      check(answers): WarGameFinding | null {
+        if (!isEmpty(answers.distribution_list)) return null;
+        return {
+          id: rid('021'),
+          dimension: 'consistency',
+          severity: 'info',
+          title: 'No distribution list defined',
+          question:
+            'Who receives controlled copies of this SOP? Per 21 CFR 820.40, documents must be available at all locations of use. Without a distribution list, how do you ensure obsolete copies are retrieved?',
+          observation:
+            'No distribution list is defined. Without knowing which departments and roles receive this SOP, ' +
+            'there is no mechanism to ensure all affected personnel have access to the current version and that obsolete copies are removed.',
+          requirement:
+            '21 CFR 820.40(a) requires that approved documents are available at all locations where operations essential to the effective functioning of the quality system are performed. ' +
+            'Obsolete documents must be promptly removed from all points of use.',
+          reference: '21 CFR 820.40(a)',
+          recommendation:
+            'Define a distribution list specifying all departments, roles, or work stations that must have access to this SOP. ' +
+            'For electronic document management systems, define the access permissions that serve as the distribution control.',
+          relatedFields: ['distribution_list'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_022 — completeness: No related documents cross-referenced
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('022'),
+      dimension: 'completeness',
+      title: 'No related documents cross-referenced',
+      question:
+        'Does this SOP operate in isolation? I see no cross-references to related SOPs, forms, or work instructions. How do your operators know which forms to complete or which upstream and downstream procedures apply?',
+      check(answers): WarGameFinding | null {
+        if (!isEmpty(answers.related_documents)) return null;
+        return {
+          id: rid('022'),
+          dimension: 'completeness',
+          severity: 'warning',
+          title: 'No related documents cross-referenced',
+          question:
+            'Does this SOP operate in isolation? I see no cross-references to related SOPs, forms, or work instructions. How do your operators know which forms to complete or which upstream and downstream procedures apply?',
+          observation:
+            'The SOP does not reference any related documents such as forms, logbooks, work instructions, specifications, or upstream/downstream SOPs. ' +
+            'Most procedures exist within a process chain and require associated documentation.',
+          requirement:
+            '21 CFR 211.186 requires complete records that trace all steps. ' +
+            'A quality system must maintain traceability between procedures, and cross-references are essential for holistic process understanding.',
+          reference: '21 CFR 211.186; 21 CFR 820.40; ICH E6(R2) Section 5.5.3',
+          recommendation:
+            'Add a Related Documents section listing all associated SOPs, work instructions, forms, templates, specifications, ' +
+            'and regulatory guidance that personnel need to reference when executing this procedure.',
+          relatedFields: ['related_documents'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_023 — practical_feasibility: Process scope too broad or undefined
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('023'),
+      dimension: 'practical_feasibility',
+      title: 'Process scope undefined or too broad',
+      question:
+        'What is the scope of this SOP? I cannot determine what processes are included and, more importantly, what is excluded. An SOP with unclear boundaries leads to gaps and overlaps with other procedures.',
+      check(answers): WarGameFinding | null {
+        const scope = str(answers.process_scope);
+        if (scope.length >= 30) return null;
+        return {
+          id: rid('023'),
           dimension: 'practical_feasibility',
           severity: 'warning',
-          title: 'No Root Cause Analysis Methodology Defined',
+          title: 'Process scope undefined or too broad',
           question:
-            'When a deviation or CAPA is initiated, what root cause analysis methodology do you use? How do you ensure you are addressing the true root cause rather than just the symptoms?',
+            'What is the scope of this SOP? I cannot determine what processes are included and, more importantly, what is excluded. An SOP with unclear boundaries leads to gaps and overlaps with other procedures.',
           observation:
-            'No root cause analysis (RCA) method has been specified. Without a structured RCA approach, investigations tend to identify superficial causes rather than true root causes, leading to ineffective corrective actions and recurring deviations. FDA inspectors frequently challenge the depth and rigor of root cause investigations.',
+            `The process scope is ${scope.length === 0 ? 'not defined' : `only ${scope.length} characters, which is too brief to define clear boundaries`}. ` +
+            'Without a well-defined scope, personnel may not know whether a specific situation or process variant is covered by this SOP ' +
+            'or by another procedure.',
           requirement:
-            'CAPA procedures must include investigation of the cause of nonconformities and implementation of actions to prevent recurrence. Effective root cause analysis requires a documented, systematic methodology.',
-          reference: 'ICH Q10 Section 3.2.1',
+            '21 CFR 211.100 requires written procedures for production and process control. ' +
+            'The scope defines the boundaries of each procedure and prevents gaps or overlaps in the quality system.',
+          reference: '21 CFR 211.100; 21 CFR 820.40',
           recommendation:
-            'Select and document one or more root cause analysis methodologies appropriate to the organization (e.g., 5 Whys, Fishbone/Ishikawa, Fault Tree Analysis). Train investigation personnel on the chosen methodology. Require documented RCA for all major and critical deviations, and include the RCA output in CAPA records.',
-          relatedFields: ['root_cause_analysis_method', 'corrective_action_triggers', 'preventive_action_methodology'],
-        };
-      },
-    },
-    {
-      id: 'sop_016',
-      dimension: 'documentation',
-      title: 'Deviation Trending Frequency Insufficient',
-      question:
-        'You trend deviations only annually. How can you detect emerging patterns or systemic issues in a timely manner with such infrequent analysis?',
-      check(answers): WarGameFinding | null {
-        if (answers.deviation_trending !== 'annual') return null;
-        return {
-          id: 'sop_016',
-          dimension: 'documentation',
-          severity: 'warning',
-          title: 'Deviation Trending Too Infrequent',
-          question:
-            'You trend deviations only annually. How can you detect emerging patterns or systemic issues in a timely manner with such infrequent analysis?',
-          observation:
-            'Deviation trending is performed only on an annual basis. Annual trending is insufficient to detect emerging patterns, seasonal variations, or systemic process breakdowns in a timely manner. By the time an annual review identifies a trend, the underlying issue may have caused significant quality impact over months of undetected recurrence.',
-          requirement:
-            'The pharmaceutical quality system should include monitoring of process performance and product quality to ensure a state of control is maintained. Trending should be performed at a frequency sufficient to detect signals early.',
-          reference: 'ICH Q10 Section 3.2.2',
-          recommendation:
-            'Increase deviation trending frequency to at least quarterly for routine SOPs and monthly for critical or high-risk processes. Implement statistical process control where applicable. Use dashboards or automated alerts to flag emerging trends between formal review cycles.',
-          relatedFields: ['deviation_trending', 'effectiveness_metrics', 'review_frequency'],
+            'Define the scope clearly, including: what processes, equipment, and products are covered, ' +
+            'what is explicitly excluded, the start and end points of the procedure, and any limitations or preconditions.',
+          relatedFields: ['process_scope'],
         };
       },
     },
 
-    /* ============================================================== */
-    /*  REVIEW & RETENTION  (sop_017 – sop_020)                       */
-    /* ============================================================== */
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_024 — regulatory_alignment: Part 11 compliance gap
+    // ───────────────────────────────────────────────────────────────────────
     {
-      id: 'sop_017',
+      id: rid('024'),
       dimension: 'regulatory_alignment',
-      title: 'No Periodic Review Schedule',
+      title: '21 CFR Part 11 compliance not addressed',
       question:
-        'This SOP is reviewed only "as needed." FDA expects SOPs to be periodically reviewed to ensure they remain current and reflect actual practice. What triggers a review, and how do you know the SOP still accurately describes what personnel are doing?',
+        'Does this SOP involve electronic records or electronic signatures? If so, where are your 21 CFR Part 11 controls — audit trails, access controls, and electronic signature requirements?',
       check(answers): WarGameFinding | null {
-        if (answers.review_frequency !== 'as_needed') return null;
+        const regs = str(answers.applicable_regulations).toLowerCase();
+        if (regs.includes('part 11') || regs.includes('part11') || regs.includes('11.10')) return null;
+        // Only flag if the SOP involves electronic systems
+        const steps = str(answers.procedure_steps).toLowerCase();
+        const scope = str(answers.process_scope).toLowerCase();
+        const hasElectronic =
+          steps.includes('electronic') || steps.includes('system') || steps.includes('software') ||
+          steps.includes('database') || steps.includes('lims') || steps.includes('edms') ||
+          scope.includes('electronic') || scope.includes('system') || scope.includes('software');
+        if (!hasElectronic) return null;
         return {
-          id: 'sop_017',
+          id: rid('024'),
           dimension: 'regulatory_alignment',
-          severity: 'warning',
-          title: 'No Periodic Review Schedule Defined',
-          question:
-            'This SOP is reviewed only "as needed." FDA expects SOPs to be periodically reviewed to ensure they remain current and reflect actual practice. What triggers a review, and how do you know the SOP still accurately describes what personnel are doing?',
-          observation:
-            'The SOP review frequency is set to "as needed" with no defined periodic review cycle. Without scheduled reviews, SOPs can become outdated, diverge from actual practice, and fail to incorporate regulatory changes. An inspector finding that an SOP has not been reviewed in years — while the process it describes has evolved — will question the organization\'s quality culture.',
-          requirement:
-            'SOPs should be periodically reviewed at defined intervals to ensure they remain current, accurate, and compliant with applicable regulations. The review frequency should be risk-based.',
-          reference: 'ICH Q10 Section 3.2.5',
-          recommendation:
-            'Establish a periodic review schedule — typically every 2 years for standard SOPs and annually for critical or high-risk procedures. Assign review responsibility, define review criteria (regulatory changes, deviation history, process modifications), and track review completion. Document the outcome of each review, even if no changes are needed ("reviewed, no changes required").',
-          relatedFields: ['review_frequency', 'review_committee_members', 'effectiveness_metrics', 'change_control_notes'],
-        };
-      },
-    },
-    {
-      id: 'sop_018',
-      dimension: 'risk_identification',
-      title: 'Record Retention Period Too Short',
-      question:
-        'The retention period for records associated with this SOP is only 3 years. Can you confirm this meets the minimum retention requirements for all applicable regulations, including those that may require retention for the commercial life of the product plus additional years?',
-      check(answers): WarGameFinding | null {
-        if (answers.record_retention_period !== '3_years') return null;
-        return {
-          id: 'sop_018',
-          dimension: 'risk_identification',
           severity: 'critical',
-          title: 'Record Retention Period Potentially Non-Compliant',
+          title: '21 CFR Part 11 compliance not addressed',
           question:
-            'The retention period for records associated with this SOP is only 3 years. Can you confirm this meets the minimum retention requirements for all applicable regulations, including those that may require retention for the commercial life of the product plus additional years?',
+            'Does this SOP involve electronic records or electronic signatures? If so, where are your 21 CFR Part 11 controls — audit trails, access controls, and electronic signature requirements?',
           observation:
-            'A 3-year retention period may not meet regulatory minimums for many GxP contexts. FDA regulations require clinical investigation records to be retained for 2 years after marketing application approval or investigation discontinuation. GMP records may need to be retained for the expiry date of the last batch plus additional years. Device records may require retention for the expected life of the device. A blanket 3-year policy risks premature destruction of legally required records.',
+            'The SOP references electronic systems, software, or databases in the procedure steps or scope, ' +
+            'but does not reference 21 CFR Part 11 in the applicable regulations. Electronic records generated or maintained under this procedure ' +
+            'must comply with Part 11 requirements for audit trails, access controls, system validation, and electronic signatures.',
           requirement:
-            'Records must be retained for the period required by applicable regulations. For clinical investigations, records must be retained for 2 years after the date of marketing application approval or 2 years after the investigation is discontinued. Manufacturing records must be retained for at least 1 year after the expiry date of the batch.',
-          reference: '21 CFR 312.62; 21 CFR 211.180',
+            '21 CFR Part 11.10 requires that persons who use electronic record/electronic signature systems shall employ procedures and controls to ensure ' +
+            'the authenticity, integrity, and confidentiality of electronic records, including audit trails, access controls, and operational system checks.',
+          reference: '21 CFR Part 11.10; FDA Guidance on Scope and Application of 21 CFR Part 11 (2003)',
           recommendation:
-            'Conduct a retention requirements analysis mapping each record type to its applicable regulatory retention mandate. Set the retention period to the longest applicable requirement. For most GxP organizations, a minimum of 15 years or the product lifecycle plus 2 years (whichever is longer) is a defensible baseline. Document the rationale for the chosen retention period.',
-          relatedFields: ['record_retention_period', 'archiving_method', 'retrieval_procedures', 'gxp_classification'],
+            'Add 21 CFR Part 11 to the applicable regulations. Address audit trail requirements, user access controls, ' +
+            'electronic signature manifest, system validation status, and backup/recovery procedures for electronic records generated by this SOP.',
+          relatedFields: ['applicable_regulations', 'procedure_steps', 'process_scope'],
         };
       },
     },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_025 — consistency: Department not specified
+    // ───────────────────────────────────────────────────────────────────────
     {
-      id: 'sop_019',
-      dimension: 'completeness',
-      title: 'No Effectiveness Metrics Defined',
+      id: rid('025'),
+      dimension: 'consistency',
+      title: 'Responsible department not identified',
       question:
-        'How do you measure whether this SOP is effective? What key performance indicators tell you the procedure is achieving its intended purpose and the quality system is in a state of control?',
+        'Which department owns and operates under this SOP? Without departmental attribution, training assignments and management review cannot be properly directed.',
       check(answers): WarGameFinding | null {
-        if (!isEmpty(answers.effectiveness_metrics)) return null;
+        if (!isEmpty(answers.department)) return null;
         return {
-          id: 'sop_019',
-          dimension: 'completeness',
+          id: rid('025'),
+          dimension: 'consistency',
           severity: 'warning',
-          title: 'No Effectiveness Metrics Defined',
+          title: 'Responsible department not identified',
           question:
-            'How do you measure whether this SOP is effective? What key performance indicators tell you the procedure is achieving its intended purpose and the quality system is in a state of control?',
+            'Which department owns and operates under this SOP? Without departmental attribution, training assignments and management review cannot be properly directed.',
           observation:
-            'No effectiveness metrics have been defined for this SOP. Without measurable outcomes, there is no objective way to assess whether the procedure is achieving its intended purpose, whether training is adequate, or whether process improvements are needed. Management review cannot meaningfully evaluate SOP performance without data.',
+            'No department is identified for this SOP. Department attribution is essential for management review, ' +
+            'training assignment, periodic review responsibility, and organizational accountability.',
           requirement:
-            'Management should determine and implement effective and efficient processes for identifying, gathering, and analyzing appropriate data to demonstrate the suitability and effectiveness of the quality management system and to evaluate where continual improvement can be made.',
-          reference: 'ICH Q10 Section 4.1',
+            '21 CFR 211.22 requires the quality control unit to have responsibility and authority. ' +
+            '21 CFR 820.20(b)(1) requires that management establish the organizational structure. Departmental ownership of SOPs supports both requirements.',
+          reference: '21 CFR 211.22; 21 CFR 820.20(b)(1)',
           recommendation:
-            'Define 2-4 effectiveness metrics for this SOP, such as: deviation rate, right-first-time percentage, training completion rate, cycle time compliance, or audit finding frequency. Establish targets, track performance, and include in management review. Use the data to drive continuous improvement.',
-          relatedFields: ['effectiveness_metrics', 'review_frequency', 'deviation_trending'],
+            'Identify the owning department and any supporting departments. This enables proper routing for review cycles, ' +
+            'training assignments, and management responsibility for procedure compliance.',
+          relatedFields: ['department'],
         };
       },
     },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_026 — scientific_rigor: Procedure steps lack specificity
+    // ───────────────────────────────────────────────────────────────────────
     {
-      id: 'sop_020',
-      dimension: 'documentation',
-      title: 'No Change Impact Assessment Required',
+      id: rid('026'),
+      dimension: 'scientific_rigor',
+      title: 'Procedure steps lack specificity',
       question:
-        'When changes are made to this SOP, is an impact assessment performed? How do you evaluate whether a change affects related procedures, training, validations, or regulatory filings?',
+        'Your procedure steps are vague. 21 CFR 211.100 requires procedures designed to assure that products have the required identity, strength, quality, and purity. ' +
+        'Show me the specific parameters, acceptance criteria, and measurable actions in each step.',
       check(answers): WarGameFinding | null {
-        if (answers.impact_assessment_required !== false) return null;
+        const steps = str(answers.procedure_steps);
+        if (steps.length === 0 || steps.length >= 200) return null;
+        if (steps.length >= 50) return null;
         return {
-          id: 'sop_020',
+          id: rid('026'),
+          dimension: 'scientific_rigor',
+          severity: 'warning',
+          title: 'Procedure steps lack specificity',
+          question:
+            'Your procedure steps are vague. 21 CFR 211.100 requires procedures designed to assure that products have the required identity, strength, quality, and purity. ' +
+            'Show me the specific parameters, acceptance criteria, and measurable actions in each step.',
+          observation:
+            `The procedure steps section contains only ${steps.length} characters. Brief, high-level instructions leave room for interpretation ` +
+            'and inconsistent execution between operators, shifts, and sites.',
+          requirement:
+            '21 CFR 211.100(a) requires written procedures designed to assure quality. ' +
+            '21 CFR 820.70(a) requires that process parameters be documented. Steps must be specific enough that trained personnel can reproducibly execute the procedure.',
+          reference: '21 CFR 211.100(a); 21 CFR 820.70(a)',
+          recommendation:
+            'Expand each step with: specific actions (who does what), measurable parameters (temperatures, times, quantities), ' +
+            'acceptance criteria, equipment to be used, and decision points. A procedure step like "mix the solution" should become ' +
+            '"Operator adds Component B to Vessel V-100 and mixes at 200 RPM for 15 minutes at 25 +/- 2 degrees C until solution is clear."',
+          relatedFields: ['procedure_steps'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_027 — practical_feasibility: Review cycle exceeds 3 years
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('027'),
+      dimension: 'practical_feasibility',
+      title: 'Review cycle exceeds industry standard',
+      question:
+        'Your review cycle exceeds 3 years. In my inspection experience, SOPs that are not reviewed regularly become outdated and lead to deviations. What justifies such a long review interval?',
+      check(answers): WarGameFinding | null {
+        const cycle = str(answers.review_cycle).toLowerCase();
+        if (isEmpty(cycle)) return null;
+        const years = num(answers.review_cycle);
+        const hasLong =
+          cycle.includes('5 year') || cycle.includes('4 year') ||
+          cycle.includes('5-year') || cycle.includes('4-year') ||
+          (years > 3 && years <= 100);
+        if (!hasLong) return null;
+        return {
+          id: rid('027'),
+          dimension: 'practical_feasibility',
+          severity: 'warning',
+          title: 'Review cycle exceeds industry standard',
+          question:
+            'Your review cycle exceeds 3 years. In my inspection experience, SOPs that are not reviewed regularly become outdated and lead to deviations. What justifies such a long review interval?',
+          observation:
+            `The review cycle is specified as "${str(answers.review_cycle)}". ` +
+            'Industry best practice and regulatory expectations generally call for SOP review every 2-3 years at most. ' +
+            'Longer intervals increase the risk of process drift, outdated regulatory references, and non-compliance.',
+          requirement:
+            'While no regulation specifies an exact review interval, 21 CFR 820.40 requires procedures to be adequate for their intended use. ' +
+            'FDA investigators routinely cite outdated SOPs as evidence of inadequate document control systems.',
+          reference: '21 CFR 820.40; FDA Compliance Program 7356.002',
+          recommendation:
+            'Reduce the review cycle to no more than 2-3 years. High-risk procedures (aseptic processing, sterility testing) ' +
+            'should be reviewed annually. Document the rationale for the chosen review interval in the document control SOP.',
+          relatedFields: ['review_cycle'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_028 — risk_identification: Deviation handling lacks severity classification
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('028'),
+      dimension: 'risk_identification',
+      title: 'Deviation handling lacks severity classification',
+      question:
+        'Your deviation handling section does not classify deviations by severity. How do you differentiate a minor procedural deviation from one with direct product impact? 21 CFR 211.192 requires that deviations be investigated commensurate with their significance.',
+      check(answers): WarGameFinding | null {
+        const deviation = str(answers.deviation_handling).toLowerCase();
+        if (isEmpty(deviation)) return null;
+        if (deviation.includes('critical') || deviation.includes('major') || deviation.includes('minor') ||
+            deviation.includes('severity') || deviation.includes('classification') || deviation.includes('tier')) return null;
+        return {
+          id: rid('028'),
+          dimension: 'risk_identification',
+          severity: 'warning',
+          title: 'Deviation handling lacks severity classification',
+          question:
+            'Your deviation handling section does not classify deviations by severity. How do you differentiate a minor procedural deviation from one with direct product impact? 21 CFR 211.192 requires that deviations be investigated commensurate with their significance.',
+          observation:
+            'The deviation handling description does not include a severity classification system (e.g., critical, major, minor). ' +
+            'Without classification, all deviations receive the same level of investigation, leading to either over-investigation of trivial issues ' +
+            'or under-investigation of significant ones.',
+          requirement:
+            '21 CFR 211.192 requires thorough investigation of discrepancies. A risk-based classification system ensures that investigation depth ' +
+            'is proportional to the potential impact on product quality and patient safety.',
+          reference: '21 CFR 211.192; ICH Q9; ICH Q10',
+          recommendation:
+            'Implement a severity classification system: Critical (direct product quality/patient safety impact), ' +
+            'Major (potential impact requiring further assessment), Minor (no product impact, procedural in nature). ' +
+            'Define investigation timelines and escalation requirements for each category.',
+          relatedFields: ['deviation_handling'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_029 — regulatory_alignment: Clinical SOP missing ICH E6(R2)
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('029'),
+      dimension: 'regulatory_alignment',
+      title: 'Clinical SOP missing ICH E6(R2) reference',
+      question:
+        'This appears to be a clinical operations SOP, yet it does not reference ICH E6(R2). GCP is the foundational regulation for clinical trial conduct. How do you demonstrate GCP compliance without referencing the applicable guideline?',
+      check(answers): WarGameFinding | null {
+        const dept = str(answers.department).toLowerCase();
+        const scope = str(answers.process_scope).toLowerCase();
+        const title = str(answers.sop_title).toLowerCase();
+        const isClinical =
+          dept.includes('clinical') || scope.includes('clinical') || scope.includes('trial') ||
+          scope.includes('investigator') || title.includes('clinical') || title.includes('gcp') ||
+          dept.includes('cro') || scope.includes('subject') || scope.includes('patient');
+        if (!isClinical) return null;
+        const regs = str(answers.applicable_regulations).toLowerCase();
+        if (regs.includes('ich e6') || regs.includes('e6(r2)') || regs.includes('gcp')) return null;
+        return {
+          id: rid('029'),
+          dimension: 'regulatory_alignment',
+          severity: 'critical',
+          title: 'Clinical SOP missing ICH E6(R2) reference',
+          question:
+            'This appears to be a clinical operations SOP, yet it does not reference ICH E6(R2). GCP is the foundational regulation for clinical trial conduct. How do you demonstrate GCP compliance without referencing the applicable guideline?',
+          observation:
+            'The SOP appears to relate to clinical operations based on its title, scope, or department, ' +
+            'but does not reference ICH E6(R2) Good Clinical Practice in the applicable regulations section.',
+          requirement:
+            'ICH E6(R2) is the international ethical and scientific quality standard for designing, conducting, recording, and reporting trials that involve human subjects. ' +
+            'All clinical SOPs must be traceable to GCP requirements.',
+          reference: 'ICH E6(R2); 21 CFR Part 312; 21 CFR Part 50; 21 CFR Part 56',
+          recommendation:
+            'Add ICH E6(R2) to the applicable regulations. Map specific GCP requirements to the relevant procedure steps ' +
+            'to demonstrate that the SOP fulfills its intended GCP obligations.',
+          relatedFields: ['applicable_regulations', 'department', 'process_scope', 'sop_title'],
+        };
+      },
+    },
+
+    // ───────────────────────────────────────────────────────────────────────
+    // sop_030 — documentation: Training records not linked to SOP revisions
+    // ───────────────────────────────────────────────────────────────────────
+    {
+      id: rid('030'),
+      dimension: 'documentation',
+      title: 'Training records not linked to SOP revisions',
+      question:
+        'When this SOP is revised, how do you ensure all affected personnel are retrained on the new version? I need to see the linkage between SOP revisions and retraining records. Per 21 CFR 211.25, training must be current.',
+      check(answers): WarGameFinding | null {
+        if (isEmpty(answers.training_requirements)) return null;
+        const changeControl = str(answers.change_control_process).toLowerCase();
+        if (changeControl.includes('retrain') || changeControl.includes('re-train') ||
+            changeControl.includes('training impact') || changeControl.includes('training assessment')) return null;
+        if (isEmpty(changeControl)) return null;
+        return {
+          id: rid('030'),
           dimension: 'documentation',
           severity: 'warning',
-          title: 'No Change Impact Assessment Required',
+          title: 'Training records not linked to SOP revisions',
           question:
-            'When changes are made to this SOP, is an impact assessment performed? How do you evaluate whether a change affects related procedures, training, validations, or regulatory filings?',
+            'When this SOP is revised, how do you ensure all affected personnel are retrained on the new version? I need to see the linkage between SOP revisions and retraining records. Per 21 CFR 211.25, training must be current.',
           observation:
-            'Change impact assessment is not required for modifications to this SOP. Without a formal impact assessment, changes may be made in isolation without considering downstream effects on related SOPs, training curricula, validated systems, batch records, or regulatory submissions. This creates a risk of cascading non-compliance that may not surface until an inspection or quality event.',
+            'The SOP defines training requirements and references a change control process, but the change control description ' +
+            'does not mention retraining or training impact assessment. This gap means that revised SOPs may be issued without ensuring personnel are trained on the changes.',
           requirement:
-            'Changes to the pharmaceutical quality system should be evaluated for their impact on product quality, regulatory filings, validated states, and other elements of the quality system. The depth of assessment should be commensurate with the level of risk.',
-          reference: 'ICH Q10 Section 3.2.4',
+            '21 CFR 211.25(a) requires that training be conducted in particular operations the employee performs and in cGMP as it relates to the function. ' +
+            '21 CFR 820.25(b) requires documented training. When an SOP is revised, all personnel who execute the procedure must be retrained before the new version becomes effective.',
+          reference: '21 CFR 211.25(a); 21 CFR 820.25(b)',
           recommendation:
-            'Require a documented impact assessment for all SOP changes. The assessment should evaluate effects on: related procedures and work instructions, training requirements, validated systems and equipment, regulatory submissions, batch records and forms, and cross-referenced documents. Define criteria for when a full impact assessment versus a simplified assessment is appropriate.',
-          relatedFields: ['impact_assessment_required', 'change_request_process', 'stakeholder_notification', 'cross_reference_sops', 'change_effectiveness_review'],
+            'Include retraining requirements in the change control process. The change control record should include a training impact assessment, ' +
+            'identify affected personnel, and track retraining completion before the revised SOP becomes effective.',
+          relatedFields: ['training_requirements', 'change_control_process'],
         };
       },
     },
@@ -582,9 +1099,11 @@ export function createSopAuditor(): WarGameAuditor {
 
   return {
     category: 'sop',
-    name: 'SOP System Auditor',
+    name: 'SOP GCP/GMP Inspector',
     description:
-      'Simulates FDA inspector scrutiny of Standard Operating Procedures and quality system elements during a GMP/GCP inspection, examining document control, training, Part 11 compliance, CAPA integration, and audit readiness.',
+      'Simulates an FDA GCP/GMP inspector scrutinizing a Standard Operating Procedure during a facility inspection, ' +
+      'examining document control, training adequacy, deviation handling, regulatory traceability, and compliance with ' +
+      '21 CFR 211 (cGMP), 21 CFR 820 (QSR), ICH E6(R2) (GCP), and 21 CFR Part 11 (electronic records).',
     rules,
   };
 }
