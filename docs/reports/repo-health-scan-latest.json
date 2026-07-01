@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-01T15:51:28.906Z",
+  "generatedAt": "2026-07-01T16:11:59.502Z",
   "git": {
-    "sha": "b5cc02fb37965156ae2d4b4a5cc64c2e452659a3",
+    "sha": "0160bc58a0bec6f3aeef516e6c8ba20c44a1776b",
     "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 100,
+        "count": 102,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -114,6 +114,8 @@
           "services/compliance/index.ts",
           "services/documents/index.ts",
           "services/proof/index.ts",
+          "shared/constants/domain/index.ts",
+          "shared/constants/domain/mappings/index.ts",
           "shared/navigation/index.ts",
           "shared/regulatory/index.ts",
           "shared/schema/index.ts",
@@ -2847,7 +2849,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 65,
+      "duplicateGroups": 67,
       "largeByBytes": 1,
       "largeByLines": 2
     },
