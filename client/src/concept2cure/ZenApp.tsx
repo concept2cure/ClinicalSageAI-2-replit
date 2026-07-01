@@ -148,6 +148,7 @@ import QualityRoute from './quality/QualityRoute';
 import type { IntTab } from './intelligence/data';
 import LabelingRoute from './labeling/LabelingRoute';
 import RiskRoute from './risk/RiskRoute';
+import RbmRoute from './rbm/RbmRoute';
 import TaskingRoute from './tasking/TaskingRoute';
 import CommunicationRoute from './communication/CommunicationRoute';
 import SubmissionRoute from './submission/SubmissionRoute';
@@ -1238,6 +1239,13 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         setLayoutMode('risk');
         return;
       }
+      if (normalizedPath === 'rbm') {
+        /* Risk-Based Monitoring workstream (ICH E6(R3)/E8(R1) — RACT/CtQ, KRIs,
+           QTLs, central-monitoring signals, site risk, monitoring plan). Live
+           domain shell. Backed by /api/mdx/rbm-*. */
+        setLayoutMode('rbm');
+        return;
+      }
       if (normalizedPath === 'tasking') {
         /* Cross-program tasking workstream (global Kanban + list across every
            module). Live domain shell mirroring risk. Org-scoped; backed by
@@ -2000,6 +2008,10 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
 
   if (layoutMode === 'risk' && !embeddedModule) {
     return <RiskRoute activeProjectId={activeProjectId} />;
+  }
+
+  if (layoutMode === 'rbm' && !embeddedModule) {
+    return <RbmRoute activeProjectId={activeProjectId} />;
   }
 
   if (layoutMode === 'tasking' && !embeddedModule) {

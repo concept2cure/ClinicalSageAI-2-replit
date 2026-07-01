@@ -18210,6 +18210,301 @@ export const riskControls = pgTable(
 );
 export type RiskControl = InferSelectModel<typeof riskControls>;
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// RISK-BASED MONITORING (RBM / RBQM) — ICH E6(R3) + E8(R1) conduct layer.
+// Mirrors the risk_items conventions: integer organization_id tenant column,
+// nullable uuid program_id (canonical project id space), jsonb metadata,
+// soft-delete deleted_at, org + program indexes. See migrations/20260629_rbm_surfaces.sql.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const rbmRiskAssessments = pgTable(
+  'rbm_risk_assessments',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    title:          text('title').notNull(),
+    framework:      text('framework').default('ich_e6r3').notNull(),
+    overallRisk:    text('overall_risk'),
+    status:         text('status').default('draft').notNull(),
+    version:        integer('version').default(1).notNull(),
+    approvedBy:     integer('approved_by').references(() => users.id),
+    approvedAt:     timestamp('approved_at', { withTimezone: true }),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:      timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_assessments_org_idx').on(table.organizationId),
+    programIdx:    index('rbm_assessments_program_idx').on(table.programId),
+    orgProgramIdx: index('rbm_assessments_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmRiskAssessment = InferSelectModel<typeof rbmRiskAssessments>;
+export const insertRbmRiskAssessmentSchema = createInsertSchemaOmit(rbmRiskAssessments, {
+  id: true, createdAt: true, updatedAt: true, deletedAt: true,
+});
+
+export const rbmRiskItems = pgTable(
+  'rbm_risk_items',
+  {
+    id:                 serial('id').primaryKey(),
+    organizationId:     integer('organization_id').notNull().references(() => organizations.id),
+    assessmentId:       integer('assessment_id').references(() => rbmRiskAssessments.id, { onDelete: 'cascade' }),
+    programId:          uuid('program_id'),
+    refCode:            text('ref_code'),
+    category:           text('category').default('operational').notNull(),
+    ctqFactor:          text('ctq_factor').notNull(),
+    riskDescription:    text('risk_description'),
+    likelihood:         integer('likelihood').notNull(),
+    impact:             integer('impact').notNull(),
+    detectability:      integer('detectability'),
+    riskScore:          integer('risk_score'),
+    isCritical:         boolean('is_critical').default(false),
+    mitigation:         text('mitigation'),
+    residualLikelihood: integer('residual_likelihood'),
+    residualImpact:     integer('residual_impact'),
+    residualScore:      integer('residual_score'),
+    status:             text('status').default('open').notNull(),
+    assignedTo:         integer('assigned_to').references(() => users.id),
+    metadata:           jsonb('metadata').default('{}'),
+    createdAt:          timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:          timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:          timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_items_org_idx').on(table.organizationId),
+    assessmentIdx: index('rbm_items_assessment_idx').on(table.assessmentId),
+    orgProgramIdx: index('rbm_items_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmRiskItem = InferSelectModel<typeof rbmRiskItems>;
+export const insertRbmRiskItemSchema = createInsertSchemaOmit(rbmRiskItems, {
+  id: true, createdAt: true, updatedAt: true, deletedAt: true,
+});
+
+export const rbmKris = pgTable(
+  'rbm_kris',
+  {
+    id:               serial('id').primaryKey(),
+    organizationId:   integer('organization_id').notNull().references(() => organizations.id),
+    programId:        uuid('program_id'),
+    assessmentId:     integer('assessment_id').references(() => rbmRiskAssessments.id, { onDelete: 'set null' }),
+    name:             text('name').notNull(),
+    metricDefinition: text('metric_definition'),
+    dataSource:       text('data_source').default('manual'),
+    unit:             text('unit'),
+    direction:        text('direction').default('higher_worse'),
+    thresholdAmber:   numeric('threshold_amber', { precision: 12, scale: 4 }),
+    thresholdRed:     numeric('threshold_red', { precision: 12, scale: 4 }),
+    currentValue:     numeric('current_value', { precision: 12, scale: 4 }),
+    status:           text('status').default('green').notNull(),
+    evaluatedAt:      timestamp('evaluated_at', { withTimezone: true }),
+    metadata:         jsonb('metadata').default('{}'),
+    createdAt:        timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:        timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:        timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_kris_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_kris_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmKri = InferSelectModel<typeof rbmKris>;
+export const insertRbmKriSchema = createInsertSchemaOmit(rbmKris, {
+  id: true, createdAt: true, updatedAt: true, deletedAt: true,
+});
+
+export const rbmKriValues = pgTable(
+  'rbm_kri_values',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    kriId:          integer('kri_id').notNull().references(() => rbmKris.id, { onDelete: 'cascade' }),
+    value:          numeric('value', { precision: 12, scale: 4 }).notNull(),
+    status:         text('status'),
+    observedAt:     timestamp('observed_at', { withTimezone: true }).defaultNow().notNull(),
+    note:           text('note'),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('rbm_kri_values_org_idx').on(table.organizationId),
+    kriIdx: index('rbm_kri_values_kri_idx').on(table.kriId, table.observedAt),
+  }),
+);
+export type RbmKriValue = InferSelectModel<typeof rbmKriValues>;
+
+export const rbmPatientProfiles = pgTable(
+  'rbm_patient_profiles',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    siteId:         text('site_id'),
+    subjectId:      text('subject_id').notNull(),
+    metrics:        jsonb('metrics').default('{}').notNull(),
+    anomalyScore:   numeric('anomaly_score', { precision: 8, scale: 3 }),
+    topDimension:   text('top_dimension'),
+    status:         text('status').default('normal').notNull(),
+    detail:         text('detail'),
+    scoredAt:       timestamp('scored_at', { withTimezone: true }),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:      timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_patient_profiles_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_patient_profiles_org_program_idx').on(table.organizationId, table.programId),
+    statusIdx:     index('rbm_patient_profiles_status_idx').on(table.organizationId, table.status),
+  }),
+);
+export type RbmPatientProfile = InferSelectModel<typeof rbmPatientProfiles>;
+
+export const rbmQtls = pgTable(
+  'rbm_qtls',
+  {
+    id:                serial('id').primaryKey(),
+    organizationId:    integer('organization_id').notNull().references(() => organizations.id),
+    programId:         uuid('program_id'),
+    parameter:         text('parameter').notNull(),
+    rationale:         text('rationale'),
+    threshold:         numeric('threshold', { precision: 12, scale: 4 }),
+    secondaryLimit:    numeric('secondary_limit', { precision: 12, scale: 4 }),
+    currentValue:      numeric('current_value', { precision: 12, scale: 4 }),
+    breached:          boolean('breached').default(false),
+    breachActionTaken: text('breach_action_taken'),
+    status:            text('status').default('within').notNull(),
+    metadata:          jsonb('metadata').default('{}'),
+    createdAt:         timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:         timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_qtls_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_qtls_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmQtl = InferSelectModel<typeof rbmQtls>;
+export const insertRbmQtlSchema = createInsertSchemaOmit(rbmQtls, {
+  id: true, createdAt: true, updatedAt: true, deletedAt: true,
+});
+
+export const rbmSignals = pgTable(
+  'rbm_signals',
+  {
+    id:              serial('id').primaryKey(),
+    organizationId:  integer('organization_id').notNull().references(() => organizations.id),
+    programId:       uuid('program_id'),
+    siteId:          text('site_id'),
+    source:          text('source').default('manual').notNull(),
+    signalType:      text('signal_type'),
+    severity:        text('severity').default('medium').notNull(),
+    title:           text('title').notNull(),
+    detail:          text('detail'),
+    statistic:       jsonb('statistic').default('{}'),
+    detectedAt:      timestamp('detected_at', { withTimezone: true }).defaultNow().notNull(),
+    status:          text('status').default('new').notNull(),
+    resolutionNotes: text('resolution_notes'),
+    metadata:        jsonb('metadata').default('{}'),
+    createdAt:       timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:       timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:       timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_signals_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_signals_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmSignal = InferSelectModel<typeof rbmSignals>;
+export const insertRbmSignalSchema = createInsertSchemaOmit(rbmSignals, {
+  id: true, createdAt: true, updatedAt: true, deletedAt: true,
+});
+
+export const rbmSiteRiskScores = pgTable(
+  'rbm_site_risk_scores',
+  {
+    id:              serial('id').primaryKey(),
+    organizationId:  integer('organization_id').notNull().references(() => organizations.id),
+    programId:       uuid('program_id'),
+    siteId:          text('site_id'),
+    siteNumber:      text('site_number'),
+    siteName:        text('site_name'),
+    compositeRisk:   numeric('composite_risk', { precision: 6, scale: 2 }),
+    enrollmentRisk:  numeric('enrollment_risk', { precision: 6, scale: 2 }),
+    qualityRisk:     numeric('quality_risk', { precision: 6, scale: 2 }),
+    operationalRisk: numeric('operational_risk', { precision: 6, scale: 2 }),
+    monitoringTier:  text('monitoring_tier').default('standard').notNull(),
+    drivers:         jsonb('drivers').default('[]'),
+    scoredAt:        timestamp('scored_at', { withTimezone: true }).defaultNow().notNull(),
+    metadata:        jsonb('metadata').default('{}'),
+    createdAt:       timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:       timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:        index('rbm_site_risk_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_site_risk_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmSiteRiskScore = InferSelectModel<typeof rbmSiteRiskScores>;
+
+export const rbmMonitoringPlans = pgTable(
+  'rbm_monitoring_plans',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    assessmentId:   integer('assessment_id').references(() => rbmRiskAssessments.id, { onDelete: 'set null' }),
+    title:          text('title').notNull(),
+    strategy:       text('strategy').default('risk_based').notNull(),
+    status:         text('status').default('draft').notNull(),
+    approvedBy:     integer('approved_by').references(() => users.id),
+    approvedAt:     timestamp('approved_at', { withTimezone: true }),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    deletedAt:      timestamp('deleted_at', { withTimezone: true }),
+  },
+  table => ({
+    orgIdx:        index('rbm_plans_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_plans_org_program_idx').on(table.organizationId, table.programId),
+  }),
+);
+export type RbmMonitoringPlan = InferSelectModel<typeof rbmMonitoringPlans>;
+export const insertRbmMonitoringPlanSchema = createInsertSchemaOmit(rbmMonitoringPlans, {
+  id: true, createdAt: true, updatedAt: true, deletedAt: true,
+});
+
+export const rbmMonitoringActions = pgTable(
+  'rbm_monitoring_actions',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    planId:         integer('plan_id').references(() => rbmMonitoringPlans.id, { onDelete: 'cascade' }),
+    riskItemId:     integer('risk_item_id').references(() => rbmRiskItems.id, { onDelete: 'set null' }),
+    signalId:       integer('signal_id').references(() => rbmSignals.id, { onDelete: 'set null' }),
+    actionType:     text('action_type').default('issue').notNull(),
+    description:    text('description').notNull(),
+    priority:       text('priority').default('medium').notNull(),
+    owner:          integer('owner').references(() => users.id),
+    dueDate:        date('due_date'),
+    status:         text('status').default('open').notNull(),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:  index('rbm_actions_org_idx').on(table.organizationId),
+    planIdx: index('rbm_actions_plan_idx').on(table.planId),
+  }),
+);
+export type RbmMonitoringAction = InferSelectModel<typeof rbmMonitoringActions>;
+export const insertRbmMonitoringActionSchema = createInsertSchemaOmit(rbmMonitoringActions, {
+  id: true, createdAt: true, updatedAt: true,
+});
+
 export const softwareLifecycleItems = pgTable(
   'software_lifecycle_items',
   {
