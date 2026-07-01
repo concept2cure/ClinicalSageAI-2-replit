@@ -17,6 +17,12 @@
 import { Request, Response, NextFunction } from 'express';
 import Redis from 'ioredis';
 import { createScopedLogger } from '../utils/logger';
+import {
+  RATE_LIMITS,
+  RATE_LIMIT_FAIL_CLOSED_CATEGORIES,
+  RATE_LIMIT_STORE,
+  REDIS,
+} from '../config/platform-limits';
 
 const logger = createScopedLogger('redis-rate-limiter');
 
@@ -72,10 +78,10 @@ export async function initializeRedisRateLimiter(): Promise<boolean> {
 
   try {
     redisClient = new Redis(redisUrl, {
-      maxRetriesPerRequest: 3,
-      retryStrategy: times => Math.min(times * 100, 2000),
+      maxRetriesPerRequest: REDIS.maxRetriesPerRequest,
+      retryStrategy: times => Math.min(times * REDIS.retryBackoffStepMs, REDIS.retryBackoffCapMs),
       enableReadyCheck: true,
-      connectTimeout: 5000,
+      connectTimeout: REDIS.connectTimeoutMs,
       lazyConnect: true,
     });
 
@@ -131,7 +137,7 @@ export async function closeRedisRateLimiter(): Promise<void> {
 // IN-MEMORY FALLBACK
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MEMORY_STORE_MAX_SIZE = 10_000;
+const MEMORY_STORE_MAX_SIZE = RATE_LIMIT_STORE.memoryStoreMaxSize;
 const memoryStore = new Map<string, { count: number; resetAt: number }>();
 
 /**
@@ -155,7 +161,7 @@ const memoryStoreCleanup = setInterval(() => {
       if (key) memoryStore.delete(key);
     }
   }
-}, 60000);
+}, RATE_LIMIT_STORE.memoryStoreCleanupIntervalMs);
 memoryStoreCleanup.unref();
 
 /**
@@ -261,59 +267,17 @@ async function checkRedisRateLimit(
 // DEFAULT RULES
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Values are centralized in server/config/platform-limits.ts (RATE_LIMITS).
+// Spread into fresh mutable objects so this record satisfies the local
+// RateLimitRule type and remains independently overridable per-call.
 const DEFAULT_RULES: Record<string, RateLimitRule> = {
-  // Authentication endpoints
-  auth: {
-    windowMs: process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 60 * 1000,
-    maxRequests: process.env.NODE_ENV === 'production' ? 20 : 300,
-    message:
-      process.env.NODE_ENV === 'production'
-        ? 'Too many authentication attempts. Please try again later.'
-        : 'Too many authentication attempts. Please wait briefly and try again.',
-  },
-
-  // General API
-  api: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 100,
-    message: 'Too many requests. Please slow down.',
-  },
-
-  // AI/ML endpoints (resource intensive)
-  ai: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 30,
-    message: 'Too many AI requests. Please wait before making more.',
-    skipRoles: ['admin', 'super_admin'],
-  },
-
-  // Document generation
-  documents: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 20,
-    message: 'Too many document requests. Please wait.',
-  },
-
-  // Concept2Cure specific
-  concept2cure: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 100,
-    message: 'Rate limit exceeded for Concept2Cure API.',
-  },
-
-  // Heavy validation endpoints
-  validation: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 10,
-    message: 'Too many validation requests.',
-  },
-
-  // File uploads
-  upload: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 10,
-    message: 'Too many file uploads. Please wait.',
-  },
+  auth: { ...RATE_LIMITS.auth },
+  api: { ...RATE_LIMITS.api },
+  ai: { ...RATE_LIMITS.ai, skipRoles: [...RATE_LIMITS.ai.skipRoles] },
+  documents: { ...RATE_LIMITS.documents },
+  concept2cure: { ...RATE_LIMITS.concept2cure },
+  validation: { ...RATE_LIMITS.validation },
+  upload: { ...RATE_LIMITS.upload },
 };
 
 /**
@@ -329,7 +293,7 @@ const DEFAULT_RULES: Record<string, RateLimitRule> = {
  * availability. This only affects the error path; normal Redis-up and
  * in-memory-fallback limiting behaviour is unchanged.
  */
-const FAIL_CLOSED_CATEGORIES = new Set<string>(['auth', 'documents']);
+const FAIL_CLOSED_CATEGORIES = new Set<string>(RATE_LIMIT_FAIL_CLOSED_CATEGORIES);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MIDDLEWARE FACTORY
