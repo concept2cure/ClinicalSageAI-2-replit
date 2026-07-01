@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-01T04:47:42.686Z",
+  "generatedAt": "2026-07-01T04:47:54.775Z",
   "git": {
-    "sha": "f51f5cb879963aaef058aaaf297eca19ba34409d",
+    "sha": "d437000d095b893d8426c7d67f7a4273b0eb80de",
     "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 239,
     "largeFilesByBytes": 29,
-    "largeFilesByLines": 83
+    "largeFilesByLines": 84
   },
   "findings": {
     "duplicateBasenames": [
@@ -2780,6 +2780,10 @@
         "lines": 1650
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/labeling.ts",
+        "lines": 1644
+      },
+      {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
       },
@@ -2831,7 +2835,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 388,
       "largeByBytes": 26,
-      "largeByLines": 72
+      "largeByLines": 73
     },
     {
       "owner": "Unassigned (TBD)",
