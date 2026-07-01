@@ -1,7 +1,7 @@
 /**
  * Routes of Administration — canonical domain vocabulary.
  *
- * 18 routes aligned to FDA standard terminology for drug administration.
+ * 19 routes aligned to FDA standard terminology for drug administration.
  * Used in dosing design, protocol specifications, and CMC sections.
  *
  * @module shared/constants/domain/routes-of-administration
@@ -19,6 +19,7 @@ export type RouteOfAdministration =
   | 'transdermal'
   | 'inhaled'
   | 'intranasal'
+  | 'intradermal'
   | 'intrathecal'
   | 'intravitreal'
   | 'intraperitoneal'
@@ -70,6 +71,11 @@ export const ROUTES_OF_ADMINISTRATION: DomainEntry<RouteOfAdministration>[] = [
     value: 'intranasal',
     label: 'Intranasal',
     description: 'Administration into the nasal cavity for local or systemic effect.',
+  },
+  {
+    value: 'intradermal',
+    label: 'Intradermal (ID)',
+    description: 'Injection into the dermis layer of the skin, e.g. for diagnostics or certain vaccines.',
   },
   {
     value: 'intrathecal',

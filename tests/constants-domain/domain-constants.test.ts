@@ -55,8 +55,8 @@ const MODULES: Array<{
 }> = [
   { name: 'THERAPEUTIC_AREAS', entries: THERAPEUTIC_AREAS, options: therapeuticAreaOptions, expectedLength: 25 },
   { name: 'CLINICAL_PHASES', entries: CLINICAL_PHASES, options: clinicalPhaseOptions, expectedLength: 10 },
-  { name: 'ROUTES_OF_ADMINISTRATION', entries: ROUTES_OF_ADMINISTRATION, options: routeOfAdministrationOptions, expectedLength: 18 },
-  { name: 'DOSAGE_FORMS', entries: DOSAGE_FORMS, options: dosageFormOptions, expectedLength: 22 },
+  { name: 'ROUTES_OF_ADMINISTRATION', entries: ROUTES_OF_ADMINISTRATION, options: routeOfAdministrationOptions, expectedLength: 19 },
+  { name: 'DOSAGE_FORMS', entries: DOSAGE_FORMS, options: dosageFormOptions, expectedLength: 23 },
   { name: 'STUDY_DESIGNS', entries: STUDY_DESIGNS, options: studyDesignOptions, expectedLength: 14 },
   { name: 'EXPRESSION_SYSTEMS', entries: EXPRESSION_SYSTEMS, options: expressionSystemOptions, expectedLength: 12 },
   { name: 'MANUFACTURING_PROCESSES', entries: MANUFACTURING_PROCESSES, options: manufacturingProcessOptions, expectedLength: 20 },

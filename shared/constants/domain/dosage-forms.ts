@@ -1,7 +1,7 @@
 /**
  * Dosage Forms — canonical domain vocabulary.
  *
- * 22 dosage forms aligned to FDA CDER nomenclature. Used in CMC sections,
+ * 23 dosage forms aligned to FDA CDER nomenclature. Used in CMC sections,
  * protocol specifications, and product characterization.
  *
  * @module shared/constants/domain/dosage-forms
@@ -32,6 +32,7 @@ export type DosageForm =
   | 'dry_powder_inhaler'
   | 'nebulizer_solution'
   | 'implant'
+  | 'suppository'
   | 'other';
 
 export const DOSAGE_FORMS: DomainEntry<DosageForm>[] = [
@@ -139,6 +140,11 @@ export const DOSAGE_FORMS: DomainEntry<DosageForm>[] = [
     value: 'implant',
     label: 'Implant',
     description: 'Solid dosage form surgically or procedurally placed in the body for sustained drug release.',
+  },
+  {
+    value: 'suppository',
+    label: 'Suppository',
+    description: 'Solid dosage form for rectal or vaginal insertion that melts or dissolves to release drug.',
   },
   {
     value: 'other',
