@@ -825,6 +825,41 @@ const rules: AuditRule[] = [
       return null;
     },
   },
+
+  /* ── Consistency ─────────────────────────────────────────────────── */
+  {
+    id: rid('intended_use_labeling_mismatch'),
+    dimension: 'consistency',
+    title: 'Intended Use Statement Inconsistent with Labeling',
+    question:
+      'Per 21 CFR 807.87(e), the indications for use statement in the 510(k) must be consistent with the proposed labeling. Has the submitter ensured that the intended use, indications for use, and labeling all align?',
+    check: (a) => {
+      if (!isBlank(a.intended_use) && !isBlank(a.labeling_intended_use)) {
+        const submitted = String(a.intended_use).toLowerCase().trim();
+        const labeling = String(a.labeling_intended_use).toLowerCase().trim();
+        if (submitted !== labeling && !submitted.includes(labeling) && !labeling.includes(submitted)) {
+          return {
+            id: rid('intended_use_labeling_mismatch'),
+            dimension: 'consistency',
+            severity: 'critical',
+            title: 'Intended Use Statement Inconsistent with Labeling',
+            question:
+              'Per 21 CFR 807.87(e), the indications for use statement in the 510(k) must be consistent with the proposed labeling. Has the submitter ensured that the intended use, indications for use, and labeling all align?',
+            observation:
+              'The intended use statement in the 510(k) submission appears to differ from the intended use as stated in the proposed labeling. Any inconsistency between these statements may result in an Additional Information (AI) request or Refuse to Accept (RTA) decision.',
+            requirement:
+              '21 CFR 807.87(e) requires the 510(k) to include proposed labeling. The indications for use statement (FDA Form 3881) must be consistent with the labeling, instructions for use (IFU), and any promotional materials. Inconsistencies between the 510(k) intended use and the labeling are a common reason for Additional Information requests.',
+            reference:
+              '21 CFR 807.87(e); FDA Guidance: The 510(k) Program — Evaluating Substantial Equivalence (2014); FDA Form 3881',
+            recommendation:
+              'Review and harmonize the intended use statement across: (1) FDA Form 3881 (Indications for Use), (2) the device labeling, (3) the instructions for use (IFU), and (4) the predicate comparison section of the 510(k). Ensure verbatim consistency wherever possible.',
+            relatedFields: ['intended_use', 'labeling_intended_use', 'predicate_device'],
+          };
+        }
+      }
+      return null;
+    },
+  },
 ];
 
 /* ------------------------------------------------------------------ */
