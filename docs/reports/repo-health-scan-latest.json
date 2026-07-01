@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-01T16:11:59.502Z",
+  "generatedAt": "2026-07-01T17:04:25.252Z",
   "git": {
-    "sha": "0160bc58a0bec6f3aeef516e6c8ba20c44a1776b",
+    "sha": "d6c258aa6bf402e351b7de709fe9e1760f86371a",
     "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
@@ -2376,12 +2376,12 @@
     ],
     "largeFilesByBytes": [
       {
-        "file": "shared/schema.ts",
-        "bytes": 821945
+        "file": "server/services/ana/AnaToolExecutor.ts",
+        "bytes": 822306
       },
       {
-        "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 819566
+        "file": "shared/schema.ts",
+        "bytes": 821945
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2503,7 +2503,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 16021
+        "lines": 16076
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
