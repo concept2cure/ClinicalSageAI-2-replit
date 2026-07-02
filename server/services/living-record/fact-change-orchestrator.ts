@@ -29,7 +29,7 @@ import { inArray } from 'drizzle-orm';
 
 import { db } from '../../db';
 import { evidenceClaims } from '../../../shared/schema';
-import type { CanonicalFact, FactBinding, FactDrift } from '../../../shared/schema/living-record-spine';
+import type { CanonicalFact, FactDrift } from '../../../shared/schema/living-record-spine';
 import auditService from '../auditService';
 import { propagateRegulatoryChange } from '../living-file/change-router.service';
 import { createResolutionPlan } from '../resolution/resolution-planner';
@@ -46,44 +46,22 @@ import {
   writeDrift,
 } from './canonical-fact-store';
 import {
+  bindingImpactInput,
   classifyBindingImpact,
+  factChangeFailure as fail,
   hasProposedValue,
   isNoopChange,
   proposedFactView,
   summarizeImpacts,
   type BindingImpact,
+  type FactChangeFailure,
   type FactChangeImpactSummary,
   type ProposedFactValue,
 } from './fact-change';
 import { resolveLegacyProgram } from './program-link';
 import { toCanonicalValue } from './value-reconciliation';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared result envelope
-// ─────────────────────────────────────────────────────────────────────────────
-
-export type FactChangeFailureCode = 'not_found' | 'conflict' | 'invalid';
-
-export interface FactChangeFailure {
-  ok: false;
-  code: FactChangeFailureCode;
-  message: string;
-}
-
-function fail(code: FactChangeFailureCode, message: string): FactChangeFailure {
-  return { ok: false, code, message };
-}
-
-function bindingImpactInput(b: FactBinding) {
-  return {
-    id: b.id,
-    target: b.target,
-    targetKind: b.targetKind,
-    bindingKind: b.bindingKind,
-    observedValue: b.observedValue,
-    transform: (b.transform as Record<string, unknown> | null) ?? null,
-  };
-}
+export type { FactChangeFailure, FactChangeFailureCode } from './fact-change';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Impact preview

@@ -310,6 +310,30 @@ and the platform propagates it under governance.
    propagation digest. Operator-declared values enter through
    `establishGovernedFact` (`canonical_fact.established`), which refuses to
    overwrite an existing active fact.
+7. **Propagate** — `propagateFactToCitations`
+   (`POST /facts/:factId/propagate`) writes the agreed value into every
+   divergent **claim** citation: the claim's structured value is set to the
+   fact's, verification returns to `verified`, the binding heals to `bound`,
+   and the open drift rows resolve — audited as `canonical_fact.propagated`.
+   Prose targets (`section:`/`paragraph:`/`document:`) are deliberately
+   skipped (reported with reason `prose_target`): running text changes travel
+   the resolution rewrite workflow, never a mechanical edit. Manual overrides
+   are never overwritten. The pure eligibility rule is
+   `propagationEligibility` (`fact-change.ts`).
+
+### 3.6 Source Tracer
+
+`source-tracer.ts` resolves the declared chain
+`cited location → fact → establishing claim → source artifact` to actual rows
+— the walk §1 promises but the graph read surfaces previously stopped short
+of (claim traversals returned `evidence_sources` ids unresolved):
+
+- `GET /api/change-propagation/facts/:factId/trace` — the fact, its
+  establishing claim (`established_by_claim_id` resolved), the source
+  artifact (`evidence_sources`: file, page count, content hash), and every
+  citation each resolved back to its own source.
+- `GET /api/change-propagation/bindings/:bindingId/trace` — the reverse walk
+  from a single cited location back to the source artifact.
 
 ---
 

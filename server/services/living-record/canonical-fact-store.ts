@@ -340,7 +340,7 @@ export async function writeDrift(input: WriteDriftInput) {
 export async function resolveDrift(
   driftId: string,
   resolution: string,
-  resolvedBy: number,
+  resolvedBy: number | null,
   status: Extract<DriftStatus, 'resolved' | 'dismissed'> = 'resolved'
 ): Promise<void> {
   await db

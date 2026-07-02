@@ -10,7 +10,10 @@
  *   POST /api/change-propagation/programs/:programId/facts          declare a governed value
  *   POST /api/change-propagation/facts/:factId/impact-preview       classify every citation vs a proposed value
  *   POST /api/change-propagation/facts/:factId/change               apply the governed change + propagate
+ *   POST /api/change-propagation/facts/:factId/propagate            write the agreed value into divergent claim citations
  *   GET  /api/change-propagation/facts/:factId/history              supersession chain, newest first
+ *   GET  /api/change-propagation/facts/:factId/trace                fact → establishing claim → source artifact + citations
+ *   GET  /api/change-propagation/bindings/:bindingId/trace          citation → fact → claim → source artifact
  *
  * All routes require JWT auth and are org-scoped.
  */
@@ -26,8 +29,13 @@ import {
   establishGovernedFact,
   factHistory,
   previewFactChange,
-  type FactChangeFailure,
 } from '../services/living-record/fact-change-orchestrator';
+import { propagateFactToCitations } from '../services/living-record/fact-propagation';
+import type { FactChangeFailure } from '../services/living-record/fact-change';
+import {
+  traceBindingToSource,
+  traceFactToSource,
+} from '../services/living-record/source-tracer';
 import type { ProposedFactValue } from '../services/living-record/fact-change';
 
 const router = Router();
@@ -178,6 +186,58 @@ router.post('/facts/:factId/change', async (req: Request, res: Response) => {
     res.json(result);
   } catch (err: any) {
     res.status(500).json({ error: 'Fact change failed', detail: err?.message });
+  }
+});
+
+// Propagate the agreed value into divergent claim citations (heals bindings,
+// re-verifies claims, resolves drift). Prose targets and overrides are skipped
+// with the reason reported; body may restrict to specific bindingIds.
+router.post('/facts/:factId/propagate', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  const bindingIds = Array.isArray(req.body?.bindingIds)
+    ? req.body.bindingIds.map(String)
+    : undefined;
+  try {
+    const result = await propagateFactToCitations({
+      factId: String(req.params.factId),
+      organizationId: orgId,
+      reason: typeof req.body?.reason === 'string' ? req.body.reason : '',
+      actor: actorId(req),
+      bindingIds,
+      tolerance: parseTolerance(req.body),
+    });
+    if (!result.ok) return sendFailure(res, result);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Propagation failed', detail: err?.message });
+  }
+});
+
+// Source Tracer: fact → establishing claim → source artifact, plus every
+// citation resolved back to its own source.
+router.get('/facts/:factId/trace', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  try {
+    const result = await traceFactToSource(String(req.params.factId), orgId);
+    if (!result.ok) return sendFailure(res, result);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Trace failed', detail: err?.message });
+  }
+});
+
+// Source Tracer, reverse walk: cited location → fact → claim → source artifact.
+router.get('/bindings/:bindingId/trace', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  try {
+    const result = await traceBindingToSource(String(req.params.bindingId), orgId);
+    if (!result.ok) return sendFailure(res, result);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Trace failed', detail: err?.message });
   }
 });
 

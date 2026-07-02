@@ -11,6 +11,7 @@ import {
   classifyBindingImpact,
   hasProposedValue,
   isNoopChange,
+  propagationEligibility,
   proposedFactView,
   summarizeImpacts,
   type BindingImpactInput,
@@ -134,6 +135,37 @@ describe('classifyBindingImpact', () => {
       countFact(120)
     );
     expect(impact.claimId).toBeNull();
+  });
+});
+
+describe('propagationEligibility', () => {
+  it('only divergent claim citations are mechanically propagatable', () => {
+    const fact = countFact(120);
+    const driftingClaim = classifyBindingImpact(binding(), fact);
+    expect(propagationEligibility(driftingClaim)).toEqual({ eligible: true });
+  });
+
+  it('prose targets are excluded — they go through the rewrite workflow', () => {
+    const impact = classifyBindingImpact(
+      binding({ target: 'section:doc_9:m2.5', targetKind: 'section' }),
+      countFact(120)
+    );
+    expect(propagationEligibility(impact)).toEqual({ eligible: false, reason: 'prose_target' });
+  });
+
+  it('overrides, consistent citations, and non-evaluable transforms are skipped', () => {
+    const fact = countFact(120);
+    expect(
+      propagationEligibility(classifyBindingImpact(binding({ bindingKind: 'manual_override' }), fact))
+    ).toEqual({ eligible: false, reason: 'override' });
+    expect(
+      propagationEligibility(classifyBindingImpact(binding({ observedValue: '120' }), fact))
+    ).toEqual({ eligible: false, reason: 'consistent' });
+    expect(
+      propagationEligibility(
+        classifyBindingImpact(binding({ bindingKind: 'derived', transform: { fn: 'mystery' } }), fact)
+      )
+    ).toEqual({ eligible: false, reason: 'not_evaluable' });
   });
 });
 

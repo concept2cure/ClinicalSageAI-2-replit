@@ -14,6 +14,7 @@
  * See docs/architecture/LIVING_RECORD_SPINE.md §3.5 (Governed Fact Change).
  */
 
+import type { FactBinding } from '../../../shared/schema/living-record-spine';
 import { claimIdFromTarget } from './object-model';
 import {
   applyTransform,
@@ -22,6 +23,34 @@ import {
   type FactValueView,
   type Severity,
 } from './value-reconciliation';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared result envelope (used by the orchestrator and the propagator)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type FactChangeFailureCode = 'not_found' | 'conflict' | 'invalid';
+
+export interface FactChangeFailure {
+  ok: false;
+  code: FactChangeFailureCode;
+  message: string;
+}
+
+export function factChangeFailure(code: FactChangeFailureCode, message: string): FactChangeFailure {
+  return { ok: false, code, message };
+}
+
+/** Project a fact_bindings row onto the plain input the classifier consumes. */
+export function bindingImpactInput(b: FactBinding): BindingImpactInput {
+  return {
+    id: b.id,
+    target: b.target,
+    targetKind: b.targetKind,
+    bindingKind: b.bindingKind,
+    observedValue: b.observedValue,
+    transform: (b.transform as Record<string, unknown> | null) ?? null,
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Proposed values
@@ -167,6 +196,32 @@ export function classifyBindingImpact(
     observed: finding.observed,
     severity: finding.severity,
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Propagation eligibility
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Can the platform mechanically write the new value into this citation?
+ * Only divergent claim citations qualify: a claim carries a structured value
+ * the propagator can set directly. Prose targets (section/paragraph/document)
+ * are deliberately excluded — updating running text is a governed rewrite in
+ * the resolution workflow, never a silent mechanical edit. Overrides are
+ * excluded by design; non-evaluable transforms cannot be computed.
+ */
+export type PropagationSkipReason = 'override' | 'not_evaluable' | 'consistent' | 'prose_target';
+
+export type PropagationEligibility =
+  | { eligible: true }
+  | { eligible: false; reason: PropagationSkipReason };
+
+export function propagationEligibility(impact: BindingImpact): PropagationEligibility {
+  if (impact.outcome === 'override') return { eligible: false, reason: 'override' };
+  if (impact.outcome === 'not_evaluable') return { eligible: false, reason: 'not_evaluable' };
+  if (impact.outcome === 'consistent') return { eligible: false, reason: 'consistent' };
+  if (impact.claimId === null) return { eligible: false, reason: 'prose_target' };
+  return { eligible: true };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

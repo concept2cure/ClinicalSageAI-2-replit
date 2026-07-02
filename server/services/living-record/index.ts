@@ -9,6 +9,8 @@
  *   - reconciliation-engine reconcile-on-write + the Drift Sentinel job
  *   - fact-change            pure impact classification for a proposed change
  *   - fact-change-orchestrator the governed change-propagation path (push)
+ *   - fact-propagation       write the agreed value into divergent claim citations
+ *   - source-tracer          resolve fact/citation back to the source artifact
  *
  * See docs/architecture/LIVING_RECORD_SPINE.md.
  */
@@ -20,6 +22,8 @@ export * from './canonical-fact-store';
 export * from './sequence-store';
 export * from './program-link';
 export * from './fact-change';
+export * from './fact-propagation';
+export * from './source-tracer';
 export {
   applyFactChange,
   establishGovernedFact,
@@ -29,7 +33,6 @@ export {
   type ApplyFactChangeResult,
   type EstablishFactParams,
   type EstablishFactResult,
-  type FactChangeFailure,
   type FactChangePreview,
   type FactHistoryEntry,
 } from './fact-change-orchestrator';
