@@ -233,6 +233,23 @@ export const ANALYZE_SAFETY_SIGNAL: AnaTool = {
   },
 };
 
+export const SCREEN_SIGNAL_PANEL: AnaTool = {
+  name: 'screen_signal_panel',
+  description:
+    "Multi-method pharmacovigilance signal screen from a 2×2 contingency table (a/b/c/d counts): runs the frequentist PRR/ROR/χ² criterion AND the two Bayesian shrinkage methods — BCPNN Information Component (WHO-UMC; signal when the lower 95% bound IC025 > 0) and gamma-Poisson EBGM (FDA/MGPS family; signal when EB05 ≥ 2) — then consolidates them into a single priority tier (strong = all 3 concur, moderate = 2, weak = 1, none = 0) with explicit divergence notes. Prefer this over analyze_safety_signal when you want a robust, small-count-aware verdict: the Bayesian methods suppress the coincidental co-reports that inflate raw PRR at low counts. EBGM here uses a fixed single-table prior (α=β=0.5), not a database-wide MGPS fit. DETERMINISTIC. " +
+    DETERMINISTIC_NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      a: { type: 'number', description: 'Reports of the event for the product of interest.' },
+      b: { type: 'number', description: 'Reports of other events for the product of interest.' },
+      c: { type: 'number', description: 'Reports of the event for all other products.' },
+      d: { type: 'number', description: 'Reports of other events for all other products.' },
+    },
+    required: ['a', 'b', 'c', 'd'],
+  },
+};
+
 export const ADJUST_MULTIPLICITY: AnaTool = {
   name: 'adjust_multiplicity',
   description:
@@ -525,6 +542,7 @@ export const STATISTICAL_DESIGN_TOOLS: AnaTool[] = [
   DESIGN_MRMC_READER_STUDY,
   ANALYZE_EXTERNAL_CONTROL_BORROW,
   ANALYZE_SAFETY_SIGNAL,
+  SCREEN_SIGNAL_PANEL,
   ADJUST_MULTIPLICITY,
   COMPUTE_DIAGNOSTIC_ACCURACY,
   SIZE_DIAGNOSTIC_STUDY,

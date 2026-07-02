@@ -13757,6 +13757,18 @@ registerToolHandler('analyze_safety_signal', async (input: Record<string, unknow
   })
 );
 
+registerToolHandler('screen_signal_panel', async (input: Record<string, unknown>) =>
+  runStatsTool('screen_signal_panel', async () => {
+    const { screenSignalPanel } = await import('../stats/signal-disproportionality.js');
+    return screenSignalPanel({
+      a: input.a as number,
+      b: input.b as number,
+      c: input.c as number,
+      d: input.d as number,
+    });
+  })
+);
+
 registerToolHandler('adjust_multiplicity', async (input: Record<string, unknown>) =>
   runStatsTool('adjust_multiplicity', async () => {
     const { testMultiplicity } = await import('../stats/multiplicity.js');

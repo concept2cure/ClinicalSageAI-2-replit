@@ -131,6 +131,36 @@ visible instead of silently dropped.
     under full-suite load; their `beforeAll` hooks now carry explicit 60s
     timeouts.
 
+## Capability expansion — Bayesian pharmacovigilance signal detection
+
+The disproportionality engine (`server/services/stats/signal-disproportionality.ts`)
+and several tool descriptions advertised **"PRR/ROR/EBGM"**, but only the
+frequentist measures (PRR, ROR, Yates χ²) were implemented — the Bayesian
+shrinkage methods were absent. Raw PRR/ROR are sensitive but throw spurious
+signals at small report counts, which is exactly what the Bayesian methods
+exist to suppress. Implemented the missing capability, deterministically and
+with hand-verified reference values:
+
+- **BCPNN Information Component** (`computeBcpnnIc`) — the WHO-UMC method
+  (Bate et al. 1998; Norén et al. 2006). `IC = log2[(a+α)/(E+α)]` with additive
+  shrinkage and a 95% credibility interval; signal when the lower bound
+  `IC025 > 0`.
+- **Gamma-Poisson EBGM** (`computeGammaPoissonEbgm`) — the FDA/MGPS family
+  (DuMouchel 1999) in single-table, fixed-prior form. Posterior
+  `λ | a ~ Gamma(α+a, β+E)`; reports EBGM (posterior geometric mean via
+  digamma), EB05/EB95 (Wilson–Hilferty percentiles); signal when `EB05 ≥ 2`.
+  Documented as NOT a substitute for a database-wide MGPS mixture fit.
+- **`screenSignalPanel`** — runs all three and returns a consolidated priority
+  tier (strong/moderate/weak/none by concordance) with explicit divergence
+  notes (e.g. frequentist fires but the shrinkage methods don't → small-count
+  false positive, lower priority).
+- Exposed to AnA as the new deterministic tool **`screen_signal_panel`**
+  (`statisticalDesignTools.ts` + handler in `AnaToolExecutor.ts`), wired into
+  `ALL_ANA_TOOLS` and covered by the tool-registry-consistency guard.
+- Tests: `server/services/stats/__tests__/signal-disproportionality.test.ts`
+  (15 cases incl. hand-verified IC/EBGM values) and the
+  `screen_signal_panel` registration/behavior test.
+
 ## Found, not fixed here (documented gaps)
 
 - **`client/src/concept2cure/services/cmcService.ts` — 13 legacy endpoints

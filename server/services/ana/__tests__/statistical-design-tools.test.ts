@@ -24,7 +24,7 @@ describe('statistical-design tools — registration', () => {
     for (const tool of STATISTICAL_DESIGN_TOOLS) {
       expect(getToolHandler(tool.name), `${tool.name} handler`).toBeTruthy();
     }
-    expect(STATISTICAL_DESIGN_TOOLS).toHaveLength(18);
+    expect(STATISTICAL_DESIGN_TOOLS).toHaveLength(19);
   });
 });
 
@@ -216,6 +216,18 @@ describe('statistical-design tools — deterministic computation', () => {
     expect(out.result.signal).toBe(true);
     expect(out.result.prr).toBeGreaterThan(2);
     expect(out.result.ror).toBeGreaterThan(0);
+  });
+
+  it('screen_signal_panel consolidates frequentist + Bayesian methods into a tier', async () => {
+    const out = await call('screen_signal_panel', { a: 30, b: 100, c: 10, d: 10000 });
+    expect(out.status).toBe('computed');
+    expect(out.result.frequentist.signal).toBe(true);
+    expect(out.result.bcpnn.signal).toBe(true);
+    expect(out.result.ebgm.signal).toBe(true);
+    expect(out.result.concordance).toBe(3);
+    expect(out.result.tier).toBe('strong');
+    // Bayesian shrinkage pulls EBGM below the raw relative report ratio.
+    expect(out.result.ebgm.ebgm).toBeLessThan(out.result.ebgm.relativeReportRatio);
   });
 
   it('adjust_multiplicity (Holm) rejects only the smallest p when expected', async () => {
