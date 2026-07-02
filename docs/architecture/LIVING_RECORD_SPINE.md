@@ -361,6 +361,24 @@ section-bound value surfaces in `programFreshnessReport` under a
 `document_section` bucket, beside the device artifact buckets, so a stale CTD
 section reads in the same health model as a stale defense packet.
 
+### 3.8 The conversational surface (AnA tools)
+
+The engine above is reachable from chat through five AnA tools
+(`server/services/ana/changePropagationTools.ts`, handlers in
+`AnaToolExecutor.ts`), so an operator can ask "what happens if the sample size
+changes to 120?" and drive the governed fix in conversation:
+
+- `list_governed_facts` — the program's canonical values (find the factId).
+- `preview_fact_impact` — the read-only blast radius of a proposed change.
+- `apply_fact_change` — the governed mutation (re-version → flag → cascade →
+  resolution plan); requires an explicit reason-for-change.
+- `trace_fact_to_source` — the Source Tracer.
+- `explain_resolution_plan` — the structured explanation of the plan the change
+  opened, grounded strictly in the stored plan.
+
+All are org-scoped from the tool context; the mutation carries the same
+reason-for-change contract as the REST route.
+
 ---
 
 ## 4 · Mapping to the §13 quality bars
