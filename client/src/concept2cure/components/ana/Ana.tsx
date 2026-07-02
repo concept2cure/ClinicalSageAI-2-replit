@@ -347,6 +347,31 @@ export function Ana({
     [chat]
   );
 
+  const handleIntelligenceAnswer = useCallback(
+    (flowState: any, nodeId: string, answers: Record<string, unknown>) => {
+      const payload = JSON.stringify({ flow_state: flowState, node_id: nodeId, answers });
+      void chat.send(`[INTELLIGENCE_ANSWER]${payload}`);
+    },
+    [chat]
+  );
+
+  const handleIntelligenceAction = useCallback(
+    (actionType: string) => {
+      void chat.send(`Please proceed with: ${actionType}`);
+    },
+    [chat]
+  );
+
+  const handleWarGameRemediate = useCallback(
+    (findingId: string, findingTitle: string) => {
+      void chat.send(
+        `Please help me address this war game finding: "${findingTitle}" (finding ID: ${findingId}). ` +
+        `What specific changes should I make to resolve this issue and strengthen my submission?`
+      );
+    },
+    [chat]
+  );
+
   // Auto-send a handed-off draft from the home composer. `externalMessage` is
   // the legacy alias (AnaPersistentPanel); `initialMessage` wins if both set.
   // Guarded with a ref so remounts (React strict-mode, router re-mount) can't
@@ -533,6 +558,10 @@ export function Ana({
         warnings: m.warnings,
         toolCalls: m.toolCalls,
         sentAt: m.sentAt,
+        intelligenceQuestion: m.intelligenceQuestion,
+        intelligenceFlowState: m.intelligenceFlowState,
+        intelligenceFlowComplete: m.intelligenceFlowComplete,
+        warGameReport: m.warGameReport,
         };
       }),
     [chat.messages]
@@ -978,6 +1007,9 @@ export function Ana({
           modelOverride={modelOverride}
           onModelOverrideChange={setModelOverride}
           onSafetyNarrative={handleSafetyNarrative}
+          onIntelligenceAnswer={handleIntelligenceAnswer}
+          onIntelligenceAction={handleIntelligenceAction}
+          onWarGameRemediate={handleWarGameRemediate}
         />
       )}
       {view === 'projects' && (

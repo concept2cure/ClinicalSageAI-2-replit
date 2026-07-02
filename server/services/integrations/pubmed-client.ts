@@ -12,12 +12,72 @@
  * @module server/services/integrations/pubmed-client
  */
 
+import { z } from 'zod';
 import { fetchWithRetry } from './http.js';
+// @ts-ignore -- JS module without type declarations (existing TTL cache).
+import { createCache } from '../../cache_manager.js';
 
 const DEFAULT_BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_RESULTS = 20;
 const DEFAULT_RESULTS = 5;
+
+/** Cache the raw (pre-staleness) result payload for 12h; recompute freshness on read. */
+const CACHE_TTL_SECONDS = 12 * 60 * 60;
+/**
+ * Staleness threshold: a cached PubMed result older than this (seconds) is
+ * flagged `stale: true`. Literature moves slowly, so 6 hours is comfortable.
+ */
+export const STALE_AFTER_SECONDS = 6 * 60 * 60;
+
+const cache = createCache('pubmed');
+
+function isTestEnv(): boolean {
+  return !!process.env.VITEST || process.env.NODE_ENV === 'test';
+}
+
+export interface StalenessFields {
+  /** ISO timestamp of when the underlying data was fetched from the source. */
+  retrievedAt: string;
+  /** Age of the returned data in seconds (0 for a fresh fetch). */
+  cacheAgeSeconds: number;
+  /** True when `cacheAgeSeconds` exceeds {@link STALE_AFTER_SECONDS}. */
+  stale: boolean;
+}
+
+/** Derive additive freshness fields from the epoch-ms the data was fetched. */
+export function computeStaleness(fetchedAtMs: number): StalenessFields {
+  const cacheAgeSeconds = Math.max(0, Math.round((Date.now() - fetchedAtMs) / 1000));
+  return {
+    retrievedAt: new Date(fetchedAtMs).toISOString(),
+    cacheAgeSeconds,
+    stale: cacheAgeSeconds > STALE_AFTER_SECONDS,
+  };
+}
+
+/** Permissive shape guards — assert only the fields we read; never throw. */
+const EsearchSchema = z
+  .object({
+    esearchresult: z
+      .object({ idlist: z.array(z.any()).optional(), count: z.any().optional() })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+const EsummarySchema = z
+  .object({ result: z.record(z.string(), z.any()).optional() })
+  .passthrough();
+
+function warnShapeMismatch(stage: string, err: z.ZodError): void {
+  console.warn(
+    JSON.stringify({
+      event: 'integration.response_shape_mismatch',
+      source: 'PubMed',
+      stage,
+      issues: err.issues.slice(0, 3),
+    })
+  );
+}
 
 export type PubmedStudyType =
   | 'rct'
@@ -47,7 +107,7 @@ export interface PubmedArticle {
   url: string;
 }
 
-export interface PubmedSearchResult {
+export interface PubmedSearchResult extends Partial<StalenessFields> {
   source: 'PubMed';
   /** Total articles matching the query (not just this page). */
   totalCount: number;
@@ -149,19 +209,41 @@ async function getJson(url: string): Promise<any> {
  * caller can fall back to manual-search guidance.
  */
 export async function searchPubmed(params: PubmedSearchParams): Promise<PubmedSearchResult> {
-  const esearch = await getJson(`${baseUrl()}/esearch.fcgi?${buildEsearchParams(params).toString()}`);
-  const ids: string[] = esearch?.esearchresult?.idlist ?? [];
-  const totalCount = Number(esearch?.esearchresult?.count ?? ids.length) || ids.length;
+  const esearchParams = buildEsearchParams(params);
+  const cacheKey = esearchParams.toString();
+
+  if (!isTestEnv()) {
+    const cached = await cache.getCachedData(cacheKey);
+    if (cached?.data) {
+      return { ...cached.data, ...computeStaleness(cached.timestamp) };
+    }
+  }
+
+  const esearch = await getJson(`${baseUrl()}/esearch.fcgi?${esearchParams.toString()}`);
+  const esearchParsed = EsearchSchema.safeParse(esearch);
+  if (!esearchParsed.success) warnShapeMismatch('esearch', esearchParsed.error);
+  const esearchResult = (esearchParsed.success ? esearchParsed.data : {})?.esearchresult ?? {};
+  const ids: string[] = Array.isArray(esearchResult.idlist) ? esearchResult.idlist : [];
+  const totalCount = Number(esearchResult.count ?? ids.length) || ids.length;
 
   if (ids.length === 0) {
-    return { source: 'PubMed', totalCount: 0, articles: [] };
+    const emptyPayload = { source: 'PubMed' as const, totalCount: 0, articles: [] };
+    return { ...emptyPayload, ...computeStaleness(Date.now()) };
   }
 
   const summaryQs = applyEtiquette(
     new URLSearchParams({ db: 'pubmed', id: ids.join(','), retmode: 'json' })
   );
   const summary = await getJson(`${baseUrl()}/esummary.fcgi?${summaryQs.toString()}`);
+  const summaryParsed = EsummarySchema.safeParse(summary);
+  if (!summaryParsed.success) warnShapeMismatch('esummary', summaryParsed.error);
+  const resultMap = (summaryParsed.success ? summaryParsed.data : {})?.result ?? {};
 
-  const articles = ids.map(id => normalizeArticle(id, summary?.result?.[id]));
-  return { source: 'PubMed', totalCount, articles };
+  const articles = ids.map(id => normalizeArticle(id, resultMap[id]));
+  const payload = { source: 'PubMed' as const, totalCount, articles };
+
+  if (!isTestEnv()) {
+    await cache.saveToCacheWithExpiry(cacheKey, payload, CACHE_TTL_SECONDS).catch(() => {});
+  }
+  return { ...payload, ...computeStaleness(Date.now()) };
 }

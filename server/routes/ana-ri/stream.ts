@@ -55,6 +55,7 @@ import { runStreamPostProcessing } from './post-processing.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
+import { guardUserInput, PromptInjectionError } from '../../services/ana/ana-input-guard.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
@@ -116,6 +117,42 @@ router.post('/stream', async (req: Request, res: Response) => {
       return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
     }
 
+    // ── Prompt-injection inspection (coverage: EVERY user turn) ──────────
+    // Wires the existing prompt-injection defense (server/lib/prompt-injection-
+    // protection) into the streaming hot path. Detection + high-risk audit
+    // logging ALWAYS run; hard-block and content encapsulation are opt-in via
+    // PROMPT_INJECTION_ENFORCE / PROMPT_INJECTION_ENCAPSULATE (both default OFF),
+    // so with default config this is pure observation — output is unchanged.
+    // Runs before the SSE headers are written so an enforced block returns a
+    // clean 400 rather than a mid-stream error.
+    const { orgId: guardOrgId, userId: guardUserId } = extractRequestContext(req);
+    let injectionGuard;
+    try {
+      injectionGuard = await guardUserInput(message, {
+        organizationId: guardOrgId,
+        userId: guardUserId,
+        route: '/api/ana-ri/stream',
+        threadId: thread_id,
+        projectId: project_id || resolveProjectIdFromBody(req.body),
+        ipAddress:
+          (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+          req.socket?.remoteAddress ||
+          undefined,
+        userAgent: req.headers['user-agent'] as string | undefined,
+      });
+    } catch (guardErr) {
+      if (guardErr instanceof PromptInjectionError) {
+        return sendError(
+          res,
+          400,
+          'Message was blocked by the input safety policy',
+          null,
+          'PROMPT_INJECTION_BLOCKED',
+        );
+      }
+      throw guardErr;
+    }
+
     const gw = ensureGateway();
     const deterministicMode = gw?.isDeterministic?.() || false;
     if (!gw || (!deterministicMode && gw.getEnabledProviders().length === 0)) {
@@ -170,6 +207,46 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Resolve context
     const { orgId, userId } = extractRequestContext(req);
+
+    // ── Intelligence answer fast-path ──────────────────────────────────
+    // When the client submits a structured intelligence flow answer, skip
+    // the full AI pipeline and call the tool handler directly.
+    const INTELLIGENCE_ANSWER_PREFIX = '[INTELLIGENCE_ANSWER]';
+    if (typeof message === 'string' && message.startsWith(INTELLIGENCE_ANSWER_PREFIX)) {
+      try {
+        const payload = JSON.parse(message.slice(INTELLIGENCE_ANSWER_PREFIX.length));
+        const handler = getToolHandler('answer_intelligence_question');
+        if (!handler) throw new Error('answer_intelligence_question handler not registered');
+        const streamProjectId = project_id || resolveProjectIdFromBody(req.body);
+        const resultStr = await handler(payload, {
+          organizationId: orgId,
+          userId: userId || null,
+          projectId: streamProjectId ? Number(streamProjectId) || null : null,
+        });
+        const parsed = JSON.parse(resultStr);
+        if (parsed?.status === 'intelligence_question' && parsed.question) {
+          res.write(`data: ${JSON.stringify({ type: 'intelligence_question', question: parsed.question, flowState: parsed.flowState })}\n\n`);
+          res.write(`data: ${JSON.stringify({ type: 'text', content: `**${parsed.question.node.question}**\n\n${parsed.question.node.guidance || ''}` })}\n\n`);
+        } else if (parsed?.status === 'intelligence_flow_complete' && parsed.completion) {
+          res.write(`data: ${JSON.stringify({ type: 'intelligence_flow_complete', completion: parsed.completion, flowState: parsed.flowState })}\n\n`);
+          res.write(`data: ${JSON.stringify({ type: 'text', content: parsed.completion.summary })}\n\n`);
+        } else if (parsed?.error) {
+          res.write(`data: ${JSON.stringify({ type: 'text', content: `Error: ${parsed.error}` })}\n\n`);
+        }
+        res.write(`data: ${JSON.stringify({ type: 'done', latencyMs: Date.now() - streamPhaseStart })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'post_done' })}\n\n`);
+        stopKeepalive();
+        res.end();
+        return;
+      } catch (err: any) {
+        res.write(`data: ${JSON.stringify({ type: 'text', content: `Error processing intelligence answer: ${err?.message}` })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'done', latencyMs: Date.now() - streamPhaseStart })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: 'post_done' })}\n\n`);
+        stopKeepalive();
+        res.end();
+        return;
+      }
+    }
 
     const validatedLens: IntentLens | undefined =
       intent_lens && VALID_LENSES.has(intent_lens as IntentLens)
@@ -439,7 +516,13 @@ router.post('/stream', async (req: Request, res: Response) => {
       }
     }
 
-    messages.push({ role: 'user', content: effectiveMessage });
+    // Default path uses `effectiveMessage` unchanged. Only when
+    // PROMPT_INJECTION_ENCAPSULATE is enabled does the guard hand back the
+    // injection-resistant encapsulated form for the model to see as data.
+    messages.push({
+      role: 'user',
+      content: injectionGuard.encapsulated ? injectionGuard.text : effectiveMessage,
+    });
 
     // Status: generating (context is built, about to stream tokens from the model)
     res.write(
@@ -717,6 +800,33 @@ router.post('/stream', async (req: Request, res: Response) => {
                   if (collectedProvenance.length >= PROVENANCE_CAP) break;
                   if (p && typeof p === 'object') collectedProvenance.push(p as ProvenanceRecord);
                 }
+              }
+              if (parsed?.status === 'intelligence_question' && parsed.question) {
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'intelligence_question',
+                    question: parsed.question,
+                    flowState: parsed.flowState,
+                  })}\n\n`
+                );
+              }
+              if (parsed?.status === 'intelligence_flow_complete' && parsed.completion) {
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'intelligence_flow_complete',
+                    completion: parsed.completion,
+                    flowState: parsed.flowState,
+                  })}\n\n`
+                );
+              }
+              // War Game report — forward to client as a dedicated SSE event
+              if (parsed?.war_game_report) {
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'war_game_report',
+                    report: parsed.war_game_report,
+                  })}\n\n`
+                );
               }
               if (parsed && parsed.status === 'generated' && typeof parsed.content === 'string' && parsed.content.length > 0) {
                 const draftTitle: string = parsed.title || 'Generated document';

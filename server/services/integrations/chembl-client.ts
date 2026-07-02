@@ -18,7 +18,10 @@
  * @module server/services/integrations/chembl-client
  */
 
+import { z } from 'zod';
 import { fetchWithRetry } from './http.js';
+// @ts-ignore -- JS module without type declarations (existing TTL cache).
+import { createCache } from '../../cache_manager.js';
 
 const DEFAULT_BASE_URL = 'https://www.ebi.ac.uk/chembl/api/data';
 const REQUEST_TIMEOUT_MS = 12_000;
@@ -27,6 +30,64 @@ const DEFAULT_RESULTS = 5;
 
 const USER_AGENT =
   process.env.INTEGRATION_USER_AGENT || 'Concept2Cure-AnA/1.0 (regulatory intelligence)';
+
+/**
+ * Cache the raw (pre-staleness) payload for 7 days; ChEMBL is a curated release
+ * that changes only a few times a year, so records are effectively static.
+ */
+const CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
+/**
+ * Staleness threshold: a cached ChEMBL result older than this (seconds) is
+ * flagged `stale: true`. 24 hours is comfortable for release-versioned data.
+ */
+export const STALE_AFTER_SECONDS = 24 * 60 * 60;
+
+const cache = createCache('chembl');
+
+function isTestEnv(): boolean {
+  return !!process.env.VITEST || process.env.NODE_ENV === 'test';
+}
+
+export interface StalenessFields {
+  /** ISO timestamp of when the underlying data was fetched from the source. */
+  retrievedAt: string;
+  /** Age of the returned data in seconds (0 for a fresh fetch). */
+  cacheAgeSeconds: number;
+  /** True when `cacheAgeSeconds` exceeds {@link STALE_AFTER_SECONDS}. */
+  stale: boolean;
+}
+
+/** Derive additive freshness fields from the epoch-ms the data was fetched. */
+export function computeStaleness(fetchedAtMs: number): StalenessFields {
+  const cacheAgeSeconds = Math.max(0, Math.round((Date.now() - fetchedAtMs) / 1000));
+  return {
+    retrievedAt: new Date(fetchedAtMs).toISOString(),
+    cacheAgeSeconds,
+    stale: cacheAgeSeconds > STALE_AFTER_SECONDS,
+  };
+}
+
+/** Permissive shape guards — assert only the fields we read; never throw. */
+const MoleculeResponseSchema = z
+  .object({
+    molecules: z.array(z.any()).optional(),
+    page_meta: z.object({ total_count: z.any().optional() }).passthrough().optional(),
+  })
+  .passthrough();
+const MechanismResponseSchema = z
+  .object({ mechanisms: z.array(z.any()).optional() })
+  .passthrough();
+
+function warnShapeMismatch(stage: string, err: z.ZodError): void {
+  console.warn(
+    JSON.stringify({
+      event: 'integration.response_shape_mismatch',
+      source: 'ChEMBL',
+      stage,
+      issues: err.issues.slice(0, 3),
+    })
+  );
+}
 
 function baseUrl(): string {
   return (process.env.CHEMBL_API_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, '');
@@ -93,14 +154,14 @@ export interface ChemblMechanism {
   targetUrl: string | null;
 }
 
-export interface ChemblCompoundSearchResult {
+export interface ChemblCompoundSearchResult extends Partial<StalenessFields> {
   source: 'ChEMBL';
   query: string;
   totalCount: number;
   molecules: ChemblMolecule[];
 }
 
-export interface ChemblMechanismResult {
+export interface ChemblMechanismResult extends Partial<StalenessFields> {
   source: 'ChEMBL';
   chemblId: string;
   mechanisms: ChemblMechanism[];
@@ -174,17 +235,35 @@ export async function searchChemblCompounds(
 ): Promise<ChemblCompoundSearchResult> {
   const trimmed = (query ?? '').trim();
   if (!trimmed) {
-    return { source: 'ChEMBL', query: '', totalCount: 0, molecules: [] };
+    return { source: 'ChEMBL', query: '', totalCount: 0, molecules: [], ...computeStaleness(Date.now()) };
   }
-  const data = await getJson(buildMoleculeSearchUrl(trimmed, limit));
-  const list: any[] = Array.isArray(data?.molecules) ? data.molecules : [];
-  const totalCount = Number(data?.page_meta?.total_count ?? list.length) || list.length;
-  return {
-    source: 'ChEMBL',
+  const url = buildMoleculeSearchUrl(trimmed, limit);
+  const cacheKey = `compound:${url}`;
+
+  if (!isTestEnv()) {
+    const cached = await cache.getCachedData(cacheKey);
+    if (cached?.data) {
+      return { ...cached.data, ...computeStaleness(cached.timestamp) };
+    }
+  }
+
+  const data = await getJson(url);
+  const parsed = MoleculeResponseSchema.safeParse(data);
+  if (!parsed.success) warnShapeMismatch('molecule', parsed.error);
+  const safe = parsed.success ? parsed.data : {};
+  const list: any[] = Array.isArray(safe.molecules) ? safe.molecules : [];
+  const totalCount = Number(safe.page_meta?.total_count ?? list.length) || list.length;
+  const payload = {
+    source: 'ChEMBL' as const,
     query: trimmed,
     totalCount,
     molecules: list.map(normalizeMolecule),
   };
+
+  if (!isTestEnv()) {
+    await cache.saveToCacheWithExpiry(cacheKey, payload, CACHE_TTL_SECONDS).catch(() => {});
+  }
+  return { ...payload, ...computeStaleness(Date.now()) };
 }
 
 /** Build the mechanism-lookup URL (exported for testability). */
@@ -202,9 +281,22 @@ export function buildMechanismUrl(chemblId: string): string {
  */
 export async function getChemblMechanisms(chemblId: string): Promise<ChemblMechanismResult> {
   const id = (chemblId ?? '').trim();
-  if (!id) return { source: 'ChEMBL', chemblId: '', mechanisms: [] };
-  const data = await getJson(buildMechanismUrl(id));
-  const list: any[] = Array.isArray(data?.mechanisms) ? data.mechanisms : [];
+  if (!id) return { source: 'ChEMBL', chemblId: '', mechanisms: [], ...computeStaleness(Date.now()) };
+  const url = buildMechanismUrl(id);
+  const cacheKey = `mechanism:${url}`;
+
+  if (!isTestEnv()) {
+    const cached = await cache.getCachedData(cacheKey);
+    if (cached?.data) {
+      return { ...cached.data, ...computeStaleness(cached.timestamp) };
+    }
+  }
+
+  const data = await getJson(url);
+  const parsed = MechanismResponseSchema.safeParse(data);
+  if (!parsed.success) warnShapeMismatch('mechanism', parsed.error);
+  const safe = parsed.success ? parsed.data : {};
+  const list: any[] = Array.isArray(safe.mechanisms) ? safe.mechanisms : [];
   const mechanisms: ChemblMechanism[] = list.map(raw => {
     const targetId: string | null = raw?.target_chembl_id ?? null;
     return {
@@ -216,5 +308,9 @@ export async function getChemblMechanisms(chemblId: string): Promise<ChemblMecha
         : null,
     };
   });
-  return { source: 'ChEMBL', chemblId: id, mechanisms };
+  const payload = { source: 'ChEMBL' as const, chemblId: id, mechanisms };
+  if (!isTestEnv()) {
+    await cache.saveToCacheWithExpiry(cacheKey, payload, CACHE_TTL_SECONDS).catch(() => {});
+  }
+  return { ...payload, ...computeStaleness(Date.now()) };
 }

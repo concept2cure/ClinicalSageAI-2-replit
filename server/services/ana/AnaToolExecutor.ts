@@ -16137,3 +16137,167 @@ registerToolHandler('plan_lifecycle_management', async (input: Record<string, un
     return planLifecycleManagement(input as any);
   }, 'deterministic')
 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Intelligence Questioning Engine
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('start_intelligence_flow', async (input, ctx) => {
+  const { resolveFlowCategory } = await import('./intelligence-questions/flows/index.js');
+  const { startFlow } = await import('./intelligence-questions/engine.js');
+
+  const documentType = String(input.document_type || '');
+  const category = resolveFlowCategory(documentType);
+  if (!category) {
+    return JSON.stringify({
+      error: `No intelligence flow found for document type: "${documentType}". Use list_intelligence_flows to see available flows.`,
+    });
+  }
+
+  const engineCtx = {
+    organizationId: ctx?.organizationId ?? null,
+    userId: ctx?.userId ?? null,
+    projectId: ctx?.projectId ? String(ctx.projectId) : null,
+    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+  };
+
+  try {
+    const result = startFlow(category, engineCtx);
+    /* Audit log — fire-and-forget, never block the response. Records who started
+       which flow, when (21 CFR Part 11 §11.10(e) traceability for the questioning
+       session that feeds document authoring). */
+    try {
+      const { auditLog } = await import('../auditService.js');
+      auditLog({
+        tenantId:   ctx?.organizationId ?? null,
+        userId:     ctx?.userId ?? null,
+        action:     'INTELLIGENCE_FLOW_STARTED',
+        resource:   'intelligence_flow',
+        resourceId: String(result.state.flowId),
+        details: { flowCategory: category, documentType, projectId: engineCtx.projectId },
+      });
+    } catch { /* never block the tool response on audit failure */ }
+    return JSON.stringify({
+      status: 'intelligence_question',
+      flowState: result.state,
+      question: result.event,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: err?.message || 'Failed to start intelligence flow' });
+  }
+});
+
+registerToolHandler('answer_intelligence_question', async (input, ctx) => {
+  const { advanceFlow } = await import('./intelligence-questions/engine.js');
+
+  const flowState = input.flow_state as any;
+  const nodeId = String(input.node_id || '');
+  const answers = (input.answers || {}) as Record<string, unknown>;
+
+  if (!flowState || !nodeId) {
+    return JSON.stringify({ error: 'flow_state and node_id are required' });
+  }
+
+  const engineCtx = {
+    organizationId: ctx?.organizationId ?? null,
+    userId: ctx?.userId ?? null,
+    projectId: ctx?.projectId ? String(ctx.projectId) : null,
+    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+  };
+
+  try {
+    const result = advanceFlow(flowState, nodeId, answers, engineCtx);
+    if (result.completeEvent) {
+      /* Audit log on flow completion — captures the completed questioning
+         session (who/what/when + issue posture) that will drive downstream
+         document generation. Fire-and-forget; never blocks. */
+      try {
+        const { auditLog } = await import('../auditService.js');
+        const issues = result.state.issues || [];
+        auditLog({
+          tenantId:   ctx?.organizationId ?? null,
+          userId:     ctx?.userId ?? null,
+          action:     'INTELLIGENCE_FLOW_COMPLETED',
+          resource:   'intelligence_flow',
+          resourceId: String(result.state.flowId),
+          details: {
+            flowCategory:   result.state.flowCategory,
+            completedNodes: result.state.completedNodes.length,
+            criticalIssues: issues.filter((i: any) => i.severity === 'critical').length,
+            warnings:       issues.filter((i: any) => i.severity === 'warning').length,
+            projectId:      engineCtx.projectId,
+          },
+        });
+      } catch { /* never block the tool response on audit failure */ }
+      return JSON.stringify({
+        status: 'intelligence_flow_complete',
+        flowState: result.state,
+        completion: result.completeEvent,
+      });
+    }
+    return JSON.stringify({
+      status: 'intelligence_question',
+      flowState: result.state,
+      question: result.event,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: err?.message || 'Failed to advance intelligence flow' });
+  }
+});
+
+registerToolHandler('list_intelligence_flows', async (_input, ctx) => {
+  const { getAvailableFlows } = await import('./intelligence-questions/flows/index.js');
+
+  const engineCtx = {
+    organizationId: ctx?.organizationId ?? null,
+    userId: ctx?.userId ?? null,
+    projectId: ctx?.projectId ? String(ctx.projectId) : null,
+    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+  };
+
+  const flows = getAvailableFlows(engineCtx);
+  return JSON.stringify({ flows });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// War Game Simulation
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('start_war_game', async (input, ctx) => {
+  try {
+    const { runWarGame } = await import('./intelligence-questions/war-game/engine.js');
+    const category = String(input.war_game_category || '') as import('./intelligence-questions/war-game/types.js').WarGameCategory;
+    const report = runWarGame(
+      category,
+      String(input.source_flow_id || ''),
+      (input.answers || {}) as Record<string, Record<string, unknown>>,
+    );
+    /* Audit log the adversarial audit run — records who ran which War Game and
+       the resulting readiness posture (score/assessment). Fire-and-forget. */
+    try {
+      const { auditLog } = await import('../auditService.js');
+      auditLog({
+        tenantId:   ctx?.organizationId ?? null,
+        userId:     ctx?.userId ?? null,
+        action:     'WAR_GAME_RUN',
+        resource:   'war_game_report',
+        resourceId: String((report as any)?.id || input.source_flow_id || category),
+        details: {
+          category,
+          sourceFlowId:      String(input.source_flow_id || ''),
+          overallScore:      (report as any)?.overallScore,
+          overallAssessment: (report as any)?.overallAssessment,
+          findingCount:      Array.isArray((report as any)?.findings) ? (report as any).findings.length : undefined,
+        },
+      });
+    } catch { /* never block the tool response on audit failure */ }
+    return JSON.stringify({
+      success: true,
+      war_game_report: report,
+    });
+  } catch (err: any) {
+    return JSON.stringify({
+      error: err?.message || 'Failed to run war game simulation',
+    });
+  }
+});

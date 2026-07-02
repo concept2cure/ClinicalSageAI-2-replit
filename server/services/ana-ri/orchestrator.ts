@@ -564,6 +564,21 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     }
   }
 
+  // 8e2. Intelligence Questioning Engine — instruct AnA to use the flow tools
+  systemPrompt += `
+
+## INTELLIGENCE QUESTIONING FLOWS
+When a user asks to create, build, draft, or develop a regulatory document (protocol, CSR, IND, SOP, 510(k), CER, etc.), invoke the \`start_intelligence_flow\` tool with the document type. This launches a guided questioning flow that collects structured information through step-by-step questions with validation and regulatory issue detection.
+
+Available document types: protocol, csr, ind, nda, bla, sop, 510k, pma, cer, cmc, risk management, safety narrative, labeling, briefing book, stability study, project setup — plus natural language aliases (e.g., "new drug application", "biologics license", "premarket approval", "prescribing information", "advisory committee briefing").
+
+Do NOT try to ask these questions yourself in free text — always use the intelligence flow tool so the client renders structured form widgets. When suggesting workflows, mention you can "walk through a guided questionnaire" for any of these document types.
+
+## WAR GAME SIMULATION
+When a user asks you to "run a war game", "pressure test", "audit simulation", "FDA review simulation", "stress test", or similar, use the start_war_game tool with the collected intelligence data from the most recent completed flow. If no flow has been completed yet, guide the user to complete a questionnaire first by starting an intelligence flow for the relevant document type. You can also proactively suggest running a war game after completing an intelligence flow by saying something like "Would you like me to run an FDA War Game simulation to pressure-test this [document type] before submission?"
+
+War Game auditors are available for 15 document categories: protocol, ind, csr, 510k, cer, sop, nda, bla, pma, cmc, risk_management, safety_narrative, labeling, briefing_book, stability. Each auditor contains 25-32 adversarial rules across 7 audit dimensions (completeness, consistency, regulatory alignment, scientific rigor, practical feasibility, documentation, risk identification). The simulation scores each dimension starting from 100 and deducting points per finding severity, producing an overall regulatory risk assessment.`;
+
   // 8f. Inject proactive intelligence surfacing protocol + intelligence usage directives + citation protocol
   systemPrompt += `
 

@@ -17,6 +17,7 @@ import { requireAuthedOrgId } from '../utils/authedOrgId';
 import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger.js';
 import { assertUploadSafe, UploadSafetyError } from '../middleware/uploadSafety';
+import { FILE_LIMITS } from '../config/platform-limits';
 
 const logger = createScopedLogger('document-routes');
 
@@ -89,7 +90,7 @@ const ALLOWED_MIME_TYPES = new Set([
 
 const upload = multer({
   storage: multerStorage,
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max per FDA ESG guidelines
+  limits: { fileSize: FILE_LIMITS.maxUploadBytes }, // 100MB max per FDA ESG guidelines
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_MIME_TYPES.has(file.mimetype)) {
       cb(null, true);

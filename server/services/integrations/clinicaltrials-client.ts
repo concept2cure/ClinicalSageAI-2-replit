@@ -13,7 +13,10 @@
  * @module server/services/integrations/clinicaltrials-client
  */
 
+import { z } from 'zod';
 import { fetchWithRetry } from './http.js';
+// @ts-ignore -- JS module without type declarations (existing TTL cache).
+import { createCache } from '../../cache_manager.js';
 
 const DEFAULT_BASE_URL = 'https://clinicaltrials.gov/api/v2';
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -21,6 +24,52 @@ const MAX_PAGE_SIZE = 50;
 const DEFAULT_PAGE_SIZE = 10;
 const USER_AGENT =
   process.env.INTEGRATION_USER_AGENT || 'Concept2Cure-AnA/1.0 (regulatory intelligence)';
+
+/** Cache the raw (pre-staleness) result payload for 6h; recompute freshness on read. */
+const CACHE_TTL_SECONDS = 6 * 60 * 60;
+/**
+ * Staleness threshold: a cached result older than this (in seconds) is flagged
+ * `stale: true` so the model can down-weight it or trigger a refresh. Data
+ * younger than this is considered acceptably fresh. 1 hour for CT.gov.
+ */
+export const STALE_AFTER_SECONDS = 60 * 60;
+
+const cache = createCache('ctgov');
+
+function isTestEnv(): boolean {
+  return !!process.env.VITEST || process.env.NODE_ENV === 'test';
+}
+
+export interface StalenessFields {
+  /** ISO timestamp of when the underlying data was fetched from the source. */
+  retrievedAt: string;
+  /** Age of the returned data in seconds (0 for a fresh fetch). */
+  cacheAgeSeconds: number;
+  /** True when `cacheAgeSeconds` exceeds {@link STALE_AFTER_SECONDS}. */
+  stale: boolean;
+}
+
+/** Derive additive freshness fields from the epoch-ms the data was fetched. */
+export function computeStaleness(fetchedAtMs: number): StalenessFields {
+  const cacheAgeSeconds = Math.max(0, Math.round((Date.now() - fetchedAtMs) / 1000));
+  return {
+    retrievedAt: new Date(fetchedAtMs).toISOString(),
+    cacheAgeSeconds,
+    stale: cacheAgeSeconds > STALE_AFTER_SECONDS,
+  };
+}
+
+/**
+ * Permissive top-level shape guard. We only assert the fields we read exist and
+ * are the right type; everything else passes through. On mismatch we log and
+ * fall back to safe empties (never throw) to preserve graceful degradation.
+ */
+const CtgovResponseSchema = z
+  .object({
+    studies: z.array(z.any()).optional(),
+    totalCount: z.number().optional(),
+  })
+  .passthrough();
 
 export interface CtgovSearchParams {
   /** Free-text term (maps to query.term). */
@@ -55,7 +104,7 @@ export interface CtgovTrial {
   url: string;
 }
 
-export interface CtgovSearchResult {
+export interface CtgovSearchResult extends Partial<StalenessFields> {
   source: 'ClinicalTrials.gov';
   /** Total studies matching the query across all pages (not just this page). */
   totalCount: number;
@@ -133,6 +182,16 @@ export function buildStudiesQuery(params: CtgovSearchParams): URLSearchParams {
 export async function searchTrials(params: CtgovSearchParams): Promise<CtgovSearchResult> {
   const qs = buildStudiesQuery(params);
   const url = `${baseUrl()}/studies?${qs.toString()}`;
+  const cacheKey = qs.toString();
+
+  // Serve from TTL cache when available (skipped under the test runner so
+  // fetch-based unit tests keep their deterministic call counts).
+  if (!isTestEnv()) {
+    const cached = await cache.getCachedData(cacheKey);
+    if (cached?.data) {
+      return { ...cached.data, ...computeStaleness(cached.timestamp) };
+    }
+  }
 
   const res = await fetchWithRetry(url, { headers: { 'User-Agent': USER_AGENT } }, { timeoutMs: REQUEST_TIMEOUT_MS });
   if (!res.ok) {
@@ -140,12 +199,28 @@ export async function searchTrials(params: CtgovSearchParams): Promise<CtgovSear
   }
 
   const data: any = await res.json();
-  const studies = Array.isArray(data?.studies) ? data.studies : [];
+  const parsed = CtgovResponseSchema.safeParse(data);
+  if (!parsed.success) {
+    console.warn(
+      JSON.stringify({
+        event: 'integration.response_shape_mismatch',
+        source: 'ClinicalTrials.gov',
+        issues: parsed.error.issues.slice(0, 3),
+      })
+    );
+  }
+  const safe = parsed.success ? parsed.data : {};
+  const studies = Array.isArray(safe.studies) ? safe.studies : [];
   const pageSize = Math.min(Math.max(Math.trunc(params.pageSize ?? DEFAULT_PAGE_SIZE), 1), MAX_PAGE_SIZE);
 
-  return {
-    source: 'ClinicalTrials.gov',
-    totalCount: typeof data?.totalCount === 'number' ? data.totalCount : studies.length,
+  const payload = {
+    source: 'ClinicalTrials.gov' as const,
+    totalCount: typeof safe.totalCount === 'number' ? safe.totalCount : studies.length,
     trials: studies.slice(0, pageSize).map(normalizeStudy),
   };
+
+  if (!isTestEnv()) {
+    await cache.saveToCacheWithExpiry(cacheKey, payload, CACHE_TTL_SECONDS).catch(() => {});
+  }
+  return { ...payload, ...computeStaleness(Date.now()) };
 }

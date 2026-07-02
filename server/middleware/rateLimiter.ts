@@ -7,6 +7,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
+import { LEGACY_RATE_LIMITS, RATE_LIMIT_STORE } from '../config/platform-limits';
 
 interface RateLimitRule {
   windowMs: number; // Time window in milliseconds
@@ -19,42 +20,20 @@ interface RateLimitTracker {
   resetTime: number; // Time when the window resets
 }
 
-// Default rate limit rules for different API categories
+// Default rate limit rules for different API categories.
+// Values are centralized in server/config/platform-limits.ts (LEGACY_RATE_LIMITS).
 const DEFAULT_RULES: Record<string, RateLimitRule> = {
-  // Authentication APIs
-  auth: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 30, // 30 requests per 15 minutes
-    message: 'Too many authentication attempts, please try again later.',
-  },
-
-  // General API endpoints
-  api: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 60, // 60 requests per minute (1 per second)
-    message: 'Too many requests, please slow down.',
-  },
-
-  // High-intensity validation endpoints
-  validation: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 10, // 10 requests per minute
-    message: 'Too many validation requests, please slow down.',
-  },
-
-  // AI/ML endpoints that might be resource-intensive
-  ai: {
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 20, // 20 requests per minute
-    message: 'Too many AI requests, please slow down.',
-  },
+  auth: { ...LEGACY_RATE_LIMITS.auth },
+  api: { ...LEGACY_RATE_LIMITS.api },
+  validation: { ...LEGACY_RATE_LIMITS.validation },
+  ai: { ...LEGACY_RATE_LIMITS.ai },
 };
 
 // In-memory store for rate limit tracking
 // In a production environment, consider using Redis for distributed rate limiting.
 // A hard cap on the number of tracked IPs prevents unbounded memory growth
 // from a flood of unique source IPs (intentional or accidental).
-const IP_LIMITER_MAX_KEYS = 10_000;
+const IP_LIMITER_MAX_KEYS = RATE_LIMIT_STORE.maxTrackedKeys;
 const ipLimiters: Record<string, Record<string, RateLimitTracker>> = {};
 
 /**

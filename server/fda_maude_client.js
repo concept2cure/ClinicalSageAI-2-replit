@@ -16,6 +16,38 @@ const cacheManager = createCache('fda_maude');
 const FDA_MAUDE_API_BASE = 'https://api.fda.gov/device/event.json';
 
 /**
+ * Escape a user-supplied value for safe embedding inside a double-quoted
+ * openFDA/Lucene phrase. Backslash and double-quote are the only characters
+ * that can terminate a quoted phrase, so escaping them fully neutralizes
+ * query injection while preserving the literal search intent.
+ *
+ * @param {string} value
+ * @returns {string}
+ */
+export function escapeLucenePhrase(value) {
+  return String(value).replace(/[\\"]/g, '\\$&');
+}
+
+/**
+ * Build a quoted Lucene field clause (`field:"escaped value"`) from
+ * untrusted input. Quoting turns the value into a literal phrase match that
+ * cannot alter the surrounding query structure.
+ *
+ * @param {string} field
+ * @param {string} value
+ * @returns {string}
+ */
+export function luceneField(field, value) {
+  return `${field}:"${escapeLucenePhrase(value)}"`;
+}
+
+/** openFDA dates are YYYY-MM-DD; reject anything else so range queries stay safe. */
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+export function safeDate(value, fallback) {
+  return ISO_DATE_RE.test(String(value)) ? String(value) : fallback;
+}
+
+/**
  * Make an HTTP request to the FDA MAUDE API
  *
  * @param {string} endpoint API endpoint
@@ -112,30 +144,30 @@ export async function searchDeviceReports({
     // Build search query for FDA MAUDE API
     let searchQuery = '';
 
+    // All user-supplied text is embedded as an escaped, quoted Lucene phrase
+    // so it cannot alter the query structure (openFDA `search` is Lucene-style).
     if (productCode) {
-      searchQuery += `device.product_code:"${productCode}"`;
+      searchQuery += luceneField('device.product_code', productCode);
     }
 
     if (deviceName) {
       if (searchQuery) searchQuery += ' AND ';
-      // Use partial match to increase chance of finding relevant results
-      searchQuery += `device.generic_name:${deviceName}`;
+      searchQuery += luceneField('device.generic_name', deviceName);
     }
 
     if (manufacturer) {
       if (searchQuery) searchQuery += ' AND ';
-      searchQuery += `device.manufacturer_d_name:${manufacturer}`;
+      searchQuery += luceneField('device.manufacturer_d_name', manufacturer);
     }
 
     if (dateFrom || dateTo) {
-      if (searchQuery) searchQuery += ' AND ';
-
-      if (dateFrom && dateTo) {
-        searchQuery += `date_received:[${dateFrom} TO ${dateTo}]`;
-      } else if (dateFrom) {
-        searchQuery += `date_received:[${dateFrom} TO 3000-01-01]`;
-      } else if (dateTo) {
-        searchQuery += `date_received:[1900-01-01 TO ${dateTo}]`;
+      // Validate dates (YYYY-MM-DD); ignore malformed values rather than
+      // interpolating them into the range query.
+      const from = safeDate(dateFrom, null);
+      const to = safeDate(dateTo, null);
+      if (from || to) {
+        if (searchQuery) searchQuery += ' AND ';
+        searchQuery += `date_received:[${from || '1900-01-01'} TO ${to || '3000-01-01'}]`;
       }
     }
 
