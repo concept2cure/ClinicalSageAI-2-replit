@@ -1,0 +1,400 @@
+/**
+ * @fileoverview RBM actuation service — the canonical write + engine-inference
+ * operations for Risk-Based Monitoring (ICH E6(R3)/E8(R1)).
+ * @module server/services/rbm/rbm-actuator
+ *
+ * Extracted so the AnA tool handlers can drive the exact same mutations the
+ * `/api/mdx/rbm-*` routes expose — create Critical-to-Quality factors, KRIs, KRI
+ * readings, QTLs, signals, monitoring plans, and actions; triage signals; and
+ * approve assessments/plans — from conversation instead of forms.
+ *
+ * Design contract:
+ *   - EVERY function is tenant-scoped. `organizationId` is passed by the caller
+ *     from trusted server context (JWT principal / AnA ToolContext) and written
+ *     on every row + used in every WHERE. It is NEVER taken from model input.
+ *   - The functions INFER the derived fields a form would otherwise ask for:
+ *     risk score + criticality band (likelihood×impact), KRI status (vs amber/red
+ *     + direction), QTL status + the secondary early-warning limit, and the
+ *     monitoring-plan strategy (from the assessment's overall risk). Callers only
+ *     supply the primitives a monitor actually knows.
+ *   - `Exec` is any pg-like query runner (`pool` or a pooled client), so the same
+ *     code runs behind the route (shared pool) and behind AnA (`getPool()`), and
+ *     is unit-testable with a mock.
+ */
+
+import {
+  scoreRisk,
+  kriStatus,
+  qtlStatus,
+  defaultPlanStrategy,
+  type KriDirection,
+} from './rbm-engine';
+
+/** Minimal pg-compatible executor: `pool`, a pooled client, or a test double. */
+export interface Exec {
+  query(sql: string, args: unknown[]): Promise<{ rows: any[] }>;
+}
+
+const CTQ_CATEGORY = ['safety', 'efficacy', 'data_integrity', 'compliance', 'operational'] as const;
+const SIGNAL_SOURCE = ['central_stat', 'kri', 'qtl', 'site_score', 'manual'] as const;
+const SEVERITY = ['low', 'medium', 'high', 'critical'] as const;
+const SIGNAL_STATUS = ['new', 'triaged', 'investigating', 'resolved', 'dismissed'] as const;
+const ACTION_TYPE = ['issue', 'capa', 'site_visit', 'query', 'escalation'] as const;
+const PRIORITY = ['low', 'medium', 'high'] as const;
+const ACTION_STATUS = ['open', 'in_progress', 'done'] as const;
+
+export type CtqCategory = (typeof CTQ_CATEGORY)[number];
+export type SignalSeverity = (typeof SEVERITY)[number];
+
+function num(v: unknown): number | null {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Secondary (early-warning) QTL limit when the caller doesn't set one: 75% of
+ *  the primary threshold — the upper end of the TransCelerate 50–75% band. */
+export function inferSecondaryLimit(threshold: number | null | undefined): number | null {
+  if (threshold == null || !Number.isFinite(threshold)) return null;
+  return Math.round(threshold * 0.75 * 10000) / 10000;
+}
+
+// ── Risk assessment — Critical-to-Quality factors ────────────────────────────
+
+export interface AddCtqInput {
+  programId?: string | null;
+  assessmentId?: number | null;
+  category?: CtqCategory;
+  ctqFactor: string;
+  riskDescription?: string | null;
+  likelihood: number;
+  impact: number;
+  detectability?: number | null;
+  isCritical?: boolean;
+  mitigation?: string | null;
+}
+
+/** Create a CtQ risk item. Infers risk_score from likelihood×impact and, when
+ *  `isCritical` is omitted, infers criticality from the score band (high ⇒ true). */
+export async function addCtqFactor(exec: Exec, organizationId: number, input: AddCtqInput) {
+  const { score, band } = scoreRisk(input.likelihood, input.impact);
+  const isCritical = input.isCritical ?? band === 'high';
+  const { rows } = await exec.query(
+    `INSERT INTO rbm_risk_items (
+       organization_id, assessment_id, program_id, category, ctq_factor, risk_description,
+       likelihood, impact, detectability, risk_score, is_critical, mitigation, status
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'open') RETURNING *`,
+    [
+      organizationId, input.assessmentId ?? null, input.programId ?? null,
+      input.category ?? 'operational', input.ctqFactor, input.riskDescription ?? null,
+      input.likelihood, input.impact, input.detectability ?? null, score, isCritical,
+      input.mitigation ?? null,
+    ],
+  );
+  return { item: rows[0], inferred: { riskScore: score, band, isCritical } };
+}
+
+// ── Key Risk Indicators ──────────────────────────────────────────────────────
+
+export interface DefineKriInput {
+  programId?: string | null;
+  assessmentId?: number | null;
+  name: string;
+  metricDefinition?: string | null;
+  dataSource?: string;
+  unit?: string | null;
+  direction?: KriDirection;
+  thresholdAmber?: number | null;
+  thresholdRed?: number | null;
+  currentValue?: number | null;
+}
+
+/** Create a KRI. Infers green/amber/red status from the current value vs the
+ *  amber/red thresholds and the direction. */
+export async function defineKri(exec: Exec, organizationId: number, input: DefineKriInput) {
+  const dir: KriDirection = input.direction ?? 'higher_worse';
+  const status = kriStatus(input.currentValue ?? null, input.thresholdAmber ?? null, input.thresholdRed ?? null, dir);
+  const { rows } = await exec.query(
+    `INSERT INTO rbm_kris (
+       organization_id, program_id, assessment_id, name, metric_definition, data_source,
+       unit, direction, threshold_amber, threshold_red, current_value, status, evaluated_at
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, CASE WHEN $11 IS NULL THEN NULL ELSE NOW() END)
+     RETURNING *`,
+    [
+      organizationId, input.programId ?? null, input.assessmentId ?? null, input.name,
+      input.metricDefinition ?? null, input.dataSource ?? 'manual', input.unit ?? null, dir,
+      input.thresholdAmber ?? null, input.thresholdRed ?? null, input.currentValue ?? null, status,
+    ],
+  );
+  return { kri: rows[0], inferred: { status } };
+}
+
+export interface RecordKriReadingInput {
+  kriId?: number | null;
+  kriName?: string | null;
+  programId?: string | null;
+  value: number;
+  observedAt?: string | null;
+  note?: string | null;
+}
+
+/** Append a KRI reading and recompute the KRI's status. The KRI is resolved by
+ *  id, or by (case-insensitive) name within the program when the caller only
+ *  knows the indicator's name — so AnA can log "screen-failure rate is 34%"
+ *  without an id. Returns `{ resolved:false }` when no matching KRI exists. */
+export async function recordKriReading(exec: Exec, organizationId: number, input: RecordKriReadingInput) {
+  let kri: any = null;
+  if (input.kriId != null) {
+    kri = (await exec.query(
+      `SELECT id, direction, threshold_amber, threshold_red FROM rbm_kris
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [input.kriId, organizationId],
+    )).rows[0] ?? null;
+  } else if (input.kriName && input.programId) {
+    kri = (await exec.query(
+      `SELECT id, direction, threshold_amber, threshold_red FROM rbm_kris
+        WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+          AND LOWER(name) = LOWER($3) LIMIT 1`,
+      [organizationId, input.programId, input.kriName],
+    )).rows[0] ?? null;
+  }
+  if (!kri) return { resolved: false as const };
+
+  const dir: KriDirection = (kri.direction ?? 'higher_worse') as KriDirection;
+  const status = kriStatus(input.value, num(kri.threshold_amber), num(kri.threshold_red), dir);
+  const ins = await exec.query(
+    `INSERT INTO rbm_kri_values (organization_id, kri_id, value, status, observed_at, note)
+     VALUES ($1,$2,$3,$4, COALESCE($5::timestamptz, NOW()), $6) RETURNING *`,
+    [organizationId, kri.id, input.value, status, input.observedAt ?? null, input.note ?? null],
+  );
+  await exec.query(
+    `UPDATE rbm_kris SET current_value = $1, status = $2, evaluated_at = NOW(), updated_at = NOW()
+      WHERE id = $3 AND organization_id = $4`,
+    [input.value, status, kri.id, organizationId],
+  );
+  return { resolved: true as const, reading: ins.rows[0], kriId: kri.id, inferred: { status } };
+}
+
+// ── Quality Tolerance Limits ─────────────────────────────────────────────────
+
+export interface SetQtlInput {
+  programId?: string | null;
+  parameter: string;
+  rationale?: string | null;
+  threshold?: number | null;
+  secondaryLimit?: number | null;
+  currentValue?: number | null;
+}
+
+/** Create a QTL. Infers the secondary early-warning limit (75% of threshold)
+ *  when omitted, and the within/approaching/breached status from the value. */
+export async function setQtl(exec: Exec, organizationId: number, input: SetQtlInput) {
+  const secondary = input.secondaryLimit ?? inferSecondaryLimit(input.threshold);
+  const status = qtlStatus(input.currentValue ?? null, input.threshold ?? null, secondary);
+  const { rows } = await exec.query(
+    `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit, current_value, breached, status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+    [
+      organizationId, input.programId ?? null, input.parameter, input.rationale ?? null,
+      input.threshold ?? null, secondary, input.currentValue ?? null, status === 'breached', status,
+    ],
+  );
+  return { qtl: rows[0], inferred: { secondaryLimit: secondary, status } };
+}
+
+// ── Central-monitoring signals ───────────────────────────────────────────────
+
+export interface RaiseSignalInput {
+  programId?: string | null;
+  siteId?: string | null;
+  source?: (typeof SIGNAL_SOURCE)[number];
+  signalType?: string | null;
+  severity?: SignalSeverity;
+  title: string;
+  detail?: string | null;
+  statistic?: Record<string, unknown> | null;
+}
+
+/** Raise a monitoring signal (defaults source=manual, severity=medium, status=new). */
+export async function raiseSignal(exec: Exec, organizationId: number, input: RaiseSignalInput) {
+  const { rows } = await exec.query(
+    `INSERT INTO rbm_signals (organization_id, program_id, site_id, source, signal_type, severity, title, detail, statistic, status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'new') RETURNING *`,
+    [
+      organizationId, input.programId ?? null, input.siteId ?? null, input.source ?? 'manual',
+      input.signalType ?? null, input.severity ?? 'medium', input.title, input.detail ?? null,
+      JSON.stringify(input.statistic ?? {}),
+    ],
+  );
+  return { signal: rows[0] };
+}
+
+export interface TriageSignalInput {
+  signalId: number;
+  status?: (typeof SIGNAL_STATUS)[number];
+  severity?: SignalSeverity;
+  resolutionNotes?: string | null;
+  detail?: string | null;
+}
+
+/** Triage a signal (status / severity / notes). Returns null when not found in
+ *  the tenant. */
+export async function triageSignal(exec: Exec, organizationId: number, input: TriageSignalInput) {
+  const set: string[] = [];
+  const args: unknown[] = [];
+  const add = (col: string, v: unknown) => { args.push(v); set.push(`${col} = $${args.length}`); };
+  if (input.status !== undefined) add('status', input.status);
+  if (input.severity !== undefined) add('severity', input.severity);
+  if (input.resolutionNotes !== undefined) add('resolution_notes', input.resolutionNotes);
+  if (input.detail !== undefined) add('detail', input.detail);
+  if (set.length === 0) return { updated: false as const, reason: 'no_fields' };
+  args.push(input.signalId, organizationId);
+  const { rows } = await exec.query(
+    `UPDATE rbm_signals SET ${set.join(', ')}, updated_at = NOW()
+      WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
+      RETURNING *`,
+    args,
+  );
+  return rows[0] ? { updated: true as const, signal: rows[0] } : { updated: false as const, reason: 'not_found' };
+}
+
+// ── Monitoring plan + actions ────────────────────────────────────────────────
+
+export interface DraftPlanInput {
+  programId?: string | null;
+  assessmentId?: number | null;
+  title?: string;
+  strategy?: 'centralized' | 'risk_based' | 'on_site' | 'hybrid';
+}
+
+/** Create a monitoring plan. When the strategy is omitted, infer it from the
+ *  program's latest assessment overall risk (defaultPlanStrategy). */
+export async function draftPlan(exec: Exec, organizationId: number, input: DraftPlanInput) {
+  let strategy = input.strategy;
+  let overall: string | null = null;
+  if (!strategy && input.programId) {
+    const a = (await exec.query(
+      `SELECT overall_risk FROM rbm_risk_assessments
+        WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+        ORDER BY updated_at DESC LIMIT 1`,
+      [organizationId, input.programId],
+    )).rows[0];
+    overall = a?.overall_risk ?? null;
+    if (overall === 'low' || overall === 'medium' || overall === 'high') {
+      strategy = defaultPlanStrategy(overall);
+    }
+  }
+  strategy = strategy ?? 'risk_based';
+  const title = input.title ?? 'Risk-based monitoring plan';
+  const { rows } = await exec.query(
+    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status)
+     VALUES ($1,$2,$3,$4,$5,'draft') RETURNING *`,
+    [organizationId, input.programId ?? null, input.assessmentId ?? null, title, strategy],
+  );
+  return { plan: rows[0], inferred: { strategy, fromOverallRisk: overall } };
+}
+
+export interface CreateActionInput {
+  planId: number;
+  riskItemId?: number | null;
+  signalId?: number | null;
+  actionType?: (typeof ACTION_TYPE)[number];
+  description: string;
+  priority?: (typeof PRIORITY)[number];
+  owner?: number | null;
+  dueDate?: string | null;
+}
+
+/** Create a monitoring action under a plan (verifying the plan is in-tenant).
+ *  Returns null when the plan is not found in the tenant. */
+export async function createAction(exec: Exec, organizationId: number, input: CreateActionInput) {
+  const own = await exec.query(
+    `SELECT 1 FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [input.planId, organizationId],
+  );
+  if (own.rows.length === 0) return { created: false as const, reason: 'plan_not_found' };
+  const { rows } = await exec.query(
+    `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, risk_item_id, signal_id, action_type, description, priority, owner, due_date, status)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'open') RETURNING *`,
+    [
+      organizationId, input.planId, input.riskItemId ?? null, input.signalId ?? null,
+      input.actionType ?? 'issue', input.description, input.priority ?? 'medium',
+      input.owner ?? null, input.dueDate ?? null,
+    ],
+  );
+  return { created: true as const, action: rows[0] };
+}
+
+export interface UpdateActionInput {
+  actionId: number;
+  status?: (typeof ACTION_STATUS)[number];
+  priority?: (typeof PRIORITY)[number];
+  description?: string;
+  actionType?: (typeof ACTION_TYPE)[number];
+  owner?: number | null;
+  dueDate?: string | null;
+}
+
+/** Update a monitoring action (status transition, reassignment, etc.). */
+export async function updateAction(exec: Exec, organizationId: number, input: UpdateActionInput) {
+  const col: Record<string, string> = {
+    status: 'status', priority: 'priority', description: 'description',
+    actionType: 'action_type', owner: 'owner', dueDate: 'due_date',
+  };
+  const set: string[] = [];
+  const args: unknown[] = [];
+  for (const [k, v] of Object.entries(input)) {
+    if (k === 'actionId' || v === undefined || !col[k]) continue;
+    args.push(v); set.push(`${col[k]} = $${args.length}`);
+  }
+  if (set.length === 0) return { updated: false as const, reason: 'no_fields' };
+  args.push(input.actionId, organizationId);
+  const { rows } = await exec.query(
+    `UPDATE rbm_monitoring_actions SET ${set.join(', ')}, updated_at = NOW()
+      WHERE id = $${args.length - 1} AND organization_id = $${args.length}
+      RETURNING *`,
+    args,
+  );
+  return rows[0] ? { updated: true as const, action: rows[0] } : { updated: false as const, reason: 'not_found' };
+}
+
+// ── Governed approvals (21 CFR Part 11 — reason-for-change captured) ──────────
+
+/** Approve + activate a risk assessment, recording the reason-for-change and the
+ *  approving user (attribution). Returns null when not found in the tenant. */
+export async function approveAssessment(
+  exec: Exec,
+  organizationId: number,
+  userId: number | null,
+  assessmentId: number,
+  reason: string,
+) {
+  const { rows } = await exec.query(
+    `UPDATE rbm_risk_assessments
+        SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
+            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
+      WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
+      RETURNING *`,
+    [userId, reason, assessmentId, organizationId],
+  );
+  return rows[0] ?? null;
+}
+
+/** Approve + activate a monitoring plan, recording the reason-for-change and the
+ *  approving user. Returns null when not found in the tenant. */
+export async function approvePlan(
+  exec: Exec,
+  organizationId: number,
+  userId: number | null,
+  planId: number,
+  reason: string,
+) {
+  const { rows } = await exec.query(
+    `UPDATE rbm_monitoring_plans
+        SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
+            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
+      WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
+      RETURNING *`,
+    [userId, reason, planId, organizationId],
+  );
+  return rows[0] ?? null;
+}
