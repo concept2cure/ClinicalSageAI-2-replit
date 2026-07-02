@@ -11,6 +11,9 @@
  *   POST /api/change-propagation/facts/:factId/impact-preview       classify every citation vs a proposed value
  *   POST /api/change-propagation/facts/:factId/change               apply the governed change + propagate
  *   POST /api/change-propagation/facts/:factId/propagate            write the agreed value into divergent claim citations
+ *   POST /api/change-propagation/facts/:factId/bind-section         cite a fact from a CTD/IND document section
+ *   POST /api/change-propagation/programs/:programId/artifacts/:artifactId/scan-citations
+ *                                                                   auto-detect + optionally bind the facts a section's prose cites
  *   GET  /api/change-propagation/facts/:factId/history              supersession chain, newest first
  *   GET  /api/change-propagation/facts/:factId/trace                fact → establishing claim → source artifact + citations
  *   GET  /api/change-propagation/bindings/:bindingId/trace          citation → fact → claim → source artifact
@@ -31,6 +34,10 @@ import {
   previewFactChange,
 } from '../services/living-record/fact-change-orchestrator';
 import { propagateFactToCitations } from '../services/living-record/fact-propagation';
+import {
+  bindSectionToFact,
+  scanArtifactCitations,
+} from '../services/living-record/document-binder';
 import type { FactChangeFailure } from '../services/living-record/fact-change';
 import {
   traceBindingToSource,
@@ -80,6 +87,14 @@ function parseProposedValue(body: any): ProposedFactValue {
   if (typeof body?.unit === 'string') proposed.unit = body.unit;
   if (typeof body?.valueType === 'string') proposed.valueType = body.valueType;
   return proposed;
+}
+
+function optionalString(v: unknown): string | undefined {
+  return typeof v === 'string' ? v : undefined;
+}
+
+function parseBindingKind(v: unknown): 'mirror' | 'derived' | 'manual_override' | undefined {
+  return v === 'mirror' || v === 'derived' || v === 'manual_override' ? v : undefined;
 }
 
 function parseTolerance(body: any): number | undefined {
@@ -213,6 +228,57 @@ router.post('/facts/:factId/propagate', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Propagation failed', detail: err?.message });
   }
 });
+
+// Cite a governed fact from a CTD/IND document section. A mirror citation that
+// already disagrees with the value is flagged on the spot.
+router.post('/facts/:factId/bind-section', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  const body = req.body ?? {};
+  try {
+    const result = await bindSectionToFact({
+      factId: String(req.params.factId),
+      organizationId: orgId,
+      docRef: String(body.docRef ?? ''),
+      sectionKey: optionalString(body.sectionKey),
+      observedValue: String(body.observedValue ?? ''),
+      observedUnit: optionalString(body.observedUnit),
+      bindingKind: parseBindingKind(body.bindingKind),
+      overrideReason: optionalString(body.overrideReason),
+      actor: actorId(req),
+    });
+    if (!result.ok) return sendFailure(res, result);
+    res.status(201).json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Bind failed', detail: err?.message });
+  }
+});
+
+// Scan a CTD artifact's prose for citations of the program's governed values.
+// Preview by default; ?persist=true (or body.persist) binds the matches and
+// flags any that already diverge.
+router.post(
+  '/programs/:programId/artifacts/:artifactId/scan-citations',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const persist = req.body?.persist === true || String(req.query.persist) === 'true';
+    try {
+      const result = await scanArtifactCitations({
+        programId: String(req.params.programId),
+        organizationId: orgId,
+        artifactId: String(req.params.artifactId),
+        persist,
+        tolerance: parseTolerance(req.body),
+        actor: actorId(req),
+      });
+      if (!result.ok) return sendFailure(res, result);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Citation scan failed', detail: err?.message });
+    }
+  }
+);
 
 // Source Tracer: fact → establishing claim → source artifact, plus every
 // citation resolved back to its own source.

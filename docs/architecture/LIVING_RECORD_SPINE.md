@@ -335,6 +335,32 @@ of (claim traversals returned `evidence_sources` ids unresolved):
 - `GET /api/change-propagation/bindings/:bindingId/trace` — the reverse walk
   from a single cited location back to the source artifact.
 
+### 3.7 Document Citations (binding facts to CTD/IND sections)
+
+Until a governed fact is bound to a document section, the change-propagation
+machinery is dead for pharma dossiers: the reconciliation engine only ever
+binds `claim:` targets, so a value change reached the claim graph but no CTD/IND
+document. `document-binder.ts` closes that:
+
+- `POST /facts/:factId/bind-section` — an operator/AI declares that a document
+  section cites a fact, creating a `fact_binding` with a `section:<docRef>:<key>`
+  or `document:<docRef>` target. A mirror citation whose value already
+  disagrees is flagged immediately (`fact_drift`, `detected_by='citation_scan'`).
+- `POST /programs/:programId/artifacts/:artifactId/scan-citations` — auto-detect
+  the facts a CTD artifact's prose cites: `extractNumericalFacts` pulls the
+  labelled numbers, `matchCitationsToFacts` (pure, in `document-citations.ts`)
+  maps each to an active fact by label↔field affinity and compares values.
+  Preview by default; `persist:true` binds the matches and flags any that
+  already diverge. This is the inconsistency-intelligence entry point for
+  existing dossiers — it finds the sections that cite a value and the ones
+  where that value has already drifted.
+
+Once a section is bound, `applyFactChange`, the Drift Sentinel, the source
+tracer, and the freshness report all see it for free. Drift on a document- or
+section-bound value surfaces in `programFreshnessReport` under a
+`document_section` bucket, beside the device artifact buckets, so a stale CTD
+section reads in the same health model as a stale defense packet.
+
 ---
 
 ## 4 · Mapping to the §13 quality bars

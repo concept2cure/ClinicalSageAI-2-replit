@@ -313,8 +313,9 @@ export interface WriteDriftInput {
   driftType: DriftType;
   severity: Severity;
   cascadeActionId?: string | null;
-  /** Which mechanism found the drift: the sentinel sweep or a governed fact change. */
-  detectedBy?: 'drift_sentinel' | 'fact_change';
+  /** Which mechanism found the drift: the sentinel sweep, a governed fact
+   *  change, or a document citation scan. */
+  detectedBy?: 'drift_sentinel' | 'fact_change' | 'citation_scan';
 }
 
 export async function writeDrift(input: WriteDriftInput) {

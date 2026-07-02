@@ -39,6 +39,7 @@ import {
   gsprProgramMappings,
 } from '../../../shared/schema/gspr-postmarket';
 import { reactiveDependencyService } from '../reactive-dependency-service';
+import { resolveLegacyProgram } from '../living-record/program-link';
 import {
   propagateClaimChange,
   propagateEvidenceChange,
@@ -131,12 +132,21 @@ async function reactiveTrigger(req: RegulatoryChangeRequest): Promise<HandlerOut
     device_profile_changed: 'device_profile',
   };
 
-  if (req.legacyProgramId === undefined) return null;
+  // Pharma callers frequently hold only the uuid programId. Rather than
+  // silently dropping their reactive propagation, resolve the legacy integer id
+  // through the program-link bridge (the same bridge the fact-change
+  // orchestrator uses). When no link exists there is genuinely nothing to key
+  // governed_dependencies on, so the no-op stands.
+  const legacyProgramId =
+    req.legacyProgramId ??
+    (await resolveLegacyProgram(req.programId, req.organizationId)) ??
+    undefined;
+  if (legacyProgramId === undefined) return null;
 
   try {
     const result = await reactiveDependencyService.propagateChange({
       organizationId: req.organizationId,
-      projectId: req.legacyProgramId,
+      projectId: legacyProgramId,
       triggerType: triggerByEvent[req.event] as any,
       sourceType: sourceTypeByEvent[req.event],
       sourceId: req.sourceId,
