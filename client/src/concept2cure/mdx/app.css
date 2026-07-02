@@ -544,6 +544,8 @@ svg { display: block; }
 .status-pill.review    { background: var(--warning-muted); color: var(--warning); }
 .status-pill.active    { background: var(--ai-muted); color: var(--ai); }
 .status-pill.na        { background: var(--bg-100); color: var(--text-500); }
+.status-pill.final     { background: var(--success-muted); color: var(--success); }
+.status-pill.locked    { background: var(--accent-000); color: var(--accent-200); border-color: var(--accent-muted); }
 .status-pill.empty     { background: var(--bg-100); color: var(--text-500); border-color: var(--border); border-style: dashed; }
 .status-pill.included  { background: var(--success-muted); color: var(--success); }
 .status-pill.excluded  { background: var(--bg-100); color: var(--text-400); }

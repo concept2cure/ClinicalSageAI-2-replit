@@ -25,9 +25,9 @@ import { PostmarketSurface } from './surfaces/PostmarketSurface';
 import { AnalyticsSurface } from './surfaces/AnalyticsSurface';
 import { MemorySurface } from './surfaces/MemorySurface';
 import { AdminSurface } from './surfaces/AdminSurface';
+import { VaultSurface } from './surfaces/VaultSurface';
 import {
   TasksSurface,
-  VaultSurface,
   ValidationSurface,
   SubmissionsSurface,
   TemplatesSurface,
@@ -262,7 +262,7 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
         surface = <TasksSurface onAskAna={askAna} />;
         break;
       case 'vault':
-        surface = <VaultSurface onAskAna={askAna} />;
+        surface = <VaultSurface program={programForContext} onAskAna={askAna} />;
         break;
       case 'validation':
         surface = <ValidationSurface onAskAna={askAna} />;

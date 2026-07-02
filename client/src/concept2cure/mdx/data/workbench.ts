@@ -1,6 +1,7 @@
 /**
- * Workbench fixtures — Tasks, Vault, Validation Center, Submission Center,
+ * Workbench fixtures — Tasks, Validation Center, Submission Center,
  * Templates. Ported verbatim from data-workbench.jsx.
+ * Vault fixtures live in data/vault.ts next to surfaces/VaultSurface.tsx.
  */
 
 export type TaskCol = 'todo' | 'doing' | 'review' | 'blocked' | 'done';
@@ -62,71 +63,6 @@ export const TASKS_METRICS: TaskMetric[] = [
   { label: 'Due this week',         metric: '14',  meta: 'OR-801 and OR-902 account for 9' },
   { label: 'Awaiting my action',    metric: '6',   meta: '3 reviews · 2 e-sig · 1 blocker', tone: 'warn' },
   { label: 'Cycle time median',     metric: '2.4', unit: 'd', meta: 'Down 0.3d vs last month' },
-];
-
-// ── Vault ────────────────────────────────────────────────────────────────
-
-export interface VaultFolder { id: string; label: string; count: number; active?: boolean }
-export interface VaultFilter { id: string; label: string }
-export interface VaultFile {
-  id: string;
-  name: string;
-  kind: string;
-  type: string;
-  size: string;
-  prog: string;
-  ver: string;
-  versions: number;
-  status: 'final' | 'review' | 'draft';
-  updated: string;
-  author: string;
-  linked: number;
-  esig: boolean;
-  hash: string;
-  blocker?: boolean;
-}
-export interface VaultVersion { v: string; when: string; author: string; note: string; status: 'final' | 'superseded' }
-
-export const VAULT_FOLDERS: VaultFolder[] = [
-  { id: 'root',    label: 'All programs',              count: 1842, active: true },
-  { id: 'or801',   label: 'OR-801 Screw',              count: 284 },
-  { id: 'cv330',   label: 'CV-330 Monitor',            count: 412 },
-  { id: 'bx204',   label: 'BX-204 CGM',                count: 318 },
-  { id: 'dx102',   label: 'DX-102 IVD',                count: 176 },
-  { id: 'iv415',   label: 'IV-415 CoDx',               count: 241 },
-  { id: 'shared',  label: 'Shared · Templates',        count: 62 },
-  { id: 'corresp', label: 'Regulatory correspondence', count: 89 },
-];
-
-export const VAULT_FILTERS: VaultFilter[] = [
-  { id: 'all',      label: 'All types' },
-  { id: 'report',   label: 'Test reports' },
-  { id: 'cert',     label: 'Certificates' },
-  { id: 'label',    label: 'Labeling' },
-  { id: 'code',     label: 'Software / SBOM' },
-  { id: 'supplier', label: 'Supplier docs' },
-  { id: 'resp',     label: 'FDA correspondence' },
-];
-
-export const VAULT_FILES: VaultFile[] = [
-  { id: 'f1',  name: 'TR-OR801-009 · Pull-out force, axial',     kind: 'report',   type: 'pdf',  size: '4.2 MB',  prog: 'OR-801', ver: 'v3.2',  versions: 3, status: 'final',  updated: '30 min ago',  author: 'S. Marchetti',     linked: 4, esig: true,  hash: 'a91e…4f02' },
-  { id: 'f2',  name: 'Biocompat -11 systemic toxicity · final',  kind: 'report',   type: 'pdf',  size: '2.8 MB',  prog: 'OR-801', ver: 'v2.0',  versions: 2, status: 'review', updated: '2h ago',     author: 'L. Tran',          linked: 3, esig: false, hash: 'b742…19cc', blocker: true },
-  { id: 'f3',  name: 'ENG-OR801 rev D · drawing package',        kind: 'code',     type: 'zip',  size: '18.4 MB', prog: 'OR-801', ver: 'rev D', versions: 5, status: 'final',  updated: 'yesterday',  author: 'Eng team',          linked: 7, esig: true,  hash: 'c0d8…7791' },
-  { id: 'f4',  name: 'Proposed labeling · Instructions for use', kind: 'label',    type: 'docx', size: '3.1 MB',  prog: 'OR-801', ver: 'v1.4',  versions: 4, status: 'review', updated: '3h ago',     author: 'S. Marchetti',     linked: 2, esig: false, hash: 'd111…22aa' },
-  { id: 'f5',  name: 'FDA 510(k) cover letter — OR-801',         kind: 'cert',     type: 'docx', size: '0.4 MB',  prog: 'OR-801', ver: 'v0.3',  versions: 3, status: 'draft',  updated: '5h ago',     author: 'S. Marchetti',     linked: 1, esig: false, hash: 'e9b1…5140' },
-  { id: 'f6',  name: 'Supplier cert · Ti-6Al-4V ELI lot 22K',    kind: 'supplier', type: 'pdf',  size: '0.9 MB',  prog: 'OR-801', ver: 'v1.0',  versions: 1, status: 'final',  updated: '1d ago',     author: 'Supplier',          linked: 2, esig: true,  hash: 'f212…0094' },
-  { id: 'f7',  name: 'FDA response · pre-submission Q319-2024',  kind: 'resp',     type: 'pdf',  size: '1.2 MB',  prog: 'OR-801', ver: 'v1.0',  versions: 1, status: 'final',  updated: '2w ago',     author: 'FDA',               linked: 0, esig: true,  hash: '77ac…b102' },
-  { id: 'f8',  name: 'SBOM · PM-660 patient monitor firmware 2.1', kind: 'code',   type: 'json', size: '0.2 MB',  prog: 'PM-660', ver: 'v2.1',  versions: 6, status: 'review', updated: '1h ago',     author: 'A. Müller',         linked: 1, esig: false, hash: '18aa…6671' },
-  { id: 'f9',  name: 'DSMB charter · CV-330 pivotal',            kind: 'cert',     type: 'docx', size: '0.7 MB',  prog: 'CV-330', ver: 'v1.2',  versions: 2, status: 'review', updated: '4h ago',     author: 'CRO',               linked: 3, esig: false, hash: '3cc1…2278' },
-  { id: 'f10', name: 'FAERS export · IV-415 · Q1-2026',          kind: 'report',   type: 'csv',  size: '0.3 MB',  prog: 'IV-415', ver: 'v1.0',  versions: 1, status: 'final',  updated: '6h ago',     author: 'A. Müller',         linked: 2, esig: false, hash: '4fa0…9091' },
-  { id: 'f11', name: 'Analytical sensitivity · DX-102 · 14 analytes', kind: 'report', type: 'xlsx', size: '1.1 MB', prog: 'DX-102', ver: 'v0.4', versions: 4, status: 'draft', updated: '8h ago',     author: 'P. Shah',           linked: 1, esig: false, hash: '8e22…1b33' },
-  { id: 'f12', name: 'Gamma sterilization validation summary',   kind: 'report',   type: 'pdf',  size: '3.4 MB',  prog: 'OR-801', ver: 'v2.0',  versions: 2, status: 'final',  updated: '1w ago',     author: 'Contract lab',      linked: 2, esig: true,  hash: 'c199…0e44' },
-];
-
-export const VAULT_VERSIONS: VaultVersion[] = [
-  { v: 'v3.2', when: '30 min ago',  author: 'S. Marchetti',      note: 'Replaced cover page per reviewer · corrected n=30 → n=30 per diameter', status: 'final' },
-  { v: 'v3.1', when: '6 hours ago', author: 'Claude · Opus 4.5', note: 'AI-drafted revision — TOC regeneration',                                  status: 'superseded' },
-  { v: 'v3.0', when: 'yesterday',   author: 'S. Marchetti',      note: 'Incorporated peer review feedback from L. Tran',                          status: 'superseded' },
 ];
 
 // ── Validation Center ────────────────────────────────────────────────────
