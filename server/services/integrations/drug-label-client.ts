@@ -13,7 +13,10 @@
  * @module server/services/integrations/drug-label-client
  */
 
+import { z } from 'zod';
 import { fetchWithRetry } from './http.js';
+// @ts-ignore -- JS module without type declarations (existing TTL cache).
+import { createCache } from '../../cache_manager.js';
 
 const DEFAULT_BASE_URL = 'https://api.fda.gov';
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -22,6 +25,50 @@ const DEFAULT_LIMIT = 3;
 const SECTION_CAP = 1500; // keep long SPL sections compact for the model
 const USER_AGENT =
   process.env.INTEGRATION_USER_AGENT || 'Concept2Cure-AnA/1.0 (regulatory intelligence)';
+
+/** Cache the raw (pre-staleness) payload for 24h; SPL labels update infrequently. */
+const CACHE_TTL_SECONDS = 24 * 60 * 60;
+/**
+ * Staleness threshold: a cached label result older than this (seconds) is
+ * flagged `stale: true`. 12 hours is comfortable for SPL data.
+ */
+export const STALE_AFTER_SECONDS = 12 * 60 * 60;
+
+const cache = createCache('openfda_drug_label');
+
+function isTestEnv(): boolean {
+  return !!process.env.VITEST || process.env.NODE_ENV === 'test';
+}
+
+export interface StalenessFields {
+  /** ISO timestamp of when the underlying data was fetched from the source. */
+  retrievedAt: string;
+  /** Age of the returned data in seconds (0 for a fresh fetch). */
+  cacheAgeSeconds: number;
+  /** True when `cacheAgeSeconds` exceeds {@link STALE_AFTER_SECONDS}. */
+  stale: boolean;
+}
+
+/** Derive additive freshness fields from the epoch-ms the data was fetched. */
+export function computeStaleness(fetchedAtMs: number): StalenessFields {
+  const cacheAgeSeconds = Math.max(0, Math.round((Date.now() - fetchedAtMs) / 1000));
+  return {
+    retrievedAt: new Date(fetchedAtMs).toISOString(),
+    cacheAgeSeconds,
+    stale: cacheAgeSeconds > STALE_AFTER_SECONDS,
+  };
+}
+
+/** Permissive shape guard — assert only the fields we read; never throw. */
+const LabelResponseSchema = z
+  .object({
+    results: z.array(z.any()).optional(),
+    meta: z
+      .object({ results: z.object({ total: z.any().optional() }).passthrough().optional() })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
 
 export interface DrugLabelSearchParams {
   brandName?: string;
@@ -41,7 +88,7 @@ export interface DrugLabel {
   dosage: string;
 }
 
-export interface DrugLabelSearchResult {
+export interface DrugLabelSearchResult extends Partial<StalenessFields> {
   source: 'FDA Drug Labels (openFDA SPL)';
   searchExpression: string;
   total: number;
@@ -92,11 +139,25 @@ export async function searchDrugLabels(params: DrugLabelSearchParams): Promise<D
   const limit = Math.min(Math.max(Math.trunc(params.limit ?? DEFAULT_LIMIT), 1), MAX_LIMIT);
   const search = buildDrugLabelSearch(params);
   if (!search) {
-    return { source: 'FDA Drug Labels (openFDA SPL)', searchExpression: '', total: 0, labels: [] };
+    return {
+      source: 'FDA Drug Labels (openFDA SPL)',
+      searchExpression: '',
+      total: 0,
+      labels: [],
+      ...computeStaleness(Date.now()),
+    };
   }
 
   const qs = new URLSearchParams({ search, limit: String(limit) });
   if (process.env.OPENFDA_API_KEY) qs.set('api_key', process.env.OPENFDA_API_KEY);
+  const cacheKey = `${search}|limit:${limit}`;
+
+  if (!isTestEnv()) {
+    const cached = await cache.getCachedData(cacheKey);
+    if (cached?.data) {
+      return { ...cached.data, ...computeStaleness(cached.timestamp) };
+    }
+  }
 
   const res = await fetchWithRetry(
     `${baseUrl()}/drug/label.json?${qs.toString()}`,
@@ -106,18 +167,40 @@ export async function searchDrugLabels(params: DrugLabelSearchParams): Promise<D
   if (!res.ok) {
     // openFDA returns 404 when a search has zero matches — treat as empty, not error.
     if (res.status === 404) {
-      return { source: 'FDA Drug Labels (openFDA SPL)', searchExpression: search, total: 0, labels: [] };
+      return {
+        source: 'FDA Drug Labels (openFDA SPL)',
+        searchExpression: search,
+        total: 0,
+        labels: [],
+        ...computeStaleness(Date.now()),
+      };
     }
     throw new Error(`openFDA drug/label returned HTTP ${res.status}`);
   }
 
   const data: any = await res.json();
-  const results = Array.isArray(data?.results) ? data.results : [];
-  const total = Number(data?.meta?.results?.total ?? results.length) || results.length;
-  return {
-    source: 'FDA Drug Labels (openFDA SPL)',
+  const parsed = LabelResponseSchema.safeParse(data);
+  if (!parsed.success) {
+    console.warn(
+      JSON.stringify({
+        event: 'integration.response_shape_mismatch',
+        source: 'FDA Drug Labels (openFDA SPL)',
+        issues: parsed.error.issues.slice(0, 3),
+      })
+    );
+  }
+  const safe = parsed.success ? parsed.data : {};
+  const results = Array.isArray(safe.results) ? safe.results : [];
+  const total = Number(safe.meta?.results?.total ?? results.length) || results.length;
+  const payload = {
+    source: 'FDA Drug Labels (openFDA SPL)' as const,
     searchExpression: search,
     total,
     labels: results.slice(0, limit).map(normalizeLabel),
   };
+
+  if (!isTestEnv()) {
+    await cache.saveToCacheWithExpiry(cacheKey, payload, CACHE_TTL_SECONDS).catch(() => {});
+  }
+  return { ...payload, ...computeStaleness(Date.now()) };
 }

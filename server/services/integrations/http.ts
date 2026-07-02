@@ -11,6 +11,8 @@
  * @module server/services/integrations/http
  */
 
+import { hostThrottle, hostOf } from './host-throttle.js';
+
 const RETRYABLE_STATUS = new Set([408, 429, 500, 502, 503, 504]);
 const DEFAULT_RETRIES = 2;
 const DEFAULT_BASE_DELAY_MS = 300;
@@ -20,6 +22,13 @@ export interface FetchRetryOptions {
   timeoutMs?: number;
   retries?: number;
   baseDelayMs?: number;
+  /**
+   * Apply per-host admission control (concurrency cap + min-interval spacing)
+   * around the whole retry sequence. Defaults to `true`, but is a transparent
+   * no-op under the test runner so existing suites (and their fetch call
+   * counts) are unaffected. Pass `false` to bypass entirely.
+   */
+  throttle?: boolean;
 }
 
 function isTestEnv(): boolean {
@@ -47,6 +56,21 @@ export async function fetchWithRetry(
   url: string,
   init: Parameters<typeof fetch>[1] = {},
   opts: FetchRetryOptions = {}
+): Promise<Response> {
+  // Per-host admission control wraps the entire retry sequence, so a retrying
+  // request keeps its concurrency slot. Off under the test runner to preserve
+  // existing behavior / call counts.
+  const useThrottle = (opts.throttle ?? true) && !isTestEnv();
+  if (useThrottle) {
+    return hostThrottle.run(hostOf(url), () => fetchWithRetryInner(url, init, opts));
+  }
+  return fetchWithRetryInner(url, init, opts);
+}
+
+async function fetchWithRetryInner(
+  url: string,
+  init: Parameters<typeof fetch>[1],
+  opts: FetchRetryOptions
 ): Promise<Response> {
   const retries = Math.max(0, opts.retries ?? DEFAULT_RETRIES);
   const baseDelay = isTestEnv() ? 0 : Math.max(0, opts.baseDelayMs ?? DEFAULT_BASE_DELAY_MS);
