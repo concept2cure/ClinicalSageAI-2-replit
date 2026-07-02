@@ -55,6 +55,7 @@ import { runStreamPostProcessing } from './post-processing.js';
 import { reflectAfterTurn } from '../../services/ana-ri/relational-profile-service.js';
 import { loadAnaToolPolicy, filterToolsByPolicy } from '../../services/ana-ri/mdx-tool-policy.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
+import { guardUserInput, PromptInjectionError } from '../../services/ana/ana-input-guard.js';
 import { isPdfIntakeEnabled, readLocalUploadBuffer } from '../../services/anthropic-files.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
@@ -114,6 +115,42 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     if (!message || typeof message !== 'string') {
       return sendError(res, 400, 'Message is required', null, 'INVALID_MESSAGE');
+    }
+
+    // ── Prompt-injection inspection (coverage: EVERY user turn) ──────────
+    // Wires the existing prompt-injection defense (server/lib/prompt-injection-
+    // protection) into the streaming hot path. Detection + high-risk audit
+    // logging ALWAYS run; hard-block and content encapsulation are opt-in via
+    // PROMPT_INJECTION_ENFORCE / PROMPT_INJECTION_ENCAPSULATE (both default OFF),
+    // so with default config this is pure observation — output is unchanged.
+    // Runs before the SSE headers are written so an enforced block returns a
+    // clean 400 rather than a mid-stream error.
+    const { orgId: guardOrgId, userId: guardUserId } = extractRequestContext(req);
+    let injectionGuard;
+    try {
+      injectionGuard = await guardUserInput(message, {
+        organizationId: guardOrgId,
+        userId: guardUserId,
+        route: '/api/ana-ri/stream',
+        threadId: thread_id,
+        projectId: project_id || resolveProjectIdFromBody(req.body),
+        ipAddress:
+          (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() ||
+          req.socket?.remoteAddress ||
+          undefined,
+        userAgent: req.headers['user-agent'] as string | undefined,
+      });
+    } catch (guardErr) {
+      if (guardErr instanceof PromptInjectionError) {
+        return sendError(
+          res,
+          400,
+          'Message was blocked by the input safety policy',
+          null,
+          'PROMPT_INJECTION_BLOCKED',
+        );
+      }
+      throw guardErr;
     }
 
     const gw = ensureGateway();
@@ -479,7 +516,13 @@ router.post('/stream', async (req: Request, res: Response) => {
       }
     }
 
-    messages.push({ role: 'user', content: effectiveMessage });
+    // Default path uses `effectiveMessage` unchanged. Only when
+    // PROMPT_INJECTION_ENCAPSULATE is enabled does the guard hand back the
+    // injection-resistant encapsulated form for the model to see as data.
+    messages.push({
+      role: 'user',
+      content: injectionGuard.encapsulated ? injectionGuard.text : effectiveMessage,
+    });
 
     // Status: generating (context is built, about to stream tokens from the model)
     res.write(
