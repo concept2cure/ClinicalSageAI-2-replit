@@ -219,8 +219,13 @@ async function checkRedisRateLimit(
     // Count entries in current window
     pipeline.zcard(fullKey);
 
-    // Add current request with timestamp as score
-    pipeline.zadd(fullKey, now, `${now}:${Math.random().toString(36).slice(2)}`);
+    // Add current request with timestamp as score. Keep the member id so a
+    // rejected request can be removed again below — otherwise denied retries
+    // would keep refilling the window and a client at its limit could stay
+    // locked out indefinitely (and behavior would diverge from the in-memory
+    // fallback, which only counts allowed requests).
+    const member = `${now}:${Math.random().toString(36).slice(2)}`;
+    pipeline.zadd(fullKey, now, member);
 
     // Set expiry on the key
     pipeline.pexpire(fullKey, windowMs);
@@ -235,6 +240,10 @@ async function checkRedisRateLimit(
     const count = (results[1]?.[1] as number) || 0;
 
     if (count >= maxRequests) {
+      // Rejected — un-count this request so denied retries don't extend the
+      // window. Best-effort: on failure the entry ages out with the window.
+      await redisClient.zrem(fullKey, member).catch(() => {});
+
       // Get the oldest entry to calculate retry time
       const oldest = await redisClient.zrange(fullKey, 0, 0, 'WITHSCORES');
       const oldestTime = oldest.length >= 2 ? parseInt(oldest[1], 10) : now;

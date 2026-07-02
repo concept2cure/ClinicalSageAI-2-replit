@@ -54,6 +54,12 @@ export interface AssembleTechnicalFileParams {
 
 export interface AssembleTechnicalFileResult {
   bundle: TechnicalFileBundle;
+  /**
+   * Remove the temp staging/output directory backing the bundle. Call once the
+   * bundle bytes are no longer needed. Idempotent + best-effort; without this
+   * every assemble leaks a full staged package under os.tmpdir().
+   */
+  cleanup: () => Promise<void>;
   skipped: Array<{ sectionId: string; source: string; reason: string }>;
   /** Number of leaves materialized to disk (all locally-renderable tables). */
   materialized: number;
@@ -165,7 +171,20 @@ export async function assembleTechnicalFileFromCore(
     unresolved: unresolvedLeaves.length,
   });
 
-  return { bundle, skipped: plan.skipped, materialized, unresolvedLeaves, ready: manifest.ready };
+  const cleanup = async () => {
+    try {
+      await fs.rm(outputDir, { recursive: true, force: true });
+    } catch (err) {
+      logger.warn('Failed to remove technical-file assemble temp dir', {
+        sequenceId,
+        organizationId,
+        outputDir,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+
+  return { bundle, cleanup, skipped: plan.skipped, materialized, unresolvedLeaves, ready: manifest.ready };
 }
 
 export default { assembleTechnicalFileFromCore };

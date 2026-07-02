@@ -78,16 +78,18 @@ export function verifyJwtWithRotation<T = unknown>(
   token: string,
   options: JwtVerifyOptions = {},
 ): T {
-  const opts: VerifyOptions = { ...options, algorithms: ['HS256'] };
+  // The algorithm pin is spelled inline at each call site (rather than
+  // hoisted into a shared options object) so the ci:jwt-verify-pinned
+  // gate can verify it textually.
   const current = currentSecret();
 
   try {
-    return jwt.verify(token, current, opts) as T;
+    return jwt.verify(token, current, { ...options, algorithms: ['HS256'] } satisfies VerifyOptions) as T;
   } catch (primaryErr) {
     const previous = previousSecret();
     if (previous && isSignatureMismatch(primaryErr)) {
       try {
-        return jwt.verify(token, previous, opts) as T;
+        return jwt.verify(token, previous, { ...options, algorithms: ['HS256'] } satisfies VerifyOptions) as T;
       } catch {
         // Fall through to throw the primary error so the caller
         // gets a consistent failure mode regardless of rotation state.

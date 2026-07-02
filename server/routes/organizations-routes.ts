@@ -13,6 +13,17 @@ const router = Router();
 router.use(authMiddleware);
 
 /**
+ * PLATFORM-STAFF roles only. Deliberately excludes the org-membership role
+ * 'admin' (every tenant's own admin carries JWT role 'admin'), which must
+ * NOT bypass tenant scoping — that would let any customer admin read and
+ * write every other organization. Matches the posture of clients-routes.ts
+ * / tenant-users.ts (super_admin only).
+ */
+function isPlatformStaff(role: unknown): boolean {
+  return role === 'platform_admin' || role === 'superadmin' || role === 'super_admin';
+}
+
+/**
  * Validate that the requesting user belongs to the organization in :id param.
  * Platform admins / superadmins bypass the check.
  */
@@ -23,7 +34,7 @@ function validateOrgOwnership(req: any, res: any, next: any) {
     : null;
   const userRole = req.user?.role || req.userRole;
 
-  if (userRole === 'platform_admin' || userRole === 'superadmin' || userRole === 'admin') {
+  if (isPlatformStaff(userRole)) {
     return next();
   }
 
@@ -47,10 +58,9 @@ router.get('/', async (req, res) => {
   try {
     const userId = req.user?.id ? parseInt(String(req.user.id)) : null;
     const userRole = req.user?.role || req.userRole;
-    const isAdmin =
-      userRole === 'platform_admin' ||
-      userRole === 'superadmin' ||
-      userRole === 'admin';
+    // Only platform staff may list ALL organizations; a tenant 'admin' sees
+    // just their own memberships like any other user (no tenant enumeration).
+    const isAdmin = isPlatformStaff(userRole);
 
     let orgRows;
 

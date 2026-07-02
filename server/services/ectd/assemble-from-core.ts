@@ -47,6 +47,13 @@ export interface AssembleSequenceParams {
 }
 
 export interface AssembleSequenceResult extends PackageFromCoreResult {
+  /**
+   * Remove the temp staging/output directory backing `bundle.path`. Call once
+   * the bundle bytes are no longer needed (e.g. after transmit, or after an
+   * assemble-only run has reported its metadata). Idempotent + best-effort;
+   * without this every assemble leaks a full staged package under os.tmpdir().
+   */
+  cleanup: () => Promise<void>;
   /** Number of leaves materialized to disk (all locally-renderable tables). */
   materialized: number;
   /**
@@ -135,7 +142,20 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     unresolved: unresolvedLeaves.length,
   });
 
-  return { ...result, materialized, unresolvedLeaves };
+  const cleanup = async () => {
+    try {
+      await fs.rm(outputDir, { recursive: true, force: true });
+    } catch (err) {
+      logger.warn('Failed to remove assemble temp dir', {
+        sequenceId,
+        organizationId,
+        outputDir,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+
+  return { ...result, cleanup, materialized, unresolvedLeaves };
 }
 
 export default { assembleSequence };

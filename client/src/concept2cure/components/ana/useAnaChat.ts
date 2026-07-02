@@ -20,7 +20,7 @@
  * @module client/src/concept2cure/components/ana/useAnaChat
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getAuthHeaders } from '../../../utils/authToken';
 import { extractPendingSignoffs, type PendingSignoff } from './useGovernedAction';
@@ -515,8 +515,17 @@ export interface UseAnaChatOptions {
 export interface UseAnaChatReturn {
   messages: AnaChatMessage[];
   isStreaming: boolean;
-  /** Send a user message (with optional attachments) and stream the reply. */
-  send: (text: string, attachments?: MessageAttachment[]) => Promise<void>;
+  /**
+   * Send a user message (with optional attachments) and stream the reply.
+   * `sendOpts.toolsOverride` pins tools for THIS turn — callers that update
+   * the pinned-tools state and send in the same tick would otherwise send
+   * with the pre-update tool set (the state update only lands next render).
+   */
+  send: (
+    text: string,
+    attachments?: MessageAttachment[],
+    sendOpts?: { toolsOverride?: string[] },
+  ) => Promise<void>;
   /** Abort the current stream. */
   stop: () => void;
   /** Reset the conversation (new thread). */
@@ -535,21 +544,37 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const [isLoadingThread, setIsLoadingThread] = useState(false);
   const threadIdRef = useRef<string | null>(options.initialThreadId || null);
   const abortRef = useRef<AbortController | null>(null);
+  // Live mirror of isStreaming for send()'s re-entrancy guard. The state value
+  // is a render-time snapshot: a caller that aborts (reset/stop) and re-sends
+  // in the same tick would be wrongly no-opped by the stale closure — the
+  // "retry wipes the conversation and sends nothing" bug.
+  const isStreamingRef = useRef(false);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
+  }, []);
+
+  // Abort any in-flight stream when the hosting panel unmounts — otherwise the
+  // fetch keeps the connection (and the server-side generation) alive until
+  // completion or the idle timeout.
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
   }, []);
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
     threadIdRef.current = null;
     setMessages([]);
+    isStreamingRef.current = false;
     setIsStreaming(false);
   }, []);
 
   const loadThread = useCallback(async (threadId: string) => {
     if (!threadId) return;
     abortRef.current?.abort();
+    isStreamingRef.current = false;
     setIsStreaming(false);
     setIsLoadingThread(true);
     try {
@@ -591,9 +616,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   }, []);
 
   const send = useCallback(
-    async (rawText: string, attachments?: MessageAttachment[]) => {
+    async (
+      rawText: string,
+      attachments?: MessageAttachment[],
+      sendOpts?: { toolsOverride?: string[] },
+    ) => {
       const text = rawText.trim();
-      if (!text || isStreaming) return;
+      if (!text || isStreamingRef.current) return;
 
       const sentAt = Date.now();
       const userMsg: AnaChatMessage = {
@@ -619,6 +648,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           sentAt,
         },
       ]);
+      isStreamingRef.current = true;
       setIsStreaming(true);
 
       const abortCtl = new AbortController();
@@ -720,11 +750,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           content: m.text,
         })),
         // Pinned tools (additive focus). Omitted when empty so the server
-        // stays in auto/intent-based selection.
-        selected_tools:
-          options.selectedTools && options.selectedTools.length > 0
-            ? options.selectedTools
-            : undefined,
+        // stays in auto/intent-based selection. A per-call override wins so
+        // "pin these tools and send now" applies to this very turn.
+        selected_tools: (() => {
+          const tools = sendOpts?.toolsOverride ?? options.selectedTools;
+          return tools && tools.length > 0 ? tools : undefined;
+        })(),
         // Model/effort picker. Both omitted when unset so the server keeps its
         // default routing (effort='balanced', no model pin).
         effort_level: options.effortLevel ?? undefined,
@@ -1137,8 +1168,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         }
       } finally {
         clearIdleTimer();
-        abortRef.current = null;
-        setIsStreaming(false);
+        // Only clean up if this stream still owns the shared refs: an aborted
+        // stream's finally runs asynchronously, and by then a replacement
+        // send() may already be live — clobbering its controller/flags would
+        // orphan the new stream.
+        if (abortRef.current === abortCtl) {
+          abortRef.current = null;
+          isStreamingRef.current = false;
+          setIsStreaming(false);
+        }
       }
     },
     [
