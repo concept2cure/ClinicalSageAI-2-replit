@@ -1,23 +1,23 @@
 {
-  "generatedAt": "2026-07-01T03:59:49.832Z",
+  "generatedAt": "2026-07-02T21:14:59.037Z",
   "git": {
-    "sha": "d710290f9ce3c192042f33156f7a78a1dbbc1f50",
-    "branch": "concept2cure-v2"
+    "sha": "cb11b1abfef35c3e76e4261e8f3dc651ca0f520b",
+    "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 238,
-    "largeFilesByBytes": 24,
-    "largeFilesByLines": 73
+    "duplicateBasenames": 240,
+    "largeFilesByBytes": 29,
+    "largeFilesByLines": 83
   },
   "findings": {
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 98,
+        "count": 102,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -56,6 +56,8 @@
           "server/services/ana-biostats/index.ts",
           "server/services/ana-ri/index.ts",
           "server/services/ana/index.ts",
+          "server/services/ana/intelligence-questions/flows/index.ts",
+          "server/services/ana/intelligence-questions/war-game/auditors/index.ts",
           "server/services/ana/therapeutic-area-profiles/index.ts",
           "server/services/automation/index.ts",
           "server/services/biostatistics-judgment/index.ts",
@@ -112,6 +114,8 @@
           "services/compliance/index.ts",
           "services/documents/index.ts",
           "services/proof/index.ts",
+          "shared/constants/domain/index.ts",
+          "shared/constants/domain/mappings/index.ts",
           "shared/navigation/index.ts",
           "shared/regulatory/index.ts",
           "shared/schema/index.ts",
@@ -121,7 +125,7 @@
       },
       {
         "basename": "types",
-        "count": 45,
+        "count": 47,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -136,6 +140,8 @@
           "server/services/ai-governance/classification/types.ts",
           "server/services/ana-advisory/types.ts",
           "server/services/ana-biostats/types.ts",
+          "server/services/ana/intelligence-questions/types.ts",
+          "server/services/ana/intelligence-questions/war-game/types.ts",
           "server/services/ana/therapeutic-area-profiles/types.ts",
           "server/services/biostatistics-judgment/types.ts",
           "server/services/biostats-signal-engine/types.ts",
@@ -697,6 +703,16 @@
         ]
       },
       {
+        "basename": "engine",
+        "count": 4,
+        "paths": [
+          "server/services/ana/intelligence-questions/engine.ts",
+          "server/services/ana/intelligence-questions/war-game/engine.ts",
+          "server/services/biostats-signal-engine/engine.ts",
+          "server/services/rules-engine/engine.ts"
+        ]
+      },
+      {
         "basename": "hooks",
         "count": 4,
         "paths": [
@@ -1075,6 +1091,15 @@
         ]
       },
       {
+        "basename": "protocol-development",
+        "count": 3,
+        "paths": [
+          "server/routes/protocol-development.ts",
+          "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+          "shared/schema/protocol-development.ts"
+        ]
+      },
+      {
         "basename": "resolution",
         "count": 3,
         "paths": [
@@ -1090,6 +1115,15 @@
           "server/routes/rim.ts",
           "server/services/intelligence/rim.ts",
           "shared/schema/rim.ts"
+        ]
+      },
+      {
+        "basename": "safety-narrative",
+        "count": 3,
+        "paths": [
+          "server/routes/safety-narrative.ts",
+          "server/services/ana/intelligence-questions/flows/safety-narrative.ts",
+          "server/services/ana/safety-narrative.ts"
         ]
       },
       {
@@ -1508,14 +1542,6 @@
         ]
       },
       {
-        "basename": "engine",
-        "count": 2,
-        "paths": [
-          "server/services/biostats-signal-engine/engine.ts",
-          "server/services/rules-engine/engine.ts"
-        ]
-      },
-      {
         "basename": "environment",
         "count": 2,
         "paths": [
@@ -1665,6 +1691,14 @@
         "paths": [
           "server/routes/grants.ts",
           "shared/schema/grants.ts"
+        ]
+      },
+      {
+        "basename": "grounding-eval.test",
+        "count": 2,
+        "paths": [
+          "server/services/evidence/__tests__/grounding-eval.test.ts",
+          "tests/ai-safety/grounding-eval.test.ts"
         ]
       },
       {
@@ -1956,14 +1990,6 @@
         ]
       },
       {
-        "basename": "protocol-development",
-        "count": 2,
-        "paths": [
-          "server/routes/protocol-development.ts",
-          "shared/schema/protocol-development.ts"
-        ]
-      },
-      {
         "basename": "protocol-deviations",
         "count": 2,
         "paths": [
@@ -2124,6 +2150,14 @@
         ]
       },
       {
+        "basename": "risk-management",
+        "count": 2,
+        "paths": [
+          "server/services/ana/intelligence-questions/flows/risk-management.ts",
+          "server/services/ana/risk-management.ts"
+        ]
+      },
+      {
         "basename": "rolebasedaccess",
         "count": 2,
         "paths": [
@@ -2137,14 +2171,6 @@
         "paths": [
           "server/eval/doc-quality/run-eval.ts",
           "server/eval/rag/run-eval.ts"
-        ]
-      },
-      {
-        "basename": "safety-narrative",
-        "count": 2,
-        "paths": [
-          "server/routes/safety-narrative.ts",
-          "server/services/ana/safety-narrative.ts"
         ]
       },
       {
@@ -2359,7 +2385,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 826599
+        "bytes": 834045
       },
       {
         "file": "shared/schema.ts",
@@ -2371,7 +2397,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 491375
+        "bytes": 495991
       },
       {
         "file": "server/statistics-service.ts",
@@ -2422,12 +2448,24 @@
         "bytes": 132966
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "bytes": 127662
+      },
+      {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 117471
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "bytes": 116241
+      },
+      {
         "file": "server/services/submission-package-orchestrator.ts",
         "bytes": 115960
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+        "bytes": 114943
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2446,12 +2484,20 @@
         "bytes": 108892
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+        "bytes": 108007
+      },
+      {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
         "bytes": 106347
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
         "bytes": 105877
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
+        "bytes": 104369
       }
     ],
     "largeFilesByLines": [
@@ -2465,11 +2511,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 16140
+        "lines": 16304
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 9009
+        "lines": 9112
       },
       {
         "file": "server/statistics-service.ts",
@@ -2532,6 +2578,10 @@
         "lines": 2559
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "lines": 2504
+      },
+      {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2501
       },
@@ -2550,6 +2600,14 @@
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "lines": 2340
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
+        "lines": 2327
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "lines": 2278
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
@@ -2584,8 +2642,20 @@
         "lines": 2068
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
+        "lines": 2059
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
+        "lines": 2020
+      },
+      {
         "file": "server/services/foresight-ai-engine.ts",
         "lines": 2007
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
+        "lines": 2003
       },
       {
         "file": "server/routes/submission-ops.ts",
@@ -2608,8 +2678,16 @@
         "lines": 1927
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+        "lines": 1888
+      },
+      {
         "file": "server/services/ai-gateway/gateway.ts",
         "lines": 1886
+      },
+      {
+        "file": "server/services/ana-ri/orchestrator.ts",
+        "lines": 1877
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
@@ -2622,10 +2700,6 @@
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
         "lines": 1864
-      },
-      {
-        "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1862
       },
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
@@ -2662,6 +2736,10 @@
       {
         "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
         "lines": 1815
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
+        "lines": 1813
       },
       {
         "file": "server/services/precedent-engine.ts",
@@ -2732,12 +2810,20 @@
         "lines": 1600
       },
       {
+        "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
+        "lines": 1582
+      },
+      {
         "file": "server/routes/cortex-unified.ts",
         "lines": 1553
       },
       {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
         "lines": 1550
+      },
+      {
+        "file": "server/services/ana/intelligence-questions/flows/sop-development.ts",
+        "lines": 1549
       },
       {
         "file": "server/routes/ivdr-routes.ts",
@@ -2753,13 +2839,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 378,
-      "largeByBytes": 21,
-      "largeByLines": 62
+      "duplicateGroups": 389,
+      "largeByBytes": 26,
+      "largeByLines": 72
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 273,
+      "duplicateGroups": 274,
       "largeByBytes": 2,
       "largeByLines": 8
     },
@@ -2771,7 +2857,7 @@
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 65,
+      "duplicateGroups": 67,
       "largeByBytes": 1,
       "largeByLines": 2
     },

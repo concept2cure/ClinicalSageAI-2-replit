@@ -1,20 +1,20 @@
 # Repo Health Scan
 
-Generated: 2026-07-01T03:59:49.832Z
-Branch: concept2cure-v2
-SHA: d710290f9ce3c192042f33156f7a78a1dbbc1f50
+Generated: 2026-07-02T21:14:59.037Z
+Branch: claude/ana-intelligence-questions-8q3xjj
+SHA: cb11b1abfef35c3e76e4261e8f3dc651ca0f520b
 
 ## Summary
 
-- Duplicate basenames: 238
-- Files over byte threshold: 24
-- Files over line threshold: 73
+- Duplicate basenames: 240
+- Files over byte threshold: 29
+- Files over line threshold: 83
 
 ## Owner Summary
 
-- Backend Platform (server/routes + server/services owners): duplicateGroups=378, largeByBytes=21, largeByLines=62
-- Unassigned (TBD): duplicateGroups=273, largeByBytes=2, largeByLines=8
+- Backend Platform (server/routes + server/services owners): duplicateGroups=389, largeByBytes=26, largeByLines=72
+- Unassigned (TBD): duplicateGroups=274, largeByBytes=2, largeByLines=8
 - Concept2Cure Frontend (client/src/concept2cure maintainers): duplicateGroups=154, largeByBytes=0, largeByLines=1
-- Shared Contracts (shared/schema + shared/types owners): duplicateGroups=65, largeByBytes=1, largeByLines=2
+- Shared Contracts (shared/schema + shared/types owners): duplicateGroups=67, largeByBytes=1, largeByLines=2
 - Frontend Platform (client/src maintainers): duplicateGroups=39, largeByBytes=0, largeByLines=0
 - Developer Experience (scripts maintainers): duplicateGroups=3, largeByBytes=0, largeByLines=0
