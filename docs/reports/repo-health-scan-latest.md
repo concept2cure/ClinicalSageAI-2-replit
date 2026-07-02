@@ -1,8 +1,8 @@
 # Repo Health Scan
 
-Generated: 2026-07-02T21:14:59.037Z
-Branch: claude/ana-intelligence-questions-8q3xjj
-SHA: cb11b1abfef35c3e76e4261e8f3dc651ca0f520b
+Generated: 2026-07-02T21:16:10.045Z
+Branch: concept2cure-v2
+SHA: 67bc8e7beef1f57a8a5c8aded19aee8cdb4db3bf
 
 ## Summary
 

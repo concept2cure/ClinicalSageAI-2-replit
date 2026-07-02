@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-02T21:14:59.037Z",
+  "generatedAt": "2026-07-02T21:16:10.045Z",
   "git": {
-    "sha": "cb11b1abfef35c3e76e4261e8f3dc651ca0f520b",
-    "branch": "claude/ana-intelligence-questions-8q3xjj"
+    "sha": "67bc8e7beef1f57a8a5c8aded19aee8cdb4db3bf",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
