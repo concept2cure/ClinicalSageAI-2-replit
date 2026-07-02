@@ -7,6 +7,8 @@
  *   - value-reconciliation pure comparison + reconcile/drift logic
  *   - canonical-fact-store persistence for facts, bindings, drift
  *   - reconciliation-engine reconcile-on-write + the Drift Sentinel job
+ *   - fact-change            pure impact classification for a proposed change
+ *   - fact-change-orchestrator the governed change-propagation path (push)
  *
  * See docs/architecture/LIVING_RECORD_SPINE.md.
  */
@@ -17,6 +19,20 @@ export * from './value-reconciliation';
 export * from './canonical-fact-store';
 export * from './sequence-store';
 export * from './program-link';
+export * from './fact-change';
+export {
+  applyFactChange,
+  establishGovernedFact,
+  factHistory,
+  previewFactChange,
+  type ApplyFactChangeParams,
+  type ApplyFactChangeResult,
+  type EstablishFactParams,
+  type EstablishFactResult,
+  type FactChangeFailure,
+  type FactChangePreview,
+  type FactHistoryEntry,
+} from './fact-change-orchestrator';
 export {
   reconcileClaim,
   reconcileClaimById,

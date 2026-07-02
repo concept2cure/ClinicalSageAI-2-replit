@@ -277,6 +277,40 @@ folded into `programFreshnessReport` as a `canonical_fact` artifact bucket so th
 living record's value-drift shows up beside artifact staleness. (Seam noted in
 the freshness service; folding it in is the only follow-up this spec defers.)
 
+### 3.5 Governed Fact Change (the push path)
+
+The Sentinel is pull: it discovers divergence after the fact. The
+**Fact-Change Orchestrator** (`fact-change-orchestrator.ts`, exposed at
+`/api/change-propagation`) is push: an operator changes a governed value once
+and the platform propagates it under governance.
+
+1. **Preview** — `previewFactChange` classifies every citation
+   (`fact_binding`) of the value against the proposed change using the pure
+   `classifyBindingImpact` (`fact-change.ts`): `will_drift`, `consistent`,
+   `override`, or `not_evaluable`. Overrides and non-evaluable transforms are
+   shown, not hidden — the operator sees the full blast radius before acting.
+2. **Apply** — `applyFactChange` re-versions the fact via
+   `supersedeAndReversion` (history kept; a `disputed` fact may be re-versioned
+   to resolve the dispute). **Bindings are carried forward to the new
+   version** — without the carry-forward, `fact_bindings.fact_id` would keep
+   pointing at the superseded row and the citation set would be orphaned at the
+   exact moment the value changed.
+3. **Flag** — each now-divergent citation gets a `fact_drift` row immediately
+   (`detected_by = 'fact_change'`), its binding goes `drifted`, and bound
+   claims' `verification` goes `drifted` — no waiting for the next sweep.
+4. **Cascade** — each drifted claim fans out through
+   `propagateRegulatoryChange({ event: 'claim_changed', … })`, the same path
+   the Sentinel uses.
+5. **Govern** — a resolution plan (`trigger 'impact_propagation'`, recommended
+   path `harmonize`) is opened listing every affected object, so the
+   propagated update travels through review/re-approval rather than as silent
+   edits. Requires the legacy program link; skipped (and reported) otherwise.
+6. **Audit** — `canonical_fact.governed_change` is written to the audit trail
+   with the operator's required reason-for-change, both values, and the
+   propagation digest. Operator-declared values enter through
+   `establishGovernedFact` (`canonical_fact.established`), which refuses to
+   overwrite an existing active fact.
+
 ---
 
 ## 4 · Mapping to the §13 quality bars
