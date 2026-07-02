@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-01T17:04:25.252Z",
+  "generatedAt": "2026-07-02T21:13:44.101Z",
   "git": {
-    "sha": "d6c258aa6bf402e351b7de709fe9e1760f86371a",
+    "sha": "cc32c97c41f4e7f454ce8e5514f77bd0130778bf",
     "branch": "claude/ana-intelligence-questions-8q3xjj"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 239,
+    "duplicateBasenames": 240,
     "largeFilesByBytes": 29,
     "largeFilesByLines": 83
   },
@@ -1694,6 +1694,14 @@
         ]
       },
       {
+        "basename": "grounding-eval.test",
+        "count": 2,
+        "paths": [
+          "server/services/evidence/__tests__/grounding-eval.test.ts",
+          "tests/ai-safety/grounding-eval.test.ts"
+        ]
+      },
+      {
         "basename": "gspr-postmarket",
         "count": 2,
         "paths": [
@@ -2831,13 +2839,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 388,
+      "duplicateGroups": 389,
       "largeByBytes": 26,
       "largeByLines": 72
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 273,
+      "duplicateGroups": 274,
       "largeByBytes": 2,
       "largeByLines": 8
     },
