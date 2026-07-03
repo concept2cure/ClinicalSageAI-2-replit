@@ -11,6 +11,27 @@
 --    configuration (defaults mirror Anthropic's $25 top-up at $10 floor).
 -- ═══════════════════════════════════════════════════════════════════════════
 
+-- api_usage_logs was originally created in db/migrations/
+-- 20260319_billing_usage_budgets_alerts.sql — a directory outside this
+-- migration chain, so environments built from migrations/ alone (e.g. the
+-- Neon preview branch) may not have it. Create it here (identical
+-- definition, IF NOT EXISTS everywhere) so the ALTER below is always valid.
+CREATE TABLE IF NOT EXISTS api_usage_logs (
+  id SERIAL PRIMARY KEY,
+  organization_id INTEGER NOT NULL REFERENCES organizations(id),
+  user_id INTEGER,
+  module TEXT NOT NULL,                -- '510k', 'cer', 'ectd', 'cmc', 'ai_assistance', 'vault'
+  endpoint TEXT,
+  request_count INTEGER NOT NULL DEFAULT 1,
+  tokens_used INTEGER NOT NULL DEFAULT 0,
+  cost_cents INTEGER NOT NULL DEFAULT 0,
+  metadata JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS api_usage_org_date_idx ON api_usage_logs (organization_id, created_at);
+CREATE INDEX IF NOT EXISTS api_usage_module_idx ON api_usage_logs (module);
+
 ALTER TABLE api_usage_logs ADD COLUMN IF NOT EXISTS model TEXT;
 
 CREATE INDEX IF NOT EXISTS api_usage_org_model_date_idx
