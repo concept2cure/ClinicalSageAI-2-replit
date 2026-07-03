@@ -2047,6 +2047,35 @@ button.ctable-row { border-radius: 0; }
 /* ═════════════════════════════════════════════════════════════
    VAULT
    ═════════════════════════════════════════════════════════════ */
+
+/* Phase 5 full-surface layout (kit surfaces.css merged; kit tokens
+   --canvas-elevated/--border-100/--radius-md adapted to this sheet). */
+.vault-grid {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+.vault-rail {
+  background: var(--bg-050);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  position: sticky; top: 16px;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.vault-rail-lbl {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-400); font-weight: 600; padding: 4px 8px 6px;
+}
+.vault-grid .vault-main { min-width: 0; }
+.vault-grid .vault-drawer { position: sticky; top: 16px; }
+@media (max-width: 1280px) {
+  .vault-grid { grid-template-columns: 200px minmax(0, 1fr) 300px; }
+}
+
+/* Legacy workbench-tab layout (drawer/tree row styles below are shared
+   by the Phase 5 surface). */
 .vault-layout {
   display: grid; grid-template-columns: 220px 1fr 340px;
   gap: 12px; padding: 20px 32px 32px; min-height: calc(100vh - 220px);

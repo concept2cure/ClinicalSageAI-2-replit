@@ -1,27 +1,31 @@
 /**
- * VaultSurface — the document management surface (Workbench › Vault).
+ * VaultSurface — the document management surface (Document vault).
  *
- * Extracted from workbench/Workbench.tsx into its own surface file so
- * the vault follows the same surface/data/hooks structure as the other
- * MDX surfaces. Expanded toward the kit design in
- * design-system/ui_kits/mdx/surfaces/Vault.jsx: KPI strip, folder rail,
- * retention + distribution policy in the detail drawer, live version
- * history.
+ * Port of the kit's Phase 5 full vault surface
+ * (design-system/ui_kits/mdx/surfaces/Vault.jsx, mapped to this file by
+ * PHASE_5_INSTALL.md): folder rail on the left, DocumentsPanel as the
+ * center pane (framework filter pills included), version + audit drawer
+ * on the right — replacing the old workbench-tab body this surface
+ * originally shipped with.
  *
  * Data: useVault(programId) against GET /api/mdx/vault with fixture
- * fallback per the SampleDataBanner contract — when the live fetch is
- * idle, errors, or returns no rows, the canonical fixtures from
- * data/vault.ts render instead and the banner marks them as sample.
+ * fallback per the SampleDataBanner contract; version history for the
+ * selected artifact is live (useVaultVersions) with fixture fallback,
+ * and its provenance marker derives from the same value that picks the
+ * list. Folder selection validates at render — a folder absent from the
+ * current data set falls back to 'root' with no state-sync effect.
  */
 
 import * as React from 'react';
 import { I } from '../icons';
+import { DocumentsPanel } from '../components/DocumentsPanel';
+import type { KitDocument, KitDocFramework, DocStatus } from '../components/DocumentsPanel';
 import {
+  VAULT_DOC_FRAMEWORKS,
   VAULT_FILES,
-  VAULT_FILTERS,
-  VAULT_FOLDERS,
-  VAULT_KPIS,
   VAULT_VERSIONS,
+  vaultFoldersForFiles,
+  vaultKpisForFiles,
   type VaultFile,
   type VaultVersion,
 } from '../data/vault';
@@ -36,77 +40,70 @@ export interface VaultSurfaceProps {
   onOpenEditor?: (docId: string) => void;
 }
 
-function exportManifest(files: VaultFile[]) {
-  const headers = [
-    'Name', 'Type', 'Kind', 'Program', 'Size', 'Version', 'Status',
-    'Updated', 'Author', 'Retention', 'Distribution', 'SHA-256',
-  ];
-  const rows = files.map(f => [
-    f.name, f.type, f.kind, f.prog, f.size, f.ver, f.status,
-    f.updated, f.author, f.retention ?? '—', f.distribution ?? '—', f.hash,
-  ]);
-  const csv = [headers, ...rows]
-    .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
-    .join('\r\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `vault-manifest-${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+/** Adapt vault file rows into the DocumentsPanel shape (kit fileToDoc):
+ *  name → title, kind → framework tag, status → doc lifecycle. */
+const KIND_TO_FRAMEWORK: Record<string, string> = {
+  submission: 'k510',
+  label: 'k510',
+  clinical: 'pma',
+  csr: 'pma',
+  protocol: 'pma',
+  resp: 'agency',
+  qms: 'qms',
+  template: 'qms',
+  cert: 'qms',
+};
+
+function toDocStatus(status: VaultFile['status']): DocStatus {
+  if (status === 'locked') return 'locked';
+  if (status === 'final') return 'ready';
+  return status;
+}
+
+function fileToDoc(f: VaultFile): KitDocument {
+  return {
+    id: f.id,
+    framework: KIND_TO_FRAMEWORK[f.kind] ?? 'eng',
+    type: f.kind,
+    title: f.name,
+    ver: f.ver,
+    status: toDocStatus(f.status),
+    completion: f.status === 'locked' || f.status === 'final' ? 100 : f.status === 'review' ? 88 : 64,
+    blocker: f.blocker === true,
+    owner: f.author,
+    reviewers: [],
+    lastEdit: f.updated,
+    esigRequired: f.esig,
+    esigState: f.esig ? 'signed' : 'na',
+    signedBy: f.esig ? `${f.author} · ${f.updated}` : null as unknown as string | undefined,
+    sections: 1,
+    sectionsComplete: 1,
+    editor: 'vault-viewer',
+  };
 }
 
 export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfaceProps) {
   const [folder, setFolder] = React.useState('root');
-  const [filter, setFilter] = React.useState('all');
-  const [query, setQuery] = React.useState('');
   const [selected, setSelected] = React.useState<string | null>(null);
 
   const live = useVault(program?.id ?? null);
   const usingSample = !live.files || live.files.length === 0;
   const allFiles = usingSample ? VAULT_FILES : (live.files as VaultFile[]);
-  const folders = usingSample ? VAULT_FOLDERS : (live.folders ?? VAULT_FOLDERS);
-  const kpis = usingSample ? VAULT_KPIS : (live.kpis ?? VAULT_KPIS);
+  const folders = usingSample
+    ? vaultFoldersForFiles(VAULT_FILES)
+    : (live.folders ?? vaultFoldersForFiles(allFiles));
+  const kpis = usingSample ? vaultKpisForFiles(VAULT_FILES) : (live.kpis ?? vaultKpisForFiles(allFiles));
 
-  /* Selections are validated at render, not synced by effect: a folder or
-     type that no longer exists in the current data set (live ↔ sample flip,
-     live program switch) falls back to 'root'/'all' with no transient
-     wrong-folder render. */
+  /* Selection validates at render — a folder id absent from the current
+     data set (live ↔ sample flip, live program switch) reads as 'root'. */
   const activeFolder = folders.some(f => f.id === folder) ? folder : 'root';
 
-  /* Only offer type filters that match at least one file in the current
-     data set — live artifact kinds are free-form (category/type values),
-     so taxonomy filters with no matching kind would be dead rows. Kinds
-     outside the taxonomy still get a filter, labeled by their raw value. */
-  const filters = React.useMemo(() => {
-    const present = new Set(allFiles.map(f => f.kind));
-    const known = VAULT_FILTERS.filter(f => f.id === 'all' || present.has(f.id));
-    const knownIds = new Set(known.map(f => f.id));
-    const adHoc = [...present]
-      .filter(k => !knownIds.has(k))
-      .sort()
-      .map(k => ({ id: k, label: k }));
-    return [...known, ...adHoc];
-  }, [allFiles]);
-  const activeFilter = filters.some(f => f.id === filter) ? filter : 'all';
-
-  const files = allFiles.filter(
-    f =>
-      (activeFolder === 'root' || f.folder === activeFolder) &&
-      (activeFilter === 'all' || f.kind === activeFilter) &&
-      (!query ||
-        f.name.toLowerCase().includes(query.toLowerCase()) ||
-        f.hash.toLowerCase().includes(query.toLowerCase()) ||
-        f.author.toLowerCase().includes(query.toLowerCase())),
-  );
-  const sel = allFiles.find(f => f.id === selected) || files[0];
+  const filteredFiles = allFiles.filter(f => activeFolder === 'root' || f.folder === activeFolder);
+  const docs = filteredFiles.map(fileToDoc);
+  const sel = allFiles.find(f => f.id === selected) || filteredFiles[0];
 
   /* Live version history for the selected artifact; fixture fallback. The
-     provenance flag derives from the SAME value that picks the list, so
-     the '· sample' marker can never disagree with what is rendered. */
+     provenance flag derives from the SAME value that picks the list. */
   const liveVersionsQuery = useVaultVersions(!usingSample && sel ? sel.id : null);
   const liveVersions =
     !usingSample && liveVersionsQuery.versions && liveVersionsQuery.versions.length
@@ -114,8 +111,6 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
       : null;
   const versions: VaultVersion[] = liveVersions ?? VAULT_VERSIONS;
   const versionsAreSample = liveVersions === null;
-
-  const totalSize = files.reduce((s, f) => s + (parseFloat(f.size) || 0), 0);
 
   return (
     <>
@@ -129,22 +124,25 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
           </div>
         </div>
         <div className="page-actions">
-          {/* Manifest always covers the FULL vault, not the filtered view —
-              a partial CSV silently filed as the Part 11 manifest would be
-              an audit-record hazard. */}
-          <button className="btn ghost small" onClick={() => exportManifest(allFiles)}>
+          <button
+            className="btn ghost small"
+            onClick={() =>
+              onAskAna(
+                `Export the full vault manifest as a signed PDF, including SHA-256 chain validation across all ${allFiles.length} artifacts.`,
+              )
+            }
+          >
             {I.download} Export manifest
           </button>
           <button
             className="btn primary small"
             onClick={() =>
               onAskAna(
-                'Walk me through uploading a document to the vault. Confirm the program, section, document type, ' +
-                  'version, and whether an e-signature is required, then file it into the right folder with hash + audit entry.',
+                'Upload an artifact to the vault. Confirm program, section, document type, version, and e-signature requirement, then file it with hash + audit entry.',
               )
             }
           >
-            {I.plus} Upload
+            {I.upload} Upload
           </button>
         </div>
       </div>
@@ -164,9 +162,10 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
         ))}
       </div>
 
-      <div className="vault-layout">
-        <aside className="vault-tree">
-          <div className="vault-tree-lbl">Folders</div>
+      <div className="vault-grid">
+        {/* Folder rail */}
+        <aside className="vault-rail">
+          <div className="vault-rail-lbl">Folders</div>
           {folders.map(f => (
             <button
               key={f.id}
@@ -179,198 +178,128 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
               <span className="n">{f.count}</span>
             </button>
           ))}
-          <div className="vault-tree-lbl" style={{ marginTop: 14 }}>
-            Types
-          </div>
-          {filters.map(f => (
-            <button
-              key={f.id}
-              className="vault-tree-row small"
-              data-active={activeFilter === f.id}
-              onClick={() => setFilter(f.id)}
-            >
-              <span className="lbl">{f.label}</span>
-            </button>
-          ))}
         </aside>
 
-        <section className="vault-main">
-          <div className="vault-searchrow">
-            <div className="vault-search">
-              <span className="ico">{I.search}</span>
-              <input
-                placeholder="Search files, hashes, authors…"
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-              />
-            </div>
-            <span className="vault-meta">
-              {files.length} files{totalSize > 0 && <> · {totalSize.toFixed(1)} MB</>}
-            </span>
-          </div>
+        {/* Documents panel — main */}
+        <div className="vault-main">
+          <DocumentsPanel
+            title={folders.find(f => f.id === activeFolder)?.label || 'All artifacts'}
+            subtitle={`${filteredFiles.length} of ${allFiles.length} artifacts shown · click any row to preview · sparkle to ask AnA`}
+            docs={docs}
+            frameworks={VAULT_DOC_FRAMEWORKS as unknown as KitDocFramework[]}
+            onOpenEditor={id => {
+              setSelected(id);
+              onOpenEditor?.(id);
+            }}
+            onAskAna={onAskAna}
+          />
+        </div>
 
-          <div className="ctable">
-            <div
-              className="ctable-head"
-              style={{ gridTemplateColumns: '1fr 80px 80px 100px 100px 120px' }}
-            >
-              <div>Name</div>
-              <div>Type</div>
-              <div>Size</div>
-              <div>Version</div>
-              <div>Status</div>
-              <div>Updated</div>
+        {/* Detail drawer */}
+        {sel && (
+          <aside className="vault-drawer">
+            <div className="drawer-head">
+              <div className="drawer-eyebrow">
+                {sel.prog} · {sel.kind}
+              </div>
+              <div className="drawer-title">{sel.name}</div>
             </div>
-            {files.map(f => (
+            <div className="drawer-meta">
+              <div>
+                <div className="k">Version</div>
+                <div className="v mono">{sel.ver}</div>
+              </div>
+              <div>
+                <div className="k">Size</div>
+                <div className="v mono">{sel.size}</div>
+              </div>
+              <div>
+                <div className="k">Status</div>
+                <div className="v">
+                  <span className={`status-pill ${sel.status}`}>{sel.status}</span>
+                </div>
+              </div>
+              <div>
+                <div className="k">Linked</div>
+                <div className="v">{sel.linked} artifacts</div>
+              </div>
+              <div>
+                <div className="k">Author</div>
+                <div className="v">{sel.author}</div>
+              </div>
+              {sel.retention && (
+                <div>
+                  <div className="k">Retention</div>
+                  <div className="v">{sel.retention}</div>
+                </div>
+              )}
+              {sel.distribution && (
+                <div>
+                  <div className="k">Distribution</div>
+                  <div className="v">{sel.distribution}</div>
+                </div>
+              )}
+              <div>
+                <div className="k">SHA-256</div>
+                <div className="v mono tiny">{sel.hash}</div>
+              </div>
+            </div>
+
+            <div className="drawer-actions">
               <button
-                key={f.id}
-                className="ctable-row"
-                style={{ gridTemplateColumns: '1fr 80px 80px 100px 100px 120px' }}
-                data-on={sel?.id === f.id}
-                onClick={() => setSelected(f.id)}
-                onDoubleClick={() => onOpenEditor?.(f.id)}
+                className="btn primary small"
+                onClick={() =>
+                  onAskAna(
+                    `Download ${sel.name} (${sel.ver}, ${sel.size}, SHA-256 ${sel.hash}) — confirm distribution policy` +
+                      (sel.distribution ? ` (${sel.distribution})` : '') +
+                      ` and log access to audit trail.`,
+                  )
+                }
               >
-                <div className="vault-name">
-                  <span className={`vault-type ${f.type}`}>{f.type}</span>
-                  <span className="ctable-strong">{f.name}</span>
-                  {f.blocker && <span className="pill-err small">blocker</span>}
-                  {f.esig && (
-                    <span className="vault-esig" title="E-signed">
-                      {I.shieldCheck}
-                    </span>
-                  )}
-                </div>
-                <div>{f.kind}</div>
-                <div className="mono">{f.size}</div>
-                <div className="mono">{f.ver}</div>
-                <div>
-                  <span className={`status-pill ${f.status}`}>{f.status}</span>
-                </div>
-                <div>{f.updated}</div>
+                {I.download} Download
               </button>
+              <button
+                className="btn ghost small"
+                onClick={() =>
+                  onAskAna(`Preview ${sel.name} — surface outline, claims, and any open blockers.`)
+                }
+              >
+                {I.eye} Preview
+              </button>
+            </div>
+
+            <div className="drawer-section-lbl">
+              Version history{versionsAreSample ? ' · sample' : ''}
+            </div>
+            {versions.map((v, i) => (
+              <div key={i} className="version-row" data-status={v.status}>
+                <span className="mono version-v">{v.v}</span>
+                <div className="version-body">
+                  <div className="version-meta">
+                    {v.when} · {v.author}
+                  </div>
+                  <div className="version-note">{v.note}</div>
+                </div>
+              </div>
             ))}
-            {files.length === 0 && (
-              <div className="ctable-row" style={{ gridTemplateColumns: '1fr' }}>
-                <div style={{ color: 'var(--text-400)' }}>
-                  No artifacts match the current folder, type, and search.
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
 
-        <aside className="vault-drawer">
-          {sel && (
-            <>
-              <div className="drawer-head">
-                <div className="drawer-eyebrow">
-                  {sel.prog} · {sel.kind}
-                </div>
-                <div className="drawer-title">{sel.name}</div>
-              </div>
-              <div className="drawer-meta">
-                <div>
-                  <div className="k">Version</div>
-                  <div className="v mono">{sel.ver}</div>
-                </div>
-                <div>
-                  <div className="k">Size</div>
-                  <div className="v mono">{sel.size}</div>
-                </div>
-                <div>
-                  <div className="k">Status</div>
-                  <div className="v">
-                    <span className={`status-pill ${sel.status}`}>{sel.status}</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="k">Linked</div>
-                  <div className="v">{sel.linked} artifacts</div>
-                </div>
-                <div>
-                  <div className="k">Author</div>
-                  <div className="v">{sel.author}</div>
-                </div>
-                {sel.retention && (
-                  <div>
-                    <div className="k">Retention</div>
-                    <div className="v">{sel.retention}</div>
-                  </div>
-                )}
-                {sel.distribution && (
-                  <div>
-                    <div className="k">Distribution</div>
-                    <div className="v">{sel.distribution}</div>
-                  </div>
-                )}
-                <div>
-                  <div className="k">SHA-256</div>
-                  <div className="v mono tiny">{sel.hash}</div>
-                </div>
-              </div>
-
-              <div className="drawer-actions">
-                <button
-                  className="btn primary small"
-                  onClick={() =>
-                    onAskAna(
-                      `Download ${sel.name} (${sel.ver}, ${sel.size}, SHA-256 ${sel.hash}) from the vault — ` +
-                        `confirm export is permitted under the program's distribution policy` +
-                        (sel.distribution ? ` (${sel.distribution})` : '') +
-                        ` and log the access in the audit trail.`,
-                    )
-                  }
-                >
-                  {I.download} Download
-                </button>
-                <button
-                  className="btn ghost small"
-                  onClick={() =>
-                    onAskAna(
-                      `Preview ${sel.name} (${sel.kind} · ${sel.ver}). Surface its outline, key claims, and any open blockers without leaving the vault.`,
-                    )
-                  }
-                >
-                  {I.eye} Preview
-                </button>
-                <button className="btn ghost small" onClick={() => onAskAna(`Summarize ${sel.name}`)}>
-                  {I.sparkles} Ask Claude
-                </button>
-              </div>
-
-              <div className="drawer-section-lbl">
-                Version history{versionsAreSample ? ' · sample' : ''}
-              </div>
-              {versions.map((v, i) => (
-                <div key={i} className="version-row" data-status={v.status}>
-                  <span className="mono version-v">{v.v}</span>
-                  <div className="version-body">
-                    <div className="version-meta">
-                      {v.when} · {v.author}
-                    </div>
-                    <div className="version-note">{v.note}</div>
-                  </div>
-                </div>
-              ))}
-
-              <div className="drawer-section-lbl">Audit trail</div>
-              <div className="audit-row">
-                <span className="mono">AUD-9101</span>
-                <span>
-                  Signed by {sel.author} · {sel.updated}
-                </span>
-              </div>
-              <div className="audit-row">
-                <span className="mono">AUD-9098</span>
-                <span>Checksum verified · system</span>
-              </div>
-              <div className="audit-row">
-                <span className="mono">AUD-9094</span>
-                <span>Uploaded · {sel.author}</span>
-              </div>
-            </>
-          )}
-        </aside>
+            <div className="drawer-section-lbl">Recent audit</div>
+            <div className="audit-row">
+              <span className="mono">A-9924812</span>
+              <span>
+                Signed · {sel.author} · {sel.updated}
+              </span>
+            </div>
+            <div className="audit-row">
+              <span className="mono">A-9924809</span>
+              <span>SHA-256 verified · system · 2m ago</span>
+            </div>
+            <div className="audit-row">
+              <span className="mono">A-9924801</span>
+              <span>Uploaded · {sel.author} · 6d ago</span>
+            </div>
+          </aside>
+        )}
       </div>
     </>
   );
