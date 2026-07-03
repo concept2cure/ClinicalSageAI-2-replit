@@ -35,6 +35,16 @@ import {
   getOverageLedger,
 } from '../services/weekly-usage-limits.js';
 import { checkSeatAvailability, setSeatsPurchased, isSeatEnforcementOn } from '../services/seat-licensing.js';
+import { getUsageLimitsSnapshot, getWeeklyUsageByModel } from '../services/usage-windows.js';
+import {
+  getCreditBalance,
+  getCreditLedger,
+  getAutoReload,
+  setAutoReload,
+  addCreditEntry,
+} from '../services/credit-ledger.js';
+import { resolveCapabilities } from '../services/entitlements/resolver.js';
+import { requirePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import Stripe from 'stripe';
 
 import { createScopedLogger } from '../utils/logger.js';
@@ -826,6 +836,133 @@ router.put('/weekly-limits/:metric', authenticateToken, requireRole('admin', 'ow
     }
     logger.error('Set weekly limit error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to set weekly usage limit' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Plan usage windows (Anthropic-style session + weekly per-model buckets)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /usage/limits — the "Plan usage limits" snapshot: current session window
+// (% used, resets at) + weekly "All models" and premium buckets.
+router.get('/usage/limits', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    res.json(await getUsageLimitsSnapshot(orgId));
+  } catch (error) {
+    logger.error('Get usage limits error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load plan usage limits' });
+  }
+});
+
+// GET /usage/by-model — weekly per-model drill-down beneath the bucket bars.
+router.get('/usage/by-model', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    res.json({ models: await getWeeklyUsageByModel(orgId) });
+  } catch (error) {
+    logger.error('Get usage by model error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load per-model usage' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Credit balance + auto-reload (Anthropic-style billing page)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /credits — current balance, recent ledger, auto-reload settings.
+router.get('/credits', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const [balanceCents, ledger, autoReload] = await Promise.all([
+      getCreditBalance(orgId),
+      getCreditLedger(orgId, 50),
+      getAutoReload(orgId),
+    ]);
+    res.json({ balanceCents, ledger, autoReload });
+  } catch (error) {
+    logger.error('Get credits error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to load credit balance' });
+  }
+});
+
+// PUT /credits/auto-reload — set the "top off to $X when balance is $Y" rule.
+// GOVERNED: org admins only, reason-for-change required, audited (Part 11).
+router.put('/credits/auto-reload', authenticateToken, requireRole('admin', 'owner'), async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    const userId = getUserId(req);
+    if (!userId) return res.status(401).json({ error: 'User context required' });
+
+    const { enabled, thresholdCents, topupCents, reason } = req.body ?? {};
+    if (!reason || typeof reason !== 'string' || !reason.trim()) {
+      return res.status(400).json({ error: 'A reason-for-change is required to change auto-reload settings' });
+    }
+    const saved = await setAutoReload(
+      orgId,
+      { enabled: Boolean(enabled), thresholdCents: Number(thresholdCents), topupCents: Number(topupCents) },
+      { userId },
+      reason,
+    );
+    res.json({ autoReload: saved });
+  } catch (error) {
+    const validation = (error as any)?.validation;
+    if (Array.isArray(validation)) return res.status(400).json({ error: (error as Error).message, validation });
+    logger.error('Set auto-reload error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to set auto-reload' });
+  }
+});
+
+// POST /credits/adjust — grant / adjust an org's credit balance. PLATFORM
+// ADMIN ONLY: ledger credits move money-equivalent value, so tenants cannot
+// self-issue them; payment-backed purchases wire through Stripe checkout
+// separately. Audited via the ledger row (created_by) + description.
+router.post('/credits/adjust', authenticateToken, requirePlatformAdmin, async (req: Request, res: Response) => {
+  try {
+    const userId = getUserId(req);
+    const { organizationId, entryType, amountCents, description, reference } = req.body ?? {};
+    const targetOrg = Number(organizationId);
+    if (!Number.isInteger(targetOrg) || targetOrg <= 0) {
+      return res.status(400).json({ error: 'organizationId must be a positive integer' });
+    }
+    if (entryType !== 'grant' && entryType !== 'adjustment') {
+      return res.status(400).json({ error: "entryType must be 'grant' or 'adjustment'" });
+    }
+    if (!description || typeof description !== 'string' || !description.trim()) {
+      return res.status(400).json({ error: 'A description (reason) is required for a credit adjustment' });
+    }
+    const entry = await addCreditEntry(
+      targetOrg,
+      { entryType, amountCents: Number(amountCents), description, reference, allowNegative: entryType === 'adjustment' },
+      { userId },
+    );
+    res.json({ entry });
+  } catch (error) {
+    const validation = (error as any)?.validation;
+    if (Array.isArray(validation)) return res.status(400).json({ error: (error as Error).message, validation });
+    logger.error('Credit adjust error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to adjust credits' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Capabilities (unified entitlement view)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// GET /capabilities — effective capabilities: tier matrix ⊕ toggle grants,
+// module subscriptions, and the org-relevant flags (the settings page shape).
+router.get('/capabilities', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
+    res.json(await resolveCapabilities(orgId));
+  } catch (error) {
+    logger.error('Get capabilities error', { err: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ error: 'Failed to resolve capabilities' });
   }
 });
 

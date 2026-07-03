@@ -11,6 +11,7 @@
 
 export * from './types';
 export * from './mdx-entitlements';
+export * from './resolver';
 
 import entitlements from './mdx-entitlements';
 

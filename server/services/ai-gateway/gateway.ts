@@ -54,6 +54,7 @@ import {
   getOrgPlacementResolver,
   mergeOrgPolicyDefaults,
 } from './providers/org-placement';
+import { recordApiUsageSafe, usdToCents } from '../usage-recorder.js';
 import { createScopedLogger } from '../../utils/logger.js';
 const log = createScopedLogger('ai-gateway');
 
@@ -504,6 +505,7 @@ export class AIGateway {
         () => this.executeProvider(selectedModel, request, requestId, startTime), primaryRetries, 1000, overloadPolicy
       );
       this.recordSuccess(selectedModel.provider, response.latencyMs);
+      this.recordTenantUsage(request, response, true);
       await this.logAudit(request, response, strategy, true, undefined, triedModels);
       return response;
     } catch (error: any) {
@@ -528,6 +530,7 @@ export class AIGateway {
           () => this.executeProvider(fallback, request, requestId, startTime), 1, 1000, overloadPolicy
         );
         this.recordSuccess(fallback.provider, response.latencyMs);
+        this.recordTenantUsage(request, response, true);
         await this.logAudit(request, response, strategy, true, undefined, triedModels);
         return response;
       } catch (error: any) {
@@ -552,6 +555,7 @@ export class AIGateway {
       deterministic: false,
       finishReason: 'error',
     };
+    this.recordTenantUsage(request, errorResponse, false);
     await this.logAudit(request, errorResponse, strategy, false, lastError?.message, triedModels);
 
     throw new GatewayAllProvidersFailedError(
@@ -1663,6 +1667,43 @@ export class AIGateway {
     } catch (auditError: any) {
       log.error(`[AI Gateway] Audit log failed: ${auditError.message}`);
     }
+  }
+
+  /**
+   * Meter this call into api_usage_logs — the billing/limits source table
+   * (dashboard usage, weekly limits, session/weekly plan windows). Distinct
+   * from logAudit: audit is the compliance ledger and can be toggled off;
+   * tenant metering must survive that toggle. Fire-and-forget — a metering
+   * outage never fails the AI call. Calls without a tenant org id are not
+   * metered (the recorder drops them rather than guessing attribution).
+   */
+  private recordTenantUsage(
+    request: GatewayRequest,
+    response: GatewayResponse,
+    success: boolean
+  ): void {
+    const orgRaw = request.organizationId;
+    const orgId = typeof orgRaw === 'string' ? Number.parseInt(orgRaw, 10) : orgRaw;
+    if (orgId == null || !Number.isFinite(orgId) || orgId <= 0) return;
+    const userRaw = request.userId;
+    const userId = typeof userRaw === 'string' ? Number.parseInt(userRaw, 10) : userRaw;
+    recordApiUsageSafe({
+      organizationId: orgId,
+      userId: userId != null && Number.isFinite(userId) ? userId : null,
+      module: request.callerModule || 'ai_assistance',
+      endpoint: request.taskType,
+      model: response.model,
+      requestCount: 1,
+      tokensUsed: response.usage.totalTokens,
+      costCents: usdToCents(response.usage.estimatedCostUsd),
+      metadata: {
+        provider: response.provider,
+        requestId: response.requestId,
+        success,
+        estimatedCostUsd: response.usage.estimatedCostUsd,
+        cached: response.cached === true,
+      },
+    });
   }
 
   /** SHA-256 of the canonicalized prompt messages, for reproducibility audit. */

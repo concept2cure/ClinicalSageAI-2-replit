@@ -17535,6 +17535,7 @@ export const apiUsageLogs = pgTable(
     userId: integer('user_id'),
     module: text('module').notNull(), // '510k', 'cer', 'ectd', 'cmc', 'ai_assistance', 'vault'
     endpoint: text('endpoint'),
+    model: text('model'), // LLM that served the call (per-model usage buckets)
     requestCount: integer('request_count').default(1).notNull(),
     tokensUsed: integer('tokens_used').default(0).notNull(),
     costCents: integer('cost_cents').default(0).notNull(), // cost in cents
@@ -17544,6 +17545,11 @@ export const apiUsageLogs = pgTable(
   table => ({
     orgDateIdx: index('api_usage_org_date_idx').on(table.organizationId, table.createdAt),
     moduleIdx: index('api_usage_module_idx').on(table.module),
+    orgModelDateIdx: index('api_usage_org_model_date_idx').on(
+      table.organizationId,
+      table.model,
+      table.createdAt
+    ),
   })
 );
 
@@ -17635,6 +17641,49 @@ export const featureToggles = pgTable(
 );
 
 export type FeatureToggle = InferSelectModel<typeof featureToggles>;
+
+// ============================================================
+// BILLING: CREDIT BALANCE LEDGER + AUTO-RELOAD
+// ============================================================
+// Rechargeable usage-credit balance (Anthropic-style): an append-only
+// signed ledger (credits positive, debits negative; balance is the sum)
+// plus per-org auto-reload settings ("top off to $X when balance is $Y").
+
+export const creditLedger = pgTable(
+  'credit_ledger',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .references(() => organizations.id)
+      .notNull(),
+    entryType: text('entry_type').notNull(), // grant | purchase | auto_reload | debit | adjustment
+    amountCents: integer('amount_cents').notNull(),
+    balanceAfterCents: integer('balance_after_cents').notNull(),
+    description: text('description'),
+    reference: text('reference'), // Stripe payment intent, feature run id, ...
+    createdBy: integer('created_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgDateIdx: index('credit_ledger_org_date_idx').on(table.organizationId, table.createdAt),
+  })
+);
+
+export type CreditLedgerEntry = InferSelectModel<typeof creditLedger>;
+
+export const creditAutoreloadSettings = pgTable('credit_autoreload_settings', {
+  organizationId: integer('organization_id')
+    .references(() => organizations.id)
+    .primaryKey(),
+  enabled: boolean('enabled').default(false).notNull(),
+  thresholdCents: integer('threshold_cents').default(1000).notNull(),
+  topupCents: integer('topup_cents').default(2500).notNull(),
+  updatedBy: integer('updated_by'),
+  reason: text('reason'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type CreditAutoreloadSettings = InferSelectModel<typeof creditAutoreloadSettings>;
 
 // ============================================================
 // BUSINESS CENTER — cost accounting config (platform-global)

@@ -3,6 +3,7 @@ import chatRoutes from '../routes/chat';
 import indGenerationRoutes from '../routes/ind-generation';
 import regulatoryRegistryRoutes from '../routes/regulatory-registry';
 import { authenticateToken } from '../middleware/auth.js';
+import { enforceWeeklyLimit } from '../middleware/enforceWeeklyLimit.js';
 
 export async function registerAiRoutes({ app, pool, aiCircuitBreaker }: RouteBootstrapContext) {
   // SECURITY: AI routes are auth-gated for two reasons. First, they
@@ -14,16 +15,24 @@ export async function registerAiRoutes({ app, pool, aiCircuitBreaker }: RouteBoo
   // loop. authenticateToken before the rate limiters (which are
   // mounted earlier in the middleware stack) gives a layered defense.
 
+  // USAGE LIMITS: the LLM-backed families additionally pass through the
+  // weekly `requests` limit (services/weekly-usage-limits). Strictly
+  // opt-in per org — with no configured limit the check is a no-op — and
+  // fail-open, so a metering outage never blocks an AI call. This is the
+  // enforcement half of the Anthropic-style plan-usage model; the
+  // dashboard half reads /api/billing/usage/limits.
+  const weeklyRequestLimit = enforceWeeklyLimit('requests');
+
   try {
     const anaFeaturesModule = await import('../routes/ana-features');
-    app.use('/api/ana', authenticateToken, anaFeaturesModule.default);
+    app.use('/api/ana', authenticateToken, weeklyRequestLimit, anaFeaturesModule.default);
   } catch (error) {
     console.error('❌ Failed to mount AnA Features routes:', error);
   }
 
   try {
     const anaRiModule = await import('../routes/ana-ri');
-    app.use('/api/ana-ri', authenticateToken, aiCircuitBreaker, anaRiModule.default);
+    app.use('/api/ana-ri', authenticateToken, aiCircuitBreaker, weeklyRequestLimit, anaRiModule.default);
   } catch (error) {
     console.error('❌ Failed to mount AnA RI routes:', error);
   }
@@ -37,7 +46,7 @@ export async function registerAiRoutes({ app, pool, aiCircuitBreaker }: RouteBoo
     console.error('❌ Failed to mount external evidence routes:', error);
   }
 
-  app.use('/api/chat', authenticateToken, chatRoutes);
+  app.use('/api/chat', authenticateToken, weeklyRequestLimit, chatRoutes);
   app.use('/api/ind-generation', authenticateToken, indGenerationRoutes);
   app.use('/api/regulatory', authenticateToken, regulatoryRegistryRoutes);
 
@@ -97,7 +106,7 @@ export async function registerAiRoutes({ app, pool, aiCircuitBreaker }: RouteBoo
 
   try {
     const anaIntelligenceRoutes = await import('../routes/ana-intelligence');
-    app.use('/api/claude', authenticateToken, anaIntelligenceRoutes.default);
+    app.use('/api/claude', authenticateToken, weeklyRequestLimit, anaIntelligenceRoutes.default);
   } catch (error) {
     console.error('❌ Failed to mount Claude Intelligence routes:', error);
   }
