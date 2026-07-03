@@ -8316,6 +8316,131 @@ export const GET_TMF_VIEW: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Document Operations Tools — governed writes + cross-store search + plan
+// introspection. Writes require a reason-for-change (min 8 chars) and are
+// audited; reads are tenant-scoped. Together with the View Tools these give
+// AnA the full document lifecycle: find → read → draft/save → version →
+// file to TMF → track completeness — plus plan/credit answers for clients.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const SAVE_DOCUMENT_TO_VAULT: AnaTool = {
+  name: 'save_document_to_vault',
+  description:
+    "Save a NEW document into the organization's vault: creates the artifact (status draft, version 1) with a SHA-256 content hash and an immutable version-1 snapshot. Use when AnA has drafted content the client wants filed. GOVERNED: requires a reason, is audited, and is tenant-scoped. Returns the new document's ids.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string', description: 'Document title.' },
+      content: { type: 'string', description: 'Full document text/content.' },
+      category: { type: 'string', description: "Category, e.g. 'document', 'report', 'correspondence'. Default 'document'." },
+      ctd_section: { type: 'string', description: "Optional CTD section, e.g. '2.7.3'." },
+      reason: { type: 'string', description: 'Reason-for-change (min 8 chars) — recorded in the audit trail.' },
+    },
+    required: ['title', 'content', 'reason'],
+  },
+};
+
+export const UPDATE_VAULT_DOCUMENT: AnaTool = {
+  name: 'update_vault_document',
+  description:
+    "Save a NEW VERSION of an existing vault document: bumps the version, replaces the working content, recomputes the SHA-256 hash, and writes an immutable version snapshot with the reason as the change description. Refuses locked documents (finalized content is immutable). GOVERNED: reason required, audited, tenant-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      artifact_id: { type: 'string', description: "Numeric id or 'artifact_…' external id." },
+      content: { type: 'string', description: 'The full replacement content.' },
+      reason: { type: 'string', description: 'Reason-for-change (min 8 chars) — becomes the version change description.' },
+    },
+    required: ['artifact_id', 'content', 'reason'],
+  },
+};
+
+export const COMPARE_VAULT_VERSIONS: AnaTool = {
+  name: 'compare_vault_versions',
+  description:
+    "Compare two SEALED versions of a vault document by version number: returns each version's metadata (hash, author, timestamp, change description) plus a line-level change summary. Use get_document_versions first to see which versions exist; for a full section-level redline, feed the two contents to compare_document_versions. Tenant-scoped, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      artifact_id: { type: 'string', description: "Numeric id or 'artifact_…' external id." },
+      version_a: { type: 'number', description: 'Older version number.' },
+      version_b: { type: 'number', description: 'Newer version number.' },
+    },
+    required: ['artifact_id', 'version_a', 'version_b'],
+  },
+};
+
+export const SEED_TMF: AnaTool = {
+  name: 'seed_tmf',
+  description:
+    "Populate a Trial Master File with the expected-document skeleton from the TMF Reference Model catalog (ICH E6(R2) §8 essential documents). Idempotent — artifacts already present are skipped, so it can fill gaps in an in-progress TMF. Scope 'essential' seeds only essential documents; 'all' (default) seeds the full catalog. GOVERNED: reason required, audited, tenant-scoped. Use get_tmf_view afterwards to see the seeded index.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      tmf_file_id: { type: 'number', description: 'The TMF file id (from create_tmf or get_tmf_view).' },
+      scope: { type: 'string', enum: ['essential', 'all'], description: "Seed scope. Default 'all'." },
+      reason: { type: 'string', description: 'Reason-for-change (min 8 chars).' },
+    },
+    required: ['tmf_file_id', 'reason'],
+  },
+};
+
+export const UPDATE_TMF_ARTIFACT_STATUS: AnaTool = {
+  name: 'update_tmf_artifact_status',
+  description:
+    "Move a TMF artifact through its lifecycle: expected → received → in_review → final (or missing / not_applicable). Use after documents arrive or pass QC so the completeness gap-check reflects reality. GOVERNED: reason required, audited, tenant-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      tmf_artifact_id: { type: 'number', description: 'The TMF artifact id (from get_tmf_view / classify_tmf_artifact).' },
+      status: {
+        type: 'string',
+        enum: ['expected', 'received', 'in_review', 'final', 'missing', 'not_applicable'],
+        description: 'The new lifecycle status.',
+      },
+      document_date: { type: 'string', description: 'Optional document date (YYYY-MM-DD).' },
+      reason: { type: 'string', description: 'Reason-for-change (min 8 chars).' },
+    },
+    required: ['tmf_artifact_id', 'status', 'reason'],
+  },
+};
+
+export const SEARCH_ALL_DOCUMENTS: AnaTool = {
+  name: 'search_all_documents',
+  description:
+    "One search across every document store: vault artifacts, governed submission documents, and TMF artifacts — matched by title/name, returned as typed hits with ids ready for the read tools (read_vault_document, read_governed_document, get_tmf_view). Tenant-scoped, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: { type: 'string', description: 'Case-insensitive substring to match against titles/names.' },
+      limit: { type: 'number', description: 'Max hits per store. Default 15, max 50.' },
+    },
+    required: ['query'],
+  },
+};
+
+export const GET_PLAN_USAGE: AnaTool = {
+  name: 'get_plan_usage',
+  description:
+    "The organization's plan usage limits, Anthropic-style: the current 5-hour session window (% used, resets at) and the weekly 'All models' + premium-model buckets, plus a per-model weekly drill-down. Use when a client asks how much usage they have left, when limits reset, or which models are consuming budget. Tenant-scoped, read-only.",
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
+export const GET_BILLING_CREDITS: AnaTool = {
+  name: 'get_billing_credits',
+  description:
+    "The organization's usage-credit balance: current balance in cents, auto-reload settings ('top off to $X when balance is $Y'), and the most recent ledger entries. Use when a client asks about their credit balance or recent credit activity. Tenant-scoped, read-only.",
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
+export const GET_ORG_CAPABILITIES: AnaTool = {
+  name: 'get_org_capabilities',
+  description:
+    "The organization's effective capabilities: plan tier, which features the tier unlocks (with any pilot-flag grants), and enabled module subscriptions. Use when a client asks what their plan includes or why a feature is locked — answer honestly with the upgrade path (feature minTier) rather than guessing. Tenant-scoped, read-only.",
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
 const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   LIST_VAULT_DOCUMENTS,
   READ_VAULT_DOCUMENT,
@@ -8323,6 +8448,15 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   LIST_GOVERNED_DOCUMENTS,
   READ_GOVERNED_DOCUMENT,
   GET_TMF_VIEW,
+  SAVE_DOCUMENT_TO_VAULT,
+  UPDATE_VAULT_DOCUMENT,
+  COMPARE_VAULT_VERSIONS,
+  SEED_TMF,
+  UPDATE_TMF_ARTIFACT_STATUS,
+  SEARCH_ALL_DOCUMENTS,
+  GET_PLAN_USAGE,
+  GET_BILLING_CREDITS,
+  GET_ORG_CAPABILITIES,
   RECONCILE_DOSSIER_NUMBERS,
   GENERATE_SCHEDULE_OF_EVENTS,
   AMEND_SCHEDULE_OF_EVENTS,
