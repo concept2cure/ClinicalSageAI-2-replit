@@ -15,7 +15,7 @@
  * the plan's weekly all-models budget — an explicit org setting always wins
  * over a plan default.
  *
- * Window math is PURE (sessionWindowFromEvents, percentUsed) so it is
+ * Window math is PURE (currentSessionWindow, percentUsed) so it is
  * unit-testable without a DB; the snapshot function is a thin aggregator.
  */
 
@@ -69,32 +69,41 @@ export const PLAN_LABELS: Record<string, string> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface SessionWindow {
-  /** First metered event of the active session, or null when idle. */
+  /** First metered event of the active session, or null when idle/expired. */
   start: Date | null;
-  /** When the session window resets (start + 5h), or null when idle. */
+  /** When the session window resets (start + 5h), or null when idle/expired. */
   resetsAt: Date | null;
 }
 
 /**
- * PURE: derive the active session window from event timestamps. The session
- * anchor is the earliest event within the trailing SESSION_WINDOW_HOURS; the
- * window resets SESSION_WINDOW_HOURS after that anchor. No events in the
- * trailing window → idle (null/null).
+ * PURE: derive the CURRENT session window from event timestamps using the
+ * discrete-session model (how Anthropic's plan sessions work): the first
+ * event starts a session lasting exactly windowHours; events inside the
+ * window belong to it; the first event AFTER the window ends starts the
+ * next session with its own windowHours. The current session is the last
+ * one in the chain — and it only counts while `now` is inside its window
+ * (an expired session with no newer event → idle, usage resets to 0).
+ * Future timestamps are ignored.
  */
-export function sessionWindowFromEvents(
+export function currentSessionWindow(
   eventTimes: Date[],
   now: Date = new Date(),
   windowHours: number = SESSION_WINDOW_HOURS,
 ): SessionWindow {
-  const cutoff = now.getTime() - windowHours * 3_600_000;
-  let earliest: number | null = null;
-  for (const t of eventTimes) {
-    const ms = t.getTime();
-    if (!Number.isFinite(ms) || ms < cutoff || ms > now.getTime()) continue;
-    if (earliest === null || ms < earliest) earliest = ms;
+  const windowMs = windowHours * 3_600_000;
+  const times = eventTimes
+    .map(t => t.getTime())
+    .filter(ms => Number.isFinite(ms) && ms <= now.getTime())
+    .sort((a, b) => a - b);
+  if (times.length === 0) return { start: null, resetsAt: null };
+
+  let start = times[0];
+  for (const ms of times) {
+    if (ms >= start + windowMs) start = ms; // window over → this event opens the next session
   }
-  if (earliest === null) return { start: null, resetsAt: null };
-  return { start: new Date(earliest), resetsAt: new Date(earliest + windowHours * 3_600_000) };
+  const resetsAt = start + windowMs;
+  if (now.getTime() >= resetsAt) return { start: null, resetsAt: null }; // last session expired
+  return { start: new Date(start), resetsAt: new Date(resetsAt) };
 }
 
 /**
@@ -134,46 +143,66 @@ export interface UsageLimitsSnapshot {
  * The Anthropic-Usage-page-shaped snapshot for an org: session window +
  * weekly all-models and premium buckets, each with % used and reset time.
  */
+/** How far back the session chain is reconstructed. A session older than
+ *  this whose chain is still unbroken is treated as starting at the horizon
+ *  — a documented approximation that bounds the query to ≤ 1440 rows. */
+const SESSION_LOOKBACK_HOURS = 24;
+
 export async function getUsageLimitsSnapshot(
   organizationId: number,
   now: Date = new Date(),
 ): Promise<UsageLimitsSnapshot> {
-  // Plan tier → budgets (org-configured weekly limit overrides the default).
-  const orgRes = await pool.query<{ tier: string | null }>(
-    `SELECT tier FROM organizations WHERE id = $1`,
-    [organizationId],
-  );
+  // Tier, configured weekly limit, and the session's minute buckets are
+  // mutually independent — fetch them in parallel.
+  const [orgRes, configured, minuteRes] = await Promise.all([
+    pool.query<{ tier: string | null }>(
+      `SELECT tier FROM organizations WHERE id = $1`,
+      [organizationId],
+    ),
+    getLimit(organizationId, 'cost_cents').catch(() => null),
+    // Per-minute buckets over the look-back horizon: enough resolution to
+    // chain discrete sessions, bounded regardless of traffic volume.
+    pool.query<{ minute: Date; cost: string; tokens: string }>(
+      `SELECT date_trunc('minute', created_at) AS minute,
+              COALESCE(SUM(cost_cents), 0) AS cost,
+              COALESCE(SUM(tokens_used), 0) AS tokens
+         FROM api_usage_logs
+        WHERE organization_id = $1
+          AND created_at >= $2
+        GROUP BY 1
+        ORDER BY 1`,
+      [organizationId, new Date(now.getTime() - SESSION_LOOKBACK_HOURS * 3_600_000)],
+    ),
+  ]);
+
   const tier = orgRes.rows[0]?.tier && PLAN_USAGE_BUDGETS[orgRes.rows[0].tier]
     ? (orgRes.rows[0].tier as string)
     : 'standard';
   const budgets = PLAN_USAGE_BUDGETS[tier];
-
-  const configured = await getLimit(organizationId, 'cost_cents').catch(() => null);
   const weeklyBudget = configured?.enabled && configured.weeklyLimit > 0
     ? configured.weeklyLimit
     : budgets.weeklyCostCents;
   const weekStartDow = configured?.weekStartDow ?? 1;
 
-  // Session: aggregate + anchor in one pass over the trailing 5h.
-  const sessionRes = await pool.query<{
-    first_at: Date | null;
-    cost: string;
-    tokens: string;
-  }>(
-    `SELECT MIN(created_at) AS first_at,
-            COALESCE(SUM(cost_cents), 0) AS cost,
-            COALESCE(SUM(tokens_used), 0) AS tokens
-       FROM api_usage_logs
-      WHERE organization_id = $1
-        AND created_at >= $2`,
-    [organizationId, new Date(now.getTime() - SESSION_WINDOW_HOURS * 3_600_000)],
-  );
-  const sessionRow = sessionRes.rows[0];
-  const session = sessionWindowFromEvents(
-    sessionRow?.first_at ? [new Date(sessionRow.first_at)] : [],
-    now,
-  );
-  const sessionUsed = Number(sessionRow?.cost ?? 0);
+  // Discrete session: chain minute buckets into sessions; only usage inside
+  // the CURRENT (unexpired) session window counts — at resetsAt the meter
+  // honestly returns to 0 until the next call starts a new session.
+  const buckets = minuteRes.rows.map(r => ({
+    at: new Date(r.minute),
+    cost: Number(r.cost),
+    tokens: Number(r.tokens),
+  }));
+  const session = currentSessionWindow(buckets.map(b => b.at), now);
+  let sessionUsed = 0;
+  let sessionTokens = 0;
+  if (session.start && session.resetsAt) {
+    for (const b of buckets) {
+      if (b.at >= session.start && b.at < session.resetsAt) {
+        sessionUsed += b.cost;
+        sessionTokens += b.tokens;
+      }
+    }
+  }
 
   // Weekly: all-models + premium bucket in one pass over the current window.
   const { start: weekStart, end: weekEnd } = currentWeekWindow(weekStartDow, now);
@@ -204,7 +233,7 @@ export async function getUsageLimitsSnapshot(
       label: 'Current session',
       windowHours: SESSION_WINDOW_HOURS,
       usedCostCents: sessionUsed,
-      usedTokens: Number(sessionRow?.tokens ?? 0),
+      usedTokens: sessionTokens,
       budgetCostCents: budgets.sessionCostCents,
       pctUsed: percentUsed(sessionUsed, budgets.sessionCostCents),
       resetsAt: session.resetsAt ? session.resetsAt.toISOString() : null,

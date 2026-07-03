@@ -84,7 +84,9 @@ export function normalizeUsageEntry(entry: ApiUsageEntry): NormalizedUsageEntry 
     module,
     endpoint: entry.endpoint?.toString().trim() || null,
     model: entry.model?.toString().trim() || null,
-    requestCount: Math.max(1, clamp(entry.requestCount, 1)),
+    // Default 1; an EXPLICIT 0 is preserved — failed calls are recorded
+    // for observability without consuming the weekly 'requests' quota.
+    requestCount: entry.requestCount == null ? 1 : clamp(entry.requestCount, 0),
     tokensUsed: clamp(entry.tokensUsed, 0),
     costCents: clamp(entry.costCents, 0),
     metadata: entry.metadata ?? null,

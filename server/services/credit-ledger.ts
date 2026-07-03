@@ -339,21 +339,57 @@ export async function setAutoReload(
 }
 
 /**
- * Apply an auto-reload when the current balance qualifies. Idempotent per
- * qualifying dip in practice: the top-up itself raises the balance above the
- * threshold, so a second call after a single dip is a no-op. Best-effort —
- * returns null (never throws) when reload is off, unqualified, or errored.
+ * Apply an auto-reload when the current balance qualifies. The qualify
+ * check and the insert run in ONE transaction holding the same per-org
+ * advisory lock as every other ledger write, so two concurrent debits
+ * that both dip below the threshold produce exactly one reload: the
+ * second caller re-reads the post-reload balance under the lock and no
+ * longer qualifies. Best-effort — returns null (never throws) when
+ * reload is off, unqualified, or errored.
  */
 export async function maybeAutoReload(organizationId: number): Promise<CreditEntry | null> {
+  const client = await pool.connect();
   try {
-    const settings = await getAutoReload(organizationId);
-    const balance = await getCreditBalance(organizationId);
-    if (!shouldAutoReload(balance, settings)) return null;
-    const entry = await addCreditEntry(organizationId, {
-      entryType: 'auto_reload',
-      amountCents: settings.topupCents,
-      description: `Auto-reload: balance ${balance}¢ <= threshold ${settings.thresholdCents}¢`,
-    });
+    await client.query('BEGIN');
+    await client.query(`SELECT pg_advisory_xact_lock(hashtext('credit_ledger:' || $1::text))`, [organizationId]);
+
+    const settingsRes = await client.query(
+      `SELECT enabled, threshold_cents, topup_cents FROM credit_autoreload_settings WHERE organization_id = $1`,
+      [organizationId],
+    );
+    const settings = settingsRes.rows.length
+      ? {
+          enabled: settingsRes.rows[0].enabled === true,
+          thresholdCents: Number(settingsRes.rows[0].threshold_cents),
+          topupCents: Number(settingsRes.rows[0].topup_cents),
+        }
+      : DEFAULT_AUTORELOAD;
+
+    const balRes = await client.query<{ balance: string }>(
+      `SELECT COALESCE(SUM(amount_cents), 0) AS balance FROM credit_ledger WHERE organization_id = $1`,
+      [organizationId],
+    );
+    const balance = Number(balRes.rows[0]?.balance ?? 0);
+
+    if (!shouldAutoReload(balance, settings)) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    const res = await client.query(
+      `INSERT INTO credit_ledger
+         (organization_id, entry_type, amount_cents, balance_after_cents, description, created_at)
+       VALUES ($1, 'auto_reload', $2, $3, $4, NOW())
+       RETURNING *`,
+      [
+        organizationId,
+        settings.topupCents,
+        balance + settings.topupCents,
+        `Auto-reload: balance ${balance}¢ <= threshold ${settings.thresholdCents}¢`,
+      ],
+    );
+    await client.query('COMMIT');
+    const entry = rowToEntry(res.rows[0]);
     logger.info('auto-reload applied', {
       organizationId,
       topupCents: settings.topupCents,
@@ -361,10 +397,13 @@ export async function maybeAutoReload(organizationId: number): Promise<CreditEnt
     });
     return entry;
   } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
     logger.error('maybeAutoReload failed', {
       organizationId,
       err: err instanceof Error ? err.message : String(err),
     });
     return null;
+  } finally {
+    client.release();
   }
 }

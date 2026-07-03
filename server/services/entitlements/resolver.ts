@@ -51,7 +51,9 @@ export interface ResolvedModule {
 export interface ResolvedToggle {
   featureKey: string;
   enabled: boolean;
-  /** True when the flag applies to this org (globally enabled or org-listed). */
+  /** Always true in resolver output — flags that do not apply to the org
+   *  are dropped before returning, so one tenant never sees another
+   *  tenant's pilot flags or the platform's global flag catalog. */
   appliesToOrg: boolean;
 }
 
@@ -121,14 +123,18 @@ export async function resolveCapabilities(organizationId: number): Promise<Resol
     const res = await pool.query(
       `SELECT feature_key, enabled, enabled_for_organization_ids FROM feature_toggles`,
     );
-    toggles = res.rows.map((r: any) => {
+    // Tenant-scope the output: only flags that apply to THIS org are
+    // returned. Returning the whole table would disclose unreleased pilot
+    // flags and other tenants' rollout state to any authenticated user.
+    for (const r of res.rows) {
       const applies = toggleAppliesToOrg(
         { enabled: r.enabled === true, enabledForOrganizationIds: r.enabled_for_organization_ids },
         organizationId,
       );
-      if (applies) granted.add(String(r.feature_key));
-      return { featureKey: String(r.feature_key), enabled: r.enabled === true, appliesToOrg: applies };
-    });
+      if (!applies) continue;
+      granted.add(String(r.feature_key));
+      toggles.push({ featureKey: String(r.feature_key), enabled: r.enabled === true, appliesToOrg: true });
+    }
   } catch (err) {
     logger.error('feature_toggles lookup failed; continuing without flags', {
       organizationId,

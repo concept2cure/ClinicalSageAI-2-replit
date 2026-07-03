@@ -545,7 +545,9 @@ svg { display: block; }
 .status-pill.active    { background: var(--ai-muted); color: var(--ai); }
 .status-pill.na        { background: var(--bg-100); color: var(--text-500); }
 .status-pill.final     { background: var(--success-muted); color: var(--success); }
-.status-pill.locked    { background: var(--accent-000); color: var(--accent-200); border-color: var(--accent-muted); }
+/* Neutral, not accent — locked pills repeat per row, and accent orange is
+   reserved for one focal point per screen. */
+.status-pill.locked    { background: var(--bg-200); color: var(--text-200); border-color: var(--border-strong); }
 .status-pill.empty     { background: var(--bg-100); color: var(--text-500); border-color: var(--border); border-style: dashed; }
 .status-pill.included  { background: var(--success-muted); color: var(--success); }
 .status-pill.excluded  { background: var(--bg-100); color: var(--text-400); }

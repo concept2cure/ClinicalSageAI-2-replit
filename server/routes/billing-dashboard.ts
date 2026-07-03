@@ -902,9 +902,16 @@ router.put('/credits/auto-reload', authenticateToken, requireRole('admin', 'owne
     if (!reason || typeof reason !== 'string' || !reason.trim()) {
       return res.status(400).json({ error: 'A reason-for-change is required to change auto-reload settings' });
     }
+    // Partial update: omitted fields keep their current values, so a plain
+    // { enabled: false, reason } toggle works without re-supplying amounts.
+    const current = await getAutoReload(orgId);
     const saved = await setAutoReload(
       orgId,
-      { enabled: Boolean(enabled), thresholdCents: Number(thresholdCents), topupCents: Number(topupCents) },
+      {
+        enabled: enabled == null ? current.enabled : Boolean(enabled),
+        thresholdCents: thresholdCents == null ? current.thresholdCents : Number(thresholdCents),
+        topupCents: topupCents == null ? current.topupCents : Number(topupCents),
+      },
       { userId },
       reason,
     );

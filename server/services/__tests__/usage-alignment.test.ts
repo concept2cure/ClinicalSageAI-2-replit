@@ -12,7 +12,7 @@ import { describe, it, expect } from 'vitest';
 
 import { normalizeUsageEntry, usdToCents } from '../usage-recorder';
 import {
-  sessionWindowFromEvents,
+  currentSessionWindow,
   percentUsed,
   PLAN_USAGE_BUDGETS,
   SESSION_WINDOW_HOURS,
@@ -64,7 +64,12 @@ describe('normalizeUsageEntry', () => {
     expect(row.module).toBe('ai_assistance');
     expect(row.tokensUsed).toBe(0);
     expect(row.costCents).toBe(0);
-    expect(row.requestCount).toBe(1); // at least one request
+    expect(row.requestCount).toBe(1); // default when unspecified
+  });
+
+  it('preserves an explicit requestCount of 0 (failed calls do not consume quota)', () => {
+    expect(normalizeUsageEntry({ organizationId: 7, requestCount: 0 })!.requestCount).toBe(0);
+    expect(normalizeUsageEntry({ organizationId: 7, requestCount: -2 })!.requestCount).toBe(0);
   });
 
   it('preserves attribution fields', () => {
@@ -95,30 +100,54 @@ describe('normalizeUsageEntry', () => {
 // usage-windows
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('sessionWindowFromEvents', () => {
+describe('currentSessionWindow (discrete-session model)', () => {
   const now = new Date('2026-07-02T12:00:00Z');
   const h = 3_600_000;
+  const at = (hoursAgo: number) => new Date(now.getTime() - hoursAgo * h);
 
-  it('is idle with no events in the trailing window', () => {
-    expect(sessionWindowFromEvents([], now)).toEqual({ start: null, resetsAt: null });
-    // An event older than the window does not anchor a session.
-    const stale = new Date(now.getTime() - (SESSION_WINDOW_HOURS + 1) * h);
-    expect(sessionWindowFromEvents([stale], now)).toEqual({ start: null, resetsAt: null });
+  it('is idle with no events, and after the last session expires', () => {
+    expect(currentSessionWindow([], now)).toEqual({ start: null, resetsAt: null });
+    // A single event older than the window: its session ended, nothing restarted it.
+    expect(currentSessionWindow([at(SESSION_WINDOW_HOURS + 1)], now)).toEqual({
+      start: null,
+      resetsAt: null,
+    });
   });
 
-  it('anchors on the earliest event inside the window and resets 5h after it', () => {
-    const first = new Date(now.getTime() - 2.5 * h);
-    const later = new Date(now.getTime() - 1 * h);
-    const w = sessionWindowFromEvents([later, first], now);
+  it('anchors on the session first call and resets exactly 5h after it', () => {
+    const first = at(2.5);
+    const later = at(1);
+    const w = currentSessionWindow([later, first], now);
     expect(w.start?.toISOString()).toBe(first.toISOString());
     expect(w.resetsAt?.toISOString()).toBe(
       new Date(first.getTime() + SESSION_WINDOW_HOURS * h).toISOString(),
     );
   });
 
+  it('does NOT slide the anchor: an event during an earlier session belongs to it, and a later event starts a NEW session', () => {
+    // Session 1 anchored 7h ago (events at 7h and 4h ago; window ended 2h ago).
+    // Event 1h ago is after that window → it starts session 2.
+    const w = currentSessionWindow([at(7), at(4), at(1)], now);
+    expect(w.start?.toISOString()).toBe(at(1).toISOString());
+    expect(w.resetsAt?.toISOString()).toBe(
+      new Date(at(1).getTime() + SESSION_WINDOW_HOURS * h).toISOString(),
+    );
+  });
+
+  it('reports idle when the chained session has expired even with steady earlier usage', () => {
+    // Events at 12h, 8h, 6h ago: session 1 [12h→7h] contains 8h; 6h-ago event
+    // starts session 2 [6h→1h], which has now expired → idle, meter reads 0.
+    expect(currentSessionWindow([at(12), at(8), at(6)], now)).toEqual({
+      start: null,
+      resetsAt: null,
+    });
+  });
+
   it('ignores future timestamps', () => {
-    const future = new Date(now.getTime() + h);
-    expect(sessionWindowFromEvents([future], now)).toEqual({ start: null, resetsAt: null });
+    expect(currentSessionWindow([new Date(now.getTime() + h)], now)).toEqual({
+      start: null,
+      resetsAt: null,
+    });
   });
 });
 

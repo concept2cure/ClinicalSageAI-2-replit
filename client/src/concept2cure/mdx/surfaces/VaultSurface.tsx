@@ -71,16 +71,32 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
   const folders = usingSample ? VAULT_FOLDERS : (live.folders ?? VAULT_FOLDERS);
   const kpis = usingSample ? VAULT_KPIS : (live.kpis ?? VAULT_KPIS);
 
-  /* Reset folder selection when the folder set changes shape (live ↔ sample). */
-  React.useEffect(() => {
-    if (!folders.some(f => f.id === folder)) setFolder('root');
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  }, [usingSample]);
+  /* Selections are validated at render, not synced by effect: a folder or
+     type that no longer exists in the current data set (live ↔ sample flip,
+     live program switch) falls back to 'root'/'all' with no transient
+     wrong-folder render. */
+  const activeFolder = folders.some(f => f.id === folder) ? folder : 'root';
+
+  /* Only offer type filters that match at least one file in the current
+     data set — live artifact kinds are free-form (category/type values),
+     so taxonomy filters with no matching kind would be dead rows. Kinds
+     outside the taxonomy still get a filter, labeled by their raw value. */
+  const filters = React.useMemo(() => {
+    const present = new Set(allFiles.map(f => f.kind));
+    const known = VAULT_FILTERS.filter(f => f.id === 'all' || present.has(f.id));
+    const knownIds = new Set(known.map(f => f.id));
+    const adHoc = [...present]
+      .filter(k => !knownIds.has(k))
+      .sort()
+      .map(k => ({ id: k, label: k }));
+    return [...known, ...adHoc];
+  }, [allFiles]);
+  const activeFilter = filters.some(f => f.id === filter) ? filter : 'all';
 
   const files = allFiles.filter(
     f =>
-      (folder === 'root' || f.folder === folder) &&
-      (filter === 'all' || f.kind === filter) &&
+      (activeFolder === 'root' || f.folder === activeFolder) &&
+      (activeFilter === 'all' || f.kind === activeFilter) &&
       (!query ||
         f.name.toLowerCase().includes(query.toLowerCase()) ||
         f.hash.toLowerCase().includes(query.toLowerCase()) ||
@@ -88,13 +104,16 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
   );
   const sel = allFiles.find(f => f.id === selected) || files[0];
 
-  /* Live version history for the selected artifact; fixture fallback. */
-  const liveVersions = useVaultVersions(!usingSample && sel ? sel.id : null);
-  const versions: VaultVersion[] =
-    (!usingSample && liveVersions.versions && liveVersions.versions.length
-      ? liveVersions.versions
-      : VAULT_VERSIONS);
-  const versionsAreSample = usingSample || !liveVersions.versions || liveVersions.versions.length === 0;
+  /* Live version history for the selected artifact; fixture fallback. The
+     provenance flag derives from the SAME value that picks the list, so
+     the '· sample' marker can never disagree with what is rendered. */
+  const liveVersionsQuery = useVaultVersions(!usingSample && sel ? sel.id : null);
+  const liveVersions =
+    !usingSample && liveVersionsQuery.versions && liveVersionsQuery.versions.length
+      ? liveVersionsQuery.versions
+      : null;
+  const versions: VaultVersion[] = liveVersions ?? VAULT_VERSIONS;
+  const versionsAreSample = liveVersions === null;
 
   const totalSize = files.reduce((s, f) => s + (parseFloat(f.size) || 0), 0);
 
@@ -110,7 +129,10 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
           </div>
         </div>
         <div className="page-actions">
-          <button className="btn ghost small" onClick={() => exportManifest(files)}>
+          {/* Manifest always covers the FULL vault, not the filtered view —
+              a partial CSV silently filed as the Part 11 manifest would be
+              an audit-record hazard. */}
+          <button className="btn ghost small" onClick={() => exportManifest(allFiles)}>
             {I.download} Export manifest
           </button>
           <button
@@ -149,7 +171,7 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
             <button
               key={f.id}
               className="vault-tree-row"
-              data-active={folder === f.id}
+              data-active={activeFolder === f.id}
               onClick={() => setFolder(f.id)}
             >
               <span className="ico">{I.folder}</span>
@@ -160,11 +182,11 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
           <div className="vault-tree-lbl" style={{ marginTop: 14 }}>
             Types
           </div>
-          {VAULT_FILTERS.map(f => (
+          {filters.map(f => (
             <button
               key={f.id}
               className="vault-tree-row small"
-              data-active={filter === f.id}
+              data-active={activeFilter === f.id}
               onClick={() => setFilter(f.id)}
             >
               <span className="lbl">{f.label}</span>

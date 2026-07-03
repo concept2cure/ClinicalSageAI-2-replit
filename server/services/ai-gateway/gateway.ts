@@ -1693,7 +1693,10 @@ export class AIGateway {
       module: request.callerModule || 'ai_assistance',
       endpoint: request.taskType,
       model: response.model,
-      requestCount: 1,
+      // Failed calls are recorded (observability) but must not consume the
+      // weekly 'requests' quota — a provider outage would otherwise burn an
+      // org's limit on calls that returned nothing.
+      requestCount: success ? 1 : 0,
       tokensUsed: response.usage.totalTokens,
       costCents: usdToCents(response.usage.estimatedCostUsd),
       metadata: {
