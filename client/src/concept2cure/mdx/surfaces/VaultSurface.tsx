@@ -283,7 +283,11 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
               </div>
             ))}
 
-            <div className="drawer-section-lbl">Recent audit</div>
+            {/* Audit rows are kit sample copy until the per-artifact audit
+                endpoint ships (PHASE_5_INSTALL: useVaultDetail → versions +
+                audit) — labeled honestly so live tenants can't mistake
+                fixture entries for their real trail. */}
+            <div className="drawer-section-lbl">Recent audit · sample</div>
             <div className="audit-row">
               <span className="mono">A-9924812</span>
               <span>
