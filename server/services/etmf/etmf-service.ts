@@ -13,7 +13,8 @@
  */
 
 import { pool } from '../../db';
-import { classifyArtifact } from './etmf-logic';
+import { classifyArtifact, zoneName } from './etmf-logic';
+import { seedArtifacts } from './tmf-completeness';
 import type { ArtifactStatus } from '../../../shared/schema/etmf';
 
 interface Queryable {
@@ -69,6 +70,44 @@ export async function addArtifactTx(client: Queryable, orgId: number, userId: nu
     [orgId, tmfFileId, zone, section, input.artifactName, input.expected !== false, input.completenessRequired !== false, input.status ?? 'expected', input.documentDate ?? null, userId],
   );
   return { id: Number(rows[0].id), zone, classification };
+}
+
+/**
+ * Seed a TMF with the reference model's expected-document skeleton: one
+ * 'expected' placeholder per catalog artifact (tmf-completeness.ts), with
+ * completeness_required = essential. Idempotent — artifacts whose name is
+ * already present in the file (case-insensitive) are skipped, so seeding an
+ * in-progress TMF only fills the gaps. Returns per-outcome counts.
+ */
+export async function seedReferenceModelTx(
+  client: Queryable,
+  orgId: number,
+  userId: number,
+  tmfFileId: number,
+  scope: 'essential' | 'all' = 'all',
+): Promise<{ seeded: number; skipped: number }> {
+  await getTmf(client, orgId, tmfFileId);
+  const existing = await client.query(
+    `SELECT artifact_name FROM tmf_artifacts WHERE tmf_file_id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [tmfFileId, orgId],
+  );
+  const present = new Set(existing.rows.map((r: any) => String(r.artifact_name).trim().toLowerCase()));
+
+  let seeded = 0;
+  let skipped = 0;
+  for (const seed of seedArtifacts(scope)) {
+    if (present.has(seed.artifactName.trim().toLowerCase())) {
+      skipped += 1;
+      continue;
+    }
+    await client.query(
+      `INSERT INTO tmf_artifacts (organization_id, tmf_file_id, zone, section, artifact_name, expected, completeness_required, status, created_by)
+       VALUES ($1,$2,$3,$4,$5,TRUE,$6,'expected',$7)`,
+      [orgId, tmfFileId, seed.zone, zoneName(seed.zone), seed.artifactName, seed.completenessRequired, userId],
+    );
+    seeded += 1;
+  }
+  return { seeded, skipped };
 }
 
 const ARTIFACT_STATUSES = ['expected', 'received', 'in_review', 'final', 'missing', 'not_applicable'];

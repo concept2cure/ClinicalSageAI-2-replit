@@ -17,6 +17,11 @@
  */
 
 import type { Tone } from './workbench';
+import {
+  docKindsForView,
+  filingTypesForView,
+  type VaultViewId,
+} from '../../../../../shared/constants/domain/vault-taxonomy';
 
 export type VaultFileStatus = 'draft' | 'review' | 'final' | 'locked';
 
@@ -92,15 +97,21 @@ export const VAULT_FOLDERS: VaultFolder[] = [
   { id: 'corresp', label: 'Regulatory correspondence', count: 89,   parent: 'root' },
 ];
 
-export const VAULT_FILTERS: VaultFilter[] = [
-  { id: 'all',      label: 'All types' },
-  { id: 'report',   label: 'Test reports' },
-  { id: 'cert',     label: 'Certificates' },
-  { id: 'label',    label: 'Labeling' },
-  { id: 'code',     label: 'Software / SBOM' },
-  { id: 'supplier', label: 'Supplier docs' },
-  { id: 'resp',     label: 'FDA correspondence' },
-];
+/**
+ * Type filters and framework pills come from the shared cross-client
+ * taxonomy (shared/constants/domain/vault-taxonomy.ts), which serves
+ * pharma / biotech / device / ivd product owners plus the CRO/CDMO
+ * service view. This is the DEVICE view (the MDX module); the pharma,
+ * biotech, and service vault views derive theirs from the same source.
+ */
+export function vaultFiltersForView(view: VaultViewId): VaultFilter[] {
+  return [
+    { id: 'all', label: 'All types' },
+    ...docKindsForView(view).map(k => ({ id: k.value, label: k.label })),
+  ];
+}
+
+export const VAULT_FILTERS: VaultFilter[] = vaultFiltersForView('device');
 
 export const VAULT_KPIS: VaultKpi[] = [
   { label: 'Artifacts in vault', metric: '1,842', meta: '12 awaiting signature · 3 retention review' },
@@ -109,15 +120,19 @@ export const VAULT_KPIS: VaultKpi[] = [
   { label: 'Vault size',         metric: '4.2',   unit: 'GB', meta: 'Across 9 folders · 7-year+ retention' },
 ];
 
-/** Framework filter row for the artifact list (kit DocumentsPanel shape). */
-export const VAULT_DOC_FRAMEWORKS = [
-  { id: 'k510',   label: '510(k)',      desc: 'Submission artifacts' },
-  { id: 'pma',    label: 'PMA',         desc: 'Premarket approval' },
-  { id: 'cer',    label: 'CER',         desc: 'Clinical evaluation' },
-  { id: 'eng',    label: 'Engineering', desc: 'DHF + RMF' },
-  { id: 'qms',    label: 'QMS',         desc: 'Quality system' },
-  { id: 'agency', label: 'Agency',      desc: 'FDA / NB correspondence' },
-] as const;
+/** Framework filter row for the artifact list (kit DocumentsPanel shape),
+ *  derived per-view from the shared filing-type taxonomy. */
+export function vaultFrameworksForView(
+  view: VaultViewId,
+): Array<{ id: string; label: string; desc?: string }> {
+  return filingTypesForView(view).map(f => ({
+    id: f.value,
+    label: f.label,
+    desc: f.description,
+  }));
+}
+
+export const VAULT_DOC_FRAMEWORKS = vaultFrameworksForView('device');
 
 export const VAULT_FILES: VaultFile[] = [
   { id: 'f1',  name: 'TR-OR801-009 · Pull-out force, axial',     kind: 'report',   type: 'pdf',  size: '4.2 MB',  prog: 'OR-801', folder: 'or801',   ver: 'v3.2',  versions: 3, status: 'final',  updated: '30 min ago',  author: 'S. Marchetti',  linked: 4, esig: true,  hash: 'a91e…4f02', retention: '15 years',          distribution: 'org-internal' },

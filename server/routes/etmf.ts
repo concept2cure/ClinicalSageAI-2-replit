@@ -18,6 +18,7 @@ import {
   createTmfTx,
   addArtifactTx,
   setArtifactStatusTx,
+  seedReferenceModelTx,
   listTmfFiles,
   listArtifacts,
   getCompletenessInput,
@@ -94,6 +95,21 @@ router.get('/files', async (req, res) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   try { res.json(await listTmfFiles(orgId)); } catch (err) { fail(res, err); }
+});
+
+// POST /files/:id/seed — populate the expected-document skeleton from the
+// TMF Reference Model catalog (idempotent: fills gaps only). Governed —
+// seeding declares what the study is accountable to file.
+const seedSchema = z.object({ scope: z.enum(['essential', 'all']).optional(), reason });
+router.post('/files/:id/seed', async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
+  const parsed = seedSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  await governed(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
+    const result = await seedReferenceModelTx(client, orgId, userId, id, parsed.data.scope ?? 'all');
+    return { target: `tmf-file:${id}`, payload: result, body: { tmfFileId: id, ...result } };
+  });
 });
 
 const artifactSchema = z.object({
