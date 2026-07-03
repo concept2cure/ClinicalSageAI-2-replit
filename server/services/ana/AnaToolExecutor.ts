@@ -16301,3 +16301,250 @@ registerToolHandler('start_war_game', async (input, ctx) => {
     });
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Document View Tools — read/view access across every document store
+// (vault artifacts + versions, governed C2C documents + sections, eTMF).
+// All read-only, all org-scoped; a missing tenant context is a hard error.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const VIEW_MAX_CHARS_DEFAULT = 6_000;
+const VIEW_MAX_CHARS_CAP = 30_000;
+
+function viewLimit(input: Record<string, unknown>, key = 'limit', def = 25, cap = 100): number {
+  const raw = Number(input[key]);
+  return Number.isFinite(raw) ? Math.min(cap, Math.max(1, Math.round(raw))) : def;
+}
+
+function viewExcerpt(text: string, input: Record<string, unknown>): { content: string; totalChars: number; truncated: boolean } {
+  const raw = Number(input.max_chars);
+  const max = Number.isFinite(raw)
+    ? Math.min(VIEW_MAX_CHARS_CAP, Math.max(200, Math.round(raw)))
+    : VIEW_MAX_CHARS_DEFAULT;
+  return { content: text.slice(0, max), totalChars: text.length, truncated: text.length > max };
+}
+
+registerToolHandler('list_vault_documents', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'list_vault_documents requires tenant context.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const filters: string[] = [`a.status != 'archived'`];
+    const args: unknown[] = [ctx.organizationId];
+    if (typeof input.query === 'string' && input.query.trim()) {
+      args.push(`%${input.query.trim().replace(/[%_]/g, (m) => `\\${m}`)}%`);
+      filters.push(`a.title ILIKE $${args.length}`);
+    }
+    if (typeof input.status === 'string' && ['draft', 'review', 'approved', 'locked'].includes(input.status)) {
+      args.push(input.status);
+      filters.push(`a.status = $${args.length}`);
+    }
+    if (typeof input.ctd_prefix === 'string' && input.ctd_prefix.trim()) {
+      args.push(`${input.ctd_prefix.trim()}%`);
+      filters.push(`a.ctd_section ILIKE $${args.length}`);
+    }
+    args.push(viewLimit(input));
+    const { rows } = await getPool().query(
+      `SELECT a.id, a.artifact_id, a.title, a.type, a.category, a.ctd_section, a.status,
+              a.version, a.updated_at
+         FROM concept2cure_artifacts a
+        WHERE a.organization_id = $1 AND ${filters.join(' AND ')}
+        ORDER BY a.updated_at DESC
+        LIMIT $${args.length}`,
+      args,
+    );
+    return JSON.stringify({
+      ok: true,
+      count: rows.length,
+      documents: rows,
+      message: rows.length
+        ? `${rows.length} vault documents. Use read_vault_document with an id to open one.`
+        : 'No vault documents match the filters.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `list_vault_documents failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('read_vault_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'read_vault_document requires tenant context.' });
+  const artifactId = typeof input.artifact_id === 'string' ? input.artifact_id.trim() : '';
+  if (!artifactId) return JSON.stringify({ error: 'artifact_id (string) is required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const { rows } = await getPool().query(
+      `SELECT id, artifact_id, title, type, category, ctd_section, status, version,
+              content, content_hash, created_at, updated_at, locked_at
+         FROM concept2cure_artifacts
+        WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2)
+        LIMIT 1`,
+      [ctx.organizationId, artifactId],
+    );
+    if (!rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+    const { content, ...meta } = rows[0];
+    const excerpt = viewExcerpt(typeof content === 'string' ? content : JSON.stringify(content ?? ''), input);
+    return JSON.stringify({
+      ok: true,
+      document: meta,
+      content: excerpt.content,
+      totalChars: excerpt.totalChars,
+      truncated: excerpt.truncated,
+      ...(excerpt.truncated
+        ? { message: `Content truncated at ${excerpt.content.length} of ${excerpt.totalChars} characters — raise max_chars to read more.` }
+        : {}),
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `read_vault_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_document_versions', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'get_document_versions requires tenant context.' });
+  const artifactId = typeof input.artifact_id === 'string' ? input.artifact_id.trim() : '';
+  if (!artifactId) return JSON.stringify({ error: 'artifact_id (string) is required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const idRes = await getPool().query<{ id: number }>(
+      `SELECT id FROM concept2cure_artifacts
+        WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2) LIMIT 1`,
+      [ctx.organizationId, artifactId],
+    );
+    if (!idRes.rows.length) return JSON.stringify({ error: `No vault document '${artifactId}' in this organization.` });
+    const versions = await getPool().query(
+      `SELECT id, version_number, change_summary, content_hash, created_at, created_by_id
+         FROM c2c_artifact_versions
+        WHERE artifact_id = $1
+        ORDER BY version_number DESC`,
+      [idRes.rows[0].id],
+    );
+    return JSON.stringify({ ok: true, count: versions.rows.length, versions: versions.rows });
+  } catch (err: unknown) {
+    // Version table lives in a separate migration; absent table → empty history.
+    if ((err as { code?: string }).code === '42P01') return JSON.stringify({ ok: true, count: 0, versions: [] });
+    return JSON.stringify({ error: `get_document_versions failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('list_governed_documents', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'list_governed_documents requires tenant context.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const filters: string[] = [];
+    const args: unknown[] = [ctx.organizationId];
+    for (const [key, col] of [['doc_type', 'doc_type'], ['agency', 'agency'], ['status', 'status']] as const) {
+      const v = input[key];
+      if (typeof v === 'string' && v.trim()) {
+        args.push(v.trim().toLowerCase());
+        filters.push(`d.${col} = $${args.length}`);
+      }
+    }
+    args.push(viewLimit(input));
+    const { rows } = await getPool().query(
+      `SELECT d.id, d.project_id, d.doc_type, d.agency, d.title, d.status, d.readiness, d.updated_at
+         FROM c2c_documents d
+        WHERE d.org_id = $1${filters.length ? ` AND ${filters.join(' AND ')}` : ''}
+        ORDER BY d.updated_at DESC
+        LIMIT $${args.length}`,
+      args,
+    );
+    return JSON.stringify({
+      ok: true,
+      count: rows.length,
+      documents: rows,
+      message: rows.length
+        ? `${rows.length} governed documents. Use read_governed_document with a document id for its outline or a section's content.`
+        : 'No governed documents match the filters.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `list_governed_documents failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('read_governed_document', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'read_governed_document requires tenant context.' });
+  const documentId = typeof input.document_id === 'string' ? input.document_id.trim() : '';
+  if (!documentId) return JSON.stringify({ error: 'document_id (string) is required.' });
+  try {
+    const { getPool } = await import('../../db.js');
+    const doc = await getPool().query(
+      `SELECT id, doc_type, agency, title, status, readiness FROM c2c_documents
+        WHERE org_id = $1 AND id = $2 LIMIT 1`,
+      [ctx.organizationId, documentId],
+    );
+    if (!doc.rows.length) return JSON.stringify({ error: `No governed document '${documentId}' in this organization.` });
+
+    const sectionKey = typeof input.section_key === 'string' ? input.section_key.trim() : '';
+    if (!sectionKey) {
+      const outline = await getPool().query(
+        `SELECT section_key, parent_key, label, status, mandatory, version, path_order
+           FROM c2c_document_sections
+          WHERE document_id = $1
+          ORDER BY path_order`,
+        [documentId],
+      );
+      return JSON.stringify({
+        ok: true,
+        document: doc.rows[0],
+        outline: outline.rows,
+        message: `Outline with ${outline.rows.length} sections. Call again with section_key to read a section's content.`,
+      });
+    }
+
+    const section = await getPool().query(
+      `SELECT section_key, label, status, mandatory, version, content
+         FROM c2c_document_sections
+        WHERE document_id = $1 AND section_key = $2 LIMIT 1`,
+      [documentId, sectionKey],
+    );
+    if (!section.rows.length) {
+      return JSON.stringify({ error: `Section '${sectionKey}' not found in document '${documentId}'.` });
+    }
+    const { content, ...sectionMeta } = section.rows[0];
+    const excerpt = viewExcerpt(typeof content === 'string' ? content : JSON.stringify(content ?? ''), input);
+    return JSON.stringify({
+      ok: true,
+      document: doc.rows[0],
+      section: sectionMeta,
+      content: excerpt.content,
+      totalChars: excerpt.totalChars,
+      truncated: excerpt.truncated,
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `read_governed_document failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_tmf_view', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'get_tmf_view requires tenant context.' });
+  try {
+    const { listTmfFiles, listArtifacts, getCompletenessInput } = await import('../etmf/etmf-service.js');
+    const { evaluateCompleteness, zoneName } = await import('../etmf/etmf-logic.js');
+    const orgId = Number(ctx.organizationId);
+
+    const tmfFileId = Number(input.tmf_file_id);
+    if (!Number.isFinite(tmfFileId)) {
+      const files = await listTmfFiles(orgId);
+      return JSON.stringify({
+        ok: true,
+        count: files.length,
+        tmf_files: files,
+        message: files.length
+          ? 'Call again with tmf_file_id for a TMF index + completeness view.'
+          : 'No TMF files yet — create_tmf opens one.',
+      });
+    }
+
+    const [artifacts, completenessInput] = await Promise.all([
+      listArtifacts(orgId, tmfFileId),
+      getCompletenessInput(orgId, tmfFileId),
+    ]);
+    const completeness = evaluateCompleteness(completenessInput);
+    const byZone: Record<string, unknown[]> = {};
+    for (const a of artifacts) {
+      const label = `Zone ${a.zone} · ${zoneName(Number(a.zone))}`;
+      (byZone[label] ??= []).push(a);
+    }
+    return JSON.stringify({ ok: true, tmf_file_id: tmfFileId, zones: byZone, completeness });
+  } catch (err) {
+    return JSON.stringify({ error: `get_tmf_view failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});

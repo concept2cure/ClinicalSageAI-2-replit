@@ -8216,7 +8216,113 @@ const START_WAR_GAME: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Document View Tools — read/view access across every document store the
+// platform holds: vault artifacts (concept2cure_artifacts + versions),
+// governed C2C documents (c2c_documents + sections), and the eTMF index.
+// All read-only, all tenant-scoped via ToolContext.organizationId. These
+// complement the existing write tools (create_tmf, classify_tmf_artifact,
+// section drafting) and the upload-file readers (search_large_document).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const LIST_VAULT_DOCUMENTS: AnaTool = {
+  name: 'list_vault_documents',
+  description:
+    "List documents in the organization's vault (concept2cure_artifacts) — every program artifact with title, type, CTD section, status, version, and last update. Filter by a title query, lifecycle status, or CTD section prefix. Use this to see what documents exist before reading one with read_vault_document. Tenant-scoped, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: { type: 'string', description: 'Case-insensitive title substring filter.' },
+      status: {
+        type: 'string',
+        enum: ['draft', 'review', 'approved', 'locked'],
+        description: 'Filter by lifecycle status.',
+      },
+      ctd_prefix: { type: 'string', description: "CTD section prefix filter, e.g. '2.7' or '3'." },
+      limit: { type: 'number', description: 'Max rows returned. Default 25, max 100.' },
+    },
+    required: [],
+  },
+};
+
+export const READ_VAULT_DOCUMENT: AnaTool = {
+  name: 'read_vault_document',
+  description:
+    "Read a vault document's metadata AND content by its id (numeric id or 'artifact_…' external id). Returns title, type, category, CTD section, status, version, content hash, timestamps, and the document text (truncated to max_chars with the full length reported — raise max_chars or read again for more). Use list_vault_documents first to find the id. Tenant-scoped, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      artifact_id: { type: 'string', description: "Numeric id or 'artifact_…' external id." },
+      max_chars: { type: 'number', description: 'Max content characters returned. Default 6000, max 30000.' },
+    },
+    required: ['artifact_id'],
+  },
+};
+
+export const GET_DOCUMENT_VERSIONS: AnaTool = {
+  name: 'get_document_versions',
+  description:
+    "Version history for a vault document: every version with its number, change summary, content hash, author id, and timestamp, newest first. Use to see how a document evolved or to cite a specific sealed version. Tenant-scoped, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      artifact_id: { type: 'string', description: "Numeric id or 'artifact_…' external id." },
+    },
+    required: ['artifact_id'],
+  },
+};
+
+export const LIST_GOVERNED_DOCUMENTS: AnaTool = {
+  name: 'list_governed_documents',
+  description:
+    "List the organization's governed submission documents (c2c_documents) — INDs, NDAs, BLAs, 510(k)s, CERs and the rest — with doc type, agency, lifecycle status (draft/review/approved/locked/submitted/archived), and readiness percent. Filter by doc type, agency, or status. Use read_governed_document to open one. Tenant-scoped, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      doc_type: { type: 'string', description: "Filter by document type, e.g. 'ind', 'nda', '510k', 'cer'." },
+      agency: { type: 'string', description: "Filter by agency, e.g. 'fda', 'ema'." },
+      status: { type: 'string', description: 'Filter by lifecycle status.' },
+      limit: { type: 'number', description: 'Max rows returned. Default 25, max 100.' },
+    },
+    required: [],
+  },
+};
+
+export const READ_GOVERNED_DOCUMENT: AnaTool = {
+  name: 'read_governed_document',
+  description:
+    "Read a governed submission document. Without section_key: returns the document's outline — every section with its key, label, status (todo/drafted/review/approved/locked), and whether it is mandatory. With section_key: returns that section's current content and version. Use list_governed_documents first to find the document id. Tenant-scoped, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id: { type: 'string', description: "The document id (e.g. 'doc_…')." },
+      section_key: { type: 'string', description: 'Optional section key — omit to get the outline.' },
+      max_chars: { type: 'number', description: 'Max section-content characters returned. Default 6000, max 30000.' },
+    },
+    required: ['document_id'],
+  },
+};
+
+export const GET_TMF_VIEW: AnaTool = {
+  name: 'get_tmf_view',
+  description:
+    "View a Trial Master File's index and completeness: every artifact grouped by DIA TMF Reference Model zone with its status (expected/received/in_review/final/missing/not_applicable), plus the completeness gap-check (percent, per-zone gaps, inspection-readiness verdict). Omit tmf_file_id to list the organization's TMF files instead. Read-only counterpart of create_tmf / classify_tmf_artifact. Tenant-scoped.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      tmf_file_id: { type: 'number', description: 'The TMF file id. Omit to list all TMF files.' },
+    },
+    required: [],
+  },
+};
+
 const ALL_ANA_TOOLS_RAW: AnaTool[] = [
+  LIST_VAULT_DOCUMENTS,
+  READ_VAULT_DOCUMENT,
+  GET_DOCUMENT_VERSIONS,
+  LIST_GOVERNED_DOCUMENTS,
+  READ_GOVERNED_DOCUMENT,
+  GET_TMF_VIEW,
   RECONCILE_DOSSIER_NUMBERS,
   GENERATE_SCHEDULE_OF_EVENTS,
   AMEND_SCHEDULE_OF_EVENTS,
