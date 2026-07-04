@@ -12,11 +12,14 @@ import { apiRequest } from '@/lib/queryClient';
 import type {
   CreateReportRunInput,
   CreateReportRunResult,
+  CreateSubscriptionInput,
   FetchRunsParams,
   ProgramGroupSummary,
+  QualitySummary,
   RenderedReport,
   ReportRunDependency,
   ReportRunSummary,
+  ReportSubscriptionSummary,
   ReportTypeSummary,
   RunPredictionInput,
 } from './types';
@@ -136,4 +139,34 @@ export async function fetchPortfolio(programGroupId: number | string): Promise<R
 export async function runPrediction(input: RunPredictionInput): Promise<RenderedReport> {
   const response = await apiRequest('POST', `${INSIGHTS_BASE}/predictions/run`, input);
   return unwrap<RenderedReport>(response);
+}
+
+/** GET /api/insights/subscriptions — the org's scheduled-report subscriptions. */
+export async function fetchSubscriptions(): Promise<ReportSubscriptionSummary[]> {
+  const response = await apiRequest('GET', `${INSIGHTS_BASE}/subscriptions`);
+  return unwrap<ReportSubscriptionSummary[]>(response);
+}
+
+/** POST /api/insights/subscriptions — create a scheduled-report subscription.
+ *  The org is bound server-side from the JWT; never send it in the body. */
+export async function createSubscription(
+  input: CreateSubscriptionInput
+): Promise<ReportSubscriptionSummary> {
+  const response = await apiRequest('POST', `${INSIGHTS_BASE}/subscriptions`, input);
+  return unwrap<ReportSubscriptionSummary>(response);
+}
+
+/** PATCH /api/insights/subscriptions/:id — enable/disable a subscription. */
+export async function setSubscriptionEnabled(
+  id: number | string,
+  enabled: boolean
+): Promise<ReportSubscriptionSummary> {
+  const response = await apiRequest('PATCH', `${INSIGHTS_BASE}/subscriptions/${id}`, { enabled });
+  return unwrap<ReportSubscriptionSummary>(response);
+}
+
+/** GET /api/insights/quality — ADMIN-only prediction calibration + freshness. */
+export async function fetchQuality(): Promise<QualitySummary> {
+  const response = await apiRequest('GET', `${INSIGHTS_BASE}/quality`);
+  return unwrap<QualitySummary>(response);
 }

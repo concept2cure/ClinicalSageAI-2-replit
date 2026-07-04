@@ -34,4 +34,14 @@ export const insightsKeys = {
   /** Program groups for an organization. */
   programGroups: (organizationId: number | string) =>
     ['concept2cure', 'insights', 'program-groups', organizationId] as const,
+
+  /** The board-pack rollup for a program group. */
+  portfolio: (programGroupId: number | string) =>
+    ['concept2cure', 'insights', 'portfolio', programGroupId] as const,
+
+  /** The org's scheduled-report subscriptions. */
+  subscriptions: () => ['concept2cure', 'insights', 'subscriptions'] as const,
+
+  /** Prediction calibration + provider freshness (admin). */
+  quality: () => ['concept2cure', 'insights', 'quality'] as const,
 } as const;

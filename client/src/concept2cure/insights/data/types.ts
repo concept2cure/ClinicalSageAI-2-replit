@@ -216,6 +216,52 @@ export type RunPredictionInput =
       openEscalations?: number;
     };
 
+/** A scheduled-report subscription row (`GET /api/insights/subscriptions`). */
+export interface ReportSubscriptionSummary {
+  id: number;
+  organizationId: number;
+  reportTypeId: string;
+  scopeType: string;
+  scopeId: string;
+  enabled: boolean;
+  channel?: string;
+  format?: string;
+  nextRunAt?: string | null;
+  lastRunAt?: string | null;
+}
+
+/** A report schedule (mirrors the server `reportScheduleSchema`). */
+export interface ReportScheduleInput {
+  cadence: 'daily' | 'weekly' | 'monthly';
+  hour: number;
+  minute?: number;
+  dayOfWeek?: number;
+  dayOfMonth?: number;
+  timeZoneOffsetMinutes?: number;
+}
+
+/** Input accepted by `createSubscription` / `POST /api/insights/subscriptions`.
+ *  The org is bound server-side from the JWT and is never sent in the body. */
+export interface CreateSubscriptionInput {
+  reportTypeId: string;
+  scopeType: string;
+  scopeId: string;
+  schedule: ReportScheduleInput;
+  clientWorkspaceId?: number | null;
+  recipients?: string[];
+  format?: 'pdf' | 'in_app';
+  channel?: 'platform' | 'external';
+  persona?: string | null;
+  enabled?: boolean;
+}
+
+/** Prediction-calibration + provider-freshness summary (`GET /quality`, admin). */
+export interface QualitySummary {
+  organizationId: number;
+  quality: Record<string, unknown>;
+  freshness: Record<string, unknown>;
+}
+
 /** Query parameters accepted by `fetchRuns` / `GET /runs`. */
 export interface FetchRunsParams {
   organizationId: number;
