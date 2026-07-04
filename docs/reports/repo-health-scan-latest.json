@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-04T00:05:58.829Z",
+  "generatedAt": "2026-07-04T04:22:43.076Z",
   "git": {
-    "sha": "279b9eb77dba3a1f52a2268caba7dd1a643412c7",
+    "sha": "8d27d62dc4ebdfc9c738937a42c0ad7a8f95bd8d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -478,6 +478,18 @@
         ]
       },
       {
+        "basename": "vault",
+        "count": 6,
+        "paths": [
+          "client/src/concept2cure/mdx/data/vault.ts",
+          "design-system/ui_kits/mdx/data/vault.js",
+          "design-system/ui_kits/mdx/surfaces/Vault.jsx",
+          "shared/schema/vault.ts",
+          "ui_kits/mdx/data/vault.js",
+          "ui_kits/mdx/surfaces/Vault.jsx"
+        ]
+      },
+      {
         "basename": "workbench",
         "count": 6,
         "paths": [
@@ -619,17 +631,6 @@
           "server/middleware/validation.ts",
           "server/utils/validation.js",
           "services/proof/validation.ts"
-        ]
-      },
-      {
-        "basename": "vault",
-        "count": 5,
-        "paths": [
-          "design-system/ui_kits/mdx/data/vault.js",
-          "design-system/ui_kits/mdx/surfaces/Vault.jsx",
-          "shared/schema/vault.ts",
-          "ui_kits/mdx/data/vault.js",
-          "ui_kits/mdx/surfaces/Vault.jsx"
         ]
       },
       {
@@ -2385,11 +2386,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 842353
+        "bytes": 871915
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 821945
+        "bytes": 824032
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2397,7 +2398,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 496344
+        "bytes": 509935
       },
       {
         "file": "server/statistics-service.ts",
@@ -2503,7 +2504,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19665
+        "lines": 19714
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2511,11 +2512,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 16481
+        "lines": 17074
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 9117
+        "lines": 9357
       },
       {
         "file": "server/statistics-service.ts",
@@ -2674,16 +2675,16 @@
         "lines": 1937
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 1930
+      },
+      {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1927
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
         "lines": 1888
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 1886
       },
       {
         "file": "server/services/ana-ri/orchestrator.ts",
@@ -2851,7 +2852,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 154,
+      "duplicateGroups": 155,
       "largeByBytes": 0,
       "largeByLines": 1
     },
