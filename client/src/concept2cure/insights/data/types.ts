@@ -119,6 +119,14 @@ export interface ReportTypeSummary {
   family: string;
   allowedScopes: string[];
   allowedPersonas: string[];
+  /** Client segments this type serves (empty = universal). Drives per-segment
+   *  catalog anchoring; the server already filters, this is carried for UI. */
+  allowedClientSegments?: string[];
+  /** Entitlement verdict for the requesting org's tier (Phase 2). When
+   *  `entitled` is false the catalog renders an honest Locked state instead
+   *  of a Generate action. `requiredTier` names the tier that unlocks it. */
+  entitled?: boolean;
+  requiredTier?: string;
 }
 
 /**
@@ -177,6 +185,81 @@ export interface CreateReportRunResult {
   snapshot: Record<string, unknown>;
   blockers: string[];
   confidence: number | null;
+}
+
+/**
+ * Request for a LIVE prediction run (`POST /api/insights/predictions/run`).
+ * Discriminated on `kind`: the forecast reads from the readiness twin by scope;
+ * the pre-mortem carries the submission-draft context the risk model needs.
+ * The assembled report is ALWAYS `status:'partial'` with a disclosure block.
+ */
+export type RunPredictionInput =
+  | {
+      kind: 'regulatory_forecast';
+      scopeType: ReportScope;
+      scopeId: string;
+      submissionType: string;
+      agency?: string;
+    }
+  | {
+      kind: 'crl_rtf_premortem';
+      scopeType: ReportScope;
+      scopeId: string;
+      submissionType: string;
+      targetAgency?: string;
+      therapeuticArea?: string | null;
+      projectId?: number;
+      submissionId?: string;
+      presentSections: string[];
+      sectionScores?: Record<string, number>;
+      harmonizeIssueCount?: number;
+      openEscalations?: number;
+    };
+
+/** A scheduled-report subscription row (`GET /api/insights/subscriptions`). */
+export interface ReportSubscriptionSummary {
+  id: number;
+  organizationId: number;
+  reportTypeId: string;
+  scopeType: string;
+  scopeId: string;
+  enabled: boolean;
+  channel?: string;
+  format?: string;
+  nextRunAt?: string | null;
+  lastRunAt?: string | null;
+}
+
+/** A report schedule (mirrors the server `reportScheduleSchema`). */
+export interface ReportScheduleInput {
+  cadence: 'daily' | 'weekly' | 'monthly';
+  hour: number;
+  minute?: number;
+  dayOfWeek?: number;
+  dayOfMonth?: number;
+  timeZoneOffsetMinutes?: number;
+}
+
+/** Input accepted by `createSubscription` / `POST /api/insights/subscriptions`.
+ *  The org is bound server-side from the JWT and is never sent in the body. */
+export interface CreateSubscriptionInput {
+  reportTypeId: string;
+  scopeType: string;
+  scopeId: string;
+  schedule: ReportScheduleInput;
+  clientWorkspaceId?: number | null;
+  recipients?: string[];
+  format?: 'pdf' | 'in_app';
+  channel?: 'platform' | 'external';
+  persona?: string | null;
+  enabled?: boolean;
+}
+
+/** Prediction-calibration + provider-freshness summary (`GET /quality`, admin). */
+export interface QualitySummary {
+  organizationId: number;
+  quality: Record<string, unknown>;
+  freshness: Record<string, unknown>;
 }
 
 /** Query parameters accepted by `fetchRuns` / `GET /runs`. */

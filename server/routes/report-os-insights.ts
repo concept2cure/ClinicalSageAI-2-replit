@@ -22,14 +22,37 @@ import {
 import type { PredictionOutcome } from '../services/report-os/quality/types';
 import {
   assemblePredictionReport,
+  assertHasDisclosure,
   type PredictionReportMeta,
 } from '../services/report-os/prediction/assembler';
 import type { PredictionInput } from '../services/report-os/prediction/types';
+import {
+  readinessTwinToTrajectoryInput,
+  runDeficiencyRiskForDraft,
+} from '../services/report-os/prediction/model-adapters';
+import { requireReportEntitlement } from '../services/report-os/entitlement-map';
+import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
 import {
   createSubscription,
   listSubscriptions,
   setEnabled,
 } from '../services/report-os/scheduling/subscription-service';
+
+/** typeId + human label for each live prediction kind, sourced from the seed. */
+const PREDICTION_KIND_TO_TYPE: Record<string, { typeId: string; label: string }> = {
+  regulatory_forecast: {
+    typeId: 'prediction.regulatory_forecast',
+    label:
+      REPORT_TYPE_SEED.find((t) => t.typeId === 'prediction.regulatory_forecast')?.label ??
+      'Predictive Regulatory Forecast',
+  },
+  crl_rtf_premortem: {
+    typeId: 'prediction.crl_rtf_premortem',
+    label:
+      REPORT_TYPE_SEED.find((t) => t.typeId === 'prediction.crl_rtf_premortem')?.label ??
+      'CRL / RTF Pre-Mortem',
+  },
+};
 
 const router = Router();
 router.use(authMiddleware);
@@ -113,6 +136,37 @@ const predictionRequestSchema = z.object({
   input: predictionInputSchema,
   meta: predictionMetaSchema,
 });
+
+// Live prediction-run request: the caller names a prediction KIND + scope; the
+// server does the model IO. Discriminated so the pre-mortem carries the draft
+// context the risk model needs, while the forecast reads from the twin by scope.
+const forecastRunSchema = z.object({
+  kind: z.literal('regulatory_forecast'),
+  scopeType: z.string().min(1),
+  scopeId: z.string().min(1),
+  submissionType: z.string().min(1),
+  agency: z.string().min(1).optional(),
+});
+
+const premortemRunSchema = z.object({
+  kind: z.literal('crl_rtf_premortem'),
+  scopeType: z.string().min(1),
+  scopeId: z.string().min(1),
+  submissionType: z.string().min(1),
+  targetAgency: z.string().min(1).optional(),
+  therapeuticArea: z.string().nullable().optional(),
+  projectId: z.number().int().positive().optional(),
+  submissionId: z.string().optional(),
+  presentSections: z.array(z.string()),
+  sectionScores: z.record(z.number()).optional(),
+  harmonizeIssueCount: z.number().int().nonnegative().optional(),
+  openEscalations: z.number().int().nonnegative().optional(),
+});
+
+const predictionRunSchema = z.discriminatedUnion('kind', [
+  forecastRunSchema,
+  premortemRunSchema,
+]);
 
 const reportScheduleSchema = z.object({
   cadence: z.enum(['daily', 'weekly', 'monthly']),
@@ -205,6 +259,99 @@ router.post('/predictions', async (req: Request, res: Response) => {
 
     const renderedReport = assemblePredictionReport(input, meta);
     return res.json({ data: renderedReport });
+  } catch (error: any) {
+    return res.status(500).json({ error: error?.message ?? 'Internal error' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /predictions/run — LIVE prediction. The server runs the real, honest
+// model (submission-readiness twin for the forecast; CRL/RTF risk model for the
+// pre-mortem), projects it onto a normalized PredictionInput via the adapters,
+// then assembles the advisory report. Entitlement-gated (professional); the
+// assembled report is ALWAYS status:'partial' with a mandatory disclosure block
+// (assertHasDisclosure). Never fabricates: a program with no readiness
+// assessment yields a 422, not a rendered 0%.
+// ---------------------------------------------------------------------------
+
+router.post('/predictions/run', async (req: Request, res: Response) => {
+  try {
+    const organizationId = authedOrgId(req);
+    if (organizationId == null) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+
+    const parsed = predictionRunSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
+    const body = parsed.data;
+
+    const typeInfo = PREDICTION_KIND_TO_TYPE[body.kind];
+    // Entitlement gate — fail-closed. Both prediction kinds are professional.
+    const decision = await requireReportEntitlement(
+      organizationId,
+      typeInfo.typeId,
+      'prediction',
+    );
+    if (!decision.entitled) {
+      return res.status(403).json({
+        error: 'This prediction requires a higher plan.',
+        feature: decision.feature,
+        requiredTier: decision.requiredTier,
+        tier: decision.tier,
+      });
+    }
+
+    let input: PredictionInput | null;
+    if (body.kind === 'regulatory_forecast') {
+      input = await readinessTwinToTrajectoryInput({
+        programId: body.scopeId,
+        submissionType: body.submissionType,
+        agency: body.agency ?? 'FDA',
+      });
+      // Honest refusal: no assessment on record → don't fabricate a 0-score.
+      if (input === null) {
+        return res.status(422).json({
+          error:
+            'No readiness assessment exists for this program yet. Run a submission-readiness assessment before requesting a forecast.',
+          code: 'no_assessment',
+        });
+      }
+    } else {
+      input = await runDeficiencyRiskForDraft({
+        organizationId,
+        projectId: body.projectId,
+        submissionId: body.submissionId,
+        submissionType: body.submissionType,
+        targetAgency: body.targetAgency,
+        therapeuticArea: body.therapeuticArea ?? null,
+        presentSections: body.presentSections,
+        sectionScores: body.sectionScores,
+        harmonizeIssueCount: body.harmonizeIssueCount,
+        openEscalations: body.openEscalations,
+      });
+    }
+
+    const meta: PredictionReportMeta = {
+      reportTypeId: typeInfo.typeId,
+      reportTypeLabel: typeInfo.label,
+      scopeType: body.scopeType,
+      scopeId: body.scopeId,
+    };
+
+    const report = assemblePredictionReport(input, meta);
+    // Structural guarantee: the mandatory disclosure block is present.
+    assertHasDisclosure(report);
+
+    return res.json({
+      data: report,
+      meta: {
+        feature: decision.feature,
+        tier: decision.tier,
+        requiredTier: decision.requiredTier,
+      },
+    });
   } catch (error: any) {
     return res.status(500).json({ error: error?.message ?? 'Internal error' });
   }

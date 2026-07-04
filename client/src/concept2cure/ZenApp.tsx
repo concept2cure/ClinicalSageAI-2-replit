@@ -143,6 +143,7 @@ import PdevRoute from './pdev/PdevRoute';
 import BiopharmaRoute from './biopharma/BiopharmaRoute';
 import CmcRoute from './cmc/CmcRoute';
 import IntelligenceRoute from './intelligence/IntelligenceRoute';
+import { InsightsSurface } from './insights/surface';
 import AuthoringRoute from './authoring/AuthoringRoute';
 import QualityRoute from './quality/QualityRoute';
 import type { IntTab } from './intelligence/data';
@@ -2040,6 +2041,15 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         }}
       />
     );
+  }
+
+  // Insights — the segment-aware Report-OS surface (reporting, analytics &
+  // predictions). Live over /api/report-os + /api/insights; the catalog is
+  // segment-filtered and entitlement-gated server-side, so this surface renders
+  // the same governed data whether reached here in-shell or at its own
+  // /concept2cure/insights URL. Self-contained (no props).
+  if (layoutMode === 'insights' && !embeddedModule) {
+    return <InsightsSurface />;
   }
 
   // Quality system (SOP register + controlled-document control). Live surface

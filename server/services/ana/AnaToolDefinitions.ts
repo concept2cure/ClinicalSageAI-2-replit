@@ -8442,6 +8442,54 @@ export const GET_ORG_CAPABILITIES: AnaTool = {
   input_schema: { type: 'object', properties: {}, required: [] },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Reporting View Tools — read/list access over the governed Report-OS
+// product, segment-anchored and entitlement-aware. AnA NARRATES report
+// outputs; it never originates a metric, score, or probability — those come
+// only from deterministic providers (report-os/ana/report-tools.ts
+// ANA_REPORTING_GUARDRAIL). All tenant-scoped, read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const LIST_REPORT_TYPES: AnaTool = {
+  name: 'list_report_types',
+  description:
+    "List the governed report types available to this organization for a given scope — already " +
+    "filtered to the org's client segment(s) and annotated with the entitlement verdict for its " +
+    "plan tier (entitled vs the tier that unlocks it). Use before generating or discussing a report " +
+    "so the user is only offered report types their segment, scope, and plan actually permit. " +
+    "AnA narrates these; it never invents a report type. Tenant-scoped, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      scope: {
+        type: 'string',
+        enum: ['account', 'program', 'project', 'study', 'submission', 'document'],
+        description: 'The report scope to list types for.',
+      },
+      persona: { type: 'string', description: 'Optional persona filter (e.g. executive, ra_lead, qa).' },
+    },
+    required: ['scope'],
+  },
+};
+
+export const GET_PORTFOLIO_READINESS: AnaTool = {
+  name: 'get_portfolio_readiness',
+  description:
+    "The enterprise portfolio board-pack rollup for a program group: average readiness and " +
+    "confidence, worst risk, ready/partial/missing counts, total critical blockers, the " +
+    "attention-ranked worklist (lowest readiness first), and top blocker themes. Every number is " +
+    "computed by the deterministic orchestrator — AnA explains the rollup, never originates it. " +
+    "Requires the enterprise plan (portfolio_rollup); returns a locked notice otherwise. " +
+    "Tenant-scoped, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      program_group_id: { type: 'number', description: 'The program group id to roll up.' },
+    },
+    required: ['program_group_id'],
+  },
+};
+
 const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   LIST_VAULT_DOCUMENTS,
   READ_VAULT_DOCUMENT,
@@ -8449,6 +8497,8 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   LIST_GOVERNED_DOCUMENTS,
   READ_GOVERNED_DOCUMENT,
   GET_TMF_VIEW,
+  LIST_REPORT_TYPES,
+  GET_PORTFOLIO_READINESS,
   SAVE_DOCUMENT_TO_VAULT,
   UPDATE_VAULT_DOCUMENT,
   COMPARE_VAULT_VERSIONS,
