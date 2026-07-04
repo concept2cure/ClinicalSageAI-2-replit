@@ -265,8 +265,8 @@ export async function initializeParallelServices(httpServer: Server, pool: Pool)
     const { initSubscriptionSweep } = await import(
       '../services/report-os/scheduling/worker-register'
     );
+    // The sweep logs its own scheduled/disabled state via its scoped logger.
     await initSubscriptionSweep();
-    console.log('✅ Report subscription sweep initialized');
   } catch (err: any) {
     console.warn('⚠️ Report subscription sweep initialization failed (non-blocking):', err?.message);
   }

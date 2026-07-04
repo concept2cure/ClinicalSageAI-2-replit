@@ -29,6 +29,7 @@ import {
   requireReportEntitlement,
   decideReportEntitlement,
 } from '../services/report-os/entitlement-map';
+import { fetchPortfolioReport } from '../services/report-os/portfolio/fetch';
 import { resolveCapabilities } from '../services/entitlements/resolver';
 import type { Tier } from '../services/entitlements/types';
 import { computeInitialRun } from '../services/report-os/orchestrator';
@@ -801,6 +802,41 @@ router.get('/taxonomy', async (req: Request, res: Response) => {
       return { ...row, entitled: d.entitled, requiredTier: d.requiredTier };
     });
     return res.json({ data: annotated, meta: { segments, tier } });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /portfolio?programGroupId= — the enterprise board-pack rollup over a
+// program group. Gated on portfolio_rollup (enterprise); every metric traces
+// to the same orchestrator the /runs path uses.
+router.get('/portfolio', async (req: Request, res: Response) => {
+  try {
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const gate = await requireReportEntitlement(organizationId, 'portfolio.board_pack', 'portfolio');
+    if (!gate.entitled) {
+      return res.status(403).json({
+        error: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
+        feature: gate.feature,
+        requiredTier: gate.requiredTier,
+        tier: gate.tier,
+      });
+    }
+    const programGroupId = Number(req.query.programGroupId);
+    if (!Number.isFinite(programGroupId) || programGroupId <= 0) {
+      return res.status(400).json({ error: 'programGroupId query parameter is required' });
+    }
+    const report = await fetchPortfolioReport(organizationId, programGroupId, {
+      reportTypeId: 'portfolio.board_pack',
+      reportTypeLabel: 'Portfolio board pack',
+    });
+    if (!report) {
+      return res.status(404).json({ error: 'Program group not found or has no members in this organization' });
+    }
+    return res.json({ data: report });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
