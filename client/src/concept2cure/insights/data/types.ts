@@ -187,6 +187,35 @@ export interface CreateReportRunResult {
   confidence: number | null;
 }
 
+/**
+ * Request for a LIVE prediction run (`POST /api/insights/predictions/run`).
+ * Discriminated on `kind`: the forecast reads from the readiness twin by scope;
+ * the pre-mortem carries the submission-draft context the risk model needs.
+ * The assembled report is ALWAYS `status:'partial'` with a disclosure block.
+ */
+export type RunPredictionInput =
+  | {
+      kind: 'regulatory_forecast';
+      scopeType: ReportScope;
+      scopeId: string;
+      submissionType: string;
+      agency?: string;
+    }
+  | {
+      kind: 'crl_rtf_premortem';
+      scopeType: ReportScope;
+      scopeId: string;
+      submissionType: string;
+      targetAgency?: string;
+      therapeuticArea?: string | null;
+      projectId?: number;
+      submissionId?: string;
+      presentSections: string[];
+      sectionScores?: Record<string, number>;
+      harmonizeIssueCount?: number;
+      openEscalations?: number;
+    };
+
 /** Query parameters accepted by `fetchRuns` / `GET /runs`. */
 export interface FetchRunsParams {
   organizationId: number;

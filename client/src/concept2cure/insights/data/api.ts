@@ -18,10 +18,14 @@ import type {
   ReportRunDependency,
   ReportRunSummary,
   ReportTypeSummary,
+  RunPredictionInput,
 } from './types';
 
 /** Base path the Report-OS router is mounted at (server/bootstrap). */
 export const REPORT_OS_BASE = '/api/report-os';
+
+/** Base path the Insights router is mounted at (predictions/quality/subs). */
+export const INSIGHTS_BASE = '/api/insights';
 
 /**
  * Build the query string for `GET /runs` from typed params. Pure and exported
@@ -108,4 +112,28 @@ export async function fetchProgramGroups(
   const query = new URLSearchParams({ organizationId: String(organizationId) }).toString();
   const response = await apiRequest('GET', `${REPORT_OS_BASE}/program-groups?${query}`);
   return unwrap<ProgramGroupSummary[]>(response);
+}
+
+/**
+ * GET /api/report-os/portfolio?programGroupId= — the enterprise board-pack
+ * rollup for a program group (Phase 5). 403s below the enterprise tier; the
+ * caller surfaces an honest Locked state.
+ */
+export async function fetchPortfolio(programGroupId: number | string): Promise<RenderedReport> {
+  const query = new URLSearchParams({ programGroupId: String(programGroupId) }).toString();
+  const response = await apiRequest('GET', `${REPORT_OS_BASE}/portfolio?${query}`);
+  return unwrap<RenderedReport>(response);
+}
+
+/**
+ * POST /api/insights/predictions/run — run a LIVE, entitlement-gated prediction
+ * (readiness-twin forecast or CRL/RTF pre-mortem). The server does the model IO
+ * and returns an advisory report that is ALWAYS `status:'partial'` and carries a
+ * mandatory disclosure block. A 403 means the org's tier does not unlock the
+ * prediction; a 422 means no readiness assessment exists yet (forecast only) —
+ * `apiRequest` throws on both, so callers surface the honest state.
+ */
+export async function runPrediction(input: RunPredictionInput): Promise<RenderedReport> {
+  const response = await apiRequest('POST', `${INSIGHTS_BASE}/predictions/run`, input);
+  return unwrap<RenderedReport>(response);
 }

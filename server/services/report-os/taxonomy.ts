@@ -439,4 +439,42 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     governanceRequirements: { part11: true, auditTrail: true },
     truthfulnessRules: { allowPartial: true, requireBlockers: true, forbidFinalIfMissingCritical: true },
   },
+  {
+    // Predictive regulatory forecast — the submission-readiness twin projected
+    // into an advisory approval/review/deficiency trajectory. ALWAYS partial and
+    // ALWAYS carries a mandatory disclosure block (the model is not validated),
+    // per the prediction assembler contract. Gated to prediction_forecast_report
+    // (professional) via entitlement-map.
+    typeId: 'prediction.regulatory_forecast',
+    label: 'Predictive Regulatory Forecast',
+    family: 'prediction',
+    allowedScopes: ['program', 'project', 'submission'],
+    allowedPersonas: ['executive', 'ra_lead', 'pm'],
+    allowedClientSegments: ['pharma', 'biotech', 'device'],
+    dataDependencies: ['submission_readiness', 'readiness_trend'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['submission_ops'],
+    anaModules: ['ana-ri', 'foresight_risk_synthesis'],
+    exportTemplate: 'prediction-forecast-pack',
+    governanceRequirements: { part11: true, auditTrail: true },
+    truthfulnessRules: { allowPartial: true, forbidFinal: true, requireDisclosure: true },
+  },
+  {
+    // CRL / RTF pre-mortem — the deficiency-risk model projected into refuse-to-file
+    // and complete-response-letter probabilities. ALWAYS partial with a mandatory
+    // disclosure. Gated to crl_rtf_premortem (professional).
+    typeId: 'prediction.crl_rtf_premortem',
+    label: 'CRL / RTF Pre-Mortem',
+    family: 'prediction',
+    allowedScopes: ['program', 'project', 'submission'],
+    allowedPersonas: ['executive', 'ra_lead', 'qa'],
+    allowedClientSegments: ['pharma', 'biotech'],
+    dataDependencies: ['deficiency_risk', 'correspondence_issues'],
+    artifactDependencies: ['concept2cure_artifacts'],
+    workflowDependencies: ['submission_ops'],
+    anaModules: ['ana-ri', 'foresight_risk_synthesis'],
+    exportTemplate: 'prediction-premortem-pack',
+    governanceRequirements: { part11: true, auditTrail: true },
+    truthfulnessRules: { allowPartial: true, forbidFinal: true, requireDisclosure: true },
+  },
 ];
