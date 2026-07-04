@@ -204,6 +204,38 @@ export function assessTmfCompleteness(input: TmfCompletenessInput): TmfCompleten
   };
 }
 
+export interface TmfSeedArtifact {
+  zone: number;
+  code: string;
+  artifactName: string;
+  /** Essential documents drive completeness; optional ones are tracked only. */
+  completenessRequired: boolean;
+}
+
+/**
+ * The expected-document skeleton a NEW study TMF is seeded with: every
+ * reference-model artifact as an 'expected' placeholder, with
+ * completeness_required = essential (ICH E6(R2) §8 essential documents
+ * drive the inspection-readiness denominator; optional artifacts are
+ * tracked but never dilute it). Pure — the seeding transaction in
+ * etmf-service.ts consumes this list.
+ */
+export function seedArtifacts(scope: 'essential' | 'all' = 'all'): TmfSeedArtifact[] {
+  const out: TmfSeedArtifact[] = [];
+  for (const zone of TMF_REFERENCE_MODEL) {
+    for (const a of zone.artifacts) {
+      if (scope === 'essential' && !a.essential) continue;
+      out.push({
+        zone: zone.number,
+        code: a.code,
+        artifactName: a.name,
+        completenessRequired: a.essential,
+      });
+    }
+  }
+  return out;
+}
+
 /** The reference model (zones + artifacts) for a checklist UI. */
 export function getTmfReferenceModel(): TmfZone[] {
   return TMF_REFERENCE_MODEL;
