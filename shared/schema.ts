@@ -2558,6 +2558,11 @@ export const organizationUsers = pgTable(
       .notNull()
       .references(() => users.id),
     role: text('role').default('member').notNull(), // admin, manager, member, viewer
+    // Optional job persona (executive | ra_lead | qa | …) from the canonical
+    // REPORT_PERSONAS vocabulary. Personalizes surfaces (role-aware home,
+    // default report-catalog persona); NOT an authorization boundary — access
+    // control stays on `role`. Null = unset.
+    persona: text('persona'),
     permissions: json('permissions'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),

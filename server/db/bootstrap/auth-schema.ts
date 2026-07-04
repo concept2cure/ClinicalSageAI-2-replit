@@ -106,10 +106,11 @@ export async function applyAuthSchemaMigrations(client: PoolClient): Promise<voi
       UNIQUE(organization_id, user_id)
     )
   `);
-  // Back-fill permissions column on junction tables created before it was added
+  // Back-fill columns on junction tables created before they were added.
   await client.query(`
     ALTER TABLE organization_users
-      ADD COLUMN IF NOT EXISTS permissions JSONB
+      ADD COLUMN IF NOT EXISTS permissions JSONB,
+      ADD COLUMN IF NOT EXISTS persona     TEXT
   `);
 }
 
