@@ -20,6 +20,11 @@ import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
 import { GLOBAL_REPORT_TYPE_SEED } from '../services/report-os/taxonomy-global';
 import { PREDICTION_REPORT_TYPES } from '../services/report-os/prediction/report-types';
 import { resolveScope } from '../services/report-os/scope-model';
+import {
+  deriveOrgSegments,
+  filterTypesForSegment,
+  type SegmentFilterableType,
+} from '../services/report-os/segment';
 import { computeInitialRun } from '../services/report-os/orchestrator';
 import { renderReport, type RenderInput } from '../services/report-os/render/render';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
@@ -757,13 +762,27 @@ router.post('/taxonomy/seed', async (_req: Request, res: Response) => {
   }
 });
 
-router.get('/taxonomy', async (_req: Request, res: Response) => {
+router.get('/taxonomy', async (req: Request, res: Response) => {
   try {
     const rows = await db
       .select()
       .from(reportTypeRegistry)
       .where(eq(reportTypeRegistry.enabled, true));
-    return res.json({ data: rows });
+
+    // Anchor the catalog to what this client segment actually needs: filter
+    // to report types whose `allowedClientSegments` intersects the org's
+    // derived segment(s). Universal types (empty allowedClientSegments) are
+    // always shown. Optional ?persona= intersects on allowedPersonas.
+    // When there's no tenant context we return the full enabled set (the
+    // route is auth-gated at the mount, so this is the defensive path only).
+    const organizationId = authedOrgId(req);
+    const persona = typeof req.query.persona === 'string' ? req.query.persona : null;
+    if (organizationId == null || !Number.isFinite(organizationId)) {
+      return res.json({ data: rows });
+    }
+    const segments = await deriveOrgSegments(organizationId);
+    const filtered = filterTypesForSegment(rows as SegmentFilterableType[], segments, persona);
+    return res.json({ data: filtered, meta: { segments } });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }

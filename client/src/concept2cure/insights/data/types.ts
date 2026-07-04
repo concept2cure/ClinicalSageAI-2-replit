@@ -119,6 +119,14 @@ export interface ReportTypeSummary {
   family: string;
   allowedScopes: string[];
   allowedPersonas: string[];
+  /** Client segments this type serves (empty = universal). Drives per-segment
+   *  catalog anchoring; the server already filters, this is carried for UI. */
+  allowedClientSegments?: string[];
+  /** Entitlement verdict for the requesting org's tier (Phase 2). When
+   *  `entitled` is false the catalog renders an honest Locked state instead
+   *  of a Generate action. `requiredTier` names the tier that unlocks it. */
+  entitled?: boolean;
+  requiredTier?: string;
 }
 
 /**
