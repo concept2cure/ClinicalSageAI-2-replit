@@ -259,6 +259,18 @@ export async function initializeParallelServices(httpServer: Server, pool: Pool)
     console.warn('⚠️ Automation engine failed to load:', scheduledJobs.reason);
   }
 
+  // Report-OS subscription sweep — fires due scheduled reports. Graceful
+  // no-op when Redis is absent; never blocks boot.
+  try {
+    const { initSubscriptionSweep } = await import(
+      '../services/report-os/scheduling/worker-register'
+    );
+    await initSubscriptionSweep();
+    console.log('✅ Report subscription sweep initialized');
+  } catch (err: any) {
+    console.warn('⚠️ Report subscription sweep initialization failed (non-blocking):', err?.message);
+  }
+
   if (hocuspocus.status === 'fulfilled') {
     try {
       hocuspocus.value.attachHocuspocusToServer(httpServer);
