@@ -205,7 +205,7 @@ const VALID_ACTION_TYPES = [
 ];
 const VALID_SOURCE_SURFACES = [
   'global_panel', 'contextual_rail', 'inline_action', 'command_palette',
-  'workflow_trigger', 'chat_action', 'api',
+  'workflow_trigger', 'chat_action', 'recommendation', 'api',
 ];
 
 export function isValidDocumentStatus(status: string): boolean {

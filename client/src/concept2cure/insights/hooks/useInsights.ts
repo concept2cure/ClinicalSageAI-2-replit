@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createReportRun,
   createSubscription,
+  fetchOrgPortfolio,
   fetchPortfolio,
   fetchProgramGroups,
   fetchQuality,
@@ -116,6 +117,21 @@ export function usePortfolio(programGroupId: number | string | null | undefined)
     enabled: programGroupId !== null && programGroupId !== undefined && programGroupId !== '',
     staleTime: 1000 * 60,
     retry: false, // don't retry a 403/422 — it is a stable entitlement/data state
+  });
+}
+
+/**
+ * The org-wide portfolio rollup across all top-level programs (enterprise). A
+ * 403 (below the enterprise tier) or 404 (no programs) surfaces as the query
+ * error so the caller renders an honest Locked / empty state.
+ */
+export function useOrgPortfolio(enabled = true) {
+  return useQuery({
+    queryKey: [...insightsKeys.orgPortfolio()],
+    queryFn: () => fetchOrgPortfolio(),
+    enabled,
+    staleTime: 1000 * 60,
+    retry: false,
   });
 }
 

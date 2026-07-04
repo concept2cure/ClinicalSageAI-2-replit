@@ -29,7 +29,7 @@ import {
   requireReportEntitlement,
   decideReportEntitlement,
 } from '../services/report-os/entitlement-map';
-import { fetchPortfolioReport } from '../services/report-os/portfolio/fetch';
+import { fetchPortfolioReport, fetchOrgPortfolioSummary } from '../services/report-os/portfolio/fetch';
 import { resolveCapabilities } from '../services/entitlements/resolver';
 import type { Tier } from '../services/entitlements/types';
 import { computeInitialRun } from '../services/report-os/orchestrator';
@@ -802,6 +802,36 @@ router.get('/taxonomy', async (req: Request, res: Response) => {
       return { ...row, entitled: d.entitled, requiredTier: d.requiredTier };
     });
     return res.json({ data: annotated, meta: { segments, tier } });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /portfolio/org — the enterprise rollup over ALL top-level programs in the
+// org (not a single program group). Returns the RAW flat OrgPortfolioSummary
+// (program list + aggregates), not a rendered board pack, so the Command Center
+// can bind the program array directly. Same entitlement gate + same orchestrator
+// as /portfolio; every metric traces to computeInitialRun.
+router.get('/portfolio/org', async (req: Request, res: Response) => {
+  try {
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const gate = await requireReportEntitlement(organizationId, 'portfolio.board_pack', 'portfolio');
+    if (!gate.entitled) {
+      return res.status(403).json({
+        error: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
+        feature: gate.feature,
+        requiredTier: gate.requiredTier,
+        tier: gate.tier,
+      });
+    }
+    const summary = await fetchOrgPortfolioSummary(organizationId);
+    if (!summary) {
+      return res.status(404).json({ error: 'No programs found for this organization' });
+    }
+    return res.json({ data: summary });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }

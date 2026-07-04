@@ -14,6 +14,7 @@ import type {
   CreateReportRunResult,
   CreateSubscriptionInput,
   FetchRunsParams,
+  OrgPortfolioSummary,
   ProgramGroupSummary,
   QualitySummary,
   RenderedReport,
@@ -126,6 +127,16 @@ export async function fetchPortfolio(programGroupId: number | string): Promise<R
   const query = new URLSearchParams({ programGroupId: String(programGroupId) }).toString();
   const response = await apiRequest('GET', `${REPORT_OS_BASE}/portfolio?${query}`);
   return unwrap<RenderedReport>(response);
+}
+
+/**
+ * GET /api/report-os/portfolio/org — the enterprise rollup over ALL top-level
+ * programs in the org, as a raw flat summary (program list + aggregates). 403
+ * below the enterprise tier; the caller surfaces an honest Locked state.
+ */
+export async function fetchOrgPortfolio(): Promise<OrgPortfolioSummary> {
+  const response = await apiRequest('GET', `${REPORT_OS_BASE}/portfolio/org`);
+  return unwrap<OrgPortfolioSummary>(response);
 }
 
 /**
