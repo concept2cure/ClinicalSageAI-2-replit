@@ -16894,3 +16894,87 @@ registerToolHandler('get_org_capabilities', async (_input, ctx) => {
     return JSON.stringify({ error: `get_org_capabilities failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reporting View Tools — read/list over the governed Report-OS product,
+// segment-anchored + entitlement-aware. AnA narrates; it never originates a
+// metric (report-os/ana ANA_REPORTING_GUARDRAIL). Tenant-scoped, read-only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('list_report_types', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'list_report_types requires tenant context.' });
+  const scope = typeof input.scope === 'string' ? input.scope : '';
+  if (!scope) return JSON.stringify({ error: 'scope (string) is required.' });
+  const persona = typeof input.persona === 'string' && input.persona.trim() ? input.persona.trim() : null;
+  try {
+    const { getPool } = await import('../../db.js');
+    const { deriveOrgSegments, filterTypesForSegment } = await import('../report-os/segment.js');
+    const { decideReportEntitlement } = await import('../report-os/entitlement-map.js');
+    const { resolveCapabilities } = await import('../entitlements/resolver.js');
+    const orgId = Number(ctx.organizationId);
+
+    const { rows } = await getPool().query(
+      `SELECT type_id, label, family, allowed_scopes, allowed_personas, allowed_client_segments
+         FROM report_type_registry WHERE enabled = true`,
+    );
+    const typed = rows.map((r: any) => ({
+      typeId: r.type_id,
+      label: r.label,
+      family: r.family,
+      allowedScopes: r.allowed_scopes ?? [],
+      allowedPersonas: r.allowed_personas ?? [],
+      allowedClientSegments: r.allowed_client_segments ?? [],
+    }));
+
+    const segments = await deriveOrgSegments(orgId);
+    const segFiltered = filterTypesForSegment(typed, segments, persona)
+      .filter((t: any) => Array.isArray(t.allowedScopes) && t.allowedScopes.includes(scope));
+
+    let tier: 'free' | 'standard' | 'professional' | 'enterprise' = 'standard';
+    try { tier = (await resolveCapabilities(orgId)).tier; } catch { /* default standard */ }
+
+    const types = segFiltered.map((t: any) => {
+      const d = decideReportEntitlement(t.typeId, t.family, tier);
+      return {
+        typeId: t.typeId, label: t.label, family: t.family,
+        entitled: d.entitled, requiredTier: d.requiredTier,
+      };
+    });
+    return JSON.stringify({
+      ok: true, scope, segments, tier, count: types.length, reportTypes: types,
+      note: 'Report types are already filtered to this org segment(s) and annotated with entitlement. AnA narrates these; it never invents a report type or a metric.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `list_report_types failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('get_portfolio_readiness', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'get_portfolio_readiness requires tenant context.' });
+  const programGroupId = Number(input.program_group_id);
+  if (!Number.isInteger(programGroupId) || programGroupId <= 0) {
+    return JSON.stringify({ error: 'program_group_id (positive integer) is required.' });
+  }
+  try {
+    const orgId = Number(ctx.organizationId);
+    const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
+    const gate = await requireReportEntitlement(orgId, 'portfolio.board_pack', 'portfolio');
+    if (!gate.entitled) {
+      return JSON.stringify({
+        ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, tier: gate.tier,
+        message: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
+      });
+    }
+    const { fetchPortfolioSummary } = await import('../report-os/portfolio/fetch.js');
+    const summary = await fetchPortfolioSummary(orgId, programGroupId);
+    if (!summary) {
+      return JSON.stringify({ error: 'Program group not found or has no members in this organization.' });
+    }
+    return JSON.stringify({
+      ok: true, portfolio: summary,
+      note: 'Every metric is computed by the deterministic orchestrator. AnA explains the rollup; it never originates a readiness score, risk level, or blocker count.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `get_portfolio_readiness failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
