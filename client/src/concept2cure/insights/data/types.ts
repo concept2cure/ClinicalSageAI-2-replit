@@ -143,6 +143,41 @@ export interface ReportRunSummary {
   blockers?: string[];
 }
 
+/** One program in the org-wide portfolio rollup (`/portfolio/org`). */
+export interface PortfolioProgramInsight {
+  projectId: number;
+  name: string;
+  code?: string | null;
+  indication?: string | null;
+  readinessScore: number;
+  confidence: number;
+  status: 'ready' | 'partial' | 'missing';
+  criticalBlockerCount: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  topBlockers?: string[];
+}
+
+/**
+ * Org-wide portfolio rollup across all top-level programs (`GET /portfolio/org`).
+ * Raw flat data (not a rendered report). `truncated` = the org has more programs
+ * than the server compute cap. Note: `trend` is intentionally absent — the
+ * backend has no per-program readiness trend source yet (documented gap).
+ */
+export interface OrgPortfolioSummary {
+  organizationId: number;
+  truncated: boolean;
+  memberCount: number;
+  avgReadiness: number;
+  avgConfidence: number;
+  worstRisk: 'low' | 'medium' | 'high' | 'critical';
+  readyCount: number;
+  partialCount: number;
+  missingCount: number;
+  totalCriticalBlockers: number;
+  attentionRanked: PortfolioProgramInsight[];
+  topBlockerThemes: Array<{ theme: string; count: number }>;
+}
+
 /** A program group (`/program-groups`) with its member projects. */
 export interface ProgramGroupSummary {
   id: number;

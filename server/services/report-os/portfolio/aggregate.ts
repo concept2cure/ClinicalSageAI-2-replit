@@ -6,7 +6,13 @@
  */
 
 import type { RenderedReport, ReportBlock, ReportSection } from '../render/types';
-import type { PortfolioSummary, ProgramMemberInsight, RiskLevel } from './types';
+import type {
+  OrgPortfolioSummary,
+  PortfolioAggregate,
+  PortfolioSummary,
+  ProgramMemberInsight,
+  RiskLevel,
+} from './types';
 
 const RISK_LEVELS: readonly RiskLevel[] = ['low', 'medium', 'high', 'critical'];
 
@@ -42,10 +48,7 @@ function roundedMean(values: number[]): number {
  * - topBlockerThemes counts the frequency of all members' topBlockers strings,
  *   sorted descending by count, capped at the top 5.
  */
-export function aggregatePortfolio(
-  programGroupId: number,
-  members: ProgramMemberInsight[]
-): PortfolioSummary {
+export function summarizeMembers(members: ProgramMemberInsight[]): PortfolioAggregate {
   const readyCount = members.filter(m => m.status === 'ready').length;
   const partialCount = members.filter(m => m.status === 'partial').length;
   const missingCount = members.filter(m => m.status === 'missing').length;
@@ -69,7 +72,6 @@ export function aggregatePortfolio(
     .slice(0, 5);
 
   return {
-    programGroupId,
     memberCount: members.length,
     avgReadiness: roundedMean(members.map(m => m.readinessScore)),
     avgConfidence: roundedMean(members.map(m => m.confidence)),
@@ -81,6 +83,30 @@ export function aggregatePortfolio(
     attentionRanked,
     topBlockerThemes,
   };
+}
+
+/**
+ * Aggregates per-program-member insights into a program-GROUP portfolio
+ * summary. Pure. Delegates the math to {@link summarizeMembers}.
+ */
+export function aggregatePortfolio(
+  programGroupId: number,
+  members: ProgramMemberInsight[]
+): PortfolioSummary {
+  return { programGroupId, ...summarizeMembers(members) };
+}
+
+/**
+ * Aggregates per-program-member insights into an ORG-wide rollup (all top-level
+ * programs in the org). Same math as {@link aggregatePortfolio}; carries the
+ * org id and a `truncated` flag instead of a program-group id. Pure.
+ */
+export function aggregateOrgPortfolio(
+  organizationId: number,
+  members: ProgramMemberInsight[],
+  truncated = false
+): OrgPortfolioSummary {
+  return { organizationId, truncated, ...summarizeMembers(members) };
 }
 
 /**

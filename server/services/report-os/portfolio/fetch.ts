@@ -12,17 +12,29 @@
  * unit-testable; the fetch itself is a thin, org-scoped query loop.
  */
 
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, isNull, ne } from 'drizzle-orm';
 import { db } from '../../../db';
 import { projects } from '@shared/schema';
 import {
   reportProgramGroups,
   reportProgramGroupProjects,
 } from '@shared/schema/report-os';
+import { createScopedLogger } from '../../../utils/logger';
 import { computeInitialRun, type RunComputationResult } from '../orchestrator';
-import { aggregatePortfolio, renderPortfolioReport } from './aggregate';
-import type { ProgramMemberInsight, PortfolioSummary, RiskLevel } from './types';
+import { aggregateOrgPortfolio, aggregatePortfolio, renderPortfolioReport } from './aggregate';
+import type {
+  OrgPortfolioSummary,
+  ProgramMemberInsight,
+  PortfolioSummary,
+  RiskLevel,
+} from './types';
 import type { RenderedReport } from '../render/types';
+
+const logger = createScopedLogger('report-os-portfolio');
+
+/** Max programs computed for an org-wide rollup in one request (no silent drop:
+ *  the summary carries `truncated: true` when the org exceeds this). */
+const ORG_ROLLUP_CAP = 100;
 
 /** PURE: risk level from the count of critical blockers on a member. */
 export function riskFromBlockers(criticalBlockerCount: number): RiskLevel {
@@ -42,6 +54,7 @@ export function toMemberInsight(
   projectId: number,
   name: string,
   computed: RunComputationResult,
+  extra?: { code?: string | null; indication?: string | null },
 ): ProgramMemberInsight {
   const criticalBlockerCount = computed.criticalBlockers.length;
   const confidence = Math.max(0, Math.min(100, Math.round(computed.confidence)));
@@ -53,6 +66,8 @@ export function toMemberInsight(
   return {
     projectId,
     name,
+    code: extra?.code ?? null,
+    indication: extra?.indication ?? null,
     readinessScore: confidence,
     confidence,
     status,
@@ -102,6 +117,65 @@ export async function fetchPortfolioSummary(
     insights.push(toMemberInsight(m.projectId, m.name, computed));
   }
   return aggregatePortfolio(programGroupId, insights);
+}
+
+/** Top-level programs (roots of the project hierarchy) for an org, capped. */
+async function fetchOrgPrograms(
+  organizationId: number,
+): Promise<{ rows: Array<{ projectId: number; name: string; code: string | null; indication: string | null }>; truncated: boolean }> {
+  const rows = await db
+    .select({
+      projectId: projects.id,
+      name: projects.name,
+      code: projects.code,
+      indication: projects.therapeuticArea,
+    })
+    .from(projects)
+    .where(
+      and(
+        eq(projects.organizationId, organizationId),
+        // Top-level programs only — a program's studies/sub-projects roll up
+        // under it, so counting them too would double-count the portfolio.
+        isNull(projects.parentProjectId),
+        ne(projects.status, 'archived'),
+      ),
+    )
+    .limit(ORG_ROLLUP_CAP + 1);
+
+  const truncated = rows.length > ORG_ROLLUP_CAP;
+  if (truncated) {
+    logger.warn('org portfolio rollup truncated at cap', { organizationId, cap: ORG_ROLLUP_CAP });
+  }
+  return {
+    rows: rows.slice(0, ORG_ROLLUP_CAP).map((r) => ({
+      projectId: r.projectId,
+      name: r.name ?? `Project ${r.projectId}`,
+      code: r.code ?? null,
+      indication: r.indication ?? null,
+    })),
+    truncated,
+  };
+}
+
+/**
+ * Assemble the ORG-WIDE portfolio rollup: every top-level program in the org,
+ * each scored via the SAME orchestrator the /runs path uses, then aggregated.
+ * Returns the raw flat {@link OrgPortfolioSummary} (not a rendered document) so
+ * the caller gets a directly-consumable program list. Returns null when the org
+ * has no programs (honest empty, not a fake zero).
+ */
+export async function fetchOrgPortfolioSummary(
+  organizationId: number,
+): Promise<OrgPortfolioSummary | null> {
+  const { rows, truncated } = await fetchOrgPrograms(organizationId);
+  if (rows.length === 0) return null;
+
+  const insights: ProgramMemberInsight[] = [];
+  for (const r of rows) {
+    const computed = await computeInitialRun(organizationId, 'project', String(r.projectId));
+    insights.push(toMemberInsight(r.projectId, r.name, computed, { code: r.code, indication: r.indication }));
+  }
+  return aggregateOrgPortfolio(organizationId, insights, truncated);
 }
 
 /** Assemble + render the board-pack report for a program group. */
