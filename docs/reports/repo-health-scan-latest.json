@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-04T04:23:11.369Z",
+  "generatedAt": "2026-07-04T05:49:34.168Z",
   "git": {
-    "sha": "32a2e7f3ba7e564d5d11ab6a0416b0575dfb82f0",
+    "sha": "6551d542dd39833f45a800a597869e57e0ed7fa8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2591,11 +2591,11 @@
         "lines": 2419
       },
       {
-        "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
-        "lines": 2379
+        "file": "client/src/concept2cure/ZenApp.tsx",
+        "lines": 2388
       },
       {
-        "file": "client/src/concept2cure/ZenApp.tsx",
+        "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "lines": 2379
       },
       {
