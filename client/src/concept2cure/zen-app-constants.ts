@@ -133,7 +133,9 @@ export type LayoutMode =
   // ── Phase 9 surface ──
   | 'authoring'
   // ── Quality system (SOP register + controlled-document control) ──
-  | 'quality';
+  | 'quality'
+  // ── Insights (Report-OS: reporting, analytics & predictions) ──
+  | 'insights';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // NAV MAPPINGS
@@ -207,6 +209,7 @@ export const SIDEBAR_NAV_TO_LAYOUT: Record<string, LayoutMode> = {
   apps: 'apps',
   'artifacts-center': 'artifacts-center',
   setup: 'setup',
+  insights: 'insights',
   projects: 'projects',
   home: 'projects',
   documents: 'regulatory-workspace',
