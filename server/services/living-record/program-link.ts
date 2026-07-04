@@ -33,6 +33,24 @@ export async function resolveUuidProgram(
   return row?.programId ?? null;
 }
 
+/** Resolve the legacy integer program id for a uuid program, or null. */
+export async function resolveLegacyProgram(
+  programId: string,
+  organizationId: number
+): Promise<number | null> {
+  const [row] = await db
+    .select({ legacyProgramId: livingRecordProgramLinks.legacyProgramId })
+    .from(livingRecordProgramLinks)
+    .where(
+      and(
+        eq(livingRecordProgramLinks.organizationId, organizationId),
+        eq(livingRecordProgramLinks.programId, programId)
+      )
+    )
+    .limit(1);
+  return row?.legacyProgramId ?? null;
+}
+
 /** Record the legacy↔uuid program link. Idempotent (no-op if it already exists). */
 export async function linkLegacyProgram(params: {
   organizationId: number;

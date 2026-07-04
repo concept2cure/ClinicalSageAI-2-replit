@@ -106,18 +106,75 @@ export interface UpsertFactInput {
  */
 export async function upsertCanonicalFact(input: UpsertFactInput): Promise<CanonicalFact> {
   const existing = await resolveActiveFact(input.programId, input.entity, input.field);
-  const canonical =
-    input.valueNum !== null && input.valueNum !== undefined
-      ? String(input.valueNum)
-      : (input.valueText ?? '').trim();
-  const hash = valueHash(input.programId, input.entity, input.field, canonical);
+  if (existing) return supersedeAndReversion(existing, input);
+  return insertFactVersion(input, null);
+}
 
-  if (existing) {
-    await db
-      .update(canonicalFacts)
-      .set({ status: 'superseded', updatedAt: new Date() })
-      .where(eq(canonicalFacts.id, existing.id));
-  }
+/**
+ * Supersede a specific fact row and write the next version. Bindings must
+ * follow the fact across versions — fact_bindings.fact_id points at a row, so
+ * without the carry-forward a re-version orphans the entire citation set at the
+ * exact moment the value changed (and the Drift Sentinel, which joins bindings
+ * to active facts only, would stop seeing them).
+ *
+ * Takes the row (not the key) so callers may re-version a 'disputed' fact —
+ * resolving a dispute with a governed change is a legal path.
+ */
+export async function supersedeAndReversion(
+  existing: CanonicalFact,
+  input: Omit<UpsertFactInput, 'organizationId' | 'programId' | 'entity' | 'field'> &
+    Partial<Pick<UpsertFactInput, 'organizationId' | 'programId' | 'entity' | 'field'>>
+): Promise<CanonicalFact> {
+  await db
+    .update(canonicalFacts)
+    .set({ status: 'superseded', updatedAt: new Date() })
+    .where(eq(canonicalFacts.id, existing.id));
+
+  const row = await insertFactVersion(
+    {
+      organizationId: input.organizationId ?? existing.organizationId,
+      programId: input.programId ?? existing.programId,
+      entity: input.entity ?? existing.entity,
+      field: input.field ?? existing.field,
+      valueNum: input.valueNum,
+      valueText: input.valueText,
+      unit: input.unit,
+      comparator: input.comparator ?? existing.comparator,
+      valueType: input.valueType ?? existing.valueType,
+      establishedByClaimId: input.establishedByClaimId,
+      establishedBySourceId: input.establishedBySourceId,
+      confidence: input.confidence,
+      createdBy: input.createdBy,
+    },
+    existing
+  );
+  await carryForwardBindings(existing.id, row.id);
+  return row;
+}
+
+/** Normalize the value/lineage columns of an insert (one place for the `??` rules). */
+function factColumns(input: UpsertFactInput) {
+  const hasNum = input.valueNum !== null && input.valueNum !== undefined;
+  return {
+    canonical: hasNum ? String(input.valueNum) : (input.valueText ?? '').trim(),
+    valueNum: hasNum ? String(input.valueNum) : null,
+    valueText: input.valueText ?? null,
+    unit: input.unit ?? null,
+    comparator: input.comparator ?? '=',
+    valueType: input.valueType ?? 'text',
+    establishedByClaimId: input.establishedByClaimId ?? null,
+    establishedBySourceId: input.establishedBySourceId ?? null,
+    confidence: input.confidence !== undefined ? String(input.confidence) : '0.5000',
+    createdBy: input.createdBy ?? null,
+  };
+}
+
+async function insertFactVersion(
+  input: UpsertFactInput,
+  supersedes: CanonicalFact | null
+): Promise<CanonicalFact> {
+  const { canonical, ...columns } = factColumns(input);
+  const hash = valueHash(input.programId, input.entity, input.field, canonical);
 
   const [row] = await db
     .insert(canonicalFacts)
@@ -126,22 +183,24 @@ export async function upsertCanonicalFact(input: UpsertFactInput): Promise<Canon
       programId: input.programId,
       entity: input.entity,
       field: input.field,
-      valueNum: input.valueNum !== null && input.valueNum !== undefined ? String(input.valueNum) : null,
-      valueText: input.valueText ?? null,
-      unit: input.unit ?? null,
-      comparator: input.comparator ?? '=',
-      valueType: input.valueType ?? 'text',
-      establishedByClaimId: input.establishedByClaimId ?? null,
-      establishedBySourceId: input.establishedBySourceId ?? null,
-      confidence: input.confidence !== undefined ? String(input.confidence) : '0.5000',
+      ...columns,
       status: 'active',
-      version: existing ? existing.version + 1 : 1,
-      supersedesId: existing?.id ?? null,
+      version: supersedes ? supersedes.version + 1 : 1,
+      supersedesId: supersedes?.id ?? null,
       contentHash: hash,
-      createdBy: input.createdBy ?? null,
     })
     .returning();
   return row;
+}
+
+/** Re-point every binding from a superseded fact version to its successor. */
+export async function carryForwardBindings(fromFactId: string, toFactId: string): Promise<number> {
+  const moved = await db
+    .update(factBindings)
+    .set({ factId: toFactId, updatedAt: new Date() })
+    .where(eq(factBindings.factId, fromFactId))
+    .returning({ id: factBindings.id });
+  return moved.length;
 }
 
 export async function setFactStatus(factId: string, status: FactStatus): Promise<void> {
@@ -169,6 +228,8 @@ export interface BindFactInput {
 
 export async function bindToFact(input: BindFactInput): Promise<FactBinding> {
   const kind = (targetKind(input.target) ?? 'document') as BindingTargetKind;
+  // Bindings carried forward across fact versions can already occupy the
+  // (fact, target) slot; re-binding then refreshes the row instead of failing.
   const [row] = await db
     .insert(factBindings)
     .values({
@@ -183,6 +244,17 @@ export async function bindToFact(input: BindFactInput): Promise<FactBinding> {
       bindingStatus: input.bindingKind === 'manual_override' ? 'overridden' : 'bound',
       overrideReason: input.overrideReason ?? null,
       createdBy: input.createdBy ?? null,
+    })
+    .onConflictDoUpdate({
+      target: [factBindings.factId, factBindings.target],
+      set: {
+        bindingKind: input.bindingKind ?? 'mirror',
+        transform: input.transform ?? null,
+        observedValue: input.observedValue ?? null,
+        bindingStatus: input.bindingKind === 'manual_override' ? 'overridden' : 'bound',
+        overrideReason: input.overrideReason ?? null,
+        updatedAt: new Date(),
+      },
     })
     .returning();
   return row;
@@ -241,6 +313,9 @@ export interface WriteDriftInput {
   driftType: DriftType;
   severity: Severity;
   cascadeActionId?: string | null;
+  /** Which mechanism found the drift: the sentinel sweep, a governed fact
+   *  change, or a document citation scan. */
+  detectedBy?: 'drift_sentinel' | 'fact_change' | 'citation_scan';
 }
 
 export async function writeDrift(input: WriteDriftInput) {
@@ -256,7 +331,7 @@ export async function writeDrift(input: WriteDriftInput) {
       driftType: input.driftType,
       severity: input.severity,
       status: 'open',
-      detectedBy: 'drift_sentinel',
+      detectedBy: input.detectedBy ?? 'drift_sentinel',
       cascadeActionId: input.cascadeActionId ?? null,
     })
     .returning();
@@ -266,7 +341,7 @@ export async function writeDrift(input: WriteDriftInput) {
 export async function resolveDrift(
   driftId: string,
   resolution: string,
-  resolvedBy: number,
+  resolvedBy: number | null,
   status: Extract<DriftStatus, 'resolved' | 'dismissed'> = 'resolved'
 ): Promise<void> {
   await db

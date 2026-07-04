@@ -25,6 +25,11 @@ function makeChain() {
       activeTable = t;
       return chain;
     },
+    leftJoin() {
+      // Join keeps the driving table (set by from) as the fixture key; the
+      // fixture rows already carry any joined columns (e.g. target).
+      return chain;
+    },
     where() {
       return chain;
     },
@@ -57,6 +62,7 @@ import {
 import { aiMlPccpPlans } from '../../../../shared/schema/ai-ml-pccp';
 import { evidenceSufficiencyAssessments } from '../../../../shared/schema/evidence-sufficiency';
 import { reviewerSimulationRuns } from '../../../../shared/schema/reviewer-simulation';
+import { factDrift } from '../../../../shared/schema/living-record-spine';
 
 const ORG = 7;
 const PROGRAM = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
@@ -162,6 +168,49 @@ describe('programFreshnessReport — pccp + sims + sufficiency', () => {
     const r = await programFreshnessReport(ORG, PROGRAM);
     const sa = r.artifacts.find(a => a.artifact === 'evidence_sufficiency_assessment');
     expect(sa?.state).toBe('fresh');
+  });
+});
+
+describe('programFreshnessReport — canonical fact drift buckets', () => {
+  test('drift on a document/section binding is a document_section bucket; claim/unbound stays canonical_fact', async () => {
+    setRows(factDrift, [
+      {
+        id: 'd-sec',
+        severity: 'high',
+        driftType: 'value_mismatch',
+        expectedValue: '120',
+        observedValue: '186',
+        detectedAt: new Date(),
+        target: 'section:artifact_9:m2.5',
+      },
+      {
+        id: 'd-claim',
+        severity: 'medium',
+        driftType: 'value_mismatch',
+        expectedValue: '120',
+        observedValue: '150',
+        detectedAt: new Date(),
+        target: 'claim:42',
+      },
+      {
+        id: 'd-unbound',
+        severity: 'low',
+        driftType: 'value_mismatch',
+        expectedValue: '1',
+        observedValue: '2',
+        detectedAt: new Date(),
+        target: null,
+      },
+    ]);
+    const r = await programFreshnessReport(ORG, PROGRAM);
+    const docs = r.artifacts.filter(a => a.artifact === 'document_section');
+    expect(docs).toHaveLength(1);
+    expect(docs[0].artifactId).toBe('d-sec');
+    expect(docs[0].target).toBe('section:artifact_9:m2.5');
+    expect(docs[0].state).toBe('stale'); // high severity → stale
+    const facts = r.artifacts.filter(a => a.artifact === 'canonical_fact');
+    expect(facts.map(a => a.artifactId).sort()).toEqual(['d-claim', 'd-unbound']);
+    expect(r.hasStaleArtifacts).toBe(true);
   });
 });
 

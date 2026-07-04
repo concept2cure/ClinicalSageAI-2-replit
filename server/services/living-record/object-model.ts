@@ -159,6 +159,16 @@ export function claimTarget(claimId: number): string {
   return `claim:${claimId}`;
 }
 
+/** Build a section target pointer (e.g. 'section:artifact_9:m2.5'). */
+export function sectionTarget(docRef: string, sectionKey: string): string {
+  return `section:${docRef}:${sectionKey}`;
+}
+
+/** Build a document target pointer (e.g. 'document:artifact_9'). */
+export function documentTarget(docRef: string): string {
+  return `document:${docRef}`;
+}
+
 /** Extract the integer claim id from a 'claim:<id>' pointer, or null. */
 export function claimIdFromTarget(target: string): number | null {
   if (targetKind(target) !== 'claim') return null;

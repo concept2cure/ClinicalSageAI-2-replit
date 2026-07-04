@@ -57,12 +57,24 @@ vi.mock('../../reactive-dependency-service', () => ({
 }));
 
 const updateReturnMock = vi.fn(async () => [{ id: 'std-app-1' }]);
+// resolveLegacyProgram (program-link) selects the legacy id for a uuid program.
+// Default: no link → reactiveTrigger falls back to the caller-supplied
+// legacyProgramId. Tests that pass legacyProgramId explicitly never depend on
+// this; the "without legacyProgramId" test relies on it returning [].
+const programLinkSelectMock = vi.fn(async () => [] as Array<{ legacyProgramId: number }>);
 vi.mock('../../../db', () => ({
   db: {
     update: () => ({
       set: () => ({
         where: () => ({
           returning: () => updateReturnMock(),
+        }),
+      }),
+    }),
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: () => programLinkSelectMock(),
         }),
       }),
     }),
@@ -81,6 +93,8 @@ beforeEach(() => {
   propagateRiskVocabChangeMock.mockClear();
   reactivePropagateMock.mockClear();
   updateReturnMock.mockClear();
+  programLinkSelectMock.mockClear();
+  programLinkSelectMock.mockResolvedValue([]);
 });
 
 describe('propagateRegulatoryChange — claim events', () => {
@@ -219,7 +233,7 @@ describe('propagateRegulatoryChange — broad events', () => {
     expect(propagateRiskVocabChangeMock).not.toHaveBeenCalled();
   });
 
-  test('event without legacyProgramId skips reactive service', async () => {
+  test('event without legacyProgramId skips reactive service when no program link exists', async () => {
     await propagateRegulatoryChange({
       organizationId: ORG,
       programId: PROGRAM,
@@ -227,6 +241,18 @@ describe('propagateRegulatoryChange — broad events', () => {
       sourceId: 'K1',
     });
     expect(reactivePropagateMock).not.toHaveBeenCalled();
+  });
+
+  test('event without legacyProgramId still cascades when a program link resolves', async () => {
+    programLinkSelectMock.mockResolvedValueOnce([{ legacyProgramId: 77 }]);
+    await propagateRegulatoryChange({
+      organizationId: ORG,
+      programId: PROGRAM,
+      event: 'intended_use_changed',
+      sourceId: PROGRAM,
+    });
+    expect(reactivePropagateMock).toHaveBeenCalledTimes(1);
+    expect(reactivePropagateMock.mock.calls[0][0].projectId).toBe(77);
   });
 });
 

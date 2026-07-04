@@ -277,6 +277,108 @@ folded into `programFreshnessReport` as a `canonical_fact` artifact bucket so th
 living record's value-drift shows up beside artifact staleness. (Seam noted in
 the freshness service; folding it in is the only follow-up this spec defers.)
 
+### 3.5 Governed Fact Change (the push path)
+
+The Sentinel is pull: it discovers divergence after the fact. The
+**Fact-Change Orchestrator** (`fact-change-orchestrator.ts`, exposed at
+`/api/change-propagation`) is push: an operator changes a governed value once
+and the platform propagates it under governance.
+
+1. **Preview** — `previewFactChange` classifies every citation
+   (`fact_binding`) of the value against the proposed change using the pure
+   `classifyBindingImpact` (`fact-change.ts`): `will_drift`, `consistent`,
+   `override`, or `not_evaluable`. Overrides and non-evaluable transforms are
+   shown, not hidden — the operator sees the full blast radius before acting.
+2. **Apply** — `applyFactChange` re-versions the fact via
+   `supersedeAndReversion` (history kept; a `disputed` fact may be re-versioned
+   to resolve the dispute). **Bindings are carried forward to the new
+   version** — without the carry-forward, `fact_bindings.fact_id` would keep
+   pointing at the superseded row and the citation set would be orphaned at the
+   exact moment the value changed.
+3. **Flag** — each now-divergent citation gets a `fact_drift` row immediately
+   (`detected_by = 'fact_change'`), its binding goes `drifted`, and bound
+   claims' `verification` goes `drifted` — no waiting for the next sweep.
+4. **Cascade** — each drifted claim fans out through
+   `propagateRegulatoryChange({ event: 'claim_changed', … })`, the same path
+   the Sentinel uses.
+5. **Govern** — a resolution plan (`trigger 'impact_propagation'`, recommended
+   path `harmonize`) is opened listing every affected object, so the
+   propagated update travels through review/re-approval rather than as silent
+   edits. Requires the legacy program link; skipped (and reported) otherwise.
+6. **Audit** — `canonical_fact.governed_change` is written to the audit trail
+   with the operator's required reason-for-change, both values, and the
+   propagation digest. Operator-declared values enter through
+   `establishGovernedFact` (`canonical_fact.established`), which refuses to
+   overwrite an existing active fact.
+7. **Propagate** — `propagateFactToCitations`
+   (`POST /facts/:factId/propagate`) writes the agreed value into every
+   divergent **claim** citation: the claim's structured value is set to the
+   fact's, verification returns to `verified`, the binding heals to `bound`,
+   and the open drift rows resolve — audited as `canonical_fact.propagated`.
+   Prose targets (`section:`/`paragraph:`/`document:`) are deliberately
+   skipped (reported with reason `prose_target`): running text changes travel
+   the resolution rewrite workflow, never a mechanical edit. Manual overrides
+   are never overwritten. The pure eligibility rule is
+   `propagationEligibility` (`fact-change.ts`).
+
+### 3.6 Source Tracer
+
+`source-tracer.ts` resolves the declared chain
+`cited location → fact → establishing claim → source artifact` to actual rows
+— the walk §1 promises but the graph read surfaces previously stopped short
+of (claim traversals returned `evidence_sources` ids unresolved):
+
+- `GET /api/change-propagation/facts/:factId/trace` — the fact, its
+  establishing claim (`established_by_claim_id` resolved), the source
+  artifact (`evidence_sources`: file, page count, content hash), and every
+  citation each resolved back to its own source.
+- `GET /api/change-propagation/bindings/:bindingId/trace` — the reverse walk
+  from a single cited location back to the source artifact.
+
+### 3.7 Document Citations (binding facts to CTD/IND sections)
+
+Until a governed fact is bound to a document section, the change-propagation
+machinery is dead for pharma dossiers: the reconciliation engine only ever
+binds `claim:` targets, so a value change reached the claim graph but no CTD/IND
+document. `document-binder.ts` closes that:
+
+- `POST /facts/:factId/bind-section` — an operator/AI declares that a document
+  section cites a fact, creating a `fact_binding` with a `section:<docRef>:<key>`
+  or `document:<docRef>` target. A mirror citation whose value already
+  disagrees is flagged immediately (`fact_drift`, `detected_by='citation_scan'`).
+- `POST /programs/:programId/artifacts/:artifactId/scan-citations` — auto-detect
+  the facts a CTD artifact's prose cites: `extractNumericalFacts` pulls the
+  labelled numbers, `matchCitationsToFacts` (pure, in `document-citations.ts`)
+  maps each to an active fact by label↔field affinity and compares values.
+  Preview by default; `persist:true` binds the matches and flags any that
+  already diverge. This is the inconsistency-intelligence entry point for
+  existing dossiers — it finds the sections that cite a value and the ones
+  where that value has already drifted.
+
+Once a section is bound, `applyFactChange`, the Drift Sentinel, the source
+tracer, and the freshness report all see it for free. Drift on a document- or
+section-bound value surfaces in `programFreshnessReport` under a
+`document_section` bucket, beside the device artifact buckets, so a stale CTD
+section reads in the same health model as a stale defense packet.
+
+### 3.8 The conversational surface (AnA tools)
+
+The engine above is reachable from chat through five AnA tools
+(`server/services/ana/changePropagationTools.ts`, handlers in
+`AnaToolExecutor.ts`), so an operator can ask "what happens if the sample size
+changes to 120?" and drive the governed fix in conversation:
+
+- `list_governed_facts` — the program's canonical values (find the factId).
+- `preview_fact_impact` — the read-only blast radius of a proposed change.
+- `apply_fact_change` — the governed mutation (re-version → flag → cascade →
+  resolution plan); requires an explicit reason-for-change.
+- `trace_fact_to_source` — the Source Tracer.
+- `explain_resolution_plan` — the structured explanation of the plan the change
+  opened, grounded strictly in the stored plan.
+
+All are org-scoped from the tool context; the mutation carries the same
+reason-for-change contract as the REST route.
+
 ---
 
 ## 4 · Mapping to the §13 quality bars

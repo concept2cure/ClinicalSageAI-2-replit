@@ -5477,6 +5477,183 @@ registerToolHandler('reconcile_extracted_figures', async (input: Record<string, 
   }
 });
 
+// ── Change propagation / Inconsistency Intelligence ─────────────────────────
+// Expose the Living Record Spine's governed value-change engine to AnA. All are
+// org-scoped from ToolContext; apply_fact_change is a governed mutation that
+// requires an explicit reason and opens a resolution plan.
+
+function proposedValueFromInput(input: Record<string, unknown>) {
+  const proposed: { valueNum?: number; valueText?: string; unit?: string } = {};
+  if (typeof input.valueNum === 'number') proposed.valueNum = input.valueNum;
+  else if (typeof input.valueNum === 'string' && input.valueNum.trim() !== '') {
+    const n = parseFloat(input.valueNum);
+    if (Number.isFinite(n)) proposed.valueNum = n;
+  }
+  if (typeof input.valueText === 'string') proposed.valueText = input.valueText;
+  if (typeof input.unit === 'string') proposed.unit = input.unit;
+  return proposed;
+}
+
+registerToolHandler('list_governed_facts', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) {
+    return JSON.stringify({ error: 'list_governed_facts requires organization context' });
+  }
+  const programId = String(input.programId ?? '');
+  if (!programId) return JSON.stringify({ status: 'needs_parameters', message: 'programId is required' });
+  try {
+    const { listProgramFacts } = await import('../living-record/canonical-fact-store.js');
+    const all = await listProgramFacts(programId);
+    const facts = all
+      .filter(f => f.organizationId === organizationId)
+      .map(f => ({
+        factId: f.id,
+        entity: f.entity,
+        field: f.field,
+        value: f.valueNum ?? f.valueText,
+        unit: f.unit,
+        valueType: f.valueType,
+        version: f.version,
+        confidence: f.confidence,
+      }));
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'living_record_spine',
+      count: facts.length,
+      facts,
+      instruction: 'These are the program’s governed values. Use a factId with preview_fact_impact or apply_fact_change.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `list_governed_facts failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
+registerToolHandler('preview_fact_impact', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) {
+    return JSON.stringify({ error: 'preview_fact_impact requires organization context' });
+  }
+  const factId = String(input.factId ?? '');
+  if (!factId) return JSON.stringify({ status: 'needs_parameters', message: 'factId is required' });
+  try {
+    const { previewFactChange } = await import('../living-record/fact-change-orchestrator.js');
+    const proposed = proposedValueFromInput(input);
+    const result = await previewFactChange({
+      factId,
+      organizationId,
+      proposed: Object.keys(proposed).length > 0 ? proposed : undefined,
+      tolerance: typeof input.tolerance === 'number' ? input.tolerance : undefined,
+    });
+    if (!result.ok) return JSON.stringify({ status: 'not_found', message: result.message });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'living_record_spine',
+      currentValue: result.currentValue,
+      proposedValue: result.proposedValue,
+      isNoop: result.isNoop,
+      summary: result.summary,
+      impacts: result.impacts,
+      instruction:
+        'Report the blast radius: how many citations will drift, the highest severity, and whether re-approval is required. If the user wants to proceed, call apply_fact_change with a reason.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `preview_fact_impact failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
+registerToolHandler('apply_fact_change', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) {
+    return JSON.stringify({ error: 'apply_fact_change requires organization context' });
+  }
+  const factId = String(input.factId ?? '');
+  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
+  if (!factId || !reason) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'factId and a reason-for-change are required. Ask the user for the reason if not supplied.',
+    });
+  }
+  try {
+    const { applyFactChange } = await import('../living-record/fact-change-orchestrator.js');
+    const result = await applyFactChange({
+      factId,
+      organizationId,
+      newValue: proposedValueFromInput(input),
+      reason,
+      actor: ctx?.userId ?? null,
+      tolerance: typeof input.tolerance === 'number' ? input.tolerance : undefined,
+    });
+    if (!result.ok) return JSON.stringify({ status: result.code, message: result.message });
+    return JSON.stringify({
+      status: 'applied',
+      engine: 'living_record_spine',
+      newFactId: result.newFact.id,
+      version: result.newFact.version,
+      summary: result.summary,
+      driftCreated: result.driftCreated,
+      claimsMarkedDrifted: result.claimsMarkedDrifted,
+      cascadedClaims: result.cascadedClaims,
+      resolutionPlanId: result.resolutionPlanId,
+      resolutionPlanSkippedReason: result.resolutionPlanSkippedReason,
+      instruction:
+        'The value was changed under governance. Report the impact summary and, if a resolutionPlanId was returned, offer to explain it with explain_resolution_plan.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `apply_fact_change failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
+registerToolHandler('trace_fact_to_source', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) {
+    return JSON.stringify({ error: 'trace_fact_to_source requires organization context' });
+  }
+  const factId = String(input.factId ?? '');
+  if (!factId) return JSON.stringify({ status: 'needs_parameters', message: 'factId is required' });
+  try {
+    const { traceFactToSource } = await import('../living-record/source-tracer.js');
+    const result = await traceFactToSource(factId, organizationId);
+    if (!result.ok) return JSON.stringify({ status: 'not_found', message: result.message });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'living_record_spine',
+      fact: { id: result.fact.id, entity: result.fact.entity, field: result.fact.field },
+      establishingClaim: result.establishingClaim,
+      establishingSource: result.establishingSource,
+      citations: result.citations,
+      instruction:
+        'Report the chain: the governed value, the claim that established it, and the source artifact (file/page). List each citing location.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `trace_fact_to_source failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
+registerToolHandler('explain_resolution_plan', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) {
+    return JSON.stringify({ error: 'explain_resolution_plan requires organization context' });
+  }
+  const planId = String(input.planId ?? '');
+  if (!planId) return JSON.stringify({ status: 'needs_parameters', message: 'planId is required' });
+  try {
+    const { getResolutionPlan } = await import('../resolution/resolution-planner.js');
+    const { explainResolutionPlan } = await import('../resolution/ana-resolution-support.js');
+    const plan = await getResolutionPlan(organizationId, planId);
+    if (!plan) return JSON.stringify({ status: 'not_found', message: 'Resolution plan not found' });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'resolution_layer',
+      explanation: explainResolutionPlan(plan),
+      instruction:
+        'Present the structured explanation grounded in the plan: trigger, affected objects, recommended path, review requirements, and next steps. Do not invent resolution steps beyond it.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `explain_resolution_plan failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Document Generation Tools (Master Document Builder)
 // ─────────────────────────────────────────────────────────────────────────────
