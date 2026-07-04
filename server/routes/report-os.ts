@@ -25,6 +25,12 @@ import {
   filterTypesForSegment,
   type SegmentFilterableType,
 } from '../services/report-os/segment';
+import {
+  requireReportEntitlement,
+  decideReportEntitlement,
+} from '../services/report-os/entitlement-map';
+import { resolveCapabilities } from '../services/entitlements/resolver';
+import type { Tier } from '../services/entitlements/types';
 import { computeInitialRun } from '../services/report-os/orchestrator';
 import { renderReport, type RenderInput } from '../services/report-os/render/render';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
@@ -782,7 +788,19 @@ router.get('/taxonomy', async (req: Request, res: Response) => {
     }
     const segments = await deriveOrgSegments(organizationId);
     const filtered = filterTypesForSegment(rows as SegmentFilterableType[], segments, persona);
-    return res.json({ data: filtered, meta: { segments } });
+
+    // Annotate each row with its entitlement verdict for the org's tier so the
+    // client can render an honest Locked state without a second round trip.
+    let tier: Tier = 'standard';
+    try {
+      tier = (await resolveCapabilities(organizationId)).tier;
+    } catch { /* default standard — never unlocks paid features */ }
+    const annotated = filtered.map((row) => {
+      const r = row as SegmentFilterableType & { typeId: string; family?: string };
+      const d = decideReportEntitlement(r.typeId, r.family, tier);
+      return { ...row, entitled: d.entitled, requiredTier: d.requiredTier };
+    });
+    return res.json({ data: annotated, meta: { segments, tier } });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
@@ -1045,6 +1063,20 @@ router.post('/runs', async (req: Request, res: Response) => {
       });
     }
 
+    // Entitlement gate: refuse to generate a report above the org's tier.
+    // Gated on the authed org (never the body) so a downgraded tier cannot
+    // be bypassed by a crafted organizationId.
+    const gateOrgId = authedOrgId(req) ?? orgId;
+    const gate = await requireReportEntitlement(gateOrgId, type[0].typeId, type[0].family);
+    if (!gate.entitled) {
+      return res.status(403).json({
+        error: `This report requires the ${gate.requiredTier} plan.`,
+        feature: gate.feature,
+        requiredTier: gate.requiredTier,
+        tier: gate.tier,
+      });
+    }
+
     const scope = resolveScope({ scopeType, scopeId, organizationId: orgId });
     let programProjectIds: number[] | undefined;
     if (scopeType === 'program') {
@@ -1209,10 +1241,24 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
       .limit(1);
     if (!run) return res.status(404).json({ error: 'Run not found' });
     const [reportType] = await db
-      .select({ label: reportTypeRegistry.label })
+      .select({ label: reportTypeRegistry.label, family: reportTypeRegistry.family })
       .from(reportTypeRegistry)
       .where(eq(reportTypeRegistry.typeId, run.reportTypeId))
       .limit(1);
+
+    // Entitlement gate: exporting is a paid action too — a downgraded org
+    // cannot export a report family above its tier.
+    const exportGate = await requireReportEntitlement(
+      organizationId, run.reportTypeId, reportType?.family,
+    );
+    if (!exportGate.entitled) {
+      return res.status(403).json({
+        error: `Exporting this report requires the ${exportGate.requiredTier} plan.`,
+        feature: exportGate.feature,
+        requiredTier: exportGate.requiredTier,
+        tier: exportGate.tier,
+      });
+    }
     const providers = await db
       .select({
         provider: reportRunDependencies.provider,
@@ -1509,6 +1555,21 @@ router.post('/bundles', async (req: Request, res: Response) => {
     const parsed = createBundleSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const { organizationId, name, description, runIds, createdBy } = parsed.data;
+
+    // Bundling is a paid packaging action — gate on the base report_families
+    // capability (standard+). The member runs were already gated at generation.
+    const bundleGate = await requireReportEntitlement(
+      authedOrgId(req) ?? organizationId, 'readiness.executive_digest',
+    );
+    if (!bundleGate.entitled) {
+      return res.status(403).json({
+        error: `Bundling reports requires the ${bundleGate.requiredTier} plan.`,
+        feature: bundleGate.feature,
+        requiredTier: bundleGate.requiredTier,
+        tier: bundleGate.tier,
+      });
+    }
+
     const uniqueRunIds = [...new Set(runIds)];
     const runs = await db
       .select()
