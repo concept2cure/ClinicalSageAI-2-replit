@@ -1276,16 +1276,25 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         setLayoutMode('submission-gateway');
         return;
       }
-      // Phase 11 Intelligence cluster — Protocol / Biostat / Reports resolve to
-      // the new read-only shell. Must precede the BUNDLE_MDX_HASH and
-      // BUNDLE_INTENTS checks below (which otherwise route 'protocol'/'reporting'
-      // to MDX tabs and 'biostat' to a deep-research intent). 'cmc' is handled
-      // earlier and still routes to the richer standalone CmcRoute pending a
-      // designer call on rail ownership.
+      // Reports → the governed Report-OS Insights surface (segment-aware
+      // catalog, entitlement-gated runs, predictions & portfolio). This
+      // supersedes the legacy fixture ReportsSurface (the intelligence
+      // 'reporting' sub-tab), so the home "Reports" tile now opens the live
+      // surface. Must precede the BUNDLE_MDX_HASH / BUNDLE_INTENTS checks,
+      // which would otherwise route 'reporting' to an MDX tab.
+      if (normalizedPath === 'reporting') {
+        setLayoutMode('insights');
+        return;
+      }
+      // Phase 11 Intelligence cluster — Protocol / Biostat resolve to the
+      // read-only shell. Must precede the BUNDLE_MDX_HASH and BUNDLE_INTENTS
+      // checks below (which otherwise route 'protocol' to an MDX tab and
+      // 'biostat' to a deep-research intent). 'cmc' is handled earlier and
+      // still routes to the richer standalone CmcRoute pending a designer call
+      // on rail ownership.
       const INTELLIGENCE_TABS: Record<string, IntTab> = {
         protocol: 'protocol',
         biostat: 'biostat',
-        reporting: 'reporting',
       };
       if (normalizedPath in INTELLIGENCE_TABS) {
         setIntelligenceTab(INTELLIGENCE_TABS[normalizedPath]);
