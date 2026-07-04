@@ -64,6 +64,19 @@ const LABEL_FIELD_SYNONYMS: Record<string, string[]> = {
   duration_weeks: ['duration', 'duration_weeks', 'treatment_duration', 'study_duration'],
   age_range: ['age', 'age_range'],
   batches: ['batches', 'batch_count', 'batches_count'],
+  // ── Medical device / IVD ──────────────────────────────────────────────────
+  sensitivity: ['sensitivity', 'clinical_sensitivity'],
+  specificity: ['specificity', 'clinical_specificity'],
+  ppa: ['ppa', 'positive_percent_agreement', 'sensitivity'],
+  npa: ['npa', 'negative_percent_agreement', 'specificity'],
+  lod: ['lod', 'limit_of_detection'],
+  lob: ['lob', 'limit_of_blank'],
+  loq: ['loq', 'limit_of_quantitation'],
+  precision_cv: ['precision_cv', 'cv', 'coefficient_of_variation', 'repeatability', 'reproducibility', 'precision'],
+  predicate_knumber: ['predicate_knumber', 'predicate', 'k_number', 'knumber', 'predicate_device'],
+  de_novo_number: ['de_novo_number', 'de_novo', 'denovo'],
+  pma_number: ['pma_number', 'pma'],
+  rpn: ['rpn', 'risk_priority_number', 'risk_threshold', 'risk_acceptability'],
 };
 
 /** lowercase, non-alphanumeric → '_', collapse repeats, trim. */

@@ -369,15 +369,55 @@ The engine above is reachable from chat through five AnA tools
 changes to 120?" and drive the governed fix in conversation:
 
 - `list_governed_facts` — the program's canonical values (find the factId).
+- `establish_governed_fact` — declare a governed value directly (no claim
+  required); the entry point that makes a device/IVD value governable.
 - `preview_fact_impact` — the read-only blast radius of a proposed change.
 - `apply_fact_change` — the governed mutation (re-version → flag → cascade →
   resolution plan); requires an explicit reason-for-change.
+- `scan_document_citations` — find where a document cites a governed value and
+  flag any citation that has already drifted (CTD artifact or device post-market
+  document).
 - `trace_fact_to_source` — the Source Tracer.
 - `explain_resolution_plan` — the structured explanation of the plan the change
   opened, grounded strictly in the stored plan.
 
 All are org-scoped from the tool context; the mutation carries the same
 reason-for-change contract as the REST route.
+
+### 3.9 Device & IVD coverage
+
+The spine is domain-agnostic — `canonical_facts` keys on a free-string
+`(program, entity, field)` — but the *inconsistency-intelligence* layer began
+pharma-only: the numeric extractor, the label↔field synonyms, and the document
+scanner all knew only CTD prose. Three additive changes extend it to medical
+device and IVD without new tables or a new engine:
+
+1. **Vocabulary** — `extractNumericalFacts`
+   (`intelligence/cross-artifact-consistency.ts`) and `LABEL_FIELD_SYNONYMS`
+   (`living-record/document-citations.ts`) now recognise the device/IVD
+   governed quantities: clinical **sensitivity / specificity**, **PPA / NPA**,
+   **LoD / LoB / LoQ**, **precision CV**, **predicate 510(k) / De Novo / PMA**
+   identifiers, and the **risk priority number**. Anchors require an explicit
+   label + connector so a bare percentage is never captured. This one extractor
+   feeds both the dossier consistency check and the citation scanner, so device
+   coverage lights up everywhere at once.
+2. **Device document scanner** — `scanPostMarketCitations`
+   (`living-record/document-binder.ts`) reads a post-market document's narrative
+   columns (PMS/PSUR/PMCF/SSCP) and reuses the shared scan core. Because
+   `post_market_documents` is uuid-program-scoped like `canonical_facts`, it
+   needs **no legacy-id bridge** — cleaner than the pharma path.
+3. **Conversational reach** — `establish_governed_fact` lets a device/IVD
+   program seed its governed values, and `scan_document_citations` runs the
+   scanner over either a CTD artifact or a post-market document. Once a device
+   value is established and its documents scanned, the whole machinery — drift,
+   the `document_section` freshness bucket, the source tracer, `apply_fact_change`
+   — works for device/IVD for free.
+
+The staleness-propagation layer (change-router, defense-packet / GSPR /
+standards propagators, freshness report) was already device-first and is
+unchanged. Deferred by design, as separate feature areas: conversational tools
+for CAPA/MDR/vigilance and the IVD lifecycle calculators, and a device
+cross-document reconciler.
 
 ---
 

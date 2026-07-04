@@ -94,6 +94,48 @@ export const TRACE_FACT_TO_SOURCE: AnaTool = {
   },
 };
 
+export const ESTABLISH_GOVERNED_FACT: AnaTool = {
+  name: 'establish_governed_fact',
+  description:
+    "Declare a governed value for a program — the single agreed number/text for an (entity, field), e.g. a device assay's clinical sensitivity, a limit of detection, a predicate 510(k) number, an enrolled sample size, a NOAEL. This is how a value BECOMES governable: once established, it can be cited by documents, previewed, changed under governance, and traced. Use it to seed the governed values for a device/IVD or pharma program before scanning documents or previewing a change. Refuses to overwrite an existing active value — change an agreed value with apply_fact_change instead. Works for any domain; the store is not pharma-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'The regulatory program UUID that scopes the value.' },
+      entity: { type: 'string', description: "The thing the value is about, e.g. 'assay', 'device', 'trial', 'drug_substance'." },
+      field: { type: 'string', description: "The property, e.g. 'clinical_sensitivity', 'limit_of_detection', 'predicate', 'sample_size', 'noael'." },
+      valueNum: { type: 'number', description: 'Numeric value (counts/measures/percentages). Provide valueNum OR valueText.' },
+      valueText: { type: 'string', description: "Text value (e.g. a predicate K-number 'K123456', a categorical). Provide valueNum OR valueText." },
+      unit: { type: 'string', description: 'Optional unit (%, mg, copies/mL, months).' },
+      comparator: { type: 'string', description: "Optional comparator ('=', '>=', '<='). Default '='." },
+      reason: { type: 'string', description: 'Optional note recorded on the audit trail.' },
+    },
+    required: ['programId', 'entity', 'field'],
+  },
+};
+
+export const SCAN_DOCUMENT_CITATIONS: AnaTool = {
+  name: 'scan_document_citations',
+  description:
+    "Scan a document's prose for citations of the program's governed values and (optionally) bind them — the inconsistency-intelligence entry point for existing documents. Finds where a document repeats a governed number (sensitivity, specificity, LoD, sample size, dose, predicate K-number, …) and flags any citation whose value has already DRIFTED from the governed value. Works for a pharma CTD artifact (documentKind='ctd_artifact', documentId = the artifact_id) or a device/IVD post-market document (documentKind='post_market', documentId = the document UUID). Preview by default; set persist=true to bind the citations so future governed changes flag them automatically. " +
+    GROUNDED_NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'The regulatory program UUID.' },
+      documentKind: {
+        type: 'string',
+        enum: ['ctd_artifact', 'post_market'],
+        description: "'ctd_artifact' for a pharma CTD/IND artifact; 'post_market' for a device/IVD PMS/PSUR/PMCF/SSCP document.",
+      },
+      documentId: { type: 'string', description: "The document id: the concept2cure artifact_id for 'ctd_artifact', or the document UUID for 'post_market'." },
+      persist: { type: 'boolean', description: 'Bind the matched citations (and flag divergent ones). Default false = preview only.' },
+      tolerance: { type: 'number', description: 'Optional relative tolerance for measure comparisons.' },
+    },
+    required: ['programId', 'documentKind', 'documentId'],
+  },
+};
+
 export const EXPLAIN_RESOLUTION_PLAN: AnaTool = {
   name: 'explain_resolution_plan',
   description:
@@ -111,8 +153,10 @@ export const EXPLAIN_RESOLUTION_PLAN: AnaTool = {
 /** All change-propagation tools, spread into ALL_ANA_TOOLS. */
 export const CHANGE_PROPAGATION_TOOLS: AnaTool[] = [
   LIST_GOVERNED_FACTS,
+  ESTABLISH_GOVERNED_FACT,
   PREVIEW_FACT_IMPACT,
   APPLY_FACT_CHANGE,
+  SCAN_DOCUMENT_CITATIONS,
   TRACE_FACT_TO_SOURCE,
   EXPLAIN_RESOLUTION_PLAN,
 ];

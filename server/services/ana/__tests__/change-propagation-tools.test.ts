@@ -13,17 +13,30 @@ import {
   LIST_GOVERNED_FACTS,
   TRACE_FACT_TO_SOURCE,
   EXPLAIN_RESOLUTION_PLAN,
+  ESTABLISH_GOVERNED_FACT,
+  SCAN_DOCUMENT_CITATIONS,
 } from '../changePropagationTools';
 
 describe('CHANGE_PROPAGATION_TOOLS', () => {
-  it('exposes exactly the five governed change-propagation tools', () => {
+  it('exposes exactly the governed change-propagation tools', () => {
     expect(CHANGE_PROPAGATION_TOOLS.map(t => t.name).sort()).toEqual([
       'apply_fact_change',
+      'establish_governed_fact',
       'explain_resolution_plan',
       'list_governed_facts',
       'preview_fact_impact',
+      'scan_document_citations',
       'trace_fact_to_source',
     ]);
+  });
+
+  it('the domain-agnostic tools carry no pharma-only assumptions (device/IVD usable)', () => {
+    // establish + scan are keyed by programId, not a legacy pharma id, so a
+    // device/IVD program can seed governed values and scan post-market docs.
+    expect(ESTABLISH_GOVERNED_FACT.input_schema.required).toEqual(['programId', 'entity', 'field']);
+    expect(SCAN_DOCUMENT_CITATIONS.input_schema.required).toEqual(['programId', 'documentKind', 'documentId']);
+    const kind = (SCAN_DOCUMENT_CITATIONS.input_schema.properties as any).documentKind;
+    expect(kind.enum).toEqual(['ctd_artifact', 'post_market']);
   });
 
   it('every tool has a description and an object input schema', () => {
