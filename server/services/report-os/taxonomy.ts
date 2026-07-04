@@ -316,8 +316,10 @@ export const REPORT_TYPE_SEED: ReportTypeDefinition[] = [
     label: 'Inspection Readiness & 483 Response Pack',
     family: 'inspection_readiness',
     allowedScopes: ['program', 'project', 'submission'],
-    allowedPersonas: ['qa', 'ra_lead', 'executive'],
-    allowedClientSegments: ['pharma', 'biotech', 'device', 'ivd'],
+    allowedPersonas: ['qa', 'ra_lead', 'executive', 'clinical_ops'],
+    // Service orgs included: a CRO/CDMO hosts sponsor + agency GCP/BIMO
+    // inspections of its own sites and must track 483 responses too.
+    allowedClientSegments: ['pharma', 'biotech', 'device', 'ivd', 'cro'],
     dataDependencies: ['inspections', 'inspection_findings', 'finding_responses', 'readiness_assessments'],
     artifactDependencies: ['concept2cure_artifacts'],
     workflowDependencies: ['governance_boundary'],

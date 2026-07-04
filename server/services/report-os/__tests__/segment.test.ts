@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   productTypesToSegments,
   filterTypesForSegment,
+  serviceSegmentFor,
   type SegmentFilterableType,
 } from '../segment';
 import { REPORT_TYPE_SEED } from '../taxonomy';
@@ -23,6 +24,36 @@ describe('productTypesToSegments', () => {
   it('is case/whitespace tolerant and drops unknown types', () => {
     expect(productTypesToSegments([' Drug ', 'BIOLOGIC'])).toEqual(['pharma', 'biotech']);
     expect(productTypesToSegments(['widget', ''])).toEqual([]);
+  });
+});
+
+describe('serviceSegmentFor', () => {
+  it('maps CRO/CDMO client types to the cro service segment', () => {
+    expect(serviceSegmentFor('cro')).toBe('cro');
+    expect(serviceSegmentFor('cdmo')).toBe('cro');
+    expect(serviceSegmentFor(' CRO ')).toBe('cro');
+    expect(serviceSegmentFor(null, 'cdmo')).toBe('cro');
+  });
+
+  it('does NOT treat product-owning client types (incl. the pharma default) as service', () => {
+    // client_type defaults to 'pharma' for every org — must not add a segment,
+    // or the pharma catalog would leak to every org and break anchoring.
+    expect(serviceSegmentFor('pharma')).toBeNull();
+    expect(serviceSegmentFor('biotech')).toBeNull();
+    expect(serviceSegmentFor('medtech')).toBeNull();
+    expect(serviceSegmentFor(null, null)).toBeNull();
+    expect(serviceSegmentFor(undefined, undefined)).toBeNull();
+  });
+});
+
+describe('CRO segment anchoring (real taxonomy)', () => {
+  it('a CRO org sees the eTMF completeness pack; a program-less non-service org does not', () => {
+    const croVisible = filterTypesForSegment(REPORT_TYPE_SEED, ['cro']);
+    expect(croVisible.some((t) => t.typeId === 'etmf.completeness_pack')).toBe(true);
+    // A program-less, non-service org (no derived segments) sees only universal
+    // types — the CRO-scoped eTMF pack is not universal, so it is excluded.
+    const universalOnly = filterTypesForSegment(REPORT_TYPE_SEED, []);
+    expect(universalOnly.some((t) => t.typeId === 'etmf.completeness_pack')).toBe(false);
   });
 });
 

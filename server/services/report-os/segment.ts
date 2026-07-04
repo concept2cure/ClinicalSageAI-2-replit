@@ -29,6 +29,15 @@ import type { ClientSegmentType } from '../../../shared/constants/domain/organiz
 
 const logger = createScopedLogger('report-os-segment');
 
+/**
+ * The segment vocabulary the report catalog anchors on. This is the four
+ * product-owning `ClientSegmentType`s PLUS the `'cro'` service segment — the
+ * taxonomy stamps CRO-relevant report types (e.g. `etmf.completeness_pack`)
+ * with `'cro'` in `allowedClientSegments`, but `ClientSegmentType` proper does
+ * not include it because a CRO owns no regulatory program of its own.
+ */
+export type ReportSegment = ClientSegmentType | 'cro';
+
 /** Map a `regulatory_programs.product_type` value to a client segment. */
 const PRODUCT_TYPE_TO_SEGMENT: Record<string, ClientSegmentType> = {
   drug: 'pharma',
@@ -40,6 +49,17 @@ const PRODUCT_TYPE_TO_SEGMENT: Record<string, ClientSegmentType> = {
   // sees the pharma catalog via its other programs.
   combination: 'device',
 };
+
+/**
+ * Service-organization markers (from `organizations.client_type` /
+ * `industry_mode`) that add the `'cro'` service segment. Product-owning
+ * client_type values are DELIBERATELY excluded here: `client_type` defaults to
+ * `'pharma'` for every org, so unioning product segments from it would show the
+ * pharma catalog to every org and break per-segment anchoring. Product segments
+ * come only from real `regulatory_programs`; the service segment is the one
+ * signal `client_type` legitimately adds (a CRO/CDMO owns no program).
+ */
+const SERVICE_CLIENT_TYPES = new Set(['cro', 'cdmo']);
 
 /**
  * PURE: map a set of raw `product_type` strings to the distinct, ordered
@@ -57,27 +77,64 @@ export function productTypesToSegments(productTypes: Iterable<string>): ClientSe
 }
 
 /**
- * Derive the client segment(s) for an org from its regulatory programs.
- * Returns `[]` for service orgs, program-less orgs, or on any DB error
- * (fail-open to "universal types only", never throws into the request).
+ * PURE: does an org's declared type(s) name a service organization (CRO/CDMO)?
+ * Reads the free-text `client_type` and `industry_mode` markers. Returns the
+ * `'cro'` service segment when either names a service org, else `null`.
  */
-export async function deriveOrgSegments(organizationId: number): Promise<ClientSegmentType[]> {
+export function serviceSegmentFor(
+  clientType?: string | null,
+  industryMode?: string | null,
+): 'cro' | null {
+  const markers = [clientType, industryMode].map((v) => String(v ?? '').trim().toLowerCase());
+  return markers.some((m) => SERVICE_CLIENT_TYPES.has(m)) ? 'cro' : null;
+}
+
+/** Canonical order for a full ReportSegment list (product segments then service). */
+function orderSegments(set: Set<ReportSegment>): ReportSegment[] {
+  const order: ReportSegment[] = ['pharma', 'biotech', 'device', 'ivd', 'cro'];
+  return order.filter((s) => set.has(s));
+}
+
+/**
+ * Derive the report segment(s) for an org: the UNION of its product segments
+ * (from `regulatory_programs.product_type`) and — for a CRO/CDMO service org —
+ * the `'cro'` service segment (from `organizations.client_type` /
+ * `industry_mode`). A CRO with no programs of its own therefore still sees its
+ * cross-sponsor catalog (eTMF completeness, inspection readiness). Returns `[]`
+ * for a program-less product org or on any DB error (fail-open to "universal
+ * types only", never throws into the request).
+ */
+export async function deriveOrgSegments(organizationId: number): Promise<ReportSegment[]> {
   if (!Number.isFinite(organizationId) || organizationId <= 0) return [];
+  const set = new Set<ReportSegment>();
   try {
     const { rows } = await getPool().query<{ product_type: string }>(
       `SELECT DISTINCT product_type FROM regulatory_programs
         WHERE organization_id = $1 AND product_type IS NOT NULL`,
       [organizationId],
     );
-    return productTypesToSegments(rows.map((r) => r.product_type));
+    for (const s of productTypesToSegments(rows.map((r) => r.product_type))) set.add(s);
   } catch (err) {
-    // Missing table (fresh deploy) or query error → treat as no segment.
-    logger.warn('deriveOrgSegments failed; defaulting to universal', {
+    // Missing table (fresh deploy) or query error → no product segments.
+    logger.warn('deriveOrgSegments: program derivation failed', {
       organizationId,
       err: err instanceof Error ? err.message : String(err),
     });
-    return [];
   }
+  try {
+    const { rows } = await getPool().query<{ client_type: string | null; industry_mode: string | null }>(
+      `SELECT client_type, industry_mode FROM organizations WHERE id = $1 LIMIT 1`,
+      [organizationId],
+    );
+    const svc = serviceSegmentFor(rows[0]?.client_type, rows[0]?.industry_mode);
+    if (svc) set.add(svc);
+  } catch (err) {
+    logger.warn('deriveOrgSegments: service derivation failed', {
+      organizationId,
+      err: err instanceof Error ? err.message : String(err),
+    });
+  }
+  return orderSegments(set);
 }
 
 /** A report-type row as seen by the filter — only the fields it reads. */
@@ -97,7 +154,7 @@ export interface SegmentFilterableType {
  */
 export function filterTypesForSegment<T extends SegmentFilterableType>(
   rows: T[],
-  segments: ClientSegmentType[],
+  segments: ReportSegment[],
   persona?: string | null,
 ): T[] {
   const segSet = new Set<string>(segments);
