@@ -318,9 +318,16 @@ router.get('/analytics', async (req: Request, res: Response) => {
       pace24m.push(paceMap.get(d.toISOString().slice(0, 7)) ?? 0);
     }
 
+    // kpis / blockers / pace24m are LIVE from tenant data above. The three
+    // facets below need sources we don't hold as tenant data — per-phase
+    // cycle-time-vs-peer medians, FDA public reviewer velocity, and per-tool
+    // AnA accept rates. We return them as `null` (NOT []) so the client falls
+    // back to illustrative fixtures WITH an honest "sample data" banner,
+    // rather than rendering blank sections that look like real zeros.
+    // Fabricating these would violate the reporting truthfulness contract.
     return ok(res, {
       kpis, blockers, pace24m,
-      phases: [], reviewers: [], anaUsage: [],
+      phases: null, reviewers: null, anaUsage: null,
     });
   } catch (err) { return serverError(res, log, 'analytics-aggregate', err); }
 });
