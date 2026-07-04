@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-04T05:49:34.168Z",
+  "generatedAt": "2026-07-04T05:52:57.516Z",
   "git": {
-    "sha": "6551d542dd39833f45a800a597869e57e0ed7fa8",
+    "sha": "de35a431498a38e15b2f5e6a6b649fbed4b9f077",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2390,7 +2390,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 824032
+        "bytes": 824344
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2504,7 +2504,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19714
+        "lines": 19719
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2671,12 +2671,12 @@
         "lines": 1981
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 1937
+        "file": "server/routes/report-os.ts",
+        "lines": 1962
       },
       {
-        "file": "server/routes/report-os.ts",
-        "lines": 1932
+        "file": "server/routes/auth.ts",
+        "lines": 1937
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
