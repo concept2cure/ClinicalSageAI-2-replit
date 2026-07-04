@@ -252,6 +252,14 @@ export async function initializeParallelServices(httpServer: Server, pool: Pool)
     try {
       await scheduledJobs.value.initScheduledJobs();
       console.log('✅ Automation engine scheduled jobs initialized');
+      // Register per-org default schedules (incl. the 7 AM proactive regulatory
+      // digest) for every active org so the digest cron actually fires. No-op
+      // when Redis is absent. Non-blocking — a failure here never stops boot.
+      try {
+        await scheduledJobs.value.registerDefaultSchedulesForActiveOrgs();
+      } catch (err: any) {
+        console.warn('⚠️ Default schedule registration failed (non-blocking):', err?.message);
+      }
     } catch (err: any) {
       console.warn('⚠️ Automation engine initialization failed (non-blocking):', err?.message);
     }

@@ -424,6 +424,51 @@ export async function registerDefaultSchedules(organizationId: number): Promise<
   }
 }
 
+/**
+ * Register the default schedules (incl. the 7 AM proactive regulatory digest)
+ * for EVERY active organization. Called once at startup so the digest cron
+ * actually fires — `registerDefaultSchedules` is per-org and otherwise has no
+ * caller. Idempotent: Bull keys repeatable jobs by `${orgId}:${type}`, so
+ * re-registering on each boot updates in place rather than duplicating.
+ *
+ * No-op (with a log) when the scheduler queue is not initialized (no Redis),
+ * so we don't spam per-org/per-job warnings in dev.
+ */
+export async function registerDefaultSchedulesForActiveOrgs(): Promise<number> {
+  if (!schedulerQueue) {
+    log.info('Scheduler queue not initialized (no Redis) — skipping default schedule registration');
+    return 0;
+  }
+  // Lazy import to avoid pulling the DB runtime into this module's load graph.
+  const { pool } = await import('../../db/runtime.js');
+  let orgIds: number[] = [];
+  try {
+    const { rows } = await pool.query<{ id: number }>(
+      `SELECT id FROM organizations WHERE status = 'active'`,
+    );
+    orgIds = rows.map((r) => r.id);
+  } catch (err) {
+    log.warn(
+      `Could not enumerate active organizations for default schedules: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return 0;
+  }
+
+  let registered = 0;
+  for (const orgId of orgIds) {
+    try {
+      await registerDefaultSchedules(orgId);
+      registered += 1;
+    } catch (err) {
+      log.warn(
+        `Failed to register default schedules for org ${orgId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+  log.info(`Registered default schedules for ${registered}/${orgIds.length} active organizations`);
+  return registered;
+}
+
 // ─── Graceful Shutdown ──────────────────────────────────────────────────────
 
 export async function shutdownScheduledJobs(): Promise<void> {
