@@ -13654,6 +13654,73 @@ registerToolHandler('draft_clinical_overview_m2_5', async (input, ctx) => {
   });
 });
 
+registerToolHandler('batch_draft_sections', async (input, ctx) => {
+  // S2 — draft many sections in ONE parallel batch instead of one section per
+  // agentic turn. Reuses the existing AnaDocumentDraftingService.batchDraft
+  // (bounded-concurrency Promise.all); no new drafting logic. Nothing is saved —
+  // the author promotes each draft through the governed authoring flow.
+  const rawSections = Array.isArray(input.sections) ? input.sections : [];
+  if (rawSections.length === 0) {
+    return JSON.stringify({ error: 'batch_draft_sections requires a non-empty sections[] array' });
+  }
+  if (rawSections.length > 20) {
+    return JSON.stringify({ error: 'batch_draft_sections is limited to 20 sections per call' });
+  }
+
+  const framework = (typeof input.framework === 'string' ? input.framework : 'FDA') as string;
+  const submissionType = typeof input.submission_type === 'string' ? input.submission_type : undefined;
+  const projectContext = (input.project_context && typeof input.project_context === 'object'
+    ? (input.project_context as Record<string, unknown>)
+    : undefined) as
+    | { deviceName?: string; deviceType?: string; indication?: string; predicateDevice?: string; classification?: string }
+    | undefined;
+
+  const requests = rawSections
+    .map((s) => {
+      const sec = s as Record<string, unknown>;
+      const sectionType = typeof sec.section_type === 'string' ? sec.section_type : '';
+      const instructions = typeof sec.instructions === 'string' ? sec.instructions : '';
+      if (!sectionType || !instructions) return null;
+      return {
+        framework: framework as any,
+        submissionType,
+        sectionType,
+        instructions,
+        existingContent: typeof sec.existing_content === 'string' ? sec.existing_content : undefined,
+        projectContext,
+        organizationId: ctx?.organizationId ?? undefined,
+        userId: ctx?.userId ?? undefined,
+        projectId: ctx?.projectId ?? undefined,
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
+
+  if (requests.length === 0) {
+    return JSON.stringify({ error: 'each section requires section_type and instructions' });
+  }
+
+  try {
+    const { getAnaDraftingService } = await import('./AnaDocumentDraftingService.js');
+    const service = getAnaDraftingService();
+    const results = await service.batchDraft({ requests, concurrency: 5 });
+    return JSON.stringify({
+      status: 'drafted',
+      engine: 'framework-grade',
+      count: results.length,
+      sections: results.map((r, i) => ({
+        sectionType: requests[i].sectionType,
+        content: r.content,
+        model: r.model,
+        latencyMs: r.latencyMs,
+      })),
+      instruction:
+        'These are parallel first drafts. The author promotes each through the governed authoring flow (accept into the section, which runs the Part-11 version trigger). State any completeness gaps honestly; do not present unknown values as established.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `batch draft failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 registerToolHandler('draft_fda_ir_response', async (input) => {
   const irText = typeof input.ir_text === 'string' ? input.ir_text : '';
   if (!irText || irText.length < 50) {

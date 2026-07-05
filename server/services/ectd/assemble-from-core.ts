@@ -93,6 +93,12 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
   const stageDir = path.join(outputDir, 'stage');
   await fs.mkdir(stageDir, { recursive: true });
 
+  // Guard against a throw AFTER mkdtemp but BEFORE the `cleanup` handle is
+  // returned — otherwise a failed assemble leaks its staged temp dir because the
+  // caller never gets cleanup(). Happy-path cleanup stays the caller's to invoke.
+  let assembleReturned = false;
+  try {
+
   const { byKey, unresolved: unresolvedLeaves, materialized } = await materializeLeafSources({
     leaves: leaves.map((l) => ({ documentTable: l.documentTable, documentId: l.documentId })),
     organizationId,
@@ -155,7 +161,13 @@ export async function assembleSequence(params: AssembleSequenceParams): Promise<
     }
   };
 
+  assembleReturned = true;
   return { ...result, cleanup, materialized, unresolvedLeaves };
+  } finally {
+    if (!assembleReturned) {
+      await fs.rm(outputDir, { recursive: true, force: true }).catch(() => {});
+    }
+  }
 }
 
 export default { assembleSequence };

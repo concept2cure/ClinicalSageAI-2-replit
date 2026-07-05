@@ -257,6 +257,34 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   compare_submission_against_precedent: () => 'Comparing the submission against precedent',
   lookup_regulatory_precedents: i => `Looking up regulatory precedents${i.topic ? ` on ${quoteArg(i.topic)}` : ''}`,
   compile_correspondence_response_package: () => 'Compiling the correspondence response package',
+  // Document authoring — the human should see WHAT is being drafted, calmly.
+  draft_clinical_overview_m2_5: () => 'Drafting the Module 2.5 Clinical Overview',
+  batch_draft_sections: i => {
+    const n = Array.isArray(i.sections) ? i.sections.length : 0;
+    return n > 0 ? `Drafting ${n} section${n === 1 ? '' : 's'} in parallel` : 'Drafting sections in parallel';
+  },
+  draft_fda_ir_response: () => 'Drafting the FDA Information Request response',
+  // Document vault / governed reads — legible "she's reading the right thing".
+  list_vault_documents: () => 'Listing the document vault',
+  read_vault_document: () => 'Reading the vault document',
+  get_document_versions: () => 'Reviewing the document version history',
+  list_governed_documents: () => 'Listing the governed documents',
+  read_governed_document: () => 'Reading the governed document',
+  save_document_to_vault: () => 'Saving the document to the vault',
+  update_vault_document: () => 'Updating the vault document',
+  compare_vault_versions: () => 'Comparing the document versions',
+  // eTMF / inspection readiness (CRO).
+  get_tmf_view: () => 'Opening the Trial Master File',
+  seed_tmf: () => 'Setting up the Trial Master File structure',
+  // Reporting & analytics canvas.
+  generate_report: i => (i.report_type_id ? `Generating the ${quoteArg(i.report_type_id)} report` : 'Generating the report'),
+  suggest_reports: () => 'Finding the reports that fit your programs',
+  explain_report_blockers: () => 'Explaining what is blocking this report',
+  save_report_definition: () => 'Saving the dashboard',
+  list_report_definitions: () => 'Listing your saved dashboards',
+  list_report_types: () => 'Listing the available reports',
+  get_portfolio_readiness: () => 'Assessing portfolio readiness',
+  search_connected_repositories: i => `Searching your connected repositories${i.query ? ` for ${quoteArg(i.query)}` : ''}`,
 };
 
 /**
