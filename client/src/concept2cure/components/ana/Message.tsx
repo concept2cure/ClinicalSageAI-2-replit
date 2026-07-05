@@ -324,8 +324,7 @@ export function Message({
           )}
           {detectedDocumentType && (
             <span
-              className={styles.cite}
-              style={{ marginLeft: 8, background: 'var(--ana-accent, #5b6af5)', color: '#fff', borderRadius: 4, padding: '1px 7px', fontSize: '0.72em', fontWeight: 600, letterSpacing: '0.01em' }}
+              className={styles.docTypeChip}
               title={`Drafting document: ${detectedDocumentType}`}
             >
               Drafting: {detectedDocumentType}
