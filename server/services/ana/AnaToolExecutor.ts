@@ -5870,6 +5870,70 @@ registerToolHandler('build_postmarket_report', async (input: Record<string, unkn
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Writing Precision Gate (deterministic critique of a draft)
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('critique_draft', async (input: Record<string, unknown>) => {
+  const text = typeof input.text === 'string' ? input.text : '';
+  if (!text.trim()) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'text (the draft to critique) is required' });
+  }
+  try {
+    const { critiqueDraft, buildRevisionBrief } = await import('./writing-precision-gate.js');
+    const report = critiqueDraft({
+      text,
+      audience: typeof input.audience === 'string' ? (input.audience as any) : undefined,
+      documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
+    });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      score: report.score,
+      verdict: report.verdict,
+      metrics: report.metrics,
+      findings: report.findings,
+      revisionBrief: buildRevisionBrief(report),
+      instruction:
+        report.verdict === 'pass'
+          ? 'The draft passes the deterministic precision gate. You may still improve prose, but no machine-checkable defect remains.'
+          : 'Revise the draft against the revisionBrief (most severe first), preserving every value that is already correct and cited, then re-run critique_draft until the verdict is pass.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `critique_draft failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
+registerToolHandler('verify_revision', async (input: Record<string, unknown>) => {
+  const originalText = typeof input.originalText === 'string' ? input.originalText : '';
+  const revisedText = typeof input.revisedText === 'string' ? input.revisedText : '';
+  if (!originalText.trim() || !revisedText.trim()) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'originalText and revisedText are both required' });
+  }
+  try {
+    const { verifyRevision } = await import('./writing-precision-gate.js');
+    const audience = typeof input.audience === 'string' ? (input.audience as any) : undefined;
+    const documentType = typeof input.documentType === 'string' ? input.documentType : undefined;
+    const result = verifyRevision(
+      { text: originalText, audience, documentType },
+      { text: revisedText, audience, documentType }
+    );
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction:
+        result.passesNow
+          ? 'The revision passes the precision gate. Confirm the improvement and proceed.'
+          : result.improved
+            ? 'The revision improved but has not fully passed; re-critique and continue revising the remaining findings.'
+            : 'The revision did not improve (or introduced regressions). Re-read the original critique and try again.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `verify_revision failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Predicate intelligence (shadow-service proxy with org→program ownership)
 // ─────────────────────────────────────────────────────────────────────────────
 

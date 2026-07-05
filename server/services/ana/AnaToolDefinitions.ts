@@ -18,6 +18,7 @@ import { CHANGE_PROPAGATION_TOOLS } from './changePropagationTools';
 import { IVD_LIFECYCLE_TOOLS } from './ivdLifecycleTools';
 import { CAPA_MDR_TOOLS } from './capaMdrTools';
 import { PREDICATE_INTELLIGENCE_TOOLS } from './predicateIntelligenceTools';
+import { WRITING_QUALITY_TOOLS } from './writingQualityTools';
 import { REGULATORY_CURRENCY_TOOLS } from './regulatoryCurrencyTools';
 import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
 import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
@@ -9416,6 +9417,10 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   // substantial-equivalence matrix, and read the defense preview (shadow-service
   // proxy with org→program ownership).
   ...PREDICATE_INTELLIGENCE_TOOLS,
+  // Writing Precision Gate — deterministic critique (grounding, in-document
+  // consistency, readability, abbreviations, structure) + revision brief that
+  // closes the draft->critique->revise loop for long-form medical writing.
+  ...WRITING_QUALITY_TOOLS,
   // Regulatory Currency Engine: curated, freshness-stamped registry of DATED facts
   // (vacated/superseded/upcoming-mandatory rules) so AnA never advises on a VOID
   // rule from its static knowledge. See regulatoryCurrencyTools.ts.
