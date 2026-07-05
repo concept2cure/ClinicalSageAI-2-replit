@@ -26,6 +26,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { db } from '../../db';
 import { concept2cureArtifacts } from '../../../shared/schema';
+import { postMarketDocuments } from '../../../shared/schema/gspr-postmarket';
 import type { CanonicalFact, FactBinding } from '../../../shared/schema/living-record-spine';
 import auditService from '../auditService';
 import { extractNumericalFacts } from '../intelligence/cross-artifact-consistency';
@@ -215,32 +216,25 @@ function dedupeByFact(matches: CitationMatch[]): CitationMatch[] {
   return [...byFact.values()];
 }
 
-export async function scanArtifactCitations(
-  params: ScanArtifactParams
-): Promise<ScanArtifactResult | FactChangeFailure> {
-  const [artifact] = await db
-    .select({
-      artifactId: concept2cureArtifacts.artifactId,
-      content: concept2cureArtifacts.content,
-      ctdSection: concept2cureArtifacts.ctdSection,
-    })
-    .from(concept2cureArtifacts)
-    .where(
-      and(
-        eq(concept2cureArtifacts.artifactId, params.artifactId),
-        eq(concept2cureArtifacts.organizationId, params.organizationId)
-      )
-    )
-    .limit(1);
-  if (!artifact) return fail('not_found', 'Artifact not found');
-
-  const target = artifact.ctdSection
-    ? sectionTarget(artifact.artifactId, artifact.ctdSection)
-    : documentTarget(artifact.artifactId);
-
+/**
+ * The shared scan core: extract the labelled numbers from a document's prose,
+ * match them to the program's active facts, and (when persisting) bind each
+ * match to `target` and flag any that already diverge. Domain-agnostic — the
+ * pharma artifact scanner and the device post-market scanner both call it, so a
+ * governed value is judged by one rule regardless of document family.
+ */
+async function scanProseForCitations(params: {
+  programId: string;
+  organizationId: number;
+  target: string;
+  prose: string;
+  persist?: boolean;
+  tolerance?: number;
+  actor: number | null;
+}): Promise<{ citations: ScannedCitation[]; summary: ReturnType<typeof summarizeCitationMatches>; unmatchedLabels: string[] }> {
   const facts = await listProgramFacts(params.programId);
   const factById = new Map(facts.map(f => [f.id, f]));
-  const extracted = extractNumericalFacts(artifact.content ?? '');
+  const extracted = extractNumericalFacts(params.prose ?? '');
   const result = matchCitationsToFacts(extracted, activeFactViews(facts), {
     tolerance: params.tolerance,
   });
@@ -255,7 +249,7 @@ export async function scanArtifactCitations(
         organizationId: params.organizationId,
         programId: params.programId,
         factId: match.factId,
-        target,
+        target: params.target,
         bindingKind: 'mirror',
         observedValue: match.observedValue,
         createdBy: params.actor ?? null,
@@ -282,22 +276,82 @@ export async function scanArtifactCitations(
         driftId = drift.id;
       }
     }
-    citations.push({ ...match, target, bound, driftId });
+    citations.push({ ...match, target: params.target, bound, driftId });
   }
 
+  return {
+    citations,
+    summary: summarizeCitationMatches({ matches: deduped, unmatchedLabels: result.unmatchedLabels }),
+    unmatchedLabels: result.unmatchedLabels,
+  };
+}
+
+async function auditCitationScan(params: {
+  organizationId: number;
+  actor: number | null;
+  resourceType: string;
+  resourceId: string;
+  programId: string;
+  target: string;
+  citations: ScannedCitation[];
+}): Promise<void> {
+  await auditService.logAction({
+    tenantId: params.organizationId,
+    userId: params.actor ?? 'system',
+    action: 'canonical_fact.citations_bound',
+    resourceType: params.resourceType,
+    resourceId: params.resourceId,
+    details: {
+      programId: params.programId,
+      target: params.target,
+      boundCount: params.citations.length,
+      divergentCount: params.citations.filter(c => c.consistency === 'divergent').length,
+    },
+  });
+}
+
+export async function scanArtifactCitations(
+  params: ScanArtifactParams
+): Promise<ScanArtifactResult | FactChangeFailure> {
+  const [artifact] = await db
+    .select({
+      artifactId: concept2cureArtifacts.artifactId,
+      content: concept2cureArtifacts.content,
+      ctdSection: concept2cureArtifacts.ctdSection,
+    })
+    .from(concept2cureArtifacts)
+    .where(
+      and(
+        eq(concept2cureArtifacts.artifactId, params.artifactId),
+        eq(concept2cureArtifacts.organizationId, params.organizationId)
+      )
+    )
+    .limit(1);
+  if (!artifact) return fail('not_found', 'Artifact not found');
+
+  const target = artifact.ctdSection
+    ? sectionTarget(artifact.artifactId, artifact.ctdSection)
+    : documentTarget(artifact.artifactId);
+
+  const scan = await scanProseForCitations({
+    programId: params.programId,
+    organizationId: params.organizationId,
+    target,
+    prose: artifact.content ?? '',
+    persist: params.persist,
+    tolerance: params.tolerance,
+    actor: params.actor,
+  });
+
   if (params.persist) {
-    await auditService.logAction({
-      tenantId: params.organizationId,
-      userId: params.actor ?? 'system',
-      action: 'canonical_fact.citations_bound',
+    await auditCitationScan({
+      organizationId: params.organizationId,
+      actor: params.actor,
       resourceType: 'concept2cure_artifact',
       resourceId: artifact.artifactId,
-      details: {
-        programId: params.programId,
-        target,
-        boundCount: citations.length,
-        divergentCount: citations.filter(c => c.consistency === 'divergent').length,
-      },
+      programId: params.programId,
+      target,
+      citations: scan.citations,
     });
   }
 
@@ -306,8 +360,103 @@ export async function scanArtifactCitations(
     artifactId: artifact.artifactId,
     target,
     persisted: Boolean(params.persist),
-    summary: summarizeCitationMatches({ matches: deduped, unmatchedLabels: result.unmatchedLabels }),
-    citations,
-    unmatchedLabels: result.unmatchedLabels,
+    summary: scan.summary,
+    citations: scan.citations,
+    unmatchedLabels: scan.unmatchedLabels,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Device / IVD post-market document scanner
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ScanPostMarketParams {
+  /** UUID regulatory program — same namespace as canonical_facts (no legacy bridge). */
+  programId: string;
+  organizationId: number;
+  /** UUID of the post_market_documents row. */
+  documentId: string;
+  persist?: boolean;
+  tolerance?: number;
+  actor: number | null;
+}
+
+export interface ScanPostMarketResult {
+  ok: true;
+  documentId: string;
+  documentType: string;
+  target: string;
+  persisted: boolean;
+  summary: ReturnType<typeof summarizeCitationMatches>;
+  citations: ScannedCitation[];
+  unmatchedLabels: string[];
+}
+
+/**
+ * Scan a device/IVD post-market document (PMS/PSUR/PMCF/SSCP) for citations of
+ * the program's governed values. Reads the indexed narrative columns
+ * (summary / risks / benefit-risk conclusion). Because post_market_documents is
+ * uuid-program-scoped like canonical_facts, this needs no legacy-id bridge — it
+ * is the device analogue of scanArtifactCitations and feeds the same drift,
+ * freshness (document_section bucket), and source-tracer machinery.
+ */
+export async function scanPostMarketCitations(
+  params: ScanPostMarketParams
+): Promise<ScanPostMarketResult | FactChangeFailure> {
+  const [doc] = await db
+    .select({
+      id: postMarketDocuments.id,
+      documentType: postMarketDocuments.documentType,
+      summary: postMarketDocuments.summary,
+      risksIdentified: postMarketDocuments.risksIdentified,
+      benefitRiskConclusion: postMarketDocuments.benefitRiskConclusion,
+    })
+    .from(postMarketDocuments)
+    .where(
+      and(
+        eq(postMarketDocuments.id, params.documentId),
+        eq(postMarketDocuments.organizationId, params.organizationId),
+        eq(postMarketDocuments.programId, params.programId)
+      )
+    )
+    .limit(1);
+  if (!doc) return fail('not_found', 'Post-market document not found');
+
+  const prose = [doc.summary, doc.risksIdentified, doc.benefitRiskConclusion]
+    .filter(Boolean)
+    .join('\n\n');
+  const target = documentTarget(doc.id);
+
+  const scan = await scanProseForCitations({
+    programId: params.programId,
+    organizationId: params.organizationId,
+    target,
+    prose,
+    persist: params.persist,
+    tolerance: params.tolerance,
+    actor: params.actor,
+  });
+
+  if (params.persist) {
+    await auditCitationScan({
+      organizationId: params.organizationId,
+      actor: params.actor,
+      resourceType: 'post_market_document',
+      resourceId: doc.id,
+      programId: params.programId,
+      target,
+      citations: scan.citations,
+    });
+  }
+
+  return {
+    ok: true,
+    documentId: doc.id,
+    documentType: doc.documentType,
+    target,
+    persisted: Boolean(params.persist),
+    summary: scan.summary,
+    citations: scan.citations,
+    unmatchedLabels: scan.unmatchedLabels,
   };
 }

@@ -5528,6 +5528,86 @@ registerToolHandler('list_governed_facts', async (input: Record<string, unknown>
   }
 });
 
+registerToolHandler('establish_governed_fact', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) {
+    return JSON.stringify({ error: 'establish_governed_fact requires organization context' });
+  }
+  const programId = String(input.programId ?? '');
+  const entity = String(input.entity ?? '').trim();
+  const field = String(input.field ?? '').trim();
+  if (!programId || !entity || !field) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'programId, entity, and field are required' });
+  }
+  try {
+    const { establishGovernedFact } = await import('../living-record/fact-change-orchestrator.js');
+    const result = await establishGovernedFact({
+      organizationId,
+      programId,
+      entity,
+      field,
+      value: proposedValueFromInput(input),
+      comparator: typeof input.comparator === 'string' ? input.comparator : undefined,
+      reason: typeof input.reason === 'string' ? input.reason : undefined,
+      actor: ctx?.userId ?? null,
+    });
+    if (!result.ok) return JSON.stringify({ status: result.code, message: result.message });
+    return JSON.stringify({
+      status: 'established',
+      engine: 'living_record_spine',
+      factId: result.fact.id,
+      entity: result.fact.entity,
+      field: result.fact.field,
+      instruction:
+        'The value is now governed. It can be cited (scan_document_citations), previewed (preview_fact_impact), changed (apply_fact_change), and traced.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `establish_governed_fact failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
+registerToolHandler('scan_document_citations', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) {
+    return JSON.stringify({ error: 'scan_document_citations requires organization context' });
+  }
+  const programId = String(input.programId ?? '');
+  const documentKind = String(input.documentKind ?? '');
+  const documentId = String(input.documentId ?? '');
+  if (!programId || !documentId || (documentKind !== 'ctd_artifact' && documentKind !== 'post_market')) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: "programId, documentId, and documentKind ('ctd_artifact' | 'post_market') are required",
+    });
+  }
+  const persist = input.persist === true;
+  const tolerance = typeof input.tolerance === 'number' ? input.tolerance : undefined;
+  try {
+    const { scanArtifactCitations, scanPostMarketCitations } = await import(
+      '../living-record/document-binder.js'
+    );
+    const result =
+      documentKind === 'post_market'
+        ? await scanPostMarketCitations({ programId, organizationId, documentId, persist, tolerance, actor: ctx?.userId ?? null })
+        : await scanArtifactCitations({ programId, organizationId, artifactId: documentId, persist, tolerance, actor: ctx?.userId ?? null });
+    if (!result.ok) return JSON.stringify({ status: result.code, message: result.message });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'living_record_spine',
+      documentKind,
+      target: result.target,
+      persisted: result.persisted,
+      summary: result.summary,
+      citations: result.citations,
+      unmatchedLabels: result.unmatchedLabels,
+      instruction:
+        'Report which governed values this document cites and, critically, any citation flagged divergent (its value no longer matches the governed value). If persisted, those citations are now tracked for future changes.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `scan_document_citations failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
 registerToolHandler('preview_fact_impact', async (input: Record<string, unknown>, ctx?: ToolContext) => {
   const organizationId = ctx?.organizationId ?? undefined;
   if (organizationId == null) {

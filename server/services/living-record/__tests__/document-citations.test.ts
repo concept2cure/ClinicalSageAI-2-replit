@@ -58,6 +58,15 @@ describe('labelMatchesFact', () => {
     // 'n'/'p' are guarded — they only match a field that equals them exactly.
     expect(labelMatchesFact('sample_size', fact({ entity: 'x', field: 'notes' }))).toBe(false);
   });
+
+  it('maps device/IVD labels to their fact fields', () => {
+    expect(labelMatchesFact('sensitivity', fact({ entity: 'assay', field: 'clinical_sensitivity' }))).toBe(true);
+    expect(labelMatchesFact('lod', fact({ entity: 'assay', field: 'limit_of_detection', valueType: 'measure' }))).toBe(true);
+    expect(labelMatchesFact('predicate_knumber', fact({ entity: 'device', field: 'predicate', valueType: 'text' }))).toBe(true);
+    expect(labelMatchesFact('precision_cv', fact({ entity: 'assay', field: 'repeatability', valueType: 'measure' }))).toBe(true);
+    // Cross-domain guard: an IVD label must not bind a pharma field.
+    expect(labelMatchesFact('sensitivity', fact({ entity: 'trial', field: 'shelf_life' }))).toBe(false);
+  });
 });
 
 describe('matchCitationsToFacts', () => {
