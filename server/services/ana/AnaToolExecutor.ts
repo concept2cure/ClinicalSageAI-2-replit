@@ -17155,3 +17155,158 @@ registerToolHandler('get_portfolio_readiness', async (input, ctx) => {
     return JSON.stringify({ error: `get_portfolio_readiness failed: ${err instanceof Error ? err.message : String(err)}` });
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reporting Canvas Tools — AnA generates governed reports, suggests a
+// best-practices dashboard, and saves canvases. Every report is a governed run;
+// AnA composes + narrates, never originates a metric. generate_report and
+// suggest_reports return a `report_canvas` envelope the stream route forwards to
+// the client canvas.
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('generate_report', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'generate_report requires tenant context.' });
+  const reportTypeId = typeof input.report_type_id === 'string' ? input.report_type_id : '';
+  const scopeType = typeof input.scope_type === 'string' ? input.scope_type : '';
+  const scopeId = typeof input.scope_id === 'string' ? input.scope_id : '';
+  if (!reportTypeId || !scopeType || !scopeId) {
+    return JSON.stringify({ error: 'report_type_id, scope_type and scope_id are required.' });
+  }
+  try {
+    const orgId = Number(ctx.organizationId);
+    const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
+    const gate = await requireReportEntitlement(orgId, reportTypeId);
+    if (!gate.entitled) {
+      return JSON.stringify({
+        ok: true, locked: true, feature: gate.feature, requiredTier: gate.requiredTier, tier: gate.tier,
+        message: `This report requires the ${gate.requiredTier} plan.`,
+      });
+    }
+    const { isKnownReportType, renderGovernedReport } = await import('../report-os/canvas/render-report.js');
+    if (!isKnownReportType(reportTypeId)) {
+      return JSON.stringify({ error: `Unknown report type: ${reportTypeId}.` });
+    }
+    const submissionType = typeof input.submission_type === 'string' ? input.submission_type : undefined;
+    const result = await renderGovernedReport(orgId, {
+      typeId: reportTypeId, scopeType: scopeType as any, scopeId, submissionType,
+    });
+    return JSON.stringify({
+      ok: true,
+      report_canvas: { kind: 'report', report: result.rendered },
+      confidence: result.confidence,
+      criticalBlockerCount: result.criticalBlockerCount,
+      note: 'This report is computed live by the governed orchestrator and is advisory (partial), not a sealed run. AnA presents and explains it; every number comes from the engine.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `generate_report failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('explain_report_blockers', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'explain_report_blockers requires tenant context.' });
+  const reportTypeId = typeof input.report_type_id === 'string' ? input.report_type_id : '';
+  const scopeType = typeof input.scope_type === 'string' ? input.scope_type : '';
+  const scopeId = typeof input.scope_id === 'string' ? input.scope_id : '';
+  if (!reportTypeId || !scopeType || !scopeId) {
+    return JSON.stringify({ error: 'report_type_id, scope_type and scope_id are required.' });
+  }
+  try {
+    const orgId = Number(ctx.organizationId);
+    const { requireReportEntitlement } = await import('../report-os/entitlement-map.js');
+    const gate = await requireReportEntitlement(orgId, reportTypeId);
+    if (!gate.entitled) {
+      return JSON.stringify({
+        ok: true, locked: true, requiredTier: gate.requiredTier, tier: gate.tier,
+        message: `This report requires the ${gate.requiredTier} plan.`,
+      });
+    }
+    const { isKnownReportType, renderGovernedReport } = await import('../report-os/canvas/render-report.js');
+    if (!isKnownReportType(reportTypeId)) return JSON.stringify({ error: `Unknown report type: ${reportTypeId}.` });
+    const result = await renderGovernedReport(orgId, { typeId: reportTypeId, scopeType: scopeType as any, scopeId });
+    return JSON.stringify({
+      ok: true,
+      reportTypeId, scopeType, scopeId,
+      confidence: result.confidence,
+      criticalBlockerCount: result.criticalBlockerCount,
+      blockers: result.blockers,
+      note: 'These blockers are surfaced by the governed engine. AnA explains what they mean and how to resolve them; it never invents a blocker.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `explain_report_blockers failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('suggest_reports', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'suggest_reports requires tenant context.' });
+  const persona = typeof input.persona === 'string' && input.persona.trim() ? input.persona.trim() : null;
+  try {
+    const orgId = Number(ctx.organizationId);
+    const { suggestReportsForOrg } = await import('../report-os/canvas/suggestion-service.js');
+    const result = await suggestReportsForOrg(orgId, persona);
+    return JSON.stringify({
+      ok: true,
+      report_canvas: { kind: 'suggestions', ...result },
+      note: 'Suggestions are honest set arithmetic over this client’s real programs, segment, tier, and report history — ranked, with a reason each. Locked reports show the tier that unlocks them. The preset is a ready-to-save dashboard of governed panels; numbers appear only when each panel is generated.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `suggest_reports failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('save_report_definition', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'save_report_definition requires tenant context.' });
+  const title = typeof input.title === 'string' ? input.title.trim() : '';
+  const rawPanels = Array.isArray(input.panels) ? input.panels : [];
+  if (!title) return JSON.stringify({ error: 'title is required.' });
+  if (rawPanels.length === 0) return JSON.stringify({ error: 'at least one panel is required.' });
+  try {
+    const orgId = Number(ctx.organizationId);
+    const panels = rawPanels.map((p: any) => ({
+      reportTypeId: String(p.report_type_id ?? ''),
+      scopeType: String(p.scope_type ?? 'program'),
+      scopeId: p.scope_id != null ? String(p.scope_id) : null,
+      label: p.label != null ? String(p.label) : null,
+    }));
+    const spec = { scopeType: (panels[0]?.scopeType ?? 'program') as any, panels: panels as any };
+    const persona = typeof input.persona === 'string' && input.persona.trim() ? input.persona.trim() : null;
+    const description = typeof input.description === 'string' ? input.description : null;
+    const { createDefinition } = await import('../report-os/canvas/definition-service.js');
+    const res = await createDefinition({
+      organizationId: orgId,
+      title, description, persona,
+      origin: 'ana',
+      spec,
+      createdBy: ctx.userId ? Number(ctx.userId) : null,
+    });
+    if (!res.ok) {
+      return JSON.stringify({
+        ok: false, error: 'Some panels were rejected before saving.', issues: res.issues ?? [],
+        note: 'A panel must be a known report type the org is entitled to. Fix or drop the flagged panels and save again.',
+      });
+    }
+    return JSON.stringify({
+      ok: true,
+      definition: { id: res.definition!.id, uuid: res.definition!.definitionUuid, title: res.definition!.title, kind: res.definition!.kind, panelCount: panels.length },
+      note: 'Saved. Every panel was validated against the catalog + entitlement tier before persisting.',
+    });
+  } catch (err) {
+    return JSON.stringify({ error: `save_report_definition failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('list_report_definitions', async (_input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'list_report_definitions requires tenant context.' });
+  try {
+    const orgId = Number(ctx.organizationId);
+    const { listDefinitions } = await import('../report-os/canvas/definition-service.js');
+    const rows = await listDefinitions(orgId);
+    const definitions = rows.map((r) => ({
+      id: r.id, uuid: r.definitionUuid, title: r.title, kind: r.kind, origin: r.origin,
+      persona: r.persona, panelCount: Array.isArray(r.spec?.panels) ? r.spec.panels.length : 0,
+      updatedAt: r.updatedAt,
+    }));
+    return JSON.stringify({ ok: true, count: definitions.length, definitions });
+  } catch (err) {
+    return JSON.stringify({ error: `list_report_definitions failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
