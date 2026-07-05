@@ -787,8 +787,19 @@ router.post('/stream', async (req: Request, res: Response) => {
           // fabrication through. Cap the corpus identically so the self-check
           // sees exactly the evidence the model had.
           toolEvidenceCorpus.push(capToolResultForModel(resultStr));
+          // Calm, human-facing message for a non-success step so the client can
+          // render an honest state ("AnA couldn't finish X") instead of a raw
+          // error string — trust is the interface, including when something
+          // fails. The lower-cased label reads naturally mid-sentence.
+          const humanStep = stepLabel.charAt(0).toLowerCase() + stepLabel.slice(1);
+          const humanMessage =
+            toolStatus === 'error'
+              ? `AnA couldn't finish ${humanStep}. She'll continue with what she has.`
+              : toolStatus === 'not_found'
+                ? `This step (${humanStep}) isn't available here. AnA will work around it.`
+                : undefined;
           res.write(
-            `data: ${JSON.stringify({ type: 'tool_result', name: toolUse.name, label: stepLabel, status: toolStatus, result: resultStr })}\n\n`
+            `data: ${JSON.stringify({ type: 'tool_result', name: toolUse.name, label: stepLabel, status: toolStatus, ...(humanMessage ? { message: humanMessage } : {}), result: resultStr })}\n\n`
           );
           if (toolStatus === 'success') {
             try {
