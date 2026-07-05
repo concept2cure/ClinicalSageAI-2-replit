@@ -11,15 +11,6 @@ import { ValidateCompletenessEngine } from '../validate-completeness-engine';
 
 const engine = new ValidateCompletenessEngine();
 
-/** Collect the checklist section descriptions for easy assertions. */
-async function descriptionsFor(submissionType: string, targetAgency = 'EU'): Promise<string[]> {
-  const res = await engine.validate({ submissionType, presentSections: [], targetAgency });
-  return res.checklist.map((c) => c.requirement ?? '').concat(
-    // requirement field name may differ; fold in any description-like fields
-    res.checklist.map((c: any) => c.description ?? ''),
-  );
-}
-
 describe('IVDR completeness branch', () => {
   it('surfaces IVD-specific requirements (Performance Evaluation Report, GSPR, performance)', async () => {
     const res = await engine.validate({ submissionType: 'IVDR', presentSections: [], targetAgency: 'EU' });

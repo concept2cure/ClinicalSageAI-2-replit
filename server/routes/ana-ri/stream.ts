@@ -872,7 +872,7 @@ router.post('/stream', async (req: Request, res: Response) => {
       const callModel = async (
         results: ToolResultEntry[],
         priorText: string,
-        _round: number,
+        round: number,
         includeTools: boolean,
       ): Promise<ModelTurn> => {
         loopMessages.push({ role: 'assistant', content: priorText || '' });
@@ -882,13 +882,28 @@ router.post('/stream', async (req: Request, res: Response) => {
             .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
             .join('\n\n'),
         });
+
+        // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
+        // production behavior is byte-identical until deliberately enabled and
+        // validated. When on, intermediate follow-up rounds (round >= 2 that
+        // still carry tools) run on the latency-optimized tier so routine
+        // tool-result summarization stops paying top-tier latency. It NEVER
+        // downgrades a user-pinned model (resolvedOverride) and NEVER the forced
+        // final grounded answer (includeTools === false) — that stays on the
+        // resolved strategy, so the truthfulness/quality of the answer the user
+        // reads is unchanged.
+        const roundStrategy =
+          process.env.ANA_LOOP_TIERING === 'on' && !resolvedOverride && includeTools && round >= 2
+            ? 'latency_optimized'
+            : selectedStrategy;
+
         let roundText = '';
         const roundResponse = await gw.route({
           taskType: routingPlan.taskType,
           messages: loopMessages,
           maxTokens: routingPlan.maxTokens,
           temperature: routingPlan.temperature,
-          strategy: selectedStrategy,
+          strategy: roundStrategy,
           // Keep the same explicit-model pin across the agentic follow-up rounds
           // so a user-chosen model stays consistent for the whole turn.
           ...(resolvedOverride
