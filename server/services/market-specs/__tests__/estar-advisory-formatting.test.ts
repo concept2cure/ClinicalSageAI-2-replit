@@ -35,8 +35,8 @@ describe('eSTAR advisory formatting (E1 wiring)', () => {
       warnings: expect.any(Number),
       findings: expect.any(Array),
     });
-    // A clean set of PDFs should not raise format errors.
-    expect(report.findings.every((f) => f.rule !== 'file_format')).toBe(true);
+    // A clean set of accepted-format PDFs should not raise a file-type finding.
+    expect(report.findings.every((f) => f.rule !== 'ACCEPTED_FILE_TYPES')).toBe(true);
   });
 
   it('flags an encrypted attachment (the case the advisory is meant to catch)', () => {
@@ -46,6 +46,6 @@ describe('eSTAR advisory formatting (E1 wiring)', () => {
       { fileName: 'attachments/locked.pdf', fileFormat: 'PDF', fileSizeBytes: 5_000, encrypted: true },
     ];
     const report = validateLeavesAgainstMarketSpec(spec, withEncrypted);
-    expect(report.findings.some((f) => /encrypt/i.test(f.rule) || /encrypt/i.test(f.message))).toBe(true);
+    expect(report.findings.some((f) => f.rule === 'PDF_NO_SECURITY')).toBe(true);
   });
 });
