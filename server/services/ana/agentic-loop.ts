@@ -284,6 +284,7 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   list_report_definitions: () => 'Listing your saved dashboards',
   list_report_types: () => 'Listing the available reports',
   get_portfolio_readiness: () => 'Assessing portfolio readiness',
+  search_connected_repositories: i => `Searching your connected repositories${i.query ? ` for ${quoteArg(i.query)}` : ''}`,
 };
 
 /**

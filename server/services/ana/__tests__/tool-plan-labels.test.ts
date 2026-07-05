@@ -69,6 +69,13 @@ describe('describeToolPlan', () => {
     expect(none.label).toBe('Drafting sections in parallel');
   });
 
+  it('labels the connected-repository search with the query', () => {
+    const [d] = describeToolPlan([
+      { id: '1', name: 'search_connected_repositories', input: { query: 'signed 1572' } },
+    ]);
+    expect(d.label).toBe('Searching your connected repositories for "signed 1572"');
+  });
+
   it('interpolates the report type into the generate_report label', () => {
     const [d] = describeToolPlan([
       { id: '1', name: 'generate_report', input: { report_type_id: 'readiness.executive_digest' } },
