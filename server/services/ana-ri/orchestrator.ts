@@ -24,6 +24,11 @@ import {
 import { buildDeficiencyContext, type SubmissionType } from './deficiency-taxonomy.js';
 import { resolveToDeficiencyType, resolveToRegistryEntry, getSubmissionTypeContext } from '../../../shared/regulatory/submission-type-bridge.js';
 import { buildDocumentActionContext, type DocumentActionType } from './document-actions.js';
+import {
+  detectDocumentTemplate,
+  buildDocumentTemplateBlock,
+  type DetectedDocumentTemplate,
+} from './document-templates.js';
 import { buildRoleAdaptiveContext } from './role-adapter.js';
 import { buildCommandContextForPrompt } from './command-executor.js';
 import {
@@ -299,6 +304,8 @@ export interface OrchestratorOutput {
   systemPrompt: string;
   detectedIntent: DetectedIntent;
   detectedSubmissionType: SubmissionType | null;
+  /** Specific regulatory document type detected from the message (e.g. "CTD Clinical Overview") */
+  detectedDocumentTemplate: DetectedDocumentTemplate | null;
   appliedRole: UserRole;
   activeWorkstream: WorkstreamContext;
   workstreamHandoff: WorkstreamHandoff | null;
@@ -323,6 +330,7 @@ export interface OrchestratorOutput {
     roleSource: 'explicit' | 'default';
     deficiencyContextInjected: boolean;
     documentActionContextInjected: boolean;
+    documentTemplateInjected: boolean;
     workstreamContextInjected: boolean;
     workstreamHandoffInjected: boolean;
     projectIntelligenceInjected: boolean;
@@ -415,6 +423,19 @@ export function orchestrate(input: OrchestratorInput): OrchestratorOutput {
     if (profileBlock) {
       systemPrompt += '\n\n' + profileBlock;
       projectIntelligenceInjected = true;
+    }
+  }
+
+  // 4c. Detect specific regulatory document type and inject its template structure.
+  //     This fires ABOVE the intent-lens system — "draft a Clinical Overview" maps
+  //     directly to the 2.5 template, bypassing the generic "improve" lens.
+  const detectedDocumentTemplate = detectDocumentTemplate(input.message);
+  let documentTemplateInjected = false;
+  if (detectedDocumentTemplate) {
+    const templateBlock = buildDocumentTemplateBlock(detectedDocumentTemplate);
+    if (templateBlock) {
+      systemPrompt += '\n\n' + templateBlock;
+      documentTemplateInjected = true;
     }
   }
 
@@ -672,6 +693,7 @@ Rules for proactive surfacing:
     systemPrompt,
     detectedIntent,
     detectedSubmissionType,
+    detectedDocumentTemplate,
     appliedRole,
     activeWorkstream,
     workstreamHandoff,
@@ -683,6 +705,7 @@ Rules for proactive surfacing:
       roleSource,
       deficiencyContextInjected,
       documentActionContextInjected,
+      documentTemplateInjected,
       workstreamContextInjected: true,
       workstreamHandoffInjected: !!workstreamHandoff,
       projectIntelligenceInjected,

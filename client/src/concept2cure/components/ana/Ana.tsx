@@ -586,6 +586,7 @@ export function Ana({
         fallback: m.fallback,
         stopped: m.stopped,
         detectedLens: m.detectedLens,
+        detectedDocumentType: m.detectedDocumentType,
         suggestedActions: m.suggestedActions,
         thinking: m.thinking,
         evidence: m.evidence,

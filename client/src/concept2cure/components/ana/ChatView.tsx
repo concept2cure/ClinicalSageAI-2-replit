@@ -40,6 +40,8 @@ export interface ChatMessageView {
   executedActions?: ExecutedActionChip[];
   /** Detected intent lens (e.g. "audit", "risk"). Rendered as a meta chip. */
   detectedLens?: string;
+  /** Specific regulatory document type detected (e.g. "Clinical Overview"). Rendered as "Drafting: X" chip. */
+  detectedDocumentType?: string;
   /** Server-suggested follow-up document actions (raw type strings). */
   suggestedActions?: string[];
   /** Extended-thinking reasoning content (collapsible section). */
@@ -198,6 +200,7 @@ export function ChatView({
                 stopped={m.stopped}
                 executedActions={m.executedActions}
                 detectedLens={m.detectedLens}
+                detectedDocumentType={m.detectedDocumentType}
                 suggestedActions={m.suggestedActions}
                 suggestedActionLabels={suggestedActionLabels}
                 thinking={m.thinking}
