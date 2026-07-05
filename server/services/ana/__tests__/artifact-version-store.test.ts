@@ -11,6 +11,7 @@ import crypto from 'node:crypto';
 import { describe, it, expect } from 'vitest';
 import {
   normalizeTitleSlug,
+  resolveChangeDescription,
   upsertDocumentArtifactVersion,
   listDocumentArtifactVersions,
 } from '../artifactVersionStore';
@@ -40,6 +41,23 @@ describe('normalizeTitleSlug', () => {
     expect(normalizeTitleSlug('IND Cover Letter')).not.toBe(
       normalizeTitleSlug('IND Cover Note'),
     );
+  });
+});
+
+describe('resolveChangeDescription (E6b reason-on-save)', () => {
+  it('uses the operator reason when a non-blank one is supplied', () => {
+    expect(resolveChangeDescription('Corrected the sensitivity value', 'boilerplate')).toBe(
+      'Corrected the sensitivity value',
+    );
+    expect(resolveChangeDescription('  trimmed reason  ', 'boilerplate')).toBe('trimmed reason');
+  });
+
+  it('falls back to the boilerplate when reason is absent/blank (backward-compatible)', () => {
+    expect(resolveChangeDescription(undefined, 'Initial AnA Document Studio draft')).toBe(
+      'Initial AnA Document Studio draft',
+    );
+    expect(resolveChangeDescription(null, 'rev v2')).toBe('rev v2');
+    expect(resolveChangeDescription('   ', 'rev v2')).toBe('rev v2');
   });
 });
 
