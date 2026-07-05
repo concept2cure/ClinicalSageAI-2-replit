@@ -103,6 +103,13 @@ export async function assembleTechnicalFileFromCore(
   const stageDir = path.join(outputDir, 'stage');
   await fs.mkdir(stageDir, { recursive: true });
 
+  // Harden against a throw AFTER mkdtemp but BEFORE we return the `cleanup`
+  // handle: on any internal failure the caller never receives cleanup(), so the
+  // staged temp dir would leak. Guard it here so a failed assemble removes its
+  // own scratch dir; the happy-path cleanup remains the caller's to invoke.
+  let assembleReturned = false;
+  try {
+
   const { byKey, unresolved: unresolvedLeaves, materialized } = await materializeLeafSources({
     leaves: leaves.map((l) => ({ documentTable: l.documentTable, documentId: l.documentId })),
     organizationId,
@@ -184,7 +191,13 @@ export async function assembleTechnicalFileFromCore(
     }
   };
 
-  return { bundle, cleanup, skipped: plan.skipped, materialized, unresolvedLeaves, ready: manifest.ready };
+    assembleReturned = true;
+    return { bundle, cleanup, skipped: plan.skipped, materialized, unresolvedLeaves, ready: manifest.ready };
+  } finally {
+    if (!assembleReturned) {
+      await fs.rm(outputDir, { recursive: true, force: true }).catch(() => {});
+    }
+  }
 }
 
 export default { assembleTechnicalFileFromCore };
