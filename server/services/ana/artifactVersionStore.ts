@@ -32,6 +32,16 @@ function sha256(content: string): string {
   return crypto.createHash('sha256').update(content).digest('hex');
 }
 
+/**
+ * Resolve the version's change_description (E6b): the operator's reason-for-change
+ * when they supplied a non-blank one, otherwise today's auto-generated
+ * boilerplate. Backward-compatible — callers that pass nothing get the old text.
+ */
+export function resolveChangeDescription(reason: string | undefined | null, fallback: string): string {
+  const r = typeof reason === 'string' ? reason.trim() : '';
+  return r || fallback;
+}
+
 export interface UpsertDocumentArtifactVersionInput {
   organizationId: number;
   projectId: number;
@@ -40,6 +50,12 @@ export interface UpsertDocumentArtifactVersionInput {
   title: string;
   content: string;
   documentType?: string;
+  /**
+   * Operator-supplied reason-for-change recorded on the version row (E6b). When
+   * omitted, the version keeps today's auto-generated boilerplate description, so
+   * this is fully backward-compatible — existing callers are unaffected.
+   */
+  reasonForChange?: string;
 }
 
 export interface UpsertDocumentArtifactVersionResult {
@@ -98,7 +114,7 @@ async function insertNewArtifact(
       input.organizationId,
       input.content,
       ctx.contentHash,
-      'Initial AnA Document Studio draft',
+      resolveChangeDescription(input.reasonForChange, 'Initial AnA Document Studio draft'),
       ctx.userId,
       ctx.now,
     ]
@@ -203,7 +219,7 @@ export async function upsertDocumentArtifactVersion(
         nextVersion,
         input.content,
         contentHash,
-        `AnA Document Studio revision (v${nextVersion})`,
+        resolveChangeDescription(input.reasonForChange, `AnA Document Studio revision (v${nextVersion})`),
         userId,
         now,
       ]
