@@ -172,6 +172,28 @@ export class ValidateCompletenessEngine {
       ];
     }
 
+    // IVD / IVDR technical file (EU IVDR 2017/746, Annexes I–III/XIII/XIV) and
+    // FDA IVD 510(k)/PMA. Previously IVD was folded into the device branch with
+    // no dedicated requirement set; this makes IVD a first-class citizen with the
+    // performance-evaluation + GSPR structure that distinguishes it from devices.
+    if (['IVDR', 'IVDR-TF', 'IVD-510(k)', 'IVD-PMA', 'IVD'].includes(submissionType)) {
+      return [
+        { module: 'A', section: 'Annex I', description: 'General Safety and Performance Requirements (GSPR) checklist', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.1', description: 'Device Description and Specification (intended purpose, analytes)', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.2', description: 'Information supplied by the manufacturer (labelling, IFU)', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.3', description: 'Design and Manufacturing Information', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.4', description: 'GSPR mapping to standards / common specifications', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.5', description: 'Benefit–Risk Analysis and Risk Management (ISO 14971)', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.6.1', description: 'Analytical Performance (sensitivity, specificity, LoD/LoQ)', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex II.6.2', description: 'Clinical Performance (diagnostic sensitivity/specificity, PPV/NPV)', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex XIII', description: 'Performance Evaluation Report (PER) — scientific validity + analytical + clinical', required: true, criticality: 'blocking' as const },
+        { module: 'A', section: 'Annex I.9', description: 'Software / cybersecurity documentation (if applicable)', required: false, criticality: 'important' as const },
+        { module: 'A', section: 'Annex XIV', description: 'Post-Market Performance Follow-up (PMPF) plan', required: true, criticality: 'important' as const },
+        { module: 'A', section: 'Annex III', description: 'Post-Market Surveillance (PMS) plan / PSUR', required: true, criticality: 'important' as const },
+        { module: 'A', section: 'Stability', description: 'Stability (shelf-life, in-use, transport)', required: true, criticality: 'important' as const },
+      ];
+    }
+
     // MAA (EMA)
     if (submissionType === 'MAA') {
       return [

@@ -17,6 +17,7 @@ import {
   getTrialTmfCompleteness,
   TmfArtifactError,
 } from '../services/etmf/tmf-artifact-persistence';
+import { buildTmfInspectionPackage } from '../services/etmf/tmf-inspection-package';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('etmf-routes');
@@ -103,6 +104,78 @@ router.get('/trials/:trialId/completeness', limiter, requireRole(AUTHOR), async 
   const scope = req.query.scope === 'all' ? 'all' : 'essential';
   try {
     res.json(await getTrialTmfCompleteness(trialId, ctx, scope));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Bulk-file TMF artifacts for a trial in one call (E3). Body:
+ * { artifacts: [{ artifactCode, documentRef? }, ...] }. Previously artifacts
+ * could only be filed one HTTP round-trip at a time. Each is recorded through
+ * the same audited, idempotent path; the response reports per-item outcome so a
+ * partial batch (one unknown code) is honest, not silently dropped.
+ */
+router.post('/trials/:trialId/artifacts/bulk', limiter, requireRole(AUTHOR), async (req: Request, res: Response) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const trialId = String(Array.isArray(req.params.trialId) ? req.params.trialId[0] : req.params.trialId);
+  const b = (req.body && typeof req.body === 'object' ? req.body : {}) as any;
+  if (!Array.isArray(b.artifacts) || b.artifacts.length === 0) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'artifacts[] is required and must be non-empty.' } });
+  }
+  if (b.artifacts.length > 500) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Batch limited to 500 artifacts.' } });
+  }
+  try {
+    const results: Array<{ artifactCode: string; ok: boolean; error?: string }> = [];
+    for (const item of b.artifacts) {
+      const artifactCode = String((item && item.artifactCode) ?? '');
+      if (!artifactCode) {
+        results.push({ artifactCode: '', ok: false, error: 'artifactCode required' });
+        continue;
+      }
+      try {
+        await recordTmfArtifactFiling({ trialId, artifactCode, documentRef: item.documentRef }, ctx);
+        results.push({ artifactCode, ok: true });
+      } catch (err) {
+        if (err instanceof TmfArtifactError) {
+          results.push({ artifactCode, ok: false, error: err.code });
+        } else {
+          throw err;
+        }
+      }
+    }
+    const filed = results.filter((r) => r.ok).length;
+    res.status(200).json({ filed, total: results.length, results });
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+/**
+ * Produce an inspection-readiness package (E3) — the missing eTMF deliverable.
+ * Streams a ZIP (manifest + completeness + artifact index + README). Honest by
+ * construction: metadata/readiness index only, never fabricated document bytes.
+ * ?scope=essential|all.
+ */
+router.get('/trials/:trialId/inspection-package', limiter, requireRole(AUTHOR), async (req: Request, res: Response) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const trialId = String(Array.isArray(req.params.trialId) ? req.params.trialId[0] : req.params.trialId);
+  const scope = req.query.scope === 'all' ? 'all' : 'essential';
+  try {
+    const pkg = await buildTmfInspectionPackage({
+      trialId,
+      organizationId: ctx.organizationId,
+      scope,
+      generatedAt: new Date().toISOString(),
+    });
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="${pkg.fileName}"`);
+    res.setHeader('X-TMF-SHA256', pkg.sha256);
+    res.setHeader('X-TMF-Ready', String(pkg.ready));
+    res.status(200).send(pkg.zip);
   } catch (err) {
     fail(res, err);
   }

@@ -7037,6 +7037,44 @@ export const DRAFT_CLINICAL_OVERVIEW_M2_5: AnaTool = {
   },
 };
 
+export const BATCH_DRAFT_SECTIONS: AnaTool = {
+  name: 'batch_draft_sections',
+  description:
+    "Draft MANY document sections in ONE parallel batch instead of one section per turn. Use this when the author asks to draft/regenerate several sections at once (e.g. 'draft all the TODO sections in Module 2', 'give me first drafts of 2.4, 2.5 and 2.7'). Each request is a section to draft with its own instructions; they run concurrently (bounded) through the same framework-grade drafting engine used for single sections, so a five-section batch returns in roughly the time of the slowest one rather than five sequential turns. Returns per-section drafted content the author promotes through the governed authoring flow — nothing is auto-saved. Do NOT use it to fabricate quantitative results; where a value is unknown the draft must say so.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      sections: {
+        type: 'array',
+        description: 'The sections to draft in parallel (2–20).',
+        items: {
+          type: 'object',
+          properties: {
+            section_type: { type: 'string', description: 'Document section / CTD type to draft (e.g. "2.5", "nonclinical_overview", "device_description").' },
+            instructions: { type: 'string', description: 'What this section must contain / how to draft it.' },
+            existing_content: { type: 'string', description: 'Optional existing content to revise rather than draft from scratch.' },
+          },
+          required: ['section_type', 'instructions'],
+        },
+      },
+      framework: { type: 'string', description: 'Regulatory framework context (e.g. "FDA", "EMA", "MDR", "IVDR"). Shared across the batch.' },
+      submission_type: { type: 'string', description: 'Canonical filing type (e.g. "US_IND", "510k", "IVDR-TF") — unlocks framework-grade authoring for all filing types. Shared across the batch.' },
+      project_context: {
+        type: 'object',
+        description: 'Shared project context applied to every section (device/product name, indication, etc.).',
+        properties: {
+          deviceName: { type: 'string' },
+          deviceType: { type: 'string' },
+          indication: { type: 'string' },
+          predicateDevice: { type: 'string' },
+          classification: { type: 'string' },
+        },
+      },
+    },
+    required: ['sections'],
+  },
+};
+
 export const DRAFT_FDA_IR_RESPONSE: AnaTool = {
   name: 'draft_fda_ir_response',
   description:
@@ -8961,6 +8999,7 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   ASSEMBLE_ECTD_MODULE_FROM_ARTIFACTS,
   DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
   DRAFT_CLINICAL_OVERVIEW_M2_5,
+  BATCH_DRAFT_SECTIONS,
   DRAFT_FDA_IR_RESPONSE,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,
