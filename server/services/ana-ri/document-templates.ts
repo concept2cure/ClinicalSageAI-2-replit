@@ -643,12 +643,11 @@ export function detectDocumentTemplate(message: string): DetectedDocumentTemplat
     if (score > 0) {
       const patternCount = template.detectionPatterns.length;
       const normalizedScore = score / Math.max(patternCount, 1);
-      if (normalizedScore >= template.minConfidence || score >= 2) {
-        candidates.push({ template, score: normalizedScore, matches });
-      } else if (score >= 1) {
-        // Single-pattern match — use raw score for tie-breaking but below threshold
-        candidates.push({ template, score: normalizedScore * 0.5, matches });
-      }
+      // Any match is a candidate; score = fraction of patterns matched.
+      // A single match on a 5-pattern template gives 0.2 which clears the
+      // final 0.1 gate below, ensuring specific phrases like "clinical overview"
+      // always produce a result without requiring multi-pattern overlap.
+      candidates.push({ template, score: normalizedScore, matches });
     }
   }
 
@@ -661,7 +660,9 @@ export function detectDocumentTemplate(message: string): DetectedDocumentTemplat
   });
 
   const best = candidates[0];
-  if (best.score < 0.3) return null; // Too weak even after threshold bypass
+  // Reject incidental matches: require at least 1/10 of patterns to match.
+  // Even a single match on the largest template (10 patterns) gives 0.1.
+  if (best.score < 0.1) return null;
 
   return {
     template: best.template,
