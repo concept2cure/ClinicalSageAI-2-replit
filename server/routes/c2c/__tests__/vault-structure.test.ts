@@ -59,6 +59,10 @@ describe('GET /api/c2c/projects/:id/vault-structure', () => {
     expect(res.body.folders.map((f: any) => f.id)).toContain('eng');
     expect(res.body.folders.map((f: any) => f.id)).not.toContain('module-1');
     expect(res.body.buildTypes).toEqual(['k510/FDA']);
+    // Industry-specific framing: filing types carry their governing regulation.
+    const k510 = res.body.filingTypes.find((f: any) => f.value === 'k510');
+    expect(k510).toBeTruthy();
+    expect(k510.regulatoryRefs).toContain('21 CFR 807');
     // Section tree merged with live status.
     const doc = res.body.documents[0];
     expect(doc.docType).toBe('k510');

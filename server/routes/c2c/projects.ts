@@ -466,8 +466,17 @@ router.get('/:id/vault-structure', async (req: Request, res: Response) => {
       projectId,
       view,
       folders:     foldersForView(view),
-      docKinds:    docKindsForView(view).map(k => ({ value: k.value, label: k.label })),
-      filingTypes: filingTypesForView(view).map(f => ({ value: f.value, label: f.label })),
+      docKinds:    docKindsForView(view).map(k => ({ value: k.value, label: k.label, description: k.description })),
+      // Industry-specific framing: each framework pill carries its governing
+      // regulation(s) so the Explorer can render "510(k) · 21 CFR 807",
+      // "eCTD · ICH M8", "IVDR PE · EU IVDR 2017/746" — the segment's real
+      // regulatory language, not a generic label.
+      filingTypes: filingTypesForView(view).map(f => ({
+        value: f.value,
+        label: f.label,
+        description: f.description,
+        regulatoryRefs: (f as { regulatoryRefs?: string[] }).regulatoryRefs ?? [],
+      })),
       buildTypes,
       documents,
     });
