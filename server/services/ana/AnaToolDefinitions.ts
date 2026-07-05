@@ -15,6 +15,7 @@ import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
 import { RECONCILIATION_TOOLS } from './reconciliationTools';
 import { CHANGE_PROPAGATION_TOOLS } from './changePropagationTools';
+import { IVD_LIFECYCLE_TOOLS } from './ivdLifecycleTools';
 import { REGULATORY_CURRENCY_TOOLS } from './regulatoryCurrencyTools';
 import { LICENSE_STATUS_TOOLS } from './licenseStatusTools';
 import { SUBMISSION_INTELLIGENCE_TOOLS } from './submissionIntelligenceTools';
@@ -9401,6 +9402,10 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   // changing a governed value, apply the change under governance (flag + cascade +
   // resolution plan), trace a value to its source, and explain the resulting plan.
   ...CHANGE_PROPAGATION_TOOLS,
+  // IVD lifecycle deterministic calculators — signal disproportionality, ISO
+  // 17511 traceability, scientific validity, cutoff, stability, DoC, and the
+  // post-market report authoring (eMDR/MIR/FSN/PSUR).
+  ...IVD_LIFECYCLE_TOOLS,
   // Regulatory Currency Engine: curated, freshness-stamped registry of DATED facts
   // (vacated/superseded/upcoming-mandatory rules) so AnA never advises on a VOID
   // rule from its static knowledge. See regulatoryCurrencyTools.ts.

@@ -5766,6 +5766,110 @@ registerToolHandler('explain_resolution_plan', async (input: Record<string, unkn
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// IVD lifecycle deterministic calculators (all pure engines, no DB/org context)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ivdComputed(result: unknown, instruction: string): string {
+  return JSON.stringify({ status: 'computed', engine: 'deterministic', result, instruction });
+}
+
+function ivdError(name: string, err: any): string {
+  const message = err?.message || 'unknown error';
+  // The throw-based engines phrase their message as the parameter problem.
+  return JSON.stringify({ status: 'needs_parameters', tool: name, message });
+}
+
+registerToolHandler('screen_signal_panel', async (input: Record<string, unknown>) => {
+  try {
+    const { screenSignalPanel } = await import('../stats/signal-disproportionality.js');
+    const result = screenSignalPanel({
+      a: Number(input.a), b: Number(input.b), c: Number(input.c), d: Number(input.d),
+    });
+    return ivdComputed(result, 'Report each disproportionality metric with its bound and the consolidated signal tier.');
+  } catch (err: any) {
+    return ivdError('screen_signal_panel', err);
+  }
+});
+
+registerToolHandler('assess_iso17511_traceability', async (input: Record<string, unknown>) => {
+  try {
+    const { assessTraceability } = await import('../regulatory/iso-17511-traceability.js');
+    return ivdComputed(assessTraceability(input as any), 'Report validity, the gaps, and the recommendation for the traceability chain.');
+  } catch (err: any) {
+    return ivdError('assess_iso17511_traceability', err);
+  }
+});
+
+registerToolHandler('assess_scientific_validity', async (input: Record<string, unknown>) => {
+  try {
+    const { assessScientificValidity } = await import('../regulatory/scientific-validity.js');
+    return ivdComputed(assessScientificValidity(input as any), 'Report the verdict (established/supported/insufficient) and the evidence gaps.');
+  } catch (err: any) {
+    return ivdError('assess_scientific_validity', err);
+  }
+});
+
+registerToolHandler('determine_assay_cutoff', async (input: Record<string, unknown>) => {
+  try {
+    const { determineCutoff } = await import('../stats/analytical-performance-extensions.js');
+    // The engine takes the bare observations array (the route wraps it).
+    return ivdComputed(determineCutoff(input.observations as any), 'Report the cutoff with its sensitivity, specificity, and Youden J.');
+  } catch (err: any) {
+    return ivdError('determine_assay_cutoff', err);
+  }
+});
+
+registerToolHandler('assess_shelf_life_stability', async (input: Record<string, unknown>) => {
+  try {
+    const { assessRealTimeStability } = await import('../stats/analytical-performance-extensions.js');
+    return ivdComputed(assessRealTimeStability(input as any), 'Report the supportable shelf-life and whether the claim holds against the allowed change.');
+  } catch (err: any) {
+    return ivdError('assess_shelf_life_stability', err);
+  }
+});
+
+registerToolHandler('assess_accelerated_stability', async (input: Record<string, unknown>) => {
+  try {
+    const { assessAcceleratedStability } = await import('../stats/analytical-performance-extensions.js');
+    return ivdComputed(assessAcceleratedStability(input as any), 'Report the projected shelf-life at the storage temperature.');
+  } catch (err: any) {
+    return ivdError('assess_accelerated_stability', err);
+  }
+});
+
+registerToolHandler('generate_declaration_of_conformity', async (input: Record<string, unknown>) => {
+  try {
+    const { generateDeclarationOfConformity } = await import('../regulatory/registration-listing.js');
+    const result = generateDeclarationOfConformity(input as any);
+    return ivdComputed(result, 'If valid, present the declaration; if not, list exactly the missing[] fields to collect.');
+  } catch (err: any) {
+    return ivdError('generate_declaration_of_conformity', err);
+  }
+});
+
+registerToolHandler('build_postmarket_report', async (input: Record<string, unknown>) => {
+  const reportType = String(input.reportType ?? '');
+  const fields = (input.fields ?? {}) as Record<string, unknown>;
+  try {
+    const authoring = await import('../postmarket/report-authoring.js');
+    const builder: Record<string, (f: any) => unknown> = {
+      emdr: authoring.buildEmdr,
+      mir: authoring.buildMir,
+      fsn: authoring.buildFsn,
+      psur: authoring.buildPsur,
+    };
+    const build = builder[reportType];
+    if (!build) {
+      return JSON.stringify({ status: 'needs_parameters', message: "reportType must be one of: emdr, mir, fsn, psur" });
+    }
+    const result = build(fields);
+    return ivdComputed(result, 'If valid, present the report payload; if not, list exactly the missing[] required fields.');
+  } catch (err: any) {
+    return ivdError('build_postmarket_report', err);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Document Generation Tools (Master Document Builder)
 // ─────────────────────────────────────────────────────────────────────────────
 
