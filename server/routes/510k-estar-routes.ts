@@ -15,6 +15,8 @@ import {
 import { listAcroFields } from '../services/forms/fill-official-pdf';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { getMarketSpec } from '../services/market-specs/market-submission-specs';
+import { validateLeavesAgainstMarketSpec, type LeafFileDescriptor } from '../services/market-specs/market-formatting-validator';
 
 const logger = createScopedLogger('510k-estar-routes');
 
@@ -171,6 +173,38 @@ router.post('/build', authMiddleware, requireEditorAccess, async (req, res) => {
     const pdf = await renderPdfBuffersFor510k(content, stylePacks['510k_v1']);
     const zipBuffer = await buildZipBuffer(pdf, attachments);
     const filename = `${sanitizeFilename(meta.id)}_eSTAR.zip`;
+
+    // E1 — ADVISORY market-formatting check. The FDA eSTAR spec (us-estar) already
+    // encodes CDRH's file-naming / format / size / no-encryption rules; run the
+    // built package's files against it so the author sees formatting problems that
+    // would trip acceptance BEFORE submitting. Advisory + non-blocking: it never
+    // changes the produced ZIP or the 200 path — a real gate would be a separate,
+    // deliberate flag-gated step. Any validator failure is swallowed so it can
+    // never break a working build.
+    let formattingReport: unknown;
+    try {
+      const spec = getMarketSpec('us-estar');
+      if (spec) {
+        const leaves: LeafFileDescriptor[] = [
+          { fileName: '01_CoverLetter.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.coverLetter.length },
+          { fileName: '02_510kSummary.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.summary.length },
+          { fileName: '03_DeviceDescription.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.deviceDescription.length },
+          { fileName: '04_SE_Discussion.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.seDiscussion.length },
+          { fileName: '05_PerformanceTesting.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.performanceTesting.length },
+          { fileName: '06_Labeling.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.labeling.length },
+          ...attachments.map((a) => ({
+            fileName: sanitizeFilename(a.filename),
+            fileSizeBytes: Buffer.from(a.buffer, 'base64').length,
+          })),
+        ];
+        formattingReport = validateLeavesAgainstMarketSpec(spec, leaves);
+      }
+    } catch (validationErr) {
+      logger.warn('eSTAR advisory formatting validation failed (non-fatal)', {
+        err: validationErr instanceof Error ? validationErr.message : String(validationErr),
+      });
+    }
+
     const consequence = await createGovernedExportConsequence({
       organizationId: getOrganizationId(req),
       projectId: meta.projectId,
@@ -187,10 +221,20 @@ router.post('/build', authMiddleware, requireEditorAccess, async (req, res) => {
       // This route produces a ZIP of rendered section PDFs, NOT the official FDA
       // eSTAR interactive PDF that CDRH ingests. `officialEstarPdf: false` keeps
       // that honest so no downstream surface presents this as a submittable eSTAR.
-      metadata: { format: 'zip', attachmentCount: attachments.length, package: 'eSTAR', officialEstarPdf: false },
+      metadata: {
+        format: 'zip',
+        attachmentCount: attachments.length,
+        package: 'eSTAR',
+        officialEstarPdf: false,
+        formattingErrors: (formattingReport as { errors?: number } | undefined)?.errors ?? 0,
+        formattingWarnings: (formattingReport as { warnings?: number } | undefined)?.warnings ?? 0,
+      },
     });
 
-    return res.status(200).json(consequence);
+    // The advisory formatting report rides alongside the governed consequence so
+    // the UI can surface "N formatting issues to fix before submitting" without
+    // blocking the draft export.
+    return res.status(200).json({ ...consequence, formattingReport: formattingReport ?? null });
   } catch (error: any) {
     logger.error('governed export failure', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
