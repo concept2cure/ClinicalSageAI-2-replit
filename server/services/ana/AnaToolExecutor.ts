@@ -5710,6 +5710,37 @@ registerToolHandler('trace_fact_to_source', async (input: Record<string, unknown
   }
 });
 
+registerToolHandler('reconcile_device_documents', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) {
+    return JSON.stringify({ error: 'reconcile_device_documents requires organization context' });
+  }
+  const programId = String(input.programId ?? '');
+  if (!programId) return JSON.stringify({ status: 'needs_parameters', message: 'programId is required' });
+  const tol = input.tolerance as { absolute?: unknown; relative?: unknown } | undefined;
+  const tolerance = tol
+    ? {
+        absolute: typeof tol.absolute === 'number' ? tol.absolute : undefined,
+        relative: typeof tol.relative === 'number' ? tol.relative : undefined,
+      }
+    : undefined;
+  try {
+    const { reconcileDeviceDocuments } = await import('../reconciliation/device-document-reconciler.js');
+    const result = await reconcileDeviceDocuments({ programId, organizationId, tolerance });
+    if (!result.ok) return JSON.stringify({ status: 'not_found', message: result.message });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      documentsScanned: result.documentsScanned,
+      result: result.report,
+      instruction:
+        'Report each conflict verbatim: the quantity, its distinct values with source documents, the consensus, and the severity. A cross-document performance-claim mismatch is a submission blocker.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `reconcile_device_documents failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
 registerToolHandler('explain_resolution_plan', async (input: Record<string, unknown>, ctx?: ToolContext) => {
   const organizationId = ctx?.organizationId ?? undefined;
   if (organizationId == null) {

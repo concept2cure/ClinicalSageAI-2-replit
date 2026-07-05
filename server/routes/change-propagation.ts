@@ -283,6 +283,40 @@ router.post(
   }
 );
 
+// Device/IVD: reconcile the numeric governed quantities across ALL of a
+// program's post-market documents — cross-document divergence (a sensitivity /
+// LoD / RPN restated differently in different documents) in one pass.
+router.post(
+  '/programs/:programId/reconcile-device-documents',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    try {
+      const { reconcileDeviceDocuments } = await import(
+        '../services/reconciliation/device-document-reconciler'
+      );
+      const tolerance =
+        req.body && typeof req.body === 'object' && req.body.tolerance
+          ? {
+              absolute:
+                typeof req.body.tolerance.absolute === 'number' ? req.body.tolerance.absolute : undefined,
+              relative:
+                typeof req.body.tolerance.relative === 'number' ? req.body.tolerance.relative : undefined,
+            }
+          : undefined;
+      const result = await reconcileDeviceDocuments({
+        programId: String(req.params.programId),
+        organizationId: orgId,
+        tolerance,
+      });
+      if (!result.ok) return res.status(404).json({ error: result.message, code: result.code });
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Device reconciliation failed', detail: err?.message });
+    }
+  }
+);
+
 // Device/IVD: scan a post-market document (PMS/PSUR/PMCF/SSCP) for citations of
 // the program's governed values. Same contract as the artifact scan.
 router.post(
