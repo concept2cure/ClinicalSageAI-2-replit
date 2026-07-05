@@ -562,6 +562,7 @@ export function Ana({
         intelligenceFlowState: m.intelligenceFlowState,
         intelligenceFlowComplete: m.intelligenceFlowComplete,
         warGameReport: m.warGameReport,
+        reportCanvas: m.reportCanvas,
         };
       }),
     [chat.messages]

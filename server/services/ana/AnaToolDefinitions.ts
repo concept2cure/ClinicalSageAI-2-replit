@@ -8490,6 +8490,120 @@ export const GET_PORTFOLIO_READINESS: AnaTool = {
   },
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// AnA Reporting Canvas tools — AnA conversationally generates governed reports,
+// suggests a best-practices dashboard grounded in the client's programs, answers
+// reporting questions, and saves dashboards. Every report is a governed run
+// (same orchestrator + entitlement gate + truthfulness gate as a direct run):
+// AnA composes and narrates, it NEVER originates a metric.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const GENERATE_REPORT: AnaTool = {
+  name: 'generate_report',
+  description:
+    'Generate one governed report LIVE for the reporting canvas: runs the given report type over a ' +
+    'scope through the same orchestrator + truthfulness gate as a direct run, and returns the rendered ' +
+    'report (sections + typed blocks: metrics, tables, charts, blockers, gaps, disclosures). Use to ' +
+    'build a report the user asked for or to populate a dashboard panel. Entitlement-gated (returns a ' +
+    'locked notice with the required tier otherwise). AnA presents and explains this report; every ' +
+    'number is computed by the engine, never by AnA. Tenant-scoped.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      report_type_id: { type: 'string', description: 'A governed report type id (from list_report_types).' },
+      scope_type: {
+        type: 'string',
+        enum: ['account', 'program', 'project', 'study', 'submission', 'document'],
+        description: 'The scope to run the report at.',
+      },
+      scope_id: { type: 'string', description: 'The id of the scope entity (e.g. project id).' },
+      submission_type: { type: 'string', description: 'Optional submission type hint (e.g. NDA, 510k).' },
+    },
+    required: ['report_type_id', 'scope_type', 'scope_id'],
+  },
+};
+
+export const EXPLAIN_REPORT_BLOCKERS: AnaTool = {
+  name: 'explain_report_blockers',
+  description:
+    'Generate a governed report and return its blockers + gaps for AnA to explain in plain language — ' +
+    'what is blocking readiness/finality and why. Reuses generate_report under the hood (same governed ' +
+    'engine); AnA narrates the returned blockers, it never invents one. Entitlement-gated. Tenant-scoped.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      report_type_id: { type: 'string', description: 'A governed report type id.' },
+      scope_type: {
+        type: 'string',
+        enum: ['account', 'program', 'project', 'study', 'submission', 'document'],
+      },
+      scope_id: { type: 'string' },
+    },
+    required: ['report_type_id', 'scope_type', 'scope_id'],
+  },
+};
+
+export const SUGGEST_REPORTS: AnaTool = {
+  name: 'suggest_reports',
+  description:
+    "Suggest the best-practice reports and a preset dashboard for THIS client, grounded in their real " +
+    "programs, segment, entitlement tier, and what they already run/subscribe to. Returns a ranked, " +
+    "reasoned list (each with a plain-language why) plus a ready-to-save preset dashboard spec of " +
+    "governed report panels. Locked-but-relevant reports are surfaced with the tier that unlocks them, " +
+    "never as available picks. AnA proposes; the numbers come only when each report is generated. " +
+    "Tenant-scoped, read-only.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      persona: { type: 'string', description: 'Optional persona lens (e.g. executive, ra_lead, qa).' },
+    },
+    required: [],
+  },
+};
+
+export const SAVE_REPORT_DEFINITION: AnaTool = {
+  name: 'save_report_definition',
+  description:
+    'Save an AnA-authored dashboard/report canvas: a titled, ordered set of governed report-type panels. ' +
+    'Every panel is validated against the report catalog + the org entitlement tier before saving — an ' +
+    'unknown or un-entitled panel is rejected with the reason. Use after the user approves a suggested or ' +
+    'assembled dashboard so it persists and can be re-opened. Tenant-scoped.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string', description: 'The dashboard/report title.' },
+      description: { type: 'string', description: 'Optional description.' },
+      persona: { type: 'string', description: 'Optional persona lens the canvas was framed for.' },
+      panels: {
+        type: 'array',
+        description: 'Ordered governed panels.',
+        items: {
+          type: 'object',
+          properties: {
+            report_type_id: { type: 'string' },
+            scope_type: {
+              type: 'string',
+              enum: ['account', 'program', 'project', 'study', 'submission', 'document'],
+            },
+            scope_id: { type: 'string', description: 'Optional pinned scope id.' },
+            label: { type: 'string', description: 'Optional panel label override.' },
+          },
+          required: ['report_type_id', 'scope_type'],
+        },
+      },
+    },
+    required: ['title', 'panels'],
+  },
+};
+
+export const LIST_REPORT_DEFINITIONS: AnaTool = {
+  name: 'list_report_definitions',
+  description:
+    "List the org's saved report dashboards/canvases (title, kind, origin, persona, panel count). Use to " +
+    'let the user re-open or extend a dashboard they saved earlier. Tenant-scoped, read-only.',
+  input_schema: { type: 'object', properties: {}, required: [] },
+};
+
 const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   LIST_VAULT_DOCUMENTS,
   READ_VAULT_DOCUMENT,
@@ -8499,6 +8613,11 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   GET_TMF_VIEW,
   LIST_REPORT_TYPES,
   GET_PORTFOLIO_READINESS,
+  GENERATE_REPORT,
+  EXPLAIN_REPORT_BLOCKERS,
+  SUGGEST_REPORTS,
+  SAVE_REPORT_DEFINITION,
+  LIST_REPORT_DEFINITIONS,
   SAVE_DOCUMENT_TO_VAULT,
   UPDATE_VAULT_DOCUMENT,
   COMPARE_VAULT_VERSIONS,
