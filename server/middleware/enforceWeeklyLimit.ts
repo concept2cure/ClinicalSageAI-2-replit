@@ -39,7 +39,17 @@ export interface EnforceWeeklyLimitOptions {
   getIncrement?: (req: Request) => number;
   /** Block (rather than pass) when the check itself errors. Default false (fail open). */
   failClosed?: boolean;
+  /**
+   * HTTP methods the limit applies to. Defaults to mutating methods only
+   * (POST/PUT/PATCH) — metered work (LLM calls, generation) is invoked by
+   * mutations, while router-wide mounts also see reads (thread lists,
+   * health checks) that must neither consume quota nor accrue billable
+   * overage units.
+   */
+  methods?: string[];
 }
+
+const DEFAULT_GUARDED_METHODS = ['POST', 'PUT', 'PATCH'];
 
 function setHeaders(res: Response, metric: WeeklyMetric, d: LimitDecision): void {
   res.setHeader('X-Weekly-Metric', metric);
@@ -51,7 +61,12 @@ function setHeaders(res: Response, metric: WeeklyMetric, d: LimitDecision): void
 }
 
 export function enforceWeeklyLimit(metric: WeeklyMetric, options: EnforceWeeklyLimitOptions = {}) {
+  const guardedMethods = (options.methods ?? DEFAULT_GUARDED_METHODS).map(m => m.toUpperCase());
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    if (!guardedMethods.includes(req.method.toUpperCase())) {
+      next();
+      return;
+    }
     try {
       const raw = getSecureOrgId(req as any);
       const orgId = raw == null ? NaN : Number(raw);

@@ -252,11 +252,31 @@ export async function initializeParallelServices(httpServer: Server, pool: Pool)
     try {
       await scheduledJobs.value.initScheduledJobs();
       console.log('✅ Automation engine scheduled jobs initialized');
+      // Register per-org default schedules (incl. the 7 AM proactive regulatory
+      // digest) for every active org so the digest cron actually fires. No-op
+      // when Redis is absent. Non-blocking — a failure here never stops boot.
+      try {
+        await scheduledJobs.value.registerDefaultSchedulesForActiveOrgs();
+      } catch (err: any) {
+        console.warn('⚠️ Default schedule registration failed (non-blocking):', err?.message);
+      }
     } catch (err: any) {
       console.warn('⚠️ Automation engine initialization failed (non-blocking):', err?.message);
     }
   } else {
     console.warn('⚠️ Automation engine failed to load:', scheduledJobs.reason);
+  }
+
+  // Report-OS subscription sweep — fires due scheduled reports. Graceful
+  // no-op when Redis is absent; never blocks boot.
+  try {
+    const { initSubscriptionSweep } = await import(
+      '../services/report-os/scheduling/worker-register'
+    );
+    // The sweep logs its own scheduled/disabled state via its scoped logger.
+    await initSubscriptionSweep();
+  } catch (err: any) {
+    console.warn('⚠️ Report subscription sweep initialization failed (non-blocking):', err?.message);
   }
 
   if (hocuspocus.status === 'fulfilled') {

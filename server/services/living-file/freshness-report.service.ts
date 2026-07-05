@@ -30,8 +30,9 @@ import {
 import { aiMlPccpPlans } from '../../../shared/schema/ai-ml-pccp';
 import { evidenceSufficiencyAssessments } from '../../../shared/schema/evidence-sufficiency';
 import { reviewerSimulationRuns } from '../../../shared/schema/reviewer-simulation';
-import { factDrift } from '../../../shared/schema/living-record-spine';
+import { factDrift, factBindings } from '../../../shared/schema/living-record-spine';
 import { driftSeverityToFreshness } from '../living-record/value-reconciliation';
+import { targetKind } from '../living-record/object-model';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -48,10 +49,13 @@ export interface ArtifactFreshness {
     | 'ai_ml_pccp_plan'
     | 'reviewer_simulation_run'
     | 'evidence_sufficiency_assessment'
-    | 'canonical_fact';
+    | 'canonical_fact'
+    | 'document_section';
   artifactId: string;
   state: FreshnessState;
   reason?: string;
+  /** For document_section rows: the bound target (e.g. section:artifact_9:m2.5). */
+  target?: string;
   updatedAt?: Date | null;
 }
 
@@ -323,6 +327,11 @@ async function canonicalFactDriftFreshness(
   // folds the Living Record Spine drift into the one freshness read model so the
   // health readout (design Surface 8) reads a single source. The drift inbox
   // (Surface 2) shows full detail; here it is one freshness row per open drift.
+  // Left-join the drifting binding so a drift on a bound CTD/IND document
+  // section (target 'section:…' / 'document:…') is reported as its own
+  // document_section bucket — the pharma dossier surfaces beside device
+  // artifacts in the one health read model. Claim-bound and unbound drift stays
+  // in the canonical_fact bucket.
   const rows = await db
     .select({
       id: factDrift.id,
@@ -331,8 +340,10 @@ async function canonicalFactDriftFreshness(
       expectedValue: factDrift.expectedValue,
       observedValue: factDrift.observedValue,
       detectedAt: factDrift.detectedAt,
+      target: factBindings.target,
     })
     .from(factDrift)
+    .leftJoin(factBindings, eq(factBindings.id, factDrift.bindingId))
     .where(
       and(
         eq(factDrift.organizationId, organizationId),
@@ -340,13 +351,18 @@ async function canonicalFactDriftFreshness(
         eq(factDrift.status, 'open')
       )
     );
-  return rows.map(r => ({
-    artifact: 'canonical_fact' as const,
-    artifactId: r.id,
-    state: driftSeverityToFreshness(r.severity),
-    reason: `${r.driftType}: expected ${r.expectedValue ?? '—'}, observed ${r.observedValue ?? '—'}`,
-    updatedAt: r.detectedAt,
-  }));
+  return rows.map(r => {
+    const kind = r.target ? targetKind(r.target) : null;
+    const isDocument = kind === 'section' || kind === 'document' || kind === 'paragraph';
+    return {
+      artifact: isDocument ? ('document_section' as const) : ('canonical_fact' as const),
+      artifactId: r.id,
+      state: driftSeverityToFreshness(r.severity),
+      reason: `${r.driftType}: expected ${r.expectedValue ?? '—'}, observed ${r.observedValue ?? '—'}`,
+      target: r.target ?? undefined,
+      updatedAt: r.detectedAt,
+    };
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

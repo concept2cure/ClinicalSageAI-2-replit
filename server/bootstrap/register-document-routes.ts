@@ -229,6 +229,11 @@ export async function registerDocumentRoutes({
         name: 'Regulatory Graph',
       },
       {
+        path: '/api/change-propagation',
+        mod: '../routes/change-propagation.js',
+        name: 'Change Propagation (governed fact change)',
+      },
+      {
         path: '/api/standards',
         mod: '../routes/standards.js',
         name: 'Standards Catalog',

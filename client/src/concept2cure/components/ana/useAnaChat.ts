@@ -464,6 +464,30 @@ export interface AnaChatMessage {
     topPriorities: string[];
     regulatoryRiskLevel: 'low' | 'moderate' | 'high' | 'critical';
   };
+  /**
+   * Reporting Canvas — a governed report render or a best-practices suggestion
+   * set produced by the reporting tools (generate_report / suggest_reports).
+   * Rendered inline as the AnA Reporting Canvas. Every value is governed; AnA
+   * narrates it.
+   */
+  reportCanvas?:
+    | { kind: 'report'; report: unknown; source?: string }
+    | {
+        kind: 'suggestions';
+        segments: string[];
+        tier: string;
+        suggestions: Array<{
+          typeId: string;
+          label: string;
+          family: string;
+          entitled: boolean;
+          requiredTier: string;
+          alreadyUsed: boolean;
+          reasons: string[];
+        }>;
+        preset: { title: string; scopeType: string; panels: Array<{ reportTypeId: string; scopeType: string; label?: string | null }> } | null;
+        source?: string;
+      };
 }
 
 export interface UseAnaChatOptions {
@@ -1112,6 +1136,17 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   prev.map(m =>
                     m.id === assistantId
                       ? { ...m, warGameReport: report }
+                      : m
+                  )
+                );
+              }
+            } else if (event.type === 'report_canvas') {
+              const canvas = event.canvas;
+              if (canvas && (canvas.kind === 'report' || canvas.kind === 'suggestions')) {
+                setMessages(prev =>
+                  prev.map(m =>
+                    m.id === assistantId
+                      ? { ...m, reportCanvas: { ...canvas, source: event.source } }
                       : m
                   )
                 );

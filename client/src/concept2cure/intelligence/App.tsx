@@ -14,7 +14,6 @@ import { TopBar } from './shell/TopBar';
 import { ProtocolSurface } from './surfaces/Protocol';
 import { CmcSurface } from './surfaces/Cmc';
 import { BiostatSurface } from './surfaces/Biostat';
-import { ReportsSurface } from './surfaces/Reports';
 import { HERE_LABEL, INT_SUGGESTIONS, type IntTab } from './data';
 
 export interface IntelligenceAppProps {
@@ -52,7 +51,6 @@ export function IntelligenceApp({ initialNav = 'protocol', onAskAna, onNavigate 
   switch (activeNav) {
     case 'cmc':       surface = <CmcSurface onAsk={onAsk} onOpenAuthoring={onOpenAuthoring} />; break;
     case 'biostat':   surface = <BiostatSurface onAsk={onAsk} onOpenAuthoring={onOpenAuthoring} />; break;
-    case 'reporting': surface = <ReportsSurface onAsk={onAsk} />; break;
     default:          surface = <ProtocolSurface onAsk={onAsk} onOpenAuthoring={onOpenAuthoring} />;
   }
 

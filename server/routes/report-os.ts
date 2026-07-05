@@ -20,6 +20,18 @@ import { REPORT_TYPE_SEED } from '../services/report-os/taxonomy';
 import { GLOBAL_REPORT_TYPE_SEED } from '../services/report-os/taxonomy-global';
 import { PREDICTION_REPORT_TYPES } from '../services/report-os/prediction/report-types';
 import { resolveScope } from '../services/report-os/scope-model';
+import {
+  deriveOrgSegments,
+  filterTypesForSegment,
+  type SegmentFilterableType,
+} from '../services/report-os/segment';
+import {
+  requireReportEntitlement,
+  decideReportEntitlement,
+} from '../services/report-os/entitlement-map';
+import { fetchPortfolioReport, fetchOrgPortfolioSummary } from '../services/report-os/portfolio/fetch';
+import { resolveCapabilities } from '../services/entitlements/resolver';
+import type { Tier } from '../services/entitlements/types';
 import { computeInitialRun } from '../services/report-os/orchestrator';
 import { renderReport, type RenderInput } from '../services/report-os/render/render';
 import { buildSealedRecord } from '../services/report-os/sealing/seal';
@@ -757,13 +769,104 @@ router.post('/taxonomy/seed', async (_req: Request, res: Response) => {
   }
 });
 
-router.get('/taxonomy', async (_req: Request, res: Response) => {
+router.get('/taxonomy', async (req: Request, res: Response) => {
   try {
     const rows = await db
       .select()
       .from(reportTypeRegistry)
       .where(eq(reportTypeRegistry.enabled, true));
-    return res.json({ data: rows });
+
+    // Anchor the catalog to what this client segment actually needs: filter
+    // to report types whose `allowedClientSegments` intersects the org's
+    // derived segment(s). Universal types (empty allowedClientSegments) are
+    // always shown. Optional ?persona= intersects on allowedPersonas.
+    // When there's no tenant context we return the full enabled set (the
+    // route is auth-gated at the mount, so this is the defensive path only).
+    const organizationId = authedOrgId(req);
+    const persona = typeof req.query.persona === 'string' ? req.query.persona : null;
+    if (organizationId == null || !Number.isFinite(organizationId)) {
+      return res.json({ data: rows });
+    }
+    const segments = await deriveOrgSegments(organizationId);
+    const filtered = filterTypesForSegment(rows as SegmentFilterableType[], segments, persona);
+
+    // Annotate each row with its entitlement verdict for the org's tier so the
+    // client can render an honest Locked state without a second round trip.
+    let tier: Tier = 'standard';
+    try {
+      tier = (await resolveCapabilities(organizationId)).tier;
+    } catch { /* default standard — never unlocks paid features */ }
+    const annotated = filtered.map((row) => {
+      const r = row as SegmentFilterableType & { typeId: string; family?: string };
+      const d = decideReportEntitlement(r.typeId, r.family, tier);
+      return { ...row, entitled: d.entitled, requiredTier: d.requiredTier };
+    });
+    return res.json({ data: annotated, meta: { segments, tier } });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /portfolio/org — the enterprise rollup over ALL top-level programs in the
+// org (not a single program group). Returns the RAW flat OrgPortfolioSummary
+// (program list + aggregates), not a rendered board pack, so the Command Center
+// can bind the program array directly. Same entitlement gate + same orchestrator
+// as /portfolio; every metric traces to computeInitialRun.
+router.get('/portfolio/org', async (req: Request, res: Response) => {
+  try {
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const gate = await requireReportEntitlement(organizationId, 'portfolio.board_pack', 'portfolio');
+    if (!gate.entitled) {
+      return res.status(403).json({
+        error: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
+        feature: gate.feature,
+        requiredTier: gate.requiredTier,
+        tier: gate.tier,
+      });
+    }
+    const summary = await fetchOrgPortfolioSummary(organizationId);
+    if (!summary) {
+      return res.status(404).json({ error: 'No programs found for this organization' });
+    }
+    return res.json({ data: summary });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /portfolio?programGroupId= — the enterprise board-pack rollup over a
+// program group. Gated on portfolio_rollup (enterprise); every metric traces
+// to the same orchestrator the /runs path uses.
+router.get('/portfolio', async (req: Request, res: Response) => {
+  try {
+    const organizationId = authedOrgId(req) ?? NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
+    const gate = await requireReportEntitlement(organizationId, 'portfolio.board_pack', 'portfolio');
+    if (!gate.entitled) {
+      return res.status(403).json({
+        error: `Portfolio rollup requires the ${gate.requiredTier} plan.`,
+        feature: gate.feature,
+        requiredTier: gate.requiredTier,
+        tier: gate.tier,
+      });
+    }
+    const programGroupId = Number(req.query.programGroupId);
+    if (!Number.isFinite(programGroupId) || programGroupId <= 0) {
+      return res.status(400).json({ error: 'programGroupId query parameter is required' });
+    }
+    const report = await fetchPortfolioReport(organizationId, programGroupId, {
+      reportTypeId: 'portfolio.board_pack',
+      reportTypeLabel: 'Portfolio board pack',
+    });
+    if (!report) {
+      return res.status(404).json({ error: 'Program group not found or has no members in this organization' });
+    }
+    return res.json({ data: report });
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
   }
@@ -1026,6 +1129,20 @@ router.post('/runs', async (req: Request, res: Response) => {
       });
     }
 
+    // Entitlement gate: refuse to generate a report above the org's tier.
+    // Gated on the authed org (never the body) so a downgraded tier cannot
+    // be bypassed by a crafted organizationId.
+    const gateOrgId = authedOrgId(req) ?? orgId;
+    const gate = await requireReportEntitlement(gateOrgId, type[0].typeId, type[0].family);
+    if (!gate.entitled) {
+      return res.status(403).json({
+        error: `This report requires the ${gate.requiredTier} plan.`,
+        feature: gate.feature,
+        requiredTier: gate.requiredTier,
+        tier: gate.tier,
+      });
+    }
+
     const scope = resolveScope({ scopeType, scopeId, organizationId: orgId });
     let programProjectIds: number[] | undefined;
     if (scopeType === 'program') {
@@ -1190,10 +1307,24 @@ router.get('/runs/:id/export.pdf', async (req: Request, res: Response) => {
       .limit(1);
     if (!run) return res.status(404).json({ error: 'Run not found' });
     const [reportType] = await db
-      .select({ label: reportTypeRegistry.label })
+      .select({ label: reportTypeRegistry.label, family: reportTypeRegistry.family })
       .from(reportTypeRegistry)
       .where(eq(reportTypeRegistry.typeId, run.reportTypeId))
       .limit(1);
+
+    // Entitlement gate: exporting is a paid action too — a downgraded org
+    // cannot export a report family above its tier.
+    const exportGate = await requireReportEntitlement(
+      organizationId, run.reportTypeId, reportType?.family,
+    );
+    if (!exportGate.entitled) {
+      return res.status(403).json({
+        error: `Exporting this report requires the ${exportGate.requiredTier} plan.`,
+        feature: exportGate.feature,
+        requiredTier: exportGate.requiredTier,
+        tier: exportGate.tier,
+      });
+    }
     const providers = await db
       .select({
         provider: reportRunDependencies.provider,
@@ -1490,6 +1621,21 @@ router.post('/bundles', async (req: Request, res: Response) => {
     const parsed = createBundleSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
     const { organizationId, name, description, runIds, createdBy } = parsed.data;
+
+    // Bundling is a paid packaging action — gate on the base report_families
+    // capability (standard+). The member runs were already gated at generation.
+    const bundleGate = await requireReportEntitlement(
+      authedOrgId(req) ?? organizationId, 'readiness.executive_digest',
+    );
+    if (!bundleGate.entitled) {
+      return res.status(403).json({
+        error: `Bundling reports requires the ${bundleGate.requiredTier} plan.`,
+        feature: bundleGate.feature,
+        requiredTier: bundleGate.requiredTier,
+        tier: bundleGate.tier,
+      });
+    }
+
     const uniqueRunIds = [...new Set(runIds)];
     const runs = await db
       .select()

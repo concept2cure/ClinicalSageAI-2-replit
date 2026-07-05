@@ -828,6 +828,18 @@ router.post('/stream', async (req: Request, res: Response) => {
                   })}\n\n`
                 );
               }
+              // Reporting Canvas — a governed report render or a best-practices
+              // suggestion set from the reporting tools. Forwarded verbatim so the
+              // client canvas renders it (report → ReportView; suggestions → chips).
+              if (parsed?.report_canvas) {
+                res.write(
+                  `data: ${JSON.stringify({
+                    type: 'report_canvas',
+                    canvas: parsed.report_canvas,
+                    source: toolUse.name,
+                  })}\n\n`
+                );
+              }
               if (parsed && parsed.status === 'generated' && typeof parsed.content === 'string' && parsed.content.length > 0) {
                 const draftTitle: string = parsed.title || 'Generated document';
                 // Record for durable version-history persistence in post-processing.
