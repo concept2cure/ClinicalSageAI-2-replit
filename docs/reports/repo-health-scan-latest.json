@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-05T18:41:33.449Z",
+  "generatedAt": "2026-07-05T21:49:09.404Z",
   "git": {
-    "sha": "b57acd785b62127ed5771bfe1ad8a83cdd2b39d7",
+    "sha": "866dad221c6d28f3e44e097d3257b7eb05b0c26f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2687,12 +2687,12 @@
         "lines": 1927
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
-        "lines": 1888
+        "file": "server/services/ana-ri/orchestrator.ts",
+        "lines": 1900
       },
       {
-        "file": "server/services/ana-ri/orchestrator.ts",
-        "lines": 1877
+        "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
+        "lines": 1888
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
