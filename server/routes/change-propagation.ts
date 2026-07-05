@@ -13,7 +13,9 @@
  *   POST /api/change-propagation/facts/:factId/propagate            write the agreed value into divergent claim citations
  *   POST /api/change-propagation/facts/:factId/bind-section         cite a fact from a CTD/IND document section
  *   POST /api/change-propagation/programs/:programId/artifacts/:artifactId/scan-citations
- *                                                                   auto-detect + optionally bind the facts a section's prose cites
+ *                                                                   auto-detect + optionally bind the facts a CTD artifact's prose cites
+ *   POST /api/change-propagation/programs/:programId/post-market/:documentId/scan-citations
+ *                                                                   device/IVD: same, over a post-market document (PMS/PSUR/PMCF/SSCP)
  *   GET  /api/change-propagation/facts/:factId/history              supersession chain, newest first
  *   GET  /api/change-propagation/facts/:factId/trace                fact → establishing claim → source artifact + citations
  *   GET  /api/change-propagation/bindings/:bindingId/trace          citation → fact → claim → source artifact
@@ -37,6 +39,7 @@ import { propagateFactToCitations } from '../services/living-record/fact-propaga
 import {
   bindSectionToFact,
   scanArtifactCitations,
+  scanPostMarketCitations,
 } from '../services/living-record/document-binder';
 import type { FactChangeFailure } from '../services/living-record/fact-change';
 import {
@@ -276,6 +279,31 @@ router.post(
       res.json(result);
     } catch (err: any) {
       res.status(500).json({ error: 'Citation scan failed', detail: err?.message });
+    }
+  }
+);
+
+// Device/IVD: scan a post-market document (PMS/PSUR/PMCF/SSCP) for citations of
+// the program's governed values. Same contract as the artifact scan.
+router.post(
+  '/programs/:programId/post-market/:documentId/scan-citations',
+  requireUuidProgramAccess,
+  async (req: Request, res: Response) => {
+    const orgId = getOrgId(req)!;
+    const persist = req.body?.persist === true || String(req.query.persist) === 'true';
+    try {
+      const result = await scanPostMarketCitations({
+        programId: String(req.params.programId),
+        organizationId: orgId,
+        documentId: String(req.params.documentId),
+        persist,
+        tolerance: parseTolerance(req.body),
+        actor: actorId(req),
+      });
+      if (!result.ok) return sendFailure(res, result);
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Post-market citation scan failed', detail: err?.message });
     }
   }
 );
