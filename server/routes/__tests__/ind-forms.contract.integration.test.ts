@@ -44,7 +44,9 @@ beforeAll(async () => {
   sponsorId = sponsor.id;
   const inv = await createInvestigator({ firstName: 'Pat', lastName: 'Smith', credentials: 'MD' }, ctx);
   investigatorId = inv.id;
-});
+  // PGlite bootstrap can exceed the global 10s hookTimeout when the full
+  // suite runs under load; give it explicit headroom.
+}, 60_000);
 afterAll(async () => {
   await harness.close();
 });

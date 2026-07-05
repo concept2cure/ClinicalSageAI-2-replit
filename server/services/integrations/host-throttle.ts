@@ -113,11 +113,16 @@ export class HostThrottle {
   private async acquire(host: string, limits: HostLimits): Promise<void> {
     const st = this.getState(host);
 
-    // Concurrency gate: wait for a free slot when at capacity.
+    // Concurrency gate: wait for a free slot when at capacity. A queued
+    // waiter receives its slot directly from release() (which leaves
+    // `active` unchanged on hand-off), so it must NOT increment again —
+    // otherwise a fresh caller arriving between release() and this
+    // continuation could observe a free slot and briefly exceed the cap.
     if (limits.concurrency > 0 && st.active >= limits.concurrency) {
       await new Promise<void>(resolve => st.queue.push(resolve));
+    } else {
+      st.active++;
     }
-    st.active++;
 
     // Spacing gate: reserve a start slot now (so concurrent acquirers are
     // spaced deterministically), then sleep until it arrives.
@@ -132,9 +137,15 @@ export class HostThrottle {
 
   private release(host: string): void {
     const st = this.getState(host);
-    st.active = Math.max(0, st.active - 1);
     const next = st.queue.shift();
-    if (next) next();
+    if (next) {
+      // Hand the slot to the next waiter without decrementing: the count
+      // stays saturated so no interleaved acquire() can steal the slot
+      // before the waiter's continuation resumes.
+      next();
+    } else {
+      st.active = Math.max(0, st.active - 1);
+    }
   }
 
   /**

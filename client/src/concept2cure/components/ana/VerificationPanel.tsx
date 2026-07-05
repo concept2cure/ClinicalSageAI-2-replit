@@ -13,7 +13,7 @@
  * regulatory user (and the 21 CFR Part 11 trail) cites — not "AnA wrote it"
  * but "AnA wrote it and proved it matches your source."
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { EsignModal, type EsigSignedManifest } from '../../_shared/components/EsignModal';
 import { I } from './icons';
@@ -99,6 +99,13 @@ export function VerificationPanel({
   const [modalOpen, setModalOpen] = useState(false);
   const [appliedSeal, setAppliedSeal] = useState<VerifiedSeal | null>(seal ?? null);
   const [sealError, setSealError] = useState<string | null>(null);
+  // Resync when the host switches the shown version/document while this panel
+  // stays mounted — otherwise the first version's seal keeps rendering (and
+  // keeps canSeal false) for every other version.
+  useEffect(() => {
+    setAppliedSeal(seal ?? null);
+    setSealError(null);
+  }, [seal]);
   const canSeal = ok && Boolean(onSeal) && !appliedSeal;
 
   const handleSign = async (input: {

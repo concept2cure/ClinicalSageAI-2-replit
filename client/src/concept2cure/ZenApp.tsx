@@ -30,6 +30,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLocation, Redirect } from 'wouter';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/utils/authToken';
 import { useToast } from '@/hooks/use-toast';
 
 // Stage 10 extracted modules
@@ -851,11 +852,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
     queryKey: ['project-artifacts', activeProjectId],
     queryFn: async () => {
       if (!activeProjectId) return [];
-      const token =
-        sessionStorage.getItem('trialsage_access_token') ||
-        localStorage.getItem('trialsage_access_token');
+      // Canonical token access: reading the legacy 'trialsage_access_token'
+      // key directly races with authToken.ts's legacy-key migration (which
+      // deletes it), silently de-authenticating this fetch.
       const res = await fetch(`/api/concept2cure/projects/${activeProjectId}/artifacts`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: { ...getAuthHeaders() },
       });
       if (!res.ok) return [];
       const data = await res.json();
@@ -947,11 +948,11 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
       if (!activeProjectId) {
         return { promoted: false, message: 'No active project.' };
       }
-      const token =
-        sessionStorage.getItem('trialsage_access_token') ||
-        localStorage.getItem('trialsage_access_token');
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      // Canonical token access (see project-artifacts query above).
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      };
 
       const res = await fetch(
         `/api/concept2cure/projects/${activeProjectId}/artifacts/${artifactId}/status`,

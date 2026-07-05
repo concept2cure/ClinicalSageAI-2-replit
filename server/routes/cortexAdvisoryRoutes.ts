@@ -259,8 +259,16 @@ const DEVICE_510K_SECTIONS = {
 /**
  * GET /api/cortex/advisory/:projectId
  * Get comprehensive advisory analysis for a project
+ *
+ * Extracted to a named handler because it must be registered twice: this
+ * router is mounted at `/advisory` (cortex-unified.ts), so the historical
+ * `/advisory/:projectId` declaration here actually resolved to
+ * `/api/cortex/advisory/advisory/:projectId` — a path no client calls. The
+ * canonical `/:projectId` registration lives at the BOTTOM of this file so
+ * it cannot shadow the literal routes (/patterns, /guidance, /stats, …)
+ * declared between here and there.
  */
-router.get('/advisory/:projectId', asyncHandler(async (req, res) => {
+const advisoryProjectHandler = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
   // Tenant scope: only return advisory analysis for a project the caller's
   // org owns. Previously this read any project by id (cross-tenant).
@@ -413,7 +421,11 @@ router.get('/advisory/:projectId', asyncHandler(async (req, res) => {
       })),
       confidence: 85,
     });
-}));
+});
+
+// Legacy double-prefixed path (mounted under /advisory → /advisory/advisory/:projectId).
+// Kept for any caller that adapted to the old effective path.
+router.get('/advisory/:projectId', advisoryProjectHandler);
 
 /**
  * GET /api/cortex/pyramid/:submissionType
@@ -692,5 +704,10 @@ router.get('/similar-learnings', asyncHandler(async (req, res) => {
     })),
   });
 }));
+
+// Canonical project-advisory path: /api/cortex/advisory/:projectId (this router
+// is mounted at /advisory). Registered LAST so the param route cannot shadow
+// the literal routes above (/patterns, /guidance, /stats, /assess, …).
+router.get('/:projectId', advisoryProjectHandler);
 
 export default router;

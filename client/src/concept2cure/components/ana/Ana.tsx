@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 
 import { apiRequest } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/utils/authToken';
 import { isFeatureEnabled } from '@/flags/featureFlags';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
 
@@ -298,6 +299,14 @@ export function Ana({
   useEffect(() => {
     if (!resolvedThreadId) return;
     if (pinnedThreadHydratedRef.current === resolvedThreadId) return;
+    // Echo guard: when the host feeds back the id we just reported via
+    // onThreadChange (the thread that is ALREADY live in this chat), loading
+    // it would abort the in-flight stream and clobber the first reply. Mark
+    // it hydrated and leave the live conversation alone.
+    if (resolvedThreadId === chat.threadId) {
+      pinnedThreadHydratedRef.current = resolvedThreadId;
+      return;
+    }
     pinnedThreadHydratedRef.current = resolvedThreadId;
     setView('chat');
     void chat.loadThread(resolvedThreadId);
@@ -340,11 +349,15 @@ export function Ana({
   // persisted as a version row here. Persistence is intentionally not wired yet.
   const handleSafetyNarrative = useCallback(
     (payload: SafetyNarrativeSubmit) => {
-      setSelectedTools(prev => Array.from(new Set([...prev, ...payload.tools])));
+      const merged = Array.from(new Set([...selectedTools, ...payload.tools]));
+      setSelectedTools(merged);
       setView('chat');
-      void chat.send(payload.message);
+      // Pass the merged pins for THIS turn too: the state update above only
+      // reaches chat.send on the next render, so without the override the
+      // guided draft→author→verify turn would go out without its tools.
+      void chat.send(payload.message, undefined, { toolsOverride: merged });
     },
-    [chat]
+    [chat, selectedTools]
   );
 
   const handleIntelligenceAnswer = useCallback(
@@ -408,6 +421,27 @@ export function Ana({
     void navigator.clipboard?.writeText(text).catch(() => {});
   }, []);
 
+  // Intelligence-question answers travel as a `[INTELLIGENCE_ANSWER]{json}`
+  // protocol message (the server strips the prefix and parses the payload).
+  // Render them as a readable line rather than the raw JSON blob — in both
+  // the chat view and the exported audit-trail markdown.
+  const displayTextFor = useCallback((m: AnaChatMessage): string => {
+    if (m.role !== 'user' || !m.text.startsWith('[INTELLIGENCE_ANSWER]')) return m.text;
+    try {
+      const payload = JSON.parse(m.text.slice('[INTELLIGENCE_ANSWER]'.length));
+      const answers =
+        payload?.answers && typeof payload.answers === 'object'
+          ? Object.entries(payload.answers as Record<string, unknown>)
+          : [];
+      if (answers.length > 0) {
+        return `Answered: ${answers.map(([k, v]) => `${k} — ${String(v)}`).join('; ')}`;
+      }
+    } catch {
+      /* malformed payload — fall through to the generic label */
+    }
+    return 'Submitted answers to AnA’s questions.';
+  }, []);
+
   // Export the entire chat as a markdown document — the regulatory audit
   // trail use case. Filename includes the date for easy filing.
   const handleExport = useCallback(() => {
@@ -422,7 +456,7 @@ export function Ana({
     for (const m of chat.messages) {
       lines.push(m.role === 'user' ? `## User` : `## AnA`);
       lines.push('');
-      lines.push(m.text);
+      lines.push(displayTextFor(m));
       lines.push('');
       if (m.executedActions && m.executedActions.length > 0) {
         lines.push(
@@ -440,7 +474,7 @@ export function Ana({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [chat.messages, activeProjectName]);
+  }, [chat.messages, activeProjectName, displayTextFor]);
 
   const handleRetry = useCallback(
     (messageId: string) => {
@@ -543,7 +577,7 @@ export function Ana({
         return {
         id: m.id,
         role: m.role,
-        text: m.text,
+        text: displayTextFor(m),
         attachments: m.attachments,
         streaming: m.streaming,
         statusPhase: m.statusPhase,
@@ -565,7 +599,7 @@ export function Ana({
         reportCanvas: m.reportCanvas,
         };
       }),
-    [chat.messages]
+    [chat.messages, displayTextFor]
   );
 
   const greetingName = account.name.split(' ')[0] || account.name;
@@ -673,6 +707,11 @@ export function Ana({
   // Fetch the durable version history whenever a draft reports a persisted
   // artifactId we haven't loaded yet (or its version count changed). Failures
   // are silent — the in-session grouping remains the fallback.
+  // `versionFetchTargetRef` records the draft-version each artifact was last
+  // fetched FOR: without it, a server response with fewer rows than d.version
+  // (or a draft without a version number) re-arms the effect on its own
+  // setPersistedVersions update and refetches in a loop.
+  const versionFetchTargetRef = useRef<Map<string, number>>(new Map());
   useEffect(() => {
     if (!studioEnabled) return;
     const seen = new Set<string>();
@@ -683,10 +722,17 @@ export function Ana({
       const artifactId = d.artifactId;
       const knownCount = persistedVersions[artifactId]?.length ?? 0;
       if (typeof d.version === 'number' && d.version <= knownCount) continue;
+      const fetchTarget = typeof d.version === 'number' ? d.version : 0;
+      if (versionFetchTargetRef.current.get(artifactId) === fetchTarget) continue;
+      versionFetchTargetRef.current.set(artifactId, fetchTarget);
       void (async () => {
         try {
+          // conversation-os is mounted behind Bearer-only auth — without the
+          // Authorization header this fetch always 401s and version history
+          // silently never loads.
           const res = await fetch(
             `/api/conversation-os/artifacts/${encodeURIComponent(artifactId)}/document-versions`,
+            { credentials: 'include', headers: { ...getAuthHeaders() } },
           );
           if (!res.ok) return;
           const data = await res.json();
@@ -925,6 +971,14 @@ export function Ana({
   // when the studio flag is on.
   const { seal: sealVerified } = useVerifiedSeal();
   const [appliedSeals, setAppliedSeals] = useState<Record<number, VerifiedSeal>>({});
+  // Seals are keyed by version index WITHIN one document. When the active
+  // document changes (durable artifactId when persisted, else title — the
+  // grouping key above; NOT `id`, which changes per version), stale entries
+  // would mis-attribute another document's Part 11 seal, so clear them.
+  const activeDocumentKey = activeDocument ? (activeDocument.artifactId ?? activeDocument.title) : null;
+  useEffect(() => {
+    setAppliedSeals({});
+  }, [activeDocumentKey]);
   const shownSeal = appliedSeals[safeVersionIndex] ?? null;
   const handleSeal = useCallback(
     async (input: {

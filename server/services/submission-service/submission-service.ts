@@ -507,16 +507,23 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     sponsorName: params.sponsorName ?? `Organization ${ctx.organizationId}`,
   });
 
-  const result = await gw.transmit({
-    organizationId: ctx.organizationId,
-    userId: ctx.userId,
-    programId: null,
-    packageId: null,
-    bundle: assembled.bundle,
-    environment,
-    submissionType: seq.type ?? undefined,
-    metadata: { applicationId: params.applicationId ?? `SEQ-${sequenceId}`, sequence: seq.sequenceNumber, environment },
-  });
+  let result;
+  try {
+    result = await gw.transmit({
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      programId: null,
+      packageId: null,
+      bundle: assembled.bundle,
+      environment,
+      submissionType: seq.type ?? undefined,
+      metadata: { applicationId: params.applicationId ?? `SEQ-${sequenceId}`, sequence: seq.sequenceNumber, environment },
+    });
+  } finally {
+    // The gateway has consumed the bundle bytes (or failed); either way the
+    // staged temp package is no longer needed.
+    await assembled.cleanup();
+  }
 
   const dispatchStatus = toDispatchStatus(result.status);
   await db

@@ -9,6 +9,7 @@
 
 import type { CSSProperties } from 'react';
 import { useCallback, useState } from 'react';
+import { getAuthHeaders } from '../../utils/authToken';
 
 export interface ChatAttachment {
   id: string;
@@ -127,10 +128,22 @@ export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload
         const form = new FormData();
         form.append('file', file);
         if (projectId != null) form.append('projectId', String(projectId));
-        const res = await fetch('/api/chat/upload', { method: 'POST', body: form, credentials: 'include' });
+        // /api/chat is mounted behind Bearer-only authenticateToken — cookies
+        // alone never authenticate it, so the Authorization header is required.
+        const res = await fetch('/api/chat/upload', {
+          method: 'POST',
+          body: form,
+          credentials: 'include',
+          headers: { ...getAuthHeaders() },
+        });
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          throw new Error(body?.error || `Upload failed (${res.status})`);
+          // The error body may be a string or a { code, message } object.
+          const errMsg =
+            typeof body?.error === 'string'
+              ? body.error
+              : body?.error?.message || body?.message || `Upload failed (${res.status})`;
+          throw new Error(errMsg);
         }
         const data = await res.json();
         const method: string | null = data.extractionMethod ?? null;

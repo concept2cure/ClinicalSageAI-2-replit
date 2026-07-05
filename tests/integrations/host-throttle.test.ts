@@ -43,6 +43,38 @@ describe('HostThrottle concurrency cap', () => {
     // All slots released.
     expect(t.activeFor('h')).toBe(0);
   });
+
+  it('hands the slot directly to a queued waiter on release (no over-admit window)', async () => {
+    // Regression: release() used to decrement `active` and THEN wake the queued
+    // waiter, which re-incremented only when its continuation resumed. A fresh
+    // run() landing in that microtask window saw a free slot and over-admitted.
+    const t = new HostThrottle();
+    t.configure('h', { concurrency: 1, minIntervalMs: 0 });
+
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const tracked = () => async () => {
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await sleep(10);
+      inFlight--;
+    };
+
+    const gate = sleep(10);
+    const a = t.run('h', () => gate); // occupies the only slot
+    const b = t.run('h', tracked()); // queued waiter
+    // Let run(a) reach `await fn()` so its continuation (which runs release())
+    // is subscribed to `gate` ahead of ours…
+    await Promise.resolve();
+    // …then subscribe c's start to the same promise: it executes after
+    // release() but before the queued waiter resumes — the historical
+    // over-admit window.
+    const c = gate.then(() => t.run('h', tracked()));
+
+    await Promise.all([a, b, c]);
+    expect(maxInFlight).toBe(1);
+    expect(t.activeFor('h')).toBe(0);
+  });
 });
 
 describe('HostThrottle min-interval', () => {

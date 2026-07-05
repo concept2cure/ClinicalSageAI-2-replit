@@ -56,7 +56,9 @@ beforeAll(async () => {
     INSERT INTO unified_documents (id, title, document_type, created_by, organization_id, latest_version)
     VALUES (11, 'Unified No-Version Leaf', 'summary', 'tester', ${ORG}, 1);
   `);
-});
+  // PGlite bootstrap can exceed the global 10s hookTimeout when the full
+  // suite runs under load; give it explicit headroom.
+}, 60_000);
 
 afterAll(async () => {
   await harness.close();

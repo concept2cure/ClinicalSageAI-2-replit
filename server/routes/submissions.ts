@@ -1189,6 +1189,9 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       productName: parsed.data.productName,
       manufacturer: parsed.data.manufacturer,
     });
+    // Assemble-only: the response carries metadata, not bytes — the staged
+    // temp package is not needed once we've read the descriptor.
+    await result.cleanup();
     // Sanitized — never expose the server temp path.
     res.json({
       ok: true,
@@ -1232,6 +1235,9 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
       sponsorId: parsed.data.sponsorId ?? `ORG-${ctx.organizationId}`,
       sponsorName: parsed.data.sponsorName ?? `Organization ${ctx.organizationId}`,
     });
+    // Assemble-only: the response carries metadata, not bytes — the staged
+    // temp package is not needed once we've read the descriptor.
+    await result.cleanup();
     // Sanitized — never expose the server temp path.
     res.json({
       ok: true,

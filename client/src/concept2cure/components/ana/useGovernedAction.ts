@@ -13,6 +13,7 @@
  */
 
 import { useState, useCallback } from 'react';
+import { getAuthHeaders } from '../../../utils/authToken';
 
 /** A governed action AnA proposed that needs the user's sign-off to run. */
 export interface PendingSignoff {
@@ -84,15 +85,24 @@ export function useGovernedAction() {
     setSubmitting(true);
     setError(null);
     try {
+      // /api/ana-ri is mounted behind Bearer-only authenticateToken — cookies
+      // alone never authenticate it, so the Authorization header is required
+      // (same posture as useVerifiedSeal).
       const res = await fetch('/api/ana-ri/governed-action', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
         body: JSON.stringify(args),
       });
       const payload = (await res.json().catch(() => ({}))) as Record<string, any>;
       if (!res.ok) {
-        const msg = (payload?.error as string) || (payload?.message as string) || `HTTP ${res.status}`;
+        // The error body may be a string or a { code, message } object — never
+        // pass an object to setError (it would be rendered as a JSX child).
+        const rawErr = payload?.error;
+        const msg =
+          (typeof rawErr === 'string' ? rawErr : rawErr?.message) ||
+          (typeof payload?.message === 'string' ? payload.message : '') ||
+          `HTTP ${res.status}`;
         setError(msg);
         return null;
       }
