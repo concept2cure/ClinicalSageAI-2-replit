@@ -27,6 +27,7 @@ import { extractPendingSignoffs, type PendingSignoff } from './useGovernedAction
 import type { BriefingBookPremortemResult } from './BriefingBookPanel';
 import i18n from '@/i18n';
 import type { AuthoringContextPack } from '../../../../../shared/types/authoring-context';
+import type { DetectedDocumentTemplatePayload } from '../../../../../shared/types/ana-document-detection';
 
 /**
  * Abort the stream if no bytes arrive for this long. Guards against a stalled
@@ -349,6 +350,13 @@ export interface AnaChatMessage {
    * Shown as a "Drafting: X" chip while the response streams.
    */
   detectedDocumentType?: string;
+  /**
+   * The full detected-document-template payload — display name, authority,
+   * submission family, confidence, and the ICH/FDA section structure. This is
+   * the data source for the document-context banner and the section-outline
+   * surface (WO-2 / WO-3). `detectedDocumentType` above remains the chip label.
+   */
+  detectedDocumentTemplate?: DetectedDocumentTemplatePayload;
   /**
    * Document-action suggestions from the orchestrator. Tapping one sends
    * a follow-up message that triggers the action's generator.
@@ -843,7 +851,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               const actions: string[] | undefined = Array.isArray(o?.suggestedActions)
                 ? o.suggestedActions.filter((s: any) => typeof s === 'string')
                 : undefined;
-              const docTemplate: { chipLabel: string; displayName: string } | null =
+              const docTemplate: DetectedDocumentTemplatePayload | null =
                 o?.detectedDocumentTemplate ?? null;
               setMessages(prev =>
                 prev.map(m =>
@@ -853,6 +861,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                         detectedLens: lens && lens !== 'auto' ? lens : m.detectedLens,
                         suggestedActions: actions && actions.length > 0 ? actions : m.suggestedActions,
                         detectedDocumentType: docTemplate?.chipLabel ?? m.detectedDocumentType,
+                        detectedDocumentTemplate: docTemplate ?? m.detectedDocumentTemplate,
                       }
                     : m
                 )

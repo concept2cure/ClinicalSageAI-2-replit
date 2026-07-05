@@ -668,6 +668,27 @@
 }
 .citeButton:hover { background: var(--bg-200); color: var(--ink, var(--text-100)); }
 
+/* Detected regulatory document-type chip ("Drafting: X").
+   Token-driven, legible in both themes (muted fill + body ink), with an AnA-
+   persona dot carrying the identity colour so it never rides the text (keeps
+   WCAG contrast + colour-never-alone: the label states the meaning). Replaces
+   the earlier inline-styled chip that referenced a nonexistent `--ana-accent`
+   token. Final colour model is Design's per WO-1; this is the in-system bar. */
+.docTypeChip {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-left: 8px; padding: 1px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--muted); color: var(--ink-body, var(--text-200));
+  font-family: var(--font-sans); font-size: 0.72em; font-weight: 600;
+  letter-spacing: var(--tracking-wide, 0.02em);
+  vertical-align: 1px;
+}
+.docTypeChip::before {
+  content: ''; flex-shrink: 0;
+  width: 5px; height: 5px; border-radius: 9999px;
+  background: var(--ai);
+}
+
 /* Evidence drill-down panel — mirrors the reasoning panel pattern. */
 .evidencePanel {
   margin: 4px 0 10px;

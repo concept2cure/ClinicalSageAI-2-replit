@@ -30,6 +30,7 @@ import {
 } from '../../services/ai-gateway/effort.js';
 import { orchestrate } from '../../services/ana-ri/orchestrator.js';
 import type { IntentLens, UserRole } from '../../services/ana-ri/persona.js';
+import type { DetectedDocumentTemplatePayload } from '../../../shared/types/ana-document-detection.js';
 import type { SubmissionType } from '../../services/ana-ri/deficiency-taxonomy.js';
 import { inferRole } from '../../services/ana-ri/role-adapter.js';
 import { recordAnaTurn } from '../../services/ana-ri-metrics.js';
@@ -41,11 +42,7 @@ import {
 import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
-import {
-  getEnabledServerTools,
-  getAllEnabledTools,
-  ALL_ANA_TOOLS,
-} from '../../services/ana/AnaToolDefinitions.js';
+import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
 import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
@@ -377,7 +374,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     const memoryBlock = memoryResult.memoryBlock;
 
     if (enrichment.sources.length > 0) {
-      console.log(`[AnA RI Stream] Context enriched with: ${enrichment.sources.join(', ')}`);
+      console.info(`[AnA RI Stream] Context enriched with: ${enrichment.sources.join(', ')}`);
     }
 
     // Use rewritten message if slash command or @app mention was detected
@@ -544,14 +541,23 @@ router.post('/stream', async (req: Request, res: Response) => {
           detectedIntent: orchestration.detectedIntent,
           detectedSubmissionType: orchestration.detectedSubmissionType,
           detectedDocumentTemplate: orchestration.detectedDocumentTemplate
-            ? {
+            ? ({
                 id: orchestration.detectedDocumentTemplate.template.id,
                 displayName: orchestration.detectedDocumentTemplate.template.displayName,
                 chipLabel: orchestration.detectedDocumentTemplate.template.chipLabel,
                 authority: orchestration.detectedDocumentTemplate.template.authority,
                 submissionFamily: orchestration.detectedDocumentTemplate.template.submissionFamily,
                 confidence: orchestration.detectedDocumentTemplate.confidence,
-              }
+                // Forward the document's section structure so the client can
+                // render the ICH/FDA outline. `guidance` is deliberately dropped
+                // — it is prompt material, not UI. See WO-3 / shared contract.
+                sections: orchestration.detectedDocumentTemplate.template.sections.map((s) => ({
+                  heading: s.heading,
+                  code: s.code,
+                  required: s.required,
+                  targetWords: s.targetWords,
+                })),
+              } satisfies DetectedDocumentTemplatePayload)
             : null,
           appliedRole: orchestration.appliedRole,
           activeWorkstream: orchestration.activeWorkstream,
