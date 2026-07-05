@@ -5870,6 +5870,231 @@ registerToolHandler('build_postmarket_report', async (input: Record<string, unkn
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Predicate intelligence (shadow-service proxy with org→program ownership)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Verify the program belongs to the org, then call the predicate shadow service
+ * directly (the tool holds a tenant context, not a JWT, so it mirrors the BFF's
+ * requireProgramAccess check rather than hopping the authenticated route).
+ */
+async function predicateShadowCall(
+  organizationId: number,
+  programId: string,
+  method: 'GET' | 'POST',
+  path: string,
+  opts: { body?: unknown; query?: Record<string, string | undefined> } = {}
+): Promise<string> {
+  const { db } = await import('../../db.js');
+  const { regulatoryPrograms } = await import('../../../shared/schema/programs.js');
+  const { and, eq } = await import('drizzle-orm');
+  const [program] = await db
+    .select({ id: regulatoryPrograms.id })
+    .from(regulatoryPrograms)
+    .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, organizationId)))
+    .limit(1);
+  if (!program) return JSON.stringify({ error: 'Access denied: program not in your organization.' });
+
+  const base = (process.env.SHADOW_SERVICE_URL || 'http://localhost:8001').replace(/\/$/, '');
+  const url = new URL(path, base + '/');
+  for (const [k, v] of Object.entries(opts.query ?? {})) if (v !== undefined) url.searchParams.set(k, v);
+  try {
+    const res = await fetch(url.toString(), {
+      method,
+      headers: {
+        'X-Admin-Token': process.env.REVIEW_ADMIN_TOKEN || '',
+        ...(opts.body ? { 'Content-Type': 'application/json' } : {}),
+      },
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      signal: AbortSignal.timeout(30000),
+    });
+    if (res.status === 503) {
+      return JSON.stringify({ status: 'unavailable', message: 'Predicate universe not configured or stale.' });
+    }
+    const text = await res.text();
+    if (!res.ok) {
+      return JSON.stringify({ status: 'error', httpStatus: res.status, detail: text.slice(0, 500) });
+    }
+    return text; // already JSON from the shadow service
+  } catch (err: any) {
+    return JSON.stringify({ status: 'unavailable', message: `Predicate service unavailable: ${err?.message ?? 'unknown'}` });
+  }
+}
+
+registerToolHandler('suggest_predicate_devices', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) return JSON.stringify({ error: 'suggest_predicate_devices requires organization context' });
+  const programId = String(input.program_id ?? '');
+  if (!programId) return JSON.stringify({ status: 'needs_parameters', message: 'program_id is required' });
+  return predicateShadowCall(organizationId, programId, 'POST', 'predicate/suggest', { body: input });
+});
+
+registerToolHandler('generate_se_matrix', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) return JSON.stringify({ error: 'generate_se_matrix requires organization context' });
+  const programId = String(input.program_id ?? '');
+  if (!programId || !input.selected_predicate_k_number || !input.subject_device) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'program_id, selected_predicate_k_number, and subject_device are required' });
+  }
+  return predicateShadowCall(organizationId, programId, 'POST', 'predicate/generate-se-matrix', { body: input });
+});
+
+registerToolHandler('get_predicate_defense_preview', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) return JSON.stringify({ error: 'get_predicate_defense_preview requires organization context' });
+  const programId = String(input.program_id ?? '');
+  if (!programId) return JSON.stringify({ status: 'needs_parameters', message: 'program_id is required' });
+  return predicateShadowCall(organizationId, programId, 'GET', 'predicate/defense-preview', {
+    query: { program_id: programId, candidate_id: typeof input.candidate_id === 'string' ? input.candidate_id : undefined },
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAPA / complaint / MDR / vigilance (device post-market safety workstream)
+// ─────────────────────────────────────────────────────────────────────────────
+
+registerToolHandler('assess_mdr_reportability', async (input: Record<string, unknown>) => {
+  try {
+    const { classify } = await import('../capa-mdr/triageEngine.js');
+    const result = classify({
+      patientHarm: input.patientHarm as any,
+      isMalfunction: input.isMalfunction === true,
+      eventLocationCountry: typeof input.eventLocationCountry === 'string' ? input.eventLocationCountry : null,
+      anticipatesCorrection: input.anticipatesCorrection === true,
+      trendThresholdCrossed: input.trendThresholdCrossed === true,
+      eventNarrative: typeof input.eventNarrative === 'string' ? input.eventNarrative : null,
+    });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result,
+      instruction:
+        'Report the reportability determination verbatim: FDA MDR, EU MDR vigilance, 806 notice, suggested jurisdiction/report-type/severity, and the rationale.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ status: 'needs_parameters', tool: 'assess_mdr_reportability', message: err?.message || 'invalid input' });
+  }
+});
+
+registerToolHandler('triage_capa_mdr_queue', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) return JSON.stringify({ error: 'triage_capa_mdr_queue requires organization context' });
+  const programId = String(input.programId ?? '');
+  if (!programId) return JSON.stringify({ status: 'needs_parameters', message: 'programId is required' });
+  try {
+    const { getTriageQueue } = await import('../capa-mdr/capaMdr.service.js');
+    const items = await getTriageQueue(organizationId, {
+      programId,
+      openOnly: input.openOnly !== false,
+      limit: typeof input.limit === 'number' ? input.limit : undefined,
+    });
+    return JSON.stringify({ status: 'computed', engine: 'capa_mdr', count: items.length, items });
+  } catch (err: any) {
+    return JSON.stringify({ error: `triage_capa_mdr_queue failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
+registerToolHandler('read_vigilance_timeline', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) return JSON.stringify({ error: 'read_vigilance_timeline requires organization context' });
+  const programId = String(input.programId ?? '');
+  if (!programId) return JSON.stringify({ status: 'needs_parameters', message: 'programId is required' });
+  try {
+    const { listVigilanceEvents } = await import('../capa-mdr/capaMdr.service.js');
+    const events = await listVigilanceEvents(organizationId, {
+      programId,
+      entityType: typeof input.entityType === 'string' ? (input.entityType as any) : undefined,
+      entityId: typeof input.entityId === 'string' ? input.entityId : undefined,
+      kind: typeof input.kind === 'string' ? (input.kind as any) : undefined,
+      limit: typeof input.limit === 'number' ? input.limit : undefined,
+    });
+    return JSON.stringify({ status: 'computed', engine: 'capa_mdr', count: events.length, events });
+  } catch (err: any) {
+    return JSON.stringify({ error: `read_vigilance_timeline failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
+registerToolHandler('create_complaint', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) return JSON.stringify({ error: 'create_complaint requires organization context' });
+  const programId = String(input.programId ?? '');
+  const receivedAtRaw = String(input.receivedAt ?? '');
+  const receivedAt = receivedAtRaw ? new Date(receivedAtRaw) : null;
+  if (!programId || !input.source || !input.channel || !receivedAt || Number.isNaN(receivedAt.getTime()) || !input.eventNarrative) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'programId, source, channel, a valid receivedAt (ISO date), and eventNarrative are required',
+    });
+  }
+  try {
+    const { createComplaint } = await import('../capa-mdr/capaMdr.service.js');
+    const complaint = await createComplaint(organizationId, {
+      programId,
+      source: input.source as any,
+      channel: input.channel as any,
+      receivedAt,
+      eventNarrative: String(input.eventNarrative),
+      patientHarm: input.patientHarm as any,
+      severityAssessment: input.severityAssessment as any,
+      isMalfunction: input.isMalfunction === true,
+      anticipatesCorrection: input.anticipatesCorrection === true,
+      trendThresholdCrossed: input.trendThresholdCrossed === true,
+      eventLocationCountry: typeof input.eventLocationCountry === 'string' ? input.eventLocationCountry : null,
+      deviceModel: typeof input.deviceModel === 'string' ? input.deviceModel : null,
+      deviceUdiDi: typeof input.deviceUdiDi === 'string' ? input.deviceUdiDi : null,
+      deviceLot: typeof input.deviceLot === 'string' ? input.deviceLot : null,
+      createdBy: ctx?.userId != null ? String(ctx.userId) : null,
+    });
+    return JSON.stringify({
+      status: 'created',
+      engine: 'capa_mdr',
+      complaintId: complaint.id,
+      complaintCode: (complaint as any).complaintCode,
+      preliminaryClassification: (complaint as any).preliminaryClassification,
+      instruction: 'Report the complaint code and the auto-computed preliminary reportability classification.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `create_complaint failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
+registerToolHandler('open_device_capa', async (input: Record<string, unknown>, ctx?: ToolContext) => {
+  const organizationId = ctx?.organizationId ?? undefined;
+  if (organizationId == null) return JSON.stringify({ error: 'open_device_capa requires organization context' });
+  const programId = String(input.programId ?? '');
+  if (!programId || !input.title || !input.type || !input.source) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'programId, title, type, and source are required' });
+  }
+  const targetRaw = typeof input.targetCloseDate === 'string' ? input.targetCloseDate : '';
+  const targetCloseDate = targetRaw ? new Date(targetRaw) : null;
+  try {
+    const { createCapaRecord } = await import('../capa-mdr/capaMdr.service.js');
+    const capa = await createCapaRecord(organizationId, {
+      programId,
+      title: String(input.title),
+      type: input.type as any,
+      source: input.source as any,
+      summary: typeof input.summary === 'string' ? input.summary : null,
+      problemStatement: typeof input.problemStatement === 'string' ? input.problemStatement : null,
+      riskLevel: input.riskLevel as any,
+      assignedTo: typeof input.assignedTo === 'string' ? input.assignedTo : null,
+      targetCloseDate: targetCloseDate && !Number.isNaN(targetCloseDate.getTime()) ? targetCloseDate : null,
+      createdBy: ctx?.userId != null ? String(ctx.userId) : null,
+    });
+    return JSON.stringify({
+      status: 'created',
+      engine: 'capa_mdr',
+      capaId: capa.id,
+      capaCode: (capa as any).capaCode,
+      state: (capa as any).state,
+      instruction: 'Report the CAPA code and that it was opened. Offer to add actions or transition it.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `open_device_capa failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Document Generation Tools (Master Document Builder)
 // ─────────────────────────────────────────────────────────────────────────────
 
