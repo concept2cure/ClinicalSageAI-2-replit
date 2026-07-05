@@ -837,6 +837,24 @@ router.post('/:id/sections/:key/ai-draft', async (req: Request, res: Response) =
       return res.end();
     }
 
+    // Industry-specific tailoring: resolve the framework-grade system prompt for
+    // THIS build type from the Global Document Registry — the same authoring
+    // brain the batch drafter uses — so a 510(k) section drafts like a 510(k), an
+    // IVDR section speaks to the Annex XIII performance evaluation, a CTD section
+    // follows ICH M4, an eTMF artifact follows the DIA reference model. The map
+    // normalizes c2c doc_type ids to registry submission types; unmapped types
+    // fall back gracefully to the resolver's default.
+    const { resolveSystemPrompt } = await import('../../services/ana/AnaDocumentDraftingService.js');
+    const DOC_TYPE_TO_SUBMISSION: Record<string, string> = {
+      k510: '510k', pma: 'PMA', denovo: 'De Novo', ide: 'IDE',
+      ivdr: 'IVDR', ivdr_tf: 'IVDR', ivdr_pe: 'IVDR', cer: 'MDR',
+      nda: 'NDA', bla: 'BLA', anda: 'ANDA', maa: 'MAA', impd: 'EU_CTA',
+      ind: 'US_IND', ectd: 'NDA', dmf: 'DMF', tmf: 'US_IND',
+    };
+    const submissionType =
+      DOC_TYPE_TO_SUBMISSION[String(section.doc_type).toLowerCase()] ?? section.doc_type;
+    const systemPrompt = resolveSystemPrompt(submissionType);
+
     const prompt = `Generate professional ${section.agency} regulatory content for:
 Document: ${section.title} (${section.doc_type})
 Section: ${key} — ${section.label}
@@ -851,7 +869,10 @@ Provide detailed, compliance-ready content following ${section.agency} guideline
     let assembled = '';
     const gwResponse = await gw.route({
       taskType: 'document_drafting',
-      messages: [{ role: 'user', content: prompt }],
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt },
+      ],
       maxTokens: 3000,
       temperature: 0.3,
       stream: true,
@@ -876,6 +897,7 @@ Provide detailed, compliance-ready content following ${section.agency} guideline
         tone,
         agency: section.agency,
         docType: section.doc_type,
+        submissionType,
         sectionKey: key,
         model: gwResponse.model,
         provider: gwResponse.provider,
