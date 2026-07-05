@@ -23,7 +23,13 @@ draft ──▶ critique_draft ──▶ (verdict: revise?) ──▶ model revi
   rose, findings were resolved, and no regressions were introduced — the
   deterministic loop-closer.
 
-Both tools are pure/deterministic (no DB, no org context).
+- **`critique_document`** critiques a whole multi-section document: it runs the
+  gate per section for located findings AND checks consistency across the full
+  concatenation, so a value stated one way in §1 and another in §3 — invisible
+  to any single-section pass — is caught. This is the cross-section coherence
+  long documents lacked.
+
+All three tools are pure/deterministic (no DB, no org context).
 
 ## Dimensions (`server/services/ana/writing-precision-gate.ts`)
 

@@ -5933,6 +5933,35 @@ registerToolHandler('verify_revision', async (input: Record<string, unknown>) =>
   }
 });
 
+registerToolHandler('critique_document', async (input: Record<string, unknown>) => {
+  const sections = Array.isArray(input.sections) ? input.sections : [];
+  const clean = sections
+    .filter((s: any) => s && typeof s.title === 'string' && typeof s.text === 'string')
+    .map((s: any) => ({ title: s.title, text: s.text }));
+  if (clean.length === 0) {
+    return JSON.stringify({ status: 'needs_parameters', message: 'sections[] with {title, text} is required' });
+  }
+  try {
+    const { critiqueDocument } = await import('./writing-precision-gate.js');
+    const result = critiqueDocument(clean, {
+      audience: typeof input.audience === 'string' ? (input.audience as any) : undefined,
+      documentType: typeof input.documentType === 'string' ? input.documentType : undefined,
+    });
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      documentScore: result.documentScore,
+      verdict: result.verdict,
+      crossSectionFindings: result.crossSectionFindings,
+      sections: result.sections.map(s => ({ title: s.title, score: s.score, verdict: s.verdict, findings: s.report.findings })),
+      instruction:
+        'Report the document score and, first, any cross-section findings (a value stated inconsistently across sections is a reviewer blocker). Then list per-section findings for the sections that need revision.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `critique_document failed: ${err?.message ?? 'unknown error'}` });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Predicate intelligence (shadow-service proxy with org→program ownership)
 // ─────────────────────────────────────────────────────────────────────────────

@@ -245,6 +245,83 @@ export function verifyRevision(
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Document-level critique (per-section + cross-section coherence)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface DocumentSectionInput {
+  /** A heading or id so findings can be attributed. */
+  title: string;
+  text: string;
+}
+
+export interface SectionCritique {
+  title: string;
+  score: number;
+  verdict: 'pass' | 'revise';
+  findingCount: number;
+  report: PrecisionReport;
+}
+
+export interface DocumentCritique {
+  /** Lowest section score minus any cross-section penalty, floored at 0. */
+  documentScore: number;
+  verdict: 'pass' | 'revise';
+  sections: SectionCritique[];
+  /** A value/term stated inconsistently ACROSS sections (not caught per-section). */
+  crossSectionFindings: PrecisionFinding[];
+}
+
+/**
+ * Critique a whole document: run the gate on each section for located findings,
+ * AND run the consistency checker over the full concatenation so a value stated
+ * one way in §1 and another in §3 — invisible to any single-section pass — is
+ * caught. This is the cross-section coherence enforcement long documents lacked.
+ */
+export function critiqueDocument(
+  sections: DocumentSectionInput[],
+  opts: { audience?: ReadabilityAudience; documentType?: string } = {}
+): DocumentCritique {
+  const sectionCritiques: SectionCritique[] = sections.map(s => {
+    const report = critiqueDraft({ text: s.text, audience: opts.audience });
+    return {
+      title: s.title,
+      score: report.score,
+      verdict: report.verdict,
+      findingCount: report.findings.length,
+      report,
+    };
+  });
+
+  // Cross-section consistency: run over the concatenation, then keep only the
+  // findings that arise BETWEEN sections (i.e. no single section already has
+  // that inconsistency on its own).
+  const perSectionConsistencyKeys = new Set<string>();
+  for (const s of sections) {
+    for (const f of critiqueDraft({ text: s.text }).findings) {
+      if (f.category === 'consistency') perSectionConsistencyKeys.add(f.message);
+    }
+  }
+  const whole = critiqueDraft({ text: sections.map(s => s.text).join('\n\n'), documentType: opts.documentType });
+  const crossSectionFindings = whole.findings.filter(
+    f => f.category === 'consistency' && !perSectionConsistencyKeys.has(f.message)
+  );
+
+  const worstSection = sectionCritiques.reduce((min, s) => Math.min(min, s.score), 100);
+  const crossPenalty = crossSectionFindings.reduce(
+    (sum, f) => sum + (f.severity === 'high' ? 18 : 8),
+    0
+  );
+  const documentScore = Math.max(0, worstSection - crossPenalty);
+  const verdict: 'pass' | 'revise' =
+    documentScore < 100 &&
+    (sectionCritiques.some(s => s.verdict === 'revise') || crossSectionFindings.length > 0)
+      ? 'revise'
+      : 'pass';
+
+  return { documentScore, verdict, sections: sectionCritiques, crossSectionFindings };
+}
+
 /**
  * Render the report as a compact, ordered revision brief — the exact
  * instructions to feed back to the model for a rewrite. Empty string when the

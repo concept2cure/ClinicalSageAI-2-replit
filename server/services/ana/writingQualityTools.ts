@@ -52,5 +52,32 @@ export const VERIFY_REVISION: AnaTool = {
   },
 };
 
+export const CRITIQUE_DOCUMENT: AnaTool = {
+  name: 'critique_document',
+  description:
+    'Critique a whole multi-section document for precision AND cross-section coherence — the document-level gate for long-form writing. Runs the precision gate on each section (for located, per-section findings) and, critically, also checks CONSISTENCY across the whole document so a value stated one way in one section and differently in another — invisible to any single-section check — is caught. Returns a per-section breakdown, the cross-section findings, and a document score/verdict. Use for a full CSR / CER / Clinical Overview before finalizing. DETERMINISTIC.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      sections: {
+        type: 'array',
+        minItems: 1,
+        description: 'The document sections in order.',
+        items: {
+          type: 'object',
+          properties: {
+            title: { type: 'string', description: 'Section heading or id (for attributing findings).' },
+            text: { type: 'string', description: 'The section prose.' },
+          },
+          required: ['title', 'text'],
+        },
+      },
+      audience: { type: 'string', enum: ['patient', 'clinician', 'regulator', 'general'], description: "Readability register (default 'regulator')." },
+      documentType: { type: 'string', description: 'Optional document type for required-section coverage.' },
+    },
+    required: ['sections'],
+  },
+};
+
 /** All writing-quality tools, spread into ALL_ANA_TOOLS. */
-export const WRITING_QUALITY_TOOLS: AnaTool[] = [CRITIQUE_DRAFT, VERIFY_REVISION];
+export const WRITING_QUALITY_TOOLS: AnaTool[] = [CRITIQUE_DRAFT, VERIFY_REVISION, CRITIQUE_DOCUMENT];

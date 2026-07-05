@@ -14,8 +14,8 @@ import {
   checkTerminologyConsistency,
 } from '../terminology-consistency';
 import { checkOverclaims } from '../claim-precision';
-import { critiqueDraft, buildRevisionBrief, verifyRevision } from '../writing-precision-gate';
-import { CRITIQUE_DRAFT, VERIFY_REVISION } from '../writingQualityTools';
+import { critiqueDraft, buildRevisionBrief, verifyRevision, critiqueDocument } from '../writing-precision-gate';
+import { CRITIQUE_DRAFT, VERIFY_REVISION, CRITIQUE_DOCUMENT } from '../writingQualityTools';
 import { getToolHandler } from '../AnaToolExecutor';
 
 describe('terminology consistency', () => {
@@ -169,5 +169,38 @@ describe('verifyRevision + verify_revision tool', () => {
     const out = JSON.parse(await handler({ originalText: ungrounded, revisedText: grounded }, {}));
     expect(out.status).toBe('computed');
     expect(out.result.passesNow).toBe(true);
+  });
+});
+
+describe('critiqueDocument + critique_document tool', () => {
+  it('catches a value stated inconsistently ACROSS sections', () => {
+    const doc = critiqueDocument([
+      { title: 'Methods', text: 'A total of N=186 subjects were randomized to treatment according to the protocol.' },
+      { title: 'Results', text: 'Efficacy was assessed in N=184 subjects who completed the study per the SAP.' },
+    ]);
+    expect(doc.crossSectionFindings.some(f => f.category === 'consistency')).toBe(true);
+    expect(doc.verdict).toBe('revise');
+  });
+
+  it('passes a coherent two-section document', () => {
+    const doc = critiqueDocument([
+      { title: 'Methods', text: 'A total of 186 subjects were randomized to treatment according to the protocol.' },
+      { title: 'Results', text: 'All 186 subjects were analyzed for efficacy, per the SAP and the protocol.' },
+    ]);
+    expect(doc.crossSectionFindings).toHaveLength(0);
+    expect(doc.verdict).toBe('pass');
+  });
+
+  it('tool requires sections and runs live', async () => {
+    expect(CRITIQUE_DOCUMENT.input_schema.required).toEqual(['sections']);
+    const handler = getToolHandler('critique_document')!;
+    const out = JSON.parse(await handler({
+      sections: [
+        { title: 'A', text: 'A total of N=186 subjects were randomized according to the protocol.' },
+        { title: 'B', text: 'Efficacy was assessed in N=184 subjects per the SAP.' },
+      ],
+    }, {}));
+    expect(out.status).toBe('computed');
+    expect(Array.isArray(out.crossSectionFindings)).toBe(true);
   });
 });
