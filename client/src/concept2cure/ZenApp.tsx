@@ -2056,9 +2056,18 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
   // predictions). Live over /api/report-os + /api/insights; the catalog is
   // segment-filtered and entitlement-gated server-side, so this surface renders
   // the same governed data whether reached here in-shell or at its own
-  // /concept2cure/insights URL. Self-contained (no props).
+  // /concept2cure/insights URL. "Ask AnA about this report" hands off to the
+  // AnA Reporting Canvas — the prompt seeds a chat turn and flips to the
+  // conversation route, where the reporting tools render the governed canvas.
   if (layoutMode === 'insights' && !embeddedModule) {
-    return <InsightsSurface />;
+    return (
+      <InsightsSurface
+        onAsk={(prompt) => {
+          setExternalChatMessage({ text: prompt, ts: Date.now() });
+          setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'deep-research');
+        }}
+      />
+    );
   }
 
   // Quality system (SOP register + controlled-document control). Live surface
