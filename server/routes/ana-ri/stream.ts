@@ -543,6 +543,16 @@ router.post('/stream', async (req: Request, res: Response) => {
         orchestration: {
           detectedIntent: orchestration.detectedIntent,
           detectedSubmissionType: orchestration.detectedSubmissionType,
+          detectedDocumentTemplate: orchestration.detectedDocumentTemplate
+            ? {
+                id: orchestration.detectedDocumentTemplate.template.id,
+                displayName: orchestration.detectedDocumentTemplate.template.displayName,
+                chipLabel: orchestration.detectedDocumentTemplate.template.chipLabel,
+                authority: orchestration.detectedDocumentTemplate.template.authority,
+                submissionFamily: orchestration.detectedDocumentTemplate.template.submissionFamily,
+                confidence: orchestration.detectedDocumentTemplate.confidence,
+              }
+            : null,
           appliedRole: orchestration.appliedRole,
           activeWorkstream: orchestration.activeWorkstream,
           workstreamHandoff: orchestration.workstreamHandoff,

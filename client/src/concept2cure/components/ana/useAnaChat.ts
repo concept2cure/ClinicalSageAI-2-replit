@@ -344,6 +344,12 @@ export interface AnaChatMessage {
    */
   detectedLens?: string;
   /**
+   * Specific regulatory document type detected from the user's message
+   * (e.g. "Clinical Overview", "CMC Drug Substance", "510(k) SE Statement").
+   * Shown as a "Drafting: X" chip while the response streams.
+   */
+  detectedDocumentType?: string;
+  /**
    * Document-action suggestions from the orchestrator. Tapping one sends
    * a follow-up message that triggers the action's generator.
    */
@@ -830,13 +836,15 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
             if (event.type === 'thread_id' && event.thread_id) {
               threadIdRef.current = event.thread_id;
             } else if (event.type === 'orchestration') {
-              // Capture detected intent lens + suggested follow-up actions
-              // so the UI can show "Audit"/"Risk" chips and next-action pills.
+              // Capture detected intent lens, document template, and suggested follow-up actions
+              // so the UI can show "Audit"/"Risk" chips, "Drafting: X" chips, and next-action pills.
               const o = event.orchestration || {};
               const lens: string | undefined = o?.detectedIntent?.lens;
               const actions: string[] | undefined = Array.isArray(o?.suggestedActions)
                 ? o.suggestedActions.filter((s: any) => typeof s === 'string')
                 : undefined;
+              const docTemplate: { chipLabel: string; displayName: string } | null =
+                o?.detectedDocumentTemplate ?? null;
               setMessages(prev =>
                 prev.map(m =>
                   m.id === assistantId
@@ -844,6 +852,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                         ...m,
                         detectedLens: lens && lens !== 'auto' ? lens : m.detectedLens,
                         suggestedActions: actions && actions.length > 0 ? actions : m.suggestedActions,
+                        detectedDocumentType: docTemplate?.chipLabel ?? m.detectedDocumentType,
                       }
                     : m
                 )

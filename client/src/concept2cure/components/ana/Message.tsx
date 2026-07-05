@@ -76,6 +76,8 @@ export interface MessageProps {
   executedActions?: ExecutedActionChip[];
   /** Detected intent lens (audit / risk / strategy / improve / compare). */
   detectedLens?: string;
+  /** Specific regulatory document type detected (e.g. "Clinical Overview"). Shown as "Drafting: X" chip. */
+  detectedDocumentType?: string;
   /** Raw DocumentActionType strings from the orchestrator. */
   suggestedActions?: string[];
   /** Label lookup for DocumentActionType strings. */
@@ -142,6 +144,7 @@ export function Message({
   stopped,
   executedActions,
   detectedLens,
+  detectedDocumentType,
   suggestedActions,
   suggestedActionLabels,
   thinking,
@@ -317,6 +320,15 @@ export function Message({
               title={`Detected intent lens: ${detectedLens}`}
             >
               {formatLens(detectedLens)}
+            </span>
+          )}
+          {detectedDocumentType && (
+            <span
+              className={styles.cite}
+              style={{ marginLeft: 8, background: 'var(--ana-accent, #5b6af5)', color: '#fff', borderRadius: 4, padding: '1px 7px', fontSize: '0.72em', fontWeight: 600, letterSpacing: '0.01em' }}
+              title={`Drafting document: ${detectedDocumentType}`}
+            >
+              Drafting: {detectedDocumentType}
             </span>
           )}
           {fallback && (
