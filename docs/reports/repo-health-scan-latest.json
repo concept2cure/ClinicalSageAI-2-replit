@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-05T01:14:41.972Z",
+  "generatedAt": "2026-07-05T01:26:32.295Z",
   "git": {
-    "sha": "04763490c836f41ab31185579d44a9a085cfd2ef",
+    "sha": "c581f8c2288f2f885d243ebda936701e169f2666",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2386,7 +2386,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 889241
+        "bytes": 889627
       },
       {
         "file": "shared/schema.ts",
@@ -2512,7 +2512,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 17393
+        "lines": 17405
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2592,7 +2592,7 @@
       },
       {
         "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 2397
+        "lines": 2398
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
