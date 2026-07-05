@@ -12,7 +12,10 @@
 import type { IntIconKey } from './icons';
 
 export interface IntNavItem {
-  id: 'protocol' | 'cmc' | 'biostat' | 'reporting';
+  // 'reporting' retired: the governed Report-OS Insights surface (layoutMode
+  // 'insights') supersedes the legacy fixture ReportsSurface. The home
+  // "Reports" tile now routes there directly.
+  id: 'protocol' | 'cmc' | 'biostat';
   label: string;
   icon: IntIconKey;
   group: string;
@@ -23,7 +26,6 @@ export const INT_NAV: IntNavItem[] = [
   { id: 'protocol',  label: 'Protocol and Study Design', icon: 'microscope', group: 'intelligence', desc: 'Study design templates, endpoint libraries, active protocols and amendments.' },
   { id: 'cmc',       label: 'CMC Module',                icon: 'beaker',     group: 'intelligence', desc: 'Chemistry, manufacturing, controls — drug substance, drug product, stability, specs.' },
   { id: 'biostat',   label: 'Biostatistics',             icon: 'sigma',      group: 'intelligence', desc: 'Statistical analysis plans, sample-size calculations, TLF packages, interim analyses.' },
-  { id: 'reporting', label: 'Reports',                   icon: 'barChart3',  group: 'intelligence', desc: 'Readiness dashboards, timeline forecasts, precedent likelihood models.' },
 ];
 
 export type IntTab = IntNavItem['id'];
@@ -32,7 +34,6 @@ export const HERE_LABEL: Record<string, string> = {
   protocol: 'Protocol and Study Design',
   cmc: 'CMC Module',
   biostat: 'Biostatistics',
-  reporting: 'Reports',
 };
 
 /* ─── Protocol fixtures ───────────────────────────────────────── */

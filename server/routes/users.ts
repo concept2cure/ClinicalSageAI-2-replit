@@ -11,8 +11,12 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import rateLimit from 'express-rate-limit';
 import { db } from '../db';
-import { eq } from 'drizzle-orm';
-import { users, organizations, notificationPreferences } from '../../shared/schema';
+import { and, eq } from 'drizzle-orm';
+import { users, organizations, organizationUsers, notificationPreferences } from '../../shared/schema';
+import {
+  REPORT_PERSONAS,
+  isReportPersona,
+} from '../../shared/constants/domain/report-personas';
 
 import { config } from '../config/environment';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
@@ -441,6 +445,100 @@ router.put('/me/preferences', async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update preferences' } });
+  }
+});
+
+/**
+ * GET /api/users/me/persona
+ * The session user's job persona for their current org (from
+ * organization_users.persona), plus their access role and the canonical
+ * vocabulary the client can offer. Self + org-scoped from the verified JWT.
+ */
+router.get('/me/persona', async (req: Request, res: Response) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+    const decoded = verifyJwtWithRotation(token) as { userId: string; organizationId?: string };
+    const userId = parseInt(decoded.userId);
+    const organizationId = parseInt(String(decoded.organizationId ?? ''));
+    if (!Number.isFinite(userId) || !Number.isFinite(organizationId)) {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+
+    const rows = await db
+      .select({ persona: organizationUsers.persona, role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, organizationId)))
+      .limit(1);
+
+    if (!rows.length) {
+      return res.status(404).json({ error: { code: 'MEMBERSHIP_NOT_FOUND', message: 'No membership in this organization' } });
+    }
+
+    return res.json({
+      persona: rows[0].persona ?? null,
+      role: rows[0].role,
+      availablePersonas: REPORT_PERSONAS,
+    });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+    console.error('[users] Get persona error:', error);
+    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to get persona' } });
+  }
+});
+
+/**
+ * PUT /api/users/me/persona
+ * Set (or clear, with null) the session user's persona for their current org.
+ * Self + org-scoped from the verified JWT — no other user/org row is reachable.
+ * `persona` must be one of REPORT_PERSONAS, or null to unset. Persona is NOT an
+ * authorization boundary; it only personalizes surfaces.
+ */
+router.put('/me/persona', async (req: Request, res: Response) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: { code: 'AUTH_006', message: 'No token provided' } });
+    }
+    const decoded = verifyJwtWithRotation(token) as { userId: string; organizationId?: string };
+    const userId = parseInt(decoded.userId);
+    const organizationId = parseInt(String(decoded.organizationId ?? ''));
+    if (!Number.isFinite(userId) || !Number.isFinite(organizationId)) {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+
+    const { persona } = (req.body ?? {}) as { persona?: unknown };
+    if (persona !== null && !isReportPersona(persona)) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'persona must be one of the canonical personas, or null to clear',
+          availablePersonas: REPORT_PERSONAS,
+        },
+      });
+    }
+
+    const [updated] = await db
+      .update(organizationUsers)
+      .set({ persona: (persona as string | null), updatedAt: new Date() })
+      .where(and(eq(organizationUsers.userId, userId), eq(organizationUsers.organizationId, organizationId)))
+      .returning({ persona: organizationUsers.persona, role: organizationUsers.role });
+
+    if (!updated) {
+      return res.status(404).json({ error: { code: 'MEMBERSHIP_NOT_FOUND', message: 'No membership in this organization' } });
+    }
+
+    return res.json({ success: true, persona: updated.persona ?? null, role: updated.role });
+  } catch (error: any) {
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: { code: 'AUTH_005', message: 'Session expired' } });
+    }
+    console.error('[users] Update persona error:', error);
+    return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Failed to update persona' } });
   }
 });
 

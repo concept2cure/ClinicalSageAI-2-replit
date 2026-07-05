@@ -182,8 +182,9 @@ router.get('/vault/:artifactId/versions', async (req: Request, res: Response) =>
   try {
     /* Look up the numeric id from either form (artifact_xxx external id
        or numeric pk), then pull the version rows. The version table is
-       c2c_artifact_versions (defined right after concept2cure_artifacts
-       in schema.ts). */
+       concept2cure_artifact_versions (foundation migration; columns
+       `version` / `change_description`) — aliased here to the response
+       shape the client selectors already consume. */
     const idResult = await pool.query<{ id: number }>(
       `SELECT id FROM concept2cure_artifacts
         WHERE organization_id = $1 AND (id::text = $2 OR artifact_id = $2)
@@ -194,11 +195,12 @@ router.get('/vault/:artifactId/versions', async (req: Request, res: Response) =>
     const id = idResult.rows[0].id;
 
     const versions = await pool.query(
-      `SELECT id, version_number, change_summary, content_hash, created_at, created_by_id
-         FROM c2c_artifact_versions
-        WHERE artifact_id = $1
-        ORDER BY version_number DESC`,
-      [id],
+      `SELECT id, version AS version_number, change_description AS change_summary,
+              content_hash, created_at, created_by_id
+         FROM concept2cure_artifact_versions
+        WHERE artifact_id = $1 AND organization_id = $2
+        ORDER BY version DESC`,
+      [id, orgId],
     );
     return ok(res, versions.rows, { count: versions.rowCount ?? 0 });
   } catch (err: unknown) {

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { aggregatePortfolio, renderPortfolioReport, worstRisk } from '../aggregate';
+import {
+  aggregateOrgPortfolio,
+  aggregatePortfolio,
+  renderPortfolioReport,
+  worstRisk,
+} from '../aggregate';
 import type { ProgramMemberInsight, RiskLevel } from '../types';
 
 const FIXED_AT = '2026-06-15T00:00:00.000Z';
@@ -114,6 +119,33 @@ describe('aggregatePortfolio', () => {
     expect(summary.totalCriticalBlockers).toBe(0);
     expect(summary.attentionRanked).toEqual([]);
     expect(summary.topBlockerThemes).toEqual([]);
+  });
+});
+
+describe('aggregateOrgPortfolio', () => {
+  const members: ProgramMemberInsight[] = [
+    member({ projectId: 1, name: 'Alpha', readinessScore: 80, confidence: 70, status: 'ready', riskLevel: 'low' }),
+    member({ projectId: 2, name: 'Bravo', readinessScore: 30, confidence: 40, status: 'partial', criticalBlockerCount: 3, riskLevel: 'high', topBlockers: ['Missing CMC data'] }),
+  ];
+
+  it('reuses the same math as aggregatePortfolio, scoped to the org', () => {
+    const org = aggregateOrgPortfolio(42, members);
+    const group = aggregatePortfolio(7, members);
+    expect(org.organizationId).toBe(42);
+    expect(org.truncated).toBe(false);
+    // Identical aggregate fields — no divergent implementation.
+    const { programGroupId, ...groupAgg } = group;
+    const { organizationId, truncated, ...orgAgg } = org;
+    expect(orgAgg).toEqual(groupAgg);
+  });
+
+  it('carries the truncated flag through', () => {
+    expect(aggregateOrgPortfolio(42, members, true).truncated).toBe(true);
+  });
+
+  it('returns zeros + low risk for an empty org', () => {
+    const org = aggregateOrgPortfolio(42, []);
+    expect(org).toMatchObject({ organizationId: 42, memberCount: 0, avgReadiness: 0, worstRisk: 'low', truncated: false });
   });
 });
 

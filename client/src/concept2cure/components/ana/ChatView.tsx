@@ -19,6 +19,7 @@ import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
 import { Message, type ExecutedActionChip, type ToolCallView } from './Message';
 import { IntelligenceQuestionWidget } from './IntelligenceQuestionWidget';
 import { WarGameReport } from './WarGameReport';
+import { AnaReportCanvas } from './AnaReportCanvas';
 import type { MessageAttachment } from './useAnaChat';
 import type { PendingSignoff } from './useGovernedAction';
 import styles from './styles.module.css';
@@ -71,6 +72,8 @@ export interface ChatMessageView {
   intelligenceFlowComplete?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceFlowCompleteEvent;
   /** War Game report — FDA auditor simulation results. */
   warGameReport?: import('./useAnaChat').AnaChatMessage['warGameReport'];
+  /** Reporting Canvas — governed report render / best-practices suggestions. */
+  reportCanvas?: import('./useAnaChat').AnaChatMessage['reportCanvas'];
 }
 
 export interface ChatViewProps {
@@ -236,6 +239,9 @@ export function ChatView({
                     onWarGameRemediate?.(findingId, finding?.title || findingId);
                   }}
                 />
+              )}
+              {m.reportCanvas && (
+                <AnaReportCanvas canvas={m.reportCanvas} onAction={(prompt) => onSend(prompt)} />
               )}
             </div>
           ))}

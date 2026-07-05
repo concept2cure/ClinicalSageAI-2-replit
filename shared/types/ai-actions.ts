@@ -56,6 +56,7 @@ export type AIActionSourceSurface =
   | 'inline_menu'         // Phase 2: InlineAIMenu on tables/forms
   | 'inline_button'       // Phase 2: InlineAIButton on rows/cards
   | 'validation_surface'  // Phase 2: Validation findings refinement
+  | 'recommendation'      // Dispatched from a predictive Recommendation.actionPayload
   | 'api';                // Direct API call
 
 /** Module types aligned with existing moduleTypeEnum. */

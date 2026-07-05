@@ -143,6 +143,7 @@ import PdevRoute from './pdev/PdevRoute';
 import BiopharmaRoute from './biopharma/BiopharmaRoute';
 import CmcRoute from './cmc/CmcRoute';
 import IntelligenceRoute from './intelligence/IntelligenceRoute';
+import { InsightsSurface } from './insights/surface';
 import AuthoringRoute from './authoring/AuthoringRoute';
 import QualityRoute from './quality/QualityRoute';
 import type { IntTab } from './intelligence/data';
@@ -1275,16 +1276,25 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         setLayoutMode('submission-gateway');
         return;
       }
-      // Phase 11 Intelligence cluster — Protocol / Biostat / Reports resolve to
-      // the new read-only shell. Must precede the BUNDLE_MDX_HASH and
-      // BUNDLE_INTENTS checks below (which otherwise route 'protocol'/'reporting'
-      // to MDX tabs and 'biostat' to a deep-research intent). 'cmc' is handled
-      // earlier and still routes to the richer standalone CmcRoute pending a
-      // designer call on rail ownership.
+      // Reports → the governed Report-OS Insights surface (segment-aware
+      // catalog, entitlement-gated runs, predictions & portfolio). This
+      // supersedes the legacy fixture ReportsSurface (the intelligence
+      // 'reporting' sub-tab), so the home "Reports" tile now opens the live
+      // surface. Must precede the BUNDLE_MDX_HASH / BUNDLE_INTENTS checks,
+      // which would otherwise route 'reporting' to an MDX tab.
+      if (normalizedPath === 'reporting') {
+        setLayoutMode('insights');
+        return;
+      }
+      // Phase 11 Intelligence cluster — Protocol / Biostat resolve to the
+      // read-only shell. Must precede the BUNDLE_MDX_HASH and BUNDLE_INTENTS
+      // checks below (which otherwise route 'protocol' to an MDX tab and
+      // 'biostat' to a deep-research intent). 'cmc' is handled earlier and
+      // still routes to the richer standalone CmcRoute pending a designer call
+      // on rail ownership.
       const INTELLIGENCE_TABS: Record<string, IntTab> = {
         protocol: 'protocol',
         biostat: 'biostat',
-        reporting: 'reporting',
       };
       if (normalizedPath in INTELLIGENCE_TABS) {
         setIntelligenceTab(INTELLIGENCE_TABS[normalizedPath]);
@@ -2036,6 +2046,24 @@ export const ZenApp: React.FC<ZenAppProps> = ({ initialProjectId, initialConvers
         onNavigate={handleAnaPanelNavigate}
         onAskAna={(text) => {
           setExternalChatMessage({ text, ts: Date.now() });
+          setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'deep-research');
+        }}
+      />
+    );
+  }
+
+  // Insights — the segment-aware Report-OS surface (reporting, analytics &
+  // predictions). Live over /api/report-os + /api/insights; the catalog is
+  // segment-filtered and entitlement-gated server-side, so this surface renders
+  // the same governed data whether reached here in-shell or at its own
+  // /concept2cure/insights URL. "Ask AnA about this report" hands off to the
+  // AnA Reporting Canvas — the prompt seeds a chat turn and flips to the
+  // conversation route, where the reporting tools render the governed canvas.
+  if (layoutMode === 'insights' && !embeddedModule) {
+    return (
+      <InsightsSurface
+        onAsk={(prompt) => {
+          setExternalChatMessage({ text: prompt, ts: Date.now() });
           setLayoutMode(activeProjectId ? 'regulatory-workspace' : 'deep-research');
         }}
       />
