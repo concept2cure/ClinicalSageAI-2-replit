@@ -20,6 +20,13 @@
 
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../../db.js';
+import { productTypesToSegments } from '../../services/report-os/segment.js';
+import {
+  foldersForView,
+  docKindsForView,
+  filingTypesForView,
+  type VaultViewId,
+} from '../../../shared/constants/domain/vault-taxonomy.js';
 
 const router = Router();
 
@@ -348,6 +355,134 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
     console.error('[c2c/projects] GET /:id/activity', err);
     // audit_logs schema varies; degrade gracefully.
     return res.json({ activity: [] });
+  }
+});
+
+// ── GET /api/c2c/projects/:id/vault-structure ────────────────────────────────
+//
+// Workstream A1 — the dynamic, build-type-aware Vault structure. Returns the
+// folder/document tree the Vault Explorer should render for THIS project,
+// aligned to its client segment AND its active document build types:
+//   - `view`         the vault view (pharma/biotech/device/ivd/service),
+//                    derived from the project's product_type (falls back across
+//                    the org's programs, then to the cross-sponsor service view)
+//   - `folders`      the segment folder spine (CTD / DHF / TMF) — foldersForView
+//   - `docKinds`     the document-kind filters valid for this view
+//   - `filingTypes`  the framework pills valid for this view
+//   - `buildTypes`   the distinct (doc_type/agency) filings live on the project
+//   - `documents`    each filing's rule-pack section tree merged with LIVE
+//                    section status (todo/drafted/…); this is what makes the
+//                    files "organized exactly by document build type".
+//
+// Everything is derived — no hardcoded per-segment tree — so a 510(k) device
+// project renders the DHF/eSTAR structure, an IVDR project its Annex tree, a
+// pharma NDA the CTD modules, and a CRO study the TMF zones. Tenant-scoped.
+
+router.get('/:id/vault-structure', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
+  const projectId = req.params.id;
+
+  try {
+    // Project + its product modality (org-scoped for tenancy).
+    const projRes = await pool.query(
+      `SELECT id, name, product_type
+       FROM regulatory_programs
+       WHERE id = $1 AND organization_id = $2
+       LIMIT 1`,
+      [projectId, orgId],
+    );
+    if (projRes.rows.length === 0) return send404(res);
+    const productType = (projRes.rows[0] as any).product_type as string | null;
+
+    // Derive the vault view: project product_type → segment; if the project has
+    // none, fall back to the union across the org's programs; else the
+    // cross-sponsor service (CRO/CDMO) view.
+    let view: VaultViewId;
+    const projSegs = productType ? productTypesToSegments([productType]) : [];
+    if (projSegs.length > 0) {
+      view = projSegs[0];
+    } else {
+      const orgTypesRes = await pool.query(
+        `SELECT DISTINCT product_type FROM regulatory_programs
+         WHERE organization_id = $1 AND product_type IS NOT NULL`,
+        [orgId],
+      );
+      const orgSegs = productTypesToSegments(orgTypesRes.rows.map((r: any) => r.product_type));
+      view = orgSegs[0] ?? 'service';
+    }
+
+    // The project's active document build types + their rule-pack section trees.
+    const docsRes = await pool.query(
+      `SELECT d.id, d.doc_type, d.agency, d.rule_pack_version, d.title,
+              d.status, d.readiness, rp.required_sections
+       FROM c2c_documents d
+       LEFT JOIN c2c_rule_packs rp
+         ON rp.doc_type = d.doc_type AND rp.agency = d.agency
+            AND rp.version = d.rule_pack_version
+       WHERE d.project_id = $1 AND d.org_id = $2
+       ORDER BY d.updated_at DESC`,
+      [projectId, orgId],
+    );
+
+    const documents = [];
+    for (const d of docsRes.rows as any[]) {
+      // Live section statuses for this document.
+      const secRes = await pool.query(
+        `SELECT section_key, status, version,
+                (content -> 'paragraphs') IS NOT NULL AS has_content
+         FROM c2c_document_sections
+         WHERE document_id = $1`,
+        [d.id],
+      );
+      const live = new Map<string, any>(secRes.rows.map((r: any) => [r.section_key, r]));
+      const specs = Array.isArray(d.required_sections) ? (d.required_sections as any[]) : [];
+      const sections = specs.map((spec: any) => ({
+        key:        spec.key,
+        parentKey:  spec.parent_key ?? null,
+        label:      spec.label,
+        mandatory:  spec.mandatory ?? false,
+        pathOrder:  spec.path_order ?? 0,
+        status:     live.get(spec.key)?.status ?? 'todo',
+        version:    live.get(spec.key)?.version ?? null,
+        hasContent: live.get(spec.key)?.has_content ?? false,
+      }));
+      documents.push({
+        id:        d.id,
+        docType:   d.doc_type,
+        agency:    d.agency,
+        title:     d.title,
+        status:    d.status,
+        readiness: d.readiness,
+        sections,
+      });
+    }
+
+    const buildTypes = Array.from(
+      new Set((docsRes.rows as any[]).map(d => `${d.doc_type}/${d.agency}`)),
+    );
+
+    return res.json({
+      projectId,
+      view,
+      folders:     foldersForView(view),
+      docKinds:    docKindsForView(view).map(k => ({ value: k.value, label: k.label, description: k.description })),
+      // Industry-specific framing: each framework pill carries its governing
+      // regulation(s) so the Explorer can render "510(k) · 21 CFR 807",
+      // "eCTD · ICH M8", "IVDR PE · EU IVDR 2017/746" — the segment's real
+      // regulatory language, not a generic label.
+      filingTypes: filingTypesForView(view).map(f => ({
+        value: f.value,
+        label: f.label,
+        description: f.description,
+        regulatoryRefs: (f as { regulatoryRefs?: string[] }).regulatoryRefs ?? [],
+      })),
+      buildTypes,
+      documents,
+    });
+  } catch (err: unknown) {
+    console.error('[c2c/projects] GET /:id/vault-structure', err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
 
