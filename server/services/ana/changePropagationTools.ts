@@ -136,6 +136,28 @@ export const SCAN_DOCUMENT_CITATIONS: AnaTool = {
   },
 };
 
+export const RECONCILE_DEVICE_DOCUMENTS: AnaTool = {
+  name: 'reconcile_device_documents',
+  description:
+    "Reconcile the numeric governed quantities ACROSS a device/IVD program's post-market documents in one pass — the cross-document inconsistency check for device programs. Finds where the same quantity (clinical sensitivity, specificity, LoD, precision CV, RPN, …) is restated with DIFFERENT values in different documents (e.g. a sensitivity in the PMS report ≠ the PSUR ≠ the SSCP), returning each conflict's distinct values, their source documents, a plurality consensus, and a severity. Deterministic. This is the device analogue of the pharma dossier reconciliation. " +
+    GROUNDED_NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      programId: { type: 'string', description: 'The regulatory program UUID whose device documents to reconcile.' },
+      tolerance: {
+        type: 'object',
+        description: 'Optional agreement tolerance. Two values agree (are not flagged) when within either bound. Default 0/0 = exact.',
+        properties: {
+          absolute: { type: 'number', description: 'Absolute tolerance. Default 0.' },
+          relative: { type: 'number', description: 'Relative tolerance (fraction). Default 0.' },
+        },
+      },
+    },
+    required: ['programId'],
+  },
+};
+
 export const EXPLAIN_RESOLUTION_PLAN: AnaTool = {
   name: 'explain_resolution_plan',
   description:
@@ -157,6 +179,7 @@ export const CHANGE_PROPAGATION_TOOLS: AnaTool[] = [
   PREVIEW_FACT_IMPACT,
   APPLY_FACT_CHANGE,
   SCAN_DOCUMENT_CITATIONS,
+  RECONCILE_DEVICE_DOCUMENTS,
   TRACE_FACT_TO_SOURCE,
   EXPLAIN_RESOLUTION_PLAN,
 ];

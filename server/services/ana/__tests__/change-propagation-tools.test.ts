@@ -25,6 +25,7 @@ describe('CHANGE_PROPAGATION_TOOLS', () => {
       'explain_resolution_plan',
       'list_governed_facts',
       'preview_fact_impact',
+      'reconcile_device_documents',
       'scan_document_citations',
       'trace_fact_to_source',
     ]);

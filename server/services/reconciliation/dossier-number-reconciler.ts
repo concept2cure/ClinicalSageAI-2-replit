@@ -126,6 +126,18 @@ const SEVERITY_BY_KEY: Record<string, DivergenceSeverity> = {
   duration_weeks: 'medium',
   age_range: 'medium',
   batches: 'medium',
+  // Device / IVD quantities — a performance-claim or predicate divergence across
+  // the technical documentation / SE discussion / CER / IFU is a submission
+  // blocker, so it ranks alongside the pharma RTF triggers.
+  sensitivity: 'critical',
+  specificity: 'critical',
+  ppa: 'critical',
+  npa: 'critical',
+  lod: 'high',
+  lob: 'high',
+  loq: 'high',
+  precision_cv: 'high',
+  rpn: 'high',
 };
 
 function severityFor(quantityKey: string): DivergenceSeverity {
@@ -134,7 +146,8 @@ function severityFor(quantityKey: string): DivergenceSeverity {
   // Family fallbacks for keys not enumerated above.
   if (/(^|_)(n|sample|enroll|randomi[sz]|subjects?)($|_)/.test(key)) return 'critical';
   if (/dose|noael|loael|mrsd/.test(key)) return 'critical';
-  if (/effect|p_?value|ci|mean|median|reduction|difference/.test(key)) return 'high';
+  if (/sensitivity|specificity|ppa|npa/.test(key)) return 'critical';
+  if (/effect|p_?value|ci|mean|median|reduction|difference|lod|loq|cv|precision/.test(key)) return 'high';
   return 'medium';
 }
 
