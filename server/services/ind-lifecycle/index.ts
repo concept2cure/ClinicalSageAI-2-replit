@@ -7,10 +7,13 @@
  *   - ind-amendment-service     : 21 CFR 312.30/312.31 amendment planning.
  *   - ind-readiness-service     : deterministic IND filing-readiness verdict.
  *
- * INTEGRATION NOTES: every module here is deterministic and persistence-free.
- * Each file's header lists the TODO(persistence) wiring points for the human
- * (route the produced intents/plans through submission-service to create the
- * tenant-scoped, audited ectd_sequences + submission_leaves rows).
+ * INTEGRATION NOTES: the planners/assemblers here are deterministic and
+ * persistence-free; their outputs are persisted by the sibling persistence
+ * modules — ind-lifecycle-persistence (tenant-scoped, audited ectd_sequences +
+ * submission_leaves via submission-service) and the register services
+ * (ind-safety-report- / ind-annual-report- / ind-amendment-persistence: durable
+ * draft → filed records), exposed under /api/ind-lifecycle
+ * (server/routes/ind-lifecycle).
  *
  * @module server/services/ind-lifecycle
  */
