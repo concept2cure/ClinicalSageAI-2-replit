@@ -17,7 +17,7 @@ import {
 import { I } from '../icons';
 import { connected } from '../dataConnect';
 import { SURFACE_VIEWS } from '../surfaceViews';
-import '../styles/coverage-v2.css';
+// coverage-v2.css is loaded globally by V2App (shared surface primitives).
 
 const READ: Record<string, { label: string; tone: string }> = {
   'contract-ready': { label: 'Contract-ready', tone: 'ok' },

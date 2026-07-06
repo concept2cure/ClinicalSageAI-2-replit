@@ -40,6 +40,12 @@ import {
 } from './registryModel';
 import { locationForSurface, surfaceIdFromLocation } from './routing';
 import './styles/app-v2.css';
+// Shared surface stylesheets — the kit loads these globally (they carry the
+// cross-surface primitives: .sp*/.pj-card/.cm-pushbar in journey, and
+// .rd-chip/.sc-*/.ub-*/.tl-spec/.cv-* in coverage). Loaded once here so every
+// surface has them, matching the kit's index.html global load.
+import './styles/journey-v2.css';
+import './styles/coverage-v2.css';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 

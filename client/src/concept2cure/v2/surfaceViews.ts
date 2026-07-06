@@ -17,6 +17,7 @@ import type React from 'react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 import { CapabilityIndex } from './intelligence/Intelligence';
 import { CodebaseCoverage } from './surfaces/Coverage';
+import { SubmissionCenter } from './surfaces/SubmissionCenter';
 import { GlobalRiBrowser } from './surfaces/Surfaces';
 
 export interface SurfaceViewProps {
@@ -38,4 +39,5 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'global-ri': { component: GlobalRiBrowser, full: true },
   'intelligence-catalog': { component: CapabilityIndex },
   coverage: { component: CodebaseCoverage },
+  'submission-center': { component: SubmissionCenter },
 };
