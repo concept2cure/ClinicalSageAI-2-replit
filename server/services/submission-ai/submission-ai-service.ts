@@ -20,6 +20,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { getGateway } from '../ai-gateway';
 import { classifyGatewayError } from '../ai-gateway/gateway-error-map';
 import { evaluateDispatchGate } from '../ectd/dispatch-gate';
@@ -27,7 +28,15 @@ import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('submission-ai-service');
-const PROMPTS_DIR = path.join(__dirname, '..', 'ai-gateway', 'prompts');
+// ESM-safe __dirname (package is "type":"module"; bare __dirname crashes the
+// whole boot path under both Node 20 and 22 — same pattern as the other 25
+// fileURLToPath call sites in server/).
+const PROMPTS_DIR = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  'ai-gateway',
+  'prompts'
+);
 
 export class SubmissionAiError extends Error {
   constructor(

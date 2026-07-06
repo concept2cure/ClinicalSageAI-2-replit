@@ -36,6 +36,12 @@ import {
   recordFcoiReview,
 } from '../services/fcoi-metrics';
 
+// ESM-safe __dirname (package is "type":"module"; bare __dirname is undefined
+// in ES module scope and crashes at import time on Node 20/22).
+import { fileURLToPath as ___c2cFileURLToPath } from 'node:url';
+import { dirname as ___c2cDirname } from 'node:path';
+const __dirname = ___c2cDirname(___c2cFileURLToPath(import.meta.url));
+
 const router = Router();
 
 function resolveUserId(req: Request): number | null {

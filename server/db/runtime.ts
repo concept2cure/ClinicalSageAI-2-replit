@@ -19,6 +19,12 @@
  */
 
 import { config as dotenvConfig } from 'dotenv';
+
+// ESM-safe __dirname (package is "type":"module"; bare __dirname is undefined
+// in ES module scope and crashes at import time on Node 20/22).
+import { fileURLToPath as ___c2cFileURLToPath } from 'node:url';
+import { dirname as ___c2cDirname } from 'node:path';
+const __dirname = ___c2cDirname(___c2cFileURLToPath(import.meta.url));
 dotenvConfig({ override: false, quiet: true });
 
 import { Pool } from 'pg';

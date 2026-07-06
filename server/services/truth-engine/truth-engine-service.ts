@@ -26,6 +26,12 @@ import { classifyGatewayError } from '../ai-gateway/gateway-error-map';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
+// ESM-safe __dirname (package is "type":"module"; bare __dirname is undefined
+// in ES module scope and crashes at import time on Node 20/22).
+import { fileURLToPath as ___c2cFileURLToPath } from 'node:url';
+import { dirname as ___c2cDirname } from 'node:path';
+const __dirname = ___c2cDirname(___c2cFileURLToPath(import.meta.url));
+
 const logger = createScopedLogger('truth-engine-service');
 const PROMPTS_DIR = path.join(__dirname, '..', 'ai-gateway', 'prompts');
 
