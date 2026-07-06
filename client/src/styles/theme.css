@@ -29,10 +29,11 @@
   --color-text-primary: #141413;      /* Anthropic dark */
   --color-text-secondary: #4a4a46;    /* Warm dark gray */
 
-  /* TYPOGRAPHY — Anthropic authentic */
-  --font-heading: 'Poppins', Arial, sans-serif;
+  /* TYPOGRAPHY — decided 2026-07-06: system-ui chrome + Lora reading
+     (Poppins removed; see design-system/colors_and_type.css §3) */
+  --font-heading: var(--font-sans, system-ui, sans-serif);
   --font-base: 'Lora', Georgia, serif;
-  --font-ui: 'Poppins', Arial, sans-serif;  /* For UI elements, buttons, labels */
+  --font-ui: var(--font-sans, system-ui, sans-serif);  /* For UI elements, buttons, labels */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-md: 1rem;

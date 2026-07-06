@@ -17,6 +17,20 @@ export type FeatureFlag = {
 
 // Define all available feature flags
 export const featureFlags: Record<string, FeatureFlag> = {
+  // ui-v2 — the full client UI replacement (design_handoff_c2c_v2_ui_replacement
+  // kit: registry-driven shell + ~95 surfaces + AnA rail + ⌘K). While dark, the
+  // legacy ZenApp shell keeps serving /concept2cure; when enabled, the v2 shell
+  // mounts in its place (auth + client-portal redirects unchanged). Runtime
+  // override for verification without a rebuild: localStorage 'c2c-ui-v2' = '1'
+  // or URL ?ui-v2=1 (see client/src/concept2cure/v2/uiV2Flag.ts).
+  ENABLE_UI_V2: {
+    id: 'ENABLE_UI_V2',
+    name: 'Concept2Cure.RI ui-v2 shell',
+    description:
+      'Enables the ui-v2 full UI replacement: registry-driven shell (rail, top bar, AnA rail, command palette) and the kit surfaces as they port. Ships dark during the phased migration.',
+    defaultValue: false,
+    enabled: false,
+  },
   // AnA Document Studio — split-pane authoring (chat left, live document
   // preview + verification trust-panel right). Ships dark; enable per-org.
   ENABLE_ANA_DOCUMENT_STUDIO: {
