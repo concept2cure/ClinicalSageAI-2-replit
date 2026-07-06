@@ -113,10 +113,34 @@ patches, `icon?` added to the interface). Full diff + disposition:
   request-kernel 403s browser module requests from a `127.0.0.1` Origin
   (use `localhost`).
 
+### Tranche 1b (2026-07-06) — coverage (live install tracker)
+- **`coverage`** (contract-ready) — kit coverage.jsx ported: the whole
+  reconciled 81-surface registry alive in the UI, cross-referenced against
+  what this shell has ported (SURFACE_VIEWS) and whether the backend link is
+  live. Reads straight from `UI_SURFACES` + `CROSS_CUTTING_CONCERNS` +
+  `connected()` — no fixture; it IS the install/coverage tracker. Verified
+  live: 81 surfaces · 3 ported · 5 contract-ready · 66 routes-ready ·
+  10 kit-only/planned · backend "Live".
+- **CSS pipeline hardened** — family ports no longer duplicate the app.css
+  token-shim header (lives once in app-v2.css); added the `.cv-kpis` grid the
+  kit coverage.css omitted (port-helper, flagged to upstream).
+
 ### Tranche order from here
-Contract-ready remainder (submission-center · pyramid · communication-center ·
-coverage) → projects/project-home (Home2.jsx) → routes-ready families per the
-kit load order (`app/index.html`) → kit-only/planned on fixtures.
+Contract-ready remainder (submission-center · pyramid · communication-center)
+→ projects/project-home (Home2.jsx) → routes-ready families per the kit load
+order (`app/index.html`) → kit-only/planned on fixtures.
+
+### Local verification harness (for the backend track)
+Standing up the dev server for browser verification surfaced pre-existing,
+UI-independent defects, now captured as backend work:
+- **dev boot** — ESM `__dirname` + extensionless dir-ambiguous import (fixed in
+  PR #1010).
+- **schema drift** — `users` table missing `email_otp_*` columns vs the drizzle
+  schema (`ensureAuthTables()` adds them); the `audit` schema must exist before
+  first boot or the tamper-proof audit log 500s dev-login; base numbered
+  migrations (0000–0004) weren't applied by the c2c migration runner alone.
+- **request kernel** — 403s browser module requests carrying a `127.0.0.1`
+  Origin; `localhost` is allow-listed. (Verification uses `localhost`.)
 
 ## Backend asks (parallel track — from the kit runbook; UI renders these as honest gaps)
 1. DMS cross-repo search REST mount (`searchConnectedRepositories` →
