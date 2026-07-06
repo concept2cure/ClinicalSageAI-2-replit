@@ -19,6 +19,12 @@ export interface DocxPdfPipelineResult {
     compressedSizeBytes: number;
     compressionRatio: number;
   } | null;
+  /**
+   * Reason compression was skipped, when `--compress` was requested but could
+   * not run (e.g. `ghostscript_unavailable`). Null when compression ran or was
+   * not requested. The PDF is still produced either way.
+   */
+  compressionSkipped?: string | null;
 }
 
 export async function runDocxPdfPipeline(
