@@ -205,7 +205,7 @@ I would choose **Concept2Cure** — but I would tell the team it's a 2-week inve
 | 6 | **Polish the Data Room** — add folder upload with structure preservation, visual file previews, drag-and-drop, relevance scoring on search results | Medium | Large |
 | 7 | **Create an Export Center** — one page showing all governed exports with snapshot hashes, reviewer signatures, and download links | Medium | Medium |
 | 8 | **Add a Review Inbox** — "3 documents awaiting your review" with one-click navigation to the document in review mode | Medium | Medium |
-| 9 | **Publish a case study** — even a self-reported benchmark (e.g., "IND nonclinical summaries: 100 hours → 4 hours") would close the validation gap with Weave | High | Low |
+| 9 | **Publish a case study** — run and document an internal time-comparison benchmark (manual vs. platform-assisted), reporting results regardless of magnitude; until then the only defensible formulation is "substantial cycle-time reduction reported in early pilots; formal benchmark pending" | High | Low |
 | 10 | **Surface intelligence scores in the editor** — show RIM risk score, claim confidence, and readiness % as a persistent strip in EditorPanel, not hidden in inspector panels | High | Medium |
 
 ---

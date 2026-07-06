@@ -186,7 +186,7 @@ router.post('/study-design', (req: Request, res: Response) => {
   res.json(designIvdStudyProgram(b));
 });
 
-// ── Reviewer simulation (mock FDA / notified-body deficiencies) ─────────────
+// ── Reviewer simulation (predicted FDA / notified-body deficiencies) ────────
 router.post('/review-simulation', async (req: Request, res: Response) => {
   const b = req.body ?? {};
   const PATHWAYS = ['510k', 'de_novo', 'pma', 'eu_ivdr'];

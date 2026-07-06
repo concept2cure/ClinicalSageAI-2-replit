@@ -4,7 +4,7 @@
  * CRO (Contract Research Organization) routes — real, tenant-scoped CRUD over
  * the cro_* tables (cro_clients, cro_studies, cro_regulatory_submissions,
  * cro_milestones, cro_team_assignments). The dashboard aggregates those same
- * tables. Previously every endpoint here returned hardcoded mock data
+ * tables. Previously every endpoint here returned hardcoded canned data
  * (fabricated clients, studies, revenue, compliance scores) and the
  * create/update handlers echoed the body without persisting anything.
  *

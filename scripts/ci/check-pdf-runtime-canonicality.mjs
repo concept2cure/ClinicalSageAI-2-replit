@@ -60,6 +60,23 @@ const APPROVED = new Set([
   'server/routes/planner-routes.ts',
   'server/routes/report-os.ts',
   'server/services/ivdrPackHtml.ts',
+  // AnA-integration consumers (landed 2026-06-29 via the ana-integration
+  // merge while this gate was advisory-only; documented at CI-wiring time,
+  // 2026-07-06). Each is a legitimate exception — none is a DOCX→PDF
+  // conversion that pdf-converter.ts could perform:
+  //   submission-ops.ts        — binder export renders section markdown via pdfkit.
+  //   leaf-pdf-renderer.ts     — deterministic eCTD leaf PDFs (byte-identical output
+  //                              is the index.xml md5 checksum contract).
+  //   pdf-bookmark-generator.ts — builds /Outlines dicts on EXISTING PDFs (eCTD spec).
+  //   fill-official-pdf.ts     — fills AcroForm fields of official FDA PDFs.
+  //   ind-form-fill-service.ts — fills official FDA 1571/1572/3674 AcroForms.
+  //   templateExtractor.ts     — READS PDFs (PDFDocument.load) to extract formatting.
+  'server/routes/submission-ops.ts',
+  'server/services/ectd/leaf-pdf-renderer.ts',
+  'server/services/ectd/pdf-bookmark-generator.ts',
+  'server/services/forms/fill-official-pdf.ts',
+  'server/services/ind-forms/ind-form-fill-service.ts',
+  'server/services/templates/templateExtractor.ts',
 ]);
 
 const PDF_LIB_IMPORT = /from\s+['"](pdfkit|pdf-lib)['"]/;
