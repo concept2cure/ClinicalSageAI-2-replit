@@ -100,9 +100,10 @@ describe('getRefreshTokenSecret', () => {
     delete process.env.REFRESH_TOKEN_SECRET_DEV;
     delete process.env.REFRESH_TOKEN_SECRET_STAGING;
     delete process.env.REFRESH_TOKEN_SECRET_PROD;
-    // Satisfy the production MFA posture gate so these tests isolate the
-    // refresh-secret contract.
+    // Satisfy the production MFA + RLS posture gates so these tests isolate
+    // the refresh-secret contract.
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.RLS_ENFORCE = 'on';
     process.env.DATABASE_URL = 'postgres://test';
     process.env.DATABASE_URL_DEV = 'postgres://test';
     process.env.DATABASE_URL_STAGING = 'postgres://test';
@@ -182,6 +183,9 @@ describe('assertMfaKeyPosture', () => {
     process.env.JWT_SECRET = VALID_SECRET;
     process.env.JWT_SECRET_PROD = VALID_SECRET;
     process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
+    // Satisfy the production RLS posture gate (runs after the MFA gate) so
+    // the 'loads in production' case below exercises the MFA contract only.
+    process.env.RLS_ENFORCE = 'on';
     process.env.DATABASE_URL = 'postgres://test';
     process.env.DATABASE_URL_DEV = 'postgres://test';
     process.env.DATABASE_URL_PROD = 'postgres://test';
@@ -238,11 +242,12 @@ describe('getCurrentEnvironment', () => {
     process.env.DATABASE_URL_DEV = 'postgres://test';
     process.env.DATABASE_URL_PROD = 'postgres://test';
     // Production-path enforcement added alongside JWT: provide a dedicated,
-    // distinct refresh secret and a dedicated MFA key so the 'recognizes
-    // production' case below exercises env selection, not the new fail-closed
-    // gates (which have their own dedicated suites above).
+    // distinct refresh secret, a dedicated MFA key and an explicit RLS mode so
+    // the 'recognizes production' case below exercises env selection, not the
+    // fail-closed gates (which have their own dedicated suites above/below).
     process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.RLS_ENFORCE = 'on';
   });
 
   afterEach(() => {
