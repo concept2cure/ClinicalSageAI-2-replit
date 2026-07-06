@@ -125,10 +125,25 @@ patches, `icon?` added to the interface). Full diff + disposition:
   token-shim header (lives once in app-v2.css); added the `.cv-kpis` grid the
   kit coverage.css omitted (port-helper, flagged to upstream).
 
+### Tranche 1c (2026-07-06) — submission-center (answer-first reference)
+- **`submission-center`** (contract-ready) — the SCREENS.md §03 reference:
+  opens with the AnswerLead dispatch verdict, not a grid; the 8 workspaces
+  scaffold from the real `SUBMISSION_WORKSPACES` contract; portfolio binds
+  live to `GET /api/submissions` (fixture behind the pill otherwise).
+- **Shared-CSS architecture** — journey.css ported and promoted (with
+  coverage.css) to global imports in V2App, matching the kit's global CSS
+  load; the honest scaffold's status chips are styled as a result. The
+  `index.css` shim gained the ui-v2 shared vars (`--v2-shadow-*`, `--idle`,
+  `--accent-bg`, `--p`) so the per-file token-cascade gate resolves them.
+
+### Ported so far (5 surfaces + honest scaffold)
+`home` · `global-ri` (live) · `intelligence-catalog` · `coverage` (live) ·
+`submission-center` — all verified in a real browser.
+
 ### Tranche order from here
-Contract-ready remainder (submission-center · pyramid · communication-center)
-→ projects/project-home (Home2.jsx) → routes-ready families per the kit load
-order (`app/index.html`) → kit-only/planned on fixtures.
+Contract-ready remainder (pyramid · communication-center) → projects /
+project-home (Home2.jsx) → routes-ready families per the kit load order
+(`app/index.html`) → kit-only/planned on fixtures.
 
 ### Local verification harness (for the backend track)
 Standing up the dev server for browser verification surfaced pre-existing,
