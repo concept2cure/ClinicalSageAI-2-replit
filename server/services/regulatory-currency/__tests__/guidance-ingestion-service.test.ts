@@ -232,4 +232,30 @@ describe('fetchFdaGuidanceList', () => {
     const result = await fetchFdaGuidanceList();
     expect(result.status).toBe('unavailable');
   });
+
+  it('passes an abort timeout signal to fetch so a hung upstream cannot stall the worker', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ results: [] }),
+    });
+    globalThis.fetch = fetchMock;
+
+    await fetchFdaGuidanceList({ topic: 'biomarker' });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init).toBeDefined();
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+    expect(init.signal.aborted).toBe(false);
+  });
+
+  it('maps a timed-out request to unavailable with a timeout message', async () => {
+    const timeoutErr = new Error('The operation was aborted due to timeout');
+    timeoutErr.name = 'TimeoutError';
+    globalThis.fetch = vi.fn().mockRejectedValue(timeoutErr);
+
+    const result = await fetchFdaGuidanceList({ topic: 'biomarker' });
+    expect(result.status).toBe('unavailable');
+    expect((result as any).message).toMatch(/timed out after 30000ms/);
+  });
 });

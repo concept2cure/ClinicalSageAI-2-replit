@@ -288,3 +288,72 @@ describe('getCurrentEnvironment', () => {
     expect(config.isProduction).toBe(false);
   });
 });
+
+describe('production RLS enforcement posture (fires on config import)', () => {
+  let originalEnv: NodeJS.ProcessEnv;
+
+  beforeEach(() => {
+    originalEnv = { ...process.env };
+    vi.resetModules();
+    delete process.env.RLS_ENFORCE;
+    delete process.env.RLS_REQUIRE_ENFORCE;
+    // Satisfy every other production gate so these tests isolate the RLS one.
+    process.env.JWT_SECRET = VALID_SECRET;
+    process.env.JWT_SECRET_PROD = VALID_SECRET;
+    process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
+    process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.DATABASE_URL = 'postgres://test';
+    process.env.DATABASE_URL_DEV = 'postgres://test';
+    process.env.DATABASE_URL_PROD = 'postgres://test';
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    vi.resetModules();
+  });
+
+  it('refuses to load in production when RLS_ENFORCE is unset', async () => {
+    process.env.NODE_ENV = 'production';
+    await expect(import('../environment')).rejects.toThrow(/REFUSING TO BOOT/);
+  });
+
+  it('refuses to load in production on an unrecognized RLS_ENFORCE value', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RLS_ENFORCE = 'onn'; // typo must not silently disable RLS
+    await expect(import('../environment')).rejects.toThrow(/unrecognized value/);
+  });
+
+  it('loads in production with RLS_ENFORCE=on', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RLS_ENFORCE = 'on';
+    const { config } = await import('../environment');
+    expect(config.isProduction).toBe(true);
+  });
+
+  it('loads (with a warning) in production when the operator explicitly sets off', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RLS_ENFORCE = 'off';
+    const { config } = await import('../environment');
+    expect(config.isProduction).toBe(true);
+  });
+
+  it('loads (with a warning) in production when the operator explicitly sets shadow', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RLS_ENFORCE = 'shadow';
+    const { config } = await import('../environment');
+    expect(config.isProduction).toBe(true);
+  });
+
+  it('fail-closes in production under RLS_REQUIRE_ENFORCE=true unless on', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RLS_ENFORCE = 'off';
+    process.env.RLS_REQUIRE_ENFORCE = 'true';
+    await expect(import('../environment')).rejects.toThrow(/FAIL-CLOSED/);
+  });
+
+  it('does not require RLS_ENFORCE outside production', async () => {
+    process.env.NODE_ENV = 'development';
+    const { config } = await import('../environment');
+    expect(config.isDevelopment).toBe(true);
+  });
+});
