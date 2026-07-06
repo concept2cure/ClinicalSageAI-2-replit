@@ -85,8 +85,11 @@ function isTestFile(filePath) {
 
 function grepFiles(pattern) {
   try {
+    // --exclude-dir keeps installed packages out of the scan: with
+    // node_modules present (CI runs after npm install) third-party dist
+    // files that import 'docx' would fail the gate spuriously.
     const output = execSync(
-      `grep -rn --include='*.ts' --include='*.tsx' --include='*.js' --include='*.mjs' --include='*.py' -E ${JSON.stringify(pattern)} .`,
+      `grep -rn --include='*.ts' --include='*.tsx' --include='*.js' --include='*.mjs' --include='*.py' --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git -E ${JSON.stringify(pattern)} .`,
       { cwd: ROOT, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
     );
     return output

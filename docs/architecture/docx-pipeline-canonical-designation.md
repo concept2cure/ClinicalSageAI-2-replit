@@ -9,7 +9,7 @@ The platform has three DOCX generation paths:
 | Runtime | File | Purpose | When to use |
 |---------|------|---------|-------------|
 | **JS `docx` v9.5.1** | `server/services/docx/docxFactory.ts`, `server/services/docxGenerator.ts` | Programmatic document generation in Node.js | On-the-fly generation from structured data (AI-generated sections, real-time exports, lightweight documents) |
-| **Python `python-docx`** | `workers/artifact-compute/docx-python-runtime.py` | Isolated worker for markdown→DOCX conversion | Artifact compute pipeline, batch generation, image-heavy documents |
+| **Python `python-docx`** | `workers/artifact-compute/docx-python-runtime.py` (family also includes the `docx-insert` / `docx-xml` / `docx-validate` surgical-edit and validation runtimes in the same directory) | Isolated worker for markdown→DOCX conversion, surgical edits to existing documents, and OOXML validation | Artifact compute pipeline, batch generation, image-heavy documents, AnA document surgery |
 | **Shadow Service (template-based)** | `shadow_service/shadow_service/docx_renderer.py` + `seed_docx_templates.py` | Template-driven rendering with placeholder filling | Production regulatory documents from approved templates (eCTD, FDA forms, CER) |
 
 ## Canonical designation

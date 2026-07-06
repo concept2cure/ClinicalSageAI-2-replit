@@ -205,6 +205,20 @@ export interface AnaGatewayResponse extends GatewayResponse {
 export interface GatewayMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
+  /**
+   * Provenance of this message's content, used by the policy engine's
+   * indirect-prompt-injection scan (see policy.ts):
+   *   - 'app'      — authored verbatim by our own code (a shipped system
+   *                  prompt). System messages marked 'app' are exempt from
+   *                  injection scanning so legitimate directives are never
+   *                  false-positived.
+   *   - 'external' — assembled from ingested/untrusted sources (uploaded
+   *                  documents, RAG chunks, tool outputs). Scanned strictly.
+   * Unset means unknown provenance: the message is scanned (fail-closed).
+   * Never mark a message 'app' if any part of its content was interpolated
+   * from user uploads or retrieval results.
+   */
+  origin?: 'app' | 'external';
   /** Multi-modal content blocks (images + text) — Claude only */
   contentBlocks?: ContentBlock[];
   /**
@@ -400,8 +414,23 @@ export interface PolicyConfig {
   /** Required content filters */
   contentFilters: boolean;
 
-  /** PII detection and redaction */
+  /**
+   * PII/PHI detection on outbound message content (see policy.ts,
+   * evaluatePiiPolicy). When true, every message is classified with the
+   * governed ai-governance content classifier before provider dispatch:
+   * structured PHI blocks fail-closed, email/SSN spans are redacted from the
+   * provider payload, and lower-confidence identifiers are flagged into the
+   * gateway audit trail.
+   */
   piiDetection: boolean;
+
+  /**
+   * Scan non-user roles (system/assistant/tool) for indirect prompt
+   * injection — hostile directives smuggled in via RAG chunks, tool outputs
+   * or ingested documents. Optional; when unset, the AI_GATEWAY_SCAN_ALL_ROLES
+   * env var decides (default ON). Explicit config wins over the env var.
+   */
+  scanAllRoles?: boolean;
 }
 
 export interface GatewayConfig {
@@ -447,7 +476,12 @@ export interface AuditLogEntry {
   id?: string;
   requestId: string;
   timestamp: Date;
-  provider: ProviderName;
+  /**
+   * Provider that served the request. 'none' records a request the policy
+   * layer refused before any provider was selected (content-policy block) —
+   * refusals are compliance events and must leave an audit trace too.
+   */
+  provider: ProviderName | 'none';
   model: string;
   taskType: TaskType;
   strategy: RoutingStrategy;

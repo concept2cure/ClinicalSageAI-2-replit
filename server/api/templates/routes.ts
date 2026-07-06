@@ -3,7 +3,9 @@ import { templateService } from '../../services/templateService';
 // Document templates now use ectdTemplates table
 import multer from 'multer';
 import path from 'path';
+import fs from 'node:fs';
 import crypto from 'node:crypto';
+import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety';
 import { db } from '../../db';
 import { ectdTemplates } from '../../../shared/schema';
 import { eq, and, or, like, sql, type SQL } from 'drizzle-orm';
@@ -38,6 +40,23 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB limit
   },
 });
+
+/**
+ * Claimed-type → canonical MIME for post-upload magic-byte verification.
+ * Keys mirror the multer fileFilter allowlist above; the extension is the
+ * only "declared type" that gate actually checks, so the content check is
+ * keyed off it too (pdf = '%PDF', docx = ZIP 'PK\x03\x04', legacy doc = OLE
+ * compound D0CF11E0, txt/rtf = text-shaped). An extension missing from this
+ * map falls through to a MIME verifyFileSignature cannot vouch for, which
+ * rejects — fail-closed if the allowlist ever widens without updating this.
+ */
+const CLAIMED_EXTENSION_MIME: Record<string, string> = {
+  '.pdf': 'application/pdf',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.doc': 'application/msword',
+  '.txt': 'text/plain',
+  '.rtf': 'text/rtf',
+};
 
 /**
  * GET /api/templates
@@ -98,17 +117,18 @@ router.get('/', async (req: Request, res: Response) => {
  */
 router.get('/catalog', async (req: Request, res: Response) => {
   try {
-    const { 
-      category, 
-      region, 
-      module, 
-      search, 
-      tags,
-      organizationId = '6' 
-    } = req.query;
-    
+    // SECURITY: org id comes from the authenticated tenant context, matching
+    // every other handler in this file. The previous `organizationId = '6'`
+    // query-param default let any authenticated caller read (and enumerate)
+    // other tenants' template catalogs by rewriting a query string.
+    const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const { category, region, module, search, tags } = req.query;
+
     const conditions: (SQL<unknown> | undefined)[] = [
-      eq(ectdTemplates.organizationId, parseInt(organizationId as string)),
+      eq(ectdTemplates.organizationId, organizationId),
       eq(ectdTemplates.isActive, true)
     ];
     
@@ -388,6 +408,27 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
         success: false,
         error: 'No file uploaded',
       });
+    }
+
+    // SECURITY: magic-byte signature verification + AV scan (fail-closed in
+    // production) on the persisted bytes. The multer fileFilter above only
+    // checks the attacker-controlled extension; this confirms the stored
+    // content actually matches the claimed type. On rejection the temp file
+    // is unlinked so a spoofed upload doesn't linger under uploads/templates.
+    const claimedExt = path.extname(req.file.originalname).toLowerCase();
+    const declaredMime = CLAIMED_EXTENSION_MIME[claimedExt] ?? 'application/octet-stream';
+    try {
+      await assertUploadSafe(req.file.path, declaredMime, req.file.originalname);
+    } catch (safetyErr) {
+      try {
+        await fs.promises.unlink(req.file.path);
+      } catch {
+        /* best-effort cleanup */
+      }
+      if (safetyErr instanceof UploadSafetyError) {
+        return res.status(safetyErr.status).json(safetyErr.body);
+      }
+      throw safetyErr;
     }
 
     const { name, category, module, description } = req.body;
