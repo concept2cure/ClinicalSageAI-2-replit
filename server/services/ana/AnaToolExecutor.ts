@@ -6635,14 +6635,20 @@ registerToolHandler('author_docx_native', async (input, ctx) => {
         quality,
       });
       const pdfStat = await fs.stat(pipeline.finalPdf);
+      const compNote = pipeline.compression
+        ? ` (${pipeline.compression.compressedSizeBytes} bytes after ${quality} compression)`
+        : pipeline.compressionSkipped
+          ? ` (compression skipped: ${pipeline.compressionSkipped})`
+          : '';
       return JSON.stringify({
-        ok:           true,
-        engine:       'python-docx + libreoffice',
+        ok:                 true,
+        engine:             'python-docx + libreoffice',
         docxPath,
-        pdfPath:      pipeline.finalPdf,
-        sizeBytes:    pdfStat.size,
-        compression:  pipeline.compression ?? null,
-        message: `Authored ${docx.fileName} via python-docx and converted to PDF via headless LibreOffice. PDF: ${pipeline.finalPdf}.`,
+        pdfPath:            pipeline.finalPdf,
+        sizeBytes:          pdfStat.size,
+        compression:        pipeline.compression ?? null,
+        compressionSkipped: pipeline.compressionSkipped ?? null,
+        message: `Authored ${docx.fileName} via python-docx and converted to PDF via headless LibreOffice. PDF: ${pipeline.finalPdf}${compNote}.`,
       });
     }
 
@@ -6697,16 +6703,20 @@ registerToolHandler('convert_docx_to_pdf', async (input) => {
       quality,
     });
     const stat = await fs.stat(result.finalPdf);
+    const compNote = result.compression
+      ? ` (${result.compression.compressedSizeBytes} bytes after ${quality} compression)`
+      : result.compressionSkipped
+        ? ` (compression skipped: ${result.compressionSkipped})`
+        : '';
     return JSON.stringify({
-      ok:               true,
-      inputDocx:        result.inputDocx,
-      convertedPdf:     result.convertedPdf,
-      finalPdf:         result.finalPdf,
-      sizeBytes:        stat.size,
-      compression:      result.compression ?? null,
-      message: `DOCX → PDF complete via headless LibreOffice. PDF: ${result.finalPdf}${
-        result.compression ? ` (${result.compression.compressedSizeBytes} bytes after ${quality} compression)` : ''
-      }.`,
+      ok:                 true,
+      inputDocx:          result.inputDocx,
+      convertedPdf:       result.convertedPdf,
+      finalPdf:           result.finalPdf,
+      sizeBytes:          stat.size,
+      compression:        result.compression ?? null,
+      compressionSkipped: result.compressionSkipped ?? null,
+      message: `DOCX → PDF complete via headless LibreOffice. PDF: ${result.finalPdf}${compNote}.`,
     });
   } catch (err) {
     return JSON.stringify({
