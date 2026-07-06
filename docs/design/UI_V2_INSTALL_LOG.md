@@ -15,7 +15,7 @@ no model-vendor branding on screen, reuse existing providers/hooks/governed comp
 | 0 | Branch (`concept2cure-v2` @ e6ebf60) + `ENABLE_UI_V2` flag | ✅ this change |
 | 1 | Foundation: tokens · fonts (DECIDED) · kit CSS as stylesheet · Shell/TopBar/AnaRail/⌘K behind flag | ✅ this change |
 | 2 | Registry reconciliation (see `UI_V2_REGISTRY_RECONCILIATION_2026-07-06.md`) | ✅ this change |
-| 3 | Surface port loop (~95 surfaces, 5-layer model, contract-ready first) | ⏳ after registry-diff sign-off |
+| 3 | Surface port loop (~95 surfaces, 5-layer model, contract-ready first) | 🔄 in progress — tranche 1a landed (sign-off received 2026-07-06) |
 | 4 | Editor + governance + provenance (TipTap stack, SSE draft, Prov tab) | ⏳ |
 | 5 | Entry flows (Auth → MFA → org picker · Onboarding · Portal decision) | ⏳ |
 | 6 | Entitlements · e-sign live wiring (blocked on INSTALL §5 backend validator) | ⏳ |
@@ -75,6 +75,48 @@ patches, `icon?` added to the interface). Full diff + disposition:
 - `ci:typecheck:no-regression` 0 errors · `ci:design-system` clean ·
   `ci:token-cascade` unchanged vs base (12 pre-existing unresolved vars in
   legacy pdev/biopharma/projects-prototype css; `app-v2.css` resolves 100%)
+
+## Phase 3 record
+
+### Tranche 1a (2026-07-06) — home · global-ri · intelligence-catalog · kit scaffold
+- **Port pipeline** — kit fixtures are extracted by evaluating the kit data
+  files and code-generating TS modules (1:1 data fidelity, no transcription);
+  per-family CSS ports through the same `.c2c-v2` scoping generator as the
+  shell (`surfaces-v2.css`, `intelligence-v2.css`).
+- **`home`** — kit `Surfaces.jsx` Home: time-aware greeting (real
+  authenticated first name), segment context card, composer with engine
+  selector, quick actions, per-segment module grid (all ids resolve in the
+  reconciled registry).
+- **`global-ri`** (contract-ready) — kit capability browser bound LIVE to
+  `GET /api/global-ri/catalog` via the existing `useGlobalRiCatalog()` hook;
+  kit fixture is the offline mirror behind the pill. Capability runs call the
+  real routes; offline seeds carry their own caveat text and the pill.
+  The live catalog carries per-tool `tools[].inputSchema` (the @shared
+  contract); the kit fixture flattens the first tool's schema — the browser
+  accepts both (`GriCapability` view type).
+- **`intelligence-catalog`** — PedigreeBadge · CitationChips · DetResultCard ·
+  ValidationSummaryPanel (the SHARED deterministic renderers — reuse, never
+  redefine) + the Capability Index (142 tools / 24 domains). Worked demos are
+  reference records marked with the Sample pill; `intelResultFor` returns the
+  honest "inputs required" scaffold for tools without a worked record —
+  nothing fabricated.
+- **Kit scaffold** — unported surfaces now render the kit's own
+  `SurfaceScaffold` (5-layer install path, mounted routes, bindings,
+  compliance rails) instead of the interim placeholder.
+- **Verified in a real browser** (Playwright + the dev server on the PR #1010
+  boot fixes): login → shell → all four surfaces render; global-ri pill shows
+  LIVE with 41 capabilities · 26 AnA tools from the backend; AnA rail
+  live-first fetch to `/api/coauthor` falls back to fixture-behind-pill on
+  404 exactly as designed. Environment findings for the backend track:
+  `users` schema drift vs migrations (email_otp_* columns), tamper-proof
+  audit requires the `audit` schema to exist before first boot, and the
+  request-kernel 403s browser module requests from a `127.0.0.1` Origin
+  (use `localhost`).
+
+### Tranche order from here
+Contract-ready remainder (submission-center · pyramid · communication-center ·
+coverage) → projects/project-home (Home2.jsx) → routes-ready families per the
+kit load order (`app/index.html`) → kit-only/planned on fixtures.
 
 ## Backend asks (parallel track — from the kit runbook; UI renders these as honest gaps)
 1. DMS cross-repo search REST mount (`searchConnectedRepositories` →

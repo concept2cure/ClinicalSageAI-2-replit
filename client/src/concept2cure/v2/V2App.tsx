@@ -28,8 +28,9 @@ import {
   makeSampleActionResult,
   type AnaMessage,
 } from './Shell';
-import { SurfaceBoundary, SurfaceScaffold } from './SurfaceScaffold';
+import { SurfaceBoundary } from './SurfaceScaffold';
 import { SURFACE_VIEWS } from './surfaceViews';
+import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
 import {
   AI_ACTIONS,
   ANA_MODES,
@@ -208,11 +209,13 @@ export function V2App() {
   const hideAna = Boolean(view?.hideAna);
   const isFull = Boolean(view?.full);
   let body: React.ReactNode;
-  if (view) {
+  if (activeId === 'home') {
+    body = <Home onNav={nav} onAsk={ask} segment={prefs.segment} />;
+  } else if (view) {
     const V = view.component;
     body = <V surface={ctxSurface} onAsk={ask} onNav={nav} segment={prefs.segment} />;
   } else {
-    body = <SurfaceScaffold surface={ctxSurface} onAsk={ask} />;
+    body = <KitSurfaceScaffold surface={ctxSurface} onAsk={ask} />;
   }
 
   return (

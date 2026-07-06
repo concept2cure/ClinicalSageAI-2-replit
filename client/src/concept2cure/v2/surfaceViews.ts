@@ -15,6 +15,8 @@
  */
 import type React from 'react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
+import { CapabilityIndex } from './intelligence/Intelligence';
+import { GlobalRiBrowser } from './surfaces/Surfaces';
 
 export interface SurfaceViewProps {
   surface: UiSurface;
@@ -29,8 +31,9 @@ export interface SurfaceView {
   hideAna?: boolean;
 }
 
+/* Kit load order (app/index.html) is the port order; flags mirror the kit's
+   window.SURFACE_VIEWS registrations exactly. */
 export const SURFACE_VIEWS: Record<string, SurfaceView> = {
-  // Phase 3 — register ported surfaces here, e.g.:
-  // 'submission-center': { component: SubmissionCenter },
-  // 'document-authoring': { component: Editor, full: true, hideAna: true },
+  'global-ri': { component: GlobalRiBrowser, full: true },
+  'intelligence-catalog': { component: CapabilityIndex },
 };

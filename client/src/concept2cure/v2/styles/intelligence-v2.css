@@ -1,0 +1,192 @@
+/* ui-v2 family stylesheet — kit intelligence.css ported (generated, scoped under .c2c-v2;
+   fix kit-side first, then re-port). Loads with its surface module. */
+/* ════════════════════════════════════════════════════════════════════
+   Concept2Cure.RI ui-v2 shell — kit app/app.css ported as a real stylesheet
+   (design_handoff_c2c_v2_ui_replacement, 2026-07-06).
+
+   GENERATED port — mirror of the kit file, scoped under .c2c-v2 so the kit
+   class vocabulary (.shell/.rail/.topbar/.page/.btn/…) cannot collide with
+   the legacy ZenApp/MDX stylesheets while both shells ship behind the
+   ENABLE_UI_V2 flag. Fix visual bugs kit-side first, then re-port
+   (scripts in the design package; see docs/design/UI_V2_INSTALL_LOG.md).
+
+   Token shim (mdx/app.css convention): canonical tokens come from
+   design-system/colors_and_type.css (imported once in main.tsx). Aliased or
+   kit-local names below; everything else (--bg-*, --text-*, --border,
+   --success/--warning/--error, --font-*, --radius-*, --ease, --topbar)
+   resolves from canonical and is intentionally not re-declared. Appended at
+   the end: the shell-required blocks that live in kit coverage.css (.al-*,
+   .acct-*) and specialist.css (.esign-*) — do NOT re-port those blocks when
+   those surface families land in Phase 3. */
+:root {
+  --accent-000: var(--accent-main-000);
+  --accent-100: var(--accent-main-100);
+  --accent-200: var(--accent-main-200);
+  --dur: var(--dur-normal);
+
+  /* kit-only status + layout vars (not part of the canonical surface) */
+  --idle: #b0aea5;
+  --idle-muted: #eeece4;
+  --rail: 264px;
+  --rail-collapsed: 56px;
+  --ana: 380px;
+  --ana-seam: 32px;
+
+  /* kit elevation — canonical --shadow-* are Claude-flat (0-alpha); the kit
+     menus/modals carry their own warm shadows (≤ .14 alpha, per kit README) */
+  --v2-shadow-xs: 0 1px 2px 0 rgb(20 20 19 / .04);
+  --v2-shadow-sm: 0 1px 3px 0 rgb(20 20 19 / .06), 0 1px 2px -1px rgb(20 20 19 / .06);
+  --v2-shadow-md: 0 4px 8px -2px rgb(20 20 19 / .08), 0 2px 4px -2px rgb(20 20 19 / .06);
+  --v2-shadow-lg: 0 12px 28px -6px rgb(20 20 19 / .14), 0 4px 10px -4px rgb(20 20 19 / .08);
+}
+.c2c-v2.dark {
+  --idle-muted: rgba(176, 174, 165, .16);
+  --v2-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / .35);
+  --v2-shadow-md: 0 4px 8px -2px rgb(0 0 0 / .4);
+  --v2-shadow-lg: 0 12px 28px -6px rgb(0 0 0 / .5);
+}
+
+/* root element — carries the kit body reset (the v2 shell owns the viewport) */
+.c2c-v2 {
+  height: 100%;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-100);
+  background: var(--bg-000);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.c2c-v2 *, .c2c-v2 *::before, .c2c-v2 *::after { box-sizing: border-box; }
+.c2c-v2 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; }
+.c2c-v2 button:focus-visible { outline: 2px solid var(--accent-100); outline-offset: 2px; border-radius: var(--radius-md); }
+.c2c-v2 input, .c2c-v2 textarea, .c2c-v2 select { font: inherit; color: inherit; background: transparent; border: 0; outline: 0; }
+.c2c-v2 svg { display: block; }
+
+/* the "Sample data" / "Live" provenance pill (kit data-connect.jsx renders it
+   with inline styles; classes here so the port stays CSP-lean) */
+.c2c-v2 .c2c-sample-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 600; line-height: 1;
+  padding: 3px 7px; border-radius: 999px; letter-spacing: .02em; white-space: nowrap;
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+}
+.c2c-v2 .c2c-sample-tag.is-live {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  border-color: color-mix(in srgb, var(--success) 30%, transparent);
+}
+
+/* port helpers — the kit expressed these as one-off inline style attributes;
+   classes keep the TSX clean and the CSP surface minimal */
+.c2c-v2 .ana-hidden-input { display: none; }
+.c2c-v2 .ana-ctx-module-mid { flex: 1; }
+.c2c-v2 .rail-account .chev { color: var(--text-400); font-size: 14px; }
+.c2c-v2 .cmdk-list { max-height: 380px; }
+.c2c-v2 .cmdk-empty { padding: 20px 16px; text-align: center; color: var(--text-400); font-size: 12px; }
+.c2c-v2 .cmdk-foot-hint { margin-left: auto; opacity: 0.5; }
+.c2c-v2 .esign-f .btn { flex: 1; justify-content: center; }
+.c2c-v2 .page-full { padding: 0; display: flex; }
+
+/* ════════════════════════════════════════════════════════════════════
+   intelligence.css — AnA deterministic intelligence layer
+   PedigreeBadge · DetResultCard · CitationChips · ValidationSummaryPanel
+   · Capability index surface. All classes prefixed .ped- / .det- / .vsp-
+   / .cap-. Tokens from app.css only.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── PedigreeBadge — the keystone trust pill ── */
+.c2c-v2 .ped{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:10px;line-height:1.3;white-space:nowrap;cursor:help;border:1px solid transparent;}
+.c2c-v2 .ped svg{width:10px;height:10px;}
+.c2c-v2 .ped[data-l="deterministic_registry"], .c2c-v2 .ped[data-l="deterministic_query"]{background:var(--success-muted);color:var(--success);border-color:color-mix(in oklab,var(--success) 30%,transparent);}
+.c2c-v2 .ped[data-l="rim_learned"]{background:var(--ai-muted);color:var(--ai);border-color:color-mix(in oklab,var(--ai) 30%,transparent);}
+.c2c-v2 .ped[data-l="external_api_live"]{background:var(--ai-muted);color:var(--ai);border-color:color-mix(in oklab,var(--ai) 30%,transparent);}
+.c2c-v2 .ped[data-l="model_assisted"]{background:var(--accent-000);color:var(--accent-200);border-color:color-mix(in oklab,var(--accent-200) 35%,transparent);}
+
+/* ── Deterministic result card ── */
+.c2c-v2 .det{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin:8px 0;font-size:12px;}
+.c2c-v2 .det-h{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--bg-050);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.c2c-v2 .det-tool{font-family:var(--font-mono);font-size:10px;color:var(--text-300);background:var(--bg-100);padding:1px 6px;border-radius:4px;}
+.c2c-v2 .det-domain{font-size:10px;color:var(--text-400);}
+.c2c-v2 .det-h .ped{margin-left:auto;}
+.c2c-v2 .det-verdict{display:flex;align-items:baseline;gap:10px;padding:12px 14px 4px;}
+.c2c-v2 .det-verdict-v{font-size:20px;font-weight:600;color:var(--text-100);line-height:1.2;}
+.c2c-v2 .det-verdict-v[data-tone="ok"]{color:var(--success);}
+.c2c-v2 .det-verdict-v[data-tone="warn"]{color:var(--warning);}
+.c2c-v2 .det-verdict-v[data-tone="crit"]{color:var(--error);}
+.c2c-v2 .det-verdict-l{font-size:11px;color:var(--text-400);font-weight:500;}
+.c2c-v2 .det-b{padding:8px 14px 12px;display:flex;flex-direction:column;gap:8px;}
+.c2c-v2 .det-sec-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:4px;}
+.c2c-v2 .det-find{display:flex;gap:7px;align-items:flex-start;padding:5px 8px;border-radius:6px;background:var(--bg-050);font-size:11.5px;line-height:1.45;color:var(--text-200);}
+.c2c-v2 .det-find+.det-find{margin-top:3px;}
+.c2c-v2 .det-find svg{width:11px;height:11px;flex-shrink:0;margin-top:2px;}
+.c2c-v2 .det-find[data-sev="critical"], .c2c-v2 .det-find[data-sev="error"]{background:var(--error-muted);color:var(--error);}
+.c2c-v2 .det-find[data-sev="warning"]{background:var(--warning-muted);color:#7a4a0f;}
+.c2c-v2 .det-find[data-sev="ok"]{color:var(--text-200);}
+.c2c-v2 .det-find[data-sev="ok"] svg{color:var(--success);}
+.c2c-v2 .det-rat{margin:0;padding-left:18px;color:var(--text-300);font-size:11.5px;line-height:1.55;}
+.c2c-v2 .det-rat li{margin:2px 0;}
+.c2c-v2 .det-rec{display:flex;gap:7px;align-items:flex-start;font-size:11.5px;line-height:1.5;color:var(--text-200);}
+.c2c-v2 .det-rec .n{font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--accent-200);flex-shrink:0;margin-top:1px;}
+.c2c-v2 .det-warns{font-size:10.5px;color:var(--warning);background:var(--warning-muted);border-radius:6px;padding:6px 9px;line-height:1.45;}
+.c2c-v2 .det-f{display:flex;align-items:center;gap:6px;padding:8px 12px;border-top:1px solid var(--bg-100);background:var(--bg-050);flex-wrap:wrap;}
+
+/* ── Citation chips — visible by default, scannable ── */
+.c2c-v2 .cit{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:500;font-family:var(--font-mono);background:var(--bg-000);border:1px solid var(--border-strong);color:var(--text-200);padding:2px 7px;border-radius:5px;line-height:1.4;white-space:nowrap;}
+.c2c-v2 .cit svg{width:9px;height:9px;color:var(--text-400);}
+.c2c-v2 .cit:hover{border-color:var(--accent-100);color:var(--accent-200);}
+.c2c-v2 .cit-lead{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-right:2px;}
+
+/* ── ValidationSummaryPanel ── */
+.c2c-v2 .vsp{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;font-size:12px;}
+.c2c-v2 .vsp-h{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg-050);}
+.c2c-v2 .vsp-t{font-size:12.5px;font-weight:600;color:var(--text-100);flex:1;}
+.c2c-v2 .vsp-std{font-size:9.5px;font-weight:600;font-family:var(--font-mono);background:var(--bg-100);color:var(--text-300);padding:2px 7px;border-radius:4px;}
+.c2c-v2 .vsp-verdict{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:10px;}
+.c2c-v2 .vsp-verdict svg{width:11px;height:11px;}
+.c2c-v2 .vsp-verdict[data-ok="true"]{background:var(--success-muted);color:var(--success);}
+.c2c-v2 .vsp-verdict[data-ok="false"]{background:var(--error-muted);color:var(--error);}
+.c2c-v2 .vsp-grp{padding:6px 0;}
+.c2c-v2 .vsp-grp-l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);padding:6px 14px 3px;}
+.c2c-v2 .vsp-row{display:flex;gap:8px;align-items:flex-start;padding:6px 14px;border-top:1px solid var(--bg-100);line-height:1.45;}
+.c2c-v2 .vsp-row svg{width:11px;height:11px;flex-shrink:0;margin-top:2px;}
+.c2c-v2 .vsp-row[data-sev="error"] svg, .c2c-v2 .vsp-row[data-sev="reject"] svg{color:var(--error);}
+.c2c-v2 .vsp-row[data-sev="warning"] svg{color:var(--warning);}
+.c2c-v2 .vsp-row[data-sev="notice"] svg, .c2c-v2 .vsp-row[data-sev="info"] svg{color:var(--ai);}
+.c2c-v2 .vsp-rule{font-family:var(--font-mono);font-size:9.5px;font-weight:600;color:var(--text-300);background:var(--bg-100);padding:1px 5px;border-radius:3px;flex-shrink:0;margin-top:1px;}
+.c2c-v2 .vsp-dom{font-size:9.5px;color:var(--text-400);flex-shrink:0;margin-top:2px;}
+.c2c-v2 .vsp-msg{font-size:11.5px;color:var(--text-200);flex:1;min-width:0;}
+.c2c-v2 .vsp-empty{padding:20px 14px;text-align:center;font-size:11.5px;color:var(--text-400);}
+
+/* ── Capability index surface ── */
+.c2c-v2 .cap{max-width:1060px;margin:0 auto;padding:28px 32px 64px;}
+.c2c-v2 .cap-hero{margin-bottom:20px;}
+.c2c-v2 .cap-eyebrow{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-200);margin-bottom:6px;}
+.c2c-v2 .cap-title{font-size:20px;font-weight:600;color:var(--text-100);margin:0 0 6px;}
+.c2c-v2 .cap-sub{font-size:12.5px;color:var(--text-400);line-height:1.55;max-width:720px;margin:0;}
+.c2c-v2 .cap-legend{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 24px;padding:12px 14px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);align-items:center;}
+.c2c-v2 .cap-legend-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-right:4px;}
+.c2c-v2 .cap-wave{margin-bottom:22px;}
+.c2c-v2 .cap-wave-h{font-size:13px;font-weight:600;color:var(--text-100);margin:0 0 2px;}
+.c2c-v2 .cap-wave-sub{font-size:11px;color:var(--text-400);margin:0 0 10px;}
+.c2c-v2 .cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;}
+.c2c-v2 .cap-card{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;}
+.c2c-v2 .cap-card-h{display:flex;align-items:center;gap:7px;margin-bottom:7px;}
+.c2c-v2 .cap-card-t{font-size:12px;font-weight:600;color:var(--text-100);flex:1;}
+.c2c-v2 .cap-card-n{font-family:var(--font-mono);font-size:9.5px;color:var(--text-400);background:var(--bg-100);padding:1px 6px;border-radius:8px;font-weight:600;}
+.c2c-v2 .cap-tools{display:flex;flex-wrap:wrap;gap:4px;}
+.c2c-v2 .cap-tool{font-family:var(--font-mono);font-size:9.5px;color:var(--text-300);background:var(--bg-050);border:1px solid var(--bg-200);padding:2px 6px;border-radius:4px;line-height:1.4;cursor:pointer;transition:all 200ms cubic-bezier(.4,0,.2,1);}
+.c2c-v2 .cap-tool:hover{border-color:var(--accent-100);color:var(--accent-200);background:var(--accent-000);}
+.c2c-v2 .cap-legend .ped{cursor:default;}
+.c2c-v2 .ana-sugg[data-on]{border-color:var(--accent-100);color:var(--accent-200);background:var(--accent-000);}
+.c2c-v2 .cap-run{margin-top:9px;display:flex;justify-content:flex-end;}
+.c2c-v2 .cap-run button{font-size:10.5px;font-weight:600;color:var(--accent-200);background:var(--accent-000);border:1px solid color-mix(in oklab,var(--accent-100) 40%,transparent);padding:4px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:5px;}
+.c2c-v2 .cap-run button:hover{background:var(--accent-100);color:#fff;}
+.c2c-v2 .cap-run button svg{width:11px;height:11px;}
+.c2c-v2 .cap-demo{margin:26px 0;}
+.c2c-v2 .cap-demo-h{font-size:13px;font-weight:600;color:var(--text-100);margin:0 0 3px;}
+.c2c-v2 .cap-demo-sub{font-size:11px;color:var(--text-400);margin:0 0 12px;}
+.c2c-v2 .cap-demo-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
+@media (max-width:1100px){.c2c-v2 .cap-demo-cols{grid-template-columns:1fr;}}
