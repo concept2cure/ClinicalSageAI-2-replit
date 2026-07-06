@@ -88,6 +88,16 @@
 .c2c-v2 .esign-f .btn { flex: 1; justify-content: center; }
 .c2c-v2 .page-full { padding: 0; display: flex; }
 
+/* kit-gap patch — coverage.jsx wraps its KPI cards in .cv-kpis but the kit's
+   coverage.css never styles that container (cards stack). Upstream to the kit;
+   until then this restores the intended responsive KPI row. */
+.c2c-v2 .cv-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 18px 0 22px;
+}
+
 /* ════════════════════════════════════════════════════════════════════
    Concept2Cure.RI — unified product shell
    Tokens identical to ui_kits/mdx so every surface drops in seamlessly.
