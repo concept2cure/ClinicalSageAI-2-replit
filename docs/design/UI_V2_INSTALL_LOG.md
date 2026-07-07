@@ -160,13 +160,37 @@ patches, `icon?` added to the interface). Full diff + disposition:
   Part 11 governed note. Used by communication-center and 14 other kit surfaces that
   will port in subsequent tranches.
 
-### Ported so far (7 surfaces + honest scaffold + C2CForm shared component)
+### Tranche 1e (2026-07-07) — project-home · projects (Home2.jsx)
+- **`project-home`** (full surface) — kit Home2.jsx (1694 lines, lines 1–1441) ported:
+  the project workspace dashboard. Sub-components: ProjectTasks (kanban board +
+  critical path + schedule goals with Ring progress), TMFPanel (eTMF zone status via
+  gap global `window.ETMF_DATA`), GrantsPanel (award milestones + subaward monitoring
+  via gap global `window.GRANT_DATA`), ProjectMeetings (HA meeting log with questions
+  + commitments), ProjectSubmissions (submission pipeline + agency gateways via gap
+  globals `window.SUBMISSION_PIPELINE/GATEWAYS/SUBMISSIONS`), ProjectVault (tree-based
+  document vault with file-type tone chips + search), StageTracker + StagePanel
+  (lifecycle stage navigation with toolkit). All window globals null-safe with default
+  fallbacks. Orchestration embed intentionally skipped (gap + circular dep avoidance).
+  `SampleTag sample={true}` at top. Registered in SURFACE_VIEWS as `full: true`.
+- **`projects`** — kit Home2.jsx lines 1443–1694 ported: the portfolio-level project
+  list with health metrics, workstream/status filtering, grid/list toggle, and the
+  NewProjectWizard (3-step: choose template → configure → review & create). Wizard
+  uses gap globals: `window.RegistryPicker`, `window.SEGMENT_CONTEXT`,
+  `window.getSubmissionTypeContext`, `window.REG_TA_GROUPS/REG_TA/REG_PATHWAYS/
+  REG_TEMPLATES` — all null-safe with "Loading registry..." fallback. Inter-surface
+  navigation via `window.C2C_PROJECT` + `onNav('project-home')`. Registered in
+  SURFACE_VIEWS.
+- **Fixture file rename** — `project-home-data.ts` → `project-home-data.tsx` (the
+  kit's `Ring` SVG component uses JSX; `.ts` extension caused TS parse errors).
+
+### Ported so far (9 surfaces + honest scaffold + C2CForm shared component)
 `home` · `global-ri` (live) · `intelligence-catalog` · `coverage` (live) ·
-`submission-center` · `pyramid` · `communication-center` — all verified by typecheck.
+`submission-center` · `pyramid` · `communication-center` · `project-home` ·
+`projects` — all verified by typecheck.
 
 ### Tranche order from here
-Projects / project-home (Home2.jsx) → routes-ready families per the kit load order
-(`app/index.html`) → kit-only/planned on fixtures.
+Routes-ready families per the kit load order (`app/index.html`) → kit-only/planned
+on fixtures.
 
 ### Local verification harness (for the backend track)
 Standing up the dev server for browser verification surfaced pre-existing,

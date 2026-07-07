@@ -21,6 +21,8 @@ import { CommunicationCenter } from './surfaces/CommunicationCenter';
 import { PyramidShell } from './surfaces/Pyramid';
 import { SubmissionCenter } from './surfaces/SubmissionCenter';
 import { GlobalRiBrowser } from './surfaces/Surfaces';
+import { ProjectHome } from './surfaces/ProjectHome';
+import { Projects } from './surfaces/Projects';
 
 export interface SurfaceViewProps {
   surface: UiSurface;
@@ -44,4 +46,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'submission-center': { component: SubmissionCenter },
   pyramid: { component: PyramidShell },
   'communication-center': { component: CommunicationCenter },
+  'project-home': { component: ProjectHome, full: true },
+  projects: { component: Projects },
 };
