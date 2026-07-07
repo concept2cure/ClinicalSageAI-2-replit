@@ -21,6 +21,7 @@ import { CommunicationCenter } from './surfaces/CommunicationCenter';
 import { PyramidShell } from './surfaces/Pyramid';
 import { SubmissionCenter } from './surfaces/SubmissionCenter';
 import { GlobalRiBrowser } from './surfaces/Surfaces';
+import { Evidence } from './surfaces/Evidence';
 import { ProjectHome } from './surfaces/ProjectHome';
 import { Projects } from './surfaces/Projects';
 
@@ -48,4 +49,5 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'communication-center': { component: CommunicationCenter },
   'project-home': { component: ProjectHome, full: true },
   projects: { component: Projects },
+  'evidence-search': { component: Evidence },
 };
