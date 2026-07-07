@@ -12,6 +12,7 @@ import {
   type RbmKri, type RbmRiskItem, type RbmAction, type RbmApproval,
   type RbmNavItem,
 } from '../fixtures/rbm-data';
+import '../styles/rbm-v2.css';
 
 /* Re-export surfaces so Rbm.tsx imports from one place */
 export { RbmOverview, RbmReport, RbmRact, RbmKris, RbmQtls } from './RbmSurfacesA';

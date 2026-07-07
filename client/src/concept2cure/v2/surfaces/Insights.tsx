@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { SampleTag } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
+import '../styles/insights-v2.css';
 
 /* ── Window globals -- cross-surface data providers (gap until backing modules port) ── */
 declare global {

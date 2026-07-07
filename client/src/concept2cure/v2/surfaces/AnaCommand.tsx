@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { SampleTag } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
+import '../styles/ana-v2.css';
 import {
   AC_PORTFOLIO, AC_CONTINUITY, AC_RECS, AC_TEMPLATES, AC_GATE, AC_ROLES,
   type AcPortfolioItem, type AcContinuity, type AcRecommendation, type AcWorkflowStep,

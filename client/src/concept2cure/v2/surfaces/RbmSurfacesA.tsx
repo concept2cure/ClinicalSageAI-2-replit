@@ -13,6 +13,7 @@ import {
   RbmChip, RbmScore, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
   RbmFormModal, GovernedApprovalDialog, type FormField,
 } from './RbmSurfaces';
+import '../styles/rbm-v2.css';
 
 const RACT_CATS = ['Safety', 'Endpoint', 'Data integrity', 'Enrollment', 'Site operations', 'IP handling'];
 const KRI_SOURCES = ['EDC', 'CTMS', 'EDC + safety DB', 'IRT/RTSM', 'Lab', 'Central review'];

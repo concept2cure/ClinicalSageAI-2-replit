@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { SampleTag } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
+import '../styles/ana-v2.css';
 
 /* ── Typed icon accessor ── */
 

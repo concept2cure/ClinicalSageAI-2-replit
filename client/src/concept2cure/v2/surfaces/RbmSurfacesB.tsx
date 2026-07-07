@@ -13,6 +13,7 @@ import {
   RbmChip, RbmScore, RbmFreshness, DimBars,
   RbmFormModal, GovernedApprovalDialog, RBM_STORE, useRbmActions, type FormField,
 } from './RbmSurfaces';
+import '../styles/rbm-v2.css';
 
 const SRC_LABEL: Record<string, string> = { central_stat: 'Statistical', kri: 'KRI', qtl: 'QTL', site_score: 'Site score', manual: 'Manual' };
 const SEV_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };

@@ -21,6 +21,8 @@ import type {
   AcGrant,
 } from '../fixtures/admin-data';
 import '../styles/project-home-v2.css';
+import '../styles/ana-v2.css';
+import '../styles/translation-v2.css';
 
 /* ── Window globals -- cross-surface data providers ── */
 declare global {

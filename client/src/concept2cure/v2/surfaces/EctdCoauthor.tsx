@@ -15,6 +15,7 @@ import { SampleTag } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
+import '../styles/ectd-v2.css';
 
 /* ---- Types ---- */
 

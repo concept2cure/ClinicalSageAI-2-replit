@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import '../styles/auth-entry.css';
+import '../styles/translation-v2.css';
 
 const INDUSTRIES = ['Biotech', 'Pharma', 'Medical device', 'IVD / diagnostics', 'CRO', 'Academic'];
 const ROLES = ['Regulatory affairs', 'Clinical', 'Quality', 'CMC', 'Executive', 'Medical writing'];
