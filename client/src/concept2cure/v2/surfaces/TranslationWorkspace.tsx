@@ -448,7 +448,7 @@ export function TranslationWorkspace({ onTranslate }: TranslationWorkspaceProps)
     <div className="txw">
       <div className="txw-empty" style={{ padding: '40px 24px' }}>
         <div style={{ fontWeight: 600, color: 'var(--text-200)', marginBottom: 6 }}>Translation workspace is off</div>
-        Enable it in Admin -> Translation workspace to draft, post-edit, and certify translated regulatory content.
+        Enable it in Admin {'>'} Translation workspace to draft, post-edit, and certify translated regulatory content.
       </div>
     </div>
   );
