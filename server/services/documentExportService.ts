@@ -828,6 +828,49 @@ export function renderMarkdownToPDF(doc: any, content: string, baseFontSize: num
   }
 }
 
+/**
+ * Render a single draft's markdown to a standalone PDF buffer — the JS-native
+ * (pdfkit) path behind the Document Studio's "Download as PDF". No LibreOffice
+ * needed; the base PDF is always producible in-process. Optional Ghostscript
+ * compression is applied downstream by the export route (best-effort).
+ */
+export async function renderMarkdownDraftToPDF(
+  title: string,
+  markdown: string,
+  fontSize = 11
+): Promise<Buffer> {
+  return new Promise<Buffer>((resolve, reject) => {
+    try {
+      const doc: any = new (PDFDocument as any)({
+        size: 'LETTER',
+        margins: { top: 72, right: 72, bottom: 72, left: 72 },
+        bufferPages: true,
+        info: {
+          Title: title || 'Document',
+          Author: 'Concept2Cure Platform',
+          CreationDate: new Date(),
+        },
+      });
+      const chunks: Buffer[] = [];
+      const stream = new PassThrough();
+      stream.on('data', (c: Buffer) => chunks.push(c));
+      stream.on('end', () => resolve(Buffer.concat(chunks)));
+      stream.on('error', reject);
+      doc.pipe(stream);
+
+      if (title) {
+        doc.fontSize(fontSize + 8).font('Helvetica-Bold').text(title);
+        doc.moveDown(1);
+        doc.fontSize(fontSize).font('Helvetica');
+      }
+      renderMarkdownToPDF(doc, markdown || '', fontSize);
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
 async function storePackageRecord(
   packageId: string,
   options: ECTDPackageOptions,
