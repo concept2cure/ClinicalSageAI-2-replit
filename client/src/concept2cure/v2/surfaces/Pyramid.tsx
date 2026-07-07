@@ -16,7 +16,7 @@ import {
   PY_TYPES, PY_ROLES, PY_PYRAMID, PY_STATUS, PY_RISK,
   PY_GLOBAL, pyProgress, pyNextTasks, pyRiskProfile, pyResources, pyCoverage,
   type PyType, type PyTask, type PyPyramid, type PyGlobalConfig,
-} from '../fixtures/pyramid';
+} from '../fixtures/pyramid-data';
 import '../styles/pyramid-v2.css';
 
 // ── Shared atoms ──────────────────────────────────────────────────────────
