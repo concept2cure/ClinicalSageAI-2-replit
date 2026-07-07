@@ -288,7 +288,7 @@ const BiostatEngine = (() => {
     const nSens = Math.ceil((zA + zB) ** 2 * sens * (1 - sens) / (0.05 ** 2)), nSpec = Math.ceil((zA + zB) ** 2 * spec * (1 - spec) / (0.05 ** 2));
     const total = Math.ceil(Math.max(nSens / prev, nSpec / (1 - prev))), adjTotal = Math.ceil(total / (1 - input.attritionRate));
     const ppv = (sens * prev) / (sens * prev + (1 - spec) * (1 - prev)), npv = (spec * (1 - prev)) / (spec * (1 - prev) + (1 - sens) * prev);
-    return shape(input, { method: 'Diagnostic accuracy study (sensitivity/specificity)', perGroup: total, total, groups: 1, power: input.powerTarget, adjPer: adjTotal, adjTotal, testStatistic: 'Exact binomial / Clopper-Pearson', formula: `n_sens = (z_a+z_b)^2*Se(1-Se)/w^2  *  n_spec = (z_a+z_b)^2*Sp(1-Sp)/w^2  (prev=${prev})`, diag: { sensitivity: sens, specificity: spec, ppv: Math.round(ppv * 1e4) / 1e4, npv: Math.round(npv * 1e4) / 1e4, nSens, nSpec } });
+    return shape(input, { method: 'Diagnostic accuracy study (sensitivity/specificity)', perGroup: total, total, groups: 1, power: input.powerTarget, adjPer: adjTotal, adjTotal, criticalValue: zA, testStatistic: 'Exact binomial / Clopper-Pearson', formula: `n_sens = (z_a+z_b)^2*Se(1-Se)/w^2  *  n_spec = (z_a+z_b)^2*Sp(1-Sp)/w^2  (prev=${prev})`, diag: { sensitivity: sens, specificity: spec, ppv: Math.round(ppv * 1e4) / 1e4, npv: Math.round(npv * 1e4) / 1e4, nSens, nSpec } });
   }
   function compute(input: BiostatInput): BiostatResult {
     if (input.clientTrack === 'diagnostics_ivd' && ['diagnostic_accuracy', 'agreement'].includes(input.studyType)) return computeDiagnostic(input);
