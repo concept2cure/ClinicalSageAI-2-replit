@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-07T08:08:45.698Z",
+  "generatedAt": "2026-07-07T08:41:37.067Z",
   "git": {
-    "sha": "c421434ac39be2a51926e28d84bbbb8f73cb0e5c",
+    "sha": "447349c87353658ebdb649b442f34f9987f8774c",
     "branch": "claude/elegant-lovelace-low2l9"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 242,
     "largeFilesByBytes": 29,
-    "largeFilesByLines": 83
+    "largeFilesByLines": 84
   },
   "findings": {
     "duplicateBasenames": [
@@ -780,6 +780,16 @@
         ]
       },
       {
+        "basename": "orchestration",
+        "count": 4,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Orchestration.tsx",
+          "server/routes/orchestration.ts",
+          "shared/schema/orchestration.ts",
+          "shared/types/orchestration.ts"
+        ]
+      },
+      {
         "basename": "qsub",
         "count": 4,
         "paths": [
@@ -1078,15 +1088,6 @@
           "server/openai-service.ts",
           "server/services/openai-service.ts",
           "server/test/services/openai-service.ts"
-        ]
-      },
-      {
-        "basename": "orchestration",
-        "count": 3,
-        "paths": [
-          "server/routes/orchestration.ts",
-          "shared/schema/orchestration.ts",
-          "shared/types/orchestration.ts"
         ]
       },
       {
@@ -2809,6 +2810,10 @@
         "lines": 1678
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 1672
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
       },
@@ -2885,9 +2890,9 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 167,
+      "duplicateGroups": 168,
       "largeByBytes": 0,
-      "largeByLines": 1
+      "largeByLines": 2
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
