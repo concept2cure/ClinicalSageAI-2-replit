@@ -17,7 +17,7 @@
  * - WCAG 2.1 AA: Accessible routing with focus management
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenSignup, ZenAuthLayout } from '../auth';
@@ -25,6 +25,7 @@ import { Concept2CureLogin } from '../components/concept2cure-auth';
 import { ZenApp } from '../ZenApp';
 import MdxRoute from '../mdx/MdxRoute';
 import { InsightsSurface } from '../insights/surface';
+import { isUiV2Enabled } from '../v2/uiV2Flag';
 // Master Administration + Business Center UI is owned by Claude Design (built
 // from HANDOFF_TO_DESIGN_master_admin_business_center.md). Only the backend +
 // API ship here; route registrations are added back when the designed UI lands.
@@ -40,10 +41,20 @@ import {
 // SalesLandingPage) have been removed — none of those surfaces are in the
 // design-system bundle. Their routes were stripped above.
 
+// ui-v2 — the full UI replacement shell (design_handoff_c2c_v2_ui_replacement).
+// Lazy so the flag-off path never downloads the v2 chunk (or its stylesheet).
+const V2App = lazy(() => import('../v2/V2App'));
+
 const ProtectedZenApp: React.FC = () => (
   <ProtectedRoute>
     <ProjectProvider>
-      <ZenApp />
+      {isUiV2Enabled() ? (
+        <Suspense fallback={<ZenLoadingScreen />}>
+          <V2App />
+        </Suspense>
+      ) : (
+        <ZenApp />
+      )}
     </ProjectProvider>
   </ProtectedRoute>
 );

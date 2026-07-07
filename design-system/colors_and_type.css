@@ -276,99 +276,40 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   3. TYPE — FAMILIES  (Claude.ai-exact)
+   3. TYPE — FAMILIES  (DECIDED 2026-07-06)
    ───────────────────────────────────────────────────────────
-   Claude's web UI ships commercial Klim Type Foundry faces:
-     — Styrene B    (display + UI chrome)
-     — Tiempos Text (long-form serif, chat response)
-     — Copernicus   (editorial serif, rare display)
-     — ui-monospace (code)
+   Lora (serif — reading, answers, artifact prose)
+   + system-ui (sans — chrome/UI; the native grotesque the ui-v2
+     kit is hand-tuned for: "chrome disappears" at 13px)
+   + JetBrains Mono (code, IDs, citations).
 
-   These are COMMERCIAL — do not ship the .woff2 files outside
-   a licensed property. Drop them into `fonts/` to match the
-   @font-face declarations below. The `src: local()` step lets
-   the system pick up the font if it's already installed
-   (designers on macOS often have Styrene/Tiempos locally).
-
-   Fallbacks are the closest free Google Fonts; this means the
-   UI remains usable before the licensed files arrive.
+   Lora + JetBrains Mono load from Google Fonts in
+   client/index.html. Styrene B / Tiempos / Copernicus (Klim,
+   commercial) were REJECTED — licensing + Claude-clone look —
+   and their @font-face declarations removed with this decision.
+   Poppins was removed from chrome at the same time (it reflows
+   the kit's dense layouts). See the ui-v2 install runbook
+   (START_HERE_CLAUDE_CODE.md) and INSTALL_TARGET_AUDIT §6.
    ─────────────────────────────────────────────────────────── */
 
-@font-face {
-  font-family: 'Styrene B';
-  src: local('Styrene B LC'), local('Styrene B'),
-       url('fonts/StyreneB-Regular.woff2') format('woff2');
-  font-weight: 400; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'Styrene B';
-  src: local('Styrene B LC Medium'), local('Styrene B Medium'),
-       url('fonts/StyreneB-Medium.woff2') format('woff2');
-  font-weight: 500; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'Styrene B';
-  src: local('Styrene B LC Bold'), local('Styrene B Bold'),
-       url('fonts/StyreneB-Bold.woff2') format('woff2');
-  font-weight: 600 700; font-style: normal; font-display: swap;
-}
-
-@font-face {
-  font-family: 'Tiempos Text';
-  src: local('Tiempos Text'),
-       url('fonts/TiemposText-Regular.woff2') format('woff2');
-  font-weight: 400; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'Tiempos Text';
-  src: local('Tiempos Text Italic'),
-       url('fonts/TiemposText-RegularItalic.woff2') format('woff2');
-  font-weight: 400; font-style: italic; font-display: swap;
-}
-@font-face {
-  font-family: 'Tiempos Text';
-  src: local('Tiempos Text Semibold'),
-       url('fonts/TiemposText-Semibold.woff2') format('woff2');
-  font-weight: 600; font-style: normal; font-display: swap;
-}
-
-@font-face {
-  font-family: 'Copernicus';
-  src: local('Copernicus Book'), local('Copernicus'),
-       url('fonts/Copernicus-Book.woff2') format('woff2');
-  font-weight: 400; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'Copernicus';
-  src: local('Copernicus Semibold'),
-       url('fonts/Copernicus-Semibold.woff2') format('woff2');
-  font-weight: 600; font-style: normal; font-display: swap;
-}
-
 :root {
-  /* UI chrome + display — Styrene B */
+  /* UI chrome + display — the OS system grotesque */
   --font-sans:
-    'Styrene B', 'Styrene B LC', 'Söhne', 'Söhne Buch',
-    ui-sans-serif, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
-  --font-display:
-    'Styrene B', 'Söhne', ui-sans-serif, -apple-system,
-    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: var(--font-sans);
 
-  /* Long-form prose, chat assistant response — Tiempos Text */
+  /* Long-form prose, answers, artifact reading — Lora */
   --font-serif:
-    'Tiempos Text', 'Copernicus', ui-serif, 'Source Serif 4',
-    'Lora', Georgia, 'Times New Roman', serif;
+    'Lora', ui-serif, Georgia, 'Times New Roman', serif;
 
-  /* Editorial serif, section labels — Copernicus */
-  --font-editorial:
-    'Copernicus', 'Tiempos Text', ui-serif, 'Source Serif 4',
-    Georgia, serif;
+  /* Editorial serif, section labels — same reading face */
+  --font-editorial: var(--font-serif);
 
   /* Code, IDs, citations */
   --font-mono:
-    ui-monospace, 'JetBrains Mono', SFMono-Regular, 'SF Mono',
+    'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono',
     Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 
   /* Tracking */
