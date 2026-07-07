@@ -15,7 +15,7 @@ no model-vendor branding on screen, reuse existing providers/hooks/governed comp
 | 0 | Branch (`concept2cure-v2` @ e6ebf60) + `ENABLE_UI_V2` flag | ✅ this change |
 | 1 | Foundation: tokens · fonts (DECIDED) · kit CSS as stylesheet · Shell/TopBar/AnaRail/⌘K behind flag | ✅ this change |
 | 2 | Registry reconciliation (see `UI_V2_REGISTRY_RECONCILIATION_2026-07-06.md`) | ✅ this change |
-| 3 | Surface port loop (~95 surfaces, 5-layer model, contract-ready first) | 🔄 in progress — tranche 1a landed (sign-off received 2026-07-06) |
+| 3 | Surface port loop (~95 surfaces, 5-layer model, contract-ready first) | 🔄 in progress — tranches 1a-1e landed via PR #1009 (9 surfaces) |
 | 4 | Editor + governance + provenance (TipTap stack, SSE draft, Prov tab) | ⏳ |
 | 5 | Entry flows (Auth → MFA → org picker · Onboarding · Portal decision) | ⏳ |
 | 6 | Entitlements · e-sign live wiring (blocked on INSTALL §5 backend validator) | ⏳ |
