@@ -474,7 +474,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
         <Kpi l="Avg yield" v={avgY + '%'} />
       </div>
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Batch disposition</span><span className="s">release when deviations = 0 and yield >= 90%</span></div>
+        <div className="pj-card-h"><span className="t">Batch disposition</span><span className="s">release when deviations = 0 and yield {'>='}  90%</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           <table className="reg-tbl"><thead><tr><th>Batch</th><th>Stage</th><th>Yield</th><th>Deviations</th><th>Eligible</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
           <tbody>{rows.map((r) => (
