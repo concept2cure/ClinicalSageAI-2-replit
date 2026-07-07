@@ -14,6 +14,10 @@ vi.mock('../../services/pdf-compression-service.js', () => ({
   compressPdfBatch: vi.fn(),
 }));
 
+vi.mock('../../services/documentExportService.js', () => ({
+  renderMarkdownDraftToPDF: vi.fn(async () => Buffer.from('%PDF-1.4\n%mock-pdf\n')),
+}));
+
 import pdfTaskRoutes from '../pdf-task-routes';
 import {
   compressPdfBatch,
@@ -127,5 +131,42 @@ describe('pdf-task-routes /compress', () => {
 
     expect(res.status).toBe(400);
     expect(res.body.error).toContain('Invalid request body');
+  });
+});
+
+describe('pdf-task-routes /render-markdown-pdf', () => {
+  const app = express();
+  app.use(express.json());
+  app.use('/api/pdf-tasks', pdfTaskRoutes);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns 400 when markdown is missing', async () => {
+    const res = await request(app)
+      .post('/api/pdf-tasks/render-markdown-pdf')
+      .send({ title: 'X' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toContain('markdown');
+  });
+
+  it('returns a PDF when no compression is requested', async () => {
+    const res = await request(app)
+      .post('/api/pdf-tasks/render-markdown-pdf')
+      .send({ title: 'Clinical Overview', markdown: '# Title\n\nBody paragraph.' });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.headers['x-compression-skipped']).toBeUndefined();
+  });
+
+  it('returns the PDF with X-Compression-Skipped when Ghostscript is unavailable', async () => {
+    (isGhostscriptAvailable as any).mockResolvedValue(false);
+    const res = await request(app)
+      .post('/api/pdf-tasks/render-markdown-pdf')
+      .send({ title: 'Doc', markdown: '# T', compress: true, quality: 'ebook' });
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toContain('application/pdf');
+    expect(res.headers['x-compression-skipped']).toBe('ghostscript_unavailable');
   });
 });
