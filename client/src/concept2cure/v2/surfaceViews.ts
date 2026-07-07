@@ -36,6 +36,7 @@ import { CodebaseCoverage } from './surfaces/Coverage';
 import { DecisionLineage } from './surfaces/DecisionLineage';
 import { DeepResearch } from './surfaces/DeepResearch';
 import { DesignControls } from './surfaces/DesignControls';
+import { DeviceWorkstream } from './surfaces/DeviceWorkstream';
 import { DispatchReadiness } from './surfaces/DispatchReadiness';
 import { DocJourney } from './surfaces/DocJourney';
 import { DocumentAuthoring } from './surfaces/DocumentAuthoring';
@@ -61,12 +62,12 @@ import { Onboarding } from './surfaces/Onboarding';
 import { Orchestration } from './surfaces/Orchestration';
 import { PdevInd } from './surfaces/PdevInd';
 import { PrecedentEngine } from './surfaces/PrecedentEngine';
+import { ProtocolWorkspace } from './surfaces/ProtocolDev';
 import { ProjectHome } from './surfaces/ProjectHome';
 import { Projects } from './surfaces/Projects';
 import { PyramidShell } from './surfaces/Pyramid';
 import { Rbm } from './surfaces/Rbm';
 import { RegChange } from './surfaces/RegChange';
-import { RegEditor } from './surfaces/RegEditor';
 import { Registrations } from './surfaces/Registrations';
 import { ReportEngine } from './surfaces/ReportEngine';
 import { ResearchAdmin } from './surfaces/ResearchAdmin';
@@ -117,21 +118,21 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'conversation-thread': { component: ConversationThread, hideAna: true },
   coverage: { component: CodebaseCoverage },
   'cro-portfolio': { component: CroPortfolio },
-  'csr-workflow': { component: RegEditor, full: true, hideAna: true },
+  'csr-workflow': { component: CsrWorkflow, full: true, hideAna: true },
   'decision-lineage': { component: DecisionLineage, full: true },
   'deep-research': { component: DeepResearch },
   'design-controls': { component: DesignControls },
-  'device-510k': { component: RegEditor, full: true, hideAna: true },
-  'device-cer': { component: RegEditor, full: true, hideAna: true },
-  'device-diagnostics': { component: RegEditor, full: true, hideAna: true },
-  'device-submission': { component: RegEditor, full: true, hideAna: true },
-  'device-workstream': { component: RegEditor, full: true, hideAna: true },
+  'device-510k': { component: DeviceWorkstream, full: true, hideAna: true },
+  'device-cer': { component: DeviceWorkstream, full: true, hideAna: true },
+  'device-diagnostics': { component: DeviceWorkstream, full: true, hideAna: true },
+  'device-submission': { component: DeviceWorkstream, full: true, hideAna: true },
+  'device-workstream': { component: DeviceWorkstream, full: true, hideAna: true },
   'dispatch-readiness': { component: DispatchReadiness, full: true },
   'doc-journey': { component: DocJourney },
-  'document-authoring': { component: RegEditor, full: true, hideAna: true },
+  'document-authoring': { component: DocumentAuthoring, full: true, hideAna: true },
   dossier: { component: Dossier },
   'dossier-map': { component: DossierMap },
-  'ectd-coauthor': { component: RegEditor, full: true, hideAna: true },
+  'ectd-coauthor': { component: EctdCoauthor, full: true, hideAna: true },
   etmf: { component: Etmf },
   'evidence-search': { component: Evidence },
   'filings-catalog': { component: FilingsCatalog },
@@ -161,7 +162,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'program-journey': { component: BiopharmaJourney },
   'project-home': { component: ProjectHome, full: true },
   projects: { component: Projects },
-  'protocol-dev': { component: RegEditor, full: true, hideAna: true },
+  'protocol-dev': { component: ProtocolWorkspace, full: true, hideAna: true },
   pyramid: { component: PyramidShell },
   rbm: { component: Rbm, hideAna: true },
   'reg-change': { component: RegChange },
@@ -180,6 +181,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   tasks: { component: TaskBoard },
   'template-library': { component: TemplateLibrary },
   training: { component: Training },
+  usage: { component: UsageBilling },
   'usage-billing': { component: UsageBilling },
-  vault: { component: Vault },
+  vault: { component: Vault, full: true },
 };
