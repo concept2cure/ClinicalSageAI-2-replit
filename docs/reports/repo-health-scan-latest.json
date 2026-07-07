@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-07T07:59:49.952Z",
+  "generatedAt": "2026-07-07T08:08:45.698Z",
   "git": {
-    "sha": "3e2aa662ca9d76e8c281199639e0e59a6789b79c",
+    "sha": "c421434ac39be2a51926e28d84bbbb8f73cb0e5c",
     "branch": "claude/elegant-lovelace-low2l9"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 241,
+    "duplicateBasenames": 242,
     "largeFilesByBytes": 29,
     "largeFilesByLines": 83
   },
@@ -991,6 +991,15 @@
         ]
       },
       {
+        "basename": "etmf",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/v2/fixtures/etmf.ts",
+          "server/routes/etmf.ts",
+          "shared/schema/etmf.ts"
+        ]
+      },
+      {
         "basename": "extras",
         "count": 3,
         "paths": [
@@ -1051,6 +1060,15 @@
           "client/src/services/portal/logger.ts",
           "server/utils/logger.js",
           "server/utils/logger.ts"
+        ]
+      },
+      {
+        "basename": "nonclinical",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Nonclinical.tsx",
+          "server/routes/nonclinical.ts",
+          "shared/schema/nonclinical.ts"
         ]
       },
       {
@@ -1503,6 +1521,14 @@
         ]
       },
       {
+        "basename": "dispatch-readiness",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/v2/fixtures/dispatch-readiness.ts",
+          "server/services/ectd/dispatch-readiness.ts"
+        ]
+      },
+      {
         "basename": "dmsp",
         "count": 2,
         "paths": [
@@ -1596,14 +1622,6 @@
         "paths": [
           "client/public/design-system/ui_kits/mdx/EstarEditor.jsx",
           "design-system/ui_kits/mdx_phase2/EstarEditor.jsx"
-        ]
-      },
-      {
-        "basename": "etmf",
-        "count": 2,
-        "paths": [
-          "server/routes/etmf.ts",
-          "shared/schema/etmf.ts"
         ]
       },
       {
@@ -1852,14 +1870,6 @@
         "paths": [
           "server/routes/mdx.ts",
           "shared/constants/mdx.ts"
-        ]
-      },
-      {
-        "basename": "nonclinical",
-        "count": 2,
-        "paths": [
-          "server/routes/nonclinical.ts",
-          "shared/schema/nonclinical.ts"
         ]
       },
       {
@@ -2863,7 +2873,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 390,
+      "duplicateGroups": 391,
       "largeByBytes": 26,
       "largeByLines": 72
     },
@@ -2875,7 +2885,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 164,
+      "duplicateGroups": 167,
       "largeByBytes": 0,
       "largeByLines": 1
     },
