@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-07T08:41:37.067Z",
+  "generatedAt": "2026-07-07T09:31:29.200Z",
   "git": {
-    "sha": "447349c87353658ebdb649b442f34f9987f8774c",
+    "sha": "bcbf1575eaad69b19fb1cc0bdb916df0ab81718f",
     "branch": "claude/elegant-lovelace-low2l9"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 242,
+    "duplicateBasenames": 243,
     "largeFilesByBytes": 29,
     "largeFilesByLines": 84
   },
@@ -730,6 +730,16 @@
         ]
       },
       {
+        "basename": "etmf",
+        "count": 4,
+        "paths": [
+          "client/src/concept2cure/v2/fixtures/etmf.ts",
+          "client/src/concept2cure/v2/surfaces/Etmf.tsx",
+          "server/routes/etmf.ts",
+          "shared/schema/etmf.ts"
+        ]
+      },
+      {
         "basename": "hooks",
         "count": 4,
         "paths": [
@@ -998,15 +1008,6 @@
           "client/src/concept2cure/mdx/data/engineering-docs.ts",
           "design-system/ui_kits/mdx/data/engineering-docs.js",
           "ui_kits/mdx/data/engineering-docs.js"
-        ]
-      },
-      {
-        "basename": "etmf",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/v2/fixtures/etmf.ts",
-          "server/routes/etmf.ts",
-          "shared/schema/etmf.ts"
         ]
       },
       {
@@ -2178,6 +2179,14 @@
         ]
       },
       {
+        "basename": "review",
+        "count": 2,
+        "paths": [
+          ".claude/skills/gstack/scripts/resolvers/review.ts",
+          "client/src/concept2cure/v2/surfaces/Review.tsx"
+        ]
+      },
+      {
         "basename": "risk-management",
         "count": 2,
         "paths": [
@@ -2867,77 +2876,13 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
-      "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 391,
-      "largeByBytes": 26,
-      "largeByLines": 72
-    },
-    {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 274,
-      "largeByBytes": 2,
-      "largeByLines": 8
-    },
-    {
-      "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 168,
-      "largeByBytes": 0,
-      "largeByLines": 2
-    },
-    {
-      "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 67,
-      "largeByBytes": 1,
-      "largeByLines": 2
-    },
-    {
-      "owner": "Frontend Platform (client/src maintainers)",
-      "duplicateGroups": 39,
-      "largeByBytes": 0,
-      "largeByLines": 0
-    },
-    {
-      "owner": "Developer Experience (scripts maintainers)",
-      "duplicateGroups": 3,
-      "largeByBytes": 0,
-      "largeByLines": 0
-    }
-  ],
-  "owners": [
-    {
-      "pattern": "^server/",
-      "owner": "Backend Platform",
-      "contact": "server/routes + server/services owners"
-    },
-    {
-      "pattern": "^client/src/concept2cure/",
-      "owner": "Concept2Cure Frontend",
-      "contact": "client/src/concept2cure maintainers"
-    },
-    {
-      "pattern": "^client/src/",
-      "owner": "Frontend Platform",
-      "contact": "client/src maintainers"
-    },
-    {
-      "pattern": "^shared/",
-      "owner": "Shared Contracts",
-      "contact": "shared/schema + shared/types owners"
-    },
-    {
-      "pattern": "^scripts/",
-      "owner": "Developer Experience",
-      "contact": "scripts maintainers"
+      "duplicateGroups": 945,
+      "largeByBytes": 29,
+      "largeByLines": 84
     }
   ]
 }
