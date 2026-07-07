@@ -16,14 +16,56 @@
 import type React from 'react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 import { CapabilityIndex } from './intelligence/Intelligence';
-import { CodebaseCoverage } from './surfaces/Coverage';
+import { Setup, AuditTrail, Apps, ArtifactsCenter, AdminConsole } from './surfaces/AdminSurfaces';
+import { AgencyMeetings } from './surfaces/AgencyMeetings';
+import { AnaCommand } from './surfaces/AnaCommand';
+import { AnaMemory } from './surfaces/AnaMemory';
+import { AuthoringEngine } from './surfaces/AuthoringEngine';
+import { BatchDraft } from './surfaces/BatchDraft';
+import { BiopharmaJourney } from './surfaces/BiopharmaJourney';
+import { BiopharmaProject, CsrWorkflow, RegulatoryWorkspace } from './surfaces/BiopharmaProject';
+import { Pediatric, Orphan, Lifecycle, Pharmacovigilance } from './surfaces/BiopharmaSpecialty';
+import { Biostatistics } from './surfaces/Biostatistics';
+import { ChangeAssessment } from './surfaces/ChangeAssessment';
+import { ClinicalOps } from './surfaces/ClinicalOps';
+import { CmcModule } from './surfaces/CmcModule';
 import { CommunicationCenter } from './surfaces/CommunicationCenter';
-import { PyramidShell } from './surfaces/Pyramid';
-import { SubmissionCenter } from './surfaces/SubmissionCenter';
-import { GlobalRiBrowser } from './surfaces/Surfaces';
+import { CodebaseCoverage } from './surfaces/Coverage';
+import { DecisionLineage } from './surfaces/DecisionLineage';
+import { DeepResearch } from './surfaces/DeepResearch';
+import { DesignControls } from './surfaces/DesignControls';
+import { DispatchReadiness } from './surfaces/DispatchReadiness';
+import { DocJourney } from './surfaces/DocJourney';
+import { DocumentAuthoring } from './surfaces/DocumentAuthoring';
+import { Dossier } from './surfaces/Dossier';
+import { DossierMap } from './surfaces/DossierMap';
+import { EctdCoauthor } from './surfaces/EctdCoauthor';
+import { Etmf } from './surfaces/Etmf';
 import { Evidence } from './surfaces/Evidence';
+import { FilingsCatalog } from './surfaces/FilingsCatalog';
+import { HaqManager } from './surfaces/HaqManager';
+import { HumanFactors } from './surfaces/HumanFactors';
+import { Inconsistency } from './surfaces/Inconsistency';
+import { IndLifecycle } from './surfaces/IndLifecycle';
+import { InsightsCanvas } from './surfaces/Insights';
+import { IvdCompleteness } from './surfaces/IvdCompleteness';
+import { LabelingPI } from './surfaces/LabelingPi';
+import { LicensingSurface } from './surfaces/LicensingSurface';
+import { MarketAccess } from './surfaces/MarketAccess';
+import { NdaCockpit } from './surfaces/NdaCockpit';
+import { Nonclinical } from './surfaces/Nonclinical';
+import { Orchestration } from './surfaces/Orchestration';
+import { PdevInd } from './surfaces/PdevInd';
+import { PrecedentEngine } from './surfaces/PrecedentEngine';
 import { ProjectHome } from './surfaces/ProjectHome';
 import { Projects } from './surfaces/Projects';
+import { PyramidShell } from './surfaces/Pyramid';
+import { RegChange } from './surfaces/RegChange';
+import { Registrations } from './surfaces/Registrations';
+import { Review } from './surfaces/Review';
+import { SubmissionCenter } from './surfaces/SubmissionCenter';
+import { GlobalRiBrowser } from './surfaces/Surfaces';
+import { Training } from './surfaces/Training';
 
 export interface SurfaceViewProps {
   surface: UiSurface;
@@ -41,13 +83,65 @@ export interface SurfaceView {
 /* Kit load order (app/index.html) is the port order; flags mirror the kit's
    window.SURFACE_VIEWS registrations exactly. */
 export const SURFACE_VIEWS: Record<string, SurfaceView> = {
-  'global-ri': { component: GlobalRiBrowser, full: true },
-  'intelligence-catalog': { component: CapabilityIndex },
-  coverage: { component: CodebaseCoverage },
-  'submission-center': { component: SubmissionCenter },
-  pyramid: { component: PyramidShell },
+  'admin-console': { component: AdminConsole },
+  'agency-meetings': { component: AgencyMeetings },
+  'ana-command': { component: AnaCommand },
+  'ana-memory': { component: AnaMemory },
+  apps: { component: Apps },
+  'artifacts-center': { component: ArtifactsCenter },
+  'audit-trail': { component: AuditTrail },
+  'authoring-engine': { component: AuthoringEngine },
+  'batch-draft': { component: BatchDraft, full: true },
+  biopharma: { component: BiopharmaProject },
+  biostatistics: { component: Biostatistics },
+  'change-assessment': { component: ChangeAssessment },
+  'clinical-ops': { component: ClinicalOps },
+  cmc: { component: CmcModule },
   'communication-center': { component: CommunicationCenter },
+  coverage: { component: CodebaseCoverage },
+  'csr-workflow': { component: CsrWorkflow },
+  'decision-lineage': { component: DecisionLineage, full: true },
+  'deep-research': { component: DeepResearch },
+  'design-controls': { component: DesignControls },
+  'dispatch-readiness': { component: DispatchReadiness, full: true },
+  'doc-journey': { component: DocJourney },
+  'document-authoring': { component: DocumentAuthoring, full: true },
+  dossier: { component: Dossier },
+  'dossier-map': { component: DossierMap },
+  'ectd-coauthor': { component: EctdCoauthor, full: true, hideAna: true },
+  etmf: { component: Etmf },
+  'evidence-search': { component: Evidence },
+  'filings-catalog': { component: FilingsCatalog },
+  'global-ri': { component: GlobalRiBrowser, full: true },
+  'haq-manager': { component: HaqManager },
+  'human-factors': { component: HumanFactors },
+  inconsistency: { component: Inconsistency },
+  'ind-checklist': { component: IndLifecycle },
+  'ind-lifecycle': { component: IndLifecycle },
+  insights: { component: InsightsCanvas, full: true, hideAna: true },
+  'intelligence-catalog': { component: CapabilityIndex },
+  'ivd-completeness': { component: IvdCompleteness, full: true },
+  'labeling-pi': { component: LabelingPI },
+  licensing: { component: LicensingSurface },
+  'lifecycle-mgmt': { component: Lifecycle },
+  'market-access': { component: MarketAccess },
+  'nda-cockpit': { component: NdaCockpit },
+  nonclinical: { component: Nonclinical },
+  orchestration: { component: Orchestration },
+  orphan: { component: Orphan },
+  pdev: { component: PdevInd },
+  pediatric: { component: Pediatric },
+  pharmacovigilance: { component: Pharmacovigilance },
+  'precedent-intelligence': { component: PrecedentEngine },
+  'program-journey': { component: BiopharmaJourney },
   'project-home': { component: ProjectHome, full: true },
   projects: { component: Projects },
-  'evidence-search': { component: Evidence },
+  pyramid: { component: PyramidShell },
+  'reg-change': { component: RegChange },
+  registrations: { component: Registrations },
+  'regulatory-workspace': { component: RegulatoryWorkspace, full: true },
+  review: { component: Review },
+  setup: { component: Setup },
+  'submission-center': { component: SubmissionCenter },
+  training: { component: Training },
 };
