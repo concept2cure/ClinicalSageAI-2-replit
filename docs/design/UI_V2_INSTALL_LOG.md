@@ -136,13 +136,36 @@ patches, `icon?` added to the interface). Full diff + disposition:
   `index.css` shim gained the ui-v2 shared vars (`--v2-shadow-*`, `--idle`,
   `--accent-bg`, `--p`) so the per-file token-cascade gate resolves them.
 
-### Ported so far (5 surfaces + honest scaffold)
+### Tranche 1d (2026-07-07) — pyramid · communication-center (contract-ready remainder)
+- **`pyramid`** (contract-ready) — kit pyramid.jsx (309 lines) + pyramid-analytics.jsx
+  (114 lines) ported: type selector, dashboard (progress ring + risk + phases + next
+  actions), work breakdown with task sheet, analytics (resource allocation + document
+  coverage matrix + critical path), global submissions browser. Live API binding:
+  `useLive('/api/v1/pyramids/:type', PY_PYRAMID)`, types, global configs. Fixture:
+  8 submission types, 9 roles, 5-status vocab, 4-risk vocab, BX-204 NDA with 7 phases
+  and 23 tasks. Registered in SURFACE_VIEWS.
+- **`communication-center`** (contract-ready) — kit communication-center.jsx (394 lines)
+  ported: the regulated FDA↔client loop hub. Four tabs: FDA loop (submission lifecycle
+  states, CRL response countdown with days counter, deficiency gap analysis with
+  section-linked tasks), Agency inbox (communications with urgency/response tracking,
+  triage/advance workflow), Meetings & commitments (HA interactions, PMR/PMC/REMS),
+  Authority profiles (channel/transport/validation/ack). Live API binding:
+  `useLive('/api/communication-center/projects/:pid/agency-communications', CC_COMMS)`.
+  Log-communication form uses the shared C2CForm (kit data-entry.jsx, ported as a
+  shared component for reuse across 15+ surfaces). RotateCcw icon added to the icon
+  vocabulary.
+- **C2CForm** — kit data-entry.jsx (the governed data-entry drawer) ported as a shared
+  typed component (`C2CForm.tsx`): right-side panel with typed field schema (text /
+  textarea / select / seg / date / number / password), required-field validation,
+  Part 11 governed note. Used by communication-center and 14 other kit surfaces that
+  will port in subsequent tranches.
+
+### Ported so far (7 surfaces + honest scaffold + C2CForm shared component)
 `home` · `global-ri` (live) · `intelligence-catalog` · `coverage` (live) ·
-`submission-center` — all verified in a real browser.
+`submission-center` · `pyramid` · `communication-center` — all verified by typecheck.
 
 ### Tranche order from here
-Contract-ready remainder (pyramid · communication-center) → projects /
-project-home (Home2.jsx) → routes-ready families per the kit load order
+Projects / project-home (Home2.jsx) → routes-ready families per the kit load order
 (`app/index.html`) → kit-only/planned on fixtures.
 
 ### Local verification harness (for the backend track)

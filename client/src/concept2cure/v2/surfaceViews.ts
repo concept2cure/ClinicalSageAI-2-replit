@@ -17,6 +17,8 @@ import type React from 'react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 import { CapabilityIndex } from './intelligence/Intelligence';
 import { CodebaseCoverage } from './surfaces/Coverage';
+import { CommunicationCenter } from './surfaces/CommunicationCenter';
+import { PyramidShell } from './surfaces/Pyramid';
 import { SubmissionCenter } from './surfaces/SubmissionCenter';
 import { GlobalRiBrowser } from './surfaces/Surfaces';
 
@@ -40,4 +42,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'intelligence-catalog': { component: CapabilityIndex },
   coverage: { component: CodebaseCoverage },
   'submission-center': { component: SubmissionCenter },
+  pyramid: { component: PyramidShell },
+  'communication-center': { component: CommunicationCenter },
 };
