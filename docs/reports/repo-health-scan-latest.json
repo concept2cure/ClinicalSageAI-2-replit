@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-06T21:24:53.427Z",
+  "generatedAt": "2026-07-07T07:36:00.618Z",
   "git": {
-    "sha": "a7c380b4d8bc49afacd1d9b7281068aa25d177eb",
+    "sha": "75bc5f6b404eb4372641147e4fc05adfccf6beb9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -226,7 +226,7 @@
       },
       {
         "basename": "icons",
-        "count": 31,
+        "count": 32,
         "paths": [
           "client/public/design-system/ui_kits/ana_ri/Icons.jsx",
           "client/public/design-system/ui_kits/ectd_coauthor/Icons.jsx",
@@ -247,6 +247,7 @@
           "client/src/concept2cure/risk/icons.tsx",
           "client/src/concept2cure/submission/icons.tsx",
           "client/src/concept2cure/tasking/icons.tsx",
+          "client/src/concept2cure/v2/icons.tsx",
           "design-system/ui_kits/ana_ri/Icons.jsx",
           "design-system/ui_kits/ectd_coauthor/Icons.jsx",
           "design-system/ui_kits/home/Icons.jsx",
@@ -384,24 +385,11 @@
         ]
       },
       {
-        "basename": "overview",
-        "count": 8,
-        "paths": [
-          "client/src/concept2cure/biopharma/surfaces/Overview.tsx",
-          "client/src/concept2cure/cmc/surfaces/Overview.tsx",
-          "client/src/concept2cure/labeling/surfaces/Overview.tsx",
-          "client/src/concept2cure/mdx/surfaces/Overview.tsx",
-          "client/src/concept2cure/pdev/surfaces/Overview.tsx",
-          "client/src/concept2cure/risk/surfaces/Overview.tsx",
-          "client/src/concept2cure/submission/surfaces/Overview.tsx",
-          "client/src/concept2cure/tasking/surfaces/Overview.tsx"
-        ]
-      },
-      {
         "basename": "shell",
-        "count": 8,
+        "count": 9,
         "paths": [
           "client/public/design-system/ui_kits/mdx/Shell.jsx",
+          "client/src/concept2cure/v2/Shell.tsx",
           "design-system/ui_kits/mdx/shell.jsx",
           "design-system/ui_kits/mdx_phase2/Shell.jsx",
           "design-system/ui_kits/pdev/Shell.jsx",
@@ -413,9 +401,10 @@
       },
       {
         "basename": "surfaces",
-        "count": 8,
+        "count": 9,
         "paths": [
           "client/public/design-system/ui_kits/mdx/Surfaces.jsx",
+          "client/src/concept2cure/v2/surfaces/Surfaces.tsx",
           "design-system/ui_kits/mdx_phase2/Surfaces.jsx",
           "design-system/ui_kits/pdev/Surfaces.jsx",
           "ui_kits/biopharma/surfaces.jsx",
@@ -423,6 +412,20 @@
           "ui_kits/pdev/Surfaces.jsx",
           "ui_kits/risk/surfaces.jsx",
           "ui_kits/submission/surfaces.jsx"
+        ]
+      },
+      {
+        "basename": "overview",
+        "count": 8,
+        "paths": [
+          "client/src/concept2cure/biopharma/surfaces/Overview.tsx",
+          "client/src/concept2cure/cmc/surfaces/Overview.tsx",
+          "client/src/concept2cure/labeling/surfaces/Overview.tsx",
+          "client/src/concept2cure/mdx/surfaces/Overview.tsx",
+          "client/src/concept2cure/pdev/surfaces/Overview.tsx",
+          "client/src/concept2cure/risk/surfaces/Overview.tsx",
+          "client/src/concept2cure/submission/surfaces/Overview.tsx",
+          "client/src/concept2cure/tasking/surfaces/Overview.tsx"
         ]
       },
       {
@@ -475,6 +478,18 @@
           "design-system/ui_kits/mdx/surfaces/Analytics.jsx",
           "ui_kits/mdx/data/analytics.js",
           "ui_kits/mdx/surfaces/Analytics.jsx"
+        ]
+      },
+      {
+        "basename": "projects",
+        "count": 6,
+        "paths": [
+          "client/src/concept2cure/components/concept2cure-projects/data/projects.ts",
+          "client/src/concept2cure/translation/surfaces/Projects.tsx",
+          "client/src/concept2cure/v2/surfaces/Projects.tsx",
+          "database/schema/projects.ts",
+          "design-system/ui_kits/home/Projects.jsx",
+          "server/routes/c2c/projects.ts"
         ]
       },
       {
@@ -546,6 +561,17 @@
         ]
       },
       {
+        "basename": "intelligence",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/components/claude-ectd-coauthor/Intelligence.tsx",
+          "client/src/concept2cure/v2/fixtures/intelligence.ts",
+          "client/src/concept2cure/v2/intelligence/Intelligence.tsx",
+          "server/routes/intelligence.ts",
+          "shared/types/intelligence.ts"
+        ]
+      },
+      {
         "basename": "ivd",
         "count": 5,
         "paths": [
@@ -576,17 +602,6 @@
           "design-system/ui_kits/mdx/surfaces/Postmarket.jsx",
           "ui_kits/mdx/data/postmarket.js",
           "ui_kits/mdx/surfaces/Postmarket.jsx"
-        ]
-      },
-      {
-        "basename": "projects",
-        "count": 5,
-        "paths": [
-          "client/src/concept2cure/components/concept2cure-projects/data/projects.ts",
-          "client/src/concept2cure/translation/surfaces/Projects.tsx",
-          "database/schema/projects.ts",
-          "design-system/ui_kits/home/Projects.jsx",
-          "server/routes/c2c/projects.ts"
         ]
       },
       {
@@ -1020,15 +1035,6 @@
         ]
       },
       {
-        "basename": "intelligence",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/components/claude-ectd-coauthor/Intelligence.tsx",
-          "server/routes/intelligence.ts",
-          "shared/types/intelligence.ts"
-        ]
-      },
-      {
         "basename": "jest.config",
         "count": 3,
         "paths": [
@@ -1089,6 +1095,15 @@
           "client/src/concept2cure/mdx/data/postmarket-docs.ts",
           "design-system/ui_kits/mdx/data/postmarket-docs.js",
           "ui_kits/mdx/data/postmarket-docs.js"
+        ]
+      },
+      {
+        "basename": "projecthome",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/projectHome/ProjectHome.tsx",
+          "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+          "design-system/ui_kits/mdx_phase2/ProjectHome.jsx"
         ]
       },
       {
@@ -1956,14 +1971,6 @@
         "paths": [
           "client/src/concept2cure/components/concept2cure-projects/ProjectDetail.tsx",
           "client/src/concept2cure/projects/ProjectDetail.tsx"
-        ]
-      },
-      {
-        "basename": "projecthome",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/mdx/projectHome/ProjectHome.tsx",
-          "design-system/ui_kits/mdx_phase2/ProjectHome.jsx"
         ]
       },
       {
@@ -2852,7 +2859,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 155,
+      "duplicateGroups": 162,
       "largeByBytes": 0,
       "largeByLines": 1
     },
