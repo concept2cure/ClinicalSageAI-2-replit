@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-07T09:31:29.200Z",
+  "generatedAt": "2026-07-07T11:39:27.811Z",
   "git": {
-    "sha": "bcbf1575eaad69b19fb1cc0bdb916df0ab81718f",
+    "sha": "74695da209956683dffc19d03c26bee999383174",
     "branch": "claude/elegant-lovelace-low2l9"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 243,
+    "duplicateBasenames": 244,
     "largeFilesByBytes": 29,
     "largeFilesByLines": 84
   },
@@ -469,6 +469,19 @@
         ]
       },
       {
+        "basename": "vault",
+        "count": 7,
+        "paths": [
+          "client/src/concept2cure/mdx/data/vault.ts",
+          "client/src/concept2cure/v2/surfaces/Vault.tsx",
+          "design-system/ui_kits/mdx/data/vault.js",
+          "design-system/ui_kits/mdx/surfaces/Vault.jsx",
+          "shared/schema/vault.ts",
+          "ui_kits/mdx/data/vault.js",
+          "ui_kits/mdx/surfaces/Vault.jsx"
+        ]
+      },
+      {
         "basename": "analytics",
         "count": 6,
         "paths": [
@@ -502,18 +515,6 @@
           "database/schema/projects.ts",
           "design-system/ui_kits/home/Projects.jsx",
           "server/routes/c2c/projects.ts"
-        ]
-      },
-      {
-        "basename": "vault",
-        "count": 6,
-        "paths": [
-          "client/src/concept2cure/mdx/data/vault.ts",
-          "design-system/ui_kits/mdx/data/vault.js",
-          "design-system/ui_kits/mdx/surfaces/Vault.jsx",
-          "shared/schema/vault.ts",
-          "ui_kits/mdx/data/vault.js",
-          "ui_kits/mdx/surfaces/Vault.jsx"
         ]
       },
       {
@@ -592,6 +593,17 @@
           "design-system/ui_kits/mdx/surfaces/Memory.jsx",
           "ui_kits/mdx/data/memory.js",
           "ui_kits/mdx/surfaces/Memory.jsx"
+        ]
+      },
+      {
+        "basename": "onboarding",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Onboarding.tsx",
+          "design-system/ui_kits/mdx/data/onboarding.js",
+          "design-system/ui_kits/mdx/surfaces/Onboarding.jsx",
+          "ui_kits/mdx/data/onboarding.js",
+          "ui_kits/mdx/surfaces/Onboarding.jsx"
         ]
       },
       {
@@ -777,16 +789,6 @@
           "design-system/ui_kits/mdx/surfaces/Notifications.jsx",
           "ui_kits/mdx/data/notifications.js",
           "ui_kits/mdx/surfaces/Notifications.jsx"
-        ]
-      },
-      {
-        "basename": "onboarding",
-        "count": 4,
-        "paths": [
-          "design-system/ui_kits/mdx/data/onboarding.js",
-          "design-system/ui_kits/mdx/surfaces/Onboarding.jsx",
-          "ui_kits/mdx/data/onboarding.js",
-          "ui_kits/mdx/surfaces/Onboarding.jsx"
         ]
       },
       {
@@ -1824,6 +1826,14 @@
         "paths": [
           "server/routes/ana-ri/kernel.ts",
           "server/src/control-plane/kernel.ts"
+        ]
+      },
+      {
+        "basename": "labeling",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Labeling.tsx",
+          "server/services/ana/intelligence-questions/flows/labeling.ts"
         ]
       },
       {
@@ -2880,7 +2890,7 @@
   "ownerSummary": [
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 945,
+      "duplicateGroups": 949,
       "largeByBytes": 29,
       "largeByLines": 84
     }

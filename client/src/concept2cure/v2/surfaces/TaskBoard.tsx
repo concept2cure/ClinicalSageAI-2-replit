@@ -133,7 +133,6 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
       <AnswerLead
         tone={critBlocked || overdue.length ? 'urgent' : 'calm'}
-        onAsk={onAsk}
         eyebrow="What is on the critical path -- and what needs you first"
         headline={critBlocked
           ? <>Your path to {milestone ? <b>"{milestone.title}"</b> : 'the milestone'} is <b>blocked</b> at "{critBlocked.title}".</>

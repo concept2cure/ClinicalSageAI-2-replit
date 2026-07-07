@@ -28,6 +28,8 @@ import { Pediatric, Orphan, Lifecycle, Pharmacovigilance } from './surfaces/Biop
 import { Biostatistics } from './surfaces/Biostatistics';
 import { ChangeAssessment } from './surfaces/ChangeAssessment';
 import { ClinicalOps } from './surfaces/ClinicalOps';
+import { ConversationThread } from './surfaces/ConversationThread';
+import { CroPortfolio } from './surfaces/CroPortfolio';
 import { CmcModule } from './surfaces/CmcModule';
 import { CommunicationCenter } from './surfaces/CommunicationCenter';
 import { CodebaseCoverage } from './surfaces/Coverage';
@@ -49,23 +51,36 @@ import { Inconsistency } from './surfaces/Inconsistency';
 import { IndLifecycle } from './surfaces/IndLifecycle';
 import { InsightsCanvas } from './surfaces/Insights';
 import { IvdCompleteness } from './surfaces/IvdCompleteness';
+import { Labeling } from './surfaces/Labeling';
 import { LabelingPI } from './surfaces/LabelingPi';
 import { LicensingSurface } from './surfaces/LicensingSurface';
 import { MarketAccess } from './surfaces/MarketAccess';
 import { NdaCockpit } from './surfaces/NdaCockpit';
 import { Nonclinical } from './surfaces/Nonclinical';
+import { Onboarding } from './surfaces/Onboarding';
 import { Orchestration } from './surfaces/Orchestration';
 import { PdevInd } from './surfaces/PdevInd';
 import { PrecedentEngine } from './surfaces/PrecedentEngine';
 import { ProjectHome } from './surfaces/ProjectHome';
 import { Projects } from './surfaces/Projects';
 import { PyramidShell } from './surfaces/Pyramid';
+import { Rbm } from './surfaces/Rbm';
 import { RegChange } from './surfaces/RegChange';
 import { Registrations } from './surfaces/Registrations';
+import { ReportEngine } from './surfaces/ReportEngine';
+import { ResearchAdmin } from './surfaces/ResearchAdmin';
 import { Review } from './surfaces/Review';
+import { Risk } from './surfaces/Risk';
+import { SafetyNarrative } from './surfaces/SafetyNarrative';
+import { ShadowReview } from './surfaces/ShadowReview';
+import { SourceTracer } from './surfaces/SourceTracer';
 import { SubmissionCenter } from './surfaces/SubmissionCenter';
 import { GlobalRiBrowser } from './surfaces/Surfaces';
+import { TaskBoard } from './surfaces/TaskBoard';
+import { TemplateLibrary } from './surfaces/TemplateLibrary';
 import { Training } from './surfaces/Training';
+import { UsageBilling } from './surfaces/UsageBilling';
+import { Vault } from './surfaces/Vault';
 
 export interface SurfaceViewProps {
   surface: UiSurface;
@@ -98,7 +113,9 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'clinical-ops': { component: ClinicalOps },
   cmc: { component: CmcModule },
   'communication-center': { component: CommunicationCenter },
+  'conversation-thread': { component: ConversationThread, hideAna: true },
   coverage: { component: CodebaseCoverage },
+  'cro-portfolio': { component: CroPortfolio },
   'csr-workflow': { component: CsrWorkflow },
   'decision-lineage': { component: DecisionLineage, full: true },
   'deep-research': { component: DeepResearch },
@@ -121,12 +138,14 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   insights: { component: InsightsCanvas, full: true, hideAna: true },
   'intelligence-catalog': { component: CapabilityIndex },
   'ivd-completeness': { component: IvdCompleteness, full: true },
+  labeling: { component: Labeling },
   'labeling-pi': { component: LabelingPI },
   licensing: { component: LicensingSurface },
   'lifecycle-mgmt': { component: Lifecycle },
   'market-access': { component: MarketAccess },
   'nda-cockpit': { component: NdaCockpit },
   nonclinical: { component: Nonclinical },
+  onboarding: { component: Onboarding },
   orchestration: { component: Orchestration },
   orphan: { component: Orphan },
   pdev: { component: PdevInd },
@@ -137,11 +156,23 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'project-home': { component: ProjectHome, full: true },
   projects: { component: Projects },
   pyramid: { component: PyramidShell },
+  rbm: { component: Rbm, hideAna: true },
   'reg-change': { component: RegChange },
   registrations: { component: Registrations },
   'regulatory-workspace': { component: RegulatoryWorkspace, full: true },
+  'report-engine': { component: ReportEngine },
+  'research-admin': { component: ResearchAdmin },
   review: { component: Review },
+  'risk-ledger': { component: Risk },
+  'safety-narrative': { component: SafetyNarrative },
   setup: { component: Setup },
+  'shadow-review': { component: ShadowReview, full: true },
+  'source-tracer': { component: SourceTracer },
   'submission-center': { component: SubmissionCenter },
+  'task-board': { component: TaskBoard },
+  tasks: { component: TaskBoard },
+  'template-library': { component: TemplateLibrary },
   training: { component: Training },
+  'usage-billing': { component: UsageBilling },
+  vault: { component: Vault },
 };

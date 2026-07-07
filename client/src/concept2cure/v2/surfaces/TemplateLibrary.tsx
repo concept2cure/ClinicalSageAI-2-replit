@@ -440,7 +440,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
               <span className="tl-edit-ic">{I.sparkles}</span>
               <input
                 className="tl-edit-in"
-                placeholder="Ask AnA to adjust this template — e.g. \"headings in Calibri 13, 1.15 spacing, accent #1F8A5B\""
+                placeholder={'Ask AnA to adjust this template — e.g. "headings in Calibri 13, 1.15 spacing, accent #1F8A5B"'}
                 value={edit}
                 onChange={(e) => setEdit(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') applyEdit(); }}

@@ -152,7 +152,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
         <div className="metric"><div className="metric-l">Hazards identified</div><div className="metric-n" style={{ fontSize: 22 }}>{summary.total}</div></div>
         <div className="metric" data-tone="ok"><div className="metric-l">Residual acceptable</div><div className="metric-n" style={{ fontSize: 22 }}>{summary.accepted} / {summary.total}</div></div>
         <div className="metric" data-tone={summary.open ? 'warn' : ''}><div className="metric-l">Open evaluations</div><div className="metric-n" style={{ fontSize: 22 }}>{summary.open}</div></div>
-        <div className="metric" data-tone={summary.highResidual ? 'err' : 'ok'}><div className="metric-l">High residual (>=15)</div><div className="metric-n" style={{ fontSize: 22 }}>{summary.highResidual}</div></div>
+        <div className="metric" data-tone={summary.highResidual ? 'err' : 'ok'}><div className="metric-l">High residual (&gt;=15)</div><div className="metric-n" style={{ fontSize: 22 }}>{summary.highResidual}</div></div>
       </div>
 
       <div className="risk-split">

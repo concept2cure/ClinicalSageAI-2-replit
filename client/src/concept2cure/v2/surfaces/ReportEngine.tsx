@@ -77,7 +77,7 @@ interface DashboardData {
 
 /* ── Ported document generators (analytics-routes.ts) ── */
 
-function genRecommendations(a: ParsedProtocol, csrs: SimilarProtocol[]): string {
+function genRecommendations(a: ParsedProtocol, csrs: SimilarProtocol[] = []): string {
   const riskCount = (a.risk_factors || []).length;
   const high = (a.risk_factors || []).filter(r => (r.severity || '').toLowerCase() === 'high');
   const med = (a.risk_factors || []).filter(r => (r.severity || '').toLowerCase() === 'medium');
@@ -261,7 +261,6 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
       {analysis && a ? (
         <AnswerLead
           tone="calm"
-          onAsk={ask}
           eyebrow={'Your analysis of ' + (a.title || 'the protocol').slice(0, 48) + ' is ready'}
           headline={<>I read the {a.phase && a.phase !== 'Unknown' ? <>Phase {a.phase} </> : null}{a.indication && a.indication !== 'Unspecified' ? <>{a.indication.toLowerCase()} </> : null}protocol and drafted your <b>{docDef?.label}</b> -- {a.risk_factors.length ? <><b>{a.risk_factors.length} design {a.risk_factors.length === 1 ? 'risk' : 'risks'}</b> to address</> : <>the design looks sound on the parameters I could read</>}.</>}
           body={<>{a.sample_size ? <>At N={a.sample_size}{a.duration_weeks ? <> over {a.duration_weeks} weeks</> : null}, the recommendations and statistical insights are written out below -- power estimates, dropout, and comparison to similar studies. {analysis.source === 'local' ? 'Connect the backend to match against the live CSR library.' : `Matched against ${(analysis.similar_protocols || []).length} similar CSRs.`}</> : <>I could not read a sample size from the text -- add it and the power analysis will fill in.</>}</>}
@@ -272,7 +271,6 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
       ) : (
         <AnswerLead
           tone="calm"
-          onAsk={ask}
           eyebrow="What do you want to understand about your protocol"
           headline={<>Paste a protocol and I will tell you where it is strong, where it is risky, and what the statistics say.</>}
           body="You will get three written deliverables -- design recommendations vs. similar studies, statistical insights (power, dropout, modelling), and an IND-readiness read -- not just numbers on a chart."
