@@ -1,0 +1,492 @@
+import React, { useState, useEffect } from 'react';
+import { I } from '../icons';
+import {
+  SURFACE_CTX, CL_MOD, CL_OPTIMAL, CL_TYPE, CL_PRI,
+  TB_TEAM, TB_PROJECTS,
+  type C2CTask, type ActivityItem, type TeamMember, type ProjectEntry,
+} from '../fixtures/collab-data';
+import { TB_TASKS } from '../fixtures/task-board-data';
+
+/* ================================================================
+   Collaboration layer -- universal "add to tasking / assign / collaborate"
+   available from EVERY surface.
+
+   Grounded in the concept2cure-v2 backend (forensic):
+     - Canonical store: unifiedTasks (shared/schema.ts) via
+       /api/task-management (server/routes/taskManagement.routes.ts).
+     - createTaskSchema fields: title, description, moduleType,
+       moduleSource, projectId, taskType, priority, assigneeId,
+       dueDate, estimatedHours, dependencies[], tags[].
+     - Polymorphic origin: sourceEntityType + sourceEntityId.
+     - Auto-assign: getOptimalAssignee() (workload-balanced).
+     - Honest gaps: task-audit.ts coded but unwired; notifications
+       stubbed.
+
+   This module owns ONE shared store (C2C) so a task created from
+   the editor, a submission, a safety case or the board all land in
+   the same place. TaskBoard subscribes to it.
+   ================================================================ */
+
+/* ── Interfaces ── */
+
+interface C2CContext {
+  surfaceId: string;
+  surfaceLabel: string;
+  project: string;
+  entityType: string;
+  entityId: string | null;
+  entityLabel: string | null;
+  moduleType: string;
+}
+
+interface QuickTaskForm {
+  title: string;
+  project: string;
+  moduleType: string;
+  taskType: string;
+  priority: string;
+  assignee: string;
+  dueDays: number;
+  criticalPath: boolean;
+  regulatoryImpact: boolean;
+  approvalRequired: boolean;
+  note: string;
+}
+
+interface QuickTaskProps {
+  ctx: C2CContext;
+  onClose: () => void;
+  onCreated?: (t: C2CTask) => void;
+  onGoToBoard?: () => void;
+}
+
+interface CollabDiscussProps {
+  ctx: C2CContext;
+  onClose: () => void;
+  onCreated?: (t?: C2CTask) => void;
+}
+
+interface CollabLayerProps {
+  onNav?: (id: string) => void;
+}
+
+interface ToastState {
+  type: 'task' | 'msg';
+  t?: C2CTask;
+}
+
+/* ── Shared C2C store ──
+   Module-level mutable state with a subscriber pattern. Deferred
+   emit avoids "Cannot update a component while rendering a different
+   component" -- notifications fire on a microtask, never synchronously. */
+
+type Subscriber = () => void;
+
+let tasks: C2CTask[] = TB_TASKS.map(t => ({ ...t }));
+const subs = new Set<Subscriber>();
+const defer = (typeof queueMicrotask === 'function')
+  ? queueMicrotask
+  : (fn: () => void) => { setTimeout(fn, 0); };
+
+function emit(): void {
+  defer(() => {
+    subs.forEach(fn => { try { fn(); } catch (_e) { /* subscriber error */ } });
+    try { window.dispatchEvent(new CustomEvent('c2c:tasks')); } catch (_e) { /* noop */ }
+  });
+}
+
+let ctx: C2CContext = {
+  surfaceId: 'home',
+  surfaceLabel: 'Home',
+  project: TB_PROJECTS[0].id,
+  entityType: 'workspace',
+  entityId: null,
+  entityLabel: null,
+  moduleType: 'Regulatory',
+};
+
+export const C2C = {
+  team: TB_TEAM as Record<string, TeamMember>,
+  projects: TB_PROJECTS as ProjectEntry[],
+  mod: CL_MOD,
+  optimal: CL_OPTIMAL,
+
+  modColor(m: string): string {
+    return CL_MOD[m] || '#888';
+  },
+  list(): C2CTask[] {
+    return tasks;
+  },
+  subscribe(fn: Subscriber): () => void {
+    subs.add(fn);
+    return () => { subs.delete(fn); };
+  },
+  optimalFor(m: string): string {
+    return CL_OPTIMAL[m] || 'jc';
+  },
+
+  /* Surface context -- App calls this on every navigation; surfaces may
+     refine it for entity-level granularity (a section, a case, a filing). */
+  setSurface(id: string, label?: string): void {
+    const d = SURFACE_CTX[id] || SURFACE_CTX.home;
+    ctx = {
+      surfaceId: id,
+      surfaceLabel: label || id,
+      project: ctx.project,
+      entityType: d.et,
+      entityId: null,
+      entityLabel: null,
+      moduleType: d.mod,
+    };
+    emit();
+  },
+  setContext(patch: Partial<C2CContext>): void {
+    ctx = { ...ctx, ...patch };
+    emit();
+  },
+  getContext(): C2CContext {
+    return ctx;
+  },
+  surfaceNoun(id: string): string {
+    return (SURFACE_CTX[id] || SURFACE_CTX.home).noun;
+  },
+
+  addTask(task: Partial<C2CTask> & Record<string, unknown>): C2CTask {
+    const id = (task.taskId as string) || ('C2C-TASK-' + (2300 + Math.floor(Math.random() * 699)));
+    const t: C2CTask = {
+      status: 'pending', progress: 0, comments: 0, attachments: 0,
+      dependsOn: [], blocks: [], priority: 'high', taskType: 'action', impactScore: 6,
+      criticalPath: false, regulatoryImpact: true, approvalRequired: false,
+      approvalStatus: 'not_started', assignedBy: 'jc', source: 'unified',
+      activity: [], title: '', project: '', moduleType: '', assignee: '', due: '', phase: '',
+      ...task,
+      taskId: id,
+    };
+    tasks = [t, ...tasks];
+    emit();
+    return t;
+  },
+  update(taskId: string, patch: Partial<C2CTask>): void {
+    tasks = tasks.map(t => t.taskId === taskId ? { ...t, ...patch } : t);
+    emit();
+  },
+  addComment(taskId: string, msg: ActivityItem): void {
+    tasks = tasks.map(t => {
+      if (t.taskId !== taskId) return t;
+      const act = [...(t.activity || []), msg];
+      return { ...t, comments: (t.comments || 0) + 1, activity: act };
+    });
+    emit();
+  },
+  open(mode?: string, patch?: Partial<C2CContext>): void {
+    if (patch) ctx = { ...ctx, ...patch };
+    window.dispatchEvent(new CustomEvent('c2c:open-collab', { detail: { mode: mode || 'task' } }));
+  },
+};
+
+/* Expose on window for cross-module access (TaskBoard, App, etc.) */
+(window as any).C2C = C2C;
+
+/* ================================================================
+   UI -- the universal launcher + Quick task / Collaborate modal.
+   Mounted ONCE by App. Reads C2C live so it works identically on
+   every surface.
+   ================================================================ */
+
+function clAvatar(id: string): string {
+  const p = (C2C.team[id]) || { n: '?' };
+  return (p.n || '?').split(' ').map(s => s[0]).join('').slice(0, 2);
+}
+
+/* ── Quick task -- unifiedTasks intake, context pre-filled ── */
+
+function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTaskProps) {
+  const projInit = surfaceCtx.project && surfaceCtx.project !== 'all'
+    ? surfaceCtx.project
+    : C2C.projects[0].id;
+
+  const [f, setF] = useState<QuickTaskForm>({
+    title: '', project: projInit, moduleType: surfaceCtx.moduleType || 'Regulatory',
+    taskType: 'action', priority: 'high', assignee: 'auto', dueDays: 7,
+    criticalPath: false, regulatoryImpact: true, approvalRequired: false, note: '',
+  });
+
+  const set = <K extends keyof QuickTaskForm>(k: K, v: QuickTaskForm[K]) =>
+    setF(p => ({ ...p, [k]: v }));
+
+  const who = f.assignee === 'auto' ? C2C.optimalFor(f.moduleType) : f.assignee;
+  const whoName = (C2C.team[who] || { n: who }).n;
+
+  const create = (another: boolean) => {
+    if (!f.title.trim()) return;
+    const t = C2C.addTask({
+      title: f.title.trim(), project: f.project, moduleType: f.moduleType,
+      taskType: f.taskType, priority: f.priority, assignee: who,
+      assignmentType: f.assignee === 'auto' ? 'auto' : 'manual',
+      criticalPath: f.criticalPath, regulatoryImpact: f.regulatoryImpact,
+      approvalRequired: f.approvalRequired,
+      approvalStatus: f.approvalRequired ? 'pending' : 'not_started',
+      due: f.dueDays <= 0 ? 'today' : ('in ' + f.dueDays + ' day' + (f.dueDays > 1 ? 's' : '')),
+      phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+      sourceEntityType: surfaceCtx.entityType,
+      sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
+      sourceLabel: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+      activity: f.note.trim()
+        ? [{ type: 'note', text: f.note.trim(), who: 'You', when: 'just now' }]
+        : [],
+    });
+    onCreated?.(t);
+    if (another) { setF(p => ({ ...p, title: '', note: '' })); } else { onClose(); }
+  };
+
+  return (
+    <div className="cl-field-grp">
+      <div className="cl-ctxbar">
+        <span className="cl-ctx-k">From</span>
+        <span className="cl-ctx-chip"><span className="ico">{I.target || I.crosshair || I.zap}</span>{surfaceCtx.entityLabel || surfaceCtx.surfaceLabel}</span>
+        <span className="cl-ctx-meta">stamped as <code>sourceEntityType: {surfaceCtx.entityType}</code></span>
+      </div>
+      <div className="cl-field"><label>Task<i>*</i></label>
+        <input type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)}
+          placeholder={'e.g. Review ' + C2C.surfaceNoun(surfaceCtx.surfaceId) + ' and resolve open items'} />
+      </div>
+      <div className="cl-frow">
+        <div className="cl-field"><label>Project</label>
+          <select value={f.project} onChange={e => set('project', e.target.value)}>
+            {C2C.projects.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+          </select>
+        </div>
+        <div className="cl-field"><label>Module</label>
+          <select value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>
+            {Object.keys(C2C.mod).map(m => <option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="cl-frow">
+        <div className="cl-field"><label>Type</label>
+          <select value={f.taskType} onChange={e => set('taskType', e.target.value)}>
+            {Object.keys(CL_TYPE).map(t => <option key={t} value={t}>{CL_TYPE[t]}</option>)}
+          </select>
+        </div>
+        <div className="cl-field"><label>Priority</label>
+          <select value={f.priority} onChange={e => set('priority', e.target.value)}>
+            {CL_PRI.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
+        <div className="cl-field"><label>Due in (days)</label>
+          <input type="number" min="0" max="120" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} />
+        </div>
+      </div>
+      <div className="cl-field"><label>Assign to</label>
+        <div className="cl-assignees">
+          <button type="button" className={`cl-asg${f.assignee === 'auto' ? ' on' : ''}`} onClick={() => set('assignee', 'auto')}>
+            <span className="cl-asg-av auto">{I.sparkles}</span>Auto
+          </button>
+          {Object.keys(C2C.team).map(k => (
+            <button type="button" key={k} className={`cl-asg${f.assignee === k ? ' on' : ''}`}
+              onClick={() => set('assignee', k)} title={C2C.team[k].n + ' -- ' + C2C.team[k].t}>
+              <span className="cl-asg-av">{clAvatar(k)}</span>{C2C.team[k].n}
+            </button>
+          ))}
+        </div>
+      </div>
+      {f.assignee === 'auto' && (
+        <div className="cl-note">
+          <span className="ico">{I.sparkles}</span>Auto-assign resolves to <b>{whoName}</b> for <b>{f.moduleType}</b> -- workload-balanced via <code>getOptimalAssignee()</code>.
+        </div>
+      )}
+      <div className="cl-field"><label>Flags</label>
+        <div className="cl-toggles">
+          <button type="button" className={`cl-tog${f.criticalPath ? ' on' : ''}`} onClick={() => set('criticalPath', !f.criticalPath)}>
+            <span className="ico">{I.zap}</span>Critical path
+          </button>
+          <button type="button" className={`cl-tog${f.regulatoryImpact ? ' on' : ''}`} onClick={() => set('regulatoryImpact', !f.regulatoryImpact)}>
+            <span className="ico">{I.shieldCheck}</span>Regulatory impact
+          </button>
+          <button type="button" className={`cl-tog${f.approvalRequired ? ' on' : ''}`} onClick={() => set('approvalRequired', !f.approvalRequired)}>
+            <span className="ico">{I.checkSquare || I.check}</span>Approval gate
+          </button>
+        </div>
+      </div>
+      <div className="cl-field"><label>Note <span className="cl-opt">-- optional</span></label>
+        <textarea rows={2} value={f.note} onChange={e => set('note', e.target.value)} placeholder="Add context for the assignee..." />
+      </div>
+      <div className="cl-warn">
+        <span className="ico">{I.alertTriangle}</span>Writes <code>unifiedTasks</code> via <code>POST /api/task-management/tasks</code>. Audit (<code>task-audit.ts</code>) and notifications are stubbed in the backend.
+      </div>
+      <div className="cl-foot">
+        <div className="cl-endpoint"><b>POST</b> /api/task-management/tasks</div>
+        <button className="btn ghost" onClick={() => create(true)} disabled={!f.title.trim()}>{I.plus} Create &amp; add another</button>
+        <button className="btn primary" onClick={() => create(false)} disabled={!f.title.trim()}>{I.check} Create task</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Collaborate -- post a message / @mention / route, optionally -> task ── */
+
+function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussProps) {
+  const [to, setTo] = useState('sm');
+  const [body, setBody] = useState('');
+  const [makeTask, setMakeTask] = useState(false);
+
+  const send = () => {
+    if (!body.trim()) return;
+    if (makeTask) {
+      C2C.addTask({
+        title: body.trim().slice(0, 90), project: surfaceCtx.project,
+        moduleType: surfaceCtx.moduleType || 'Regulatory',
+        taskType: 'review', priority: 'medium', assignee: to, assignmentType: 'manual',
+        sourceEntityType: surfaceCtx.entityType,
+        sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
+        sourceLabel: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+        due: 'in 3 days', phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+        activity: [{ type: 'note', text: body.trim(), who: 'You', when: 'just now' }],
+      });
+      onCreated?.();
+    }
+    onClose();
+  };
+
+  return (
+    <div className="cl-field-grp">
+      <div className="cl-ctxbar">
+        <span className="cl-ctx-k">About</span>
+        <span className="cl-ctx-chip"><span className="ico">{I.messageSquare}</span>{surfaceCtx.entityLabel || surfaceCtx.surfaceLabel}</span>
+        <span className="cl-ctx-meta">thread on <code>/api/collaboration</code></span>
+      </div>
+      <div className="cl-field"><label>Send to</label>
+        <div className="cl-assignees">
+          {Object.keys(C2C.team).map(k => (
+            <button type="button" key={k} className={`cl-asg${to === k ? ' on' : ''}`}
+              onClick={() => setTo(k)} title={C2C.team[k].t}>
+              <span className="cl-asg-av">{clAvatar(k)}</span>{C2C.team[k].n}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="cl-field"><label>Message</label>
+        <textarea rows={4} autoFocus value={body} onChange={e => setBody(e.target.value)}
+          placeholder={'@' + (C2C.team[to] || { n: '' }).n + ' -- share context, ask a question, or route this for action...'} />
+      </div>
+      <button type="button" className={`cl-tasktoggle${makeTask ? ' on' : ''}`} onClick={() => setMakeTask(m => !m)}>
+        <span className="cl-check">{makeTask ? I.check : ''}</span>
+        <span><b>Also create a task</b> and assign it to {(C2C.team[to] || { n: 'them' }).n}</span>
+      </button>
+      <div className="cl-warn">
+        <span className="ico">{I.alertTriangle}</span>Posts to the collaboration thread + <code>/tasks/:id/notify</code>. WebSocket delivery is stubbed (<code>io.to('tasks').emit</code> commented out) -- message persists, live ping does not fire yet.
+      </div>
+      <div className="cl-foot">
+        <span className="cl-endpoint"><b>POST</b> /api/collaboration/messages</span>
+        <button className="btn ghost" onClick={onClose}>Cancel</button>
+        <button className="btn primary" onClick={send} disabled={!body.trim()}>{I.arrowRight} {makeTask ? 'Send & assign' : 'Send'}</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── The layer: launcher (FAB) + modal. Mounted once, lives on every screen. ── */
+
+export function CollabLayer({ onNav }: CollabLayerProps) {
+  const [, setTick] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState('task');
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => C2C.subscribe(() => setTick(x => x + 1)), []);
+
+  useEffect(() => {
+    const openH = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      setTab((detail && detail.mode) || 'task');
+      setOpen(true);
+    };
+    const keyH = (e: KeyboardEvent) => {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.shiftKey && e.key.toLowerCase() === 't') {
+        e.preventDefault(); setTab('task'); setOpen(true);
+      }
+    };
+    window.addEventListener('c2c:open-collab', openH);
+    window.addEventListener('keydown', keyH);
+    return () => {
+      window.removeEventListener('c2c:open-collab', openH);
+      window.removeEventListener('keydown', keyH);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 4200);
+    return () => clearTimeout(id);
+  }, [toast]);
+
+  const currentCtx = C2C.getContext();
+  const created = (t?: C2CTask) => setToast(t ? { type: 'task', t } : { type: 'msg' });
+
+  return (
+    <>
+      {/* floating launcher -- present on every surface */}
+      <div className="cl-fab-wrap">
+        {menuOpen && (
+          <div className="cl-fab-menu" onMouseLeave={() => setMenuOpen(false)}>
+            <button className="cl-fab-mi" onClick={() => { setTab('task'); setOpen(true); setMenuOpen(false); }}>
+              <span className="ico">{I.checkSquare || I.check}</span>
+              <span><b>New task</b><em>Assign &amp; track from here</em></span>
+            </button>
+            <button className="cl-fab-mi" onClick={() => { setTab('collab'); setOpen(true); setMenuOpen(false); }}>
+              <span className="ico">{I.messageSquare}</span>
+              <span><b>Collaborate</b><em>Message -- @mention -- route</em></span>
+            </button>
+            <button className="cl-fab-mi" onClick={() => { onNav?.('tasks'); setMenuOpen(false); }}>
+              <span className="ico">{I.layoutPanels || I.grid}</span>
+              <span><b>Open task board</b><em>{C2C.list().filter(t => t.status !== 'completed').length} open across the org</em></span>
+            </button>
+          </div>
+        )}
+        <button className="cl-fab" data-open={menuOpen || undefined}
+          onClick={() => setMenuOpen(o => !o)} title="Add a task or collaborate"
+          aria-label="Add a task or collaborate">
+          <span className="ico">{menuOpen ? I.close : (I.checkSquare || I.plus)}</span>
+        </button>
+      </div>
+
+      {/* the modal */}
+      {open && (
+        <div className="cl-bd" onClick={() => setOpen(false)}>
+          <div className="cl-modal" onClick={e => e.stopPropagation()}>
+            <div className="cl-head">
+              <div className="cl-tabs">
+                <button className={`cl-tab${tab === 'task' ? ' on' : ''}`} onClick={() => setTab('task')}>
+                  <span className="ico">{I.checkSquare || I.check}</span>New task
+                </button>
+                <button className={`cl-tab${tab === 'collab' ? ' on' : ''}`} onClick={() => setTab('collab')}>
+                  <span className="ico">{I.messageSquare}</span>Collaborate
+                </button>
+              </div>
+              <button className="cl-x" onClick={() => setOpen(false)}>{I.close}</button>
+            </div>
+            <div className="cl-body">
+              {tab === 'task'
+                ? <QuickTask ctx={currentCtx} onClose={() => setOpen(false)} onCreated={created}
+                    onGoToBoard={() => { onNav?.('tasks'); setOpen(false); }} />
+                : <CollabDiscuss ctx={currentCtx} onClose={() => setOpen(false)} onCreated={created} />}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* toast -- confirms the task landed in the shared store / board */}
+      {toast && (
+        <div className="cl-toast" role="status">
+          <span className="cl-toast-ic">{I.check}</span>
+          {toast.type === 'task' && toast.t
+            ? <span className="cl-toast-t">Task created -- <b>{toast.t.taskId}</b> assigned to {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}</span>
+            : <span className="cl-toast-t">Message sent</span>}
+          <button className="cl-toast-go" onClick={() => { onNav?.('tasks'); setToast(null); }}>Open board {I.arrowRight}</button>
+        </div>
+      )}
+    </>
+  );
+}

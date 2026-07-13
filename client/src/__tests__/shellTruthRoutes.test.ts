@@ -34,20 +34,21 @@ describe('stage 5 shell truth route smoke', () => {
     expect(app).toContain('{() => <Redirect to="/concept2cure" />}');
   });
 
-  it('routes project-scoped paths through ZenRouter into ProtectedZenApp', () => {
+  it('routes app paths through ZenRouter into the persistent ui-v2 shell', () => {
+    // Phase 7 deleted the legacy ZenApp shell: /, /concept2cure and every
+    // surface/project deep link are owned by the ui-v2 fast path, which
+    // renders ProtectedZenApp (the v2 shell) OUTSIDE the location-keyed
+    // transition Switch so the shell persists across in-app navigations.
     const router = read('client/src/concept2cure/router/ZenRouter.tsx');
-    expect(router).toContain('<Route path="/concept2cure/project/:projectId/:rest*">');
-    expect(router).toContain('<Route path="/concept2cure/project/:projectId">');
+    expect(router).toContain("location.startsWith('/concept2cure')");
     expect(router).toContain('<ProtectedZenApp />');
+    expect(router).not.toContain("from '../ZenApp'");
   });
 
-  it('keeps Zen workspace orchestration on the regulatory-workspace layoutMode', () => {
-    // ProjectWorkspaceShell was inlined into ZenApp during the design
-    // refactor; the workspace surface is now selected by layoutMode
-    // rather than a wrapper component. The contract this test
-    // enforces — "the workspace path is selected by a known
-    // layoutMode value" — is intact.
-    const zenApp = read('client/src/concept2cure/ZenApp.tsx');
-    expect(zenApp).toContain("layoutMode === 'regulatory-workspace'");
+  it('keeps the regulatory workspace surface registered in the v2 renderer map', () => {
+    // ZenApp's layoutMode switch is gone; the workspace surface is now a
+    // SURFACE_VIEWS registration resolved from the shared registry id.
+    const views = read('client/src/concept2cure/v2/surfaceViews.ts');
+    expect(views).toContain("'regulatory-workspace'");
   });
 });

@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-07-07T07:36:00.618Z",
+  "generatedAt": "2026-07-13T07:51:59.557Z",
   "git": {
-    "sha": "75bc5f6b404eb4372641147e4fc05adfccf6beb9",
-    "branch": "concept2cure-v2"
+    "sha": "56048e020d1af484947f8888b6de55b7bed475fa",
+    "branch": "claude/elegant-lovelace-low2l9"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 240,
+    "duplicateBasenames": 244,
     "largeFilesByBytes": 29,
     "largeFilesByLines": 83
   },
@@ -469,6 +469,19 @@
         ]
       },
       {
+        "basename": "vault",
+        "count": 7,
+        "paths": [
+          "client/src/concept2cure/mdx/data/vault.ts",
+          "client/src/concept2cure/v2/surfaces/Vault.tsx",
+          "design-system/ui_kits/mdx/data/vault.js",
+          "design-system/ui_kits/mdx/surfaces/Vault.jsx",
+          "shared/schema/vault.ts",
+          "ui_kits/mdx/data/vault.js",
+          "ui_kits/mdx/surfaces/Vault.jsx"
+        ]
+      },
+      {
         "basename": "analytics",
         "count": 6,
         "paths": [
@@ -481,6 +494,18 @@
         ]
       },
       {
+        "basename": "evidence",
+        "count": 6,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Evidence.tsx",
+          "design-system/ui_kits/pdev/Evidence.jsx",
+          "server/routes/evidence.ts",
+          "server/src/services/reg/evidence.ts",
+          "shared/schema/evidence.ts",
+          "ui_kits/pdev/Evidence.jsx"
+        ]
+      },
+      {
         "basename": "projects",
         "count": 6,
         "paths": [
@@ -490,18 +515,6 @@
           "database/schema/projects.ts",
           "design-system/ui_kits/home/Projects.jsx",
           "server/routes/c2c/projects.ts"
-        ]
-      },
-      {
-        "basename": "vault",
-        "count": 6,
-        "paths": [
-          "client/src/concept2cure/mdx/data/vault.ts",
-          "design-system/ui_kits/mdx/data/vault.js",
-          "design-system/ui_kits/mdx/surfaces/Vault.jsx",
-          "shared/schema/vault.ts",
-          "ui_kits/mdx/data/vault.js",
-          "ui_kits/mdx/surfaces/Vault.jsx"
         ]
       },
       {
@@ -550,17 +563,6 @@
         ]
       },
       {
-        "basename": "evidence",
-        "count": 5,
-        "paths": [
-          "design-system/ui_kits/pdev/Evidence.jsx",
-          "server/routes/evidence.ts",
-          "server/src/services/reg/evidence.ts",
-          "shared/schema/evidence.ts",
-          "ui_kits/pdev/Evidence.jsx"
-        ]
-      },
-      {
         "basename": "intelligence",
         "count": 5,
         "paths": [
@@ -591,6 +593,17 @@
           "design-system/ui_kits/mdx/surfaces/Memory.jsx",
           "ui_kits/mdx/data/memory.js",
           "ui_kits/mdx/surfaces/Memory.jsx"
+        ]
+      },
+      {
+        "basename": "onboarding",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Onboarding.tsx",
+          "design-system/ui_kits/mdx/data/onboarding.js",
+          "design-system/ui_kits/mdx/surfaces/Onboarding.jsx",
+          "ui_kits/mdx/data/onboarding.js",
+          "ui_kits/mdx/surfaces/Onboarding.jsx"
         ]
       },
       {
@@ -729,6 +742,16 @@
         ]
       },
       {
+        "basename": "etmf",
+        "count": 4,
+        "paths": [
+          "client/src/concept2cure/v2/fixtures/etmf.ts",
+          "client/src/concept2cure/v2/surfaces/Etmf.tsx",
+          "server/routes/etmf.ts",
+          "shared/schema/etmf.ts"
+        ]
+      },
+      {
         "basename": "hooks",
         "count": 4,
         "paths": [
@@ -769,13 +792,13 @@
         ]
       },
       {
-        "basename": "onboarding",
+        "basename": "orchestration",
         "count": 4,
         "paths": [
-          "design-system/ui_kits/mdx/data/onboarding.js",
-          "design-system/ui_kits/mdx/surfaces/Onboarding.jsx",
-          "ui_kits/mdx/data/onboarding.js",
-          "ui_kits/mdx/surfaces/Onboarding.jsx"
+          "client/src/concept2cure/v2/surfaces/Orchestration.tsx",
+          "server/routes/orchestration.ts",
+          "shared/schema/orchestration.ts",
+          "shared/types/orchestration.ts"
         ]
       },
       {
@@ -1053,21 +1076,30 @@
         ]
       },
       {
+        "basename": "mdx",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Mdx.tsx",
+          "server/routes/mdx.ts",
+          "shared/constants/mdx.ts"
+        ]
+      },
+      {
+        "basename": "nonclinical",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Nonclinical.tsx",
+          "server/routes/nonclinical.ts",
+          "shared/schema/nonclinical.ts"
+        ]
+      },
+      {
         "basename": "openai-service",
         "count": 3,
         "paths": [
           "server/openai-service.ts",
           "server/services/openai-service.ts",
           "server/test/services/openai-service.ts"
-        ]
-      },
-      {
-        "basename": "orchestration",
-        "count": 3,
-        "paths": [
-          "server/routes/orchestration.ts",
-          "shared/schema/orchestration.ts",
-          "shared/types/orchestration.ts"
         ]
       },
       {
@@ -1095,6 +1127,15 @@
           "client/src/concept2cure/mdx/data/postmarket-docs.ts",
           "design-system/ui_kits/mdx/data/postmarket-docs.js",
           "ui_kits/mdx/data/postmarket-docs.js"
+        ]
+      },
+      {
+        "basename": "projectdetail",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/components/concept2cure-projects/ProjectDetail.tsx",
+          "client/src/concept2cure/projects/ProjectDetail.tsx",
+          "client/src/concept2cure/v2/surfaces/ProjectDetail.tsx"
         ]
       },
       {
@@ -1502,6 +1543,14 @@
         ]
       },
       {
+        "basename": "dispatch-readiness",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/v2/fixtures/dispatch-readiness.ts",
+          "server/services/ectd/dispatch-readiness.ts"
+        ]
+      },
+      {
         "basename": "dmsp",
         "count": 2,
         "paths": [
@@ -1595,14 +1644,6 @@
         "paths": [
           "client/public/design-system/ui_kits/mdx/EstarEditor.jsx",
           "design-system/ui_kits/mdx_phase2/EstarEditor.jsx"
-        ]
-      },
-      {
-        "basename": "etmf",
-        "count": 2,
-        "paths": [
-          "server/routes/etmf.ts",
-          "shared/schema/etmf.ts"
         ]
       },
       {
@@ -1806,6 +1847,22 @@
         ]
       },
       {
+        "basename": "labeling",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Labeling.tsx",
+          "server/services/ana/intelligence-questions/flows/labeling.ts"
+        ]
+      },
+      {
+        "basename": "licensing",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/v2/fixtures/licensing.ts",
+          "server/routes/licensing.ts"
+        ]
+      },
+      {
         "basename": "lifecycle",
         "count": 2,
         "paths": [
@@ -1835,22 +1892,6 @@
         "paths": [
           "server/routes/__tests__/market-access.test.ts",
           "server/services/regulatory/__tests__/market-access.test.ts"
-        ]
-      },
-      {
-        "basename": "mdx",
-        "count": 2,
-        "paths": [
-          "server/routes/mdx.ts",
-          "shared/constants/mdx.ts"
-        ]
-      },
-      {
-        "basename": "nonclinical",
-        "count": 2,
-        "paths": [
-          "server/routes/nonclinical.ts",
-          "shared/schema/nonclinical.ts"
         ]
       },
       {
@@ -1963,14 +2004,6 @@
         "paths": [
           "tests/server/project-module-bridge.test.ts",
           "tests/services/project-module-bridge.test.ts"
-        ]
-      },
-      {
-        "basename": "projectdetail",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/components/concept2cure-projects/ProjectDetail.tsx",
-          "client/src/concept2cure/projects/ProjectDetail.tsx"
         ]
       },
       {
@@ -2155,6 +2188,14 @@
         "paths": [
           "server/routes/research-security.ts",
           "shared/schema/research-security.ts"
+        ]
+      },
+      {
+        "basename": "review",
+        "count": 2,
+        "paths": [
+          ".claude/skills/gstack/scripts/resolvers/review.ts",
+          "client/src/concept2cure/v2/surfaces/Review.tsx"
         ]
       },
       {
@@ -2598,10 +2639,6 @@
         "lines": 2419
       },
       {
-        "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 2398
-      },
-      {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "lines": 2379
       },
@@ -2790,6 +2827,10 @@
         "lines": 1678
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 1674
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1658
       },
@@ -2843,23 +2884,30 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 389,
+      "duplicateGroups": 392,
       "largeByBytes": 26,
       "largeByLines": 72
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 274,
+      "duplicateGroups": 275,
       "largeByBytes": 2,
       "largeByLines": 8
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 162,
+      "duplicateGroups": 175,
       "largeByBytes": 0,
       "largeByLines": 1
     },

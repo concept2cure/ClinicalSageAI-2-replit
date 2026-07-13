@@ -1,0 +1,258 @@
+.c2c-v2 {
+  /* ─── DossierDrawer ──────────────────────────────────────── */
+  .dd-scrim {
+    position: fixed; inset: 0;
+    background: rgba(20, 20, 19, 0.32);
+    z-index: 200;
+    animation: dd-fade var(--dur) var(--ease);
+  }
+  @keyframes dd-fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes dd-slide { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+  .dd-drawer {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: min(560px, 92vw);
+    background: var(--bg-000);
+    border-left: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    z-index: 201;
+    display: flex; flex-direction: column;
+    animation: dd-slide 0.18s var(--ease);
+  }
+  .dd-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .dd-crumb { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-400); min-width: 0; }
+  .dd-crumb svg { width: 12px; height: 12px; }
+  .dd-crumb-here { color: var(--text-100); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dd-hdr-actions { display: flex; align-items: center; gap: 2px; }
+  .dd-act, .dd-close {
+    width: 28px; height: 28px; border-radius: var(--radius-md);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-400);
+  }
+  .dd-act:hover, .dd-close:hover { background: var(--bg-100); color: var(--text-100); }
+  .dd-act svg, .dd-close svg { width: 14px; height: 14px; }
+
+  .dd-body { flex: 1; overflow-y: auto; padding: 24px; }
+  .dd-preview { display: flex; flex-direction: column; gap: 14px; }
+  .dd-prev-num { font-family: var(--font-mono); font-size: 11px; color: var(--text-400); letter-spacing: 0.04em; }
+  .dd-prev-title { font-size: 18px; font-weight: 600; color: var(--text-100); margin: 0; line-height: 1.25; }
+  .dd-prev-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+  .dd-prev-body { font-size: 13px; line-height: 1.6; color: var(--text-200); }
+  .dd-prev-body p { margin: 0 0 10px; }
+  .dd-prev-body b { color: var(--text-100); font-weight: 500; }
+
+  .dd-prev-blocker {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 10px 12px; background: var(--error-muted); color: var(--error);
+    border-radius: var(--radius-md); font-size: 12px;
+  }
+  .dd-prev-blocker svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+
+  .dd-prev-mini {
+    margin-top: 8px; padding: 12px 14px;
+    background: var(--bg-050); border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+  .dd-prev-mini-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-400); margin-bottom: 8px; }
+  .dd-prev-mini-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 11.5px; color: var(--text-300); }
+
+  .dd-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; border-top: 1px solid var(--border);
+    background: var(--bg-050); flex-shrink: 0; gap: 12px;
+  }
+  .dd-foot-meta { font-size: 11px; color: var(--text-400); display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .dd-foot-status { display: inline-flex; align-items: center; gap: 5px; }
+  .dd-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-500); }
+  .dd-status-dot.in_progress { background: var(--accent-100); }
+  .dd-status-dot.complete { background: var(--success); }
+  .dd-status-dot.review { background: var(--warning); }
+  .dd-status-dot.draft { background: var(--text-500); }
+
+  .dd-foot-edit {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; background: var(--accent-100); color: var(--text-000);
+    border-radius: var(--radius-md); font-size: 12px; font-weight: 500;
+  }
+  .dd-foot-edit:hover { background: var(--accent-200); }
+  .dd-foot-edit svg { width: 13px; height: 13px; }
+
+  /* ─── DossierDrawer · path bar + tabs ──────────────────────── */
+  .dd-path {
+    padding: 6px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-050);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-400);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex-shrink: 0;
+  }
+
+  .dd-tabs {
+    display: flex; gap: 0;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .dd-tab {
+    padding: 10px 12px;
+    font-size: 12px; font-weight: 500;
+    color: var(--text-400);
+    border-bottom: 2px solid transparent;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+  .dd-tab:hover { color: var(--text-100); }
+  .dd-tab[data-on="true"] {
+    color: var(--text-100);
+    border-bottom-color: var(--accent-100);
+  }
+  .dd-tab-count {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 1px 5px;
+    background: var(--bg-100);
+    color: var(--text-300);
+    border-radius: 8px;
+    min-width: 16px;
+    text-align: center;
+  }
+  .dd-tab[data-on="true"] .dd-tab-count {
+    background: var(--accent-100);
+    color: var(--text-000);
+  }
+
+  /* ─── DossierDrawer · Document tab ─────────────────────────── */
+  .dd-doc-wrap { display: flex; flex-direction: column; gap: 10px; }
+  .dd-doc-status {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--text-400);
+    padding: 4px 0;
+  }
+  .dd-doc-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .dd-doc-dot.dirty { background: var(--accent-100); }
+  .dd-doc-dot.saved { background: var(--success); }
+  .dd-doc-hint { color: var(--text-500); margin-left: auto; }
+
+  .dd-doc-edit {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: var(--text-100);
+    background: var(--bg-000);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    white-space: pre-wrap;
+    outline: none;
+    min-height: 360px;
+    transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  }
+  .dd-doc-edit:focus {
+    border-color: var(--accent-100);
+    box-shadow: 0 0 0 3px var(--accent-muted);
+  }
+
+  /* ─── DossierDrawer · Attachments tab ──────────────────────── */
+  .dd-att-wrap { display: flex; flex-direction: column; gap: 12px; }
+  .dd-att-drop {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-md);
+    padding: 24px 16px;
+    font-size: 12px;
+    color: var(--text-300);
+    cursor: pointer;
+    transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+  .dd-att-drop:hover { border-color: var(--text-400); }
+  .dd-att-drop[data-over="true"] {
+    border-color: var(--accent-100);
+    background: color-mix(in srgb,var(--accent-100) 6%,transparent);
+    color: var(--text-100);
+  }
+  .dd-att-drop svg { width: 20px; height: 20px; color: var(--text-400); }
+  .dd-att-drop-sub { font-size: 10.5px; color: var(--text-500); }
+
+  .dd-att-empty {
+    text-align: center; padding: 32px 16px;
+    font-size: 12px; color: var(--text-400);
+  }
+
+  .dd-att-list { display: flex; flex-direction: column; gap: 4px; }
+  .dd-att-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-000);
+  }
+  .dd-att-row[data-live="true"] { border-color: var(--accent-100); }
+  .dd-att-ico {
+    width: 28px; height: 28px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--bg-100);
+    border-radius: var(--radius-sm);
+    color: var(--text-300);
+  }
+  .dd-att-ico svg { width: 14px; height: 14px; }
+  .dd-att-ico.kind-pdf  { color: #b03a2e; }
+  .dd-att-ico.kind-doc  { color: #2e6cb0; }
+  .dd-att-ico.kind-xls,
+  .dd-att-ico.kind-csv  { color: #2d8659; }
+  .dd-att-ico.kind-img  { color: #8e44ad; }
+  .dd-att-ico.kind-code { color: var(--text-300); }
+
+  .dd-att-meta { flex: 1; min-width: 0; }
+  .dd-att-name {
+    font-size: 12.5px; font-weight: 500; color: var(--text-100);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .dd-att-sub {
+    font-size: 10.5px; color: var(--text-400);
+    display: inline-flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  }
+  .dd-att-sub .mono { font-family: var(--font-mono); font-size: 9.5px; }
+
+  .dd-att-tag, .dd-act-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 2px 6px;
+    background: var(--accent-100);
+    color: var(--text-000);
+    border-radius: 8px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    flex-shrink: 0;
+  }
+
+  /* ─── DossierDrawer · Activity tab ─────────────────────────── */
+  .dd-act-empty {
+    text-align: center; padding: 40px 16px;
+    font-size: 12px; color: var(--text-400);
+  }
+  .dd-act-list { display: flex; flex-direction: column; gap: 4px; }
+  .dd-act-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-000);
+  }
+  .dd-act-row[data-live="true"] { border-color: var(--accent-100); }
+  .dd-act-row .audit-chip { flex-shrink: 0; margin-top: 1px; }
+  .dd-act-meta { flex: 1; min-width: 0; }
+  .dd-act-line {
+    display: inline-flex; gap: 8px; align-items: baseline; flex-wrap: wrap;
+    font-size: 12.5px; color: var(--text-100);
+  }
+  .dd-act-actor { font-weight: 500; }
+  .dd-act-diff, .dd-act-sig { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-300); }
+  .dd-act-file { color: var(--text-300); }
+  .dd-act-sub { font-size: 10.5px; color: var(--text-400); margin-top: 2px; }
+}

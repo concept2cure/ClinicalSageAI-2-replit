@@ -230,6 +230,23 @@ describe('Rescue Cut: Core Workflow API Integration', () => {
 
     expect(res.status).toBe(401);
   });
+
+  it('enforces auth on GET /api/knowledge-base/search-connectors (DMS cross-repo search mount)', async () => {
+    const module = await import('../../routes/knowledge-base');
+    const router = module.default;
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/knowledge-base', router);
+
+    const res = await request(app)
+      .get('/api/knowledge-base/search-connectors?q=protocol')
+      .set('Authorization', 'Bearer invalid.jwt.token');
+
+    // The connector-search mount lives behind the router's authenticateToken;
+    // an invalid JWT must never reach the org's connected repositories.
+    expect(res.status).toBe(401);
+  });
 });
 
 // Composition root was refactored from server/index.ts into per-domain
@@ -265,6 +282,37 @@ describe('Stage 4: Backend beta contract smoke net', () => {
     // AnA RI / chat.
     expect(aiRoutes).toContain("app.use('/api/ana-ri'");
     expect(aiRoutes).toContain("app.use('/api/chat'");
+  });
+
+  it('wires the ui-v2 backend gap closures (DMS search, rollup, registrations, validation-kit, HAQ, eTMF)', () => {
+    const inlineRoutes = fs.readFileSync(
+      path.join(repoRoot, 'server/bootstrap/register-inline-routes.ts'),
+      'utf8'
+    );
+    const docRoutes = fs.readFileSync(
+      path.join(repoRoot, 'server/bootstrap/register-document-routes.ts'),
+      'utf8'
+    );
+    const guard = fs.readFileSync(
+      path.join(repoRoot, 'server/middleware/staticDataGuard.ts'),
+      'utf8'
+    );
+
+    // Registrations capability + GAMP 5 validation-kit self-serve mounts.
+    expect(inlineRoutes).toContain("app.use('/api/registrations', authMiddleware, registrationsStandardsRoutes)");
+    expect(inlineRoutes).toContain("app.use('/api/validation-kit', authMiddleware, validationKitRoutes)");
+
+    // eTMF collapsed to a single gateway (both route families, one auth pass).
+    expect(inlineRoutes).toContain('const etmfGateway = express.Router();');
+    expect(inlineRoutes).toContain('etmfGateway.use(etmfCompletenessModule.default);');
+    expect(inlineRoutes).toContain('etmfGateway.use(etmfGovernedModule.default);');
+
+    // HAQ Manager mounted unconditionally (guard removed — persisted data source).
+    expect(docRoutes).toContain("app.use('/api/haq-manager', haqModule.default);");
+    expect(docRoutes).not.toContain("isStaticDataEnabled('ENABLE_HAQ_MANAGER_STATIC_DATA')");
+    // The flag is gone as an active STATIC_DATA_FLAGS entry (quoted); an
+    // explanatory comment may still name it unquoted.
+    expect(guard).not.toContain("'ENABLE_HAQ_MANAGER_STATIC_DATA'");
   });
 
   it('keeps concept2cure router tenant-scoped and envelope-based', () => {

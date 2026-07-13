@@ -134,14 +134,18 @@ export async function registerDocumentRoutes({
   }
 
   // ── HAQ Response Manager (FDA IR, EMA D120, PMDA, HC question tracking) ──
+  //
+  // Mounted unconditionally: every endpoint reads/writes org-scoped persisted
+  // data through the projectMemoryEntries feature store (createFeatureStore
+  // 'haq_question') — there is no static/mock business data here. The former
+  // ENABLE_HAQ_MANAGER_STATIC_DATA guard was mis-applied (it 503'd a governed
+  // persisted feature); per docs/ga-static-data-route-hardening.md the flag is
+  // removed once a route is backed by a governed persisted data source, which
+  // this is. Auth + tenant-scope live inside the router.
   try {
     const haqModule = await import('../routes/haq-manager');
-    if (isStaticDataEnabled('ENABLE_HAQ_MANAGER_STATIC_DATA')) {
-      app.use('/api/haq-manager', haqModule.default);
-      console.log('✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)');
-    } else {
-      mountStaticBusinessDataGuard('/api/haq-manager', 'HAQ Response Manager routes', 'ENABLE_HAQ_MANAGER_STATIC_DATA');
-    }
+    app.use('/api/haq-manager', haqModule.default);
+    console.log('✅ HAQ Response Manager routes mounted (question tracking, AI drafting, review workflow)');
   } catch (error) {
     console.error('❌ Failed to mount HAQ Manager routes:', error);
   }

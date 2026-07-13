@@ -27,6 +27,37 @@
   --dur: var(--dur-normal);
 
   --border-light: var(--border-subtle, var(--border));
+  /* projects-prototype.css references --border-200 (defined only inside the
+     pdev module's scoped sheet); alias to the same bg-300 value globally so
+     the per-file token-cascade gate resolves it. */
+  --border-200: var(--bg-300);
+  --border-100: var(--bg-200);
+
+  /* Layout widths — the v2/biopharma/mdx family sheets reference these; the
+     module roots re-declare them scoped (app-v2.css .c2c-v2, mdx app.css),
+     which wins over this :root fallback. Declared here so the per-file
+     token-cascade gate resolves them in every family sheet. */
+  --rail: 264px;
+  --rail-collapsed: 56px;
+  --rail-expanded: 260px;
+
+  /* pdev module vars — defined on the module's scoped root in
+     concept2cure/pdev/app.css (which wins); mirrored here for the gate. */
+  --pdev-rail-w: 280px;
+  --pdev-rail-collapsed: 56px;
+  --pdev-ana-w: 380px;
+  --pdev-ana-seam: 32px;
+  --pdev-dur: var(--dur-normal, 200ms);
+  --pdev-ease: var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  --error-text: #8a2929;
+
+  /* Element-scoped dynamic vars: [data-tone] rules set --t/--tm per tone and
+     gauges set --pct inline; these :root defaults only give var() a resolvable
+     fallback (idle tone, empty gauge) and are always overridden in use. */
+  --t: var(--text-400);
+  --tm: var(--idle-muted);
+  --pct: 0;
+  --bg-50: var(--bg-100);
 
   /* Status colors — projects-prototype.css uses bare --err/--ok aliases. */
   --err: var(--error);
