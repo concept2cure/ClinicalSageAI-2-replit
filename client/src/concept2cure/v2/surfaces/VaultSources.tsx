@@ -7,7 +7,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { useLive, SampleTag } from '../dataConnect';
+import { useLive, liveGet, SampleTag } from '../dataConnect';
 import {
   VAULT_SOURCES,
   vaultSourceConnected,
@@ -151,6 +151,9 @@ interface DmsSearchProps {
   onNav?: (target: string) => void;
 }
 
+/* Honest empty result when the backend is unreachable — never fabricated docs. */
+const EMPTY_DMS: DmsResult = { documents: [], skipped: [], sample: true };
+
 export function DmsSearch({ q, onNav }: DmsSearchProps) {
   const [res, setRes] = useState<DmsResult | null>(null);
   const [loading, setLoading] = useState(false);
@@ -161,12 +164,15 @@ export function DmsSearch({ q, onNav }: DmsSearchProps) {
     let cancel = false;
     setLoading(true);
     const t = setTimeout(() => {
-      /* window.C2C_DMS has no typed provider yet (kit data-connect.jsx
-         C2C_DMS is unported); GAP RULE — the empty sample result stays. */
-      ((window as any).C2C_DMS
-        ? (window as any).C2C_DMS.search(query)
-        : Promise.resolve({ documents: [], skipped: [], sample: true }))
-        .then((r: DmsResult) => { if (!cancel) { setRes(r); setLoading(false); } })
+      /* Live cross-repository search via /api/knowledge-base/search-connectors
+         (services/integrations/connector-search). liveGet falls back to the
+         empty fixture with sample:true when the backend is unreachable, so an
+         offline shell degrades honestly rather than fabricating documents. */
+      liveGet<DmsResult>(
+        `/api/knowledge-base/search-connectors?q=${encodeURIComponent(query)}`,
+        EMPTY_DMS,
+      )
+        .then((r) => { if (!cancel) { setRes({ ...r.data, sample: r.sample }); setLoading(false); } })
         .catch(() => { if (!cancel) { setRes(null); setLoading(false); } });
     }, 320);
     return () => { cancel = true; clearTimeout(t); };

@@ -165,4 +165,100 @@ router.get('/ana-drafts', async (req: Request, res: Response) => {
   }
 });
 
+/* ── Authoring-outcome rollup ─────────────────────────────────────────────
+   GET /api/mdx/ana-drafts/rollup
+
+   Cross-run rollup of AnA authoring outcomes, replacing BatchDraft's
+   per-run-only metrics with a durable figure. Counts are org-scoped and
+   accurate: `drafted_at` is stamped when AnA drafts a section and survives
+   acceptance (accept clears draft_source, stamps accepted_at — see
+   POST /api/cerv2-sections/:id/accept-ana-draft), so:
+     drafted  = drafted_at IS NOT NULL
+     accepted = drafted_at IS NOT NULL AND accepted_at IS NOT NULL
+     inReview = drafted - accepted
+
+   Scope note (honest, not a limitation to hide): cerv2_510k_sections carries
+   organization_id but NO program_id, so a per-program breakdown cannot be
+   attributed from the schema without a migration (a section→program link) —
+   a GROUP BY over the org-only join would double-count in a multi-program
+   org. We therefore report org-level totals, and attach the single program's
+   identity only when the org has exactly one active program (the common seed
+   case), where the org rollup IS that program's rollup. Latency is likewise
+   not persisted for authoring drafts, so it is omitted rather than invented.
+   Per-program + latency are tracked as a follow-up requiring a schema change. */
+
+interface RollupCountRow {
+  drafted: string;
+  accepted: string;
+}
+
+interface ProgramIdentityRow {
+  program_id: string;
+  program_code: string | null;
+  program_name: string | null;
+  regulatory_path: string | null;
+}
+
+router.get('/ana-drafts/rollup', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+
+  try {
+    const { rows: countRows } = await pool.query<RollupCountRow>(
+      `SELECT
+          COUNT(*) FILTER (WHERE drafted_at IS NOT NULL)                            AS drafted,
+          COUNT(*) FILTER (WHERE drafted_at IS NOT NULL AND accepted_at IS NOT NULL) AS accepted
+       FROM cerv2_510k_sections
+       WHERE organization_id = $1`,
+      [orgId],
+    );
+
+    const drafted = Number(countRows[0]?.drafted ?? 0);
+    const accepted = Number(countRows[0]?.accepted ?? 0);
+    const inReview = Math.max(drafted - accepted, 0);
+    const acceptanceRate = drafted > 0 ? Math.round((accepted / drafted) * 100) : 0;
+
+    /* Attach program identity only when it is unambiguous (exactly one active
+       program for the org). Never fabricate a per-program split. */
+    const { rows: progRows } = await pool.query<ProgramIdentityRow>(
+      `SELECT id AS program_id, code AS program_code, name AS program_name,
+              regulatory_path
+       FROM regulatory_programs
+       WHERE organization_id = $1 AND deleted_at IS NULL
+       LIMIT 2`,
+      [orgId],
+    );
+    const program =
+      progRows.length === 1
+        ? {
+            programId:   progRows[0].program_id,
+            programCode: progRows[0].program_code,
+            programName: progRows[0].program_name,
+            pathway: progRows[0].regulatory_path
+              ? REGULATORY_PATH_TO_PATHWAY[progRows[0].regulatory_path.toLowerCase()] ?? null
+              : null,
+          }
+        : null;
+
+    return ok(
+      res,
+      { scope: 'organization', drafted, accepted, inReview, acceptanceRate, program },
+      {
+        programCount: progRows.length,
+        note: 'Org-level rollup. Per-program breakdown and draft latency require a section→program link and a persisted latency column (deferred).',
+      },
+    );
+  } catch (err: unknown) {
+    const code = (err as { code?: string }).code;
+    if (code === '42703') {
+      return clientError(
+        res,
+        409,
+        'Authoring-outcome rollup not provisioned — apply migration 20260506_kit_section_draft_provenance.sql',
+      );
+    }
+    return serverError(res, log, 'ana-drafts-rollup', err);
+  }
+});
+
 export default router;

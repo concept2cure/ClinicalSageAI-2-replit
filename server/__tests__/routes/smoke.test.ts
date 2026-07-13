@@ -230,6 +230,23 @@ describe('Rescue Cut: Core Workflow API Integration', () => {
 
     expect(res.status).toBe(401);
   });
+
+  it('enforces auth on GET /api/knowledge-base/search-connectors (DMS cross-repo search mount)', async () => {
+    const module = await import('../../routes/knowledge-base');
+    const router = module.default;
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/knowledge-base', router);
+
+    const res = await request(app)
+      .get('/api/knowledge-base/search-connectors?q=protocol')
+      .set('Authorization', 'Bearer invalid.jwt.token');
+
+    // The connector-search mount lives behind the router's authenticateToken;
+    // an invalid JWT must never reach the org's connected repositories.
+    expect(res.status).toBe(401);
+  });
 });
 
 // Composition root was refactored from server/index.ts into per-domain

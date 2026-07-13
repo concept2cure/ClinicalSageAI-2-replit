@@ -1,7 +1,24 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
+import { useLive } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
+
+/* Submission data-standards capability chips — live from
+   /api/registrations/data-standards (server-truthful shipped/not_integrated
+   states), with this honest list as the offline fixture fallback. */
+interface DataStandard {
+  id: string;
+  label: string;
+  status: 'shipped' | 'not_integrated';
+  detail?: string;
+}
+const REG_STANDARDS_FALLBACK: DataStandard[] = [
+  { id: 'estar', label: 'eSTAR (FDA CDRH)', status: 'shipped' },
+  { id: 'ectd', label: 'eCTD compile · validate · export', status: 'shipped' },
+  { id: 'eudamed_m2m', label: 'EUDAMED M2M', status: 'not_integrated' },
+  { id: 'idmp_xevmpd', label: 'EU IDMP / xEVMPD', status: 'not_integrated' },
+];
 
 /* ── Inline fixture types ── */
 
@@ -197,6 +214,10 @@ function RegRow({ r, prod, onAsk }: RegRowProps) {
 
 export function Registrations({ onAsk }: SurfaceViewProps) {
   const [tab, setTab] = useState('reg');
+  const standards = useLive<DataStandard[]>(
+    '/api/registrations/data-standards',
+    REG_STANDARDS_FALLBACK,
+  );
   const all = [...REG_LIVE, ...REG_MARKETS];
   const approved = all.filter(r => r.status === 'approved').length;
   const review = all.filter(r => r.status === 'under-review').length;
@@ -242,10 +263,18 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
           </table>
           <div className="reg-standards">
             <span className="reg-std-l">Submission data standards</span>
-            <span className="reg-std ok">{I.check} eSTAR (FDA CDRH) &mdash; shipped</span>
-            <span className="reg-std ok">{I.check} eCTD compile {I.dot} validate {I.dot} export &mdash; shipped</span>
-            <span className="reg-std gap">{I.alertTriangle} EUDAMED M2M &mdash; not in the platform yet {I.dot} flagged</span>
-            <span className="reg-std gap">{I.alertTriangle} EU IDMP / xEVMPD &mdash; not in the platform yet {I.dot} flagged</span>
+            {(standards.data || REG_STANDARDS_FALLBACK).map((s) => (
+              <span
+                key={s.id}
+                className={'reg-std ' + (s.status === 'shipped' ? 'ok' : 'gap')}
+                title={s.detail}
+              >
+                {s.status === 'shipped' ? I.check : I.alertTriangle} {s.label} &mdash;{' '}
+                {s.status === 'shipped'
+                  ? 'shipped'
+                  : <>not in the platform yet {I.dot} flagged</>}
+              </span>
+            ))}
           </div>
         </div>
       )}

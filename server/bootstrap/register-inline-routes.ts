@@ -15,7 +15,7 @@
  * @module server/bootstrap/register-inline-routes
  */
 
-import type { Express, Request, Response } from 'express';
+import express, { type Express, type Request, type Response } from 'express';
 import type { Pool } from 'pg';
 
 import { authMiddleware } from '../auth.js';
@@ -37,6 +37,7 @@ import dossierReadinessRouter from '../routes/dossier-readiness';
 import regulatorySubmissionsRoutes from '../routes/regulatorySubmissions';
 import submissionOpsRoutes from '../routes/submission-ops';
 import regulatoryProgramsRoutes from '../routes/regulatory-programs';
+import registrationsStandardsRoutes from '../routes/registrations-standards';
 import savedPrecedentQueriesRoutes from '../routes/saved-precedent-queries';
 import mdxRoutes from '../routes/mdx';
 import mdxAnaDraftsRoutes from '../routes/mdx-ana-drafts';
@@ -413,11 +414,25 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Platform capabilities route:', error);
   }
 
-  // eTMF — Trial Master File completeness / inspection-readiness (DIA TMF RM).
+  // eTMF — one /api/etmf mount for both eTMF route families. They were
+  // previously mounted twice at the same prefix (here and again ~260 lines
+  // below), which ran authMiddleware twice per request and left a latent
+  // shadowing hazard (first-registered wins the day either router adds a path
+  // the other already defines). Their path sets are disjoint — etmf.routes is
+  // deterministic completeness / inspection-readiness (trial-scoped), etmf is
+  // governed C2C-08 CRUD (file-scoped) — so a single gateway router preserves
+  // every endpoint with one auth pass. Pattern mirrors the /api/programs
+  // gateway in register-document-routes.ts.
   try {
-    const etmfModule = await import('../routes/etmf.routes');
-    app.use('/api/etmf', authMiddleware, etmfModule.default);
-    console.info('✅ eTMF routes mounted (/api/etmf)');
+    const [etmfCompletenessModule, etmfGovernedModule] = await Promise.all([
+      import('../routes/etmf.routes'),
+      import('../routes/etmf'),
+    ]);
+    const etmfGateway = express.Router();
+    etmfGateway.use(etmfCompletenessModule.default);
+    etmfGateway.use(etmfGovernedModule.default);
+    app.use('/api/etmf', authMiddleware, etmfGateway);
+    console.info('✅ eTMF routes mounted (/api/etmf — completeness + governed CRUD)');
   } catch (error) {
     console.error('❌ Failed to mount eTMF routes:', error);
   }
@@ -674,14 +689,10 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Lifecycle Obligation routes:', error);
   }
 
-  // AI-native eTMF — DIA TMF Reference Model artifacts + completeness gap-check.
-  try {
-    const etmfModule = await import('../routes/etmf');
-    app.use('/api/etmf', authMiddleware, etmfModule.default);
-    console.info('✅ eTMF routes mounted (/api/etmf)');
-  } catch (error) {
-    console.error('❌ Failed to mount eTMF routes:', error);
-  }
+  // (eTMF governed CRUD — routes/etmf — is now mounted once via the single
+  // /api/etmf gateway above, alongside routes/etmf.routes. The former second
+  // mount here was removed to end the double authMiddleware pass and the
+  // latent route-shadowing hazard.)
 
   // Research compliance — roster, training-gating, compliance-checklist engine.
   try {
@@ -860,6 +871,9 @@ export function registerInlineSubmissionWorkflowRoutes({
   // Saved Precedent Queries + MDX module health.
   app.use('/api/submission-ops', submissionOpsRoutes);
   app.use('/api/regulatory-programs', regulatoryProgramsRoutes);
+  // Registrations surface — submission data-standards capability status (honest
+  // shipped/not_integrated states for eSTAR, eCTD, EUDAMED M2M, IDMP/xEVMPD).
+  app.use('/api/registrations', authMiddleware, registrationsStandardsRoutes);
   app.use('/api/saved-precedent-queries', savedPrecedentQueriesRoutes);
   app.use('/api/mdx', mdxRoutes);
   /* MDX beta-surface routers — each one backs a kit surface. Stacking
