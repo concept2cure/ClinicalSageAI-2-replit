@@ -19,14 +19,14 @@ describe('isUiV2Enabled', () => {
     setFeatureEnabled('ENABLE_UI_V2', featureFlags.ENABLE_UI_V2.defaultValue);
   });
 
-  it('ships dark: defaults to the flag default (false)', () => {
-    expect(featureFlags.ENABLE_UI_V2.defaultValue).toBe(false);
-    expect(isUiV2Enabled()).toBe(false);
+  it('on by default since Phase 7 (cleanup & acceptance)', () => {
+    expect(featureFlags.ENABLE_UI_V2.defaultValue).toBe(true);
+    expect(isUiV2Enabled()).toBe(true);
   });
 
   it('follows the feature flag when no override is present', () => {
-    setFeatureEnabled('ENABLE_UI_V2', true);
-    expect(isUiV2Enabled()).toBe(true);
+    setFeatureEnabled('ENABLE_UI_V2', false);
+    expect(isUiV2Enabled()).toBe(false);
   });
 
   it('localStorage override wins over the flag', () => {
