@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-13T04:05:49.843Z",
+  "generatedAt": "2026-07-13T07:51:39.492Z",
   "git": {
-    "sha": "1b96a7b0e516cc78702807408be75b84aebca51a",
+    "sha": "2fa78e7f54a89ff8de987a3324897cbd829f7ba4",
     "branch": "claude/elegant-lovelace-low2l9"
   },
   "thresholds": {
@@ -2884,14 +2884,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": -1
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

@@ -48,6 +48,85 @@ if (!fs.existsSync(exportsDir)) {
   fs.mkdirSync(exportsDir, { recursive: true });
 }
 
+const renderMarkdownPdfSchema = z.object({
+  title: z.string().max(300).optional(),
+  markdown: z.string().min(1),
+  compress: z.boolean().optional(),
+  quality: qualityEnum.optional(),
+});
+
+/**
+ * POST /api/pdf-tasks/render-markdown-pdf
+ *
+ * Render draft markdown to a PDF, with optional best-effort Ghostscript
+ * compression. Backs the Document Studio's "Download as PDF" (CC-P1).
+ *
+ * The base PDF is JS-native (pdfkit) and always produced. Compression is
+ * best-effort: if Ghostscript is unavailable — or the pass errors — the
+ * uncompressed PDF is returned with `X-Compression-Skipped` set, never a 5xx.
+ *
+ * Body: { title?, markdown, compress?, quality? }
+ * Response: application/pdf (binary). Headers:
+ *   X-Compression-Skipped: <reason>  — only when compression was requested but skipped
+ *   X-Compression-Ratio:   <0..1>    — only when compression ran
+ */
+router.post('/render-markdown-pdf', async (req: Request, res: Response) => {
+  const parsed = renderMarkdownPdfSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: 'markdown (non-empty string) is required', details: parsed.error.flatten() });
+  }
+  const { title, markdown, compress, quality } = parsed.data;
+
+  try {
+    const { renderMarkdownDraftToPDF } = await import('../services/documentExportService.js');
+    let pdf = await renderMarkdownDraftToPDF(title || 'Document', markdown);
+
+    let compressionSkipped: string | null = null;
+    let compressionRatio: number | null = null;
+
+    if (compress === true) {
+      const q = quality || 'ebook';
+      if (!(await isGhostscriptAvailable())) {
+        compressionSkipped = 'ghostscript_unavailable';
+      } else {
+        const workDir = fs.mkdtempSync(path.join(exportsDir, 'pdf-'));
+        const inPath = path.join(workDir, 'in.pdf');
+        const outPath = path.join(workDir, 'out.pdf');
+        try {
+          fs.writeFileSync(inPath, pdf);
+          const result = await compressPdfWithGhostscript({
+            inputPath: inPath,
+            outputPath: outPath,
+            quality: q,
+          });
+          pdf = fs.readFileSync(outPath);
+          compressionRatio = result.compressionRatio;
+        } catch (e) {
+          // Never lose the produced PDF on a compression error.
+          compressionSkipped = `ghostscript_error:${(e instanceof Error ? e.message : String(e)).slice(0, 120)}`;
+        } finally {
+          fs.rmSync(workDir, { recursive: true, force: true });
+        }
+      }
+    }
+
+    const stem = (title || 'document').replace(/[^\w.-]+/g, '_').slice(0, 80) || 'document';
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${stem}.pdf"`);
+    res.setHeader('Access-Control-Expose-Headers', 'X-Compression-Skipped, X-Compression-Ratio');
+    if (compressionSkipped) res.setHeader('X-Compression-Skipped', compressionSkipped);
+    if (compressionRatio !== null) res.setHeader('X-Compression-Ratio', String(compressionRatio));
+    return res.status(200).end(pdf);
+  } catch (err) {
+    console.error('Error rendering markdown PDF:', err);
+    return res
+      .status(500)
+      .json({ error: 'PDF render failed', message: err instanceof Error ? err.message : String(err) });
+  }
+});
+
 /**
  * Schedule enhanced PDF generation with email notification
  */
