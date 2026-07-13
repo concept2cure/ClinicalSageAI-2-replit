@@ -1,7 +1,10 @@
 import type { NextFunction, Request, Response } from 'express';
 
 export const STATIC_DATA_FLAGS = [
-  'ENABLE_HAQ_MANAGER_STATIC_DATA',
+  // ENABLE_HAQ_MANAGER_STATIC_DATA was removed: HAQ Manager is backed by a
+  // governed persisted data source (projectMemoryEntries), not static business
+  // data, so it is mounted unconditionally. Per the hardening runbook, a flag
+  // is retired once its route runs on persisted data.
   'ENABLE_MISSION_CONTROL_STATIC_DATA',
 ] as const;
 

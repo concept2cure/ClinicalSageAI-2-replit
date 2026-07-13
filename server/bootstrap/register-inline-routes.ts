@@ -38,6 +38,7 @@ import regulatorySubmissionsRoutes from '../routes/regulatorySubmissions';
 import submissionOpsRoutes from '../routes/submission-ops';
 import regulatoryProgramsRoutes from '../routes/regulatory-programs';
 import registrationsStandardsRoutes from '../routes/registrations-standards';
+import validationKitRoutes from '../routes/validation-kit';
 import savedPrecedentQueriesRoutes from '../routes/saved-precedent-queries';
 import mdxRoutes from '../routes/mdx';
 import mdxAnaDraftsRoutes from '../routes/mdx-ana-drafts';
@@ -874,6 +875,9 @@ export function registerInlineSubmissionWorkflowRoutes({
   // Registrations surface — submission data-standards capability status (honest
   // shipped/not_integrated states for eSTAR, eCTD, EUDAMED M2M, IDMP/xEVMPD).
   app.use('/api/registrations', authMiddleware, registrationsStandardsRoutes);
+  // GAMP 5 validation-kit — self-serve catalog + download, backed by the real
+  // documents under docs/validation/ with their true (draft) status.
+  app.use('/api/validation-kit', authMiddleware, validationKitRoutes);
   app.use('/api/saved-precedent-queries', savedPrecedentQueriesRoutes);
   app.use('/api/mdx', mdxRoutes);
   /* MDX beta-surface routers — each one backs a kit surface. Stacking

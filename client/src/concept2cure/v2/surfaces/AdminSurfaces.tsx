@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLive } from '../dataConnect';
+import { getAuthToken } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { getSurfaceMeta } from '../registryModel';
 import { LIC_ROLES } from '../fixtures/licensing';
@@ -1241,8 +1242,55 @@ interface AcFormState {
   reason: string;
 }
 
+/* GAMP 5 validation-kit — self-serve catalog from /api/validation-kit, backed
+   by the real documents under docs/validation/. Offline (empty fixture) the
+   GAMP row falls back to the honest "provided at contract" state, since
+   self-serve download requires the backend. */
+interface ValidationArtifact {
+  docId: string;
+  type: string;
+  title: string;
+  version: string | null;
+  status: string | null;
+  sizeBytes: number;
+}
+interface ValidationKit {
+  artifacts: ValidationArtifact[];
+  note: string;
+}
+const VKIT_FALLBACK: ValidationKit = { artifacts: [], note: '' };
+
+/** Short badge from a document's own status line (drafts ship as DRAFT). */
+function vkitBadge(status: string | null): string {
+  if (!status) return 'Available';
+  if (/draft/i.test(status)) return 'Draft';
+  if (/approved|final|released/i.test(status)) return 'Approved';
+  return 'Available';
+}
+
+/** Authenticated download — the endpoint is Bearer-gated, so an <a href> can't
+    carry the JWT; fetch with the token and stream the blob to a download. */
+async function downloadValidationDoc(docId: string, filename: string): Promise<void> {
+  const token = getAuthToken();
+  const res = await fetch(`/api/validation-kit/${encodeURIComponent(docId)}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) return;
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
 export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
   const [sec, setSec] = useState('access');
+  const vkit = useLive<ValidationKit>('/api/validation-kit', VKIT_FALLBACK);
+  const vkitDocs = vkit.data?.artifacts ?? [];
   const [grants, setGrants] = useState<AcGrant[]>(AC_GRANTS);
   const [form, setForm] = useState<AcFormState>({ email: '', role: 'support', reason: '' });
   const [toast, fireToast] = useToast();
@@ -1382,10 +1430,36 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                         Release-by-release validation documentation for your
                         computer-system-validation file.
                       </span>
+                      {vkitDocs.length > 0 && (
+                        <div className="ac-val-docs">
+                          {vkitDocs.map((d) => (
+                            <button
+                              key={d.docId}
+                              type="button"
+                              className="ac-val-doc"
+                              title={d.status || undefined}
+                              onClick={() => downloadValidationDoc(d.docId, `${d.docId}.md`)}
+                            >
+                              {I.download}
+                              <span className="ac-val-doc-t">{d.type}</span>
+                              <span className="ac-val-doc-id">{d.docId}</span>
+                              <span className={'ac-val-doc-st ' + vkitBadge(d.status).toLowerCase()}>
+                                {vkitBadge(d.status)}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <span className="ac-val-st soon">
-                      Provided at contract -- not yet self-serve
-                    </span>
+                    {vkitDocs.length > 0 ? (
+                      <span className="ac-val-st ok">
+                        {I.check} Self-serve -- {vkitDocs.length} document{vkitDocs.length === 1 ? '' : 's'}
+                      </span>
+                    ) : (
+                      <span className="ac-val-st soon">
+                        Provided at contract -- not yet self-serve
+                      </span>
+                    )}
                   </div>
                   <div className="ac-val-row">
                     <div className="ac-val-main">
@@ -1401,8 +1475,9 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                 </div>
                 <div className="ac-val-note">
                   {I.shieldCheck} Every governed mutation carries a reason-for-change and lands
-                  in the audit trail. The two rows marked "provided at contract" are the only items
-                  not yet self-serve -- tracked openly, never claimed early.
+                  in the audit trail. Any row marked "provided at contract" is not yet self-serve
+                  -- tracked openly, never claimed early. Validation protocols download as drafts;
+                  executed and approved records are provided through QA at contract.
                 </div>
               </div>
             )}

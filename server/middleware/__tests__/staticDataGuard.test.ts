@@ -53,7 +53,7 @@ describe('staticDataGuard', () => {
   it('throws if static-data flags are enabled in production', () => {
     expect(() =>
       assertNoStaticDataFlagsInProduction('production', {
-        ENABLE_HAQ_MANAGER_STATIC_DATA: 'true',
+        ENABLE_MISSION_CONTROL_STATIC_DATA: 'true',
       } as NodeJS.ProcessEnv)
     ).toThrow(/Static-data routes cannot be enabled in production/);
   });
@@ -61,7 +61,7 @@ describe('staticDataGuard', () => {
   it('does not throw outside production', () => {
     expect(() =>
       assertNoStaticDataFlagsInProduction('development', {
-        ENABLE_HAQ_MANAGER_STATIC_DATA: 'true',
+        ENABLE_MISSION_CONTROL_STATIC_DATA: 'true',
       } as NodeJS.ProcessEnv)
     ).not.toThrow();
   });

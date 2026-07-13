@@ -284,6 +284,37 @@ describe('Stage 4: Backend beta contract smoke net', () => {
     expect(aiRoutes).toContain("app.use('/api/chat'");
   });
 
+  it('wires the ui-v2 backend gap closures (DMS search, rollup, registrations, validation-kit, HAQ, eTMF)', () => {
+    const inlineRoutes = fs.readFileSync(
+      path.join(repoRoot, 'server/bootstrap/register-inline-routes.ts'),
+      'utf8'
+    );
+    const docRoutes = fs.readFileSync(
+      path.join(repoRoot, 'server/bootstrap/register-document-routes.ts'),
+      'utf8'
+    );
+    const guard = fs.readFileSync(
+      path.join(repoRoot, 'server/middleware/staticDataGuard.ts'),
+      'utf8'
+    );
+
+    // Registrations capability + GAMP 5 validation-kit self-serve mounts.
+    expect(inlineRoutes).toContain("app.use('/api/registrations', authMiddleware, registrationsStandardsRoutes)");
+    expect(inlineRoutes).toContain("app.use('/api/validation-kit', authMiddleware, validationKitRoutes)");
+
+    // eTMF collapsed to a single gateway (both route families, one auth pass).
+    expect(inlineRoutes).toContain('const etmfGateway = express.Router();');
+    expect(inlineRoutes).toContain('etmfGateway.use(etmfCompletenessModule.default);');
+    expect(inlineRoutes).toContain('etmfGateway.use(etmfGovernedModule.default);');
+
+    // HAQ Manager mounted unconditionally (guard removed — persisted data source).
+    expect(docRoutes).toContain("app.use('/api/haq-manager', haqModule.default);");
+    expect(docRoutes).not.toContain("isStaticDataEnabled('ENABLE_HAQ_MANAGER_STATIC_DATA')");
+    // The flag is gone as an active STATIC_DATA_FLAGS entry (quoted); an
+    // explanatory comment may still name it unquoted.
+    expect(guard).not.toContain("'ENABLE_HAQ_MANAGER_STATIC_DATA'");
+  });
+
   it('keeps concept2cure router tenant-scoped and envelope-based', () => {
     const content = fs.readFileSync(path.join(repoRoot, 'server/routes/concept2cure.ts'), 'utf8');
 
