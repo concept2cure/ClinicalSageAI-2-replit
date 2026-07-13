@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-13T07:51:59.557Z",
+  "generatedAt": "2026-07-13T19:54:49.157Z",
   "git": {
-    "sha": "56048e020d1af484947f8888b6de55b7bed475fa",
-    "branch": "claude/elegant-lovelace-low2l9"
+    "sha": "a32a0067c2d9553f831eb1f180decb7fa00b9900",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
@@ -2627,12 +2627,12 @@
         "lines": 2559
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "lines": 2504
+        "file": "server/routes/knowledge-base.ts",
+        "lines": 2557
       },
       {
-        "file": "server/routes/knowledge-base.ts",
-        "lines": 2501
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "lines": 2504
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2803,6 +2803,10 @@
         "lines": 1785
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 1749
+      },
+      {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
       },
@@ -2825,10 +2829,6 @@
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
         "lines": 1678
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 1674
       },
       {
         "file": "server/services/unifiedDocumentIngestion.js",
@@ -2884,14 +2884,7 @@
       }
     ]
   },
-  "comparison": {
-    "baseline": "docs/reports/repo-health-scan-latest.json",
-    "delta": {
-      "duplicateBasenames": 0,
-      "largeFilesByBytes": 0,
-      "largeFilesByLines": 0
-    }
-  },
+  "comparison": null,
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

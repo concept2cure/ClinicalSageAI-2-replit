@@ -1,18 +1,14 @@
 # Repo Health Scan
 
-Generated: 2026-07-13T07:51:59.557Z
-Branch: claude/elegant-lovelace-low2l9
-SHA: 56048e020d1af484947f8888b6de55b7bed475fa
+Generated: 2026-07-13T19:54:49.157Z
+Branch: concept2cure-v2
+SHA: a32a0067c2d9553f831eb1f180decb7fa00b9900
 
 ## Summary
 
 - Duplicate basenames: 244
 - Files over byte threshold: 29
 - Files over line threshold: 83
-- Baseline: docs/reports/repo-health-scan-latest.json
-- Delta duplicate basenames: 0
-- Delta files over byte threshold: 0
-- Delta files over line threshold: 0
 
 ## Owner Summary
 
