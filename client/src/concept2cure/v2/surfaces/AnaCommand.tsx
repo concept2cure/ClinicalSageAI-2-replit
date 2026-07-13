@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, connected, liveGet } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
@@ -57,10 +57,10 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
   const [portState, setPortState] = useState<{ data: AcPortfolioItem[]; sample: boolean }>({ data: AC_PORTFOLIO, sample: true });
   useEffect(() => {
     const fx = AC_PORTFOLIO;
-    const conn = c2cApi && c2cApi.connected();
-    if (!conn) { setPortState({ data: fx, sample: true }); return; }
-    c2cApi.get('/api/report-os/portfolio/org')
-      .then((r: any) => {
+    if (!connected()) { setPortState({ data: fx, sample: true }); return; }
+    liveGet<any>('/api/report-os/portfolio/org', null)
+      .then(({ data: r, sample }) => {
+        if (sample) { setPortState({ data: fx, sample: true }); return; }
         const rows = (r && (r.attentionRanked || (r.data && r.data.attentionRanked))) || [];
         if (!rows.length) { setPortState({ data: fx, sample: true }); return; }
         const mapped: AcPortfolioItem[] = rows.map((m: any) => ({
@@ -79,8 +79,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
           module: '',
         }));
         setPortState({ data: mapped, sample: false });
-      })
-      .catch(() => setPortState({ data: fx, sample: true }));
+      });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const PORT = (portState.data && portState.data.length) ? portState.data : AC_PORTFOLIO;

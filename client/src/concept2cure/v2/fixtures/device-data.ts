@@ -46,9 +46,9 @@ export interface DevicePathway {
   sections: DeviceSection[]; tabs: string[];
   content: Record<string, ContentBlock[]>;
   predicate: PredicateData | null;
-  classification: Record<string, unknown>;
-  risk: { standard: string; count: number; extreme: number; rows: RiskRow[] };
-  performance: { groups: PerformanceGroup[] };
+  classification?: Record<string, unknown>;
+  risk?: { standard: string; count: number; extreme: number; rows: RiskRow[] };
+  performance?: { groups: PerformanceGroup[] };
   assembly: Record<string, unknown>;
   findings: Finding[];
   ana: { section: string; activity: Array<{ type: string; text: string; when: string }>; actions: Array<{ id: string; label: string; icon: string; prompt: string }> };
@@ -328,9 +328,9 @@ export const DV: DeviceHubData = {
   pathways: {
     '510k': pathway510k,
     'denovo': pathwayDeNovo,
-    'pma': pmaPathway as DevicePathway,
-    'cer': cerPathway as DevicePathway,
-    'ivdr': ivdrPathway as DevicePathway,
+    'pma': pmaPathway,
+    'cer': cerPathway,
+    'ivdr': ivdrPathway,
   },
   markets: DV_MARKETS,
   mdsap: { authority: 'MDSAP — AU · BR · CA · JP · US', note: 'One ISO 13485 QMS audit recognised by five regulators — foundational to the Canada, Brazil, Australia and Japan pathways.' },

@@ -7,6 +7,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
+import { useLive, SampleTag } from '../dataConnect';
 import {
   VAULT_SOURCES,
   vaultSourceConnected,
@@ -103,6 +104,8 @@ export function SourceBar({ searchPlaceholder, onSearch, standardLabel, filingLa
                 : <>Link your {active.label} account to search and import. Import runs <b>detect → classify → approve</b> into governed artifacts <span className="vsrc-ep">POST /api/mdx/imports</span>.</>}
             </div>
           )}
+          {/* window.openAna (opens the AnA rail) has no typed provider and
+              SourceBar takes no onAsk prop; GAP RULE — optional call stays. */}
           <div className="vsrc-panel-acts">
             {active.gap ? (
               <button className="btn ghost sm" onClick={() => { ((window as any).openAna || (() => {}))('Flag Google Drive as a requested Vault connector for our org.'); }}>{I.flag || I.plus} Request this connector</button>
@@ -158,6 +161,8 @@ export function DmsSearch({ q, onNav }: DmsSearchProps) {
     let cancel = false;
     setLoading(true);
     const t = setTimeout(() => {
+      /* window.C2C_DMS has no typed provider yet (kit data-connect.jsx
+         C2C_DMS is unported); GAP RULE — the empty sample result stays. */
       ((window as any).C2C_DMS
         ? (window as any).C2C_DMS.search(query)
         : Promise.resolve({ documents: [], skipped: [], sample: true }))
@@ -365,13 +370,16 @@ interface VaultProjectStripProps {
 }
 
 export function VaultProjectStrip({ onNav, onAsk }: VaultProjectStripProps) {
+  /* C2C_PROJECT, PD_FIXTURES and PD_MODULE_LABELS are runtime window channels
+     with no typed provider yet (kit project-detail.jsx is unported); GAP RULE
+     — the reads keep their fixture fallbacks rather than inventing one. */
   const proj = (window as any).C2C_PROJECT || null;
   const pid = (proj && proj.id && proj.id !== 'new') ? proj.id : 'bx-301';
   const fx = ((window as any).PD_FIXTURES ? (window as any).PD_FIXTURES(proj) : { project: {}, workstreams: [], drafts: [] });
   const base = '/api/c2c/projects/' + encodeURIComponent(pid);
-  const P = (window as any).useLive ? (window as any).useLive(base, fx.project, [pid]) : { data: fx.project, sample: true };
-  const WS = (window as any).useLive ? (window as any).useLive(base + '/workstreams', fx.workstreams, [pid]) : { data: fx.workstreams, sample: true };
-  const DR = (window as any).useLive ? (window as any).useLive(base + '/drafts', fx.drafts, [pid]) : { data: fx.drafts, sample: true };
+  const P = useLive(base, fx.project, [pid]);
+  const WS = useLive(base + '/workstreams', fx.workstreams, [pid]);
+  const DR = useLive(base + '/drafts', fx.drafts, [pid]);
   const project = P.data || fx.project || {};
   const workstreams: any[] = WS.data || [];
   const drafts: any[] = DR.data || [];
@@ -401,13 +409,11 @@ export function VaultProjectStrip({ onNav, onAsk }: VaultProjectStripProps) {
     return Math.round(h / 24) + 'd ago';
   };
 
-  const SampleTag = (window as any).SampleTag as React.ComponentType<{ sample: boolean }> | undefined;
-
   return (
     <div className="vps">
       <div className="vps-head">
         <div className="vps-t">{I.folder} From Project management
-          <span className="vps-x">— {(project.code || project.program_type || 'Project')} · {ready}% ready {SampleTag ? <SampleTag sample={sample} /> : null}</span>
+          <span className="vps-x">— {(project.code || project.program_type || 'Project')} · {ready}% ready <SampleTag sample={sample} /></span>
         </div>
         <button className="btn ghost sm" onClick={() => { if (onNav) onNav('project-home'); }}>Open project workspace {I.arrowRight || I.chevronRight}</button>
       </div>

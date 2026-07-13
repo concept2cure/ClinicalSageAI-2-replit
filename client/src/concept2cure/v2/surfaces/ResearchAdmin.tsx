@@ -2,6 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { SampleTag } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import {
+  PDEV_CITI, PDEV_COMMITTEES, PDEV_COVERAGE, PDEV_GRANTS, PDEV_PORTFOLIO_ANALYTICS,
+} from '../fixtures/protocol-data';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -17,10 +20,9 @@ import '../styles/project-home-v2.css';
    Source: docs/RESEARCH_ADMIN_UI_REQUIREMENTS_2026-06-29.md
    Registers as SURFACE_VIEWS['research-admin'].
 
-   NOTE: This surface depends on runtime data injected as window globals
-   by the kit (PDEV_COMMITTEES, PDEV_COVERAGE, PDEV_GRANTS, PDEV_CITI,
-   PDEV_PORTFOLIO_ANALYTICS). When those are absent the sections render
-   placeholder states.
+   NOTE: Section data (PDEV_COMMITTEES, PDEV_COVERAGE, PDEV_GRANTS,
+   PDEV_CITI, PDEV_PORTFOLIO_ANALYTICS) is imported from the typed
+   fixtures/protocol-data module (ported from the kit's window globals).
    ═══════════════════════════════════════════════════════════════════ */
 
 /* ── Types ── */
@@ -52,7 +54,7 @@ interface MeetingData {
   committee: string;
   present: string[];
   quorumRequired: number;
-  agenda: { protocol: string; risk: string; votes: Record<string, string> }[];
+  agenda: { protocol: string; risk: string; votes: Record<string, string | null> }[];
 }
 
 interface CoverageItem {
@@ -175,7 +177,7 @@ function GovernedActionDialog({ open, onClose, onConfirm, title, intent, basis, 
 /* ════ Committees ════ */
 
 function Committees({ onGov }: { onGov: (cfg: GovAction) => void }) {
-  const C = (window as any).PDEV_COMMITTEES;
+  const C = PDEV_COMMITTEES;
   if (!C) return <div className="ra-sec"><div className="ra-empty-sec">Committee data not loaded (PDEV_COMMITTEES)</div></div>;
   const [type, setType] = useState<string>(C.active);
   const members: CommitteeMember[] = C.members[type] || [];
@@ -236,7 +238,7 @@ function MeetingPoll({ C, meeting, onGov }: { C: any; meeting: MeetingData; onGo
   const allMembers: CommitteeMember[] = C.members[meeting.committee] || [];
   const present = meeting.present;
   const item = meeting.agenda[0];
-  const [votes, setVotes] = useState<Record<string, string>>(() => ({ ...item.votes }));
+  const [votes, setVotes] = useState<Record<string, string | null>>(() => ({ ...item.votes }));
   const setVote = (mid: string, v: string) => setVotes(p => ({ ...p, [mid]: v }));
   /* Quorum: majority present incl >=1 nonscientist present, recused do not count */
   const presentMembers = allMembers.filter(m => present.includes(m.id));
@@ -316,7 +318,7 @@ function MeetingPoll({ C, meeting, onGov }: { C: any; meeting: MeetingData; onGo
 /* ════ Coverage analysis ════ */
 
 function Coverage({ onGov }: { onGov: (cfg: GovAction) => void }) {
-  const data = (window as any).PDEV_COVERAGE;
+  const data = PDEV_COVERAGE;
   if (!data) return <div className="ra-sec"><div className="ra-empty-sec">Coverage data not loaded (PDEV_COVERAGE)</div></div>;
   const A: CoverageAnalysis = data.analysis;
   const [items, setItems] = useState<CoverageItem[]>(A.items);
@@ -381,7 +383,7 @@ function Coverage({ onGov }: { onGov: (cfg: GovAction) => void }) {
 /* ════ Grant finder ════ */
 
 function Grants() {
-  const G = (window as any).PDEV_GRANTS;
+  const G = PDEV_GRANTS;
   if (!G) return <div className="ra-sec"><div className="ra-empty-sec">Grant data not loaded (PDEV_GRANTS)</div></div>;
   const [q, setQ] = useState('');
   const opps: GrantOpportunity[] = (G.opportunities || []).filter((o: GrantOpportunity) => !q || o.title.toLowerCase().includes(q.toLowerCase()) || o.agency.toLowerCase().includes(q.toLowerCase()));
@@ -438,7 +440,7 @@ function ProfRow({ k, items }: { k: string; items: string[] }) {
 /* ════ CITI training matrix ════ */
 
 function Training() {
-  const T = (window as any).PDEV_CITI;
+  const T = PDEV_CITI;
   if (!T) return <div className="ra-sec"><div className="ra-empty-sec">CITI training data not loaded (PDEV_CITI)</div></div>;
   const cellTone: Record<string, string> = { current: 'ok', expiring: 'warn', expired: 'err', missing: 'err', 'n/a': 'idle' };
   return (
@@ -487,14 +489,14 @@ function Training() {
 /* ════ Portfolio analytics ════ */
 
 function Portfolio() {
-  const P = (window as any).PDEV_PORTFOLIO_ANALYTICS;
+  const P = PDEV_PORTFOLIO_ANALYTICS;
   if (!P) return <div className="ra-sec"><div className="ra-empty-sec">Portfolio data not loaded (PDEV_PORTFOLIO_ANALYTICS)</div></div>;
   const buckets = [
     { id: 'expired', label: 'Expired', t: 'err' },
     { id: 'due_30', label: 'Due <=30d', t: 'warn' },
     { id: 'due_90', label: 'Due <=90d', t: 'ai' },
     { id: 'current', label: 'Current', t: 'ok' },
-  ];
+  ] as const;
   const urgTone: Record<string, string> = { expired: 'err', due_30: 'warn', due_90: 'ai', upcoming: 'idle' };
 
   return (
@@ -502,7 +504,7 @@ function Portfolio() {
       <div className="ra-buckets">
         {buckets.map(b => (
           <div key={b.id} className="ra-bucket" data-tone={b.t}>
-            <div className="ra-bucket-n">{(P.buckets || {})[b.id] || 0}</div>
+            <div className="ra-bucket-n">{P.buckets[b.id] || 0}</div>
             <div className="ra-bucket-l">{b.label}</div>
           </div>
         ))}

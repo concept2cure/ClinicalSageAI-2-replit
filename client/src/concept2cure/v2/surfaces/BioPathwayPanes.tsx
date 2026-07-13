@@ -400,7 +400,7 @@ interface PathwayShellProps {
 export function BioPathwayShell({ pathway, program, workspaceSub, onAsk, onNav, children }: PathwayShellProps) {
   const [tab, setTab] = useState('workspace');
   const data = useMemo(() => bioPathwayData(program), [program && program.code]);
-  const ask = onAsk || ((window as any).openAna ? ((q: string) => (window as any).openAna(q)) : (() => {}));
+  const ask = onAsk || (() => {});
   const openSection = () => { try { localStorage.setItem('c2c_open_surface', 'dossier'); } catch (_e) { /* noop */ } onNav && onNav('dossier'); };
   const counts: TabCounts = {
     audit: data.audit.length,

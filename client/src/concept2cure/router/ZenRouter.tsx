@@ -154,6 +154,27 @@ const PageTransition: React.FC<PageTransitionProps> = ({ children }) => (
 export const ZenRouter: React.FC = () => {
   const [location] = useLocation();
 
+  // ui-v2 owns its routing internally (wouter location -> surface id), so the
+  // shell must persist across in-app navigations. Rendering it inside the
+  // location-keyed <Switch>/<AnimatePresence> below would remount the whole
+  // shell on every nav (dropping palette/AnA/scroll state and replaying the
+  // enter animation). Auth entry routes and the standalone MDX module keep
+  // the legacy transition switch.
+  const uiV2AuthRoute =
+    /^\/(concept2cure\/)?(login|signup|password-reset)(\/|\?|$)/.test(location);
+  const uiV2Owns =
+    isUiV2Enabled() &&
+    !uiV2AuthRoute &&
+    !location.startsWith('/concept2cure/mdx') &&
+    (location === '/' || location.startsWith('/concept2cure'));
+  if (uiV2Owns) {
+    return (
+      <PortalAuthProvider>
+        <ProtectedZenApp />
+      </PortalAuthProvider>
+    );
+  }
+
   return (
     <PortalAuthProvider>
       <AnimatePresence mode="wait">
@@ -216,15 +237,22 @@ export const ZenRouter: React.FC = () => {
 
           {/* Insights — reporting, analytics & prediction surface. Mounted before
               the ZenApp catch-all so it is reachable at its own URL while the rail
-              integration into ZenApp lands separately. */}
+              integration into ZenApp lands separately. Under ui-v2 the shell owns
+              this id (SURFACE_VIEWS['insights']), so the route defers to it. */}
           <Route path="/concept2cure/insights">
-            {() => (
-              <ProtectedRoute>
+            {() =>
+              isUiV2Enabled() ? (
                 <PageTransition>
-                  <InsightsSurface />
+                  <ProtectedZenApp />
                 </PageTransition>
-              </ProtectedRoute>
-            )}
+              ) : (
+                <ProtectedRoute>
+                  <PageTransition>
+                    <InsightsSurface />
+                  </PageTransition>
+                </ProtectedRoute>
+              )
+            }
           </Route>
 
           {/* Bundle surfaces — ZenApp resolves layoutMode + URL into one of

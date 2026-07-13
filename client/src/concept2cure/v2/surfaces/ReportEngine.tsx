@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, connected, liveGet } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -209,7 +209,7 @@ const ANALYTICS_FIXTURE: DashboardData = {
 
 export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk || (() => {});
-  const live = !!((window as any).C2C_API && (window as any).C2C_API.connected());
+  const live = connected();
   const [text, setText] = useState(SAMPLE_PROTOCOL);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [docType, setDocType] = useState('recommendations');
@@ -219,9 +219,10 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
   const runLocal = () => { const a = parseProtocol(text); setAnalysis({ protocol_data: a, similar_protocols: [], source: 'local' }); };
   const analyze = () => {
     if (text.trim().length < 50) { fireToast('Add more protocol detail (min ~50 chars)'); return; }
-    if (!live) { runLocal(); return; }
+    const api = (window as any).C2C_API; // POST has no dataConnect mapping -- keep the kit bridge guard so this falls back to the local analyzer
+    if (!api || !api.connected()) { runLocal(); return; }
     setBusy(true);
-    (window as any).C2C_API.post('/api/analytics/analyze-protocol-text', { text })
+    api.post('/api/analytics/analyze-protocol-text', { text })
       .then((r: any) => { const d = (r && r.data) || {}; setAnalysis({ protocol_data: d.protocol_data || parseProtocol(text), similar_protocols: d.similar_protocols || [], recommendations: d.recommendations, statistical_insights: d.statistical_insights, source: 'live' }); })
       .catch(() => runLocal())
       .finally(() => setBusy(false));
@@ -332,10 +333,12 @@ function AnalyticsDashboard({ live }: { live: boolean }) {
   const [d, setD] = useState<DashboardData>(ANALYTICS_FIXTURE);
   const [src, setSrc] = useState<string>(live ? 'loading' : 'fixture');
   useEffect(() => {
-    if (live && (window as any).C2C_API) {
-      (window as any).C2C_API.get('/api/analytics/dashboard')
-        .then((r: any) => { if (r && r.data) { setD(r.data); setSrc('live'); } else setSrc('fixture'); })
-        .catch(() => setSrc('fixture'));
+    if (live) {
+      liveGet<{ data?: DashboardData } | null>('/api/analytics/dashboard', null)
+        .then((res) => {
+          const r = res.sample ? null : res.data;
+          if (r && r.data) { setD(r.data); setSrc('live'); } else setSrc('fixture');
+        });
     }
   }, [live]);
   const phases = Object.entries(d.reportsByPhase || {});

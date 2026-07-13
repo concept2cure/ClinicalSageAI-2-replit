@@ -13,7 +13,7 @@ import type { StVerifyOutput } from '../fixtures/source-tracer-data';
 
 export function SourceTracer({ onAsk, onNav }: SurfaceViewProps) {
   const ST = ST_SOURCETYPES;
-  const ask = onAsk || ((window as any).openAna || (() => {}));
+  const ask = onAsk || (() => {});
   const open = (id: string) => {
     if (!id) return;
     try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* swallow */ }

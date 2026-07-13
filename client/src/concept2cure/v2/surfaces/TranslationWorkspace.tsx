@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
+import { ESIGN_MEANINGS } from '../registryModel';
+import { TranslationPane } from './EditorTranslate';
 import {
   TXW_STATUS_META, TXW_METHODS, TXW_APPROVABLE_METHODS,
   STEPS, TXW_PROJECTS, TXW_SEGMENTS, TXW_GLOSSARY, TXW_QA, TXW_CATEGORIES,
@@ -328,7 +330,7 @@ export function QaPanel({ onJump }: QaPanelProps) {
 }
 
 export function GovApproveModal({ seg, onCancel, onConfirm }: GovApproveModalProps) {
-  const meanings = (window as any).ESIGN_MEANINGS || ['APPROVER', 'VERIFIER', 'AUTHOR', 'REVIEWER'];
+  const meanings = ESIGN_MEANINGS;
   const [meaning, setMeaning] = useState('APPROVER');
   const [pw, setPw] = useState('');
   const [totp, setTotp] = useState('');
@@ -469,7 +471,6 @@ export function TranslationWorkspace({ onTranslate }: TranslationWorkspaceProps)
     setGov(null);
     setTab('segments');
   };
-  const TransPane = (window as any).TranslationPane;
 
   return (
     <div className="txw">
@@ -486,7 +487,7 @@ export function TranslationWorkspace({ onTranslate }: TranslationWorkspaceProps)
           </button>
         )}
       </div>
-      {tab === 'sections' && TransPane && <TransPane onTranslate={onTranslate} />}
+      {tab === 'sections' && <TranslationPane onTranslate={onTranslate} />}
       {tab === 'segments' && <SegmentsPanel onOpenWide={() => setWide(true)} onApprove={approve} settings={settings} />}
       {tab === 'gloss'    && <GlossaryPanel />}
       {tab === 'qa'       && <QaPanel onJump={() => setTab('segments')} />}

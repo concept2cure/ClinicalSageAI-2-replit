@@ -3,15 +3,8 @@ import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
+import { RBM_SITES, RBM_OVERSIGHT_COUNTS } from '../fixtures/rbm-data';
 import '../styles/project-home-v2.css';
-
-/* ── Cross-surface data providers (RBM surface writes these globals) ── */
-declare global {
-  interface Window {
-    RBM_SITES?: RbmSite[];
-    RBM_OVERSIGHT_COUNTS?: Record<string, { open: number; high: number }>;
-  }
-}
 
 /* ── Inline fixture types ── */
 
@@ -81,10 +74,10 @@ const CO_DEV: CoDev[] = [
   { sev: 'low', site: '1104', title: 'Visit window exceeded (2 subjects)', capa: 'documented', status: 'planned' },
 ];
 
-/** Build site list from cross-surface RBM data (race-proof: always reads current). */
+/** Build site list from cross-surface RBM data (shared rbm-data fixture). */
 function buildSites(): CoSite[] {
-  return ((window as any).RBM_SITES || []).map((s: RbmSite) => {
-    const ov = ((window as any).RBM_OVERSIGHT_COUNTS || {})[s.n] || { open: 0, high: 0 };
+  return RBM_SITES.map((s: RbmSite) => {
+    const ov = RBM_OVERSIGHT_COUNTS[s.n] || { open: 0, high: 0 };
     return { n: s.n, name: s.name, country: s.country, composite: s.composite, tier: s.tier, driver: (s.drivers || [])[0] || '', open: ov.open, high: ov.high };
   });
 }

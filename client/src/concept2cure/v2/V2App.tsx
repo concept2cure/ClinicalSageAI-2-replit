@@ -29,6 +29,7 @@ import {
   type AnaMessage,
 } from './Shell';
 import { SurfaceBoundary } from './SurfaceScaffold';
+import { CollabLayer } from './surfaces/CollabLauncher';
 import { SURFACE_VIEWS } from './surfaceViews';
 import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
 import {
@@ -277,6 +278,7 @@ export function V2App() {
           setCmdkOpen(false);
         }}
       />
+      <CollabLayer onNav={nav} />
       {esignFor && (
         <ESignGate
           actionId={esignFor}

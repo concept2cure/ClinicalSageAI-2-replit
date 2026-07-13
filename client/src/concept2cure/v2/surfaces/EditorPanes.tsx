@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { I } from '../icons';
 import { initials } from './EditorWidgets';
 import type { AuditEntry, VersionEntry, ApprovalPath } from '../fixtures/editor-data-types';
-import type { CanonicalFact, FactDriftData } from '../fixtures/editor-gov-data';
+import { RCE_FACT_DRIFT, type CanonicalFact } from '../fixtures/editor-gov-data';
 
 /* ── Prop interfaces ─────────────────────────────────────────────── */
 
@@ -239,9 +239,8 @@ export function SourcesPane({ onLink, section }: SourcesPaneProps): React.JSX.El
 /* ── 3. FactDriftPane ────────────────────────────────────────────── */
 
 export function FactDriftPane({ section }: FactDriftPaneProps): React.JSX.Element {
-  const data = (window as any).RCE_FACT_DRIFT as FactDriftData | undefined;
+  const data = RCE_FACT_DRIFT;
   const [expanded, setExpanded] = useState<string | null>(null);
-  if (!data) return emptyMsg('No fact-drift data available for this section.');
 
   const categorize = (f: CanonicalFact): string => {
     if (f.bindings.some(b => b.bindingStatus === 'broken')) return 'broken';

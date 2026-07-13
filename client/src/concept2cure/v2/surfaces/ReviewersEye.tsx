@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
+import {
+  c2cDeficiencyGaps,
+  type DeficiencyGapResult,
+  type SubmissionType,
+} from '../fixtures/deficiency-taxonomy-data';
 
 /* ── Types ── */
 
@@ -11,25 +16,6 @@ export interface LintIssue {
   offsetEnd?: number;
   ruleId: string;
   phrase?: string;
-}
-
-interface DeficiencyPattern {
-  id: string;
-  title: string;
-  signal: string;
-  mit: string;
-  status: 'present' | 'weak' | 'missing';
-  sev: 'critical' | 'major' | 'minor';
-}
-
-interface DeficiencyGapResult {
-  total: number;
-  present: number;
-  weak: number;
-  missing: number;
-  completeness: number;
-  criticalOpen?: number;
-  patterns: DeficiencyPattern[];
 }
 
 interface ReviewersEyeProps {
@@ -185,9 +171,7 @@ export function ReviewersEye({
   const Art = art.charAt(0).toUpperCase() + art.slice(1);
 
   const risk = useMemo<DeficiencyGapResult | null>(
-    () => ((window as any).c2cDeficiencyGaps && subType)
-      ? (window as any).c2cDeficiencyGaps(text, subType, ag)
-      : null,
+    () => subType ? c2cDeficiencyGaps(text, subType as SubmissionType, ag) : null,
     [text, subType, ag],
   );
 

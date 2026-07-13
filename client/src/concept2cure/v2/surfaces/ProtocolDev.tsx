@@ -4,9 +4,13 @@
  * ------------------------------------------------------------------ */
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
+import * as PG from './ProtocolGov';
+import { PDEV_DOC } from '../fixtures/protocol-data';
 
-const PG = (window as any).PG || {};
 const Ic = PG.Ic;
+
+/** Next major protocol version (kit PDEV_nextMajor). */
+const pdevNextMajor = (v: string) => { const m = /^(\d+)\./.exec(v || ''); return m ? ((+m[1]) + 1) + '.0' : '1.0'; };
 
 const TABS = [
   { id: 'document',    label: 'Document',                icon: 'fileText' },
@@ -371,7 +375,7 @@ export function ConsentTab({ doc, onToggle }: ConsentTabProps) {
 
 /* ---- Main workspace ---- */
 export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
-  const doc = (window as any).PDEV_DOC;
+  const doc: any = PDEV_DOC;
   const [tab, setTab] = useState('document');
   const [activeSec, setActiveSec] = useState(doc.openSection);
   const [gov, setGov] = useState<any>(null);
@@ -415,7 +419,7 @@ export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
           <Ic n={t.icon} s={14} />{t.label}</button>))}</div>
       <div className="pd-grid">
         <Outline doc={doc} activeSec={activeSec} onSec={onSec} onFinalize={() => govAct({
-          title: 'Finalize protocol', intent: 'Finalize this protocol version. Required sections must be complete; bumps to v' + (window as any).PDEV_nextMajor(doc.version) + '.',
+          title: 'Finalize protocol', intent: 'Finalize this protocol version. Required sections must be complete; bumps to v' + pdevNextMajor(doc.version) + '.',
           basis: 'Deterministic completeness gate · 21 CFR Part 11 e-signature', esign: true })} />
         <div className="pd-work">{body}</div>
       </div>
@@ -436,7 +440,7 @@ export function PIAcc({ id, title, badge, open, onToggle, children }: PIAccProps
 }
 
 export function ProtocolIntelPanel({ onAsk }: WorkspaceProps) {
-  const doc = (window as any).PDEV_DOC; if (!doc) return null;
+  const doc: any = PDEV_DOC; if (!doc) return null;
   const [open, setOpen] = useState<string | null>('readiness');
   const tog = (k: string) => setOpen(open === k ? null : k);
   const ask = (m: string) => onAsk && onAsk(m);
@@ -489,7 +493,7 @@ export function ProtocolIntelPanel({ onAsk }: WorkspaceProps) {
 }
 
 /* ---- Bridge exports ---- */
-(window as any).PDEV_nextMajor = (v: string) => { const m = /^(\d+)\./.exec(v || ''); return m ? ((+m[1]) + 1) + '.0' : '1.0'; };
+(window as any).PDEV_nextMajor = pdevNextMajor;
 (window as any).ProtocolWorkspace = ProtocolWorkspace;
 (window as any).ProtocolIntelPanel = ProtocolIntelPanel;
 (window as any).SURFACE_VIEWS = (window as any).SURFACE_VIEWS || {};

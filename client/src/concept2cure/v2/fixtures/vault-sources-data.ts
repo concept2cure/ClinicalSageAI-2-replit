@@ -7,6 +7,11 @@
  */
 
 import React from 'react';
+import { connected } from '../dataConnect';
+import { DOSSIER_SPINES } from './dossier-data';
+import { TMF_REFERENCE_MODEL, ETMF_SAMPLE_TRIAL, ETMF_FILINGS } from './etmf';
+import { giForSeg } from './governed-intelligence-data';
+import { SC_SUBMISSIONS } from './submission';
 
 /* ── Vault source ── */
 
@@ -44,7 +49,7 @@ export const VAULT_SOURCES: VaultSource[] = [
 
 export function vaultSourceConnected(s: VaultSource | null | undefined): boolean {
   if (!s) return false;
-  if (s.id === 'corpus') return !!((window as any).C2C_API && (window as any).C2C_API.connected());
+  if (s.id === 'corpus') return connected();
   return !!s.connected;
 }
 
@@ -64,7 +69,8 @@ export interface SpineDoc {
   num: string;
   title: string;
   type: string;
-  section: string;
+  /** Optional so dossier-data DossierDoc leaves (which carry no section) fit. */
+  section?: string;
   status: string;
   pct: number;
   owner: string;
@@ -79,23 +85,23 @@ export interface Spine {
   program: string;
   spine: string;
   standard: string;
-  tree: SpineNode[];
+  tree: (SpineNode | SpineDoc)[];
   filingTypes?: any[];
   docKinds?: any[];
   live?: boolean;
 }
 
 export function buildTmfSpine(): Spine {
-  const model: any[] = (window as any).TMF_REFERENCE_MODEL || [];
-  const trial: any = (window as any).ETMF_SAMPLE_TRIAL || { title: 'Trial Master File', providedArtifacts: [] };
+  const model = TMF_REFERENCE_MODEL;
+  const trial = ETMF_SAMPLE_TRIAL;
   const provided = new Set<string>(trial.providedArtifacts || []);
-  const filings: any = (window as any).ETMF_FILINGS || {};
+  const filings = ETMF_FILINGS;
 
-  const tree: SpineNode[] = model.map((z: any) => ({
+  const tree: SpineNode[] = model.map((z) => ({
     id: 'tmf-z' + z.number,
     code: 'Zone ' + z.number,
     label: z.name,
-    children: z.artifacts.map((a: any) => {
+    children: z.artifacts.map((a) => {
       const filed = provided.has(a.code);
       const f = filings[a.code];
       const status = filed
@@ -128,13 +134,9 @@ export function buildTmfSpine(): Spine {
 
 (window as any).buildTmfSpine = buildTmfSpine;
 
-/* ── Attach TMF spine to DOSSIER_SPINES if available ── */
+/* ── Attach the TMF spine as the CRO build of DOSSIER_SPINES ── */
 
-try {
-  if ((window as any).DOSSIER_SPINES && (window as any).TMF_REFERENCE_MODEL) {
-    (window as any).DOSSIER_SPINES.cro = buildTmfSpine();
-  }
-} catch (_e) { /* ignore */ }
+DOSSIER_SPINES.cro = buildTmfSpine();
 
 /* ── Standard labels per segment ── */
 
@@ -173,7 +175,7 @@ export interface VaultBuild {
 
 export const VAULT_BUILDS: VaultBuild[] = (() => {
   const builds: VaultBuild[] = [];
-  ((window as any).SC_SUBMISSIONS || []).forEach((s: any) => {
+  SC_SUBMISSIONS.forEach((s) => {
     builds.push({
       id: s.id,
       program: s.program,
@@ -185,28 +187,27 @@ export const VAULT_BUILDS: VaultBuild[] = (() => {
         (REGION_LABELS[s.region] ? ' · ' + REGION_LABELS[s.region] : ''),
     });
   });
-  const gi: any = (window as any).GI_BY_SEG || {};
-  if (gi.medtech && gi.medtech.program) {
+  const giMedtech = giForSeg('medtech');
+  if (giMedtech && giMedtech.program) {
     builds.push({
-      id: 'build-medtech', program: gi.medtech.program.code,
+      id: 'build-medtech', program: giMedtech.program.code,
       appType: '510k', region: 'fda', pathway: 'estar', seg: 'medtech',
-      label: gi.medtech.program.code + ' · 510(k) · FDA eSTAR',
+      label: giMedtech.program.code + ' · 510(k) · FDA eSTAR',
     });
   }
-  if (gi.diagnostics && gi.diagnostics.program) {
+  const giDiagnostics = giForSeg('diagnostics');
+  if (giDiagnostics && giDiagnostics.program) {
     builds.push({
       id: 'build-ivd', program: 'IVD dossier',
       appType: 'ivdr', region: 'eu', pathway: 'ivdr', seg: 'diagnostics',
       label: 'IVD dossier · IVDR PE · EU',
     });
   }
-  if ((window as any).ETMF_SAMPLE_TRIAL) {
-    builds.push({
-      id: 'build-tmf', program: (window as any).ETMF_SAMPLE_TRIAL.trialId,
-      appType: 'tmf', region: '—', pathway: 'tmf', seg: 'cro',
-      label: (window as any).ETMF_SAMPLE_TRIAL.trialId + ' · TMF · DIA RM',
-    });
-  }
+  builds.push({
+    id: 'build-tmf', program: ETMF_SAMPLE_TRIAL.trialId,
+    appType: 'tmf', region: '—', pathway: 'tmf', seg: 'cro',
+    label: ETMF_SAMPLE_TRIAL.trialId + ' · TMF · DIA RM',
+  });
   return builds;
 })();
 
@@ -215,7 +216,7 @@ export const VAULT_BUILDS: VaultBuild[] = (() => {
 /* ── Spine selection for a build ── */
 
 export function spineForBuild(build: VaultBuild | null | undefined): Spine | undefined {
-  const S: any = (window as any).DOSSIER_SPINES || {};
+  const S = DOSSIER_SPINES;
   if (!build) return S.biotech;
   const p = build.pathway || '';
   if (p === 'estar' || p === 'mdr') return S.medtech || S.biotech;

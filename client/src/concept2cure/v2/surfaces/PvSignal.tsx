@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
+import { AnswerLead, type AnswerLeadProps } from '../AnswerLead';
+import { PedigreeBadge, CitationChips } from '../intelligence/Intelligence';
 
 /* -- Interfaces -- */
 
@@ -183,18 +185,14 @@ function PvMetric({ big, val, crit, met, sub }: PvMetricProps) {
 }
 
 export function PvSignalPanel({ onAsk, product, event, embedded }: PvSignalPanelProps) {
-  const PedigreeBadge = (window as any).PedigreeBadge as React.ComponentType<{ level: string }> | undefined;
-  const AnswerLead = (window as any).AnswerLead as React.ComponentType<any> | undefined;
-  const CitationChips = (window as any).CitationChips as React.ComponentType<{ items: string[]; lead: string }> | undefined;
-
-  const ask: (text: string) => void = onAsk || (window as any).openAna || (() => {});
+  const ask: (text: string) => void = onAsk || (() => {});
   const [cell, setCell] = useState<ContingencyCell>({ a: 25, b: 75, c: 100, d: 1000 });
   const set = (k: keyof ContingencyCell, v: string) => setCell(p => ({ ...p, [k]: Math.max(0, parseInt(v, 10) || 0) }));
   const p = c2cScreenSignalPanel(cell);
   const T = PV_TIER[p.tier];
   const which = p.bcpnn.signal ? 'BCPNN IC025 stays above 0' : (p.ebgm.signal ? 'EBGM EB05 clears 2' : 'neither Bayesian bound clears its threshold');
 
-  const lead = {
+  const lead: AnswerLeadProps = {
     tone: p.tier === 'strong' ? 'calm' : p.tier === 'none' ? 'good' : 'calm',
     eyebrow: 'Which of your safety signals are real — not small-count noise',
     headline: <>For {product || 'this drug'} {'·'} {event || 'this event'}, {p.concordance} of 3 methods flag a signal {'—'} that reads as a <b>{T.label.toLowerCase()}</b>.</>,
@@ -217,14 +215,14 @@ export function PvSignalPanel({ onAsk, product, event, embedded }: PvSignalPanel
       <div className="pv-panel-head">
         <div className="pv-panel-ttl">
           {I.activity || I.trendingUp} Disproportionality screen
-          {PedigreeBadge && <PedigreeBadge level="deterministic_registry" />}
+          <PedigreeBadge level="deterministic_registry" />
         </div>
         <span className="pv-sample">Sample counts</span>
       </div>
 
       {embedded
         ? <p className="pv-embed-lead">Beyond the raw PRR, I ran all three signal-detection methods on this pair. <b>{p.concordance} of 3 agree</b> {'—'} that reads as a <b>{T.label.toLowerCase()}</b>. The Bayesian bounds below (IC025, EB05) shrink the small-count noise that inflates a raw ratio, so you act on the consolidated verdict, not one number.</p>
-        : (AnswerLead && <AnswerLead {...lead} onAsk={ask} />)}
+        : <AnswerLead {...lead} />}
 
       <div className="pv-verdict">
         <div className={'pv-tier pv-tier-' + T.cls}>
@@ -284,7 +282,7 @@ export function PvSignalPanel({ onAsk, product, event, embedded }: PvSignalPanel
         </div>
       </div>
 
-      {CitationChips && <CitationChips items={PV_CITES} lead="Method sources" />}
+      <CitationChips items={PV_CITES} lead="Method sources" />
     </div>
   );
 }

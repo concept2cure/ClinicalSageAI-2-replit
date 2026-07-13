@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, liveGet } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   LIC_DTC,
@@ -54,8 +54,7 @@ interface BillingApi {
 
 const billing: BillingApi = {
   status() {
-    const api = (window as any).C2C_API;
-    return api ? api.live('/api/billing/status', null, (d: any) => d) : Promise.resolve(null);
+    return liveGet<BillingStatus | null>('/api/billing/status', null).then((r) => (r.sample ? null : r.data));
   },
   checkout(body) {
     const api = (window as any).C2C_API;

@@ -171,7 +171,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'report-engine': { component: ReportEngine },
   'research-admin': { component: ResearchAdmin },
   review: { component: Review },
-  'risk-ledger': { component: Risk },
+  risk: { component: Risk },
   'safety-narrative': { component: SafetyNarrative },
   setup: { component: Setup },
   'shadow-review': { component: ShadowReview, full: true },
@@ -181,7 +181,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   tasks: { component: TaskBoard },
   'template-library': { component: TemplateLibrary },
   training: { component: Training },
+  billing: { component: UsageBilling },
   usage: { component: UsageBilling },
-  'usage-billing': { component: UsageBilling },
   vault: { component: Vault, full: true },
 };

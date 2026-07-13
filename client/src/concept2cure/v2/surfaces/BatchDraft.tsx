@@ -1,20 +1,21 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, connected } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { getDossierSpine } from '../fixtures/dossier-data';
 import '../styles/project-home-v2.css';
 
-/* ── Window globals -- cross-surface data providers (gap until backing modules port) ── */
+/* ── Window globals -- runtime channels with no typed provider yet (kit
+   data-connect.jsx C2C_AUTHORING and the editor's __C2C_DOC_ID; GAP RULE:
+   the offline fallbacks below stay honest until those modules port) ── */
 
 declare global {
   interface Window {
-    DOSSIER_SPINES?: Record<string, DossierSpine>;
     C2C_AUTHORING?: {
       batchDraft: (opts: BatchDraftOpts) => Promise<void>;
       saveSection: (opts: SaveSectionOpts) => Promise<void>;
     };
     __C2C_DOC_ID?: string | null;
-    C2C_API?: { connected: () => boolean };
   }
 }
 
@@ -101,14 +102,12 @@ function bdWordCount(html: string): number {
 
 export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   const seg = segment || 'biotech';
-  const spine: DossierSpine = ((window as any).DOSSIER_SPINES || {})[seg]
-    || ((window as any).DOSSIER_SPINES || {}).biotech
-    || { tree: [], program: '', standard: '' };
+  const spine: DossierSpine = getDossierSpine(seg);
   const agency = seg === 'pharma' || seg === 'biotech'
     ? 'FDA'
     : (seg === 'medtech' || seg === 'diagnostics' ? 'FDA CDRH' : 'FDA');
   const docId: string | null = (typeof window !== 'undefined' && (window as any).__C2C_DOC_ID) || null;
-  const canLive = !!(docId && (window as any).C2C_API && (window as any).C2C_API.connected());
+  const canLive = !!(docId && connected());
 
   /* real leaf sections that still need drafting (not final/approved) */
   const todo = useMemo(() => {

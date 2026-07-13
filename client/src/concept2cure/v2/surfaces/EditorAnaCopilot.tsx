@@ -1,5 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { I } from '../icons';
+import { connected, SampleTag } from '../dataConnect';
+import { AnaVerbBar, RegistryContextHeader, StreamingRenderer } from './AnaVerbs';
+import { GovernedActionModal } from './GovernedActionModal';
+import { GLOBAL_REGISTRY } from './RegistryBridge';
+import { getSectionContext } from '../fixtures/editor-health-data';
+import { REG_LANGS, type LangCode } from '../fixtures/editor-data-types';
+import { REG_PATHWAYS } from '../fixtures/editor-pathways';
 
 /* ----------------------------------------------------------------
    AnA Co-Author copilot panel -- the conversational co-authoring
@@ -40,7 +47,8 @@ interface AttachPayload {
 interface AnaCopilotProps {
   pathway: Pathway; section: Section; busy: boolean;
   onGenerate?: () => void; onAction?: (id: string) => void;
-  onVerbApply?: (verb: string) => void; onAttach?: (payload: AttachPayload) => void;
+  onVerbApply?: (verb: string, html?: string, meta?: { conf?: number; prov?: string }, editOnly?: boolean) => void;
+  onAttach?: (payload: AttachPayload) => void;
   messages: Message[]; onSend: (text: string, opts: { agent: boolean }) => void;
   mode: string; setMode: React.Dispatch<React.SetStateAction<string>>;
   market: Market; markets?: Market[]; lang?: string;
@@ -85,9 +93,7 @@ export function AnaCopilot({
   const [govAction, setGovAction] = useState<string | null>(null);
 
   const regType = useMemo(
-    () => ((window as any).GLOBAL_REGISTRY || []).find(
-      (e: { pathwayKey: string; id: string }) => e.pathwayKey === pathway.id,
-    ),
+    () => GLOBAL_REGISTRY.find(e => e.pathwayKey === pathway.id),
     [pathway.id],
   );
   const subTypeId = regType ? regType.id : null;
@@ -108,19 +114,17 @@ export function AnaCopilot({
   };
 
   /* Section context */
-  const getSectionContext = (window as any).getSectionContext as
-    ((num: string) => { type: string; evidence: string[]; actions?: { label: string; ic?: string }[] }) | undefined;
-  const secCtxObj = getSectionContext ? getSectionContext(section.num) : null;
-  const secCtxLabel = secCtxObj ? secCtxObj.type : 'Document section';
+  const secCtxObj = getSectionContext(section.num);
+  const secCtxLabel = secCtxObj.type;
 
   /* Other-market lookup */
   const other = (markets || []).find(m => m.lang !== lang);
   const otherLang = other
-    ? (((window as any).REG_LANGS || {})[other.lang || ''] || { label: other.lang }).label
+    ? (REG_LANGS[other.lang as LangCode] || { label: other.lang }).label
     : null;
 
   /* Project picker for uploads */
-  const PW: Record<string, PathwayDef> = (window as any).REG_PATHWAYS || {};
+  const PW: Record<string, PathwayDef> = REG_PATHWAYS;
   const projOpts = Object.keys(PW).map(id => ({
     id, code: PW[id].code, label: PW[id].code + ' · ' + (PW[id].kind || 'document'),
   }));
@@ -151,8 +155,8 @@ export function AnaCopilot({
 
   /* Suggestions */
   const SUGGEST: { t: string; ic: string }[] = (() => {
-    const ctx = getSectionContext ? getSectionContext(section.num) : null;
-    if (ctx && ctx.actions && ctx.actions.length > 0) {
+    const ctx = getSectionContext(section.num);
+    if (ctx.actions && ctx.actions.length > 0) {
       return ctx.actions.slice(0, 4).map(a => ({ t: a.label + ' — §' + section.num, ic: a.ic || 'sparkles' }));
     }
     return [
@@ -163,20 +167,7 @@ export function AnaCopilot({
     ];
   })();
 
-  /* Dynamic window components */
-  const SampleTag = (window as any).SampleTag as React.ComponentType<{ sample: boolean }> | undefined;
-  const AnaVerbBar = (window as any).AnaVerbBar as React.ComponentType<{
-    section: Section; activeVerb: string | null; onVerb: (v: string) => void;
-  }> | undefined;
-  const StreamingRenderer = (window as any).StreamingRenderer as React.ComponentType<{ content: string }> | undefined;
-  const GovernedActionModal = (window as any).GovernedActionModal as React.ComponentType<{
-    action: string | null; section: Section; onClose: () => void; onConfirm: () => void;
-  }> | undefined;
-  const RegistryContextHeader = (window as any).RegistryContextHeader as React.ComponentType<{
-    submissionTypeId: string;
-  }> | undefined;
-
-  const isConnected = (window as any).C2C_API && (window as any).C2C_API.connected && (window as any).C2C_API.connected();
+  const isConnected = connected();
 
   return (
     <div className="rce-ana">
@@ -187,7 +178,7 @@ export function AnaCopilot({
           <div className="nm">AnA {'·'} Co-Author</div>
           <div className="sub">{secCtxLabel} {'·'} {'§'}{section.num} {section.label}</div>
         </div>
-        {SampleTag && <SampleTag sample={!isConnected} />}
+        <SampleTag sample={!isConnected} />
         <button className="rce-ana-acts-toggle" data-on={actsOpen || undefined} title="Quick actions"
           onClick={() => setActsOpen(o => !o)}>{I.grid}</button>
       </div>
@@ -221,16 +212,22 @@ export function AnaCopilot({
       </div>
 
       {/* Registry context header */}
-      {subTypeId && RegistryContextHeader && <RegistryContextHeader submissionTypeId={subTypeId} />}
+      {subTypeId && <RegistryContextHeader submissionTypeId={subTypeId} />}
 
       {/* Verb bar */}
-      {AnaVerbBar && (
-        <AnaVerbBar section={section} activeVerb={activeVerb}
-          onVerb={(v: string) => { setActiveVerb(v); onVerbApply && onVerbApply(v); }} />
-      )}
+      <AnaVerbBar submissionTypeId={subTypeId || undefined} sectionId={section.id}
+        sectionLabel={section.num + ' ' + section.label} activeVerb={activeVerb || undefined}
+        onVerb={(v: string) => setActiveVerb(cur => (cur === v ? null : v))} />
 
       {/* Conversation thread */}
       <div className="rce-ana-thread" ref={scrollRef}>
+        {activeVerb && (
+          <StreamingRenderer active verb={activeVerb} submissionTypeId={subTypeId || undefined}
+            sectionLabel={section.num + ' ' + section.label} sectionKey={section.id}
+            onAccept={(html) => { onVerbApply && onVerbApply(activeVerb, html, undefined, false); setActiveVerb(null); }}
+            onEdit={(html) => { onVerbApply && onVerbApply(activeVerb, html, undefined, true); setActiveVerb(null); }}
+            onDiscard={() => setActiveVerb(null)} />
+        )}
         {messages.length === 0 && (
           <div className="rce-ana-suggest">
             {SUGGEST.map((s, i) => (
@@ -292,11 +289,7 @@ export function AnaCopilot({
           return (
             <div key={i} className={'rce-msg' + (m.role === 'ana' ? ' rce-msg-ana' : ' rce-msg-user')} data-role={m.role}>
               {m.role === 'ana' && <span className="rce-msg-mark">{'✻'}</span>}
-              <div className="rce-msg-body">
-                {StreamingRenderer && m.role === 'ana'
-                  ? <StreamingRenderer content={m.text || ''} />
-                  : <span>{m.text}</span>}
-              </div>
+              <div className="rce-msg-body"><span>{m.text}</span></div>
             </div>
           );
         })}
@@ -368,10 +361,11 @@ export function AnaCopilot({
       )}
 
       {/* Governed action modal */}
-      {GovernedActionModal && govAction && (
-        <GovernedActionModal action={govAction} section={section}
-          onClose={() => setGovAction(null)}
-          onConfirm={() => { onAction && onAction(govAction); setGovAction(null); }} />
+      {govAction && (
+        <GovernedActionModal action={govAction} submissionTypeId={subTypeId || undefined}
+          sectionLabel={section.num}
+          onConfirm={() => { onAction && onAction(govAction); setGovAction(null); }}
+          onCancel={() => setGovAction(null)} />
       )}
 
       {/* Compose area */}

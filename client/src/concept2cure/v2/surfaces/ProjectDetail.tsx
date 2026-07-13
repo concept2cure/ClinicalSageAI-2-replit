@@ -343,7 +343,7 @@ export function IND({ onAsk }: SurfaceViewProps) {
     fireToast('Amendment created · ' + v.kind);
   };
 
-  const ask = onAsk || ((window as any).openAna || (() => {}));
+  const ask = onAsk || (() => {});
   const phases = IND_PHASES;
   const curPhase = phases.find((p) => p.status === 'active' || p.status === 'current' || p.status === 'progress')
     || phases.find((p) => p.pct > 0 && p.pct < 100) || phases[0];
@@ -353,7 +353,7 @@ export function IND({ onAsk }: SurfaceViewProps) {
 
   const indLead = (
     <AnswerLead
-      tone={blockers.length ? 'urgent' : 'calm'} onAsk={ask}
+      tone={blockers.length ? 'urgent' : 'calm'}
       eyebrow="Is your IND ready to submit — and what has to happen first"
       headline={blockers.length
         ? <>One thing is standing between you and submitting: <b>{topBlocker?.sect}</b>.</>

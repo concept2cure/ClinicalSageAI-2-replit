@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 import { I } from '../icons';
 import { SampleTag } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import {
+  LIC_ARCHETYPES,
+  LIC_DTC,
+  LIC_PRICING,
+  LIC_ROLES,
+  LIC_TIER_LEVEL,
+  licBundle as licBundleOf,
+} from '../fixtures/onboarding-data';
 import '../styles/project-home-v2.css';
 
 /* ── Helpers ── */
@@ -25,26 +33,20 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
   const [invites, setInvites] = useState([{ email: '', role: 'owner' }]);
   const [done, setDone] = useState(false);
 
-  const archetypes: Array<{ id: string; label: string; family: string }> =
-    (window as any).LIC_ARCHETYPES || [];
+  const archetypes: Array<{ id: string; label: string; family: string }> = LIC_ARCHETYPES;
   const family =
     (archetypes.find((a) => a.id === org.archetype) || ({} as any)).family ||
     'pharma';
-  const dtcTiers: any[] = (window as any).LIC_DTC || [];
-  const pricingMap: Record<string, any[]> =
-    (window as any).LIC_PRICING || {};
+  const dtcTiers: any[] = LIC_DTC;
+  const pricingMap: Record<string, any[]> = LIC_PRICING;
   const tiers: any[] =
     model === 'dtc'
       ? dtcTiers
       : pricingMap[family] || pricingMap.pharma || [];
   const selTier: any = tiers.find((t: any) => t.tier === tier) || tiers[0] || {};
-  const licBundle: (n: number) => any =
-    (window as any).licBundle || (() => ({ label: '', discountPct: 0 }));
-  const bundle = licBundle(seats);
-  const roles: Array<{ id: string; label: string }> =
-    (window as any).LIC_ROLES || [];
-  const tierLevel: Record<string, number> =
-    (window as any).LIC_TIER_LEVEL || {};
+  const bundle = licBundleOf(seats);
+  const roles: Array<{ id: string; label: string }> = LIC_ROLES;
+  const tierLevel: Record<string, number> = LIC_TIER_LEVEL;
 
   const onNav = (id: string) => {
     try {

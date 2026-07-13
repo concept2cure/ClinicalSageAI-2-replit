@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { CMC_OS, getPharmaData } from '../fixtures/pharma-data';
 
 /* ── Types ── */
 interface ShadowFinding {
@@ -106,7 +107,7 @@ interface CMCOSData {
 
 interface PharmaData {
   shadow?: ShadowReview;
-  biostats?: BiostatsJudgment;
+  biostats?: BiostatsJudgment | null;
   atmpData?: ATMPData;
   formData?: INDFormData;
 }
@@ -405,7 +406,7 @@ function ATMPPanel({ data }: { data: PharmaData }) {
 /* ── CMC Module 3 OS Panel ── */
 
 function CMCOSPanel() {
-  const C = (window as any).CMC_OS as CMCOSData | undefined;
+  const C: CMCOSData = CMC_OS;
   if (!C) return null;
   const approved = C.sections.filter(s => s.state === 'approved' && !s.stale).length;
   const stale = C.sections.filter(s => s.stale).length;
@@ -449,14 +450,11 @@ function CMCOSPanel() {
 /* ── Main Panel ── */
 
 export function PharmaIntelPanel({ pid, onAsk }: PharmaIntelPanelProps) {
-  const data = useMemo<PharmaData | null>(
-    () => (window as any).getPharmaData && (window as any).getPharmaData(pid),
-    [pid],
-  );
+  const data = useMemo<PharmaData | null>(() => getPharmaData(pid), [pid]);
   const [open, setOpen] = useState<string | null>('shadow');
   const isInd = pid === 'ind';
   const isAtmp = pid === 'atmp';
-  const hasCmcOs = !!(window as any).CMC_OS && (pid === 'ctd' || pid === 'bla' || pid === 'nda');
+  const hasCmcOs = !!CMC_OS && (pid === 'ctd' || pid === 'bla' || pid === 'nda');
 
   if (!data) return (
     <div className="dv-dock dv-dock-embed">
@@ -467,7 +465,7 @@ export function PharmaIntelPanel({ pid, onAsk }: PharmaIntelPanelProps) {
   );
 
   const rtf = data.shadow ? Math.round(data.shadow.rtfRiskScore * 100) : null;
-  const cmcOs = (window as any).CMC_OS as CMCOSData | undefined;
+  const cmcOs: CMCOSData = CMC_OS;
 
   return (
     <div className="dv-dock dv-dock-embed">

@@ -11,6 +11,8 @@ import {
   type VaultDoc,
   type VaultFolder,
 } from '../fixtures/vault-data';
+import { getDossierSpine } from '../fixtures/dossier-data';
+import { VAULT_BUILDS, spineForBuild, type VaultBuild } from '../fixtures/vault-sources-data';
 import '../styles/project-home-v2.css';
 
 /* ── File icon resolver (maps key to I[key]) ── */
@@ -93,20 +95,13 @@ function VaultTree({ nodes, depth, activeFolder, onPick, expanded, toggle }: Vau
 
 export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const seg: string = (window as any).__C2C_SEGMENT || 'biotech';
-  const builds: any[] = (window as any).VAULT_BUILDS || [];
-  const defBuild = builds.find((b: any) => b.seg === seg) || builds[0] || null;
+  const builds: VaultBuild[] = VAULT_BUILDS;
+  const defBuild = builds.find((b) => b.seg === seg) || builds[0] || null;
   const [buildId, setBuildId] = useState<string | null>(defBuild && defBuild.id);
-  const build = builds.find((b: any) => b.id === buildId) || defBuild;
+  const build = builds.find((b) => b.id === buildId) || defBuild;
 
-  /* Spine from kit globals (getDossierSpine / spineForBuild), fixture fallback */
-  const getDossierSpine: (s: string) => any =
-    (window as any).getDossierSpine || (() => ({ tree: [], program: '', spine: '' }));
-  const spineForBuild: (b: any) => any =
-    (window as any).spineForBuild || (() => getDossierSpine(seg));
-  const fixtureSpine = build && (window as any).spineForBuild
-    ? spineForBuild(build)
-    : getDossierSpine(seg);
-  const spine = fixtureSpine;
+  /* Spine follows the build's filing designation; segment fixture fallback */
+  const spine = (build ? spineForBuild(build) : undefined) || getDossierSpine(seg);
 
   const tree = useMemo(
     () => [...(spine.tree || []), ...vaultCrossCuttingFolders()],

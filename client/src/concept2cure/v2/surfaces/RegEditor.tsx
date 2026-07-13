@@ -11,6 +11,7 @@ import { PresenceCluster, Outline, TablePicker, MarginCommentPins, buildSeedMess
 import { SectionHealth, DossierReadiness } from './EditorHealth';
 import { PreflightPane, SignModal, ProvenancePane, computePreflight, deriveReadiness } from './EditorGov';
 import { EditorCockpit } from './EditorCockpit';
+import { c2cMedicalLint } from './ReviewersEye';
 import { SelToolbar, PdfDoc, downloadDocx, DELIB_STEPS, buildDocxScript } from './EditorStudio';
 import { TranslationPane } from './EditorTranslate';
 import { type ActionDeps, doFullBuild, doAction, doGenerate, doExport, doAuthorDocx, onSend as sendAction, onAttach as attachAction, runDelib, applyVerbDraft, resolveComment, assignComment, replyComment, commentToTask, saveVersion, toggleLock, signSection, onSign as signAction } from './RegEditorActions';
@@ -47,8 +48,7 @@ const DOCK_TABS: { id: string; icon: string; label: string }[] = [
 export function RegEditor({ surface, onNav, onAsk, segment }: SurfaceViewProps) {
   /* ── Pathway resolution ── */
   const lsPw = typeof localStorage !== 'undefined' ? localStorage.getItem('rce-pathway') : null;
-  const _surfPw = (window as any).REG_SURFACE_PATHWAY?.[surface.id]
-    || REG_SURFACE_PATHWAY[surface.id as keyof typeof REG_SURFACE_PATHWAY];
+  const _surfPw = REG_SURFACE_PATHWAY[surface.id as keyof typeof REG_SURFACE_PATHWAY];
   const _allowLs = surface.id === 'document-authoring' || surface.id === 'ectd-coauthor';
   const pid = ((_allowLs && lsPw && REG_PATHWAYS[lsPw as PathwayId])
     ? lsPw : (_surfPw && REG_PATHWAYS[_surfPw as PathwayId] ? _surfPw : 'ctd')) as PathwayId;
@@ -177,7 +177,8 @@ export function RegEditor({ surface, onNav, onAsk, segment }: SurfaceViewProps) 
   const finishDelib = () => { if (delibTimerRef.current) { clearTimeout(delibTimerRef.current); delibTimerRef.current = null; } };
 
   /* ── Governance derivations ── */
-  const govCtx = useMemo(() => ({ approvalPath, ...((window as any).RCE_GOV || {}) }), [approvalPath]);
+  const govCtx = useMemo(() => ({ approvalPath, wordCount, empty: bodyEmpty, errFlags: 0, warnFlags: 0 }),
+    [approvalPath, wordCount, bodyEmpty]);
   const preCtx = { conf: sec.conf ?? 0, status: sec.status as any, blocker: !!(sec as any).blocker, words: wordCount, cites: 0, locked: isLocked, signed: isSigned, empty: bodyEmpty, wordCount, warnFlags: 0, errFlags: 0, changeCount, changeAfterSign: editedAfterSign };
   const preflight = useMemo(() => computePreflight(preCtx), [sec, wordCount, isLocked, isSigned]); // eslint-disable-line
   const readyLevel = useMemo(() => deriveReadiness(preCtx), [sec, wordCount, isLocked, isSigned]); // eslint-disable-line
@@ -185,8 +186,8 @@ export function RegEditor({ surface, onNav, onAsk, segment }: SurfaceViewProps) 
   const statusMeta = STATUS_META[sec.status] || STATUS_META.draft;
 
   useEffect(() => { // Reviewer's Eye
-    const lint = (window as any).c2cMedicalLint;
-    if (lint && bodyRef.current) try { lint(bodyRef.current, { pathway: pid, section: sec.id, market: market.id }); } catch { /* noop */ }
+    const el = bodyRef.current;
+    if (el) try { c2cMedicalLint(el.textContent || '', pid); } catch { /* noop */ }
   }, [docKey, rev]); // eslint-disable-line
 
   /* ── stateRef + ActionDeps ── */
@@ -287,7 +288,8 @@ export function RegEditor({ surface, onNav, onAsk, segment }: SurfaceViewProps) 
         : <div className="rce-pane" style={{ padding: 40, textAlign: 'center', color: 'var(--text-400)', fontSize: 12 }}>Protocol intelligence not loaded</div>; }
       case 'ana': return <AnaCopilot pathway={pathway as any} section={sec as any} busy={busy}
         onGenerate={() => doGenerate(deps)} onAction={(id: string) => doAction(deps, id)}
-        onVerbApply={(v: string) => applyVerbDraft(deps, v, '', {})} onAttach={(p: any) => attachAction(deps, p)}
+        onVerbApply={(v, html, meta, editOnly) => applyVerbDraft(deps, v, html || '', meta || {}, editOnly)}
+        onAttach={(p: any) => attachAction(deps, p)}
         messages={messages} onSend={(t: string, o: any) => sendAction(deps, t, o)} mode={mode} setMode={setMode}
         market={market as any} markets={markets} lang={lang} langInfo={langInfo} taLabel={taLabel} pid={pid}
         defaultFolder={sec.num} />;
@@ -321,9 +323,8 @@ export function RegEditor({ surface, onNav, onAsk, segment }: SurfaceViewProps) 
   };
 
   if (view === 'cockpit') {
-    const Ck = (window as any).RegCockpit || EditorCockpit;
     return (<div className="rce" ref={rootRef}>
-      <Ck pathway={pathway as any} sections={allSecs as any} docMap={storeRef.current} lang={lang}
+      <EditorCockpit pathway={pathway as any} sections={allSecs as any} docMap={storeRef.current} lang={lang}
         market={market as any} langInfo={langInfo} taLabel={taLabel}
         onOpenSection={(id: string) => { setActive(id); setView('editor'); }} onNav={onNav}
         onAuthor={() => setView('studio')}
@@ -338,7 +339,7 @@ export function RegEditor({ surface, onNav, onAsk, segment }: SurfaceViewProps) 
         <div className="rce-ana" style={{ flex: '0 0 380px', minWidth: 320, display: 'flex', flexDirection: 'column' }}>
           <AnaCopilot pathway={pathway as any} section={sec as any} busy={busy}
             onGenerate={() => doGenerate(deps)} onAction={(id: string) => doAction(deps, id)}
-            onVerbApply={(v: string) => applyVerbDraft(deps, v, '', {})}
+            onVerbApply={(v, html, meta, editOnly) => applyVerbDraft(deps, v, html || '', meta || {}, editOnly)}
             onAttach={(p: any) => attachAction(deps, p)} messages={messages}
             onSend={(t: string, o: any) => sendAction(deps, t, o)} mode={mode} setMode={setMode}
             market={market as any} markets={markets} lang={lang} langInfo={langInfo}

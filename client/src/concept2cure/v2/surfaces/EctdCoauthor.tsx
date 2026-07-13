@@ -11,7 +11,7 @@
  */
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, connected, liveGet } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -191,10 +191,6 @@ const ECTD_THREAD: EctdThreadMessage[] = [
 
 /* ---- Local live-first data + validation/compliance actions ---- */
 
-function isConnected(): boolean {
-  return !!((window as any).C2C_API && (window as any).C2C_API.connected());
-}
-
 function runValidateAction(docId: number): Promise<ValidationResult> {
   const local = (): ValidationResult => ({
     isValid: false, errorCount: 1, warningCount: 2, totalSections: 19,
@@ -229,12 +225,8 @@ function runComplianceAction(docId: number): Promise<ComplianceResult> {
       { ruleId: 'M4-DOC-003', description: 'All sections have assigned module numbers', status: 'non-compliant' },
     ],
   });
-  if ((window as any).C2C_API) {
-    return (window as any).C2C_API.live('/api/coauthor/documents/' + docId + '/compliance', { compliance: local() })
-      .then((r: any) => (r.data && r.data.compliance) || local())
-      .catch(local);
-  }
-  return Promise.resolve(local());
+  return liveGet<{ compliance?: ComplianceResult } | null>('/api/coauthor/documents/' + docId + '/compliance', { compliance: local() })
+    .then((r) => (r.data && r.data.compliance) || local());
 }
 
 /* ---- Provenance-traced paragraph ---- */
@@ -262,7 +254,7 @@ function EcPara({ b }: { b: EctdBlock }) {
 
 export function EctdCoauthor({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
-  const live = isConnected();
+  const live = connected();
   const art = ECTD_ARTIFACT;
   const [tree, setTree] = useState<EctdModule[]>(ECTD_TREE);
   const [activeId, setActiveId] = useState('2.5');

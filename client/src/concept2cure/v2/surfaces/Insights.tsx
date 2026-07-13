@@ -2,18 +2,12 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { SampleTag } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { APP_LICENSE } from '../fixtures/admin-data';
+import { GI_BY_SEG } from '../fixtures/governed-intelligence-data';
+import { AMEM_ATOMS } from './AnaMemory';
+import { PJ_PROGRAMS } from './BiopharmaJourney';
 import '../styles/project-home-v2.css';
 import '../styles/insights-v2.css';
-
-/* ── Window globals -- cross-surface data providers (gap until backing modules port) ── */
-declare global {
-  interface Window {
-    APP_LICENSE?: { tier?: string };
-    PJ_PROGRAMS?: Record<string, { code: string; indication: string; app?: string; readiness: number; agency?: string; target?: { label: string; v: string } }>;
-    GI_BY_SEG?: Record<string, { program: { code: string; name: string; filing: string; indication: string; scope?: string }; findings?: { title: string; severity: string; contradictionType: string; deterministicRule?: string }[]; checks?: { k: string; detail: string }[] }>;
-    AMEM_ATOMS?: unknown[];
-  }
-}
 
 /* ── Entitlement tiers (mdx-entitlements) ── */
 
@@ -139,8 +133,8 @@ interface ProgramCtx {
 }
 
 function roProgram(seg: string): ProgramCtx {
-  const pj = ((window as any).PJ_PROGRAMS || {})[seg];
-  const gi = ((window as any).GI_BY_SEG || {})[seg];
+  const pj = (PJ_PROGRAMS as Record<string, any>)[seg];
+  const gi = (GI_BY_SEG as Record<string, any>)[seg];
   if (pj) return { code: pj.code, label: pj.indication, filing: (pj.app || '').split(' -- ')[0] || pj.app, indication: pj.indication, readiness: pj.readiness, scope: 'program', scopeId: pj.code, agency: pj.agency, pdufa: (pj.target && /PDUFA|action/i.test(pj.target.label)) ? pj.target.v : null };
   if (gi) return { code: gi.program.code, label: gi.program.name, filing: gi.program.filing, indication: gi.program.indication, readiness: null, scope: gi.program.scope || 'submission', scopeId: gi.program.code, pdufa: null };
   return { code: 'BX-204', label: 'Bextrelimab', filing: 'NDA', indication: 'Oncology', readiness: 88, scope: 'program', scopeId: 'BX-204', pdufa: null };
@@ -271,7 +265,7 @@ function roMarketsIn(utterance: string): string[] {
 interface PortfolioRow { code: string; indication: string; filing: string; readiness: number; seg: string }
 function roPortfolio(): PortfolioRow[] {
   const rows: PortfolioRow[] = [];
-  const pj = (window as any).PJ_PROGRAMS || {};
+  const pj = PJ_PROGRAMS as Record<string, any>;
   Object.keys(pj).forEach(seg => { const p = pj[seg]; rows.push({ code: p.code, indication: p.indication, filing: (p.app || '').split(' -- ')[0], readiness: p.readiness, seg }); });
   return rows;
 }
@@ -280,7 +274,7 @@ function roPortfolio(): PortfolioRow[] {
 function roSuggestForClient(seg: string) {
   const p = roProgram(seg);
   const preset = roPresetsForSeg(seg)[0];
-  const mem = ((window as any).AMEM_ATOMS || []).length;
+  const mem = AMEM_ATOMS.length;
   const rBit = p.readiness == null ? `${p.code} is in ${p.filing} preparation` : `${p.code} is ${p.readiness}% ready`;
   const pduBit = p.pdufa ? ` with a target action date of ${p.pdufa}` : '';
   const histBit = mem ? ` I am also drawing on ${mem} thing${mem > 1 ? 's' : ''} I remember about how you work.` : '';
@@ -338,7 +332,7 @@ interface RenderedReport {
 
 function roRenderReport(type: ReportType, seg: string): RenderedReport {
   const p = roProgram(seg);
-  const gi = ((window as any).GI_BY_SEG || {})[seg] || {};
+  const gi = (GI_BY_SEG as Record<string, any>)[seg] || {};
   const findings = (gi.findings || []);
   const blockingTitles = findings.filter((f: { contradictionType: string }) => f.contradictionType === 'dosage_conflict').map((f: { title: string }) => f.title);
   const now = new Date().toISOString();
@@ -734,7 +728,7 @@ function RODashboard({ dashboard, seg, tier, sample, onOpen, onAsk }: { dashboar
 
 /* ── Tier helper ── */
 function getInitialTier(): string {
-  const t = ((window as any).APP_LICENSE && (window as any).APP_LICENSE.tier) || '';
+  const t = APP_LICENSE.tier || '';
   return ['standard', 'professional', 'enterprise'].includes(t) ? t : 'professional';
 }
 

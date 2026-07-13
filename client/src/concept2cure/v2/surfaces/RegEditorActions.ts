@@ -2,6 +2,7 @@
    standalone functions that take an ActionDeps parameter. */
 import type React from 'react';
 import type { AuditEntry, VersionEntry } from '../fixtures/editor-data-types';
+import { REG_GEN, REG_GEN_I18N, type LangCode } from '../fixtures/editor-data';
 import type { PreflightResult } from './EditorGov';
 import { RCE_TEAM } from './EditorWidgets';
 
@@ -162,11 +163,7 @@ export async function doFullBuild(d: ActionDeps): Promise<void> {
   await wait(steps.length * 1200);
   const el = d.bodyRef.current;
   if (el) {
-    const gen = (window as any).REG_GEN || {};
-    el.innerHTML = gen.sectionDraft
-      ? gen.sectionDraft(sec.num, pathway.code, market.agency)
-      : '<p>Section ' + sec.num + ' ' + sec.label + ' -- drafted by AnA from linked evidence, '
-        + 'regulatory precedent (' + market.agency + '), and the controlled vocabulary for ' + pathway.program + '.</p>';
+    el.innerHTML = '<p>' + (REG_GEN[sec.id] || REG_GEN._default) + '</p>';
     d.saveCurrent();
   }
   audit(d, 'ai', 'Full build -- draft + preflight + export');
@@ -199,7 +196,7 @@ export async function doGenerate(d: ActionDeps): Promise<void> {
   const st = d.getState();
   if (st.busy) return;
   d.setBusy(true); d.setStream('');
-  const { sec, pathway, market, mode } = st;
+  const { sec, lang, mode } = st;
   ana(d, 'Drafting ' + sec.num + ' ' + sec.label + '...');
   runDelib(d, [
     { kind: 'thinking', label: 'Reading the section evidence & controlled vocabulary', sub: 'Thinking' },
@@ -207,12 +204,7 @@ export async function doGenerate(d: ActionDeps): Promise<void> {
     { kind: 'step', label: 'Drafting ' + sec.num + ' ' + sec.label, sub: 'Author -- ' + mode },
   ]);
   await wait(2800);
-  const gen = (window as any).REG_GEN || {};
-  const draft = gen.sectionDraft
-    ? gen.sectionDraft(sec.num, pathway.code, market.agency)
-    : 'This section presents the ' + sec.label.toLowerCase() + ' for ' + pathway.program
-      + ', supported by linked evidence from the ' + market.agency + ' regulatory framework. '
-      + 'All claims are grounded in the controlled vocabulary and cited source data.';
+  const draft = (REG_GEN_I18N[sec.id] || {})[lang as LangCode] || REG_GEN[sec.id] || REG_GEN._default;
   let buf = '';
   for (let i = 0; i < draft.length; i++) {
     buf += draft[i]; d.setStream(buf); await wait(8 + Math.random() * 12);
@@ -334,7 +326,7 @@ export async function doAction(d: ActionDeps, kind: string): Promise<void> {
       ana(d, 'All market variants updated from the master (' + market.agency + ') source.');
       break;
     case 'translate': {
-      const tgt = (window as any).REG_GEN_I18N?.targetLang || 'ja';
+      const tgt = Object.keys(REG_GEN_I18N[sec.id] || {}).find(l => l !== st.lang) || 'ja';
       ana(d, 'Translating ' + sec.num + ' to ' + tgt + '...');
       runDelib(d, [{ kind: 'step', label: 'Translating to ' + tgt, sub: 'Translate' }]);
       await wait(2400);

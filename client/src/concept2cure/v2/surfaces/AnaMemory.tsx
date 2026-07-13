@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, connected, liveGet } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/ana-v2.css';
@@ -72,7 +72,7 @@ interface RelationalProfile {
 
 /* ── Inline fixture data (kit window globals, grounded in real programs) ── */
 
-const AMEM_ATOMS: MemoryAtom[] = [
+export const AMEM_ATOMS: MemoryAtom[] = [
   { id: 5001, category: 'regulatory', subcategory: 'pathway', title: 'BX-301 files a BLA under §351(a)',
     content: 'BX-301 (anti-BCMA) is on the BLA §351(a) pathway for relapsed multiple myeloma. Current filing readiness 64%.',
     source_document_name: 'BX-301 program charter', confidence_score: 0.98, importance_level: 'critical',
@@ -113,8 +113,7 @@ const AMEM_PROFILE: RelationalProfile = {
 
 export function AnaMemory({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const c2cApi = (window as any).C2C_API;
-  const live = c2cApi && c2cApi.connected();
+  const live = connected();
 
   const [mem, setMem] = useState<{ atoms: MemoryAtom[]; sample: boolean }>({ atoms: AMEM_ATOMS, sample: true });
   const [cat, setCat] = useState('all');
@@ -127,17 +126,18 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
     const fx = AMEM_ATOMS;
     if (!live) { setMem({ atoms: fx, sample: true }); return; }
     setMem({ atoms: fx, sample: true });
-    c2cApi.get('/api/mdx/ana/memory')
-      .then((r: any) => {
+    liveGet<any>('/api/mdx/ana/memory', null)
+      .then((res) => {
+        const r = res.sample ? null : res.data;
         const arr: MemoryAtom[] = Array.isArray(r) ? r : ((r && r.data) || []);
         setMem(arr.length ? { atoms: arr, sample: false } : { atoms: fx, sample: true });
-      })
-      .catch(() => setMem({ atoms: fx, sample: true }));
+      });
   }, [live]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const verify = (id: number) => {
     setMem(m => ({ ...m, atoms: m.atoms.map(a => (a.id === id ? { ...a, is_verified_by_user: true, verified_at: new Date().toISOString() } : a)) }));
-    if (live) c2cApi.post('/api/mdx/ana/memory/' + id + '/verify', {}).catch(() => {/* noop */});
+    const api = (window as any).C2C_API;
+    if (api && api.connected()) api.post('/api/mdx/ana/memory/' + id + '/verify', {}).catch(() => {/* noop */});
     fire('Verified -- AnA will weight this memory more.');
   };
 

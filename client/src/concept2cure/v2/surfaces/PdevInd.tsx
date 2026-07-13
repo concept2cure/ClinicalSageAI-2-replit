@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected } from '../dataConnect';
+import { SampleTag, connected, liveGet } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -168,11 +168,7 @@ const PDEV_DRAFT: PdevAiDraftResult = {
 /* ── Inline API helpers (live ?? fixture) ── */
 
 function pdevFetchView(id: string): Promise<{ data: PdevProgramView; sample: boolean }> {
-  const api = (window as any).C2C_API;
-  if (api && typeof api.live === 'function') {
-    return api.live('/api/pdev/programs/' + encodeURIComponent(id), PDEV_VIEW);
-  }
-  return Promise.resolve({ data: PDEV_VIEW, sample: true });
+  return liveGet<PdevProgramView>('/api/pdev/programs/' + encodeURIComponent(id), PDEV_VIEW);
 }
 
 function pdevDraft(body: { programId: string; activityKey: string; userPrompt?: string }): Promise<PdevAiDraftResult> {

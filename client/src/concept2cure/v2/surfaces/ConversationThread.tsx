@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { SampleTag } from '../dataConnect';
+import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import {
@@ -21,16 +22,14 @@ interface AnaTurnProps {
 
 function AnaTurn({ turn, onApply, onRefine, onNav, onViewArtifact }: AnaTurnProps) {
   const [openThink, setOpenThink] = useState(false);
-  const DocTypeChip = (window as any).DocTypeChip;
-  const DocumentContextCard = (window as any).DocumentContextCard;
   return (
     <div className="ct-turn ct-ana">
       <div className="ct-ana-av">{'✻'}</div>
       <div className="ct-ana-body">
-        {turn.doc && DocTypeChip && (
+        {turn.doc && (
           <div style={{ marginBottom: 6 }}><DocTypeChip doc={turn.doc} /></div>
         )}
-        {turn.doc && (turn.doc.confidence || 1) < 0.4 && DocumentContextCard && (
+        {turn.doc && (turn.doc.confidence || 1) < 0.4 && (
           <DocumentContextCard doc={turn.doc} defaultOpen={false} />
         )}
         {turn.thinking && (

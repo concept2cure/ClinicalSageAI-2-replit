@@ -266,7 +266,7 @@ export const GI_FINDINGS: GiFinding[] = [
 
 /* ── Per-segment binding ── */
 
-const GI_BY_SEG: Record<string, GiSegmentBinding> = {
+export const GI_BY_SEG: Record<string, GiSegmentBinding> = {
   biotech: {
     program: { projectId: 301, code: 'BX-301', name: 'anti-BCMA mAb', app: 'BLA -- 351(a)', filing: 'BLA', stage: 'Clinical -> CMC assembly', indication: 'Relapsed multiple myeloma' },
     findings: GI_FINDINGS.filter(f => f.id === 'CF-1' || f.id === 'CF-2'),

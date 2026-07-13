@@ -110,7 +110,7 @@ interface PjBlocker {
 
 /* ── Program identity (segment-aware) ── */
 
-const PJ_PROGRAMS: Record<string, PjProgram> = {
+export const PJ_PROGRAMS: Record<string, PjProgram> = {
   biotech: {
     code: 'BX-301', name: '', app: 'BLA · 351(a)',
     modality: 'Biologic (BLA)', indication: 'Relapsed multiple myeloma',

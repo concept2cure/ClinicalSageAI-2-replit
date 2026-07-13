@@ -15,7 +15,7 @@
  */
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, connected, liveGet } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
@@ -77,9 +77,9 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
   /* live ?? fixture: try the real per-trial completeness endpoint once. */
   useEffect(() => {
     let cancel = false;
-    if ((window as any).C2C_API && (window as any).C2C_API.connected()) {
-      (window as any).C2C_API.live('/api/etmf/trials/' + encodeURIComponent(trial.trialId) + '/completeness?scope=' + scope, null)
-        .then((r: any) => { if (!cancel && r && !r.sample && r.data) setLive(r.data); });
+    if (connected()) {
+      liveGet<TmfCompletenessResult | null>('/api/etmf/trials/' + encodeURIComponent(trial.trialId) + '/completeness?scope=' + scope, null)
+        .then((r) => { if (!cancel && r && !r.sample && r.data) setLive(r.data); });
     }
     return () => { cancel = true; };
   }, [scope]);

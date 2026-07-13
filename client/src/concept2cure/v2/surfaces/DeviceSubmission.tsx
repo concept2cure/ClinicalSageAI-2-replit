@@ -2,6 +2,7 @@
    Ported from design kit device-sub.jsx. */
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
+import { DV, DV_CAPA, DV_INSPECTION, DV_PCCP, getDevicePathway } from '../fixtures/device-data';
 import {
   Ic, KV, StatusBadge, DeviceAcc, Tree, DocumentPage,
   IntelReadiness, IntelPredicate, IntelClassification, IntelRisk,
@@ -156,7 +157,7 @@ function IntelAssembly({ pw, onGov }: { pw: any; onGov: (cfg: any) => void }) {
   );
 }
 function IntelGlobalMarkets({ pw }: { pw: any }) {
-  const DV = (window as any).DV; const M = DV.markets || [];
+  const M = DV.markets || [];
   const [open, setOpen] = useState<string | null>(null);
   const tier = (n: number) => n >= 66 ? 'hi' : n >= 45 ? 'mid' : 'lo';
   return (
@@ -184,7 +185,7 @@ function IntelGlobalMarkets({ pw }: { pw: any }) {
   );
 }
 function IntelCapa() {
-  const D = (window as any).DV_CAPA; if (!D) return null;
+  const D = DV_CAPA; if (!D) return null;
   const ht: Record<string, string> = { none: 'idle', malfunction: 'warn', injury: 'warn', serious_injury: 'err', death: 'err' };
   const st: Record<string, string> = { new: 'idle', triaged: 'ai', investigation: 'warn', escalated_mdr: 'err', escalated_capa: 'warn', resolved: 'ok', closed: 'ok' };
   const ct: Record<string, string> = { open: 'idle', investigation: 'warn', action_planned: 'ai', action_implemented: 'ai', effectiveness_check: 'warn', closed_effective: 'ok', closed_not_effective: 'err', escalated: 'err' };
@@ -233,7 +234,7 @@ function IntelCapa() {
   );
 }
 function IntelInspection() {
-  const D = (window as any).DV_INSPECTION; if (!D) return null;
+  const D = DV_INSPECTION; if (!D) return null;
   const oT: Record<string, string> = { pending: 'idle', nai: 'ok', vai: 'warn', oai: 'err' };
   const oL: Record<string, string> = { pending: 'Pending', nai: 'NAI', vai: 'VAI', oai: 'OAI' };
   const fT: Record<string, string> = { critical: 'err', major: 'warn', minor: 'ai', observation: 'idle' };
@@ -273,7 +274,7 @@ function IntelInspection() {
   );
 }
 function IntelPccp() {
-  const P = (window as any).DV_PCCP; if (!P) return null;
+  const P = DV_PCCP; if (!P) return null;
   const pl = P.plan;
   const MT: Record<string, string> = { algorithm_update: 'Algorithm update', retraining: 'Retraining', input_data_change: 'Input data', output_format_change: 'Output format', performance_threshold_change: 'Perf threshold', ui_change: 'UI change', hardware_dependency: 'Hardware', other: 'Other' };
   const MO: Record<string, string> = { accepted: 'ok', draft: 'idle', proposed: 'warn', rejected: 'err', superseded: 'idle' };
@@ -329,9 +330,9 @@ const INTEL: Record<string, IntelEntry> = {
   reviewsim: { title: 'Reviewer simulation', icon: 'scale', C: IntelReviewSim, has: pw => !!pw.reviewsim },
   humanfactors: { title: 'Human factors (62366)', icon: 'user', C: IntelHumanFactors, has: pw => !!pw.humanfactors },
   registration: { title: 'Registration and listing', icon: 'fileCheck', C: IntelRegistration, has: pw => !!pw.registration },
-  pccp: { title: 'AI/ML PCCP (FDA 2025)', icon: 'settings', C: IntelPccp, has: () => !!(window as any).DV_PCCP },
-  capa: { title: 'CAPA and MDR vigilance', icon: 'alertTriangle', C: IntelCapa, has: () => !!(window as any).DV_CAPA },
-  inspection: { title: 'Inspection readiness', icon: 'shieldCheck', C: IntelInspection, has: () => !!(window as any).DV_INSPECTION },
+  pccp: { title: 'AI/ML PCCP (FDA 2025)', icon: 'settings', C: IntelPccp, has: () => !!DV_PCCP },
+  capa: { title: 'CAPA and MDR vigilance', icon: 'alertTriangle', C: IntelCapa, has: () => !!DV_CAPA },
+  inspection: { title: 'Inspection readiness', icon: 'shieldCheck', C: IntelInspection, has: () => !!DV_INSPECTION },
   assembly: { title: 'Assembly and validate', icon: 'rocket', C: IntelAssembly, has: () => true },
 };
 function intelOrder(pw: any): string[] {
@@ -359,17 +360,16 @@ function CoAuthor({ pw, sec, onAsk }: { pw: any; sec: any; onAsk: (m: string) =>
 export function DeviceSubmission({ onAsk, surface }: { onAsk: (m: string) => void; surface?: any }) {
   const initial = (surface && ({ 'device-cer': 'cer', 'device-diagnostics': 'ivdr' } as Record<string, string>)[surface.id]) || '510k';
   const [pwId, setPwId] = useState(initial);
-  const pw = (window as any).getDevicePathway(pwId);
+  const pw = getDevicePathway(pwId);
   const [activeSec, setActiveSec] = useState(pw.sections[0].id);
   const [dock, setDock] = useState('intel');
   const [openAcc, setOpenAcc] = useState<string | null>('readiness');
   const [gov, setGov] = useState<any>(null);
   const sec = pw.sections.find((s: any) => s.id === activeSec) || pw.sections[0];
-  const DV = (window as any).DV;
-  useEffect(() => { try { const C2C = (window as any).C2C; if (C2C && sec) C2C.setContext({ entityType: 'section', entityId: sec.id, entityLabel: (pw.label || pwId.toUpperCase()) + ' · §' + sec.num + ' ' + sec.label }); } catch (_e) { /* silent */ } }, [pwId, sec?.id]);
+  useEffect(() => { try { const C2C = (window as any).C2C; if (C2C && sec) C2C.setContext({ entityType: 'section', entityId: sec.id, entityLabel: (pw.label || pwId.toUpperCase()) + ' · §' + sec.num + ' ' + (sec as any).label }); } catch (_e) { /* silent */ } }, [pwId, sec?.id]);
   const ask = (m: string) => onAsk && onAsk(m);
   const order = useMemo(() => intelOrder(pw), [pwId]);
-  const switchPathway = (id: string) => { setPwId(id); const np = (window as any).getDevicePathway(id); setActiveSec(np.sections[0].id); setOpenAcc('readiness'); };
+  const switchPathway = (id: string) => { setPwId(id); const np = getDevicePathway(id); setActiveSec(np.sections[0].id); setOpenAcc('readiness'); };
   const onSec = (s: any) => { setActiveSec(s.id); if (s.tab && INTEL[s.tab]) { setDock('intel'); setOpenAcc(s.tab); } };
   return (
     <div className="dv-wrap">
@@ -405,7 +405,7 @@ export function DeviceSubmission({ onAsk, surface }: { onAsk: (m: string) => voi
   );
 }
 export function DeviceIntelPanel({ dvId, onAsk }: { dvId: string; onAsk?: (m: string) => void }) {
-  const pw = (window as any).getDevicePathway(dvId);
+  const pw = getDevicePathway(dvId);
   const [openAcc, setOpenAcc] = useState<string | null>('readiness');
   const [gov, setGov] = useState<any>(null);
   const order = useMemo(() => intelOrder(pw), [dvId]);
