@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-07T11:39:27.811Z",
+  "generatedAt": "2026-07-13T04:05:49.843Z",
   "git": {
-    "sha": "74695da209956683dffc19d03c26bee999383174",
+    "sha": "1b96a7b0e516cc78702807408be75b84aebca51a",
     "branch": "claude/elegant-lovelace-low2l9"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 244,
     "largeFilesByBytes": 29,
-    "largeFilesByLines": 84
+    "largeFilesByLines": 83
   },
   "findings": {
     "duplicateBasenames": [
@@ -1076,6 +1076,15 @@
         ]
       },
       {
+        "basename": "mdx",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Mdx.tsx",
+          "server/routes/mdx.ts",
+          "shared/constants/mdx.ts"
+        ]
+      },
+      {
         "basename": "nonclinical",
         "count": 3,
         "paths": [
@@ -1118,6 +1127,15 @@
           "client/src/concept2cure/mdx/data/postmarket-docs.ts",
           "design-system/ui_kits/mdx/data/postmarket-docs.js",
           "ui_kits/mdx/data/postmarket-docs.js"
+        ]
+      },
+      {
+        "basename": "projectdetail",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/components/concept2cure-projects/ProjectDetail.tsx",
+          "client/src/concept2cure/projects/ProjectDetail.tsx",
+          "client/src/concept2cure/v2/surfaces/ProjectDetail.tsx"
         ]
       },
       {
@@ -1877,14 +1895,6 @@
         ]
       },
       {
-        "basename": "mdx",
-        "count": 2,
-        "paths": [
-          "server/routes/mdx.ts",
-          "shared/constants/mdx.ts"
-        ]
-      },
-      {
         "basename": "oncology",
         "count": 2,
         "paths": [
@@ -1994,14 +2004,6 @@
         "paths": [
           "tests/server/project-module-bridge.test.ts",
           "tests/services/project-module-bridge.test.ts"
-        ]
-      },
-      {
-        "basename": "projectdetail",
-        "count": 2,
-        "paths": [
-          "client/src/concept2cure/components/concept2cure-projects/ProjectDetail.tsx",
-          "client/src/concept2cure/projects/ProjectDetail.tsx"
         ]
       },
       {
@@ -2637,10 +2639,6 @@
         "lines": 2419
       },
       {
-        "file": "client/src/concept2cure/ZenApp.tsx",
-        "lines": 2398
-      },
-      {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "lines": 2379
       },
@@ -2830,7 +2828,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 1672
+        "lines": 1674
       },
       {
         "file": "server/services/unifiedDocumentIngestion.js",
@@ -2886,13 +2884,77 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": -1
+    }
+  },
   "ownerSummary": [
     {
+      "owner": "Backend Platform (server/routes + server/services owners)",
+      "duplicateGroups": 392,
+      "largeByBytes": 26,
+      "largeByLines": 72
+    },
+    {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 949,
-      "largeByBytes": 29,
-      "largeByLines": 84
+      "duplicateGroups": 275,
+      "largeByBytes": 2,
+      "largeByLines": 8
+    },
+    {
+      "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
+      "duplicateGroups": 175,
+      "largeByBytes": 0,
+      "largeByLines": 1
+    },
+    {
+      "owner": "Shared Contracts (shared/schema + shared/types owners)",
+      "duplicateGroups": 67,
+      "largeByBytes": 1,
+      "largeByLines": 2
+    },
+    {
+      "owner": "Frontend Platform (client/src maintainers)",
+      "duplicateGroups": 39,
+      "largeByBytes": 0,
+      "largeByLines": 0
+    },
+    {
+      "owner": "Developer Experience (scripts maintainers)",
+      "duplicateGroups": 3,
+      "largeByBytes": 0,
+      "largeByLines": 0
+    }
+  ],
+  "owners": [
+    {
+      "pattern": "^server/",
+      "owner": "Backend Platform",
+      "contact": "server/routes + server/services owners"
+    },
+    {
+      "pattern": "^client/src/concept2cure/",
+      "owner": "Concept2Cure Frontend",
+      "contact": "client/src/concept2cure maintainers"
+    },
+    {
+      "pattern": "^client/src/",
+      "owner": "Frontend Platform",
+      "contact": "client/src maintainers"
+    },
+    {
+      "pattern": "^shared/",
+      "owner": "Shared Contracts",
+      "contact": "shared/schema + shared/types owners"
+    },
+    {
+      "pattern": "^scripts/",
+      "owner": "Developer Experience",
+      "contact": "scripts maintainers"
     }
   ]
 }

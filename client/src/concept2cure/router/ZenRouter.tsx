@@ -22,10 +22,7 @@ import { Switch, Route, useLocation, Redirect } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ZenSignup, ZenAuthLayout } from '../auth';
 import { Concept2CureLogin } from '../components/concept2cure-auth';
-import { ZenApp } from '../ZenApp';
 import MdxRoute from '../mdx/MdxRoute';
-import { InsightsSurface } from '../insights/surface';
-import { isUiV2Enabled } from '../v2/uiV2Flag';
 // Master Administration + Business Center UI is owned by Claude Design (built
 // from HANDOFF_TO_DESIGN_master_admin_business_center.md). Only the backend +
 // API ship here; route registrations are added back when the designed UI lands.
@@ -42,19 +39,16 @@ import {
 // design-system bundle. Their routes were stripped above.
 
 // ui-v2 — the full UI replacement shell (design_handoff_c2c_v2_ui_replacement).
-// Lazy so the flag-off path never downloads the v2 chunk (or its stylesheet).
+// Phase 7: the legacy ZenApp shell is deleted; the v2 shell IS the product.
+// Lazy so auth entry pages never download the app chunk (or its stylesheet).
 const V2App = lazy(() => import('../v2/V2App'));
 
 const ProtectedZenApp: React.FC = () => (
   <ProtectedRoute>
     <ProjectProvider>
-      {isUiV2Enabled() ? (
-        <Suspense fallback={<ZenLoadingScreen />}>
-          <V2App />
-        </Suspense>
-      ) : (
-        <ZenApp />
-      )}
+      <Suspense fallback={<ZenLoadingScreen />}>
+        <V2App />
+      </Suspense>
     </ProjectProvider>
   </ProtectedRoute>
 );
@@ -163,7 +157,6 @@ export const ZenRouter: React.FC = () => {
   const uiV2AuthRoute =
     /^\/(concept2cure\/)?(login|signup|password-reset)(\/|\?|$)/.test(location);
   const uiV2Owns =
-    isUiV2Enabled() &&
     !uiV2AuthRoute &&
     !location.startsWith('/concept2cure/mdx') &&
     (location === '/' || location.startsWith('/concept2cure'));
@@ -235,65 +228,13 @@ export const ZenRouter: React.FC = () => {
             )}
           </Route>
 
-          {/* Insights — reporting, analytics & prediction surface. Mounted before
-              the ZenApp catch-all so it is reachable at its own URL while the rail
-              integration into ZenApp lands separately. Under ui-v2 the shell owns
-              this id (SURFACE_VIEWS['insights']), so the route defers to it. */}
-          <Route path="/concept2cure/insights">
-            {() =>
-              isUiV2Enabled() ? (
-                <PageTransition>
-                  <ProtectedZenApp />
-                </PageTransition>
-              ) : (
-                <ProtectedRoute>
-                  <PageTransition>
-                    <InsightsSurface />
-                  </PageTransition>
-                </ProtectedRoute>
-              )
-            }
-          </Route>
+          {/* App routes — /, /concept2cure and every surface/project deep link —
+              are owned by the ui-v2 fast path above this Switch (the shell must
+              persist across navs, so it renders outside the location-keyed
+              transition). Only auth entry, the standalone MDX module, and
+              legacy redirects reach this Switch. */}
 
-          {/* Bundle surfaces — ZenApp resolves layoutMode + URL into one of
-              the four designed surfaces (home, mdx, ana_ri, ectd_coauthor). */}
-          <Route path="/">
-            {() => (
-              <PageTransition>
-                <ProtectedZenApp />
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/project/:projectId/:rest*">
-            {() => (
-              <PageTransition>
-                <ProtectedZenApp />
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/project/:projectId">
-            {() => (
-              <PageTransition>
-                <ProtectedZenApp />
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure">
-            {() => (
-              <PageTransition>
-                <ProtectedZenApp />
-              </PageTransition>
-            )}
-          </Route>
-          <Route path="/concept2cure/*">
-            {() => (
-              <PageTransition>
-                <ProtectedZenApp />
-              </PageTransition>
-            )}
-          </Route>
-
-          {/* Catch-all — anything we didn't recognize lands on the bundle home. */}
+          {/* Catch-all — anything we didn't recognize lands on the shell home. */}
           <Route>{() => <Redirect to="/concept2cure" />}</Route>
         </Switch>
       </AnimatePresence>
