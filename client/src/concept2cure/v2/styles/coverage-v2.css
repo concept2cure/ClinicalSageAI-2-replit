@@ -1385,6 +1385,12 @@
 .c2c-v2 .sr-gate.band-med .sr-gate-fill{ background:var(--warning); }
 .c2c-v2 .sr-gate-word{ font-size:11px; font-weight:600; text-transform:capitalize; color:var(--text-300); }
 .c2c-v2 .sr-gate-sub{ font-size:11px; color:var(--text-400); margin-top:3px; line-height:1.45; }
+.c2c-v2 .sr-netprior{ border:1px solid var(--border); border-radius:11px; background:var(--bg-000); padding:12px 16px; margin-bottom:14px; }
+.c2c-v2 .sr-netprior-main{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+.c2c-v2 .sr-netprior-label{ font-size:12.5px; font-weight:600; color:var(--text-100); display:inline-flex; align-items:center; gap:8px; }
+.c2c-v2 .sr-netprior-val{ font-size:20px; font-weight:600; letter-spacing:-.02em; color:var(--text-200); }
+.c2c-v2 .sr-netprior-val.muted{ color:var(--text-400); }
+.c2c-v2 .sr-netprior-sub{ font-size:11px; color:var(--text-400); margin-top:4px; line-height:1.45; }
 .c2c-v2 .sr-findings-hd{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:11px; }
 .c2c-v2 .sr-findings-t{ font-size:13px; font-weight:600; color:var(--text-100); }
 .c2c-v2 .sr-findings-s{ font-size:11px; color:var(--text-400); }

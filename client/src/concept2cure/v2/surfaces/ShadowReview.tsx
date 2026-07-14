@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLive } from '../dataConnect';
 import { PedigreeBadge } from '../intelligence/Intelligence';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -14,6 +14,16 @@ import type { ShadowFinding, SeverityMeta } from '../fixtures/shadow-review-data
 
 function riskBand(v: number): string { return v >= 0.66 ? 'high' : v >= 0.33 ? 'med' : 'low'; }
 function riskWord(v: number): string { return v >= 0.66 ? 'high' : v >= 0.33 ? 'moderate' : 'low'; }
+
+/* -- Live regulatory-intelligence telemetry (GET, org-scoped, DB-backed) -- */
+interface RiEnvelope<T> { success?: boolean; data?: T }
+interface NetworkInsight {
+  probability: number | null;
+  sampleSize: number;
+  tenantCount: number;
+  epsilon: number | null;
+  matchSpecificity: string;
+}
 
 /* ================================================================
    ShadowReview -- AnA simulates the reviewer who will read your
@@ -31,6 +41,17 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
   const [lensId, setLensId] = useState('fda_filing');
   const [_ran, _setRan] = useState(true); // sample run is pre-populated
   const lens = shadowLens(lensId);
+
+  // Live cross-tenant risk prior from the calibrated engine — the real "network"
+  // in predictive & network risk. Degrades to an honest "unavailable" note offline
+  // (there is no fixture prior; a fabricated number would defeat the point).
+  const netState = useLive<RiEnvelope<NetworkInsight>>(
+    '/api/regulatory-intelligence/network-insights',
+    {},
+    []
+  );
+  const netData = (netState.data?.data ?? null) as NetworkInsight | null;
+  const netLive = !netState.sample && !!netData && netData.probability != null;
 
   const findings = useMemo(() => {
     const f = (SHADOW_FINDINGS[lensId] || []) as ShadowFinding[];
@@ -97,6 +118,21 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       <div className="sr-body">
+        {/* Live network prior — real cross-tenant gate-hit rate from the calibrated engine */}
+        <div className="sr-netprior">
+          <div className="sr-netprior-main">
+            <span className="sr-netprior-label">Network prior <SampleTag sample={!netLive} /></span>
+            <span className={'sr-netprior-val' + (netLive ? '' : ' muted')}>
+              {netLive ? Math.round((netData!.probability as number) * 100) + '%' : '—'}
+            </span>
+          </div>
+          <div className="sr-netprior-sub">
+            {netLive
+              ? `Observed gate-hit rate across ${netData!.sampleSize} comparable submissions (${netData!.tenantCount} organizations); match ${netData!.matchSpecificity}, differential-privacy protected.`
+              : 'Cross-submission risk prior is unavailable offline — binds to /api/regulatory-intelligence/network-insights (org-scoped, differential-privacy protected).'}
+          </div>
+        </div>
+
         {/* The two gates that kill a filing */}
         <div className="sr-gates">
           {([

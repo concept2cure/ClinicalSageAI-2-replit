@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { CMC_OS, getPharmaData } from '../fixtures/pharma-data';
+import { SampleTag } from '../dataConnect';
 
 /* ── Types ── */
 interface ShadowFinding {
@@ -198,6 +199,7 @@ function ShadowPanel({ data }: { data: PharmaData }) {
           <RiskBar label="RTF risk" score={s.rtfRiskScore} />
           <RiskBar label="CRL risk" score={s.crlRiskScore} />
         </div>
+        <SampleTag sample={true} />
       </div>
       <p className="dv-mini-note" style={{ marginBottom: 8 }}>{s.summary}</p>
       {s.findings.map((f, i) => (
