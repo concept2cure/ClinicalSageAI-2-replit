@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { SampleTag } from '../dataConnect';
 import '../styles/project-home-v2.css';
 
 /* -- Inline fixture types -- */
@@ -100,7 +101,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
       <div className="reg-head">
         <div>
           <div className="reg-kicker">Platform · commercial</div>
-          <h1 className="reg-title">Market access &amp; reimbursement</h1>
+          <h1 className="reg-title">Market access &amp; reimbursement <SampleTag sample={true} /></h1>
           <p className="reg-sub">
             Payer coverage, value dossiers and coding strategy -- the bridge from
             a cleared device to a reimbursed one. Grounds the market-access

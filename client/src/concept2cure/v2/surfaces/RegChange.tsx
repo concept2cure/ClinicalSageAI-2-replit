@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { SampleTag, useLive } from '../dataConnect';
 import '../styles/project-home-v2.css';
 
 /* ── Inline fixture types ── */
@@ -63,35 +64,91 @@ const RCI_CHANGES: RciChange[] = [
 const _RCI_SEV: Record<string, string> = { high: 'err', med: 'warn', low: 'ok' };
 const _RCI_SEVL: Record<string, string> = { high: 'Action required', med: 'Review', low: 'Monitor' };
 
+/* ── Live horizon cards (GET /api/learning/horizon/cards) → the change shape ──
+ * The horizon engine detects regulatory changes but does not assess portfolio
+ * impact (that is what "Assess with AnA" generates), so live cards render with a
+ * neutral "Review" state and an explicit "impact not yet assessed" note — never a
+ * fabricated severity. When the feed is empty (the scan is env-gated), the surface
+ * falls back to the sample fixture behind the SampleTag pill. */
+
+interface HorizonCard {
+  id: string;
+  body?: string;
+  jurisdictions?: string[];
+  standardCode?: string;
+  title: string;
+  changeKind?: string;
+  summary?: string;
+  effectiveDate?: string;
+  publishedAt?: string;
+  topics?: string[];
+  url?: string;
+  status?: string;
+}
+
+function fmtHorizonWhen(c: HorizonCard): string {
+  const raw = c.effectiveDate || c.publishedAt;
+  if (!raw) return 'Effective date pending';
+  const dt = new Date(raw);
+  if (isNaN(dt.getTime())) return String(raw);
+  const s = dt.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  return c.effectiveDate ? `Effective ${s}` : `Published ${s}`;
+}
+
+function cardToChange(c: HorizonCard): RciChange {
+  const juris = c.jurisdictions && c.jurisdictions.length ? c.jurisdictions.join(', ') : c.body || 'Portfolio';
+  return {
+    id: c.id,
+    src: [c.body, c.changeKind].filter(Boolean).join(' · ') || 'Horizon scan',
+    kind: c.changeKind || 'change',
+    when: fmtHorizonWhen(c),
+    sev: 'med', // detected-but-unassessed → "Review"; impact is assessed via AnA, never fabricated
+    live: !!c.effectiveDate,
+    title: c.title,
+    summary: c.summary || 'Summary pending assessment.',
+    affects: [{ dev: juris, what: c.standardCode || (c.topics && c.topics.join(', ')) || 'Impact not yet assessed', sub: c.body || '—' }],
+    action: 'Assess impact with AnA',
+    doc: c.standardCode ? `${c.standardCode} impact assessment` : 'Impact assessment',
+    owner: 'Reg',
+    due: c.effectiveDate ? fmtHorizonWhen(c).replace('Effective ', '') : 'Monitor',
+  };
+}
+
 /* ════ RegChange -- regulatory change intelligence surface ════ */
 
 export function RegChange({ onAsk }: SurfaceViewProps) {
+  // GET /api/learning/horizon/cards — live ?? fixture (SampleTag reflects which).
+  const horizon = useLive<{ cards?: HorizonCard[] }>('/api/learning/horizon/cards', { cards: [] }, []);
+  const liveCards = horizon.data?.cards ?? [];
+  const changes: RciChange[] = liveCards.length ? liveCards.map(cardToChange) : RCI_CHANGES;
+  const sample = horizon.sample || liveCards.length === 0;
+
   const [open, setOpen] = useState<string | null>(RCI_CHANGES[0].id);
-  const affecting = RCI_CHANGES.filter(c => c.affects.length).length;
-  const actionReq = RCI_CHANGES.filter(c => c.sev === 'high').length;
-  const live = RCI_CHANGES.filter(c => c.live).length;
+  const affecting = changes.filter(c => c.affects.length).length;
+  const actionReq = changes.filter(c => c.sev === 'high').length;
+  const inForce = changes.filter(c => c.live).length;
   const ask = onAsk;
 
   return (
     <div className="reg-wrap">
       <div className="reg-head">
         <div>
-          <div className="reg-eyebrow">Platform {I.dot} intelligence</div>
-          <h1 className="reg-title">Regulatory change intelligence</h1>
+          <div className="reg-eyebrow">Platform {I.dot} intelligence {I.dot} /api/learning/horizon</div>
+          <h1 className="reg-title">Regulatory change intelligence <SampleTag sample={sample} /></h1>
           <p className="reg-sub">Horizon scan of FDA guidance, ISO/IEC standard revisions, and EU MDR/IVDR &amp; AI-Act changes &mdash; each assessed for impact against your portfolio and resolved to an action document. Not a feed: a worklist.</p>
         </div>
         {ask && <button className="reg-cta" onClick={() => ask('Scan regulatory changes affecting the BX-204 portfolio and draft the impact assessments')}>{I.sparkles} Scan with AnA</button>}
       </div>
 
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{RCI_CHANGES.length}</div><div className="reg-kpi-l">Changes tracked</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{changes.length}</div><div className="reg-kpi-l">Changes tracked</div></div>
         <div className="reg-kpi"><div className="reg-kpi-v">{affecting}</div><div className="reg-kpi-l">Affect your portfolio</div></div>
         <div className="reg-kpi" data-tone="err"><div className="reg-kpi-v">{actionReq}</div><div className="reg-kpi-l">Action required</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">{live}</div><div className="reg-kpi-l">In force / imminent</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{inForce}</div><div className="reg-kpi-l">In force / imminent</div></div>
       </div>
 
       <div className="rci-feed">
-        {RCI_CHANGES.map(c => {
+        {changes.map(c => {
           const isOpen = open === c.id;
           return (
             <div key={c.id} className="rci-card" data-open={isOpen || undefined}>
