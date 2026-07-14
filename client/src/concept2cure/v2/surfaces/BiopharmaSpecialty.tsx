@@ -13,7 +13,7 @@
  */
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLive } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -731,11 +731,52 @@ const PV_AGG: PvAgg[] = [
   { product: 'BX-099', cycle: 'PBRER 2026-H1', due: 'FDA · day +60', by: 'AnA', reviewers: 'TP, MS', status: 'queued' },
 ];
 
+/* ── Live periodic safety reports (GET /api/pharmacovigilance/periodic-reports, {success,data}) ──
+ * The signals table's PRR/case-count come from POST /signals/screen (disproportionality), not a
+ * GET, so Active signals stays on its governed fixture behind the SampleTag; the aggregate-report
+ * cycle/due/status map cleanly to the register GET. Fields the backend does not carry (product,
+ * drafter, reviewers) are omitted rather than fabricated. */
+interface PeriodicReportRow {
+  id: string;
+  reportType?: string;
+  periodStart?: string;
+  periodEnd?: string;
+  status?: string;
+  submittedTo?: string[];
+  dueDate?: string;
+}
+interface PeriodicReportsEnvelope { success?: boolean; data?: PeriodicReportRow[]; total?: number }
+
+function fmtPvDate(d?: string): string {
+  if (!d) return '';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? String(d) : dt.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function reportToAgg(r: PeriodicReportRow): PvAgg {
+  const period = [r.periodStart, r.periodEnd].filter(Boolean).map(fmtPvDate).join(' – ');
+  const auth = r.submittedTo && r.submittedTo.length ? r.submittedTo.join('/') : 'Authority';
+  return {
+    product: '',
+    cycle: [r.reportType, period].filter(Boolean).join(' ') || 'Periodic report',
+    due: `${auth} · ${fmtPvDate(r.dueDate) || 'date pending'}`,
+    by: '',
+    reviewers: '',
+    status: r.status || 'draft',
+  };
+}
+
 export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
   const [sigs, addSig] = useRows<PvSignal>(PV_SIG);
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
+
+  // GET /api/pharmacovigilance/periodic-reports — live ?? fixture ({success,data,total}).
+  const reportsState = useLive<PeriodicReportsEnvelope>('/api/pharmacovigilance/periodic-reports', { data: [] }, []);
+  const liveReports = reportsState.data?.data ?? [];
+  const aggs: PvAgg[] = liveReports.length ? liveReports.map(reportToAgg) : PV_AGG;
+  const aggsSample = reportsState.sample || liveReports.length === 0;
 
   const FORM: C2CFormConfig = {
     eyebrow: 'Pharmacovigilance · log signal',
@@ -812,7 +853,7 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
     >
       {/* PvSignalPanel placeholder -- not yet ported as a standalone component */}
       <div className="sp-sec">
-        <SpCard title="Active signals" meta="FAERS + EudraVigilance · 90d" action={<AddBtn onClick={() => setForm(true)} label="Log signal" />} foot={<SpAsk onAsk={ask} cmd="Adjudicate the immune-mediated pneumonitis signal -- pull every case narrative, run causality assessment, suggest label update." label="Adjudicate the pneumonitis signal" />}>
+        <SpCard title="Active signals" sample meta="FAERS + EudraVigilance · 90d" action={<AddBtn onClick={() => setForm(true)} label="Log signal" />} foot={<SpAsk onAsk={ask} cmd="Adjudicate the immune-mediated pneumonitis signal -- pull every case narrative, run causality assessment, suggest label update." label="Adjudicate the pneumonitis signal" />}>
           <div className="sp-list">
             {sigs.map((s, i) => (
               <div key={i} className={rowcls(s)}>
@@ -828,14 +869,14 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-sec">
-        <SpCard title="Aggregate reports in cycle" sample meta="PSUR + PBRER">
+        <SpCard title="Aggregate reports in cycle" sample={aggsSample} meta="PSUR + PBRER">
           <div className="sp-list">
-            {PV_AGG.map((r, i) => (
+            {aggs.map((r, i) => (
               <div key={i} className="sp-row">
-                <span className="sp-tag">{r.product}</span>
+                {r.product && <span className="sp-tag">{r.product}</span>}
                 <span className="sp-row-b">
                   <span className="sp-row-t">{r.cycle}</span>
-                  <span className="sp-row-s">Due {r.due} · drafted by {r.by} · reviewers {r.reviewers}</span>
+                  <span className="sp-row-s">Due {r.due}{r.by ? ` · drafted by ${r.by}` : ''}{r.reviewers ? ` · reviewers ${r.reviewers}` : ''}</span>
                 </span>
                 {pill(r.status)}
               </div>
