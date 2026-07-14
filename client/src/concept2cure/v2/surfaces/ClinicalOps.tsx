@@ -4,6 +4,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { RBM_SITES, RBM_OVERSIGHT_COUNTS } from '../fixtures/rbm-data';
+import { useLive } from '../dataConnect';
 import '../styles/project-home-v2.css';
 
 /* ── Inline fixture types ── */
@@ -214,6 +215,8 @@ function pill(status: string) {
     drafting: 'warn', queued: 'idle', filed: 'ai', eligible: 'warn',
     awarded: 'ok', agreed: 'ok', submitted: 'ai', 'in draft': 'idle',
     received: 'ok', complete: 'ok',
+    planning: 'idle', recruiting: 'warn', follow_up: 'ai', completed: 'ok',
+    paused: 'warn', terminated: 'err',
   };
   return <span className={'rd-chip tone-' + (map[status] || 'idle')}>{status}</span>;
 }
@@ -251,6 +254,35 @@ function C2CToast({ msg }: { msg: string }) {
   );
 }
 
+/* ── Live Clinical Operations CTMS (GET /api/clinical-operations, envelope {success,data,...}) ──
+ * Only the studies list has a flat, org-wide GET with a clean shape match. Sites/deviations are
+ * study-scoped (nested under /studies/:studyId) and carry a CTMS shape, not the RBM risk-engine
+ * outputs this surface renders, so those sections stay on their governed fixtures. */
+interface ClinOpsStudyRow {
+  id: string;
+  protocol?: string;
+  name?: string;
+  phase?: string;
+  status?: string;
+  enrolled?: number;
+  target_enrollment?: number;
+  indication?: string;
+  therapeutic_area?: string;
+}
+interface StudiesEnvelope { success?: boolean; data?: ClinOpsStudyRow[]; total?: number }
+
+function rowToStudy(r: ClinOpsStudyRow): CoStudy {
+  return {
+    id: r.protocol || r.name || r.id,
+    phase: (r.phase || '').replace(/^Phase\s*/i, '').trim() || '—',
+    design: r.therapeutic_area || r.indication || 'Study',
+    n: r.enrolled ?? 0,
+    target: r.target_enrollment ?? 0,
+    status: r.status || 'active',
+    note: r.indication || '',
+  };
+}
+
 /* ════ Clinical Operations — clinical-development stage surface ════ */
 
 export function ClinicalOps({ onAsk }: SurfaceViewProps) {
@@ -261,6 +293,12 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
   const [siteForm, setSiteForm] = useState(false);
   const [devForm, setDevForm] = useState(false);
   const [toast, fireToast] = useToast();
+
+  // GET /api/clinical-operations/studies — live ?? fixture (envelope {success,data,total}).
+  const studiesState = useLive<StudiesEnvelope>('/api/clinical-operations/studies', { data: [] }, []);
+  const liveStudies = studiesState.data?.data ?? [];
+  const studies: CoStudy[] = liveStudies.length ? liveStudies.map(rowToStudy) : CO_STUDIES;
+  const studiesSample = studiesState.sample || liveStudies.length === 0;
 
   const SITE_FORM: C2CFormConfig = {
     eyebrow: 'Clinical ops -- activate site',
@@ -349,9 +387,9 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
       </div>
 
       <div className="sp-sec">
-        <SpCard title="Studies & enrollment" sample meta="Phase 1 -> 3">
+        <SpCard title="Studies & enrollment" sample={studiesSample} meta="Phase 1 -> 3">
           <div className="sp-list">
-            {CO_STUDIES.map((s, i) => (
+            {studies.map((s, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Summarize the status of study ${s.id}`)}>
                 <span className="sp-tag">{s.id}</span>
                 <span className="sp-tag2">Ph {s.phase}</span>
