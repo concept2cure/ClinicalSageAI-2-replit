@@ -24,6 +24,14 @@ interface NetworkInsight {
   epsilon: number | null;
   matchSpecificity: string;
 }
+interface ActiveWarning {
+  id: string;
+  patternId?: string;
+  severity?: string;
+  suggestedCorrection?: string;
+  confidence?: number;
+  createdAt?: string;
+}
 
 /* ================================================================
    ShadowReview -- AnA simulates the reviewer who will read your
@@ -52,6 +60,16 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
   );
   const netData = (netState.data?.data ?? null) as NetworkInsight | null;
   const netLive = !netState.sample && !!netData && netData.probability != null;
+
+  // Live active model warnings from the counterfactual-replay engine (org-scoped).
+  // A distinct block, never merged into the simulated findings — real vs simulated stays clear.
+  const warnState = useLive<RiEnvelope<ActiveWarning[]>>(
+    '/api/regulatory-intelligence/warnings',
+    { data: [] },
+    []
+  );
+  const warnings = (warnState.data?.data ?? []) as ActiveWarning[];
+  const warnLive = !warnState.sample && warnings.length > 0;
 
   const findings = useMemo(() => {
     const f = (SHADOW_FINDINGS[lensId] || []) as ShadowFinding[];
@@ -132,6 +150,19 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
               : 'Cross-submission risk prior is unavailable offline — binds to /api/regulatory-intelligence/network-insights (org-scoped, differential-privacy protected).'}
           </div>
         </div>
+
+        {warnLive && (
+          <div className="sr-netprior">
+            <div className="sr-netprior-main">
+              <span className="sr-netprior-label">{warnings.length} active model warning{warnings.length === 1 ? '' : 's'} from the calibrated engine <SampleTag sample={false} /></span>
+            </div>
+            {warnings.slice(0, 6).map((w) => (
+              <div key={w.id} className="sr-netprior-sub">
+                <b>{w.severity || 'warning'}</b> — {w.suggestedCorrection || w.patternId || 'pattern flagged'}{typeof w.confidence === 'number' ? ` · confidence ${Math.round(w.confidence * 100)}%` : ''}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* The two gates that kill a filing */}
         <div className="sr-gates">
