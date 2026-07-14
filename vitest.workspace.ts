@@ -46,7 +46,10 @@ export default defineWorkspace([
       name: 'client',
       globals: true,
       environment: 'node',
-      include: ['client/**/__tests__/**/*.test.ts'],
+      include: [
+        'client/**/__tests__/**/*.test.ts',
+        'client/**/__tests__/**/*.test.tsx',
+      ],
       exclude: ['node_modules', 'dist', '_archive', '_deprecated'],
       testTimeout: 10000,
       hookTimeout: 10000,
