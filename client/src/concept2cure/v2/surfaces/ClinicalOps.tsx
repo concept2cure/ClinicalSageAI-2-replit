@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
+import { useLiveList } from '../dataConnect';
 import { RBM_SITES, RBM_OVERSIGHT_COUNTS } from '../fixtures/rbm-data';
 import '../styles/project-home-v2.css';
 
@@ -74,9 +75,9 @@ const CO_DEV: CoDev[] = [
   { sev: 'low', site: '1104', title: 'Visit window exceeded (2 subjects)', capa: 'documented', status: 'planned' },
 ];
 
-/** Build site list from cross-surface RBM data (shared rbm-data fixture). */
-function buildSites(): CoSite[] {
-  return RBM_SITES.map((s: RbmSite) => {
+/** Build site list from cross-surface RBM data (live ?? shared rbm-data fixture). */
+function buildSites(sitesData: RbmSite[] = RBM_SITES): CoSite[] {
+  return sitesData.map((s: RbmSite) => {
     const ov = RBM_OVERSIGHT_COUNTS[s.n] || { open: 0, high: 0 };
     return { n: s.n, name: s.name, country: s.country, composite: s.composite, tier: s.tier, driver: (s.drivers || [])[0] || '', open: ov.open, high: ov.high };
   });
@@ -224,6 +225,14 @@ function rowcls(r: { _new?: boolean }): string {
 
 function useRows<T extends { _new?: boolean }>(seed: T[]): readonly [T[], (r: T) => void] {
   const [rows, setRows] = useState(() => (seed || []).map((r) => ({ ...r })));
+  // Re-seed when the live source resolves (seed identity changes once).
+  const seedRef = useRef(seed);
+  useEffect(() => {
+    if (seed !== seedRef.current) {
+      seedRef.current = seed;
+      setRows((seed || []).map((r) => ({ ...r })));
+    }
+  }, [seed]);
   const add = (r: T) => {
     const row: T = { ...r, _new: true };
     setRows((rs) => [row, ...rs]);
@@ -255,8 +264,9 @@ function C2CToast({ msg }: { msg: string }) {
 
 export function ClinicalOps({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const initialSites = buildSites();
-  const [sites, addSite] = useRows<CoSite>(initialSites.length ? initialSites : buildSites());
+  const liveSites = useLiveList<RbmSite>('/api/mdx/rbm-site-risk', RBM_SITES);
+  const initialSites = useMemo(() => buildSites(liveSites.data), [liveSites.data]);
+  const [sites, addSite] = useRows<CoSite>(initialSites);
   const [devs, addDev] = useRows<CoDev>(CO_DEV);
   const [siteForm, setSiteForm] = useState(false);
   const [devForm, setDevForm] = useState(false);
@@ -319,7 +329,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
       <div className="sp-sec">
         <SpCard
           title="Site-risk assessment -- RBM"
-          sample
+          sample={liveSites.sample}
           meta="site-risk-engine composite"
           foot={
             <SpAsk
