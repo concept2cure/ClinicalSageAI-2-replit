@@ -8,7 +8,7 @@
  */
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   STATUS_TONE,
@@ -61,10 +61,11 @@ export function BiopharmaProject({ onAsk, onNav }: SurfaceViewProps) {
   const p = BIO_PROGRAM;
   const bla = BIO_BLA;
   const [tab, setTab] = useState('similarity');
+  const liveModules = useLiveList<(typeof BIO_MODULES)[number]>('/api/biopharma/ctd', BIO_MODULES);
 
   return (
     <div className="page-inner">
-      <SampleTag sample={true} />
+      <SampleTag sample={liveModules.sample} />
       <PageHead
         eyebrow="Project · submission"
         title="Biopharma — BLA / CTD"
@@ -101,7 +102,7 @@ export function BiopharmaProject({ onAsk, onNav }: SurfaceViewProps) {
             <div className="sec-sub">233 documents</div>
           </div>
           <div className="cmc-blueprint" style={{ gridTemplateColumns: 'repeat(2,1fr)' }}>
-            {BIO_MODULES.map((m) => (
+            {liveModules.data.map((m) => (
               <button key={m.code} className="cmc-card" style={{ textAlign: 'left' }} onClick={() => onNav && onNav('document-authoring')}>
                 <div className="cmc-card-top">
                   <span className="mono cmc-code">{m.code}</span>

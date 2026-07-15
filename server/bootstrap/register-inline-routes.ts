@@ -387,6 +387,26 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Nonclinical routes:', error);
   }
 
+  // Change assessment (510(k)-change / MDR significant-change determinations) —
+  // org-scoped contract endpoint for the change-assessment surface.
+  try {
+    const changeAssessmentModule = await import('../routes/change-assessment.routes');
+    app.use('/api/change-assessment', authMiddleware, changeAssessmentModule.default);
+    console.info('✅ Change-assessment route mounted (/api/change-assessment)');
+  } catch (error) {
+    console.error('❌ Failed to mount change-assessment route:', error);
+  }
+
+  // Enablement / training catalog — org-scoped contract endpoint for the
+  // training surface (registry apiPrefix /api/enablement).
+  try {
+    const enablementModule = await import('../routes/enablement');
+    app.use('/api/enablement', authMiddleware, enablementModule.default);
+    console.info('✅ Enablement route mounted (/api/enablement)');
+  } catch (error) {
+    console.error('❌ Failed to mount enablement route:', error);
+  }
+
   // CDISC validation — deterministic SDTM domain conformance (SDTM-IG v3.4).
   try {
     const cdiscValidationModule = await import('../routes/cdisc-validation.routes');

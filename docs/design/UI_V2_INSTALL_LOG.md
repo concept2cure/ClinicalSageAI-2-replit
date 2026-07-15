@@ -222,6 +222,44 @@ wired yet — the honest `live ?? fixture` path. Turning each fixture shell live
 against its real endpoint is the remaining backend-wire work, tracked below,
 independent of surface installation.
 
+### Update 2026-07-14b — live-data wiring (fail-closed) for the fixture surfaces
+`dataConnect.tsx` gains `useLiveList(path, fixture)` + `matchesShape`: it
+attempts the live GET and uses the response **only when it structurally
+matches the fixture shape**, otherwise keeps the fixture with `sample:true`.
+Fail-closed by design — a backend that returns a partial/different shape than
+the surface displays (verified real: `GET /api/nonclinical/studies` returns DB
+columns without the `finding`/`dur`/`cls`/`send` fields the surface renders)
+never shows degraded data as "Live"; the honest pill stays until the endpoint
+returns the full display contract.
+
+Every fixture-backed surface's primary list is now wired through `useLiveList`
+(seed-reactive local state), driving its `SampleTag` / primary-`SpCard` sample
+flag from the live result:
+- `nonclinical` → `GET /api/nonclinical/studies`
+- `risk` → `GET /api/mdx/risk-items` (write path already existed)
+- `labeling` → `GET /api/mdx/labeling/1/translations` (write path already existed)
+- `clinical-ops` → `GET /api/mdx/rbm-site-risk` (site-risk list)
+- `biopharma` → `GET /api/biopharma/ctd` (CTD modules)
+- `pediatric` → `GET /api/biopharma/pediatric`
+- `orphan` → `GET /api/biopharma/orphan`
+- `lifecycle-mgmt` → `GET /api/biopharma/supplements`
+- `change-assessment` → `GET /api/change-assessment`
+- `pdev` — already wired live (`sample={!isLive}`) before this change.
+
+**Missing backends added (contract stubs).** `GET /api/change-assessment` and
+`GET /api/enablement` (training) were the two registry-declared endpoints that
+did not exist. Added as org-scoped route handlers mounted in
+`register-inline-routes`, returning an empty canonical envelope until a backing
+store lands — non-breaking, server build green, and the client fails closed to
+its fixture so nothing fabricated is served. Swap the empty list for a real
+query when each table exists; the client contract is already in place.
+
+Net: all surfaces across all kits are installed, rendering, and go-live-capable
+— each pulls live data the moment its endpoint returns the matching display
+contract, and shows an honest `Sample data` pill until then. Remaining work is
+backend data (tables/queries behind these endpoints), verifiable only with a
+running DB, tracked on the backend track below.
+
 ### Local verification harness (for the backend track)
 Standing up the dev server for browser verification surfaced pre-existing,
 UI-independent defects, now captured as backend work:
