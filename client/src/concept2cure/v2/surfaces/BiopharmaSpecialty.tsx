@@ -11,9 +11,9 @@
  * the primary action opens a typed intake drawer (C2CForm) and the saved
  * record is prepended to the live list (fresh-row highlight + toast).
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLiveList } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -162,6 +162,14 @@ function rowcls(r: { _new?: boolean }): string {
 
 function useRows<T extends { _new?: boolean }>(seed: T[]): readonly [T[], (r: T) => void] {
   const [rows, setRows] = useState(() => (seed || []).map((r) => ({ ...r })));
+  // Re-seed when the live source resolves (seed identity changes once).
+  const seedRef = useRef(seed);
+  useEffect(() => {
+    if (seed !== seedRef.current) {
+      seedRef.current = seed;
+      setRows((seed || []).map((r) => ({ ...r })));
+    }
+  }, [seed]);
   const add = (r: T) => {
     const row: T = { ...r, _new: true };
     setRows((rs) => [row, ...rs]);
@@ -227,7 +235,8 @@ const PED_PREA: PedPrea[] = [
 
 export function Pediatric({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const [plans, addPlan] = useRows<PedPlan>(PED_PLANS);
+  const livePlans = useLiveList<PedPlan>('/api/biopharma/pediatric', PED_PLANS);
+  const [plans, addPlan] = useRows<PedPlan>(livePlans.data);
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -305,7 +314,7 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
       onAsk={ask}
     >
       <div className="sp-sec">
-        <SpCard title="Pediatric investigation plans" meta="FDA · EMA" action={<AddBtn onClick={() => setForm(true)} label="Add plan" />}>
+        <SpCard title="Pediatric investigation plans" sample={livePlans.sample} meta="FDA · EMA" action={<AddBtn onClick={() => setForm(true)} label="Add plan" />}>
           <div className="sp-list">
             {plans.map((p, i) => (
               <div key={i} className={rowcls(p)}>
@@ -392,7 +401,8 @@ const ORPH_ADV: OrphAdv[] = [
 
 export function Orphan({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const [des, addDes] = useRows<OrphDes>(ORPH_DES);
+  const liveDes = useLiveList<OrphDes>('/api/biopharma/orphan', ORPH_DES);
+  const [des, addDes] = useRows<OrphDes>(liveDes.data);
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -466,7 +476,7 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
       onAsk={ask}
     >
       <div className="sp-sec">
-        <SpCard title="Designations" meta="FDA · EMA · PMDA" action={<AddBtn onClick={() => setForm(true)} label="New request" />}>
+        <SpCard title="Designations" sample={liveDes.sample} meta="FDA · EMA · PMDA" action={<AddBtn onClick={() => setForm(true)} label="New request" />}>
           <div className="sp-list">
             {des.map((d, i) => (
               <div key={i} className={rowcls(d)}>
@@ -570,7 +580,8 @@ const LCM_REN: LcmRen[] = [
 
 export function Lifecycle({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const [supp, addSupp] = useRows<LcmSupp>(LCM_SUPP);
+  const liveSupp = useLiveList<LcmSupp>('/api/biopharma/supplements', LCM_SUPP);
+  const [supp, addSupp] = useRows<LcmSupp>(liveSupp.data);
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -645,7 +656,7 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
       onAsk={ask}
     >
       <div className="sp-sec">
-        <SpCard title="Supplements and variations" meta="FDA · EMA · PMDA" action={<AddBtn onClick={() => setForm(true)} label="New supplement" />}>
+        <SpCard title="Supplements and variations" sample={liveSupp.sample} meta="FDA · EMA · PMDA" action={<AddBtn onClick={() => setForm(true)} label="New supplement" />}>
           <div className="sp-list">
             {supp.map((s, i) => (
               <div key={i} className={rowcls(s)}>
