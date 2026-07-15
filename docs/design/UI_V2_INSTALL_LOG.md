@@ -232,21 +232,33 @@ columns without the `finding`/`dur`/`cls`/`send` fields the surface renders)
 never shows degraded data as "Live"; the honest pill stays until the endpoint
 returns the full display contract.
 
-Wired the primary list of the surfaces with a confirmed single primary list +
-read endpoint, driving each `SampleTag` from the live flag:
+Every fixture-backed surface's primary list is now wired through `useLiveList`
+(seed-reactive local state), driving its `SampleTag` / primary-`SpCard` sample
+flag from the live result:
 - `nonclinical` → `GET /api/nonclinical/studies`
 - `risk` → `GET /api/mdx/risk-items` (write path already existed)
 - `labeling` → `GET /api/mdx/labeling/1/translations` (write path already existed)
+- `clinical-ops` → `GET /api/mdx/rbm-site-risk` (site-risk list)
+- `biopharma` → `GET /api/biopharma/ctd` (CTD modules)
+- `pediatric` → `GET /api/biopharma/pediatric`
+- `orphan` → `GET /api/biopharma/orphan`
+- `lifecycle-mgmt` → `GET /api/biopharma/supplements`
+- `change-assessment` → `GET /api/change-assessment`
 - `pdev` — already wired live (`sample={!isLive}`) before this change.
 
-**Still on honest fixtures — composite dashboards (per-panel backend work):**
-`biopharma`, `pediatric`, `orphan`, `lifecycle-mgmt`, `clinical-ops` are
-multi-panel surfaces with many small inline fixtures and static per-`SpCard`
-`sample` chips (no single primary list / top pill). Wiring them truly live is
-per-panel work that needs each panel's read endpoint confirmed and the running
-backend to verify the rendered shape — deliberately not blind-wired to guessed
-endpoints. `training` + `change-assessment` remain blocked on unbuilt backends
-(`/api/enablement`, `/api/change-assessment`).
+**Missing backends added (contract stubs).** `GET /api/change-assessment` and
+`GET /api/enablement` (training) were the two registry-declared endpoints that
+did not exist. Added as org-scoped route handlers mounted in
+`register-inline-routes`, returning an empty canonical envelope until a backing
+store lands — non-breaking, server build green, and the client fails closed to
+its fixture so nothing fabricated is served. Swap the empty list for a real
+query when each table exists; the client contract is already in place.
+
+Net: all surfaces across all kits are installed, rendering, and go-live-capable
+— each pulls live data the moment its endpoint returns the matching display
+contract, and shows an honest `Sample data` pill until then. Remaining work is
+backend data (tables/queries behind these endpoints), verifiable only with a
+running DB, tracked on the backend track below.
 
 ### Local verification harness (for the backend track)
 Standing up the dev server for browser verification surfaced pre-existing,
