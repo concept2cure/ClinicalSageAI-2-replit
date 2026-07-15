@@ -390,7 +390,7 @@ export async function registerInlineAiWorkflowRoutes({
   // Change assessment (510(k)-change / MDR significant-change determinations) —
   // org-scoped contract endpoint for the change-assessment surface.
   try {
-    const changeAssessmentModule = await import('../routes/change-assessment');
+    const changeAssessmentModule = await import('../routes/change-assessment.routes');
     app.use('/api/change-assessment', authMiddleware, changeAssessmentModule.default);
     console.info('✅ Change-assessment route mounted (/api/change-assessment)');
   } catch (error) {
