@@ -15,7 +15,7 @@ no model-vendor branding on screen, reuse existing providers/hooks/governed comp
 | 0 | Branch (`concept2cure-v2` @ e6ebf60) + `ENABLE_UI_V2` flag | ✅ this change |
 | 1 | Foundation: tokens · fonts (DECIDED) · kit CSS as stylesheet · Shell/TopBar/AnaRail/⌘K behind flag | ✅ this change |
 | 2 | Registry reconciliation (see `UI_V2_REGISTRY_RECONCILIATION_2026-07-06.md`) | ✅ this change |
-| 3 | Surface port loop (~95 surfaces, 5-layer model, contract-ready first) | 🔄 in progress — tranches 1a-1e landed via PR #1009 (9 surfaces) |
+| 3 | Surface port loop (~95 surfaces, 5-layer model, contract-ready first) | ✅ complete — all registry surfaces installed across all 12 kits; render-verified in CI (see 2026-07-14 update below) |
 | 4 | Editor + governance + provenance (TipTap stack, SSE draft, Prov tab) | ⏳ |
 | 5 | Entry flows (Auth → MFA → org picker · Onboarding · Portal decision) | ⏳ |
 | 6 | Entitlements · e-sign live wiring (blocked on INSTALL §5 backend validator) | ⏳ |
@@ -186,11 +186,41 @@ patches, `icon?` added to the interface). Full diff + disposition:
 ### Ported so far (9 surfaces + honest scaffold + C2CForm shared component)
 `home` · `global-ri` (live) · `intelligence-catalog` · `coverage` (live) ·
 `submission-center` · `pyramid` · `communication-center` · `project-home` ·
-`projects` — all verified by typecheck.
+`projects` — all verified by typecheck. *(This was the tranche-1 snapshot; the
+full set has since landed — see the 2026-07-14 update below.)*
 
 ### Tranche order from here
 Routes-ready families per the kit load order (`app/index.html`) → kit-only/planned
 on fixtures.
+
+### Update 2026-07-14 — all surfaces installed across all kits (render-verified)
+The surface port loop is complete. Every id in the surface registry
+(`shared/constants/ui-surface-registry.ts` + `.ui-v2.ts`), minus the five
+non-surface infrastructure ids (`auth-session`, `tenant-org`, `feature-flags`,
+`ana-rail`, `esign-modal`), resolves to a real `SURFACE_VIEWS` component — **0
+scaffold fallbacks**. Coverage is 100% in every kit:
+
+`home` 4/4 · `mdx` 21/21 · `authoring` 6/6 · `biopharma` 8/8 · `intelligence`
+3/3 · `risk` 3/3 · `pdev` 2/2 · `submission` 1/1 · `ectd_coauthor` 1/1 · `cmc`
+1/1 · `tasking` 1/1 · `labeling` 1/1 · kit-agnostic (`core`) 29/29.
+
+**Operational proof (CI-enforced):**
+`client/src/concept2cure/v2/__tests__/surfaceRender.test.tsx` mounts every
+`SURFACE_VIEWS` surface plus the home hub under the live provider tree
+(`QueryClient` + `AuthProvider` + `ProjectProvider`) and asserts each renders
+without throwing (99 cases), plus a per-kit assertion so no kit can silently
+regress to scaffolds. Runs in the CI `Test` job.
+
+**Cleanup:** removed the dead `surfaces/Mdx.tsx` (`MdxFrame` iframe) —
+superseded by the native `DeviceWorkstream` surface to which the
+`device-workstream`/`device-510k`/`device-cer`/`device-diagnostics` ids
+resolve; it had zero references (no parallel old/new path).
+
+**Still fixture-backed (not a coverage gap):** surfaces installed and rendering
+still degrade to the `Sample data` fixture where their live endpoint isn't
+wired yet — the honest `live ?? fixture` path. Turning each fixture shell live
+against its real endpoint is the remaining backend-wire work, tracked below,
+independent of surface installation.
 
 ### Local verification harness (for the backend track)
 Standing up the dev server for browser verification surfaced pre-existing,

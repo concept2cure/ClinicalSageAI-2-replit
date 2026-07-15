@@ -93,21 +93,41 @@ function stubSurface(id: string): UiSurface {
 const noop = () => {};
 const commonProps = { onAsk: noop, onNav: noop, segment: 'medical-device' };
 
+/** Infrastructure ids that are not user-facing surfaces and so have no view. */
+const INFRA_IDS = new Set([
+  'auth-session',
+  'tenant-org',
+  'feature-flags',
+  'ana-rail',
+  'esign-modal',
+]);
+const surfaceEntries = UI_SURFACES.filter((s) => !INFRA_IDS.has(s.id));
+
 describe('surface registry ↔ SURFACE_VIEWS coverage', () => {
   it('every registry surface resolves to a real component (no scaffold fallback)', () => {
-    const infra = new Set([
-      'auth-session',
-      'tenant-org',
-      'feature-flags',
-      'ana-rail',
-      'esign-modal',
-    ]);
-    const missing = UI_SURFACES.filter(
-      (s) => !infra.has(s.id) && !SURFACE_VIEWS[s.id],
-    ).map((s) => s.id);
+    const missing = surfaceEntries
+      .filter((s) => !SURFACE_VIEWS[s.id])
+      .map((s) => s.id);
     expect(
       missing,
       `registry surfaces with no SURFACE_VIEWS component: ${missing.join(', ')}`,
+    ).toEqual([]);
+  });
+
+  // "All surfaces installed across all kits" — proven per kit, so a whole kit
+  // can never silently regress to scaffolds. Every design kit (home, mdx,
+  // authoring, biopharma, cmc, pdev, submission, tasking, intelligence, risk,
+  // labeling, ectd_coauthor) plus the kit-agnostic surfaces must be 100%
+  // installed.
+  const kits = [...new Set(surfaceEntries.map((s) => s.uiKit ?? 'core'))].sort();
+
+  it.each(kits)('kit "%s" is fully installed', (kit) => {
+    const inKit = surfaceEntries.filter((s) => (s.uiKit ?? 'core') === kit);
+    const uninstalled = inKit.filter((s) => !SURFACE_VIEWS[s.id]).map((s) => s.id);
+    expect(inKit.length).toBeGreaterThan(0);
+    expect(
+      uninstalled,
+      `kit ${kit}: ${uninstalled.length}/${inKit.length} surfaces have no component`,
     ).toEqual([]);
   });
 });
