@@ -92,3 +92,4 @@ tesseract-cache/
 
 # Generated SBOM (produced in CI, published as an artifact)
 sbom.cyclonedx.json
+docs/reports/workflow-audit-results.json
