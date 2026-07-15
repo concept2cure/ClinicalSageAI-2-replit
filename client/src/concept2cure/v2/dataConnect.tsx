@@ -90,6 +90,25 @@ export function useLive<T>(
  * malformed "live" data. Empty live list with a non-empty fixture is also
  * rejected (nothing to show → keep the sample so the surface isn't blank).
  */
+/**
+ * Unwrap the project's canonical success envelope. The `ok(res, rows, meta)`
+ * helper (`server/lib/api-response.ts`) returns `{ data: rows, meta }`, so most
+ * list reads arrive as `{ data: [...] }` rather than a bare array; some legacy
+ * routes still return the bare array. Return the inner list in both cases so
+ * `matchesShape` inspects the rows, not the envelope.
+ */
+export function unwrapList(payload: unknown): unknown {
+  if (Array.isArray(payload)) return payload;
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    Array.isArray((payload as { data?: unknown }).data)
+  ) {
+    return (payload as { data: unknown }).data;
+  }
+  return payload;
+}
+
 export function matchesShape<T>(live: unknown, fixture: T[]): live is T[] {
   if (!Array.isArray(live)) return false;
   if (fixture.length === 0) return live.length > 0;
@@ -117,8 +136,9 @@ export function useLiveList<T>(
 ): UseLiveState<T[]> {
   const raw = useLive<unknown>(path, fixture, deps);
   if (raw.loading) return { data: fixture, loading: true, sample: true };
-  if (!raw.sample && matchesShape<T>(raw.data, fixture)) {
-    return { data: raw.data, loading: false, sample: false };
+  const list = unwrapList(raw.data);
+  if (!raw.sample && matchesShape<T>(list, fixture)) {
+    return { data: list, loading: false, sample: false };
   }
   return { data: fixture, loading: false, sample: true, error: raw.error };
 }
