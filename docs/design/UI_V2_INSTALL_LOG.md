@@ -222,6 +222,32 @@ wired yet — the honest `live ?? fixture` path. Turning each fixture shell live
 against its real endpoint is the remaining backend-wire work, tracked below,
 independent of surface installation.
 
+### Update 2026-07-14b — live-data wiring (fail-closed) for the fixture surfaces
+`dataConnect.tsx` gains `useLiveList(path, fixture)` + `matchesShape`: it
+attempts the live GET and uses the response **only when it structurally
+matches the fixture shape**, otherwise keeps the fixture with `sample:true`.
+Fail-closed by design — a backend that returns a partial/different shape than
+the surface displays (verified real: `GET /api/nonclinical/studies` returns DB
+columns without the `finding`/`dur`/`cls`/`send` fields the surface renders)
+never shows degraded data as "Live"; the honest pill stays until the endpoint
+returns the full display contract.
+
+Wired the primary list of the surfaces with a confirmed single primary list +
+read endpoint, driving each `SampleTag` from the live flag:
+- `nonclinical` → `GET /api/nonclinical/studies`
+- `risk` → `GET /api/mdx/risk-items` (write path already existed)
+- `labeling` → `GET /api/mdx/labeling/1/translations` (write path already existed)
+- `pdev` — already wired live (`sample={!isLive}`) before this change.
+
+**Still on honest fixtures — composite dashboards (per-panel backend work):**
+`biopharma`, `pediatric`, `orphan`, `lifecycle-mgmt`, `clinical-ops` are
+multi-panel surfaces with many small inline fixtures and static per-`SpCard`
+`sample` chips (no single primary list / top pill). Wiring them truly live is
+per-panel work that needs each panel's read endpoint confirmed and the running
+backend to verify the rendered shape — deliberately not blind-wired to guessed
+endpoints. `training` + `change-assessment` remain blocked on unbuilt backends
+(`/api/enablement`, `/api/change-assessment`).
+
 ### Local verification harness (for the backend track)
 Standing up the dev server for browser verification surfaced pre-existing,
 UI-independent defects, now captured as backend work:
