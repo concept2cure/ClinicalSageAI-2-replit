@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -144,13 +144,19 @@ function ChangeDecision({ title, flag, dec }: ChangeDecisionProps) {
 /* ════ Change Assessment surface ════ */
 
 export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
+  const liveItems = useLiveList<ChangeItem>('/api/change-assessment', CHANGE_ITEMS);
+  const items = liveItems.data;
   const [sel, setSel] = useState(CHANGE_ITEMS[0].id);
-  const item = CHANGE_ITEMS.find(c => c.id === sel) || CHANGE_ITEMS[0];
-  const triggers = CHANGE_ITEMS.filter(c => c.fda.outcome === 'new-submission' || c.eu.outcome === 'nb-notify').length;
+  // Keep the selection valid when the live list resolves.
+  useEffect(() => {
+    if (items[0] && !items.some((c) => c.id === sel)) setSel(items[0].id);
+  }, [items, sel]);
+  const item = items.find(c => c.id === sel) || items[0];
+  const triggers = items.filter(c => c.fda.outcome === 'new-submission' || c.eu.outcome === 'nb-notify').length;
 
   return (
     <div className="page-inner reg">
-      <SampleTag sample={true} />
+      <SampleTag sample={liveItems.sample} />
       <div className="reg-head">
         <div>
           <div className="reg-eyebrow">Platform {I.dot} lifecycle</div>
@@ -161,15 +167,15 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
       </div>
 
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{CHANGE_ITEMS.length}</div><div className="reg-kpi-l">Open changes</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{items.length}</div><div className="reg-kpi-l">Open changes</div></div>
         <div className="reg-kpi"><div className="reg-kpi-v">{triggers}</div><div className="reg-kpi-l">Trigger a filing</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">{CHANGE_ITEMS.length - triggers}</div><div className="reg-kpi-l">Document to file</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{items.length - triggers}</div><div className="reg-kpi-l">Document to file</div></div>
         <div className="reg-kpi"><div className="reg-kpi-v">2</div><div className="reg-kpi-l">Jurisdictions assessed</div></div>
       </div>
 
       <div className="chg-split">
         <div className="chg-list">
-          {CHANGE_ITEMS.map(c => {
+          {items.map(c => {
             const trig = c.fda.outcome === 'new-submission' || c.eu.outcome === 'nb-notify';
             return (
               <button key={c.id} className="chg-row" data-on={c.id === sel || undefined} onClick={() => setSel(c.id)}>
