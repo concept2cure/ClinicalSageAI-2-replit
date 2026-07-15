@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected } from '../dataConnect';
+import { SampleTag, connected, useLiveList } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -12,8 +12,19 @@ import type { RiskRow, RiskControl } from '../fixtures/risk-data';
 /* ---- Risk management (ISO 14971) ---- */
 
 export function Risk({ onAsk }: SurfaceViewProps) {
-  const [rows, setRows] = useState<RiskRow[]>(INITIAL_ROWS);
+  const live = useLiveList<RiskRow>('/api/mdx/risk-items', INITIAL_ROWS);
+  const [rows, setRows] = useState<RiskRow[]>(live.data);
   const [sel, setSel] = useState(INITIAL_ROWS[0].id);
+  // Adopt the live risk file once the backend responds (fail-closed to the
+  // fixture until then; user-added hazards before that are optimistic).
+  const seededRef = React.useRef<RiskRow[]>(live.data);
+  useEffect(() => {
+    if (live.data !== seededRef.current) {
+      seededRef.current = live.data;
+      setRows(live.data);
+      if (live.data[0]) setSel(live.data[0].id);
+    }
+  }, [live.data]);
   const [view, setView] = useState<'initial' | 'residual'>('initial');
   const [form, setForm] = useState(false);
   const [ctrlForm, setCtrlForm] = useState(false);
@@ -119,7 +130,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="page-inner">
-      <SampleTag sample={true} />
+      <SampleTag sample={live.sample} />
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Specialist / device</div>

@@ -81,6 +81,48 @@ export function useLive<T>(
   return state;
 }
 
+/**
+ * Structural fail-closed guard: is `live` shaped like `fixture` (a list whose
+ * rows carry the fixture's keys)? Used to decide whether a 200 response is
+ * actually the contract the surface renders. A 200 with a *different* shape
+ * (e.g. a backend that returns DB columns the surface doesn't display) is
+ * rejected, so the surface keeps its honest fixture instead of rendering
+ * malformed "live" data. Empty live list with a non-empty fixture is also
+ * rejected (nothing to show → keep the sample so the surface isn't blank).
+ */
+export function matchesShape<T>(live: unknown, fixture: T[]): live is T[] {
+  if (!Array.isArray(live)) return false;
+  if (fixture.length === 0) return live.length > 0;
+  if (live.length === 0) return false;
+  const wantKeys = Object.keys(fixture[0] as Record<string, unknown>).filter(
+    (k) => !k.startsWith('_'),
+  );
+  const row = live[0];
+  if (typeof row !== 'object' || row === null) return false;
+  return wantKeys.every((k) => k in (row as Record<string, unknown>));
+}
+
+/**
+ * live ?? fixture for a list surface, fail-closed on shape. Attempts the live
+ * GET; uses the response only when it structurally matches the fixture
+ * (`matchesShape`), otherwise returns the fixture with `sample:true`. This is
+ * the one call a fixture-backed surface adds to become genuinely
+ * go-live-capable without any risk of rendering degraded data before its
+ * backend returns the full display contract.
+ */
+export function useLiveList<T>(
+  path: string | null,
+  fixture: T[],
+  deps: React.DependencyList = [path],
+): UseLiveState<T[]> {
+  const raw = useLive<unknown>(path, fixture, deps);
+  if (raw.loading) return { data: fixture, loading: true, sample: true };
+  if (!raw.sample && matchesShape<T>(raw.data, fixture)) {
+    return { data: raw.data, loading: false, sample: false };
+  }
+  return { data: fixture, loading: false, sample: true, error: raw.error };
+}
+
 /** The provenance pill every live-backed surface shows (styles in app-v2.css). */
 export function SampleTag({ sample }: { sample: boolean }) {
   return (

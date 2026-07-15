@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import { C2CForm } from '../C2CForm';
@@ -212,6 +212,15 @@ function rowcls(r: { _new?: boolean }): string {
 
 function useRows(seed: NcStudy[]): readonly [NcStudy[], (r: NcStudy) => void] {
   const [rows, setRows] = useState(() => (seed || []).map((r) => ({ ...r })));
+  // Re-seed when the live list resolves (the seed identity changes once the
+  // backend responds); user-added rows before that are optimistic.
+  const seedRef = useRef(seed);
+  useEffect(() => {
+    if (seed !== seedRef.current) {
+      seedRef.current = seed;
+      setRows((seed || []).map((r) => ({ ...r })));
+    }
+  }, [seed]);
   const add = (r: NcStudy) => {
     const row: NcStudy = { ...r, _new: true };
     setRows((rs) => [row, ...rs]);
@@ -262,7 +271,8 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
   const open = (id: string) => {
     try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
   };
-  const [studies, addStudy] = useRows(NC_STUDIES);
+  const liveStudies = useLiveList<NcStudy>('/api/nonclinical/studies', NC_STUDIES);
+  const [studies, addStudy] = useRows(liveStudies.data);
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -319,7 +329,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
       ]}
       onAsk={ask}
     >
-      <SampleTag sample={true} />
+      <SampleTag sample={liveStudies.sample} />
 
       <div className="sp-sec">
         <SpCard

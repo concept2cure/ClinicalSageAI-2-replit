@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected } from '../dataConnect';
+import { SampleTag, connected, useLiveList } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -21,7 +21,16 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
   const doc = LABEL_DOC;
   const EN = LABEL_ENUMS;
   const symTone = (s: string) => s === 'placed' ? 'ok' : s === 'review' ? 'warn' : s === 'na' ? 'idle' : 'err';
-  const [trans, setTrans] = useState<LabelTranslation[]>(LABEL_TRANSLATIONS);
+  const liveTrans = useLiveList<LabelTranslation>('/api/mdx/labeling/1/translations', LABEL_TRANSLATIONS);
+  const [trans, setTrans] = useState<LabelTranslation[]>(liveTrans.data);
+  // Adopt live translations once the backend responds; fail-closed to fixture.
+  const transSeed = useRef<LabelTranslation[]>(liveTrans.data);
+  useEffect(() => {
+    if (liveTrans.data !== transSeed.current) {
+      transSeed.current = liveTrans.data;
+      setTrans(liveTrans.data);
+    }
+  }, [liveTrans.data]);
   const [tForm, setTForm] = useState(false);
   const [toast, setToast] = useState('');
   const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
@@ -72,7 +81,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="page-inner">
-      <SampleTag sample={true} />
+      <SampleTag sample={liveTrans.sample} />
       <div className="ph">
         <div>
           <div className="ph-eyebrow">{'Specialist / device / ' + kindLabel + ' v' + doc.version}</div>
