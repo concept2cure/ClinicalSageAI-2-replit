@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-13T19:54:49.157Z",
+  "generatedAt": "2026-07-15T00:01:28.576Z",
   "git": {
-    "sha": "a32a0067c2d9553f831eb1f180decb7fa00b9900",
+    "sha": "9ab6c067f29bb0f1119a1a1d71aba06b734ca2d3",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1076,15 +1076,6 @@
         ]
       },
       {
-        "basename": "mdx",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/v2/surfaces/Mdx.tsx",
-          "server/routes/mdx.ts",
-          "shared/constants/mdx.ts"
-        ]
-      },
-      {
         "basename": "nonclinical",
         "count": 3,
         "paths": [
@@ -1892,6 +1883,14 @@
         "paths": [
           "server/routes/__tests__/market-access.test.ts",
           "server/services/regulatory/__tests__/market-access.test.ts"
+        ]
+      },
+      {
+        "basename": "mdx",
+        "count": 2,
+        "paths": [
+          "server/routes/mdx.ts",
+          "shared/constants/mdx.ts"
         ]
       },
       {
@@ -2900,7 +2899,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 175,
+      "duplicateGroups": 174,
       "largeByBytes": 0,
       "largeByLines": 1
     },
