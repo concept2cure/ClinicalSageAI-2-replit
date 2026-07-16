@@ -595,6 +595,74 @@ async function seed() {
       }
     }
 
+    // ── Biopharma specialty (pediatric / orphan / lifecycle) — scoped to org ──
+    {
+      const pedExists = await client.query(`SELECT to_regclass('public.biopharma_pediatric_plans') AS t`);
+      if (pedExists.rows[0]?.t) {
+        const pedRows = [
+          { id: 'pip-420', product: 'BX-420', kind: 'EMA PIP', ageRange: '2--17', deferrals: 2, waivers: 1, milestones: 8, due: 'Trial readout · Q1 2027', status: 'agreed' },
+          { id: 'psp-204', product: 'BX-204', kind: 'FDA iPSP', ageRange: '12--17', deferrals: 1, waivers: 0, milestones: 5, due: 'PREA · post-approval Y2', status: 'submitted' },
+          { id: 'pip-301', product: 'BX-301', kind: 'EMA PIP', ageRange: '0--17', deferrals: 0, waivers: 1, milestones: 6, due: 'CHMP advice · Q3 2026', status: 'in draft' },
+          { id: 'psp-115', product: 'BX-115', kind: 'FDA iPSP', ageRange: '6--17', deferrals: 0, waivers: 0, milestones: 4, due: 'Pre-IND meeting · 28 days', status: 'in draft' },
+        ];
+        for (const r of pedRows) {
+          await client.query(
+            `INSERT INTO biopharma_pediatric_plans (id, organization_id, product, kind, age_range, deferrals, waivers, milestones, due, status)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.product, r.kind, r.ageRange, r.deferrals, r.waivers, r.milestones, r.due, r.status],
+          );
+        }
+        console.log('   ✓ Biopharma pediatric plans demo seeded');
+      } else {
+        console.log('   ⚠ biopharma_pediatric_plans not found — run migrations first, skipping');
+      }
+
+      const orphExists = await client.query(`SELECT to_regclass('public.biopharma_orphan_designations') AS t`);
+      if (orphExists.rows[0]?.t) {
+        const orphRows = [
+          { id: 'orph-1', product: 'BX-256', agency: 'FDA', indication: 'RPE65-mediated dystrophy', date: '2024-08-12', prevalence: '~3,000 US patients', benefit: '7-yr exclusivity · PDUFA waiver · Tax credit', status: 'designated' },
+          { id: 'orph-2', product: 'BX-256', agency: 'EMA', indication: 'RPE65-mediated dystrophy', date: '2024-11-04', prevalence: '<5 per 10k EU', benefit: '10-yr exclusivity · Protocol assistance · Fee reduction', status: 'designated' },
+          { id: 'orph-3', product: 'BX-301', agency: 'FDA', indication: 'Relapsed multiple myeloma', date: '2026-03-22', prevalence: '<200k US patients', benefit: 'Pending', status: 'requested' },
+          { id: 'orph-4', product: 'BX-420', agency: 'PMDA', indication: 'Pediatric biologic', date: '2025-05-01', prevalence: '~4,200 Japan patients', benefit: 'Re-exam 10-yr · Priority review', status: 'designated' },
+          { id: 'orph-5', product: 'BX-115', agency: 'FDA', indication: 'CNS · rare seizure', date: '--', prevalence: '~7,500 US patients', benefit: 'Pre-submission', status: 'planned' },
+        ];
+        for (const r of orphRows) {
+          await client.query(
+            `INSERT INTO biopharma_orphan_designations (id, organization_id, product, agency, indication, date, prevalence, benefit, status)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.product, r.agency, r.indication, r.date, r.prevalence, r.benefit, r.status],
+          );
+        }
+        console.log('   ✓ Biopharma orphan designations demo seeded');
+      } else {
+        console.log('   ⚠ biopharma_orphan_designations not found — run migrations first, skipping');
+      }
+
+      const suppExists = await client.query(`SELECT to_regclass('public.biopharma_supplements') AS t`);
+      if (suppExists.rows[0]?.t) {
+        const suppRows = [
+          { id: 'sNDA-211990-001', agency: 'FDA', product: 'BX-099', subject: 'sNDA · Prior Approval -- Pediatric indication extension', filed: '2026-03-04', due: 'PDUFA 2026-09-04', status: 'filed' },
+          { id: 'sNDA-211990-002', agency: 'FDA', product: 'BX-099', subject: 'sNDA · CBE-30 -- Manufacturing site addition (DS)', filed: '2026-04-22', due: 'Effective 2026-05-22', status: 'filed' },
+          { id: 'EU-VAR-006012-1', agency: 'EMA', product: 'BX-099', subject: 'Type II variation -- Specification change (host cell protein)', filed: '2026-02-11', due: 'CHMP day 60', status: 'review' },
+          { id: 'EU-VAR-006012-2', agency: 'EMA', product: 'BX-099', subject: 'Type IB variation -- Container closure update', filed: '--', due: 'Target 2026-06', status: 'drafting' },
+          { id: 'JP-VAR-2024-3', agency: 'PMDA', product: 'BX-099', subject: 'Partial change (Japan) -- Manufacturer change', filed: '2026-01-15', due: 'PMDA day 60', status: 'review' },
+        ];
+        for (const r of suppRows) {
+          await client.query(
+            `INSERT INTO biopharma_supplements (id, organization_id, agency, product, subject, filed, due, status)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.agency, r.product, r.subject, r.filed, r.due, r.status],
+          );
+        }
+        console.log('   ✓ Biopharma lifecycle supplements demo seeded');
+      } else {
+        console.log('   ⚠ biopharma_supplements not found — run migrations first, skipping');
+      }
+    }
+
     await client.query('COMMIT');
 
     // ── Summary ───────────────────────────────────────────────────
