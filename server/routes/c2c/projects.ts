@@ -60,22 +60,81 @@ function send404(res: Response) {
   return res.status(404).json({ error: 'NOT_FOUND' });
 }
 
-// ── GET /api/c2c/projects/:id ─────────────────────────────────────────────────
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-router.get('/:id', async (req: Request, res: Response) => {
+/** Present a program_type as the portfolio workstream bucket. */
+const WS_CASE = `CASE
+         WHEN p.program_type IN ('510k','de_novo','pma','ivd','device') THEN 'MDX'
+         WHEN p.program_type IN ('ind','bla','biologic') THEN 'Biotech'
+         WHEN p.program_type IN ('nda','maa') THEN 'Pharma'
+         ELSE initcap(replace(p.program_type, '_', ' '))
+       END`;
+
+// ── GET /api/c2c/projects ─────────────────────────────────────────────────────
+//
+// Portfolio list shaped to the v2 Projects surface's display contract
+// ({ id, title, ws, code, stage, readiness, status, lead, blocker, due,
+// activity }) — every field projected from a real regulatory_programs column
+// (progress_percent → readiness, phase → stage, target_submission_date → due,
+// lead_user_id → lead). Fails closed to an empty envelope when the store is
+// not provisioned.
+
+router.get('/', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
 
   try {
     const { rows } = await pool.query(
+      `SELECT p.id::text                                            AS id,
+              p.name                                                AS title,
+              ${WS_CASE}                                            AS ws,
+              COALESCE(p.code, '—')                                 AS code,
+              initcap(replace(COALESCE(p.phase, 'planning'), '_', ' ')) AS stage,
+              COALESCE(p.progress_percent, 0)                       AS readiness,
+              p.status                                              AS status,
+              COALESCE(u.name, u.email, '—')                        AS lead,
+              NULL::text                                            AS blocker,
+              COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
+              'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
+         FROM regulatory_programs p
+         LEFT JOIN users u ON u.id = p.lead_user_id
+        WHERE p.organization_id = $1 AND p.deleted_at IS NULL
+        ORDER BY p.updated_at DESC`,
+      [orgId],
+    );
+    return res.json({ data: rows, meta: { count: rows.length } });
+  } catch (err: unknown) {
+    if ((err as { code?: string })?.code === '42P01') {
+      return res.json({ data: [], meta: { count: 0, pendingStore: true } });
+    }
+    console.error('[c2c/projects] GET /', err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ── GET /api/c2c/projects/:id ─────────────────────────────────────────────────
+
+router.get('/:id', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
+  // Guard the uuid cast — a non-uuid id would otherwise throw 22P02 → 500.
+  if (!UUID_RE.test(req.params.id)) return send404(res);
+
+  try {
+    // Columns verified against migrations/20260524_program_workbench_schema.sql
+    // (the previous projection referenced sponsor_name / lead_indication /
+    // filing_date / pdufa_date / completion_percentage, none of which exist on
+    // regulatory_programs — the read 500'd with 42703 on a real schema).
+    const { rows } = await pool.query(
       `SELECT
-         p.id, p.code, p.name, p.program_type, p.status,
-         p.sponsor_name, p.lead_indication, p.description,
-         p.target_agencies, p.filing_date, p.pdufa_date,
-         p.completion_percentage, p.created_at, p.updated_at,
-         p.team_members
+         p.id, p.code, p.name, p.program_type, p.status, p.phase, p.priority,
+         p.description, p.product_name, p.indication, p.intended_use,
+         p.primary_agency, p.target_agencies,
+         p.target_submission_date, p.actual_submission_date, p.approval_date,
+         p.progress_percent, p.lead_user_id, p.team_members,
+         p.created_at, p.updated_at
        FROM regulatory_programs p
-       WHERE p.id = $1 AND p.organization_id = $2
+       WHERE p.id = $1 AND p.organization_id = $2 AND p.deleted_at IS NULL
        LIMIT 1`,
       [req.params.id, orgId],
     );
