@@ -1,18 +1,19 @@
 /**
- * Change assessment API — contract endpoint for the `change-assessment`
- * surface's live read (`GET /api/change-assessment`, consumed via useLiveList).
+ * Change assessment API (`GET /api/change-assessment`, consumed via useLiveList).
  *
- * This establishes the org-scoped route the client expects. There is no
- * change-assessment store yet, so it returns an empty canonical envelope; the
- * surface fails closed to its codebase fixture and shows the honest
- * "Sample data" pill (GAP RULE — never fabricate data as live). When a backing
- * table lands, swap the empty list for the query — the client contract is
- * already in place.
+ * Org-scoped read of the `change_assessments` store — each row is a 510(k)-change
+ * / MDR significant-change determination shaped 1:1 to the surface's display
+ * contract (id/title/device/area/raised/owner/fda/eu/doc). If the store is empty
+ * or unavailable the route returns an empty canonical envelope and the client
+ * fails closed to its fixture (GAP RULE — never fabricate data as live).
  */
 import { Router, type Request, type Response } from 'express';
-import { ok, orgRequired } from '../lib/api-response';
+import { pool } from '../db';
+import { ok, orgRequired, serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+const log = createScopedLogger('change-assessment');
 
 function getOrgId(req: Request): number | null {
   const raw = (req as { user?: { organizationId?: unknown } }).user?.organizationId;
@@ -21,11 +22,26 @@ function getOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** GET /api/change-assessment — org-scoped change-assessment list. */
-router.get('/', (req: Request, res: Response) => {
+/** GET /api/change-assessment — org-scoped change determinations. */
+router.get('/', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
-  return ok(res, [], { count: 0, pendingStore: true });
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, title, device, area, raised, owner, fda, eu, doc
+         FROM change_assessments
+        WHERE organization_id = $1 AND deleted_at IS NULL
+        ORDER BY raised DESC NULLS LAST, id`,
+      [orgId],
+    );
+    return ok(res, rows, { count: rows.length });
+  } catch (err) {
+    // Store not provisioned yet in this tenant → honest empty (client keeps fixture).
+    if ((err as { code?: string })?.code === '42P01') {
+      return ok(res, [], { count: 0, pendingStore: true });
+    }
+    return serverError(res, log, 'list-change-assessments', err);
+  }
 });
 
 export default router;

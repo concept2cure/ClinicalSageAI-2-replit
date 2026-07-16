@@ -547,6 +547,54 @@ async function seed() {
       console.log('   ⚠ submissions/coauthor_documents not found — run drizzle-kit push first, skipping');
     }
 
+    // ── Change assessments (Device/Dx lifecycle) — scoped to THIS demo org ──
+    {
+      const caExists = await client.query(`SELECT to_regclass('public.change_assessments') AS t`);
+      if (caExists.rows[0]?.t) {
+        const caRows = [
+          {
+            id: 'CH-118', title: 'Add predictive-low glucose alert algorithm', device: 'BX-204 CGM',
+            area: 'Software / labeling', raised: '2026-06-10', owner: 'R. Okafor',
+            fda: { steps: [
+              { q: 'Is the change made to address a safety issue (e.g. recall/CAPA)?', basis: 'Flowchart A', a: 'no', detail: 'Feature enhancement, not corrective.' },
+              { q: 'Could the change significantly affect clinical functionality or performance specs?', basis: 'Flowchart A.3', a: 'yes', detail: 'A new algorithmic output (predictive low) that drives a clinical alert is a new functional claim.' },
+              { q: 'Does a risk-based assessment show new/increased risk not addressed by existing controls?', basis: 'Flowchart A.4', a: 'yes', gate: true, detail: 'False-negative predictive alert is a new hazard not in the cleared risk file.' },
+            ], outcome: 'new-submission', label: 'New 510(k) required', rationale: 'A new clinical functional claim with a new risk profile exceeds the "could significantly affect" threshold — a new 510(k) is required before marketing the feature.' },
+            eu: { steps: [
+              { q: 'Change to intended purpose?', basis: 'MDCG 2020-3 Chart', a: 'no', detail: 'Intended purpose (CGM for diabetes management) unchanged.' },
+              { q: 'Change to design/performance affecting safety/benefit-risk?', basis: 'Chart A S1', a: 'yes', gate: true, detail: 'New algorithm affects performance and benefit-risk — significant.' },
+            ], outcome: 'nb-notify', label: 'Significant change — NB notification', rationale: 'Per MDCG 2020-3 this is a significant change to design/performance; the notified body must be notified and assess before the change is placed on the EU market.' },
+            doc: { kind: 'New 510(k) + MDR significant-change file', status: 'draft' },
+          },
+          {
+            id: 'CH-121', title: 'Change sensor adhesive supplier (equivalent material)', device: 'BX-204 CGM',
+            area: 'Manufacturing / materials', raised: '2026-06-14', owner: 'M. Webb',
+            fda: { steps: [
+              { q: 'Is the change made to address a safety issue?', basis: 'Flowchart A', a: 'no', detail: 'Supply-chain change.' },
+              { q: 'Change in materials with body contact?', basis: 'Flowchart C', a: 'yes', detail: 'Skin-contact adhesive — new supplier.' },
+              { q: 'Same material chemistry & biocompatibility profile (per risk-based assessment)?', basis: 'Flowchart C.2', a: 'yes', gate: true, detail: 'Identical chemistry; ISO 10993-10/-23 re-test passed equivalent. No new biocompatibility risk.' },
+            ], outcome: 'letter-to-file', label: 'Document to file (no new 510(k))', rationale: 'Materials change with equivalent chemistry and passing biocompatibility re-test does not significantly affect safety/effectiveness — document the rationale in a Letter to File per the 2017 guidance.' },
+            eu: { steps: [
+              { q: 'Change to intended purpose?', basis: 'MDCG 2020-3', a: 'no', detail: 'Unchanged.' },
+              { q: 'Change of material that adversely affects safety/performance or biocompatibility?', basis: 'Chart C', a: 'no', gate: true, detail: 'Equivalent material, biocompatibility maintained.' },
+            ], outcome: 'record-only', label: 'Non-significant — internal change record', rationale: 'Not a significant change under MDCG 2020-3; record under the QMS change-control process and update the technical documentation. No prior NB notification required.' },
+            doc: { kind: 'Letter to File + QMS change record', status: 'in-review' },
+          },
+        ];
+        for (const r of caRows) {
+          await client.query(
+            `INSERT INTO change_assessments (id, organization_id, title, device, area, raised, owner, fda, eu, doc)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9::jsonb,$10::jsonb)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.title, r.device, r.area, r.raised, r.owner, JSON.stringify(r.fda), JSON.stringify(r.eu), JSON.stringify(r.doc)],
+          );
+        }
+        console.log('   ✓ Change assessments demo seeded');
+      } else {
+        console.log('   ⚠ change_assessments not found — run migrations first, skipping');
+      }
+    }
+
     await client.query('COMMIT');
 
     // ── Summary ───────────────────────────────────────────────────
