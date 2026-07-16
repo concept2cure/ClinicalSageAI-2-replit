@@ -132,16 +132,24 @@ async function seed() {
       ON CONFLICT (organization_id, user_id) DO UPDATE SET role = 'admin'
     `, [org.id, admin.id]);
 
-    // Sync to auth_users if table exists
+    // Sync to auth_users if table exists. Wrapped in a SAVEPOINT: a failed
+    // statement aborts the whole transaction in Postgres (25P02), so catching
+    // the JS error is not enough — without the savepoint, a missing auth_users
+    // table would poison every later step. ROLLBACK TO restores the txn.
     try {
+      await client.query('SAVEPOINT sp_auth_users');
       await client.query(`
         INSERT INTO auth_users (email, username, password_hash, is_active, email_verified)
         VALUES ($1, $2, $3, true, true)
         ON CONFLICT (email) DO UPDATE SET password_hash = $3, is_active = true
       `, ['jm.smith@concept2cure.pro', 'jmsmith', adminPasswordHash]);
+      await client.query('RELEASE SAVEPOINT sp_auth_users');
       console.log('   ✓ auth_users synced');
     } catch {
-      // auth_users table may not exist — that's fine
+      // auth_users table may not exist — roll back to the savepoint so the
+      // outer transaction stays usable, then carry on.
+      await client.query('ROLLBACK TO SAVEPOINT sp_auth_users');
+      console.log('   • auth_users not present — skipped');
     }
 
     // ════════════════════════════════════════════════════════════════
