@@ -407,6 +407,18 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount enablement route:', error);
   }
 
+  // Translation platform — regulated localization workflow (projects/segments:
+  // machine draft → human post-edit → back-translation → approve) + tenant
+  // DNT/preferred-term glossary. Consumed by the translation surfaces via
+  // client/src/concept2cure/translation/services/translationService.ts.
+  try {
+    const translationModule = await import('../routes/translation.routes');
+    app.use('/api/translation', authMiddleware, translationModule.default);
+    console.info('✅ Translation routes mounted (/api/translation)');
+  } catch (error) {
+    console.error('❌ Failed to mount Translation routes:', error);
+  }
+
   // CDISC validation — deterministic SDTM domain conformance (SDTM-IG v3.4).
   try {
     const cdiscValidationModule = await import('../routes/cdisc-validation.routes');
