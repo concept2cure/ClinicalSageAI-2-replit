@@ -37,6 +37,9 @@ interface DossierSpine {
 }
 
 interface LeafSection {
+  /** Stable unique leaf id (e.g. 'e41', 'g-ca') — used for React keys.
+   *  `num` is the display/section number and is not unique (many are '—'). */
+  id: string;
   num: string;
   title: string;
   status?: string;
@@ -307,7 +310,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
             {todo.map((s) => {
               const on = sel.has(s.num);
               return (
-                <button key={s.num} className={'bd-pick-item' + (on ? ' on' : '')} onClick={() => { toggle(s.num); }}>
+                <button key={s.id} className={'bd-pick-item' + (on ? ' on' : '')} onClick={() => { toggle(s.num); }}>
                   <span className={'bd-check' + (on ? ' on' : '')}>{on ? I.check : ''}</span>
                   <span className="mono bd-pick-code">{s.num}</span>
                   <span className="bd-pick-title">{s.title}</span>
@@ -358,7 +361,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
             const c = cards[s.num];
             if (!c) return null;
             return (
-              <div key={s.num} className={'bd-card st-' + c.state + (c.accepted ? ' accepted' : '')}>
+              <div key={s.id} className={'bd-card st-' + c.state + (c.accepted ? ' accepted' : '')}>
                 <div className="bd-card-head">
                   <span className="mono bd-card-code">{s.num}</span>
                   <span className="bd-card-title">{s.title}</span>
