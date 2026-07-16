@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -240,8 +240,20 @@ function SpecTab({ spec }: { spec: TemplateSpec }) {
 /* ── Template library surface ── */
 
 export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
-  const [rows, setRows] = useState<TemplateRecord[]>(TL_FIXTURE);
-  const [selId, setSel] = useState(TL_FIXTURE[0].id);
+  // live ?? fixture: adopt the org's real templates once the backend responds
+  // (fail-closed to the fixture until then; templates saved before that are
+  // optimistic, mirroring the Risk surface).
+  const live = useLiveList<TemplateRecord>('/api/c2c/templates', TL_FIXTURE);
+  const [rows, setRows] = useState<TemplateRecord[]>(live.data);
+  const [selId, setSel] = useState(live.data[0].id);
+  const seededRef = useRef<TemplateRecord[]>(live.data);
+  useEffect(() => {
+    if (live.data !== seededRef.current) {
+      seededRef.current = live.data;
+      setRows(live.data);
+      if (live.data[0]) setSel(live.data[0].id);
+    }
+  }, [live.data]);
   const [tab, setTab] = useState('preview');
   const [uploading, setUploading] = useState(false);
   const [extract, setExtract] = useState<{ name: string; confidence: number; warnings: string[]; spec: TemplateSpec } | null>(null);
@@ -292,7 +304,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="sp" style={{ maxWidth: 1180 }}>
-      <SampleTag sample={true} />
+      <SampleTag sample={live.sample} />
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Authoring {I.dot} /api/c2c/templates</div>

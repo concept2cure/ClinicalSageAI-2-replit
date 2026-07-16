@@ -663,6 +663,44 @@ async function seed() {
       }
     }
 
+    // ── AnA formatting templates (c2c_template_specs) — scoped to org ─────────
+    {
+      const tplExists = await client.query(`SELECT to_regclass('public.c2c_template_specs') AS t`);
+      if (tplExists.rows[0]?.t) {
+        const baseSpec = {
+          specVersion: 1,
+          page: { size: 'letter', orientation: 'portrait', marginsInches: { top: 1, bottom: 1, left: 1.25, right: 1 } },
+          typography: { bodyFont: 'Times New Roman', headingFont: 'Arial', monoFont: 'Consolas', bodySizePt: 12, heading1SizePt: 16, heading2SizePt: 14, heading3SizePt: 12, lineSpacing: 1.15, paragraphSpaceAfterPt: 6 },
+          colors: { text: '1A1A1A', muted: '666666', accent: '2A6FDB', tableHeaderBg: 'E8EDF3', tableBorder: 'BBBBBB' },
+          brand: { organizationName: 'Concept2Cure', confidentialityNotice: 'CONFIDENTIAL — For Regulatory Use Only', logo: { present: true, placement: 'header' } },
+          header: { text: 'Concept2Cure - {docType}', showLogo: true, alignment: 'left' },
+          footer: { text: '{program}', showPageNumbers: true, pageNumberFormat: 'Page {PAGE} of {PAGES}' },
+          table: { headerBold: true, borderSizePt: 0.5 },
+          formFields: [], namedStyles: [],
+        };
+        const tplRows = [
+          { id: 'tpl_house_ctd', name: 'Concept2Cure House Style — CTD', description: 'Corporate CTD/eCTD body template', src: 'C2C_CTD_house_style.docx', type: 'docx', conf: 0.95, warnings: [], verified: true, docTypes: ['CTD', 'eCTD', 'NDA', 'BLA'], spec: baseSpec },
+          { id: 'tpl_estar_cover', name: 'FDA eSTAR Cover Letter', description: '510(k) cover letter, CDRH format', src: 'eSTAR_cover_letter.docx', type: 'docx', conf: 0.90, warnings: [], verified: true, docTypes: ['510(k)', 'eSTAR'], spec: { ...baseSpec, colors: { ...baseSpec.colors, accent: '1F8A5B' }, header: { text: '{sponsor}', showLogo: true, alignment: 'center' } } },
+          { id: 'tpl_csr_e3', name: 'CSR — ICH E3 House Format', description: 'Clinical study report, ICH E3 structure', src: 'CSR_E3_house.docx', type: 'docx', conf: 0.93, warnings: [], verified: true, docTypes: ['CSR'], spec: { ...baseSpec, page: { ...baseSpec.page, size: 'a4' }, colors: { ...baseSpec.colors, accent: '8250C4' } } },
+          { id: 'tpl_chmp_resp', name: 'EMA CHMP Response Template', description: 'Day-120 / Day-180 LoQ response', src: 'CHMP_response.docx', type: 'docx', conf: 0.72, warnings: ['Heading font not found; using Arial.', 'No embedded logo image found.'], verified: false, docTypes: ['MAA', 'CHMP'], spec: { ...baseSpec, page: { ...baseSpec.page, size: 'a4' }, colors: { ...baseSpec.colors, accent: 'D97757' }, brand: { ...baseSpec.brand, logo: { present: false, placement: 'header' } } } },
+        ];
+        for (const r of tplRows) {
+          await client.query(
+            `INSERT INTO c2c_template_specs
+               (id, org_id, project_id, name, description, source_file_name, source_file_type,
+                spec, doc_types, extraction_confidence, extraction_warnings, verified, is_active, created_by)
+             VALUES ($1,$2,NULL,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9,$10::jsonb,$11,true,$12)
+             ON CONFLICT (id) DO NOTHING`,
+            [r.id, org.id, r.name, r.description, r.src, r.type,
+             JSON.stringify(r.spec), JSON.stringify(r.docTypes), r.conf, JSON.stringify(r.warnings), r.verified, admin.id],
+          );
+        }
+        console.log('   ✓ AnA formatting templates demo seeded');
+      } else {
+        console.log('   ⚠ c2c_template_specs not found — run migrations first, skipping');
+      }
+    }
+
     await client.query('COMMIT');
 
     // ── Summary ───────────────────────────────────────────────────

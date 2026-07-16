@@ -88,7 +88,9 @@ router.get('/', async (req: Request, res: Response) => {
   try {
     const projectId = typeof req.query.projectId === 'string' ? req.query.projectId : undefined;
     const templates = await listTemplates(orgId, { projectId });
-    return res.json({ templates });
+    // Canonical list envelope: `{ data }` so the v2 template-library surface can
+    // adopt it via useLiveList (which unwraps a bare array or `{ data }`).
+    return res.json({ data: templates, meta: { count: templates.length } });
   } catch (err: any) {
     console.error('[c2c/templates] list', err?.message);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });

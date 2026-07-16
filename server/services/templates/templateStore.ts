@@ -23,6 +23,8 @@ export interface TemplateRecord {
   sourceFileName: string | null;
   sourceFileType: 'docx' | 'pdf' | null;
   spec: TemplateSpec;
+  /** Regulatory document types this template applies to (e.g. ['CTD','NDA']). */
+  docTypes: string[];
   extractionConfidence: number | null;
   extractionWarnings: string[];
   verified: boolean;
@@ -41,6 +43,7 @@ function rowToRecord(row: any): TemplateRecord {
     sourceFileName: row.source_file_name ?? null,
     sourceFileType: row.source_file_type ?? null,
     spec: normalizeTemplateSpec(row.spec),
+    docTypes: Array.isArray(row.doc_types) ? row.doc_types : [],
     extractionConfidence:
       row.extraction_confidence === null || row.extraction_confidence === undefined
         ? null
