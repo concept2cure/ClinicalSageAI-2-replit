@@ -12,7 +12,7 @@
  * through `ragRouter`.
  */
 
-import { db } from '../db';
+import { db } from '../db.js';
 import { ragDocuments, ragChunks, ragQueries, ragKnowledgeGraph } from '@shared/schema';
 import { eq, and, sql, desc, inArray, like, ilike, or } from 'drizzle-orm';
 import crypto from 'crypto';

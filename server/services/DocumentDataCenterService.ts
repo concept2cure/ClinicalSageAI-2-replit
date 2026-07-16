@@ -26,7 +26,7 @@ import {
   organizations,
   deviceAuditTrail 
 } from '../../shared/schema.js';
-import { eq, and, or, inArray, like, sql, desc, asc, isNull } from 'drizzle-orm';
+import { eq, and, or, inArray, like, sql, desc, asc, isNull, arrayOverlaps } from 'drizzle-orm';
 import auditService from './auditService.js';
 import { ai } from '../lib/unified-ai-client';
 import multer from 'multer';
@@ -533,25 +533,21 @@ class DocumentDataCenterService {
         );
       }
 
-      // Category filter (supports multi-category)
+      // Category filter (supports multi-category). arrayOverlaps binds each
+      // value as its own array element — the previous join(',') collapsed the
+      // list into ONE element ('a,b'), so multi-value filters never matched.
       if (filters?.categories?.length) {
-        conditions.push(
-          sql`${deviceDataCenter.categories} && ARRAY[${filters.categories.join(',')}]::text[]`
-        );
+        conditions.push(arrayOverlaps(deviceDataCenter.categories, filters.categories));
       }
 
       // Test standards filter
       if (filters?.testStandards?.length) {
-        conditions.push(
-          sql`${deviceDataCenter.testStandards} && ARRAY[${filters.testStandards.join(',')}]::text[]`
-        );
+        conditions.push(arrayOverlaps(deviceDataCenter.testStandards, filters.testStandards));
       }
 
       // Components filter
       if (filters?.components?.length) {
-        conditions.push(
-          sql`${deviceDataCenter.deviceComponents} && ARRAY[${filters.components.join(',')}]::text[]`
-        );
+        conditions.push(arrayOverlaps(deviceDataCenter.deviceComponents, filters.components));
       }
 
       // Date range filter
