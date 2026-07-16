@@ -804,6 +804,36 @@ async function seed() {
       }
     }
 
+    // ── Clinical operations studies (v2 studies & enrollment board) ──────────
+    {
+      const coExists = await client.query(`SELECT to_regclass('clinical_ops.studies') AS t`);
+      if (coExists.rows[0]?.t) {
+        const orgIdText = String(org.id);
+        const coStudies = [
+          { protocol: 'BX204-301', phase: '3', design: 'Randomized · pivotal', n: 412, target: 412, status: 'active', note: 'Primary ORR readout Q4 2026' },
+          { protocol: 'BX204-201', phase: '2', design: 'Single-arm · dose-expansion', n: 186, target: 186, status: 'complete', note: 'Supportive · CSR locked' },
+          { protocol: 'BX204-101', phase: '1', design: 'Dose-escalation (3+3)', n: 54, target: 54, status: 'complete', note: 'MTD established' },
+        ];
+        for (const r of coStudies) {
+          const exists = await client.query(
+            `SELECT id FROM clinical_ops.studies WHERE org_id = $1 AND protocol = $2 LIMIT 1`,
+            [orgIdText, r.protocol],
+          );
+          if (!exists.rows[0]) {
+            await client.query(
+              `INSERT INTO clinical_ops.studies
+                 (org_id, name, protocol, phase, status, indication, target_enrollment, enrolled, design, note)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+              [orgIdText, `${r.protocol} — BX-204`, r.protocol, r.phase, r.status, 'BX-204 program', r.target, r.n, r.design, r.note],
+            );
+          }
+        }
+        console.log('   ✓ Clinical operations studies demo seeded');
+      } else {
+        console.log('   ⚠ clinical_ops.studies not found — run migrations first, skipping');
+      }
+    }
+
     await client.query('COMMIT');
 
     // ── Summary ───────────────────────────────────────────────────
