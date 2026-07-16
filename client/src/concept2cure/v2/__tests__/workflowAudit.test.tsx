@@ -75,35 +75,53 @@ interface Row {
 const results: Row[] = [];
 const ids = Object.keys(SURFACE_VIEWS).sort();
 
+// Some surfaces guard on the active segment (e.g. IvdCompleteness renders its
+// full IVDR framework only under 'diagnostics', a short guard otherwise).
+// Rendering under each candidate segment and keeping the fullest result audits
+// every surface in the context where it actually renders its workflow.
+const SEGMENTS = ['medical-device', 'diagnostics', 'biotech'] as const;
+
 describe('workflow click-through audit', () => {
   it.each(ids)('audit %s', (id) => {
     const surfaceMeta = getSurface(id);
     const View = SURFACE_VIEWS[id].component;
+    const surface = getSurface(id) ?? stub(id);
+
+    // A console error in ANY segment is a defect — accumulate across all of
+    // them, independent of which segment rendered the most content.
     const errs: string[] = [];
-    const spy = vi.spyOn(console, 'error').mockImplementation((...a) => {
-      // React act(...) warnings are test-harness noise, not surface errors.
-      const s = a.map(String).join(' ');
-      if (!s.includes('not wrapped in act')) errs.push(s);
-    });
-    let mounted = false;
-    let chars = 0;
-    let note = '';
-    try {
-      const { container } = render(
-        <Providers>
-          <View surface={getSurface(id) ?? stub(id)} onAsk={noop} onNav={noop} segment="medical-device" />
-        </Providers>,
-      );
-      mounted = container.firstChild != null;
-      chars = (container.textContent ?? '').length;
-    } catch (e) {
-      note = e instanceof Error ? e.message : String(e);
-    } finally {
-      spy.mockRestore();
+    let best = { mounted: false, chars: 0, text: '', note: '' };
+    for (const seg of SEGMENTS) {
+      const spy = vi.spyOn(console, 'error').mockImplementation((...a) => {
+        const s = a.map(String).join(' ');
+        if (!s.includes('not wrapped in act')) errs.push(s);
+      });
+      let mounted = false;
+      let chars = 0;
+      let text = '';
+      let note = '';
+      try {
+        const { container, unmount } = render(
+          <Providers>
+            <View surface={surface} onAsk={noop} onNav={noop} segment={seg} />
+          </Providers>,
+        );
+        mounted = container.firstChild != null;
+        text = container.textContent ?? '';
+        chars = text.length;
+        unmount();
+      } catch (e) {
+        note = e instanceof Error ? e.message : String(e);
+      } finally {
+        spy.mockRestore();
+      }
+      // Keep the render with the most content (the surface's natural segment).
+      if (chars > best.chars || (mounted && !best.mounted)) {
+        best = { mounted: mounted || best.mounted, chars, text, note: note || best.note };
+      }
     }
+    const { mounted, chars, text, note } = best;
     // The honest data pill: SampleTag renders "Sample data" (offline) or "Live".
-    const container = document.body;
-    const text = container.textContent ?? '';
     const dataState: Row['dataState'] = /Sample data|\bsample\b/i.test(text)
       ? 'sample'
       : /\bLive\b/.test(text)
