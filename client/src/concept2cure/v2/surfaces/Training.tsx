@@ -1,5 +1,6 @@
 import React from 'react';
 import { I } from '../icons';
+import { SampleTag, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -41,6 +42,14 @@ const CERTS: Certification[] = [
 /* ════ Training -- enablement surface ════ */
 
 export function Training({ onAsk }: SurfaceViewProps) {
+  // live ?? fixture: adopt the org's real enablement content once the backend
+  // responds, failing closed to the fixture (Sample-data pill) until then.
+  const livePaths = useLiveList<LearningPath>('/api/enablement/paths', PATHS);
+  const liveCerts = useLiveList<Certification>('/api/enablement/certifications', CERTS);
+  const paths = livePaths.data;
+  const certs = liveCerts.data;
+  const sample = livePaths.sample || liveCerts.sample;
+
   return (
     <div className="page-inner">
       <div className="ph">
@@ -52,13 +61,15 @@ export function Training({ onAsk }: SurfaceViewProps) {
         <button className="btn primary" onClick={() => onAsk('Give me a guided tour of the workspace')}>{I.sparkles} Start guided tour</button>
       </div>
 
+      <SampleTag sample={sample} />
+
       <div className="sec">
         <div className="sec-hdr">
           <div className="sec-title">Learning paths</div>
-          <div className="sec-sub">{PATHS.length} paths</div>
+          <div className="sec-sub">{paths.length} paths</div>
         </div>
         <div className="launch-grid">
-          {PATHS.map((p) => (
+          {paths.map((p) => (
             <button key={p.id} className="launch" onClick={() => onAsk(`Continue the "${p.title}" path`)}>
               <div className="launch-top">
                 <span className="launch-ico">{I.book}</span>
@@ -87,7 +98,7 @@ export function Training({ onAsk }: SurfaceViewProps) {
           <div className="sec-title">Certifications</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9, maxWidth: 620 }}>
-          {CERTS.map((c, i) => (
+          {certs.map((c, i) => (
             <div key={i} className="form-row">
               <span
                 className="esig"

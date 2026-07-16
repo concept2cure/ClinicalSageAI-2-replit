@@ -132,16 +132,24 @@ async function seed() {
       ON CONFLICT (organization_id, user_id) DO UPDATE SET role = 'admin'
     `, [org.id, admin.id]);
 
-    // Sync to auth_users if table exists
+    // Sync to auth_users if table exists. Wrapped in a SAVEPOINT: a failed
+    // statement aborts the whole transaction in Postgres (25P02), so catching
+    // the JS error is not enough — without the savepoint, a missing auth_users
+    // table would poison every later step. ROLLBACK TO restores the txn.
     try {
+      await client.query('SAVEPOINT sp_auth_users');
       await client.query(`
         INSERT INTO auth_users (email, username, password_hash, is_active, email_verified)
         VALUES ($1, $2, $3, true, true)
         ON CONFLICT (email) DO UPDATE SET password_hash = $3, is_active = true
       `, ['jm.smith@concept2cure.pro', 'jmsmith', adminPasswordHash]);
+      await client.query('RELEASE SAVEPOINT sp_auth_users');
       console.log('   ✓ auth_users synced');
     } catch {
-      // auth_users table may not exist — that's fine
+      // auth_users table may not exist — roll back to the savepoint so the
+      // outer transaction stays usable, then carry on.
+      await client.query('ROLLBACK TO SAVEPOINT sp_auth_users');
+      console.log('   • auth_users not present — skipped');
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -592,6 +600,285 @@ async function seed() {
         console.log('   ✓ Change assessments demo seeded');
       } else {
         console.log('   ⚠ change_assessments not found — run migrations first, skipping');
+      }
+    }
+
+    // ── Biopharma specialty (pediatric / orphan / lifecycle) — scoped to org ──
+    {
+      const pedExists = await client.query(`SELECT to_regclass('public.biopharma_pediatric_plans') AS t`);
+      if (pedExists.rows[0]?.t) {
+        const pedRows = [
+          { id: 'pip-420', product: 'BX-420', kind: 'EMA PIP', ageRange: '2--17', deferrals: 2, waivers: 1, milestones: 8, due: 'Trial readout · Q1 2027', status: 'agreed' },
+          { id: 'psp-204', product: 'BX-204', kind: 'FDA iPSP', ageRange: '12--17', deferrals: 1, waivers: 0, milestones: 5, due: 'PREA · post-approval Y2', status: 'submitted' },
+          { id: 'pip-301', product: 'BX-301', kind: 'EMA PIP', ageRange: '0--17', deferrals: 0, waivers: 1, milestones: 6, due: 'CHMP advice · Q3 2026', status: 'in draft' },
+          { id: 'psp-115', product: 'BX-115', kind: 'FDA iPSP', ageRange: '6--17', deferrals: 0, waivers: 0, milestones: 4, due: 'Pre-IND meeting · 28 days', status: 'in draft' },
+        ];
+        for (const r of pedRows) {
+          await client.query(
+            `INSERT INTO biopharma_pediatric_plans (id, organization_id, product, kind, age_range, deferrals, waivers, milestones, due, status)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.product, r.kind, r.ageRange, r.deferrals, r.waivers, r.milestones, r.due, r.status],
+          );
+        }
+        console.log('   ✓ Biopharma pediatric plans demo seeded');
+      } else {
+        console.log('   ⚠ biopharma_pediatric_plans not found — run migrations first, skipping');
+      }
+
+      const orphExists = await client.query(`SELECT to_regclass('public.biopharma_orphan_designations') AS t`);
+      if (orphExists.rows[0]?.t) {
+        const orphRows = [
+          { id: 'orph-1', product: 'BX-256', agency: 'FDA', indication: 'RPE65-mediated dystrophy', date: '2024-08-12', prevalence: '~3,000 US patients', benefit: '7-yr exclusivity · PDUFA waiver · Tax credit', status: 'designated' },
+          { id: 'orph-2', product: 'BX-256', agency: 'EMA', indication: 'RPE65-mediated dystrophy', date: '2024-11-04', prevalence: '<5 per 10k EU', benefit: '10-yr exclusivity · Protocol assistance · Fee reduction', status: 'designated' },
+          { id: 'orph-3', product: 'BX-301', agency: 'FDA', indication: 'Relapsed multiple myeloma', date: '2026-03-22', prevalence: '<200k US patients', benefit: 'Pending', status: 'requested' },
+          { id: 'orph-4', product: 'BX-420', agency: 'PMDA', indication: 'Pediatric biologic', date: '2025-05-01', prevalence: '~4,200 Japan patients', benefit: 'Re-exam 10-yr · Priority review', status: 'designated' },
+          { id: 'orph-5', product: 'BX-115', agency: 'FDA', indication: 'CNS · rare seizure', date: '--', prevalence: '~7,500 US patients', benefit: 'Pre-submission', status: 'planned' },
+        ];
+        for (const r of orphRows) {
+          await client.query(
+            `INSERT INTO biopharma_orphan_designations (id, organization_id, product, agency, indication, date, prevalence, benefit, status)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.product, r.agency, r.indication, r.date, r.prevalence, r.benefit, r.status],
+          );
+        }
+        console.log('   ✓ Biopharma orphan designations demo seeded');
+      } else {
+        console.log('   ⚠ biopharma_orphan_designations not found — run migrations first, skipping');
+      }
+
+      const suppExists = await client.query(`SELECT to_regclass('public.biopharma_supplements') AS t`);
+      if (suppExists.rows[0]?.t) {
+        const suppRows = [
+          { id: 'sNDA-211990-001', agency: 'FDA', product: 'BX-099', subject: 'sNDA · Prior Approval -- Pediatric indication extension', filed: '2026-03-04', due: 'PDUFA 2026-09-04', status: 'filed' },
+          { id: 'sNDA-211990-002', agency: 'FDA', product: 'BX-099', subject: 'sNDA · CBE-30 -- Manufacturing site addition (DS)', filed: '2026-04-22', due: 'Effective 2026-05-22', status: 'filed' },
+          { id: 'EU-VAR-006012-1', agency: 'EMA', product: 'BX-099', subject: 'Type II variation -- Specification change (host cell protein)', filed: '2026-02-11', due: 'CHMP day 60', status: 'review' },
+          { id: 'EU-VAR-006012-2', agency: 'EMA', product: 'BX-099', subject: 'Type IB variation -- Container closure update', filed: '--', due: 'Target 2026-06', status: 'drafting' },
+          { id: 'JP-VAR-2024-3', agency: 'PMDA', product: 'BX-099', subject: 'Partial change (Japan) -- Manufacturer change', filed: '2026-01-15', due: 'PMDA day 60', status: 'review' },
+        ];
+        for (const r of suppRows) {
+          await client.query(
+            `INSERT INTO biopharma_supplements (id, organization_id, agency, product, subject, filed, due, status)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.agency, r.product, r.subject, r.filed, r.due, r.status],
+          );
+        }
+        console.log('   ✓ Biopharma lifecycle supplements demo seeded');
+      } else {
+        console.log('   ⚠ biopharma_supplements not found — run migrations first, skipping');
+      }
+    }
+
+    // ── AnA formatting templates (c2c_template_specs) — scoped to org ─────────
+    {
+      const tplExists = await client.query(`SELECT to_regclass('public.c2c_template_specs') AS t`);
+      if (tplExists.rows[0]?.t) {
+        const baseSpec = {
+          specVersion: 1,
+          page: { size: 'letter', orientation: 'portrait', marginsInches: { top: 1, bottom: 1, left: 1.25, right: 1 } },
+          typography: { bodyFont: 'Times New Roman', headingFont: 'Arial', monoFont: 'Consolas', bodySizePt: 12, heading1SizePt: 16, heading2SizePt: 14, heading3SizePt: 12, lineSpacing: 1.15, paragraphSpaceAfterPt: 6 },
+          colors: { text: '1A1A1A', muted: '666666', accent: '2A6FDB', tableHeaderBg: 'E8EDF3', tableBorder: 'BBBBBB' },
+          brand: { organizationName: 'Concept2Cure', confidentialityNotice: 'CONFIDENTIAL — For Regulatory Use Only', logo: { present: true, placement: 'header' } },
+          header: { text: 'Concept2Cure - {docType}', showLogo: true, alignment: 'left' },
+          footer: { text: '{program}', showPageNumbers: true, pageNumberFormat: 'Page {PAGE} of {PAGES}' },
+          table: { headerBold: true, borderSizePt: 0.5 },
+          formFields: [], namedStyles: [],
+        };
+        const tplRows = [
+          { id: 'tpl_house_ctd', name: 'Concept2Cure House Style — CTD', description: 'Corporate CTD/eCTD body template', src: 'C2C_CTD_house_style.docx', type: 'docx', conf: 0.95, warnings: [], verified: true, docTypes: ['CTD', 'eCTD', 'NDA', 'BLA'], spec: baseSpec },
+          { id: 'tpl_estar_cover', name: 'FDA eSTAR Cover Letter', description: '510(k) cover letter, CDRH format', src: 'eSTAR_cover_letter.docx', type: 'docx', conf: 0.90, warnings: [], verified: true, docTypes: ['510(k)', 'eSTAR'], spec: { ...baseSpec, colors: { ...baseSpec.colors, accent: '1F8A5B' }, header: { text: '{sponsor}', showLogo: true, alignment: 'center' } } },
+          { id: 'tpl_csr_e3', name: 'CSR — ICH E3 House Format', description: 'Clinical study report, ICH E3 structure', src: 'CSR_E3_house.docx', type: 'docx', conf: 0.93, warnings: [], verified: true, docTypes: ['CSR'], spec: { ...baseSpec, page: { ...baseSpec.page, size: 'a4' }, colors: { ...baseSpec.colors, accent: '8250C4' } } },
+          { id: 'tpl_chmp_resp', name: 'EMA CHMP Response Template', description: 'Day-120 / Day-180 LoQ response', src: 'CHMP_response.docx', type: 'docx', conf: 0.72, warnings: ['Heading font not found; using Arial.', 'No embedded logo image found.'], verified: false, docTypes: ['MAA', 'CHMP'], spec: { ...baseSpec, page: { ...baseSpec.page, size: 'a4' }, colors: { ...baseSpec.colors, accent: 'D97757' }, brand: { ...baseSpec.brand, logo: { present: false, placement: 'header' } } } },
+        ];
+        for (const r of tplRows) {
+          await client.query(
+            `INSERT INTO c2c_template_specs
+               (id, org_id, project_id, name, description, source_file_name, source_file_type,
+                spec, doc_types, extraction_confidence, extraction_warnings, verified, is_active, created_by)
+             VALUES ($1,$2,NULL,$3,$4,$5,$6,$7::jsonb,$8::jsonb,$9,$10::jsonb,$11,true,$12)
+             ON CONFLICT (id) DO NOTHING`,
+            [r.id, org.id, r.name, r.description, r.src, r.type,
+             JSON.stringify(r.spec), JSON.stringify(r.docTypes), r.conf, JSON.stringify(r.warnings), r.verified, admin.id],
+          );
+        }
+        console.log('   ✓ AnA formatting templates demo seeded');
+      } else {
+        console.log('   ⚠ c2c_template_specs not found — run migrations first, skipping');
+      }
+    }
+
+    // ── Enablement / training (learning paths + certifications) — org-scoped ──
+    {
+      const pathsExists = await client.query(`SELECT to_regclass('public.enablement_learning_paths') AS t`);
+      if (pathsExists.rows[0]?.t) {
+        const pathRows = [
+          { id: 'start', title: 'Getting started with AnA', lessons: 6, done: 6, mins: 35, level: 'Essential', tone: 'ok' },
+          { id: '510k', title: '510(k) submission mastery', lessons: 9, done: 4, mins: 70, level: 'Device', tone: 'ai' },
+          { id: 'ectd', title: 'eCTD authoring & assembly', lessons: 8, done: 1, mins: 60, level: 'Pharma', tone: 'ai' },
+          { id: 'ana', title: 'AnA power user -- slash commands & modes', lessons: 5, done: 0, mins: 25, level: 'All roles', tone: 'idle' },
+          { id: 'part11', title: '21 CFR Part 11 in practice', lessons: 4, done: 2, mins: 30, level: 'Compliance', tone: 'warn' },
+          { id: 'biostat', title: 'Conversational biostatistics', lessons: 7, done: 0, mins: 55, level: 'Clinical', tone: 'idle' },
+        ];
+        for (const r of pathRows) {
+          await client.query(
+            `INSERT INTO enablement_learning_paths (id, organization_id, title, lessons, done, mins, level, tone)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.title, r.lessons, r.done, r.mins, r.level, r.tone],
+          );
+        }
+        console.log('   ✓ Enablement learning paths demo seeded');
+      } else {
+        console.log('   ⚠ enablement_learning_paths not found — run migrations first, skipping');
+      }
+
+      const certsExists = await client.query(`SELECT to_regclass('public.enablement_certifications') AS t`);
+      if (certsExists.rows[0]?.t) {
+        const certRows = [
+          { id: 'cert-author', name: 'AnA Certified -- Regulatory Author', status: 'earned', whenLabel: 'Mar 2026' },
+          { id: 'cert-510k', name: '510(k) Workbench Specialist', status: 'in-progress', whenLabel: '44% complete' },
+          { id: 'cert-ectd', name: 'eCTD Assembly Professional', status: 'locked', whenLabel: 'Complete the path to unlock' },
+        ];
+        for (const r of certRows) {
+          await client.query(
+            `INSERT INTO enablement_certifications (id, organization_id, name, status, when_label)
+             VALUES ($1,$2,$3,$4,$5)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.name, r.status, r.whenLabel],
+          );
+        }
+        console.log('   ✓ Enablement certifications demo seeded');
+      } else {
+        console.log('   ⚠ enablement_certifications not found — run migrations first, skipping');
+      }
+    }
+
+    // ── Nonclinical studies (+ SEND datasets) — org-scoped, review board ──────
+    {
+      const ncExists = await client.query(`SELECT to_regclass('public.nonclinical_studies') AS t`);
+      if (ncExists.rows[0]?.t) {
+        // send: 'passed' → "conforms", 'not_validated' → "in progress",
+        //       null (no dataset) → "n/a" (derived on read).
+        const ncStudies = [
+          { num: 'TX-701', type: 'repeat_dose_tox', species: 'Rat', dur: '26-week', finding: 'Minimal hepatocellular hypertrophy (adaptive)', cls: 'non-adverse', status: 'finalized', send: 'passed' },
+          { num: 'TX-702', type: 'repeat_dose_tox', species: 'Cynomolgus', dur: '39-week', finding: 'No adverse findings to top dose', cls: 'clean', status: 'finalized', send: 'passed' },
+          { num: 'CARC-701', type: 'carcinogenicity', species: 'Tg mouse', dur: '26-week', finding: 'In life -- terminal necropsy pending', cls: 'pending', status: 'in_life', send: 'not_validated' },
+          { num: 'PK-301', type: 'adme_pk', species: 'Rat', dur: '—', finding: 'Dose-proportional exposure, no accumulation', cls: 'clean', status: 'finalized', send: 'passed' },
+          { num: 'SP-201', type: 'safety_pharmacology', species: 'Cynomolgus', dur: '—', finding: 'No QTc or hemodynamic effect', cls: 'clean', status: 'finalized', send: 'passed' },
+          { num: 'GT-101', type: 'genotoxicity', species: 'in vitro / in vivo', dur: '—', finding: 'Negative across the battery', cls: 'clean', status: 'finalized', send: null },
+        ];
+        const sendExists = await client.query(`SELECT to_regclass('public.send_datasets') AS t`);
+        for (const r of ncStudies) {
+          const existing = await client.query(
+            `SELECT id FROM nonclinical_studies WHERE organization_id = $1 AND study_number = $2 LIMIT 1`,
+            [org.id, r.num],
+          );
+          let studyId = existing.rows[0]?.id;
+          if (!studyId) {
+            const ins = await client.query(
+              `INSERT INTO nonclinical_studies
+                 (organization_id, study_number, title, study_type, species, glp_compliant, status,
+                  duration_label, key_finding, finding_class, created_by)
+               VALUES ($1,$2,$3,$4,$5,true,$6,$7,$8,$9,$10)
+               RETURNING id`,
+              [org.id, r.num, `${r.num} — ${r.species} ${r.dur}`, r.type, r.species, r.status, r.dur, r.finding, r.cls, admin.id],
+            );
+            studyId = ins.rows[0].id;
+          }
+          if (r.send && sendExists.rows[0]?.t) {
+            const sd = await client.query(`SELECT id FROM send_datasets WHERE study_id = $1 LIMIT 1`, [studyId]);
+            if (!sd.rows[0]) {
+              await client.query(
+                `INSERT INTO send_datasets (organization_id, study_id, validation_status, created_by)
+                 VALUES ($1,$2,$3,$4)`,
+                [org.id, studyId, r.send, admin.id],
+              );
+            }
+          }
+        }
+        console.log('   ✓ Nonclinical studies (+ SEND) demo seeded');
+      } else {
+        console.log('   ⚠ nonclinical_studies not found — run migrations first, skipping');
+      }
+    }
+
+    // ── Clinical operations studies (v2 studies & enrollment board) ──────────
+    {
+      const coExists = await client.query(`SELECT to_regclass('clinical_ops.studies') AS t`);
+      if (coExists.rows[0]?.t) {
+        const orgIdText = String(org.id);
+        const coStudies = [
+          { protocol: 'BX204-301', phase: '3', design: 'Randomized · pivotal', n: 412, target: 412, status: 'active', note: 'Primary ORR readout Q4 2026' },
+          { protocol: 'BX204-201', phase: '2', design: 'Single-arm · dose-expansion', n: 186, target: 186, status: 'complete', note: 'Supportive · CSR locked' },
+          { protocol: 'BX204-101', phase: '1', design: 'Dose-escalation (3+3)', n: 54, target: 54, status: 'complete', note: 'MTD established' },
+        ];
+        for (const r of coStudies) {
+          const exists = await client.query(
+            `SELECT id FROM clinical_ops.studies WHERE org_id = $1 AND protocol = $2 LIMIT 1`,
+            [orgIdText, r.protocol],
+          );
+          if (!exists.rows[0]) {
+            await client.query(
+              `INSERT INTO clinical_ops.studies
+                 (org_id, name, protocol, phase, status, indication, target_enrollment, enrolled, design, note)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+              [orgIdText, `${r.protocol} — BX-204`, r.protocol, r.phase, r.status, 'BX-204 program', r.target, r.n, r.design, r.note],
+            );
+          }
+        }
+        console.log('   ✓ Clinical operations studies demo seeded');
+      } else {
+        console.log('   ⚠ clinical_ops.studies not found — run migrations first, skipping');
+      }
+    }
+
+    // ── Labeling document + translations (v2 translation board) ──────────────
+    // The v2 surface reads /api/mdx/labeling/1/translations, so the demo org
+    // needs a labeling document (its first → id 1 in a fresh DB) with rows.
+    {
+      const lblExists = await client.query(`SELECT to_regclass('public.labeling_documents') AS d, to_regclass('public.labeling_translations') AS t`);
+      if (lblExists.rows[0]?.d && lblExists.rows[0]?.t) {
+        let doc = await client.query(
+          `SELECT id FROM labeling_documents WHERE organization_id = $1 AND deleted_at IS NULL ORDER BY id LIMIT 1`,
+          [org.id],
+        );
+        let docId = doc.rows[0]?.id;
+        if (!docId) {
+          const ins = await client.query(
+            `INSERT INTO labeling_documents (organization_id, device_name, doc_kind, version, status, language, region)
+             VALUES ($1,$2,$3,'1.0','review','en','eu') RETURNING id`,
+            [org.id, 'BX-204 CGM', 'ifu'],
+          );
+          docId = ins.rows[0].id;
+        }
+        const trans = [
+          { language: 'en', translator: 'Source', method: 'human', btv: true, status: 'approved' },
+          { language: 'de', translator: 'L. Weber', method: 'human', btv: true, status: 'approved' },
+          { language: 'fr', translator: 'M. Dubois', method: 'human', btv: true, status: 'approved' },
+          { language: 'es', translator: 'C. Ruiz', method: 'mt_postedited', btv: true, status: 'approved' },
+          { language: 'it', translator: 'G. Bruno', method: 'mt_postedited', btv: true, status: 'approved' },
+          { language: 'nl', translator: 'S. Visser', method: 'mt_postedited', btv: false, status: 'review' },
+          { language: 'pl', translator: 'K. Nowak', method: 'machine', btv: false, status: 'in_progress' },
+        ];
+        for (const t of trans) {
+          const ex = await client.query(
+            `SELECT id FROM labeling_translations WHERE labeling_document_id = $1 AND language = $2 LIMIT 1`,
+            [docId, t.language],
+          );
+          if (!ex.rows[0]) {
+            await client.query(
+              `INSERT INTO labeling_translations
+                 (labeling_document_id, organization_id, language, translator, translation_method, back_translation_verified, status)
+               VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+              [docId, org.id, t.language, t.translator, t.method, t.btv, t.status],
+            );
+          }
+        }
+        console.log('   ✓ Labeling document + translations demo seeded');
+      } else {
+        console.log('   ⚠ labeling_documents/translations not found — run migrations first, skipping');
       }
     }
 

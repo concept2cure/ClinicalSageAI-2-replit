@@ -264,6 +264,7 @@ function C2CToast({ msg }: { msg: string }) {
 
 export function ClinicalOps({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
+  const liveStudies = useLiveList<CoStudy>('/api/clinical-operations/studies', CO_STUDIES);
   const liveSites = useLiveList<RbmSite>('/api/mdx/rbm-site-risk', RBM_SITES);
   const initialSites = useMemo(() => buildSites(liveSites.data), [liveSites.data]);
   const [sites, addSite] = useRows<CoSite>(initialSites);
@@ -359,9 +360,9 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
       </div>
 
       <div className="sp-sec">
-        <SpCard title="Studies & enrollment" sample meta="Phase 1 -> 3">
+        <SpCard title="Studies & enrollment" sample={liveStudies.sample} meta="Phase 1 -> 3">
           <div className="sp-list">
-            {CO_STUDIES.map((s, i) => (
+            {liveStudies.data.map((s, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Summarize the status of study ${s.id}`)}>
                 <span className="sp-tag">{s.id}</span>
                 <span className="sp-tag2">Ph {s.phase}</span>

@@ -119,11 +119,45 @@ export async function upsertSendDatasetTx(client: Queryable, orgId: number, user
 // ─── Reads ───────────────────────────────────────────────────────────────────
 
 export async function listStudies(orgId: number, submissionId?: number): Promise<any[]> {
+  // Shaped to the nonclinical review board's display contract
+  // ({ id, type, species, dur, finding, cls, send }). `id` is the human study
+  // number; `send` (CDISC SEND conformance) is derived from the study's latest
+  // send_datasets row so no column duplicates that state.
   const params: unknown[] = [orgId];
-  let sql = `SELECT id, submission_id, iacuc_protocol_id, study_number, title, study_type, species, glp_compliant, status, ctd_section
-               FROM nonclinical_studies WHERE organization_id = $1 AND deleted_at IS NULL`;
-  if (submissionId != null) { params.push(submissionId); sql += ` AND submission_id = $2`; }
-  sql += ` ORDER BY created_at DESC`;
+  let sql = `
+    SELECT s.study_number                         AS id,
+           CASE s.study_type
+             WHEN 'repeat_dose_tox'     THEN 'Repeat-dose tox'
+             WHEN 'single_dose_tox'     THEN 'Single-dose tox'
+             WHEN 'safety_pharmacology' THEN 'Safety pharmacology'
+             WHEN 'genotoxicity'        THEN 'Genotoxicity'
+             WHEN 'carcinogenicity'     THEN 'Carcinogenicity'
+             WHEN 'reproductive_tox'    THEN 'Reproductive tox'
+             WHEN 'local_tolerance'     THEN 'Local tolerance'
+             WHEN 'adme_pk'             THEN 'Toxicokinetics'
+             WHEN 'immunotoxicity'      THEN 'Immunotoxicity'
+             ELSE initcap(replace(s.study_type, '_', ' '))
+           END                                    AS type,
+           s.species,
+           s.duration_label                       AS dur,
+           s.key_finding                          AS finding,
+           s.finding_class                        AS cls,
+           CASE
+             WHEN sd.validation_status IS NULL     THEN 'n/a'
+             WHEN sd.validation_status = 'passed'  THEN 'conforms'
+             ELSE 'in progress'
+           END                                    AS send
+      FROM nonclinical_studies s
+      LEFT JOIN LATERAL (
+        SELECT validation_status
+          FROM send_datasets
+         WHERE study_id = s.id AND deleted_at IS NULL
+         ORDER BY updated_at DESC
+         LIMIT 1
+      ) sd ON true
+     WHERE s.organization_id = $1 AND s.deleted_at IS NULL`;
+  if (submissionId != null) { params.push(submissionId); sql += ` AND s.submission_id = $2`; }
+  sql += ` ORDER BY s.created_at DESC`;
   const { rows } = await pool.query(sql, params);
   return rows;
 }

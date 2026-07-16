@@ -29,15 +29,53 @@ function appWith(router: Router, org: number | null) {
 
 beforeEach(() => query.mockReset());
 
-describe('enablement contract stub', () => {
-  it('403 without org context', async () => {
+describe('enablement routes', () => {
+  it('root: 403 without org context', async () => {
     const res = await request(appWith(enablementRouter, null)).get('/api/x');
     expect(res.status).toBe(403);
   });
-  it('empty canonical envelope with org context', async () => {
+  it('root: empty canonical envelope with org context', async () => {
     const res = await request(appWith(enablementRouter, 42)).get('/api/x');
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.data).toHaveLength(0);
+  });
+
+  it('paths: returns org-scoped rows shaped to the display contract', async () => {
+    query.mockResolvedValueOnce({
+      rows: [{ id: 'start', title: 'Getting started', lessons: 6, done: 6, mins: 35, level: 'Essential', tone: 'ok' }],
+    });
+    const res = await request(appWith(enablementRouter, 1)).get('/api/x/paths');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    for (const k of ['id', 'title', 'lessons', 'done', 'mins', 'level', 'tone']) {
+      expect(res.body.data[0]).toHaveProperty(k);
+    }
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('enablement_learning_paths'), [1]);
+  });
+
+  it('certifications: returns org-scoped rows shaped to the display contract', async () => {
+    query.mockResolvedValueOnce({
+      rows: [{ id: 'cert-author', name: 'AnA Certified', status: 'earned', when: 'Mar 2026' }],
+    });
+    const res = await request(appWith(enablementRouter, 1)).get('/api/x/certifications');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(1);
+    for (const k of ['id', 'name', 'status', 'when']) {
+      expect(res.body.data[0]).toHaveProperty(k);
+    }
+    expect(query).toHaveBeenCalledWith(expect.stringContaining('enablement_certifications'), [1]);
+  });
+
+  it('paths: 403 without org context', async () => {
+    const res = await request(appWith(enablementRouter, null)).get('/api/x/paths');
+    expect(res.status).toBe(403);
+  });
+
+  it('paths: fails closed to an empty envelope when the store is not provisioned', async () => {
+    query.mockRejectedValueOnce(Object.assign(new Error('relation does not exist'), { code: '42P01' }));
+    const res = await request(appWith(enablementRouter, 1)).get('/api/x/paths');
+    expect(res.status).toBe(200);
     expect(res.body.data).toHaveLength(0);
   });
 });

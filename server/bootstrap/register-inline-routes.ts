@@ -816,6 +816,19 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Biopharma CTD routes:', error);
   }
 
+  // Biopharma specialty reads — pediatric plans, orphan designations, lifecycle
+  // supplements. Each mounts at its own sub-prefix (rather than the bare
+  // /api/biopharma) so it resolves ahead of the programs router's GET /:id.
+  try {
+    const specialty = await import('../routes/biopharma-specialty.routes');
+    app.use('/api/biopharma/pediatric', authMiddleware, specialty.pediatricRouter);
+    app.use('/api/biopharma/orphan', authMiddleware, specialty.orphanRouter);
+    app.use('/api/biopharma/supplements', authMiddleware, specialty.supplementsRouter);
+    console.info('✅ Biopharma specialty routes mounted (/api/biopharma/{pediatric,orphan,supplements})');
+  } catch (error) {
+    console.error('❌ Failed to mount Biopharma specialty routes:', error);
+  }
+
   // Biopharma domain programs + meetings (Phase 10 — /api/biopharma/*).
   try {
     const biopharmaModule = await import('../routes/biopharma/programs');
