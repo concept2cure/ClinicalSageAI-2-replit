@@ -755,6 +755,55 @@ async function seed() {
       }
     }
 
+    // ── Nonclinical studies (+ SEND datasets) — org-scoped, review board ──────
+    {
+      const ncExists = await client.query(`SELECT to_regclass('public.nonclinical_studies') AS t`);
+      if (ncExists.rows[0]?.t) {
+        // send: 'passed' → "conforms", 'not_validated' → "in progress",
+        //       null (no dataset) → "n/a" (derived on read).
+        const ncStudies = [
+          { num: 'TX-701', type: 'repeat_dose_tox', species: 'Rat', dur: '26-week', finding: 'Minimal hepatocellular hypertrophy (adaptive)', cls: 'non-adverse', status: 'finalized', send: 'passed' },
+          { num: 'TX-702', type: 'repeat_dose_tox', species: 'Cynomolgus', dur: '39-week', finding: 'No adverse findings to top dose', cls: 'clean', status: 'finalized', send: 'passed' },
+          { num: 'CARC-701', type: 'carcinogenicity', species: 'Tg mouse', dur: '26-week', finding: 'In life -- terminal necropsy pending', cls: 'pending', status: 'in_life', send: 'not_validated' },
+          { num: 'PK-301', type: 'adme_pk', species: 'Rat', dur: '—', finding: 'Dose-proportional exposure, no accumulation', cls: 'clean', status: 'finalized', send: 'passed' },
+          { num: 'SP-201', type: 'safety_pharmacology', species: 'Cynomolgus', dur: '—', finding: 'No QTc or hemodynamic effect', cls: 'clean', status: 'finalized', send: 'passed' },
+          { num: 'GT-101', type: 'genotoxicity', species: 'in vitro / in vivo', dur: '—', finding: 'Negative across the battery', cls: 'clean', status: 'finalized', send: null },
+        ];
+        const sendExists = await client.query(`SELECT to_regclass('public.send_datasets') AS t`);
+        for (const r of ncStudies) {
+          const existing = await client.query(
+            `SELECT id FROM nonclinical_studies WHERE organization_id = $1 AND study_number = $2 LIMIT 1`,
+            [org.id, r.num],
+          );
+          let studyId = existing.rows[0]?.id;
+          if (!studyId) {
+            const ins = await client.query(
+              `INSERT INTO nonclinical_studies
+                 (organization_id, study_number, title, study_type, species, glp_compliant, status,
+                  duration_label, key_finding, finding_class, created_by)
+               VALUES ($1,$2,$3,$4,$5,true,$6,$7,$8,$9,$10)
+               RETURNING id`,
+              [org.id, r.num, `${r.num} — ${r.species} ${r.dur}`, r.type, r.species, r.status, r.dur, r.finding, r.cls, admin.id],
+            );
+            studyId = ins.rows[0].id;
+          }
+          if (r.send && sendExists.rows[0]?.t) {
+            const sd = await client.query(`SELECT id FROM send_datasets WHERE study_id = $1 LIMIT 1`, [studyId]);
+            if (!sd.rows[0]) {
+              await client.query(
+                `INSERT INTO send_datasets (organization_id, study_id, validation_status, created_by)
+                 VALUES ($1,$2,$3,$4)`,
+                [org.id, studyId, r.send, admin.id],
+              );
+            }
+          }
+        }
+        console.log('   ✓ Nonclinical studies (+ SEND) demo seeded');
+      } else {
+        console.log('   ⚠ nonclinical_studies not found — run migrations first, skipping');
+      }
+    }
+
     await client.query('COMMIT');
 
     // ── Summary ───────────────────────────────────────────────────

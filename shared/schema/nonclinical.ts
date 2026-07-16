@@ -57,6 +57,14 @@ export const nonclinicalStudies = pgTable(
     status: text('status').$type<NonclinicalStudyStatus>().notNull().default('planned'),
     /** Derived CTD Module 4 section (e.g. 4.2.3.2). Persisted for the index. */
     ctdSection: text('ctd_section'),
+    // ── Study-summary display fields (surface the study on the nonclinical
+    // review board without opening the full record). Additive, nullable. ──
+    /** Study duration label, e.g. '26-week'. */
+    durationLabel: text('duration_label'),
+    /** One-line key finding summary. */
+    keyFinding: text('key_finding'),
+    /** Finding classification: 'clean' | 'non-adverse' | 'adverse' | 'pending'. */
+    findingClass: text('finding_class'),
     reportFinalizedDate: date('report_finalized_date'),
     createdBy: integer('created_by').notNull().references(() => users.id),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
