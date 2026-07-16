@@ -41,6 +41,7 @@ export * from './schema/csr-knowledge-db';
 export * from './schema/submissions';
 export * from './schema/evidence';
 export * from './schema/shadow-review';
+export * from './schema/change-assessments';
 
 // ============================================================
 // SHARED ENUMS
