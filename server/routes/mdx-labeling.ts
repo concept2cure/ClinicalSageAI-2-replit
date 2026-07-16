@@ -200,8 +200,22 @@ router.get('/labeling/:id/translations', async (req: Request, res: Response) => 
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
   if (!(await requireDocInOrg(orgId, id))) return notFoundInTenant(res, 'Labeling document');
   try {
+    // SELECT * keeps every column v1 consumers read; the extra aliases
+    // (method, btv, name) add the v2 translation-board display keys without
+    // removing anything — additive, so no consumer breaks.
     const { rows } = await pool.query(
-      `SELECT * FROM labeling_translations WHERE labeling_document_id = $1 ORDER BY language`,
+      `SELECT *,
+              translation_method        AS method,
+              back_translation_verified AS btv,
+              CASE language
+                WHEN 'en' THEN 'English'  WHEN 'de' THEN 'German'
+                WHEN 'fr' THEN 'French'   WHEN 'es' THEN 'Spanish'
+                WHEN 'it' THEN 'Italian'  WHEN 'nl' THEN 'Dutch'
+                WHEN 'pl' THEN 'Polish'   WHEN 'ja' THEN 'Japanese'
+                WHEN 'zh' THEN 'Chinese'  WHEN 'pt' THEN 'Portuguese'
+                ELSE upper(language)
+              END                       AS name
+         FROM labeling_translations WHERE labeling_document_id = $1 ORDER BY language`,
       [id],
     );
     return ok(res, rows, { count: rows.length });

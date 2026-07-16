@@ -834,6 +834,54 @@ async function seed() {
       }
     }
 
+    // ── Labeling document + translations (v2 translation board) ──────────────
+    // The v2 surface reads /api/mdx/labeling/1/translations, so the demo org
+    // needs a labeling document (its first → id 1 in a fresh DB) with rows.
+    {
+      const lblExists = await client.query(`SELECT to_regclass('public.labeling_documents') AS d, to_regclass('public.labeling_translations') AS t`);
+      if (lblExists.rows[0]?.d && lblExists.rows[0]?.t) {
+        let doc = await client.query(
+          `SELECT id FROM labeling_documents WHERE organization_id = $1 AND deleted_at IS NULL ORDER BY id LIMIT 1`,
+          [org.id],
+        );
+        let docId = doc.rows[0]?.id;
+        if (!docId) {
+          const ins = await client.query(
+            `INSERT INTO labeling_documents (organization_id, device_name, doc_kind, version, status, language, region)
+             VALUES ($1,$2,$3,'1.0','review','en','eu') RETURNING id`,
+            [org.id, 'BX-204 CGM', 'ifu'],
+          );
+          docId = ins.rows[0].id;
+        }
+        const trans = [
+          { language: 'en', translator: 'Source', method: 'human', btv: true, status: 'approved' },
+          { language: 'de', translator: 'L. Weber', method: 'human', btv: true, status: 'approved' },
+          { language: 'fr', translator: 'M. Dubois', method: 'human', btv: true, status: 'approved' },
+          { language: 'es', translator: 'C. Ruiz', method: 'mt_postedited', btv: true, status: 'approved' },
+          { language: 'it', translator: 'G. Bruno', method: 'mt_postedited', btv: true, status: 'approved' },
+          { language: 'nl', translator: 'S. Visser', method: 'mt_postedited', btv: false, status: 'review' },
+          { language: 'pl', translator: 'K. Nowak', method: 'machine', btv: false, status: 'in_progress' },
+        ];
+        for (const t of trans) {
+          const ex = await client.query(
+            `SELECT id FROM labeling_translations WHERE labeling_document_id = $1 AND language = $2 LIMIT 1`,
+            [docId, t.language],
+          );
+          if (!ex.rows[0]) {
+            await client.query(
+              `INSERT INTO labeling_translations
+                 (labeling_document_id, organization_id, language, translator, translation_method, back_translation_verified, status)
+               VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+              [docId, org.id, t.language, t.translator, t.method, t.btv, t.status],
+            );
+          }
+        }
+        console.log('   ✓ Labeling document + translations demo seeded');
+      } else {
+        console.log('   ⚠ labeling_documents/translations not found — run migrations first, skipping');
+      }
+    }
+
     await client.query('COMMIT');
 
     // ── Summary ───────────────────────────────────────────────────
