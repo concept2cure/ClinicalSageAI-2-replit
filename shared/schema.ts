@@ -43,6 +43,7 @@ export * from './schema/evidence';
 export * from './schema/shadow-review';
 export * from './schema/change-assessments';
 export * from './schema/biopharma-specialty';
+export * from './schema/enablement-content';
 
 // ============================================================
 // SHARED ENUMS

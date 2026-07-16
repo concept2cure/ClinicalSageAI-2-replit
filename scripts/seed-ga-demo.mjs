@@ -701,6 +701,52 @@ async function seed() {
       }
     }
 
+    // ── Enablement / training (learning paths + certifications) — org-scoped ──
+    {
+      const pathsExists = await client.query(`SELECT to_regclass('public.enablement_learning_paths') AS t`);
+      if (pathsExists.rows[0]?.t) {
+        const pathRows = [
+          { id: 'start', title: 'Getting started with AnA', lessons: 6, done: 6, mins: 35, level: 'Essential', tone: 'ok' },
+          { id: '510k', title: '510(k) submission mastery', lessons: 9, done: 4, mins: 70, level: 'Device', tone: 'ai' },
+          { id: 'ectd', title: 'eCTD authoring & assembly', lessons: 8, done: 1, mins: 60, level: 'Pharma', tone: 'ai' },
+          { id: 'ana', title: 'AnA power user -- slash commands & modes', lessons: 5, done: 0, mins: 25, level: 'All roles', tone: 'idle' },
+          { id: 'part11', title: '21 CFR Part 11 in practice', lessons: 4, done: 2, mins: 30, level: 'Compliance', tone: 'warn' },
+          { id: 'biostat', title: 'Conversational biostatistics', lessons: 7, done: 0, mins: 55, level: 'Clinical', tone: 'idle' },
+        ];
+        for (const r of pathRows) {
+          await client.query(
+            `INSERT INTO enablement_learning_paths (id, organization_id, title, lessons, done, mins, level, tone)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.title, r.lessons, r.done, r.mins, r.level, r.tone],
+          );
+        }
+        console.log('   ✓ Enablement learning paths demo seeded');
+      } else {
+        console.log('   ⚠ enablement_learning_paths not found — run migrations first, skipping');
+      }
+
+      const certsExists = await client.query(`SELECT to_regclass('public.enablement_certifications') AS t`);
+      if (certsExists.rows[0]?.t) {
+        const certRows = [
+          { id: 'cert-author', name: 'AnA Certified -- Regulatory Author', status: 'earned', whenLabel: 'Mar 2026' },
+          { id: 'cert-510k', name: '510(k) Workbench Specialist', status: 'in-progress', whenLabel: '44% complete' },
+          { id: 'cert-ectd', name: 'eCTD Assembly Professional', status: 'locked', whenLabel: 'Complete the path to unlock' },
+        ];
+        for (const r of certRows) {
+          await client.query(
+            `INSERT INTO enablement_certifications (id, organization_id, name, status, when_label)
+             VALUES ($1,$2,$3,$4,$5)
+             ON CONFLICT (organization_id, id) DO NOTHING`,
+            [r.id, org.id, r.name, r.status, r.whenLabel],
+          );
+        }
+        console.log('   ✓ Enablement certifications demo seeded');
+      } else {
+        console.log('   ⚠ enablement_certifications not found — run migrations first, skipping');
+      }
+    }
+
     await client.query('COMMIT');
 
     // ── Summary ───────────────────────────────────────────────────
