@@ -17,6 +17,9 @@
 import bcrypt from 'bcryptjs';
 import pg from 'pg';
 import crypto from 'crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const { Pool } = pg;
 
@@ -879,6 +882,27 @@ async function seed() {
         console.log('   ✓ Labeling document + translations demo seeded');
       } else {
         console.log('   ⚠ labeling_documents/translations not found — run migrations first, skipping');
+      }
+    }
+
+    // ── Domain seed modules (scripts/seed/ga-demo.d/*.mjs) ───────────────────
+    // Each module owns one domain's demo rows: it default-exports
+    // `async (client, { org, admin }) => {}` and follows the same conventions as
+    // the inline blocks above (to_regclass-guarded, org-scoped, idempotent).
+    // Modularized so domains can be authored independently without contending
+    // for this file.
+    {
+      const domainDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'seed', 'ga-demo.d');
+      if (fs.existsSync(domainDir)) {
+        const files = fs.readdirSync(domainDir).filter((f) => f.endsWith('.mjs')).sort();
+        for (const file of files) {
+          const mod = await import(pathToFileURL(path.join(domainDir, file)).href);
+          if (typeof mod.default === 'function') {
+            await mod.default(client, { org, admin });
+          } else {
+            console.log(`   ⚠ ${file} has no default export — skipped`);
+          }
+        }
       }
     }
 
