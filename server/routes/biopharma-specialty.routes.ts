@@ -9,13 +9,16 @@
  * fails closed to an empty canonical envelope (client keeps its fixture) when
  * the store isn't provisioned (`42P01`). Consumed by the specialty surfaces via
  * useLiveList.
+ *
+ * Exposed as three routers each mounted at its own sub-prefix (rather than one
+ * router at the bare `/api/biopharma`) so they resolve ahead of the programs
+ * router's `GET /:id` without adding a second mount on the shared prefix.
  */
 import { Router, type Request, type Response } from 'express';
 import { pool } from '../db';
 import { ok, orgRequired, serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
-const router = Router();
 const log = createScopedLogger('biopharma-specialty');
 
 function getOrgId(req: Request): number | null {
@@ -39,40 +42,31 @@ async function readList(res: Response, orgId: number, sql: string, op: string) {
   }
 }
 
-router.get('/pediatric', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  return readList(
-    res,
-    orgId,
-    `SELECT id, product, kind, age_range AS "ageRange", deferrals, waivers, milestones, due, status
-       FROM biopharma_pediatric_plans WHERE organization_id = $1 ORDER BY id`,
-    'list-pediatric',
-  );
-});
+/** Build a single-endpoint router that serves an org-scoped list at `GET /`. */
+function listRouter(sql: string, op: string): Router {
+  const router = Router();
+  router.get('/', async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) return orgRequired(res);
+    return readList(res, orgId, sql, op);
+  });
+  return router;
+}
 
-router.get('/orphan', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  return readList(
-    res,
-    orgId,
-    `SELECT id, product, agency, indication, date, prevalence, benefit, status
-       FROM biopharma_orphan_designations WHERE organization_id = $1 ORDER BY id`,
-    'list-orphan',
-  );
-});
+export const pediatricRouter = listRouter(
+  `SELECT id, product, kind, age_range AS "ageRange", deferrals, waivers, milestones, due, status
+     FROM biopharma_pediatric_plans WHERE organization_id = $1 ORDER BY id`,
+  'list-pediatric',
+);
 
-router.get('/supplements', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  return readList(
-    res,
-    orgId,
-    `SELECT id, agency, product, subject, filed, due, status
-       FROM biopharma_supplements WHERE organization_id = $1 ORDER BY id`,
-    'list-supplements',
-  );
-});
+export const orphanRouter = listRouter(
+  `SELECT id, product, agency, indication, date, prevalence, benefit, status
+     FROM biopharma_orphan_designations WHERE organization_id = $1 ORDER BY id`,
+  'list-orphan',
+);
 
-export default router;
+export const supplementsRouter = listRouter(
+  `SELECT id, agency, product, subject, filed, due, status
+     FROM biopharma_supplements WHERE organization_id = $1 ORDER BY id`,
+  'list-supplements',
+);
