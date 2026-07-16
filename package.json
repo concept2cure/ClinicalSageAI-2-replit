@@ -350,9 +350,9 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.24.8",
-    "@electric-sql/pglite": "^0.5.2",
     "@babel/preset-react": "^7.24.7",
     "@babel/preset-typescript": "^7.24.7",
+    "@electric-sql/pglite": "^0.5.2",
     "@eslint/js": "^10.0.0",
     "@figma/code-connect": "^1.2.3",
     "@replit/vite-plugin-cartographer": "^0.5.1",
@@ -395,6 +395,7 @@
     "ajv-formats": "^3.0.1",
     "autoprefixer": "^10.4.20",
     "babel-jest": "^30.3.0",
+    "danger": "13.0.10",
     "drizzle-kit": "^0.30.4",
     "esbuild": "^0.25.0",
     "eslint": "^10.2.0",
