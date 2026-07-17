@@ -61,6 +61,28 @@ export interface UnresolvedLeaf {
   reason: string;
 }
 
+/**
+ * Partition unresolved leaves into GENUINE DEFECTS vs KNOWN-EXTERNAL pointers.
+ *
+ * `unresolvedLeaves` mixes two very different populations:
+ *   - genuine defects — a coauthor/unified row not found in the org, or an
+ *     unsupported document_table (no resolver). The leaf references a document
+ *     that does not exist or cannot be handled: the assembled dossier is
+ *     substantively broken and must NOT be transmitted to an agency.
+ *   - known-external pointers — a `vault_documents` (S3) / `ctd_onboarding`
+ *     upload whose bytes legitimately live in external storage; not a defect in
+ *     the reference itself, just not materialized by this local PDF path.
+ *
+ * A transmit gate must fail closed on the FIRST group but not the second, so it
+ * never silently ships a dossier with a dangling document reference yet also
+ * never wrongly rejects a legitimate externally-stored submission. Pure/DB-free.
+ */
+export function genuineDefectLeaves(unresolved: UnresolvedLeaf[]): UnresolvedLeaf[] {
+  return unresolved.filter(
+    (l) => !l.documentTable || !(l.documentTable in EXTERNAL_DOCUMENT_TABLES),
+  );
+}
+
 export interface MaterializeLeafSourcesParams {
   leaves: Array<{ documentTable: string | null; documentId: number | null }>;
   organizationId: number;

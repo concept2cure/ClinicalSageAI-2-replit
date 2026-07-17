@@ -507,6 +507,24 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     sponsorName: params.sponsorName ?? `Organization ${ctx.organizationId}`,
   });
 
+  // A dossier transmitted to an agency must not silently drop a leaf. assemble
+  // surfaces leaves whose source could not be materialized; the genuine defects
+  // among them (a coauthor/unified row missing in the org, or an unsupported
+  // document_table — as opposed to a known-external S3/onboarding pointer) mean
+  // the leaf references a document that does not exist and would be dropped from
+  // the bundle. Transmitting that is an incomplete submission (Refuse-to-File
+  // risk), so fail closed — release the staged bundle and block.
+  const { genuineDefectLeaves } = await import('../ectd/leaf-source-resolver');
+  const defectLeaves = genuineDefectLeaves(assembled.unresolvedLeaves);
+  if (defectLeaves.length > 0) {
+    await assembled.cleanup();
+    throw new SubmissionError(
+      'DISPATCH_BLOCKED',
+      `Transmit blocked: ${defectLeaves.length} leaf source(s) reference a document that could not be assembled ` +
+        `(${defectLeaves.map((d) => `${d.documentTable}:${d.documentId}`).join(', ')}) — the submission would be incomplete.`,
+    );
+  }
+
   let result;
   try {
     result = await gw.transmit({
