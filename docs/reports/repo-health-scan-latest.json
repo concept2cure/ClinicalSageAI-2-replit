@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-16T21:55:29.326Z",
+  "generatedAt": "2026-07-17T01:00:19.792Z",
   "git": {
-    "sha": "4ec2852a02d69195adfe5aa39287f3cfac5aa698",
+    "sha": "5cb3596daa28acb89e788f6ddbd1e51f6dd0b4c7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2718,6 +2718,10 @@
         "lines": 1962
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 1945
+      },
+      {
         "file": "server/routes/auth.ts",
         "lines": 1937
       },
@@ -2800,10 +2804,6 @@
       {
         "file": "server/routes/ana-cortex-ft.ts",
         "lines": 1785
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 1749
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
