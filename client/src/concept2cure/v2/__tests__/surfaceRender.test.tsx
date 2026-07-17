@@ -13,7 +13,7 @@
  * offline, their queries degrade to the fixtures each surface already ships.
  */
 import React from 'react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
@@ -153,5 +153,49 @@ describe('every SURFACE_VIEWS surface mounts without throwing', () => {
       </Providers>,
     );
     expect(container.firstChild).not.toBeNull();
+  });
+});
+
+/**
+ * First-use quality gate: a surface can render non-empty yet still log a real
+ * runtime error (a crashed subtree caught by React, a bad data access) — the
+ * kind of defect a first-time human hits but a mount-only test misses. This
+ * renders every surface in its first-use (no-backend → fixture) state and fails
+ * if any surface logs a CRASH-class console.error. React style warnings
+ * (act(), key/nesting/unknown-prop) are not first-use crashes and are ignored,
+ * so the gate stays meaningful and non-flaky.
+ */
+describe('no surface logs a crash-class error on first-use render', () => {
+  const ids = Object.keys(SURFACE_VIEWS).sort();
+
+  /** True when a console.error call looks like a real crash, not a style warning. */
+  function isCrash(args: unknown[]): boolean {
+    if (args.some((a) => a instanceof Error)) return true;
+    const msg = args.map((a) => (typeof a === 'string' ? a : '')).join(' ');
+    if (/not wrapped in act|inside a test was not wrapped/i.test(msg)) return false; // benign test noise
+    if (/^Warning:/.test(msg) && !/error occurred in the/i.test(msg)) return false; // React style warnings
+    return /error occurred in the|Cannot read propert|is not a function|is not iterable|undefined is not|Maximum update depth/i.test(
+      msg,
+    );
+  }
+
+  it.each(ids)('%s renders without a crash-class error', (id) => {
+    const surface = getSurface(id) ?? stubSurface(id);
+    const View = SURFACE_VIEWS[id].component;
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      render(
+        <Providers>
+          <View surface={surface} {...commonProps} />
+        </Providers>,
+      );
+      const crashes = spy.mock.calls.filter(isCrash);
+      expect(
+        crashes,
+        `${id} logged a crash-class error: ${crashes.map((c) => String(c[0])).join(' | ')}`,
+      ).toHaveLength(0);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
