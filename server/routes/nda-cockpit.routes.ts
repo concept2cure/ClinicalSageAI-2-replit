@@ -12,8 +12,14 @@
  * POST /api/nda-cockpit/m1 → append a new Module-1 document (label required;
  *   optional st/note) as an org-scoped persisted row.
  *
- * The PDUFA clock and Refuse-to-File log stay the surface's local-first lists.
- * Org scoped; 403 without org context; reads fail closed to an empty list on
+ * GET  /api/nda-cockpit/rtf → the org's Refuse-to-File risk log
+ *   ({ id, sev, area, text, fix }), ordered by seq, backing the surface's
+ *   "Refuse-to-File risk" list.
+ * POST /api/nda-cockpit/rtf → append a new filing-risk item (area + text
+ *   required; optional sev/fix) as an org-scoped persisted row.
+ *
+ * The PDUFA clock stays the surface's local-first list. Org scoped; 403 without
+ * org context; reads fail closed to an empty list on
  * 42P01 (never 500) and the write returns 503 PENDING_STORE on 42P01 so an
  * unprovisioned store never breaks the surface.
  */
@@ -149,6 +155,93 @@ router.post('/m1', async (req: Request, res: Response) => {
       });
     }
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to create NDA Module 1 document.' } });
+  }
+});
+
+router.get('/rtf', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
+  }
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, sev, area, text, fix
+         FROM c2c_nda_rtf
+        WHERE organization_id = $1
+        ORDER BY seq, id`,
+      [orgId],
+    );
+    const data = rows.map((r) => ({
+      id: r.id,
+      sev: r.sev,
+      area: r.area,
+      text: r.text,
+      fix: r.fix ?? '',
+    }));
+    return res.json({ data, meta: { count: data.length } });
+  } catch (err) {
+    if ((err as { code?: string })?.code === '42P01') {
+      return res.json({ data: [], meta: { count: 0, pendingStore: true } });
+    }
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to read NDA Refuse-to-File risks.' } });
+  }
+});
+
+/**
+ * POST /api/nda-cockpit/rtf — append a Refuse-to-File risk-log item.
+ *
+ * The v2 NdaCockpit "Log a filing-risk item" form POSTs here once its read has
+ * adopted the store (LIVE). Plain org-scoped persisted create — sev defaults to
+ * 'med', seq = max(seq)+1 for this org. Org scoped; 403 without org; 400 when
+ * area or text is missing; 503 PENDING_STORE on 42P01 so the client falls back
+ * to its local-only behavior.
+ */
+router.post('/rtf', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
+  }
+
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
+
+  const area = str(body.area);
+  const text = str(body.text);
+  const missing = [!area && 'area', !text && 'text'].filter(Boolean);
+  if (missing.length) {
+    return res.status(400).json({
+      error: { code: 'INVALID_BODY', message: `Missing required field(s): ${missing.join(', ')}.` },
+    });
+  }
+
+  const sev = str(body.sev) || 'med';
+  const fix = str(body.fix) || null;
+  const id = 'rtf-' + Date.now();
+
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO c2c_nda_rtf (organization_id, id, sev, area, text, fix, seq)
+       VALUES ($1, $2, $3, $4, $5, $6,
+               COALESCE((SELECT MAX(seq) FROM c2c_nda_rtf WHERE organization_id = $1), -1) + 1)
+       RETURNING id, sev, area, text, fix`,
+      [orgId, id, sev, area, text, fix],
+    );
+    const r = rows[0];
+    const data = {
+      id: r.id,
+      sev: r.sev,
+      area: r.area,
+      text: r.text,
+      fix: r.fix ?? '',
+    };
+    return res.status(201).json({ data, meta: { created: true } });
+  } catch (err) {
+    if ((err as { code?: string })?.code === '42P01') {
+      return res.status(503).json({
+        error: { code: 'PENDING_STORE', message: 'NDA Refuse-to-File store is not provisioned yet.' },
+      });
+    }
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to create NDA Refuse-to-File risk.' } });
   }
 });
 

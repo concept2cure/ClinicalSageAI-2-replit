@@ -38,6 +38,7 @@ interface NdaClockStep {
 }
 
 interface NdaRtfItem {
+  id?: string;
   sev: string;
   area: string;
   text: string;
@@ -86,16 +87,6 @@ const NDA_RTF_SEED: NdaRtfItem[] = [
 ];
 
 /* ── Inline shared kit helpers ── */
-
-function useRows<T extends { _new?: boolean }>(seed: T[]): readonly [T[], (r: T) => void] {
-  const [rows, setRows] = useState(() => (seed || []).map((r) => ({ ...r })));
-  const add = (r: T) => {
-    const row: T = { ...r, _new: true };
-    setRows((rs) => [row, ...rs]);
-    setTimeout(() => setRows((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
-  };
-  return [rows, add] as const;
-}
 
 function useToast(): [string, (m: string) => void] {
   const [msg, setMsg] = useState('');
@@ -154,7 +145,25 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   const overall = modules.length
     ? Math.round(modules.reduce((a, m) => a + m.pct, 0) / modules.length)
     : 0;
-  const [rtf, addRtf] = useRows<NdaRtfItem>(NDA_RTF_SEED);
+  /* live ?? fixture — adopt the org's seeded Refuse-to-File risk log when the
+     store returns the full shape, else keep the fixture (no empty-flash). The
+     list stays locally mutable so a logged risk appears immediately, and the
+     POST persists it when live. */
+  const rtfLive = useLiveList<NdaRtfItem>('/api/nda-cockpit/rtf', NDA_RTF_SEED);
+  const rtfIsLive = !rtfLive.sample;
+  const [rtf, setRtf] = useState<NdaRtfItem[]>(() => NDA_RTF_SEED.map((r) => ({ ...r })));
+  const rtfSeeded = useRef<NdaRtfItem[] | null>(null);
+  useEffect(() => {
+    if (!rtfLive.loading && rtfLive.data && rtfSeeded.current !== rtfLive.data) {
+      rtfSeeded.current = rtfLive.data;
+      setRtf(rtfLive.data.map((r) => ({ ...r })));
+    }
+  }, [rtfLive.loading, rtfLive.data]);
+  const addRtf = (r: NdaRtfItem) => {
+    const row: NdaRtfItem = { ...r, _new: true };
+    setRtf((rs) => [row, ...rs]);
+    setTimeout(() => setRtf((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
+  };
   /* live ?? fixture — adopt the org's seeded Module-1 admin worklist when the
      store returns the full shape, else keep the fixture (no empty-flash). The
      list stays locally mutable so an added document appears immediately, and
@@ -203,11 +212,43 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     ],
   };
 
-  const submitRtf = (v: Record<string, string>) => {
-    addRtf({ sev: v.sev, area: v.area, text: v.text, fix: v.fix });
+  const submitRtf = async (v: Record<string, string>) => {
     setForm(null);
     setTab('rtf');
-    fireToast('Filing risk logged · ' + v.area);
+    const local = (): NdaRtfItem => ({ id: 'rtf-' + Date.now(), sev: v.sev, area: v.area, text: v.text, fix: v.fix });
+    if (!rtfIsLive) {
+      // Fixture mode — nothing to persist to; say so instead of faking success.
+      addRtf(local());
+      fireToast('Filing risk logged · ' + v.area + ' · sample only, not persisted');
+      return;
+    }
+    try {
+      const res = await apiRequest('POST', '/api/nda-cockpit/rtf', {
+        area: v.area,
+        text: v.text,
+        sev: v.sev,
+        fix: v.fix,
+      });
+      if (!res.ok) {
+        addRtf(local());
+        fireToast('Could not log filing risk · sign in required — sample only, not persisted');
+        return;
+      }
+      const body = await res.json().catch(() => null);
+      const row = body?.data;
+      // Adopt the persisted row (server-generated id) when returned, else the local shape.
+      addRtf(row && typeof row.area === 'string' ? (row as NdaRtfItem) : local());
+      fireToast('Filing risk logged · ' + v.area);
+    } catch (e) {
+      // apiRequest throws on non-OK with the server's reason. Fall back to local
+      // and say it did not persist — never report a write that did not happen.
+      addRtf(local());
+      fireToast(
+        'Could not log filing risk · ' +
+          (e instanceof Error && e.message ? e.message : 'request failed') +
+          ' — sample only, not persisted',
+      );
+    }
   };
 
   const submitM1 = async (v: Record<string, string>) => {
@@ -363,7 +404,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {tab === 'rtf' && (
         <div className="reg-card">
-          <div className="reg-card-h"><span>Refuse-to-File risk &mdash; shadow review of the 60-day filing decision</span><span style={{ display: 'flex', gap: 8 }}><button className="nda-open" onClick={() => setForm('rtf')}>{I.plus} Log risk</button>{ask && <button className="nda-open" onClick={() => ask('Draft a filing-risk mitigation plan for the open NDA Refuse-to-File items')}>{I.sparkles} Mitigation plan</button>}</span></div>
+          <div className="reg-card-h"><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Refuse-to-File risk &mdash; shadow review of the 60-day filing decision <SampleTag sample={rtfLive.sample} /></span><span style={{ display: 'flex', gap: 8 }}><button className="nda-open" onClick={() => setForm('rtf')}>{I.plus} Log risk</button>{ask && <button className="nda-open" onClick={() => ask('Draft a filing-risk mitigation plan for the open NDA Refuse-to-File items')}>{I.sparkles} Mitigation plan</button>}</span></div>
           <div className="nda-rtf">
             {rtf.map((r, i) => (
               <div key={i} className={'nda-rtf-row' + (r._new ? ' de-row-new' : '')} data-sev={r.sev}>
