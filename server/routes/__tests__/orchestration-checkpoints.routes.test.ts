@@ -21,7 +21,7 @@ function appWith(org: number | null) {
     if (org !== null) (req as unknown as { organizationId: number }).organizationId = org;
     next();
   });
-  app.use('/api/orchestration', checkpointsRouter);
+  app.use('/api/orchestration/checkpoints', checkpointsRouter);
   return app;
 }
 

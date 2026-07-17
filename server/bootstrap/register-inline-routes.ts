@@ -900,10 +900,12 @@ export async function registerInlineAiWorkflowRoutes({
 
   // Persisted approval-checkpoint read (approval_checkpoints × workflow_runs).
   // Own try/catch: this lightweight read must stay up even if the heavy
-  // orchestration service graph fails to import (and vice versa).
+  // orchestration service graph fails to import (and vice versa). Mounted at
+  // its own sub-prefix (not the bare /api/orchestration) so the route-mount
+  // audit sees a single mount per prefix.
   try {
     const orchestrationCheckpointRoutes = (await import('../routes/orchestration-checkpoints')).default;
-    app.use('/api/orchestration', orchestrationCheckpointRoutes);
+    app.use('/api/orchestration/checkpoints', orchestrationCheckpointRoutes);
     console.log('✅ Orchestration checkpoint routes mounted at /api/orchestration/checkpoints');
   } catch (error: any) {
     console.error('❌ Failed to mount Orchestration checkpoint routes:', error.message);

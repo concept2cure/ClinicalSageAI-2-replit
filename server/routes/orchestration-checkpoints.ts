@@ -36,7 +36,9 @@ function resolveOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-router.get('/checkpoints', async (req: Request, res: Response) => {
+// Mounted at /api/orchestration/checkpoints (its own sub-prefix), so the
+// list lives at the router root.
+router.get('/', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (orgId == null) {
     return res.status(403).json({ error: 'Organization context required' });
