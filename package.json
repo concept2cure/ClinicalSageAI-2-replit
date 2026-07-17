@@ -349,7 +349,7 @@
     "zod-validation-error": "^5.0.0"
   },
   "devDependencies": {
-    "@babel/preset-env": "^7.24.8",
+    "@babel/preset-env": "^8.0.2",
     "@babel/preset-react": "^7.24.7",
     "@babel/preset-typescript": "^7.24.7",
     "@electric-sql/pglite": "^0.5.2",
