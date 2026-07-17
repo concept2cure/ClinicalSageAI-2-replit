@@ -62,6 +62,13 @@ Rotate these before any shared or externally reachable deployment.
 | Reg intelligence | Reg-change horizon scan | `c2c_reg_changes` (5 change records) |
 | Governance | Decision lineage trails | `c2c_decision_lineage` (3 governed-artifact trails) |
 | Dossier | CTD module map (completeness/readiness) | `c2c_dossier_map` (5 modules) |
+| IND | IND lifecycle checklist (forms + eCTD sections) | `c2c_ind_checklist` (BX-301 IND: 3 forms, 17 sections) |
+| Program | Program journey (stage overlay + clock) | `c2c_program_journey` (BX-204) |
+| Market access | Payer coverage / value dossier / coding | `c2c_market_access` (BX-204) |
+| Shadow review | Refuse-to-File findings by reviewer lens | `c2c_shadow_review` (5 lenses, 14 findings) |
+| Labeling | USPI section worklist + agency negotiation | `c2c_labeling_pi` (18 sections) |
+| Protocol dev | Protocol section tree / SoA / risk register | `c2c_protocol_dev` (SELVO-DLBCL-201) |
+| Research admin | CITI training matrix | `c2c_research_admin` (6 personnel) |
 
 Each Wave-2/3 surface adopts live data only when the store returns its full
 display shape, else fails closed to the codebase fixture with a "Sample data"
@@ -77,11 +84,14 @@ PvSignal (a deterministic disproportionality calculator — inputs → PRR/ROR/
 BCPNN/EBGM, nothing to seed), Setup (installer-only backend — intentionally not
 wired), InsightsCanvas, CER/PMA fixture panels, v2 Risk (ISO 14971 device-risk
 variant; the standalone risk module is the live one), and the remaining
-records-list surfaces not yet wired (labeling-pi, protocol-dev, ind-checklist,
-filings-catalog, precedent-intelligence, market-access, program-journey,
-device-510k, ivd-completeness, shadow-review, batch-draft, research-admin,
-task-board). AnaDocTemplates/AnaDocContext/SourceTracer are helper/static
-modules, not instance-data surfaces.
+records-list surfaces not yet wired (filings-catalog and precedent-intelligence
+— static taxonomies/search catalogs; batch-draft; task-board — already backed by
+the tasking layer). device-510k is the ported MDX 510(k) sub-app whose instance
+lists (eSTAR sections, predicates, SE matrix) are already live via the MDX data
+layer; ivd-completeness is a computed catalog over the shared dossier spine (its
+`IvdFamily` shape carries a non-serializable match predicate) — both correctly
+left as-is rather than forced into a store. AnaDocTemplates/AnaDocContext/
+SourceTracer are helper/static modules, not instance-data surfaces.
 
 ## 4. Config-gated (needs keys, not code)
 

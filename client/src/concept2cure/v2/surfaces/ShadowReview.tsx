@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, liveGet } from '../dataConnect';
 import { PedigreeBadge } from '../intelligence/Intelligence';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -15,6 +15,10 @@ import type { ShadowFinding, SeverityMeta } from '../fixtures/shadow-review-data
 function riskBand(v: number): string { return v >= 0.66 ? 'high' : v >= 0.33 ? 'med' : 'low'; }
 function riskWord(v: number): string { return v >= 0.66 ? 'high' : v >= 0.33 ? 'moderate' : 'low'; }
 
+/* Live read row: one reviewer lens with its findings list (JSONB). Grouped
+   back into the SHADOW_FINDINGS record the surface renders. */
+interface ShadowLensRow { lens: string; findings: ShadowFinding[]; }
+
 /* ================================================================
    ShadowReview -- AnA simulates the reviewer who will read your
    submission BEFORE you file. Scores the two gates that actually
@@ -24,7 +28,6 @@ function riskWord(v: number): string { return v >= 0.66 ? 'high' : v >= 0.33 ? '
 
 export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
-  const live = false; // sample data only until live API connected
   const seq = SHADOW_SEQUENCE;
   const lenses = SHADOW_LENSES;
 
@@ -32,10 +35,40 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
   const [_ran, _setRan] = useState(true); // sample run is pre-populated
   const lens = shadowLens(lensId);
 
+  /* live ?? fixture — adopt the org's seeded shadow-review findings when the
+     store returns the full per-lens shape (lens + findings[] with the
+     ShadowFinding display keys), else keep the codebase fixture so the worklist
+     is never empty. Never fabricates. `sample` drives the truthful pill. */
+  const [findingsByLens, setFindingsByLens] = useState<Record<string, ShadowFinding[]>>(SHADOW_FINDINGS);
+  const [sample, setSample] = useState(true);
+  const live = !sample;
+
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: ShadowLensRow[] }>('/api/shadow-review', { data: [] }).then((res) => {
+      if (cancelled) return;
+      const list = res.data?.data;
+      const row0 = list?.[0];
+      if (
+        !res.sample && Array.isArray(list) && list.length > 0 &&
+        row0?.lens && Array.isArray(row0.findings) &&
+        row0.findings[0]?.title && row0.findings[0]?.dimension
+      ) {
+        const map: Record<string, ShadowFinding[]> = {};
+        for (const r of list) map[r.lens] = r.findings;
+        setFindingsByLens(map);
+        setSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const findings = useMemo(() => {
-    const f = (SHADOW_FINDINGS[lensId] || []) as ShadowFinding[];
+    const f = (findingsByLens[lensId] || []) as ShadowFinding[];
     return f.slice().sort((a, b) => SR_SEV[a.severity].rank - SR_SEV[b.severity].rank);
-  }, [lensId]);
+  }, [lensId, findingsByLens]);
 
   const risk = useMemo(() => shadowAggregateRisk(findings), [findings]);
   const rtf = risk.rtf;
@@ -65,7 +98,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="sr">
-      <SampleTag sample={true} />
+      <SampleTag sample={sample} />
 
       <div className="sr-head">
         <div className="sr-eyebrow">

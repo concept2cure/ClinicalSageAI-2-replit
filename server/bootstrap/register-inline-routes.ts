@@ -894,6 +894,26 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Dossier map route:', error);
   }
 
+  // Wave-3 batch: org-scoped instance-list reads, each on its own sub-prefix,
+  // feeding a registered v2 surface that fails closed to its fixture.
+  for (const [prefix, modPath, label] of [
+    ['/api/ind-checklist', '../routes/ind-checklist.routes', 'IND checklist'],
+    ['/api/program-journey', '../routes/program-journey.routes', 'Program journey'],
+    ['/api/market-access', '../routes/market-access.routes', 'Market access'],
+    ['/api/shadow-review', '../routes/shadow-review.routes', 'Shadow review'],
+    ['/api/labeling-pi', '../routes/labeling-pi.routes', 'Labeling PI'],
+    ['/api/protocol-dev', '../routes/protocol-dev.routes', 'Protocol dev'],
+    ['/api/research-admin', '../routes/research-admin.routes', 'Research admin'],
+  ] as const) {
+    try {
+      const mod = await import(modPath);
+      app.use(prefix, authMiddleware, mod.default);
+      console.info(`✅ ${label} route mounted (${prefix})`);
+    } catch (error) {
+      console.error(`❌ Failed to mount ${label} route:`, error);
+    }
+  }
+
   // C2C client formatting templates — AnA document-formatting engine.
   // Extract a TemplateSpec from an upload, build/edit client templates, and
   // render documents as .docx / .pdf with the client's fonts, margins, logo.

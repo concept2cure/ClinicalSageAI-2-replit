@@ -1,17 +1,10 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
 /* ── Inline fixture types ── */
-
-interface LpSection {
-  n: string;
-  label: string;
-  st: string;
-  flag?: string;
-}
 
 interface LpContent {
   heading: string;
@@ -28,12 +21,25 @@ interface LpNegotiation {
   rationale: string;
 }
 
+/* One row per label section — the live read shape (GET /api/labeling-pi). The
+   section number + label are catalog; `st`, `flag`, `content`, and
+   `negotiation` are per-org instance state. `content`/`negotiation` arrive as
+   JSONB and are null for sections without them. */
+interface LpRow {
+  n: string;
+  label: string;
+  st: string;
+  flag: string | null;
+  content: LpContent | null;
+  negotiation: LpNegotiation | null;
+}
+
 /* ── Inline fixture data (kit-identical) ── */
 
 const LP_STAGES = ['Draft', 'FDA labeling review', 'Negotiation', 'Approved'];
 
 /* USPI -- PLLR / 21 CFR 201.57 full prescribing information (17 sections) */
-const LP_SECTIONS: LpSection[] = [
+const LP_SECTIONS: { n: string; label: string; st: string; flag?: string }[] = [
   { n: 'HL', label: 'Highlights of prescribing information', st: 'review' },
   { n: 'BW', label: 'Boxed warning', st: 'negotiation', flag: 'agency' },
   { n: '1', label: 'Indications and usage', st: 'negotiation', flag: 'agency' },
@@ -89,23 +95,42 @@ const LP_NEGOTIATION: Record<string, LpNegotiation> = {
     rationale: 'FDA proposes removing the forward-looking iPSP sentence from labeling (belongs in the PMR, not the PI). Low-stakes -- accept.' },
 };
 
+/* Combined per-section fixture — the `live ?? fixture` shape for the read.
+   Each row carries the section metadata plus its rendered content and agency
+   negotiation (null where absent), mirroring GET /api/labeling-pi. */
+const LP_ROWS: LpRow[] = LP_SECTIONS.map(s => ({
+  n: s.n,
+  label: s.label,
+  st: s.st,
+  flag: s.flag ?? null,
+  content: LP_CONTENT[s.n] ?? null,
+  negotiation: LP_NEGOTIATION[s.n] ?? null,
+}));
+
 /* ════ Labeling PI -- prescribing information surface ════ */
 
 export function LabelingPI({ onAsk }: SurfaceViewProps) {
   const [fmt, setFmt] = useState('uspi');
   const [active, setActive] = useState('1');
   const [stage, setStage] = useState('Negotiation');
+
+  /* live ?? fixture — adopt the org's seeded label worklist when the store
+     returns the full section shape ({ n, label, st, flag, content,
+     negotiation }), else keep the codebase fixture so the tree is never empty.
+     Never fabricates; no empty-flash (fixture renders while loading). */
+  const { data: rows, sample } = useLiveList<LpRow>('/api/labeling-pi', LP_ROWS);
+
   const stIdx = LP_STAGES.indexOf(stage);
-  const sec = LP_SECTIONS.find(s => s.n === active) || LP_SECTIONS[2];
-  const content = LP_CONTENT[active] || { heading: sec.n + '  ' + sec.label, body: ['Section content is maintained in the structured label and rendered here. Open in the editor to author, or ask AnA to draft from the clinical and safety files.'] };
-  const neg = LP_NEGOTIATION[active];
-  const agencyOpen = LP_SECTIONS.filter(s => s.flag === 'agency').length;
+  const sec = rows.find(s => s.n === active) || rows[2] || rows[0];
+  const content = sec?.content || { heading: (sec?.n ?? active) + '  ' + (sec?.label ?? ''), body: ['Section content is maintained in the structured label and rendered here. Open in the editor to author, or ask AnA to draft from the clinical and safety files.'] };
+  const neg = sec?.negotiation ?? null;
+  const agencyOpen = rows.filter(s => s.flag === 'agency').length;
 
   return (
     <div className="reg-wrap lp">
       <div className="reg-head">
         <div>
-          <div className="reg-eyebrow">Platform -- authoring</div>
+          <div className="reg-eyebrow">Platform -- authoring <SampleTag sample={sample} /></div>
           <h1 className="reg-title">Labeling -- prescribing information</h1>
           <p className="reg-sub">The label itself -- PLLR / 21 CFR 201.57 (USPI), EU SmPC (QRD), and SPL for submission. The highest-stakes document of the review, negotiated with the agency at end of cycle.</p>
         </div>
@@ -135,7 +160,7 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
       <div className="lp-split">
         <aside className="lp-tree">
           <div className="lp-tree-h">Label sections</div>
-          {LP_SECTIONS.map(s => (
+          {rows.map(s => (
             <button key={s.n} className={'lp-sec' + (s.n === active ? ' on' : '')} data-st={s.st} onClick={() => setActive(s.n)}>
               <span className="lp-sec-n">{s.n}</span>
               <span className="lp-sec-l">{s.label}</span>
