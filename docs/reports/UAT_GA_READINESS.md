@@ -59,6 +59,9 @@ Rotate these before any shared or externally reachable deployment.
 | CRO | Sponsor portfolio roster | `c2c_cro_portfolio` (5 sponsors) |
 | Evidence pool | pdev EvidencePicker | `c2c_evidence_objects` (11 objects) |
 | Biostatistics | SAP / sample-size / interims sections | `c2c_biostat_*` |
+| Reg intelligence | Reg-change horizon scan | `c2c_reg_changes` (5 change records) |
+| Governance | Decision lineage trails | `c2c_decision_lineage` (3 governed-artifact trails) |
+| Dossier | CTD module map (completeness/readiness) | `c2c_dossier_map` (5 modules) |
 
 Each Wave-2/3 surface adopts live data only when the store returns its full
 display shape, else fails closed to the codebase fixture with a "Sample data"

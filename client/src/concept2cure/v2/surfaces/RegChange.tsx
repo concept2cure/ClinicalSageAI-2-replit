@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
+import { SampleTag, liveGet } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -66,17 +67,39 @@ const _RCI_SEVL: Record<string, string> = { high: 'Action required', med: 'Revie
 /* ════ RegChange -- regulatory change intelligence surface ════ */
 
 export function RegChange({ onAsk }: SurfaceViewProps) {
+  const [changes, setChanges] = useState<RciChange[]>(RCI_CHANGES);
   const [open, setOpen] = useState<string | null>(RCI_CHANGES[0].id);
-  const affecting = RCI_CHANGES.filter(c => c.affects.length).length;
-  const actionReq = RCI_CHANGES.filter(c => c.sev === 'high').length;
-  const live = RCI_CHANGES.filter(c => c.live).length;
+  const [sample, setSample] = useState(true);
+
+  /* live ?? fixture — adopt the org's seeded horizon scan when the store
+     returns the full change shape (rail fields + nested affects[]), else keep
+     the codebase fixture so the worklist is never empty. Never fabricates. */
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: RciChange[] }>('/api/reg-change', { data: [] }).then((res) => {
+      if (cancelled) return;
+      const list = res.data?.data;
+      if (!res.sample && Array.isArray(list) && list.length > 0 && list[0]?.id && list[0]?.title && Array.isArray(list[0]?.affects)) {
+        setChanges(list);
+        setOpen(list[0].id);
+        setSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const affecting = changes.filter(c => c.affects.length).length;
+  const actionReq = changes.filter(c => c.sev === 'high').length;
+  const live = changes.filter(c => c.live).length;
   const ask = onAsk;
 
   return (
     <div className="reg-wrap">
       <div className="reg-head">
         <div>
-          <div className="reg-eyebrow">Platform {I.dot} intelligence</div>
+          <div className="reg-eyebrow">Platform {I.dot} intelligence <SampleTag sample={sample} /></div>
           <h1 className="reg-title">Regulatory change intelligence</h1>
           <p className="reg-sub">Horizon scan of FDA guidance, ISO/IEC standard revisions, and EU MDR/IVDR &amp; AI-Act changes &mdash; each assessed for impact against your portfolio and resolved to an action document. Not a feed: a worklist.</p>
         </div>
@@ -84,14 +107,14 @@ export function RegChange({ onAsk }: SurfaceViewProps) {
       </div>
 
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{RCI_CHANGES.length}</div><div className="reg-kpi-l">Changes tracked</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{changes.length}</div><div className="reg-kpi-l">Changes tracked</div></div>
         <div className="reg-kpi"><div className="reg-kpi-v">{affecting}</div><div className="reg-kpi-l">Affect your portfolio</div></div>
         <div className="reg-kpi" data-tone="err"><div className="reg-kpi-v">{actionReq}</div><div className="reg-kpi-l">Action required</div></div>
         <div className="reg-kpi"><div className="reg-kpi-v">{live}</div><div className="reg-kpi-l">In force / imminent</div></div>
       </div>
 
       <div className="rci-feed">
-        {RCI_CHANGES.map(c => {
+        {changes.map(c => {
           const isOpen = open === c.id;
           return (
             <div key={c.id} className="rci-card" data-open={isOpen || undefined}>

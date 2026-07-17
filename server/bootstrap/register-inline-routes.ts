@@ -864,6 +864,36 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount CRO portfolio route:', error);
   }
 
+  // Regulatory change horizon scan — org-scoped change records read by GET
+  // /api/reg-change (own sub-prefix). Feeds the RegChange surface.
+  try {
+    const regChangeModule = await import('../routes/reg-change.routes');
+    app.use('/api/reg-change', authMiddleware, regChangeModule.default);
+    console.info('✅ Reg change route mounted (/api/reg-change)');
+  } catch (error) {
+    console.error('❌ Failed to mount Reg change route:', error);
+  }
+
+  // Decision lineage — org-scoped governed-decision records read by GET
+  // /api/decision-lineage (own sub-prefix). Feeds the DecisionLineage surface.
+  try {
+    const decisionLineageModule = await import('../routes/decision-lineage.routes');
+    app.use('/api/decision-lineage', authMiddleware, decisionLineageModule.default);
+    console.info('✅ Decision lineage route mounted (/api/decision-lineage)');
+  } catch (error) {
+    console.error('❌ Failed to mount Decision lineage route:', error);
+  }
+
+  // Dossier map — org-scoped CTD module-map completeness read by GET
+  // /api/dossier-map (own sub-prefix). Feeds the DossierMap surface.
+  try {
+    const dossierMapModule = await import('../routes/dossier-map.routes');
+    app.use('/api/dossier-map', authMiddleware, dossierMapModule.default);
+    console.info('✅ Dossier map route mounted (/api/dossier-map)');
+  } catch (error) {
+    console.error('❌ Failed to mount Dossier map route:', error);
+  }
+
   // C2C client formatting templates — AnA document-formatting engine.
   // Extract a TemplateSpec from an upload, build/edit client templates, and
   // render documents as .docx / .pdf with the client's fonts, margins, logo.
