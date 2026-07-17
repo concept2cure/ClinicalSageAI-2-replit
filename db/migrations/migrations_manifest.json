@@ -520,6 +520,7 @@
     "20260717_evidence_objects_store.sql",
     "20260717_human_factors_store.sql",
     "20260717_sae_cases_store.sql",
+    "20260717_sae_reporting_clock.sql",
     "20260717_nda_modules_store.sql",
     "20260717_doc_journey_store.sql",
     "20260717_evidence_asks_store.sql",

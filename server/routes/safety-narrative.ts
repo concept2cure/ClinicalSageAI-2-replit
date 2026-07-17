@@ -11,6 +11,7 @@
 
 import { Router, Request, Response } from 'express';
 import { safetyNarrativeService } from '../services/safety-narrative-service';
+import { computeExpeditedReportingClock } from '../services/pv/expedited-reporting-clock';
 import { pool } from '../db';
 
 const router = Router();
@@ -47,29 +48,65 @@ router.get('/cases', async (req: Request, res: Response) => {
     const { rows } = await pool.query(
       `SELECT id, due, clock, due_days, subject_id, age, sex, study_id,
               treatment_arm, study_drug, dose, first_dose_date,
-              medical_history, concomitant_meds, event
+              medical_history, concomitant_meds, event,
+              awareness_date, expectedness
          FROM c2c_sae_cases
         WHERE organization_id = $1
         ORDER BY due_days ASC, id`,
       [orgId],
     );
-    const data = rows.map((r) => ({
-      id: r.id,
-      due: r.due,
-      clock: r.clock,
-      dueDays: r.due_days,
-      subjectId: r.subject_id,
-      age: r.age ?? undefined,
-      sex: r.sex ?? undefined,
-      studyId: r.study_id ?? undefined,
-      treatmentArm: r.treatment_arm ?? undefined,
-      studyDrug: r.study_drug ?? undefined,
-      dose: r.dose ?? undefined,
-      firstDoseDate: r.first_dose_date ?? undefined,
-      medicalHistory: Array.isArray(r.medical_history) ? r.medical_history : [],
-      concomitantMeds: Array.isArray(r.concomitant_meds) ? r.concomitant_meds : [],
-      event: r.event ?? {},
-    }));
+    // Compute the 21 CFR 312.32(c) / ICH E2A expedited-reporting clock LIVE from
+    // the stored facts (awareness_date + event seriousness/causality/outcome +
+    // expectedness) via the pure PV module — never from the static due/clock
+    // columns, which are kept only for backward compatibility. A single `now`
+    // anchors every row so the worklist is internally consistent. When
+    // awareness_date is absent the module fails closed (null due date /
+    // days-remaining, overdue false) and the client falls back to the stored
+    // display.
+    const now = new Date();
+    const data = rows.map((r) => {
+      const event = (r.event ?? {}) as {
+        seriousnessCriteria?: string[];
+        causality?: string;
+        outcome?: string;
+      };
+      const reporting = computeExpeditedReportingClock(
+        {
+          awarenessDate: r.awareness_date ?? null,
+          seriousnessCriteria: Array.isArray(event.seriousnessCriteria) ? event.seriousnessCriteria : [],
+          causality: event.causality ?? null,
+          expectedness: r.expectedness ?? null,
+          outcome: event.outcome ?? null,
+        },
+        now,
+      );
+      return {
+        id: r.id,
+        due: r.due,
+        clock: r.clock,
+        dueDays: r.due_days,
+        subjectId: r.subject_id,
+        age: r.age ?? undefined,
+        sex: r.sex ?? undefined,
+        studyId: r.study_id ?? undefined,
+        treatmentArm: r.treatment_arm ?? undefined,
+        studyDrug: r.study_drug ?? undefined,
+        dose: r.dose ?? undefined,
+        firstDoseDate: r.first_dose_date ?? undefined,
+        awarenessDate: r.awareness_date ?? undefined,
+        expectedness: r.expectedness ?? undefined,
+        medicalHistory: Array.isArray(r.medical_history) ? r.medical_history : [],
+        concomitantMeds: Array.isArray(r.concomitant_meds) ? r.concomitant_meds : [],
+        event: r.event ?? {},
+        // Live-computed expedited-reporting clock (additive; stored columns kept).
+        reportingCategory: reporting.category,
+        reportingClockStart: reporting.clockStart,
+        reportingDueDate: reporting.dueDate,
+        reportingDaysRemaining: reporting.daysRemaining,
+        reportingOverdue: reporting.overdue,
+        reportingBasis: reporting.basis,
+      };
+    });
     return res.json({ data, meta: { count: data.length } });
   } catch (err) {
     if ((err as { code?: string })?.code === '42P01') {
