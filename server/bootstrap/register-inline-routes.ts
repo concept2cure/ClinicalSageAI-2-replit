@@ -904,6 +904,7 @@ export async function registerInlineAiWorkflowRoutes({
     ['/api/labeling-pi', '../routes/labeling-pi.routes', 'Labeling PI'],
     ['/api/protocol-dev', '../routes/protocol-dev.routes', 'Protocol dev'],
     ['/api/research-admin', '../routes/research-admin.routes', 'Research admin'],
+    ['/api/investigator-brochure', '../routes/investigator-brochure.routes', "Investigator's Brochure"],
   ] as const) {
     try {
       const mod = await import(modPath);
