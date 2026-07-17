@@ -85,14 +85,16 @@ surface's own write path, and residual acceptability is taken from the server's
 A few older MDX panels read raw `SELECT *` endpoints whose DB columns diverge
 from the v2 display fixture, so `useLiveList`'s structural guard correctly
 rejects the response and the panel stays on its "Sample data" fixture rather
-than rendering mismatched data. The Risk surface was the org-wide case and is
-now fixed via `mapRiskItems`; still outstanding are the **RBM site-risk** panel
-(`/api/mdx/rbm-site-risk`, needs the caller to discover the org's `program_id`
-first — like `useOrchProgram` — then a `rbm_site_risk_scores → RbmSite` mapper)
-and **Labeling translations** (`/api/mdx/labeling/:id/translations`, needs the
-org's real labeling-document id in place of the hard-coded `1`, then a
-`labeling_translations → LabelTranslation` mapper). Both should follow the
-Risk pattern: entity-id discovery + a pure, unit-tested, fail-closed adapter.
+than rendering mismatched data. Fixed this pass: **Risk** (org-wide, via
+`mapRiskItems`) and **Labeling translations** (document-id discovery via
+`GET /api/mdx/labeling` + `mapLabelTranslations`, with the language display
+name derived through `Intl.DisplayNames`). Still outstanding: the **RBM
+site-risk** panel (`/api/mdx/rbm-site-risk`) — its GET is scoped by a UUID
+`program_id` that the portfolio discovery endpoint doesn't hand back directly
+(it returns integer project ids), so the entity-id resolution needs
+backend-validated work before a `rbm_site_risk_scores → RbmSite` mapper can be
+trusted. Follow the same pattern once the program-id resolution is settled:
+entity-id discovery + a pure, unit-tested, fail-closed adapter.
 
 ## 3. Labeled sample-data surfaces (by design — not defects)
 

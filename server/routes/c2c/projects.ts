@@ -117,8 +117,9 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
   if (!orgId) return send403(res);
+  const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
   // Guard the uuid cast — a non-uuid id would otherwise throw 22P02 → 500.
-  if (!UUID_RE.test(req.params.id)) return send404(res);
+  if (!UUID_RE.test(id)) return send404(res);
 
   try {
     // Columns verified against migrations/20260524_program_workbench_schema.sql
@@ -136,7 +137,7 @@ router.get('/:id', async (req: Request, res: Response) => {
        FROM regulatory_programs p
        WHERE p.id = $1 AND p.organization_id = $2 AND p.deleted_at IS NULL
        LIMIT 1`,
-      [req.params.id, orgId],
+      [id, orgId],
     );
 
     if (rows.length === 0) return send404(res);
