@@ -29,6 +29,17 @@ import {
 import { eq, and, asc } from 'drizzle-orm';
 import crypto from 'crypto';
 import { renderLeafPdf } from './ectd/leaf-pdf-renderer';
+import {
+  computeEctdCompleteness,
+  assertEctdSubmissionComplete,
+  EctdCompletenessError,
+  type CompletenessReport,
+  type IncompleteLeaf,
+} from './ectd/completeness';
+
+// Re-exported so existing importers of the export service keep working.
+export { EctdCompletenessError };
+export type { CompletenessReport };
 
 // ---------------------------------------------------------------------------
 // Types
@@ -66,6 +77,7 @@ interface EctdPackageResult {
     totalGranules: number;
     totalFiles: number;
     generatedAt: string;
+    completeness: CompletenessReport;
   };
 }
 
@@ -381,6 +393,14 @@ export async function generateEctdPackage(
     submissionType?: string;
     sequenceNumber?: string;
     applicationNumber?: string;
+    /**
+     * Submission-grade gate. When true, the export throws EctdCompletenessError
+     * instead of assembling a package that contains placeholder ("PENDING")
+     * leaves or no content — so a substantively-empty dossier can never be
+     * produced for an actual filing. Defaults to false (draft exports still
+     * build, with the completeness report attached to stats).
+     */
+    requireComplete?: boolean;
   } = {}
 ): Promise<EctdPackageResult> {
   const region = options.region || 'FDA';
@@ -484,6 +504,8 @@ export async function generateEctdPackage(
 
   // Populate from database granules
   let totalFiles = 0;
+  let placeholderLeaves = 0;
+  const incompleteSections: IncompleteLeaf[] = [];
   for (const granule of granules) {
     const moduleNum = granule.granuleId.split('.')[0];
     const entry = moduleGranuleMap.get(moduleNum);
@@ -541,7 +563,9 @@ export async function generateEctdPackage(
     }
 
     // Leaves are rendered to real PDF below (renderLeafPdf); when no authored
-    // content exists, a structured placeholder document is rendered instead.
+    // content exists, a structured placeholder document is rendered instead —
+    // tracked here so the completeness gate can see unfinished leaves.
+    const isPlaceholder = !documentContent;
     const fileContent = documentContent || generateStructuredDocument({
       sectionCode: granule.granuleId,
       title: granule.granuleName,
@@ -570,6 +594,15 @@ export async function generateEctdPackage(
       checksum: md5(leafBytes),
       operation: 'new',
     });
+
+    if (isPlaceholder) {
+      placeholderLeaves++;
+      incompleteSections.push({
+        granuleId: granule.granuleId,
+        granuleName: granule.granuleName,
+        status: granule.status,
+      });
+    }
   }
 
   // Also add project_sections as documents if they have content
@@ -627,6 +660,14 @@ export async function generateEctdPackage(
       operation: 'new',
     });
   }
+
+  // 3c. Submission-completeness gate. A submission-grade export must never ship
+  // placeholder ("Content Status: PENDING") leaves or an empty dossier — that is
+  // a Refuse-to-File / eCTD technical-rejection risk (FDA eCTD Technical
+  // Conformance Guide; ICH M8). Measured always; enforced (throws) only when the
+  // caller requests a submission-grade build via { requireComplete: true }.
+  const completeness = computeEctdCompleteness(totalFiles, placeholderLeaves, incompleteSections);
+  if (options.requireComplete) assertEctdSubmissionComplete(completeness);
 
   // 4. Generate index.xml (the root eCTD backbone)
   const indexXml = generateIndexXml({
@@ -719,6 +760,7 @@ export async function generateEctdPackage(
       totalGranules: granules.length + projectSections.filter(s => s.content?.trim().length > 0).length,
       totalFiles,
       generatedAt,
+      completeness,
     },
   };
 }
