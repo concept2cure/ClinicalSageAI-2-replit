@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected, useLiveList } from '../dataConnect';
+import { SampleTag, useLive, unwrapList } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -14,6 +14,62 @@ import type { LabelTranslation } from '../fixtures/labeling-data';
 
 /* ---- Labeling and IFU ---- */
 
+/** Human-readable language name for a code ('de' → 'German'), via the platform
+ *  Intl data; passes through anything it can't resolve (incl. a name already
+ *  stored in the language column) so the label is never blank. */
+function languageName(code: string): string {
+  if (!code) return code;
+  // Only resolve BCP-47-ish subtags ('de', 'pt-BR'); pass anything else through
+  // unchanged — a full name already stored in the column stays as written
+  // rather than being lower-cased by Intl's normalization of unknown input.
+  if (!/^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/i.test(code)) return code;
+  try {
+    return new Intl.DisplayNames(['en'], { type: 'language' }).of(code) || code;
+  } catch {
+    return code;
+  }
+}
+
+/**
+ * Map the raw `labeling_translations` rows the backend returns
+ * (GET /api/mdx/labeling/:id/translations — DB columns: translation_method,
+ * back_translation_verified, …) onto the LabelTranslation display contract the
+ * translation board renders. `name` has no column — it is a display label
+ * derived from the language, exactly as the surface's own addTrans does
+ * (`name = v.name || v.language`). method/btv/status map straight across from
+ * the write path's columns.
+ *
+ * Fail-closed (returns null → the surface keeps its Sample fixture) unless the
+ * payload is a non-empty list of rows carrying the translation signature
+ * (language + status). Exported for unit coverage.
+ */
+export function mapLabelTranslations(payload: unknown): LabelTranslation[] | null {
+  const list = unwrapList(payload);
+  if (!Array.isArray(list) || list.length === 0) return null;
+
+  const str = (v: unknown, fallback = ''): string => (typeof v === 'string' && v ? v : fallback);
+  const out: LabelTranslation[] = [];
+  for (const raw of list) {
+    if (!raw || typeof raw !== 'object') return null;
+    const r = raw as Record<string, unknown>;
+    // Signature gate — a labeling_translations row, not the display fixture
+    // (which carries `method`/`btv`, not `translation_method`).
+    if (!str(r.language) || !str(r.status)) return null;
+    if (!('translation_method' in r) && !('back_translation_verified' in r)) return null;
+
+    const language = str(r.language);
+    out.push({
+      id: r.id != null ? String(r.id) : 'TR-' + language,
+      language,
+      name: languageName(language),
+      method: str(r.translation_method, 'machine'),
+      btv: r.back_translation_verified === true,
+      status: str(r.status, 'pending'),
+    });
+  }
+  return out.length ? out : null;
+}
+
 export function Labeling({ onAsk }: SurfaceViewProps) {
   const sym = LABEL_SYMBOLS;
   const udi = LABEL_UDI;
@@ -21,7 +77,31 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
   const doc = LABEL_DOC;
   const EN = LABEL_ENUMS;
   const symTone = (s: string) => s === 'placed' ? 'ok' : s === 'review' ? 'warn' : s === 'na' ? 'idle' : 'err';
-  const liveTrans = useLiveList<LabelTranslation>('/api/mdx/labeling/1/translations', LABEL_TRANSLATIONS);
+  // Discover the org's real labeling document (the surface used a hard-coded id
+  // `1`); fall back to 1 so behavior is unchanged when discovery can't run.
+  const docLive = useLive<unknown>('/api/mdx/labeling', null);
+  const docId = useMemo(() => {
+    if (docLive.loading || docLive.sample) return 1;
+    const rows = unwrapList(docLive.data);
+    const first = Array.isArray(rows) && rows.length ? (rows[0] as Record<string, unknown>) : null;
+    const idv = first && typeof first === 'object' ? first.id : null;
+    return typeof idv === 'number' && Number.isFinite(idv) ? idv : 1;
+  }, [docLive.loading, docLive.sample, docLive.data]);
+
+  // The endpoint returns raw labeling_translations rows (translation_method,
+  // back_translation_verified…); useLiveList's guard would reject that shape, so
+  // adopt via mapLabelTranslations, which maps the rows and fails closed to the
+  // fixture on anything it can't map.
+  const transRaw = useLive<unknown>(`/api/mdx/labeling/${docId}/translations`, null, [docId]);
+  const liveTransRows = useMemo(
+    () => (!transRaw.loading && !transRaw.sample ? mapLabelTranslations(transRaw.data) : null),
+    [transRaw.loading, transRaw.sample, transRaw.data],
+  );
+  const liveTrans = {
+    data: liveTransRows ?? LABEL_TRANSLATIONS,
+    sample: liveTransRows == null,
+    loading: transRaw.loading,
+  };
   const [trans, setTrans] = useState<LabelTranslation[]>(liveTrans.data);
   // Adopt live translations once the backend responds; fail-closed to fixture.
   const transSeed = useRef<LabelTranslation[]>(liveTrans.data);
@@ -49,7 +129,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
     const nt: LabelTranslation = { id, language: v.language, name: v.name || v.language, method: v.method || 'mt_postedited', btv: false, status: 'pending', _new: true };
     setTrans(ts => [...ts, nt]); setTForm(false);
     const api = (window as any).C2C_API;
-    if (api && api.connected()) { api.post('/api/mdx/labeling/1/translations', { language: nt.language, translationMethod: nt.method, status: 'pending' }).catch(() => {}); }
+    if (api && api.connected()) { api.post('/api/mdx/labeling/' + docId + '/translations', { language: nt.language, translationMethod: nt.method, status: 'pending' }).catch(() => {}); }
     fire('Translation ' + v.language + ' added / status Pending');
   };
   const advTrans = (id: string) => setTrans(ts => ts.map(t => {
