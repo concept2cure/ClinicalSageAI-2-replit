@@ -26,6 +26,64 @@ function getOrgId(req: Request): number {
   );
 }
 
+/**
+ * GET /rounds — the v2 HaqManager display contract: authority letters as
+ * "rounds" plus their questions grouped by round, shaped to exactly the keys
+ * the surface renders (id/disc/tone/status/q/draft/cites/commitments). The
+ * surface adopts this via liveGet and falls back to its codebase fixture when
+ * the store is empty or unreachable, so it never renders a blank workbench.
+ * Fails closed to `{ data: null }` on any store error.
+ */
+router.get('/rounds', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const letters = await store.query(orgId, 'letter');
+    if (letters.length === 0) {
+      return res.json({ data: null, meta: { count: 0 } });
+    }
+    const questions = await store.query(orgId, 'question');
+
+    const rounds = letters.map((l: any) => ({
+      id: l.letterId,
+      agency: l.agency,
+      flag: l.flag,
+      authority: l.authority,
+      submission: l.submission,
+      type: l.type,
+      received: l.received,
+      due: l.due,
+      clockDays: l.clockDays,
+      clockTotal: l.clockTotal,
+      note: l.note,
+    }));
+
+    const byRound: Record<string, any[]> = {};
+    for (const r of rounds) byRound[r.id] = [];
+    for (const q of questions) {
+      const rid = q.letterId;
+      if (!byRound[rid]) continue;
+      byRound[rid].push({
+        id: q.qid,
+        disc: q.disc,
+        tone: q.tone,
+        status: q.status,
+        owner: q.owner,
+        q: q.q,
+        analysis: q.analysis,
+        draft: q.draft,
+        cites: Array.isArray(q.cites) ? q.cites : [],
+        commitments: Array.isArray(q.commitments) ? q.commitments : [],
+        precedentNote: q.precedentNote,
+        roundId: rid,
+      });
+    }
+
+    res.json({ data: { rounds, questions: byRound }, meta: { count: rounds.length } });
+  } catch {
+    res.json({ data: null, meta: { count: 0, pendingStore: true } });
+  }
+});
+
 router.get('/letters', async (_req: Request, res: Response) => {
   try {
     const orgId = getOrgId(_req);

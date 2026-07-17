@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, liveGet } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { HAQ_ROUNDS, HAQ_QUESTIONS } from '../fixtures/haq-data';
-import type { HaqQuestion } from '../fixtures/haq-data';
+import type { HaqQuestion, HaqRound } from '../fixtures/haq-data';
 import '../styles/project-home-v2.css';
 
 /* ── Inline shared helpers ── */
@@ -32,10 +32,33 @@ function C2CToast({ msg }: { msg: string }) {
 /* ════ HaqManager -- Health Authority Questions response workbench ════ */
 
 export function HaqManager({ onAsk }: SurfaceViewProps) {
-  const rounds = HAQ_ROUNDS;
-  const [roundId, setRoundId] = useState<string>(rounds[0]?.id ?? '');
+  /* live ?? fixture — adopt the store's rounds+questions only when the backend
+     returns the full display shape, else keep the codebase fixture so the
+     workbench never renders blank. Same round ids ('fda-ir1'/'ema-d120') in
+     both, so the selected round survives the swap. */
+  type RoundsPayload = { rounds?: HaqRound[]; questions?: Record<string, HaqQuestion[]> } | null;
+  const [live, setLive] = useState<{ rounds: HaqRound[]; questions: Record<string, HaqQuestion[]> } | null>(null);
+  const [sample, setSample] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: RoundsPayload }>('/api/haq-manager/rounds', { data: null }).then((res) => {
+      if (cancelled) return;
+      const d = res.data?.data;
+      if (!res.sample && d && Array.isArray(d.rounds) && d.rounds.length > 0 && d.rounds[0]?.id) {
+        setLive({ rounds: d.rounds, questions: d.questions || {} });
+        setSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const rounds = live?.rounds ?? HAQ_ROUNDS;
+  const questionsByRound = live?.questions ?? HAQ_QUESTIONS;
+  const [roundId, setRoundId] = useState<string>((HAQ_ROUNDS[0]?.id ?? ''));
   const round = rounds.find((r) => r.id === roundId) || rounds[0];
-  const baseQs = HAQ_QUESTIONS[roundId] || [];
+  const baseQs = questionsByRound[roundId] || [];
   const [statusMap, setStatusMap] = useState<Record<string, string>>({});
   const [extra, setExtra] = useState<HaqQuestion[]>([]);
   const [form, setForm] = useState(false);
@@ -128,7 +151,10 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       <div className="haq">
         <div className="haq-head">
           <div>
-            <div className="sec-kicker">PLATFORM -- POST-SUBMISSION</div>
+            <div className="sec-kicker" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              PLATFORM -- POST-SUBMISSION
+              <SampleTag sample={sample} />
+            </div>
             <h1 className="haq-title">Health authority questions</h1>
             <p className="haq-sub">
               Agency information requests and lists of questions -- decomposed,
@@ -159,7 +185,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                 data-on={r.id === roundId || undefined}
                 onClick={() => {
                   setRoundId(r.id);
-                  const fq = (HAQ_QUESTIONS[r.id] || [])[0];
+                  const fq = (questionsByRound[r.id] || [])[0];
                   setActiveId(fq?.id ?? '');
                 }}
               >
