@@ -57,11 +57,16 @@ test('route truth contract remains anchored for root/login/project routes', () =
   assert.match(appSrc, /<Route path="\/sign-in">/);
   assert.match(appSrc, /Redirect to="\/concept2cure\/login"/);
 
-  // ZenRouter owns the canonical login + project paths and the root
-  // entry point.
+  // ZenRouter keeps the canonical login route in the transition Switch…
   assert.match(routerSrc, /<Route path="\/concept2cure\/login">/);
-  assert.match(routerSrc, /<Route path="\/concept2cure\/project\/:projectId">/);
-  assert.match(routerSrc, /<Route path="\/">/);
+  // …while the root entry point and every /concept2cure surface/project deep
+  // link are owned by the ui-v2 fast path (the shell must persist across
+  // navs, so it renders outside the location-keyed Switch). The contract
+  // ("root reachable; project routes exist under /concept2cure") is
+  // unchanged; ownership moved to the uiV2Owns guard.
+  assert.match(routerSrc, /const uiV2Owns =/);
+  assert.match(routerSrc, /location === '\/' \|\| location\.startsWith\('\/concept2cure'\)/);
+  assert.match(routerSrc, /<ProtectedZenApp \/>/);
 });
 
 test('compare script fails closed when base ref is absent', () => {

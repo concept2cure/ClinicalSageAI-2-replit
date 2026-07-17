@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { PedigreeBadge } from '../intelligence/Intelligence';
+import { liveGet, unwrapList, useLive } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   SAMPLE_DISPATCH_ASSESSMENT,
@@ -9,6 +10,32 @@ import {
   type ReadinessFinding,
 } from '../fixtures/dispatch-readiness';
 import '../styles/project-home-v2.css';
+
+/** Discover the org's newest eCTD sequence id (submissions → sequences),
+ *  failing closed to null (the surface then keeps its sample assessment). */
+function useLatestSequenceId(): number | null {
+  const [seqId, setSeqId] = useState<number | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const subs = await liveGet<unknown>('/api/submissions', null);
+      if (subs.sample) return; // discovery failed → stay on sample
+      const subList = unwrapList(subs.data);
+      const first = Array.isArray(subList) ? (subList[0] as { id?: number } | undefined) : undefined;
+      if (!first?.id) return;
+      const seqs = await liveGet<unknown>(`/api/submissions/${first.id}/sequences`, null);
+      if (seqs.sample) return;
+      const seqList = unwrapList(seqs.data);
+      const rows = Array.isArray(seqList) ? (seqList as Array<{ id?: number }>) : [];
+      const latest = rows[rows.length - 1];
+      if (!cancelled && latest?.id) setSeqId(latest.id);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return seqId;
+}
 
 /* ── severity → tone map ── */
 const SEV_TONE: Record<string, string> = { error: 'error', warning: 'warning', info: 'idle' };
@@ -21,7 +48,16 @@ const SEV_TONE: Record<string, string> = { error: 'error', warning: 'warning', i
 
 export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const a: DispatchReadinessAssessment = SAMPLE_DISPATCH_ASSESSMENT;
+  // live ?? sample: the real deterministic gate for the org's newest sequence
+  // (same engine, assessSequenceDispatchReadiness); sample when no live
+  // sequence is reachable.
+  const seqId = useLatestSequenceId();
+  const live = useLive<DispatchReadinessAssessment>(
+    seqId === null ? null : `/api/submissions/sequences/${seqId}/dispatch-readiness`,
+    SAMPLE_DISPATCH_ASSESSMENT,
+    [seqId],
+  );
+  const a: DispatchReadinessAssessment = live.data;
   const gate = useMemo(() => dispatchGateFor(a), [a]);
   const ev = a.externalValidation;
   const rd = a.readiness;
@@ -91,11 +127,11 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
       <div className="dr2-head">
         <div className="dr2-eyebrow">
           <span className="dr2-kicker">AnA · dispatch gate · proven, not generated</span>
-          <span className="dr2-src sample">Sample data</span>
+          <span className={live.sample ? 'dr2-src sample' : 'dr2-src'}>{live.sample ? 'Sample data' : 'Live'}</span>
         </div>
         <h1 className="dr2-title">Cleared to dispatch?</h1>
         <div className="dr2-sub">
-          BX-204 · BLA 761123 · sequence 0000 · region {String(a.region || 'fda').toUpperCase()} · {a.leafCount} leaves · status {a.sequenceStatus}
+          {live.sample ? 'BX-204 · BLA 761123 · sequence 0000' : `Sequence ${a.sequenceId}`} · region {String(a.region || 'fda').toUpperCase()} · {a.leafCount} leaves · status {a.sequenceStatus}
         </div>
       </div>
 

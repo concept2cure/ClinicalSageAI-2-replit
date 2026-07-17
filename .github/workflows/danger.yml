@@ -25,11 +25,44 @@ jobs:
         with:
           node-version: '20'
 
+      # npm ci installs the LOCKED tree — danger is a pinned devDependency, so
+      # `npx danger` below resolves to the local, lockfile-frozen binary. It
+      # previously ran unpinned via npx (fetching danger + its whole dependency
+      # tree at latest on every run), which is how a transitive release could —
+      # and did — break every run of this job overnight with
+      # "Could not find pull request information".
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
+      # If Danger ever fails again, this step's output says exactly which of
+      # the two API reads Danger performs is failing and with what HTTP status,
+      # so nobody has to guess between rules, permissions, and platform issues.
+      - name: Preflight — probe the PR API reads Danger depends on
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          for accept in "application/vnd.github+json" "application/vnd.github.v3.diff"; do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: $accept" \
+              "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/pulls/${PR}") || code="curl-error"
+            echo "GET pulls/${PR} (${accept}) -> ${code}"
+          done
+
+      # Retry wrapper: absorbs transient GitHub 5xx (HTML error pages) without
+      # masking real dangerfile failures — a deterministic rule failure exits 1
+      # on every attempt and still fails the job.
       - name: Run Danger
-        run: npx danger ci
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DANGER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          for attempt in 1 2 3; do
+            if npx danger ci; then
+              exit 0
+            fi
+            echo "::warning::danger ci failed (attempt ${attempt}/3)"
+            [ "$attempt" -lt 3 ] && sleep $((attempt * 15))
+          done
+          exit 1

@@ -93,9 +93,11 @@ describe('HostThrottle min-interval', () => {
     );
 
     starts.sort((a, b) => a - b);
-    // Allow a little scheduler slack below the 50ms target.
-    expect(starts[1] - starts[0]).toBeGreaterThanOrEqual(45);
-    expect(starts[2] - starts[1]).toBeGreaterThanOrEqual(45);
+    // Allow scheduler slack below the 50ms target. Unthrottled starts land
+    // ~0-2ms apart, so a 35ms floor still discriminates sharply while
+    // absorbing loaded-CI-runner jitter (observed: 42ms on a 45ms floor).
+    expect(starts[1] - starts[0]).toBeGreaterThanOrEqual(35);
+    expect(starts[2] - starts[1]).toBeGreaterThanOrEqual(35);
   });
 });
 

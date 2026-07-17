@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, connected, liveGet, unwrapList, useLive } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -66,6 +66,9 @@ interface OrchCheckpoint {
   run: string | null;
   required: string;
   approvers: OrchApprover[];
+  /** Live rows carry the persisted gate status (proposed / awaiting_review /
+   *  approved / executed / failed / skipped); fixture rows omit it. */
+  status?: string;
 }
 
 interface OrchData {
@@ -152,6 +155,182 @@ const ORCH: OrchData = {
   ],
 };
 
+/* ── Live adoption (live ?? fixture, fail-closed) ──────────────────────────
+ *
+ * Readiness — GET /api/orchestration/projects/:pid/readiness returns the
+ * computed ReadinessAssessment (shared/types/orchestration.ts, produced by
+ * server/services/orchestration/readiness-engine.ts): { overallScore, status,
+ * blockers[{ severity critical|major|minor, category, message,
+ * suggestedResolution }], assessedAt, … }. Honest field mapping:
+ *   overallScore → overallScore        (same 0-100 readiness semantic)
+ *   isReady      → status === 'ready'  (deriveStatus: 90+ score, no criticals)
+ *   blockerCount → count of severity==='critical' — the exact class that
+ *                  blocks readiness server-side (majors/minors do not), shown
+ *                  in the rows below as warning/advisory so nothing is hidden
+ *   evaluatedAt  → assessedAt (formatted for display)
+ *   findings.rules      → blockers with category !== 'validation_failure'
+ *   findings.validation → blockers with category === 'validation_failure'
+ * The engine computes NO ai-inferred class, so findings.ai stays
+ * fixture-backed and the view labels that group as sample when the rest of
+ * the panel is live.
+ *
+ * Runs — GET /api/orchestration/project/:pid returns { workflows:
+ * WorkflowExecution[] } from the in-process execution engine (rows exist
+ * once workflows have been executed via POST /api/orchestration/execute);
+ * empty ⇒ the fixture stays with its Sample pill.
+ *
+ * Checkpoints — GET /api/orchestration/checkpoints reads the persisted
+ * approval_checkpoints × workflow_runs store (written by real approval
+ * chains, e.g. the PDEV workflow bridge); empty ⇒ fixture + Sample pill.
+ */
+
+function fmtWhen(iso?: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso);
+  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+interface LiveBlocker {
+  severity?: string;
+  category?: string;
+  message?: string;
+  targetTitle?: string;
+  suggestedResolution?: string;
+}
+
+export function mapReadiness(payload: unknown): OrchReadiness | null {
+  const d = payload as {
+    overallScore?: unknown; status?: unknown; blockers?: unknown; assessedAt?: unknown;
+  } | null;
+  if (
+    !d || typeof d.overallScore !== 'number' || typeof d.status !== 'string' ||
+    !Array.isArray(d.blockers) || typeof d.assessedAt !== 'string'
+  ) return null;
+  const blockers = d.blockers as LiveBlocker[];
+  const toFinding = (b: LiveBlocker): OrchFinding => ({
+    rule: String(b.message ?? ''),
+    type: String(b.category ?? 'finding'),
+    sev: b.severity === 'critical' ? 'blocker' : b.severity === 'major' ? 'warning' : 'advisory',
+    status: b.severity === 'critical' ? 'fail' : 'warn',
+    detail: String(b.suggestedResolution ?? b.targetTitle ?? ''),
+  });
+  return {
+    overallScore: d.overallScore,
+    blockerCount: blockers.filter((b) => b.severity === 'critical').length,
+    isReady: d.status === 'ready',
+    evaluatedAt: fmtWhen(d.assessedAt),
+    findings: {
+      rules: blockers.filter((b) => b.category !== 'validation_failure').map(toFinding),
+      validation: blockers.filter((b) => b.category === 'validation_failure').map(toFinding),
+      // Not computed by the readiness engine — stays fixture, labelled sample.
+      ai: ORCH.readiness.findings.ai,
+    },
+  };
+}
+
+export function mapRuns(payload: unknown, tplNames: Record<string, string>): OrchRun[] | null {
+  const w = (payload as { workflows?: unknown } | null)?.workflows;
+  if (!Array.isArray(w) || w.length === 0) return null;
+  const ok = w.every((x) => {
+    const e = x as { executionId?: unknown; status?: unknown; steps?: unknown } | null;
+    return e && typeof e.executionId === 'string' && typeof e.status === 'string' && Array.isArray(e.steps);
+  });
+  if (!ok) return null;
+  type LiveExec = {
+    executionId: string; templateId?: string; status: string; startedAt?: string;
+    progressPercent?: number; requestedBy?: { userName?: string };
+    steps: Array<{ stepId?: string; name?: string; status?: string }>;
+    result?: {
+      blockers?: Array<{ message?: string }>;
+      recommendations?: Array<{ suggestedAction?: string; reason?: string }>;
+      createdObjects?: Array<{ type?: string; id?: string | number; title?: string }>;
+      updatedObjects?: Array<{ type?: string; id?: string | number; title?: string }>;
+    };
+  };
+  const objLabel = (o: { type?: string; id?: string | number; title?: string }) =>
+    String(o.title || [o.type, o.id].filter(Boolean).join(' ') || 'object');
+  return [...(w as LiveExec[])]
+    .sort((a, b) => String(b.startedAt ?? '').localeCompare(String(a.startedAt ?? '')))
+    .map((x): OrchRun => ({
+      id: x.executionId,
+      title: tplNames[String(x.templateId)] || String(x.templateId || 'workflow').replace(/_/g, ' '),
+      status: x.status,
+      started: fmtWhen(x.startedAt),
+      by: String(x.requestedBy?.userName ?? '—'),
+      pct: typeof x.progressPercent === 'number' ? x.progressPercent : 0,
+      steps: x.steps.map((s) => ({
+        s: String(s.name ?? s.stepId ?? 'step'),
+        st: s.status === 'completed' ? 'done' : String(s.status ?? 'pending'),
+      })),
+      touched: (x.result?.updatedObjects ?? []).map(objLabel),
+      outputs: (x.result?.createdObjects ?? []).map(objLabel),
+      blockers: (x.result?.blockers ?? []).map((b) => String(b.message ?? '')),
+      recs: (x.result?.recommendations ?? []).map((c) => String(c.suggestedAction || c.reason || '')),
+    }));
+}
+
+export function mapCps(payload: unknown): OrchCheckpoint[] | null {
+  const list = unwrapList(payload);
+  if (!Array.isArray(list) || list.length === 0) return null;
+  const ok = list.every((x) => {
+    const c = x as { id?: unknown; stepName?: unknown; gateType?: unknown; status?: unknown } | null;
+    return c && typeof c.id === 'string' && typeof c.stepName === 'string' &&
+      typeof c.gateType === 'string' && typeof c.status === 'string';
+  });
+  if (!ok) return null;
+  type LiveCp = {
+    id: string; stepName: string; gateType: string; status: string;
+    runName?: string | null; requiredApproverRoles?: unknown; requiredApproverCount?: unknown;
+    approvals?: Array<{ approverId?: string; approverName?: string; approverRole?: string; decision?: string; decidedAt?: string }> | null;
+  };
+  return (list as LiveCp[]).map((c): OrchCheckpoint => {
+    const roles = Array.isArray(c.requiredApproverRoles) ? c.requiredApproverRoles.map(String) : [];
+    const count = typeof c.requiredApproverCount === 'number' ? c.requiredApproverCount : 1;
+    return {
+      id: c.id,
+      label: c.stepName,
+      gateType: c.gateType,
+      run: c.runName ? String(c.runName) : null,
+      required: roles.length
+        ? `${count} × ${roles.join(' / ')}`
+        : `${count} approver${count === 1 ? '' : 's'}`,
+      status: c.status,
+      approvers: (Array.isArray(c.approvals) ? c.approvals : []).map((a): OrchApprover => ({
+        who: String(a.approverName || a.approverId || '—'),
+        role: String(a.approverRole || '—'),
+        decision: String(a.decision || 'pending'),
+        when: a.decidedAt ? fmtWhen(a.decidedAt) : undefined,
+      })),
+    };
+  });
+}
+
+/** Discover the org's lead program the same way AnaCommand.tsx does —
+ *  GET /api/report-os/portfolio/org → attentionRanked[0].projectId is the
+ *  integer projects.id the orchestration endpoints operate on. Fails closed
+ *  to null (every live path stays off; the fixture keeps its Sample pill). */
+function useOrchProgram(): { pid: number; label: string } | null {
+  const [prog, setProg] = useState<{ pid: number; label: string } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!connected()) return undefined;
+    liveGet<any>('/api/report-os/portfolio/org', null).then(({ data, sample }) => {
+      if (cancelled || sample) return;
+      const rows = (data && (data.attentionRanked || (data.data && data.data.attentionRanked))) || [];
+      const first = Array.isArray(rows) ? rows[0] : null;
+      if (first && typeof first.projectId === 'number') {
+        setProg({
+          pid: first.projectId,
+          label: String(first.code || first.name || 'Project ' + first.projectId),
+        });
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
+  return prog;
+}
+
 /* ── Helpers ── */
 
 type CtrlTuple = [string, string, () => void, boolean];
@@ -163,8 +342,64 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   const [runs, setRuns] = useState<OrchRun[]>(ORCH.runs);
   const [cps, setCps] = useState<OrchCheckpoint[]>(ORCH.checkpoints);
   const [selId, setSel] = useState(ORCH.runs[0].id);
-  const sel = runs.find((r) => r.id === selId) || runs[0];
-  const r = ORCH.readiness;
+  const [runsSample, setRunsSample] = useState(true);
+  const [cpsSample, setCpsSample] = useState(true);
+
+  /* Live adoption — each panel independently, fail-closed to its fixture. */
+  const prog = useOrchProgram();
+  const pid = prog ? prog.pid : null;
+
+  // Readiness — computed live per request; adopted only when the response
+  // carries the ReadinessAssessment fields the mapping needs.
+  const rdLive = useLive<unknown>(
+    pid == null ? null : `/api/orchestration/projects/${pid}/readiness`,
+    null,
+    [pid],
+  );
+  const liveReadiness = useMemo(
+    () => (!rdLive.loading && !rdLive.sample ? mapReadiness(rdLive.data) : null),
+    [rdLive.loading, rdLive.sample, rdLive.data],
+  );
+  const rSample = liveReadiness == null;
+  const r = liveReadiness ?? ORCH.readiness;
+
+  // Template names give live runs their registered display titles.
+  const tplLive = useLive<unknown>(pid == null ? null : '/api/orchestration/templates', null, [pid]);
+  const tplNames = useMemo(() => {
+    const t = (tplLive.data as { templates?: Array<{ templateId?: string; name?: string }> } | null)?.templates;
+    const m: Record<string, string> = {};
+    if (Array.isArray(t)) for (const x of t) if (x?.templateId && x?.name) m[x.templateId] = x.name;
+    return m;
+  }, [tplLive.data]);
+
+  // Runs — the project's workflow executions; empty ⇒ fixture stays.
+  const runsLive = useLive<unknown>(pid == null ? null : `/api/orchestration/project/${pid}`, null, [pid]);
+  useEffect(() => {
+    if (runsLive.loading || runsLive.sample) return;
+    const mapped = mapRuns(runsLive.data, tplNames);
+    if (mapped) {
+      setRuns(mapped);
+      setRunsSample(false);
+      setSel((prev) => (mapped.some((m) => m.id === prev) ? prev : mapped[0].id));
+    }
+  }, [runsLive.loading, runsLive.sample, runsLive.data, tplNames]);
+
+  // Approval gates — persisted approval_checkpoints; empty ⇒ fixture stays.
+  const cpsLive = useLive<unknown>(connected() ? '/api/orchestration/checkpoints' : null, null, []);
+  useEffect(() => {
+    if (cpsLive.loading || cpsLive.sample) return;
+    const mapped = mapCps(cpsLive.data);
+    if (mapped) {
+      setCps(mapped);
+      setCpsSample(false);
+    }
+  }, [cpsLive.loading, cpsLive.sample, cpsLive.data]);
+
+  const sel = runs.find((x) => x.id === selId) || runs[0];
+  // The fixture program code is shown only while the readiness panel itself is
+  // fixture-backed; live findings are always attributed to the real program.
+  const progLabel = !rSample && prog ? prog.label : ORCH.program.code;
+  const provAgree = rSample === runsSample && runsSample === cpsSample;
 
   const setRunStatus = (id: string, st: string) =>
     setRuns((rs) => rs.map((x) => (x.id === id ? { ...x, status: st } : x)));
@@ -175,6 +410,9 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     ));
 
   const pendingGates = cps.filter((c) => {
+    // Live rows carry the persisted gate status; fixture rows infer from the
+    // demo approver decisions.
+    if (c.status) return c.status === 'awaiting_review' || c.status === 'proposed';
     const dec = c.approvers.map((a) => a.decision);
     return dec.indexOf('pending') > -1 || dec.indexOf('blocked') > -1;
   });
@@ -192,9 +430,15 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   const stepIc = (st: string): React.ReactElement | null =>
     st === 'done' ? I.check : st === 'failed' ? I.close : st === 'awaiting' ? I.clock : st === 'paused' ? I.pause : null;
 
-  const findGroup = (label: string, sub: string, list: OrchFinding[]) => (
+  const findGroup = (label: string, sub: string, list: OrchFinding[], fixtureRows = false) => (
     <div style={{ marginBottom: 18 }}>
-      <div className="orch-sec-l">{label} <span style={{ color: 'var(--text-500)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{I.dot} {sub}</span></div>
+      <div className="orch-sec-l">{label} <span style={{ color: 'var(--text-500)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{I.dot} {sub}</span>{fixtureRows ? <> <SampleTag sample={true} /></> : null}</div>
+      {fixtureRows ? (
+        <div className="orch-run-m" style={{ marginBottom: 6 }}>Not computed by the live readiness engine -- the rows below are illustrative sample data.</div>
+      ) : null}
+      {list.length === 0 ? (
+        <div className="orch-run-m" style={{ marginBottom: 6 }}>No findings in this class.</div>
+      ) : null}
       {list.map((f, i) => (
         <div key={i} className="orch-find">
           <span className={'orch-find-dot ' + (SEV_TONE[f.sev] || 'idle')} />
@@ -215,15 +459,24 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="page-inner orch">
-      <SampleTag sample={true} />
+      {provAgree ? (
+        <SampleTag sample={rSample} />
+      ) : (
+        // Panels are partially wired — label each domain's provenance honestly.
+        <span style={{ display: 'inline-flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span className="orch-run-m">readiness <SampleTag sample={rSample} /></span>
+          <span className="orch-run-m">runs <SampleTag sample={runsSample} /></span>
+          <span className="orch-run-m">approvals <SampleTag sample={cpsSample} /></span>
+        </span>
+      )}
       <div className="ph">
         <div>
-          <div className="ph-eyebrow">Orchestration {I.dot} {ORCH.program.code}</div>
+          <div className="ph-eyebrow">Orchestration {I.dot} {progLabel}</div>
           <h1 className="ph-title">Workflow runs &amp; readiness</h1>
           <div className="ph-sub">The persisted execution engine -- <code>workflowRuns</code> (versioned, pausable, replayable), human-in-the-loop <code>approvalCheckpoints</code>, and deterministic <code>readinessEvaluations</code>. Every step, object touched and output is recorded for Part-11 traceability.</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn ghost" onClick={() => onAsk && onAsk('Run a pre-dispatch readiness evaluation for ' + ORCH.program.code)}>{I.sparkles} Ask AnA</button>
+          <button className="btn ghost" onClick={() => onAsk && onAsk('Run a pre-dispatch readiness evaluation for ' + progLabel)}>{I.sparkles} Ask AnA</button>
           <button className="btn primary">{I.workflow} New run</button>
         </div>
       </div>
@@ -346,7 +599,9 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
                   </span>
                 </div>
                 {c.gateType === 'auto_on_pass' ? (
-                  <div className="orch-note">{I.zap}<span>Gate fires automatically when its run reports zero validation errors. Current run <b>{c.run}</b> failed validation -- gate is held.</span></div>
+                  <div className="orch-note">{I.zap}<span>Gate fires automatically when its run reports zero validation errors.{cpsSample ? <> Current run <b>{c.run}</b> failed validation -- gate is held.</> : c.run ? <> Linked run: <b>{c.run}</b>.</> : null}</span></div>
+                ) : c.approvers.length === 0 ? (
+                  <div className="orch-note">{I.clock}<span>No decisions recorded yet{c.status ? <> -- gate is <b>{c.status.replace(/_/g, ' ')}</b></> : null}.</span></div>
                 ) : c.approvers.map((a, i) => (
                   <div key={i} className="orch-appr">
                     <span className="orch-appr-av">{a.who.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span>
@@ -384,13 +639,17 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
                 <span className={'rd-chip tone-' + (r.isReady ? 'ok' : 'err')}>{r.isReady ? 'Ready to dispatch' : 'Not ready'}</span>
                 <span className="rd-chip tone-err">{r.blockerCount} blockers</span>
               </div>
-              <div className="ph-sub" style={{ margin: 0 }}>Deterministic gate: clears only when blocker-class findings = 0 across rules-based, validation and AI-inferred evidence classes.</div>
+              <div className="ph-sub" style={{ margin: 0 }}>
+                {rSample
+                  ? 'Deterministic gate: clears only when blocker-class findings = 0 across rules-based, validation and AI-inferred evidence classes.'
+                  : 'Deterministic gate computed by the readiness engine: ready requires a 90+ score with zero critical blockers.'}
+              </div>
             </div>
             <button className="btn ghost" onClick={() => onAsk && onAsk('Re-run the readiness evaluation and explain the open blockers')}>{I.rotateCw} Re-evaluate</button>
           </div>
           {findGroup('Rules-based findings', 'readinessRules · required_item / quality_gate', r.findings.rules)}
           {findGroup('Validation findings', 'eCTD · CDISC · hyperlink integrity', r.findings.validation)}
-          {findGroup('AI-inferred findings', 'cross-reference · claim-evidence', r.findings.ai)}
+          {findGroup('AI-inferred findings', 'cross-reference · claim-evidence', r.findings.ai, !rSample)}
         </div>
       )}
     </div>

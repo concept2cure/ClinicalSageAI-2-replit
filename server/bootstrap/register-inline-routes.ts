@@ -407,6 +407,18 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount enablement route:', error);
   }
 
+  // Translation platform — regulated localization workflow (projects/segments:
+  // machine draft → human post-edit → back-translation → approve) + tenant
+  // DNT/preferred-term glossary. Consumed by the translation surfaces via
+  // client/src/concept2cure/translation/services/translationService.ts.
+  try {
+    const translationModule = await import('../routes/translation.routes');
+    app.use('/api/translation', authMiddleware, translationModule.default);
+    console.info('✅ Translation routes mounted (/api/translation)');
+  } catch (error) {
+    console.error('❌ Failed to mount Translation routes:', error);
+  }
+
   // CDISC validation — deterministic SDTM domain conformance (SDTM-IG v3.4).
   try {
     const cdiscValidationModule = await import('../routes/cdisc-validation.routes');
@@ -884,6 +896,19 @@ export async function registerInlineAiWorkflowRoutes({
     console.log('✅ Phase 3 Orchestration API routes mounted at /api/orchestration');
   } catch (error: any) {
     console.error('❌ Failed to mount Orchestration routes:', error.message);
+  }
+
+  // Persisted approval-checkpoint read (approval_checkpoints × workflow_runs).
+  // Own try/catch: this lightweight read must stay up even if the heavy
+  // orchestration service graph fails to import (and vice versa). Mounted at
+  // its own sub-prefix (not the bare /api/orchestration) so the route-mount
+  // audit sees a single mount per prefix.
+  try {
+    const orchestrationCheckpointRoutes = (await import('../routes/orchestration-checkpoints')).default;
+    app.use('/api/orchestration/checkpoints', orchestrationCheckpointRoutes);
+    console.log('✅ Orchestration checkpoint routes mounted at /api/orchestration/checkpoints');
+  } catch (error: any) {
+    console.error('❌ Failed to mount Orchestration checkpoint routes:', error.message);
   }
 }
 

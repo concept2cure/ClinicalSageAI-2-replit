@@ -6,7 +6,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import ragService from '../services/biotechRagService.js';
-import { db } from '../db';
+import { db } from '../db.js';
 import crypto from 'crypto';
 import {
   ragDocuments,

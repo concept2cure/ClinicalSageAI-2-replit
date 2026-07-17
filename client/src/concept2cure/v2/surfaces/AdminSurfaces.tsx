@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { SampleTag, useLive } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { getAuthToken } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { getSurfaceMeta } from '../registryModel';
@@ -17,6 +18,7 @@ import {
 } from '../fixtures/admin-data';
 import type {
   AuditEntry,
+  AppsCatalogApp,
   AppsCatalogGroup,
   AppLicense,
   AcGrant,
@@ -44,7 +46,7 @@ declare global {
 
 interface AdminHeaderProps {
   eyebrow: string;
-  title: string;
+  title: React.ReactNode;
   sub?: string;
   actions?: React.ReactNode;
 }
@@ -104,7 +106,16 @@ interface LangOption {
   agency: string;
 }
 
-/* ════════════ Setup (org config) ════════════ */
+/* ════════════ Setup (org config) ════════════
+   Honestly fixture-backed (fail-closed). The only /api/setup routes on the
+   server (server/routes/setup.ts) are the first-run installer — GET /status
+   ({ initialized }) and the self-closing POST /initialize that creates the
+   first org + admin on an empty database. Neither can truthfully read or
+   persist this panel's org-config fields (orgName, clientType, MFA/SSO,
+   translation-workspace policy), so these settings stay in localStorage and
+   the surface carries the Sample-data pill instead of pretending to be an
+   org-wide governed write. Do not wire this panel to /api/setup — calling the
+   installer from here would be destructive, not persistence. */
 
 export function Setup({ onAsk }: SurfaceViewProps) {
   const [s, setS] = useState<SetupSettings>(() => {
@@ -186,8 +197,12 @@ export function Setup({ onAsk }: SurfaceViewProps) {
     <div className="page-inner">
       <AdminHeader
         eyebrow="Admin -- organization"
-        title="Setup"
-        sub="Organization profile, security defaults, and module configuration. Changes apply to every member of this tenant."
+        title={
+          <React.Fragment>
+            Setup <SampleTag sample={true} />
+          </React.Fragment>
+        }
+        sub="Organization profile, security defaults, and module configuration. Saved in this browser only -- the governed org-settings backend is not wired yet."
         actions={
           <button className="btn ghost" onClick={() => onAsk && onAsk('Summarize my org configuration')}>
             {I.sparkles} Ask AnA
@@ -926,43 +941,210 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
   );
 }
 
-/* ════════════ Apps catalog ════════════ */
+/* ════════════ Apps catalog ════════════
+   Live-wired to /api/module-subscriptions (mounted in
+   server/bootstrap/register-inline-routes.ts, router
+   server/routes/module-subscriptions.ts):
+     GET /catalog            → { modules: [{ moduleId, name, description,
+                                 category, isEnabled, isAvailable,
+                                 requiredTier, sortOrder }] }
+     GET /license            → { tier, industryMode, usage: { projects|users:
+                                 { currentCount, maxAllowed } } }
+     PUT /:moduleId/toggle   → { moduleId, enabled } (admin-only; 403 with a
+                                 reason when the tier does not include it)
+   Fail-closed: any fetch/shape failure keeps the curated APPS_CATALOG /
+   APP_LICENSE fixture with the Sample-data pill. Fields the backend cannot
+   truthfully supply (renewsAt — no renewal column is read anywhere server-side)
+   are left empty when live, never invented. */
 
-const BILLING_TONE: Record<string, string> = { paid: 'ok', active: 'ai' };
+/** One live catalog row (ModuleCatalogEntry, server/services/license-manager.ts). */
+interface LiveModuleEntry {
+  moduleId: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  isEnabled: boolean;
+  isAvailable: boolean;
+  requiredTier: string | null;
+  sortOrder: number;
+}
+
+/** Display row — the fixture shape plus the live module's own name. */
+type AppRow = AppsCatalogApp & { name?: string };
+type AppGroup = Omit<AppsCatalogGroup, 'apps'> & { apps: AppRow[] };
+
+function isLiveModuleEntry(m: unknown): m is LiveModuleEntry {
+  if (!m || typeof m !== 'object') return false;
+  const r = m as Record<string, unknown>;
+  return (
+    typeof r.moduleId === 'string' &&
+    typeof r.name === 'string' &&
+    typeof r.isEnabled === 'boolean' &&
+    typeof r.isAvailable === 'boolean'
+  );
+}
+
+/** Truthful tier chip for a live module: within-plan modules show the lowest
+    tier that includes them ('Included' when unrestricted); modules the org's
+    tier does NOT include map to 'Add-on' — the same upgrade-path semantics the
+    fixture uses (and the same rule the server enforces on toggle). */
+function liveTierLabel(m: LiveModuleEntry): string {
+  if (!m.isAvailable) return 'Add-on';
+  if (!m.requiredTier) return 'Included';
+  return m.requiredTier.charAt(0).toUpperCase() + m.requiredTier.slice(1);
+}
+
+/** Map GET /catalog into the grouped display, or null when the payload does
+    not carry the display contract (→ fail closed to the fixture). */
+function mapLiveCatalog(payload: unknown): AppGroup[] | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const modules = (payload as { modules?: unknown }).modules;
+  if (!Array.isArray(modules)) return null;
+  const rows = modules.filter(isLiveModuleEntry);
+  if (rows.length === 0) return null;
+  const byCat = new Map<string, LiveModuleEntry[]>();
+  for (const m of rows) {
+    const cat = m.category || 'other';
+    const list = byCat.get(cat) || [];
+    list.push(m);
+    byCat.set(cat, list);
+  }
+  const groups = Array.from(byCat.values());
+  for (const mods of groups) mods.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  groups.sort((a, b) => (a[0]?.sortOrder || 0) - (b[0]?.sortOrder || 0));
+  return groups.map((mods) => {
+    const cat = mods[0]?.category || 'other';
+    return {
+      group: cat.charAt(0).toUpperCase() + cat.slice(1),
+      note: `${mods.length} module${mods.length === 1 ? '' : 's'} -- live subscription state for this organization`,
+      apps: mods.map((m) => ({
+        id: m.moduleId,
+        name: m.name,
+        tier: liveTierLabel(m),
+        on: m.isEnabled,
+        desc: m.description || m.name,
+      })),
+    };
+  });
+}
+
+/** Map GET /license into the fixture display shape, or null on shape mismatch.
+    `renewsAt` stays empty — the backend holds no renewal date to report. */
+function mapLiveLicense(payload: unknown): AppLicense | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const p = payload as {
+    tier?: unknown;
+    industryMode?: unknown;
+    usage?: {
+      projects?: { currentCount?: unknown; maxAllowed?: unknown };
+      users?: { currentCount?: unknown; maxAllowed?: unknown };
+    };
+  };
+  const pj = p.usage?.projects;
+  const us = p.usage?.users;
+  if (typeof p.tier !== 'string') return null;
+  if (typeof pj?.currentCount !== 'number' || typeof pj?.maxAllowed !== 'number') return null;
+  if (typeof us?.currentCount !== 'number' || typeof us?.maxAllowed !== 'number') return null;
+  return {
+    tier: p.tier,
+    industryMode: typeof p.industryMode === 'string' ? p.industryMode : '',
+    renewsAt: '',
+    usage: {
+      projects: { current: pj.currentCount, limit: pj.maxAllowed },
+      users: { current: us.currentCount, limit: us.maxAllowed },
+    },
+  };
+}
 
 export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   const open = (id: string) => onNav(id);
-  const [lic, setLic] = useState<AppLicense>(APP_LICENSE);
-  const [cat, setCat] = useState<AppsCatalogGroup[]>(APPS_CATALOG);
+  const catLive = useLive<unknown>('/api/module-subscriptions/catalog', null);
+  const licLive = useLive<unknown>('/api/module-subscriptions/license', null);
+  const liveCat = useMemo(
+    () => (catLive.sample ? null : mapLiveCatalog(catLive.data)),
+    [catLive.sample, catLive.data],
+  );
+  const liveLic = useMemo(
+    () => (licLive.sample ? null : mapLiveLicense(licLive.data)),
+    [licLive.sample, licLive.data],
+  );
+  const catalogIsLive = liveCat !== null;
+  const lic: AppLicense = liveLic ?? APP_LICENSE;
+  const [cat, setCat] = useState<AppGroup[]>(APPS_CATALOG);
+  const seededRef = useRef<AppGroup[] | null>(null);
+  useEffect(() => {
+    if (liveCat && seededRef.current !== liveCat) {
+      seededRef.current = liveCat;
+      setCat(liveCat);
+    }
+  }, [liveCat]);
   const [admin, setAdmin] = useState(false);
   const [toast, setToast] = useState('');
+  const fireToast = (m: string) => {
+    setToast(m);
+    setTimeout(() => setToast(''), 3200);
+  };
 
   const tierLabel = lic.tier || 'professional';
   const pj = lic.usage?.projects || { current: 0, limit: 0 };
   const us = lic.usage?.users || { current: 0, limit: 0 };
 
-  const toggle = (groupIdx: number, appId: string, next: boolean) => {
-    /* PUT /api/module-subscriptions/:moduleId/toggle -- wired when live API lands */
+  const setOn = (groupIdx: number, appId: string, on: boolean) =>
     setCat((prev) =>
       prev.map((g, gi) =>
         gi !== groupIdx
           ? g
           : {
               ...g,
-              apps: g.apps.map((a) => (a.id === appId ? { ...a, on: next } : a)),
+              apps: g.apps.map((a) => (a.id === appId ? { ...a, on } : a)),
             },
       ),
     );
-    const surf = getSurfaceMeta(appId);
-    setToast((next ? 'Enabled ' : 'Disabled ') + (surf.label || appId));
-    setTimeout(() => setToast(''), 2600);
+
+  const toggle = async (groupIdx: number, appId: string, next: boolean) => {
+    const row = cat[groupIdx]?.apps.find((a) => a.id === appId);
+    const label = row?.name || getSurfaceMeta(appId).label || appId;
+    setOn(groupIdx, appId, next); // optimistic
+    if (!catalogIsLive) {
+      // Fixture mode — nothing to persist to; say so instead of faking success.
+      fireToast((next ? 'Enabled ' : 'Disabled ') + label + ' -- sample only, not persisted');
+      return;
+    }
+    try {
+      // PUT /api/module-subscriptions/:moduleId/toggle (admin-only, org-scoped)
+      const res = await apiRequest(
+        'PUT',
+        `/api/module-subscriptions/${encodeURIComponent(appId)}/toggle`,
+        { enabled: next },
+      );
+      if (!res.ok) {
+        // apiRequest passes 401 through without throwing
+        setOn(groupIdx, appId, !next);
+        fireToast(`Could not ${next ? 'enable' : 'disable'} ${label} -- sign in required`);
+        return;
+      }
+      fireToast((next ? 'Enabled ' : 'Disabled ') + label);
+    } catch (e) {
+      // apiRequest throws on non-OK with the server's reason (e.g. admin
+      // required, or the tier does not include this module). Revert -- never
+      // report a write that did not happen.
+      setOn(groupIdx, appId, !next);
+      fireToast(
+        `Could not ${next ? 'enable' : 'disable'} ${label} -- ` +
+          (e instanceof Error && e.message ? e.message : 'request failed'),
+      );
+    }
   };
 
   return (
     <div className="page-inner">
       <AdminHeader
-        eyebrow="Workspace"
-        title="Apps catalog"
+        eyebrow="Workspace -- /api/module-subscriptions"
+        title={
+          <React.Fragment>
+            Apps catalog <SampleTag sample={!catalogIsLive || liveLic === null} />
+          </React.Fragment>
+        }
         sub="Every application -- the destinations you open and work in -- entitlement-aware. Active apps launch; add-ons show an upgrade path, never a dead button. Platform services (below) are the capabilities that run inside these apps."
         actions={
           <button
@@ -1040,11 +1222,14 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
           <div className="launch-grid">
             {g.apps.map((a) => {
               const surf = getSurfaceMeta(a.id);
+              const label = a.name || surf.label || a.id;
               const isCore = a.tier === 'Core';
-              const canToggle =
-                admin && !isCore && a.tier !== 'Add-on'
-                  ? true
-                  : admin && a.on && a.tier === 'Add-on';
+              const isAddOn = a.tier === 'Add-on';
+              /* Mirrors the server gate (canAccessModule): a within-plan module
+                 toggles freely; an out-of-plan module ('Add-on') can only be
+                 switched OFF -- re-enabling it would 403, so the card shows the
+                 upgrade path instead. */
+              const showToggle = admin && !isCore && (isAddOn ? a.on : true);
               return (
                 <div key={a.id} className="launch" data-locked={!a.on || undefined}>
                   {!a.on && <span className="launch-lock">{I.lock}</span>}
@@ -1053,19 +1238,21 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                       {(surf.icon ? I[surf.icon] : null) || I.grid}
                     </span>
                   </div>
-                  <div className="launch-title">{surf.label || a.id}</div>
+                  <div className="launch-title">{label}</div>
                   <div className="launch-desc">
                     {!a.on
-                      ? `Upgrade your plan to unlock ${surf.label || a.id}.`
+                      ? isAddOn
+                        ? `Upgrade your plan to unlock ${label}.`
+                        : `Disabled for this organization -- an admin can re-enable it.`
                       : a.desc}
                   </div>
                   <div className="launch-foot">
                     <span
-                      className={`rd-chip tone-${a.tier === 'Core' ? 'ok' : a.tier === 'Add-on' && !a.on ? 'idle' : 'ai'}`}
+                      className={`rd-chip tone-${isCore ? 'ok' : isAddOn && !a.on ? 'idle' : 'ai'}`}
                     >
                       {a.tier}
                     </span>
-                    {admin && !isCore && (a.on || a.tier === 'Add-on') ? (
+                    {showToggle ? (
                       <button
                         className="lic-toggle"
                         role="switch"
@@ -1085,15 +1272,24 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
                       >
                         Open
                       </button>
-                    ) : (
+                    ) : isAddOn ? (
                       <a
                         className="btn primary"
                         style={{ height: 26, marginLeft: 'auto', textDecoration: 'none' }}
                         href="/settings/subscription"
-                        title={`Upgrade your plan to unlock ${surf.label || a.id}`}
+                        title={`Upgrade your plan to unlock ${label}`}
                       >
                         Upgrade plan
                       </a>
+                    ) : (
+                      <button
+                        className="btn ghost"
+                        style={{ height: 26, marginLeft: 'auto' }}
+                        onClick={() => setAdmin(true)}
+                        title="Turn on admin controls to enable this module"
+                      >
+                        Admin controls
+                      </button>
                     )}
                   </div>
                 </div>

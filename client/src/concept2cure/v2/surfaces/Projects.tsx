@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   PROJECTS, NP_TEAMS, WS_TONE,
@@ -245,12 +245,17 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     return false;
   });
 
-  const list = PROJECTS.filter(p => (ws === 'all' || p.ws === ws) && (status === 'all' || p.status === status));
+  // live ?? fixture: the org's real program portfolio
+  // (GET /api/c2c/projects, projected from regulatory_programs).
+  const live = useLiveList<ProjPortfolioEntry>('/api/c2c/projects', PROJECTS);
+  const projects = live.data;
+
+  const list = projects.filter(p => (ws === 'all' || p.ws === ws) && (status === 'all' || p.status === status));
   const health = [
-    { l: 'Active programs', n: String(PROJECTS.length), m: 'across MDX, Biotech, Pharma', t: '' },
-    { l: 'Average readiness', n: Math.round(PROJECTS.reduce((s, p) => s + p.readiness, 0) / PROJECTS.length) + '%', m: 'portfolio mean', t: '' },
-    { l: 'Blocked', n: String(PROJECTS.filter(p => p.status === 'blocked').length), m: 'need attention', t: 'err' },
-    { l: 'Filing < 60 days', n: String(PROJECTS.filter(p => /days/.test(p.due)).length), m: 'near-term submissions', t: 'warn' },
+    { l: 'Active programs', n: String(projects.length), m: 'across MDX, Biotech, Pharma', t: '' },
+    { l: 'Average readiness', n: Math.round(projects.reduce((s, p) => s + p.readiness, 0) / (projects.length || 1)) + '%', m: 'portfolio mean', t: '' },
+    { l: 'Blocked', n: String(projects.filter(p => p.status === 'blocked').length), m: 'need attention', t: 'err' },
+    { l: 'Filing < 60 days', n: String(projects.filter(p => /days/.test(p.due)).length), m: 'near-term submissions', t: 'warn' },
   ];
   const wss = ['all', 'MDX', 'Biotech', 'Pharma'];
 
@@ -264,7 +269,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
 
   return (
     <div className="page-inner">
-      <SampleTag sample={true} />
+      <SampleTag sample={live.sample} />
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Workspace</div>
