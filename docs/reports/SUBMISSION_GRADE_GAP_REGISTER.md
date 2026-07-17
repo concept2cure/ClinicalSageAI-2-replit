@@ -27,6 +27,8 @@ max-depth adversarial multi-agent sweep is still running and will refine/extend 
 | eCTD **transmit** silently dropped leaves whose document couldn't be assembled → incomplete dossier sent to agency | Critical | FDA eCTD; ICH M8 | `6e1c9e7` |
 | e-signature route enforced identity (password+MFA) but **not signing authority** — any user could apply an approval signature | Critical | 21 CFR 11 §11.10(d)(g) | `0547a4f` |
 | MDR/IVDR "content-addressed" ZIP wasn't deterministic (implicit folder timestamps) — reproducibility/integrity bug | High | data integrity / ALCOA+ | `92d9c02` |
+| **PV expedited-reporting clock was stored, not computed** — now live-computed from sponsor **awareness date** + seriousness/causality/expectedness (7-day/15-day/none), fails safe when the awareness date is absent | High | 21 CFR 312.32(c); ICH E2A | `92df8e7` |
+| **Investigator's Brochure had no v2 surface** — `ib-builder` now surfaced as an honest ICH E6(R2) §7 section tree (deterministic, AI-free, per-section readiness) | High | ICH E6(R2) §7 | `53d059e` |
 | Completeness observability absent on 2nd export path | Low | — | `7037796` |
 
 ---
@@ -43,9 +45,7 @@ isn't a code-only fix I can land unilaterally).
 | **21 CFR Part 11 not activated** — RLS off by default & live routes bypass the tenant-scoped connection; audit is opt-in per route (no global mutation interception); e-signatures siloed across 3 stores | Critical | GxP deployment inside a regulated company | 21 CFR 11 §11.10(c)(e); Annex 11 | **Policy + careful build**: green-light to (a) turn RLS on and route live queries through the tenant connection, (b) add mandatory audit interception, (c) converge signature stores — behind flags with a rollback path. |
 | **CSV (IQ/OQ/PQ) 100% DRAFT/PENDING, unexecuted** | Critical | Any GxP use | GAMP 5; Annex 11 | **Human process**: executed & signed by your quality unit against the deployed build. Not a file to download. |
 | **AI generation key-gated** — CSR/IB/M3-narrative real AI drafting only fires with the AI-gateway key; M2 summaries are deterministic concatenation, not reasoned drafting | High | Reasoned narrative authoring (2.5/2.7, CSR discussion) | ICH E3/M4 | **Config**: AI-gateway key. (Deterministic composition works without it.) |
-| **Investigator's Brochure has no v2 surface** — `ib-builder` exists in the backend but isn't wired into the shell | High | IND (IB per ICH E6 §7) | ICH E6 | **Design/build**: wire `ib-builder` into a surface (feature slice). |
 | **Preclinical M2.6/M4 doc-gen is fixture** — study registry + SEND-readiness are live, but the Module 2.6 written/tabulated summary and Module 4 placement aren't generated | High | NDA/BLA Module 2.6 / Module 4 | ICH M4S | **Design/build**: an M2.6 builder + M4 placement over the real nonclinical data (feature slice). |
-| **PV expedited-reporting clock is stored, not computed** — `c2c_sae_cases` carries static `due/clock/due_days`; no live deadline from sponsor **awareness date** + seriousness | High | IND safety reporting timeliness | 21 CFR 312.32; ICH E2A | **Schema + design**: add an awareness/receipt date, then a deterministic 7-day/15-day clock. (Computing from onset would give *wrong* safety deadlines — deliberately not shipped.) |
 | **Marketing-application cockpits are US-first** — NDA/BLA anchored (356h/PDUFA/RTF); no executable MAA (EMA)/J-NDA (PMDA)/HC/TGA/NMPA workflow (reference-only in global-RI) | High | Non-US marketing applications | region CTD Module 1 | **Design/build**: per-region Module-1 + workflow slices. |
 
 ## Open — Medium (representative)
@@ -59,7 +59,7 @@ isn't a code-only fix I can land unilaterally).
 ## How to drive the rest
 1. **You unblock the assets** (allowlist or drop): FDA forms + eCTD DTDs → I land those cures with provenance + checksums.
 2. **You green-light the deep Part-11 work** → I sequence RLS-on + mandatory-audit + signature convergence behind flags with a rollback path and route tests.
-3. **The feature-level slices** (IB surface, M2.6/M4 doc-gen, PV awareness-date clock, non-US cockpits) → I build them one verified slice at a time, same pattern as this PR.
+3. **The feature-level slices** (M2.6/M4 doc-gen, non-US cockpits; IB surface + PV awareness-date clock now landed) → I build them one verified slice at a time, same pattern as this PR.
 4. The running adversarial sweep will add any gaps this evidence-grounded pass missed; I'll reconcile it in when it completes.
 
 _Nothing here is fabricated: every "cured" row has a commit; every open row names the standard it
