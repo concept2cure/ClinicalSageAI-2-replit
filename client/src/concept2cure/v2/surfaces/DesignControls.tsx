@@ -5,6 +5,7 @@ import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
+import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 
 /* ── Types ── */
@@ -124,12 +125,37 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
     ],
   };
 
-  const addInput = (v: Record<string, string>) => {
-    const id = 'DI-' + String(inputs.length + 1).padStart(2, '0');
-    const nr: DcInput = { id, cat: v.cat || 'functional', req: v.req, riskRef: v.riskRef || null, outputs: [], ver: null, verRef: null, val: null, valRef: null, _new: true };
-    setInputs(is => [...is, nr]);
+  const addInput = async (v: Record<string, string>) => {
     setForm(false);
-    fire('Design input ' + id + ' added -- untraced');
+
+    if (sample) {
+      // No store adopted — record locally and say so rather than claim a write.
+      const id = 'DI-' + String(inputs.length + 1).padStart(2, '0');
+      const nr: DcInput = { id, cat: v.cat || 'functional', req: v.req, riskRef: v.riskRef || null, outputs: [], ver: null, verRef: null, val: null, valRef: null, _new: true };
+      setInputs(is => [...is, nr]);
+      fire('Design input ' + id + ' added -- local/sample only, not persisted');
+      return;
+    }
+
+    // LIVE — real org-scoped POST into the store backing the read. Optimistic
+    // insert, then reconcile with the server's row; roll back on failure.
+    const tempId = 'dc-tmp-' + Date.now();
+    const optimistic: DcInput = { id: tempId, cat: v.cat || 'functional', req: v.req, riskRef: v.riskRef || null, outputs: [], ver: null, verRef: null, val: null, valRef: null, _new: true };
+    setInputs(is => [...is, optimistic]);
+    try {
+      const res = await apiRequest('POST', '/api/design-controls', {
+        req: v.req,
+        cat: v.cat || 'functional',
+        riskRef: v.riskRef || undefined,
+      });
+      const row = (await res.json())?.data as DcInput | undefined;
+      if (!row || !row.id) throw new Error('malformed response');
+      setInputs(is => is.map(i => (i.id === tempId ? { ...row, _new: true } : i)));
+      fire('Design input ' + row.id + ' added -- untraced');
+    } catch (e) {
+      setInputs(is => is.filter(i => i.id !== tempId));
+      fire('Could not add design input -- ' + (e instanceof Error && e.message ? e.message : 'request failed'));
+    }
   };
 
   const cell = (result: string | null, ref: string | null, label: string) => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import { SampleTag, liveGet } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -249,7 +250,49 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
     ],
   };
 
-  const submitMtg = (v: Record<string, string>) => {
+  const submitMtg = async (v: Record<string, string>) => {
+    setForm(false);
+
+    // LIVE — the read adopted the store, so persist the request org-scoped. On
+    // ok, adopt the row the server actually wrote (its real id/fields). On
+    // failure, don't add anything and toast honestly — never claim a save that
+    // did not happen.
+    if (!sample) {
+      try {
+        const res = await apiRequest('POST', '/api/agency-meetings', {
+          type: v.type,
+          agency: v.agency,
+          cat: v.cat || v.type,
+          program: v.program,
+          format: v.format,
+          requested: v.requested || '',
+          goal: v.goal,
+        });
+        if (!res.ok) {
+          fireToast('Could not save meeting request · signed in?');
+          return;
+        }
+        const payload = await res.json().catch(() => null);
+        const row = payload?.data as LiveMeeting | undefined;
+        if (!row || !row.id) {
+          fireToast('Could not save meeting request · signed in?');
+          return;
+        }
+        const { briefingBook: _bb, minutes: _mn, ...meeting } = row;
+        addMeeting(meeting as Meeting);
+        setSel(row.id);
+        fireToast('Meeting request created · ' + row.type);
+      } catch (e) {
+        fireToast(
+          'Could not save meeting request · ' +
+            (e instanceof Error && e.message ? e.message : 'signed in?'),
+        );
+      }
+      return;
+    }
+
+    // SAMPLE — backend unreachable; record locally and say so rather than claim
+    // a persisted write.
     const id = 'm' + Date.now();
     addMeeting({
       id,
@@ -265,9 +308,8 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
       format: v.format,
       goal: v.goal,
     });
-    setForm(false);
     setSel(id);
-    fireToast('Meeting request created · ' + v.type);
+    fireToast('Meeting request created · ' + v.type + ' · local sample only, not persisted');
   };
 
   const bb: BriefingBook | undefined = bbMap[sel];
