@@ -812,6 +812,28 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount NDA cockpit route:', error);
   }
 
+  // Evidence surface saved RAG ask — org-scoped answer + retrieved chunks read
+  // by GET /api/evidence-asks (own sub-prefix). Feeds the Evidence surface; the
+  // surface falls back to its fixture when the store is empty.
+  try {
+    const evidenceAsksModule = await import('../routes/evidence-asks.routes');
+    app.use('/api/evidence-asks', authMiddleware, evidenceAsksModule.default);
+    console.info('✅ Evidence asks route mounted (/api/evidence-asks)');
+  } catch (error) {
+    console.error('❌ Failed to mount Evidence asks route:', error);
+  }
+
+  // Document-journey lifecycle — org-scoped per-stage journey read by GET
+  // /api/doc-journey (own sub-prefix). Feeds the DocJourney surface; the
+  // surface falls back to its fixture when the store is empty.
+  try {
+    const docJourneyModule = await import('../routes/doc-journey.routes');
+    app.use('/api/doc-journey', authMiddleware, docJourneyModule.default);
+    console.info('✅ Doc journey route mounted (/api/doc-journey)');
+  } catch (error) {
+    console.error('❌ Failed to mount Doc journey route:', error);
+  }
+
   // C2C client formatting templates — AnA document-formatting engine.
   // Extract a TemplateSpec from an upload, build/edit client templates, and
   // render documents as .docx / .pdf with the client's fonts, margins, logo.
