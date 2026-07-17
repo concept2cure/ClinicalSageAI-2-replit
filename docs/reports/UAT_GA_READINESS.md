@@ -47,17 +47,38 @@ Rotate these before any shared or externally reachable deployment.
 | Training | Learning paths, certifications | 6 paths, 3 certifications |
 | Change control | Change assessment | 2 assessments (FDA/EU decision trees) |
 | Orchestration | Readiness panel, approval checkpoints | computed readiness; `approval_checkpoints` |
-| Admin | Apps (module subscriptions) | live list + toggle |
+| Admin | Apps (module subscriptions); Admin console access grants | live module list + toggle; audited `platform_role_grants` |
+| Post-submission | HAQ manager (rounds + questions) | `project_memory_entries` (2 letters, 8 questions) |
+| Human factors | HFE/UE file + use scenarios | `c2c_hf_files` + `c2c_hf_scenarios` (1 file, 6 scenarios) |
+| Safety / PV | SafetyNarrative SAE worklist | `c2c_sae_cases` (3 cases; ICH E3 §16 composer client-side) |
+| NDA cockpit | CTD module readiness + overall % | `c2c_nda_modules` (5 modules, 80% ready) |
+| Evidence | Saved evidence-ask (answer + chunks) | `c2c_evidence_asks` (1 ask, 3 chunks) |
+| Document lifecycle | DocJourney stage rail | `c2c_doc_journeys` (9 stages) |
+| Agency interactions | Agency meetings + briefing books/minutes | `c2c_agency_meetings` (4 meetings) |
+| Device design | Design controls (820.30 traceability) | `c2c_design_controls` (7 inputs) |
+| CRO | Sponsor portfolio roster | `c2c_cro_portfolio` (5 sponsors) |
+| Evidence pool | pdev EvidencePicker | `c2c_evidence_objects` (11 objects) |
+| Biostatistics | SAP / sample-size / interims sections | `c2c_biostat_*` |
+
+Each Wave-2/3 surface adopts live data only when the store returns its full
+display shape, else fails closed to the codebase fixture with a "Sample data"
+pill — so a "Live" pill on any of these after seeding is the proof it worked.
 
 ## 3. Labeled sample-data surfaces (by design — not defects)
 
-These fail closed to kit fixtures with a visible "Sample data" pill, because
-an honest backing store does not exist yet (planned Wave-2/3 work):
-document authoring cluster (Dossier, DocumentAuthoring, ArtifactsCenter),
-NDA/IND cockpit moat phases, PV signal composites, Evidence RAG panels,
-InsightsCanvas/MarketAccess, CER/PMA fixture panels, v2 Risk (ISO 14971
-device-risk variant; the standalone risk module is the live one), RBM tab
-composites, Setup (no backend exists).
+These fail closed to kit fixtures with a visible "Sample data" pill because an
+honest per-org backing store does not exist yet (planned later work), or the
+surface is a pure calculator / static reference with no instance data to back:
+document editors (DocumentAuthoring, EditorCockpit), Evidence RAG deep-search,
+PvSignal (a deterministic disproportionality calculator — inputs → PRR/ROR/
+BCPNN/EBGM, nothing to seed), Setup (installer-only backend — intentionally not
+wired), InsightsCanvas, CER/PMA fixture panels, v2 Risk (ISO 14971 device-risk
+variant; the standalone risk module is the live one), and the remaining
+records-list surfaces not yet wired (labeling-pi, protocol-dev, ind-checklist,
+filings-catalog, precedent-intelligence, market-access, program-journey,
+device-510k, ivd-completeness, shadow-review, batch-draft, research-admin,
+task-board). AnaDocTemplates/AnaDocContext/SourceTracer are helper/static
+modules, not instance-data surfaces.
 
 ## 4. Config-gated (needs keys, not code)
 
@@ -67,13 +88,18 @@ composites, Setup (no backend exists).
 
 ## 5. Known-good verification evidence
 
-- 84/84 v2 surfaces mount with 0 console errors (automated audit, re-run
-  after every wave)
+- Every v2 SURFACE_VIEWS surface mounts with 0 console errors (automated
+  render audit, re-run after every wave/slice)
 - Every seed module dry-run against a real Postgres in a rolled-back
   transaction before landing; re-runs are no-ops (idempotency proven)
-- 55+ route/service tests across the new read layers
-- CI: typecheck, tests, Lint, schema-on-fresh-Postgres, Neon preview
-  migrations all green on PR #1025
+- Each Wave-2/3 read endpoint carries a route test: 403 without org, the
+  exact display-key contract, and 42P01 fail-closed (empty/null, never 500)
+- Full `tsc --noEmit` at 0 errors; route-mount + repo-health no-regression
+  gates at +0 delta on every slice
+- CI: typecheck, tests, Lint, schema-on-fresh-Postgres, and the Neon preview
+  DB (migrations applied + schema verified + tests) green on PR #1026
+- Every domain seed module in `scripts/seed/ga-demo.d/` is auto-loaded by the
+  GA-demo orchestrator (glob loader), so seeding populates every live store
 
 ## 6. Filing an issue
 
