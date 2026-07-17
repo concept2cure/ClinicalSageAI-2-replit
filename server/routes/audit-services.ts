@@ -165,6 +165,14 @@ router.post('/export/ectd', async (req: Request, res: Response) => {
     res.setHeader('X-ECTD-Total-Modules', String(result.stats.totalModules));
     res.setHeader('X-ECTD-Total-Files', String(result.stats.totalFiles));
     res.setHeader('X-ECTD-Generated-At', result.stats.generatedAt);
+    // Surface submission-completeness here too (parity with /api/ectd/export) so
+    // any caller of this export path can see how much of the dossier is still
+    // placeholder content, not just the module/file counts.
+    if (result.stats.completeness) {
+      res.setHeader('X-ECTD-Completeness-Pct', String(result.stats.completeness.completenessPct));
+      res.setHeader('X-ECTD-Incomplete-Leaves', String(result.stats.completeness.placeholderLeaves));
+      res.setHeader('X-ECTD-Submission-Complete', String(result.stats.completeness.complete));
+    }
     res.setHeader('X-ECTD-Index-XML-Path', 'index.xml');
     res.setHeader('X-ECTD-Regional-XML-Path', `m1/${(region || 'FDA') === 'FDA' ? 'us' : (region || 'FDA') === 'EMA' ? 'eu' : 'jp'}-regional.xml`);
     if (validation) {
