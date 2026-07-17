@@ -28,6 +28,7 @@ import { createHash } from 'crypto';
 import { pool } from '../db.js';
 import { verifyToken as verifyMfaToken, isMfaEnabled } from '../services/mfaService.js';
 import auditService from '../services/auditService';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
 
 const router = Router();
 
@@ -37,6 +38,13 @@ function resolveUserId(req: Request): number | null {
   if (raw === undefined || raw === null) return null;
   const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
+}
+
+/** The signer's organization role from the authenticated request (lowercased). */
+function resolveUserRole(req: Request): string {
+  const r = req as any;
+  const raw = r.userRole ?? r.user?.role ?? r.tenantContext?.role ?? '';
+  return String(raw).trim().toLowerCase();
 }
 
 async function loadUserPasswordHash(userId: number): Promise<string | null> {
@@ -142,6 +150,21 @@ router.post('/sign', async (req: Request, res: Response) => {
   if (!userId) {
     return res.status(401).json({ error: 'AUTH_REQUIRED' });
   }
+
+  // 21 CFR Part 11 §11.10(g): identity is not authority. Even a fully
+  // re-authenticated signer (password + MFA below) may apply a signature only
+  // if their organization role carries signing authority. Enforced here so the
+  // /api/esignature/sign route matches the policy already applied to the
+  // artifact-signature route (single source of truth in
+  // server/services/part11/signing-authority).
+  const signerRole = resolveUserRole(req);
+  if (!isSigningAuthorized(signerRole)) {
+    return res.status(403).json({
+      error: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
+      code: 'ESIGNATURE_NO_AUTHORITY',
+    });
+  }
+
   const {
     documentId,
     versionId,
@@ -296,7 +319,7 @@ router.post('/sign', async (req: Request, res: Response) => {
         secondFactorVerified,
         signatureHash,
         signatureMeaning ?? null,
-        JSON.stringify({ action, deviceInfo: deviceInfo ?? null }),
+        JSON.stringify({ action, signerRole, deviceInfo: deviceInfo ?? null }),
         complianceStatement ?? null,
         legalDisclaimer ?? null,
         ipAddress,
@@ -330,6 +353,7 @@ router.post('/sign', async (req: Request, res: Response) => {
           action,
           signatureHash,
           secondFactorVerified,
+          signerRole,
         },
       });
     } catch (auditErr: any) {
