@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected, useLiveList } from '../dataConnect';
+import { SampleTag, useLive } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -11,8 +11,88 @@ import type { RiskRow, RiskControl } from '../fixtures/risk-data';
 
 /* ---- Risk management (ISO 14971) ---- */
 
+/**
+ * Map the raw `risk_items` rows the backend returns (GET /api/mdx/risk-items —
+ * DB columns, numeric severity/probability 1..5) onto the RiskRow display
+ * contract the surface renders. This is the read-side inverse of addHazard's
+ * write path (`severity = SEV_LABELS.indexOf(sev) + 1`), so a label written by
+ * the surface round-trips back to the same label. Residual acceptability is
+ * taken from the server's authoritative `acceptable` boolean — never inferred
+ * from the risk product — so the surface never overstates that a hazard is
+ * Acceptable.
+ *
+ * Fail-closed (returns null → the surface keeps its Sample fixture) unless the
+ * payload is a non-empty list of rows that actually carry the risk_items
+ * signature (hazard + harm strings, severity/probability integers in 1..5). The
+ * display fixture itself (string `sev`/`prob`, no numeric `severity`) maps to
+ * null, so a raw-shape mismatch keeps the honest sample rather than rendering
+ * half-mapped safety data. Exported for unit coverage.
+ */
+export function mapRiskItems(payload: unknown): RiskRow[] | null {
+  const list = Array.isArray(payload)
+    ? payload
+    : payload && typeof payload === 'object' && Array.isArray((payload as { data?: unknown }).data)
+      ? ((payload as { data: unknown[] }).data)
+      : null;
+  if (!Array.isArray(list) || list.length === 0) return null;
+
+  const inScale = (n: unknown): n is number =>
+    typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= 5;
+  const str = (v: unknown, fallback = ''): string =>
+    typeof v === 'string' && v ? v : fallback;
+
+  const out: RiskRow[] = [];
+  for (const raw of list) {
+    if (!raw || typeof raw !== 'object') return null;
+    const r = raw as Record<string, unknown>;
+    // Signature gate — a risk_items row, not the display fixture or some other
+    // envelope. Any row that fails fails the whole batch (all-or-nothing so the
+    // surface never shows a partially-adopted risk file).
+    if (!str(r.hazard) || !str(r.harm)) return null;
+    if (!inScale(r.severity) || !inScale(r.probability)) return null;
+
+    const sev = SEV_LABELS[r.severity - 1];
+    const prob = PROB_LABELS[r.probability - 1];
+    const status = str(r.status, 'open');
+    out.push({
+      id: str(r.ref_code) || 'HZ-' + String(r.id ?? out.length + 1).padStart(2, '0'),
+      hazard: str(r.hazard),
+      situation: str(r.hazardous_situation),
+      harm: str(r.harm),
+      seq: str(r.sequence_of_events),
+      sev,
+      prob,
+      probR: inScale(r.residual_probability) ? PROB_LABELS[r.residual_probability - 1] : prob,
+      det: inScale(r.detectability) ? r.detectability : 3,
+      strategy: str(r.control_strategy, 'design_reduce'),
+      source: str(r.source, 'other'),
+      status,
+      ctrl: '',
+      ver: '',
+      res: r.acceptable === true ? 'Acceptable' : 'Investigation',
+      open: status === 'open' || status === 'mitigating',
+      controls: [],
+    });
+  }
+  return out.length ? out : null;
+}
+
 export function Risk({ onAsk }: SurfaceViewProps) {
-  const live = useLiveList<RiskRow>('/api/mdx/risk-items', INITIAL_ROWS);
+  // The backend returns raw risk_items rows (numeric severity/probability); the
+  // surface renders labelled RiskRows. useLiveList's structural guard would
+  // reject that shape outright, so adopt via mapRiskItems instead — it maps the
+  // rows and fails closed to the fixture on anything it can't map. Same
+  // fail-closed contract, but the org's real risk file can now actually load.
+  const raw = useLive<unknown>('/api/mdx/risk-items', null);
+  const liveRows = useMemo(
+    () => (!raw.loading && !raw.sample ? mapRiskItems(raw.data) : null),
+    [raw.loading, raw.sample, raw.data],
+  );
+  const live = {
+    data: liveRows ?? INITIAL_ROWS,
+    sample: liveRows == null,
+    loading: raw.loading,
+  };
   const [rows, setRows] = useState<RiskRow[]>(live.data);
   const [sel, setSel] = useState(INITIAL_ROWS[0].id);
   // Adopt the live risk file once the backend responds (fail-closed to the
