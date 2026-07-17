@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, liveGet } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -23,9 +23,30 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
   const [cases, setCases] = useState<SaeCase[]>(SAE_CASES);
   const [selId, setSelId] = useState(SAE_CASES[0].id);
+  const [sample, setSample] = useState(true);
   const sel = cases.find((c) => c.id === selId) || cases[0];
   const [toast, setToast] = useState('');
   const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
+
+  /* live ?? fixture — adopt the org's seeded SAE worklist when the store
+     returns the full case shape, else keep the codebase fixture so the writer
+     is never empty. Local edits (setField) then work off whichever set loaded;
+     the ICH E3 §16 composer runs deterministically over the selected case. */
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: SaeCase[] }>('/api/safety-narratives/cases', { data: [] }).then((res) => {
+      if (cancelled) return;
+      const list = res.data?.data;
+      if (!res.sample && Array.isArray(list) && list.length > 0 && list[0]?.id && list[0]?.event) {
+        setCases(list);
+        setSelId(list[0].id);
+        setSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const result = useMemo(() => composeSafetyNarrative(sel), [sel]);
   const nMissing = result.missingFields.length;
@@ -68,7 +89,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="sn">
-      <SampleTag sample={true} />
+      <SampleTag sample={sample} />
       {toast && <div className="sn-toast">{I.check} {toast}</div>}
 
       <div className="sn-head">
