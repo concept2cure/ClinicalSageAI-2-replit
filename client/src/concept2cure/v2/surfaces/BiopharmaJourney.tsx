@@ -14,6 +14,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import { getSurfaceMeta } from '../registryModel';
+import { SampleTag, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -287,6 +288,35 @@ const PJ_BLOCKERS: Record<string, PjBlocker[]> = {
   ],
 };
 
+/* ── Per-program instance record (the live read contract) ──
+   One program-journey INSTANCE = the program identity plus the per-program
+   status carried by the segment-keyed maps above (overlay, modules, clock,
+   haqs, contra, blockers). The 9-stage lifecycle catalog (PJ_STAGES) stays
+   definitional and is NOT part of the record. GET /api/program-journey returns
+   exactly these keys per program; the surface adopts a segment's record when
+   the live shape matches, else keeps the fixture. */
+
+interface PjRecord extends PjProgram {
+  seg: string;
+  overlay: Record<string, [string, number]>;
+  modules: PjModule[];
+  clock: PjClockEntry[];
+  haqs: PjHaq[];
+  contra: PjContra;
+  blockers: PjBlocker[];
+}
+
+const PJ_FIXTURE: PjRecord[] = (['biotech', 'pharma'] as const).map((s) => ({
+  seg: s,
+  ...PJ_PROGRAMS[s],
+  overlay: PJ_OVERLAY[s],
+  modules: PJ_MODULES[s],
+  clock: PJ_CLOCK[s],
+  haqs: PJ_HAQS[s],
+  contra: PJ_CONTRA[s],
+  blockers: PJ_BLOCKERS[s],
+}));
+
 /* ── Readiness ring ── */
 
 function Ring({ pct }: { pct: number }) {
@@ -315,14 +345,26 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const [seg, setSegState] = useState(getSeg());
-  const prog = PJ_PROGRAMS[seg];
-  const overlay = PJ_OVERLAY[seg];
-  const stages: PjStageWithOverlay[] = PJ_STAGES.map((s) => ({
-    ...s,
-    st: overlay[s.id][0],
-    pct: overlay[s.id][1],
-  }));
-  const [sel, setSel] = useState(prog.current);
+
+  /* live ?? fixture — adopt the org's seeded program-journey instance per
+     segment when the store returns the full record shape (identity + overlay +
+     the nested status arrays), else keep the codebase fixture so the spine is
+     never empty. Never fabricates. Only seeded segments go live; the pill is
+     truthful for the active segment. */
+  const live = useLiveList<PjRecord>('/api/program-journey', PJ_FIXTURE);
+  const bySeg: Record<string, PjRecord> = {};
+  for (const r of PJ_FIXTURE) bySeg[r.seg] = r;
+  if (!live.sample) for (const r of live.data) bySeg[r.seg] = r;
+  const segIsLive = !live.sample && live.data.some((r) => r.seg === seg);
+
+  const rec = bySeg[seg] ?? bySeg.biotech;
+  const prog = rec;
+  const overlay = rec.overlay;
+  const stages: PjStageWithOverlay[] = PJ_STAGES.map((s) => {
+    const ov = overlay[s.id] ?? PJ_OVERLAY[seg]?.[s.id] ?? ['upcoming', 0];
+    return { ...s, st: ov[0], pct: ov[1] };
+  });
+  const [sel, setSel] = useState(rec.current);
   const stage = stages.find((s) => s.id === sel) || stages[0];
   const ask = onAsk;
   const open = (id: string) => {
@@ -330,24 +372,24 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
     onNav(id);
   };
 
-  const mods = PJ_MODULES[seg];
-  const clock = PJ_CLOCK[seg];
-  const haqs = PJ_HAQS[seg];
-  const contra = PJ_CONTRA[seg];
-  const blockers = PJ_BLOCKERS[seg];
+  const mods = rec.modules;
+  const clock = rec.clock;
+  const haqs = rec.haqs;
+  const contra = rec.contra;
+  const blockers = rec.blockers;
   const doneCount = stages.filter((s) => s.st === 'done').length;
 
   const setSeg = (v: string) => {
     try { (window as any).__C2C_SEGMENT = v; } catch (_e) { /* noop */ }
     setSegState(v);
-    setSel(PJ_PROGRAMS[v].current);
+    setSel((bySeg[v] ?? PJ_PROGRAMS[v]).current);
   };
 
   return (
     <div className="pj">
       <div className="pj-head">
         <div>
-          <div className="pj-eyebrow">{seg === 'pharma' ? 'Pharma' : 'Biotech'} {I.dot} program lifecycle</div>
+          <div className="pj-eyebrow">{seg === 'pharma' ? 'Pharma' : 'Biotech'} {I.dot} program lifecycle <SampleTag sample={!segIsLive} /></div>
           <h1 className="pj-title">Program journey -- concept to submission</h1>
           <p className="pj-intro">The end-to-end regulatory arc for {prog.code}, from candidate selection to approval and lifecycle. Each stage carries its agency gate, deliverables and the tools that serve it -- and every intelligence signal routes into the surface that owns it.</p>
         </div>

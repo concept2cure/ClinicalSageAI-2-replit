@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, liveGet } from '../dataConnect';
 import { PedigreeBadge } from '../intelligence/Intelligence';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -52,6 +52,40 @@ export function Evidence({ onAsk }: SurfaceViewProps) {
   const [q, setQ] = useState('');
   const [run, setRun] = useState(false);
 
+  /* live ?? fixture — adopt the org's saved evidence ask only when the store
+     returns the full display shape (a composed answer with a non-empty chunk
+     list), else keep the codebase fixture so the surface is never empty or
+     mislabelled. The fixture is the honest fallback; the pill tells the truth. */
+  const [answer, setAnswer] = useState<EvAnswer>(EV_ANSWER);
+  const [chunks, setChunks] = useState<EvChunk[]>(EV_CHUNKS);
+  const [suggest, setSuggest] = useState<string[]>(EV_SUGGEST);
+  const [sample, setSample] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{
+      data?: {
+        pedigree?: string;
+        answer?: string;
+        cites?: number[];
+        chunks?: EvChunk[];
+        suggestions?: string[];
+      } | null;
+    }>('/api/evidence-asks', { data: null }).then((res) => {
+      if (cancelled) return;
+      const d = res.data?.data;
+      if (!res.sample && d?.answer && Array.isArray(d.chunks) && d.chunks.length > 0) {
+        setAnswer({ pedigree: d.pedigree || EV_ANSWER.pedigree, text: d.answer, cites: d.cites || EV_ANSWER.cites });
+        setChunks(d.chunks);
+        if (Array.isArray(d.suggestions) && d.suggestions.length > 0) setSuggest(d.suggestions);
+        setSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const go = (text?: string) => {
     const v = text || q;
     if (!v) return;
@@ -61,7 +95,7 @@ export function Evidence({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="page-inner">
-      <SampleTag sample={true} />
+      <SampleTag sample={sample} />
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Project {I.dot} evidence</div>
@@ -96,7 +130,7 @@ export function Evidence({ onAsk }: SurfaceViewProps) {
             Try
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {EV_SUGGEST.map((s, i) => (
+            {suggest.map((s, i) => (
               <button
                 key={i}
                 className="ana-sugg"
@@ -124,15 +158,17 @@ export function Evidence({ onAsk }: SurfaceViewProps) {
           >
             <div className="gri-result-hdr">
               <span className="t">Answer</span>
-              <PedigreeBadge level={EV_ANSWER.pedigree} />
+              <PedigreeBadge level={answer.pedigree} />
             </div>
             <div className="gri-result-body">
               <div className="gri-result-sum">
-                {EV_ANSWER.text}{' '}
-                <sup className="ev-cite-ref">[1][2][3]</sup>
+                {answer.text}{' '}
+                <sup className="ev-cite-ref">
+                  {answer.cites.map((c) => `[${c}]`).join('')}
+                </sup>
               </div>
               <div className="ev-trace">
-                Traced to {EV_CHUNKS.length} source chunks across 3 documents.
+                Traced to {chunks.length} source chunks across 3 documents.
               </div>
             </div>
           </div>
@@ -144,7 +180,7 @@ export function Evidence({ onAsk }: SurfaceViewProps) {
             <div
               style={{ display: 'flex', flexDirection: 'column', gap: 9 }}
             >
-              {EV_CHUNKS.map((c) => (
+              {chunks.map((c) => (
                 <div key={c.n} className="ev-chunk">
                   <div className="ev-chunk-top">
                     <span className="ev-chunk-n">{c.n}</span>

@@ -3,7 +3,7 @@ import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { useLiveList } from '../dataConnect';
+import { useLiveList, useLive, unwrapList } from '../dataConnect';
 import { RBM_SITES, RBM_OVERSIGHT_COUNTS } from '../fixtures/rbm-data';
 import '../styles/project-home-v2.css';
 
@@ -260,12 +260,58 @@ function C2CToast({ msg }: { msg: string }) {
   );
 }
 
+/**
+ * Map the raw rbm_site_risk_scores rows the backend returns
+ * (GET /api/mdx/rbm-site-risk — DB columns: site_number, site_name,
+ * composite_risk, monitoring_tier, drivers, plus country_code joined from
+ * site_intel.sites) onto the RbmSite display contract the risk-based-monitoring
+ * board renders. Fail-closed (returns null → the board keeps its Sample
+ * fixture) unless the payload is a non-empty list of rows carrying the score
+ * signature (site_number + a monitoring_tier/composite_risk column). Exported
+ * for unit coverage.
+ */
+export function mapRbmSites(payload: unknown): RbmSite[] | null {
+  const list = unwrapList(payload);
+  if (!Array.isArray(list) || list.length === 0) return null;
+  const out: RbmSite[] = [];
+  for (const raw of list) {
+    if (!raw || typeof raw !== 'object') return null;
+    const r = raw as Record<string, unknown>;
+    // Signature gate — a score row, not the RbmSite fixture (which carries `n`/
+    // `composite`, not `site_number`/`composite_risk`).
+    if (typeof r.site_number !== 'string' || !r.site_number) return null;
+    if (!('monitoring_tier' in r) && !('composite_risk' in r)) return null;
+    const composite = r.composite_risk != null ? Number(r.composite_risk) : NaN;
+    out.push({
+      n: r.site_number,
+      name: typeof r.site_name === 'string' && r.site_name ? r.site_name : r.site_number,
+      country: typeof r.country_code === 'string' ? r.country_code : '',
+      composite: Number.isFinite(composite) ? composite : 0,
+      tier: typeof r.monitoring_tier === 'string' && r.monitoring_tier ? r.monitoring_tier : 'standard',
+      drivers: Array.isArray(r.drivers) ? (r.drivers as string[]) : [],
+    });
+  }
+  return out.length ? out : null;
+}
+
 /* ════ Clinical Operations — clinical-development stage surface ════ */
 
 export function ClinicalOps({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
   const liveStudies = useLiveList<CoStudy>('/api/clinical-operations/studies', CO_STUDIES);
-  const liveSites = useLiveList<RbmSite>('/api/mdx/rbm-site-risk', RBM_SITES);
+  // The endpoint returns raw rbm_site_risk_scores rows; useLiveList's guard
+  // would reject that shape, so adopt via mapRbmSites, which maps the rows and
+  // fails closed to the fixture on anything it can't map.
+  const sitesRaw = useLive<unknown>('/api/mdx/rbm-site-risk', null);
+  const liveSiteRows = useMemo(
+    () => (!sitesRaw.loading && !sitesRaw.sample ? mapRbmSites(sitesRaw.data) : null),
+    [sitesRaw.loading, sitesRaw.sample, sitesRaw.data],
+  );
+  const liveSites = {
+    data: liveSiteRows ?? RBM_SITES,
+    sample: liveSiteRows == null,
+    loading: sitesRaw.loading,
+  };
   const initialSites = useMemo(() => buildSites(liveSites.data), [liveSites.data]);
   const [sites, addSite] = useRows<CoSite>(initialSites);
   const [devs, addDev] = useRows<CoDev>(CO_DEV);

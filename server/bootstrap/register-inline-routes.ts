@@ -788,6 +788,132 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Projects routes:', error);
   }
 
+  // PDEV Evidence Picker library — org-scoped searchable evidence pool read by
+  // GET /api/evidence-objects (own sub-prefix, mounted nowhere else). Populates
+  // the picker's result list; before this the fetch 404'd to a permanent empty
+  // state.
+  try {
+    const evidenceObjectsModule = await import('../routes/evidence-objects.routes');
+    app.use('/api/evidence-objects', authMiddleware, evidenceObjectsModule.default);
+    console.info('✅ Evidence objects route mounted (/api/evidence-objects)');
+  } catch (error) {
+    console.error('❌ Failed to mount Evidence objects route:', error);
+  }
+
+  // NDA/BLA cockpit CTD module readiness — org-scoped per-module completeness
+  // read by GET /api/nda-cockpit/modules (own sub-prefix, mounted nowhere
+  // else). Feeds the NdaCockpit "CTD readiness" panel + overall % ready; the
+  // surface falls back to its fixture when the store is empty.
+  try {
+    const ndaCockpitModule = await import('../routes/nda-cockpit.routes');
+    app.use('/api/nda-cockpit', authMiddleware, ndaCockpitModule.default);
+    console.info('✅ NDA cockpit route mounted (/api/nda-cockpit)');
+  } catch (error) {
+    console.error('❌ Failed to mount NDA cockpit route:', error);
+  }
+
+  // Evidence surface saved RAG ask — org-scoped answer + retrieved chunks read
+  // by GET /api/evidence-asks (own sub-prefix). Feeds the Evidence surface; the
+  // surface falls back to its fixture when the store is empty.
+  try {
+    const evidenceAsksModule = await import('../routes/evidence-asks.routes');
+    app.use('/api/evidence-asks', authMiddleware, evidenceAsksModule.default);
+    console.info('✅ Evidence asks route mounted (/api/evidence-asks)');
+  } catch (error) {
+    console.error('❌ Failed to mount Evidence asks route:', error);
+  }
+
+  // Document-journey lifecycle — org-scoped per-stage journey read by GET
+  // /api/doc-journey (own sub-prefix). Feeds the DocJourney surface; the
+  // surface falls back to its fixture when the store is empty.
+  try {
+    const docJourneyModule = await import('../routes/doc-journey.routes');
+    app.use('/api/doc-journey', authMiddleware, docJourneyModule.default);
+    console.info('✅ Doc journey route mounted (/api/doc-journey)');
+  } catch (error) {
+    console.error('❌ Failed to mount Doc journey route:', error);
+  }
+
+  // Agency meetings — org-scoped list of regulatory interactions read by GET
+  // /api/agency-meetings (own sub-prefix). Feeds the AgencyMeetings surface.
+  try {
+    const agencyMeetingsModule = await import('../routes/agency-meetings.routes');
+    app.use('/api/agency-meetings', authMiddleware, agencyMeetingsModule.default);
+    console.info('✅ Agency meetings route mounted (/api/agency-meetings)');
+  } catch (error) {
+    console.error('❌ Failed to mount Agency meetings route:', error);
+  }
+
+  // Design controls — org-scoped 820.30 traceability matrix read by GET
+  // /api/design-controls (own sub-prefix). Feeds the DesignControls surface.
+  try {
+    const designControlsModule = await import('../routes/design-controls.routes');
+    app.use('/api/design-controls', authMiddleware, designControlsModule.default);
+    console.info('✅ Design controls route mounted (/api/design-controls)');
+  } catch (error) {
+    console.error('❌ Failed to mount Design controls route:', error);
+  }
+
+  // CRO portfolio — org-scoped CRO/sponsor oversight list read by GET
+  // /api/cro-portfolio (own sub-prefix). Feeds the CroPortfolio surface.
+  try {
+    const croPortfolioModule = await import('../routes/cro-portfolio.routes');
+    app.use('/api/cro-portfolio', authMiddleware, croPortfolioModule.default);
+    console.info('✅ CRO portfolio route mounted (/api/cro-portfolio)');
+  } catch (error) {
+    console.error('❌ Failed to mount CRO portfolio route:', error);
+  }
+
+  // Regulatory change horizon scan — org-scoped change records read by GET
+  // /api/reg-change (own sub-prefix). Feeds the RegChange surface.
+  try {
+    const regChangeModule = await import('../routes/reg-change.routes');
+    app.use('/api/reg-change', authMiddleware, regChangeModule.default);
+    console.info('✅ Reg change route mounted (/api/reg-change)');
+  } catch (error) {
+    console.error('❌ Failed to mount Reg change route:', error);
+  }
+
+  // Decision lineage — org-scoped governed-decision records read by GET
+  // /api/decision-lineage (own sub-prefix). Feeds the DecisionLineage surface.
+  try {
+    const decisionLineageModule = await import('../routes/decision-lineage.routes');
+    app.use('/api/decision-lineage', authMiddleware, decisionLineageModule.default);
+    console.info('✅ Decision lineage route mounted (/api/decision-lineage)');
+  } catch (error) {
+    console.error('❌ Failed to mount Decision lineage route:', error);
+  }
+
+  // Dossier map — org-scoped CTD module-map completeness read by GET
+  // /api/dossier-map (own sub-prefix). Feeds the DossierMap surface.
+  try {
+    const dossierMapModule = await import('../routes/dossier-map.routes');
+    app.use('/api/dossier-map', authMiddleware, dossierMapModule.default);
+    console.info('✅ Dossier map route mounted (/api/dossier-map)');
+  } catch (error) {
+    console.error('❌ Failed to mount Dossier map route:', error);
+  }
+
+  // Wave-3 batch: org-scoped instance-list reads, each on its own sub-prefix,
+  // feeding a registered v2 surface that fails closed to its fixture.
+  for (const [prefix, modPath, label] of [
+    ['/api/ind-checklist', '../routes/ind-checklist.routes', 'IND checklist'],
+    ['/api/program-journey', '../routes/program-journey.routes', 'Program journey'],
+    ['/api/market-access', '../routes/market-access.routes', 'Market access'],
+    ['/api/shadow-review', '../routes/shadow-review.routes', 'Shadow review'],
+    ['/api/labeling-pi', '../routes/labeling-pi.routes', 'Labeling PI'],
+    ['/api/protocol-dev', '../routes/protocol-dev.routes', 'Protocol dev'],
+    ['/api/research-admin', '../routes/research-admin.routes', 'Research admin'],
+  ] as const) {
+    try {
+      const mod = await import(modPath);
+      app.use(prefix, authMiddleware, mod.default);
+      console.info(`✅ ${label} route mounted (${prefix})`);
+    } catch (error) {
+      console.error(`❌ Failed to mount ${label} route:`, error);
+    }
+  }
+
   // C2C client formatting templates — AnA document-formatting engine.
   // Extract a TemplateSpec from an upload, build/edit client templates, and
   // render documents as .docx / .pdf with the client's fonts, margins, logo.

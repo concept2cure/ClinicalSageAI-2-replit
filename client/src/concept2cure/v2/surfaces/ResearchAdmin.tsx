@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   PDEV_CITI, PDEV_COMMITTEES, PDEV_COVERAGE, PDEV_GRANTS, PDEV_PORTFOLIO_ANALYTICS,
 } from '../fixtures/protocol-data';
+import type { CitiPerson } from '../fixtures/protocol-data';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -442,12 +443,19 @@ function ProfRow({ k, items }: { k: string; items: string[] }) {
 function Training() {
   const T = PDEV_CITI;
   if (!T) return <div className="ra-sec"><div className="ra-empty-sec">CITI training data not loaded (PDEV_CITI)</div></div>;
+  /* live ?? fixture — adopt the org's seeded CITI training matrix when the store
+     returns the full personnel row shape ({ id, name, role, cells }), else keep
+     the codebase fixture so the matrix is never empty. Never fabricates. The
+     training-column labels (T.trainings) stay fixture — the live rows carry only
+     the per-org instance data (who, role, per-module status), aligned to that
+     column order. */
+  const { data: personnel, sample } = useLiveList<CitiPerson>('/api/research-admin', T.personnel);
   const cellTone: Record<string, string> = { current: 'ok', expiring: 'warn', expired: 'err', missing: 'err', 'n/a': 'idle' };
   return (
     <div className="ra-sec">
       <div className="ra-grid2">
         <div className="ra-card">
-          <div className="ra-card-h"><h3>Training matrix</h3><span className="pd-pane-s">{(T.personnel || []).length} personnel</span></div>
+          <div className="ra-card-h"><h3>Training matrix <SampleTag sample={sample} /></h3><span className="pd-pane-s">{personnel.length} personnel</span></div>
           <div className="ra-matrix-wrap">
             <table className="ra-matrix">
               <thead><tr>
@@ -455,7 +463,7 @@ function Training() {
                 {(T.trainings || []).map((t: string, i: number) => <th key={i} className="ra-mx-th"><span>{t}</span></th>)}
               </tr></thead>
               <tbody>
-                {(T.personnel || []).map((p: any) => (
+                {personnel.map((p) => (
                   <tr key={p.id}>
                     <th className="ra-mx-rh"><span className="ra-mx-name">{p.name}</span><span className="ra-mx-role">{p.role}</span></th>
                     {(p.cells || []).map((c: string, i: number) => (

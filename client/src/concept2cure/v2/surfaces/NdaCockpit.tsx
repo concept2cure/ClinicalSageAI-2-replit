@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
+import { SampleTag, liveGet, useLiveList } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -36,6 +38,7 @@ interface NdaClockStep {
 }
 
 interface NdaRtfItem {
+  id?: string;
   sev: string;
   area: string;
   text: string;
@@ -83,20 +86,7 @@ const NDA_RTF_SEED: NdaRtfItem[] = [
   { sev: 'low', area: 'Module 2 · summaries', text: '2.7.4 Safety Summary still drafting; needed for a complete CTD.', fix: 'Finalize ISS-derived safety summary' },
 ];
 
-/* ── Derived static values ── */
-const NDA_OVERALL = Math.round(NDA_MODULES.reduce((a, m) => a + m.pct, 0) / NDA_MODULES.length);
-
 /* ── Inline shared kit helpers ── */
-
-function useRows<T extends { _new?: boolean }>(seed: T[]): readonly [T[], (r: T) => void] {
-  const [rows, setRows] = useState(() => (seed || []).map((r) => ({ ...r })));
-  const add = (r: T) => {
-    const row: T = { ...r, _new: true };
-    setRows((rs) => [row, ...rs]);
-    setTimeout(() => setRows((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
-  };
-  return [rows, add] as const;
-}
 
 function useToast(): [string, (m: string) => void] {
   const [msg, setMsg] = useState('');
@@ -126,9 +116,73 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
     onNav && onNav(id);
   };
-  const overall = NDA_OVERALL;
-  const [rtf, addRtf] = useRows<NdaRtfItem>(NDA_RTF_SEED);
-  const [m1, addM1] = useRows<NdaM1Doc>(NDA_M1_SEED);
+  /* live ?? fixture — adopt the org's seeded CTD module readiness when the
+     store returns the full shape, else keep the fixture. The overall % ready is
+     derived from whichever set loaded. The M1 worklist, PDUFA clock, and RtF
+     log stay the surface's local-first interactive lists. */
+  const [modules, setModules] = useState<NdaModule[]>(NDA_MODULES);
+  const [modulesSample, setModulesSample] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: NdaModule[] }>('/api/nda-cockpit/modules', { data: [] }).then((res) => {
+      if (cancelled) return;
+      const list = res.data?.data;
+      if (
+        !res.sample &&
+        Array.isArray(list) &&
+        list.length > 0 &&
+        list[0]?.m &&
+        typeof list[0]?.pct === 'number'
+      ) {
+        setModules(list);
+        setModulesSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const overall = modules.length
+    ? Math.round(modules.reduce((a, m) => a + m.pct, 0) / modules.length)
+    : 0;
+  /* live ?? fixture — adopt the org's seeded Refuse-to-File risk log when the
+     store returns the full shape, else keep the fixture (no empty-flash). The
+     list stays locally mutable so a logged risk appears immediately, and the
+     POST persists it when live. */
+  const rtfLive = useLiveList<NdaRtfItem>('/api/nda-cockpit/rtf', NDA_RTF_SEED);
+  const rtfIsLive = !rtfLive.sample;
+  const [rtf, setRtf] = useState<NdaRtfItem[]>(() => NDA_RTF_SEED.map((r) => ({ ...r })));
+  const rtfSeeded = useRef<NdaRtfItem[] | null>(null);
+  useEffect(() => {
+    if (!rtfLive.loading && rtfLive.data && rtfSeeded.current !== rtfLive.data) {
+      rtfSeeded.current = rtfLive.data;
+      setRtf(rtfLive.data.map((r) => ({ ...r })));
+    }
+  }, [rtfLive.loading, rtfLive.data]);
+  const addRtf = (r: NdaRtfItem) => {
+    const row: NdaRtfItem = { ...r, _new: true };
+    setRtf((rs) => [row, ...rs]);
+    setTimeout(() => setRtf((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
+  };
+  /* live ?? fixture — adopt the org's seeded Module-1 admin worklist when the
+     store returns the full shape, else keep the fixture (no empty-flash). The
+     list stays locally mutable so an added document appears immediately, and
+     the POST persists it when live. */
+  const m1Live = useLiveList<NdaM1Doc>('/api/nda-cockpit/m1', NDA_M1_SEED);
+  const m1IsLive = !m1Live.sample;
+  const [m1, setM1] = useState<NdaM1Doc[]>(() => NDA_M1_SEED.map((r) => ({ ...r })));
+  const m1Seeded = useRef<NdaM1Doc[] | null>(null);
+  useEffect(() => {
+    if (!m1Live.loading && m1Live.data && m1Seeded.current !== m1Live.data) {
+      m1Seeded.current = m1Live.data;
+      setM1(m1Live.data.map((r) => ({ ...r })));
+    }
+  }, [m1Live.loading, m1Live.data]);
+  const addM1 = (r: NdaM1Doc) => {
+    const row: NdaM1Doc = { ...r, _new: true };
+    setM1((rs) => [row, ...rs]);
+    setTimeout(() => setM1((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
+  };
   const [form, setForm] = useState<null | 'rtf' | 'm1'>(null);
   const [toast, fireToast] = useToast();
   const m1open = m1.filter(d => d.st !== 'complete' && d.st !== 'na').length;
@@ -158,18 +212,81 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     ],
   };
 
-  const submitRtf = (v: Record<string, string>) => {
-    addRtf({ sev: v.sev, area: v.area, text: v.text, fix: v.fix });
+  const submitRtf = async (v: Record<string, string>) => {
     setForm(null);
     setTab('rtf');
-    fireToast('Filing risk logged · ' + v.area);
+    const local = (): NdaRtfItem => ({ id: 'rtf-' + Date.now(), sev: v.sev, area: v.area, text: v.text, fix: v.fix });
+    if (!rtfIsLive) {
+      // Fixture mode — nothing to persist to; say so instead of faking success.
+      addRtf(local());
+      fireToast('Filing risk logged · ' + v.area + ' · sample only, not persisted');
+      return;
+    }
+    try {
+      const res = await apiRequest('POST', '/api/nda-cockpit/rtf', {
+        area: v.area,
+        text: v.text,
+        sev: v.sev,
+        fix: v.fix,
+      });
+      if (!res.ok) {
+        addRtf(local());
+        fireToast('Could not log filing risk · sign in required — sample only, not persisted');
+        return;
+      }
+      const body = await res.json().catch(() => null);
+      const row = body?.data;
+      // Adopt the persisted row (server-generated id) when returned, else the local shape.
+      addRtf(row && typeof row.area === 'string' ? (row as NdaRtfItem) : local());
+      fireToast('Filing risk logged · ' + v.area);
+    } catch (e) {
+      // apiRequest throws on non-OK with the server's reason. Fall back to local
+      // and say it did not persist — never report a write that did not happen.
+      addRtf(local());
+      fireToast(
+        'Could not log filing risk · ' +
+          (e instanceof Error && e.message ? e.message : 'request failed') +
+          ' — sample only, not persisted',
+      );
+    }
   };
 
-  const submitM1 = (v: Record<string, string>) => {
-    addM1({ id: 'm1-' + Date.now(), label: v.label, st: v.st, note: v.note || undefined });
+  const submitM1 = async (v: Record<string, string>) => {
     setForm(null);
     setTab('m1');
-    fireToast('Module 1 document added');
+    const local = (): NdaM1Doc => ({ id: 'm1-' + Date.now(), label: v.label, st: v.st, note: v.note || undefined });
+    if (!m1IsLive) {
+      // Fixture mode — nothing to persist to; say so instead of faking success.
+      addM1(local());
+      fireToast('Module 1 document added · sample only, not persisted');
+      return;
+    }
+    try {
+      const res = await apiRequest('POST', '/api/nda-cockpit/m1', {
+        label: v.label,
+        st: v.st,
+        note: v.note || undefined,
+      });
+      if (!res.ok) {
+        addM1(local());
+        fireToast('Could not save Module 1 document · sign in required — sample only, not persisted');
+        return;
+      }
+      const body = await res.json().catch(() => null);
+      const row = body?.data;
+      // Adopt the persisted row (server-generated id) when returned, else the local shape.
+      addM1(row && typeof row.id === 'string' ? (row as NdaM1Doc) : local());
+      fireToast('Module 1 document added');
+    } catch (e) {
+      // apiRequest throws on non-OK with the server's reason. Fall back to local
+      // and say it did not persist — never report a write that did not happen.
+      addM1(local());
+      fireToast(
+        'Could not save Module 1 document · ' +
+          (e instanceof Error && e.message ? e.message : 'request failed') +
+          ' — sample only, not persisted',
+      );
+    }
   };
 
   const tabs: [string, string][] = [['ctd', 'CTD readiness'], ['m1', 'Module 1 admin'], ['clock', 'PDUFA review clock'], ['rtf', 'Refuse-to-File risk']];
@@ -178,7 +295,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   const clockNow = NDA_CLOCK.find(s => s.st === 'current') || NDA_CLOCK.find(s => s.st === 'goal');
   const highs = rtf.filter(r => r.sev === 'high');
   const topHigh = highs[0] || rtf.find(r => r.sev === 'med');
-  const gateMod = NDA_MODULES.filter(m => m.gate).sort((a, b) => a.pct - b.pct)[0];
+  const gateMod = modules.filter(m => m.gate).sort((a, b) => a.pct - b.pct)[0];
   const openItems = m1open + rtf.filter(r => r.sev !== 'low').length;
 
   const lead = (
@@ -207,7 +324,9 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     <div className="cv-body"><div className="reg-wrap nda">
       <div className="reg-head">
         <div>
-          <div className="reg-eyebrow">Pharma {I.dot} filing</div>
+          <div className="reg-eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Pharma {I.dot} filing <SampleTag sample={modulesSample} />
+          </div>
           <h1 className="reg-title">NDA filing cockpit</h1>
           <p className="reg-intro">BX-204 {I.dot} NDA 212345 {I.dot} 505(b)(1) {I.dot} standard review. The complete application on one surface &mdash; CTD Module 1-5 readiness, the Module 1 administrative set, the PDUFA review clock, and Refuse-to-File risk.</p>
         </div>
@@ -231,7 +350,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {tab === 'ctd' && (
         <div className="nda-mods">
-          {NDA_MODULES.map(m => (
+          {modules.map(m => (
             <button key={m.m} className="nda-mod" onClick={() => open('dossier')}>
               <div className="nda-mod-n">M{m.m}</div>
               <div className="nda-mod-b">
@@ -250,7 +369,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {tab === 'm1' && (
         <div className="reg-card">
-          <div className="reg-card-h"><span>Module 1 &mdash; administrative &amp; prescribing (21 CFR 314.50)</span><span className="reg-card-s" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>Form 356h + required admin documents<button className="nda-open" onClick={() => setForm('m1')}>{I.plus} Add document</button></span></div>
+          <div className="reg-card-h"><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Module 1 &mdash; administrative &amp; prescribing (21 CFR 314.50) <SampleTag sample={m1Live.sample} /></span><span className="reg-card-s" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>Form 356h + required admin documents<button className="nda-open" onClick={() => setForm('m1')}>{I.plus} Add document</button></span></div>
           <table className="reg-tbl">
             <thead><tr><th>Document</th><th>Status</th><th></th></tr></thead>
             <tbody>
@@ -285,7 +404,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {tab === 'rtf' && (
         <div className="reg-card">
-          <div className="reg-card-h"><span>Refuse-to-File risk &mdash; shadow review of the 60-day filing decision</span><span style={{ display: 'flex', gap: 8 }}><button className="nda-open" onClick={() => setForm('rtf')}>{I.plus} Log risk</button>{ask && <button className="nda-open" onClick={() => ask('Draft a filing-risk mitigation plan for the open NDA Refuse-to-File items')}>{I.sparkles} Mitigation plan</button>}</span></div>
+          <div className="reg-card-h"><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Refuse-to-File risk &mdash; shadow review of the 60-day filing decision <SampleTag sample={rtfLive.sample} /></span><span style={{ display: 'flex', gap: 8 }}><button className="nda-open" onClick={() => setForm('rtf')}>{I.plus} Log risk</button>{ask && <button className="nda-open" onClick={() => ask('Draft a filing-risk mitigation plan for the open NDA Refuse-to-File items')}>{I.sparkles} Mitigation plan</button>}</span></div>
           <div className="nda-rtf">
             {rtf.map((r, i) => (
               <div key={i} className={'nda-rtf-row' + (r._new ? ' de-row-new' : '')} data-sev={r.sev}>

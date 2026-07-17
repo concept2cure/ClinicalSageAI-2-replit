@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected } from '../dataConnect';
+import { SampleTag, useLiveList } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
+import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 
 /* ── Types ── */
@@ -77,8 +78,19 @@ const DC_INPUTS: DcInput[] = [
 
 export function DesignControls({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const live = connected();
+  /* live ?? fixture — useLiveList adopts the org's seeded design inputs only
+     when GET /api/design-controls returns the full DcInput display shape, else
+     fail-closes to the codebase fixture so the matrix is never empty. */
+  const liveList = useLiveList<DcInput>('/api/design-controls', DC_INPUTS);
+  const sample = liveList.sample;
   const [inputs, setInputs] = useState<DcInput[]>(DC_INPUTS);
+
+  /* Sync the adopted live list into local state once (the "new design input"
+     form then works off whichever set loaded). */
+  useEffect(() => {
+    if (!liveList.loading && !liveList.sample) setInputs(liveList.data);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveList.loading, liveList.sample]);
   const [form, setForm] = useState(false);
   const [toast, setToast] = useState('');
   const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
@@ -113,12 +125,37 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
     ],
   };
 
-  const addInput = (v: Record<string, string>) => {
-    const id = 'DI-' + String(inputs.length + 1).padStart(2, '0');
-    const nr: DcInput = { id, cat: v.cat || 'functional', req: v.req, riskRef: v.riskRef || null, outputs: [], ver: null, verRef: null, val: null, valRef: null, _new: true };
-    setInputs(is => [...is, nr]);
+  const addInput = async (v: Record<string, string>) => {
     setForm(false);
-    fire('Design input ' + id + ' added -- untraced');
+
+    if (sample) {
+      // No store adopted — record locally and say so rather than claim a write.
+      const id = 'DI-' + String(inputs.length + 1).padStart(2, '0');
+      const nr: DcInput = { id, cat: v.cat || 'functional', req: v.req, riskRef: v.riskRef || null, outputs: [], ver: null, verRef: null, val: null, valRef: null, _new: true };
+      setInputs(is => [...is, nr]);
+      fire('Design input ' + id + ' added -- local/sample only, not persisted');
+      return;
+    }
+
+    // LIVE — real org-scoped POST into the store backing the read. Optimistic
+    // insert, then reconcile with the server's row; roll back on failure.
+    const tempId = 'dc-tmp-' + Date.now();
+    const optimistic: DcInput = { id: tempId, cat: v.cat || 'functional', req: v.req, riskRef: v.riskRef || null, outputs: [], ver: null, verRef: null, val: null, valRef: null, _new: true };
+    setInputs(is => [...is, optimistic]);
+    try {
+      const res = await apiRequest('POST', '/api/design-controls', {
+        req: v.req,
+        cat: v.cat || 'functional',
+        riskRef: v.riskRef || undefined,
+      });
+      const row = (await res.json())?.data as DcInput | undefined;
+      if (!row || !row.id) throw new Error('malformed response');
+      setInputs(is => is.map(i => (i.id === tempId ? { ...row, _new: true } : i)));
+      fire('Design input ' + row.id + ' added -- untraced');
+    } catch (e) {
+      setInputs(is => is.filter(i => i.id !== tempId));
+      fire('Could not add design input -- ' + (e instanceof Error && e.message ? e.message : 'request failed'));
+    }
   };
 
   const cell = (result: string | null, ref: string | null, label: string) => {
@@ -135,8 +172,8 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
     <div className="dc" style={{ maxWidth: 1200 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Specialist {I.dot} device {I.dot} /api/design-risk {live ? <> {I.dot} live</> : ''}</div>
-          <h1 className="sp-title">Design controls {I.dot} DHF <SampleTag sample={!live} /></h1>
+          <div className="sp-eyebrow">Specialist {I.dot} device {I.dot} /api/design-controls {!sample ? <> {I.dot} live</> : ''}</div>
+          <h1 className="sp-title">Design controls {I.dot} DHF <SampleTag sample={sample} /></h1>
           <p className="sp-state">21 CFR 820.30 design history file -- inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
         </div>
         <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} New design input</button>

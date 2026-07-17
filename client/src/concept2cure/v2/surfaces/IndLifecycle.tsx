@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, liveGet } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import {
@@ -13,47 +13,89 @@ import {
   indlReadiness,
   indlClock,
 } from '../fixtures/ind-lifecycle-data';
-import type { IndlReadinessReport, IndlClockState } from '../fixtures/ind-lifecycle-data';
+import type {
+  IndlClockState,
+  IndlProgram,
+  IndlForm,
+  IndlSection,
+} from '../fixtures/ind-lifecycle-data';
 import '../styles/project-home-v2.css';
+
+/* ── Live read shape: one org-scoped IND checklist (GET /api/ind-checklist) ──
+   Combines the program record with its Module 1 forms checklist and eCTD
+   section blueprint -- the exact keys the surface renders. */
+interface IndlChecklist {
+  code: string;
+  drugName: string;
+  productName: string;
+  indication: string;
+  sponsorName: string;
+  submissionType: string;
+  targetReceiptOffsetDays: number;
+  forms: IndlForm[];
+  sections: IndlSection[];
+}
+
+const IND_CHECKLIST_FIXTURE: IndlChecklist = {
+  ...INDL_PROGRAM,
+  forms: INDL_FORMS,
+  sections: INDL_SECTIONS,
+};
 
 /* ════ IND Lifecycle -- the deliverable-first IND workspace (21 CFR 312) ════ */
 
 export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
-  const prog = INDL_PROGRAM;
 
-  const [R, setR] = useState<IndlReadinessReport>(() => indlReadiness());
-  const [live, setLive] = useState(false);
+  /* live ?? fixture -- render the codebase fixture immediately (no empty flash),
+     then adopt the org's seeded IND checklist only when the GET returns the full
+     display shape (program + nested forms[] + sections[]). Readiness is computed
+     locally from whichever set loaded, so the local form/section state keeps
+     working either way. Never fabricates: the pill stays "Sample" until a real
+     shape-matching row arrives. */
+  const [prog, setProg] = useState<IndlProgram>(INDL_PROGRAM);
+  const [forms, setForms] = useState<IndlForm[]>(INDL_FORMS);
+  const [sections, setSections] = useState<IndlSection[]>(INDL_SECTIONS);
+  const [sample, setSample] = useState(true);
   const [tab, setTab] = useState<'file' | 'lifecycle'>('file');
   const [toast, setToast] = useState('');
 
-  /* live ?? fixture -- POST the section/form state to the real readiness route. */
+  const R = useMemo(() => indlReadiness(sections, forms), [sections, forms]);
+
   useEffect(() => {
-    const api = (window as any).C2C_API;
-    if (api && api.connected()) {
-      const sectionStatus: Record<string, string> = {};
-      INDL_SECTIONS.forEach((s) => {
-        sectionStatus[s.code] = s.status;
-      });
-      api
-        .post('/api/ind-lifecycle/readiness', {
-          filingType: 'initial',
-          sectionStatus,
-          completedForms: INDL_FORMS.filter((f) => f.done).map((f) => f.id),
-          overdueSafetyReports: 0,
-        })
-        .then((r: any) => {
-          if (r && !r.sample && typeof r.ready === 'boolean') {
-            setR(r);
-            setLive(true);
-          }
-        })
-        .catch(() => {
-          /* noop */
+    let cancelled = false;
+    liveGet<{ data?: IndlChecklist[] }>('/api/ind-checklist', {
+      data: [IND_CHECKLIST_FIXTURE],
+    }).then((res) => {
+      if (cancelled) return;
+      const row = res.data?.data?.[0];
+      if (
+        !res.sample &&
+        row &&
+        row.code &&
+        Array.isArray(row.forms) &&
+        row.forms.length > 0 &&
+        Array.isArray(row.sections) &&
+        row.sections.length > 0
+      ) {
+        setProg({
+          code: row.code,
+          drugName: row.drugName,
+          productName: row.productName,
+          indication: row.indication,
+          sponsorName: row.sponsorName,
+          submissionType: row.submissionType,
+          targetReceiptOffsetDays: row.targetReceiptOffsetDays,
         });
-    }
+        setForms(row.forms);
+        setSections(row.sections);
+        setSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
-  const sample = !live;
 
   /* 30-day regulatory clock -- a PROJECTION until FDA receipt (not yet filed). */
   const clock = useMemo<IndlClockState>(() => {
@@ -88,7 +130,6 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     tone: 'info',
   };
 
-  const forms = INDL_FORMS;
   const formsDone = forms.filter((f) => f.done).length;
   const deliverables = INDL_DELIVERABLES.filter((d) => d.group === tab);
   const stLabel = INDL_STATUS_LABEL;
@@ -98,7 +139,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
       <div className="surface-head">
         <div>
           <div className="surface-kicker">
-            {I.rocket} IND Lifecycle -- 21 CFR 312 -- /api/ind-lifecycle
+            {I.rocket} IND Lifecycle -- 21 CFR 312 -- /api/ind-checklist
           </div>
           <h1>
             {prog.drugName} -- Initial IND <SampleTag sample={sample} />
@@ -202,8 +243,8 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         }}
         secondary={
           sample
-            ? "Sample readiness -- the live route computes this from the submission's section state."
-            : 'Live from POST /api/ind-lifecycle/readiness.'
+            ? "Sample checklist -- the live route returns this org's IND forms and section state, and readiness is computed from it."
+            : 'Live from GET /api/ind-checklist.'
         }
       />
 

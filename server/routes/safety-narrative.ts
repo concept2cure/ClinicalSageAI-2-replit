@@ -11,8 +11,73 @@
 
 import { Router, Request, Response } from 'express';
 import { safetyNarrativeService } from '../services/safety-narrative-service';
+import { pool } from '../db';
 
 const router = Router();
+
+function getOrgId(req: Request): number | null {
+  const r = req as {
+    tenantId?: unknown;
+    organizationId?: unknown;
+    tenantContext?: { organizationId?: unknown };
+    user?: { organizationId?: unknown };
+  };
+  const raw =
+    r.tenantId ?? r.organizationId ?? r.tenantContext?.organizationId ?? r.user?.organizationId;
+  if (raw === undefined || raw === null) return null;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * GET /cases — the org's individual SAE case worklist (expedited-reporting
+ * clock + subject/event facts), shaped to exactly the keys the v2
+ * SafetyNarrative surface renders. The surface adopts this via liveGet and
+ * falls back to its codebase fixture (with a Sample pill) when the store is
+ * empty or unreachable, then runs the deterministic ICH E3 §16 composer over
+ * whichever case is selected. Ordered by clock urgency. Fails closed to an
+ * empty list on 42P01 so an unprovisioned store never 500s.
+ */
+router.get('/cases', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
+  }
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, due, clock, due_days, subject_id, age, sex, study_id,
+              treatment_arm, study_drug, dose, first_dose_date,
+              medical_history, concomitant_meds, event
+         FROM c2c_sae_cases
+        WHERE organization_id = $1
+        ORDER BY due_days ASC, id`,
+      [orgId],
+    );
+    const data = rows.map((r) => ({
+      id: r.id,
+      due: r.due,
+      clock: r.clock,
+      dueDays: r.due_days,
+      subjectId: r.subject_id,
+      age: r.age ?? undefined,
+      sex: r.sex ?? undefined,
+      studyId: r.study_id ?? undefined,
+      treatmentArm: r.treatment_arm ?? undefined,
+      studyDrug: r.study_drug ?? undefined,
+      dose: r.dose ?? undefined,
+      firstDoseDate: r.first_dose_date ?? undefined,
+      medicalHistory: Array.isArray(r.medical_history) ? r.medical_history : [],
+      concomitantMeds: Array.isArray(r.concomitant_meds) ? r.concomitant_meds : [],
+      event: r.event ?? {},
+    }));
+    return res.json({ data, meta: { count: data.length } });
+  } catch (err) {
+    if ((err as { code?: string })?.code === '42P01') {
+      return res.json({ data: [], meta: { count: 0, pendingStore: true } });
+    }
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to read SAE cases.' } });
+  }
+});
 
 // ── Aggregate Safety Narrative ───────────────────────────────
 

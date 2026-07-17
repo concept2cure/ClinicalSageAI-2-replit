@@ -28,7 +28,7 @@ import { Router, Request, Response } from 'express';
 import { createScopedLogger } from '../utils/logger';
 import { ok, serverError } from '../lib/api-response';
 import { pool } from '../db';
-import { formatDueIn, formatDelta, isoDate } from './intelligence-cluster.format';
+import { formatDueIn, formatDelta, isoDate, formatAgo } from './intelligence-cluster.format';
 
 const router = Router();
 const log = createScopedLogger('intelligence-cluster');
@@ -87,6 +87,32 @@ type TlfRow = {
   status: string;
   program: string | null;
 };
+type SapRow = {
+  id: string;
+  program: string | null;
+  study: string | null;
+  primary: string | null;
+  alpha: string | null;
+  power: string | null;
+  size: string | null;
+  status: string | null;
+  owner: string | null;
+  locked: boolean;
+  updated_at: Date;
+};
+type SampleSizeRow = {
+  alpha: string | number;
+  power: string | number;
+  delta: string | number;
+  sd: string | number;
+  expected: string | number;
+};
+type InterimRow = {
+  study: string | null;
+  kind: string | null;
+  dsmb: string | null;
+  date: string;
+};
 router.get('/biostat', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   try {
@@ -112,9 +138,71 @@ router.get('/biostat', async (req: Request, res: Response) => {
           };
         });
       }
+
+      // saps / sampleSize / interims read the org-scoped c2c_biostat_* store
+      // (migrations/20260717_biostat_docs.sql). safeRows swallows 42P01/42703,
+      // so an unprovisioned table leaves the section omitted → the surface hook
+      // falls back to its fixture for exactly that section (fail-closed).
+      const saps = await safeRows<SapRow>(
+        `SELECT id, program, study, primary_endpoint AS primary,
+                alpha, power, size, status, owner, locked, updated_at
+           FROM c2c_biostat_saps
+          WHERE organization_id = $1
+          ORDER BY updated_at DESC NULLS LAST`,
+        [orgId],
+      );
+      if (saps.length > 0) {
+        out.saps = saps.map((r) => ({
+          id: r.id,
+          program: r.program ?? '—',
+          study: r.study ?? '—',
+          primary: r.primary ?? '—',
+          alpha: r.alpha ?? '—',
+          power: r.power ?? '—',
+          size: r.size ?? '—',
+          status: r.status ?? 'drafted',
+          owner: r.owner ?? '—',
+          updated: r.locked ? 'locked' : formatAgo(new Date(r.updated_at)),
+        }));
+      }
+
+      // The surface renders one scenario in its calculator card; return the
+      // primary (is_primary) row, numeric-coerced (pg NUMERIC arrives as text).
+      const ss = await safeRows<SampleSizeRow>(
+        `SELECT alpha, power, delta, sd, expected
+           FROM c2c_biostat_sample_sizes
+          WHERE organization_id = $1
+          ORDER BY is_primary DESC, id ASC
+          LIMIT 1`,
+        [orgId],
+      );
+      if (ss.length > 0) {
+        const r = ss[0];
+        out.sampleSize = {
+          alpha: Number(r.alpha),
+          power: Number(r.power),
+          delta: Number(r.delta),
+          sd: Number(r.sd),
+          expected: Number(r.expected),
+        };
+      }
+
+      const interims = await safeRows<InterimRow>(
+        `SELECT study, kind, dsmb, to_char(analysis_date, 'YYYY-MM-DD') AS date
+           FROM c2c_biostat_interims
+          WHERE organization_id = $1
+          ORDER BY sort_order ASC, analysis_date ASC`,
+        [orgId],
+      );
+      if (interims.length > 0) {
+        out.interims = interims.map((r) => ({
+          study: r.study ?? '—',
+          kind: r.kind ?? '—',
+          dsmb: r.dsmb ?? '—',
+          date: r.date,
+        }));
+      }
     }
-    // saps / sampleSize / interims aggregate over c2c_documents (doc_type
-    // IN ('protocol','sap')) — deferred; omitted → surface uses fixtures.
     return ok(res, out);
   } catch (err) {
     return serverError(res, log, 'biostat', err);

@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected } from '../dataConnect';
+import { SampleTag, liveGet } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -92,9 +93,31 @@ function hfAnalyzeRisk(scenarios: HfScenario[]): HfRiskResult {
 
 export function HumanFactors({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const live = connected();
+  // live ?? fixture: the org's real HFE/UE file + use scenarios
+  // (GET /api/human-factors, c2c_hf_* store). The pill reflects DATA, not
+  // token presence — sample until the store actually answers.
+  const [live, setLive] = useState(false);
+  const [device, setDevice] = useState<string>(HF_FILE.device);
   const [present, setPresent] = useState<Record<string, boolean>>(HF_FILE.present);
   const [scenarios, setScenarios] = useState<HfScenario[]>(HF_SCENARIOS);
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: { device?: string; present?: Record<string, boolean>; scenarios?: HfScenario[] } | null }>(
+      '/api/human-factors',
+      { data: null },
+    ).then((res) => {
+      if (cancelled || res.sample) return;
+      const hf = res.data?.data;
+      if (!hf || !hf.present || !Array.isArray(hf.scenarios) || hf.scenarios.length === 0) return;
+      setDevice(hf.device || HF_FILE.device);
+      setPresent(hf.present);
+      setScenarios(hf.scenarios);
+      setLive(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [form, setForm] = useState(false);
   const [toast, setToast] = useState('');
   const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
@@ -125,12 +148,41 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
     ],
   };
 
-  const addScenario = (v: Record<string, string>) => {
-    const ns: HfScenario = { task: v.task, useError: v.useError, potentialHarmSeverity: v.potentialHarmSeverity || 'minor', mitigated: v.mitigated === 'yes', _new: true };
-    const next = [...scenarios, ns];
-    setScenarios(next);
+  const addScenario = async (v: Record<string, string>) => {
+    const sev = v.potentialHarmSeverity || 'minor';
+    const mit = v.mitigated === 'yes';
+    if (live) {
+      // Real org-scoped persisted create. apiRequest throws on non-OK (except
+      // 401) with the server's reason (e.g. NO_FILE, PENDING_STORE). Adopt the
+      // row the server actually stored so completeness/risk recompute from it.
+      try {
+        const res = await apiRequest('POST', '/api/human-factors/scenarios', {
+          task: v.task, useError: v.useError, potentialHarmSeverity: sev, mitigated: mit,
+        });
+        if (!res.ok) {
+          fire('Could not add scenario -- sign in with an org that has an HFE/UE file');
+          return;
+        }
+        const body = await res.json().catch(() => null);
+        const row = body?.data;
+        if (!row || !row.task) {
+          fire('Could not add scenario -- unexpected response');
+          return;
+        }
+        const ns: HfScenario = { task: row.task, useError: row.useError || '', potentialHarmSeverity: row.potentialHarmSeverity || 'minor', mitigated: row.mitigated === true, _new: true };
+        setScenarios(s => [...s, ns]);
+        setForm(false);
+        fire('Use scenario added' + (HF_SERIOUS.has(ns.potentialHarmSeverity) && !ns.mitigated ? ' -- unmitigated critical task' : ''));
+      } catch (e) {
+        fire('Could not add scenario -- ' + (e instanceof Error && e.message ? e.message : 'request failed'));
+      }
+      return;
+    }
+    // Sample mode — no store adopted; add locally and say it is not persisted.
+    const ns: HfScenario = { task: v.task, useError: v.useError, potentialHarmSeverity: sev, mitigated: mit, _new: true };
+    setScenarios(s => [...s, ns]);
     setForm(false);
-    fire('Use scenario added' + (HF_SERIOUS.has(ns.potentialHarmSeverity) && !ns.mitigated ? ' -- unmitigated critical task' : ''));
+    fire('Use scenario added -- local/sample only, not persisted');
   };
 
   const mitigate = (idx: number) => setScenarios(s => s.map((sc, i) => i === idx ? { ...sc, mitigated: true } : sc));
@@ -141,7 +193,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="sp-eyebrow">Specialist {I.dot} device {I.dot} /api/human-factors {live ? <> {I.dot} live</> : ''}</div>
           <h1 className="sp-title">Human factors {I.dot} IEC 62366-1 <SampleTag sample={!live} /></h1>
-          <p className="sp-state">{HF_FILE.device} -- use-related risk analysis and HFE/UE file completeness, the gate before summative testing.</p>
+          <p className="sp-state">{device} -- use-related risk analysis and HFE/UE file completeness, the gate before summative testing.</p>
         </div>
         <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Add use scenario</button>
       </div>

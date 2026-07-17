@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, liveGet } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { HAQ_ROUNDS, HAQ_QUESTIONS } from '../fixtures/haq-data';
-import type { HaqQuestion } from '../fixtures/haq-data';
+import type { HaqQuestion, HaqRound } from '../fixtures/haq-data';
 import '../styles/project-home-v2.css';
 
 /* ── Inline shared helpers ── */
@@ -32,10 +33,33 @@ function C2CToast({ msg }: { msg: string }) {
 /* ════ HaqManager -- Health Authority Questions response workbench ════ */
 
 export function HaqManager({ onAsk }: SurfaceViewProps) {
-  const rounds = HAQ_ROUNDS;
-  const [roundId, setRoundId] = useState<string>(rounds[0]?.id ?? '');
+  /* live ?? fixture — adopt the store's rounds+questions only when the backend
+     returns the full display shape, else keep the codebase fixture so the
+     workbench never renders blank. Same round ids ('fda-ir1'/'ema-d120') in
+     both, so the selected round survives the swap. */
+  type RoundsPayload = { rounds?: HaqRound[]; questions?: Record<string, HaqQuestion[]> } | null;
+  const [live, setLive] = useState<{ rounds: HaqRound[]; questions: Record<string, HaqQuestion[]> } | null>(null);
+  const [sample, setSample] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: RoundsPayload }>('/api/haq-manager/rounds', { data: null }).then((res) => {
+      if (cancelled) return;
+      const d = res.data?.data;
+      if (!res.sample && d && Array.isArray(d.rounds) && d.rounds.length > 0 && d.rounds[0]?.id) {
+        setLive({ rounds: d.rounds, questions: d.questions || {} });
+        setSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const rounds = live?.rounds ?? HAQ_ROUNDS;
+  const questionsByRound = live?.questions ?? HAQ_QUESTIONS;
+  const [roundId, setRoundId] = useState<string>((HAQ_ROUNDS[0]?.id ?? ''));
   const round = rounds.find((r) => r.id === roundId) || rounds[0];
-  const baseQs = HAQ_QUESTIONS[roundId] || [];
+  const baseQs = questionsByRound[roundId] || [];
   const [statusMap, setStatusMap] = useState<Record<string, string>>({});
   const [extra, setExtra] = useState<HaqQuestion[]>([]);
   const [form, setForm] = useState(false);
@@ -68,14 +92,59 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
     ],
   };
 
-  const submitHaq = (v: Record<string, string>) => {
+  const submitHaq = async (v: Record<string, string>) => {
+    const displayTone =
+      v.tone === 'critical' ? 'err' : v.tone === 'minor' ? 'idle' : 'warn';
+
+    // Live rounds adopted (sample === false): persist through the write-back
+    // endpoint and adopt the server's mapped question. Only claim the write on OK.
+    if (!sample) {
+      try {
+        const res = await apiRequest('POST', '/api/haq-manager/questions', {
+          roundId,
+          qid: v.id || undefined,
+          disc: v.disc,
+          tone: displayTone,
+          q: v.q,
+          owner: v.owner,
+          status: 'draft',
+        });
+        if (!res.ok) {
+          // apiRequest only reaches here non-OK on 401 (auth); others throw.
+          fireToast('Could not log question -- sign in and retry');
+          return;
+        }
+        const body = await res.json().catch(() => null);
+        const created = body?.data;
+        if (!created || !created.id) {
+          fireToast('Could not log question -- unexpected response');
+          return;
+        }
+        setExtra((xs) => [
+          { ...(created as HaqQuestion), roundId, _new: true },
+          ...xs,
+        ]);
+        setForm(false);
+        setActiveId(created.id);
+        fireToast('Question logged -- ' + created.id);
+      } catch (e) {
+        fireToast(
+          'Could not log question -- ' +
+            (e instanceof Error && e.message ? e.message : 'request failed'),
+        );
+      }
+      return;
+    }
+
+    // Sample mode — no live store adopted; record locally and say so rather than
+    // claim a write that did not happen.
     const id = v.id || 'IR-' + Date.now();
     setExtra((xs) => [
       {
         roundId,
         id,
         disc: v.disc,
-        tone: v.tone === 'critical' ? 'err' : v.tone === 'minor' ? 'idle' : 'warn',
+        tone: displayTone,
         q: v.q,
         owner: v.owner,
         status: 'draft' as const,
@@ -90,7 +159,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
     ]);
     setForm(false);
     setActiveId(id);
-    fireToast('Question logged -- ' + id);
+    fireToast('Question logged -- ' + id + ' -- local/sample only, not persisted');
   };
 
   const q = qs.find((x) => x.id === activeId) || qs[0];
@@ -128,7 +197,10 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       <div className="haq">
         <div className="haq-head">
           <div>
-            <div className="sec-kicker">PLATFORM -- POST-SUBMISSION</div>
+            <div className="sec-kicker" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              PLATFORM -- POST-SUBMISSION
+              <SampleTag sample={sample} />
+            </div>
             <h1 className="haq-title">Health authority questions</h1>
             <p className="haq-sub">
               Agency information requests and lists of questions -- decomposed,
@@ -159,7 +231,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                 data-on={r.id === roundId || undefined}
                 onClick={() => {
                   setRoundId(r.id);
-                  const fq = (HAQ_QUESTIONS[r.id] || [])[0];
+                  const fq = (questionsByRound[r.id] || [])[0];
                   setActiveId(fq?.id ?? '');
                 }}
               >

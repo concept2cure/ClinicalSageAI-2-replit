@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
+import { SampleTag, liveGet } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -297,21 +298,49 @@ function DJSnapshot({ snap }: { snap: DjSnap }) {
 
 /* ════ DocJourney — one document, ideation → submission ════ */
 
+/* live journey row = the stage rail fields plus its content snapshot */
+type DjJourneyRow = DjStage & { snap?: DjSnap | null };
+
 export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
   const openEditor = () =>
     onNav ? onNav('document-authoring') : onAsk && onAsk('Open §2.5 Clinical Overview in the editor');
 
   const [active, setActive] = useState('approve');
+  const [stages, setStages] = useState<DjStage[]>(DJ_STAGES);
+  const [snaps, setSnaps] = useState<Record<string, DjSnap>>(DJ_SNAP);
+  const [sample, setSample] = useState(true);
 
-  const stage = DJ_STAGES.find((s) => s.id === active) || DJ_STAGES[0];
-  const snap = DJ_SNAP[active];
-  const doneCount = DJ_STAGES.filter((s) => s.done).length;
+  /* live ?? fixture — adopt the org's seeded document journey when the store
+     returns the full stage shape (rail fields + snapshots), else keep the
+     codebase fixture so the journey is never empty. Never fabricates. */
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: DjJourneyRow[] }>('/api/doc-journey', { data: [] }).then((res) => {
+      if (cancelled) return;
+      const list = res.data?.data;
+      if (!res.sample && Array.isArray(list) && list.length > 0 && list[0]?.id && list[0]?.label && list[0]?.kind) {
+        setStages(list.map(({ snap: _snap, ...s }) => s));
+        const map: Record<string, DjSnap> = {};
+        for (const r of list) if (r.snap) map[r.id] = r.snap;
+        setSnaps(map);
+        setActive((cur) => (list.some((s) => s.id === cur) ? cur : list[0].id));
+        setSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const stage = stages.find((s) => s.id === active) || stages[0];
+  const snap = snaps[active];
+  const doneCount = stages.filter((s) => s.done).length;
 
   return (
     <div className="reg-wrap dj">
       <div className="reg-head">
         <div>
-          <div className="reg-eyebrow">Workspace · authoring</div>
+          <div className="reg-eyebrow">Workspace · authoring <SampleTag sample={sample} /></div>
           <h1 className="reg-title">Document journey</h1>
           <p className="reg-sub">
             One document, ideation → submission. §2.5 Clinical Overview · BX-204 (rezatinib) BLA — every stage, with the document itself in view.
@@ -324,7 +353,7 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
 
       <div className="reg-kpis">
         <div className="reg-kpi">
-          <div className="reg-kpi-v">{doneCount}/9</div>
+          <div className="reg-kpi-v">{doneCount}/{stages.length}</div>
           <div className="reg-kpi-l">Stages complete</div>
         </div>
         <div className="reg-kpi">
@@ -343,7 +372,7 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
 
       <div className="dj-split">
         <aside className="dj-rail">
-          {DJ_STAGES.map((s, i) => (
+          {stages.map((s, i) => (
             <button
               key={s.id}
               className={'dj-step' + (s.id === active ? ' on' : '')}
@@ -352,7 +381,7 @@ export function DocJourney({ onAsk, onNav }: SurfaceViewProps) {
             >
               <span className="dj-step-rail">
                 <span className="dj-step-dot">{s.done ? I.check : (I[s.ic] || String(i + 1))}</span>
-                {i < DJ_STAGES.length - 1 && <span className="dj-step-line" />}
+                {i < stages.length - 1 && <span className="dj-step-line" />}
               </span>
               <span className="dj-step-b">
                 <span className="dj-step-top">

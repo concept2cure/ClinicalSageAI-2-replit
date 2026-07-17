@@ -2,10 +2,11 @@
  *  ProtocolDev.tsx -- protocol development hub (C2C-17 + C2C-18..22)
  *  Ported from protocol-dev.jsx IIFE to typed React module.
  * ------------------------------------------------------------------ */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import * as PG from './ProtocolGov';
-import { PDEV_DOC } from '../fixtures/protocol-data';
+import { PDEV_DOC, type PdevDoc } from '../fixtures/protocol-data';
+import { SampleTag, liveGet } from '../dataConnect';
 
 const Ic = PG.Ic;
 
@@ -375,7 +376,25 @@ export function ConsentTab({ doc, onToggle }: ConsentTabProps) {
 
 /* ---- Main workspace ---- */
 export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
-  const doc: any = PDEV_DOC;
+  /* live ?? fixture — adopt the org's seeded protocol when the store returns the
+     full PdevDoc shape (header scalars + nested section tree, SoA grid, risk
+     register, amendments), else keep the codebase fixture so the hub is never
+     empty. Never fabricates. Endpoint returns { data: [doc], meta:{count} }. */
+  const [doc, setDoc] = useState<PdevDoc>(PDEV_DOC);
+  const [sample, setSample] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: PdevDoc[] }>('/api/protocol-dev', { data: [] }).then((res) => {
+      if (cancelled) return;
+      const d = res.data?.data?.[0];
+      if (!res.sample && d && d.id && Array.isArray(d.sections) && d.sections.length > 0
+          && Array.isArray(d.risks) && d.soa && Array.isArray(d.soa.visits)) {
+        setDoc(d);
+        setSample(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, []);
   const [tab, setTab] = useState('document');
   const [activeSec, setActiveSec] = useState(doc.openSection);
   const [gov, setGov] = useState<any>(null);
@@ -402,7 +421,7 @@ export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
     <div className="pd-wrap">
       <div className="pd-head">
         <div className="pd-head-l">
-          <span className="pd-kind">{PG.labelize(doc.kind) + ' protocol'}</span>
+          <span className="pd-kind">{PG.labelize(doc.kind) + ' protocol'} <SampleTag sample={sample} /></span>
           <div className="pd-titrow"><h1 className="pd-title">{doc.title}</h1><span className="pd-short">{doc.shortTitle}</span></div>
           <div className="pd-subrow">
             <span>{doc.sponsor}</span><span className="pd-dot" /><span>PI {doc.pi}</span><span className="pd-dot" /><PG.StatusBadge status={doc.status} />

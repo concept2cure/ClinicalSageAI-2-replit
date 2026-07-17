@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   LINEAGE_GRAPHS,
@@ -34,7 +34,15 @@ function dlActionLabel(a: string): string {
 
 export function DecisionLineage({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const graphs = LINEAGE_GRAPHS;
+  /* live ?? fixture — adopt the org's seeded decision trails when GET
+     /api/decision-lineage returns the full LineageGraph display shape
+     ({ rootEntityType, rootEntityId, artifactLabel, nodes, edges, metadata }),
+     else keep the codebase fixture so the trail is never empty. The fixture
+     also renders while the live fetch is in flight (no empty-flash). */
+  const { data: graphs, sample } = useLiveList<LineageGraph>(
+    '/api/decision-lineage',
+    LINEAGE_GRAPHS,
+  );
   const NT = LINEAGE_NODE_TYPES;
   const chain = LINEAGE_CHAIN;
 
@@ -53,7 +61,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
           n.regulatory.requiresSignature &&
           n.regulatory.signatureStatus === 'pending',
       ),
-    [sel],
+    [sel, graphs],
   );
 
   const isLocked = nodes.some((n) => n.action === 'locked');
@@ -129,11 +137,10 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="dl">
-      <SampleTag sample={true} />
       <div className="dl-head">
         <div className="dl-eyebrow">
           <span className="dl-kicker">Governed decision lineage</span>
-          <span className="dl-src sample">Sample data</span>
+          <SampleTag sample={sample} />
         </div>
         <h1 className="dl-title">Decision lineage &amp; provenance</h1>
         <div className="dl-sub">

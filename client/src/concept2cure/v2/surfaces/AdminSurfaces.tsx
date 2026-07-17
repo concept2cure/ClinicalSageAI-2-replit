@@ -1483,11 +1483,52 @@ async function downloadValidationDoc(docId: string, filename: string): Promise<v
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
+/* Platform role grants — live from GET /api/admin/access/grants (the audited
+   access-management router, server/routes/admin/access-management.ts). The read
+   is platform-admin gated; a 401/403 or any shape mismatch fails closed to the
+   AC_GRANTS fixture with the Sample pill. When live, create/revoke go to the
+   real POST/DELETE (both require a reason-for-change, which the form collects). */
+interface LiveGrant {
+  id: number | string;
+  user_id?: number;
+  email?: string | null;
+  name?: string | null;
+  role: string;
+  granted_by?: string | null;
+  granted_at?: string | null;
+}
+
+function mapLiveGrant(r: LiveGrant): AcGrant {
+  return {
+    id: Number(r.id),
+    name: r.name || (r.email ? r.email.split('@')[0] : String(r.id)),
+    email: r.email || '',
+    role: r.role,
+    granted_by: r.granted_by || 'system',
+    granted_at: r.granted_at ? String(r.granted_at).slice(0, 10) : '',
+  };
+}
+
 export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
   const [sec, setSec] = useState('access');
   const vkit = useLive<ValidationKit>('/api/validation-kit', VKIT_FALLBACK);
   const vkitDocs = vkit.data?.artifacts ?? [];
+  const grantsLive = useLive<{ grants?: LiveGrant[] } | null>('/api/admin/access/grants', null);
+  const liveGrants = useMemo(() => {
+    if (grantsLive.sample || !grantsLive.data) return null;
+    const arr = grantsLive.data.grants;
+    if (!Array.isArray(arr)) return null;
+    return arr.map(mapLiveGrant);
+  }, [grantsLive.sample, grantsLive.data]);
+  const grantsAreLive = liveGrants !== null;
   const [grants, setGrants] = useState<AcGrant[]>(AC_GRANTS);
+  const seededGrants = useRef<AcGrant[] | null>(null);
+  useEffect(() => {
+    if (liveGrants && seededGrants.current !== liveGrants) {
+      seededGrants.current = liveGrants;
+      setGrants(liveGrants);
+    }
+  }, [liveGrants]);
   const [form, setForm] = useState<AcFormState>({ email: '', role: 'support', reason: '' });
   const [toast, fireToast] = useToast();
   const nav = (id: string) => {
@@ -1499,7 +1540,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
     onNav && onNav(id);
   };
 
-  const doGrant = () => {
+  const doGrant = async () => {
     if (!form.email.trim()) {
       fireToast('Enter an email');
       return;
@@ -1509,6 +1550,47 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       return;
     }
     const roleMeta = LIC_ROLES.find((r) => r.id === form.role);
+    const okMsg =
+      (roleMeta && roleMeta.business ? 'Business-tier ' : '') +
+      'role granted -- audited (Part 11)';
+
+    if (grantsAreLive) {
+      // Real, audited write. apiRequest throws on non-OK (except 401) with the
+      // server's reason (e.g. business-admin required, no such user).
+      try {
+        const res = await apiRequest('POST', '/api/admin/access/grants', {
+          email: form.email.trim(),
+          role: form.role,
+          reason: form.reason.trim(),
+        });
+        if (!res.ok) {
+          fireToast('Could not grant -- sign in as a platform admin');
+          return;
+        }
+        const row = await res.json().catch(() => null);
+        const rec: AcGrant = {
+          id: row?.id ?? Date.now(),
+          name: form.email.split('@')[0],
+          email: form.email.trim(),
+          role: form.role,
+          granted_by: row?.granted_by || 'you',
+          granted_at: row?.granted_at ? String(row.granted_at).slice(0, 10) : 'just now',
+          _new: true,
+        };
+        setGrants((g) => [rec, ...g.filter((x) => !(x.email === rec.email && x.role === rec.role))]);
+        fireToast(okMsg);
+        setForm({ email: '', role: 'support', reason: '' });
+      } catch (e) {
+        fireToast(
+          'Could not grant -- ' +
+            (e instanceof Error && e.message ? e.message : 'request failed'),
+        );
+      }
+      return;
+    }
+
+    // Sample mode — no audited backend reachable; record locally and say so
+    // rather than claim a write that did not happen.
     const rec: AcGrant = {
       id: Date.now(),
       name: form.email.split('@')[0],
@@ -1519,16 +1601,43 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       _new: true,
     };
     setGrants((g) => [rec, ...g]);
-    fireToast(
-      (roleMeta && roleMeta.business ? 'Business-tier ' : '') +
-        'role granted -- audited (Part 11)',
-    );
+    fireToast(okMsg + ' -- sample only, not persisted');
     setForm({ email: '', role: 'support', reason: '' });
   };
 
-  const revoke = (id: number) => {
+  const revoke = async (id: number) => {
+    if (grantsAreLive) {
+      const reason =
+        typeof window !== 'undefined' && window.prompt
+          ? window.prompt(
+              'Reason for revoking this grant (min 3 chars, recorded in the audit trail):',
+            )
+          : '';
+      if (reason == null) return; // cancelled
+      if (reason.trim().length < 3) {
+        fireToast('A reason (min 3 chars) is required to revoke');
+        return;
+      }
+      try {
+        const res = await apiRequest('DELETE', `/api/admin/access/grants/${id}`, {
+          reason: reason.trim(),
+        });
+        if (!res.ok) {
+          fireToast('Could not revoke -- sign in as a platform admin');
+          return;
+        }
+        setGrants((g) => g.filter((x) => x.id !== id));
+        fireToast('Grant revoked -- reason recorded -- audited');
+      } catch (e) {
+        fireToast(
+          'Could not revoke -- ' +
+            (e instanceof Error && e.message ? e.message : 'request failed'),
+        );
+      }
+      return;
+    }
     setGrants((g) => g.filter((x) => x.id !== id));
-    fireToast('Grant revoked -- reason recorded -- audited');
+    fireToast('Grant revoked -- sample only, not persisted');
   };
 
   const SECTIONS: [string, string, string][] = [
@@ -1681,7 +1790,9 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
             {sec === 'access' && (
               <div>
                 <div className="pj-card-h" style={{ padding: 0, marginBottom: 12 }}>
-                  <span className="t">Platform role grants</span>
+                  <span className="t">
+                    Platform role grants <SampleTag sample={!grantsAreLive} />
+                  </span>
                   <span className="s">
                     {grants.length} active -- platform_role_grants
                   </span>

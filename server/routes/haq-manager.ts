@@ -26,6 +26,132 @@ function getOrgId(req: Request): number {
   );
 }
 
+/**
+ * GET /rounds — the v2 HaqManager display contract: authority letters as
+ * "rounds" plus their questions grouped by round, shaped to exactly the keys
+ * the surface renders (id/disc/tone/status/q/draft/cites/commitments). The
+ * surface adopts this via liveGet and falls back to its codebase fixture when
+ * the store is empty or unreachable, so it never renders a blank workbench.
+ * Fails closed to `{ data: null }` on any store error.
+ */
+router.get('/rounds', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const letters = await store.query(orgId, 'letter');
+    if (letters.length === 0) {
+      return res.json({ data: null, meta: { count: 0 } });
+    }
+    const questions = await store.query(orgId, 'question');
+
+    const rounds = letters.map((l: any) => ({
+      id: l.letterId,
+      agency: l.agency,
+      flag: l.flag,
+      authority: l.authority,
+      submission: l.submission,
+      type: l.type,
+      received: l.received,
+      due: l.due,
+      clockDays: l.clockDays,
+      clockTotal: l.clockTotal,
+      note: l.note,
+    }));
+
+    const byRound: Record<string, any[]> = {};
+    for (const r of rounds) byRound[r.id] = [];
+    for (const q of questions) {
+      const rid = q.letterId;
+      if (!byRound[rid]) continue;
+      byRound[rid].push({
+        id: q.qid,
+        disc: q.disc,
+        tone: q.tone,
+        status: q.status,
+        owner: q.owner,
+        q: q.q,
+        analysis: q.analysis,
+        draft: q.draft,
+        cites: Array.isArray(q.cites) ? q.cites : [],
+        commitments: Array.isArray(q.commitments) ? q.commitments : [],
+        precedentNote: q.precedentNote,
+        roundId: rid,
+      });
+    }
+
+    res.json({ data: { rounds, questions: byRound }, meta: { count: rounds.length } });
+  } catch {
+    res.json({ data: null, meta: { count: 0, pendingStore: true } });
+  }
+});
+
+/**
+ * POST /questions — WRITE-BACK for the v2 HaqManager "Log question" form.
+ *
+ * Persists a plain question row into the feature store (category 'haq_question',
+ * subcategory 'question') keyed to its round via `letterId`, so the next
+ * GET /rounds surfaces it under that round. The stored payload uses exactly the
+ * keys the GET /rounds mapper reads, and the response echoes the question mapped
+ * exactly as GET /rounds maps questions, so the client can adopt it verbatim.
+ *
+ * Honesty: this is a plain persisted create, not an audited ledger entry — the
+ * HAQ store carries no signature/reason-for-change trail, so nothing here claims
+ * governance it lacks. On any store/db error we return 500 and the client keeps
+ * its local copy rather than pretend the write happened.
+ */
+router.post('/questions', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  const { roundId, qid, disc, tone, q, owner, status } = req.body || {};
+
+  if (!roundId || !q) {
+    return res
+      .status(400)
+      .json({ error: 'roundId and q are required to log a question' });
+  }
+
+  const questionId = (qid && String(qid).trim()) || `IR-${Date.now()}`;
+  const payload = {
+    qid: questionId,
+    letterId: roundId,
+    disc: disc || 'Regulatory',
+    tone: tone || 'warn',
+    status: status || 'draft',
+    owner: owner || '',
+    q,
+    analysis: '',
+    draft: '',
+    cites: [] as any[],
+    commitments: [] as any[],
+    precedentNote:
+      'Run a precedent compare to see how prior submissions answered this.',
+  };
+
+  try {
+    await store.insert(orgId, 'question', questionId, payload);
+
+    // Map exactly as GET /rounds maps questions so the client adopts it verbatim.
+    const data = {
+      id: payload.qid,
+      disc: payload.disc,
+      tone: payload.tone,
+      status: payload.status,
+      owner: payload.owner,
+      q: payload.q,
+      analysis: payload.analysis,
+      draft: payload.draft,
+      cites: Array.isArray(payload.cites) ? payload.cites : [],
+      commitments: Array.isArray(payload.commitments) ? payload.commitments : [],
+      precedentNote: payload.precedentNote,
+      roundId,
+    };
+
+    return res.status(201).json({ data, meta: { created: true } });
+  } catch (err: any) {
+    return res
+      .status(500)
+      .json({ error: err?.message || 'Failed to log question' });
+  }
+});
+
 router.get('/letters', async (_req: Request, res: Response) => {
   try {
     const orgId = getOrgId(_req);

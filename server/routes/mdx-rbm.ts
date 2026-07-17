@@ -791,16 +791,33 @@ router.patch('/rbm-signals/:id', async (req, res) => {
 router.get('/rbm-site-risk', async (req, res) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  // program_id is optional: scope to one program when given, else return the
+  // org's whole site-risk roster (the v2 Clinical-ops board reads it org-wide,
+  // with no program handle to pass).
   const programId = typeof req.query.program_id === 'string' ? req.query.program_id : undefined;
-  if (!programId || !UUID_RE.test(programId)) return clientError(res, 422, 'program_id (UUID) is required');
+  if (programId && !UUID_RE.test(programId)) return clientError(res, 422, 'program_id must be a UUID');
+  const filters = ['r.organization_id = $1'];
+  const args: unknown[] = [orgId];
+  if (programId) { args.push(programId); filters.push(`r.program_id = $${args.length}`); }
   try {
+    // LEFT JOIN site_intel.sites for the site's country (not stored on the
+    // score row). The RBM recompute already depends on site_intel.sites, so the
+    // join is safe wherever scores exist; if the schema is absent the read
+    // fails closed to empty rather than 500.
     const { rows } = await pool.query(
-      `SELECT * FROM rbm_site_risk_scores WHERE organization_id = $1 AND program_id = $2
-        ORDER BY composite_risk DESC NULLS LAST, site_number`,
-      [orgId, programId],
+      `SELECT r.*, si.country_code
+         FROM rbm_site_risk_scores r
+         LEFT JOIN site_intel.sites si
+           ON si.program_id = r.program_id AND si.site_number = r.site_number
+        WHERE ${filters.join(' AND ')}
+        ORDER BY r.composite_risk DESC NULLS LAST, r.site_number`,
+      args,
     );
     return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'list-site-risk', err); }
+  } catch (err) {
+    if ((err as { code?: string })?.code === '42P01') return ok(res, [], { count: 0, pendingStore: true });
+    return serverError(res, log, 'list-site-risk', err);
+  }
 });
 
 router.post('/rbm-site-risk/recompute', async (req, res) => {

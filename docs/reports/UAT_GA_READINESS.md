@@ -47,17 +47,73 @@ Rotate these before any shared or externally reachable deployment.
 | Training | Learning paths, certifications | 6 paths, 3 certifications |
 | Change control | Change assessment | 2 assessments (FDA/EU decision trees) |
 | Orchestration | Readiness panel, approval checkpoints | computed readiness; `approval_checkpoints` |
-| Admin | Apps (module subscriptions) | live list + toggle |
+| Admin | Apps (module subscriptions); Admin console access grants | live module list + toggle; audited `platform_role_grants` |
+| Post-submission | HAQ manager (rounds + questions) | `project_memory_entries` (2 letters, 8 questions) |
+| Human factors | HFE/UE file + use scenarios | `c2c_hf_files` + `c2c_hf_scenarios` (1 file, 6 scenarios) |
+| Safety / PV | SafetyNarrative SAE worklist | `c2c_sae_cases` (3 cases; ICH E3 §16 composer client-side) |
+| NDA cockpit | CTD module readiness + overall % | `c2c_nda_modules` (5 modules, 80% ready) |
+| Evidence | Saved evidence-ask (answer + chunks) | `c2c_evidence_asks` (1 ask, 3 chunks) |
+| Document lifecycle | DocJourney stage rail | `c2c_doc_journeys` (9 stages) |
+| Agency interactions | Agency meetings + briefing books/minutes | `c2c_agency_meetings` (4 meetings) |
+| Device design | Design controls (820.30 traceability) | `c2c_design_controls` (7 inputs) |
+| CRO | Sponsor portfolio roster | `c2c_cro_portfolio` (5 sponsors) |
+| Evidence pool | pdev EvidencePicker | `c2c_evidence_objects` (11 objects) |
+| Biostatistics | SAP / sample-size / interims sections | `c2c_biostat_*` |
+| Reg intelligence | Reg-change horizon scan | `c2c_reg_changes` (5 change records) |
+| Governance | Decision lineage trails | `c2c_decision_lineage` (3 governed-artifact trails) |
+| Dossier | CTD module map (completeness/readiness) | `c2c_dossier_map` (5 modules) |
+| IND | IND lifecycle checklist (forms + eCTD sections) | `c2c_ind_checklist` (BX-301 IND: 3 forms, 17 sections) |
+| Program | Program journey (stage overlay + clock) | `c2c_program_journey` (BX-204) |
+| Market access | Payer coverage / value dossier / coding | `c2c_market_access` (BX-204) |
+| Shadow review | Refuse-to-File findings by reviewer lens | `c2c_shadow_review` (5 lenses, 14 findings) |
+| Labeling | USPI section worklist + agency negotiation | `c2c_labeling_pi` (18 sections) |
+| Protocol dev | Protocol section tree / SoA / risk register | `c2c_protocol_dev` (SELVO-DLBCL-201) |
+| Research admin | CITI training matrix | `c2c_research_admin` (6 personnel) |
+
+Each Wave-2/3 surface adopts live data only when the store returns its full
+display shape, else fails closed to the codebase fixture with a "Sample data"
+pill — so a "Live" pill on any of these after seeding is the proof it worked.
+
+The v2 Risk surface (ISO 14971) also adopts the org's live risk file: it reads
+the same `risk_items` store as the standalone module through a fail-closed
+display mapper (`mapRiskItems`) that maps raw DB rows onto the surface's
+labelled contract — severity/probability labels are the exact inverse of the
+surface's own write path, and residual acceptability is taken from the server's
+`acceptable` flag, never inferred.
+
+**Read-shape wiring (raw `SELECT *` endpoints → display fixture) — all wired.**
+A few older MDX panels read raw `SELECT *` endpoints whose DB columns diverge
+from the v2 display fixture, so `useLiveList`'s structural guard rejected the
+response and the panel stayed on its "Sample data" fixture. Each now adopts
+live through a pure, unit-tested, fail-closed adapter (the Orchestration
+mapping pattern):
+- **Risk** — `mapRiskItems` (org-wide `risk_items`).
+- **Labeling translations** — document-id discovery via `GET /api/mdx/labeling`
+  + `mapLabelTranslations` (language name via `Intl.DisplayNames`).
+- **RBM site-risk** — `GET /api/mdx/rbm-site-risk` now takes an optional
+  `program_id` (org-wide when omitted, so no UUID handle to discover) and
+  LEFT JOINs `site_intel.sites` for the site country; the board adopts via
+  `mapRbmSites`. The demo seed doesn't populate `rbm_site_risk_scores` yet, so
+  in the seeded demo this panel still shows its "Sample data" fixture (correct
+  fail-closed) — but a real org with recomputed site risk now loads live.
 
 ## 3. Labeled sample-data surfaces (by design — not defects)
 
-These fail closed to kit fixtures with a visible "Sample data" pill, because
-an honest backing store does not exist yet (planned Wave-2/3 work):
-document authoring cluster (Dossier, DocumentAuthoring, ArtifactsCenter),
-NDA/IND cockpit moat phases, PV signal composites, Evidence RAG panels,
-InsightsCanvas/MarketAccess, CER/PMA fixture panels, v2 Risk (ISO 14971
-device-risk variant; the standalone risk module is the live one), RBM tab
-composites, Setup (no backend exists).
+These fail closed to kit fixtures with a visible "Sample data" pill because an
+honest per-org backing store does not exist yet (planned later work), or the
+surface is a pure calculator / static reference with no instance data to back:
+document editors (DocumentAuthoring, EditorCockpit), Evidence RAG deep-search,
+PvSignal (a deterministic disproportionality calculator — inputs → PRR/ROR/
+BCPNN/EBGM, nothing to seed), Setup (installer-only backend — intentionally not
+wired), InsightsCanvas, CER/PMA fixture panels, and the remaining
+records-list surfaces not yet wired (filings-catalog and precedent-intelligence
+— static taxonomies/search catalogs; batch-draft; task-board — already backed by
+the tasking layer). device-510k is the ported MDX 510(k) sub-app whose instance
+lists (eSTAR sections, predicates, SE matrix) are already live via the MDX data
+layer; ivd-completeness is a computed catalog over the shared dossier spine (its
+`IvdFamily` shape carries a non-serializable match predicate) — both correctly
+left as-is rather than forced into a store. AnaDocTemplates/AnaDocContext/
+SourceTracer are helper/static modules, not instance-data surfaces.
 
 ## 4. Config-gated (needs keys, not code)
 
@@ -67,13 +123,30 @@ composites, Setup (no backend exists).
 
 ## 5. Known-good verification evidence
 
-- 84/84 v2 surfaces mount with 0 console errors (automated audit, re-run
-  after every wave)
+- Every v2 SURFACE_VIEWS surface mounts with 0 console errors (automated
+  render audit, re-run after every wave/slice)
+- First-use render gates, both provenance states: every surface renders
+  crash-free in its offline (fixture, "Sample data") branch AND in its
+  live-adopted ("Live", sample:false) branch — the seeded first-user view
+  (`surfaceRender` + `liveBranchRender`, the latter with a vacuity guard so it
+  can't pass trivially)
+- Navigation-integrity gate: every literal in-app nav target
+  (onNav/open/C2C.open/setSurface) resolves to a real SURFACE_VIEWS surface, a
+  deep-link alias, the home hub, or a modal mode — no dead buttons
+  (`navTargets`)
+- Risk live-adoption mapper unit-tested end to end: label round-trip vs the
+  write path, server-flag acceptability, and every fail-closed rejection
+  (`riskMapping`)
 - Every seed module dry-run against a real Postgres in a rolled-back
   transaction before landing; re-runs are no-ops (idempotency proven)
-- 55+ route/service tests across the new read layers
-- CI: typecheck, tests, Lint, schema-on-fresh-Postgres, Neon preview
-  migrations all green on PR #1025
+- Each Wave-2/3 read endpoint carries a route test: 403 without org, the
+  exact display-key contract, and 42P01 fail-closed (empty/null, never 500)
+- Full `tsc --noEmit` at 0 errors; route-mount + repo-health no-regression
+  gates at +0 delta on every slice
+- CI: typecheck, tests, Lint, schema-on-fresh-Postgres, and the Neon preview
+  DB (migrations applied + schema verified + tests) green on PR #1026
+- Every domain seed module in `scripts/seed/ga-demo.d/` is auto-loaded by the
+  GA-demo orchestrator (glob loader), so seeding populates every live store
 
 ## 6. Filing an issue
 

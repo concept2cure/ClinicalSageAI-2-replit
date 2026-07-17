@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-07-16T21:07:12.522Z",
+  "generatedAt": "2026-07-17T16:29:14.366Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 180,
+  "totalMigrations": 202,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -515,7 +515,29 @@
     "20260716_biopharma_specialty.sql",
     "20260716_enablement.sql",
     "20260716_nonclinical_display.sql",
-    "20260716_clinical_ops_studies_display.sql"
+    "20260716_clinical_ops_studies_display.sql",
+    "20260717_biostat_docs.sql",
+    "20260717_evidence_objects_store.sql",
+    "20260717_human_factors_store.sql",
+    "20260717_sae_cases_store.sql",
+    "20260717_nda_modules_store.sql",
+    "20260717_doc_journey_store.sql",
+    "20260717_evidence_asks_store.sql",
+    "20260717_agency_meetings_store.sql",
+    "20260717_cro_portfolio_store.sql",
+    "20260717_design_controls_store.sql",
+    "20260717_decision_lineage_store.sql",
+    "20260717_dossier_map_store.sql",
+    "20260717_reg_change_store.sql",
+    "20260717_ind_checklist_store.sql",
+    "20260717_labeling_pi_store.sql",
+    "20260717_market_access_store.sql",
+    "20260717_program_journey_store.sql",
+    "20260717_protocol_dev_store.sql",
+    "20260717_research_admin_store.sql",
+    "20260717_shadow_review_store.sql",
+    "20260717_nda_m1_docs_store.sql",
+    "20260717_nda_rtf_store.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

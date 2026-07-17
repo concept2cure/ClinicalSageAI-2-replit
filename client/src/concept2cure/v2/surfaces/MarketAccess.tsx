@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
+import { SampleTag, liveGet } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -29,6 +30,15 @@ interface CodingRow {
   kind: string;
   status: string;
   note: string;
+}
+
+/* One org's market-access program record — the read shape of
+   GET /api/market-access (nested display lists rehydrated from JSONB). */
+interface MarketAccessRecord {
+  program: string;
+  coverage: CoverageRow[];
+  dossier: DossierSection[];
+  coding: CodingRow[];
 }
 
 /* -- Inline fixture data (kit-identical) -- */
@@ -79,13 +89,45 @@ function maPill(s: string): string {
 
 export function MarketAccess({ onAsk }: SurfaceViewProps) {
   const [tab, setTab] = useState('coverage');
+  const [coverage, setCoverage] = useState<CoverageRow[]>(MA_COVERAGE);
+  const [dossier, setDossier] = useState<DossierSection[]>(MA_DOSSIER);
+  const [coding, setCoding] = useState<CodingRow[]>(MA_CODING);
+  const [sample, setSample] = useState(true);
   const ask = (q: string) => onAsk && onAsk(q);
 
-  const covered = MA_COVERAGE.filter((c) => c.status === 'covered').length;
+  /* live ?? fixture — adopt the org's seeded market-access record when the store
+     returns a program row carrying the full display shape (coverage rows with
+     region/payer + the dossier & coding lists), else keep the codebase fixture
+     so no tab is ever empty. Never fabricates. */
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: MarketAccessRecord[] }>('/api/market-access', { data: [] }).then((res) => {
+      if (cancelled) return;
+      const rec = res.data?.data?.[0];
+      if (
+        !res.sample &&
+        rec &&
+        Array.isArray(rec.coverage) && rec.coverage.length > 0 &&
+        rec.coverage[0]?.region && rec.coverage[0]?.payer &&
+        Array.isArray(rec.dossier) &&
+        Array.isArray(rec.coding)
+      ) {
+        setCoverage(rec.coverage);
+        setDossier(rec.dossier);
+        setCoding(rec.coding);
+        setSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const covered = coverage.filter((c) => c.status === 'covered').length;
   const kpis = [
-    { v: String(MA_COVERAGE.length), l: 'Markets / payers' },
+    { v: String(coverage.length), l: 'Markets / payers' },
     { v: String(covered), l: 'Covered', tone: 'ok' },
-    { v: String(MA_COVERAGE.filter((c) => c.status === 'review').length), l: 'In HTA review', tone: 'warn' },
+    { v: String(coverage.filter((c) => c.status === 'review').length), l: 'In HTA review', tone: 'warn' },
     { v: '1', l: 'Value dossier' },
   ];
   const tabs: [string, string][] = [
@@ -99,7 +141,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
     <div className="reg ma">
       <div className="reg-head">
         <div>
-          <div className="reg-kicker">Platform · commercial</div>
+          <div className="reg-kicker">Platform · commercial <SampleTag sample={sample} /></div>
           <h1 className="reg-title">Market access &amp; reimbursement</h1>
           <p className="reg-sub">
             Payer coverage, value dossiers and coding strategy -- the bridge from
@@ -153,7 +195,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
               </tr>
             </thead>
             <tbody>
-              {MA_COVERAGE.map((c, i) => (
+              {coverage.map((c, i) => (
                 <tr key={i}>
                   <td>
                     <div className="reg-mk">{c.region}</div>
@@ -205,7 +247,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
               {I.sparkles} Draft section
             </button>
           </div>
-          {MA_DOSSIER.map((s, i) => (
+          {dossier.map((s, i) => (
             <div
               key={i}
               className="ma-doc-row"
@@ -245,7 +287,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
               </tr>
             </thead>
             <tbody>
-              {MA_CODING.map((c, i) => (
+              {coding.map((c, i) => (
                 <tr key={i}>
                   <td className="mono reg-mk">{c.code}</td>
                   <td>
