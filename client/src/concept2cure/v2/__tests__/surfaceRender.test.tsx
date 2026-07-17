@@ -77,7 +77,7 @@ function stubSurface(id: string): UiSurface {
   return {
     id,
     label: id,
-    navTier: 'workspace',
+    navTier: 'specialist',
     layoutMode: id,
     group: 'workspace',
     uiKit: null,

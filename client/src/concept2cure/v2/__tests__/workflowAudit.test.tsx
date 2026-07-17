@@ -53,7 +53,7 @@ afterEach(() => cleanup());
 
 function stub(id: string): UiSurface {
   return {
-    id, label: id, navTier: 'workspace', layoutMode: id, group: 'workspace',
+    id, label: id, navTier: 'specialist', layoutMode: id, group: 'workspace',
     uiKit: null, apiPrefixes: [], anaToolFamilies: [], sharedContract: null,
     discoveryCatalog: null, readiness: 'routes-ready', compliance: [],
   };
