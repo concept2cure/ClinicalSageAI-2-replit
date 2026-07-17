@@ -74,6 +74,26 @@ Each Wave-2/3 surface adopts live data only when the store returns its full
 display shape, else fails closed to the codebase fixture with a "Sample data"
 pill — so a "Live" pill on any of these after seeding is the proof it worked.
 
+The v2 Risk surface (ISO 14971) also adopts the org's live risk file: it reads
+the same `risk_items` store as the standalone module through a fail-closed
+display mapper (`mapRiskItems`) that maps raw DB rows onto the surface's
+labelled contract — severity/probability labels are the exact inverse of the
+surface's own write path, and residual acceptability is taken from the server's
+`acceptable` flag, never inferred.
+
+**Known read-shape gaps (fail closed to sample, not defects — wiring TODO).**
+A few older MDX panels read raw `SELECT *` endpoints whose DB columns diverge
+from the v2 display fixture, so `useLiveList`'s structural guard correctly
+rejects the response and the panel stays on its "Sample data" fixture rather
+than rendering mismatched data. The Risk surface was the org-wide case and is
+now fixed via `mapRiskItems`; still outstanding are the **RBM site-risk** panel
+(`/api/mdx/rbm-site-risk`, needs the caller to discover the org's `program_id`
+first — like `useOrchProgram` — then a `rbm_site_risk_scores → RbmSite` mapper)
+and **Labeling translations** (`/api/mdx/labeling/:id/translations`, needs the
+org's real labeling-document id in place of the hard-coded `1`, then a
+`labeling_translations → LabelTranslation` mapper). Both should follow the
+Risk pattern: entity-id discovery + a pure, unit-tested, fail-closed adapter.
+
 ## 3. Labeled sample-data surfaces (by design — not defects)
 
 These fail closed to kit fixtures with a visible "Sample data" pill because an
@@ -82,8 +102,7 @@ surface is a pure calculator / static reference with no instance data to back:
 document editors (DocumentAuthoring, EditorCockpit), Evidence RAG deep-search,
 PvSignal (a deterministic disproportionality calculator — inputs → PRR/ROR/
 BCPNN/EBGM, nothing to seed), Setup (installer-only backend — intentionally not
-wired), InsightsCanvas, CER/PMA fixture panels, v2 Risk (ISO 14971 device-risk
-variant; the standalone risk module is the live one), and the remaining
+wired), InsightsCanvas, CER/PMA fixture panels, and the remaining
 records-list surfaces not yet wired (filings-catalog and precedent-intelligence
 — static taxonomies/search catalogs; batch-draft; task-board — already backed by
 the tasking layer). device-510k is the ported MDX 510(k) sub-app whose instance
@@ -103,6 +122,18 @@ SourceTracer are helper/static modules, not instance-data surfaces.
 
 - Every v2 SURFACE_VIEWS surface mounts with 0 console errors (automated
   render audit, re-run after every wave/slice)
+- First-use render gates, both provenance states: every surface renders
+  crash-free in its offline (fixture, "Sample data") branch AND in its
+  live-adopted ("Live", sample:false) branch — the seeded first-user view
+  (`surfaceRender` + `liveBranchRender`, the latter with a vacuity guard so it
+  can't pass trivially)
+- Navigation-integrity gate: every literal in-app nav target
+  (onNav/open/C2C.open/setSurface) resolves to a real SURFACE_VIEWS surface, a
+  deep-link alias, the home hub, or a modal mode — no dead buttons
+  (`navTargets`)
+- Risk live-adoption mapper unit-tested end to end: label round-trip vs the
+  write path, server-flag acceptability, and every fail-closed rejection
+  (`riskMapping`)
 - Every seed module dry-run against a real Postgres in a rolled-back
   transaction before landing; re-runs are no-ops (idempotency proven)
 - Each Wave-2/3 read endpoint carries a route test: 403 without org, the
