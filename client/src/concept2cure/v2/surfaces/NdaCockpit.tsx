@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag, liveGet } from '../dataConnect';
+import { SampleTag, liveGet, useLiveList } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -154,7 +155,25 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     ? Math.round(modules.reduce((a, m) => a + m.pct, 0) / modules.length)
     : 0;
   const [rtf, addRtf] = useRows<NdaRtfItem>(NDA_RTF_SEED);
-  const [m1, addM1] = useRows<NdaM1Doc>(NDA_M1_SEED);
+  /* live ?? fixture — adopt the org's seeded Module-1 admin worklist when the
+     store returns the full shape, else keep the fixture (no empty-flash). The
+     list stays locally mutable so an added document appears immediately, and
+     the POST persists it when live. */
+  const m1Live = useLiveList<NdaM1Doc>('/api/nda-cockpit/m1', NDA_M1_SEED);
+  const m1IsLive = !m1Live.sample;
+  const [m1, setM1] = useState<NdaM1Doc[]>(() => NDA_M1_SEED.map((r) => ({ ...r })));
+  const m1Seeded = useRef<NdaM1Doc[] | null>(null);
+  useEffect(() => {
+    if (!m1Live.loading && m1Live.data && m1Seeded.current !== m1Live.data) {
+      m1Seeded.current = m1Live.data;
+      setM1(m1Live.data.map((r) => ({ ...r })));
+    }
+  }, [m1Live.loading, m1Live.data]);
+  const addM1 = (r: NdaM1Doc) => {
+    const row: NdaM1Doc = { ...r, _new: true };
+    setM1((rs) => [row, ...rs]);
+    setTimeout(() => setM1((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
+  };
   const [form, setForm] = useState<null | 'rtf' | 'm1'>(null);
   const [toast, fireToast] = useToast();
   const m1open = m1.filter(d => d.st !== 'complete' && d.st !== 'na').length;
@@ -191,11 +210,42 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     fireToast('Filing risk logged · ' + v.area);
   };
 
-  const submitM1 = (v: Record<string, string>) => {
-    addM1({ id: 'm1-' + Date.now(), label: v.label, st: v.st, note: v.note || undefined });
+  const submitM1 = async (v: Record<string, string>) => {
     setForm(null);
     setTab('m1');
-    fireToast('Module 1 document added');
+    const local = (): NdaM1Doc => ({ id: 'm1-' + Date.now(), label: v.label, st: v.st, note: v.note || undefined });
+    if (!m1IsLive) {
+      // Fixture mode — nothing to persist to; say so instead of faking success.
+      addM1(local());
+      fireToast('Module 1 document added · sample only, not persisted');
+      return;
+    }
+    try {
+      const res = await apiRequest('POST', '/api/nda-cockpit/m1', {
+        label: v.label,
+        st: v.st,
+        note: v.note || undefined,
+      });
+      if (!res.ok) {
+        addM1(local());
+        fireToast('Could not save Module 1 document · sign in required — sample only, not persisted');
+        return;
+      }
+      const body = await res.json().catch(() => null);
+      const row = body?.data;
+      // Adopt the persisted row (server-generated id) when returned, else the local shape.
+      addM1(row && typeof row.id === 'string' ? (row as NdaM1Doc) : local());
+      fireToast('Module 1 document added');
+    } catch (e) {
+      // apiRequest throws on non-OK with the server's reason. Fall back to local
+      // and say it did not persist — never report a write that did not happen.
+      addM1(local());
+      fireToast(
+        'Could not save Module 1 document · ' +
+          (e instanceof Error && e.message ? e.message : 'request failed') +
+          ' — sample only, not persisted',
+      );
+    }
   };
 
   const tabs: [string, string][] = [['ctd', 'CTD readiness'], ['m1', 'Module 1 admin'], ['clock', 'PDUFA review clock'], ['rtf', 'Refuse-to-File risk']];
@@ -278,7 +328,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {tab === 'm1' && (
         <div className="reg-card">
-          <div className="reg-card-h"><span>Module 1 &mdash; administrative &amp; prescribing (21 CFR 314.50)</span><span className="reg-card-s" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>Form 356h + required admin documents<button className="nda-open" onClick={() => setForm('m1')}>{I.plus} Add document</button></span></div>
+          <div className="reg-card-h"><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Module 1 &mdash; administrative &amp; prescribing (21 CFR 314.50) <SampleTag sample={m1Live.sample} /></span><span className="reg-card-s" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>Form 356h + required admin documents<button className="nda-open" onClick={() => setForm('m1')}>{I.plus} Add document</button></span></div>
           <table className="reg-tbl">
             <thead><tr><th>Document</th><th>Status</th><th></th></tr></thead>
             <tbody>

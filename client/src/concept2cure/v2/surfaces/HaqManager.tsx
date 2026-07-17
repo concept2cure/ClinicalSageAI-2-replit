@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import { SampleTag, liveGet } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -91,14 +92,59 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
     ],
   };
 
-  const submitHaq = (v: Record<string, string>) => {
+  const submitHaq = async (v: Record<string, string>) => {
+    const displayTone =
+      v.tone === 'critical' ? 'err' : v.tone === 'minor' ? 'idle' : 'warn';
+
+    // Live rounds adopted (sample === false): persist through the write-back
+    // endpoint and adopt the server's mapped question. Only claim the write on OK.
+    if (!sample) {
+      try {
+        const res = await apiRequest('POST', '/api/haq-manager/questions', {
+          roundId,
+          qid: v.id || undefined,
+          disc: v.disc,
+          tone: displayTone,
+          q: v.q,
+          owner: v.owner,
+          status: 'draft',
+        });
+        if (!res.ok) {
+          // apiRequest only reaches here non-OK on 401 (auth); others throw.
+          fireToast('Could not log question -- sign in and retry');
+          return;
+        }
+        const body = await res.json().catch(() => null);
+        const created = body?.data;
+        if (!created || !created.id) {
+          fireToast('Could not log question -- unexpected response');
+          return;
+        }
+        setExtra((xs) => [
+          { ...(created as HaqQuestion), roundId, _new: true },
+          ...xs,
+        ]);
+        setForm(false);
+        setActiveId(created.id);
+        fireToast('Question logged -- ' + created.id);
+      } catch (e) {
+        fireToast(
+          'Could not log question -- ' +
+            (e instanceof Error && e.message ? e.message : 'request failed'),
+        );
+      }
+      return;
+    }
+
+    // Sample mode — no live store adopted; record locally and say so rather than
+    // claim a write that did not happen.
     const id = v.id || 'IR-' + Date.now();
     setExtra((xs) => [
       {
         roundId,
         id,
         disc: v.disc,
-        tone: v.tone === 'critical' ? 'err' : v.tone === 'minor' ? 'idle' : 'warn',
+        tone: displayTone,
         q: v.q,
         owner: v.owner,
         status: 'draft' as const,
@@ -113,7 +159,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
     ]);
     setForm(false);
     setActiveId(id);
-    fireToast('Question logged -- ' + id);
+    fireToast('Question logged -- ' + id + ' -- local/sample only, not persisted');
   };
 
   const q = qs.find((x) => x.id === activeId) || qs[0];
