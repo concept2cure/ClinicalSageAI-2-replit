@@ -897,6 +897,17 @@ export async function registerInlineAiWorkflowRoutes({
   } catch (error: any) {
     console.error('❌ Failed to mount Orchestration routes:', error.message);
   }
+
+  // Persisted approval-checkpoint read (approval_checkpoints × workflow_runs).
+  // Own try/catch: this lightweight read must stay up even if the heavy
+  // orchestration service graph fails to import (and vice versa).
+  try {
+    const orchestrationCheckpointRoutes = (await import('../routes/orchestration-checkpoints')).default;
+    app.use('/api/orchestration', orchestrationCheckpointRoutes);
+    console.log('✅ Orchestration checkpoint routes mounted at /api/orchestration/checkpoints');
+  } catch (error: any) {
+    console.error('❌ Failed to mount Orchestration checkpoint routes:', error.message);
+  }
 }
 
 /**
