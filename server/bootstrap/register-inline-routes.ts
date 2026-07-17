@@ -834,6 +834,36 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Doc journey route:', error);
   }
 
+  // Agency meetings — org-scoped list of regulatory interactions read by GET
+  // /api/agency-meetings (own sub-prefix). Feeds the AgencyMeetings surface.
+  try {
+    const agencyMeetingsModule = await import('../routes/agency-meetings.routes');
+    app.use('/api/agency-meetings', authMiddleware, agencyMeetingsModule.default);
+    console.info('✅ Agency meetings route mounted (/api/agency-meetings)');
+  } catch (error) {
+    console.error('❌ Failed to mount Agency meetings route:', error);
+  }
+
+  // Design controls — org-scoped 820.30 traceability matrix read by GET
+  // /api/design-controls (own sub-prefix). Feeds the DesignControls surface.
+  try {
+    const designControlsModule = await import('../routes/design-controls.routes');
+    app.use('/api/design-controls', authMiddleware, designControlsModule.default);
+    console.info('✅ Design controls route mounted (/api/design-controls)');
+  } catch (error) {
+    console.error('❌ Failed to mount Design controls route:', error);
+  }
+
+  // CRO portfolio — org-scoped CRO/sponsor oversight list read by GET
+  // /api/cro-portfolio (own sub-prefix). Feeds the CroPortfolio surface.
+  try {
+    const croPortfolioModule = await import('../routes/cro-portfolio.routes');
+    app.use('/api/cro-portfolio', authMiddleware, croPortfolioModule.default);
+    console.info('✅ CRO portfolio route mounted (/api/cro-portfolio)');
+  } catch (error) {
+    console.error('❌ Failed to mount CRO portfolio route:', error);
+  }
+
   // C2C client formatting templates — AnA document-formatting engine.
   // Extract a TemplateSpec from an upload, build/edit client templates, and
   // render documents as .docx / .pdf with the client's fonts, margins, logo.

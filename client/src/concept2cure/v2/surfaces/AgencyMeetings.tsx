@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
+import { SampleTag, liveGet } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -57,6 +58,12 @@ interface Minutes {
   agree: string[];
   commitments: Commitment[];
 }
+
+/* live row = a meeting plus its nested briefing book + minutes (JSONB) */
+type LiveMeeting = Meeting & {
+  briefingBook?: BriefingBook | null;
+  minutes?: Minutes | null;
+};
 
 /* -- Inline fixture data (kit-identical) -- */
 
@@ -130,16 +137,6 @@ const MTG_MINUTES: Record<string, Minutes> = {
 
 /* -- Inline shared helpers -- */
 
-function useRows<T extends { _new?: boolean }>(seed: T[]): readonly [T[], (r: T) => void] {
-  const [rows, setRows] = useState(() => (seed || []).map((r) => ({ ...r })));
-  const add = (r: T) => {
-    const row = { ...r, _new: true } as T;
-    setRows((rs) => [row, ...rs]);
-    setTimeout(() => setRows((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
-  };
-  return [rows, add] as const;
-}
-
 function useToast(): [string, (m: string) => void] {
   const [msg, setMsg] = useState('');
   const fire = (m: string) => {
@@ -166,11 +163,58 @@ function MtgStat({ children, tone }: { children: React.ReactNode; tone?: string 
 /* ════ AgencyMeetings -- agency meetings & briefing books surface ════ */
 
 export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
-  const [meetings, addMeeting] = useRows<Meeting>(MTG_LIST);
+  const [meetings, setMeetings] = useState<Meeting[]>(() => MTG_LIST.map((r) => ({ ...r })));
+  const [bbMap, setBbMap] = useState<Record<string, BriefingBook>>(MTG_BB);
+  const [minMap, setMinMap] = useState<Record<string, Minutes>>(MTG_MINUTES);
+  const [sample, setSample] = useState(true);
   const [sel, setSel] = useState('m1');
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
   const m = meetings.find((x) => x.id === sel) || meetings[0];
+
+  const addMeeting = (r: Meeting) => {
+    const row = { ...r, _new: true };
+    setMeetings((rs) => [row, ...rs]);
+    setTimeout(
+      () => setMeetings((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))),
+      1500,
+    );
+  };
+
+  /* live ?? fixture — adopt the org's seeded agency meetings (and each row's
+     nested briefing book + minutes) when the store returns the full meeting
+     shape, else keep the codebase fixture so the surface is never empty. Never
+     fabricates. Local form-added rows then work off whichever set loaded. */
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: LiveMeeting[] }>('/api/agency-meetings', { data: [] }).then((res) => {
+      if (cancelled) return;
+      const list = res.data?.data;
+      if (
+        !res.sample &&
+        Array.isArray(list) &&
+        list.length > 0 &&
+        list[0]?.id &&
+        list[0]?.type &&
+        list[0]?.status
+      ) {
+        setMeetings(list.map(({ briefingBook: _bb, minutes: _mn, ...row }) => row));
+        const bb: Record<string, BriefingBook> = {};
+        const mn: Record<string, Minutes> = {};
+        for (const r of list) {
+          if (r.briefingBook) bb[r.id] = r.briefingBook;
+          if (r.minutes) mn[r.id] = r.minutes;
+        }
+        setBbMap(bb);
+        setMinMap(mn);
+        setSel((cur) => (list.some((s) => s.id === cur) ? cur : list[0].id));
+        setSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const MTG_FORM: C2CFormConfig = {
     eyebrow: 'Agency interaction · new request',
@@ -226,8 +270,8 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
     fireToast('Meeting request created · ' + v.type);
   };
 
-  const bb: BriefingBook | undefined = MTG_BB[sel];
-  const min: Minutes | undefined = MTG_MINUTES[sel];
+  const bb: BriefingBook | undefined = bbMap[sel];
+  const min: Minutes | undefined = minMap[sel];
   const stTone: Record<string, string> = { granted: 'ok', held: 'ok', requested: 'warn', planned: 'idle' };
   const ssTone: Record<string, string> = { approved: 'ok', review: 'warn', draft: 'idle', final: 'ok' };
 
@@ -235,7 +279,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
     <div className="page-inner reg">
       <div className="reg-head">
         <div>
-          <div className="reg-eyebrow">Platform · agency interactions</div>
+          <div className="reg-eyebrow">Platform · agency interactions <SampleTag sample={sample} /></div>
           <h1 className="reg-title">Meetings &amp; briefing books</h1>
           <p className="reg-sub">
             The regulator interactions that gate a program -- Pre-IND, INTERACT,

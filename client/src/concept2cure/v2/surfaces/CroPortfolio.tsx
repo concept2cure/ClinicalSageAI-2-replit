@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, liveGet } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -124,25 +124,56 @@ const CRO_SPONSORS: CroSponsor[] = [
 /* ── CRO Sponsor Portfolio ── */
 
 export function CroPortfolio({ onAsk }: SurfaceViewProps) {
+  const [sponsors, setSponsors] = useState<CroSponsor[]>(CRO_SPONSORS);
   const [selId, setSel] = useState('helix');
-  const sel = CRO_SPONSORS.find((s) => s.id === selId) || CRO_SPONSORS[0];
+  const [sample, setSample] = useState(true);
 
-  const allSubs = CRO_SPONSORS.flatMap((s) => s.subs);
-  const allStudies = CRO_SPONSORS.flatMap((s) => s.studies);
+  /* live ?? fixture — adopt the org's seeded sponsor roster when the store
+     returns the full CroSponsor shape (roster fields + nested studies/subs),
+     else keep the codebase fixture so the console is never empty. Never
+     fabricates. */
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: CroSponsor[] }>('/api/cro-portfolio', { data: [] }).then((res) => {
+      if (cancelled) return;
+      const list = res.data?.data;
+      if (
+        !res.sample &&
+        Array.isArray(list) &&
+        list.length > 0 &&
+        list[0]?.id &&
+        list[0]?.name &&
+        Array.isArray(list[0]?.studies) &&
+        Array.isArray(list[0]?.subs)
+      ) {
+        setSponsors(list);
+        setSel((cur) => (list.some((s) => s.id === cur) ? cur : list[0].id));
+        setSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const sel = sponsors.find((s) => s.id === selId) || sponsors[0];
+
+  const allSubs = sponsors.flatMap((s) => s.subs);
+  const allStudies = sponsors.flatMap((s) => s.studies);
   const pipe = CRO_LIFECYCLE.map((st) => ({
     ...st,
     n: allSubs.filter((x) => x.state === st.k).length,
   }));
   const health = [
-    { l: 'Sponsor clients', n: CRO_SPONSORS.length, m: 'org-isolated tenants', t: '' },
+    { l: 'Sponsor clients', n: sponsors.length, m: 'org-isolated tenants', t: '' },
     { l: 'Active studies', n: allStudies.filter((s) => s.status !== 'Complete').length, m: `of ${allStudies.length} total`, t: '' },
     { l: 'Submissions in flight', n: allSubs.filter((s) => s.state !== 'dispatched').length, m: 'pre-dispatch', t: 'ai' },
-    { l: 'SOWs needing attention', n: CRO_SPONSORS.filter((s) => s.sow !== 'on-track').length, m: 'change-order / renewal', t: 'warn' },
+    { l: 'SOWs needing attention', n: sponsors.filter((s) => s.sow !== 'on-track').length, m: 'change-order / renewal', t: 'warn' },
   ];
 
   return (
     <div className="page-inner">
-      <SampleTag sample={true} />
+      <SampleTag sample={sample} />
       <div className="ph">
         <div>
           <div className="ph-eyebrow">CRO {I.dot} Multi-sponsor</div>
@@ -215,9 +246,9 @@ export function CroPortfolio({ onAsk }: SurfaceViewProps) {
         {/* sponsor roster */}
         <div className="cro-roster">
           <div className="cro-roster-hd">
-            Sponsor clients <span>{CRO_SPONSORS.length}</span>
+            Sponsor clients <span>{sponsors.length}</span>
           </div>
-          {CRO_SPONSORS.map((s) => {
+          {sponsors.map((s) => {
             const t = CRO_TYPE[s.type] || CRO_TYPE.biotech;
             return (
               <button
