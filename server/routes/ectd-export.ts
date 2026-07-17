@@ -20,7 +20,11 @@
 import { Router, Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
-import { generateEctdPackage, validateEctdPackage, EctdCompletenessError } from '../services/ectdExportService';
+import { generateEctdPackage, validateEctdPackage } from '../services/ectdExportService';
+// Import the error class from its source module (not re-exported via
+// ectdExportService) so `instanceof` still resolves in tests that vi.mock the
+// export service.
+import { EctdCompletenessError } from '../services/ectd/completeness';
 import {
   validatePackage as validateEctdLeafPackage,
   type ECTDLeaf,
@@ -379,9 +383,12 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     res.setHeader('X-ECTD-Generated-At', result.stats.generatedAt);
     // Surface submission-completeness on every export (draft builds included) so
     // callers can see how much of the dossier is still placeholder content.
-    res.setHeader('X-ECTD-Completeness-Pct', String(result.stats.completeness.completenessPct));
-    res.setHeader('X-ECTD-Incomplete-Leaves', String(result.stats.completeness.placeholderLeaves));
-    res.setHeader('X-ECTD-Submission-Complete', String(result.stats.completeness.complete));
+    const comp = result.stats.completeness;
+    if (comp) {
+      res.setHeader('X-ECTD-Completeness-Pct', String(comp.completenessPct));
+      res.setHeader('X-ECTD-Incomplete-Leaves', String(comp.placeholderLeaves));
+      res.setHeader('X-ECTD-Submission-Complete', String(comp.complete));
+    }
     if (validation) {
       res.setHeader('X-ECTD-Valid', String(validation.valid));
       if (validation.errors.length > 0) {
