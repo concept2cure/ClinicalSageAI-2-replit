@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLiveList } from '../dataConnect';
+import { SampleTag, useLive, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import { C2CForm } from '../C2CForm';
@@ -37,6 +37,24 @@ interface NcM4Placement {
   pct: number;
 }
 
+/** SEND package-readiness rollup (live projection of the governed registry). */
+interface NcSendRollup {
+  inScope: number;
+  validated: number;
+  missingDomains: string[];
+  risk: 'high' | 'medium' | 'low' | 'none';
+}
+
+/** GET /api/nonclinical-summary display contract (see server m26-m4-view.ts). */
+interface NcSummary {
+  m26: NcM26Section[];
+  m4: NcM4Placement[];
+  send: NcSendRollup;
+  completeness: number;
+  gaps: string[];
+  provisioned: boolean;
+}
+
 /* ── Inline fixture data (kit window globals) ── */
 
 const NC_STUDIES: NcStudy[] = [
@@ -69,6 +87,17 @@ const NC_M4MAP: NcM4Placement[] = [
   { code: '4.2.2', l: 'Pharmacokinetic study reports', pct: 88 },
   { code: '4.2.3', l: 'Toxicology study reports', pct: 84 },
 ];
+
+/* Composite fixture for the M2.6 / M4 / SEND cards — the offline fallback for
+   GET /api/nonclinical-summary (a live projection of the governed registry). */
+const NC_SUMMARY: NcSummary = {
+  m26: NC_M26,
+  m4: NC_M4MAP,
+  send: { inScope: 4, validated: 3, missingDomains: ['LB'], risk: 'medium' },
+  completeness: 71,
+  gaps: [],
+  provisioned: false,
+};
 
 /* ── Inline shared kit helpers (not yet ported as modules) ── */
 
@@ -201,7 +230,7 @@ function pill(status: string) {
     planned: 'idle', implemented: 'ok', monitoring: 'ai', watch: 'idle',
     drafting: 'warn', queued: 'idle', filed: 'ai', eligible: 'warn',
     awarded: 'ok', agreed: 'ok', submitted: 'ai', 'in draft': 'idle',
-    received: 'ok', complete: 'ok',
+    received: 'ok', complete: 'ok', missing: 'err',
   };
   return <span className={'rd-chip tone-' + (map[status] || 'idle')}>{status}</span>;
 }
@@ -273,6 +302,16 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
   };
   const liveStudies = useLiveList<NcStudy>('/api/nonclinical/studies', NC_STUDIES);
   const [studies, addStudy] = useRows(liveStudies.data);
+
+  // Live M2.6 / M4-placement / SEND projection of the governed registry.
+  // `useLive` does not shape-guard, so validate the envelope before adopting it;
+  // any malformed or unreachable response falls back to the honest fixture.
+  const rawSummary = useLive<{ data?: NcSummary }>('/api/nonclinical-summary', { data: NC_SUMMARY });
+  const sd = rawSummary.data?.data;
+  const summaryValid =
+    !rawSummary.sample && !!sd && Array.isArray(sd.m26) && Array.isArray(sd.m4) && !!sd.send;
+  const summary: NcSummary = summaryValid ? (sd as NcSummary) : NC_SUMMARY;
+  const summarySample = !summaryValid;
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -360,15 +399,39 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       <div className="sp-2col">
-        <SpCard title="SEND conformance" sample meta="12 domains -- Pinnacle21">
-          <div className="nc-send">
-            {NC_SEND.map((x, i) => (
-              <div key={i} className="nc-send-cell" data-st={sendTone(x.st)} title={x.d + ' -- ' + x.st}>
-                <span className="nc-send-d">{x.d}</span>
-                <span className="nc-send-s">{sendIcon(x.st)}</span>
+        <SpCard
+          title="SEND readiness"
+          sample={summarySample}
+          meta={summarySample ? '12 domains -- Pinnacle21' : `${summary.send.inScope} in-scope -- ${summary.send.risk === 'none' ? 'not in scope' : summary.send.risk + ' risk'}`}
+        >
+          {summarySample ? (
+            <div className="nc-send">
+              {NC_SEND.map((x, i) => (
+                <div key={i} className="nc-send-cell" data-st={sendTone(x.st)} title={x.d + ' -- ' + x.st}>
+                  <span className="nc-send-d">{x.d}</span>
+                  <span className="nc-send-s">{sendIcon(x.st)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="sp-list">
+              <div className="sp-row">
+                <span className="sp-row-b">
+                  <span className="sp-row-t">{summary.send.validated}/{summary.send.inScope} package(s) validation-ready</span>
+                  <span className="sp-row-s">
+                    {summary.send.missingDomains.length > 0
+                      ? 'Missing required SEND domain(s): ' + summary.send.missingDomains.join(', ')
+                      : summary.send.inScope > 0
+                        ? 'All required SEND domains present.'
+                        : 'No SEND-mandated studies in the registry yet.'}
+                  </span>
+                </span>
+                <span className={'rd-chip tone-' + (summary.send.risk === 'high' ? 'err' : summary.send.risk === 'medium' ? 'warn' : 'ok')}>
+                  {summary.send.risk === 'none' ? 'not in scope' : summary.send.risk + ' risk'}
+                </span>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
           <div className="sp-foot">
             <button className="sp-ask" onClick={() => ask('Run SEND conformance -- map units to controlled terminology and re-validate the LB reject.')}>
               {I.sparkles} Run SEND conformance
@@ -376,9 +439,9 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
           </div>
         </SpCard>
 
-        <SpCard title="Module 4 placement" sample meta="4.2.x readiness">
+        <SpCard title="Module 4 placement" sample={summarySample} meta="4.2.x readiness">
           <div className="sp-list">
-            {NC_M4MAP.map((m, i) => (
+            {summary.m4.map((m, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => open('dossier')}>
                 <span className="sp-tag">{m.code}</span>
                 <span className="sp-row-b">
@@ -395,9 +458,9 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       <div className="sp-sec">
-        <SpCard title="CTD Module 2.6 summary builder" sample meta="2.6.1 -- 2.6.7">
+        <SpCard title="CTD Module 2.6 summary builder" sample={summarySample} meta="2.6.1 -- 2.6.7">
           <div className="sp-list">
-            {NC_M26.map((m, i) => (
+            {summary.m26.map((m, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Open §${m.n} ${m.l} and continue drafting`)}>
                 <span className="sp-tag">{m.n}</span>
                 <span className="sp-row-b">

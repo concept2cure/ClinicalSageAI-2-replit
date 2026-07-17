@@ -187,3 +187,66 @@ export async function getSendReadinessInput(client: Queryable, orgId: number, st
     validatorErrorCount: s ? Number(s.validator_error_count) : 0,
   };
 }
+
+/**
+ * Load the org's governed nonclinical studies with their latest SEND dataset,
+ * in the RAW shape the M2.6/M4/SEND view assembler consumes (raw `study_type`
+ * union + `status`, not the display labels `listStudies` returns). Org-scoped;
+ * the LATERAL join picks each study's most recent non-deleted SEND package.
+ */
+export async function listStudiesForSummary(orgId: number): Promise<Array<{
+  studyNumber: string;
+  studyType: NonclinicalStudyType;
+  species: string | null;
+  glpCompliant: boolean;
+  noael: string | null;
+  durationLabel: string | null;
+  keyFinding: string | null;
+  status: string;
+  send: {
+    domainsPresent: string[];
+    defineXmlPresent: boolean;
+    nsdrcPresent: boolean;
+    validationStatus: SendValidationStatus;
+    validatorErrorCount: number;
+  } | null;
+}>> {
+  const { rows } = await pool.query(
+    `SELECT s.study_number, s.study_type, s.species, s.glp_compliant, s.noael,
+            s.duration_label, s.key_finding, s.status,
+            sd.domains_present, sd.define_xml_present, sd.nsdrc_present,
+            sd.validation_status, sd.validator_error_count
+       FROM nonclinical_studies s
+       LEFT JOIN LATERAL (
+         SELECT domains_present, define_xml_present, nsdrc_present,
+                validation_status, validator_error_count
+           FROM send_datasets
+          WHERE study_id = s.id AND deleted_at IS NULL
+          ORDER BY updated_at DESC
+          LIMIT 1
+       ) sd ON true
+      WHERE s.organization_id = $1 AND s.deleted_at IS NULL
+      ORDER BY s.created_at DESC`,
+    [orgId],
+  );
+  return rows.map((r) => ({
+    studyNumber: r.study_number,
+    studyType: r.study_type,
+    species: r.species ?? null,
+    glpCompliant: Boolean(r.glp_compliant),
+    noael: r.noael ?? null,
+    durationLabel: r.duration_label ?? null,
+    keyFinding: r.key_finding ?? null,
+    status: r.status,
+    send:
+      r.validation_status == null && r.domains_present == null
+        ? null
+        : {
+            domainsPresent: r.domains_present ?? [],
+            defineXmlPresent: Boolean(r.define_xml_present),
+            nsdrcPresent: Boolean(r.nsdrc_present),
+            validationStatus: r.validation_status ?? 'not_validated',
+            validatorErrorCount: Number(r.validator_error_count ?? 0),
+          },
+  }));
+}
