@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected } from '../dataConnect';
+import { SampleTag, liveGet } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -92,9 +92,31 @@ function hfAnalyzeRisk(scenarios: HfScenario[]): HfRiskResult {
 
 export function HumanFactors({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const live = connected();
+  // live ?? fixture: the org's real HFE/UE file + use scenarios
+  // (GET /api/human-factors, c2c_hf_* store). The pill reflects DATA, not
+  // token presence — sample until the store actually answers.
+  const [live, setLive] = useState(false);
+  const [device, setDevice] = useState<string>(HF_FILE.device);
   const [present, setPresent] = useState<Record<string, boolean>>(HF_FILE.present);
   const [scenarios, setScenarios] = useState<HfScenario[]>(HF_SCENARIOS);
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: { device?: string; present?: Record<string, boolean>; scenarios?: HfScenario[] } | null }>(
+      '/api/human-factors',
+      { data: null },
+    ).then((res) => {
+      if (cancelled || res.sample) return;
+      const hf = res.data?.data;
+      if (!hf || !hf.present || !Array.isArray(hf.scenarios) || hf.scenarios.length === 0) return;
+      setDevice(hf.device || HF_FILE.device);
+      setPresent(hf.present);
+      setScenarios(hf.scenarios);
+      setLive(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [form, setForm] = useState(false);
   const [toast, setToast] = useState('');
   const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
@@ -141,7 +163,7 @@ export function HumanFactors({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="sp-eyebrow">Specialist {I.dot} device {I.dot} /api/human-factors {live ? <> {I.dot} live</> : ''}</div>
           <h1 className="sp-title">Human factors {I.dot} IEC 62366-1 <SampleTag sample={!live} /></h1>
-          <p className="sp-state">{HF_FILE.device} -- use-related risk analysis and HFE/UE file completeness, the gate before summative testing.</p>
+          <p className="sp-state">{device} -- use-related risk analysis and HFE/UE file completeness, the gate before summative testing.</p>
         </div>
         <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} Add use scenario</button>
       </div>
