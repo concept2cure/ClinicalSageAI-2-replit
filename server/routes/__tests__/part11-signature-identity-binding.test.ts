@@ -18,7 +18,13 @@
 import express from 'express';
 import request from 'supertest';
 import bcrypt from 'bcryptjs';
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
+
+// The §11.10(g) signing-authority gate resolves the signer's org role from the
+// membership record; mock it so these identity-binding tests control authority
+// independently (default: an authorized role, so the gate is transparent).
+const resolveSignerOrgRole = vi.hoisted(() => vi.fn());
+vi.mock('../../services/part11/resolve-signer-role', () => ({ resolveSignerOrgRole }));
 
 import part11Router from '../part11-compliance';
 
@@ -70,6 +76,23 @@ function buildApp(pool: ReturnType<typeof makePool>) {
 describe('POST /api/part11/signatures — §11.200 signer-identity binding', () => {
   beforeAll(async () => {
     authUserHash = await bcrypt.hash('correct-horse', 4);
+  });
+
+  beforeEach(() => {
+    resolveSignerOrgRole.mockReset();
+    resolveSignerOrgRole.mockResolvedValue('approver'); // an authorized signing role
+  });
+
+  it('403s a session user whose org role lacks signing authority (§11.10(g))', async () => {
+    resolveSignerOrgRole.mockResolvedValueOnce('viewer'); // not a signing role
+    const pool = makePool();
+    const res = await request(buildApp(pool))
+      .post('/api/part11/signatures')
+      .send({ documentId: 'doc-x', meaning: 'approval', password: 'correct-horse' });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    // Blocked before any credential lookup.
+    expect(pool.passwordLookups).toEqual([]);
   });
 
   it('rejects signing as a different signerId than the authenticated user (no spoofing)', async () => {

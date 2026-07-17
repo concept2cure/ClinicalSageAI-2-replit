@@ -8,10 +8,12 @@
  * valid credentials must still hold a signing role.
  *
  * This module centralizes which organization roles may apply a signature so
- * every signing surface (the artifact-signature route and the /api/esignature
- * route) enforces the SAME policy. The default set mirrors the policy already
- * enforced on the artifact-signature route; a deployment can override it via the
- * ESIGNATURE_SIGNING_ROLES env var (comma-separated role names).
+ * every signing surface enforces the SAME policy: /api/esignature/sign,
+ * /api/submissions/:id/sign-release, /api/part11/signatures, and the AnA
+ * verified-seal route all resolve the signer's org role (see
+ * resolve-signer-role.ts) and call `isSigningAuthorized`. A deployment can
+ * override the default role set via the ESIGNATURE_SIGNING_ROLES env var
+ * (comma-separated role names).
  *
  * Pure / DB-free so it can be unit-tested directly.
  *

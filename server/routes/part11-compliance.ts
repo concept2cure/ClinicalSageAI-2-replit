@@ -26,6 +26,8 @@ import crypto from 'crypto';
 import { createPolicyGuard } from '../services/policy/opaMiddleware';
 import rbacService from '../services/roleBasedAccess';
 import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service';
+import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -407,6 +409,20 @@ router.post(
       return res.status(400).json({
         error:
           'documentId, meaning, and password are required per 21 CFR Part 11 §11.100',
+      });
+    }
+
+    // §11.10(g): identity is not authority. Enforce signing authority for the
+    // authenticated user before credential work, matching the policy on the
+    // other signing routes. Role from the membership record (never the body).
+    const signerOrgId = Number(
+      authUser.organizationId ?? (req as any).tenantContext?.organizationId,
+    );
+    const signerRole = await resolveSignerOrgRole(Number(signerId), signerOrgId);
+    if (!isSigningAuthorized(signerRole)) {
+      return res.status(403).json({
+        error: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
+        code: 'ESIGNATURE_NO_AUTHORITY',
       });
     }
 
