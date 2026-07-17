@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-17T01:00:19.792Z",
+  "generatedAt": "2026-07-17T18:09:24.158Z",
   "git": {
-    "sha": "5cb3596daa28acb89e788f6ddbd1e51f6dd0b4c7",
+    "sha": "19de9867bbbb79872612ae906fce98e6087ae4fb",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2690,6 +2690,10 @@
         "lines": 2059
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 2056
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 2020
       },
@@ -2716,10 +2720,6 @@
       {
         "file": "server/routes/report-os.ts",
         "lines": 1962
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 1945
       },
       {
         "file": "server/routes/auth.ts",
