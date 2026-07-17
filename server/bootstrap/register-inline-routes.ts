@@ -788,6 +788,18 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount C2C Projects routes:', error);
   }
 
+  // PDEV Evidence Picker library — org-scoped searchable evidence pool read by
+  // GET /api/evidence-objects (own sub-prefix, mounted nowhere else). Populates
+  // the picker's result list; before this the fetch 404'd to a permanent empty
+  // state.
+  try {
+    const evidenceObjectsModule = await import('../routes/evidence-objects.routes');
+    app.use('/api/evidence-objects', authMiddleware, evidenceObjectsModule.default);
+    console.info('✅ Evidence objects route mounted (/api/evidence-objects)');
+  } catch (error) {
+    console.error('❌ Failed to mount Evidence objects route:', error);
+  }
+
   // C2C client formatting templates — AnA document-formatting engine.
   // Extract a TemplateSpec from an upload, build/edit client templates, and
   // render documents as .docx / .pdf with the client's fonts, margins, logo.
