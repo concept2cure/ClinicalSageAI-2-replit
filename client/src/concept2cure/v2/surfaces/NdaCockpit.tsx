@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
+import { SampleTag, liveGet } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -83,9 +84,6 @@ const NDA_RTF_SEED: NdaRtfItem[] = [
   { sev: 'low', area: 'Module 2 · summaries', text: '2.7.4 Safety Summary still drafting; needed for a complete CTD.', fix: 'Finalize ISS-derived safety summary' },
 ];
 
-/* ── Derived static values ── */
-const NDA_OVERALL = Math.round(NDA_MODULES.reduce((a, m) => a + m.pct, 0) / NDA_MODULES.length);
-
 /* ── Inline shared kit helpers ── */
 
 function useRows<T extends { _new?: boolean }>(seed: T[]): readonly [T[], (r: T) => void] {
@@ -126,7 +124,35 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
     onNav && onNav(id);
   };
-  const overall = NDA_OVERALL;
+  /* live ?? fixture — adopt the org's seeded CTD module readiness when the
+     store returns the full shape, else keep the fixture. The overall % ready is
+     derived from whichever set loaded. The M1 worklist, PDUFA clock, and RtF
+     log stay the surface's local-first interactive lists. */
+  const [modules, setModules] = useState<NdaModule[]>(NDA_MODULES);
+  const [modulesSample, setModulesSample] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ data?: NdaModule[] }>('/api/nda-cockpit/modules', { data: [] }).then((res) => {
+      if (cancelled) return;
+      const list = res.data?.data;
+      if (
+        !res.sample &&
+        Array.isArray(list) &&
+        list.length > 0 &&
+        list[0]?.m &&
+        typeof list[0]?.pct === 'number'
+      ) {
+        setModules(list);
+        setModulesSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const overall = modules.length
+    ? Math.round(modules.reduce((a, m) => a + m.pct, 0) / modules.length)
+    : 0;
   const [rtf, addRtf] = useRows<NdaRtfItem>(NDA_RTF_SEED);
   const [m1, addM1] = useRows<NdaM1Doc>(NDA_M1_SEED);
   const [form, setForm] = useState<null | 'rtf' | 'm1'>(null);
@@ -178,7 +204,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   const clockNow = NDA_CLOCK.find(s => s.st === 'current') || NDA_CLOCK.find(s => s.st === 'goal');
   const highs = rtf.filter(r => r.sev === 'high');
   const topHigh = highs[0] || rtf.find(r => r.sev === 'med');
-  const gateMod = NDA_MODULES.filter(m => m.gate).sort((a, b) => a.pct - b.pct)[0];
+  const gateMod = modules.filter(m => m.gate).sort((a, b) => a.pct - b.pct)[0];
   const openItems = m1open + rtf.filter(r => r.sev !== 'low').length;
 
   const lead = (
@@ -207,7 +233,9 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     <div className="cv-body"><div className="reg-wrap nda">
       <div className="reg-head">
         <div>
-          <div className="reg-eyebrow">Pharma {I.dot} filing</div>
+          <div className="reg-eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            Pharma {I.dot} filing <SampleTag sample={modulesSample} />
+          </div>
           <h1 className="reg-title">NDA filing cockpit</h1>
           <p className="reg-intro">BX-204 {I.dot} NDA 212345 {I.dot} 505(b)(1) {I.dot} standard review. The complete application on one surface &mdash; CTD Module 1-5 readiness, the Module 1 administrative set, the PDUFA review clock, and Refuse-to-File risk.</p>
         </div>
@@ -231,7 +259,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {tab === 'ctd' && (
         <div className="nda-mods">
-          {NDA_MODULES.map(m => (
+          {modules.map(m => (
             <button key={m.m} className="nda-mod" onClick={() => open('dossier')}>
               <div className="nda-mod-n">M{m.m}</div>
               <div className="nda-mod-b">

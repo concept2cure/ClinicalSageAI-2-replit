@@ -800,6 +800,18 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Evidence objects route:', error);
   }
 
+  // NDA/BLA cockpit CTD module readiness — org-scoped per-module completeness
+  // read by GET /api/nda-cockpit/modules (own sub-prefix, mounted nowhere
+  // else). Feeds the NdaCockpit "CTD readiness" panel + overall % ready; the
+  // surface falls back to its fixture when the store is empty.
+  try {
+    const ndaCockpitModule = await import('../routes/nda-cockpit.routes');
+    app.use('/api/nda-cockpit', authMiddleware, ndaCockpitModule.default);
+    console.info('✅ NDA cockpit route mounted (/api/nda-cockpit)');
+  } catch (error) {
+    console.error('❌ Failed to mount NDA cockpit route:', error);
+  }
+
   // C2C client formatting templates — AnA document-formatting engine.
   // Extract a TemplateSpec from an upload, build/edit client templates, and
   // render documents as .docx / .pdf with the client's fonts, margins, logo.
