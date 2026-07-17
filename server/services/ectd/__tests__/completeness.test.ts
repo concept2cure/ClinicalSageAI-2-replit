@@ -12,7 +12,34 @@ describe('eCTD submission-completeness gate', () => {
       expect(r.complete).toBe(true);
       expect(r.completeLeaves).toBe(12);
       expect(r.placeholderLeaves).toBe(0);
+      expect(r.unfinalizedLeaves).toBe(0);
       expect(r.completenessPct).toBe(100);
+    });
+
+    it('treats draft/review (unfinalized) leaves as incomplete, distinct from placeholders', () => {
+      // 10 leaves: 2 empty placeholders + 3 draft/review + 5 finalized.
+      const r = computeEctdCompleteness(10, 2, [], 3);
+      expect(r.complete).toBe(false);
+      expect(r.placeholderLeaves).toBe(2);
+      expect(r.unfinalizedLeaves).toBe(3);
+      expect(r.completeLeaves).toBe(5);
+      expect(r.completenessPct).toBe(50);
+    });
+
+    it('a package whose every leaf is a draft is NOT submission-complete (the reported hole)', () => {
+      const r = computeEctdCompleteness(6, 0, [], 6);
+      expect(r.complete).toBe(false);
+      expect(r.unfinalizedLeaves).toBe(6);
+      expect(r.completeLeaves).toBe(0);
+      expect(r.completenessPct).toBe(0);
+    });
+
+    it('clamps unfinalized to the leaves left after placeholders', () => {
+      const r = computeEctdCompleteness(5, 3, [], 99);
+      expect(r.placeholderLeaves).toBe(3);
+      expect(r.unfinalizedLeaves).toBe(2);
+      expect(r.completeLeaves).toBe(0);
+      expect(r.complete).toBe(false);
     });
 
     it('reports a package with placeholder leaves as incomplete with a percentage', () => {
@@ -60,7 +87,16 @@ describe('eCTD submission-completeness gate', () => {
       const err = caught as EctdCompletenessError;
       expect(err.code).toBe('ECTD_INCOMPLETE');
       expect(err.completeness).toBe(report);
-      expect(err.message).toMatch(/2 of 8 leaf document\(s\) are unfinished placeholders \(75% complete\)/);
+      expect(err.message).toMatch(/2 of 8 leaf document\(s\) are unfinished/);
+      expect(err.message).toMatch(/75% complete/);
+    });
+
+    it('throws when the only shortfall is draft/review (unfinalized) content', () => {
+      const report = computeEctdCompleteness(4, 0, [
+        { granuleId: '2.5', granuleName: 'Clinical Overview', status: 'draft' },
+      ], 1);
+      expect(() => assertEctdSubmissionComplete(report)).toThrow(EctdCompletenessError);
+      expect(report.complete).toBe(false);
     });
 
     it('throws with an "nothing to file" message for an empty dossier', () => {

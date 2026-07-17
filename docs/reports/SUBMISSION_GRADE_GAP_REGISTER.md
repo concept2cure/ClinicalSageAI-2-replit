@@ -23,8 +23,8 @@ max-depth adversarial multi-agent sweep is still running and will refine/extend 
 
 | Gap | Sev | Standard | Commit |
 |---|---|---|---|
-| eCTD export could assemble a placeholder-leaky / empty dossier (no completeness gate) | Critical | FDA eCTD Tech Conformance Guide; ICH M8 | `5bb0d52` |
-| eCTD **transmit** silently dropped leaves whose document couldn't be assembled → incomplete dossier sent to agency | Critical | FDA eCTD; ICH M8 | `6e1c9e7` |
+| eCTD export could assemble a placeholder-leaky / empty dossier (no completeness gate) — the gate now also fails **draft/review (unfinalized)** leaves, not just empty placeholders (Codex P2) | Critical | FDA eCTD Tech Conformance Guide; ICH M8 | `5bb0d52` + hardening |
+| eCTD **transmit** silently dropped leaves whose document couldn't be assembled → incomplete dossier sent to agency — the gate now blocks on **every** unresolved leaf incl. external vault/onboarding pointers (their bytes aren't materialized into the ZIP), not just "genuine defects" (Codex P1) | Critical | FDA eCTD; ICH M8 | `6e1c9e7` + hardening |
 | e-signature route enforced identity (password+MFA) but **not signing authority** — any user could apply an approval signature | Critical | 21 CFR 11 §11.10(d)(g) | `0547a4f` |
 | MDR/IVDR "content-addressed" ZIP wasn't deterministic (implicit folder timestamps) — reproducibility/integrity bug | High | data integrity / ALCOA+ | `92d9c02` |
 | **PV expedited-reporting clock was stored, not computed** — now live-computed from sponsor **awareness date** + seriousness/causality/expectedness (7-day/15-day/none), fails safe when the awareness date is absent | High | 21 CFR 312.32(c); ICH E2A | `92df8e7` |

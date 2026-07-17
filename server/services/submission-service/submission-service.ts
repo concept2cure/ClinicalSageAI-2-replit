@@ -507,21 +507,42 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     sponsorName: params.sponsorName ?? `Organization ${ctx.organizationId}`,
   });
 
-  // A dossier transmitted to an agency must not silently drop a leaf. assemble
-  // surfaces leaves whose source could not be materialized; the genuine defects
-  // among them (a coauthor/unified row missing in the org, or an unsupported
-  // document_table — as opposed to a known-external S3/onboarding pointer) mean
-  // the leaf references a document that does not exist and would be dropped from
-  // the bundle. Transmitting that is an incomplete submission (Refuse-to-File
-  // risk), so fail closed — release the staged bundle and block.
-  const { genuineDefectLeaves } = await import('../ectd/leaf-source-resolver');
-  const defectLeaves = genuineDefectLeaves(assembled.unresolvedLeaves);
-  if (defectLeaves.length > 0) {
+  // A dossier transmitted to an agency must physically contain every leaf's
+  // file. `assemble` surfaces every leaf whose source could not be materialized
+  // into the package — and the packager DROPS those leaves from the ZIP
+  // (resolveFile → null → skipped). That is true for BOTH a genuine defect (a
+  // coauthor/unified row missing in the org, or an unsupported document_table)
+  // AND a known-external pointer (vault S3 / ctd_onboarding upload) whose bytes
+  // were not fetched into the package: in either case the transmitted sequence
+  // would be MISSING that document. There is no "external reference" in an eCTD
+  // backbone — a leaf resolves to a file inside the sequence. So fail closed on
+  // ANY unresolved leaf (release the staged bundle and block), classifying the
+  // cause only for the operator message.
+  const { EXTERNAL_DOCUMENT_TABLES } = await import('../ectd/leaf-source-resolver');
+  const unresolved = assembled.unresolvedLeaves;
+  if (unresolved.length > 0) {
     await assembled.cleanup();
+    const isExternal = (l: { documentTable: string | null }) =>
+      l.documentTable != null && l.documentTable in EXTERNAL_DOCUMENT_TABLES;
+    const defects = unresolved.filter((l) => !isExternal(l));
+    const external = unresolved.filter(isExternal);
+    const parts: string[] = [];
+    if (defects.length > 0) {
+      parts.push(
+        `${defects.length} reference a document that could not be assembled ` +
+          `(${defects.map((d) => `${d.documentTable}:${d.documentId}`).join(', ')})`,
+      );
+    }
+    if (external.length > 0) {
+      parts.push(
+        `${external.length} external-storage document(s) (vault/onboarding) whose bytes were not materialized into the package ` +
+          `(${external.map((d) => `${d.documentTable}:${d.documentId}`).join(', ')})`,
+      );
+    }
     throw new SubmissionError(
       'DISPATCH_BLOCKED',
-      `Transmit blocked: ${defectLeaves.length} leaf source(s) reference a document that could not be assembled ` +
-        `(${defectLeaves.map((d) => `${d.documentTable}:${d.documentId}`).join(', ')}) — the submission would be incomplete.`,
+      `Transmit blocked — the transmitted sequence would be missing ${unresolved.length} leaf file(s): ${parts.join('; ')}. ` +
+        `Every eCTD leaf must be physically present in the package.`,
     );
   }
 

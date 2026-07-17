@@ -29,6 +29,13 @@ export interface CompletenessReport {
   totalLeaves: number;
   completeLeaves: number;
   placeholderLeaves: number;
+  /**
+   * Leaves that DO carry authored content but whose content is not finalized
+   * (a draft/review artifact, not locked/approved). Distinct from a placeholder:
+   * there is real text, but it is not submission-ready. A submission-grade
+   * package must have zero of these too.
+   */
+  unfinalizedLeaves: number;
   completenessPct: number;
   complete: boolean;
   incompleteSections: IncompleteLeaf[];
@@ -43,31 +50,44 @@ export class EctdCompletenessError extends Error {
   readonly code = 'ECTD_INCOMPLETE';
   readonly completeness: CompletenessReport;
   constructor(completeness: CompletenessReport) {
+    const unfinished = completeness.placeholderLeaves + completeness.unfinalizedLeaves;
     super(
       completeness.totalLeaves === 0
         ? 'eCTD package contains no content leaves — there is nothing to file. A submission-grade export requires authored content in the dossier.'
-        : `eCTD package is not submission-complete: ${completeness.placeholderLeaves} of ${completeness.totalLeaves} leaf document(s) are unfinished placeholders (${completeness.completenessPct}% complete). A submission-grade export requires every leaf to carry finalized authored content.`,
+        : `eCTD package is not submission-complete: ${unfinished} of ${completeness.totalLeaves} leaf document(s) are unfinished ` +
+          `(${completeness.placeholderLeaves} empty placeholder(s), ${completeness.unfinalizedLeaves} draft/review) ` +
+          `(${completeness.completenessPct}% complete). A submission-grade export requires every leaf to carry finalized authored content.`,
     );
     this.name = 'EctdCompletenessError';
     this.completeness = completeness;
   }
 }
 
-/** Build the submission-completeness report from the leaf tallies. Pure. */
+/**
+ * Build the submission-completeness report from the leaf tallies. Pure.
+ *
+ * `placeholderLeaves` — leaves with no authored content (synthesized PENDING).
+ * `unfinalizedLeaves` — leaves whose content exists but is a draft/review (not
+ * locked/approved). Both are unfinished for submission-grade purposes; a package
+ * is `complete` only when it has content and zero of either.
+ */
 export function computeEctdCompleteness(
   totalLeaves: number,
   placeholderLeaves: number,
   incompleteSections: IncompleteLeaf[] = [],
+  unfinalizedLeaves = 0,
 ): CompletenessReport {
   const total = Math.max(0, Math.floor(totalLeaves));
   const placeholders = Math.max(0, Math.min(Math.floor(placeholderLeaves), total));
-  const completeLeaves = total - placeholders;
+  const unfinalized = Math.max(0, Math.min(Math.floor(unfinalizedLeaves), total - placeholders));
+  const completeLeaves = total - placeholders - unfinalized;
   return {
     totalLeaves: total,
     completeLeaves,
     placeholderLeaves: placeholders,
+    unfinalizedLeaves: unfinalized,
     completenessPct: total > 0 ? Math.round((completeLeaves / total) * 100) : 0,
-    complete: total > 0 && placeholders === 0,
+    complete: total > 0 && placeholders === 0 && unfinalized === 0,
     incompleteSections,
   };
 }
