@@ -81,20 +81,21 @@ labelled contract — severity/probability labels are the exact inverse of the
 surface's own write path, and residual acceptability is taken from the server's
 `acceptable` flag, never inferred.
 
-**Known read-shape gaps (fail closed to sample, not defects — wiring TODO).**
+**Read-shape wiring (raw `SELECT *` endpoints → display fixture) — all wired.**
 A few older MDX panels read raw `SELECT *` endpoints whose DB columns diverge
-from the v2 display fixture, so `useLiveList`'s structural guard correctly
-rejects the response and the panel stays on its "Sample data" fixture rather
-than rendering mismatched data. Fixed this pass: **Risk** (org-wide, via
-`mapRiskItems`) and **Labeling translations** (document-id discovery via
-`GET /api/mdx/labeling` + `mapLabelTranslations`, with the language display
-name derived through `Intl.DisplayNames`). Still outstanding: the **RBM
-site-risk** panel (`/api/mdx/rbm-site-risk`) — its GET is scoped by a UUID
-`program_id` that the portfolio discovery endpoint doesn't hand back directly
-(it returns integer project ids), so the entity-id resolution needs
-backend-validated work before a `rbm_site_risk_scores → RbmSite` mapper can be
-trusted. Follow the same pattern once the program-id resolution is settled:
-entity-id discovery + a pure, unit-tested, fail-closed adapter.
+from the v2 display fixture, so `useLiveList`'s structural guard rejected the
+response and the panel stayed on its "Sample data" fixture. Each now adopts
+live through a pure, unit-tested, fail-closed adapter (the Orchestration
+mapping pattern):
+- **Risk** — `mapRiskItems` (org-wide `risk_items`).
+- **Labeling translations** — document-id discovery via `GET /api/mdx/labeling`
+  + `mapLabelTranslations` (language name via `Intl.DisplayNames`).
+- **RBM site-risk** — `GET /api/mdx/rbm-site-risk` now takes an optional
+  `program_id` (org-wide when omitted, so no UUID handle to discover) and
+  LEFT JOINs `site_intel.sites` for the site country; the board adopts via
+  `mapRbmSites`. The demo seed doesn't populate `rbm_site_risk_scores` yet, so
+  in the seeded demo this panel still shows its "Sample data" fixture (correct
+  fail-closed) — but a real org with recomputed site risk now loads live.
 
 ## 3. Labeled sample-data surfaces (by design — not defects)
 
