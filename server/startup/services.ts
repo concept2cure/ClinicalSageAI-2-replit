@@ -23,6 +23,7 @@ import {
 import { initializeProofDatabasePersistence } from '../../services/proof/database-setup';
 import FeatureToggleService from '../services/featureToggleService';
 import { ensureCoreTables } from '../db/ensureCoreTables';
+import { setSchemaReadiness } from './readiness-state';
 
 /** Python backend is currently disabled (size optimization). Kept as a stub
  * so the graceful-shutdown handler can address it if it gets re-enabled. */
@@ -51,13 +52,19 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
   try {
     const result = await ensureCoreTables(process.env.DATABASE_URL);
     if (result.success) {
+      setSchemaReadiness('ready');
       console.log(
         `✅ Database readiness verified (${result.existingSchemas.length} schemas, ${result.existingTables.length} tables)`
       );
     } else if (result.missingCritical.length > 0) {
+      setSchemaReadiness('missing', `missing tables: ${result.missingCritical.join(', ')}`);
       console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
       console.error('   Run: npm run db:push to sync schema');
     } else if (result.missingExtensions.length > 0) {
+      setSchemaReadiness(
+        'missing',
+        `missing extensions: ${result.missingExtensions.join(', ')}`
+      );
       console.error(
         '❌ CRITICAL: Missing required database extensions:',
         result.missingExtensions.join(', ')
