@@ -538,7 +538,8 @@
     "20260717_research_admin_store.sql",
     "20260717_shadow_review_store.sql",
     "20260717_nda_m1_docs_store.sql",
-    "20260717_nda_rtf_store.sql"
+    "20260717_nda_rtf_store.sql",
+    "20260717_maa_module1_store.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

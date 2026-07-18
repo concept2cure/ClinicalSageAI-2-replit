@@ -56,6 +56,7 @@ import { IvdCompleteness } from './surfaces/IvdCompleteness';
 import { Labeling } from './surfaces/Labeling';
 import { LabelingPI } from './surfaces/LabelingPi';
 import { LicensingSurface } from './surfaces/LicensingSurface';
+import { MaaCockpit } from './surfaces/MaaCockpit';
 import { MarketAccess } from './surfaces/MarketAccess';
 import { NdaCockpit } from './surfaces/NdaCockpit';
 import { Nonclinical } from './surfaces/Nonclinical';
@@ -151,6 +152,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'labeling-pi': { component: LabelingPI },
   licensing: { component: LicensingSurface },
   'lifecycle-mgmt': { component: Lifecycle },
+  'maa-cockpit': { component: MaaCockpit },
   'market-access': { component: MarketAccess },
   'nda-cockpit': { component: NdaCockpit },
   nonclinical: { component: Nonclinical },

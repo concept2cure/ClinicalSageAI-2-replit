@@ -51,6 +51,7 @@ export const NAV_GROUP_OF: Record<string, string> = {
   registrations: 'both',
   'change-assessment': 'both',
   'nda-cockpit': 'biopharma',
+  'maa-cockpit': 'biopharma',
   'agency-meetings': 'both',
   'shadow-review': 'both',
   'dispatch-readiness': 'both',
@@ -114,6 +115,7 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'filings-catalog',
   'dossier-map',
   'nda-cockpit',
+  'maa-cockpit',
   'biopharma',
   'ind-checklist',
   'template-library',
@@ -478,6 +480,7 @@ export const SEGMENT_MODULES = {
       items: [
         'filings-catalog',
         'nda-cockpit',
+        'maa-cockpit',
         'ind-checklist',
         'submission-center',
         'communication-center',
@@ -555,6 +558,7 @@ export const SEGMENT_MODULES = {
       items: [
         'filings-catalog',
         'nda-cockpit',
+        'maa-cockpit',
         'ind-checklist',
         'submission-center',
         'communication-center',
