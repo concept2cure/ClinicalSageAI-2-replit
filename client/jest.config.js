@@ -39,6 +39,8 @@ export default {
     'reportOsClient\\.test\\.ts$',
     'query-options\\.test\\.ts$',
     'LockedModuleCard\\.test\\.tsx$',
+    // Auth-token store bridge unit test (utils/__tests__) — vitest + jsdom.
+    'authToken\\.test\\.ts$',
   ],
   transformIgnorePatterns: ['/node_modules/(?!wouter)'],
   transform: {
