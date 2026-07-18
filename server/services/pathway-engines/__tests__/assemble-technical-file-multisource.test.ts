@@ -3,10 +3,15 @@
  * (EU MDR/IVDR device technical file).
  *
  * Proves the silent-drop fix for the device assembler: a sequence whose leaves
- * point at coauthor_documents AND unified_documents AND ctd_onboarding_documents
+ * point at coauthor_documents AND unified_documents AND vault_documents
  * materializes the two locally-renderable leaves while surfacing the external
- * (ctd_onboarding) leaf in `unresolvedLeaves`, never silently dropped. Runs
- * against in-process PGlite.
+ * (vault) leaf in `unresolvedLeaves`, never silently dropped. Runs against
+ * in-process PGlite.
+ *
+ * vault_documents is the canonical always-external table (UUID-keyed,
+ * program-scoped — not addressable from an integer leaf id); the resolver's own
+ * unit test (leaf-source-resolver.test.ts) covers the renderable
+ * ctd_onboarding_documents upload paths in isolation.
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
@@ -40,12 +45,12 @@ beforeAll(async () => {
     INSERT INTO workflow_document_versions (document_id, version, content, created_by)
     VALUES (400, 1, '{"type":"doc","content":[{"type":"text","text":"CER body"}]}'::json, 'tester');
 
-    -- Leaves: coauthor (gspr), unified (cer), ctd_onboarding (external upload).
+    -- Leaves: coauthor (gspr), unified (cer), vault (external binary).
     INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, document_type, organization_id, created_by)
     VALUES
-      (1, 'gspr.checklist',     'GSPR Checklist',              'new', 'coauthor_documents',       300, 'gspr', ${ORG}, ${USER}),
-      (1, 'clinical.evaluation','Clinical Evaluation Report',  'new', 'unified_documents',        400, 'cer',  ${ORG}, ${USER}),
-      (1, 'tech.upload',        'Uploaded Test Report',        'new', 'ctd_onboarding_documents', 500, NULL,   ${ORG}, ${USER});
+      (1, 'gspr.checklist',     'GSPR Checklist',              'new', 'coauthor_documents', 300, 'gspr', ${ORG}, ${USER}),
+      (1, 'clinical.evaluation','Clinical Evaluation Report',  'new', 'unified_documents',  400, 'cer',  ${ORG}, ${USER}),
+      (1, 'tech.upload',        'Vault Cover Letter',          'new', 'vault_documents',    900, NULL,   ${ORG}, ${USER});
   `);
 });
 
@@ -54,7 +59,7 @@ afterAll(async () => {
 });
 
 describe('assembleTechnicalFileFromCore multi-source resolution', () => {
-  it('materializes coauthor + unified leaves and surfaces the ctd_onboarding leaf as unresolved', async () => {
+  it('materializes coauthor + unified leaves and surfaces the vault leaf as unresolved', async () => {
     const result = await assembleTechnicalFileFromCore({
       sequenceId: 1,
       organizationId: ORG,
@@ -67,11 +72,11 @@ describe('assembleTechnicalFileFromCore multi-source resolution', () => {
     // Two locally-renderable sources rendered to PDF leaves.
     expect(result.materialized).toBe(2);
 
-    // The external upload leaf is reported, not silently dropped.
+    // The external (vault) leaf is reported, not silently dropped.
     expect(result.unresolvedLeaves).toHaveLength(1);
-    expect(result.unresolvedLeaves[0].documentTable).toBe('ctd_onboarding_documents');
-    expect(result.unresolvedLeaves[0].documentId).toBe(500);
-    expect(result.unresolvedLeaves[0].reason).toMatch(/uploaded binary|not stored locally/i);
+    expect(result.unresolvedLeaves[0].documentTable).toBe('vault_documents');
+    expect(result.unresolvedLeaves[0].documentId).toBe(900);
+    expect(result.unresolvedLeaves[0].reason).toMatch(/external|S3|not stored locally/i);
 
     // A real ZIP bundle was produced.
     expect(result.bundle).toBeDefined();
