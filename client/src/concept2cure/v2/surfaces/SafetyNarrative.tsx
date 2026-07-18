@@ -13,6 +13,19 @@ const CRITERIA = ['death', 'life-threatening', 'hospitalization', 'disability', 
 const OUTCOMES = ['recovered', 'recovering', 'recovered with sequelae', 'not recovered', 'fatal', 'unknown'];
 const CAUSALITIES = ['related', 'probably related', 'possibly related', 'unlikely related', 'not related'];
 
+/* Live expedited-reporting-clock fields the GET /cases route computes server-side
+   (21 CFR 312.32(c) / ICH E2A) via server/services/pv/expedited-reporting-clock.ts.
+   Additive over the fixture SaeCase shape; absent on the codebase fixture, so the
+   surface falls back to the static clock/due display when they are not present. */
+type LiveSaeCase = SaeCase & {
+  reportingCategory?: '7-day' | '15-day' | 'none';
+  reportingClockStart?: string | null;
+  reportingDueDate?: string | null;
+  reportingDaysRemaining?: number | null;
+  reportingOverdue?: boolean;
+  reportingBasis?: string;
+};
+
 /* ================================================================
    SafetyNarrative -- SAE case-narrative writer (ICH E3 section 16).
    The generated narrative IS the hero deliverable, not a dashboard.
@@ -21,7 +34,7 @@ const CAUSALITIES = ['related', 'probably related', 'possibly related', 'unlikel
 
 export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
-  const [cases, setCases] = useState<SaeCase[]>(SAE_CASES);
+  const [cases, setCases] = useState<LiveSaeCase[]>(SAE_CASES);
   const [selId, setSelId] = useState(SAE_CASES[0].id);
   const [sample, setSample] = useState(true);
   const sel = cases.find((c) => c.id === selId) || cases[0];
@@ -34,7 +47,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
      the ICH E3 §16 composer runs deterministically over the selected case. */
   useEffect(() => {
     let cancelled = false;
-    liveGet<{ data?: SaeCase[] }>('/api/safety-narratives/cases', { data: [] }).then((res) => {
+    liveGet<{ data?: LiveSaeCase[] }>('/api/safety-narratives/cases', { data: [] }).then((res) => {
       if (cancelled) return;
       const list = res.data?.data;
       if (!res.sample && Array.isArray(list) && list.length > 0 && list[0]?.id && list[0]?.event) {
@@ -194,6 +207,41 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
               <div className="cm-doc-render">
                 <h1>Serious adverse event case narrative</h1>
                 <p style={{ fontFamily: 'var(--font-mono,monospace)', fontSize: 12, color: 'var(--text-400)' }}>{sel.id} -- {sel.clock}</p>
+                {/* Live expedited-reporting clock — computed server-side per 21 CFR 312.32(c)
+                    / ICH E2A from awareness date + seriousness/causality/expectedness. Shown
+                    only when present (live store); falls back to the static clock line above. */}
+                {sel.reportingCategory && (
+                  <div
+                    style={{
+                      margin: '8px 0 14px', padding: '10px 12px', borderRadius: 8,
+                      border: '1px solid ' + (sel.reportingOverdue ? 'var(--danger-500,#c0392b)' : 'var(--border-200,#e2e2e2)'),
+                      background: sel.reportingOverdue ? 'var(--danger-50,#fdecea)' : 'var(--surface-100,#f7f7f7)',
+                      fontSize: 12.5, lineHeight: 1.5,
+                    }}
+                  >
+                    {sel.reportingCategory === 'none' ? (
+                      <div><strong>No expedited reporting clock.</strong> {sel.reportingBasis}</div>
+                    ) : sel.reportingDueDate ? (
+                      <div>
+                        <strong style={{ color: sel.reportingOverdue ? 'var(--danger-600,#a5281b)' : 'inherit' }}>
+                          {sel.reportingOverdue
+                            ? `OVERDUE — ${sel.reportingCategory} report was due ${sel.reportingDueDate}`
+                            : `${sel.reportingCategory} expedited report — due ${sel.reportingDueDate}` +
+                              (typeof sel.reportingDaysRemaining === 'number'
+                                ? ` (${sel.reportingDaysRemaining === 0 ? 'due today' : sel.reportingDaysRemaining + ' calendar day' + (Math.abs(sel.reportingDaysRemaining) === 1 ? '' : 's') + ' remaining'})`
+                                : '')}
+                        </strong>
+                        <div style={{ color: 'var(--text-400)', marginTop: 3 }}>
+                          Clock start (Day 0 / sponsor awareness): {sel.reportingClockStart}. {sel.reportingBasis}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <strong>{sel.reportingCategory} expedited report</strong> — awareness (Day 0) date not recorded, so the due date cannot be anchored. {sel.reportingBasis}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <p>{result.narrative}</p>
                 <hr />
                 <p>Drafted deterministically from the structured case per ICH E3 section 16 convention. No clinical detail is inferred beyond the supplied facts.</p>

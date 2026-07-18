@@ -21,6 +21,10 @@ import { Router, Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { generateEctdPackage, validateEctdPackage } from '../services/ectdExportService';
+// Import the error class from its source module (not re-exported via
+// ectdExportService) so `instanceof` still resolves in tests that vi.mock the
+// export service.
+import { EctdCompletenessError } from '../services/ectd/completeness';
 import {
   validatePackage as validateEctdLeafPackage,
   type ECTDLeaf,
@@ -310,6 +314,10 @@ const exportBodySchema = z
     sequenceNumber: z.string().default('0000'),
     applicationNumber: z.string().optional(),
     validateAfter: z.boolean().default(true),
+    // Submission-grade gate: when true, the build is rejected (422) instead of
+    // assembling a package that still contains placeholder ("PENDING") leaves or
+    // no content — so a substantively-empty dossier can never be filed.
+    requireComplete: z.boolean().default(false),
   })
   .passthrough(); // governance + future fields ride through untouched
 
@@ -336,7 +344,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       details: parsedBody.error.flatten(),
     });
   }
-  const { region, submissionType, sequenceNumber, applicationNumber, validateAfter } =
+  const { region, submissionType, sequenceNumber, applicationNumber, validateAfter, requireComplete } =
     parsedBody.data;
 
   if (!validateExportGovernance(req, res)) return;
@@ -352,6 +360,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       submissionType,
       sequenceNumber,
       applicationNumber,
+      requireComplete,
     });
 
     // Optionally validate the generated package
@@ -372,6 +381,14 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     res.setHeader('X-ECTD-Total-Modules', String(result.stats.totalModules));
     res.setHeader('X-ECTD-Total-Files', String(result.stats.totalFiles));
     res.setHeader('X-ECTD-Generated-At', result.stats.generatedAt);
+    // Surface submission-completeness on every export (draft builds included) so
+    // callers can see how much of the dossier is still placeholder content.
+    const comp = result.stats.completeness;
+    if (comp) {
+      res.setHeader('X-ECTD-Completeness-Pct', String(comp.completenessPct));
+      res.setHeader('X-ECTD-Incomplete-Leaves', String(comp.placeholderLeaves));
+      res.setHeader('X-ECTD-Submission-Complete', String(comp.complete));
+    }
     if (validation) {
       res.setHeader('X-ECTD-Valid', String(validation.valid));
       if (validation.errors.length > 0) {
@@ -418,6 +435,17 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
 
     return res.send(result.buffer);
   } catch (error: any) {
+    // Submission-grade gate tripped: the dossier still has placeholder leaves or
+    // no content. This is an expected, actionable rejection — not a server
+    // failure — so return 422 with the exact unfinished sections.
+    if (error instanceof EctdCompletenessError) {
+      return res.status(422).json({
+        error: 'eCTD package is not submission-complete',
+        code: error.code,
+        message: error.message,
+        completeness: error.completeness,
+      });
+    }
     const correlationId = randomUUID();
     log.error('eCTD Export failed', {
       err: error instanceof Error ? error.message : String(error),
