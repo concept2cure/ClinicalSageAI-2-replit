@@ -40,6 +40,12 @@ beforeAll(async () => {
     INSERT INTO workflow_document_versions (document_id, version, content, created_by)
     VALUES (400, 1, '{"type":"doc","content":[{"type":"text","text":"CER body"}]}'::json, 'tester');
 
+    -- An uploaded binary whose bytes are NOT present on this environment's disk
+    -- (storage_path points nowhere). Declared PDF, but unreadable → the resolver
+    -- must surface it as unresolved rather than materialize (or silently drop) it.
+    INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, file_size, mime_type, storage_path)
+    VALUES (500, ${ORG}, 'Uploaded Test Report.pdf', 1024, 'application/pdf', '/nonexistent/uploads/onboarding-500.pdf');
+
     -- Leaves: coauthor (gspr), unified (cer), ctd_onboarding (external upload).
     INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, document_type, organization_id, created_by)
     VALUES
@@ -67,11 +73,13 @@ describe('assembleTechnicalFileFromCore multi-source resolution', () => {
     // Two locally-renderable sources rendered to PDF leaves.
     expect(result.materialized).toBe(2);
 
-    // The external upload leaf is reported, not silently dropped.
+    // The external upload leaf is reported, not silently dropped: the row exists
+    // and is declared a PDF, but its bytes are not readable at storage_path, so
+    // it cannot be materialized into a conformant leaf (fail closed).
     expect(result.unresolvedLeaves).toHaveLength(1);
     expect(result.unresolvedLeaves[0].documentTable).toBe('ctd_onboarding_documents');
     expect(result.unresolvedLeaves[0].documentId).toBe(500);
-    expect(result.unresolvedLeaves[0].reason).toMatch(/uploaded binary|not stored locally/i);
+    expect(result.unresolvedLeaves[0].reason).toMatch(/not readable at storage_path|cannot materialize/i);
 
     // A real ZIP bundle was produced.
     expect(result.bundle).toBeDefined();
