@@ -390,9 +390,15 @@ router.post('/generate', async (req, res) => {
       fields,
       config,
       projectId,
-      organizationId,
       documentId,
     } = req.body;
+
+    // Tenant scope from the authenticated context, not the body — matches the
+    // established pattern used by the other handlers in this file.
+    const organizationId = req.tenantId || req.tenantContext?.organizationId || req.user?.organizationId;
+    if (!organizationId) {
+      return res.status(403).json({ error: 'Tenant context required' });
+    }
 
     // Validate required fields
     if (!templateId || !dataSource) {
