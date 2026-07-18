@@ -337,6 +337,16 @@ CREATE TABLE IF NOT EXISTS workflow_document_versions (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   comments    TEXT
 );
+
+CREATE TABLE IF NOT EXISTS ctd_onboarding_documents (
+  id              SERIAL PRIMARY KEY,
+  organization_id INTEGER NOT NULL,
+  file_name       TEXT NOT NULL,
+  file_size       INTEGER NOT NULL DEFAULT 0,
+  mime_type       TEXT NOT NULL,
+  storage_path    TEXT NOT NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 export interface IndPgliteDb {

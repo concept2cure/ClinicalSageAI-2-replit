@@ -9,6 +9,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { promises as fs } from 'fs';
+import { createHash } from 'crypto';
 import path from 'path';
 import os from 'os';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
@@ -21,6 +22,10 @@ import { materializeLeafSources, leafSourceKey } from '../leaf-source-resolver';
 let harness: IndPgliteDb;
 const ORG = 1;
 const tmpDirs: string[] = [];
+/** Absolute paths of staged upload files (ctd_onboarding_documents.storage_path). */
+const uploadPaths: { pdf: string; nonPdf: string; mislabeled: string; missing: string } = {
+  pdf: '', nonPdf: '', mislabeled: '', missing: '',
+};
 
 async function stage(): Promise<string> {
   const d = await fs.mkdtemp(path.join(os.tmpdir(), 'leaf-src-'));
@@ -55,6 +60,32 @@ beforeAll(async () => {
     -- A unified doc with NO version rows — should still render (title fallback).
     INSERT INTO unified_documents (id, title, document_type, created_by, organization_id, latest_version)
     VALUES (11, 'Unified No-Version Leaf', 'summary', 'tester', ${ORG}, 1);
+  `);
+
+  // Stage real upload files on disk for the ctd_onboarding_documents leaves.
+  const upDir = await fs.mkdtemp(path.join(os.tmpdir(), 'leaf-uploads-'));
+  tmpDirs.push(upDir);
+  uploadPaths.pdf = path.join(upDir, 'real.pdf');
+  uploadPaths.nonPdf = path.join(upDir, 'sheet.doc');
+  uploadPaths.mislabeled = path.join(upDir, 'mislabeled.pdf');
+  uploadPaths.missing = path.join(upDir, 'gone.pdf'); // deliberately not written
+  await fs.writeFile(uploadPaths.pdf, Buffer.from('%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF'));
+  await fs.writeFile(uploadPaths.nonPdf, Buffer.from('PK not a pdf'));
+  await fs.writeFile(uploadPaths.mislabeled, Buffer.from('this is plain text, not a pdf'));
+
+  await harness.pglite.exec(`
+    -- 50: a genuine PDF upload → materializes AS the leaf.
+    INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, mime_type, storage_path)
+    VALUES (50, ${ORG}, 'Signed Form 1571.pdf', 'application/pdf', '${uploadPaths.pdf.replace(/'/g, "''")}');
+    -- 51: a non-PDF upload (docx) → unresolved (no conversion).
+    INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, mime_type, storage_path)
+    VALUES (51, ${ORG}, 'notes.doc', 'application/msword', '${uploadPaths.nonPdf.replace(/'/g, "''")}');
+    -- 52: mime says PDF but the bytes are not a PDF → unresolved (magic-byte guard).
+    INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, mime_type, storage_path)
+    VALUES (52, ${ORG}, 'mislabeled.pdf', 'application/pdf', '${uploadPaths.mislabeled.replace(/'/g, "''")}');
+    -- 53: mime PDF but the file is missing on disk → unresolved (fail closed).
+    INSERT INTO ctd_onboarding_documents (id, organization_id, file_name, mime_type, storage_path)
+    VALUES (53, ${ORG}, 'gone.pdf', 'application/pdf', '${uploadPaths.missing.replace(/'/g, "''")}');
   `);
   // PGlite bootstrap can exceed the global 10s hookTimeout when the full
   // suite runs under load; give it explicit headroom.
@@ -124,15 +155,72 @@ describe('materializeLeafSources', () => {
     expect(res.unresolved[0].reason).toMatch(/external|S3|not stored locally/i);
   });
 
-  it('reports an external ctd_onboarding_documents leaf as UNRESOLVED', async () => {
+  it('materializes a PDF ctd_onboarding_documents upload AS the leaf (real bytes, real md5)', async () => {
     const stageDir = await stage();
     const res = await materializeLeafSources({
-      leaves: [{ documentTable: 'ctd_onboarding_documents', documentId: 42 }],
+      leaves: [{ documentTable: 'ctd_onboarding_documents', documentId: 50 }],
       organizationId: ORG,
       stageDir,
     });
+    expect(res.materialized).toBe(1);
+    expect(res.unresolved).toHaveLength(0);
+    const resolved = res.byKey.get(leafSourceKey('ctd_onboarding_documents', 50))!;
+    expect(resolved).toBeDefined();
+    expect(resolved.fileName.endsWith('.pdf')).toBe(true);
+    // The staged bytes are the ORIGINAL uploaded PDF (not re-rendered), and md5
+    // is over those real bytes.
+    const staged = await readPdf(stageDir, resolved.fileName);
+    const original = await fs.readFile(uploadPaths.pdf);
+    expect(staged.equals(original)).toBe(true);
+    expect(resolved.md5).toBe(createHash('md5').update(original).digest('hex'));
+  });
+
+  it('leaves a NON-PDF upload unresolved (no binary→PDF conversion)', async () => {
+    const stageDir = await stage();
+    const res = await materializeLeafSources({
+      leaves: [{ documentTable: 'ctd_onboarding_documents', documentId: 51 }],
+      organizationId: ORG,
+      stageDir,
+    });
+    expect(res.materialized).toBe(0);
     expect(res.unresolved).toHaveLength(1);
-    expect(res.unresolved[0].documentTable).toBe('ctd_onboarding_documents');
+    expect(res.unresolved[0].reason).toMatch(/not application\/pdf/i);
+  });
+
+  it('leaves a PDF-mime-but-not-PDF-bytes upload unresolved (magic-byte guard)', async () => {
+    const stageDir = await stage();
+    const res = await materializeLeafSources({
+      leaves: [{ documentTable: 'ctd_onboarding_documents', documentId: 52 }],
+      organizationId: ORG,
+      stageDir,
+    });
+    expect(res.materialized).toBe(0);
+    expect(res.unresolved).toHaveLength(1);
+    expect(res.unresolved[0].reason).toMatch(/%PDF-|not a valid PDF/i);
+  });
+
+  it('leaves a PDF upload whose file is missing unresolved (fail closed)', async () => {
+    const stageDir = await stage();
+    const res = await materializeLeafSources({
+      leaves: [{ documentTable: 'ctd_onboarding_documents', documentId: 53 }],
+      organizationId: ORG,
+      stageDir,
+    });
+    expect(res.materialized).toBe(0);
+    expect(res.unresolved).toHaveLength(1);
+    expect(res.unresolved[0].reason).toMatch(/not readable|missing/i);
+  });
+
+  it('leaves a cross-tenant ctd_onboarding upload unresolved (org-scoped lookup)', async () => {
+    const stageDir = await stage();
+    const res = await materializeLeafSources({
+      leaves: [{ documentTable: 'ctd_onboarding_documents', documentId: 50 }],
+      organizationId: 999, // wrong org
+      stageDir,
+    });
+    expect(res.materialized).toBe(0);
+    expect(res.unresolved).toHaveLength(1);
+    expect(res.unresolved[0].reason).toMatch(/not found in this organization/i);
   });
 
   it('reports a cross-tenant unified_documents leaf as UNRESOLVED (not dropped)', async () => {
