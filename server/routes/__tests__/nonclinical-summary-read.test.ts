@@ -14,10 +14,10 @@ import request from 'supertest';
 
 const query = vi.fn();
 const insert = vi.fn();
-vi.mock('../../db', () => ({
-  pool: { query: (...a: unknown[]) => query(...a) },
-  db: { insert: (...a: unknown[]) => insert(...a) },
-}));
+vi.mock('../../db', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
+// The POST route persists via requestDb(req) (request-scoped drizzle). Mock it to
+// the same recorder so we assert the org-scoped insert without a real connection.
+vi.mock('../../db/requestDb', () => ({ requestDb: () => ({ insert: (...a: unknown[]) => insert(...a) }) }));
 
 import ncRouter from '../nonclinical-summary.routes';
 

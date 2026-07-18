@@ -17,7 +17,7 @@
  * study data. A missing store (42P01) is surfaced via `meta.pendingStore`.
  */
 import { Router, type Request, type Response } from 'express';
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import { coauthorDocuments } from '../../shared/schema';
 import { listStudiesForSummary } from '../services/nonclinical/nonclinical-service';
 import { assembleNonclinicalSummary, composeM26WrittenSummary, renderM26Html } from '../services/nonclinical/m26-m4-view';
@@ -108,7 +108,9 @@ router.post('/document', async (req: Request, res: Response) => {
   try {
     const result = composeM26WrittenSummary(studies);
     const content = renderM26Html(result);
-    const [document] = await db
+    // Request-scoped DB so the write runs on the tenant-context connection when
+    // RLS is enforced (falls back to the pool-bound db pre-tenant-context).
+    const [document] = await requestDb(req)
       .insert(coauthorDocuments)
       .values({
         organizationId: orgId,
