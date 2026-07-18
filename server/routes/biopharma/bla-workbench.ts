@@ -241,6 +241,12 @@ router.get('/assessments', async (req: Request, res: Response) => {
     );
     return send(res, 200, { assessments: rows });
   } catch (err) {
+    // Fail closed to an honest empty list when the store is not yet provisioned
+    // (42P01 undefined_table) — the surface renders its sample fallback rather
+    // than a 500. Genuine errors still surface.
+    if ((err as { code?: string })?.code === '42P01') {
+      return send(res, 200, { assessments: [], pendingStore: true });
+    }
     console.error('[bla/assessments] GET', err);
     return send(res, 500, { error: 'INTERNAL_ERROR' });
   }

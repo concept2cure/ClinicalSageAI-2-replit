@@ -46,6 +46,18 @@ interface NdaRtfItem {
   _new?: boolean;
 }
 
+interface BlaAssessment {
+  id: string;
+  kind: string;
+  title?: string | null;
+  modality?: string | null;
+  reference_product?: string | null;
+  target_agency?: string | null;
+  verdict?: string | null;
+  status: string;
+  program_id?: string | null;
+}
+
 /* ── Inline fixture data (kit window globals) ── */
 
 const NDA_MODULES: NdaModule[] = [
@@ -84,6 +96,25 @@ const NDA_RTF_SEED: NdaRtfItem[] = [
   { sev: 'med', area: 'Module 1 · financial', text: '2 investigators missing 3454/3455 — a common RTF trigger if unresolved.', fix: 'Collect outstanding disclosures or certify due diligence' },
   { sev: 'med', area: 'Module 3 · CMC', text: 'Comparability protocol acceptance criteria unreconciled vs post-change lots.', fix: 'Close 3.2.S.4.4 reconciliation' },
   { sev: 'low', area: 'Module 2 · summaries', text: '2.7.4 Safety Summary still drafting; needed for a complete CTD.', fix: 'Finalize ISS-derived safety summary' },
+];
+
+/* Biologics (BLA 351(a)) science-engine assessments — the biosimilar/biologic
+   analytical-similarity, comparability, immunogenicity, and RTF/CRL filing-risk
+   verdicts produced by /api/biopharma/bla and persisted to c2c_bla_assessments.
+   Shown live when the org has run assessments; sample rows illustrate the shape
+   for an sBLA/351(k) program otherwise. */
+const BLA_KIND_LABEL: Record<string, string> = {
+  analytical_similarity: 'Analytical similarity (CQA tiering)',
+  comparability: 'Comparability (Q5E / post-change)',
+  immunogenicity: 'Immunogenicity (ADA / NAb risk)',
+  filing_risk: 'BLA filing risk (RTF / CRL)',
+};
+
+const BLA_SEED: BlaAssessment[] = [
+  { id: 'bla-as', kind: 'analytical_similarity', title: 'BX-204 vs US-licensed reference', modality: 'mAb', reference_product: 'US-licensed reference', target_agency: 'FDA', verdict: 'similar', status: 'draft' },
+  { id: 'bla-cp', kind: 'comparability', title: 'Post-change drug substance (Process C)', modality: 'mAb', target_agency: 'FDA', verdict: 'comparable', status: 'draft' },
+  { id: 'bla-im', kind: 'immunogenicity', title: 'Pivotal ADA / NAb integrated analysis', modality: 'mAb', target_agency: 'FDA', verdict: 'low', status: 'draft' },
+  { id: 'bla-fr', kind: 'filing_risk', title: 'BLA 761xxx filing-risk profile', modality: 'mAb', target_agency: 'FDA', verdict: 'moderate', status: 'draft' },
 ];
 
 /* ── Inline shared kit helpers ── */
@@ -183,6 +214,28 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     setM1((rs) => [row, ...rs]);
     setTimeout(() => setM1((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
   };
+  /* live ?? fixture — biologics BLA assessments from /api/biopharma/bla. The
+     endpoint returns { assessments: [...] } (not the standard { data } envelope),
+     so read it directly and only adopt when the org actually has rows; else keep
+     the sample shape (no empty-flash). Read-only here — assessments are authored
+     in the biologics workbench and signed there. */
+  const [bla, setBla] = useState<BlaAssessment[]>(BLA_SEED);
+  const [blaSample, setBlaSample] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    liveGet<{ assessments?: BlaAssessment[] }>('/api/biopharma/bla/assessments', { assessments: [] }).then((res) => {
+      if (cancelled) return;
+      const list = res.data?.assessments;
+      if (!res.sample && Array.isArray(list) && list.length > 0 && typeof list[0]?.kind === 'string') {
+        setBla(list);
+        setBlaSample(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [form, setForm] = useState<null | 'rtf' | 'm1'>(null);
   const [toast, fireToast] = useToast();
   const m1open = m1.filter(d => d.st !== 'complete' && d.st !== 'na').length;
@@ -289,7 +342,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     }
   };
 
-  const tabs: [string, string][] = [['ctd', 'CTD readiness'], ['m1', 'Module 1 admin'], ['clock', 'PDUFA review clock'], ['rtf', 'Refuse-to-File risk']];
+  const tabs: [string, string][] = [['ctd', 'CTD readiness'], ['m1', 'Module 1 admin'], ['clock', 'PDUFA review clock'], ['rtf', 'Refuse-to-File risk'], ['bla', 'BLA biologics']];
 
   /* Context-aware human lead */
   const clockNow = NDA_CLOCK.find(s => s.st === 'current') || NDA_CLOCK.find(s => s.st === 'goal');
@@ -417,6 +470,42 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {tab === 'bla' && (
+        <div className="reg-card">
+          <div className="reg-card-h">
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              BLA 351(a) biologics &mdash; science-engine assessments <SampleTag sample={blaSample} />
+            </span>
+            <span className="reg-card-s" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              Analytical similarity · comparability · immunogenicity · filing risk
+              {ask && <button className="nda-open" onClick={() => ask('Run the BLA filing-risk (RTF/CRL) assessment for the biologics program and summarize the top triggers')}>{I.sparkles} Assess filing risk</button>}
+            </span>
+          </div>
+          <table className="reg-tbl">
+            <thead><tr><th>Assessment</th><th>Modality</th><th>Verdict</th><th>Status</th></tr></thead>
+            <tbody>
+              {bla.map(a => (
+                <tr key={a.id}>
+                  <td>
+                    <div className="nda-m1-l">{BLA_KIND_LABEL[a.kind] || a.kind}</div>
+                    {a.title && <div className="nda-m1-note">{a.title}{a.target_agency ? ' · ' + a.target_agency : ''}</div>}
+                  </td>
+                  <td>{a.modality || '—'}</td>
+                  <td>{a.verdict ? <span className={'reg-pill ' + (a.verdict === 'high' || a.verdict === 'not_demonstrated' ? 'review' : 'complete')}>{a.verdict.replace(/_/g, ' ')}</span> : '—'}</td>
+                  <td><span className={'reg-pill ' + (a.status === 'signed' ? 'complete' : 'draft')}>{a.status}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="scaf-note" style={{ marginTop: 10 }}>
+            The three biologics science engines (CQA-tiered analytical similarity, Q5E comparability, ADA/NAb
+            immunogenicity) and the RTF/CRL filing-risk profile are deterministic functions of the submitted data,
+            authored and Part 11-signed in the biologics workbench (<code>/api/biopharma/bla</code>). This tab reflects
+            the org's persisted assessments &mdash; it never fabricates a verdict.
+          </p>
         </div>
       )}
 
