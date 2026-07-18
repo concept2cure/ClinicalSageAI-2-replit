@@ -37,15 +37,19 @@ Plus three cross-cutting P0s surfaced by live testing: **the boot crash**, **the
 
 ## Already fixed in this PR (verified)
 
-These were reproduced live, fixed, and re-verified. Four commits on `claude/product-readiness-assessment-7wpj49`.
+These were reproduced live, fixed, and re-verified on `claude/product-readiness-assessment-7wpj49`.
 
 1. **P0 — Platform could not boot at all.** Module-scope `__dirname` under ESM crashed the server on import (Node 20: `ReferenceError: __dirname is not defined`; Node 22: `ERR_AMBIGUOUS_MODULE_SYNTAX`) in both the production bundle and `tsx` dev. Broken since ~July 3 (PR #993); invisible because `npm run build` and the unit suites shim `__dirname`, so no gate exercised a real boot. Fixed the 5 boot-blocking sites via `import.meta.url` (`6e7cbd7`). **Verified:** dev server now serves `/api/health` 200; the production bundle clears module evaluation.
 2. **P0 — Blank page at the production root URL.** `express.static(distPath)` served the raw, un-nonced `index.html` for `/` before the nonce-injecting SPA fallback ran; under the enforcing `nonce + strict-dynamic` CSP the browser blocks the un-nonced bundle → blank page. Fixed with `index:false` plus an explicit `/index.html` handler (`c6029cc`, `25d8af9`). **Verified** with an isolated harness: `/`, `/index.html`, and deep routes all serve a correctly nonced page; hashed assets still 200. ⚠️ **This fix lives only on this branch — `origin/concept2cure-v2` still has the bug, so it is a live P0 in production until this PR merges.**
 3. **5 more `__dirname`-in-ESM runtime bombs** in feature paths (FCoI review, CSR extraction, regulatory-pathway data). Fixed the 3 tester-facing ones (`c5b25fd`); flagged 2 DB-internal ones for owner review (migration-path-sensitive). Added **`tests/ci/esm-dirname-guard.test.ts`**, a CI guard that fails on any module-scope `__dirname` in server ESM — the gate that was missing (proven to catch the original pattern and pass the fix).
+4. **P0 — Health stayed green with a missing-schema database** (blocker #4 below). `/readyz` probed only `select 1`; the boot-time schema verification now records its verdict and `/readyz` fails closed (503, naming the missing tables) on a positively-verified missing schema, while `unknown` never fails on its own. Dockerfile healthcheck repointed at `/readyz` (`f5d0f6a`, with `tests/ci/readyz-schema-gate.test.ts`). **Verified live:** empty DB → 503 (`"missing tables: organizations, users"`); full 464-table schema → 200.
+5. **P0 — "FDA 21 CFR Part 11 Compliant" signup badge** (blocker #7 below) softened to "Built to support FDA 21 CFR Part 11 workflows", matching the accurate language the same page already uses; removes the false unqualified claim (`943835e`). Final wording is the owner's call.
 
 ---
 
 ## Must-fix before the pilot (confirmed blockers)
+
+> **Update:** blockers **#4 (missing-schema health gate)** and **#7 (Part 11 badge)** are now **fixed in this PR** (see items 4–5 above). They remain documented here for completeness. The rest are unchanged.
 
 ### 1. No verified way to provision the production database from scratch — CONFIRMED P0
 There is no single mechanism that produces a complete schema on a fresh Postgres. The Drizzle journal covers **1 of 162** migrations; `runMigrations()` is dead code (zero call sites); the production container `CMD` runs no migration step; and three documented install commands are each broken, nonexistent, or only *validate* tables. The repo's own preview-DB CI even states replaying the migration tree "fails because most aren't idempotent" — and the "✅ Migrations applied" comment you see on PRs is a no-op on a Neon branch that *inherits* an already-provisioned parent (independently confirmed). The only CI-proven fresh path, `drizzle-kit push`, creates tables but **zero RLS policies** and none of the SQL-only objects. **A working sequence exists and is verified below — it just has to become the canonical, documented install path.** *Effort: M.*
@@ -167,9 +171,9 @@ Run under a supervisor that restarts on exit (the process intentionally exits on
 - [ ] DB provisioned via the runbook; `pg_policies` count ≈ 370 (not 0); `npm run db:ensure` clean
 - [ ] `RLS_ENFORCE=on` and one cross-tenant read manually confirmed to return zero rows
 - [ ] `SEED_DEMO_USER=false` set; `jm.smith@concept2cure.pro` row confirmed **absent**
-- [ ] All 7 boot secrets set; server reaches green `/readyz` (not just `/api/health`)
+- [ ] All 7 boot secrets set; server reaches green `/readyz` (now fails closed on a missing schema — fixed in this PR)
 - [ ] **One full login completed with the OTP arriving in an external Gmail AND Outlook inbox**
-- [ ] "Part 11 Compliant" badge removed/softened on the signup page
+- [x] "Part 11 Compliant" badge softened on the signup page (fixed in this PR — adjust wording to preference)
 - [ ] Pilot surface scoped to wired flows (or testers told what's real vs. sample)
 - [ ] One IND/CER PDF export exercised end-to-end **in the built image**
 - [ ] Neon PITR/branch confirmed; one `pg_dump` + restore rehearsed
