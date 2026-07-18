@@ -100,11 +100,18 @@ export function serveStatic(app: Express) {
     })
   );
 
-  // Non-hashed files (index.html, favicon, etc.) — short cache with revalidation
+  // Non-hashed files (favicon, etc.) — short cache with revalidation.
+  // index:false is load-bearing: without it express.static answers "/" (and
+  // "/index.html") with the RAW index.html, which still contains the literal
+  // __CSP_NONCE__ placeholder and un-nonced <script> tags. Under the prod CSP
+  // (nonce + strict-dynamic, which ignores 'self'), the browser then blocks
+  // the bundle and the root URL renders blank. Disabling the static index
+  // forces every HTML navigation through the nonce-injecting SPA fallback below.
   app.use(
     express.static(distPath, {
       maxAge: 0,
       etag: true,
+      index: false,
     })
   );
 
