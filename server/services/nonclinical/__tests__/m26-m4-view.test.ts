@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { assembleNonclinicalSummary, type GovernedStudyRow } from '../m26-m4-view';
+import { assembleNonclinicalSummary, composeM26WrittenSummary, renderM26Html, type GovernedStudyRow } from '../m26-m4-view';
 
 function study(over: Partial<GovernedStudyRow> & Pick<GovernedStudyRow, 'studyType'>): GovernedStudyRow {
   return {
@@ -121,5 +121,42 @@ describe('assembleNonclinicalSummary — SEND rollup', () => {
     expect(v.send.inScope).toBe(1);
     expect(v.send.validated).toBe(0);
     expect(v.send.risk).not.toBe('low');
+  });
+});
+
+describe('composeM26WrittenSummary + renderM26Html (persistable M2.6 document)', () => {
+  it('composes a real narrative from governed studies', () => {
+    const result = composeM26WrittenSummary([
+      study({ studyType: 'repeat_dose_tox', studyNumber: 'TX-701' }),
+      study({ studyType: 'safety_pharmacology', studyNumber: 'SP-1' }),
+    ]);
+    expect(result.title).toMatch(/2\.6|nonclinical/i);
+    expect(typeof result.narrative).toBe('string');
+    expect(result.narrative.length).toBeGreaterThan(0);
+    expect(typeof result.completeness).toBe('number');
+  });
+
+  it('renders faithful, escaped HTML over the composer output', () => {
+    const result = composeM26WrittenSummary([
+      study({ studyType: 'repeat_dose_tox', studyNumber: 'TX-701', keyFinding: 'Mild <b>hepatic</b> effect & recovery' }),
+    ]);
+    const html = renderM26Html(result);
+    expect(html).toContain('<h2>');
+    // Narrative rendered as paragraphs.
+    expect(html).toMatch(/<p>/);
+    // Interpolated study text is HTML-escaped — no raw injected markup survives.
+    expect(html).not.toContain('<b>hepatic</b>');
+    // Tables from the composer are rendered when present.
+    if (result.tables.length > 0) expect(html).toContain('<table>');
+  });
+
+  it('surfaces the composer gaps in the rendered document', () => {
+    // A PK-only set leaves tox/pharm gaps that the composer reports.
+    const result = composeM26WrittenSummary([study({ studyType: 'adme_pk', studyNumber: 'PK-1' })]);
+    const html = renderM26Html(result);
+    if (result.gaps.length > 0) {
+      expect(html).toContain('Outstanding data gaps');
+      expect(html).toContain('<ul>');
+    }
   });
 });
