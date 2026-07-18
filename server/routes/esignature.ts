@@ -295,15 +295,29 @@ router.post('/sign', async (req: Request, res: Response) => {
   // bound_payload_digest. Fail CLOSED — never apply a signature to a version
   // that has no content (or whose row/table is absent). signatureHash above is
   // the §11.200 attribution hash; this is the §11.70 record-linking hash.
+  const orgId = Number(session.organizationId);
+  if (!Number.isFinite(orgId)) {
+    return res.status(403).json({
+      error: 'Organization context required to sign (§11.10).',
+      code: 'ESIGNATURE_ORG_REQUIRED',
+    });
+  }
   let boundPayloadDigest: string;
   try {
+    // Tenant-scoped: the version is resolved only within the signer's org
+    // (join documents.organization_id), so a signature can never be bound to
+    // another tenant's version by supplying a foreign versionId.
     const ver = await pool.query(
-      `SELECT document_id, version_number, content FROM document_versions WHERE id = $1 LIMIT 1`,
-      [Number(versionId)],
+      `SELECT dv.document_id, dv.version_number, dv.content
+         FROM document_versions dv
+         JOIN documents d ON d.id = dv.document_id
+        WHERE dv.id = $1 AND d.organization_id = $2
+        LIMIT 1`,
+      [Number(versionId), orgId],
     );
     if (ver.rows.length === 0) {
       return res.status(422).json({
-        error: 'Cannot sign: the referenced document version does not exist.',
+        error: 'Cannot sign: the referenced document version does not exist in your organization.',
         code: 'ESIGNATURE_VERSION_NOT_FOUND',
       });
     }
