@@ -582,6 +582,12 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
   const liveSupp = useLiveList<LcmSupp>('/api/biopharma/supplements', LCM_SUPP);
   const [supp, addSupp] = useRows<LcmSupp>(liveSupp.data);
+  /* live ?? fixture — the "Renewal cycles" card projects the governed
+     recurring-obligation store (/api/lifecycle/renewals) through the tested
+     lifecycle composer (region→authority, recurrence→interval, urgency bucket).
+     Falls back to the fixture with a Sample pill when offline/unprovisioned. */
+  const liveRen = useLiveList<LcmRen>('/api/lifecycle/renewals', LCM_REN);
+  const ren = liveRen.data;
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -613,7 +619,7 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
   /* AnswerLead computation */
   const inReview = supp.filter((s) => s.status === 'review');
   const highChg = LCM_CMC.filter((c) => c.risk === 'high');
-  const nextRen = [...LCM_REN].sort((a, b) => String(a.due).localeCompare(String(b.due)))[0];
+  const nextRen = [...ren].sort((a, b) => String(a.due).localeCompare(String(b.due)))[0];
   const topChg = highChg[0];
 
   return (
@@ -686,9 +692,9 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
             ))}
           </div>
         </SpCard>
-        <SpCard title="Renewal cycles" sample meta="PADER · 5-yr · re-exam">
+        <SpCard title="Renewal cycles" sample={liveRen.sample} meta="PADER · 5-yr · re-exam">
           <div className="sp-list">
-            {LCM_REN.map((r, i) => (
+            {ren.map((r, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Prepare the ${r.authority} ${r.next} renewal for ${r.product}`)}>
                 <span className="sp-tag">{r.authority}</span>
                 <span className="sp-row-b">
