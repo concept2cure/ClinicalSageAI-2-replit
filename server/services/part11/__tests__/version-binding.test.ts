@@ -8,7 +8,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { createHash } from 'crypto';
-import { buildVersionBindingDigest } from '../version-binding';
+import { buildVersionBindingDigest, evaluateBindingVerification } from '../version-binding';
 
 const base = { documentId: 42, versionId: 7, versionNumber: '0.7', content: '<p>Clinical Overview draft</p>' };
 
@@ -48,5 +48,37 @@ describe('buildVersionBindingDigest', () => {
     expect(() => buildVersionBindingDigest({ ...base, content: '' })).toThrow(/§11\.70/);
     expect(() => buildVersionBindingDigest({ ...base, content: null })).toThrow(/§11\.70/);
     expect(() => buildVersionBindingDigest({ ...base, content: undefined })).toThrow(/§11\.70/);
+  });
+});
+
+describe('evaluateBindingVerification (§11.70 read-side check)', () => {
+  const digest = buildVersionBindingDigest({ documentId: 1, versionId: 1, versionNumber: '1.0', content: '<p>signed body</p>' });
+
+  it('verifies a signature whose signed content is unchanged', () => {
+    const v = evaluateBindingVerification(digest, digest);
+    expect(v.valid).toBe(true);
+    expect(v.bindingVerified).toBe(true);
+  });
+
+  it('detects tampering when the signed content changed after signing', () => {
+    const tampered = buildVersionBindingDigest({ documentId: 1, versionId: 1, versionNumber: '1.0', content: '<p>signed body.</p>' });
+    const v = evaluateBindingVerification(digest, tampered);
+    expect(v.valid).toBe(false);
+    expect(v.bindingVerified).toBe(false);
+    expect(v.reason).toMatch(/changed since signing|tamper/i);
+  });
+
+  it('is INVALID when the signed version content is gone (unverifiable)', () => {
+    const v = evaluateBindingVerification(digest, null);
+    expect(v.valid).toBe(false);
+    expect(v.reason).toMatch(/no longer available|cannot be verified/i);
+  });
+
+  it('reports a legacy (unbound) signature as valid but NOT binding-verified', () => {
+    for (const bound of ['', null, undefined] as const) {
+      const v = evaluateBindingVerification(bound, null);
+      expect(v.valid).toBe(true);
+      expect(v.bindingVerified).toBe(false);
+    }
   });
 });
