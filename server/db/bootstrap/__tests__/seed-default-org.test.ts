@@ -7,9 +7,11 @@ function mockClient(rows: unknown[] = []): PoolClient {
 }
 
 const ORIGINAL = process.env.SEED_DEMO_USER;
+const ORIGINAL_ENV = process.env.NODE_ENV;
 afterEach(() => {
   if (ORIGINAL === undefined) delete process.env.SEED_DEMO_USER;
   else process.env.SEED_DEMO_USER = ORIGINAL;
+  process.env.NODE_ENV = ORIGINAL_ENV;
   vi.restoreAllMocks();
 });
 
@@ -24,7 +26,8 @@ describe('seedGaDemoUser — SEED_DEMO_USER gate', () => {
     });
   }
 
-  it('proceeds when SEED_DEMO_USER is unset (default behavior preserved)', async () => {
+  it('non-prod: proceeds when SEED_DEMO_USER is unset (dev convenience default)', async () => {
+    process.env.NODE_ENV = 'development';
     delete process.env.SEED_DEMO_USER;
     // Org lookup returns no rows, so the seed is a safe no-op after the first
     // query — enough to prove the gate did not short-circuit.
@@ -33,7 +36,17 @@ describe('seedGaDemoUser — SEED_DEMO_USER gate', () => {
     expect(client.query).toHaveBeenCalledTimes(1);
   });
 
-  it('proceeds when SEED_DEMO_USER=true', async () => {
+  it('PRODUCTION: skips the seed when SEED_DEMO_USER is unset (fail-closed)', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.SEED_DEMO_USER;
+    const client = mockClient();
+    await seedGaDemoUser(client);
+    // No known-password admin unless explicitly opted in.
+    expect(client.query).not.toHaveBeenCalled();
+  });
+
+  it('PRODUCTION: proceeds only when SEED_DEMO_USER=true (explicit opt-in)', async () => {
+    process.env.NODE_ENV = 'production';
     process.env.SEED_DEMO_USER = 'true';
     const client = mockClient([]);
     await seedGaDemoUser(client);

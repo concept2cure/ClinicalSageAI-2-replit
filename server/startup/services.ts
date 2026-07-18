@@ -120,6 +120,26 @@ export async function initializeEarlyServices(): Promise<void> {
     console.error('⚠️ Auth schema bootstrap warning:', error.message);
   }
 
+  // Login OTP is mandatory 2FA delivered by email. If SMTP is unconfigured in
+  // production, NO user can complete a login — fail LOUD at boot so this is
+  // caught before testers hit it, not silently one login at a time.
+  try {
+    const { isEmailConfigured } = await import('../services/emailService.js');
+    if (isEmailConfigured()) {
+      console.log('✅ Email (SMTP) configured — login OTP can be delivered');
+    } else if (process.env.NODE_ENV === 'production') {
+      console.error(
+        '❌ CRITICAL: SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASS). ' +
+          'Login OTP is mandatory 2FA — NO user can log in until email delivery works. ' +
+          'Configure SMTP and verify a code reaches a real inbox before onboarding testers.',
+      );
+    } else {
+      console.warn('⚠️ SMTP not configured — login OTP codes will be logged to the console (dev only)');
+    }
+  } catch (error: any) {
+    console.error('⚠️ Email configuration check failed:', error.message);
+  }
+
   try {
     await FeatureToggleService.initializeFeatureToggle(
       'UNIFIED_REGULATORY_SUBMISSIONS',
