@@ -27,7 +27,12 @@ import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('submission-ai-service');
-const PROMPTS_DIR = path.join(__dirname, '..', 'ai-gateway', 'prompts');
+const PROMPTS_DIR = path.join(
+  path.dirname(new URL(import.meta.url).pathname),
+  '..',
+  'ai-gateway',
+  'prompts',
+);
 
 export class SubmissionAiError extends Error {
   constructor(

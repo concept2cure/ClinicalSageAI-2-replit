@@ -19,7 +19,7 @@ import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('shadow-review-service');
-const PROMPTS_DIR = path.join(__dirname, '..', 'ai-gateway', 'prompts');
+const PROMPTS_DIR = path.join(new URL('.', import.meta.url).pathname, '..', 'ai-gateway', 'prompts');
 
 export type ReviewLens = 'fda_filing' | 'ema_d120' | 'pmda' | 'nb_mdr' | 'nb_ivdr';
 export type FindingSeverity = 'critical' | 'major' | 'minor' | 'info';

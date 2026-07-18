@@ -45,7 +45,7 @@ import { createScopedLogger } from '../../utils/logger';
 const logger = createScopedLogger('ingestion-service');
 
 const CANONICAL_DOCUMENT_TABLE = 'coauthor_documents';
-const PROMPTS_DIR = path.join(__dirname, '..', 'ai-gateway', 'prompts');
+const PROMPTS_DIR = path.join(new URL('.', import.meta.url).pathname, '..', 'ai-gateway', 'prompts');
 
 // ── Standardized error surface (never leak raw provider errors) ───────────────
 
