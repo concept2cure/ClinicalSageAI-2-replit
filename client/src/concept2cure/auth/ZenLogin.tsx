@@ -17,6 +17,7 @@ import {
 } from '@/services/portal/authService';
 
 import { computeRedirect } from './redirectUtils';
+import { setAuthToken } from '@/utils/authToken';
 
 type View = 'sign-in' | 'mfa' | 'forgot-password' | 'reset-password' | 'reset-sent' | 'success';
 
@@ -208,6 +209,9 @@ export const ZenLogin: React.FC = () => {
         sessionStorage.setItem('trialsage_refresh_token', data.refreshToken || '');
         sessionStorage.setItem('trialsage_token_expiry', expiry);
         sessionStorage.setItem('trialsage_user', JSON.stringify(data.user || {}));
+        // Bridge: also populate the canonical token store the API layer reads,
+        // so requests fired before the hard-navigate reload carry the new token.
+        setAuthToken(data.accessToken);
         // Hard navigate so the app shell reinitializes auth from storage
         window.location.href = '/concept2cure';
         return;

@@ -1,5 +1,12 @@
 const TOKEN_KEY = 'token';
-const LEGACY_TOKEN_KEYS = ['auth_token', 'trialsage_access_token'];
+// `trialsage_access_token` is NOT dead: the auth service persists it (localStorage
+// for "remember me", sessionStorage otherwise) and several hooks/contexts read it
+// directly (useLicense, TenantContext, LanguageContext, …). It is kept in lockstep
+// with the canonical key and cleared on logout, but never deleted while a session
+// is live — deleting it would drop those readers and break restart persistence.
+const SHARED_TOKEN_KEY = 'trialsage_access_token';
+// Truly dead legacy key — safe to sweep into the canonical key whenever seen.
+const DEAD_TOKEN_KEYS = ['auth_token'];
 const ORG_ID_KEY = 'currentOrganizationId';
 const LEGACY_ORG_ID_KEYS = ['currentOrganization', 'organizationId'];
 
@@ -48,12 +55,26 @@ export const getAuthToken = (): string | null => {
   const token = sessionStorage.getItem(TOKEN_KEY);
   if (token) return token;
 
-  for (const key of LEGACY_TOKEN_KEYS) {
-    const legacyToken = sessionStorage.getItem(key) || readLocalStorage(key) || readLocalStorage(TOKEN_KEY);
+  // Mirror the shared key (written by the auth service; also read directly by
+  // legacy hooks) into the canonical key. Do NOT delete it — other readers and
+  // "remember me" persistence still depend on it.
+  const shared =
+    sessionStorage.getItem(SHARED_TOKEN_KEY) ||
+    readLocalStorage(SHARED_TOKEN_KEY) ||
+    readLocalStorage(TOKEN_KEY);
+  if (shared) {
+    sessionStorage.setItem(TOKEN_KEY, shared);
+    memoryToken = shared;
+    return shared;
+  }
+
+  // Sweep any value left under a truly-dead legacy key into the canonical key.
+  for (const key of DEAD_TOKEN_KEYS) {
+    const legacyToken = sessionStorage.getItem(key) || readLocalStorage(key);
     if (legacyToken) {
       sessionStorage.setItem(TOKEN_KEY, legacyToken);
+      sessionStorage.removeItem(key);
       removeLocalStorage(key);
-      removeLocalStorage(TOKEN_KEY);
       memoryToken = legacyToken;
       return legacyToken;
     }
@@ -100,13 +121,15 @@ export const setAuthToken = (token: string): void => {
 
   if (canUseSessionStorage()) {
     sessionStorage.setItem(TOKEN_KEY, token);
-    // Keep legacy session key in sync while old hooks migrate to canonical auth access.
-    sessionStorage.setItem('trialsage_access_token', token);
+    // Keep the shared key in sync for hooks/contexts that read it directly.
+    sessionStorage.setItem(SHARED_TOKEN_KEY, token);
   }
 
+  // Sweep a stray canonical copy or a dead legacy key from localStorage, but
+  // PRESERVE localStorage[SHARED_TOKEN_KEY]: the auth service persists the token
+  // there for "remember me", and deleting it would drop the session on restart.
   removeLocalStorage(TOKEN_KEY);
-  removeLocalStorage('trialsage_access_token');
-  for (const key of LEGACY_TOKEN_KEYS) {
+  for (const key of DEAD_TOKEN_KEYS) {
     removeLocalStorage(key);
   }
 };
@@ -114,17 +137,13 @@ export const setAuthToken = (token: string): void => {
 export const clearAuthToken = (): void => {
   memoryToken = null;
 
+  const keys = [TOKEN_KEY, SHARED_TOKEN_KEY, ...DEAD_TOKEN_KEYS];
   if (canUseSessionStorage()) {
-    sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem('trialsage_access_token');
-    for (const key of LEGACY_TOKEN_KEYS) {
+    for (const key of keys) {
       sessionStorage.removeItem(key);
     }
   }
-
-  removeLocalStorage(TOKEN_KEY);
-  removeLocalStorage('trialsage_access_token');
-  for (const key of LEGACY_TOKEN_KEYS) {
+  for (const key of keys) {
     removeLocalStorage(key);
   }
 };
