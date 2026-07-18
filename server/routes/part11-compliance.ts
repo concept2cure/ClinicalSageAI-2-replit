@@ -412,6 +412,18 @@ router.post(
       });
     }
 
+    // §11.70 signature/record linking: a signature must bind the CONTENT being
+    // signed. This route hashes caller-supplied `documentContent`, so it must be
+    // present and non-empty — otherwise the "signature" would bind nothing (an
+    // empty-string digest), which is not a valid signature. Fail closed.
+    if (typeof documentContent !== 'string' || documentContent.length === 0) {
+      return res.status(400).json({
+        error:
+          'documentContent is required and must be non-empty — an electronic signature must bind the content being signed (21 CFR Part 11 §11.70).',
+        code: 'ESIGNATURE_CONTENT_REQUIRED',
+      });
+    }
+
     // §11.10(g): identity is not authority. Enforce signing authority for the
     // authenticated user before credential work, matching the policy on the
     // other signing routes. Role from the membership record (never the body).
@@ -447,7 +459,7 @@ router.post(
         .json({ error: 'Password verification failed — signature rejected per §11.100(a)' });
     }
 
-    const signatureHash = computeSignatureHash(documentId, documentContent || '', signerId, new Date());
+    const signatureHash = computeSignatureHash(documentId, documentContent, signerId, new Date());
 
     const signature: ElectronicSignature = {
       id: uuidv4(),
@@ -500,7 +512,21 @@ router.post(
         ]
       );
     } catch (error) {
-      console.error('[Part11] Signature persistence warning:', (error as Error).message);
+      // §11.70/§11.10(e): a signature that isn't durably persisted did not
+      // happen. Never report success after a failed insert — fail the request
+      // so the caller (and the audit trail) never records a phantom signature.
+      const code = (error as { code?: string })?.code;
+      console.error('[Part11] Signature persistence FAILED — signing aborted:', (error as Error).message);
+      if (code === '42P01') {
+        return res.status(503).json({
+          error: 'E-signature schema not present — run migrations before signing.',
+          code: 'ESIGNATURE_SCHEMA_MISSING',
+        });
+      }
+      return res.status(500).json({
+        error: 'Signature could not be persisted; signing aborted (no signature without a durable record).',
+        code: 'ESIGNATURE_PERSIST_FAILED',
+      });
     }
 
     appendAuditEntry({
