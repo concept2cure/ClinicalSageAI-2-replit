@@ -28,6 +28,7 @@ import { createHash } from 'crypto';
 import { pool } from '../db.js';
 import { verifyToken as verifyMfaToken, isMfaEnabled } from '../services/mfaService.js';
 import auditService from '../services/auditService';
+import { buildVersionBindingDigest } from '../services/part11/version-binding.js';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
 
 const router = Router();
@@ -288,6 +289,45 @@ router.post('/sign', async (req: Request, res: Response) => {
     )
     .digest('hex');
 
+  // §11.70 content binding: the signature must be linked to the *bytes* of the
+  // version being signed, not just its id. Load the version's content
+  // server-side and derive the deterministic binding digest stored in
+  // bound_payload_digest. Fail CLOSED — never apply a signature to a version
+  // that has no content (or whose row/table is absent). signatureHash above is
+  // the §11.200 attribution hash; this is the §11.70 record-linking hash.
+  let boundPayloadDigest: string;
+  try {
+    const ver = await pool.query(
+      `SELECT document_id, version_number, content FROM document_versions WHERE id = $1 LIMIT 1`,
+      [Number(versionId)],
+    );
+    if (ver.rows.length === 0) {
+      return res.status(422).json({
+        error: 'Cannot sign: the referenced document version does not exist.',
+        code: 'ESIGNATURE_VERSION_NOT_FOUND',
+      });
+    }
+    boundPayloadDigest = buildVersionBindingDigest({
+      documentId: Number(ver.rows[0].document_id ?? documentId),
+      versionId: Number(versionId),
+      versionNumber: ver.rows[0].version_number ?? null,
+      content: ver.rows[0].content,
+    });
+  } catch (bindErr: any) {
+    if (bindErr?.code === '42P01') {
+      return res.status(503).json({
+        error: 'E-signature schema not present — run migrations before signing.',
+        code: 'ESIGNATURE_SCHEMA_MISSING',
+      });
+    }
+    // buildVersionBindingDigest throws when content is empty/absent — an
+    // unbindable signature must be refused, not silently applied.
+    return res.status(422).json({
+      error: bindErr instanceof Error ? bindErr.message : 'Cannot bind signature to version content.',
+      code: 'ESIGNATURE_CONTENT_UNBINDABLE',
+    });
+  }
+
   try {
     const result = await pool.query(
       `INSERT INTO electronic_signatures (
@@ -296,14 +336,14 @@ router.post('/sign', async (req: Request, res: Response) => {
          authentication_method, authentication_timestamp, second_factor_verified,
          signature_hash, signature_meaning, signature_manifest,
          is_valid, compliance_statement, legal_disclaimer,
-         ip_address, device_info, signed_at
+         ip_address, device_info, signed_at, bound_payload_digest
        ) VALUES (
          $1, $2, $3, $4,
          $5, $6, $7, $8,
          'password+totp', $9, $10,
          $11, $12, $13,
          $18, $14, $15,
-         $16, $17, $9
+         $16, $17, $9, $19
        ) RETURNING id, signed_at`,
       [
         Number(documentId),
@@ -318,12 +358,13 @@ router.post('/sign', async (req: Request, res: Response) => {
         secondFactorVerified,
         signatureHash,
         signatureMeaning ?? null,
-        JSON.stringify({ action, signerRole, deviceInfo: deviceInfo ?? null }),
+        JSON.stringify({ action, signerRole, deviceInfo: deviceInfo ?? null, boundPayloadDigest }),
         complianceStatement ?? null,
         legalDisclaimer ?? null,
         ipAddress,
         deviceInfo ? JSON.stringify(deviceInfo) : null,
         signatureIsValid,
+        boundPayloadDigest,
       ]
     );
 

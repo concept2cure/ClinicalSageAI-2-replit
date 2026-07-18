@@ -19,6 +19,7 @@ import { documentVersions, documents, submissions } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import crypto from 'crypto';
 import auditService from './auditService';
+import { buildVersionBindingDigest } from './part11/version-binding';
 
 interface AuditTrailInput {
   organizationId: number;
@@ -102,13 +103,32 @@ class Part11ComplianceService {
 
       const signature = this.generateCryptographicSignature(signatureData, userId);
 
+      // §11.70 content binding: resolve the latest version AND its content, and
+      // bind the signature to a deterministic digest of that content (stored in
+      // bound_payload_digest). Fail CLOSED if there is no version content — a
+      // signature must not be applied to content that isn't there.
       const versionRows = await dbInstance
-        .select({ id: documentVersions.id })
+        .select({
+          id: documentVersions.id,
+          versionNumber: documentVersions.versionNumber,
+          content: documentVersions.content,
+        })
         .from(documentVersions)
         .where(eq(documentVersions.documentId, documentId))
         .orderBy(desc(documentVersions.createdAt))
         .limit(1);
-      const versionId = versionRows[0]?.id ?? documentId;
+      if (versionRows.length === 0) {
+        throw new Error(
+          `Part 11 §11.70: document ${documentId} has no stored version — cannot bind a signature.`,
+        );
+      }
+      const versionId = versionRows[0].id;
+      const boundPayloadDigest = buildVersionBindingDigest({
+        documentId,
+        versionId,
+        versionNumber: versionRows[0].versionNumber,
+        content: versionRows[0].content,
+      });
 
       const [electronicSig] = await dbInstance
         .insert(electronicSignatures)
@@ -127,7 +147,8 @@ class Part11ComplianceService {
           secondFactorVerified: false,
           signatureHash: signature.hash,
           signatureMeaning,
-          signatureManifest: signatureData,
+          signatureManifest: { ...signatureData, boundPayloadDigest },
+          boundPayloadDigest,
           signedAt: timestamp,
           complianceStatement: 'Electronic signature complies with 21 CFR Part 11',
           verificationStatus: 'valid',
