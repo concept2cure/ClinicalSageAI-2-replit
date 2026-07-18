@@ -237,6 +237,9 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
   const livePlans = useLiveList<PedPlan>('/api/biopharma/pediatric', PED_PLANS);
   const [plans, addPlan] = useRows<PedPlan>(livePlans.data);
+  /* live ?? fixture — PREA/PIP milestones from the governed store. */
+  const livePrea = useLiveList<PedPrea>('/api/biopharma/prea-milestones', PED_PREA);
+  const prea = livePrea.data;
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -271,7 +274,7 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
 
   /* AnswerLead computation */
   const drafts = plans.filter((p) => String(p.status).includes('draft'));
-  const nextMs = PED_PREA[0];
+  const nextMs = prea[0];
   const topDraft = drafts[0];
 
   return (
@@ -330,9 +333,9 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-sec">
-        <SpCard title="Upcoming PREA milestones" sample foot={<SpAsk onAsk={ask} cmd="Draft a PREA waiver justification against the pediatric extrapolation framework from the last Type C meeting." label="Draft PREA waiver justification" />}>
+        <SpCard title="Upcoming PREA milestones" sample={livePrea.sample} foot={<SpAsk onAsk={ask} cmd="Draft a PREA waiver justification against the pediatric extrapolation framework from the last Type C meeting." label="Draft PREA waiver justification" />}>
           <div className="sp-list">
-            {PED_PREA.map((u, i) => (
+            {prea.map((u, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Status of the ${u.product} milestone "${u.ms}" due ${u.due}`)}>
                 <span className="sp-tag">{u.product}</span>
                 <span className="sp-row-b">
@@ -403,6 +406,11 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
   const liveDes = useLiveList<OrphDes>('/api/biopharma/orphan', ORPH_DES);
   const [des, addDes] = useRows<OrphDes>(liveDes.data);
+  /* live ?? fixture — RPD vouchers/grants + patient-advocacy engagements. */
+  const liveRpd = useLiveList<OrphRpd>('/api/biopharma/orphan-rpd', ORPH_RPD);
+  const rpd = liveRpd.data;
+  const liveAdv = useLiveList<OrphAdv>('/api/biopharma/orphan-advocacy', ORPH_ADV);
+  const adv = liveAdv.data;
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -492,9 +500,9 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-2col">
-        <SpCard title="RPD vouchers & grants" sample>
+        <SpCard title="RPD vouchers & grants" sample={liveRpd.sample}>
           <div className="sp-list">
-            {ORPH_RPD.map((g, i) => (
+            {rpd.map((g, i) => (
               <div key={i} className="sp-row">
                 <span className="sp-tag">{g.product}</span>
                 <span className="sp-row-b">
@@ -506,9 +514,9 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
             ))}
           </div>
         </SpCard>
-        <SpCard title="Patient advocacy" sample>
+        <SpCard title="Patient advocacy" sample={liveAdv.sample}>
           <div className="sp-list">
-            {ORPH_ADV.map((a, i) => (
+            {adv.map((a, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Summarize our engagement history with ${a.org}`)}>
                 <span className="sp-tag">{a.product}</span>
                 <span className="sp-row-b">
