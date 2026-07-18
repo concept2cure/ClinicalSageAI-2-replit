@@ -67,11 +67,16 @@ describe('assembleTechnicalFileFromCore multi-source resolution', () => {
     // Two locally-renderable sources rendered to PDF leaves.
     expect(result.materialized).toBe(2);
 
-    // The external upload leaf is reported, not silently dropped.
+    // The ctd_onboarding leaf is reported, not silently dropped. Since c3fb1f2
+    // ("materialize uploaded PDF leaves") the resolver looks the row up org-scoped
+    // and — as this fixture stages the leaf without seeding the underlying
+    // ctd_onboarding_documents row — surfaces it as unresolved with "row not
+    // found in this organization". The guarantee under test is that an
+    // unmaterializable leaf is surfaced regardless of the specific reason.
     expect(result.unresolvedLeaves).toHaveLength(1);
     expect(result.unresolvedLeaves[0].documentTable).toBe('ctd_onboarding_documents');
     expect(result.unresolvedLeaves[0].documentId).toBe(500);
-    expect(result.unresolvedLeaves[0].reason).toMatch(/uploaded binary|not stored locally/i);
+    expect(result.unresolvedLeaves[0].reason).toMatch(/row not found|not stored locally|not readable/i);
 
     // A real ZIP bundle was produced.
     expect(result.bundle).toBeDefined();
