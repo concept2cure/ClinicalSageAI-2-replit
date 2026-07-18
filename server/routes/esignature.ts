@@ -153,10 +153,9 @@ router.post('/sign', async (req: Request, res: Response) => {
 
   // 21 CFR Part 11 §11.10(g): identity is not authority. Even a fully
   // re-authenticated signer (password + MFA below) may apply a signature only
-  // if their organization role carries signing authority. Enforced here so the
-  // /api/esignature/sign route matches the policy already applied to the
-  // artifact-signature route (single source of truth in
-  // server/services/part11/signing-authority).
+  // if their organization role carries signing authority. The policy lives in
+  // server/services/part11/signing-authority (the single source of truth every
+  // signing route shares).
   const signerRole = resolveUserRole(req);
   if (!isSigningAuthorized(signerRole)) {
     return res.status(403).json({

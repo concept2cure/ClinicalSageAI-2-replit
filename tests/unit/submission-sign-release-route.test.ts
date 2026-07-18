@@ -83,6 +83,17 @@ vi.mock('../../server/services/part11ComplianceService', () => ({
   },
 }));
 
+// §11.10(g) signing-authority gate resolves the signer's org role from the
+// membership record before any run work. These tests exercise body/lineage/
+// credential behaviour, not authority, so the resolver returns an authorized
+// role (the gate is transparent). Static — unaffected by mock resets.
+vi.mock('../../server/services/part11/resolve-signer-role.js', () => ({
+  resolveSignerOrgRole: async () => 'approver',
+}));
+vi.mock('../../server/services/part11/resolve-signer-role', () => ({
+  resolveSignerOrgRole: async () => 'approver',
+}));
+
 vi.mock('../../server/services/auditService.js', () => ({
   default: {
     logAction: (...args: unknown[]) => hoisted.auditLogAction(...args),

@@ -274,6 +274,17 @@ router.post('/requests/:id/sign', async (req: Request, res: Response) => {
     const { userId, userName, userEmail, role, meaning, password, mfaToken, ipAddress, userAgent } =
       req.body;
 
+    // SECURITY (21 CFR Part 11) — NOT PRODUCTION-READY. This workflow-signing
+    // endpoint takes the signer identity + role from the REQUEST BODY and does
+    // not verify credentials server-side (§11.200) — so the §11.10(g)
+    // signing-authority gate applied to the other signing routes cannot be
+    // meaningfully applied here (a body-supplied role is caller-controlled).
+    // Hardening this path requires: bind the signer to the authenticated JWT
+    // (not the body), re-verify password + MFA server-side, then resolve the
+    // authoritative org role via resolveSignerOrgRole() and gate with
+    // isSigningAuthorized() — the same pattern as submission-sign-release /
+    // part11-compliance / seal-verified. Tracked as e-signature convergence
+    // Step 1b (see docs/reports/SUBMISSION_GRADE_GAP_REGISTER.md).
     if (!userId || !userName || !role || !meaning || !password) {
       return res.status(400).json({
         success: false,

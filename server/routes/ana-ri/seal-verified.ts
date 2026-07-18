@@ -26,6 +26,8 @@ import {
   type SealVerifiedVersionInput,
 } from '../../services/ana/verifiedSealService.js';
 import { sendError, sendSuccess, extractRequestContext } from './shared.js';
+import { isSigningAuthorized } from '../../services/part11/signing-authority.js';
+import { resolveSignerOrgRole } from '../../services/part11/resolve-signer-role.js';
 
 /** Is E1 enabled? Mirrors the client ENABLE_ANA_DOCUMENT_STUDIO flag (off by
  * default) via an explicit env opt-in, so the route is inert until the studio
@@ -110,6 +112,21 @@ export async function handleSealVerifiedVersion(req: Request, res: Response): Pr
   const credentials = await verifySignerCredentials(defaultSignoffDeps, { userId, password, mfaToken });
   if (!credentials.verified) {
     return sendError(res, 401, credentials.error || 'Signature verification failed', { code: credentials.code }, 'SIGNATURE_REJECTED');
+  }
+
+  // §11.10(g): identity is not authority. Sealing a verified version applies a
+  // manifested electronic signature — permitted only for a signer whose org role
+  // carries signing authority. Role resolved from the membership record (never a
+  // client flag), gated by the same policy as /api/esignature/sign.
+  const signerRole = await resolveSignerOrgRole(userId, numericOrgId);
+  if (!isSigningAuthorized(signerRole)) {
+    return sendError(
+      res,
+      403,
+      'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
+      { code: 'ESIGNATURE_NO_AUTHORITY' },
+      'ESIGNATURE_NO_AUTHORITY',
+    );
   }
 
   try {

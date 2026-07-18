@@ -59,6 +59,8 @@ import { db, pool } from '../db.js';
 import { electronicSignatures } from '../../shared/schema.js';
 import { eq } from 'drizzle-orm';
 import part11ComplianceService from '../services/part11ComplianceService.js';
+import { isSigningAuthorized } from '../services/part11/signing-authority.js';
+import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import auditService from '../services/auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
 import {
@@ -163,6 +165,20 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
   const signerId = Number(user?.id ?? user?.userId);
   if (!Number.isFinite(signerId) || signerId <= 0) {
     return res.status(401).json({ error: 'authentication_required' });
+  }
+
+  // §11.10(g): identity is not authority. Even a credential-verified signer may
+  // apply a release signature only if their organization role carries signing
+  // authority. The role is resolved from the persisted membership record (never
+  // req.user.role, never the body) and gated by the same policy as
+  // /api/esignature/sign. Checked before any run probing so an unauthorized
+  // caller learns nothing about the submission.
+  const signerRole = await resolveSignerOrgRole(signerId, organizationId);
+  if (!isSigningAuthorized(signerRole)) {
+    return res.status(403).json({
+      error: 'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
+      code: 'ESIGNATURE_NO_AUTHORITY',
+    });
   }
 
   const submissionIdParam = String(req.params.submissionId);
