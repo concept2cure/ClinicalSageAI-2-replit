@@ -110,6 +110,16 @@ const BLA_KIND_LABEL: Record<string, string> = {
   filing_risk: 'BLA filing risk (RTF / CRL)',
 };
 
+/* Only an explicit allowlist of passing verdicts renders green — every other
+   value (moderate/medium/high/critical CRL risk, not_comparable,
+   not_demonstrated, insufficient_data, elevated ADA risk, or any unknown
+   string) is styled as attention, never as a false "complete". An unresolved
+   biologics blocker must never present as green. Verdicts come from the engines:
+   similarity `conclusion`, comparability `conclusion`, immunogenicity
+   `risk.tier`, filing-risk `crlRisk`. */
+const BLA_PASSING_VERDICTS = new Set(['similar', 'comparable', 'low', 'minimal', 'negligible', 'none']);
+const isPassingBlaVerdict = (v?: string | null): boolean => !!v && BLA_PASSING_VERDICTS.has(v.toLowerCase());
+
 const BLA_SEED: BlaAssessment[] = [
   { id: 'bla-as', kind: 'analytical_similarity', title: 'BX-204 vs US-licensed reference', modality: 'mAb', reference_product: 'US-licensed reference', target_agency: 'FDA', verdict: 'similar', status: 'draft' },
   { id: 'bla-cp', kind: 'comparability', title: 'Post-change drug substance (Process C)', modality: 'mAb', target_agency: 'FDA', verdict: 'comparable', status: 'draft' },
@@ -494,7 +504,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
                     {a.title && <div className="nda-m1-note">{a.title}{a.target_agency ? ' · ' + a.target_agency : ''}</div>}
                   </td>
                   <td>{a.modality || '—'}</td>
-                  <td>{a.verdict ? <span className={'reg-pill ' + (a.verdict === 'high' || a.verdict === 'not_demonstrated' ? 'review' : 'complete')}>{a.verdict.replace(/_/g, ' ')}</span> : '—'}</td>
+                  <td>{a.verdict ? <span className={'reg-pill ' + (isPassingBlaVerdict(a.verdict) ? 'complete' : 'review')}>{a.verdict.replace(/_/g, ' ')}</span> : '—'}</td>
                   <td><span className={'reg-pill ' + (a.status === 'signed' ? 'complete' : 'draft')}>{a.status}</span></td>
                 </tr>
               ))}
