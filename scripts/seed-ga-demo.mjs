@@ -200,6 +200,30 @@ async function seed() {
     // ════════════════════════════════════════════════════════════════
     console.log('[4/6] Creating demo projects...');
 
+    // Several core tables (projects, documents, …) have a NOT NULL
+    // client_workspace_id. Ensure a default workspace exists for the org and
+    // reuse its id across the seed.
+    let workspaceId = null;
+    const wsTableExists = await client.query(
+      `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'client_workspaces')`,
+    );
+    if (wsTableExists.rows[0].exists) {
+      const wsRes = await client.query(
+        `INSERT INTO client_workspaces (organization_id, name, slug, status, created_by_id)
+         VALUES ($1, 'Default Workspace', 'default', 'active', $2)
+         ON CONFLICT DO NOTHING
+         RETURNING id`,
+        [org.id, admin.id],
+      );
+      workspaceId = wsRes.rows[0]?.id
+        ?? (await client.query(
+              `SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1`,
+              [org.id],
+           )).rows[0]?.id
+        ?? null;
+      console.log(`   ✓ Client workspace: Default Workspace (id ${workspaceId})`);
+    }
+
     // Check if projects table exists
     const projectsTableExists = await client.query(`
       SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'projects')
@@ -255,11 +279,11 @@ async function seed() {
 
       for (const proj of projects) {
         await client.query(`
-          INSERT INTO projects (organization_id, name, code, description, status, type,
+          INSERT INTO projects (organization_id, client_workspace_id, name, code, description, status, type,
             depth, priority, progress, risk_level, created_by_id, owner_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)
           ON CONFLICT DO NOTHING
-        `, [org.id, proj.name, proj.code, proj.description, proj.status, proj.type,
+        `, [org.id, workspaceId, proj.name, proj.code, proj.description, proj.status, proj.type,
             proj.depth, proj.priority, proj.progress, proj.riskLevel, admin.id]);
         console.log(`   ✓ Project: ${proj.name} (${proj.progress}%)`);
       }
@@ -362,11 +386,11 @@ async function seed() {
 
       for (const doc of documents) {
         await client.query(`
-          INSERT INTO documents (organization_id, title, document_type, category, status,
+          INSERT INTO documents (organization_id, client_workspace_id, title, document_type, category, status,
             document_code, compliance_level, owner_id, created_by_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
           ON CONFLICT DO NOTHING
-        `, [org.id, doc.title, doc.docType, doc.category, doc.status,
+        `, [org.id, workspaceId, doc.title, doc.docType, doc.category, doc.status,
             doc.code, doc.compliance, admin.id]);
         console.log(`   ✓ Doc: ${doc.title}`);
       }
