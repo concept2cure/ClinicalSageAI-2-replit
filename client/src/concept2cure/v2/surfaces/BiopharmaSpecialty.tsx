@@ -556,7 +556,15 @@ interface LcmCmc {
   area: string;
   programs: string;
   status: string;
+  /** Present when live: the classifier's computed FDA reporting category. */
+  fdaCategory?: string;
+  emaCategory?: string;
 }
+
+/** Short display label for the classifier's FDA reporting category. */
+const FDA_CAT_LABEL: Record<string, string> = {
+  pas: 'PAS', cbe_30: 'CBE-30', cbe_0: 'CBE-0', annual_report: 'Annual Report', no_filing: 'No filing',
+};
 
 interface LcmRen {
   authority: string;
@@ -596,6 +604,12 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
      Falls back to the fixture with a Sample pill when offline/unprovisioned. */
   const liveRen = useLiveList<LcmRen>('/api/lifecycle/renewals', LCM_REN);
   const ren = liveRen.data;
+  /* live ?? fixture — the "CMC change control" card projects the governed
+     proposed-change store (/api/cmc-changes) through the deterministic
+     SUPAC/variations classifier (FDA reporting category → risk band). Falls back
+     to the fixture with a Sample pill when offline/unprovisioned. */
+  const liveCmc = useLiveList<LcmCmc>('/api/cmc-changes', LCM_CMC);
+  const cmc = liveCmc.data;
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -626,7 +640,7 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
 
   /* AnswerLead computation */
   const inReview = supp.filter((s) => s.status === 'review');
-  const highChg = LCM_CMC.filter((c) => c.risk === 'high');
+  const highChg = cmc.filter((c) => c.risk === 'high');
   const nextRen = [...ren].sort((a, b) => String(a.due).localeCompare(String(b.due)))[0];
   const topChg = highChg[0];
 
@@ -686,14 +700,14 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-2col">
-        <SpCard title="CMC change control" sample meta={LCM_CMC.length + ' tracked'} foot={<SpAsk onAsk={ask} cmd="Classify the open CMC changes against ICH Q12 -- flag which are PACMP-eligible and which need a prior-approval supplement." label="Classify against ICH Q12" />}>
+        <SpCard title="CMC change control" sample={liveCmc.sample} meta={cmc.length + ' tracked'} foot={<SpAsk onAsk={ask} cmd="Classify the open CMC changes against ICH Q12 -- flag which are PACMP-eligible and which need a prior-approval supplement." label="Classify against ICH Q12" />}>
           <div className="sp-list">
-            {LCM_CMC.map((c, i) => (
+            {cmc.map((c, i) => (
               <div key={i} className="sp-row">
                 <span className="sp-sev" data-s={c.risk === 'high' ? 'high' : c.risk === 'low' ? 'low' : 'med'}>{c.risk}</span>
                 <span className="sp-row-b">
                   <span className="sp-row-t">{c.title}</span>
-                  <span className="sp-row-s">{c.area} · {c.programs}</span>
+                  <span className="sp-row-s">{c.area} · {c.programs}{c.fdaCategory ? ' · ' + (FDA_CAT_LABEL[c.fdaCategory] ?? c.fdaCategory) : ''}</span>
                 </span>
                 {pill(c.status)}
               </div>
