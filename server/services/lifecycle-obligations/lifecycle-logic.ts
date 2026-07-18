@@ -114,3 +114,92 @@ export function summarizeCalendar(items: DeadlineItem[], today: string): Calenda
   for (const it of items) s[obligationUrgency(it, today)] += 1;
   return s;
 }
+
+// ─── Renewal-cycle projection (read-side view for the Lifecycle surface) ──────
+
+/** Region code → the agency label the surface shows. */
+const REGION_AUTHORITY: Record<string, string> = { fda: 'FDA', eu: 'EMA', jp: 'PMDA', mhra: 'MHRA', other: 'Other' };
+
+/** Map a governed obligation region to its agency label. Pure. */
+export function authorityForRegion(region: string | null | undefined): string {
+  return REGION_AUTHORITY[(region ?? '').toLowerCase()] ?? 'Other';
+}
+
+/** Human interval label for a recurrence in months (12→Annual, 60→5-year …). Pure. */
+export function recurrenceInterval(months: number | null | undefined): string {
+  if (months == null || months <= 0) return 'One-time';
+  if (months % 12 === 0) {
+    const years = months / 12;
+    return years === 1 ? 'Annual' : `${years}-year`;
+  }
+  return `${months}-month`;
+}
+
+/**
+ * The recurring reporting/renewal obligation types the "Renewal cycles" card
+ * surfaces (periodic safety reports, renewals, annual reports) — NOT one-off
+ * variations/supplements/pediatric commitments.
+ */
+export const RENEWAL_OBLIGATION_TYPES = new Set(['renewal', 'annual_report', 'periodic_report']);
+
+/** The report label shown for a recurring obligation. Prefers the authored
+ *  classification; otherwise derives an honest default from type + region. Pure. */
+export function renewalReportLabel(obligationType: string, region: string | null | undefined, classification: string | null | undefined): string {
+  if (classification && classification.trim()) return classification.trim();
+  const r = (region ?? '').toLowerCase();
+  switch (obligationType) {
+    case 'annual_report':
+      return r === 'fda' ? 'PADER' : 'Annual report';
+    case 'periodic_report':
+      return r === 'fda' ? 'PADER' : 'PSUR/PBRER';
+    case 'renewal':
+      return r === 'jp' ? 'Re-examination' : 'Renewal';
+    default:
+      return obligationType.replace(/_/g, ' ');
+  }
+}
+
+export interface RenewalObligationRow {
+  obligation_type: string;
+  region: string | null;
+  title: string;
+  classification: string | null;
+  due_date: string | null;
+  recurrence_months: number | null;
+  status: string;
+}
+
+export interface RenewalView {
+  authority: string;
+  product: string;
+  next: string;
+  interval: string;
+  due: string;
+  urgency: UrgencyBucket;
+}
+
+/**
+ * Project governed renewal-class obligation rows into the Lifecycle surface's
+ * "Renewal cycles" shape, enriched with the deterministic urgency bucket. Only
+ * recurring reporting/renewal types are included; rows are ordered soonest-due
+ * first (undated last). Pure — no DB, no clock (today is passed in).
+ */
+export function projectRenewalObligations(rows: RenewalObligationRow[], today: string): RenewalView[] {
+  const terminalStatuses = new Set(['approved', 'closed', 'submitted']);
+  const views = rows
+    .filter((r) => RENEWAL_OBLIGATION_TYPES.has(r.obligation_type))
+    .map((r) => ({
+      authority: authorityForRegion(r.region),
+      product: r.title,
+      next: renewalReportLabel(r.obligation_type, r.region, r.classification),
+      interval: recurrenceInterval(r.recurrence_months),
+      due: r.due_date ?? '—',
+      urgency: obligationUrgency({ dueDate: r.due_date, terminal: terminalStatuses.has(r.status) }, today),
+    }));
+  // Soonest real due date first; undated ('—') sorts last.
+  return views.sort((a, b) => {
+    if (a.due === '—') return b.due === '—' ? 0 : 1;
+    if (b.due === '—') return -1;
+    return a.due.localeCompare(b.due);
+  });
+}

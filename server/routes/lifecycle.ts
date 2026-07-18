@@ -21,8 +21,9 @@ import {
   listObligations,
   listCalendar,
   listEvents,
+  nextEventDueByObligation,
 } from '../services/lifecycle-obligations/lifecycle-service';
-import { summarizeCalendar, classificationPathway } from '../services/lifecycle-obligations/lifecycle-logic';
+import { summarizeCalendar, classificationPathway, projectRenewalObligations } from '../services/lifecycle-obligations/lifecycle-logic';
 import { recordLifecycleObligation, recordLifecycleSubmission } from '../services/lifecycle-metrics';
 
 const router = Router();
@@ -155,6 +156,33 @@ router.get('/calendar', async (req, res) => {
     const summary = summarizeCalendar(items.map((i) => ({ dueDate: i.dueDate, terminal: i.status === 'approved' || i.status === 'closed' || i.status === 'submitted' })), today());
     res.json({ summary, items });
   } catch (err) { fail(res, err); }
+});
+
+/**
+ * Read-side projection of the governed recurring-obligation store into the
+ * Lifecycle surface's "Renewal cycles" shape ({ data: RenewalView[] }), enriched
+ * with the deterministic urgency bucket. Recurring reporting/renewal types only.
+ * Fails CLOSED to an empty list (never 500, never fabricated) when the store is
+ * absent or errors, so the surface shows its sample fallback — the whole point
+ * of the surface's live ?? fixture guard.
+ */
+router.get('/renewals', async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  try {
+    const rows = await listObligations(orgId);
+    // A recurring obligation created with an anchor + cadence but no explicit
+    // parent due_date carries its dated occurrences on the events table; fall
+    // back to the nearest non-terminal event so the next generated occurrence
+    // shows (and sorts) correctly instead of as an undated row.
+    const eventDue = await nextEventDueByObligation(orgId);
+    const enriched = rows.map((r: any) => ({ ...r, due_date: r.due_date ?? eventDue.get(Number(r.id)) ?? null }));
+    const data = projectRenewalObligations(enriched, today());
+    res.json({ data, meta: { count: data.length } });
+  } catch (err) {
+    const pendingStore = (err as { code?: string } | null)?.code === '42P01';
+    res.json({ data: [], meta: { count: 0, pendingStore } });
+  }
 });
 
 export default router;
