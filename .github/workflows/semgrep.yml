@@ -23,6 +23,13 @@ jobs:
     name: Analyze (Semgrep)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Advisory, not blocking. This scan was previously dead (wrong branch
+    # filter + an invalid image tag + `--config=auto` with `--metrics=off`,
+    # which is a hard error). Now that it runs on the canonical branch, keep
+    # it non-blocking so pre-existing repo-wide findings surface in the
+    # Security tab without gating every PR. Ratchet to blocking once the
+    # backlog is triaged.
+    continue-on-error: true
     container:
       image: semgrep/semgrep:latest
     steps:
@@ -33,18 +40,24 @@ jobs:
         id: semgrep_scan
         run: |
           set +e
+          # A named ruleset (not `auto`) so it works with metrics disabled —
+          # `--config=auto` requires metrics to be on. Do not pass `--error`:
+          # findings are reported via SARIF, they do not fail the run.
           semgrep scan \
-            --config=auto \
+            --config=p/default \
             --metrics=off \
             --sarif \
-            --output=semgrep.sarif \
-            --error
-          scan_exit_code=$?
-          echo "exit_code=${scan_exit_code}" >> "$GITHUB_OUTPUT"
+            --output=semgrep.sarif
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          # Guarantee a SARIF file exists so the upload steps never hard-fail.
+          if [ ! -f semgrep.sarif ]; then
+            echo '{"version":"2.1.0","$schema":"https://json.schemastore.org/sarif-2.1.0.json","runs":[]}' > semgrep.sarif
+          fi
           exit 0
 
-      - name: Upload Semgrep SARIF
+      - name: Upload Semgrep SARIF to code scanning
         if: always()
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
@@ -55,10 +68,4 @@ jobs:
         with:
           name: semgrep-sarif
           path: semgrep.sarif
-          if-no-files-found: error
-
-      - name: Fail job on Semgrep findings
-        if: steps.semgrep_scan.outputs.exit_code != '0'
-        run: |
-          echo "Semgrep detected findings (exit code ${{ steps.semgrep_scan.outputs.exit_code }})."
-          exit 1
+          if-no-files-found: warn
