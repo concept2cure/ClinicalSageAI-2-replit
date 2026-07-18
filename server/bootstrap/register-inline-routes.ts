@@ -966,7 +966,10 @@ export async function registerInlineAiWorkflowRoutes({
     app.use('/api/biopharma/pediatric', authMiddleware, specialty.pediatricRouter);
     app.use('/api/biopharma/orphan', authMiddleware, specialty.orphanRouter);
     app.use('/api/biopharma/supplements', authMiddleware, specialty.supplementsRouter);
-    console.info('✅ Biopharma specialty routes mounted (/api/biopharma/{pediatric,orphan,supplements})');
+    app.use('/api/biopharma/prea-milestones', authMiddleware, specialty.preaMilestonesRouter);
+    app.use('/api/biopharma/orphan-rpd', authMiddleware, specialty.orphanRpdRouter);
+    app.use('/api/biopharma/orphan-advocacy', authMiddleware, specialty.orphanAdvocacyRouter);
+    console.info('✅ Biopharma specialty routes mounted (/api/biopharma/{pediatric,orphan,supplements,prea-milestones,orphan-rpd,orphan-advocacy})');
   } catch (error) {
     console.error('❌ Failed to mount Biopharma specialty routes:', error);
   }

@@ -541,7 +541,8 @@
     "20260717_nda_rtf_store.sql",
     "20260717_maa_module1_store.sql",
     "20260718_smpc_sections_store.sql",
-    "20260718_bla_assessments_store.sql"
+    "20260718_bla_assessments_store.sql",
+    "20260718_pediatric_orphan_cards.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

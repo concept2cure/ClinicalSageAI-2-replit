@@ -70,3 +70,23 @@ export const supplementsRouter = listRouter(
      FROM biopharma_supplements WHERE organization_id = $1 ORDER BY id`,
   'list-supplements',
 );
+
+// ── Batch 2: the three sub-cards that were still static surface fixtures ──────
+
+export const preaMilestonesRouter = listRouter(
+  `SELECT product, milestone AS "ms", due
+     FROM biopharma_prea_milestones WHERE organization_id = $1 ORDER BY id`,
+  'list-prea-milestones',
+);
+
+export const orphanRpdRouter = listRouter(
+  `SELECT product, kind, value, notes, status
+     FROM biopharma_orphan_rpd WHERE organization_id = $1 ORDER BY id`,
+  'list-orphan-rpd',
+);
+
+export const orphanAdvocacyRouter = listRouter(
+  `SELECT product, org_name AS "org", engagement
+     FROM biopharma_orphan_advocacy WHERE organization_id = $1 ORDER BY id`,
+  'list-orphan-advocacy',
+);
