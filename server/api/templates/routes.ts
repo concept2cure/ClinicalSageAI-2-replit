@@ -98,17 +98,22 @@ router.get('/', async (req: Request, res: Response) => {
  */
 router.get('/catalog', async (req: Request, res: Response) => {
   try {
-    const { 
-      category, 
-      region, 
-      module, 
-      search, 
+    // Tenant scope from the authenticated context, never the query string —
+    // matches the GET / handler above. Prevents reading another org's catalog.
+    const organizationId = Number((req as any).tenantId || (req as any).tenantContext?.organizationId);
+    if (!organizationId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const {
+      category,
+      region,
+      module,
+      search,
       tags,
-      organizationId = '6' 
     } = req.query;
-    
+
     const conditions: (SQL<unknown> | undefined)[] = [
-      eq(ectdTemplates.organizationId, parseInt(organizationId as string)),
+      eq(ectdTemplates.organizationId, organizationId),
       eq(ectdTemplates.isActive, true)
     ];
     

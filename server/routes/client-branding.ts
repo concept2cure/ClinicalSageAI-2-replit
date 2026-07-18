@@ -243,14 +243,15 @@ router.get('/templates/:id', async (req: Request, res: Response) => {
 
 router.post('/templates', async (req: Request, res: Response) => {
   try {
-    const { organizationId, name, description, category, fileType, content, placeholders } =
-      req.body;
+    // Tenant scope from the JWT only, consistent with every other handler in
+    // this file — the body org field is ignored.
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const orgId = guard.orgId;
+    const { name, description, category, fileType, content, placeholders } = req.body;
 
     if (!name || !category)
       return res.status(400).json({ error: 'name and category are required' });
-
-    const orgId = Number(organizationId);
-    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
 
     const templateData = {
       organizationId: orgId,

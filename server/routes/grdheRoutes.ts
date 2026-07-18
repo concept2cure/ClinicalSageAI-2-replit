@@ -75,51 +75,60 @@ const asyncHandler = (fn: Function) => (req: Request, res: Response, next: NextF
 };
 
 /**
- * Validate tenant ID middleware.
+ * Assert an addressed tenant UUID matches the verified JWT's organizationUuid.
  *
- * The URL-path `:tenantId` is the addressed tenant. It MUST match the
- * organizationUuid carried by the verified JWT — accepting it from the
- * body or query (as the previous implementation did) is exactly the
- * IDOR shape PRs #496-#499 closed.
+ * The addressed tenant — whether it arrives in the URL path, the body, or the
+ * query — MUST match the organizationUuid carried by the verified JWT.
+ * Accepting it from a request field without this cross-check is exactly the
+ * IDOR shape PRs #496-#499 closed. Shared by the path-param middleware
+ * (validateTenantId) and the body-based write handlers below. Sends the failure
+ * response and returns false; returns true when the caller may proceed.
  */
-const validateTenantId = (req: Request, res: Response, next: NextFunction) => {
-  const tenantId = String(req.params.tenantId ?? '');
-
+const assertTenantMatchesAuth = (req: Request, res: Response, tenantId: string): boolean => {
   if (!tenantId) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       error: {
         code: 'MISSING_TENANT_ID',
         message: 'Tenant ID is required',
       },
     });
+    return false;
   }
 
   // Validate UUID format
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(tenantId)) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       error: {
         code: 'INVALID_TENANT_ID',
         message: 'Tenant ID must be a valid UUID',
       },
     });
+    return false;
   }
 
   const authedUuid =
     (req as any).user?.organizationUuid ??
     (req as any).tenantContext?.organizationUuid;
   if (!authedUuid || String(authedUuid).toLowerCase() !== tenantId.toLowerCase()) {
-    return res.status(403).json({
+    res.status(403).json({
       success: false,
       error: {
         code: 'TENANT_MISMATCH',
         message: 'Authenticated tenant does not match the requested tenant',
       },
     });
+    return false;
   }
 
+  return true;
+};
+
+const validateTenantId = (req: Request, res: Response, next: NextFunction) => {
+  const tenantId = String(req.params.tenantId ?? '');
+  if (!assertTenantMatchesAuth(req, res, tenantId)) return;
   next();
 };
 
@@ -159,18 +168,11 @@ router.get('/data-residency/:tenantId', validateTenantId, asyncHandler(async (re
  * Create or update data residency configuration
  */
 router.post('/data-residency', asyncHandler(async (req: Request, res: Response) => {
+  // security-allow: tenantId is cross-checked against the JWT organizationUuid by assertTenantMatchesAuth below (grdhe keys on org UUID, not the numeric orgId requireAuthedOrgId returns).
   const { tenantId, primaryRegion, allowedProcessingRegions, ...rest } = req.body;
-  
-  if (!tenantId) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'MISSING_TENANT_ID',
-        message: 'Tenant ID is required'
-      }
-    });
-  }
-  
+
+  if (!assertTenantMatchesAuth(req, res, String(tenantId ?? ''))) return;
+
   const config = await grdheService.setDataResidencyConfig({
     tenantId,
     primaryRegion,
@@ -189,9 +191,12 @@ router.post('/data-residency', asyncHandler(async (req: Request, res: Response) 
  * Validate if tenant can process data in a specific region
  */
 router.post('/data-residency/validate', asyncHandler(async (req: Request, res: Response) => {
+  // security-allow: tenantId is cross-checked against the JWT organizationUuid by assertTenantMatchesAuth below (grdhe keys on org UUID, not the numeric orgId requireAuthedOrgId returns).
   const { tenantId, region } = req.body;
-  
-  if (!tenantId || !region) {
+
+  if (!assertTenantMatchesAuth(req, res, String(tenantId ?? ''))) return;
+
+  if (!region) {
     return res.status(400).json({
       success: false,
       error: {
@@ -200,7 +205,7 @@ router.post('/data-residency/validate', asyncHandler(async (req: Request, res: R
       }
     });
   }
-  
+
   const isValid = await grdheService.validateDataRegion(tenantId, region as DataRegion);
   
   res.json({

@@ -14,9 +14,12 @@
  *
  *   1. req.body.organizationId / orgId / org_id / tenantId / tenant_id
  *      → use requireAuthedOrgId from server/utils/authedOrgId
+ *      (member access, single-line destructuring, AND multi-line
+ *      destructuring — the last handled by a whole-file pass so a
+ *      destructure spread across several lines can't slip the gate)
  *
  *   2. req.query.organizationId / orgId / org_id / tenantId / tenant_id
- *      → same fix
+ *      → same fix (same three forms)
  *
  *   3. req.headers['x-organization-id'] / req.headers['x-tenant-id']
  *      → validateTenantContext sources the org from JWT; route code
@@ -80,18 +83,24 @@ const COMMON_EXEMPT: RegExp[] = [
 const PATTERNS: Pattern[] = [
   {
     name: 'tenant-trust-body',
+    // Two forms of the same IDOR: member access (`req.body.organizationId`,
+    // `req.body['orgId']`) AND destructuring (`const { organizationId } =
+    // req.body`). The destructuring form is how a cluster of routes slipped
+    // past this gate — the member-access-only regex was blind to it.
     regex:
-      /\breq\s*(?:\.(?:body))\s*(?:\.(?:organizationId|orgId|org_id|tenantId|tenant_id)\b|\[\s*['"](?:organizationId|orgId|org_id|tenantId|tenant_id)['"]\s*\])/,
+      /\breq\s*(?:\.(?:body))\s*(?:\.(?:organizationId|orgId|org_id|tenantId|tenant_id)\b|\[\s*['"](?:organizationId|orgId|org_id|tenantId|tenant_id)['"]\s*\])|\{[^}]*\b(?:organizationId|orgId|org_id|tenantId|tenant_id)\b[^}]*\}\s*=\s*req\s*\.\s*body\b/,
     message:
-      'Do not read organizationId / tenantId from req.body — attacker-controlled. ' +
+      'Do not read organizationId / tenantId from req.body — attacker-controlled ' +
+      '(member access OR destructuring). ' +
       'Use requireAuthedOrgId(req, res) from server/utils/authedOrgId.',
   },
   {
     name: 'tenant-trust-query',
     regex:
-      /\breq\s*(?:\.(?:query))\s*(?:\.(?:organizationId|orgId|org_id|tenantId|tenant_id)\b|\[\s*['"](?:organizationId|orgId|org_id|tenantId|tenant_id)['"]\s*\])/,
+      /\breq\s*(?:\.(?:query))\s*(?:\.(?:organizationId|orgId|org_id|tenantId|tenant_id)\b|\[\s*['"](?:organizationId|orgId|org_id|tenantId|tenant_id)['"]\s*\])|\{[^}]*\b(?:organizationId|orgId|org_id|tenantId|tenant_id)\b[^}]*\}\s*=\s*req\s*\.\s*query\b/,
     message:
-      'Do not read organizationId / tenantId from req.query — attacker-controlled. ' +
+      'Do not read organizationId / tenantId from req.query — attacker-controlled ' +
+      '(member access OR destructuring). ' +
       'Use requireAuthedOrgId(req, res) from server/utils/authedOrgId.',
   },
   {
@@ -137,6 +146,43 @@ const PATTERNS: Pattern[] = [
       'Do not fall back to a hardcoded org id — 403 instead. The legacy ?? 1 / ' +
       '|| 7 / || "default" patterns are how cross-tenant IDORs got their start ' +
       '(see PRs #496-#499).',
+  },
+];
+
+/**
+ * Whole-file (multi-line-aware) destructuring patterns.
+ *
+ * The per-line PATTERNS above cannot see a destructure that spans several
+ * lines, e.g.
+ *
+ *     const {
+ *       organizationId,
+ *       studyId,
+ *     } = req.body;
+ *
+ * That exact shape is how tenant reads slipped past the line scanner in
+ * foresight-feedback.ts. `[^{}]` matches newlines, so these regexes span the
+ * brace body across lines when run against the whole file. `g` flag so we can
+ * walk every match and map its index back to a line number.
+ */
+const MULTILINE_PATTERNS: Pattern[] = [
+  {
+    name: 'tenant-trust-body',
+    regex:
+      /\{[^{}]*\b(?:organizationId|orgId|org_id|tenantId|tenant_id)\b[^{}]*\}\s*=\s*req\s*\.\s*body\b/g,
+    message:
+      'Do not read organizationId / tenantId from req.body — attacker-controlled ' +
+      '(multi-line destructuring). ' +
+      'Use requireAuthedOrgId(req, res) from server/utils/authedOrgId.',
+  },
+  {
+    name: 'tenant-trust-query',
+    regex:
+      /\{[^{}]*\b(?:organizationId|orgId|org_id|tenantId|tenant_id)\b[^{}]*\}\s*=\s*req\s*\.\s*query\b/g,
+    message:
+      'Do not read organizationId / tenantId from req.query — attacker-controlled ' +
+      '(multi-line destructuring). ' +
+      'Use requireAuthedOrgId(req, res) from server/utils/authedOrgId.',
   },
 ];
 
@@ -215,6 +261,43 @@ function scanFile(filePath: string): Violation[] {
           pattern: pat,
         });
       }
+    }
+  }
+
+  // Second pass: whole-file destructuring that spans multiple lines. Dedupe
+  // against lines the per-line pass already flagged so single-line destructures
+  // aren't double-reported.
+  const flaggedLines = new Set(violations.map(v => v.line));
+  for (const pat of MULTILINE_PATTERNS) {
+    if (pat.exemptFiles && pat.exemptFiles.some(e => e.test(rel))) continue;
+    pat.regex.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = pat.regex.exec(content)) !== null) {
+      const startLine = content.slice(0, m.index).split('\n').length; // 1-based
+      const endLine = content.slice(0, m.index + m[0].length).split('\n').length;
+      if (flaggedLines.has(startLine)) continue;
+      const startText = lines[startLine - 1] ?? '';
+      const trimmed = startText.trimStart();
+      if (trimmed.startsWith('//') || trimmed.startsWith('*')) continue;
+      // security-allow may sit on the start line, the line before it, or the
+      // line carrying `= req.body` at the end of the destructure.
+      const prev = startLine > 1 ? lines[startLine - 2] : '';
+      const endText = lines[endLine - 1] ?? '';
+      if (
+        ALLOW_MARKER.test(startText) ||
+        ALLOW_MARKER.test(prev) ||
+        ALLOW_MARKER.test(endText)
+      ) {
+        continue;
+      }
+      flaggedLines.add(startLine);
+      violations.push({
+        file: rel,
+        line: startLine,
+        column: 1,
+        text: startText.trim().slice(0, 160) || m[0].replace(/\s+/g, ' ').slice(0, 160),
+        pattern: pat,
+      });
     }
   }
   return violations;

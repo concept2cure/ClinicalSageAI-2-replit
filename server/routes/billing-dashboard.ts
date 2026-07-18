@@ -931,6 +931,10 @@ router.put('/credits/auto-reload', authenticateToken, requireRole('admin', 'owne
 router.post('/credits/adjust', authenticateToken, requirePlatformAdmin, async (req: Request, res: Response) => {
   try {
     const userId = getUserId(req);
+    // Platform-admin credit grant: organizationId is the TARGET org receiving
+    // the adjustment, not the caller's tenant identity. Route is
+    // authenticateToken + requirePlatformAdmin; audited via the ledger row.
+    // security-allow: admin acts on a target org, not self-tenant scoping.
     const { organizationId, entryType, amountCents, description, reference } = req.body ?? {};
     const targetOrg = Number(organizationId);
     if (!Number.isInteger(targetOrg) || targetOrg <= 0) {

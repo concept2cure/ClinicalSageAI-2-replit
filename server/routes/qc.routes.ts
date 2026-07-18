@@ -15,8 +15,16 @@ import {
 } from '../../shared/schema/qc-schemas';
 import { storage } from '../storage';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
+
+// QC records (specifications, OOS, batch releases, deviations, micro tests,
+// reference standards) are 21 CFR Part 11 regulated, tenant-scoped data.
+// Authenticate at the router root so req.user is always present and
+// requireAuthedOrgId can source the org from the JWT — every handler here
+// scopes by the authenticated org, never the query string.
+router.use(authenticateToken);
 
 /**
  * Centralised error responder for QC routes. The QC storage layer is largely a
@@ -57,12 +65,10 @@ function sendQcError(res: Response, error: unknown, failMessage: string): void {
 // Get all specifications
 router.get('/specifications', async (req: Request, res: Response) => {
   try {
-    const { organizationId, clientWorkspaceId } = req.query;
-    if (!Number(organizationId)) {
-      return res.status(401).json({ error: 'Organization context required' });
-    }
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const { clientWorkspaceId } = req.query;
     const specifications = await storage.getQcSpecifications({
-      organizationId: Number(organizationId),
+      organizationId: guard.orgId,
       clientWorkspaceId: Number(clientWorkspaceId),
     });
     res.json(specifications);
@@ -148,9 +154,10 @@ router.get('/specifications/:id/versions', async (req: Request, res: Response) =
 // Get all OOS investigations
 router.get('/oos-investigations', async (req: Request, res: Response) => {
   try {
-    const { organizationId, clientWorkspaceId, status, priority } = req.query;
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const { clientWorkspaceId, status, priority } = req.query;
     const investigations = await storage.getOosInvestigations({
-      organizationId: Number(organizationId),
+      organizationId: guard.orgId,
       clientWorkspaceId: Number(clientWorkspaceId),
       status: status as string,
       priority: priority as string,
@@ -259,9 +266,10 @@ router.post('/oos-investigations/:id/capa', async (req: Request, res: Response) 
 // Get all batch releases
 router.get('/batch-releases', async (req: Request, res: Response) => {
   try {
-    const { organizationId, clientWorkspaceId, releaseStatus } = req.query;
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const { clientWorkspaceId, releaseStatus } = req.query;
     const releases = await storage.getBatchReleases({
-      organizationId: Number(organizationId),
+      organizationId: guard.orgId,
       clientWorkspaceId: Number(clientWorkspaceId),
       releaseStatus: releaseStatus as string,
     });
@@ -378,9 +386,10 @@ router.post('/batch-releases/:id/release', async (_req: Request, res: Response) 
 // Get all deviations
 router.get('/deviations', async (req: Request, res: Response) => {
   try {
-    const { organizationId, clientWorkspaceId, deviationType, severity } = req.query;
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const { clientWorkspaceId, deviationType, severity } = req.query;
     const deviations = await storage.getQcDeviations({
-      organizationId: Number(organizationId),
+      organizationId: guard.orgId,
       clientWorkspaceId: Number(clientWorkspaceId),
       deviationType: deviationType as string,
       severity: severity as string,
@@ -462,9 +471,10 @@ router.post('/deviations/:id/capa', async (req: Request, res: Response) => {
 // Get deviation trending analysis
 router.get('/deviations/trending', async (req: Request, res: Response) => {
   try {
-    const { organizationId, startDate, endDate, category } = req.query;
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const { startDate, endDate, category } = req.query;
     const trending = await storage.getDeviationTrending({
-      organizationId: Number(organizationId),
+      organizationId: guard.orgId,
       startDate: startDate as string,
       endDate: endDate as string,
       category: category as string,
@@ -482,9 +492,10 @@ router.get('/deviations/trending', async (req: Request, res: Response) => {
 // Get all microbiological tests
 router.get('/microbiological-tests', async (req: Request, res: Response) => {
   try {
-    const { organizationId, clientWorkspaceId, testType, sampleType } = req.query;
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const { clientWorkspaceId, testType, sampleType } = req.query;
     const tests = await storage.getMicrobiologicalTests({
-      organizationId: Number(organizationId),
+      organizationId: guard.orgId,
       clientWorkspaceId: Number(clientWorkspaceId),
       testType: testType as string,
       sampleType: sampleType as string,
@@ -538,9 +549,10 @@ router.put('/microbiological-tests/:id', async (req: Request, res: Response) => 
 // Get environmental monitoring schedule
 router.get('/microbiological-tests/environmental-monitoring/schedule', async (req: Request, res: Response) => {
   try {
-    const { organizationId, startDate, endDate } = req.query;
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const { startDate, endDate } = req.query;
     const schedule = await storage.getEnvironmentalMonitoringSchedule({
-      organizationId: Number(organizationId),
+      organizationId: guard.orgId,
       startDate: startDate as string,
       endDate: endDate as string,
     });
@@ -589,9 +601,10 @@ router.post('/microbiological-tests/:id/results', async (req: Request, res: Resp
 // Get all reference standards
 router.get('/reference-standards', async (req: Request, res: Response) => {
   try {
-    const { organizationId, clientWorkspaceId, status, standardType } = req.query;
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const { clientWorkspaceId, status, standardType } = req.query;
     const standards = await storage.getReferenceStandards({
-      organizationId: Number(organizationId),
+      organizationId: guard.orgId,
       clientWorkspaceId: Number(clientWorkspaceId),
       status: status as string,
       standardType: standardType as string,
@@ -663,9 +676,10 @@ router.post('/reference-standards/:id/usage', async (req: Request, res: Response
 // Get expiring standards
 router.get('/reference-standards/expiring', async (req: Request, res: Response) => {
   try {
-    const { organizationId, daysAhead } = req.query;
+    const guard = requireAuthedOrgId(req, res); if (!guard.ok) return;
+    const { daysAhead } = req.query;
     const standards = await storage.getExpiringStandards({
-      organizationId: Number(organizationId),
+      organizationId: guard.orgId,
       daysAhead: Number(daysAhead) || 30,
     });
     res.json(standards);
