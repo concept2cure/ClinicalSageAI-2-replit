@@ -806,11 +806,10 @@ async function seed() {
           if (!studyId) {
             const ins = await client.query(
               `INSERT INTO nonclinical_studies
-                 (organization_id, study_number, title, study_type, species, glp_compliant, status,
-                  duration_label, key_finding, finding_class, created_by)
-               VALUES ($1,$2,$3,$4,$5,true,$6,$7,$8,$9,$10)
+                 (organization_id, study_number, title, study_type, species, glp_compliant, status, created_by)
+               VALUES ($1,$2,$3,$4,$5,true,$6,$7)
                RETURNING id`,
-              [org.id, r.num, `${r.num} — ${r.species} ${r.dur}`, r.type, r.species, r.status, r.dur, r.finding, r.cls, admin.id],
+              [org.id, r.num, `${r.num} — ${r.species} ${r.dur}`, r.type, r.species, r.status, admin.id],
             );
             studyId = ins.rows[0].id;
           }
@@ -919,14 +918,33 @@ async function seed() {
       const domainDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'seed', 'ga-demo.d');
       if (fs.existsSync(domainDir)) {
         const files = fs.readdirSync(domainDir).filter((f) => f.endsWith('.mjs')).sort();
+        let domainOk = 0;
+        let domainSkipped = 0;
         for (const file of files) {
           const mod = await import(pathToFileURL(path.join(domainDir, file)).href);
-          if (typeof mod.default === 'function') {
-            await mod.default(client, { org, admin });
-          } else {
+          if (typeof mod.default !== 'function') {
             console.log(`   ⚠ ${file} has no default export — skipped`);
+            continue;
+          }
+          // Isolate each domain module in a SAVEPOINT so one whose backing table
+          // is not provisioned (a surface whose backend isn't built yet) skips
+          // cleanly instead of aborting the whole seed transaction. Populates
+          // every built surface; reports the rest honestly.
+          await client.query('SAVEPOINT domain_mod');
+          try {
+            await mod.default(client, { org, admin });
+            await client.query('RELEASE SAVEPOINT domain_mod');
+            domainOk++;
+          } catch (e) {
+            await client.query('ROLLBACK TO SAVEPOINT domain_mod');
+            domainSkipped++;
+            console.log(
+              `   ⚠ ${file} skipped — ${String(e.message || e).split('\n')[0]} ` +
+                `(backing table/columns not provisioned for this surface)`,
+            );
           }
         }
+        console.log(`   Domain modules: ${domainOk} seeded, ${domainSkipped} skipped (unbuilt surfaces).`);
       }
     }
 
