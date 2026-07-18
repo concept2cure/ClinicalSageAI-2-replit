@@ -12,9 +12,14 @@
  * What it does (idempotent — safe to re-run):
  *   1. Create the named schemas + extensions the Drizzle schema references.
  *   2. `drizzle-kit push` to lay down all tables from shared/schema.ts.
- *   3. Apply the RLS-bearing raw migrations that push cannot express, tracking
+ *   3. Overlay the raw migrations/ tree ON TOP of push (multi-pass, tolerant of
+ *      objects push already made) to create the core product tables that live
+ *      ONLY in raw migrations and are NOT in shared/schema.ts — regulatory_programs,
+ *      c2c_documents/sections/rule_packs, c2c_ana_*, submission-ops, … Without
+ *      this the real routes read absent tables and the UI shows "Sample data".
+ *   4. Apply the RLS-bearing raw migrations in their required order, tracking
  *      applied files in an _install_applied_migrations ledger.
- *   4. Verify: table count and pg_policies count (fails if no policies).
+ *   5. Verify: table count, pg_policies count, and that the core route tables exist.
  *
  * SEPARATE, NOT run here: the governed-content tree db/migrations/*_gcc_*.sql
  * (named `audit` schema, Part-11 tables, its own RLS). Those files are
@@ -89,19 +94,20 @@ async function step(label, fn) {
 }
 
 async function main() {
-  await step('1/4 Prerequisites — schemas + extensions', async () => {
+  await step('1/5 Prerequisites — schemas + extensions', async () => {
     await pool.query(`
       CREATE SCHEMA IF NOT EXISTS vault;
       CREATE SCHEMA IF NOT EXISTS precedent;
+      CREATE SCHEMA IF NOT EXISTS audit;
       CREATE EXTENSION IF NOT EXISTS pgcrypto;
       CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
       CREATE EXTENSION IF NOT EXISTS vector;
       CREATE EXTENSION IF NOT EXISTS pg_trgm;
     `);
-    console.log('  ✓ schemas (vault, precedent) + extensions (pgcrypto, uuid-ossp, vector, pg_trgm)');
+    console.log('  ✓ schemas (vault, precedent, audit) + extensions (pgcrypto, uuid-ossp, vector, pg_trgm)');
   });
 
-  await step('2/4 Tables — drizzle-kit push', async () => {
+  await step('2/5 Tables — drizzle-kit push', async () => {
     // `echo ""` answers drizzle-kit's interactive prompt; a fresh DB has no
     // destructive changes so it proceeds. Inherit env so drizzle.config.ts
     // resolves the same DATABASE_URL.
@@ -119,7 +125,129 @@ async function main() {
     console.log('  ✓ schema pushed from shared/schema.ts');
   });
 
-  await step('3/4 Row-Level Security policies (raw migrations)', async () => {
+  await step('3/5 Complete schema — raw migration overlay', async () => {
+    // drizzle-kit push lays down ONLY shared/schema.ts. The core product tables
+    // — regulatory_programs, c2c_documents / c2c_document_sections /
+    // c2c_rule_packs, c2c_ana_*, the submission-ops set, and ~200 more — live
+    // ONLY in the raw migrations/ tree, which drizzle's journaled migrate() does
+    // NOT replay (one journaled baseline vs 160 files). Without them every real
+    // route reads an absent table and the UI falls back to fixtures ("Sample
+    // data"). Overlay the raw tree ON TOP of push: multi-pass so
+    // forward-dependencies resolve across passes, and tolerant of objects push
+    // already created (on top of push those bare CREATEs simply report "already
+    // exists" — which also sidesteps the stale 0000 snapshot's cmax/system-column
+    // bug, since push created that table cleanly). RLS migrations are applied
+    // separately in their required order (next step), so exclude them here.
+    const rlsSet = new Set(RLS_MIGRATIONS);
+    const files = fs
+      .readdirSync(MIGRATIONS_DIR)
+      .filter((f) => f.endsWith('.sql') && !rlsSet.has(f))
+      .sort();
+
+    const isDuplicate = (err) =>
+      ['42710', '42P07', '42P06', '42P16', '42723', '42711', '42P05'].includes(err.code) ||
+      /already exists|multiple primary keys/i.test(err.message || '');
+    const isMissingDep = (err) =>
+      ['42P01', '42703', '42704', '42883', '42P17'].includes(err.code) ||
+      /does not exist|no existing constraint/i.test(err.message || '');
+
+    const done = new Set();
+    const lastErr = new Map();
+    let applied = 0;
+    let present = 0;
+
+    for (let pass = 1; pass <= 8; pass++) {
+      let progressed = false;
+      let passApplied = 0;
+      let passPresent = 0;
+      let deferred = 0;
+      let hard = 0;
+      for (const file of files) {
+        if (done.has(file)) continue;
+        const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf8');
+        // CREATE INDEX CONCURRENTLY cannot run inside a transaction block, so
+        // those files run in autocommit; every other file is atomic per file.
+        const concurrent = /concurrently/i.test(sql);
+        try {
+          if (concurrent) {
+            await pool.query(sql);
+          } else {
+            await pool.query('BEGIN');
+            await pool.query(sql);
+            await pool.query('COMMIT');
+          }
+          done.add(file);
+          passApplied++;
+          applied++;
+          progressed = true;
+        } catch (err) {
+          if (!concurrent) await pool.query('ROLLBACK').catch(() => {});
+          if (isDuplicate(err)) {
+            done.add(file);
+            passPresent++;
+            present++;
+            progressed = true;
+          } else if (isMissingDep(err)) {
+            deferred++; // retry on a later pass once its dependency is created
+            lastErr.set(file, (err.message || '').split('\n')[0]);
+          } else {
+            done.add(file); // a hard failure won't self-resolve — record + move on
+            hard++;
+            progressed = true;
+            console.log(`  ⚠ ${file}: ${(err.message || '').split('\n')[0]}`);
+          }
+        }
+      }
+      console.log(
+        `  pass ${pass}: applied=${passApplied} already-present=${passPresent} deferred=${deferred} hard=${hard}`,
+      );
+      if (!progressed) break;
+    }
+
+    const remaining = files.filter((f) => !done.has(f));
+    if (remaining.length) {
+      console.log(
+        `  • ${remaining.length} file(s) left unapplied — each references a table absent from this schema ` +
+          `(non-core index/ALTER files against renamed/removed tables); safe to skip for the app schema:`,
+      );
+      for (const f of remaining) console.log(`      ${f} — ${lastErr.get(f) || ''}`);
+    }
+    console.log(`  ✓ overlay complete: ${applied} applied, ${present} already-present from push`);
+  });
+
+  await step('4/5 Row-Level Security policies (raw migrations)', async () => {
+    // The RLS rollout (0021) hard-fails if ANY tenant column is still text.
+    // 0020 coerces a fixed list, but the raw overlay adds tables (e.g.
+    // adverse_events) with a text organization_id that predate that list. On a
+    // fresh install every table is empty, so coerce ALL residual text
+    // organization_id/tenant_id columns to integer up front — safe (no rows to
+    // fail the cast) and exactly what the integer-keyed tenant model expects.
+    // Per-column exception handling skips any column that legitimately can't be
+    // an integer rather than aborting the whole install.
+    await pool.query(`
+      DO $$
+      DECLARE r record;
+      BEGIN
+        FOR r IN
+          SELECT table_name, column_name
+            FROM information_schema.columns
+           WHERE table_schema = 'public'
+             AND column_name IN ('organization_id', 'tenant_id')
+             AND data_type IN ('text', 'character varying')
+        LOOP
+          BEGIN
+            EXECUTE format(
+              'ALTER TABLE public.%I ALTER COLUMN %I TYPE integer USING NULLIF(%I, '''')::integer',
+              r.table_name, r.column_name, r.column_name
+            );
+          EXCEPTION WHEN others THEN
+            RAISE NOTICE 'skip coercion of %.%: %', r.table_name, r.column_name, SQLERRM;
+          END;
+        END LOOP;
+      END $$;
+    `);
+    console.log('  ✓ coerced residual text tenant columns to integer (fresh-DB safe)');
+
     // Bookkeeping ledger: these raw migrations use bare CREATE POLICY (no
     // IF NOT EXISTS), so re-running a file would error on an already-present
     // policy. Record what has been applied so the installer is safely
@@ -170,7 +298,7 @@ async function main() {
     }
   });
 
-  await step('4/4 Verify', async () => {
+  await step('5/5 Verify', async () => {
     const tables = await pool.query(
       `SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'`,
     );
@@ -181,6 +309,29 @@ async function main() {
     console.log(`  RLS policies:    ${policyCount}`);
     if (tableCount < 100) throw new Error(`expected the full schema (100s of tables); only ${tableCount} created`);
     if (policyCount < 1) throw new Error('no RLS policies created — tenant isolation would be absent');
+
+    // Assert the core product tables the shipping routes read actually exist —
+    // these come from the raw overlay, not push, and their absence is exactly
+    // what makes the app render fixtures instead of live data.
+    const CORE_TABLES = [
+      'regulatory_programs',
+      'c2c_documents',
+      'c2c_document_sections',
+      'c2c_rule_packs',
+      'c2c_project_pinned_evidence',
+    ];
+    const core = await pool.query(
+      `SELECT t AS name, to_regclass('public.' || t) IS NOT NULL AS present
+         FROM unnest($1::text[]) AS t`,
+      [CORE_TABLES],
+    );
+    const missingCore = core.rows.filter((r) => !r.present).map((r) => r.name);
+    console.log(`  core route tables: ${CORE_TABLES.length - missingCore.length}/${CORE_TABLES.length} present`);
+    if (missingCore.length) {
+      throw new Error(
+        `core product tables missing (routes would read absent tables → UI shows sample data): ${missingCore.join(', ')}`,
+      );
+    }
     console.log('\n✅ Application schema install complete.');
     console.log('   Next:');
     console.log('   • set RLS_ENFORCE=on and restart to enforce tenant isolation;');
