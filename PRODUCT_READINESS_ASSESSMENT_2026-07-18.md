@@ -105,7 +105,16 @@ The eight dimensions are thorough on in-repo correctness but nearly silent on th
 
 ## Database provisioning runbook (the verified sequence)
 
-Independently tested on Postgres 16 + pgvector — this produces a correct schema *with* RLS, which no documented path currently does.
+Independently tested on Postgres 16 + pgvector — this produces a correct schema *with* RLS, which no documented path currently did.
+
+**This sequence is now codified as a one-command, idempotent installer** (added in this PR): `scripts/db/install-fresh.mjs`. Run it against the empty production DB:
+
+```bash
+DATABASE_URL='postgresql://…@ep-<id>.<region>.aws.neon.tech/<db>?sslmode=require' \
+  node scripts/db/install-fresh.mjs
+```
+
+It creates the schemas/extensions, runs `drizzle-kit push`, applies the four RLS migrations, records applied state in a ledger, and verifies table + policy counts (fails if no policies). Verified from a truly empty DB: **460 tables + 370 RLS policies**; safe to re-run. The manual steps it automates are below for reference.
 
 ```bash
 # Step 0 — shell hygiene: set ONLY these; unset the competing vars (tools disagree on precedence)

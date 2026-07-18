@@ -17,7 +17,6 @@
  *
  * Usage:
  *   DATABASE_URL='postgres://…' node scripts/db/install-fresh.mjs
- *   (or: npm run db:install)
  *
  * After this completes, set RLS_ENFORCE=on and restart to turn the tenant
  * isolation policies from shadow-mode into enforcing.

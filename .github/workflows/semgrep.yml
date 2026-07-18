@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     container:
-      image: semgrep/semgrep:1
+      image: semgrep/semgrep:latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

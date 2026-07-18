@@ -126,7 +126,7 @@ export async function initializeEarlyServices(): Promise<void> {
   try {
     const { isEmailConfigured } = await import('../services/emailService.js');
     if (isEmailConfigured()) {
-      console.log('✅ Email (SMTP) configured — login OTP can be delivered');
+      console.info('✅ Email (SMTP) configured — login OTP can be delivered');
     } else if (process.env.NODE_ENV === 'production') {
       console.error(
         '❌ CRITICAL: SMTP is not configured (SMTP_HOST/SMTP_USER/SMTP_PASS). ' +
