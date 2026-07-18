@@ -7,9 +7,11 @@
  *   - unified_documents        — title + content in workflow_document_versions
  *                                (the latest version's JSON; renderable)
  *   - ctd_onboarding_documents — an UPLOADED binary file (storage_path/mime);
- *                                no local renderable text → external pointer
+ *                                staged directly AS A LEAF when it is already a
+ *                                PDF (org-scoped, %PDF-verified), else unresolved
  *   - vault_documents          — an S3-backed binary (UUID-keyed, separate
- *                                `vault` schema) → external pointer
+ *                                `vault` schema); not addressable from an integer
+ *                                leaf id and has no org scope → unresolved
  *
  * Both assemblers (eCTD `assemble-from-core` and device
  * `assemble-technical-file-from-core`) previously resolved ONLY
@@ -34,8 +36,20 @@ import { eq, and, desc } from 'drizzle-orm';
 import { db } from '../../db';
 import { coauthorDocuments } from '../../../shared/schema';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../shared/schema/unified_workflow';
+import { ctdOnboardingDocuments } from '../../../shared/schema/ctd-projects';
+import { readLocalUploadBuffer } from '../anthropic-files';
 import { renderLeafPdf } from './leaf-pdf-renderer';
 import type { ResolvedFile } from './core-to-packager';
+
+/**
+ * An eCTD leaf must be a PDF. Verify the ACTUAL bytes (magic number), never the
+ * DB mime string alone — a mislabeled/corrupt upload must not ship to the agency
+ * with a valid-looking checksum. (The md5 is computed from whatever we stage, so
+ * there is no downstream content check to catch wrong bytes.)
+ */
+function looksLikePdf(buf: Buffer): boolean {
+  return buf.length >= 5 && buf.subarray(0, 5).toString('latin1') === '%PDF-';
+}
 
 /** Tables whose content is stored locally and can be rendered to a PDF leaf. */
 export const RENDERABLE_DOCUMENT_TABLES = new Set(['coauthor_documents', 'unified_documents']);
@@ -46,12 +60,16 @@ export const RENDERABLE_DOCUMENT_TABLES = new Set(['coauthor_documents', 'unifie
  * one of these is surfaced as unresolved, never silently dropped.
  */
 export const EXTERNAL_DOCUMENT_TABLES: Record<string, string> = {
-  ctd_onboarding_documents:
-    'ctd_onboarding_documents is an uploaded binary file (storage_path/mime_type); ' +
-    'its bytes are not stored locally as renderable content',
+  // vault_documents CANNOT be materialized from a leaf today and is intentionally
+  // left unresolved (a guard-stop, not a silent drop): submission_leaves.document_id
+  // is INTEGER but vault.documents.id is a UUID (an integer cannot address the row),
+  // and vault.documents has no organization_id (it is program-scoped), so there is
+  // no tenant-safe lookup. Materializing it would require a reference/schema change;
+  // forcing it would risk shipping wrong or cross-tenant bytes to the agency.
   vault_documents:
-    'vault_documents is an external S3-backed binary in the vault schema (UUID-keyed); ' +
-    'its content is not stored locally as renderable content',
+    'vault_documents is an external S3-backed binary in the separate `vault` schema ' +
+    '(UUID-keyed, program-scoped); it cannot be addressed from an integer leaf ' +
+    'document_id and has no org scope, so it is not materializable here',
 };
 
 /** A leaf whose source document could not be materialized into the package. */
@@ -201,6 +219,59 @@ export async function materializeLeafSources(
         .limit(1);
       const body = version ? unifiedContentToText(version.content) : '';
       await write(key, doc.title, body || doc.title, { title: doc.title ?? undefined });
+      continue;
+    }
+
+    if (documentTable === 'ctd_onboarding_documents') {
+      // An uploaded binary (storage_path on local disk, org-scoped). It can be
+      // staged as a leaf ONLY when it is already a PDF — there is no binary→PDF
+      // conversion in the repo, so a non-PDF upload stays unresolved (fail
+      // closed) rather than shipping a non-conformant leaf.
+      const [doc] = await db
+        .select({
+          mimeType: ctdOnboardingDocuments.mimeType,
+          storagePath: ctdOnboardingDocuments.storagePath,
+          fileName: ctdOnboardingDocuments.fileName,
+        })
+        .from(ctdOnboardingDocuments)
+        .where(and(eq(ctdOnboardingDocuments.id, documentId), eq(ctdOnboardingDocuments.organizationId, organizationId)))
+        .limit(1);
+      if (!doc) {
+        unresolved.push({ documentTable, documentId, reason: 'ctd_onboarding_documents row not found in this organization' });
+        continue;
+      }
+      if ((doc.mimeType || '').toLowerCase() !== 'application/pdf') {
+        unresolved.push({
+          documentTable,
+          documentId,
+          reason: `uploaded file mime "${doc.mimeType || 'unknown'}" is not application/pdf — an eCTD leaf must be a PDF and no binary→PDF conversion is available`,
+        });
+        continue;
+      }
+      // storage_path is a server-generated multer disk path; read it via the
+      // shared safe reader (returns null when unreadable/missing). Any read
+      // failure → unresolved (fail closed).
+      let buf: Buffer | null = null;
+      try {
+        buf = await readLocalUploadBuffer(doc.storagePath);
+      } catch {
+        buf = null;
+      }
+      if (!buf || buf.length === 0) {
+        unresolved.push({ documentTable, documentId, reason: 'uploaded file bytes not readable at storage_path (missing/rotated) — cannot materialize leaf' });
+        continue;
+      }
+      if (!looksLikePdf(buf)) {
+        unresolved.push({ documentTable, documentId, reason: 'uploaded file is not a valid PDF (missing %PDF- header) — refusing to stage a non-conformant leaf' });
+        continue;
+      }
+      // Stage the RAW PDF bytes (not re-rendered). The filename MUST end in .pdf
+      // so the downstream PDF/A gate treats it as a PDF; md5 is over the real bytes.
+      const fileName = `${safeName(doc.fileName || 'onboarding')}-${key.replace(/[^a-z0-9]+/gi, '-')}.pdf`;
+      const sourcePath = path.join(stageDir, fileName);
+      await fs.writeFile(sourcePath, buf);
+      byKey.set(key, { fileName, sourcePath, md5: createHash('md5').update(buf).digest('hex') });
+      materialized++;
       continue;
     }
 

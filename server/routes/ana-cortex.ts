@@ -4,6 +4,7 @@ import { db } from '../db';
 import { and, eq } from 'drizzle-orm';
 import { anaObservationTerms } from '@shared/schema';
 import { requireAuth } from '../middleware/auth.js';
+import { requireAuthedOrgId } from '../utils/authedOrgId.js';
 
 const router = express.Router();
 router.use((req, res, next) => {
@@ -186,20 +187,21 @@ router.get('/capabilities', async (_req, res) => {
   }
 });
 
-router.post('/harvest/10k', async (req, res) => {
+router.post('/harvest/10k', requireAuth, async (req, res) => {
   try {
-    const { cik, limit, includeAmended, organizationId } = req.body || {};
-    const orgId = req.organizationId || organizationId;
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const { cik, limit, includeAmended } = req.body || {};
 
-    if (!cik || !orgId) {
+    if (!cik) {
       return res.status(400).json({
         success: false,
-        error: 'cik and organizationId are required.',
+        error: 'cik is required.',
       });
     }
 
     const result = await anaCortexService.harvest10KFilings({
-      organizationId: Number(orgId),
+      organizationId: guard.orgId,
       cik,
       limit,
       includeAmended,
@@ -215,19 +217,13 @@ router.post('/harvest/10k', async (req, res) => {
   }
 });
 
-router.post('/observation-terms/csr', async (req, res) => {
+router.post('/observation-terms/csr', requireAuth, async (req, res) => {
   try {
-    const { organizationId, limit } = req.body || {};
-    const orgId = req.organizationId || organizationId;
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const { limit } = req.body || {};
 
-    if (!orgId) {
-      return res.status(400).json({
-        success: false,
-        error: 'organizationId is required.',
-      });
-    }
-
-    const result = await anaCortexService.syncObservationTermsFromCSR(Number(orgId), limit);
+    const result = await anaCortexService.syncObservationTermsFromCSR(guard.orgId, limit);
 
     res.json({ ...result, success: result.success });
   } catch (error) {
@@ -239,19 +235,13 @@ router.post('/observation-terms/csr', async (req, res) => {
   }
 });
 
-router.get('/observation-terms', async (req, res) => {
+router.get('/observation-terms', requireAuth, async (req, res) => {
   try {
-    const { organizationId, category, termType } = req.query;
-    const orgId = req.organizationId || organizationId;
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const { category, termType } = req.query;
 
-    if (!orgId) {
-      return res.status(400).json({
-        success: false,
-        error: 'organizationId is required.',
-      });
-    }
-
-    const conditions = [eq(anaObservationTerms.organizationId, Number(orgId))];
+    const conditions = [eq(anaObservationTerms.organizationId, guard.orgId)];
     if (category) {
       conditions.push(eq(anaObservationTerms.category, String(category)));
     }

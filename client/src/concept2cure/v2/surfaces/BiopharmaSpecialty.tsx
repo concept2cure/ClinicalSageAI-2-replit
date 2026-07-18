@@ -237,6 +237,9 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
   const livePlans = useLiveList<PedPlan>('/api/biopharma/pediatric', PED_PLANS);
   const [plans, addPlan] = useRows<PedPlan>(livePlans.data);
+  /* live ?? fixture — PREA/PIP milestones from the governed store. */
+  const livePrea = useLiveList<PedPrea>('/api/biopharma/prea-milestones', PED_PREA);
+  const prea = livePrea.data;
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -271,7 +274,7 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
 
   /* AnswerLead computation */
   const drafts = plans.filter((p) => String(p.status).includes('draft'));
-  const nextMs = PED_PREA[0];
+  const nextMs = prea[0];
   const topDraft = drafts[0];
 
   return (
@@ -330,9 +333,9 @@ export function Pediatric({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-sec">
-        <SpCard title="Upcoming PREA milestones" sample foot={<SpAsk onAsk={ask} cmd="Draft a PREA waiver justification against the pediatric extrapolation framework from the last Type C meeting." label="Draft PREA waiver justification" />}>
+        <SpCard title="Upcoming PREA milestones" sample={livePrea.sample} foot={<SpAsk onAsk={ask} cmd="Draft a PREA waiver justification against the pediatric extrapolation framework from the last Type C meeting." label="Draft PREA waiver justification" />}>
           <div className="sp-list">
-            {PED_PREA.map((u, i) => (
+            {prea.map((u, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Status of the ${u.product} milestone "${u.ms}" due ${u.due}`)}>
                 <span className="sp-tag">{u.product}</span>
                 <span className="sp-row-b">
@@ -403,6 +406,11 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
   const liveDes = useLiveList<OrphDes>('/api/biopharma/orphan', ORPH_DES);
   const [des, addDes] = useRows<OrphDes>(liveDes.data);
+  /* live ?? fixture — RPD vouchers/grants + patient-advocacy engagements. */
+  const liveRpd = useLiveList<OrphRpd>('/api/biopharma/orphan-rpd', ORPH_RPD);
+  const rpd = liveRpd.data;
+  const liveAdv = useLiveList<OrphAdv>('/api/biopharma/orphan-advocacy', ORPH_ADV);
+  const adv = liveAdv.data;
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -492,9 +500,9 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-2col">
-        <SpCard title="RPD vouchers & grants" sample>
+        <SpCard title="RPD vouchers & grants" sample={liveRpd.sample}>
           <div className="sp-list">
-            {ORPH_RPD.map((g, i) => (
+            {rpd.map((g, i) => (
               <div key={i} className="sp-row">
                 <span className="sp-tag">{g.product}</span>
                 <span className="sp-row-b">
@@ -506,9 +514,9 @@ export function Orphan({ onAsk }: SurfaceViewProps) {
             ))}
           </div>
         </SpCard>
-        <SpCard title="Patient advocacy" sample>
+        <SpCard title="Patient advocacy" sample={liveAdv.sample}>
           <div className="sp-list">
-            {ORPH_ADV.map((a, i) => (
+            {adv.map((a, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Summarize our engagement history with ${a.org}`)}>
                 <span className="sp-tag">{a.product}</span>
                 <span className="sp-row-b">
@@ -548,7 +556,15 @@ interface LcmCmc {
   area: string;
   programs: string;
   status: string;
+  /** Present when live: the classifier's computed FDA reporting category. */
+  fdaCategory?: string;
+  emaCategory?: string;
 }
+
+/** Short display label for the classifier's FDA reporting category. */
+const FDA_CAT_LABEL: Record<string, string> = {
+  pas: 'PAS', cbe_30: 'CBE-30', cbe_0: 'CBE-0', annual_report: 'Annual Report', no_filing: 'No filing',
+};
 
 interface LcmRen {
   authority: string;
@@ -582,6 +598,18 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
   const liveSupp = useLiveList<LcmSupp>('/api/biopharma/supplements', LCM_SUPP);
   const [supp, addSupp] = useRows<LcmSupp>(liveSupp.data);
+  /* live ?? fixture — the "Renewal cycles" card projects the governed
+     recurring-obligation store (/api/lifecycle/renewals) through the tested
+     lifecycle composer (region→authority, recurrence→interval, urgency bucket).
+     Falls back to the fixture with a Sample pill when offline/unprovisioned. */
+  const liveRen = useLiveList<LcmRen>('/api/lifecycle/renewals', LCM_REN);
+  const ren = liveRen.data;
+  /* live ?? fixture — the "CMC change control" card projects the governed
+     proposed-change store (/api/cmc-changes) through the deterministic
+     SUPAC/variations classifier (FDA reporting category → risk band). Falls back
+     to the fixture with a Sample pill when offline/unprovisioned. */
+  const liveCmc = useLiveList<LcmCmc>('/api/cmc-changes', LCM_CMC);
+  const cmc = liveCmc.data;
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -612,8 +640,8 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
 
   /* AnswerLead computation */
   const inReview = supp.filter((s) => s.status === 'review');
-  const highChg = LCM_CMC.filter((c) => c.risk === 'high');
-  const nextRen = [...LCM_REN].sort((a, b) => String(a.due).localeCompare(String(b.due)))[0];
+  const highChg = cmc.filter((c) => c.risk === 'high');
+  const nextRen = [...ren].sort((a, b) => String(a.due).localeCompare(String(b.due)))[0];
   const topChg = highChg[0];
 
   return (
@@ -672,23 +700,23 @@ export function Lifecycle({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-2col">
-        <SpCard title="CMC change control" sample meta={LCM_CMC.length + ' tracked'} foot={<SpAsk onAsk={ask} cmd="Classify the open CMC changes against ICH Q12 -- flag which are PACMP-eligible and which need a prior-approval supplement." label="Classify against ICH Q12" />}>
+        <SpCard title="CMC change control" sample={liveCmc.sample} meta={cmc.length + ' tracked'} foot={<SpAsk onAsk={ask} cmd="Classify the open CMC changes against ICH Q12 -- flag which are PACMP-eligible and which need a prior-approval supplement." label="Classify against ICH Q12" />}>
           <div className="sp-list">
-            {LCM_CMC.map((c, i) => (
+            {cmc.map((c, i) => (
               <div key={i} className="sp-row">
                 <span className="sp-sev" data-s={c.risk === 'high' ? 'high' : c.risk === 'low' ? 'low' : 'med'}>{c.risk}</span>
                 <span className="sp-row-b">
                   <span className="sp-row-t">{c.title}</span>
-                  <span className="sp-row-s">{c.area} · {c.programs}</span>
+                  <span className="sp-row-s">{c.area} · {c.programs}{c.fdaCategory ? ' · ' + (FDA_CAT_LABEL[c.fdaCategory] ?? c.fdaCategory) : ''}</span>
                 </span>
                 {pill(c.status)}
               </div>
             ))}
           </div>
         </SpCard>
-        <SpCard title="Renewal cycles" sample meta="PADER · 5-yr · re-exam">
+        <SpCard title="Renewal cycles" sample={liveRen.sample} meta="PADER · 5-yr · re-exam">
           <div className="sp-list">
-            {LCM_REN.map((r, i) => (
+            {ren.map((r, i) => (
               <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Prepare the ${r.authority} ${r.next} renewal for ${r.product}`)}>
                 <span className="sp-tag">{r.authority}</span>
                 <span className="sp-row-b">

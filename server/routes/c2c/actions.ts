@@ -27,6 +27,7 @@ import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { pool } from '../../db.js';
 import { computeAuditChainSealed, hashPayload, verifyAuditChain } from '../../services/audit/chain.js';
+import { setTenantContextTx } from '../../services/tenant/governed-tenant-context.js';
 import { verifyToken as verifyMfaToken } from '../../services/mfaService.js';
 import { evaluateAcceptGate, GroundednessReviewError } from '../../services/ai-governance/review-policy.js';
 import {
@@ -410,6 +411,12 @@ export async function writeMutation(
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // Stamp tenant context transaction-locally so the governed-action inserts
+    // (audit_logs, c2c_ana_actions — both org-keyed) satisfy row-level security
+    // when RLS_ENFORCE=on. Without this the flagship governed-write path would
+    // fail the RLS WITH CHECK the moment enforcement is flipped on. Matches the
+    // research/protocol governed family (e.g. effort-certification.ts).
+    await setTenantContextTx(client, orgId);
 
     const { actionId, auditId, sha256Chain } = await recordGovernedAction(client, {
       orgId,

@@ -122,8 +122,11 @@ router.get('/query', async (req: Request, res: Response) => {
 // Record a new decision event into the lineage chain.
 router.post('/record', async (req: Request, res: Response) => {
   try {
+    // GxP decision lineage is tamper-evident regulated data — the tenant that
+    // owns the record is the authenticated caller's org, never a body field.
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const {
-      organizationId,
       entityType,
       entityId,
       action,
@@ -142,7 +145,7 @@ router.post('/record', async (req: Request, res: Response) => {
     }
 
     const decisionId = await decisionLineageService.recordDecision({
-      organizationId: Number(organizationId) || 0,
+      organizationId: guard.orgId,
       entityType,
       entityId: Number(entityId),
       action,

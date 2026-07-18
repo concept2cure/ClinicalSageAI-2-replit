@@ -14,6 +14,7 @@ import {
 import { eq, desc, and, gte } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { requireAuthedOrgId } from '../utils/authedOrgId.js';
 
 const logger = createScopedLogger('foresight-feedback');
 
@@ -24,8 +25,9 @@ const router = Router();
  */
 router.post('/feedback/submit', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const {
-      organizationId,
       predictionId,
       actualOutcome,
       observedBiomarkers,
@@ -35,14 +37,14 @@ router.post('/feedback/submit', async (req, res) => {
       confidenceInterval
     } = req.body;
 
-    if (!organizationId || !predictionId || !actualOutcome) {
+    if (!predictionId || !actualOutcome) {
       return res.status(400).json({
-        error: 'Missing required fields: organizationId, predictionId, actualOutcome'
+        error: 'Missing required fields: predictionId, actualOutcome'
       });
     }
 
     const result = await feedbackOrchestrator.processClinicalFeedback(
-      organizationId,
+      String(guard.orgId),
       {
         predictionId,
         actualOutcome,
@@ -76,13 +78,17 @@ router.post('/feedback/submit', async (req, res) => {
  */
 router.get('/feedback/history/:organizationId', async (req, res) => {
   try {
-    const { organizationId } = req.params;
+    // The :organizationId path segment is a legacy addressing artifact; tenant
+    // scope comes from the verified JWT, never the URL. Prevents reading another
+    // org's feedback history by editing the path.
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { limit = 100, offset = 0 } = req.query;
 
     const feedbackHistory = await db!
       .select()
       .from(clinicalFeedback)
-      .where(eq(clinicalFeedback.organizationId, parseInt(organizationId)))
+      .where(eq(clinicalFeedback.organizationId, guard.orgId))
       .orderBy(desc(clinicalFeedback.capturedAt))
       .limit(Number(limit))
       .offset(Number(offset));
@@ -106,15 +112,10 @@ router.get('/feedback/history/:organizationId', async (req, res) => {
  */
 router.post('/feedback/monitor', async (req, res) => {
   try {
-    const { organizationId } = req.body;
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
 
-    if (!organizationId) {
-      return res.status(400).json({
-        error: 'Missing required field: organizationId'
-      });
-    }
-
-    const monitoringResult = await feedbackOrchestrator.continuousMonitoring(organizationId);
+    const monitoringResult = await feedbackOrchestrator.continuousMonitoring(String(guard.orgId));
 
     res.json({
       success: true,
@@ -134,15 +135,10 @@ router.post('/feedback/monitor', async (req, res) => {
  */
 router.post('/feedback/meta-learning', async (req, res) => {
   try {
-    const { organizationId } = req.body;
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
 
-    if (!organizationId) {
-      return res.status(400).json({
-        error: 'Missing required field: organizationId'
-      });
-    }
-
-    const metaLearningResult = await feedbackOrchestrator.performMetaLearning(organizationId);
+    const metaLearningResult = await feedbackOrchestrator.performMetaLearning(String(guard.orgId));
 
     res.json({
       success: true,
@@ -162,16 +158,12 @@ router.post('/feedback/meta-learning', async (req, res) => {
  */
 router.post('/feedback/hypotheses', async (req, res) => {
   try {
-    const { organizationId, context } = req.body;
-
-    if (!organizationId) {
-      return res.status(400).json({
-        error: 'Missing required field: organizationId'
-      });
-    }
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+    const { context } = req.body;
 
     const hypotheses = await feedbackOrchestrator.generateAdaptiveHypotheses(
-      organizationId,
+      String(guard.orgId),
       context || {}
     );
 
@@ -193,7 +185,9 @@ router.post('/feedback/hypotheses', async (req, res) => {
  */
 router.get('/feedback/metrics/:organizationId', async (req, res) => {
   try {
-    const { organizationId } = req.params;
+    // Tenant scope from the verified JWT, not the :organizationId path segment.
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const { days = 30 } = req.query;
 
     const startDate = new Date();
@@ -205,7 +199,7 @@ router.get('/feedback/metrics/:organizationId', async (req, res) => {
       .from(foresightPredictions)
       .where(
         and(
-          eq(foresightPredictions.organizationId, parseInt(organizationId)),
+          eq(foresightPredictions.organizationId, guard.orgId),
           gte(foresightPredictions.createdAt, startDate)
         )
       )
@@ -246,8 +240,9 @@ router.get('/feedback/metrics/:organizationId', async (req, res) => {
  */
 router.post('/feedback/outcome', async (req, res) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
     const {
-      organizationId,
       studyId,
       phase,
       primaryEndpointMet,
@@ -257,14 +252,14 @@ router.post('/feedback/outcome', async (req, res) => {
       biomarkerData
     } = req.body;
 
-    if (!organizationId || !studyId || !phase) {
+    if (!studyId || !phase) {
       return res.status(400).json({
-        error: 'Missing required fields: organizationId, studyId, phase'
+        error: 'Missing required fields: studyId, phase'
       });
     }
 
     const [outcome] = await db!.insert(clinicalOutcomes).values({
-      organizationId: parseInt(organizationId),
+      organizationId: guard.orgId,
       studyId: studyId,
       phase,
       outcomeType: primaryEndpointMet ? 'success' : 'failure',

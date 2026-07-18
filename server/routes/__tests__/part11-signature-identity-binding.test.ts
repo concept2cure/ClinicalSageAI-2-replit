@@ -88,7 +88,7 @@ describe('POST /api/part11/signatures — §11.200 signer-identity binding', () 
     const pool = makePool();
     const res = await request(buildApp(pool))
       .post('/api/part11/signatures')
-      .send({ documentId: 'doc-x', meaning: 'approval', password: 'correct-horse' });
+      .send({ documentId: 'doc-x', documentContent: '<p>c</p>', meaning: 'approval', password: 'correct-horse' });
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('ESIGNATURE_NO_AUTHORITY');
     // Blocked before any credential lookup.
@@ -121,6 +121,7 @@ describe('POST /api/part11/signatures — §11.200 signer-identity binding', () 
       .post('/api/part11/signatures')
       .send({
         documentId: 'doc-2',
+        documentContent: '<p>Clinical Overview v0.7</p>',
         meaning: 'approval',
         password: 'correct-horse',
       });
@@ -139,6 +140,7 @@ describe('POST /api/part11/signatures — §11.200 signer-identity binding', () 
       .post('/api/part11/signatures')
       .send({
         documentId: 'doc-3',
+        documentContent: '<p>Clinical Overview v0.7</p>',
         signerId: AUTH_USER_ID,
         meaning: 'approval',
         password: 'correct-horse',
@@ -146,6 +148,45 @@ describe('POST /api/part11/signatures — §11.200 signer-identity binding', () 
 
     expect(res.status).toBe(201);
     expect(pool.passwordLookups).toEqual([String(AUTH_USER_ID)]);
+  });
+
+  it('refuses to sign empty/absent content — a signature must bind content (§11.70)', async () => {
+    const pool = makePool();
+    const res = await request(buildApp(pool))
+      .post('/api/part11/signatures')
+      .send({ documentId: 'doc-empty', meaning: 'approval', password: 'correct-horse' });
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('ESIGNATURE_CONTENT_REQUIRED');
+    // Rejected before any credential lookup — nothing signed.
+    expect(pool.passwordLookups).toEqual([]);
+  });
+
+  it('fails the request (500) if the signature insert fails — never a phantom signature', async () => {
+    // A pool that authenticates the user but throws on the electronic_signatures insert.
+    const passwordLookups: string[] = [];
+    const pool = {
+      passwordLookups,
+      query: async (sql: string, params: any[]) => {
+        if (/FROM users\s+WHERE id::text/i.test(sql)) {
+          passwordLookups.push(String(params[0]));
+          return { rows: [{ password_hash: authUserHash }] };
+        }
+        if (/INSERT INTO electronic_signatures/i.test(sql)) {
+          throw new Error('connection reset');
+        }
+        return { rows: [], rowCount: 1 };
+      },
+    } as any;
+    const res = await request(buildApp(pool))
+      .post('/api/part11/signatures')
+      .send({
+        documentId: 'doc-5',
+        documentContent: '<p>content</p>',
+        meaning: 'approval',
+        password: 'correct-horse',
+      });
+    expect(res.status).toBe(500);
+    expect(res.body.code).toBe('ESIGNATURE_PERSIST_FAILED');
   });
 
   it('rejects with 401 when the supplied password is wrong (still bound to session user)', async () => {
@@ -156,6 +197,7 @@ describe('POST /api/part11/signatures — §11.200 signer-identity binding', () 
       .post('/api/part11/signatures')
       .send({
         documentId: 'doc-4',
+        documentContent: '<p>content</p>',
         meaning: 'approval',
         password: 'wrong-password',
       });
