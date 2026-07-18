@@ -80,6 +80,45 @@ describe('getAuthHeaders', () => {
     const { getAuthHeaders } = await loadAuthToken();
     expect(getAuthHeaders().Authorization).toBeUndefined();
   });
+
+  // The intelligence / license / authoring hooks now delegate their auth headers to
+  // getAuthHeaders, so the x-organization-id half of the contract is pinned here.
+  it('includes x-organization-id from the canonical org id', async () => {
+    localStorage.setItem('currentOrganizationId', '8');
+    const { getAuthHeaders } = await loadAuthToken();
+    expect(getAuthHeaders()['x-organization-id']).toBe('8');
+  });
+
+  it('defaults x-organization-id to "1" when no org is persisted', async () => {
+    const { getAuthHeaders } = await loadAuthToken();
+    expect(getAuthHeaders()['x-organization-id']).toBe('1');
+  });
+});
+
+describe('getOrgId — single canonical resolution (currentOrganizationId, not trialsage_org_id)', () => {
+  it('reads currentOrganizationId first', async () => {
+    localStorage.setItem('currentOrganizationId', '8');
+    localStorage.setItem('currentOrganization', '3');
+    const { getOrgId } = await loadAuthToken();
+    expect(getOrgId()).toBe('8');
+  });
+
+  it('falls back to the legacy currentOrganization key', async () => {
+    localStorage.setItem('currentOrganization', '3');
+    const { getOrgId } = await loadAuthToken();
+    expect(getOrgId()).toBe('3');
+  });
+
+  it('falls back to organizationId on the persisted user', async () => {
+    localStorage.setItem('trialsage_user', JSON.stringify({ organizationId: 5 }));
+    const { getOrgId } = await loadAuthToken();
+    expect(getOrgId()).toBe('5');
+  });
+
+  it('defaults to "1" when nothing is persisted', async () => {
+    const { getOrgId } = await loadAuthToken();
+    expect(getOrgId()).toBe('1');
+  });
 });
 
 describe('setAuthToken / clearAuthToken keep a single canonical tier', () => {

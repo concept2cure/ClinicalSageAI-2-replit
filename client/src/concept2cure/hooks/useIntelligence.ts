@@ -14,25 +14,18 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getAuthHeaders as canonicalAuthHeaders } from '@/utils/authToken';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AUTH HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// Delegate to the canonical auth-header builder (bearer token + x-organization-id)
+// so these requests stay in sync with the app-wide contract in queryClient.ts.
+// The previous local copy read the org id from `trialsage_org_id` — a key nothing
+// writes — so `x-organization-id` was silently dropped on every intelligence call.
 function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  const orgId =
-    sessionStorage.getItem('trialsage_org_id') ||
-    localStorage.getItem('trialsage_org_id');
-
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  if (orgId) headers['x-organization-id'] = orgId;
-  return headers;
+  return { 'Content-Type': 'application/json', ...canonicalAuthHeaders() };
 }
 
 async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {

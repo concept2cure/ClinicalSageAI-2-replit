@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState, useCallback } from 'react';
+import { getAuthHeaders as canonicalAuthHeaders } from '@/utils/authToken';
 import type { ReadinessSnapshot, ContradictionEntry } from '../../../../shared/types/authoring-context';
 
 interface AuthoringIntelligence {
@@ -18,13 +19,11 @@ interface AuthoringIntelligence {
   refetch: () => void;
 }
 
+// Delegate to the canonical auth-header builder (bearer token + x-organization-id)
+// so section-context requests carry the same tenant scope as the rest of the app
+// (queryClient.ts). The previous local copy sent only the bearer token.
 function getAuthHeaders(): Record<string, string> {
-  const token =
-    sessionStorage.getItem('trialsage_access_token') ||
-    localStorage.getItem('trialsage_access_token');
-  return token
-    ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-    : { 'Content-Type': 'application/json' };
+  return { 'Content-Type': 'application/json', ...canonicalAuthHeaders() };
 }
 
 export function useAuthoringIntelligence(
