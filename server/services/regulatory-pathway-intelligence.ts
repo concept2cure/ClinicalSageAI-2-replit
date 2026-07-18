@@ -17,6 +17,10 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'node:url';
+
+// ESM has no module-scope __dirname; recreate it from import.meta.url.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 

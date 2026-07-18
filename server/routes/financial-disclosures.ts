@@ -17,6 +17,7 @@ import { recordGovernedAction, verifyReauth } from './c2c/actions';
 import { getGateway } from '../services/ai-gateway';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'node:url';
 import {
   createInvestigatorTx,
   listInvestigators,
@@ -37,6 +38,9 @@ import {
 } from '../services/fcoi-metrics';
 
 const router = Router();
+
+// ESM has no module-scope __dirname; recreate it from import.meta.url.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
