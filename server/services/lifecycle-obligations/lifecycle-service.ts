@@ -121,3 +121,29 @@ export async function listEvents(orgId: number, obligationId: number): Promise<a
   );
   return rows;
 }
+
+/**
+ * Nearest non-terminal (unsubmitted/unapproved) occurrence due date per
+ * obligation, for the whole org, in one query. A recurring obligation created
+ * with an anchor + cadence but no explicit parent due_date carries its dated
+ * occurrences on lifecycle_obligation_events; this lets a reader show the next
+ * generated occurrence instead of an empty parent due date. Returns a
+ * Map<obligationId, dueDate('YYYY-MM-DD')>.
+ */
+export async function nextEventDueByObligation(orgId: number): Promise<Map<number, string>> {
+  const { rows } = await pool.query(
+    `SELECT obligation_id, MIN(due_date) AS next_due
+       FROM lifecycle_obligation_events
+      WHERE organization_id = $1 AND deleted_at IS NULL
+        AND due_date IS NOT NULL
+        AND status NOT IN ('submitted','approved')
+      GROUP BY obligation_id`,
+    [orgId],
+  );
+  const out = new Map<number, string>();
+  for (const r of rows) {
+    const due = r.next_due instanceof Date ? r.next_due.toISOString().slice(0, 10) : String(r.next_due).slice(0, 10);
+    out.set(Number(r.obligation_id), due);
+  }
+  return out;
+}

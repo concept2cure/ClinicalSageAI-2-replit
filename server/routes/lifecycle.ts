@@ -21,6 +21,7 @@ import {
   listObligations,
   listCalendar,
   listEvents,
+  nextEventDueByObligation,
 } from '../services/lifecycle-obligations/lifecycle-service';
 import { summarizeCalendar, classificationPathway, projectRenewalObligations } from '../services/lifecycle-obligations/lifecycle-logic';
 import { recordLifecycleObligation, recordLifecycleSubmission } from '../services/lifecycle-metrics';
@@ -170,7 +171,13 @@ router.get('/renewals', async (req, res) => {
   if (!orgId) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
   try {
     const rows = await listObligations(orgId);
-    const data = projectRenewalObligations(rows as any, today());
+    // A recurring obligation created with an anchor + cadence but no explicit
+    // parent due_date carries its dated occurrences on the events table; fall
+    // back to the nearest non-terminal event so the next generated occurrence
+    // shows (and sorts) correctly instead of as an undated row.
+    const eventDue = await nextEventDueByObligation(orgId);
+    const enriched = rows.map((r: any) => ({ ...r, due_date: r.due_date ?? eventDue.get(Number(r.id)) ?? null }));
+    const data = projectRenewalObligations(enriched, today());
     res.json({ data, meta: { count: data.length } });
   } catch (err) {
     const pendingStore = (err as { code?: string } | null)?.code === '42P01';
