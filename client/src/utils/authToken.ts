@@ -1,5 +1,9 @@
-const TOKEN_KEY = 'token';
-const LEGACY_TOKEN_KEYS = ['auth_token', 'trialsage_access_token'];
+// Canonical bearer-token store, written by every auth path (login / MFA / refresh /
+// demo) via authService (SecureStorage) to sessionStorage for an in-tab login or
+// localStorage for "remember me". This module reads it as the single source of truth.
+const CANONICAL_TOKEN_KEY = 'trialsage_access_token';
+// Read-only fallbacks for older writers; never written or deleted in getAuthToken.
+const LEGACY_TOKEN_KEYS = ['token', 'auth_token'];
 const ORG_ID_KEY = 'currentOrganizationId';
 const LEGACY_ORG_ID_KEYS = ['currentOrganization', 'organizationId'];
 
@@ -45,21 +49,20 @@ export const getAuthToken = (): string | null => {
     return memoryToken;
   }
 
-  const token = sessionStorage.getItem(TOKEN_KEY);
-  if (token) return token;
+  // Read the canonical key fresh on every call, session-first then localStorage,
+  // WITHOUT mutating storage. This fixes the token-store desync: a refreshed token
+  // propagates (no cached copy wins), "remember me" survives (the persistent
+  // localStorage copy is never deleted), and logout — which clears this key in both
+  // stores — is honored (no stale token resurfaces). Legacy keys are read-only.
+  const token =
+    sessionStorage.getItem(CANONICAL_TOKEN_KEY) ||
+    readLocalStorage(CANONICAL_TOKEN_KEY) ||
+    sessionStorage.getItem('token') ||
+    readLocalStorage('token') ||
+    readLocalStorage('auth_token');
 
-  for (const key of LEGACY_TOKEN_KEYS) {
-    const legacyToken = sessionStorage.getItem(key) || readLocalStorage(key) || readLocalStorage(TOKEN_KEY);
-    if (legacyToken) {
-      sessionStorage.setItem(TOKEN_KEY, legacyToken);
-      removeLocalStorage(key);
-      removeLocalStorage(TOKEN_KEY);
-      memoryToken = legacyToken;
-      return legacyToken;
-    }
-  }
-
-  return memoryToken;
+  memoryToken = token;
+  return token;
 };
 
 export const getOrgId = (): string => {
@@ -95,18 +98,25 @@ export const getAuthHeaders = (): Record<string, string> => {
   };
 };
 
-export const setAuthToken = (token: string): void => {
+export const setAuthToken = (token: string, persistent = false): void => {
   memoryToken = token;
 
-  if (canUseSessionStorage()) {
-    sessionStorage.setItem(TOKEN_KEY, token);
-    // Keep legacy session key in sync while old hooks migrate to canonical auth access.
-    sessionStorage.setItem('trialsage_access_token', token);
+  const canSession = canUseSessionStorage();
+
+  // Keep the token in exactly one tier: localStorage for "remember me", else
+  // sessionStorage. Clearing the opposite tier keeps getAuthToken's session-first
+  // read unambiguous after a tier change (e.g. a refresh writing a new tier).
+  if (persistent) {
+    writeLocalStorage(CANONICAL_TOKEN_KEY, token);
+    if (canSession) sessionStorage.removeItem(CANONICAL_TOKEN_KEY);
+  } else {
+    if (canSession) sessionStorage.setItem(CANONICAL_TOKEN_KEY, token);
+    removeLocalStorage(CANONICAL_TOKEN_KEY);
   }
 
-  removeLocalStorage(TOKEN_KEY);
-  removeLocalStorage('trialsage_access_token');
+  // Purge stale legacy copies so no reader resolves an outdated token.
   for (const key of LEGACY_TOKEN_KEYS) {
+    if (canSession) sessionStorage.removeItem(key);
     removeLocalStorage(key);
   }
 };
@@ -114,17 +124,10 @@ export const setAuthToken = (token: string): void => {
 export const clearAuthToken = (): void => {
   memoryToken = null;
 
-  if (canUseSessionStorage()) {
-    sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem('trialsage_access_token');
-    for (const key of LEGACY_TOKEN_KEYS) {
-      sessionStorage.removeItem(key);
-    }
-  }
-
-  removeLocalStorage(TOKEN_KEY);
-  removeLocalStorage('trialsage_access_token');
-  for (const key of LEGACY_TOKEN_KEYS) {
+  const canSession = canUseSessionStorage();
+  const keys = [CANONICAL_TOKEN_KEY, ...LEGACY_TOKEN_KEYS];
+  for (const key of keys) {
+    if (canSession) sessionStorage.removeItem(key);
     removeLocalStorage(key);
   }
 };
