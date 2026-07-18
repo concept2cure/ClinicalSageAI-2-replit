@@ -155,6 +155,17 @@ export async function materializeTechnicalFile(
 
   zip.file('checksums.md5.txt', buildMd5Index(checksums), { date: ZIP_EPOCH });
 
+  // Pin IMPLICIT parent-folder entries too. JSZip stamps the directory entries
+  // it auto-creates for nested paths (e.g. `03-annex-ii/device-description/`)
+  // with `new Date()`, not the per-file `date` we passed — which reintroduces
+  // non-determinism and occasionally flips the sha256 when two runs straddle the
+  // DOS 2-second timestamp boundary (defeating the content-addressing guarantee
+  // and flaking the determinism test). Force EVERY entry (files + folders) onto
+  // ZIP_EPOCH so identical input yields byte-identical output.
+  for (const entry of Object.values(zip.files)) {
+    entry.date = ZIP_EPOCH;
+  }
+
   await fs.mkdir(opts.outputDir, { recursive: true });
   const buffer = await zip.generateAsync({
     type: 'nodebuffer',

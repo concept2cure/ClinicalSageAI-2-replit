@@ -50,6 +50,7 @@ import { HaqManager } from './surfaces/HaqManager';
 import { HumanFactors } from './surfaces/HumanFactors';
 import { Inconsistency } from './surfaces/Inconsistency';
 import { IndLifecycle } from './surfaces/IndLifecycle';
+import { InvestigatorBrochure } from './surfaces/InvestigatorBrochure';
 import { InsightsCanvas } from './surfaces/Insights';
 import { IvdCompleteness } from './surfaces/IvdCompleteness';
 import { Labeling } from './surfaces/Labeling';
@@ -142,6 +143,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   inconsistency: { component: Inconsistency },
   'ind-checklist': { component: IndLifecycle },
   'ind-lifecycle': { component: IndLifecycle },
+  'investigator-brochure': { component: InvestigatorBrochure },
   insights: { component: InsightsCanvas, full: true, hideAna: true },
   'intelligence-catalog': { component: CapabilityIndex },
   'ivd-completeness': { component: IvdCompleteness, full: true },

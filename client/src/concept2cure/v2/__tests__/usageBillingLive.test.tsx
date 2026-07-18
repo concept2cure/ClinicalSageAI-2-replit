@@ -189,6 +189,11 @@ describe('UsageBilling — live billing (/api/billing/invoices + /credits)', () 
     mockLive({ '/api/billing/invoices': { invoices: [], hasMore: false, total: 0 } });
     mount('billing');
     expect(await screen.findByText('$16.70')).toBeTruthy(); // fixture row
+    // Wait for the live credits panel to settle too — invoices (fixture) and
+    // credits (live) resolve on independent promises, so counting the pills
+    // before the live balance appears races under load (only the invoices
+    // fixture would have rendered → 3 Sample pills instead of 1).
+    expect(await screen.findByText('$12.34')).toBeTruthy(); // live balance
     // invoices card wears the Sample pill while balance/auto-reload stay live
     expect(screen.getAllByText('Sample data')).toHaveLength(1);
     expect(screen.getAllByText('Live')).toHaveLength(2);

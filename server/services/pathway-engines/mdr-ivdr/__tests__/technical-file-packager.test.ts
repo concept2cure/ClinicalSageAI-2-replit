@@ -106,6 +106,21 @@ describe('materializeTechnicalFile (end-to-end ZIP emission)', () => {
     expect(b1.sha256).toBe(b2.sha256);
   });
 
+  it('pins every entry (files AND implicit folders) to a fixed epoch — no wall-clock timestamps', async () => {
+    // Regression guard for the determinism flake: JSZip stamps the directory
+    // entries it auto-creates for nested paths with `new Date()`, not the
+    // per-file date, so two runs straddling the DOS 2-second boundary produced
+    // different hashes. Deterministically catch a leak (no boundary needed) by
+    // asserting NO entry carries a wall-clock (current-year) timestamp.
+    const plan = buildTechnicalFilePlan({ manifest: makeManifest(), leaves, resolveFile });
+    const bundle = await materializeTechnicalFile(plan, { outputDir: tmpDir, applicationId: 'APP-003' });
+    const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
+    const entries = Object.values(zip.files);
+    expect(entries.length).toBeGreaterThan(0);
+    const leaked = entries.filter((e) => e.date.getFullYear() !== 1980).map((e) => e.name);
+    expect(leaked).toEqual([]);
+  });
+
   it('reports skipped sources for leaves with no resolvable file', async () => {
     const manifest = makeManifest();
     // Add a section whose source leaf resolves to null.

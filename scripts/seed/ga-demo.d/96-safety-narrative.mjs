@@ -12,6 +12,8 @@
 const CASES = [
   {
     id: 'ICSR-8841', due: 'Day 15', clock: 'FDA 15-day (IND safety report)', dueDays: 6,
+    // Serious + unexpected + suspected, not fatal/life-threatening ⇒ live 15-day clock.
+    awarenessDate: '2026-07-06', expectedness: 'unexpected',
     subjectId: '2041-0087', age: 67, sex: 'Female', studyId: 'BX204-301', treatmentArm: 'BX-099 200 mg Q3W',
     studyDrug: 'BX-099', dose: '200 mg IV every 3 weeks', firstDoseDate: '12 Mar 2026',
     medicalHistory: ['stage IIIB non-small-cell lung cancer', 'former smoker (28 pack-years)', 'hypertension'],
@@ -26,6 +28,8 @@ const CASES = [
   },
   {
     id: 'ICSR-8839', due: 'Day 7', clock: 'EMA 7-day (fatal/life-threatening SUSAR)', dueDays: 2,
+    // Serious + unexpected + suspected + life-threatening ⇒ live 7-day clock (urgent).
+    awarenessDate: '2026-07-13', expectedness: 'unexpected',
     subjectId: '2041-0112', age: 58, sex: 'Male', studyId: 'BX204-301', treatmentArm: 'BX-099 200 mg Q3W',
     studyDrug: 'BX-099', dose: '200 mg IV every 3 weeks', firstDoseDate: '02 Apr 2026',
     medicalHistory: ['metastatic urothelial carcinoma', 'type 2 diabetes mellitus'],
@@ -39,6 +43,8 @@ const CASES = [
   },
   {
     id: 'ICSR-8832', due: 'Day 15', clock: 'FDA 15-day (IND safety report)', dueDays: 11,
+    // Serious + suspected but EXPECTED (listed in the IB) ⇒ no expedited clock ('none').
+    awarenessDate: '2026-07-10', expectedness: 'expected',
     subjectId: '2288-0043', age: 61, sex: 'Male', studyId: 'BX204-204', treatmentArm: 'BX-204 rezatinib 400 mg QD',
     studyDrug: 'BX-204', dose: '400 mg orally once daily', firstDoseDate: '18 Feb 2026',
     medicalHistory: ['EGFR-mutant NSCLC'],
@@ -64,14 +70,15 @@ export default async function seed(client, { org }) {
       `INSERT INTO c2c_sae_cases (
          id, organization_id, due, clock, due_days, subject_id, age, sex,
          study_id, treatment_arm, study_drug, dose, first_dose_date,
-         medical_history, concomitant_meds, event
+         medical_history, concomitant_meds, event, awareness_date, expectedness
        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-         $14::jsonb, $15::jsonb, $16::jsonb)
+         $14::jsonb, $15::jsonb, $16::jsonb, $17, $18)
        ON CONFLICT (organization_id, id) DO NOTHING`,
       [
         c.id, org.id, c.due, c.clock, c.dueDays, c.subjectId, c.age, c.sex,
         c.studyId, c.treatmentArm, c.studyDrug, c.dose, c.firstDoseDate,
         JSON.stringify(c.medicalHistory), JSON.stringify(c.concomitantMeds), JSON.stringify(c.event),
+        c.awarenessDate ?? null, c.expectedness ?? null,
       ],
     );
     inserted += r.rowCount ?? 0;
