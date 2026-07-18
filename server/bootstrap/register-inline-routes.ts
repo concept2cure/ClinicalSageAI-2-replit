@@ -908,6 +908,7 @@ export async function registerInlineAiWorkflowRoutes({
     ['/api/nonclinical-summary', '../routes/nonclinical-summary.routes', 'Nonclinical M2.6/M4'],
     ['/api/maa-module1', '../routes/maa-module1.routes', 'MAA Module 1'],
     ['/api/labeling-smpc', '../routes/labeling-smpc.routes', 'EU SmPC labeling'],
+    ['/api/cmc-changes', '../routes/cmc-changes.routes', 'CMC change control'],
   ] as const) {
     try {
       const mod = await import(modPath);
