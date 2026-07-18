@@ -1,19 +1,29 @@
 #!/usr/bin/env node
 /**
- * install-fresh.mjs — Canonical from-scratch production DB provisioning.
+ * install-fresh.mjs — Canonical from-scratch DB provisioning (app schema + RLS).
  *
  * The problem this solves: there was no single, verified command that turns an
- * empty Postgres into a correct Concept2Cure schema. `drizzle-kit push` alone
- * fails on a bare DB ("schema vault does not exist") and, once the prereqs
- * exist, still creates ZERO row-level-security policies (push cannot emit
- * policies). Replaying the 162-file migrations/ tree is not idempotent and
- * fails. This script is the one supported path.
+ * empty Postgres into a correct Concept2Cure app schema. `drizzle-kit push`
+ * alone fails on a bare DB ("schema vault does not exist") and, once the
+ * prereqs exist, still creates ZERO row-level-security policies (push cannot
+ * emit policies). Replaying the 162-file migrations/ tree is not idempotent and
+ * fails. This script is the one supported path for the application schema.
  *
  * What it does (idempotent — safe to re-run):
  *   1. Create the named schemas + extensions the Drizzle schema references.
  *   2. `drizzle-kit push` to lay down all tables from shared/schema.ts.
- *   3. Apply the RLS-bearing raw migrations that push cannot express.
+ *   3. Apply the RLS-bearing raw migrations that push cannot express, tracking
+ *      applied files in an _install_applied_migrations ledger.
  *   4. Verify: table count and pg_policies count (fails if no policies).
+ *
+ * SEPARATE, NOT run here: the governed-content tree db/migrations/*_gcc_*.sql
+ * (named `audit` schema, Part-11 tables, its own RLS). Those files are
+ * psql-authored and CI applies them on their own database, never combined with
+ * the RLS rollout below (their uuid tenant columns are incompatible with the
+ * app RLS policy). The app BOOTS without them (tamper-proof audit degrades
+ * non-fatally); apply them for full Part-11 audit, via psql, as CI does:
+ *   for f in $(ls db/migrations/*_gcc_*.sql | sort); do \
+ *     psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"; done
  *
  * Usage:
  *   DATABASE_URL='postgres://…' node scripts/db/install-fresh.mjs
@@ -35,9 +45,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MIGRATIONS_DIR = path.resolve(__dirname, '..', '..', 'migrations');
 
 // RLS lives only in these raw migrations — drizzle-kit push cannot emit
-// policies, so they must be applied explicitly after the tables exist.
+// policies, so they must be applied explicitly after the tables exist. Order
+// matters: 0005 seeds CSR-knowledge RLS; the 0019→0020→0021 trio is the tenant
+// RLS rollout (audit → coerce tenant column types → enable RLS everywhere);
+// the dated files add AI-placement and research-admin policies.
 const RLS_MIGRATIONS = [
   '0005_csr_knowledge_database.sql',
+  '0019_tenant_column_audit.sql',
+  '0020_coerce_text_tenant_columns.sql',
   '0021_enable_rls_everywhere.sql',
   '20260608_ai_placement_policies.sql',
   '20260612_rls_research_admin.sql',
@@ -51,13 +66,18 @@ function getDatabaseUrl() {
   throw new Error('No DATABASE_URL found in environment');
 }
 
-/** Local/non-SSL Postgres vs Neon (SSL). Mirrors the app's own heuristic. */
+/**
+ * Local/non-SSL Postgres vs a remote managed DB (Neon). Remote connections
+ * verify the server certificate (rejectUnauthorized: true) — Neon presents a
+ * publicly-trusted cert, and disabling verification would expose the
+ * provisioning connection to MITM. Local sockets use no TLS.
+ */
 function sslFor(url) {
   const u = url.toLowerCase();
   if (u.includes('sslmode=disable') || u.includes('@localhost') || u.includes('@127.0.0.1')) {
     return false;
   }
-  return { rejectUnauthorized: false };
+  return { rejectUnauthorized: true };
 }
 
 const url = getDatabaseUrl();
@@ -103,7 +123,7 @@ async function main() {
     // Bookkeeping ledger: these raw migrations use bare CREATE POLICY (no
     // IF NOT EXISTS), so re-running a file would error on an already-present
     // policy. Record what has been applied so the installer is safely
-    // re-runnable, and tolerate policies that already exist out-of-band.
+    // re-runnable, and tolerate objects that already exist out-of-band.
     await pool.query(`
       CREATE TABLE IF NOT EXISTS public._install_applied_migrations (
         filename   text PRIMARY KEY,
@@ -161,9 +181,14 @@ async function main() {
     console.log(`  RLS policies:    ${policyCount}`);
     if (tableCount < 100) throw new Error(`expected the full schema (100s of tables); only ${tableCount} created`);
     if (policyCount < 1) throw new Error('no RLS policies created — tenant isolation would be absent');
-    console.log('\n✅ Database install complete.');
-    console.log('   Next: set RLS_ENFORCE=on and restart to enforce tenant isolation,');
-    console.log('   and leave SEED_DEMO_USER unset in production (no known-password admin).');
+    console.log('\n✅ Application schema install complete.');
+    console.log('   Next:');
+    console.log('   • set RLS_ENFORCE=on and restart to enforce tenant isolation;');
+    console.log('   • leave SEED_DEMO_USER unset in production (no known-password admin);');
+    console.log('   • for full 21 CFR Part 11 tamper-proof audit, also apply the governed-');
+    console.log('     content tree (creates the `audit` schema) via psql:');
+    console.log('       for f in $(ls db/migrations/*_gcc_*.sql | sort); do \\');
+    console.log('         psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f"; done');
   });
 }
 
