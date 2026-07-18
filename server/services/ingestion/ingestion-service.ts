@@ -41,11 +41,11 @@ import {
 } from '../ai-gateway/gateway';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
+import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
 
 const logger = createScopedLogger('ingestion-service');
 
 const CANONICAL_DOCUMENT_TABLE = 'coauthor_documents';
-const PROMPTS_DIR = path.join(new URL('.', import.meta.url).pathname, '..', 'ai-gateway', 'prompts');
 
 // ── Standardized error surface (never leak raw provider errors) ───────────────
 

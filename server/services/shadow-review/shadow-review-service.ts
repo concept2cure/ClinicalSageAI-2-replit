@@ -17,9 +17,9 @@ import { ectdSequences, submissionLeaves, shadowReviewRuns, shadowReviewFindings
 import { getGateway } from '../ai-gateway';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
+import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
 
 const logger = createScopedLogger('shadow-review-service');
-const PROMPTS_DIR = path.join(new URL('.', import.meta.url).pathname, '..', 'ai-gateway', 'prompts');
 
 export type ReviewLens = 'fda_filing' | 'ema_d120' | 'pmda' | 'nb_mdr' | 'nb_ivdr';
 export type FindingSeverity = 'critical' | 'major' | 'minor' | 'info';

@@ -20,9 +20,9 @@ import { submissions, coauthorDocuments } from '../../../shared/schema';
 import { getGateway } from '../ai-gateway';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
+import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
 
 const logger = createScopedLogger('section-generation-service');
-const PROMPTS_DIR = path.join(new URL('.', import.meta.url).pathname, '..', 'ai-gateway', 'prompts');
 
 export class AuthoringError extends Error {
   constructor(public code: 'NOT_FOUND' | 'PROVIDER_UNAVAILABLE', message: string) {

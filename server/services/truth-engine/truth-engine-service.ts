@@ -25,9 +25,9 @@ import { getGateway } from '../ai-gateway';
 import { classifyGatewayError } from '../ai-gateway/gateway-error-map';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
+import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
 
 const logger = createScopedLogger('truth-engine-service');
-const PROMPTS_DIR = path.join(new URL('.', import.meta.url).pathname, '..', 'ai-gateway', 'prompts');
 
 export class TruthEngineError extends Error {
   constructor(
