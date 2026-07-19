@@ -6,9 +6,9 @@
  *   - CsrWorkflow       (registry id `csr-workflow`)
  *   - RegulatoryWorkspace (registry id `regulatory-workspace`, full: true)
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLiveList } from '../dataConnect';
+import { SampleTag, useLive, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   STATUS_TONE,
@@ -20,6 +20,12 @@ import {
   CSR_SECTIONS,
   RW_TREE,
   RW_INTEL,
+} from '../fixtures/project3-data';
+import type {
+  CsrProgram,
+  CsrSection,
+  RwTreeItem,
+  RwIntelItem,
 } from '../fixtures/project3-data';
 import '../styles/project-home-v2.css';
 
@@ -175,12 +181,38 @@ export function BiopharmaProject({ onAsk, onNav }: SurfaceViewProps) {
 
 /* ════ CSR Workflow — ICH E3 surface ════ */
 
+/** GET /api/csr-workflow/board payload (server csr-workflow-routes.ts). */
+interface CsrBoard {
+  program: CsrProgram | null;
+  sections: CsrSection[];
+}
+
 export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
-  const p = CSR_PROGRAM;
+  // Live ICH E3 CSR build board (GET /api/csr-workflow/board → { success,
+  // data: { program, sections } }). `useLive` assigns the whole response body to
+  // `.data`, so the payload is at raw.data.data. A null `program` means the org
+  // has no live CSR build job yet — treat that (and any unreachable/malformed
+  // response) as "no live program" and keep the honest CSR_PROGRAM / CSR_SECTIONS
+  // fixture behind the sample pill.
+  const raw = useLive<{ data?: CsrBoard }>('/api/csr-workflow/board', {
+    data: { program: CSR_PROGRAM, sections: CSR_SECTIONS },
+  });
+  const board = raw.data?.data;
+  const valid =
+    !raw.sample &&
+    !!board &&
+    !!board.program &&
+    typeof board.program.title === 'string' &&
+    Number.isFinite(board.program.readiness) &&
+    Array.isArray(board.sections) &&
+    board.sections.length > 0;
+  const p = valid ? board!.program! : CSR_PROGRAM;
+  const sections = valid ? board!.sections : CSR_SECTIONS;
+  const sample = !valid;
 
   return (
     <div className="page-inner">
-      <SampleTag sample={true} />
+      <SampleTag sample={sample} />
       <PageHead
         eyebrow="Project · clinical"
         title="CSR workflow"
@@ -196,7 +228,7 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
         <div className="ct-head" style={{ gridTemplateColumns: '70px 1fr 100px 60px' }}>
           <div>§</div><div>ICH E3 section</div><div>Status</div><div></div>
         </div>
-        {CSR_SECTIONS.map((s, i) => (
+        {sections.map((s, i) => (
           <button
             key={i}
             className="ct-row"
@@ -224,9 +256,44 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
 
 /* ════ Regulatory Workspace — generic 3-pane substrate (full: true) ════ */
 
+/** GET /api/regulatory-workspace payload (server regulatory-workspace-routes.ts). */
+interface RwPayload {
+  tree: RwTreeItem[];
+  intel: RwIntelItem[];
+}
+
 export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
-  const [active, setActive] = useState('r1');
-  const sec = RW_TREE.find((s) => s.id === active) || RW_TREE[0];
+  // Live CTD authoring substrate (GET /api/regulatory-workspace → { success,
+  // data: { tree, intel } }). `useLive` puts the whole response body on `.data`,
+  // so the payload is at raw.data.data. Any unreachable/empty/malformed reply
+  // (e.g. an org with no tracked sections → empty tree) falls back to the
+  // RW_TREE / RW_INTEL fixture behind the sample pill. tree and intel move
+  // together under one flag so a live tree is never paired with fixture intel.
+  const raw = useLive<{ data?: RwPayload }>('/api/regulatory-workspace', {
+    data: { tree: RW_TREE, intel: RW_INTEL },
+  });
+  const payload = raw.data?.data;
+  const valid =
+    !raw.sample &&
+    !!payload &&
+    Array.isArray(payload.tree) &&
+    payload.tree.length > 0 &&
+    !!payload.tree[0]?.id &&
+    Array.isArray(payload.intel);
+  const tree: RwTreeItem[] = valid ? payload!.tree : RW_TREE;
+  const intel: RwIntelItem[] = valid ? payload!.intel : RW_INTEL;
+  const sample = !valid;
+
+  // Init the active section from the first tree row. useState seeds from the
+  // fixture on first paint; when the live tree resolves (its ids differ) and the
+  // current selection is no longer present, re-anchor to the live tree[0].
+  const [active, setActive] = useState<string>(() => RW_TREE[0]?.id ?? 'r1');
+  useEffect(() => {
+    if (tree.length > 0 && !tree.some((s) => s.id === active)) {
+      setActive(tree[0].id);
+    }
+  }, [tree, active]);
+  const sec = tree.find((s) => s.id === active) || tree[0];
 
   return (
     <div className="ed">
@@ -234,10 +301,11 @@ export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
         <div className="ed-tree-h">
           <div className="ed-tree-t">Sections</div>
           <div className="ed-tree-m">Generic authoring substrate</div>
+          <div style={{ marginTop: 6 }}><SampleTag sample={sample} /></div>
         </div>
         <div className="ed-tree-scroll">
           <div className="ed-vol">
-            {RW_TREE.map((s) => (
+            {tree.map((s) => (
               <button
                 key={s.id}
                 className="ed-tree-row"
@@ -285,7 +353,7 @@ export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
 
       <aside className="ed-comments">
         <div className="ed-comments-h">Intelligence</div>
-        {RW_INTEL.map((x, i) => (
+        {intel.map((x, i) => (
           <div key={i} className="gate-cell" style={{ alignItems: 'flex-start', marginBottom: 8 }}>
             <div>
               <div className="gate-k">{x.k}</div>
