@@ -22,9 +22,22 @@ import express from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// The router imports { db } for the NER/embedding handlers; the DLQ routes
-// never touch it. Stub it out so the suite stays DB-free.
-vi.mock('../../../db', () => ({ db: {} }));
+// The DLQ clear gate re-resolves the caller's org role from the DB (it must not
+// trust the possibly-stale in-request role). Stub `db` with a select-chain that
+// resolves to a per-test role row so the suite stays DB-free while still
+// exercising the authoritative-role path.
+const dbState = vi.hoisted(() => ({ orgRoleRows: [] as Array<{ role: string }> }));
+vi.mock('../../../db', () => ({
+  db: {
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: async () => dbState.orgRoleRows,
+        }),
+      }),
+    }),
+  },
+}));
 
 import router from '../phase3-routes.js';
 import regulatoryAIPhase3 from '../../../services/regulatoryAIServicePhase3.js';
@@ -37,8 +50,27 @@ interface TestUser {
   email?: string;
 }
 
-/** App with a stubbed auth layer that sets req.user (JWT-shaped). */
-function makeApp(user?: TestUser, reqPatch?: Record<string, unknown>) {
+/**
+ * App with a stubbed auth layer that sets req.user (JWT-shaped).
+ *
+ * `dbRole` is the org role the gate re-resolves from the DB. It defaults to the
+ * JWT `role` so ordinary cases (admin allowed / member denied) hold; pass an
+ * explicit `dbRole` to desync the stale JWT role from the authoritative DB role
+ * (the downgraded-admin exploit). Pass `null` to simulate no DB membership row.
+ */
+function makeApp(
+  user?: TestUser,
+  reqPatch?: Record<string, unknown>,
+  dbRole?: string | null
+) {
+  // Default the authoritative DB role to the user's JWT role (singular `role`,
+  // or an admin/owner found in the `roles` array), so ordinary cases hold.
+  const jwtRole =
+    user?.role ??
+    user?.roles?.find((r) => r === 'admin' || r === 'owner') ??
+    user?.roles?.[0];
+  const resolved = dbRole === undefined ? jwtRole : dbRole;
+  dbState.orgRoleRows = resolved ? [{ role: resolved }] : [];
   const app = express();
   app.use(express.json());
   app.use((req: any, _res, next) => {
@@ -215,6 +247,26 @@ describe('POST /api/ai/dead-letter-queue/clear', () => {
     const remaining = allEntries();
     expect(remaining).toHaveLength(2);
     expect(remaining.map((e: any) => e.error).sort()).toEqual(['boom-8', 'boom-legacy']);
+  });
+
+  it('denies a downgraded admin whose JWT still says admin but whose DB role is now member (P1)', async () => {
+    seedQueue();
+    // Stale JWT still carries role: 'admin' (an /api/ai authenticateToken pass
+    // would overwrite req.user with it); the authoritative DB role is 'member'.
+    const res = await request(makeApp({ organizationId: 7, role: 'admin' }, undefined, 'member'))
+      .post('/api/ai/dead-letter-queue/clear')
+      .send({});
+    expect(res.status).toBe(403);
+    expect(allEntries()).toHaveLength(4); // queue untouched
+  });
+
+  it('fails closed when the DB role cannot be resolved (no membership row)', async () => {
+    seedQueue();
+    const res = await request(makeApp({ organizationId: 7, role: 'admin' }, undefined, null))
+      .post('/api/ai/dead-letter-queue/clear')
+      .send({});
+    expect(res.status).toBe(403);
+    expect(allEntries()).toHaveLength(4);
   });
 
   it('resolves indices against the caller-visible queue, not the global one', async () => {

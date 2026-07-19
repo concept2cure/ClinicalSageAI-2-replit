@@ -103,6 +103,9 @@ jobs:
       - name: Guardrails — no mock data in prod routes (no regressions)
         run: npm run ci:no-mock-in-prod-routes
 
+      - name: Guardrails — js/ts shadow guard (no new same-basename .js/.ts pairs)
+        run: npm run ci:js-ts-shadows
+
       - name: Guardrails — DOCX runtime canonicality (approved runtimes only)
         run: npm run ci:check-docx-runtime
 
