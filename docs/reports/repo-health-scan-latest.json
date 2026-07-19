@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-17T18:09:24.158Z",
+  "generatedAt": "2026-07-19T18:55:33.290Z",
   "git": {
-    "sha": "19de9867bbbb79872612ae906fce98e6087ae4fb",
+    "sha": "5fefd17dfe012233fada3405f62d96e42589e18e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -651,17 +651,6 @@
         ]
       },
       {
-        "basename": "validation",
-        "count": 5,
-        "paths": [
-          "client/src/concept2cure/submission/surfaces/Validation.tsx",
-          "server/middleware/validation.js",
-          "server/middleware/validation.ts",
-          "server/utils/validation.js",
-          "services/proof/validation.ts"
-        ]
-      },
-      {
         "basename": "artifactdoc",
         "count": 4,
         "paths": [
@@ -839,6 +828,16 @@
           "client/src/concept2cure/components/claude-ectd-coauthor/Tree.tsx",
           "design-system/ui_kits/ectd_coauthor/Tree.jsx",
           "ui_kits/ectd_coauthor/Tree.jsx"
+        ]
+      },
+      {
+        "basename": "validation",
+        "count": 4,
+        "paths": [
+          "client/src/concept2cure/submission/surfaces/Validation.tsx",
+          "server/middleware/validation.ts",
+          "server/utils/validation.js",
+          "services/proof/validation.ts"
         ]
       },
       {
@@ -2694,6 +2693,10 @@
         "lines": 2056
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 2035
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 2020
       },
@@ -2724,10 +2727,6 @@
       {
         "file": "server/routes/auth.ts",
         "lines": 1937
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 1930
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
@@ -2887,7 +2886,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 392,
+      "duplicateGroups": 391,
       "largeByBytes": 26,
       "largeByLines": 72
     },
