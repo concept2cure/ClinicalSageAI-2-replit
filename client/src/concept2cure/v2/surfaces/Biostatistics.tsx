@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected } from '../dataConnect';
+import { SampleTag, connected, useLive } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -159,7 +159,9 @@ interface DocDef {
 interface BiostatPlan {
   id: string;
   study: string;
-  endpoint: string;
+  // null when the clinical endpoint is not persisted on the artifact row —
+  // the backend returns null rather than fabricating it (honest gap).
+  endpoint: string | null;
   doc: string;
   status: string;
 }
@@ -520,6 +522,24 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const [input, setInput] = useState<BiostatInput>(BS_PRESETS.survival.input);
   const [docType, setDocType] = useState('sample_size_rationale');
   const [toast, fireToast] = useToast();
+
+  // Governed statistical documents — the ONE stored, org-scoped slice of this
+  // surface (the design/document body is computed in-browser). GET
+  // /api/ana-biostats/governed-documents → { success, data: BiostatPlan[] };
+  // useLive puts the whole body on `.data`, so the list is at `.data.data`.
+  // Trust live only when the shape matches; else fail closed to the fixture.
+  const govDocs = useLive<{ data?: BiostatPlan[] }>(
+    '/api/ana-biostats/governed-documents',
+    { data: BIOSTAT_PLANS }
+  );
+  const govRows = govDocs.data?.data;
+  const plansLive =
+    !govDocs.sample &&
+    Array.isArray(govRows) &&
+    govRows.length > 0 &&
+    typeof govRows[0]?.id === 'string';
+  const plans: BiostatPlan[] = plansLive ? govRows! : BIOSTAT_PLANS;
+  const plansSample = !plansLive;
   const set = (k: string, v: unknown) => setInput((s) => ({ ...s, [k]: v }));
   const usePreset = (k: string) => { setPreset(k); setInput(BS_PRESETS[k].input); };
 
@@ -628,13 +648,13 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       <div className="pj-card" style={{ marginTop: 14 }}>
-        <div className="pj-card-h"><span className="t">Governed statistical documents</span><span className="s">this project</span></div>
+        <div className="pj-card-h"><span className="t">Governed statistical documents</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>this project<SampleTag sample={plansSample} /></span></div>
         <div className="pj-card-b" style={{ padding: 8 }}>
           <div className="sp-list">
-            {BIOSTAT_PLANS.map((p) => (
+            {plans.map((p) => (
               <button key={p.id} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => { const d = BiostatDocs.byId(p.doc); if (d) setDocType(p.doc); }}>
                 <span className="sp-tag" style={{ fontFamily: 'var(--font-mono)' }}>{p.id}</span>
-                <span className="sp-row-b"><span className="sp-row-t">{p.study}</span><span className="sp-row-s">{p.endpoint} -- {(BiostatDocs.byId(p.doc) || { label: '' }).label}</span></span>
+                <span className="sp-row-b"><span className="sp-row-t">{p.study}</span><span className="sp-row-s">{p.endpoint ? p.endpoint + ' -- ' : ''}{(BiostatDocs.byId(p.doc) || { label: '' }).label}</span></span>
                 <span className={'rd-chip tone-' + (p.status === 'approved' ? 'ok' : 'warn')}>{p.status}</span>
               </button>
             ))}

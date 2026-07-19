@@ -10,7 +10,8 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
-import type { DocBlock } from '../fixtures/project2-data';
+import { SampleTag, useLive } from '../dataConnect';
+import type { DocBlock, DocProgram, DocTreeVolume, DocComment } from '../fixtures/project2-data';
 import {
   DOC_PROGRAM,
   DOC_TREE,
@@ -32,12 +33,36 @@ function Pill({ tone, children }: { tone: string; children: React.ReactNode }) {
 export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
   const [active, setActive] = useState('m25');
   const [showComments, setShowComments] = useState(false);
-  const prog = DOC_PROGRAM;
   const band = (c: number) => (c >= 0.9 ? 'hi' : c >= 0.75 ? 'med' : 'lo');
 
   const [blocks, setBlocks] = useState<DocBlock[]>(DOC_BLOCKS_INIT);
   const [stream, setStream] = useState('');
   const [busy, setBusy] = useState(false);
+
+  // Live authoring workspace — GET /api/document-authoring/workspace → { success,
+  // data: { program, tree, blocks, comments, activeDocumentId, meta } }. useLive
+  // puts the whole body on `.data`, so the workspace is at `.data.data`. program,
+  // tree, and comments fail closed to their project2-data fixtures. The center
+  // canvas blocks stay the DOC_BLOCKS_INIT fixture ALWAYS — the backend returns
+  // [] because no governed per-block confidence/provenance store exists for eCTD
+  // content (fabricating it is forbidden), so the canvas is always shown sample.
+  const ws = useLive<{
+    data?: { program?: DocProgram; tree?: DocTreeVolume[]; comments?: DocComment[] };
+  }>('/api/document-authoring/workspace', {
+    data: { program: DOC_PROGRAM, tree: DOC_TREE, comments: DOC_COMMENTS },
+  });
+  const wsData = ws.data?.data;
+  const treeLive =
+    !ws.sample &&
+    Array.isArray(wsData?.tree) &&
+    wsData!.tree!.length > 0 &&
+    typeof wsData!.tree![0]?.vol === 'string';
+  const tree: DocTreeVolume[] = treeLive ? wsData!.tree! : DOC_TREE;
+  const prog: DocProgram = !ws.sample && wsData?.program ? wsData.program : DOC_PROGRAM;
+  const commentsLive = !ws.sample && Array.isArray(wsData?.comments);
+  const comments: DocComment[] = commentsLive ? wsData!.comments! : DOC_COMMENTS;
+  const treeSample = !treeLive;
+  const commentsSample = !commentsLive;
 
   const generate = () => {
     if (busy) return;
@@ -77,11 +102,11 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
     <div className="ed" data-comments={showComments || undefined}>
       <aside className="ed-tree">
         <div className="ed-tree-h">
-          <div className="ed-tree-t">Document tree</div>
-          <div className="ed-tree-m">{prog.readiness}% ready · {prog.due.replace('FDA filing · ', '')}</div>
+          <div className="ed-tree-t" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Document tree<SampleTag sample={treeSample} /></div>
+          <div className="ed-tree-m">{prog.readiness != null ? prog.readiness + '% ready' : 'Readiness pending'}{prog.due ? ' · ' + prog.due.replace('FDA filing · ', '') : ''}</div>
         </div>
         <div className="ed-tree-scroll">
-          {DOC_TREE.map((v) => (
+          {tree.map((v) => (
             <div key={v.vol} className="ed-vol">
               <div className="ed-vol-l">{v.vol}</div>
               {v.items.map((s) => (
@@ -111,7 +136,7 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button className="btn ghost" style={{ height: 30 }} onClick={() => setShowComments(!showComments)}>
-              {I.checkCircle} Comments {DOC_COMMENTS.length}
+              {I.checkCircle} Comments {comments.length}
             </button>
             <button className="btn primary" style={{ height: 30 }} onClick={generate} disabled={busy}>
               {I.sparkles} {busy ? 'Generating...' : 'Draft with AnA'}
@@ -124,8 +149,8 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
           <div className="ed-doc-inner">
             <div className="ed-mast">
               <div className="ed-mast-num">§2.5</div>
-              <h1 className="ed-mast-t">Clinical overview</h1>
-              <div className="ed-mast-meta">{prog.title} · last edited 12 min ago by A. Müller</div>
+              <h1 className="ed-mast-t" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Clinical overview<SampleTag sample /></h1>
+              <div className="ed-mast-meta">{prog.title ?? 'Untitled'} · sample drafted content</div>
             </div>
 
             {blocks.map((b) =>
@@ -178,8 +203,8 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
 
       {showComments && (
         <aside className="ed-comments">
-          <div className="ed-comments-h">Comments</div>
-          {DOC_COMMENTS.map((c) => (
+          <div className="ed-comments-h" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Comments<SampleTag sample={commentsSample} /></div>
+          {comments.map((c) => (
             <div key={c.id} className="cmt" data-ai={c.ai || undefined}>
               <div className="cmt-meta">
                 <span className="cmt-av">{c.ai ? '*' : c.author.split(' ').map((x) => x[0]).join('')}</span>

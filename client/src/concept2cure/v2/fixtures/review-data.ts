@@ -20,8 +20,10 @@ export interface ReviewItem {
   state: string;
   comments: number;
   esig: string;
-  conf: number;
-  prov: string;
+  // null when AnA has no governed confidence / provenance for the item — the
+  // backend returns null rather than fabricating a score or source.
+  conf: number | null;
+  prov: string | null;
   passage: string;
 }
 

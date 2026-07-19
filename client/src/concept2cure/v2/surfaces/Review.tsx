@@ -8,7 +8,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLive } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import type { ReviewItem, ReviewComment, ReviewWorkflow } from '../fixtures/review-data';
@@ -178,6 +178,36 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   const [delReason, setDelReason] = useState('');
   const [toast, fireToast] = useToast();
 
+  // Live review board — GET /api/review/board → { success, data: { queue,
+  // workflows, thread, meta } }. useLive puts the whole body on `.data`, so the
+  // board is at `.data.data`. Trust live only when the queue shape matches; else
+  // every slice fails closed to its REVIEW_* fixture behind a sample pill.
+  const board = useLive<{
+    data?: { queue?: ReviewItem[]; workflows?: Record<string, ReviewWorkflow>; thread?: ReviewComment[] };
+  }>('/api/review/board', {
+    data: { queue: REVIEW_QUEUE, workflows: REVIEW_WORKFLOWS, thread: REVIEW_THREAD },
+  });
+  const liveBoard = board.data?.data;
+  const queueLive =
+    !board.sample &&
+    Array.isArray(liveBoard?.queue) &&
+    liveBoard!.queue!.length > 0 &&
+    typeof liveBoard!.queue![0]?.id === 'string';
+  const workflows: Record<string, ReviewWorkflow> =
+    queueLive && liveBoard?.workflows ? liveBoard.workflows : REVIEW_WORKFLOWS;
+  const boardSample = !queueLive;
+
+  // Re-seed the editable queue + thread from the live board once it resolves
+  // (fires only when queueLive flips true, so it never clobbers later edits).
+  useEffect(() => {
+    if (!queueLive || !liveBoard) return;
+    const q = (liveBoard.queue ?? []).map((r) => ({ ...r }));
+    setQueue(q);
+    setSel((prev) => (q.some((r) => r.id === prev) ? prev : q[0] ? q[0].id : prev));
+    setThread((liveBoard.thread ?? []).map((c) => ({ ...c })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queueLive]);
+
   useEffect(() => {
     try {
       const r = queue.find((x) => x.id === sel);
@@ -192,7 +222,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   }, [sel, queue]);
 
   const item = queue.find((r) => r.id === sel) || queue[0];
-  const wf: ReviewWorkflow | null = REVIEW_WORKFLOWS[item.id] || null;
+  const wf: ReviewWorkflow | null = workflows[item.id] || null;
   const curStep = wf ? wf.steps.find((s) => s.status === 'current') : null;
 
   const setItemState = (id: string, state: string, esig?: string) => {
@@ -258,7 +288,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
   /* ---- AnswerLead derivation ---- */
   const signSteps = queue.filter((r) => {
-    const w = REVIEW_WORKFLOWS[r.id];
+    const w = workflows[r.id];
     const cs = w && w.steps.find((s) => s.status === 'current');
     return cs && cs.requiredActions.includes('sign');
   });
@@ -297,6 +327,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
       <div className="split">
         <div className="split-list">
+          {boardSample && <div style={{ padding: '4px 8px' }}><SampleTag sample /></div>}
           {queue.map((r) => (
             <button key={r.id} className="lrow" data-on={sel === r.id || undefined} onClick={() => { setSel(r.id); setRejecting(false); }}>
               <div className="lrow-top">
@@ -404,9 +435,11 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
             <div className="rv-doc-h">
               <span className="rv-doc-l">{I.fileText} Document under review</span>
               <div className="rv-doc-acts">
-                <span className="rv-conf" data-tone={item.conf >= 0.85 ? 'ok' : item.conf >= 0.7 ? 'warn' : 'err'} title="AnA confidence">
-                  {Math.round((item.conf || 0) * 100)}% confidence
-                </span>
+                {item.conf != null && (
+                  <span className="rv-conf" data-tone={item.conf >= 0.85 ? 'ok' : item.conf >= 0.7 ? 'warn' : 'err'} title="AnA confidence">
+                    {Math.round(item.conf * 100)}% confidence
+                  </span>
+                )}
                 <button className="btn ghost" style={{ height: 28 }} onClick={openEditor}>{I.externalLink} Open in editor</button>
               </div>
             </div>
