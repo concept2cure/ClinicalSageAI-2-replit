@@ -197,5 +197,41 @@ export async function registerClinicalIntelRoutes({
     console.error('Failed to mount RBM board routes:', error);
   }
 
+  // ── Governed-intelligence inconsistency (cross-document contradiction scan) ──
+  try {
+    const inconsistencyModule = await import('../routes/governed-intelligence-inconsistency-routes');
+    app.use('/api/governed-intelligence-inconsistency', authenticateToken, inconsistencyModule.default());
+    console.log('✅ Governed-intelligence inconsistency route mounted (GET /api/governed-intelligence-inconsistency/projects/:projectId/inconsistency)');
+  } catch (error) {
+    console.error('Failed to mount governed-intelligence inconsistency routes:', error);
+  }
+
+  // ── Deep research board (evidence workspace read-model) ──
+  try {
+    const deepResearchModule = await import('../routes/deep-research-board.routes');
+    app.use('/api/deep-research/board', authenticateToken, deepResearchModule.default());
+    console.log('✅ Deep research board route mounted (GET /api/deep-research/board)');
+  } catch (error) {
+    console.error('Failed to mount deep research board routes:', error);
+  }
+
+  // ── Precedent engine board (precedent-intelligence read-model) ──
+  try {
+    const precedentBoardModule = await import('../routes/precedent-engine-board');
+    app.use('/api/precedent-engine-board', authenticateToken, precedentBoardModule.default());
+    console.log('✅ Precedent engine board route mounted (GET /api/precedent-engine-board)');
+  } catch (error) {
+    console.error('Failed to mount precedent engine board routes:', error);
+  }
+
+  // ── Conversation thread (AnA thread transcript read-model) ──
+  try {
+    const conversationThreadModule = await import('../routes/conversation-thread-routes');
+    app.use('/api/conversation-thread', authenticateToken, conversationThreadModule.default());
+    console.log('✅ Conversation thread route mounted (GET /api/conversation-thread/:threadId)');
+  } catch (error) {
+    console.error('Failed to mount conversation thread routes:', error);
+  }
+
   console.log('✅ Clinical + Intelligence route family registered');
 }

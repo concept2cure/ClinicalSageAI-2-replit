@@ -279,6 +279,42 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
     console.error('❌ Failed to mount Task management board routes:', error);
   }
 
+  // ── Artifacts center (governed artifact catalog read-model) ──
+  try {
+    const artifactsCenterModule = await import('../routes/artifacts-center-routes');
+    app.use('/api/artifacts-center', authenticateToken, artifactsCenterModule.default());
+    console.log('✅ Artifacts center route mounted (GET /api/artifacts-center)');
+  } catch (error) {
+    console.error('❌ Failed to mount Artifacts center routes:', error);
+  }
+
+  // ── Project home (project cockpit read-model) ──
+  try {
+    const projectHomeModule = await import('../routes/project-home-routes');
+    app.use('/api/project-home', authenticateToken, projectHomeModule.default());
+    console.log('✅ Project home route mounted (GET /api/project-home/:projectId)');
+  } catch (error) {
+    console.error('❌ Failed to mount Project home routes:', error);
+  }
+
+  // ── IVD completeness (IVDR technical-documentation readiness) ──
+  try {
+    const ivdCompletenessModule = await import('../routes/ivd-completeness-routes');
+    app.use('/api/ivd-completeness', authenticateToken, ivdCompletenessModule.default());
+    console.log('✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)');
+  } catch (error) {
+    console.error('❌ Failed to mount IVD completeness routes:', error);
+  }
+
+  // ── Batch draft (multi-section drafting spine read-model) ──
+  try {
+    const batchDraftModule = await import('../routes/batch-draft-routes');
+    app.use('/api/batch-draft', authenticateToken, batchDraftModule.default());
+    console.log('✅ Batch draft route mounted (GET /api/batch-draft/spine)');
+  } catch (error) {
+    console.error('❌ Failed to mount Batch draft routes:', error);
+  }
+
   // ── Clinical Operations (study/site/enrollment/monitoring) ──
   try {
     const clinOpsModule = await import('../routes/clinical-operations-routes');
