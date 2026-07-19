@@ -38,10 +38,21 @@ const APPROVED_JS = new Set([
   'server/routes/ind-templates.ts',
   'scripts/generate_sso_spec.js',
   'client/src/services/Fda510kExportService.js',
+  // Imports ONLY the convertInchesToTwip unit helper from 'docx' — no
+  // Document generation (AnA integration, 2026-06-29).
+  'server/services/templates/templateRenderAdapter.ts',
 ]);
 
 const APPROVED_PYTHON = new Set([
   'workers/artifact-compute/docx-python-runtime.py',
+  // AnA document-surgery runtimes — same isolated artifact-compute worker
+  // family as docx-python-runtime.py (runtime #2), not a fourth runtime.
+  // insert/xml EDIT existing documents surgically; validate only READS.
+  // Landed 2026-06-29 (ana-integration); exercised by the CI test job's
+  // author/build/surgical/validate/verify e2e (ANA_DOCX_E2E_REQUIRED=1).
+  'workers/artifact-compute/docx-insert-runtime.py',
+  'workers/artifact-compute/docx-xml-runtime.py',
+  'workers/artifact-compute/docx-validate-runtime.py',
   'shadow_service/shadow_service/docx_renderer.py',
   'shadow_service/shadow_service/generators/evidence_cell_renderer.py',
   'shadow_service/shadow_service/generators/docx_factory.py',
@@ -74,8 +85,11 @@ function isTestFile(filePath) {
 
 function grepFiles(pattern) {
   try {
+    // --exclude-dir keeps installed packages out of the scan: with
+    // node_modules present (CI runs after npm install) third-party dist
+    // files that import 'docx' would fail the gate spuriously.
     const output = execSync(
-      `grep -rn --include='*.ts' --include='*.tsx' --include='*.js' --include='*.mjs' --include='*.py' -E ${JSON.stringify(pattern)} .`,
+      `grep -rn --include='*.ts' --include='*.tsx' --include='*.js' --include='*.mjs' --include='*.py' --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git -E ${JSON.stringify(pattern)} .`,
       { cwd: ROOT, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
     );
     return output

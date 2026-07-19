@@ -14,6 +14,7 @@ import {
   validateTenantAccessMiddleware,
 } from '../middleware/tenantContext';
 import { authMiddleware, requireAdminRole, requireSuperAdminRole } from '../auth';
+import { invalidateOrgMembershipCache } from '../middleware/auth';
 import { createScopedLogger } from '../utils/logger';
 import { db } from '../db';
 import crypto from 'crypto';
@@ -187,6 +188,8 @@ router.post(
           userId: Number(req.userId),
           role: 'admin',
         });
+        // New membership — drop any cached negative auth-middleware result.
+        invalidateOrgMembershipCache(Number(req.userId), newTenant[0].id);
       }
 
       res.status(201).json(newTenant[0]);

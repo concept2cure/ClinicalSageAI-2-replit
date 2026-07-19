@@ -3,6 +3,8 @@
 > **Date:** 2026-03-19
 > **Prepared by:** Concept2Cure.RI Engineering
 > **Classification:** CONFIDENTIAL — Internal Use Only
+>
+> **Attribution note (2026-07-05):** All performance figures in this document — including the Takeda benchmark (97% time savings; ~100 hours to ~3 hours) — are **Weave Bio's published claims about Weave Bio's product**, not Concept2Cure metrics. Do not reuse them in Concept2Cure product copy, sales material, or documentation. See the ground rule in `MDX_PAYING_CUSTOMER_VALUE_AND_ENTITLEMENTS_2026-06-15.md` §2 and the disposition in `docs/GA_READINESS_REGISTER_2026-07-05.md`.
 
 ---
 

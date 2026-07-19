@@ -16,6 +16,11 @@
  *  10. cookie parser
  *  11. immutability policy middleware (21 CFR Part 11)
  *  12. request debug logging (dev-only)
+ *
+ * applyAuthBoundary (exported separately) mounts the default-deny /api
+ * authentication boundary. It is called from server/index.ts AFTER the
+ * audit-trail observer (so boundary 401s are still recorded as
+ * UNAUTHORIZED_ACCESS events) and BEFORE any route registration.
  */
 
 import type { Express, NextFunction, Request, Response } from 'express';
@@ -27,7 +32,9 @@ import { applyPerformanceMiddleware } from '../middleware/enterprise-performance
 import { createRedisRateLimiter } from '../middleware/redisRateLimiter';
 import { httpLogger } from '../src/mw/observability.js';
 import { createBetaRouteFence, isBetaRouteFenceEnabled } from '../middleware/betaRouteFence';
+import { createAuthBoundary, resolveAuthBoundaryMode } from '../middleware/authBoundary';
 import firecrawlWebhooksRoutes from '../routes/firecrawl-webhooks';
+import { createScopedLogger } from '../utils/logger';
 import type { DebugLogger } from './types';
 
 /**
@@ -91,6 +98,24 @@ export function applyCoreMiddleware(app: Express, debugLog: DebugLogger): void {
   debugLog('Immutability policy enforcement middleware installed');
 
   debugLog('Express middleware configured');
+}
+
+/**
+ * Default-deny authentication boundary for /api (audit finding H2).
+ *
+ * Mounted from server/index.ts after applyAuditTrailMiddleware (so rejected
+ * requests are still observed as UNAUTHORIZED_ACCESS audit events) and
+ * before mountDiagnosticEndpoints / route registration, so EVERY /api route
+ * — including families that historically forgot per-mount auth — sits
+ * behind it. Public endpoints are enumerated explicitly in
+ * middleware/authBoundary.ts::PUBLIC_API_ALLOWLIST.
+ */
+export function applyAuthBoundary(app: Express): void {
+  app.use('/api', createAuthBoundary());
+  createScopedLogger('startup:auth-boundary').info(
+    'Default-deny auth boundary mounted on /api',
+    { modeAtBoot: resolveAuthBoundaryMode() }
+  );
 }
 
 /**

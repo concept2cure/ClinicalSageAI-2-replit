@@ -47,3 +47,41 @@ describe('startAuditChainIntegritySchedule gating (on-by-default)', () => {
     expect(scheduleMock).not.toHaveBeenCalled();
   });
 });
+
+describe('startAuditChainIntegritySchedule in production (Part 11 default-ON)', () => {
+  const original = { ...process.env };
+
+  beforeEach(() => {
+    scheduleMock.mockClear();
+    delete process.env.ENABLE_AUDIT_CHAIN_CHECK;
+    delete process.env.AUDIT_TRAIL_ENABLED;
+    process.env.NODE_ENV = 'production';
+  });
+
+  afterEach(() => {
+    process.env = { ...original };
+  });
+
+  it('schedules by default in production with nothing else configured', () => {
+    startAuditChainIntegritySchedule();
+    expect(scheduleMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('schedules in production even when the audit trail flag is unset', () => {
+    delete process.env.AUDIT_TRAIL_ENABLED;
+    startAuditChainIntegritySchedule();
+    expect(scheduleMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('respects an explicit production opt-out (ENABLE_AUDIT_CHAIN_CHECK=false)', () => {
+    process.env.ENABLE_AUDIT_CHAIN_CHECK = 'false';
+    startAuditChainIntegritySchedule();
+    expect(scheduleMock).not.toHaveBeenCalled();
+  });
+
+  it('schedules in production with an explicit opt-in too', () => {
+    process.env.ENABLE_AUDIT_CHAIN_CHECK = 'true';
+    startAuditChainIntegritySchedule();
+    expect(scheduleMock).toHaveBeenCalledTimes(1);
+  });
+});

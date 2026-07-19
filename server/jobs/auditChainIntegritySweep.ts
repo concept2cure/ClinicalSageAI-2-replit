@@ -7,8 +7,10 @@
  * evidence check on the immutable audit trail (RA-CORTEX-001 §9.1).
  *
  * Read-only and defensive: any failure is logged, never thrown, so it cannot
- * affect request handling. Self-guards to a no-op unless ENABLE_AUDIT_CHAIN_CHECK
- * is set, mirroring the Drift Sentinel schedule, so default boot is unchanged.
+ * affect request handling. Part 11 tamper-evidence monitoring defaults ON in
+ * production (opt out explicitly with ENABLE_AUDIT_CHAIN_CHECK=false); outside
+ * production it stays opt-in so default dev/test boot is unchanged. See
+ * startAuditChainIntegritySchedule for the full gating matrix.
  *
  * @module server/jobs/auditChainIntegritySweep
  */
@@ -58,19 +60,49 @@ export async function runAuditChainIntegrityCheck(): Promise<AuditChainCheckResu
 /**
  * Schedule the daily integrity sweep.
  *
- * On by default whenever the audit trail is active (AUDIT_TRAIL_ENABLED=true) —
- * if a chain is being written it should also be verified, mirroring the gating
- * of the continuous chainIntegrityMonitor. Explicit overrides:
- *   - ENABLE_AUDIT_CHAIN_CHECK=false → never schedule (opt-out)
+ * Part 11 tamper-evidence monitoring must not be silently absent in
+ * production: the sweep is read-only (verifyAuditChain issues one SELECT and
+ * takes no locks) and alert-only, so it is safe to default ON.
+ *
+ * Gating matrix:
+ *   - ENABLE_AUDIT_CHAIN_CHECK=false → never schedule (explicit opt-out; in
+ *     production this is logged as a WARNING because it names a monitoring gap)
  *   - ENABLE_AUDIT_CHAIN_CHECK=true  → always schedule, even if the trail flag
  *     is unset (e.g. to verify a pre-existing chain)
+ *   - unset, NODE_ENV=production     → schedule (default ON at GA)
+ *   - unset, elsewhere               → schedule only when the audit trail is
+ *     active (AUDIT_TRAIL_ENABLED=true) — if a chain is being written it
+ *     should also be verified, mirroring the continuous chainIntegrityMonitor
  * Default schedule: 02:00 daily (override with AUDIT_CHAIN_CHECK_CRON).
  */
 export function startAuditChainIntegritySchedule(): void {
   const explicit = process.env.ENABLE_AUDIT_CHAIN_CHECK;
-  if (explicit === 'false') return;
+  const isProduction = (process.env.NODE_ENV ?? '').toLowerCase() === 'production';
   const auditTrailOn = process.env.AUDIT_TRAIL_ENABLED === 'true';
-  if (explicit !== 'true' && !auditTrailOn) return;
+  const enabled =
+    explicit === 'false' ? false : explicit === 'true' || isProduction || auditTrailOn;
+
+  if (!enabled) {
+    // Boot-posture line: state the decision and the env var that controls it.
+    const posture = {
+      enabled: false,
+      controlledBy: 'ENABLE_AUDIT_CHAIN_CHECK',
+      reason:
+        explicit === 'false'
+          ? 'explicitly disabled (ENABLE_AUDIT_CHAIN_CHECK=false)'
+          : 'opt-in outside production (set ENABLE_AUDIT_CHAIN_CHECK=true or AUDIT_TRAIL_ENABLED=true)',
+    };
+    if (isProduction) {
+      logger.warn(
+        'Audit chain integrity sweep DISABLED in production — Part 11 tamper-evidence monitoring is off',
+        posture
+      );
+    } else {
+      logger.info('Audit chain integrity sweep disabled', posture);
+    }
+    return;
+  }
+
   const expr = process.env.AUDIT_CHAIN_CHECK_CRON || '0 2 * * *';
   try {
     cron.schedule(expr, () => {
@@ -78,7 +110,11 @@ export function startAuditChainIntegritySchedule(): void {
         logger.error(`Audit chain integrity check failed: ${err?.message ?? String(err)}`)
       );
     });
-    logger.info(`Audit chain integrity sweep scheduled (${expr})`);
+    logger.info(`Audit chain integrity sweep scheduled (${expr})`, {
+      enabled: true,
+      controlledBy: 'ENABLE_AUDIT_CHAIN_CHECK',
+      schedule: expr,
+    });
   } catch (err: any) {
     logger.error(`Failed to schedule audit chain integrity sweep: ${err?.message}`);
   }

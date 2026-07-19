@@ -19,12 +19,16 @@
  * withdrawn leaf is `delete`. (submissionLeaves.lifecycleOp.)
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * INTEGRATION NOTES (human must wire):
- *   - PURE: no DB, no audit. Feed `planIndAmendment(...)` output into the
- *     submission-service to create the ectd_sequences row (type 'amendment') and
- *     submission_leaves rows. TODO(persistence): wire to
- *     server/services/submission-service/submission-service.ts (tenant-scoped +
- *     audited). The leaf section codes + documentType hints here map directly onto
+ * INTEGRATION NOTES:
+ *   - PURE: no DB, no audit — persistence is wired in the sibling modules.
+ *     Tracked drafts: ind-amendment-persistence.createAmendmentDraft persists the
+ *     plan to ind_amendments (org-scoped + audited; POST
+ *     /api/ind-lifecycle/submission/:id/amendments). eCTD filing:
+ *     ind-lifecycle-persistence.persistAmendmentPlan feeds `planIndAmendment(...)`
+ *     output through submission-service to create the ectd_sequences row (type
+ *     'amendment') and its submission_leaves rows (tenant-scoped + audited; POST
+ *     /api/ind-lifecycle/amendment/file, which also marks a tracked draft filed).
+ *     The leaf section codes + documentType hints here map directly onto
  *     submission_leaves.sectionCode / documentType.
  *   - The CTD section mapping in `SECTION_FOR_CATEGORY` is a sensible default for
  *     common IND content; confirm against your region module profile before

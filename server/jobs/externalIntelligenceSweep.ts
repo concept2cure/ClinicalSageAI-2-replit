@@ -29,7 +29,15 @@ const logger = createScopedLogger('external-intel-sweep');
  * set ENABLE_EXTERNAL_INTELLIGENCE=false to opt out.
  */
 export function startExternalIntelligenceSchedule(): void {
-  if (process.env.ENABLE_EXTERNAL_INTELLIGENCE === 'false') return;
+  if (process.env.ENABLE_EXTERNAL_INTELLIGENCE === 'false') {
+    // Boot-posture line: this sweep is ON by default, so an explicit opt-out
+    // deserves a visible record of who turned it off.
+    logger.info('External intelligence sweep disabled (ENABLE_EXTERNAL_INTELLIGENCE=false)', {
+      enabled: false,
+      controlledBy: 'ENABLE_EXTERNAL_INTELLIGENCE',
+    });
+    return;
+  }
   const expr = process.env.EXTERNAL_INTELLIGENCE_CRON || '0 1 * * *';
   try {
     cron.schedule(expr, () => {
@@ -37,7 +45,11 @@ export function startExternalIntelligenceSchedule(): void {
         logger.error(`External intelligence sweep crashed: ${err?.message}`)
       );
     });
-    logger.info(`External intelligence sweep scheduled (${expr})`);
+    logger.info(`External intelligence sweep scheduled (${expr})`, {
+      enabled: true,
+      controlledBy: 'ENABLE_EXTERNAL_INTELLIGENCE',
+      schedule: expr,
+    });
   } catch (err: any) {
     logger.error(`Failed to schedule external intelligence sweep: ${err?.message}`);
   }

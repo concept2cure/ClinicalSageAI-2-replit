@@ -118,7 +118,18 @@ export async function runRegulatoryHorizonScan(now: Date = new Date()): Promise<
  * REGULATORY_HORIZON_SCAN_CRON).
  */
 export function startRegulatoryHorizonSchedule(): void {
-  if (process.env.ENABLE_REGULATORY_HORIZON_SCAN !== 'true') return;
+  if (process.env.ENABLE_REGULATORY_HORIZON_SCAN !== 'true') {
+    // Boot-posture line: deliberately opt-in (external harvesting egress), so
+    // make the OFF state visible rather than silently returning.
+    logger.info(
+      'Regulatory horizon scan disabled (set ENABLE_REGULATORY_HORIZON_SCAN=true to enable)',
+      {
+        enabled: false,
+        controlledBy: 'ENABLE_REGULATORY_HORIZON_SCAN',
+      }
+    );
+    return;
+  }
   const expr = process.env.REGULATORY_HORIZON_SCAN_CRON || '0 6 * * 1';
   try {
     cron.schedule(expr, () => {
@@ -126,7 +137,11 @@ export function startRegulatoryHorizonSchedule(): void {
         logger.error(`Regulatory horizon scan failed: ${err?.message ?? String(err)}`)
       );
     });
-    logger.info(`Regulatory horizon scan scheduled (${expr})`);
+    logger.info(`Regulatory horizon scan scheduled (${expr})`, {
+      enabled: true,
+      controlledBy: 'ENABLE_REGULATORY_HORIZON_SCAN',
+      schedule: expr,
+    });
   } catch (err: any) {
     logger.error(`Failed to schedule regulatory horizon scan: ${err?.message}`);
   }

@@ -29,17 +29,22 @@ import { persistCrossReferenceFiling } from '../../services/ind-lifecycle/ind-li
 import {
   createSafetyReportDraft,
   listSafetyReports,
+  getSafetyReport,
   listOverdueSafetyReports,
   SafetyReportError,
 } from '../../services/ind-lifecycle/ind-safety-report-persistence';
 import {
   createAnnualReportDraft,
   listAnnualReports,
+  getAnnualReport,
   listOverdueAnnualReports,
+  AnnualReportError,
 } from '../../services/ind-lifecycle/ind-annual-report-persistence';
 import {
   createAmendmentDraft,
   listAmendments,
+  getAmendment,
+  AmendmentError,
 } from '../../services/ind-lifecycle/ind-amendment-persistence';
 import {
   prepareIcsrTransmission,
@@ -262,6 +267,21 @@ router.get('/submission/:id/safety-reports', limiter, requireRole(AUTHOR), async
   }
 });
 
+/** Fetch one tracked safety report by id (org-scoped; the id `create` returned). */
+router.get('/safety-reports/:reportId', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const id = String(Array.isArray(req.params.reportId) ? req.params.reportId[0] : req.params.reportId);
+  try {
+    res.json(await getSafetyReport(id, ctx));
+  } catch (err) {
+    if (err instanceof SafetyReportError) {
+      return res.status(404).json({ error: { code: err.code, message: err.message } });
+    }
+    fail(res, err);
+  }
+});
+
 /** The submission's overdue (unfiled, past-deadline) safety reports. */
 router.get('/submission/:id/safety-reports/overdue', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
@@ -310,6 +330,21 @@ router.get('/submission/:id/annual-reports', limiter, requireRole(AUTHOR), async
   try {
     res.json(await listAnnualReports(submissionId, ctx));
   } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Fetch one tracked annual report by id (org-scoped; the id `create` returned). */
+router.get('/annual-reports/:reportId', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const id = String(Array.isArray(req.params.reportId) ? req.params.reportId[0] : req.params.reportId);
+  try {
+    res.json(await getAnnualReport(id, ctx));
+  } catch (err) {
+    if (err instanceof AnnualReportError) {
+      return res.status(404).json({ error: { code: err.code, message: err.message } });
+    }
     fail(res, err);
   }
 });
@@ -364,6 +399,21 @@ router.get('/submission/:id/amendments', limiter, requireRole(AUTHOR), async (re
   try {
     res.json(await listAmendments(submissionId, ctx));
   } catch (err) {
+    fail(res, err);
+  }
+});
+
+/** Fetch one tracked amendment by id (org-scoped; the id `create` returned). */
+router.get('/amendments/:amendmentId', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return noAuth(res);
+  const id = String(Array.isArray(req.params.amendmentId) ? req.params.amendmentId[0] : req.params.amendmentId);
+  try {
+    res.json(await getAmendment(id, ctx));
+  } catch (err) {
+    if (err instanceof AmendmentError) {
+      return res.status(404).json({ error: { code: err.code, message: err.message } });
+    }
     fail(res, err);
   }
 });

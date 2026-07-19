@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { pool } from '../db';
 import { createScopedLogger } from '../utils/logger.js';
+import { invalidateOrgMembershipCache } from '../middleware/auth';
 
 const log = createScopedLogger('tenant-users');
 
@@ -533,6 +534,8 @@ router.post('/legacy', async (req, res) => {
     `;
 
     await pool.query(addToOrgQuery, [organizationId, userId, validatedData.role]);
+    // New membership row — drop any cached negative auth-middleware result.
+    invalidateOrgMembershipCache(userId, organizationId);
 
     // Get the full user data to return
     const getUserQuery = `
@@ -644,6 +647,10 @@ router.delete('/:organizationId/:userId', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found in organization' });
     }
+
+    // Revocation must take effect immediately, not after the auth
+    // middleware's membership-cache TTL.
+    invalidateOrgMembershipCache(userId, organizationId);
 
     log.debug('Removed user from organization:', result.rows[0]);
     res.json({ message: 'User removed from organization successfully' });
