@@ -84,7 +84,7 @@ export default function createAnaBiostatsGovernedDocumentsRoutes(): Router {
    *   - projectId: positive integer — scope to a single project ("this project").
    *   - limit:     1..200 (default 50).
    */
-  router.get('/governed-documents', authenticateToken, async (req: Request, res: Response) => {
+  router.get('/', authenticateToken, async (req: Request, res: Response) => {
     try {
       const orgId = resolveOrganizationId(req);
       if (orgId == null) {

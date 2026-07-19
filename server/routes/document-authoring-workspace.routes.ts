@@ -220,7 +220,7 @@ export default function createDocumentAuthoringWorkspaceRoutes(): Router {
    *   - documentId (optional) selects the active section; otherwise the most
    *     recently updated authorable document is used.
    */
-  router.get('/workspace', async (req: Request, res: Response) => {
+  router.get('/', async (req: Request, res: Response) => {
     if (!db) {
       return res.status(503).json({ success: false, error: 'Database unavailable' });
     }

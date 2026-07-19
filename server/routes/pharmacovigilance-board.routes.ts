@@ -207,7 +207,7 @@ export default function createPharmacovigilanceBoardRoutes(): Router {
    * Live surveillance board for the ui-v2 Pharmacovigilance surface.
    * Response: { success: true, data: { signals: PvSignalRow[], aggregateReports: PvAggregateReportRow[] } }
    */
-  router.get('/board', async (req: Request, res: Response) => {
+  router.get('/', async (req: Request, res: Response) => {
     try {
       const orgId = getOrgId(req);
 

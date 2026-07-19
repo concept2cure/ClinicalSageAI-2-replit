@@ -48,7 +48,7 @@ export async function registerDocumentRoutes({
   // Coexists with the router above on /api/document-authoring; serves /workspace only.
   try {
     const documentAuthoringWorkspaceModule = await import('../routes/document-authoring-workspace.routes.js');
-    app.use('/api/document-authoring', authenticateToken, documentAuthoringWorkspaceModule.default());
+    app.use('/api/document-authoring/workspace', authenticateToken, documentAuthoringWorkspaceModule.default());
     console.log('✅ Document Authoring Workspace read-model routes mounted (auth-gated): /api/document-authoring/workspace');
   } catch (error) {
     console.error('❌ Failed to mount Document Authoring Workspace routes:', error);
@@ -410,7 +410,7 @@ export async function registerDocumentRoutes({
   // ── AnA Biostats — Governed Statistical Documents (list read-model for ui-v2) ──
   try {
     const anaBiostatsGovDocsModule = await import('../routes/ana-biostats-governed-documents');
-    app.use('/api/ana-biostats', authenticateToken, anaBiostatsGovDocsModule.default());
+    app.use('/api/ana-biostats/governed-documents', authenticateToken, anaBiostatsGovDocsModule.default());
     console.log('✅ AnA Biostats Governed Documents route mounted (/api/ana-biostats/governed-documents)');
   } catch (error) {
     console.error('❌ Failed to mount AnA Biostats Governed Documents routes:', error);

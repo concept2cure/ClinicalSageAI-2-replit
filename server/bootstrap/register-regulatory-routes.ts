@@ -228,7 +228,7 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
   // read (adverse-event disproportionality via the existing screen); no new SQL.
   try {
     const pvBoardModule = await import('../routes/pharmacovigilance-board.routes');
-    app.use('/api/pharmacovigilance', authenticateToken, pvBoardModule.default());
+    app.use('/api/pharmacovigilance/board', authenticateToken, pvBoardModule.default());
     console.log('✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)');
   } catch (error) {
     console.error('❌ Failed to mount Pharmacovigilance Board route:', error);
