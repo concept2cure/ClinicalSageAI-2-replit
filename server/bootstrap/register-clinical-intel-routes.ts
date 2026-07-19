@@ -161,5 +161,41 @@ export async function registerClinicalIntelRoutes({
     console.error('Failed to mount docs routes:', error);
   }
 
+  // ── Source tracer (sentence-level provenance read-model, 21 CFR Part 11) ──
+  try {
+    const sourceTracerModule = await import('../routes/source-tracer-routes');
+    app.use('/api/source-tracer', authenticateToken, sourceTracerModule.default());
+    console.log('✅ Source tracer routes mounted (GET /api/source-tracer/sections)');
+  } catch (error) {
+    console.error('Failed to mount source tracer routes:', error);
+  }
+
+  // ── Insights canvas (report-os portfolio overview read-model) ──
+  try {
+    const insightsCanvasModule = await import('../routes/insights-canvas-routes');
+    app.use('/api/insights-canvas', authenticateToken, insightsCanvasModule.default());
+    console.log('✅ Insights canvas routes mounted (GET /api/insights-canvas/overview)');
+  } catch (error) {
+    console.error('Failed to mount insights canvas routes:', error);
+  }
+
+  // ── Project vault (document vault read-model) ──
+  try {
+    const projectVaultModule = await import('../routes/c2c/project-vault');
+    app.use('/api/c2c/project-vault', authenticateToken, projectVaultModule.default());
+    console.log('✅ Project vault routes mounted (GET /api/c2c/project-vault/:id)');
+  } catch (error) {
+    console.error('Failed to mount project vault routes:', error);
+  }
+
+  // ── RBM board (risk-based monitoring program read-model) ──
+  try {
+    const rbmBoardModule = await import('../routes/mdx-rbm-board');
+    app.use('/api/mdx-rbm', authenticateToken, rbmBoardModule.default());
+    console.log('✅ RBM board route mounted (GET /api/mdx-rbm/rbm-board/:programId)');
+  } catch (error) {
+    console.error('Failed to mount RBM board routes:', error);
+  }
+
   console.log('✅ Clinical + Intelligence route family registered');
 }

@@ -261,6 +261,24 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
     console.error('❌ Failed to mount Regulatory Workspace routes:', error);
   }
 
+  // ── Audit trail ledger (append-only signed chain read-model) ──
+  try {
+    const auditLedgerModule = await import('../routes/audit-trail-ledger.routes');
+    app.use('/api/audit-trail', authenticateToken, auditLedgerModule.default(pool));
+    console.log('✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)');
+  } catch (error) {
+    console.error('❌ Failed to mount Audit trail ledger routes:', error);
+  }
+
+  // ── Task management board (cross-project task read-model) ──
+  try {
+    const taskBoardModule = await import('../routes/taskBoard.routes');
+    app.use('/api/task-management', authenticateToken, taskBoardModule.default());
+    console.log('✅ Task management board route mounted (GET /api/task-management/board)');
+  } catch (error) {
+    console.error('❌ Failed to mount Task management board routes:', error);
+  }
+
   // ── Clinical Operations (study/site/enrollment/monitoring) ──
   try {
     const clinOpsModule = await import('../routes/clinical-operations-routes');
