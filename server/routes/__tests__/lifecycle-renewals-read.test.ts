@@ -11,7 +11,7 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import request from 'supertest';
 
 const listObligations = vi.fn();
-const nextEventDueByObligation = vi.fn(async () => new Map<number, string>());
+const nextEventDueByObligation = vi.fn(async (..._a: unknown[]) => new Map<number, string>());
 vi.mock('../../services/lifecycle-obligations/lifecycle-service', () => ({
   listObligations: (...a: unknown[]) => listObligations(...a),
   nextEventDueByObligation: (...a: unknown[]) => nextEventDueByObligation(...a),

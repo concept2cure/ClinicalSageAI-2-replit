@@ -64,7 +64,7 @@ router.get('/:market', async (req: Request, res: Response) => {
   if (orgId === null) {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
-  const market = resolveMarket(req.params.market);
+  const market = resolveMarket(String(req.params.market));
   if (!market) {
     return res.status(404).json({ error: { code: 'UNKNOWN_MARKET', message: `No Module 1 requirements modeled for market "${req.params.market}".` } });
   }
@@ -88,7 +88,7 @@ router.post('/:market', async (req: Request, res: Response) => {
   if (orgId === null) {
     return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
   }
-  const market = resolveMarket(req.params.market);
+  const market = resolveMarket(String(req.params.market));
   if (!market) {
     return res.status(404).json({ error: { code: 'UNKNOWN_MARKET', message: `No Module 1 requirements modeled for market "${req.params.market}".` } });
   }
