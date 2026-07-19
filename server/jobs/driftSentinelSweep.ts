@@ -16,6 +16,9 @@
 import { db } from '../db';
 import { factBindings } from '../../shared/schema/living-record-spine';
 import { runDriftSentinel } from '../services/living-record/reconciliation-engine';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('drift-sentinel');
 
 export interface DriftSweepSummary {
   programs: number;
@@ -52,16 +55,30 @@ let timer: ReturnType<typeof setInterval> | null = null;
  * hold the process open.
  */
 export function startDriftSentinelSchedule(intervalMs: number = DEFAULT_INTERVAL_MS): void {
-  if (process.env.ENABLE_DRIFT_SENTINEL !== 'true') return;
+  if (process.env.ENABLE_DRIFT_SENTINEL !== 'true') {
+    // Boot-posture line: deliberately opt-in (per-program reconciliation +
+    // cascade writes), so make the OFF state visible rather than silently
+    // returning.
+    logger.info('Drift Sentinel sweep disabled (set ENABLE_DRIFT_SENTINEL=true to enable)', {
+      enabled: false,
+      controlledBy: 'ENABLE_DRIFT_SENTINEL',
+    });
+    return;
+  }
   if (timer) return;
   timer = setInterval(() => {
     void runDriftSentinelSweep().catch((err) => {
       // Best-effort sweep, but a silent failure means drift detection has
       // gone dark — log it so ops can see the schedule is failing.
-      console.error('[drift-sentinel] scheduled sweep failed:', err?.message ?? err);
+      logger.error(`scheduled sweep failed: ${err?.message ?? err}`);
     });
   }, intervalMs);
   if (typeof timer.unref === 'function') timer.unref();
+  logger.info('Drift Sentinel sweep scheduled', {
+    enabled: true,
+    controlledBy: 'ENABLE_DRIFT_SENTINEL',
+    intervalMs,
+  });
 }
 
 export function stopDriftSentinelSchedule(): void {

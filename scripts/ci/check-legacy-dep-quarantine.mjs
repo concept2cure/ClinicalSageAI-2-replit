@@ -43,8 +43,11 @@ function isTestFile(f) { return TEST_PATTERNS.some(re => re.test(f)); }
 
 function grepFiles(pattern) {
   try {
+    // --exclude-dir keeps installed packages out of the scan: with
+    // node_modules present (CI runs after npm install) the quarantined
+    // packages' own dist files self-import and would fail the gate.
     const output = execSync(
-      `grep -rn --include='*.ts' --include='*.tsx' --include='*.js' --include='*.mjs' -E ${JSON.stringify(pattern)} .`,
+      `grep -rn --include='*.ts' --include='*.tsx' --include='*.js' --include='*.mjs' --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git -E ${JSON.stringify(pattern)} .`,
       { cwd: ROOT, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
     );
     return output.trim().split('\n').filter(Boolean).map(line => {

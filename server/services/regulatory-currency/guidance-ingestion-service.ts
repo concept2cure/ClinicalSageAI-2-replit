@@ -128,8 +128,16 @@ const ICH_GUIDELINES: IchGuidelineItem[] = [
 const DEFAULT_FDA_URL = 'https://api.fda.gov/other/substance.json';
 
 /**
+ * Upstream request timeout. Without one, a hung guidance endpoint stalls the
+ * ingestion worker indefinitely; with it the fetch aborts and the call
+ * degrades to `{status: 'unavailable'}` like any other network failure.
+ * Same AbortSignal.timeout pattern as server/services/integrations/http.ts.
+ */
+const FETCH_TIMEOUT_MS = 30_000;
+
+/**
  * Fetch FDA guidance documents from the FDA guidance API.
- * On network failure or non-200: returns `{status: 'unavailable'}` — NEVER throws.
+ * On network failure, timeout, or non-200: returns `{status: 'unavailable'}` — NEVER throws.
  */
 export async function fetchFdaGuidanceList(
   opts: FdaGuidanceOpts = {},
@@ -151,7 +159,7 @@ export async function fetchFdaGuidanceList(
     params.set('limit', String(limit));
 
     const url = `${baseUrl}?${params.toString()}`;
-    const response = await fetch(url);
+    const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
 
     if (!response.ok) {
       return {
@@ -178,9 +186,14 @@ export async function fetchFdaGuidanceList(
       source: 'fda.gov',
     };
   } catch (err: any) {
+    // AbortSignal.timeout rejects with TimeoutError (AbortError on older
+    // runtimes) — surface a clearer message than the DOMException default.
+    const timedOut = err?.name === 'TimeoutError' || err?.name === 'AbortError';
     return {
       status: 'unavailable',
-      message: err?.message ?? 'Network request failed',
+      message: timedOut
+        ? `FDA API request timed out after ${FETCH_TIMEOUT_MS}ms`
+        : (err?.message ?? 'Network request failed'),
     };
   }
 }

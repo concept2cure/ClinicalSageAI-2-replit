@@ -26,7 +26,7 @@
  * specificity or severity with the Reference Safety Information.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * INTEGRATION NOTES (human must wire):
+ * INTEGRATION NOTES:
  *   - This module is PURE. It performs NO persistence and NO audit writes.
  *   - Expectedness: AdverseEvent carries an optional `expectedness` free-text
  *     field (vs the IB / RSI). This service maps it via `isUnexpected()`. If your
@@ -35,11 +35,15 @@
  *   - "Suspected" is derived from `causality` (WHO-UMC). definite|probable|possible
  *     => reasonable possibility (suspected); unlikely|unrelated => not suspected.
  *     Confirm this maps to your sponsor SOP for causality-to-suspectedness.
- *   - To actually FILE the report: feed `buildAmendmentIntent(...)` output into the
- *     submission-service (create an ectd_sequences row of type 'amendment' + the
- *     submission_leaves) — TODO(persistence): wire to
- *     server/services/submission-service/submission-service.ts (tenant-scoped,
- *     audited). This service deliberately does not import the DB.
+ *   - Persistence is wired in the sibling modules (this service deliberately does
+ *     not import the DB). Tracked drafts: ind-safety-report-persistence
+ *     .createSafetyReportDraft persists the classification + document model to
+ *     ind_safety_reports (org-scoped + audited; POST
+ *     /api/ind-lifecycle/submission/:id/safety-reports). eCTD filing:
+ *     ind-lifecycle-persistence.persistSafetyReportIntent feeds
+ *     `buildAmendmentIntent(...)` output through submission-service (an
+ *     ectd_sequences row of type 'amendment' + the submission_leaves,
+ *     tenant-scoped + audited; POST /api/ind-lifecycle/safety-report/file).
  *   - calculateReportingDeadline uses calendar-day arithmetic on reportDate (the
  *     clock-start = sponsor awareness date per 312.32(c)). Ensure `reportDate` is
  *     set to the date the sponsor first received the information.

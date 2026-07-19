@@ -1,3 +1,5 @@
+> **Status snapshot superseded by [docs/GA_READINESS_REGISTER_2026-07-05.md](./GA_READINESS_REGISTER_2026-07-05.md).** The phase structure and sequencing below remain the working plan; only the status/maturity claims (what is done, partial, or stubbed) are superseded — consult the register for current state.
+
 # GA Readiness Plan — Concept2Cure / ClinicalSageAI
 
 **Date:** 2026-06-16
