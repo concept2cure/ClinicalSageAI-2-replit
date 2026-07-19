@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLive } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -24,9 +24,30 @@ export function SourceTracer({ onAsk, onNav }: SurfaceViewProps) {
   const [analyzed, setAnalyzed] = useState(false);
   useEffect(() => { setVerify(null); setAnalyzed(false); }, [selId]);
 
-  const sec = ST_SECTIONS.find(s => s.id === selId) || ST_SECTIONS[0];
+  // Live provenance sections — GET /api/source-tracer/sections → { success,
+  // data: { sections, total } }. useLive puts the whole body on `.data`, so the
+  // list is at `.data.data.sections`. Trust live only when the shape matches;
+  // else fail closed to the ST_SECTIONS fixture (surfaced as sample).
+  const live = useLive<{ data?: { sections?: typeof ST_SECTIONS } }>(
+    '/api/source-tracer/sections',
+    { data: { sections: ST_SECTIONS } }
+  );
+  const liveSections = live.data?.data?.sections;
+  const sectionsLive =
+    !live.sample &&
+    Array.isArray(liveSections) &&
+    liveSections.length > 0 &&
+    typeof liveSections[0]?.id === 'string';
+  const sections = sectionsLive ? liveSections! : ST_SECTIONS;
+  const sectionsSample = !sectionsLive;
+  useEffect(() => {
+    if (sectionsLive && !sections.some(s => s.id === selId)) setSel(sections[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sectionsLive]);
+
+  const sec = sections.find(s => s.id === selId) || sections[0];
   const stTone = (s: string) => s === 'approved' ? 'ok' : s === 'review' ? 'warn' : 'idle';
-  const allSents = ST_SECTIONS.flatMap(s => s.sentences);
+  const allSents = sections.flatMap(s => s.sentences);
   const litAll = allSents.filter(s => s.sourceType === 'literature');
   const weak = allSents.filter(s => s.conf < 0.7);
   const secLits = sec.sentences.filter(s => s.sourceType === 'literature');
@@ -34,11 +55,11 @@ export function SourceTracer({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="sp">
-      <SampleTag sample={true} />
+      <SampleTag sample={sectionsSample} />
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Provenance / 21 CFR Part 11</div>
-          <h1 className="sp-title">Source tracer <span className="st-pill">Sample data</span></h1>
+          <h1 className="sp-title">Source tracer {sectionsSample && <span className="st-pill">Sample data</span>}</h1>
           <p className="sp-state">Every sentence AnA writes carries a typed source and a confidence score — trial data, literature, regulatory guidance, or internal data. Literature citations are checked against PubMed and CrossRef. No untraceable number reaches a submission.</p>
         </div>
         <button className="sp-primary" onClick={runVerify}>{I.shieldCheck} Verify sources</button>
@@ -63,10 +84,10 @@ export function SourceTracer({ onAsk, onNav }: SurfaceViewProps) {
 
       <div className="sp-2col" style={{ gridTemplateColumns: '296px 1fr' }}>
         <div className="pj-card" style={{ alignSelf: 'start' }}>
-          <div className="pj-card-h"><span className="t">Generated sections</span><span className="s">{ST_SECTIONS.length}</span></div>
+          <div className="pj-card-h"><span className="t">Generated sections</span><span className="s">{sections.length}</span></div>
           <div className="pj-card-b" style={{ padding: 8 }}>
             <div className="sp-list">
-              {ST_SECTIONS.map(s => {
+              {sections.map(s => {
                 const lit = s.sentences.filter(x => x.sourceType === 'literature').length;
                 return (
                   <button key={s.id} className="sp-row" style={{ width: '100%', textAlign: 'left', borderRadius: 8, padding: '9px 10px', border: selId === s.id ? '1px solid var(--accent-muted)' : '1px solid transparent', background: selId === s.id ? 'var(--accent-000)' : 'transparent' }} onClick={() => setSel(s.id)}>
