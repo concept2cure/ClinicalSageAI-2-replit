@@ -28,7 +28,7 @@
 import { Router, Request, Response } from 'express';
 import { desc, eq, inArray } from 'drizzle-orm';
 
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import {
   documentWorkflows,
   workflowApprovals,
@@ -251,6 +251,11 @@ export default function createReviewBoardRoutes(): Router {
     const userId = getUserId(req);
 
     try {
+      // Request-scoped, RLS-enforcing DB client. New tenant-facing routes must
+      // use requestDb(req) (ci:requestdb-coverage gate), not the shared pool —
+      // the shared pool has no tenant session vars set.
+      const db = requestDb(req);
+
       // 1. Org-scoped workflows (the review pipeline). Cancelled ones are excluded.
       const wfRowsRaw = await db
         .select()
