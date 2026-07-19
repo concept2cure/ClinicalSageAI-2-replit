@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
+import { SampleTag, useLive } from '../dataConnect';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -20,7 +21,7 @@ import '../styles/project-home-v2.css';
 /* ── Inline fixture types ── */
 
 interface CmcNavItem { id: string; label: string; icon: string; }
-interface CmcPortfolio { sub: string; product: string; region: string; type: string; rpi: number; ir: number; }
+interface CmcPortfolio { sub: string; product: string; region: string; type: string; rpi: number | null; ir: number | null; }
 interface CmcSection { key: string; path: string; st: string; audit?: string; _new?: boolean; }
 interface CmcSpecRow { id: number; attr: string; material: string; method: string; release: string; shelf: string; ich: string; st: string; noMethod?: boolean; audit?: string; _new?: boolean; }
 interface CmcStabData { attr: string; cond: string; limit: number; unit: string; points: { m: number; v: number }[]; }
@@ -30,6 +31,11 @@ interface CmcGlobal { region: string; ready: number; gaps: string[]; }
 interface CmcCorrespondence { ag: string; kind: string; subj: string; due: string; tone: string; }
 interface CmcChangeType { id: string; label: string; risk: string; }
 interface CmcChangeResult { type: CmcChangeType; markets: string[]; desc: string; paths: { m: string; label: string; path: string[] }[]; }
+
+/* ── Live board types (GET /api/cmc/module3-board -> { success, data }) ── */
+interface CmcBoardKpis { submissions: number; rpiAverage: number | null; irOverdue: number; sectionsApproved: number | null; sectionsTotal: number | null; readyPercent: number | null; }
+interface CmcBoardMeta { projectId: string | null; portfolioProvisioned: boolean; sectionsProvisioned: boolean | null; generatedAt: string; }
+interface CmcBoardData { portfolio?: CmcPortfolio[]; sections?: CmcSection[] | null; kpis?: CmcBoardKpis; meta?: CmcBoardMeta; }
 
 /* ── Inline fixture data (kit window globals) ── */
 
@@ -70,6 +76,25 @@ const CMC_SECTIONS_SEED: CmcSection[] = [
   { key: '3.2.P.5', path: 'Control of drug product', st: 'draft' },
   { key: '3.2.P.8', path: 'Stability (DP)', st: 'draft' },
 ];
+
+/* The { success, data } payload the Overview falls back to when the live board
+   is unreachable or unprovisioned -- the org portfolio + governed section seed,
+   shape-exact so `raw.data.data` is uniform whether live or sample. */
+const CMC_BOARD_FIXTURE: { data: CmcBoardData } = {
+  data: {
+    portfolio: CMC_PORT,
+    sections: CMC_SECTIONS_SEED,
+    kpis: {
+      submissions: CMC_PORT.length,
+      rpiAverage: Math.round(CMC_PORT.reduce((a, r) => a + (r.rpi ?? 0), 0) / CMC_PORT.length),
+      irOverdue: CMC_PORT.reduce((a, r) => a + (r.ir ?? 0), 0),
+      sectionsApproved: CMC_SECTIONS_SEED.filter((s) => s.st === 'approved').length,
+      sectionsTotal: CMC_SECTIONS_SEED.length,
+      readyPercent: Math.round(100 * CMC_SECTIONS_SEED.filter((s) => s.st === 'approved').length / CMC_SECTIONS_SEED.length),
+    },
+    meta: { projectId: null, portfolioProvisioned: false, sectionsProvisioned: null, generatedAt: '' },
+  },
+};
 
 const CMC_SPECROWS_SEED: CmcSpecRow[] = [
   { id: 1, attr: 'Appearance', material: 'Drug substance', method: 'Visual', release: 'Clear to opalescent', shelf: 'Clear to opalescent', ich: 'ICH Q6B', st: 'approved' },
@@ -232,30 +257,89 @@ function Kpi({ l, v, s, tone }: { l: string; v: React.ReactNode; s?: string; ton
 /* ═══════════ Overview -- portfolio + governed section approvals ═══════════ */
 
 function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
+  /* Live board -- GET /api/cmc/module3-board[?projectId]. `useLive` assigns the
+     WHOLE { success, data } body to `.data`, so the display payload is at
+     `raw.data.data`. Portfolio is org-scoped; the governed section list is
+     per-project, so it is only populated when a project is in context. */
+  const ctxProjectId = ((): string | undefined => {
+    try {
+      const p = (window as any).C2C_PROJECT;
+      const id = p && p.id != null ? String(p.id).trim() : '';
+      return id || undefined;
+    } catch (_e) { return undefined; }
+  })();
+  const boardPath = ctxProjectId
+    ? '/api/cmc/module3-board?projectId=' + encodeURIComponent(ctxProjectId)
+    : '/api/cmc/module3-board';
+  const raw = useLive<{ data?: CmcBoardData }>(boardPath, CMC_BOARD_FIXTURE);
+  const board = raw.data?.data;
+
+  /* Fail-closed shape guards. Trust a 200 only when it structurally matches the
+     display contract AND the backend reports that slice as provisioned. An empty
+     provisioned slice keeps the fixture (shown honestly as "Sample data") so the
+     surface is never blank and never presents a fixture as live. */
+  const portfolioLive = Boolean(
+    !raw.sample &&
+    board &&
+    Array.isArray(board.portfolio) &&
+    board.portfolio.length > 0 &&
+    typeof board.portfolio[0]?.sub === 'string' &&
+    board.meta?.portfolioProvisioned === true,
+  );
+  const sectionsLive = Boolean(
+    !raw.sample &&
+    board &&
+    Array.isArray(board.sections) &&
+    board.sections.length > 0 &&
+    typeof board.sections[0]?.key === 'string' &&
+    board.meta?.sectionsProvisioned === true,
+  );
+
+  const port: CmcPortfolio[] = portfolioLive ? (board!.portfolio ?? CMC_PORT) : CMC_PORT;
+  const liveSections: CmcSection[] | null = sectionsLive ? (board!.sections ?? null) : null;
+  const portfolioSample = !portfolioLive;
+  const sectionsSample = !sectionsLive;
+
+  /* Governed section-approval state seeds from the fixture, then re-seeds from
+     the live governed store once it arrives; in-place approvals mutate it. */
   const [secs, setSecs] = useState<CmcSection[]>(CMC_SECTIONS_SEED.map((s) => ({ ...s })));
+  useEffect(() => {
+    if (liveSections) setSecs(liveSections.map((s) => ({ ...s })));
+  }, [liveSections]);
   const [sign, setSign] = useState<CmcSection | null>(null);
   const [toast, fireToast] = useToast();
-  const port = CMC_PORT;
-  const avgRpi = Math.round(port.reduce((a, r) => a + r.rpi, 0) / port.length);
-  const irOverdue = port.reduce((a, r) => a + r.ir, 0);
+
+  /* rpi / ir are number | null -- honestly null when the backend cannot measure a
+     submission. Guard every reduce/sort/compare so a null never NaNs a KPI, and
+     render "—" for a null cell. KPIs come from data.kpis when the portfolio is
+     live (identical to these guarded computations), else from the fixture. */
+  const rpiNums = port.map((r) => r.rpi).filter((v): v is number => typeof v === 'number');
+  const computedAvgRpi = rpiNums.length ? Math.round(rpiNums.reduce((a, b) => a + b, 0) / rpiNums.length) : null;
+  const computedIrOverdue = port.reduce((a, r) => a + (r.ir ?? 0), 0);
+  const avgRpi: number | null = portfolioLive && board!.kpis ? board!.kpis.rpiAverage : computedAvgRpi;
+  const irOverdue: number = portfolioLive && board!.kpis ? board!.kpis.irOverdue : computedIrOverdue;
+
   const approved = secs.filter((s) => s.st === 'approved').length;
-  const readyPct = Math.round(100 * approved / secs.length);
+  const readyPct = secs.length ? Math.round(100 * approved / secs.length) : 0;
   const readyTone = readyPct >= 80 ? 'ok' : readyPct >= 50 ? 'warn' : 'err';
   const stTone = (s: string) => s === 'approved' ? 'ok' : s === 'review' ? 'warn' : 'dim';
   const doSign = () => { if (!sign) return; setSecs((ss) => ss.map((x) => x.key === sign.key ? { ...x, st: 'approved', audit: auditId(), _new: true } : x)); const a = auditId(); setSign(null); fireToast('Section ' + sign.key + ' approved -- §11.50 -- ' + a); };
-  const lowSub = [...port].sort((a, b) => a.rpi - b.rpi)[0];
+  const rpiRankable = port.filter((p): p is CmcPortfolio & { rpi: number } => typeof p.rpi === 'number');
+  const lowSub = rpiRankable.length ? [...rpiRankable].sort((a, b) => a.rpi - b.rpi)[0] : null;
   const inReview = secs.filter((s) => s.st === 'review');
   const drafts = secs.filter((s) => s.st === 'draft');
   const nextSec = inReview[0] || drafts[0];
-  const irSubs = port.filter((p) => p.ir > 0);
+  const irSubs = port.filter((p) => (p.ir ?? 0) > 0);
   const cmLead = (
     <AnswerLead
       tone={irOverdue ? 'urgent' : 'calm'}
       eyebrow={'Is your CMC package ready across all ' + port.length + ' submissions'}
-      headline={<>Your Module 3 averages <b>RPI {avgRpi}</b> -- the <b>{lowSub.sub}</b> at {lowSub.rpi} is what's holding the portfolio back.</>}
+      headline={avgRpi != null && lowSub
+        ? <>Your Module 3 averages <b>RPI {avgRpi}</b> -- the <b>{lowSub.sub}</b> at {lowSub.rpi} is what's holding the portfolio back.</>
+        : <>Your Module 3 spans <b>{port.length}</b> {port.length === 1 ? 'submission' : 'submissions'}{avgRpi != null ? <> at an <b>RPI {avgRpi}</b> average</> : <> -- preparedness is still computing across the portfolio</>}.</>}
       body={irOverdue
         ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b> ({irSubs.map((p) => p.sub).join(', ')}) -- agencies read a late IR response as a readiness signal. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
-        : <>{approved} of {secs.length} sections are approved. §{nextSec ? nextSec.key : ''} ({nextSec ? nextSec.path : ''}) is the next one to move -- clear it and {lowSub.sub} climbs with it.</>}
+        : <>{approved} of {secs.length} sections are approved. §{nextSec ? nextSec.key : ''} ({nextSec ? nextSec.path : ''}) is the next one to move -- clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}.</>}
       reassure={irOverdue ? "Answer the IRs first -- they're time-boxed. I'll draft the responses and route the sign-offs with you." : "You're building steadily. I'll help you move the next section to approved."}
       action={{ label: irOverdue ? 'Draft the overdue IR responses' : 'Advance the next section', onClick: () => ask(irOverdue ? ('Draft responses to the overdue CMC information requests for ' + irSubs.map((p) => p.sub).join(' and ')) : ('Prepare §' + (nextSec ? nextSec.key : '') + ' ' + (nextSec ? nextSec.path : '') + ' for approval')),
         alt: { label: 'Open change simulator', onClick: () => (window as any).__cmSetTab && (window as any).__cmSetTab('change') } }}
@@ -264,19 +348,19 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
   );
   return (
     <div className="cm-body">
-      <CmHead title="Module 3 overview" meta={`${port.length} submissions -- RPI ${avgRpi} average`} ask={ask} suggest={CMC_SUGGEST.overview} />
+      <CmHead title="Module 3 overview" meta={`${port.length} submissions -- RPI ${avgRpi == null ? '—' : avgRpi} average`} ask={ask} suggest={CMC_SUGGEST.overview} />
       {cmLead}
       <div className="cm-kpis">
         <Kpi l="Submissions" v={port.length} />
-        <Kpi l="RPI average" v={avgRpi} s="preparedness" />
+        <Kpi l="RPI average" v={avgRpi == null ? '—' : avgRpi} s="preparedness" />
         <Kpi l="IR overdue" v={irOverdue} tone={irOverdue ? 'warn' : undefined} />
         <Kpi l="Sections approved" v={approved + '/' + secs.length} tone={readyTone} />
       </div>
       <div className="pj-card" style={{ marginBottom: 16 }}>
-        <div className="pj-card-h"><span className="t">Portfolio</span><span className="s">{port.length} submissions</span></div>
+        <div className="pj-card-h"><span className="t">Portfolio</span><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="s">{port.length} submissions</span><SampleTag sample={portfolioSample} /></span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           <table className="reg-tbl"><thead><tr><th>Submission</th><th>Product</th><th>Region</th><th>Type</th><th>RPI</th><th>IR overdue</th></tr></thead>
-          <tbody>{port.map((r, i) => (<tr key={i}><td style={{ fontWeight: 600 }}>{r.sub}</td><td>{r.product}</td><td>{r.region}</td><td><span className="reg-pill neutral">{r.type}</span></td><td>{r.rpi}</td><td>{r.ir}</td></tr>))}</tbody></table>
+          <tbody>{port.map((r, i) => (<tr key={i}><td style={{ fontWeight: 600 }}>{r.sub}</td><td>{r.product}</td><td>{r.region}</td><td><span className="reg-pill neutral">{r.type}</span></td><td>{r.rpi == null ? '—' : r.rpi}</td><td>{r.ir == null ? '—' : r.ir}</td></tr>))}</tbody></table>
         </div>
       </div>
       <div className="pj-card" style={{ marginBottom: 16 }}>
@@ -291,7 +375,7 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
         </div>
       </div>
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Section approvals</span><span className="s">governed -- 21 CFR §11</span></div>
+        <div className="pj-card-h"><span className="t">Section approvals</span><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span className="s">governed -- 21 CFR §11</span><SampleTag sample={sectionsSample} /></span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           <table className="reg-tbl"><thead><tr><th>Section</th><th>Path</th><th>State</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
           <tbody>{secs.map((s) => (

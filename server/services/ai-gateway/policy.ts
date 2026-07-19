@@ -267,7 +267,10 @@ export class GatewayPolicyEngine {
 
     const classifier = getContentClassifier();
     const findings: PolicyFinding[] = [];
-    let verdictAction: ContentPolicyAction = 'allow';
+    // Widen the initial narrowed type to the full union: `escalate` mutates
+    // verdictAction inside a closure, so the later block/redact/flag checks are
+    // reachable at runtime even though CFA would otherwise pin it to 'allow'.
+    let verdictAction = 'allow' as ContentPolicyAction;
     const escalate = (action: ContentPolicyAction): void => {
       if (ACTION_RANK[action] > ACTION_RANK[verdictAction]) verdictAction = action;
     };

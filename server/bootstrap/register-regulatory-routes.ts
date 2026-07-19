@@ -223,6 +223,98 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
     console.error('❌ Failed to mount Pharmacovigilance routes:', error);
   }
 
+  // ── Pharmacovigilance Surveillance Board (derived signals + periodic reports) ──
+  // Read-model for the ui-v2 safety-surveillance surface: signals are DERIVED on
+  // read (adverse-event disproportionality via the existing screen); no new SQL.
+  try {
+    const pvBoardModule = await import('../routes/pharmacovigilance-board.routes');
+    app.use('/api/pharmacovigilance/board', authenticateToken, pvBoardModule.default());
+    console.log('✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)');
+  } catch (error) {
+    console.error('❌ Failed to mount Pharmacovigilance Board route:', error);
+  }
+
+  // ── CSR Workflow board (ICH E3 section readiness read-model) ──
+  try {
+    const csrWorkflowModule = await import('../routes/csr-workflow-routes');
+    app.use('/api/csr-workflow', authenticateToken, csrWorkflowModule.default());
+    console.log('✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)');
+  } catch (error) {
+    console.error('❌ Failed to mount CSR Workflow routes:', error);
+  }
+
+  // ── Review board (approval/QC pipeline read-model) ──
+  try {
+    const reviewBoardModule = await import('../routes/review-board-routes');
+    app.use('/api/review', authenticateToken, reviewBoardModule.default());
+    console.log('✅ Review board routes mounted (GET /api/review/board)');
+  } catch (error) {
+    console.error('❌ Failed to mount Review board routes:', error);
+  }
+
+  // ── Regulatory Workspace (CTD authoring substrate read-model) ──
+  try {
+    const regulatoryWorkspaceModule = await import('../routes/regulatory-workspace-routes');
+    app.use('/api/regulatory-workspace', authenticateToken, regulatoryWorkspaceModule.default());
+    console.log('✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)');
+  } catch (error) {
+    console.error('❌ Failed to mount Regulatory Workspace routes:', error);
+  }
+
+  // ── Audit trail ledger (append-only signed chain read-model) ──
+  try {
+    const auditLedgerModule = await import('../routes/audit-trail-ledger.routes');
+    app.use('/api/audit-trail', authenticateToken, auditLedgerModule.default(pool));
+    console.log('✅ Audit trail ledger route mounted (GET /api/audit-trail/ledger)');
+  } catch (error) {
+    console.error('❌ Failed to mount Audit trail ledger routes:', error);
+  }
+
+  // ── Task management board (cross-project task read-model) ──
+  try {
+    const taskBoardModule = await import('../routes/taskBoard.routes');
+    app.use('/api/task-management', authenticateToken, taskBoardModule.default());
+    console.log('✅ Task management board route mounted (GET /api/task-management/board)');
+  } catch (error) {
+    console.error('❌ Failed to mount Task management board routes:', error);
+  }
+
+  // ── Artifacts center (governed artifact catalog read-model) ──
+  try {
+    const artifactsCenterModule = await import('../routes/artifacts-center-routes');
+    app.use('/api/artifacts-center', authenticateToken, artifactsCenterModule.default());
+    console.log('✅ Artifacts center route mounted (GET /api/artifacts-center)');
+  } catch (error) {
+    console.error('❌ Failed to mount Artifacts center routes:', error);
+  }
+
+  // ── Project home (project cockpit read-model) ──
+  try {
+    const projectHomeModule = await import('../routes/project-home-routes');
+    app.use('/api/project-home', authenticateToken, projectHomeModule.default());
+    console.log('✅ Project home route mounted (GET /api/project-home/:projectId)');
+  } catch (error) {
+    console.error('❌ Failed to mount Project home routes:', error);
+  }
+
+  // ── IVD completeness (IVDR technical-documentation readiness) ──
+  try {
+    const ivdCompletenessModule = await import('../routes/ivd-completeness-routes');
+    app.use('/api/ivd-completeness', authenticateToken, ivdCompletenessModule.default());
+    console.log('✅ IVD completeness route mounted (GET /api/ivd-completeness/completeness)');
+  } catch (error) {
+    console.error('❌ Failed to mount IVD completeness routes:', error);
+  }
+
+  // ── Batch draft (multi-section drafting spine read-model) ──
+  try {
+    const batchDraftModule = await import('../routes/batch-draft-routes');
+    app.use('/api/batch-draft', authenticateToken, batchDraftModule.default());
+    console.log('✅ Batch draft route mounted (GET /api/batch-draft/spine)');
+  } catch (error) {
+    console.error('❌ Failed to mount Batch draft routes:', error);
+  }
+
   // ── Clinical Operations (study/site/enrollment/monitoring) ──
   try {
     const clinOpsModule = await import('../routes/clinical-operations-routes');
