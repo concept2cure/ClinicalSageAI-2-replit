@@ -358,13 +358,19 @@ export default function createProjectVaultRoutes(): Router {
       const tree: VaultFolder[] = [];
       for (const doc of docsRes.rows as DocRow[]) {
         const secRes = await pool.query(
+          // The document_id was already resolved from the org-filtered
+          // c2c_documents query above; the EXISTS re-asserts that ownership
+          // inline (defense in depth + explicit org_id scoping so the section
+          // read never widens past the caller's tenant).
           `SELECT ds.section_key, ds.status, ds.version, ds.updated_at,
                   (ds.content -> 'paragraphs') IS NOT NULL AS has_content,
                   COALESCE(u.name, u.email) AS owner_name
              FROM c2c_document_sections ds
              LEFT JOIN users u ON u.id = ds.owner_id
-            WHERE ds.document_id = $1`,
-          [doc.id],
+            WHERE ds.document_id = $1
+              AND EXISTS (SELECT 1 FROM c2c_documents d
+                           WHERE d.id = ds.document_id AND d.org_id = $2)`,
+          [doc.id, orgId],
         );
         const live = new Map<string, LiveSection>(
           (secRes.rows as LiveSection[]).map((r): [string, LiveSection] => [r.section_key, r]),
