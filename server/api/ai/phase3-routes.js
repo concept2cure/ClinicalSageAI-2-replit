@@ -3,7 +3,7 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import regulatoryAIPhase3 from '../../services/regulatoryAIServicePhase3.js';
 import { db } from '../../db.js';
-import { components, componentVersions, documentVersions } from '../../../shared/schema.js';
+import { components, componentVersions, documentVersions, organizationUsers } from '../../../shared/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { authedOrgId } from '../../utils/authedOrgId.js';
 
@@ -152,19 +152,62 @@ const isPlatformAdmin = req => {
 const dlqScopeFor = req =>
   isPlatformAdmin(req) ? { all: true } : { organizationId: req.organizationId };
 
+/** Org-scoped roles authorized for destructive DLQ operations. */
+const DLQ_ADMIN_ORG_ROLES = new Set(['admin', 'owner']);
+
 /**
- * Admin gate for destructive DLQ operations. Mirrors the canonical
- * requireRole('admin', 'super_admin', 'platform_admin') middleware in
- * server/middleware/auth.ts (401 unauthenticated / 403 insufficient role,
- * same error envelope).
+ * Re-resolve the caller's CURRENT org-scoped role from the database.
+ *
+ * SECURITY (P1): the destructive DLQ gate must NOT trust `req.user.roles`. The
+ * `/api/ai` namespace runs a second `authenticateToken` pass (registered in
+ * server/bootstrap/register-core-routes.ts) that overwrites `req.user` with
+ * JWT-derived roles; those stay stale for up to the access-token TTL after an
+ * org role change, so a tenant admin downgraded to member would otherwise keep
+ * clearing the org's dead-letter queue until their token expired. Querying
+ * organizationUsers here makes the gate authoritative. Fails closed (null) when
+ * the DB is unavailable or the query throws — a destructive op must not proceed
+ * on an unverifiable role.
  */
-const requireDlqAdmin = (req, res, next) => {
+const resolveOrgRole = async (userId, organizationId) => {
+  if (!db || !Number.isFinite(userId) || !Number.isFinite(organizationId)) return null;
+  try {
+    const rows = await db
+      .select({ role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(
+        and(
+          eq(organizationUsers.userId, userId),
+          eq(organizationUsers.organizationId, organizationId)
+        )
+      )
+      .limit(1);
+    return rows.length > 0 ? String(rows[0].role || '').toLowerCase() : null;
+  } catch (error) {
+    console.error('[phase3] DLQ admin role re-resolution failed:', error?.message || error);
+    return null; // fail closed
+  }
+};
+
+/**
+ * Admin gate for destructive DLQ operations (401 unauthenticated / 403
+ * insufficient role, same error envelope as the canonical requireRole).
+ * Platform operators are recognized via isPlatformAdmin (global roles / email
+ * allowlist); the org-scoped `admin` decision is re-resolved from the DB rather
+ * than the potentially-stale in-request role (see resolveOrgRole).
+ */
+const requireDlqAdmin = async (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
       error: { code: 'AUTH_003', message: 'Authentication required' },
     });
   }
-  if (rolesOf(req).includes('admin') || isPlatformAdmin(req)) {
+  if (isPlatformAdmin(req)) {
+    return next();
+  }
+  const userId = Number(req.user?.userId ?? req.user?.id ?? req.userId);
+  const orgId = Number(req.organizationId);
+  const dbRole = await resolveOrgRole(userId, orgId);
+  if (dbRole && DLQ_ADMIN_ORG_ROLES.has(dbRole)) {
     return next();
   }
   return res.status(403).json({
