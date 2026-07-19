@@ -223,6 +223,44 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
     console.error('❌ Failed to mount Pharmacovigilance routes:', error);
   }
 
+  // ── Pharmacovigilance Surveillance Board (derived signals + periodic reports) ──
+  // Read-model for the ui-v2 safety-surveillance surface: signals are DERIVED on
+  // read (adverse-event disproportionality via the existing screen); no new SQL.
+  try {
+    const pvBoardModule = await import('../routes/pharmacovigilance-board.routes');
+    app.use('/api/pharmacovigilance', authenticateToken, pvBoardModule.default());
+    console.log('✅ Pharmacovigilance Surveillance Board route mounted (GET /api/pharmacovigilance/board)');
+  } catch (error) {
+    console.error('❌ Failed to mount Pharmacovigilance Board route:', error);
+  }
+
+  // ── CSR Workflow board (ICH E3 section readiness read-model) ──
+  try {
+    const csrWorkflowModule = await import('../routes/csr-workflow-routes');
+    app.use('/api/csr-workflow', authenticateToken, csrWorkflowModule.default());
+    console.log('✅ CSR Workflow board route mounted (GET /api/csr-workflow/board)');
+  } catch (error) {
+    console.error('❌ Failed to mount CSR Workflow routes:', error);
+  }
+
+  // ── Review board (approval/QC pipeline read-model) ──
+  try {
+    const reviewBoardModule = await import('../routes/review-board-routes');
+    app.use('/api/review', authenticateToken, reviewBoardModule.default());
+    console.log('✅ Review board routes mounted (GET /api/review/board)');
+  } catch (error) {
+    console.error('❌ Failed to mount Review board routes:', error);
+  }
+
+  // ── Regulatory Workspace (CTD authoring substrate read-model) ──
+  try {
+    const regulatoryWorkspaceModule = await import('../routes/regulatory-workspace-routes');
+    app.use('/api/regulatory-workspace', authenticateToken, regulatoryWorkspaceModule.default());
+    console.log('✅ Regulatory Workspace API routes mounted (/api/regulatory-workspace)');
+  } catch (error) {
+    console.error('❌ Failed to mount Regulatory Workspace routes:', error);
+  }
+
   // ── Clinical Operations (study/site/enrollment/monitoring) ──
   try {
     const clinOpsModule = await import('../routes/clinical-operations-routes');
