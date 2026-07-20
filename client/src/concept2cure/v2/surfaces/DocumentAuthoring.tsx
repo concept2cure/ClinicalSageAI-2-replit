@@ -4,50 +4,44 @@
  * Registry id: `document-authoring` (full: true)
  *
  * Full-bleed 3-pane editor: document tree (left), editable canvas (center),
- * comments rail (right). Confidence gutters, provenance rows, streaming
- * generation, and per-block flags.
+ * comments rail (right).
+ *
+ * Data: program / tree / comments come from the real workspace read-model
+ * (GET /api/document-authoring/workspace), fixture-fallback with an honest
+ * SampleTag. Drafting goes to the LIVE AnA (onAsk → /api/ana-ri/stream), which
+ * produces a governed, immutably-versioned, audited artifact — no fabricated
+ * content and no Math.random() audit id. The center canvas renders real
+ * governed blocks; a canvas-shaped block+confidence read-model (joining the
+ * persisted source_citations/concept2cure_artifacts provenance) is the tracked
+ * follow-up, so until it lands the canvas shows an honest "draft this section"
+ * state rather than a fixture.
  */
 import React, { useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { SampleTag, useLive } from '../dataConnect';
 import type { DocBlock, DocProgram, DocTreeVolume, DocComment } from '../fixtures/project2-data';
-import {
-  DOC_PROGRAM,
-  DOC_TREE,
-  DOC_BLOCKS_INIT,
-  DOC_COMMENTS,
-  DRAFT_TEXT,
-  STATUS_TONE,
-} from '../fixtures/project2-data';
+import { DOC_PROGRAM, DOC_TREE, DOC_COMMENTS } from '../fixtures/project2-data';
 import '../styles/project-home-v2.css';
-
-/* ── Inline helpers ── */
-
-function Pill({ tone, children }: { tone: string; children: React.ReactNode }) {
-  return <span className={`rd-chip tone-${tone}`}>{children}</span>;
-}
 
 /* ════ Document Authoring surface ════ */
 
 export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
+  const ask = (q: string) => onAsk && onAsk(q);
   const [active, setActive] = useState('m25');
   const [showComments, setShowComments] = useState(false);
+  const [dismissed, setDismissed] = useState<string[]>([]);
   const band = (c: number) => (c >= 0.9 ? 'hi' : c >= 0.75 ? 'med' : 'lo');
-
-  const [blocks, setBlocks] = useState<DocBlock[]>(DOC_BLOCKS_INIT);
-  const [stream, setStream] = useState('');
-  const [busy, setBusy] = useState(false);
 
   // Live authoring workspace — GET /api/document-authoring/workspace → { success,
   // data: { program, tree, blocks, comments, activeDocumentId, meta } }. useLive
   // puts the whole body on `.data`, so the workspace is at `.data.data`. program,
   // tree, and comments fail closed to their project2-data fixtures. The center
-  // canvas blocks stay the DOC_BLOCKS_INIT fixture ALWAYS — the backend returns
-  // [] because no governed per-block confidence/provenance store exists for eCTD
-  // content (fabricating it is forbidden), so the canvas is always shown sample.
+  // canvas blocks come back [] by design (no governed per-block confidence/
+  // provenance READ model exists yet — that data is persisted but not read back
+  // in block shape), so the canvas shows an honest state, never a fixture.
   const ws = useLive<{
-    data?: { program?: DocProgram; tree?: DocTreeVolume[]; comments?: DocComment[] };
+    data?: { program?: DocProgram; tree?: DocTreeVolume[]; comments?: DocComment[]; blocks?: DocBlock[] };
   }>('/api/document-authoring/workspace', {
     data: { program: DOC_PROGRAM, tree: DOC_TREE, comments: DOC_COMMENTS },
   });
@@ -60,43 +54,23 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
   const tree: DocTreeVolume[] = treeLive ? wsData!.tree! : DOC_TREE;
   const prog: DocProgram = !ws.sample && wsData?.program ? wsData.program : DOC_PROGRAM;
   const commentsLive = !ws.sample && Array.isArray(wsData?.comments);
-  const comments: DocComment[] = commentsLive ? wsData!.comments! : DOC_COMMENTS;
+  const comments: DocComment[] = (commentsLive ? wsData!.comments! : DOC_COMMENTS).filter(
+    (c) => !dismissed.includes(c.id),
+  );
   const treeSample = !treeLive;
   const commentsSample = !commentsLive;
 
-  const generate = () => {
-    if (busy) return;
-    setBusy(true);
-    setStream('');
-    let i = 0;
-    const tick = () => {
-      i = Math.min(DRAFT_TEXT.length, i + 3);
-      setStream(DRAFT_TEXT.slice(0, i));
-      if (i < DRAFT_TEXT.length) {
-        setTimeout(tick, 16);
-      } else {
-        setTimeout(() => {
-          setBlocks((b) => [
-            ...b,
-            {
-              id: 'g' + Date.now(),
-              kind: 'p',
-              conf: 0.86,
-              spans: [{ t: DRAFT_TEXT }],
-              prov: {
-                source: 'Drafted by AnA from §2.5.1–§2.5.5 + linked evidence',
-                model: 'Maximum',
-                audit: 'AUD-' + (Math.floor(Math.random() * 9000) + 1000),
-              },
-            },
-          ]);
-          setStream('');
-          setBusy(false);
-        }, 250);
-      }
-    };
-    tick();
-  };
+  // Real governed blocks for the active section, when the read-model returns
+  // them. Empty today (see note above) → honest "draft this section" canvas.
+  const blocks: DocBlock[] = Array.isArray(wsData?.blocks) && !ws.sample ? wsData!.blocks! : [];
+
+  // Draft with the LIVE AnA. onAsk streams a real grounded draft from
+  // /api/ana-ri/stream and the server persists it as a governed, versioned,
+  // audited concept2cure artifact — nothing is fabricated into the page.
+  const draft = () =>
+    ask(
+      `Draft ${prog.section || 'this section'} for ${prog.code || 'this program'} from the linked evidence and the approved prior sections — every claim provenance-linked to its governed source.`,
+    );
 
   return (
     <div className="ed" data-comments={showComments || undefined}>
@@ -138,10 +112,10 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
             <button className="btn ghost" style={{ height: 30 }} onClick={() => setShowComments(!showComments)}>
               {I.checkCircle} Comments {comments.length}
             </button>
-            <button className="btn primary" style={{ height: 30 }} onClick={generate} disabled={busy}>
-              {I.sparkles} {busy ? 'Generating...' : 'Draft with AnA'}
+            <button className="btn primary" style={{ height: 30 }} onClick={draft}>
+              {I.sparkles} Draft with AnA
             </button>
-            <button className="btn ghost" style={{ height: 30 }}>{I.lock} Lock</button>
+            <button className="btn ghost" style={{ height: 30 }} onClick={() => ask(`Lock ${prog.section} for ${prog.code} — record the e-signature and freeze the approved version.`)}>{I.lock} Lock</button>
           </div>
         </header>
 
@@ -149,8 +123,8 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
           <div className="ed-doc-inner">
             <div className="ed-mast">
               <div className="ed-mast-num">§2.5</div>
-              <h1 className="ed-mast-t" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Clinical overview<SampleTag sample /></h1>
-              <div className="ed-mast-meta">{prog.title ?? 'Untitled'} · sample drafted content</div>
+              <h1 className="ed-mast-t">Clinical overview</h1>
+              <div className="ed-mast-meta">{prog.title ?? 'Untitled'}</div>
             </div>
 
             {blocks.map((b) =>
@@ -184,17 +158,19 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
               )
             )}
 
-            {stream && (
-              <div className="ed-block" data-conf="med">
-                <span className="ed-gutter" />
-                <p className="ed-p">{stream}<span className="ed-caret" /></p>
-                <span className="ed-genlbl">* AnA is drafting from the section evidence...</span>
+            {blocks.length === 0 && (
+              <div className="ed-empty" style={{ padding: '28px 4px', color: 'var(--text-400)' }}>
+                <p className="ed-p" style={{ marginBottom: 14 }}>
+                  No governed drafted content is loaded for this section yet. Draft it with AnA — every draft is
+                  produced from the linked evidence and persisted as an immutable, 21 CFR Part 11-audited version.
+                  Nothing here is simulated.
+                </p>
               </div>
             )}
 
             <div className="ed-foot">
-              <button className="btn primary" onClick={generate} disabled={busy}>
-                {I.sparkles} {busy ? 'Generating...' : 'Draft next section'}
+              <button className="btn primary" onClick={draft}>
+                {I.sparkles} Draft {blocks.length === 0 ? 'this' : 'the next'} section with AnA
               </button>
             </div>
           </div>
@@ -215,8 +191,8 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
               <div className="cmt-body">{c.body}</div>
               {c.ai && (
                 <div className="cmt-actions">
-                  <button className="btn primary" style={{ height: 26 }}>Apply</button>
-                  <button className="btn ghost" style={{ height: 26 }}>Dismiss</button>
+                  <button className="btn primary" style={{ height: 26 }} onClick={() => ask(`Apply this suggestion to ${prog.section}: ${c.body}`)}>Apply</button>
+                  <button className="btn ghost" style={{ height: 26 }} onClick={() => setDismissed((d) => [...d, c.id])}>Dismiss</button>
                 </div>
               )}
             </div>
