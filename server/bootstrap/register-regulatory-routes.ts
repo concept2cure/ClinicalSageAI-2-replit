@@ -404,5 +404,22 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
     console.error('❌ Failed to mount PDEV → IND routes:', error);
   }
 
+  // ── Submission Pyramid (deterministic engine read-model) ──
+  // Pure reads over SubmissionPyramidEngine + globalPyramids — no DB, no tenant
+  // data, no writes, no audit. Mounted at /api/v1 so paths resolve to
+  // /api/v1/pyramids/* and /api/v1/global-pyramids for the ui-v2 `pyramid`
+  // surface. authenticateToken is applied PER-ROUTE inside pyramid.routes.ts
+  // (NOT here) so this mount does not JWT-gate the sibling X-API-Key public API
+  // that shares the /api/v1 prefix and is registered right after this family.
+  try {
+    const pyramidModule = await import('../routes/pyramid.routes');
+    app.use('/api/v1', pyramidModule.default);
+    console.log(
+      '✅ Submission Pyramid routes mounted (GET /api/v1/pyramids/*, /api/v1/global-pyramids)'
+    );
+  } catch (error) {
+    console.error('❌ Failed to mount Submission Pyramid routes:', error);
+  }
+
   console.log('✅ Regulatory route family registered');
 }
