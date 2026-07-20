@@ -2,13 +2,15 @@
 /**
  * Apps surface ↔ /api/module-subscriptions wiring.
  *
- * Locks the honest live adoption added to surfaces/AdminSurfaces.tsx:
- *  - GET /catalog + /license adopted when both return the display contract
- *    (Live pill; live module names, tier chips, quota numbers)
+ * Locks the honest live adoption in surfaces/AdminSurfaces.tsx (fixture-free —
+ * the surface reads /catalog + /license via useLiveData, with no "Live" /
+ * "Sample data" pill):
+ *  - GET /catalog + /license render live module names, tier chips, quota numbers
  *  - renewsAt is never invented when live (the backend holds no renewal date)
  *  - toggle PUTs to /:moduleId/toggle; server rejection reverts the switch and
  *    surfaces the reason (no silent fake success)
- *  - offline → curated fixture + Sample-data pill (fail-closed)
+ *  - offline → fails closed to an honest unavailable/empty state, never a
+ *    fabricated fixture (no "Sample data", no invented renewal)
  */
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -73,12 +75,12 @@ afterEach(() => {
 });
 
 describe('Apps — live module subscriptions', () => {
-  it('adopts /catalog + /license and shows the Live pill', async () => {
+  it('adopts /catalog + /license and renders live module data', async () => {
     mockLive();
     mount();
-    expect(await screen.findByText('Live')).toBeTruthy();
-    // live module names and grouped-by-category headers, not the fixture
-    // (findByText: the catalog seeds via an effect one commit after the pill)
+    // Fixture-free (useLiveData): the surface renders live module names directly,
+    // with no "Live"/"Sample data" pill. The first live name resolving is the
+    // load gate (the catalog seeds via an effect after the fetch resolves).
     expect(await screen.findByText('CMC Wizard')).toBeTruthy();
     expect(screen.getByText('Insight Synthesis')).toBeTruthy();
     expect(screen.getByText('Authoring')).toBeTruthy();
@@ -98,7 +100,7 @@ describe('Apps — live module subscriptions', () => {
     const put = vi.fn(async () => ok({ moduleId: 'cmc-wizard', enabled: false }));
     mockLive(put);
     mount();
-    await screen.findByText('Live');
+    await screen.findByText('CMC Wizard'); // wait for the live catalog to adopt
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     fireEvent.click(screen.getByTitle('Disable module')); // the enabled within-plan module
     await waitFor(() =>
@@ -112,7 +114,7 @@ describe('Apps — live module subscriptions', () => {
       throw new Error('Admin access required');
     });
     mount();
-    await screen.findByText('Live');
+    await screen.findByText('CMC Wizard'); // wait for the live catalog to adopt
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     const sw = screen.getByTitle('Disable module');
     fireEvent.click(sw);
@@ -122,11 +124,16 @@ describe('Apps — live module subscriptions', () => {
     expect(screen.getByTitle('Disable module').getAttribute('aria-checked')).toBe('true');
   });
 
-  it('fails closed to the curated fixture offline', async () => {
+  it('fails closed offline without fabricating data', async () => {
     apiRequest.mockRejectedValue(new Error('network down'));
     mount();
-    expect(await screen.findByText('Sample data')).toBeTruthy();
-    expect(screen.getByText('Core workspace')).toBeTruthy(); // fixture group
-    expect(screen.getByText(/Renews 2027-01-14/)).toBeTruthy(); // fixture keeps its own renewal
+    // The surface still renders (no crash) — its header is always present.
+    expect(await screen.findByText('Apps catalog')).toBeTruthy();
+    // De-mocked to the fixture-free contract: offline it fails closed to an
+    // honest unavailable/empty state and must NOT fabricate a "Sample data"
+    // fixture, a "Live" pill, or an invented renewal date.
+    expect(screen.queryByText('Sample data')).toBeNull();
+    expect(screen.queryByText('Live')).toBeNull();
+    expect(screen.queryByText(/Renews 2027-01-14/)).toBeNull();
   });
 });
