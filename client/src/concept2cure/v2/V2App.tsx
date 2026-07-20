@@ -11,10 +11,11 @@
  *    becomes a location change; unknown segments render the honest scaffold.
  *  - The prototype TweaksPanel/edit-mode postMessage tooling is not product
  *    surface and is not ported.
- *  - AnA replies + action results are labelled sample until /api/ana-ri and
- *    /api/ai-actions wire in the surface phases (GAP RULE — no fabricated
- *    live output). Governed actions still demonstrate the §11.50 e-sign gate,
- *    marked sample; nothing is written.
+ *  - AnA conversation is LIVE: the shell rail, ⌘K and every surface's onAsk
+ *    stream real grounded replies from /api/ana-ri/stream (useAnaChat) — never
+ *    a fabricated/sample reply. Governed action *execution* still demonstrates
+ *    the §11.50 e-sign gate with a clearly-labelled sample result until
+ *    /api/ai-actions wires in.
  */
 import React from 'react';
 import { useLocation } from 'wouter';
@@ -28,17 +29,12 @@ import {
   makeSampleActionResult,
   type AnaMessage,
 } from './Shell';
+import { useAnaChat, type AnaChatMessage } from '../components/ana/useAnaChat';
 import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
 import { SURFACE_VIEWS } from './surfaceViews';
 import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
-import {
-  AI_ACTIONS,
-  ANA_MODES,
-  getAction,
-  getSegment,
-  getSurfaceActions,
-} from './registryModel';
+import { getAction, getSegment } from './registryModel';
 import { locationForSurface, surfaceIdFromLocation } from './routing';
 import './styles/app-v2.css';
 // Shared surface stylesheets — the kit loads these globally (they carry the
@@ -76,11 +72,23 @@ function loadPrefs(): Prefs {
   return DEFAULT_PREFS;
 }
 
+/* Adapt one real AnA turn (useAnaChat → /api/ana-ri/stream) into the shell
+   rail's AnaMessage shape. Replies are REAL, never stamped sample; while a
+   reply streams, the status phase stands in until the first token lands. */
+function adaptChatMessage(m: AnaChatMessage): AnaMessage {
+  if (m.role === 'user') return { role: 'user', body: m.text };
+  return {
+    role: 'ana',
+    body: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : ''),
+    sample: false,
+  };
+}
+
 export function V2App() {
   const [location, setLocation] = useLocation();
   const [prefs, setPrefs] = React.useState<Prefs>(loadPrefs);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
-  const [messages, setMessages] = React.useState<AnaMessage[]>([]);
+  const [actionMsgs, setActionMsgs] = React.useState<AnaMessage[]>([]);
   const [esignFor, setEsignFor] = React.useState<string | null>(null);
 
   const set = <K extends keyof Prefs>(k: K, v: Prefs[K]) =>
@@ -95,10 +103,13 @@ export function V2App() {
     });
 
   const activeId = surfaceIdFromLocation(location);
+  /* The real AnA assistant for the whole shell — one streaming conversation
+     (/api/ana-ri/stream) shared by the rail, ⌘K and every surface's onAsk. */
+  const anaChat = useAnaChat({ screenName: activeId });
   const nav = React.useCallback(
     (id: string) => {
       setLocation(locationForSurface(id));
-      setMessages([]);
+      setActionMsgs([]);
     },
     [setLocation]
   );
@@ -144,66 +155,20 @@ export function V2App() {
       notes: 'Home opens with the segment pathway chips and the composer. Ports in the surface phase.',
     } as UiSurface);
 
-  /* AnA ask — PROTOTYPE reply, always stamped sample until /api/ana-ri wires
-     in the surface phases. A fabricated reply must never read as live. */
+  /* AnA ask — routes to the REAL streaming assistant (/api/ana-ri/stream via
+     useAnaChat). The [Agent] prefix (rail agent toggle) is a task hint the
+     server's agentic tool loop handles, so we strip it and stream a grounded
+     reply. Governed action execution stays reachable via the action chips
+     (onAct → §11.50 e-sign). No fabricated/sample reply is ever shown. */
   const ask = (text: string) => {
-    if (!text) return;
-    const model = ANA_MODES.find((m) => m.id === prefs.anaMode)?.model ?? 'Balanced';
-    const plain = text.replace(/^\[Agent\]\s*/i, '').trim();
-    const agentMatch = text.match(/^\[Agent\]\s*(.*)$/i);
-    if (agentMatch) {
-      const body = agentMatch[1].trim() || 'Run the right action here.';
-      const blob = body.toLowerCase();
-      let hit: (typeof AI_ACTIONS)[number] | null = null;
-      let hitScore = 0;
-      for (const a of AI_ACTIONS) {
-        const triggers = (a.triggers ?? []).concat(
-          a.label
-            .toLowerCase()
-            .split(/\s+/)
-            .filter((w: string) => w.length > 3)
-        );
-        const score = triggers.reduce((s: number, w: string) => s + (blob.includes(w) ? 1 : 0), 0);
-        if (score > hitScore) {
-          hit = a;
-          hitScore = score;
-        }
-      }
-      setMessages((ms) => [...ms, { role: 'user', body }]);
-      if (!prefs.anaOpen) set('anaOpen', true);
-      if (hit) {
-        onAct(hit.id);
-        return;
-      }
-      setMessages((ms) => [
-        ...ms,
-        {
-          role: 'ana',
-          model,
-          sample: true,
-          body: 'I didn’t match that to a governed action on this surface. Here are the actions I can run here — pick one or rephrase:',
-          actions: getSurfaceActions(activeId).slice(0, 3),
-        },
-      ]);
-      return;
-    }
-    setMessages((ms) => [
-      ...ms,
-      { role: 'user', body: plain },
-      {
-        role: 'ana',
-        model,
-        sample: true,
-        body:
-          'Sample response — the live AnA gateway (/api/ana-ri) wires up with the surface-port phase. When it lands, this thread streams real grounded answers with pedigree badges; until then nothing here should be read as analysis.',
-        actions: getSurfaceActions(activeId).slice(0, 3),
-      },
-    ]);
+    const clean = text.replace(/^\[Agent\]\s*/i, '').trim();
+    if (!clean) return;
     if (!prefs.anaOpen) set('anaOpen', true);
+    void anaChat.send(clean);
   };
 
   const runAction = (id: string, signed: boolean) => {
-    setMessages((ms) => [...ms, { role: 'action', result: makeSampleActionResult(id, signed) }]);
+    setActionMsgs((ms) => [...ms, { role: 'action', result: makeSampleActionResult(id, signed) }]);
     if (!prefs.anaOpen) set('anaOpen', true);
   };
   const onAct = (id: string) => {
@@ -224,6 +189,10 @@ export function V2App() {
   } else {
     body = <KitSurfaceScaffold surface={ctxSurface} onAsk={ask} />;
   }
+
+  /* The rail shows the real AnA conversation; surface-scoped governed-action
+     demos (onAct) append after it and reset on navigation. */
+  const railMessages = [...anaChat.messages.map(adaptChatMessage), ...actionMsgs];
 
   return (
     <div
@@ -263,7 +232,7 @@ export function V2App() {
           segment={prefs.segment}
           mode={prefs.anaMode}
           setMode={(m) => set('anaMode', m)}
-          messages={messages}
+          messages={railMessages}
           onSend={ask}
           onAct={onAct}
         />
