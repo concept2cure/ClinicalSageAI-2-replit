@@ -20,34 +20,56 @@ RLS boot-posture hardening, PR #1042).
 | AsyncLocalStorage tenant scope (`runWithTenantScope` / `getTenantScope`) | ✅ done | `server/db/tenantStore.ts` |
 | Request middleware establishes scope + per-request scoped client | ✅ done, but **mounted on one route only** | `server/middleware/tenantContext.ts` |
 | `withTenantConnection` (dedicated scoped client for jobs/scripts) | ✅ exists, **~1 caller** | `server/db/withTenantConnection.ts`; only `server/services/memory-consolidation-job.ts` |
-| **Pooled queries carry `app.current_tenant_id`** | ❌ **missing — the linchpin** | see below |
-| Scope established across all request routes + jobs/workers | ❌ not done | the burndown |
+| Request-scoped drizzle over the tenant client (`requestDb(req)` / `getDb(req)`) | ✅ **exists**, low adoption | `server/db/requestDb.ts`, `server/db/tenantDbHelper.ts` |
+| Scope **adopted** across all request routes + jobs/workers | ❌ not done | the burndown |
 
-## The linchpin (do this first)
+## The real gap: adoption, not a missing primitive
 
-`db` (drizzle) is built over the **pool** (`server/db/runtime.ts:120`). The pool's
-`connect` handler sets `app.rls_enforce` but **not** `app.current_tenant_id`.
-The request middleware sets tenant vars only on a **dedicated per-request client**
-(`req.dbClient`); jobs use the pooled `db`. So today, when `RLS_ENFORCE=on`, any
-pooled `db.*` query runs with no `current_tenant_id` and the policy returns **zero
-rows**.
+`db` (drizzle) is built over the **pool** (`server/db/runtime.ts:120`), whose
+connections carry `app.rls_enforce` but **not** `app.current_tenant_id`. So a
+pooled `db.*` query returns **zero rows** under `RLS_ENFORCE=on`.
 
-Two ways to close it; **prefer (A):**
+But the per-connection primitives already exist:
 
-- **(A) Pool-level primitive** — a query/checkout hook that reads `getTenantScope()`
-  and applies `app.current_tenant_id` (e.g. `SET LOCAL` inside a per-checkout
-  transaction, or a wrapper that prepends `set_config`). This turns the scope
-  *already established* by the request middleware into real filtering **without
-  rewriting ~6,100 call sites.** Lives next to `installRlsEnforcement` in
-  `server/db/rlsEnforcement.ts`. Delicate (pooling/reuse/transaction semantics) —
-  needs targeted tests. **Highest leverage.**
-- (B) Migrate every tenant-owned query to a scoped client (`req.dbClient` /
-  `withTenantConnection`). Correct but ~thousands of edits; only for call sites
-  that (A) can't cover.
+- **Requests:** `requestDb(req)` returns a drizzle bound to `req.dbClient` — the
+  lazy per-request client that runs `SET LOCAL app.current_tenant_id`. Queries
+  through it are RLS-correct. `req.dbClient` + the AsyncLocalStorage scope are set
+  up by the `requireTenantContext` middleware.
+- **Jobs/scripts:** `withTenantConnection({tenantId, role})` gives a dedicated
+  scoped client; run drizzle on it via `drizzle(client, { schema })`.
 
-> ⚠️ Do **not** just wrap code in bare `runWithTenantScope` to make the metric go
-> green. Without (A) the pooled query still isn't filtered — the metric would
-> report "scoped" while RLS does nothing. That is a false-green.
+So the linchpin is **adoption**, and it has two blockers:
+
+1. **`requireTenantContext` is mounted on one route only** (`server/routes/ana-features.ts`).
+   Until it's promoted to the global `/api` chain (after the merged auth/default-deny
+   gate, with a public/health/webhook allowlist), `req.dbClient` isn't set up for
+   other routes and `requestDb(req)` falls back to the pool-bound `db`.
+2. **Handlers still call the pool-bound `db`** instead of `requestDb(req)`.
+
+Two ways to close it:
+
+- **(A) Mass-adopt the existing scoped clients** — global-mount `requireTenantContext`,
+  then migrate handlers `db.*` → `requestDb(req).*` and jobs → `withTenantConnection`.
+  Correct, but a large call-site migration (~6,100 sites, though many are already
+  behind services that can take the scoped db).
+- **(B) Automatic pool primitive** — a query/checkout hook that reads
+  `getTenantScope()` and applies `app.current_tenant_id` on the connection, so the
+  *shared* `db` becomes RLS-correct wherever scope is established, **without** the
+  call-site migration. Lives next to `installRlsEnforcement`. Delicate
+  (pool reuse / transaction / `SET LOCAL`-needs-a-txn semantics) — needs targeted
+  tests. Higher leverage if it can be made safe.
+
+> ⚠️ Do **not** wrap code in bare `runWithTenantScope` alone to turn the metric
+> green: without (A) using a scoped client or (B) the auto primitive, the pooled
+> query still isn't filtered — the metric would report "scoped" while RLS does
+> nothing. False-green.
+
+> ⚠️ **Auto-set trigger interaction:** `server/db/tenantRls.ts` installs a BEFORE-INSERT
+> trigger that sets `NEW.organization_id := current_setting('app.current_tenant_id')`.
+> It fires whenever `current_tenant_id` is set, **independent of `RLS_ENFORCE`**.
+> So broadening where `current_tenant_id` is set (either approach) can change INSERT
+> behavior even with enforcement off — any rollout must verify inserts still land the
+> intended org (especially global/super-admin sweeps where the var is `0`/empty).
 
 ## Runway size (static approximation of the runtime metric)
 
@@ -94,18 +116,26 @@ tenant.
 
 ## Recommended sequence
 
-1. **Build the pool primitive (A).** Set `app.current_tenant_id` from
-   `getTenantScope()` on pooled queries. Unit-test connection reuse + transaction
-   nesting. Nothing filters correctly until this exists.
-2. **Promote the `/api` gate** to establish request scope (chain `runWithTenantScope`
-   after the merged auth/default-deny gate), with a public-prefix allowlist. Closes
-   category (D) — hundreds of routes — at once.
-3. **Wrap background writers** (jobs → workers → schedulers) in the correct scope:
-   per-org loop, or `app_super_admin` for legitimate global sweeps.
-4. **Verify in staging** with `RLS_ENFORCE=on`: run the cron/worker set + a
+1. **Decide (A) mass-adopt vs (B) auto primitive.** (B) avoids the call-site
+   migration and is highest-leverage *if* it can be made safe against pool reuse,
+   transaction semantics, and the auto-set trigger. Prototype (B) with tests; fall
+   back to (A) if the pooling semantics prove too risky.
+2. **Promote `requireTenantContext` to the global `/api` chain** (after the merged
+   auth/default-deny gate), with a public/health/webhook allowlist. This sets up
+   `req.dbClient` + AsyncLocalStorage scope for all routes — the prerequisite for
+   either approach. **High blast radius: an over-broad mount 401s public routes** —
+   build the allowlist deliberately and verify against the merged `authBoundary`.
+3. **Adopt scoped clients:** for (A), migrate handlers `db.*` → `requestDb(req).*`;
+   for (B), no per-handler change once the primitive reads the now-global scope.
+   Either way, watch `tenant_session_var_missing_total` fall for the request path.
+4. **Wrap background writers** (jobs → workers → schedulers) in
+   `withTenantConnection` + `drizzle(client)`: per-org loop, or `app_super_admin`
+   for legitimate global sweeps. Verify the auto-set trigger still lands inserts in
+   the intended org.
+5. **Verify in staging** with `RLS_ENFORCE=on`: run the cron/worker set + a
    cross-tenant request smoke test asserting **zero-row leakage**, and watch
    `tenant_session_var_missing_total` drop to ~0 (labels pinpoint stragglers).
-5. **Flip:** `RLS_ENFORCE=on`, then `RLS_REQUIRE_ENFORCE=true` so any regression
+6. **Flip:** `RLS_ENFORCE=on`, then `RLS_REQUIRE_ENFORCE=true` so any regression
    fails boot (`server/db/rlsEnforcement.ts`).
 
 **Acceptance (GA plan 0.1):** cross-tenant read returns zero rows in a staging test;
