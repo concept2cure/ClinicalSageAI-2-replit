@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLive, useLiveList } from '../dataConnect';
+import { EmptyState, useLiveData, useLiveRows, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import { C2CForm } from '../C2CForm';
@@ -9,19 +9,21 @@ import type { C2CFormConfig } from '../C2CForm';
 /* ── Inline fixture types ── */
 
 interface NcStudy {
+  // Display columns returned by listStudies() (nonclinical-service.ts):
+  // { id, type, species, dur, finding, cls, send }. `id` is the human
+  // study_number and `send` is a derived CASE (always present). species /
+  // duration_label / key_finding / finding_class are nullable columns — and the
+  // POST /studies write path does not set dur/finding/cls, so persisted studies
+  // routinely carry null there. Rendered honestly (omitted when absent), never
+  // fabricated. `_new` is a client-only optimistic-add marker.
   id: string;
   type: string;
-  species: string;
-  dur: string;
-  finding: string;
-  cls: string;
+  species: string | null;
+  dur: string | null;
+  finding: string | null;
+  cls: string | null;
   send: string;
   _new?: boolean;
-}
-
-interface NcSendDomain {
-  d: string;
-  st: string;
 }
 
 interface NcM26Section {
@@ -55,49 +57,10 @@ interface NcSummary {
   provisioned: boolean;
 }
 
-/* ── Inline fixture data (kit window globals) ── */
-
-const NC_STUDIES: NcStudy[] = [
-  { id: 'TX-701', type: 'Repeat-dose tox', species: 'Rat', dur: '26-week', finding: 'Minimal hepatocellular hypertrophy (adaptive)', cls: 'non-adverse', send: 'conforms' },
-  { id: 'TX-702', type: 'Repeat-dose tox', species: 'Cynomolgus', dur: '39-week', finding: 'No adverse findings to top dose', cls: 'clean', send: 'conforms' },
-  { id: 'CARC-701', type: 'Carcinogenicity', species: 'Tg mouse', dur: '26-week', finding: 'In life -- terminal necropsy pending', cls: 'pending', send: 'in progress' },
-  { id: 'PK-301', type: 'Toxicokinetics', species: 'Rat', dur: '—', finding: 'Dose-proportional exposure, no accumulation', cls: 'clean', send: 'conforms' },
-  { id: 'SP-201', type: 'Safety pharm (CV)', species: 'Cynomolgus', dur: '—', finding: 'No QTc or hemodynamic effect', cls: 'clean', send: 'conforms' },
-  { id: 'GT-101', type: 'Genotoxicity (Ames + MN)', species: 'in vitro / in vivo', dur: '—', finding: 'Negative across the battery', cls: 'clean', send: 'n/a' },
-];
-
-const NC_SEND: NcSendDomain[] = [
-  { d: 'DM', st: 'conforms' }, { d: 'EX', st: 'conforms' }, { d: 'DS', st: 'conforms' }, { d: 'TX', st: 'conforms' },
-  { d: 'MA', st: 'warn' }, { d: 'MI', st: 'conforms' }, { d: 'OM', st: 'conforms' }, { d: 'PC', st: 'conforms' },
-  { d: 'PP', st: 'conforms' }, { d: 'BW', st: 'conforms' }, { d: 'CL', st: 'conforms' }, { d: 'LB', st: 'reject' },
-];
-
-const NC_M26: NcM26Section[] = [
-  { n: '2.6.1', l: 'Introduction', st: 'complete' },
-  { n: '2.6.2', l: 'Pharmacology written summary', st: 'complete' },
-  { n: '2.6.3', l: 'Pharmacology tabulated summary', st: 'complete' },
-  { n: '2.6.4', l: 'Pharmacokinetics written summary', st: 'review' },
-  { n: '2.6.5', l: 'Pharmacokinetics tabulated summary', st: 'draft' },
-  { n: '2.6.6', l: 'Toxicology written summary', st: 'drafting', note: 'carcinogenicity subsection held for CARC-701' },
-  { n: '2.6.7', l: 'Toxicology tabulated summary', st: 'draft' },
-];
-
-const NC_M4MAP: NcM4Placement[] = [
-  { code: '4.2.1', l: 'Pharmacology study reports', pct: 92 },
-  { code: '4.2.2', l: 'Pharmacokinetic study reports', pct: 88 },
-  { code: '4.2.3', l: 'Toxicology study reports', pct: 84 },
-];
-
-/* Composite fixture for the M2.6 / M4 / SEND cards — the offline fallback for
-   GET /api/nonclinical-summary (a live projection of the governed registry). */
-const NC_SUMMARY: NcSummary = {
-  m26: NC_M26,
-  m4: NC_M4MAP,
-  send: { inScope: 4, validated: 3, missingDomains: ['LB'], risk: 'medium' },
-  completeness: 71,
-  gaps: [],
-  provisioned: false,
-};
+/* Stable empty seed for the optimistic-row store while the live studies list is
+   loading. `useLiveRows` returns a fresh [] on every render until it resolves,
+   which would otherwise thrash the re-seed effect in `useRows`. */
+const EMPTY_STUDIES: NcStudy[] = [];
 
 /* ── Inline shared kit helpers (not yet ported as modules) ── */
 
@@ -277,20 +240,37 @@ function C2CToast({ msg }: { msg: string }) {
   );
 }
 
-/* ── SEND conformance icon helper ── */
+/* ── Honest loading / error / empty guard for the /api/nonclinical-summary
+   object (the M2.6 / Module 4 / SEND projection). The route fails closed to a
+   real ICH M4S skeleton, so `data` is normally present; a null payload or a
+   failed load are still surfaced honestly — never a fixture. ── */
 
-function sendIcon(st: string): React.ReactElement {
-  if (st === 'conforms') return I.check;
-  if (st === 'reject') return I.close;
-  if (st === 'warn') return I.alertTriangle;
-  return I.dot;
-}
-
-function sendTone(st: string): string {
-  if (st === 'reject') return 'err';
-  if (st === 'warn') return 'warn';
-  if (st === 'conforms') return 'ok';
-  return 'idle';
+function SummaryBody({
+  state,
+  emptyTitle,
+  children,
+}: {
+  state: DataState<NcSummary>;
+  emptyTitle: string;
+  children: (sum: NcSummary) => React.ReactNode;
+}) {
+  if (state.loading) {
+    return <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>;
+  }
+  if (state.error) {
+    return (
+      <EmptyState
+        tone="error"
+        icon={I.alertTriangle}
+        title="Couldn't load the nonclinical summary"
+        hint="The Module 2.6 / Module 4 / SEND projection didn't respond. It's computed from the governed nonclinical registry — sign in and retry, or check the service is reachable."
+      />
+    );
+  }
+  if (!state.data) {
+    return <EmptyState icon={I.fileText} title={emptyTitle} />;
+  }
+  return <>{children(state.data)}</>;
 }
 
 /* ════ Nonclinical — CTD Module 4 surface ════ */
@@ -300,18 +280,23 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
   const open = (id: string) => {
     try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
   };
-  const liveStudies = useLiveList<NcStudy>('/api/nonclinical/studies', NC_STUDIES);
-  const [studies, addStudy] = useRows(liveStudies.data);
+  const liveStudies = useLiveRows<NcStudy>('/api/nonclinical/studies');
+  // `useLiveRows` synthesizes a FRESH [] every render whenever it has no array
+  // to return (while loading AND on a failed load); feed the optimistic-row
+  // store a STABLE empty seed in those states so the re-seed effect below
+  // doesn't thrash. Once the org's registry resolves (rows or an honest empty
+  // []), that reference is stable and becomes the seed.
+  const seedStudies =
+    liveStudies.loading || liveStudies.error ? EMPTY_STUDIES : liveStudies.rows;
+  const [studies, addStudy] = useRows(seedStudies);
 
-  // Live M2.6 / M4-placement / SEND projection of the governed registry.
-  // `useLive` does not shape-guard, so validate the envelope before adopting it;
-  // any malformed or unreachable response falls back to the honest fixture.
-  const rawSummary = useLive<{ data?: NcSummary }>('/api/nonclinical-summary', { data: NC_SUMMARY });
-  const sd = rawSummary.data?.data;
-  const summaryValid =
-    !rawSummary.sample && !!sd && Array.isArray(sd.m26) && Array.isArray(sd.m4) && !!sd.send;
-  const summary: NcSummary = summaryValid ? (sd as NcSummary) : NC_SUMMARY;
-  const summarySample = !summaryValid;
+  // Live M2.6 / M4-placement / SEND projection of the governed registry
+  // (server nonclinical-summary.routes.ts → m26-m4-view.ts). useLiveData unwraps
+  // the `{ data }` success envelope, so the payload is the NcSummary object
+  // directly (not `.data.data`): a real object, an honest empty, or an honest
+  // error — never a fixture.
+  const summaryState = useLiveData<NcSummary>('/api/nonclinical-summary');
+  const summary = summaryState.data;
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -345,15 +330,22 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
     fireToast('Study added -- ' + v.id + ' -- SEND queued');
   };
 
-  const clsPill = (c: string) => (
-    <span className={'rd-chip tone-' + (c === 'adverse' ? 'warn' : c === 'pending' ? 'idle' : 'ok')}>{c}</span>
-  );
+  const clsPill = (c: string | null) =>
+    c ? (
+      <span className={'rd-chip tone-' + (c === 'adverse' ? 'warn' : c === 'pending' ? 'idle' : 'ok')}>{c}</span>
+    ) : null;
 
   return (
     <BpComposer
       eyebrow="Nonclinical -- CTD Module 4"
       title="Nonclinical & Module 4"
-      state={<><b>{studies.length}</b> GLP studies {I.dot} SEND package <b>blocked</b> on 1 reject {I.dot} Module 2.6 summary in progress.</>}
+      state={
+        summary ? (
+          <><b>{studies.length}</b> GLP {studies.length === 1 ? 'study' : 'studies'} {I.dot} SEND {summary.send.risk === 'none' ? 'not in scope' : summary.send.risk + ' risk'} {I.dot} Module 2.6 {summary.completeness}% complete.</>
+        ) : (
+          <><b>{studies.length}</b> GLP {studies.length === 1 ? 'study' : 'studies'} in the governed nonclinical registry.</>
+        )
+      }
       starters={[
         'Draft the §2.6.6 toxicology written summary from the study reports',
         'Fix the SEND LB dataset reject and re-validate',
@@ -368,8 +360,6 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
       ]}
       onAsk={ask}
     >
-      <SampleTag sample={liveStudies.sample} />
-
       <div className="sp-sec">
         <SpCard
           title="GLP study registry"
@@ -384,16 +374,39 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
           }
         >
           <div className="sp-list">
-            {studies.map((s, i) => (
-              <div key={i} className={rowcls(s)}>
-                <span className="sp-tag">{s.id}</span>
-                <span className="sp-row-b">
-                  <span className="sp-row-t">{s.type} {I.dot} {s.species}{s.dur !== '—' ? ' ' + I.dot + ' ' + s.dur : ''}</span>
-                  <span className="sp-row-s">{s.finding} {I.dot} SEND {s.send}</span>
-                </span>
-                {clsPill(s.cls)}
-              </div>
-            ))}
+            {liveStudies.loading && studies.length === 0 ? (
+              <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading nonclinical studies…</div>
+            ) : liveStudies.error && studies.length === 0 ? (
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn't load the nonclinical studies"
+                hint="The governed nonclinical registry didn't respond. These are the organization's GLP tox / pharmacology / PK studies — sign in and retry, or check the service is reachable."
+              />
+            ) : studies.length === 0 ? (
+              <EmptyState
+                icon={I.fileText}
+                title="No nonclinical studies yet"
+                hint="Add a GLP tox, pharmacology, or PK study. Each is governed here — the report is classified, its SEND package is queued, and it threads into CTD Module 4."
+              />
+            ) : (
+              studies.map((s, i) => (
+                <div key={i} className={rowcls(s)}>
+                  <span className="sp-tag">{s.id}</span>
+                  <span className="sp-row-b">
+                    <span className="sp-row-t">
+                      {s.type}
+                      {s.species ? <> {I.dot} {s.species}</> : null}
+                      {s.dur ? <> {I.dot} {s.dur}</> : null}
+                    </span>
+                    <span className="sp-row-s">
+                      {s.finding ? <>{s.finding} {I.dot} </> : null}SEND {s.send}
+                    </span>
+                  </span>
+                  {clsPill(s.cls)}
+                </div>
+              ))
+            )}
           </div>
         </SpCard>
       </div>
@@ -401,76 +414,76 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sp-2col">
         <SpCard
           title="SEND readiness"
-          sample={summarySample}
-          meta={summarySample ? '12 domains -- Pinnacle21' : `${summary.send.inScope} in-scope -- ${summary.send.risk === 'none' ? 'not in scope' : summary.send.risk + ' risk'}`}
+          meta={summary ? `${summary.send.inScope} in-scope -- ${summary.send.risk === 'none' ? 'not in scope' : summary.send.risk + ' risk'}` : 'Pinnacle21'}
         >
-          {summarySample ? (
-            <div className="nc-send">
-              {NC_SEND.map((x, i) => (
-                <div key={i} className="nc-send-cell" data-st={sendTone(x.st)} title={x.d + ' -- ' + x.st}>
-                  <span className="nc-send-d">{x.d}</span>
-                  <span className="nc-send-s">{sendIcon(x.st)}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="sp-list">
-              <div className="sp-row">
-                <span className="sp-row-b">
-                  <span className="sp-row-t">{summary.send.validated}/{summary.send.inScope} package(s) validation-ready</span>
-                  <span className="sp-row-s">
-                    {summary.send.missingDomains.length > 0
-                      ? 'Missing required SEND domain(s): ' + summary.send.missingDomains.join(', ')
-                      : summary.send.inScope > 0
-                        ? 'All required SEND domains present.'
-                        : 'No SEND-mandated studies in the registry yet.'}
+          <SummaryBody state={summaryState} emptyTitle="No SEND package data yet">
+            {(sum) => (
+              <div className="sp-list">
+                <div className="sp-row">
+                  <span className="sp-row-b">
+                    <span className="sp-row-t">{sum.send.validated}/{sum.send.inScope} package(s) validation-ready</span>
+                    <span className="sp-row-s">
+                      {sum.send.missingDomains.length > 0
+                        ? 'Missing required SEND domain(s): ' + sum.send.missingDomains.join(', ')
+                        : sum.send.inScope > 0
+                          ? 'All required SEND domains present.'
+                          : 'No SEND-mandated studies in the registry yet.'}
+                    </span>
                   </span>
-                </span>
-                <span className={'rd-chip tone-' + (summary.send.risk === 'high' ? 'err' : summary.send.risk === 'medium' ? 'warn' : 'ok')}>
-                  {summary.send.risk === 'none' ? 'not in scope' : summary.send.risk + ' risk'}
-                </span>
+                  <span className={'rd-chip tone-' + (sum.send.risk === 'high' ? 'err' : sum.send.risk === 'medium' ? 'warn' : 'ok')}>
+                    {sum.send.risk === 'none' ? 'not in scope' : sum.send.risk + ' risk'}
+                  </span>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </SummaryBody>
           <div className="sp-foot">
-            <button className="sp-ask" onClick={() => ask('Run SEND conformance -- map units to controlled terminology and re-validate the LB reject.')}>
+            <button className="sp-ask" onClick={() => ask('Run SEND conformance -- map units to controlled terminology and re-validate the package.')}>
               {I.sparkles} Run SEND conformance
             </button>
           </div>
         </SpCard>
 
-        <SpCard title="Module 4 placement" sample={summarySample} meta="4.2.x readiness">
-          <div className="sp-list">
-            {summary.m4.map((m, i) => (
-              <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => open('dossier')}>
-                <span className="sp-tag">{m.code}</span>
-                <span className="sp-row-b">
-                  <span className="sp-row-t">{m.l}</span>
-                  <span className="pj-mod-track" style={{ marginTop: 4 }}>
-                    <span className="pj-mod-fill" data-risk={m.pct < 85 || undefined} style={{ width: m.pct + '%' }} />
-                  </span>
-                </span>
-                <span className="sp-tag2">{m.pct}%</span>
-              </button>
-            ))}
-          </div>
+        <SpCard title="Module 4 placement" meta="4.2.x readiness">
+          <SummaryBody state={summaryState} emptyTitle="No Module 4 placement data yet">
+            {(sum) => (
+              <div className="sp-list">
+                {sum.m4.map((m, i) => (
+                  <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => open('dossier')}>
+                    <span className="sp-tag">{m.code}</span>
+                    <span className="sp-row-b">
+                      <span className="sp-row-t">{m.l}</span>
+                      <span className="pj-mod-track" style={{ marginTop: 4 }}>
+                        <span className="pj-mod-fill" data-risk={m.pct < 85 || undefined} style={{ width: m.pct + '%' }} />
+                      </span>
+                    </span>
+                    <span className="sp-tag2">{m.pct}%</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </SummaryBody>
         </SpCard>
       </div>
 
       <div className="sp-sec">
-        <SpCard title="CTD Module 2.6 summary builder" sample={summarySample} meta="2.6.1 -- 2.6.7">
-          <div className="sp-list">
-            {summary.m26.map((m, i) => (
-              <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Open §${m.n} ${m.l} and continue drafting`)}>
-                <span className="sp-tag">{m.n}</span>
-                <span className="sp-row-b">
-                  <span className="sp-row-t">{m.l}</span>
-                  {m.note && <span className="sp-row-s">{m.note}</span>}
-                </span>
-                {pill(m.st)}
-              </button>
-            ))}
-          </div>
+        <SpCard title="CTD Module 2.6 summary builder" meta="2.6.1 -- 2.6.7">
+          <SummaryBody state={summaryState} emptyTitle="No Module 2.6 summary data yet">
+            {(sum) => (
+              <div className="sp-list">
+                {sum.m26.map((m, i) => (
+                  <button key={i} className="sp-row" style={{ width: '100%', textAlign: 'left' }} onClick={() => ask(`Open §${m.n} ${m.l} and continue drafting`)}>
+                    <span className="sp-tag">{m.n}</span>
+                    <span className="sp-row-b">
+                      <span className="sp-row-t">{m.l}</span>
+                      {m.note && <span className="sp-row-s">{m.note}</span>}
+                    </span>
+                    {pill(m.st)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </SummaryBody>
         </SpCard>
       </div>
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag, liveGet, useLiveList } from '../dataConnect';
+import { SampleTag, liveGet, useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -68,20 +68,6 @@ const NDA_MODULES: NdaModule[] = [
   { m: '5', label: 'Clinical study reports (Module 5)', pct: 69, docs: 18, open: 3, gate: 'ISS/ISE integrated summaries pending; define.xml validation 1 error' },
 ];
 
-const NDA_M1_SEED: NdaM1Doc[] = [
-  { id: '356h', label: 'Form FDA 356h — Application to Market a New Drug', st: 'complete' },
-  { id: 'cover', label: 'Cover letter & comprehensive table of contents', st: 'complete' },
-  { id: '1571', label: 'Form FDA 3674 — Certification of compliance (CT.gov)', st: 'complete' },
-  { id: 'fin', label: 'Financial disclosure (Forms 3454 / 3455)', st: 'review', blocker: true, note: '2 of 41 investigators outstanding' },
-  { id: 'pdufa', label: 'PDUFA user fee — cover sheet & payment', st: 'complete' },
-  { id: 'ipsp', label: 'Pediatric: agreed iPSP / PREA assessment', st: 'draft' },
-  { id: 'patent', label: 'Patent & exclusivity (Form 3542 / 3542a)', st: 'draft' },
-  { id: 'debar', label: 'Debarment certification (FDC Act §306(k)(1))', st: 'complete' },
-  { id: 'field', label: 'Field copy certification', st: 'complete' },
-  { id: 'label', label: 'Proposed prescribing information (PLR/PLLR · SPL)', st: 'review' },
-  { id: 'rems', label: 'REMS — proposed (if required)', st: 'na', note: 'Not required — risk managed by labeling' },
-];
-
 const NDA_CLOCK: NdaClockStep[] = [
   { id: 'sub', label: 'Submission received', day: 'Day 0', date: '14 Jul 2026', st: 'done' },
   { id: 'file', label: 'Filing decision (RTF / 74-day letter)', day: 'Day 60', date: '12 Sep 2026', st: 'current', note: 'Filing review — RTF risk assessment open' },
@@ -89,13 +75,6 @@ const NDA_CLOCK: NdaClockStep[] = [
   { id: 'late', label: 'Late-cycle meeting', day: '~Day 240', date: 'Mar 2027', st: 'upcoming' },
   { id: 'adcom', label: 'Advisory committee (if convened)', day: '~Day 270', date: 'Apr 2027', st: 'upcoming' },
   { id: 'goal', label: 'PDUFA goal date (action)', day: 'Day 304', date: '14 May 2027', st: 'goal' },
-];
-
-const NDA_RTF_SEED: NdaRtfItem[] = [
-  { sev: 'high', area: 'Module 5 · datasets', text: 'define.xml validation error in ADaM ADTTE; FDA may deem the dataset package incomplete at filing.', fix: 'Resolve define.xml + refresh reviewer guide (ADRG)' },
-  { sev: 'med', area: 'Module 1 · financial', text: '2 investigators missing 3454/3455 — a common RTF trigger if unresolved.', fix: 'Collect outstanding disclosures or certify due diligence' },
-  { sev: 'med', area: 'Module 3 · CMC', text: 'Comparability protocol acceptance criteria unreconciled vs post-change lots.', fix: 'Close 3.2.S.4.4 reconciliation' },
-  { sev: 'low', area: 'Module 2 · summaries', text: '2.7.4 Safety Summary still drafting; needed for a complete CTD.', fix: 'Finalize ISS-derived safety summary' },
 ];
 
 /* Biologics (BLA 351(a)) science-engine assessments — the biosimilar/biologic
@@ -186,39 +165,39 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   const overall = modules.length
     ? Math.round(modules.reduce((a, m) => a + m.pct, 0) / modules.length)
     : 0;
-  /* live ?? fixture — adopt the org's seeded Refuse-to-File risk log when the
-     store returns the full shape, else keep the fixture (no empty-flash). The
-     list stays locally mutable so a logged risk appears immediately, and the
-     POST persists it when live. */
-  const rtfLive = useLiveList<NdaRtfItem>('/api/nda-cockpit/rtf', NDA_RTF_SEED);
-  const rtfIsLive = !rtfLive.sample;
-  const [rtf, setRtf] = useState<NdaRtfItem[]>(() => NDA_RTF_SEED.map((r) => ({ ...r })));
-  const rtfSeeded = useRef<NdaRtfItem[] | null>(null);
+  /* Real rows — the org's Refuse-to-File risk log (org-scoped DB read that
+     fails closed to an empty list). The list stays locally mutable so a logged
+     risk appears immediately, and the POST persists it. Seed the local list
+     once, when the read settles. */
+  const rtfLive = useLiveRows<NdaRtfItem>('/api/nda-cockpit/rtf');
+  const rtfIsLive = !rtfLive.error;
+  const [rtf, setRtf] = useState<NdaRtfItem[]>([]);
+  const rtfSeeded = useRef(false);
   useEffect(() => {
-    if (!rtfLive.loading && rtfLive.data && rtfSeeded.current !== rtfLive.data) {
-      rtfSeeded.current = rtfLive.data;
-      setRtf(rtfLive.data.map((r) => ({ ...r })));
+    if (!rtfLive.loading && !rtfSeeded.current) {
+      rtfSeeded.current = true;
+      setRtf(rtfLive.rows.map((r) => ({ ...r })));
     }
-  }, [rtfLive.loading, rtfLive.data]);
+  }, [rtfLive.loading, rtfLive.rows]);
   const addRtf = (r: NdaRtfItem) => {
     const row: NdaRtfItem = { ...r, _new: true };
     setRtf((rs) => [row, ...rs]);
     setTimeout(() => setRtf((rs) => rs.map((x) => (x === row ? { ...x, _new: false } : x))), 1500);
   };
-  /* live ?? fixture — adopt the org's seeded Module-1 admin worklist when the
-     store returns the full shape, else keep the fixture (no empty-flash). The
-     list stays locally mutable so an added document appears immediately, and
-     the POST persists it when live. */
-  const m1Live = useLiveList<NdaM1Doc>('/api/nda-cockpit/m1', NDA_M1_SEED);
-  const m1IsLive = !m1Live.sample;
-  const [m1, setM1] = useState<NdaM1Doc[]>(() => NDA_M1_SEED.map((r) => ({ ...r })));
-  const m1Seeded = useRef<NdaM1Doc[] | null>(null);
+  /* Real rows — the org's Module-1 admin worklist (org-scoped DB read that
+     fails closed to an empty list). The list stays locally mutable so an added
+     document appears immediately, and the POST persists it. Seed the local list
+     once, when the read settles. */
+  const m1Live = useLiveRows<NdaM1Doc>('/api/nda-cockpit/m1');
+  const m1IsLive = !m1Live.error;
+  const [m1, setM1] = useState<NdaM1Doc[]>([]);
+  const m1Seeded = useRef(false);
   useEffect(() => {
-    if (!m1Live.loading && m1Live.data && m1Seeded.current !== m1Live.data) {
-      m1Seeded.current = m1Live.data;
-      setM1(m1Live.data.map((r) => ({ ...r })));
+    if (!m1Live.loading && !m1Seeded.current) {
+      m1Seeded.current = true;
+      setM1(m1Live.rows.map((r) => ({ ...r })));
     }
-  }, [m1Live.loading, m1Live.data]);
+  }, [m1Live.loading, m1Live.rows]);
   const addM1 = (r: NdaM1Doc) => {
     const row: NdaM1Doc = { ...r, _new: true };
     setM1((rs) => [row, ...rs]);
@@ -280,9 +259,10 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     setTab('rtf');
     const local = (): NdaRtfItem => ({ id: 'rtf-' + Date.now(), sev: v.sev, area: v.area, text: v.text, fix: v.fix });
     if (!rtfIsLive) {
-      // Fixture mode — nothing to persist to; say so instead of faking success.
+      // Read failed (no org/session) — nothing to persist to; show it locally
+      // and say so instead of faking success.
       addRtf(local());
-      fireToast('Filing risk logged · ' + v.area + ' · sample only, not persisted');
+      fireToast('Filing risk logged · ' + v.area + ' · shown locally, not persisted');
       return;
     }
     try {
@@ -294,7 +274,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       });
       if (!res.ok) {
         addRtf(local());
-        fireToast('Could not log filing risk · sign in required — sample only, not persisted');
+        fireToast('Could not log filing risk · sign in required — shown locally, not persisted');
         return;
       }
       const body = await res.json().catch(() => null);
@@ -309,7 +289,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       fireToast(
         'Could not log filing risk · ' +
           (e instanceof Error && e.message ? e.message : 'request failed') +
-          ' — sample only, not persisted',
+          ' — shown locally, not persisted',
       );
     }
   };
@@ -319,9 +299,10 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
     setTab('m1');
     const local = (): NdaM1Doc => ({ id: 'm1-' + Date.now(), label: v.label, st: v.st, note: v.note || undefined });
     if (!m1IsLive) {
-      // Fixture mode — nothing to persist to; say so instead of faking success.
+      // Read failed (no org/session) — nothing to persist to; show it locally
+      // and say so instead of faking success.
       addM1(local());
-      fireToast('Module 1 document added · sample only, not persisted');
+      fireToast('Module 1 document added · shown locally, not persisted');
       return;
     }
     try {
@@ -332,7 +313,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       });
       if (!res.ok) {
         addM1(local());
-        fireToast('Could not save Module 1 document · sign in required — sample only, not persisted');
+        fireToast('Could not save Module 1 document · sign in required — shown locally, not persisted');
         return;
       }
       const body = await res.json().catch(() => null);
@@ -347,7 +328,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       fireToast(
         'Could not save Module 1 document · ' +
           (e instanceof Error && e.message ? e.message : 'request failed') +
-          ' — sample only, not persisted',
+          ' — shown locally, not persisted',
       );
     }
   };
@@ -402,7 +383,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
         <div className="reg-kpi"><div className="reg-kpi-v">{overall}%</div><div className="reg-kpi-l">Application readiness</div></div>
         <div className="reg-kpi"><div className="reg-kpi-v">Day 60</div><div className="reg-kpi-l">Filing review {I.dot} PDUFA Day 304</div></div>
         <div className="reg-kpi"><div className="reg-kpi-v" data-tone="warn">{m1open}</div><div className="reg-kpi-l">Module 1 admin open</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v" data-tone="err">1</div><div className="reg-kpi-l">High RTF risk</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v" data-tone={highs.length ? 'err' : undefined}>{highs.length}</div><div className="reg-kpi-l">High RTF risk</div></div>
       </div>
 
       <div className="reg-tabs">
@@ -432,19 +413,36 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {tab === 'm1' && (
         <div className="reg-card">
-          <div className="reg-card-h"><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Module 1 &mdash; administrative &amp; prescribing (21 CFR 314.50) <SampleTag sample={m1Live.sample} /></span><span className="reg-card-s" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>Form 356h + required admin documents<button className="nda-open" onClick={() => setForm('m1')}>{I.plus} Add document</button></span></div>
-          <table className="reg-tbl">
-            <thead><tr><th>Document</th><th>Status</th><th></th></tr></thead>
-            <tbody>
-              {m1.map(d => (
-                <tr key={d.id} className={d._new ? 'de-row-new' : undefined} data-blocker={d.blocker || undefined}>
-                  <td><div className="nda-m1-l">{d.label}</div>{d.note && <div className="nda-m1-note">{d.note}</div>}</td>
-                  <td><span className={'reg-pill ' + d.st}>{d.st === 'na' ? 'N/A' : d.st}</span>{d.blocker && <span className="nda-blk">{I.alertTriangle} blocks filing</span>}</td>
-                  <td style={{ textAlign: 'right' }}>{d.st !== 'na' && <button className="nda-open" onClick={() => open('dossier')}>Open {I.arrowRight || I.right}</button>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="reg-card-h"><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Module 1 &mdash; administrative &amp; prescribing (21 CFR 314.50)</span><span className="reg-card-s" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>Form 356h + required admin documents<button className="nda-open" onClick={() => setForm('m1')}>{I.plus} Add document</button></span></div>
+          {m1.length > 0 ? (
+            <table className="reg-tbl">
+              <thead><tr><th>Document</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                {m1.map(d => (
+                  <tr key={d.id} className={d._new ? 'de-row-new' : undefined} data-blocker={d.blocker || undefined}>
+                    <td><div className="nda-m1-l">{d.label}</div>{d.note && <div className="nda-m1-note">{d.note}</div>}</td>
+                    <td><span className={'reg-pill ' + d.st}>{d.st === 'na' ? 'N/A' : d.st}</span>{d.blocker && <span className="nda-blk">{I.alertTriangle} blocks filing</span>}</td>
+                    <td style={{ textAlign: 'right' }}>{d.st !== 'na' && <button className="nda-open" onClick={() => open('dossier')}>Open {I.arrowRight || I.right}</button>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : m1Live.loading ? (
+            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading Module 1 documents…</div>
+          ) : m1Live.error ? (
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn't load Module 1 documents"
+              hint="The Module 1 administrative store didn't respond. Sign in and retry, or check that the NDA cockpit service is reachable."
+            />
+          ) : (
+            <EmptyState
+              icon={I.fileText}
+              title="No Module 1 documents yet"
+              hint="Add the Form FDA 356h and the required administrative documents (21 CFR 314.50). Each appears here org-scoped with its real filing status."
+            />
+          )}
         </div>
       )}
 
@@ -467,19 +465,36 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
       {tab === 'rtf' && (
         <div className="reg-card">
-          <div className="reg-card-h"><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Refuse-to-File risk &mdash; shadow review of the 60-day filing decision <SampleTag sample={rtfLive.sample} /></span><span style={{ display: 'flex', gap: 8 }}><button className="nda-open" onClick={() => setForm('rtf')}>{I.plus} Log risk</button>{ask && <button className="nda-open" onClick={() => ask('Draft a filing-risk mitigation plan for the open NDA Refuse-to-File items')}>{I.sparkles} Mitigation plan</button>}</span></div>
-          <div className="nda-rtf">
-            {rtf.map((r, i) => (
-              <div key={i} className={'nda-rtf-row' + (r._new ? ' de-row-new' : '')} data-sev={r.sev}>
-                <span className="nda-rtf-sev">{r.sev}</span>
-                <div className="nda-rtf-b">
-                  <div className="nda-rtf-area">{r.area}</div>
-                  <div className="nda-rtf-t">{r.text}</div>
-                  <div className="nda-rtf-fix">{I.arrowRight || I.right} {r.fix}</div>
+          <div className="reg-card-h"><span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Refuse-to-File risk &mdash; shadow review of the 60-day filing decision</span><span style={{ display: 'flex', gap: 8 }}><button className="nda-open" onClick={() => setForm('rtf')}>{I.plus} Log risk</button>{ask && <button className="nda-open" onClick={() => ask('Draft a filing-risk mitigation plan for the open NDA Refuse-to-File items')}>{I.sparkles} Mitigation plan</button>}</span></div>
+          {rtf.length > 0 ? (
+            <div className="nda-rtf">
+              {rtf.map((r, i) => (
+                <div key={i} className={'nda-rtf-row' + (r._new ? ' de-row-new' : '')} data-sev={r.sev}>
+                  <span className="nda-rtf-sev">{r.sev}</span>
+                  <div className="nda-rtf-b">
+                    <div className="nda-rtf-area">{r.area}</div>
+                    <div className="nda-rtf-t">{r.text}</div>
+                    <div className="nda-rtf-fix">{I.arrowRight || I.right} {r.fix}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : rtfLive.loading ? (
+            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading Refuse-to-File risks…</div>
+          ) : rtfLive.error ? (
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn't load Refuse-to-File risks"
+              hint="The filing-risk store didn't respond. Sign in and retry, or check that the NDA cockpit service is reachable."
+            />
+          ) : (
+            <EmptyState
+              icon={I.shieldCheck}
+              title="No refuse-to-file items"
+              hint="No filing-risk items are logged for this application. Log a risk above to shadow-review the 60-day filing decision, or ask AnA to assess the submission for Refuse-to-File triggers."
+            />
+          )}
         </div>
       )}
 

@@ -14,7 +14,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import { getSurfaceMeta } from '../registryModel';
-import { SampleTag, useLiveList } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -196,105 +196,13 @@ const PJ_STAGES: PjStage[] = [
     ana: 'Set up the PSUR schedule and assess the impact of the next planned CMC change' },
 ];
 
-/* Per-program status + pct overlay per stage id */
-
-const PJ_OVERLAY: Record<string, Record<string, [string, number]>> = {
-  biotech: {
-    discovery: ['done', 100], preind: ['done', 100], ind: ['done', 96], clinical: ['done', 88],
-    presub: ['done', 80], assemble: ['active', 64], review: ['upcoming', 0],
-    approval: ['upcoming', 0], lifecycle: ['upcoming', 0],
-  },
-  pharma: {
-    discovery: ['done', 100], preind: ['done', 100], ind: ['done', 100], clinical: ['done', 100],
-    presub: ['done', 100], assemble: ['done', 95], review: ['active', 60],
-    approval: ['upcoming', 0], lifecycle: ['upcoming', 0],
-  },
-};
-
-/* CTD Module 1--5 readiness (intelligence column) */
-
-const PJ_MODULES: Record<string, PjModule[]> = {
-  biotech: [
-    { m: '1', label: 'Administrative', pct: 92, risk: false },
-    { m: '2', label: 'Summaries', pct: 68, risk: true },
-    { m: '3', label: 'CMC', pct: 71, risk: true },
-    { m: '4', label: 'Nonclinical', pct: 84, risk: false },
-    { m: '5', label: 'Clinical', pct: 48, risk: true },
-  ],
-  pharma: [
-    { m: '1', label: 'Administrative', pct: 95, risk: false },
-    { m: '2', label: 'CTD summaries', pct: 81, risk: false },
-    { m: '3', label: 'CMC', pct: 88, risk: false },
-    { m: '4', label: 'Nonclinical reports', pct: 100, risk: false },
-    { m: '5', label: 'Clinical reports', pct: 74, risk: true },
-  ],
-};
-
-/* Review clock (intelligence column) */
-
-const PJ_CLOCK: Record<string, PjClockEntry[]> = {
-  biotech: [
-    { l: 'BLA assembly', day: '--', date: '64% ready', st: 'current' },
-    { l: 'Pre-BLA meeting', day: '--', date: 'planned', st: 'upcoming' },
-    { l: 'BLA submission', day: '--', date: 'planned', st: 'upcoming' },
-    { l: 'CHMP advice · pediatric PIP-301', day: '--', date: 'Q3 2026', st: 'upcoming' },
-    { l: 'PDUFA goal date', day: '--', date: 'on filing', st: 'upcoming' },
-  ],
-  pharma: [
-    { l: 'NDA submission filed', day: 'Day 0', date: '04 Jun 2026', st: 'done' },
-    { l: 'Filing decision', day: 'Day 74', date: '17 Aug 2026', st: 'done' },
-    { l: 'Day-120 safety update', day: 'Day 120', date: '02 Oct 2026', st: 'done' },
-    { l: 'Mid-cycle communication', day: '--', date: '15 Dec 2026', st: 'done' },
-    { l: 'PDUFA goal date', day: '--', date: '04 Apr 2027', st: 'current' },
-  ],
-};
-
-/* Predicted HAQs */
-
-const PJ_HAQS: Record<string, PjHaq[]> = {
-  biotech: [
-    { conf: 91, t: 'Pediatric: rationale for the 12--17 age-range exclusion in the pivotal (PRED-PED-01)' },
-    { conf: 86, t: 'CMC: comparability protocol for the forthcoming DS supplier change (PRED-CMC-01)' },
-    { conf: 72, t: 'Statistical: handling of subjects switching arms in BX204-301 (PRED-STAT-01)' },
-  ],
-  pharma: [
-    { conf: 91, t: 'Pediatric: rationale for the 12--17 age-range exclusion in the pivotal (PRED-PED-01)' },
-    { conf: 86, t: 'CMC: comparability protocol for the forthcoming DS supplier change (PRED-CMC-01)' },
-    { conf: 72, t: 'Statistical: handling of subjects switching arms in BX204-301 (PRED-STAT-01)' },
-  ],
-};
-
-/* Cross-module contradiction */
-
-const PJ_CONTRA: Record<string, PjContra> = {
-  biotech: { t: 'Stability prediction conflict', tag: 'warn · blocks promotion',
-    d: 'Module 3.2.P.8 cites a 24-month shelf life; Phase II protocol BX115-202 assumes an 18-month supply window. (M3 §3.2.P.8.3 · Protocol BX115-202 §6.4)' },
-  pharma: { t: 'Exposure-response narrative', tag: 'err · blocks promotion',
-    d: 'Module 2.7.2 PK/PD discussion uses the pre-amendment dose; Module 2.5 efficacy section cites post-amendment exposure. (M2 §2.5.4 · M2 §2.7.2)' },
-};
-
-/* Open blockers */
-
-const PJ_BLOCKERS: Record<string, PjBlocker[]> = {
-  biotech: [
-    { sev: 'high', t: 'Drug substance stability -- 24-month projection', m: 'M3 §3.2.S.7.3', who: 'AR', due: 'Day 9 of 14' },
-    { sev: 'med', t: 'Statistical analysis plan -- interim dataset cut', m: 'M5 §5.3.5.1', who: 'BK', due: '2 days' },
-    { sev: 'med', t: 'Pediatric assessment waiver justification', m: 'M1 §1.9', who: 'TP', due: 'Next Thu' },
-  ],
-  pharma: [
-    { sev: 'high', t: 'Drug substance stability -- 24-month projection', m: 'M3 §3.2.S.7.3', who: 'AR', due: 'Day 9 of 14' },
-    { sev: 'med', t: 'Statistical analysis plan -- interim dataset cut', m: 'M5 §5.3.5.1', who: 'BK', due: '2 days' },
-    { sev: 'med', t: 'Pediatric assessment waiver justification', m: 'M1 §1.9', who: 'TP', due: 'Next Thu' },
-  ],
-};
-
 /* ── Per-program instance record (the live read contract) ──
    One program-journey INSTANCE = the program identity plus the per-program
-   status carried by the segment-keyed maps above (overlay, modules, clock,
-   haqs, contra, blockers). The 9-stage lifecycle catalog (PJ_STAGES) stays
-   definitional and is NOT part of the record. GET /api/program-journey returns
-   exactly these keys per program; the surface adopts a segment's record when
-   the live shape matches, else keeps the fixture. */
+   status (overlay, modules, clock, haqs, contra, blockers). The 9-stage
+   lifecycle catalog (PJ_STAGES) stays definitional and is NOT part of the
+   record. GET /api/program-journey returns exactly these keys per program,
+   org-scoped; the surface renders those real rows, an honest empty state, or
+   an honest error state — never a fixture. */
 
 interface PjRecord extends PjProgram {
   seg: string;
@@ -305,17 +213,6 @@ interface PjRecord extends PjProgram {
   contra: PjContra;
   blockers: PjBlocker[];
 }
-
-const PJ_FIXTURE: PjRecord[] = (['biotech', 'pharma'] as const).map((s) => ({
-  seg: s,
-  ...PJ_PROGRAMS[s],
-  overlay: PJ_OVERLAY[s],
-  modules: PJ_MODULES[s],
-  clock: PJ_CLOCK[s],
-  haqs: PJ_HAQS[s],
-  contra: PJ_CONTRA[s],
-  blockers: PJ_BLOCKERS[s],
-}));
 
 /* ── Readiness ring ── */
 
@@ -345,32 +242,67 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const [seg, setSegState] = useState(getSeg());
+  // Selected stage id; null → default to the record's current stage. Held above
+  // the honest-state gates so hook order stays stable across loading/empty/error.
+  const [sel, setSel] = useState<string | null>(null);
 
-  /* live ?? fixture — adopt the org's seeded program-journey instance per
-     segment when the store returns the full record shape (identity + overlay +
-     the nested status arrays), else keep the codebase fixture so the spine is
-     never empty. Never fabricates. Only seeded segments go live; the pill is
-     truthful for the active segment. */
-  const live = useLiveList<PjRecord>('/api/program-journey', PJ_FIXTURE);
-  const bySeg: Record<string, PjRecord> = {};
-  for (const r of PJ_FIXTURE) bySeg[r.seg] = r;
-  if (!live.sample) for (const r of live.data) bySeg[r.seg] = r;
-  const segIsLive = !live.sample && live.data.some((r) => r.seg === seg);
+  /* Real-data read — the org's program-journey instances (segment-scoped).
+     Renders the real rows, an honest empty state, or an honest error state;
+     never a fixture. */
+  const { rows, loading, error, empty } = useLiveRows<PjRecord>('/api/program-journey');
 
-  const rec = bySeg[seg] ?? bySeg.biotech;
-  const prog = rec;
-  const overlay = rec.overlay;
-  const stages: PjStageWithOverlay[] = PJ_STAGES.map((s) => {
-    const ov = overlay[s.id] ?? PJ_OVERLAY[seg]?.[s.id] ?? ['upcoming', 0];
-    return { ...s, st: ov[0], pct: ov[1] };
-  });
-  const [sel, setSel] = useState(rec.current);
-  const stage = stages.find((s) => s.id === sel) || stages[0];
   const ask = onAsk;
   const open = (id: string) => {
     try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
     onNav(id);
   };
+  const setSeg = (v: string) => {
+    try { (window as any).__C2C_SEGMENT = v; } catch (_e) { /* noop */ }
+    setSegState(v);
+    setSel(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="pj">
+        <div className="scaf-note" style={{ padding: '40px 16px', textAlign: 'center' }}>Loading program journey…</div>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="pj">
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the program journey"
+          hint="The program-journey store didn't respond. This is your organization's concept-to-submission spine — sign in and retry, or check that the service is reachable."
+        />
+      </div>
+    );
+  }
+  if (empty) {
+    return (
+      <div className="pj">
+        <EmptyState
+          icon={I.gitBranch}
+          title="No program journey data yet"
+          hint="Once a program is provisioned for this organization, its end-to-end regulatory arc — stages, CTD readiness, review clock, predicted HAQs and blockers — appears here, segment-scoped with its real status."
+        />
+      </div>
+    );
+  }
+
+  const bySeg: Record<string, PjRecord> = {};
+  for (const r of rows) bySeg[r.seg] = r;
+  const rec = bySeg[seg] ?? rows[0];
+  const prog = rec;
+  const overlay = rec.overlay;
+  const stages: PjStageWithOverlay[] = PJ_STAGES.map((s) => {
+    const ov = overlay[s.id] ?? ['upcoming', 0];
+    return { ...s, st: ov[0], pct: ov[1] };
+  });
+  const stage = stages.find((s) => s.id === (sel ?? rec.current)) || stages[0];
 
   const mods = rec.modules;
   const clock = rec.clock;
@@ -379,17 +311,11 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
   const blockers = rec.blockers;
   const doneCount = stages.filter((s) => s.st === 'done').length;
 
-  const setSeg = (v: string) => {
-    try { (window as any).__C2C_SEGMENT = v; } catch (_e) { /* noop */ }
-    setSegState(v);
-    setSel((bySeg[v] ?? PJ_PROGRAMS[v]).current);
-  };
-
   return (
     <div className="pj">
       <div className="pj-head">
         <div>
-          <div className="pj-eyebrow">{seg === 'pharma' ? 'Pharma' : 'Biotech'} {I.dot} program lifecycle <SampleTag sample={!segIsLive} /></div>
+          <div className="pj-eyebrow">{seg === 'pharma' ? 'Pharma' : 'Biotech'} {I.dot} program lifecycle</div>
           <h1 className="pj-title">Program journey -- concept to submission</h1>
           <p className="pj-intro">The end-to-end regulatory arc for {prog.code}, from candidate selection to approval and lifecycle. Each stage carries its agency gate, deliverables and the tools that serve it -- and every intelligence signal routes into the surface that owns it.</p>
         </div>
