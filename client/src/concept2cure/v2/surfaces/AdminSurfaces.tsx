@@ -1,20 +1,21 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLive } from '../dataConnect';
+import { SampleTag, useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { getAuthToken } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { getSurfaceMeta } from '../registryModel';
 import { LIC_ROLES } from '../fixtures/licensing';
+// Canonical config kept (not fixture DATA): AUDIT_KINDS is the audit-kind
+// filter taxonomy the server's deriveKind() mirrors; PLATFORM_SERVICES is the
+// static platform-capability catalog; ARTIFACT_FMT is the format→label display
+// map. The fixture DATA constants (audit log, apps catalog, app license,
+// artifacts and access grants) were removed — every surface below now renders
+// real persisted data, an honest empty state, or an honest error state.
 import {
-  AUDIT_LOG,
   AUDIT_KINDS,
-  APPS_CATALOG,
-  APP_LICENSE,
   PLATFORM_SERVICES,
-  ARTIFACTS,
   ARTIFACT_FMT,
-  AC_GRANTS,
 } from '../fixtures/admin-data';
 import type {
   AuditEntry,
@@ -511,7 +512,17 @@ export function Setup({ onAsk }: SurfaceViewProps) {
   );
 }
 
-/* ════════════ Audit trail -- immutable hash-chain viewer (ss11.10(e)) ════════════ */
+/* ════════════ Audit trail -- immutable hash-chain viewer (ss11.10(e)) ════════════
+   Live-anchored to GET /api/audit-trail/ledger (mounted in
+   server/bootstrap/register-regulatory-routes.ts, router
+   server/routes/audit-trail-ledger.routes.ts). REAL: an org-scoped, newest-first
+   slice of the append-only, hash-chained `audit_events` table, returned in this
+   surface's exact AuditEntry display shape — hash/prevHash are the real stored
+   SHA-256 chain (genesis row → prevHash 'genesis'), sig is a genuine §11.50
+   signed status, reason/meaning are the stored values, and event/target/kind are
+   documented presentation derivations of real columns. No fixture: the surface
+   renders real rows, an honest empty state, or an honest error (a 503 when the
+   hash-chain schema isn't provisioned surfaces as the error state). */
 
 export function AuditTrail({ onAsk }: SurfaceViewProps) {
   const [kind, setKind] = useState('all');
@@ -521,7 +532,12 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
   const [exporting, setExporting] = useState(false);
   const term = q.toLowerCase();
 
-  const log = AUDIT_LOG.filter(
+  // Real hash-chained ledger. useLiveRows unwraps the { success, data } envelope,
+  // returns a fresh [] while loading / on error (rendered directly, so no seed
+  // loop), and sets `error` only on a genuine fetch failure.
+  const { rows: entries, loading, error } = useLiveRows<AuditEntry>('/api/audit-trail/ledger');
+
+  const log = entries.filter(
     (e) =>
       (kind === 'all' || e.kind === kind) &&
       (!term ||
@@ -533,7 +549,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
 
   const kindCounts = AUDIT_KINDS.map((k) => ({
     ...k,
-    n: k.id === 'all' ? AUDIT_LOG.length : AUDIT_LOG.filter((e) => e.kind === k.id).length,
+    n: k.id === 'all' ? entries.length : entries.filter((e) => e.kind === k.id).length,
   }));
 
   const kindColor: Record<string, string> = {
@@ -546,8 +562,11 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
     admin: 'var(--text-400)',
   };
 
-  const entry = sel ? AUDIT_LOG.find((e) => e.id === sel) : null;
+  const entry = sel ? entries.find((e) => e.id === sel) : null;
 
+  // MOCK ACTION (flagged for the actions pass): a real signed export exists at
+  // GET /api/audit/export{,/signed} — this button only spins a fake timer and
+  // produces no file. Left un-wired (DATA-pass scope), not deleted.
   const doExport = () => {
     setExporting(true);
     setTimeout(() => setExporting(false), 2000);
@@ -555,7 +574,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
 
   /* Hash-chain integrity check (visual) */
   const chainStatus = (() => {
-    const all = AUDIT_LOG;
+    const all = entries;
     let valid = 0;
     for (let i = 0; i < all.length; i++) {
       if (i === all.length - 1) {
@@ -572,7 +591,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       <AdminHeader
         eyebrow="Admin -- compliance"
         title="Audit trail"
-        sub={`${AUDIT_LOG.length} entries -- hash-chained -- append-only -- 21 CFR Part 11 ss11.10(e)`}
+        sub={`${entries.length} entries -- hash-chained -- append-only -- 21 CFR Part 11 ss11.10(e)`}
         actions={
           <React.Fragment>
             <button
@@ -594,6 +613,25 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
         }
       />
 
+      {loading ? (
+        <div className="scaf-note" style={{ padding: '18px 10px', maxWidth: 680 }}>
+          Loading audit trail…
+        </div>
+      ) : error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the audit trail"
+          hint="The append-only, hash-chained 21 CFR Part 11 ledger didn't respond. Sign in and retry, or check the audit service is reachable -- the trail is never shown as an empty 'no events' state when it can't be read."
+        />
+      ) : entries.length === 0 ? (
+        <EmptyState
+          icon={I.scroll}
+          title="No audit entries yet"
+          hint="Governed actions -- authoring, review, submission, vault locks and e-signatures -- are written here to the immutable hash-chained ledger as they happen."
+        />
+      ) : (
+        <React.Fragment>
       {/* Chain integrity banner */}
       <div
         style={{
@@ -630,7 +668,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
           </div>
         </div>
         <span className="mono" style={{ fontSize: 10, color: 'var(--text-400)' }}>
-          HEAD {AUDIT_LOG[0]?.hash}
+          HEAD {entries[0]?.hash}
         </span>
       </div>
 
@@ -683,7 +721,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-300)', marginBottom: 8 }}>
             Hash chain -- newest to oldest
           </div>
-          {AUDIT_LOG.map((e, i) => (
+          {entries.map((e, i) => (
             <div key={e.id} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
               <div
                 style={{
@@ -705,7 +743,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
                     marginTop: 8,
                   }}
                 />
-                {i < AUDIT_LOG.length - 1 && (
+                {i < entries.length - 1 && (
                   <div style={{ width: 2, flex: 1, background: 'var(--border)' }} />
                 )}
               </div>
@@ -937,6 +975,8 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
         historical entry breaks the chain. Export produces a Part 11-compliant signed PDF with the
         full verification manifest.
       </div>
+        </React.Fragment>
+      )}
     </div>
   );
 }
@@ -952,10 +992,10 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
                                  { currentCount, maxAllowed } } }
      PUT /:moduleId/toggle   → { moduleId, enabled } (admin-only; 403 with a
                                  reason when the tier does not include it)
-   Fail-closed: any fetch/shape failure keeps the curated APPS_CATALOG /
-   APP_LICENSE fixture with the Sample-data pill. Fields the backend cannot
-   truthfully supply (renewsAt — no renewal column is read anywhere server-side)
-   are left empty when live, never invented. */
+   Fixture-free: the surface renders the real catalog + license, an honest empty
+   state, or an honest error state — no APPS_CATALOG / APP_LICENSE fallback and no
+   Sample-data pill. Fields the backend cannot truthfully supply (renewsAt — no
+   renewal column is read anywhere server-side) are left empty, never invented. */
 
 /** One live catalog row (ModuleCatalogEntry, server/services/license-manager.ts). */
 interface LiveModuleEntry {
@@ -1058,26 +1098,26 @@ function mapLiveLicense(payload: unknown): AppLicense | null {
 
 export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   const open = (id: string) => onNav(id);
-  const catLive = useLive<unknown>('/api/module-subscriptions/catalog', null);
-  const licLive = useLive<unknown>('/api/module-subscriptions/license', null);
-  const liveCat = useMemo(
-    () => (catLive.sample ? null : mapLiveCatalog(catLive.data)),
-    [catLive.sample, catLive.data],
-  );
-  const liveLic = useMemo(
-    () => (licLive.sample ? null : mapLiveLicense(licLive.data)),
-    [licLive.sample, licLive.data],
-  );
-  const catalogIsLive = liveCat !== null;
-  const lic: AppLicense = liveLic ?? APP_LICENSE;
-  const [cat, setCat] = useState<AppGroup[]>(APPS_CATALOG);
+  // Fixture-free live reads. Both endpoints return a bare (non-enveloped) object,
+  // so useLiveData yields the payload directly ({ modules } / the license object).
+  const catState = useLiveData<{ modules: LiveModuleEntry[] }>('/api/module-subscriptions/catalog');
+  const licState = useLiveData<Record<string, unknown>>('/api/module-subscriptions/license');
+  const liveGroups = useMemo(() => mapLiveCatalog(catState.data), [catState.data]);
+  const lic = useMemo(() => mapLiveLicense(licState.data), [licState.data]);
+  // Editable copy for optimistic toggles, seeded once when the live catalog
+  // resolves. liveGroups is a stable reference until the fetch re-runs (useMemo
+  // over the resolved payload), so the seed effect fires once and never loops.
+  const [cat, setCat] = useState<AppGroup[]>([]);
   const seededRef = useRef<AppGroup[] | null>(null);
   useEffect(() => {
-    if (liveCat && seededRef.current !== liveCat) {
-      seededRef.current = liveCat;
-      setCat(liveCat);
+    if (liveGroups && seededRef.current !== liveGroups) {
+      seededRef.current = liveGroups;
+      setCat(liveGroups);
     }
-  }, [liveCat]);
+  }, [liveGroups]);
+  // Render from the optimistic copy once seeded, else straight from the live map
+  // (avoids a one-frame blank between the fetch resolving and the seed effect).
+  const groups = cat.length > 0 ? cat : liveGroups ?? [];
   const [admin, setAdmin] = useState(false);
   const [toast, setToast] = useState('');
   const fireToast = (m: string) => {
@@ -1085,49 +1125,44 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
     setTimeout(() => setToast(''), 3200);
   };
 
-  const tierLabel = lic.tier || 'professional';
-  const pj = lic.usage?.projects || { current: 0, limit: 0 };
-  const us = lic.usage?.users || { current: 0, limit: 0 };
+  const tierLabel = lic?.tier || '';
+  const pj = lic?.usage?.projects || { current: 0, limit: 0 };
+  const us = lic?.usage?.users || { current: 0, limit: 0 };
 
   const setOn = (groupIdx: number, appId: string, on: boolean) =>
-    setCat((prev) =>
-      prev.map((g, gi) =>
+    setCat((prev) => {
+      const base = prev.length > 0 ? prev : liveGroups ?? [];
+      return base.map((g, gi) =>
         gi !== groupIdx
           ? g
           : {
               ...g,
               apps: g.apps.map((a) => (a.id === appId ? { ...a, on } : a)),
             },
-      ),
-    );
+      );
+    });
 
   const toggle = async (groupIdx: number, appId: string, next: boolean) => {
-    const row = cat[groupIdx]?.apps.find((a) => a.id === appId);
+    const row = groups[groupIdx]?.apps.find((a) => a.id === appId);
     const label = row?.name || getSurfaceMeta(appId).label || appId;
     setOn(groupIdx, appId, next); // optimistic
-    if (!catalogIsLive) {
-      // Fixture mode — nothing to persist to; say so instead of faking success.
-      fireToast((next ? 'Enabled ' : 'Disabled ') + label + ' -- sample only, not persisted');
-      return;
-    }
     try {
-      // PUT /api/module-subscriptions/:moduleId/toggle (admin-only, org-scoped)
+      // PUT /api/module-subscriptions/:moduleId/toggle (admin-only, org-scoped) —
+      // a real, persisted write. apiRequest passes 401 through; other non-OK
+      // throws with the server's reason (admin required / tier does not include).
       const res = await apiRequest(
         'PUT',
         `/api/module-subscriptions/${encodeURIComponent(appId)}/toggle`,
         { enabled: next },
       );
       if (!res.ok) {
-        // apiRequest passes 401 through without throwing
         setOn(groupIdx, appId, !next);
         fireToast(`Could not ${next ? 'enable' : 'disable'} ${label} -- sign in required`);
         return;
       }
       fireToast((next ? 'Enabled ' : 'Disabled ') + label);
     } catch (e) {
-      // apiRequest throws on non-OK with the server's reason (e.g. admin
-      // required, or the tier does not include this module). Revert -- never
-      // report a write that did not happen.
+      // Revert -- never report a write that did not happen.
       setOn(groupIdx, appId, !next);
       fireToast(
         `Could not ${next ? 'enable' : 'disable'} ${label} -- ` +
@@ -1140,11 +1175,7 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
     <div className="page-inner">
       <AdminHeader
         eyebrow="Workspace -- /api/module-subscriptions"
-        title={
-          <React.Fragment>
-            Apps catalog <SampleTag sample={!catalogIsLive || liveLic === null} />
-          </React.Fragment>
-        }
+        title="Apps catalog"
         sub="Every application -- the destinations you open and work in -- entitlement-aware. Active apps launch; add-ons show an upgrade path, never a dead button. Platform services (below) are the capabilities that run inside these apps."
         actions={
           <button
@@ -1159,6 +1190,9 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
       />
 
       {/* License / entitlement header */}
+      {licState.loading ? (
+        <div className="scaf-note" style={{ marginBottom: 16 }}>Loading license…</div>
+      ) : lic ? (
       <div className="lic-band">
         <div className="lic-tier">
           <span className="lic-tier-dot" data-tier={tierLabel}></span>
@@ -1212,8 +1246,45 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
           {I.creditCard || I.zap} Manage plan
         </a>
       </div>
+      ) : (
+        <div
+          className="scaf-note"
+          style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}
+        >
+          {I.info}
+          <span>
+            License &amp; entitlement details are unavailable right now
+            {licState.error ? " -- the billing service didn't respond" : ''}.
+          </span>
+          <a
+            className="btn ghost"
+            style={{ height: 28, textDecoration: 'none', marginLeft: 'auto' }}
+            href="/settings/subscription"
+          >
+            {I.creditCard || I.zap} Manage plan
+          </a>
+        </div>
+      )}
 
-      {cat.map((g, gi) => (
+      {catState.loading ? (
+        <div className="sec">
+          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading apps…</div>
+        </div>
+      ) : catState.error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the apps catalog"
+          hint="The module-subscriptions service didn't respond. Sign in and retry, or check it's reachable."
+        />
+      ) : groups.length === 0 ? (
+        <EmptyState
+          icon={I.grid}
+          title="No apps enabled yet"
+          hint="Modules auto-provision by tier. Once provisioned, your apps appear here entitlement-aware -- active apps launch and add-ons show an upgrade path."
+        />
+      ) : (
+        groups.map((g, gi) => (
         <div className="sec" key={g.group}>
           <div className="sec-hdr">
             <div className="sec-title">{g.group}</div>
@@ -1297,7 +1368,8 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
             })}
           </div>
         </div>
-      ))}
+        ))
+      )}
 
       <div className="sec">
         <div className="sec-hdr">
@@ -1333,9 +1405,34 @@ export function Apps({ onAsk, onNav }: SurfaceViewProps) {
   );
 }
 
-/* ════════════ Artifacts Center ════════════ */
+/* ════════════ Artifacts Center ════════════
+   Live-anchored to GET /api/artifacts-center (mounted in
+   server/bootstrap/register-regulatory-routes.ts, router
+   server/routes/artifacts-center-routes.ts). REAL: one row per governed artifact
+   the org owns, from concept2cure_artifacts + concept2cure_signatures + projects,
+   in this surface's display shape. No fixture — real rows, honest empty, honest
+   error. `model` is nullable: the artifacts table does not persist the AnA
+   model/tier, so it is null unless a caller stored metadata.model (rendered '—',
+   never fabricated). */
+
+/** Live artifact row (server ArtifactCenterRow) — the fixture's ArtifactEntry
+    shape but with the truthful nullable `model`. */
+interface ArtifactRow {
+  id: string;
+  name: string;
+  kind: string;
+  fmt: string;
+  size: string;
+  model: string | null;
+  when: string;
+  ver: string;
+  sig: boolean;
+  prog: string;
+}
 
 export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
+  // Real cross-project artifact gallery, unwrapped from { success, data }.
+  const { rows, loading, error } = useLiveRows<ArtifactRow>('/api/artifacts-center');
   return (
     <div className="page-inner">
       <AdminHeader
@@ -1343,9 +1440,27 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
         title="Artifacts Center"
         sub="Every artifact AnA has drafted -- across projects, with version chain, provenance and signature status. Open a DOCX to edit it, or download a PDF."
         actions={
+          // MOCK ACTION (flagged): "Export all" has no handler and no bulk-export
+          // endpoint exists — inert button, left for a later actions pass.
           <button className="btn ghost">{I.externalLink} Export all</button>
         }
       />
+      {loading ? (
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading artifacts…</div>
+      ) : error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the Artifacts Center"
+          hint="The governed artifact gallery didn't respond. Sign in and retry, or check the service is reachable."
+        />
+      ) : rows.length === 0 ? (
+        <EmptyState
+          icon={I.fileText}
+          title="No artifacts yet"
+          hint="Every artifact AnA drafts across your projects lands here -- with its version chain, provenance and signature status. Draft a section, SAP, memo or report to get started."
+        />
+      ) : (
       <div className="ctable">
         <div
           className="ct-head"
@@ -1359,7 +1474,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
           <div>Sig</div>
           <div></div>
         </div>
-        {ARTIFACTS.map((a) => {
+        {rows.map((a) => {
           const f = ARTIFACT_FMT[a.fmt] || {
             label: a.fmt.toUpperCase(),
             tone: 'idle',
@@ -1390,7 +1505,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
               <div className="mono" style={{ fontSize: 11 }}>
                 {a.prog}
               </div>
-              <div style={{ color: 'var(--text-400)' }}>{a.model}</div>
+              <div style={{ color: 'var(--text-400)' }}>{a.model ?? '—'}</div>
               <div style={{ color: 'var(--text-400)' }}>{a.when}</div>
               <div>
                 {a.sig ? (
@@ -1418,6 +1533,7 @@ export function ArtifactsCenter({ onAsk, onNav }: SurfaceViewProps) {
           );
         })}
       </div>
+      )}
       <div className="svc-note" style={{ marginTop: 14 }}>
         {I.info}
         <span>
@@ -1454,7 +1570,16 @@ interface ValidationKit {
   artifacts: ValidationArtifact[];
   note: string;
 }
-const VKIT_FALLBACK: ValidationKit = { artifacts: [], note: '' };
+
+/** Live API-key row (subset of server listApiKeys()) — the fields the admin
+    console renders. keyPrefix is the stored public prefix, never the secret. */
+interface ApiKeyRow {
+  id: number | string;
+  name: string;
+  keyPrefix: string | null;
+  status: string | null;
+  lastUsedAt: string | null;
+}
 
 /** Short badge from a document's own status line (drafts ship as DRAFT). */
 function vkitBadge(status: string | null): string {
@@ -1485,9 +1610,11 @@ async function downloadValidationDoc(docId: string, filename: string): Promise<v
 
 /* Platform role grants — live from GET /api/admin/access/grants (the audited
    access-management router, server/routes/admin/access-management.ts). The read
-   is platform-admin gated; a 401/403 or any shape mismatch fails closed to the
-   AC_GRANTS fixture with the Sample pill. When live, create/revoke go to the
-   real POST/DELETE (both require a reason-for-change, which the form collects). */
+   is platform-admin gated; a 401/403 surfaces as an honest error state (no
+   fixture, no Sample pill), a successful read with no grants as an honest empty
+   state. create/revoke go to the real POST/DELETE (both require a
+   reason-for-change, which the form collects) and only report success on a real
+   2xx. */
 interface LiveGrant {
   id: number | string;
   user_id?: number;
@@ -1511,17 +1638,22 @@ function mapLiveGrant(r: LiveGrant): AcGrant {
 
 export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
   const [sec, setSec] = useState('access');
-  const vkit = useLive<ValidationKit>('/api/validation-kit', VKIT_FALLBACK);
+  // Fixture-free live reads, fetched only when their section is active
+  // (useLiveData no-ops on a null path). Each section renders real data, an
+  // honest empty state, or an honest error state — never a fixture.
+  const vkit = useLiveData<ValidationKit>(sec === 'validation' ? '/api/validation-kit' : null);
   const vkitDocs = vkit.data?.artifacts ?? [];
-  const grantsLive = useLive<{ grants?: LiveGrant[] } | null>('/api/admin/access/grants', null);
+  const grantsState = useLiveData<{ grants?: LiveGrant[] }>(
+    sec === 'access' ? '/api/admin/access/grants' : null,
+  );
   const liveGrants = useMemo(() => {
-    if (grantsLive.sample || !grantsLive.data) return null;
-    const arr = grantsLive.data.grants;
+    const arr = grantsState.data?.grants;
     if (!Array.isArray(arr)) return null;
     return arr.map(mapLiveGrant);
-  }, [grantsLive.sample, grantsLive.data]);
-  const grantsAreLive = liveGrants !== null;
-  const [grants, setGrants] = useState<AcGrant[]>(AC_GRANTS);
+  }, [grantsState.data]);
+  // Optimistic copy of the grants list, re-seeded once when the live read
+  // resolves (liveGrants identity is stable per resolved payload → no loop).
+  const [grants, setGrants] = useState<AcGrant[]>([]);
   const seededGrants = useRef<AcGrant[] | null>(null);
   useEffect(() => {
     if (liveGrants && seededGrants.current !== liveGrants) {
@@ -1529,6 +1661,14 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       setGrants(liveGrants);
     }
   }, [liveGrants]);
+  // Live module catalog (real per-org enabled/disabled state) for the Modules
+  // section, and live org API keys for the API-keys section.
+  const modState = useLiveData<{ modules: LiveModuleEntry[] }>(
+    sec === 'modules' ? '/api/module-subscriptions/catalog' : null,
+  );
+  const liveModules = (modState.data?.modules ?? []).filter(isLiveModuleEntry);
+  const keysState = useLiveData<{ keys: ApiKeyRow[] }>(sec === 'apikeys' ? '/api/api-keys' : null);
+  const apiKeys = Array.isArray(keysState.data?.keys) ? (keysState.data!.keys as ApiKeyRow[]) : [];
   const [form, setForm] = useState<AcFormState>({ email: '', role: 'support', reason: '' });
   const [toast, fireToast] = useToast();
   const nav = (id: string) => {
@@ -1554,90 +1694,67 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       (roleMeta && roleMeta.business ? 'Business-tier ' : '') +
       'role granted -- audited (Part 11)';
 
-    if (grantsAreLive) {
-      // Real, audited write. apiRequest throws on non-OK (except 401) with the
-      // server's reason (e.g. business-admin required, no such user).
-      try {
-        const res = await apiRequest('POST', '/api/admin/access/grants', {
-          email: form.email.trim(),
-          role: form.role,
-          reason: form.reason.trim(),
-        });
-        if (!res.ok) {
-          fireToast('Could not grant -- sign in as a platform admin');
-          return;
-        }
-        const row = await res.json().catch(() => null);
-        const rec: AcGrant = {
-          id: row?.id ?? Date.now(),
-          name: form.email.split('@')[0],
-          email: form.email.trim(),
-          role: form.role,
-          granted_by: row?.granted_by || 'you',
-          granted_at: row?.granted_at ? String(row.granted_at).slice(0, 10) : 'just now',
-          _new: true,
-        };
-        setGrants((g) => [rec, ...g.filter((x) => !(x.email === rec.email && x.role === rec.role))]);
-        fireToast(okMsg);
-        setForm({ email: '', role: 'support', reason: '' });
-      } catch (e) {
-        fireToast(
-          'Could not grant -- ' +
-            (e instanceof Error && e.message ? e.message : 'request failed'),
-        );
+    // Real, audited write. apiRequest passes 401 through; other non-OK throws
+    // with the server's reason (business-admin required, no such user). Only
+    // report success — and the "audited (Part 11)" message — on a real 2xx.
+    try {
+      const res = await apiRequest('POST', '/api/admin/access/grants', {
+        email: form.email.trim(),
+        role: form.role,
+        reason: form.reason.trim(),
+      });
+      if (!res.ok) {
+        fireToast('Could not grant -- sign in as a platform admin');
+        return;
       }
-      return;
+      const row = await res.json().catch(() => null);
+      const rec: AcGrant = {
+        id: row?.id ?? Date.now(),
+        name: form.email.split('@')[0],
+        email: form.email.trim(),
+        role: form.role,
+        granted_by: row?.granted_by || 'you',
+        granted_at: row?.granted_at ? String(row.granted_at).slice(0, 10) : 'just now',
+        _new: true,
+      };
+      setGrants((g) => [rec, ...g.filter((x) => !(x.email === rec.email && x.role === rec.role))]);
+      fireToast(okMsg);
+      setForm({ email: '', role: 'support', reason: '' });
+    } catch (e) {
+      fireToast(
+        'Could not grant -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
+      );
     }
-
-    // Sample mode — no audited backend reachable; record locally and say so
-    // rather than claim a write that did not happen.
-    const rec: AcGrant = {
-      id: Date.now(),
-      name: form.email.split('@')[0],
-      email: form.email.trim(),
-      role: form.role,
-      granted_by: 'you',
-      granted_at: 'just now',
-      _new: true,
-    };
-    setGrants((g) => [rec, ...g]);
-    fireToast(okMsg + ' -- sample only, not persisted');
-    setForm({ email: '', role: 'support', reason: '' });
   };
 
   const revoke = async (id: number) => {
-    if (grantsAreLive) {
-      const reason =
-        typeof window !== 'undefined' && window.prompt
-          ? window.prompt(
-              'Reason for revoking this grant (min 3 chars, recorded in the audit trail):',
-            )
-          : '';
-      if (reason == null) return; // cancelled
-      if (reason.trim().length < 3) {
-        fireToast('A reason (min 3 chars) is required to revoke');
-        return;
-      }
-      try {
-        const res = await apiRequest('DELETE', `/api/admin/access/grants/${id}`, {
-          reason: reason.trim(),
-        });
-        if (!res.ok) {
-          fireToast('Could not revoke -- sign in as a platform admin');
-          return;
-        }
-        setGrants((g) => g.filter((x) => x.id !== id));
-        fireToast('Grant revoked -- reason recorded -- audited');
-      } catch (e) {
-        fireToast(
-          'Could not revoke -- ' +
-            (e instanceof Error && e.message ? e.message : 'request failed'),
-        );
-      }
+    const reason =
+      typeof window !== 'undefined' && window.prompt
+        ? window.prompt(
+            'Reason for revoking this grant (min 3 chars, recorded in the audit trail):',
+          )
+        : '';
+    if (reason == null) return; // cancelled
+    if (reason.trim().length < 3) {
+      fireToast('A reason (min 3 chars) is required to revoke');
       return;
     }
-    setGrants((g) => g.filter((x) => x.id !== id));
-    fireToast('Grant revoked -- sample only, not persisted');
+    // Real, audited DELETE — only drop the row and report success on a real 2xx.
+    try {
+      const res = await apiRequest('DELETE', `/api/admin/access/grants/${id}`, {
+        reason: reason.trim(),
+      });
+      if (!res.ok) {
+        fireToast('Could not revoke -- sign in as a platform admin');
+        return;
+      }
+      setGrants((g) => g.filter((x) => x.id !== id));
+      fireToast('Grant revoked -- reason recorded -- audited');
+    } catch (e) {
+      fireToast(
+        'Could not revoke -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
+      );
+    }
   };
 
   const SECTIONS: [string, string, string][] = [
@@ -1657,9 +1774,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Admin -- /api/admin</div>
-          <h1 className="sp-title">
-            Admin console <SampleTag sample={true} />
-          </h1>
+          <h1 className="sp-title">Admin console</h1>
           <p className="sp-state">
             Designate personnel, manage SSO/SCIM, security policy, module entitlements and API
             keys -- every governed action carries a reason and a 21 CFR Part 11 audit entry.
@@ -1790,9 +1905,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
             {sec === 'access' && (
               <div>
                 <div className="pj-card-h" style={{ padding: 0, marginBottom: 12 }}>
-                  <span className="t">
-                    Platform role grants <SampleTag sample={!grantsAreLive} />
-                  </span>
+                  <span className="t">Platform role grants</span>
                   <span className="s">
                     {grants.length} active -- platform_role_grants
                   </span>
@@ -1838,7 +1951,23 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                 )}
                 <div className="sp-list" style={{ marginTop: 14 }}>
-                  {grants.map((g) => {
+                  {grantsState.loading && grants.length === 0 ? (
+                    <div className="scaf-note" style={{ padding: '14px 10px' }}>Loading grants…</div>
+                  ) : grantsState.error && grants.length === 0 ? (
+                    <EmptyState
+                      tone="error"
+                      icon={I.alertTriangle}
+                      title="Couldn't load access grants"
+                      hint="Platform role grants require a platform-admin session -- sign in and retry."
+                    />
+                  ) : grants.length === 0 ? (
+                    <EmptyState
+                      icon={I.shieldCheck}
+                      title="No platform role grants yet"
+                      hint="Grant a platform role above to designate personnel. Every grant carries a reason-for-change and a 21 CFR Part 11 audit entry."
+                    />
+                  ) : (
+                    grants.map((g) => {
                     const rm = LIC_ROLES.find((r) => r.id === g.role) || {
                       label: g.role,
                       business: false,
@@ -1866,32 +1995,24 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                         </button>
                       </div>
                     );
-                  })}
+                    })
+                  )}
                 </div>
               </div>
             )}
 
             {sec === 'org' && (
               <div className="ac-fields">
-                {(
-                  [
-                    ['Organization name', 'Bright Biosciences'],
-                    ['Organization type (industry_mode)', 'Virtual biotech'],
-                    ['Current tier', 'professional'],
-                    ['Payment status', 'active'],
-                    ['Region', 'US -- FDA primary'],
-                    ['Data residency', 'US-East'],
-                  ] as [string, string][]
-                ).map(([k, v], i) => (
-                  <div key={i} className="ac-field">
-                    <span className="k">{k}</span>
-                    <span className="v">{v}</span>
-                  </div>
-                ))}
-                <div className="scaf-note" style={{ marginTop: 6 }}>
-                  Profile drives rail categories, pathways and pricing archetype. Editing is
-                  governed via /api/setup.
-                </div>
+                {/* Backend gap: the only /api/setup routes are the first-run
+                    installer (GET /status, POST /initialize); there is no
+                    governed org-profile READ endpoint to source these fields, so
+                    we show an honest empty state rather than a fabricated org
+                    profile (name / industry mode / tier / region / residency). */}
+                <EmptyState
+                  icon={I.building}
+                  title="Organization profile not yet available"
+                  hint="A governed org-profile read isn't wired yet. The profile (name, industry mode, tier, region, data residency) drives rail categories, pathways and pricing archetype; editing is governed via /api/setup."
+                />
               </div>
             )}
 
@@ -1976,27 +2097,42 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
               <div>
                 <div className="scaf-note" style={{ marginBottom: 10 }}>
                   Modules auto-provision by tier (module_subscriptions --
-                  provisionModulesForTier). Toggle to enable/disable for this organization;
-                  locked modules show an upgrade path, never a dead button.
+                  provisionModulesForTier). This organization's live entitlement state is shown
+                  below; enable or disable modules in the Apps catalog.
                 </div>
-                <div className="ob-mods">
-                  {[
-                    'AI Copilot (AnA)',
-                    'eCTD Authoring',
-                    '510(k) Module',
-                    'CER Generation',
-                    'CMC / Module 3',
-                    'Advanced Analytics',
-                    'SAML SSO',
-                    'Compliance Audit Pack',
-                    'Deep Research',
-                    'Biostatistics',
-                  ].map((m, i) => (
-                    <span key={i} className="ob-mod">
-                      {I.check} {m}
-                    </span>
-                  ))}
-                </div>
+                {modState.loading ? (
+                  <div className="scaf-note" style={{ padding: '14px 10px' }}>Loading modules…</div>
+                ) : modState.error ? (
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="Couldn't load module subscriptions"
+                    hint="The module-subscriptions service didn't respond. Sign in and retry, or check it's reachable."
+                  />
+                ) : liveModules.length === 0 ? (
+                  <EmptyState
+                    icon={I.grid}
+                    title="No modules provisioned yet"
+                    hint="Modules auto-provision by tier. Once provisioned, this organization's enabled modules appear here."
+                  />
+                ) : (
+                  <div className="ob-mods">
+                    {liveModules.map((m) => (
+                      <span
+                        key={m.moduleId}
+                        className="ob-mod"
+                        style={m.isEnabled ? undefined : { opacity: 0.55 }}
+                        title={
+                          m.isEnabled
+                            ? 'Enabled for this organization'
+                            : 'Not enabled for this organization'
+                        }
+                      >
+                        {m.isEnabled ? I.check : I.lock} {m.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -2006,29 +2142,52 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                   Programmatic access tokens (/api/api-keys) -- org-scoped, hashed at rest,
                   last-used tracked, revocable. Every use is audited.
                 </div>
-                <div className="sp-list">
-                  {(
-                    [
-                      ['Production integration', 'pk_live_....4f2a', 'used 2h ago'],
-                      ['CI validation', 'pk_live_....9c11', 'used 3d ago'],
-                    ] as [string, string, string][]
-                  ).map(([n, k, u], i) => (
-                    <div key={i} className="sp-row">
-                      <span className="sp-q-ic">{I.terminal || I.key}</span>
-                      <span className="sp-row-b">
-                        <span className="sp-row-t">{n}</span>
-                        <span className="sp-row-s" style={{ fontFamily: 'var(--font-mono)' }}>
-                          {k} -- {u}
+                {keysState.loading ? (
+                  <div className="scaf-note" style={{ padding: '14px 10px' }}>Loading API keys…</div>
+                ) : keysState.error ? (
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="Couldn't load API keys"
+                    hint="Managing API keys requires an admin session -- sign in and retry."
+                  />
+                ) : apiKeys.length === 0 ? (
+                  <EmptyState
+                    icon={I.terminal}
+                    title="No API keys yet"
+                    hint="Create an org-scoped API key for programmatic access. Keys are hashed at rest and every use is audited."
+                  />
+                ) : (
+                  <div className="sp-list">
+                    {apiKeys.map((k) => (
+                      <div key={String(k.id)} className="sp-row">
+                        <span className="sp-q-ic">{I.terminal || I.key}</span>
+                        <span className="sp-row-b">
+                          <span className="sp-row-t">{k.name}</span>
+                          <span className="sp-row-s" style={{ fontFamily: 'var(--font-mono)' }}>
+                            {k.keyPrefix ? k.keyPrefix + '…' : '—'}
+                            {k.lastUsedAt
+                              ? ' -- used ' + String(k.lastUsedAt).slice(0, 10)
+                              : ' -- never used'}
+                            {k.status && k.status !== 'active' ? ' -- ' + k.status : ''}
+                          </span>
                         </span>
-                      </span>
-                      <button className="ac-revoke">{I.close}</button>
-                    </div>
-                  ))}
-                </div>
+                        {/* MOCK ACTION (flagged for the actions pass): revoke is a real,
+                            audited DELETE /api/api-keys/:id — not wired here; button is inert. */}
+                        <button className="ac-revoke" title="Revoke -- not yet wired">
+                          {I.close}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* MOCK ACTION (flagged for the actions pass): create is a real
+                    POST /api/api-keys that returns the secret once — this button only
+                    toasts, it does not mint a key. */}
                 <button
                   className="sp-primary"
                   style={{ marginTop: 12, padding: '8px 14px' }}
-                  onClick={() => fireToast('Create API key (POST /api/api-keys)')}
+                  onClick={() => fireToast('Create API key -- not yet wired (POST /api/api-keys)')}
                 >
                   {I.plus} Create API key
                 </button>

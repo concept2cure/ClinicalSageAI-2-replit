@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   LIC_ARCHETYPES,
@@ -21,7 +20,21 @@ function _lim(n: number): string | number {
 /* ── Onboarding wizard ──
    Grounded in the real org model: organizations.industry_mode
    (LIC_ARCHETYPES) -> pricing family -> tier -> seats/billing_cycle ->
-   tier->module provisioning -> personnel roles -> activate via /api/billing. */
+   tier->module provisioning -> personnel roles -> activate via /api/billing.
+
+   DATA HONESTY: this surface renders NO persisted org data — it is a
+   config-driven input wizard. The pricing / archetype / role / tier-level /
+   bundle constants it shows are CANONICAL CONFIG, mirrored verbatim from the
+   server source of truth (server/services/billing.ts PRICING / DTC_PRICING /
+   BUNDLE_DISCOUNTS; access-management.ts GRANTABLE_ROLES) that drives the real
+   Stripe checkout — the genuine plan catalog, not a fabricated stand-in — so
+   they are kept, not re-anchored. (GET /api/billing/pricing and
+   /api/billing/dtc-pricing exist but STUB the same hardcoded constant and
+   return a reshaped subset that drops fields this wizard renders — features,
+   includedTokensMonthly, baseMonthly — so they are not a viable live anchor
+   today.) The legacy page-level "Sample data" SampleTag has been removed:
+   nothing here is fabricated sample data. `activate()` is a flagged MOCK
+   ACTION — see the comment at that function. */
 
 export function Onboarding({ onAsk }: SurfaceViewProps) {
   const [step, setStep] = useState(0);
@@ -101,17 +114,23 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
     ].filter(Boolean) as string[];
   };
 
+  // FLAG — MOCK ACTION (for the actions pass): this fakes activation. Real
+  // endpoints exist and should be wired here: DTC self-service -> POST
+  // /api/billing/dtc-checkout (returns a Stripe Checkout URL to redirect to;
+  // the free tier provisions immediately), per-user / enterprise -> POST
+  // /api/billing/checkout, and personnel invites -> the access-management grant
+  // API. Until then no workspace is created, no trial starts, no plan is
+  // provisioned, and no invites are sent — the done-screen copy below is
+  // written honestly to reflect that activation happens through billing
+  // checkout, not here.
   const activate = () => {
     setDone(true);
-    if (tier === 'enterprise') return;
-    /* Sample: would POST /dtc-checkout or /checkout */
   };
 
   const canNext = step === 0 ? org.name.trim().length > 1 : true;
 
   return (
     <div className="sp" style={{ maxWidth: 960 }}>
-      <SampleTag sample={true} />
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Onboarding {I.dot} new organization</div>
@@ -145,17 +164,21 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
           {done ? (
             <div className="ob-done">
               <div className="ob-done-ic">{I.checkCircle || I.check}</div>
-              <h2>{org.name || 'Your workspace'} is ready</h2>
+              <h2>{org.name || 'Your workspace'} is ready to activate</h2>
               <p>
                 {tier === 'enterprise'
-                  ? 'Our team will contact you to finalize the Enterprise agreement.'
+                  ? 'Enterprise plans use custom pricing finalized with our team.'
                   : model === 'dtc' && selTier.trialDays > 0
-                    ? selTier.trialDays +
-                      '-day trial started on the ' +
+                    ? 'Next: start your ' +
+                      selTier.trialDays +
+                      '-day trial on the ' +
                       selTier.name +
-                      ' plan.'
-                    : 'Provisioned on the ' + selTier.name + ' plan.'}
-                {' '}Modules for the {tier} tier are enabled.
+                      ' plan through secure checkout.'
+                    : 'Next: activate the ' +
+                      selTier.name +
+                      ' plan through secure checkout.'}
+                {' '}Modules for the {tier} tier are provisioned automatically
+                once the plan is active.
               </p>
               <div
                 className="cm-pushbar"
@@ -386,7 +409,8 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
                         letterSpacing: 0,
                       }}
                     >
-                      - roles are governed &amp; audited (21 CFR Part 11)
+                      - role grants on this platform are governed &amp; audited
+                      (21 CFR Part 11)
                     </span>
                   </div>
                   {invites.map((inv, i) => (
@@ -444,7 +468,7 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
                     <b>&nbsp;{tier}&nbsp;</b> tier
                   </div>
                   <div className="scaf-note" style={{ marginBottom: 10 }}>
-                    On activation, {org.name || 'your organization'} is
+                    Once the plan is active, {org.name || 'your organization'} is
                     auto-provisioned every module its tier qualifies for
                     (provisionModulesForTier - tier level{' '}
                     {tierLevel[tier] ?? '—'}).
@@ -492,7 +516,7 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
                       [
                         'Personnel',
                         invites.filter((x) => x.email).length +
-                          ' invited',
+                          ' to invite',
                       ],
                     ] as [string, string][]
                   ).map(([k, v], i) => (
