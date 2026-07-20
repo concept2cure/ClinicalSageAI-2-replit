@@ -32,6 +32,7 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 // tmfArtifactName maps a reference-model code → its human name. It reads the
@@ -113,49 +114,50 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
 
   const reload = () => setReloadKey((k) => k + 1);
 
-  /* File a missing essential -- real POST /artifacts (drizzle-backed, audited). */
-  /* FLAG (actions pass): uses window.C2C_API rather than the shared fetch; real
-     endpoint, so kept + refetches on success. No fabricated success offline. */
-  const fileArtifact = (code: string) => {
+  /* File a missing essential — real POST /artifacts (drizzle-backed, audited),
+     via the canonical apiRequest (bearer + x-organization-id auth). Refetches on
+     success; an auth/network failure is stated honestly and nothing is filed. */
+  const fileArtifact = async (code: string) => {
     if (!tid) return;
-    if ((window as any).C2C_API && (window as any).C2C_API.connected()) {
-      setBusy(true);
-      (window as any).C2C_API.post('/api/etmf/trials/' + encodeURIComponent(tid) + '/artifacts', { artifactCode: code, documentRef: 'vault://' + tid + '/' + code })
-        .then(() => { setToast(tmfArtifactName(code) + ' filed to the TMF'); reload(); })
-        .catch(() => { setToast('Couldn’t file ' + tmfArtifactName(code) + ' -- not persisted, try again'); })
-        .then(() => { setBusy(false); setTimeout(() => setToast(''), 2800); });
-    } else {
-      setToast('Sign in to file ' + tmfArtifactName(code) + ' -- not persisted while offline');
-      setTimeout(() => setToast(''), 2800);
+    setBusy(true);
+    try {
+      const res = await apiRequest('POST', '/api/etmf/trials/' + encodeURIComponent(tid) + '/artifacts', { artifactCode: code, documentRef: 'vault://' + tid + '/' + code });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      setToast(tmfArtifactName(code) + ' filed to the TMF'); reload();
+    } catch {
+      setToast('Couldn’t file ' + tmfArtifactName(code) + ' -- not persisted, try again');
+    } finally {
+      setBusy(false); setTimeout(() => setToast(''), 2800);
     }
   };
 
-  /* Bulk file all open essentials -- real POST /artifacts/bulk (audited). */
-  /* FLAG (actions pass): same as fileArtifact — real endpoint via window.C2C_API. */
-  const fileBulk = (codes: string[]) => {
+  /* Bulk file all open essentials — real POST /artifacts/bulk (audited), via the
+     canonical apiRequest. Reads the server's filed/total counts from the
+     response ({ data }-unwrapped); an auth/network failure is stated honestly. */
+  const fileBulk = async (codes: string[]) => {
     if (!tid || !codes || !codes.length) return;
-    if ((window as any).C2C_API && (window as any).C2C_API.connected()) {
-      setBusy(true);
-      (window as any).C2C_API.post('/api/etmf/trials/' + encodeURIComponent(tid) + '/artifacts/bulk',
-        { artifacts: codes.map((c) => ({ artifactCode: c, documentRef: 'vault://' + tid + '/' + c })) })
-        .then((r: any) => {
-          const n = (r && r.filed != null) ? r.filed : codes.length;
-          const t = (r && r.total != null) ? r.total : codes.length;
-          setToast(n + ' of ' + t + ' essentials filed to the TMF'); reload();
-        })
-        .catch(() => { setToast('Couldn’t file the essentials -- not persisted, try again'); })
-        .then(() => { setBusy(false); setTimeout(() => setToast(''), 3000); });
-    } else {
-      setToast('Sign in to file ' + codes.length + ' essentials -- not persisted while offline');
-      setTimeout(() => setToast(''), 3000);
+    setBusy(true);
+    try {
+      const res = await apiRequest('POST', '/api/etmf/trials/' + encodeURIComponent(tid) + '/artifacts/bulk',
+        { artifacts: codes.map((c) => ({ artifactCode: c, documentRef: 'vault://' + tid + '/' + c })) });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const j = await res.json().catch(() => null);
+      const body = (j && typeof j === 'object' && 'data' in j) ? (j as { data: { filed?: number; total?: number } }).data : j;
+      const n = (body && body.filed != null) ? body.filed : codes.length;
+      const t = (body && body.total != null) ? body.total : codes.length;
+      setToast(n + ' of ' + t + ' essentials filed to the TMF'); reload();
+    } catch {
+      setToast('Couldn’t file the essentials -- not persisted, try again');
+    } finally {
+      setBusy(false); setTimeout(() => setToast(''), 3000);
     }
   };
 
-  /* Generate / download the inspection package from the REAL assessment. */
-  /* FLAG (actions pass): raw fetch + window.C2C_API auth headers for the ZIP;
-     real endpoint. Offline fallback renders a markdown report from the real
-     completeness `R` (never a fixture). */
-  const generatePackage = () => {
+  /* Generate / download the inspection package from the REAL assessment, via the
+     canonical apiRequest (auth handled). On any failure it falls back to the
+     honest markdown readiness report built from the real completeness `R` (never
+     a fixture), so the user always gets a real artifact. */
+  const generatePackage = async () => {
     if (!R || !tid) return;
     setBusy(true);
     setDl(null);
@@ -164,21 +166,17 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
       const md = readinessReportMd(tid, scope, R, missing);
       downloadBlob(tid + '_inspection-readiness.md', new Blob([md], { type: 'text/markdown' }));
     };
-    if ((window as any).C2C_API && (window as any).C2C_API.connected()) {
-      const url = ((window as any).C2C_API.base() || '') + '/api/etmf/trials/' + encodeURIComponent(tid) + '/inspection-package?scope=' + scope;
-      let hdrs: Headers | null = null;
-      fetch(url, { headers: (window as any).C2C_API.getAuthHeaders() })
-        .then((res: Response) => { if (!res.ok) throw new Error('HTTP ' + res.status); hdrs = res.headers; return res.blob(); })
-        .then((blob: Blob) => {
-          downloadBlob(tid + '_inspection-package.zip', blob);
-          const sha = hdrs && hdrs.get && hdrs.get('X-TMF-SHA256');
-          const rdy = hdrs && hdrs.get && hdrs.get('X-TMF-Ready');
-          setToast('Inspection index generated' + (rdy != null ? ' -- ' + ((rdy === 'true' || rdy === '1') ? 'ready' : 'gaps remain') : '') + (sha ? ' -- SHA-256 ' + String(sha).slice(0, 10) + '...' : '') + ' -- index + readiness, not the document bytes');
-          setTimeout(() => setToast(''), 4400);
-          finish('zip');
-        })
-        .catch(() => { downloadReport(); finish('report'); });
-    } else {
+    try {
+      const res = await apiRequest('GET', '/api/etmf/trials/' + encodeURIComponent(tid) + '/inspection-package?scope=' + scope);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const blob = await res.blob();
+      downloadBlob(tid + '_inspection-package.zip', blob);
+      const sha = res.headers.get('X-TMF-SHA256');
+      const rdy = res.headers.get('X-TMF-Ready');
+      setToast('Inspection index generated' + (rdy != null ? ' -- ' + ((rdy === 'true' || rdy === '1') ? 'ready' : 'gaps remain') : '') + (sha ? ' -- SHA-256 ' + String(sha).slice(0, 10) + '...' : '') + ' -- index + readiness, not the document bytes');
+      setTimeout(() => setToast(''), 4400);
+      finish('zip');
+    } catch {
       downloadReport();
       finish('report');
     }
