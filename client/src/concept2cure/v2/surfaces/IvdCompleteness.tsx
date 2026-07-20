@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLive } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { DOSSIER_SPINES, flattenDocs } from '../fixtures/dossier-data';
 import type { DossierDoc } from '../fixtures/dossier-data';
@@ -27,6 +27,23 @@ interface IvdItem {
   status: string;
   pct: number;
   flag?: string;
+}
+
+/* ── Live board types -- GET /api/ivd-completeness/completeness returns
+   { success, data: <board> }; useLive assigns the whole HTTP body to `.data`, so
+   the display payload is at `.data.data`. Mirrors the route's display shape. The
+   live families carry no `match` predicate (server display shape), hence
+   Omit<IvdFamily, 'match'>. ── */
+interface IvdBoardSummary { total: number; evidenced: number; inProgress: number; notStarted: number; flags: number; }
+interface IvdBoardData {
+  program: string | null;
+  spine: string;
+  standard: string;
+  overall: number;
+  summary: IvdBoardSummary;
+  families: Omit<IvdFamily, 'match'>[];
+  gsprSourced: boolean;
+  perDocumentPresent: boolean;
 }
 
 const IVD_FAMILIES_SEED: { id: string; label: string; ref: string; blurb: string; match: (s: DossierDoc) => boolean }[] = [
@@ -78,8 +95,10 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
   const spine = DOSSIER_SPINES.diagnostics || { tree: [], program: '', spine: '' };
   const leaves = useMemo(() => flattenDocs(spine.tree), [spine.tree]);
 
-  /* build the family checklist from the REAL spine leaves */
-  const families = useMemo<IvdFamily[]>(() => {
+  /* FIXTURE FALLBACK -- build the family checklist from the REAL spine leaves.
+     Kept as the fail-closed source that renders whenever the live read-model is
+     unreachable, unprovisioned (503) or shape-mismatched. */
+  const fixtureFamilies = useMemo<IvdFamily[]>(() => {
     const used: Record<string, boolean> = {};
     const fam = IVD_FAMILIES_SEED.map(f => {
       const items: IvdItem[] = leaves.filter(s => {
@@ -102,6 +121,66 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
     return [...fam, pm];
   }, [leaves]);
 
+  /* Shape-exact { data: <board> } fixture so `.data.data` is uniform whether the
+     response is live or the sample fallback (mirrors the route's display shape).
+     Only ever used as the useLive fallback -- the surface renders fixtureFamilies
+     directly in sample mode, so this content is never presented as live. */
+  const fixtureBoard = useMemo<IvdBoardData>(() => {
+    const its = fixtureFamilies.reduce<IvdItem[]>((a, f) => a.concat(f.items), []);
+    const ov = its.length ? Math.round(its.reduce((a, b) => a + (b.pct || 0), 0) / its.length) : 0;
+    return {
+      program: spine.program || null,
+      spine: spine.spine || 'EU IVDR Annex II/III',
+      standard: 'IVDR',
+      overall: ov,
+      summary: {
+        total: its.length,
+        evidenced: its.filter(i => (i.pct || 0) >= 100).length,
+        inProgress: its.filter(i => (i.pct || 0) > 0 && (i.pct || 0) < 100).length,
+        notStarted: its.filter(i => (i.pct || 0) === 0).length,
+        flags: its.filter(i => i.flag).length,
+      },
+      families: fixtureFamilies.map(f => ({ id: f.id, label: f.label, ref: f.ref, blurb: f.blurb, pct: f.pct, items: f.items })),
+      gsprSourced: false,
+      perDocumentPresent: false,
+    };
+  }, [fixtureFamilies, spine.program, spine.spine]);
+
+  /* LIVE read-model -- GET /api/ivd-completeness/completeness -> { success, data }.
+     useLive assigns the whole body to `.data`, so the board is at `.data.data`.
+     Fetched only on the IVD segment. Trust live ONLY when it is not the sample
+     fallback AND the families array structurally matches the display contract
+     (the route fail-closes with 503 when unprovisioned, which useLive already
+     turns into the sample fallback -- there is no separate provisioned flag to
+     gate on). Otherwise fail closed to the derived fixture, shown as "Sample data". */
+  const livePath = seg === 'diagnostics' ? '/api/ivd-completeness/completeness' : null;
+  const raw = useLive<{ data?: IvdBoardData }>(livePath, { data: fixtureBoard });
+  const board = raw.data?.data;
+  const familiesLive = Boolean(
+    !raw.sample &&
+    board &&
+    Array.isArray(board.families) &&
+    board.families.length > 0 &&
+    typeof board.families[0]?.id === 'string' &&
+    typeof board.families[0]?.label === 'string' &&
+    Array.isArray(board.families[0]?.items),
+  );
+  const liveFamilies = familiesLive ? board!.families : null;
+  const familiesSample = !familiesLive;
+
+  /* Selected families: live when trusted, else the derived fixture. Live board
+     families carry no `match` predicate, so add an inert one to satisfy the local
+     IvdFamily contract -- exactly as the post-market fixture family does. */
+  const families: IvdFamily[] = liveFamilies
+    ? liveFamilies.map(f => ({ ...f, match: () => false }))
+    : fixtureFamilies;
+
+  /* Honest nulls: the live program is string | null (the route emits null when no
+     device/PER record names the program) -- fall back to the generic label rather
+     than fabricate a name, mirroring the existing sample behaviour. */
+  const program = familiesLive ? board!.program : (spine.program || null);
+  const spineLabel = (familiesLive ? board!.spine : spine.spine) || 'EU IVDR Annex II/III';
+
   const allItems = families.reduce<IvdItem[]>((a, f) => a.concat(f.items), []);
   const overall = allItems.length ? Math.round(allItems.reduce((a, b) => a + (b.pct || 0), 0) / allItems.length) : 0;
   const missing = allItems.filter(i => (i.pct || 0) === 0);
@@ -109,7 +188,15 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
   const done = allItems.filter(i => (i.pct || 0) >= 100);
   const flags = allItems.filter(i => i.flag);
 
+  /* Open state seeds the first four requirement families, then re-seeds to the
+     first four LIVE families once the live board arrives. Family ids are stable
+     across seed and server, so this is a no-op in practice but stays correct if
+     the server's order or ids differ. */
   const [open, setOpen] = useState<string[]>(IVD_FAMILIES_SEED.slice(0, 4).map(f => f.id));
+  useEffect(() => {
+    if (liveFamilies) setOpen(liveFamilies.slice(0, 4).map(f => f.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [familiesLive]);
   const toggle = (id: string) => { setOpen(p => p.indexOf(id) >= 0 ? p.filter(x => x !== id) : p.concat([id])); };
 
   /* wrong-segment guard: this view is IVD-only */
@@ -136,10 +223,10 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
       <div className="ivd-head">
         <div className="ivd-eyebrow">
           <span className="ivd-kicker">IVDR technical file -- performance evaluation</span>
-          <span className="ivd-src sample">Sample data</span>
+          <SampleTag sample={familiesSample} />
         </div>
-        <h1 className="ivd-title">{spine.program || 'IVD program'}</h1>
-        <div className="ivd-sub">{spine.spine || 'EU IVDR Annex II/III'} -- validate-completeness (IVDR branch)</div>
+        <h1 className="ivd-title">{program || 'IVD program'}</h1>
+        <div className="ivd-sub">{spineLabel} -- validate-completeness (IVDR branch)</div>
       </div>
 
       <div className="ivd-lead">
@@ -174,7 +261,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
               </button>
               {isOpen && (
                 <div className="ivd-items">
-                  <p className="ivd-fam-blurb">{f.blurb}</p>
+                  <p className="ivd-fam-blurb">{f.blurb} <SampleTag sample={familiesSample} /></p>
                   {f.items.map((it, i) => {
                     const t = ivdTone(it.pct, it.status);
                     return (
@@ -199,7 +286,9 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
         })}
       </div>
 
-      <p className="ivd-foot">Requirements and status derive from this project's IVDR technical file (Annex II/III). Connect the backend to compute completeness live from the validate-completeness engine's IVDR branch.</p>
+      <p className="ivd-foot">{familiesSample
+        ? "Requirements and status derive from this project's IVDR technical file (Annex II/III). Connect the backend to compute completeness live from the validate-completeness engine's IVDR branch."
+        : "Requirements and status are computed live from your organization's IVDR records (Annex II/III) via the validate-completeness engine's IVDR branch."}</p>
     </div>
   );
 }

@@ -17,8 +17,12 @@ export interface PrecedentResult {
   decisionOutcome: string;
   productCode: string;
   therapeuticArea: string;
-  cycle: number;
-  match: number;
+  // Widened to `| null` to mirror the live read-model contract
+  // (server/routes/precedent-engine-board.ts): review-cycle days are not
+  // sourceable via the service (always null), and match is the engine's
+  // similarityScore when present, else null. The surface guards both.
+  cycle: number | null;
+  match: number | null;
   riskFactors: string[];
   predicateKNumber: string | null;
 }

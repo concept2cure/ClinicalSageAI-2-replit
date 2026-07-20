@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLive } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import {
@@ -23,6 +23,40 @@ import '../styles/project-home-v2.css';
 
 type AnalysisState = RiskAnalysis | Strategy | PatternAnalysis;
 
+/* ── Live board contract — GET /api/precedent-engine-board -> { success, data }.
+   Fields are optional because a fail-closed guard must not trust the shape until
+   it has been structurally checked (the backend degrades any sub-call to an
+   honest empty value rather than 500-ing the whole board). ── */
+interface PrecedentBoardData {
+  results?: PrecedentResult[];
+  risk?: RiskAnalysis;
+  strategy?: Strategy;
+  patterns?: {
+    crl?: PatternAnalysis;
+    rtf?: PatternAnalysis;
+    ema?: PatternAnalysis;
+    adcomm?: PatternAnalysis;
+  };
+}
+
+/* The { success, data } payload the board falls back to when the live read-model
+   is unreachable or does not yet structurally match — shape-exact so `.data.data`
+   is uniform whether live or sample. Never deleted: this is the fail-closed
+   fixture the surface renders (and honestly labels "Sample data"). */
+const PE_BOARD_FIXTURE: { data: PrecedentBoardData } = {
+  data: {
+    results: PE_RESULTS,
+    risk: PE_RISK,
+    strategy: PE_STRATEGY,
+    patterns: {
+      crl: PE_PATTERNS.crl,
+      rtf: PE_PATTERNS.rtf,
+      ema: PE_PATTERNS.ema,
+      adcomm: PE_PATTERNS.adcomm,
+    },
+  },
+};
+
 /* ════ PrecedentEngine — precedent intelligence workbench ════ */
 
 export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
@@ -37,33 +71,101 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
   const [results, setResults] = useState<PrecedentResult[]>(PE_RESULTS);
   const [selK, setSelK] = useState(PE_RESULTS[0].clearanceNumber);
   const [tab, setTab] = useState('risk');
-  const [analysis, setAnalysis] = useState<AnalysisState>(PE_RISK);
   const [claim, setClaim] = useState('');
   const [claimRes, setClaimRes] = useState<ClaimResult | null>(null);
   const [busy, setBusy] = useState(false);
 
+  /* ── Live board — GET /api/precedent-engine-board -> { success, data }.
+     `useLive` assigns the WHOLE body to `.data`, so the display payload is at
+     `raw.data.data`. Each slice is trusted as live ONLY when the response is not
+     the fixture, structurally matches the display contract, and carries content;
+     otherwise it fails closed to its fixture (shown honestly as "Sample data").
+     The real-time claim check below is a separate POST endpoint and stays
+     fixture-backed. ── */
+  const raw = useLive<{ data?: PrecedentBoardData }>('/api/precedent-engine-board', PE_BOARD_FIXTURE);
+  const board = raw.data?.data;
+
+  const resultsLive = Boolean(
+    !raw.sample &&
+    board &&
+    Array.isArray(board.results) &&
+    board.results.length > 0 &&
+    typeof board.results[0]?.clearanceNumber === 'string' &&
+    typeof board.results[0]?.deviceName === 'string',
+  );
+  const riskLive = Boolean(
+    !raw.sample &&
+    board &&
+    board.risk &&
+    Array.isArray(board.risk.factors) &&
+    board.risk.factors.length > 0 &&
+    typeof board.risk.factors[0]?.label === 'string',
+  );
+  const strategyLive = Boolean(
+    !raw.sample &&
+    board &&
+    board.strategy &&
+    typeof board.strategy.recommendation === 'string' &&
+    Array.isArray(board.strategy.rationale) &&
+    board.strategy.rationale.length > 0,
+  );
+  const patternOk = (p?: PatternAnalysis) =>
+    Boolean(!raw.sample && p && typeof p.title === 'string' && Array.isArray(p.items) && p.items.length > 0);
+  const crlLive = patternOk(board?.patterns?.crl);
+  const rtfLive = patternOk(board?.patterns?.rtf);
+  const emaLive = patternOk(board?.patterns?.ema);
+  const adcommLive = patternOk(board?.patterns?.adcomm);
+
+  /* Effective slices: the live value when trusted, else the fail-closed fixture. */
+  const effResults: PrecedentResult[] = resultsLive ? (board!.results ?? PE_RESULTS) : PE_RESULTS;
+  const effRisk: RiskAnalysis = riskLive ? (board!.risk ?? PE_RISK) : PE_RISK;
+  const effStrategy: Strategy = strategyLive ? (board!.strategy ?? PE_STRATEGY) : PE_STRATEGY;
+  const effPatterns = {
+    crl: crlLive ? (board!.patterns?.crl ?? PE_PATTERNS.crl) : PE_PATTERNS.crl,
+    rtf: rtfLive ? (board!.patterns?.rtf ?? PE_PATTERNS.rtf) : PE_PATTERNS.rtf,
+    ema: emaLive ? (board!.patterns?.ema ?? PE_PATTERNS.ema) : PE_PATTERNS.ema,
+    adcomm: adcommLive ? (board!.patterns?.adcomm ?? PE_PATTERNS.adcomm) : PE_PATTERNS.adcomm,
+  };
+  const analysisMap: Record<string, AnalysisState> = {
+    risk: effRisk,
+    strategy: effStrategy,
+    crl: effPatterns.crl,
+    rtf: effPatterns.rtf,
+    ema: effPatterns.ema,
+    adcomm: effPatterns.adcomm,
+  };
+  const tabLive: Record<string, boolean> = {
+    risk: riskLive,
+    strategy: strategyLive,
+    crl: crlLive,
+    rtf: rtfLive,
+    ema: emaLive,
+    adcomm: adcommLive,
+  };
+
+  /* The analysis panel is a pure projection of the current tab over the effective
+     slices, so it reflects live data the moment the board arrives — no stale
+     window and no imperative setter to fall out of sync. */
+  const analysis: AnalysisState = analysisMap[tab] || effRisk;
+
+  /* When the live board arrives, adopt its precedents and keep the selection valid. */
+  useEffect(() => {
+    if (!resultsLive) return;
+    setResults(effResults);
+    if (!effResults.some((r) => r.clearanceNumber === selK)) setSelK(effResults[0].clearanceNumber);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resultsLive]);
+
   const sel = results.find((r) => r.clearanceNumber === selK) || results[0];
 
-  /* Fixture-backed "search" and "analysis" runners (live-first pattern in production). */
+  /* Live-first "search" — re-applies the effective precedents (live when trusted,
+     else the fixture) behind the existing busy affordance. */
   const runSearch = () => {
     setBusy(true);
     setTimeout(() => {
-      setResults(PE_RESULTS);
+      setResults(effResults);
       setBusy(false);
     }, 400);
-  };
-
-  const runTab = (t: string) => {
-    setTab(t);
-    const map: Record<string, AnalysisState> = {
-      risk: PE_RISK,
-      strategy: PE_STRATEGY,
-      crl: PE_PATTERNS.crl,
-      rtf: PE_PATTERNS.rtf,
-      ema: PE_PATTERNS.ema,
-      adcomm: PE_PATTERNS.adcomm,
-    };
-    setAnalysis(map[t] || PE_RISK);
   };
 
   const checkClaim = () => {
@@ -87,7 +189,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
 
   /* answer-first lead */
   const top = results[0] || ({} as PrecedentResult);
-  const cyc = results.map((r) => r.cycle).filter(Boolean);
+  const cyc = results.map((r) => r.cycle).filter((c): c is number => typeof c === 'number');
   const lo = cyc.length ? Math.min(...cyc) : null;
   const hi = cyc.length ? Math.max(...cyc) : null;
   const topRisk =
@@ -96,7 +198,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="sp" style={{ maxWidth: 1160 }}>
-      <SampleTag sample={true} />
+      <SampleTag sample={!resultsLive} />
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Specialist -- /api/precedent-engine</div>
@@ -126,10 +228,16 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
           strong ? (
             <>
               Citing <b>{top.clearanceNumber}</b> ({top.deviceName}) is your cleanest path --{' '}
-              {results.length} devices like yours cleared in about{' '}
-              <b>
-                {lo}--{hi} days
-              </b>
+              {results.length} devices like yours cleared
+              {lo != null && hi != null ? (
+                <>
+                  {' '}
+                  in about{' '}
+                  <b>
+                    {lo}--{hi} days
+                  </b>
+                </>
+              ) : null}
               .
             </>
           ) : (
@@ -221,7 +329,10 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
         <div className="pj-card">
           <div className="pj-card-h">
             <span className="t">Closest precedents</span>
-            <span className="s">{results.length} -- ranked by match</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="s">{results.length} -- ranked by match</span>
+              <SampleTag sample={!resultsLive} />
+            </span>
           </div>
           <div className="pj-card-b" style={{ padding: 8 }}>
             <div className="sp-list">
@@ -251,11 +362,12 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                       {r.clearanceNumber} -- {r.deviceName}
                     </span>
                     <span className="sp-row-s">
-                      {r.applicant} -- {r.clearanceType} -- {r.cycle}d cycle
+                      {r.applicant} -- {r.clearanceType}
+                      {r.cycle == null ? '' : ' -- ' + r.cycle + 'd cycle'}
                     </span>
                   </span>
                   <span className="rd-chip tone-ok">{r.decisionOutcome}</span>
-                  <span className="pe-match">{Math.round(r.match * 100)}%</span>
+                  <span className="pe-match">{r.match == null ? '—' : Math.round(r.match * 100) + '%'}</span>
                 </button>
               ))}
             </div>
@@ -268,31 +380,35 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
               <span className="t">
                 {sel.clearanceNumber} -- {sel.deviceName}
               </span>
-              <button
-                className="pj-card-h-go"
-                style={{ fontSize: 11, color: 'var(--accent-200)' }}
-                onClick={() =>
-                  ask('Compare our submission against precedent ' + sel.clearanceNumber)
-                }
-              >
-                Compare {I.arrowRight}
-              </button>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <SampleTag sample={!resultsLive} />
+                <button
+                  className="pj-card-h-go"
+                  style={{ fontSize: 11, color: 'var(--accent-200)' }}
+                  onClick={() =>
+                    ask('Compare our submission against precedent ' + sel.clearanceNumber)
+                  }
+                >
+                  Compare {I.arrowRight}
+                </button>
+              </span>
             </div>
             <div className="pj-card-b">
               <div className="tl-spec-grid">
                 <div className="tl-spec-row">
                   <span className="tl-spec-k">Applicant</span>
-                  <span className="tl-spec-v">{sel.applicant}</span>
+                  <span className="tl-spec-v">{sel.applicant || '—'}</span>
                 </div>
                 <div className="tl-spec-row">
                   <span className="tl-spec-k">Decision</span>
                   <span className="tl-spec-v">
-                    {sel.decisionOutcome} -- {sel.decisionDate}
+                    {sel.decisionOutcome || '—'}
+                    {sel.decisionDate ? ' -- ' + sel.decisionDate : ''}
                   </span>
                 </div>
                 <div className="tl-spec-row">
                   <span className="tl-spec-k">Type</span>
-                  <span className="tl-spec-v">{sel.clearanceType}</span>
+                  <span className="tl-spec-v">{sel.clearanceType || '—'}</span>
                 </div>
                 <div className="tl-spec-row">
                   <span className="tl-spec-k">Predicate</span>
@@ -313,16 +429,27 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
 
           <div className="pj-card">
             <div className="pj-card-b">
-              <div className="reg-tabs" style={{ marginTop: 0 }}>
-                {TABS.map(([id, l]) => (
-                  <button
-                    key={id}
-                    className={'reg-tab' + (tab === id ? ' on' : '')}
-                    onClick={() => runTab(id)}
-                  >
-                    {l}
-                  </button>
-                ))}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  flexWrap: 'wrap',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div className="reg-tabs" style={{ marginTop: 0 }}>
+                  {TABS.map(([id, l]) => (
+                    <button
+                      key={id}
+                      className={'reg-tab' + (tab === id ? ' on' : '')}
+                      onClick={() => setTab(id)}
+                    >
+                      {l}
+                    </button>
+                  ))}
+                </div>
+                <SampleTag sample={!tabLive[tab]} />
               </div>
               {tab === 'risk' && isRisk(analysis) && (
                 <div>

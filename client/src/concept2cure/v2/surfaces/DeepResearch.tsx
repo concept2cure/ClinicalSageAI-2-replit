@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, useLive } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import { C2CForm } from '../C2CForm';
@@ -14,9 +14,12 @@ import {
   TIER_TONE,
   type ConnectorInfo,
   type ConnectorState,
+  type ConnectorType,
+  type ConnectorCategory,
+  type ConnectorTier,
+  type CredentialField,
   type DrJob,
   type ResearchDepth,
-  type ConnectorTier,
 } from '../fixtures/deep-research-data';
 import '../styles/project-home-v2.css';
 
@@ -40,6 +43,67 @@ function C2CToast({ msg }: { msg: string }) {
     </div>
   );
 }
+
+/* ── Live board types (GET /api/deep-research/board -> { success, data }) ── */
+
+interface DrBoardConnector {
+  id: string;
+  name: string;
+  type: string;
+  cat: string;
+  tier: string;
+  creds: boolean;
+  icon: string | null;
+  desc: string;
+  cf: CredentialField[];
+  configured: boolean;
+}
+interface DrBoardCredits {
+  remaining: number;
+  limit: number;
+  tier: string | null;
+}
+interface DrBoardRunJob {
+  name: string;
+  state: 'run' | 'done';
+  hits: number | null;
+}
+interface DrBoardRun {
+  id: number;
+  uuid: string | null;
+  status: string;
+  indication: string | null;
+  progress: number;
+  creditsUsed: number;
+  jobs: DrBoardRunJob[];
+  createdAt: string | null;
+  completedAt: string | null;
+}
+interface DrBoardData {
+  connectors: DrBoardConnector[];
+  connectorCount: number;
+  configuredCount: number;
+  credits: DrBoardCredits | null;
+  runs: DrBoardRun[];
+}
+
+/* Sample deep-research credit allowance -- shown only when the board endpoint is
+   unreachable (mirrors the client's prior hardcoded 42/60 professional). */
+const DR_CREDITS_FIXTURE: DrBoardCredits = { remaining: 42, limit: 60, tier: 'professional' };
+
+/* The { success, data } board the surface falls back to when the live endpoint
+   is unreachable or unprovisioned -- shape-exact so `raw.data.data` is uniform
+   whether live or sample. Connectors mirror the client's own default seed
+   (public ready, credentialed not-configured). */
+const DR_BOARD_FIXTURE: { data: DrBoardData } = {
+  data: {
+    connectors: DR_CONN.map((c) => ({ ...c, configured: !c.creds })),
+    connectorCount: DR_CONN.length,
+    configuredCount: DR_CONN.filter((c) => !c.creds).length,
+    credits: DR_CREDITS_FIXTURE,
+    runs: [],
+  },
+};
 
 /* ════ DeepResearch — connectors & deep research surface ════ */
 
@@ -74,10 +138,84 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  /* Live board -- GET /api/deep-research/board -> { success, data: DrBoard }.
+     useLive assigns the WHOLE body to `.data`, so the display payload is at
+     `raw.data.data`. Connectors are the primary read-model; credits ride the
+     same envelope. */
+  const raw = useLive<{ data?: DrBoardData }>('/api/deep-research/board', DR_BOARD_FIXTURE);
+  const board = raw.data?.data;
+
+  /* Fail-closed shape guard -- trust the live connector catalog only on a 200
+     that structurally matches (Array.isArray + first-element typeof). The route
+     always returns the catalog (falling back to the static one), so there is no
+     provisioned flag to gate on; a bad shape keeps the fixture, shown as sample. */
+  const connectorsLive = Boolean(
+    !raw.sample &&
+      board &&
+      Array.isArray(board.connectors) &&
+      board.connectors.length > 0 &&
+      typeof board.connectors[0]?.id === 'string' &&
+      typeof board.connectors[0]?.configured === 'boolean',
+  );
+  const connectorsSample = !connectorsLive;
+  const liveConnectors = connectorsLive ? board!.connectors : null;
+
+  /* Re-seed the connector state from the live catalog once it resolves, coercing
+     the wider live field types back to the fixture unions. Keyed on the
+     live-arrived boolean so a later connect/disconnect edit is never clobbered. */
+  useEffect(() => {
+    if (liveConnectors) {
+      setConn(
+        liveConnectors.map((c) => ({
+          id: c.id,
+          name: c.name,
+          type: c.type as ConnectorType,
+          cat: c.cat as ConnectorCategory,
+          tier: c.tier as ConnectorTier,
+          creds: c.creds,
+          icon: c.icon ?? '',
+          desc: c.desc,
+          cf: c.cf,
+          configured: c.configured,
+        })),
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectorsLive]);
+
   const toggle = (id: string) =>
     setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
-  const credits = { remaining: 42, limit: 60, tier: 'professional' };
+  /* Credits -- the live board authoritatively reports the org's deep-research
+     allowance; when it reports null (usage tables unreadable) we render "—"
+     rather than fabricate a cap. Only a fail-closed (unreachable) board falls
+     back to the sample allowance. remaining/limit === -1 means unlimited. */
+  const creditsLive = Boolean(
+    !raw.sample &&
+      board &&
+      board.credits &&
+      typeof board.credits.remaining === 'number' &&
+      typeof board.credits.limit === 'number',
+  );
+  const creditsData: DrBoardCredits | null = creditsLive
+    ? board!.credits!
+    : connectorsSample
+      ? DR_CREDITS_FIXTURE
+      : null;
+  const creditsUnlimited = Boolean(
+    creditsData && (creditsData.remaining === -1 || creditsData.limit === -1),
+  );
+  const creditsTier = creditsData?.tier ?? '—';
+  const creditsLong = creditsData
+    ? creditsUnlimited
+      ? 'unlimited'
+      : `${creditsData.remaining} of ${creditsData.limit}`
+    : '—';
+  const creditsShort = creditsData
+    ? creditsUnlimited
+      ? 'unlimited credits'
+      : `${creditsData.remaining}/${creditsData.limit} credits`
+    : '— credits';
 
   const stop = () => {
     timers.current.forEach(clearTimeout);
@@ -108,7 +246,7 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
     timers.current.push(setTimeout(() => setPhase('done'), 650 + chosen.length * speed));
   };
 
-  const cats = [...new Set(DR_CONN.map((c) => c.cat))];
+  const cats = [...new Set(conn.map((c) => c.cat))];
   const configuredCount = conn.filter((c) => c.configured).length;
 
   const doConnect = (c: ConnectorState) => {
@@ -122,7 +260,7 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="sp" style={{ maxWidth: 1060 }}>
-      <SampleTag sample={true} />
+      <SampleTag sample={connectorsSample} />
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Intelligence -- connectors & deep research</div>
@@ -152,11 +290,8 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
           }
           body={
             <>
-              Deep research is a governed job (tier: {credits.tier}). You have{' '}
-              <b>
-                {credits.remaining} of {credits.limit}
-              </b>{' '}
-              research credits this period; a {depth} run costs{' '}
+              Deep research is a governed job (tier: {creditsTier}). You have{' '}
+              <b>{creditsLong}</b> research credits this period; a {depth} run costs{' '}
               {(DEPTHS.find((d) => d[0] === depth) || [])[2]}.
             </>
           }
@@ -278,8 +413,7 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
                   </button>
                 )}
                 <span className="sp-q-s">
-                  Parallel fan-out -- grounded synthesis -- {credits.remaining}/{credits.limit}{' '}
-                  credits
+                  Parallel fan-out -- grounded synthesis -- {creditsShort}
                 </span>
               </div>
             </div>
@@ -319,7 +453,12 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
               <div className="pj-card" style={{ marginBottom: 14 }}>
                 <div className="pj-card-h">
                   <span className="t">Aggregated results</span>
-                  <span className="s">{DR_RESULTS.length} top sources</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="s">{DR_RESULTS.length} top sources</span>
+                    {/* Per-run results are not in the board read-model (listJobs
+                        returns results = null); always fixture, shown honestly. */}
+                    <SampleTag sample={true} />
+                  </span>
                 </div>
                 <div className="pj-card-b">
                   <div className="sp-list">
@@ -346,7 +485,12 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
               <div className="pj-card">
                 <div className="pj-card-h">
                   <span className="t">Grounded synthesis</span>
-                  <span className="s">every claim cited</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="s">every claim cited</span>
+                    {/* Synthesis is not in the board read-model (listJobs returns
+                        synthesis = null); always fixture, shown honestly. */}
+                    <SampleTag sample={true} />
+                  </span>
                 </div>
                 <div className="pj-card-b">
                   <div
