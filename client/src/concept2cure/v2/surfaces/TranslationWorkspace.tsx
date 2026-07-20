@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { ESIGN_MEANINGS } from '../registryModel';
 import { TranslationPane } from './EditorTranslate';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import {
   TXW_STATUS_META, TXW_METHODS, STEPS, TXW_CATEGORIES,
   type TxwStatusKey,
@@ -52,7 +53,17 @@ interface SegmentsPanelProps {
   onAct: (segId: number, kind: string) => void;
   onApprove: (seg: TranslationSegment) => void; settings: TxwSettings;
 }
-interface GlossaryPanelProps { rows: GlossaryTerm[]; loading: boolean; error?: string; }
+/** A new glossary term to upsert. targetLang is left null (applies to all target
+ *  languages) — this surface manages org-wide terms and does not scope by language. */
+interface GlossaryAddInput { sourceTerm: string; doNotTranslate: boolean; category: string; targetTerm?: string }
+interface GlossaryPanelProps {
+  rows: GlossaryTerm[];
+  loading: boolean;
+  error?: string;
+  /** Upserts via POST /api/translation/glossary; resolves to null on success or
+   *  an error message on failure (the panel shows it inline). */
+  onAdd?: (input: GlossaryAddInput) => Promise<string | null>;
+}
 interface GovApproveModalProps { seg: TranslationSegment | null; onCancel: () => void; onConfirm: (p: { meaning: string; reason: string }) => void; }
 interface WideReviewModalProps {
   project: TranslationProject | null; segments: TranslationSegment[];
@@ -303,10 +314,31 @@ export function SegmentsPanel({ project, segments, loading, error, onAct, onAppr
   );
 }
 
-export function GlossaryPanel({ rows, loading, error }: GlossaryPanelProps) {
+export function GlossaryPanel({ rows, loading, error, onAdd }: GlossaryPanelProps) {
   const cats = TXW_CATEGORIES;
+  const catKeys = Object.keys(cats);
   const [q, setQ] = useState('');
   const [showDnt, setShowDnt] = useState<'all' | 'dnt' | 'pref'>('all');
+  // Add-term form (drives POST /api/translation/glossary via onAdd).
+  const [formOpen, setFormOpen] = useState(false);
+  const [fSource, setFSource] = useState('');
+  const [fDnt, setFDnt] = useState(true);
+  const [fCat, setFCat] = useState<string>('agency_name');
+  const [fTarget, setFTarget] = useState('');
+  const [fErr, setFErr] = useState('');
+  const [fBusy, setFBusy] = useState(false);
+  const resetForm = () => { setFSource(''); setFDnt(true); setFCat('agency_name'); setFTarget(''); setFErr(''); };
+  const submitTerm = async () => {
+    if (!onAdd || fBusy) return;
+    const sourceTerm = fSource.trim();
+    if (!sourceTerm) { setFErr('Enter the source term.'); return; }
+    if (!fDnt && !fTarget.trim()) { setFErr('Enter the preferred translation, or mark it do-not-translate.'); return; }
+    setFBusy(true); setFErr('');
+    const err = await onAdd({ sourceTerm, doNotTranslate: fDnt, category: fCat, targetTerm: fDnt ? undefined : fTarget.trim() });
+    setFBusy(false);
+    if (err) { setFErr(err); return; }
+    resetForm(); setFormOpen(false);
+  };
 
   if (loading) {
     return <div className="txw-body"><div className="scaf-note" style={{ padding: '18px 10px' }}>Loading glossary…</div></div>;
@@ -337,10 +369,41 @@ export function GlossaryPanel({ rows, loading, error }: GlossaryPanelProps) {
       <div className="txw-gloss-search">
         {I.search}
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search source or target term..." />
-        {/* MOCK ACTION: dead affordance — POST /api/translation/glossary exists but is not
-            wired here (flagged for the actions pass; no false claim is made). */}
-        <button className="txw-gloss-add">{I.plus}Add</button>
+        {/* Wired: opens the add-term form, which upserts via POST
+            /api/translation/glossary (onAdd). No optimistic row — the live
+            glossary refetches on success, so only the persisted term appears. */}
+        <button className="txw-gloss-add" disabled={!onAdd} onClick={() => { setFErr(''); setFormOpen(o => !o); }}>{I.plus}Add</button>
       </div>
+      {formOpen && (
+        <div className="txw-gloss-form" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-end', padding: '10px 12px', margin: '2px 0 8px', border: '1px solid var(--border, rgba(120,130,150,0.35))', borderRadius: 8, background: 'var(--bg-050, rgba(140,150,170,0.06))' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: '1 1 200px', fontSize: 12 }}>
+            <span>Source term (English)</span>
+            <input value={fSource} onChange={e => setFSource(e.target.value)} placeholder="e.g. FDA, §314.50, C-Suite" spellCheck={false} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border, rgba(120,130,150,0.35))', background: 'var(--bg-000, transparent)', color: 'inherit', font: 'inherit' }} />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: '0 1 160px', fontSize: 12 }}>
+            <span>Category</span>
+            <select value={fCat} onChange={e => setFCat(e.target.value)} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border, rgba(120,130,150,0.35))', background: 'var(--bg-000, transparent)', color: 'inherit', font: 'inherit' }}>
+              {catKeys.map(k => <option key={k} value={k}>{cats[k as keyof typeof cats]}</option>)}
+            </select>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 6, flex: '0 0 auto', fontSize: 12, paddingBottom: 6 }}>
+            <input type="checkbox" checked={fDnt} onChange={e => setFDnt(e.target.checked)} />
+            <span>Do-not-translate</span>
+          </label>
+          {!fDnt && (
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 3, flex: '1 1 200px', fontSize: 12 }}>
+              <span>Preferred translation</span>
+              <input value={fTarget} onChange={e => setFTarget(e.target.value)} placeholder="Mandated target rendering" spellCheck={false} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--border, rgba(120,130,150,0.35))', background: 'var(--bg-000, transparent)', color: 'inherit', font: 'inherit' }} />
+            </label>
+          )}
+          <div style={{ display: 'flex', gap: 6, flex: '0 0 auto', paddingBottom: 1 }}>
+            <button className="txw-gloss-add" onClick={submitTerm} disabled={fBusy}>{fBusy ? 'Saving…' : 'Save term'}</button>
+            <button className="txw-chip" onClick={() => { resetForm(); setFormOpen(false); }} disabled={fBusy}>Cancel</button>
+          </div>
+          {fErr && <div role="alert" style={{ flexBasis: '100%', fontSize: 12, color: 'var(--err, #c0392b)' }}>Couldn’t save — {fErr} Nothing was added.</div>}
+          <div style={{ flexBasis: '100%', fontSize: 11, color: 'var(--text-300, #8a93a6)' }}>Applies to all target languages · saved to the tenant registry.</div>
+        </div>
+      )}
       <div className="txw-filter">
         <span className="txw-filter-l">Type</span>
         <button className="txw-chip" data-on={showDnt === 'all' || undefined} onClick={() => setShowDnt('all')}>All<span className="txw-chip-ct">{all.length}</span></button>
@@ -531,7 +594,10 @@ export function TranslationWorkspace({ onTranslate }: TranslationWorkspaceProps)
   const detailState = useLiveData<TranslationProjectDetail>(
     project ? '/api/translation/projects/' + project.id : null,
   );
-  const glossaryState = useLiveRows<GlossaryTerm>('/api/translation/glossary');
+  // Bumped after a successful glossary upsert to refetch the live registry, so
+  // the newly-saved term appears from the server rather than an optimistic row.
+  const [glossReload, setGlossReload] = useState(0);
+  const glossaryState = useLiveRows<GlossaryTerm>('/api/translation/glossary', [glossReload]);
 
   // Stable empty seed while loading/erroring (see EMPTY_SEGMENTS) so the optimistic store
   // doesn't thrash; once the detail resolves, its segments become the seed.
@@ -554,6 +620,30 @@ export function TranslationWorkspace({ onTranslate }: TranslationWorkspaceProps)
   const counts = { segments: segments.length, gloss: glossaryState.rows.length };
   const approve = (seg: TranslationSegment) => setGov(seg);
   const now = () => new Date().toISOString();
+
+  /* Upsert a glossary term — REAL, awaited POST /api/translation/glossary. On
+     success the live glossary refetches (setGlossReload) so the panel shows the
+     server's persisted term; on failure the typed error message is returned to
+     the panel to show inline. Nothing is added optimistically. */
+  const addGlossaryTerm = async (input: GlossaryAddInput): Promise<string | null> => {
+    try {
+      const body: Record<string, unknown> = {
+        sourceTerm: input.sourceTerm,
+        doNotTranslate: input.doNotTranslate,
+        category: input.category,
+      };
+      if (!input.doNotTranslate && input.targetTerm) body.targetTerm = input.targetTerm;
+      const res = await apiRequest('POST', '/api/translation/glossary', body);
+      if (!res.ok) {
+        const j = await res.json().catch(() => null) as { error?: { code?: string; message?: string } } | null;
+        return (j?.error?.message || j?.error?.code || `The registry returned HTTP ${res.status}.`);
+      }
+      setGlossReload((k) => k + 1);
+      return null;
+    } catch (e) {
+      return e instanceof Error ? e.message : String(e);
+    }
+  };
 
   /* MOCK ACTION -- optimistic, LOCAL-ONLY workflow transitions. Real endpoints exist
      (POST /api/translation/projects/:id/segments/draft, /segments/:id/post-edit,
@@ -620,7 +710,7 @@ export function TranslationWorkspace({ onTranslate }: TranslationWorkspaceProps)
       </div>
       {tab === 'sections' && <TranslationPane onTranslate={onTranslate} />}
       {tab === 'segments' && <SegmentsPanel project={project} segments={segments} loading={segLoading} error={segError} onAct={act} onApprove={approve} settings={settings} />}
-      {tab === 'gloss'    && <GlossaryPanel rows={glossaryState.rows} loading={glossaryState.loading} error={glossaryState.error} />}
+      {tab === 'gloss'    && <GlossaryPanel rows={glossaryState.rows} loading={glossaryState.loading} error={glossaryState.error} onAdd={addGlossaryTerm} />}
       {tab === 'qa'       && <QaPanel onJump={() => setTab('segments')} />}
       {wide && <WideReviewModal project={project} segments={segments} onClose={() => setWide(false)} onApprove={approve} settings={settings} />}
       {gov  && <GovApproveModal seg={gov} onCancel={() => setGov(null)} onConfirm={finishApprove} />}
