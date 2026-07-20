@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -90,6 +91,7 @@ export function mapRiskItems(payload: unknown): RiskRow[] | null {
     const status = str(r.status, 'open');
     out.push({
       id: str(r.ref_code) || 'HZ-' + String(r.id ?? out.length + 1).padStart(2, '0'),
+      dbId: typeof r.id === 'number' ? r.id : undefined,
       hazard: str(r.hazard),
       situation: str(r.hazardous_situation),
       harm: str(r.harm),
@@ -109,6 +111,19 @@ export function mapRiskItems(payload: unknown): RiskRow[] | null {
     });
   }
   return out.length ? out : null;
+}
+
+/* The mdx-risk-management POST/PATCH wrap the single row as { data: row }
+   (ok/created). Unwrap it so mapRiskItems (a list mapper) can adopt it. */
+function envRow(json: unknown): unknown {
+  return json && typeof json === 'object' && 'data' in json ? (json as { data: unknown }).data : json;
+}
+
+/* Best-effort human message from a JSON error body, else the status. */
+function errText(json: unknown, status: number): string {
+  const j = json as { error?: unknown; message?: unknown } | null;
+  const m = j && (typeof j.error === 'string' ? j.error : typeof j.message === 'string' ? j.message : '');
+  return m || `HTTP ${status}`;
 }
 
 export function Risk({ onAsk }: SurfaceViewProps) {
@@ -169,57 +184,80 @@ export function Risk({ onAsk }: SurfaceViewProps) {
     return { total, open, accepted, highResidual, avgInitial, avgResidual };
   }, [rows, view]);
 
-  // FLAG (mock action): optimistic local add + fire-and-forget POST via the kit
-  // global window.C2C_API to the REAL endpoint (POST /api/mdx/risk-items). The
-  // row is added and the toast shown regardless of the write's outcome (the
-  // .catch swallows failures), so persistence is not confirmed at the UI. Leave
-  // for the actions pass to wire through apiRequest with refetch + real errors.
-  const addHazard = (v: Record<string, string>) => {
-    const n = rows.length + 1;
-    const id = 'HZ-' + String(n).padStart(2, '0');
-    const nr: RiskRow = {
-      id, hazard: v.hazard, situation: v.situation || '', harm: v.harm,
-      seq: v.seq || '', sev: v.sev || 'Serious', prob: v.prob || 'Occasional',
-      probR: v.prob || 'Occasional', det: Number(v.det) || 3,
-      strategy: v.strategy || 'design_reduce', source: v.source || 'other',
-      status: 'open', ctrl: '', ver: 'V&V record pending', res: 'Investigation',
-      open: true, controls: [], _new: true,
-    };
-    setRows(rs => [nr, ...rs]); setSel(id); setForm(false);
-    const api = (window as any).C2C_API;
-    if (api && api.connected()) {
-      api.post('/api/mdx/risk-items', {
-        hazard: nr.hazard, hazardousSituation: nr.situation, harm: nr.harm,
-        sequenceOfEvents: nr.seq, severity: sevI(nr.sev) + 1, probability: probI(nr.prob) + 1,
-        detectability: nr.det, controlStrategy: nr.strategy, source: nr.source,
-      }).catch(() => {});
+  // addHazard — REAL, awaited write. POSTs to the governed risk file and adopts
+  // the SERVER's row via mapRiskItems (real ref_code + numeric dbId, authoritative
+  // status/acceptability). No optimistic HZ-<n> id; the success toast fires only
+  // after the write is confirmed, and any failure is stated with nothing added.
+  const addHazard = async (v: Record<string, string>) => {
+    if (!v.hazard || !v.harm) { fire('Hazard and harm are required'); return; }
+    const sev = v.sev || 'Serious';
+    const prob = v.prob || 'Occasional';
+    try {
+      const res = await apiRequest('POST', '/api/mdx/risk-items', {
+        hazard: v.hazard, hazardousSituation: v.situation || '', harm: v.harm,
+        sequenceOfEvents: v.seq || '', severity: sevI(sev) + 1, probability: probI(prob) + 1,
+        detectability: Number(v.det) || 3, controlStrategy: v.strategy || 'design_reduce', source: v.source || 'other',
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) { fire('Couldn’t add the hazard — ' + errText(json, res.status) + '. Nothing was saved.'); return; }
+      const adopted = mapRiskItems([envRow(json)])?.[0];
+      if (!adopted) { fire('Saved, but the server returned an unexpected shape — reload to see it'); return; }
+      setRows(rs => [{ ...adopted, _new: true }, ...rs.filter(r => r.id !== adopted.id)]);
+      setSel(adopted.id); setForm(false);
+      fire('Hazard ' + adopted.id + ' saved · status ' + adopted.status);
+    } catch (e) {
+      fire('Couldn’t add the hazard — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
     }
-    fire('Hazard ' + id + ' added / status Open');
   };
 
-  // FLAG (mock action): optimistic local add + fire-and-forget POST via
-  // window.C2C_API to the REAL endpoint (POST /api/mdx/risk-items/:id/controls);
-  // failures are swallowed, so persistence isn't confirmed. Leave for the
-  // actions pass.
-  const addControl = (v: Record<string, string>) => {
+  // addControl — REAL, awaited write. POSTs to the risk item's controls
+  // (addressed by its numeric dbId — the route requires a numeric :id) and adopts
+  // the SERVER's risk_controls row (real id). Nothing is added on failure; the
+  // former fabricated RC-<n> id and swallowed error are gone.
+  const addControl = async (v: Record<string, string>) => {
     if (!row) return;
-    const cid = 'RC-' + row.id.replace('HZ-', '') + String.fromCharCode(97 + (row.controls ? row.controls.length : 0));
-    const nc: RiskControl = { id: cid, desc: v.desc, type: v.type || 'protective_measure', status: v.status || 'proposed' };
-    setRows(rs => rs.map(r => r.id === row.id ? { ...r, controls: [...(r.controls || []), nc] } : r)); setCtrlForm(false);
-    const api = (window as any).C2C_API;
-    if (api && api.connected()) { api.post('/api/mdx/risk-items/' + row.id + '/controls', { description: nc.desc, controlType: nc.type, status: nc.status }).catch(() => {}); }
-    fire('Risk control ' + cid + ' added to ' + row.id);
+    if (row.dbId == null) { fire('This hazard isn’t in the governed file yet — reload before adding controls'); return; }
+    try {
+      const res = await apiRequest('POST', '/api/mdx/risk-items/' + row.dbId + '/controls', {
+        description: v.desc, controlType: v.type || 'protective_measure', status: v.status || 'proposed',
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) { fire('Couldn’t add the control — ' + errText(json, res.status) + '. Nothing was saved.'); return; }
+      const cr = envRow(json) as Record<string, unknown> | null;
+      if (!cr || typeof cr !== 'object') { fire('Saved, but the server returned an unexpected shape — reload to see it'); return; }
+      const nc: RiskControl = {
+        id: cr.id != null ? String(cr.id) : '',
+        desc: typeof cr.description === 'string' ? cr.description : v.desc,
+        type: typeof cr.control_type === 'string' ? cr.control_type : (v.type || 'protective_measure'),
+        status: typeof cr.status === 'string' ? cr.status : (v.status || 'proposed'),
+      };
+      setRows(rs => rs.map(r => r.id === row.id ? { ...r, controls: [...(r.controls || []), nc] } : r));
+      setCtrlForm(false);
+      fire('Risk control saved to ' + row.id);
+    } catch (e) {
+      fire('Couldn’t add the control — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+    }
   };
 
-  // FLAG (mock action): optimistic local status change (also flips res to
-  // 'Acceptable' locally on accept/verify) + fire-and-forget PATCH via
-  // window.C2C_API to the REAL endpoint (PATCH /api/mdx/risk-items/:id); failures
-  // are swallowed, so the change isn't confirmed persisted. Leave for the actions pass.
-  const setStatus = (id: string, st: string) => {
-    setRows(rs => rs.map(r => r.id === id ? { ...r, status: st, open: st === 'open' || st === 'mitigating', res: (st === 'accepted' || st === 'verified') ? 'Acceptable' : r.res } : r));
-    const api = (window as any).C2C_API;
-    if (api && api.connected()) { api.patch('/api/mdx/risk-items/' + id, { status: st }).catch(() => {}); }
-    fire(id + ' -- ' + st);
+  // setStatus — REAL, awaited PATCH (addressed by numeric dbId). Adopts the
+  // SERVER's updated row so status AND residual acceptability (res) come from the
+  // authoritative `acceptable` boolean — the old code flipped res to 'Acceptable'
+  // locally on accept/verify, overstating acceptability the backend hadn't
+  // recorded. Controls are preserved (the item PATCH doesn't return them).
+  const setStatus = async (id: string, st: string) => {
+    const cur = rows.find(r => r.id === id);
+    if (!cur) return;
+    if (cur.dbId == null) { fire('This hazard isn’t in the governed file yet — reload before changing its status'); return; }
+    try {
+      const res = await apiRequest('PATCH', '/api/mdx/risk-items/' + cur.dbId, { status: st });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) { fire('Couldn’t update the status — ' + errText(json, res.status) + '. Nothing was persisted.'); return; }
+      const adopted = mapRiskItems([envRow(json)])?.[0];
+      setRows(rs => rs.map(r => r.id === id ? (adopted ? { ...adopted, controls: r.controls } : { ...r, status: st }) : r));
+      fire(id + ' → ' + st);
+    } catch (e) {
+      fire('Couldn’t update the status — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was persisted.');
+    }
   };
 
   const ctrlTone: Record<string, string> = { proposed: 'idle', implemented: 'ai', verified: 'warn', effective: 'ok' };
