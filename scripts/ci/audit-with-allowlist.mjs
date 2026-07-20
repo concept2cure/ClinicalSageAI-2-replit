@@ -80,6 +80,14 @@ const ACCEPTED_GHSA_IDS = new Set([
   'GHSA-vmh5-mc38-953g', // undici TLS cert validation bypass via dropped requestTls (SOCKS5)
   'GHSA-vxpw-j846-p89q', // undici WebSocket DoS via fragment count bypass
   'GHSA-hm92-r4w5-c3mj', // undici cross-origin request routing via SOCKS5 proxy pool reuse
+  // brace-expansion — advisory GHSA-3jxr-9vmj-r5cp (ReDoS via exponential-time
+  // expansion of consecutive non-expanding {} groups). npm audit folds three
+  // ranges under the package name: <1.1.16, >=2.0.0 <2.1.2, >=3.0.0 <5.0.7.
+  // Bumped in place via package.json `overrides` (brace-expansion@1 -> 1.1.16,
+  // @2 -> 2.1.2, @5 -> 5.0.7); `npm ls brace-expansion --all` confirms only the
+  // patched versions are installed — each AT/ABOVE its fix — so this is now a
+  // registry-lag false positive, accepted as resolved-in-installed.
+  'GHSA-3jxr-9vmj-r5cp', // brace-expansion ReDoS (fixed in installed via overrides)
   // Accepting the ws advisory above also clears the engine.io / engine.io-client /
   // socket.io / socket.io-adapter / socket.io-client "transitive vulnerability via
   // unaccepted dependency" flags — that is this same ws advisory surfaced through
