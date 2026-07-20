@@ -1,14 +1,53 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { useLiveData, EmptyState } from '../dataConnect';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import {
-  CONVO_THREADS, CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
+  CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
   CT_ARTIFACT_BUILDERS, ctRespond, buildPrimedDoc,
 } from '../fixtures/conversation-thread-data';
 import type { CtTurn, CtArtifact } from '../fixtures/conversation-thread-data';
+
+/* ── Live conversation read-model — GET /api/conversation-thread/:threadId
+   (server/routes/conversation-thread-routes.ts). REAL backend: reads the
+   org-scoped chat store (ai_threads / chat_threads + chat_messages) through the
+   request-scoped Drizzle client. It fills only what the store persists and
+   nulls/empties the rest — honest omission, never fabricated:
+     title     real (ai_threads.title, or the first user message)
+     when      real ISO-8601 (updated_at || created_at)
+     turns     real chat_messages — user → { role:'user', text },
+               assistant → { role:'ana', answer }
+     section   always null  (not persisted on the thread)
+     artifacts always []    (no message→artifact provenance is stored)
+     work      always []    (per-conversation work rollup is not modeled)
+   Real turns therefore carry no thinking/tools/proposal/links/grounding/
+   artifactRef; those appear only on locally-simulated turns (mock composer). ── */
+interface ConversationThreadView {
+  title: string;
+  section: string | null;
+  when: string;
+  turns: CtTurn[];
+  artifacts: CtArtifact[];
+  work: unknown[];
+}
+
+/* Stable empty seeds for the composer-mutated turn/artifact stores while the live
+   read is loading or errored. useLiveData returns a fresh null every render until it
+   resolves; seeding local state from a module-level constant (not a fresh []) keeps
+   the re-seed effect from thrashing into a render loop. */
+const CT_EMPTY_TURNS: CtTurn[] = [];
+const CT_EMPTY_ARTIFACTS: CtArtifact[] = [];
+
+/** Real ISO-8601 `when` → short honest date label; '' when absent/unparseable. */
+function fmtWhen(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? ''
+    : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 /* ---- AnA turn (thinking + tools + proposal + answer + grounding) ---- */
 
@@ -62,11 +101,11 @@ function AnaTurn({ turn, onApply, onRefine, onNav, onViewArtifact }: AnaTurnProp
                 <button className="ct-prop-accept" onClick={onApply}>{I.check} Accept and write to section {turn.proposal.section}</button>
                 <button className="ct-prop-refine" onClick={onRefine}>{I.penLine} Refine</button>
                 <button className="ct-prop-discard">Discard</button>
-                <span className="ct-prop-gov">{I.lock} Governed -- creates immutable version + audit</span>
+                <span className="ct-prop-gov">{I.lock} Governed -- immutable version + audit entry on persist</span>
               </div>
             ) : (
               <div className="ct-prop-applied">
-                {I.checkCircle || I.check} Applied to section {turn.proposal.section} / {turn.proposal.ver || 'v0.9'} / audit logged
+                {I.checkCircle || I.check} Applied in preview to section {turn.proposal.section} / {turn.proposal.ver || 'v0.9'} -- sign-off + audit pending
                 <button className="ct-prop-open" onClick={() => onNav && onNav('document-authoring')}>{I.externalLink} Open in editor</button>
               </div>
             )}
@@ -239,20 +278,44 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, onAdvance, collaps
 /* ---- Conversation thread (main export) ---- */
 
 export function ConversationThread({ onAsk, onNav }: SurfaceViewProps) {
-  const sel = ((window as any).C2C_CONVO || { id: 'c0' }) as { id: string; seed?: string | null };
-  const base = CONVO_THREADS[sel.id] || CONVO_THREADS.c0;
+  // Default to a new conversation (no fixture id). A real thread id is placed on
+  // window.C2C_CONVO by whatever opens an existing conversation.
+  const sel = ((window as any).C2C_CONVO || { id: 'new' }) as { id: string; seed?: string | null };
   const isNew = sel.id === 'new';
 
-  const seedTurns: CtTurn[] = isNew ? [] : base.turns.map(t => ({ ...t, proposal: t.proposal ? { ...t.proposal } : undefined }));
+  // DATA slice — re-anchored to the REAL read-model. New conversations don't fetch
+  // (nothing is persisted yet); an existing thread loads its real turns, an honest
+  // empty, or an honest error. Never a fixture.
+  const convo = useLiveData<ConversationThreadView>(
+    isNew ? null : `/api/conversation-thread/${encodeURIComponent(sel.id)}`,
+  );
+
+  // Local, composer-mutated copies seeded from the live read. Stable module-level
+  // seeds while loading/errored (see CT_EMPTY_* note) so the re-seed effect can't loop.
+  const seedTurns: CtTurn[] = !isNew && convo.data ? convo.data.turns : CT_EMPTY_TURNS;
+  const seedArtifacts: CtArtifact[] = !isNew && convo.data ? convo.data.artifacts : CT_EMPTY_ARTIFACTS;
   const [turns, setTurns] = useState<CtTurn[]>(seedTurns);
-  const [artifacts, setArtifacts] = useState<CtArtifact[]>(isNew ? [] : (base.artifacts ? base.artifacts.map(a => ({ ...a })) : []));
+  const [artifacts, setArtifacts] = useState<CtArtifact[]>(seedArtifacts);
+  const seedRef = useRef(seedTurns);
+  useEffect(() => {
+    // Re-seed once when the live read resolves (or the conversation changes): the
+    // seed reference flips from the stable empty constant to the fetched arrays.
+    if (seedTurns !== seedRef.current) {
+      seedRef.current = seedTurns;
+      setTurns(seedTurns.map(t => ({ ...t })));
+      setArtifacts(seedArtifacts.map(a => ({ ...a })));
+    }
+  }, [seedTurns, seedArtifacts]);
+
   const [openId, setOpenId] = useState<string | null>(null);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const title = isNew ? 'New conversation' : base.title;
-  const section = isNew ? null : base.section;
+  const title = isNew ? 'New conversation' : (convo.data?.title || (convo.loading ? 'Loading…' : 'Conversation'));
+  // Backend does not persist a section on the thread — always null (honest omission).
+  const section = convo.data?.section ?? null;
+  const whenLabel = fmtWhen(convo.data?.when);
 
   useEffect(() => {
     if (isNew && sel.seed) { kickoff(sel.seed); (window as any).C2C_CONVO = { ...sel, seed: null }; }
@@ -260,6 +323,19 @@ export function ConversationThread({ onAsk, onNav }: SurfaceViewProps) {
   }, []);
   useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [turns, busy]);
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // MOCK ACTIONS — flagged for the actions pass; do not treat as wired.
+  // Everything the composer "does" below is simulated locally: run510k / runUser /
+  // kickoff stream canned turns via setTimeout, ctRespond returns a canned answer,
+  // and the artifact builders (CT_ARTIFACT_BUILDERS / buildPrimedDoc / pushArtifact)
+  // fabricate artifacts carrying Math.random()-derived "audit" ids. applyProposal
+  // and advanceArtifact are optimistic local-state flips — no API call, no write,
+  // no version, no audit entry. Real endpoints for this already exist
+  // (server/routes/chat/send-message.ts, server/routes/conversation-os.ts); the
+  // actions pass should wire the composer to the real AnA stream + governed-write
+  // path. User-visible copy here has been softened so nothing claims a
+  // persistence/audit event that has not actually occurred.
+  // ───────────────────────────────────────────────────────────────────────────
   const applyProposal = (ti: number) => setTurns(ts => ts.map((t, i) => i === ti && t.proposal ? { ...t, proposal: { ...t.proposal, status: 'applied', ver: 'v0.9' } } : t));
   const viewArtifact = (id: string) => { setPanelCollapsed(false); setOpenId(id); };
   const advanceArtifact = (id: string, isDownload?: boolean) => {
@@ -331,12 +407,11 @@ export function ConversationThread({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="ct-wrap">
-      <SampleTag sample={true} />
       <div className="ct-head">
         <button className="ct-back" onClick={() => onNav && onNav('project-home')}>{I.left} Project</button>
         <div className="ct-head-mid">
           <div className="ct-head-t">{title}</div>
-          <div className="ct-head-m">{I.messageSquare} Conversation / BX-204 / NDA 212345{section ? ` / builds section ${section}` : ''}</div>
+          <div className="ct-head-m">{I.messageSquare} Conversation{whenLabel ? ` · ${whenLabel}` : ''}{section ? ` · builds section ${section}` : ''}</div>
         </div>
         <div className="ct-head-r">
           <span className="ct-head-model">{I.zap} Maximum</span>
@@ -348,10 +423,21 @@ export function ConversationThread({ onAsk, onNav }: SurfaceViewProps) {
         <div className="ct-conv">
           <div className="ct-scroll" ref={scrollRef}>
             <div className="ct-col">
-              {turns.length === 0 && (
+              {!isNew && convo.loading && turns.length === 0 && (
+                <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading conversation…</div>
+              )}
+              {!isNew && convo.error && turns.length === 0 && (
+                <EmptyState
+                  tone="error"
+                  icon={I.alertTriangle}
+                  title="Couldn't load this conversation"
+                  hint="This conversation didn't load. It's read from your organization's governed chat store — sign in and retry, or start a new one below."
+                />
+              )}
+              {turns.length === 0 && (isNew || (!convo.loading && !convo.error)) && (
                 <div className="ct-empty">
                   <div className="ct-empty-mk">{'✻'}</div>
-                  <h2>Talk to AnA about BX-204</h2>
+                  <h2>Talk to AnA</h2>
                   <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and its outputs appear as governed artifacts on the right -- ready to review, edit, approve, and export.</p>
                   <div className="ct-empty-chips">
                     {['File a 510(k) for our glucose monitoring patch', 'Is the section 2.5.4 efficacy claim defensible?', 'What blocks the Module 3 freeze?'].map((q, i) => (
@@ -367,20 +453,6 @@ export function ConversationThread({ onAsk, onNav }: SurfaceViewProps) {
               {busy && (
                 <div className="ct-turn ct-ana"><div className="ct-ana-av">{'✻'}</div><div className="ct-ana-body"><div className="ct-typing"><span /><span /><span /></div></div></div>
               )}
-              {!isNew && base.work && turns.length > 0 && (
-                <div className="ct-work">
-                  <div className="ct-work-h">{I.layers} Work done in this conversation</div>
-                  <div className="ct-work-list">
-                    {base.work.map((w, i) => (
-                      <button key={i} className="ct-work-row" data-kind={w.kind} onClick={() => onNav && onNav(CT_LINKMAP[w.kind] || 'document-authoring')}>
-                        <span className="ct-work-ic">{(I as any)[CT_LINKIC[w.kind]] || I.fileText}</span>
-                        <span className="ct-work-b"><span className="ct-work-l">{w.label}</span><span className="ct-work-m">{w.meta}</span></span>
-                        <span className="ct-work-go">{I.right}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -392,7 +464,7 @@ export function ConversationThread({ onAsk, onNav }: SurfaceViewProps) {
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
               <button className="ct-comp-send" disabled={!draft.trim() || busy} onClick={send}>{I.arrowUp}</button>
             </div>
-            <div className="ct-comp-foot">{I.lock} Governed -- AnA proposes; you accept. Every applied change writes an immutable version + 21 CFR section 11 audit entry.</div>
+            <div className="ct-comp-foot">{I.lock} Governed -- AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>
         </div>
 
