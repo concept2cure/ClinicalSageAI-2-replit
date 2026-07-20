@@ -13,7 +13,7 @@ import { protocolAnalyzerService } from '../protocol-analyzer-service';
 import { protocolOptimizerService } from '../protocol-optimizer-service';
 import { analyzeText } from '../openai-service';
 import { createScopedLogger } from '../utils/logger.js';
-import { normalCdf, normalQuantile } from '../services/stats/normal';
+import { powerTwoSampleMeans } from '../services/stats/assurance';
 
 const log = createScopedLogger('analytics-routes');
 
@@ -638,16 +638,12 @@ function generateStatisticalInsights(analysis: ProtocolAnalysisResult): string {
     insights += `### Power Analysis\n`;
     insights += `Estimated power for a two-group comparison of means at your proposed total sample size of ${analysis.sample_size} (assumed split evenly between arms), two-sided α=0.05, by standardized effect size (Cohen's d):\n\n`;
 
-    // Real two-sample normal-approximation power (replaces a fabricated formula,
-    // previously `Math.min(0.99, 0.4 + n*d/100)`). For total N split evenly
-    // (n = N/2 per arm), the noncentrality of the two-sample z statistic is
-    // λ = d·√(N/4); two-sided power = Φ(λ − z) + Φ(−λ − z) with critical value
-    // z = Φ⁻¹(1 − α/2). Uses the shared high-accuracy normal helpers.
-    const totalN = analysis.sample_size || 0;
-    const zCrit = normalQuantile(1 - 0.05 / 2); // ≈ 1.959964 for two-sided α=0.05
+    // Real two-sample power (replaces a fabricated formula, previously
+    // `Math.min(0.99, 0.4 + n*d/100)`). Delegates to the shared, tested stats
+    // helper — total N split evenly → nPerArm = N/2, two-sided α=0.05.
+    const nPerArm = (analysis.sample_size || 0) / 2;
     effectSizes.forEach(effect => {
-      const lambda = effect.size * Math.sqrt(totalN / 4);
-      const power = normalCdf(lambda - zCrit) + normalCdf(-lambda - zCrit);
+      const power = powerTwoSampleMeans(effect.size, nPerArm, 0.05, false);
       insights += `- **${effect.desc.charAt(0).toUpperCase() + effect.desc.slice(1)} effect (d=${effect.size})**: ~${(power * 100).toFixed(1)}% power at α=0.05 (two-sided)\n`;
     });
 
