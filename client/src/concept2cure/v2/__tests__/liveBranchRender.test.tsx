@@ -134,19 +134,18 @@ describe('every surface renders its live (sample:false) branch without crashing'
   // crash gate already covers) and this suite would prove nothing. dossier-map
   // renders <SampleTag sample={sample} />, so the real pill must read "Live"
   // here — confirming the mock actually put the surface in the live branch.
-  it('the mock genuinely forces the live branch (SampleTag reads "Live")', () => {
-    const { container } = render(
-      <Providers>
-        {React.createElement(SURFACE_VIEWS['dossier-map'].component, {
-          surface: getSurface('dossier-map') ?? stubSurface('dossier-map'),
-          ...commonProps,
-        })}
-      </Providers>,
-    );
-    const pill = container.querySelector('.c2c-sample-tag');
-    expect(pill, 'dossier-map did not render its SampleTag pill').not.toBeNull();
-    expect(pill?.textContent).toContain('Live');
-    expect(pill?.className).toContain('is-live');
+  it('the dataConnect live-branch mock is applied (guards against a vacuous pass)', async () => {
+    // Verify the stub forces sample:false directly, rather than via one
+    // surface's SampleTag pill. Surfaces are progressively re-anchored off the
+    // legacy useLive/useLiveList hooks onto the fixture-free contract and drop
+    // their SampleTag, so a hard-coded surface guard (it used to render
+    // dossier-map) rots the moment that surface is migrated. Asserting the mock
+    // itself proves the stub is applied, so the it.each below genuinely
+    // exercises the live-adopted branch for every surface still on the legacy
+    // hooks — without depending on any single surface staying un-migrated.
+    const { useLive, useLiveList } = await import('../dataConnect');
+    expect(useLive('/x', { k: 1 })).toMatchObject({ sample: false, data: { k: 1 } });
+    expect(useLiveList('/x', [{ k: 1 }])).toMatchObject({ sample: false, data: [{ k: 1 }] });
   });
 
   it.each(ids)('%s renders live-adopted data without a crash-class error', (id) => {
