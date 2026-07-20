@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { useLiveData } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import { C2CForm } from '../C2CForm';
@@ -8,8 +9,6 @@ import type { C2CFormConfig } from '../C2CForm';
 import {
   DR_CONN,
   DR_CATS,
-  DR_RESULTS,
-  DR_SYNTH,
   DEPTHS,
   TIER_TONE,
   type ConnectorInfo,
@@ -19,6 +18,21 @@ import {
   type ConnectorTier,
 } from '../fixtures/deep-research-data';
 import '../styles/project-home-v2.css';
+
+/* Real deep-research contract — GET /api/deep-research/board (credits) and
+   POST/GET /api/deep-research/jobs (launch + poll). No fabricated fields;
+   credits is null (rendered "—") when the usage/license tables are unreadable. */
+interface DrCredits { remaining: number; limit: number; tier: string | null }
+interface DrBoard { credits: DrCredits | null }
+interface DrResult { title?: string; conn?: string; source?: string; meta?: string; date?: string; url?: string }
+interface DrRunJob {
+  id: number;
+  status: string;
+  progress?: number;
+  results?: DrResult[] | null;
+  synthesis?: string | null;
+  connectorLogs?: Record<string, { resultCount?: number; state?: string }> | null;
+}
 
 /* ── Inline shared kit helpers ── */
 
@@ -43,16 +57,8 @@ function C2CToast({ msg }: { msg: string }) {
 
 /* ════ DeepResearch — connectors & deep research surface ════ */
 
-export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
+export function DeepResearch({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const open = (id: string) => {
-    try {
-      localStorage.setItem('c2c_open_surface', id);
-    } catch (_e) {
-      /* noop */
-    }
-    onNav && onNav(id);
-  };
 
   const [tab, setTab] = useState<'research' | 'connectors'>('research');
   const [conn, setConn] = useState<ConnectorState[]>(
@@ -72,40 +78,102 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
   const [form, setForm] = useState<ConnectorInfo | null>(null);
   const [depth, setDepth] = useState<ResearchDepth>('standard');
   const [toast, fireToast] = useToast();
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [jobId, setJobId] = useState<number | null>(null);
+  const [job, setJob] = useState<DrRunJob | null>(null);
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Real deep-research allowance for this org (GET /api/deep-research/board).
+  // Honest null (rendered "—") when usage/license are unreadable — never a
+  // fabricated 42/60 placeholder.
+  const board = useLiveData<DrBoard>('/api/deep-research/board');
+  const credits = board.data?.credits ?? null;
 
   const toggle = (id: string) =>
     setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
 
-  const credits = { remaining: 42, limit: 60, tier: 'professional' };
+  const connName = (id: string) => DR_CONN.find((c) => c.id === id)?.name || id;
+  const fanout = (j: DrRunJob | null, done: boolean): DrJob[] =>
+    sel.map((id) => {
+      const log = (j?.connectorLogs || {})[id];
+      const isDone = done || (!!log && (log.state === 'done' || log.resultCount != null));
+      return { name: connName(id), state: isDone ? 'done' : 'run', hits: log?.resultCount ?? 0 };
+    });
 
-  const stop = () => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
-    setPhase('idle');
-    setJobs([]);
-    fireToast('Research job stopped');
+  /* Poll a real research job until it settles — the per-connector fan-out,
+     results and synthesis all come from the persisted deep_research_jobs run;
+     no simulated hit counts. */
+  const poll = async (id: number) => {
+    let res: Response;
+    try {
+      res = await apiRequest('GET', `/api/deep-research/jobs/${id}`);
+    } catch (e) {
+      setPhase('idle');
+      fireToast(`Couldn't reach the research engine — ${e instanceof Error ? e.message : String(e)}.`);
+      return;
+    }
+    const j = (await res.json().catch(() => null)) as DrRunJob | null;
+    if (!res.ok || !j) {
+      setPhase('idle');
+      fireToast(`Research job read failed (HTTP ${res.status}).`);
+      return;
+    }
+    const done =
+      j.status === 'completed' || j.status === 'done' || j.status === 'failed' || j.status === 'cancelled';
+    setJob(j);
+    setJobs(fanout(j, done));
+    if (done) setPhase(j.status === 'completed' || j.status === 'done' ? 'done' : 'idle');
+    else pollRef.current = setTimeout(() => poll(id), 1600);
   };
 
-  const launch = () => {
+  const launch = async () => {
     if (!sel.length) return;
-    const chosen = sel.map((id) => DR_CONN.find((c) => c.id === id)).filter(Boolean) as ConnectorInfo[];
+    if (pollRef.current) clearTimeout(pollRef.current);
+    setJob(null);
     setPhase('running');
-    setJobs(chosen.map((c) => ({ name: c.name, state: 'run' as const, hits: 0 })));
-    const speed = depth === 'quick' ? 300 : depth === 'exhaustive' ? 800 : 550;
-    timers.current = [];
-    chosen.forEach((_, i) => {
-      timers.current.push(
-        setTimeout(() => {
-          setJobs((js) =>
-            js.map((j, k) =>
-              k === i ? { ...j, state: 'done' as const, hits: Math.floor(Math.random() * 40) + 6 } : j,
-            ),
-          );
-        }, 500 + i * speed),
+    setJobs(fanout(null, false));
+    let res: Response;
+    try {
+      res = await apiRequest('POST', '/api/deep-research/jobs', {
+        query: { indication: query },
+        connectorIds: sel,
+        depth: depth === 'exhaustive' ? 'comprehensive' : 'standard',
+      });
+    } catch (e) {
+      setPhase('idle');
+      setJobs([]);
+      fireToast(`Couldn't reach the research engine — ${e instanceof Error ? e.message : String(e)}.`);
+      return;
+    }
+    const j = (await res.json().catch(() => null)) as DrRunJob | null;
+    if (!res.ok || !j?.id) {
+      setPhase('idle');
+      setJobs([]);
+      fireToast(
+        res.status === 403
+          ? 'Deep research needs a higher plan, or you are out of research credits this period.'
+          : (j as { error?: string } | null)?.error || `Couldn't start research (HTTP ${res.status}).`,
       );
-    });
-    timers.current.push(setTimeout(() => setPhase('done'), 650 + chosen.length * speed));
+      return;
+    }
+    setJobId(j.id);
+    setJob(j);
+    poll(j.id);
+  };
+
+  const stop = async () => {
+    if (pollRef.current) clearTimeout(pollRef.current);
+    const id = jobId;
+    setPhase('idle');
+    setJobs([]);
+    setJob(null);
+    if (id != null) {
+      try {
+        await apiRequest('POST', `/api/deep-research/jobs/${id}/stop`);
+      } catch {
+        /* best effort */
+      }
+    }
+    fireToast('Research job stopped');
   };
 
   const cats = [...new Set(DR_CONN.map((c) => c.cat))];
@@ -122,7 +190,6 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="sp" style={{ maxWidth: 1060 }}>
-      <SampleTag sample={true} />
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Intelligence -- connectors & deep research</div>
@@ -152,12 +219,18 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
           }
           body={
             <>
-              Deep research is a governed job (tier: {credits.tier}). You have{' '}
-              <b>
-                {credits.remaining} of {credits.limit}
-              </b>{' '}
-              research credits this period; a {depth} run costs{' '}
-              {(DEPTHS.find((d) => d[0] === depth) || [])[2]}.
+              Deep research is a governed job{credits?.tier ? ` (tier: ${credits.tier})` : ''}.{' '}
+              {board.loading ? (
+                'Loading your research-credit allowance…'
+              ) : credits ? (
+                <>
+                  You have{' '}
+                  <b>{credits.remaining < 0 ? 'unlimited' : `${credits.remaining} of ${credits.limit}`}</b>{' '}
+                  research credits this period.
+                </>
+              ) : (
+                'Your research-credit allowance loads from your plan.'
+              )}
             </>
           }
           reassure="Nothing is fabricated -- if a source can't support a claim, I say so and cite what I did find."
@@ -278,8 +351,8 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
                   </button>
                 )}
                 <span className="sp-q-s">
-                  Parallel fan-out -- grounded synthesis -- {credits.remaining}/{credits.limit}{' '}
-                  credits
+                  Parallel fan-out -- grounded synthesis
+                  {credits ? ` -- ${credits.remaining < 0 ? 'unlimited' : credits.remaining + '/' + credits.limit} credits` : ''}
                 </span>
               </div>
             </div>
@@ -319,22 +392,27 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
               <div className="pj-card" style={{ marginBottom: 14 }}>
                 <div className="pj-card-h">
                   <span className="t">Aggregated results</span>
-                  <span className="s">{DR_RESULTS.length} top sources</span>
+                  <span className="s">{(job?.results || []).length} top sources</span>
                 </div>
                 <div className="pj-card-b">
                   <div className="sp-list">
-                    {DR_RESULTS.map((r, i) => (
+                    {(job?.results || []).length === 0 && (
+                      <div className="sp-q-s" style={{ padding: '6px 2px' }}>
+                        No sources were returned for this run.
+                      </div>
+                    )}
+                    {(job?.results || []).map((r, i) => (
                       <div key={i} className="sp-row">
                         <span className="sp-tag2">SRC-{i + 1}</span>
                         <span className="sp-row-b">
-                          <span className="sp-row-t">{r.title}</span>
+                          <span className="sp-row-t">{r.title || r.source || 'Source ' + (i + 1)}</span>
                           <span className="sp-row-s">
-                            {r.conn} -- {r.meta} -- {r.date}
+                            {[r.conn || r.source, r.meta, r.date].filter(Boolean).join(' -- ')}
                           </span>
                         </span>
                         <button
                           className="sp-go"
-                          onClick={() => ask('Open source SRC-' + (i + 1) + ': ' + r.title)}
+                          onClick={() => ask('Open source SRC-' + (i + 1) + ': ' + (r.title || r.url || ''))}
                         >
                           {I.externalLink}
                         </button>
@@ -361,16 +439,13 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
                       borderRadius: 8,
                     }}
                   >
-                    {DR_SYNTH}
+                    {job?.synthesis || 'No synthesis was returned for this run.'}
                   </div>
                   <div className="cm-pushbar" style={{ marginTop: 14 }}>
                     <button
                       className="sp-primary"
                       style={{ padding: '8px 14px' }}
-                      onClick={() => {
-                        open('vault');
-                        fireToast('Saved to Vault with citations');
-                      }}
+                      onClick={() => ask('Save this deep-research synthesis to the Vault with its citations.')}
                     >
                       {I.vault} Save to Vault
                     </button>
@@ -386,7 +461,7 @@ export function DeepResearch({ onAsk, onNav }: SurfaceViewProps) {
                     </button>
                     <button
                       className="sp-ask"
-                      onClick={() => fireToast('Exported research brief (PDF)')}
+                      onClick={() => ask('Export this deep-research brief as a PDF.')}
                     >
                       {I.download} Export brief
                     </button>
