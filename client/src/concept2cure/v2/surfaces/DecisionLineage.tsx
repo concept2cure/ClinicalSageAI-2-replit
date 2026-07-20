@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   // Canonical reference config (kept — not fixture DATA): the node-type display
@@ -55,6 +56,11 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
 
   const [sel, setSel] = useState(0);
   const g: LineageGraph | undefined = graphs[sel] || graphs[0];
+
+  // Export runner state — which format is in flight, and the last error (shown
+  // inline by the export controls). The surface has no toast; keep it contained.
+  const [exportBusy, setExportBusy] = useState('');
+  const [exportErr, setExportErr] = useState('');
 
   const nodes: LineageNode[] = (g && g.nodes) || [];
   const md = (g && g.metadata) || { totalDecisions: 0, totalApprovals: 0, totalRejections: 0, totalDelegations: 0 };
@@ -132,18 +138,44 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
           re: "Nothing is lost while it's in flight -- the trail captures every handoff, including the delegation, so accountability is never ambiguous.",
         };
 
-  const exportOne = (fmt: string) => {
-    // FLAG (mock action): routes the request to the AnA composer via onAsk; it
-    // does NOT call the real streaming export endpoint
-    // GET /api/decision-lineage/:entityType/:entityId/export (which logs the
-    // export as an auditable action). Left for the actions pass — not half-wired.
-    ask(
-      'Export the decision lineage for ' +
-        (g?.artifactLabel || 'this artifact') +
-        ' as ' +
-        fmt.toUpperCase() +
-        ' for the submission audit package.',
-    );
+  // exportOne — REAL, awaited export. Streams the immutable lineage from
+  // GET /api/decision-lineage/:entityType/:entityId/export?format=…, which the
+  // server logs as an auditable action (lineage_export), and downloads the
+  // returned file. The entity ids come from the adopted graph (g.rootEntityType
+  // / g.rootEntityId) — nothing is fabricated. On failure an inline message is
+  // shown and no file is produced.
+  const exportOne = async (fmt: string) => {
+    if (!g) { setExportErr('No lineage graph is loaded to export.'); return; }
+    setExportErr('');
+    setExportBusy(fmt);
+    try {
+      const url =
+        '/api/decision-lineage/' +
+        encodeURIComponent(g.rootEntityType) + '/' + encodeURIComponent(String(g.rootEntityId)) +
+        '/export?format=' + encodeURIComponent(fmt);
+      const res = await apiRequest('GET', url);
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        setExportErr((j && (j.error || j.message)) || ('Export failed (HTTP ' + res.status + ').'));
+        return;
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition') || '';
+      const m = /filename="?([^";]+)"?/.exec(cd);
+      const filename = (m && m[1]) || ('decision-lineage-' + g.rootEntityId + '.' + fmt);
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objUrl);
+    } catch (e) {
+      setExportErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setExportBusy('');
+    }
   };
 
   return (
@@ -430,11 +462,21 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
             <div className="dl-export-hd">Export for the audit package</div>
             <div className="dl-export-btns">
               {(['json', 'csv', 'xml'] as const).map((f) => (
-                <button key={f} className="dl-export-b" onClick={() => exportOne(f)}>
-                  {f.toUpperCase()}
+                <button
+                  key={f}
+                  className="dl-export-b"
+                  disabled={exportBusy !== ''}
+                  onClick={() => exportOne(f)}
+                >
+                  {exportBusy === f ? 'Exporting…' : f.toUpperCase()}
                 </button>
               ))}
             </div>
+            {exportErr && (
+              <p className="dl-export-note" role="alert" style={{ color: 'var(--err, #c0392b)' }}>
+                Couldn’t export — {exportErr} Nothing was downloaded.
+              </p>
+            )}
             <p className="dl-export-note">
               Exports the immutable lineage (XML is eCTD-compatible). The dedicated export
               endpoint logs each export as an auditable action.
