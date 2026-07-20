@@ -29,6 +29,7 @@ import { Pediatric, Orphan, Lifecycle, Pharmacovigilance } from './surfaces/Biop
 import { Biostatistics } from './surfaces/Biostatistics';
 import { ChangeAssessment } from './surfaces/ChangeAssessment';
 import { ClinicalOps } from './surfaces/ClinicalOps';
+import { ClientPortal } from './surfaces/ClientPortal';
 import { ConversationThread } from './surfaces/ConversationThread';
 import { CroPortfolio } from './surfaces/CroPortfolio';
 import { CmcModule } from './surfaces/CmcModule';
@@ -119,6 +120,10 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   biostatistics: { component: Biostatistics },
   'change-assessment': { component: ChangeAssessment },
   'clinical-ops': { component: ClinicalOps },
+  // External client portal — full-page read-only view (no internal AnA rail).
+  // Deep-link only (/concept2cure/client-portal); external-client users are
+  // scoped to their own workspace server-side, CRO staff can preview.
+  'client-portal': { component: ClientPortal, full: true, hideAna: true },
   cmc: { component: CmcModule },
   'communication-center': { component: CommunicationCenter },
   'conversation-thread': { component: ConversationThread, hideAna: true },
