@@ -16,7 +16,8 @@
 import type React from 'react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 import { CapabilityIndex } from './intelligence/Intelligence';
-import { Setup, AuditTrail, Apps, ArtifactsCenter, AdminConsole } from './surfaces/AdminSurfaces';
+import { Setup, Apps, ArtifactsCenter, AdminConsole } from './surfaces/AdminSurfaces';
+import { AuditTrail } from './surfaces/AdminAuditTrail';
 import { AgencyMeetings } from './surfaces/AgencyMeetings';
 import { AnaCommand } from './surfaces/AnaCommand';
 import { AnaMemory } from './surfaces/AnaMemory';
