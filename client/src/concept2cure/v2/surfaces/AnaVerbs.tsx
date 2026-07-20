@@ -423,8 +423,6 @@ export function GovernedActionModal({ action, submissionTypeId, sectionLabel, on
     { id: 'acknowledgment', label: 'Acknowledgment', desc: 'I acknowledge receipt / awareness' }, { id: 'witnessing', label: 'Witnessing', desc: 'I witnessed this action being performed' },
     { id: 'responsibility', label: 'Responsibility', desc: 'I accept responsibility for this content' },
   ];
-  const prevHash = '7f3a' + Math.random().toString(36).slice(2, 6) + '…' + Math.random().toString(36).slice(2, 6);
-  const thisHash = 'a8b2' + Math.random().toString(36).slice(2, 6) + '…' + Math.random().toString(36).slice(2, 6);
   return (
     <div className="esign-bd" onClick={onCancel}>
       <div className="esign-modal gov-modal" onClick={e => e.stopPropagation()}>
@@ -474,11 +472,11 @@ export function GovernedActionModal({ action, submissionTypeId, sectionLabel, on
           <div className="gov-hashchain">
             <div className="gov-hashchain-h">{I.link} Audit hash-chain</div>
             <div className="gov-hashchain-viz">
-              <div className="gov-hc-node prev"><span className="gov-hc-label">Previous</span><span className="gov-hc-hash mono">{prevHash}</span></div>
+              <div className="gov-hc-node prev"><span className="gov-hc-label">Previous</span><span className="gov-hc-hash mono">prior sealed record</span></div>
               <span className="gov-hc-arrow">{'→'}</span>
-              <div className="gov-hc-node current"><span className="gov-hc-label">This action</span><span className="gov-hc-hash mono">{thisHash}</span></div>
+              <div className="gov-hc-node current"><span className="gov-hc-label">This action</span><span className="gov-hc-hash mono">sealed on confirm</span></div>
             </div>
-            <div className="gov-hc-note">This entry will be immutably chained to the previous audit record. The hash includes your identity, timestamp, action, reason, and the document state.</div>
+            <div className="gov-hc-note">On confirm, this entry is immutably chained to the previous audit record. The sealed hash is computed server-side from your identity, timestamp, action, reason, and the document state — it is never fabricated or previewed client-side before you sign.</div>
           </div>
         </div>
         <div className="gov-footer">
