@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-19T18:55:33.290Z",
+  "generatedAt": "2026-07-20T04:34:55.008Z",
   "git": {
-    "sha": "5fefd17dfe012233fada3405f62d96e42589e18e",
+    "sha": "350faadc27a7aa62161e02316e1d2be13cfa22da",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2657,6 +2657,10 @@
         "lines": 2254
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 2215
+      },
+      {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2177
       },
@@ -2687,10 +2691,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
         "lines": 2059
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2056
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
