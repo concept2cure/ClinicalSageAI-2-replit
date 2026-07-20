@@ -99,21 +99,46 @@ function IntelReviewSim({ pw }: { pw: any }) {
     </div>
   );
 }
-function IntelHumanFactors({ pw }: { pw: any }) {
-  const h = pw.humanfactors; if (!h) return null;
+/* ── Human factors (IEC 62366) — REAL org-scoped backend (GET /api/human-factors).
+   Returns the org's HFE/UE file object { device, framework, present, scenarios[] }
+   (or { data: null } when none), the `{ data }` success envelope the hook unwraps.
+   We render the real framework + use-related scenarios; nullable columns are
+   `| null` and rendered null-safe. `present` (element checklist) is intentionally
+   not rendered — its persisted shape isn't part of this display contract, and we
+   never fabricate a completeness number the backend doesn't return. ── */
+
+interface HfScenario { task: string; useError: string | null; potentialHarmSeverity: string | null; mitigated: boolean | null; }
+interface HfFile { device: string | null; framework: string | null; scenarios: HfScenario[] }
+
+function IntelHumanFactors() {
+  const hf = useLiveData<HfFile>('/api/human-factors');
+  if (hf.loading) return <div className="dv-mini"><div className="scaf-note" style={{ padding: '18px 10px' }}>Loading HFE/UE file…</div></div>;
+  if (hf.error) return (
+    <div className="dv-mini">
+      <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load the HFE/UE file"
+        hint="The organization's IEC 62366 human-factors file (use specification, critical tasks, residual use-related risk) didn't respond. Sign in and retry, or check the service is reachable." />
+    </div>
+  );
+  if (hf.empty || !hf.data) return (
+    <div className="dv-mini">
+      <EmptyState icon={I.fileText} title="No HFE/UE file yet"
+        hint="Once a human-factors file is created, its use specification, use-related critical tasks and residual-risk conclusion are governed here (IEC 62366-1)." />
+    </div>
+  );
+  const h = hf.data;
+  const scenarios = h.scenarios ?? [];
   return (
     <div className="dv-mini">
-      <div className="dv-mini-sub">{h.framework} {'·'} HFE/UE file</div>
-      <div className="dv-gspr-bar"><span className="dv-gspr-seg" style={{ flex: h.completeness }} data-tone={h.completeness >= 75 ? 'ok' : 'warn'}>{h.completeness}%</span><span className="dv-gspr-seg" style={{ flex: 100 - h.completeness }} data-tone="idle" /></div>
-      {h.elements.map((el: any, i: number) => <div key={i} className="dv-mini-mfg"><span className="dv-mini-tk" data-ok={el.have}>{el.have ? '✓' : '•'}</span><span>{el.k}</span></div>)}
-      <div className="dv-mini-sub">Use-related critical tasks</div>
-      {h.critical.map((c: any, i: number) => (
+      <div className="dv-mini-sub">{h.framework || 'IEC 62366-1'}{h.device ? ` ${'·'} ${h.device}` : ''} {'·'} HFE/UE file</div>
+      <div className="dv-mini-sub">Use-related critical tasks{scenarios.length ? ` (${scenarios.length})` : ''}</div>
+      {scenarios.length === 0 ? (
+        <p className="dv-mini-note">No use-related scenarios recorded yet.</p>
+      ) : scenarios.map((c, i) => (
         <div key={i} className="dv-rsim-f" data-sev={c.mitigated ? 'minor' : 'major'}>
-          <div className="dv-rsim-fh"><span className="pg-badge" data-tone={c.sev === 'critical' ? 'err' : 'warn'}>{c.sev}</span><span className="dv-rsim-area">{c.task}</span><span className="pg-badge" data-tone={c.mitigated ? 'ok' : 'err'}>{c.mitigated ? 'mitigated' : 'open'}</span></div>
-          <div className="dv-rsim-txt">Use error: {c.error}</div>
+          <div className="dv-rsim-fh"><span className="pg-badge" data-tone={c.potentialHarmSeverity === 'critical' ? 'err' : 'warn'}>{c.potentialHarmSeverity || 'severity n/a'}</span><span className="dv-rsim-area">{c.task}</span><span className="pg-badge" data-tone={c.mitigated ? 'ok' : 'err'}>{c.mitigated ? 'mitigated' : 'open'}</span></div>
+          {c.useError && <div className="dv-rsim-txt">Use error: {c.useError}</div>}
         </div>
       ))}
-      <p className="dv-mini-note">{h.residualAcceptable ? 'Residual use-related risk acceptable — all critical tasks mitigated.' : 'Residual risk NOT acceptable — unmitigated critical task(s) must be closed before summative testing.'}</p>
     </div>
   );
 }
@@ -378,7 +403,7 @@ const INTEL: Record<string, IntelEntry> = {
   traceability17511: { title: 'Metrological traceability', icon: 'telescope', C: IntelTraceability17511, has: pw => !!pw.traceability17511 },
   cyber: { title: 'Cybersecurity', icon: 'shieldCheck', C: IntelCyber, has: pw => !!pw.cyber },
   reviewsim: { title: 'Reviewer simulation', icon: 'scale', C: IntelReviewSim, has: pw => !!pw.reviewsim },
-  humanfactors: { title: 'Human factors (62366)', icon: 'user', C: IntelHumanFactors, has: pw => !!pw.humanfactors },
+  humanfactors: { title: 'Human factors (62366)', icon: 'user', C: IntelHumanFactors, has: () => true },
   registration: { title: 'Registration and listing', icon: 'fileCheck', C: IntelRegistration, has: pw => !!pw.registration },
   pccp: { title: 'AI/ML PCCP (FDA 2025)', icon: 'settings', C: IntelPccp, has: () => true },
   capa: { title: 'CAPA and MDR vigilance', icon: 'alertTriangle', C: IntelCapa, has: () => true },
@@ -418,7 +443,11 @@ export function DeviceSubmission({ onAsk, surface }: { onAsk: (m: string) => voi
   // (Tree, DocumentPage, DeviceAcc, IntelPredicate, IntelRisk, …) that this task
   // may not edit, so honestly re-anchoring it requires a coordinated multi-file
   // change (a device-submission read model + DeviceIntel.tsx). The self-contained
-  // post-market panels (CAPA/MDR, inspections, PCCP) are re-anchored below.
+  // panels are handled here instead: CAPA/MDR, inspections and human factors are
+  // re-anchored to live org-scoped data; PCCP shows an honest empty pending a
+  // program id. (Candidate backends exist for some spine slices — /api/design-controls
+  // for DHF, but it serves a different item-list contract on its own surface;
+  // /api/cybersecurity-524b is POST-only — so they stay flagged, not half-wired.)
   const pw = getDevicePathway(pwId);
   const [activeSec, setActiveSec] = useState(pw.sections[0].id);
   const [dock, setDock] = useState('intel');
