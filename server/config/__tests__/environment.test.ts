@@ -100,10 +100,11 @@ describe('getRefreshTokenSecret', () => {
     delete process.env.REFRESH_TOKEN_SECRET_DEV;
     delete process.env.REFRESH_TOKEN_SECRET_STAGING;
     delete process.env.REFRESH_TOKEN_SECRET_PROD;
-    // Satisfy the production MFA + RLS posture gates so these tests isolate
-    // the refresh-secret contract.
+    // Satisfy the production MFA + RLS + audit-seal posture gates so these
+    // tests isolate the refresh-secret contract.
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
     process.env.RLS_ENFORCE = 'on';
+    process.env.AUDIT_HMAC_KEY = 'h'.repeat(32);
     process.env.DATABASE_URL = 'postgres://test';
     process.env.DATABASE_URL_DEV = 'postgres://test';
     process.env.DATABASE_URL_STAGING = 'postgres://test';
@@ -183,9 +184,11 @@ describe('assertMfaKeyPosture', () => {
     process.env.JWT_SECRET = VALID_SECRET;
     process.env.JWT_SECRET_PROD = VALID_SECRET;
     process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
-    // Satisfy the production RLS posture gate (runs after the MFA gate) so
-    // the 'loads in production' case below exercises the MFA contract only.
+    // Satisfy the production RLS + audit-seal posture gates (both run after the
+    // MFA gate) so the 'loads in production' case below exercises the MFA
+    // contract only.
     process.env.RLS_ENFORCE = 'on';
+    process.env.AUDIT_HMAC_KEY = 'h'.repeat(32);
     process.env.DATABASE_URL = 'postgres://test';
     process.env.DATABASE_URL_DEV = 'postgres://test';
     process.env.DATABASE_URL_PROD = 'postgres://test';
@@ -242,12 +245,14 @@ describe('getCurrentEnvironment', () => {
     process.env.DATABASE_URL_DEV = 'postgres://test';
     process.env.DATABASE_URL_PROD = 'postgres://test';
     // Production-path enforcement added alongside JWT: provide a dedicated,
-    // distinct refresh secret, a dedicated MFA key and an explicit RLS mode so
-    // the 'recognizes production' case below exercises env selection, not the
-    // fail-closed gates (which have their own dedicated suites above/below).
+    // distinct refresh secret, a dedicated MFA key, an explicit RLS mode and an
+    // audit-seal key so the 'recognizes production' case below exercises env
+    // selection, not the fail-closed gates (which have their own dedicated
+    // suites above/below).
     process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
     process.env.RLS_ENFORCE = 'on';
+    process.env.AUDIT_HMAC_KEY = 'h'.repeat(32);
   });
 
   afterEach(() => {
@@ -302,6 +307,7 @@ describe('production RLS enforcement posture (fires on config import)', () => {
     process.env.JWT_SECRET_PROD = VALID_SECRET;
     process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.AUDIT_HMAC_KEY = 'h'.repeat(32);
     process.env.DATABASE_URL = 'postgres://test';
     process.env.DATABASE_URL_DEV = 'postgres://test';
     process.env.DATABASE_URL_PROD = 'postgres://test';
@@ -352,6 +358,62 @@ describe('production RLS enforcement posture (fires on config import)', () => {
   });
 
   it('does not require RLS_ENFORCE outside production', async () => {
+    process.env.NODE_ENV = 'development';
+    const { config } = await import('../environment');
+    expect(config.isDevelopment).toBe(true);
+  });
+});
+
+describe('production audit-seal posture (fires on config import)', () => {
+  let originalEnv: NodeJS.ProcessEnv;
+
+  beforeEach(() => {
+    originalEnv = { ...process.env };
+    vi.resetModules();
+    delete process.env.AUDIT_HMAC_KEY;
+    delete process.env.AUDIT_SEAL_ACCEPT_UNSEALED;
+    // Satisfy every other production gate so these tests isolate the audit one.
+    process.env.JWT_SECRET = VALID_SECRET;
+    process.env.JWT_SECRET_PROD = VALID_SECRET;
+    process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
+    process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.RLS_ENFORCE = 'on';
+    process.env.DATABASE_URL = 'postgres://test';
+    process.env.DATABASE_URL_DEV = 'postgres://test';
+    process.env.DATABASE_URL_PROD = 'postgres://test';
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    vi.resetModules();
+  });
+
+  it('refuses to load in production when AUDIT_HMAC_KEY is unset', async () => {
+    process.env.NODE_ENV = 'production';
+    await expect(import('../environment')).rejects.toThrow(/REFUSING TO BOOT/);
+  });
+
+  it('refuses to load in production when AUDIT_HMAC_KEY is too short', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.AUDIT_HMAC_KEY = 'h'.repeat(16);
+    await expect(import('../environment')).rejects.toThrow(/too short/);
+  });
+
+  it('loads in production with a sufficiently long AUDIT_HMAC_KEY', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.AUDIT_HMAC_KEY = 'h'.repeat(32);
+    const { config } = await import('../environment');
+    expect(config.isProduction).toBe(true);
+  });
+
+  it('loads (with a warning) when the operator explicitly accepts an unsealed ledger', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.AUDIT_SEAL_ACCEPT_UNSEALED = 'true';
+    const { config } = await import('../environment');
+    expect(config.isProduction).toBe(true);
+  });
+
+  it('does not require AUDIT_HMAC_KEY outside production', async () => {
     process.env.NODE_ENV = 'development';
     const { config } = await import('../environment');
     expect(config.isDevelopment).toBe(true);
