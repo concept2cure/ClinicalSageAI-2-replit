@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
 import { ppFmtTime, ppFmtDate, ppDaysUntil } from '../fixtures/pathway-panes-data';
@@ -437,19 +438,75 @@ function BioApprovalCard({ a }: ApprovalCardProps) {
   const [signing, setSigning] = useState(false);
   const [pwd, setPwd] = useState('');
   const [meaning, setMeaning] = useState('');
-  const [signed, setSigned] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [signedInfo, setSignedInfo] = useState<{ message: string; meaning: string } | null>(null);
   const days = a.due ? ppDaysUntil(a.due) : null;
   const overdue = days !== null && days < 0;
 
-  // MOCK ACTION (flagged): "Apply signature" only flips local state — it does NOT
-  // call POST /api/approval-workflows/:id/approve or /api/esignature/sign, so no
-  // signature and no audit record are created. All user-visible §11 copy below is
-  // softened to say so; real wiring is deferred to the actions pass (no half-wire).
-  if (signed) return (
+  // WIRED (real, fail-safe). "Apply signature" performs a genuine 21 CFR Part 11
+  // governed action against the real backend, mirroring the shipped
+  // CommApprovals / EsignModal pattern:
+  //   1) POST /api/esignature/verify-password — server-side bcrypt re-auth of the
+  //      signer's password (§11.200(a)(1) first factor). This endpoint returns 200
+  //      with { valid } even for a wrong password, so we gate on the flag, not res.ok.
+  //   2) POST /api/approval-workflows/:id/approve — records the approval decision on
+  //      the real workflow. ApprovalOrchestrator.processApproval writes workflow_history
+  //      + document_audit_logs (the durable §11.10(e) audit trail). ':id' is the REAL
+  //      approvalId straight from the pending row (a.id ← RawApproval.approvalId — the id
+  //      the /approve route keys on). The stated meaning is stored verbatim as the
+  //      decision comment (§11.50).
+  // Signed state is reflected ONLY after BOTH calls succeed; any failure surfaces a
+  // truthful inline "Signature failed: …" and never marks it signed. Nothing is
+  // fabricated — /approve returns no signatureId/hash/timestamp, so none is shown.
+  //
+  // FLAG — deliberately NOT called here: POST /api/esignature/sign (the deeper §11.70
+  // content-bound electronic_signatures row). It hard-requires a numeric `versionId`
+  // that must resolve to a real `document_versions` row (JOIN `documents`, org-scoped,
+  // non-empty content — see server/routes/esignature.ts, the §11.70 binding + empty-
+  // content hardening). The PendingApproval row (server ApprovalOrchestrator.
+  // getPendingApprovals) carries only approvalId / workflowId / documentId, and its
+  // documentId is a `unified_documents` id — a DIFFERENT namespace from the legacy
+  // `documents` / `document_versions` tables the sign endpoint binds against. No field
+  // on this queue yields a valid versionId, so calling /sign would 422 (VERSION_NOT_FOUND)
+  // or bind to the wrong content. Defer until the pending row carries a versionId.
+  const applySignature = async () => {
+    if (pwd.length < 6 || meaning.trim().length === 0 || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    const reason = meaning.trim();
+    try {
+      // §11.200 — re-verify the signer's password server-side BEFORE recording.
+      const vpRes = await apiRequest('POST', '/api/esignature/verify-password', { password: pwd });
+      const vp = await vpRes.json().catch(() => ({} as { valid?: boolean; error?: string }));
+      if (!vp?.valid) {
+        setError(vp?.error === 'AUTH_REQUIRED' ? 'you are not signed in' : 'password could not be verified');
+        setSubmitting(false);
+        return;
+      }
+      // Record the approval decision on the real workflow (writes the audit trail).
+      const apRes = await apiRequest('POST', `/api/approval-workflows/${a.id}/approve`, { comments: reason });
+      const ap = await apRes.json().catch(() => ({} as { success?: boolean; message?: string; error?: string }));
+      if (!ap?.success) {
+        setError(ap?.error || 'the approval could not be recorded');
+        setSubmitting(false);
+        return;
+      }
+      setSignedInfo({ message: typeof ap.message === 'string' ? ap.message : 'Approval recorded', meaning: reason });
+      setSubmitting(false);
+    } catch (e) {
+      // apiRequest throws on any non-OK (non-401) response with the endpoint's reason.
+      // Never mark signed on failure.
+      setError(e instanceof Error && e.message ? e.message : 'request failed');
+      setSubmitting(false);
+    }
+  };
+
+  if (signedInfo) return (
     <div className="ap-card signed">
-      <div className="ap-card-hdr"><span className="ap-stage-pill" data-stage="review">{a.step}</span><span className="audit-signed">{I.lock} Preview only — not signed</span></div>
+      <div className="ap-card-hdr"><span className="ap-stage-pill" data-stage="review">{a.step}</span><span className="audit-signed">{I.lock} Signed · recorded to audit trail</span></div>
       <div className="ap-card-target">{a.target}</div>
-      <div className="ap-card-meta">Draft acknowledgement: &ldquo;{meaning}&rdquo; · not submitted to the audit trail</div>
+      <div className="ap-card-meta">Approved: &ldquo;{signedInfo.meaning}&rdquo; · {signedInfo.message}</div>
     </div>
   );
 
@@ -469,13 +526,14 @@ function BioApprovalCard({ a }: ApprovalCardProps) {
       )}
       {signing && (
         <div className="ap-sign-form">
-          <div className="ap-sign-attest"><span className="ap-sign-attest-label">Meaning of signature</span><input className="ap-sign-input" value={meaning} onChange={e => setMeaning(e.target.value)} placeholder="e.g. Reviewed and approved"/></div>
+          <div className="ap-sign-attest"><span className="ap-sign-attest-label">Meaning of signature</span><input className="ap-sign-input" value={meaning} onChange={e => setMeaning(e.target.value)} placeholder="e.g. Reviewed and approved" disabled={submitting}/></div>
           <div className="ap-sign-creds">
-            <input className="ap-sign-input" type="password" placeholder="Re-enter password" value={pwd} onChange={e => setPwd(e.target.value)}/>
-            <button className="ap-sign-confirm" disabled={pwd.length < 6 || meaning.trim().length === 0} onClick={() => setSigned(true)}>{I.lock} Apply signature</button>
-            <button className="ap-sign-cancel" onClick={() => { setSigning(false); setPwd(''); }}>Cancel</button>
+            <input className="ap-sign-input" type="password" autoComplete="current-password" placeholder="Re-enter password" value={pwd} onChange={e => setPwd(e.target.value)} disabled={submitting}/>
+            <button className="ap-sign-confirm" disabled={pwd.length < 6 || meaning.trim().length === 0 || submitting} onClick={applySignature}>{I.lock} {submitting ? 'Signing…' : 'Apply signature'}</button>
+            <button className="ap-sign-cancel" onClick={() => { setSigning(false); setPwd(''); setError(null); }} disabled={submitting}>Cancel</button>
           </div>
-          <div className="ap-sign-foot">21 CFR §11.100(b) · Preview only — this does not apply a signature or write to the audit trail. E-signing goes live once wired to POST /api/esignature/sign.</div>
+          {error && <div className="ap-sign-foot" role="alert" style={{ color: 'var(--error)' }}>Signature failed: {error}</div>}
+          <div className="ap-sign-foot">21 CFR Part 11 §11.50 · §11.200 — your password is re-verified server-side and the approval decision is recorded to the audit trail. This cannot be undone.</div>
         </div>
       )}
     </div>
@@ -498,7 +556,7 @@ export function BioApprovalsPane({ approvals }: ApprovalsPaneProps) {
       <div className="ap-section">
         <div className="ap-sec-hdr">
           <div><div className="ap-sec-title">Pending your signature</div><div className="ap-sec-sub">{approvals.length} require your e-sign</div></div>
-          <span className="ap-cfr">21 CFR Part 11 · §11.50 · §11.70</span>
+          <span className="ap-cfr">21 CFR Part 11 · §11.50 · §11.200</span>
         </div>
         {approvals.length === 0 && <div className="audit-empty">No pending approvals.</div>}
         {approvals.map(a => <BioApprovalCard key={a.id} a={a}/>)}
