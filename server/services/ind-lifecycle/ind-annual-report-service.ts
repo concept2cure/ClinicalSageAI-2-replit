@@ -21,11 +21,15 @@
  * who file the DSUR in lieu of the 312.33 narrative.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * INTEGRATION NOTES (human must wire):
- *   - PURE module: no persistence, no audit. To file the assembled report, route
- *     the section model into the submission-service as an ectd sequence of type
- *     'annual' (TODO(persistence)) — see ind-amendment-service for the leaf
- *     planning pattern, or build a dedicated annual-report intent.
+ * INTEGRATION NOTES:
+ *   - PURE module: no persistence, no audit — persistence is wired in the sibling
+ *     modules. Tracked drafts: ind-annual-report-persistence
+ *     .createAnnualReportDraft persists the section model + 60-day due date to
+ *     ind_annual_reports (org-scoped + audited; POST
+ *     /api/ind-lifecycle/submission/:id/annual-reports). eCTD filing:
+ *     ind-lifecycle-persistence.persistAnnualReport routes the report through
+ *     submission-service as an `annual` sequence with its m1.13 leaf
+ *     (tenant-scoped + audited; POST /api/ind-lifecycle/annual-report/file).
  *   - The caller must pull the period inputs (study statuses, IND safety reports
  *     filed in the period, IB changes, line listings) from the relevant data
  *     stores; this assembler does not query them.

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-29T01:18:05.071Z",
+  "generatedAt": "2026-07-19T21:37:27.234Z",
   "onSharedPool": [
     "server/routes/admin-security.ts",
     "server/routes/ana-cortex.ts",
@@ -15,7 +15,6 @@
     "server/routes/cerv2-document-routes.ts",
     "server/routes/cerv2-sections.ts",
     "server/routes/cerv2-versions.ts",
-    "server/routes/charters.ts",
     "server/routes/clients-routes.ts",
     "server/routes/coauthor.ts",
     "server/routes/collaboration.ts",

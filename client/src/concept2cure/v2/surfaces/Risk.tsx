@@ -1,15 +1,47 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLive } from '../dataConnect';
+import { EmptyState, useLiveRows } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
-import { RISK_ROWS as INITIAL_ROWS, RISK_ENUMS, SEV_LABELS, PROB_LABELS } from '../fixtures/risk-data';
+// SEV_LABELS / PROB_LABELS / RISK_ENUMS are canonical ISO 14971 reference config
+// (the severity + probability scales and the control/status/source enums that
+// mirror the backend's zod validators) — kept. RISK_ROWS was the display DATA
+// fixture and is gone: the surface now reads the org's real risk file.
+import { RISK_ENUMS, SEV_LABELS, PROB_LABELS } from '../fixtures/risk-data';
 import type { RiskRow, RiskControl } from '../fixtures/risk-data';
 
 /* ---- Risk management (ISO 14971) ---- */
+
+/* Raw risk_items row as returned by GET /api/mdx/risk-items (server
+   mdx-risk-management.ts — SELECT * FROM risk_items, org-scoped). severity and
+   probability are integers on the ISO 14971 1..5 scale; every column that can be
+   NULL in the table is typed `| null` here and mapped null-safe by mapRiskItems,
+   so the surface never fabricates a value the backend did not return. */
+interface RawRiskItem {
+  id: number;
+  ref_code: string | null;
+  hazard: string;
+  hazardous_situation: string | null;
+  harm: string;
+  sequence_of_events: string | null;
+  severity: number;
+  probability: number;
+  detectability: number | null;
+  residual_probability: number | null;
+  control_strategy: string | null;
+  source: string | null;
+  status: string;
+  acceptable: boolean | null;
+}
+
+/* Stable empty seed for the optimistic-row store while the live risk file is
+   loading or unavailable. useLiveRows synthesizes a fresh [] on every render
+   until it resolves; feeding a module-level constant into the re-seed effect
+   keeps it from thrashing ("Maximum update depth exceeded"). */
+const EMPTY_ROWS: RiskRow[] = [];
 
 /**
  * Map the raw `risk_items` rows the backend returns (GET /api/mdx/risk-items —
@@ -21,12 +53,14 @@ import type { RiskRow, RiskControl } from '../fixtures/risk-data';
  * from the risk product — so the surface never overstates that a hazard is
  * Acceptable.
  *
- * Fail-closed (returns null → the surface keeps its Sample fixture) unless the
- * payload is a non-empty list of rows that actually carry the risk_items
- * signature (hazard + harm strings, severity/probability integers in 1..5). The
- * display fixture itself (string `sev`/`prob`, no numeric `severity`) maps to
- * null, so a raw-shape mismatch keeps the honest sample rather than rendering
- * half-mapped safety data. Exported for unit coverage.
+ * Returns null unless the payload is a non-empty list of rows that actually
+ * carry the risk_items signature (hazard + harm strings, severity/probability
+ * integers in 1..5); a display-shaped row (string `sev`/`prob`, no numeric
+ * `severity`) maps to null too. The caller maps that null to a stable empty
+ * list, so the surface shows its honest empty state rather than half-mapped
+ * safety data — never a fixture. All-or-nothing: one row failing the signature
+ * fails the whole batch, so a partially-adopted risk file is never shown.
+ * Exported for unit coverage.
  */
 export function mapRiskItems(payload: unknown): RiskRow[] | null {
   const list = Array.isArray(payload)
@@ -78,33 +112,31 @@ export function mapRiskItems(payload: unknown): RiskRow[] | null {
 }
 
 export function Risk({ onAsk }: SurfaceViewProps) {
-  // The backend returns raw risk_items rows (numeric severity/probability); the
-  // surface renders labelled RiskRows. useLiveList's structural guard would
-  // reject that shape outright, so adopt via mapRiskItems instead — it maps the
-  // rows and fails closed to the fixture on anything it can't map. Same
-  // fail-closed contract, but the org's real risk file can now actually load.
-  const raw = useLive<unknown>('/api/mdx/risk-items', null);
-  const liveRows = useMemo(
-    () => (!raw.loading && !raw.sample ? mapRiskItems(raw.data) : null),
-    [raw.loading, raw.sample, raw.data],
+  // REAL slice: GET /api/mdx/risk-items (server mdx-risk-management.ts) reads the
+  // org's governed risk_items table via pg `pool` — org-scoped real rows, an
+  // honest empty, or an honest failed load, never a fixture. Raw rows carry
+  // numeric severity/probability (1..5) plus nullable columns; mapRiskItems maps
+  // them onto the RiskRow display contract null-safe (an absent column is never
+  // fabricated). A stable EMPTY_ROWS stands in while loading/errored so the
+  // re-seed effect below can't thrash.
+  const live = useLiveRows<RawRiskItem>('/api/mdx/risk-items');
+  const mapped = useMemo<RiskRow[]>(
+    () => (live.loading || live.error ? EMPTY_ROWS : (mapRiskItems(live.rows) ?? EMPTY_ROWS)),
+    [live.loading, live.error, live.rows],
   );
-  const live = {
-    data: liveRows ?? INITIAL_ROWS,
-    sample: liveRows == null,
-    loading: raw.loading,
-  };
-  const [rows, setRows] = useState<RiskRow[]>(live.data);
-  const [sel, setSel] = useState(INITIAL_ROWS[0].id);
-  // Adopt the live risk file once the backend responds (fail-closed to the
-  // fixture until then; user-added hazards before that are optimistic).
-  const seededRef = React.useRef<RiskRow[]>(live.data);
+  const [rows, setRows] = useState<RiskRow[]>(EMPTY_ROWS);
+  const [sel, setSel] = useState<string>('');
+  // Seed the optimistic-row store once the live risk file resolves; user-added
+  // hazards before that are optimistic. `mapped` is a stable reference while
+  // loading/errored, so this effect only fires on a real resolution.
+  const seededRef = React.useRef<RiskRow[]>(EMPTY_ROWS);
   useEffect(() => {
-    if (live.data !== seededRef.current) {
-      seededRef.current = live.data;
-      setRows(live.data);
-      if (live.data[0]) setSel(live.data[0].id);
+    if (mapped !== seededRef.current) {
+      seededRef.current = mapped;
+      setRows(mapped);
+      setSel(mapped[0]?.id ?? '');
     }
-  }, [live.data]);
+  }, [mapped]);
   const [view, setView] = useState<'initial' | 'residual'>('initial');
   const [form, setForm] = useState(false);
   const [ctrlForm, setCtrlForm] = useState(false);
@@ -137,6 +169,11 @@ export function Risk({ onAsk }: SurfaceViewProps) {
     return { total, open, accepted, highResidual, avgInitial, avgResidual };
   }, [rows, view]);
 
+  // FLAG (mock action): optimistic local add + fire-and-forget POST via the kit
+  // global window.C2C_API to the REAL endpoint (POST /api/mdx/risk-items). The
+  // row is added and the toast shown regardless of the write's outcome (the
+  // .catch swallows failures), so persistence is not confirmed at the UI. Leave
+  // for the actions pass to wire through apiRequest with refetch + real errors.
   const addHazard = (v: Record<string, string>) => {
     const n = rows.length + 1;
     const id = 'HZ-' + String(n).padStart(2, '0');
@@ -160,7 +197,12 @@ export function Risk({ onAsk }: SurfaceViewProps) {
     fire('Hazard ' + id + ' added / status Open');
   };
 
+  // FLAG (mock action): optimistic local add + fire-and-forget POST via
+  // window.C2C_API to the REAL endpoint (POST /api/mdx/risk-items/:id/controls);
+  // failures are swallowed, so persistence isn't confirmed. Leave for the
+  // actions pass.
   const addControl = (v: Record<string, string>) => {
+    if (!row) return;
     const cid = 'RC-' + row.id.replace('HZ-', '') + String.fromCharCode(97 + (row.controls ? row.controls.length : 0));
     const nc: RiskControl = { id: cid, desc: v.desc, type: v.type || 'protective_measure', status: v.status || 'proposed' };
     setRows(rs => rs.map(r => r.id === row.id ? { ...r, controls: [...(r.controls || []), nc] } : r)); setCtrlForm(false);
@@ -169,6 +211,10 @@ export function Risk({ onAsk }: SurfaceViewProps) {
     fire('Risk control ' + cid + ' added to ' + row.id);
   };
 
+  // FLAG (mock action): optimistic local status change (also flips res to
+  // 'Acceptable' locally on accept/verify) + fire-and-forget PATCH via
+  // window.C2C_API to the REAL endpoint (PATCH /api/mdx/risk-items/:id); failures
+  // are swallowed, so the change isn't confirmed persisted. Leave for the actions pass.
   const setStatus = (id: string, st: string) => {
     setRows(rs => rs.map(r => r.id === id ? { ...r, status: st, open: st === 'open' || st === 'mitigating', res: (st === 'accepted' || st === 'verified') ? 'Acceptable' : r.res } : r));
     const api = (window as any).C2C_API;
@@ -182,7 +228,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
   const hazardFormConfig: C2CFormConfig = {
     eyebrow: 'ISO 14971 / risk item', title: 'New hazard',
     sub: 'Adds a hazard -- hazardous situation -- harm row and computes initial risk (severity x probability).',
-    governed: 'Written to the risk file; audit-logged. Initial risk is the severity x probability product per ISO 14971.',
+    governed: 'Initial risk is the severity x probability product per ISO 14971. When the backend is connected the hazard is written to the governed risk file and audit-logged.',
     submitLabel: 'Add hazard',
     fields: [
       { key: 'hazard', label: 'Hazard', type: 'text', placeholder: 'e.g. Inaccurate glucose reading', required: true },
@@ -197,8 +243,8 @@ export function Risk({ onAsk }: SurfaceViewProps) {
   };
 
   const ctrlFormConfig: C2CFormConfig = {
-    eyebrow: 'Risk control / ' + row.id, title: 'Add risk control',
-    sub: 'Mitigation applied to ' + row.hazard + '.',
+    eyebrow: 'Risk control / ' + (row?.id ?? ''), title: 'Add risk control',
+    sub: 'Mitigation applied to ' + (row?.hazard ?? '') + '.',
     governed: 'Controls follow the ISO 14971 hierarchy: inherent safety -- protective measure -- information for safety.',
     submitLabel: 'Add control',
     fields: [
@@ -210,7 +256,6 @@ export function Risk({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="page-inner">
-      <SampleTag sample={live.sample} />
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Specialist / device</div>
@@ -223,6 +268,23 @@ export function Risk({ onAsk }: SurfaceViewProps) {
         </div>
       </div>
 
+      {live.loading && !row ? (
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the risk file…</div>
+      ) : live.error && !row ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the risk file"
+          hint="The ISO 14971 risk file didn't respond. These are the organization's governed hazards, risk controls and residual-risk evaluations — sign in and retry, or check the service is reachable."
+        />
+      ) : !row ? (
+        <EmptyState
+          icon={I.shieldCheck}
+          title="No hazards in the risk file yet"
+          hint="Add the first hazard with New hazard above — a hazard / hazardous-situation / harm row. AnA computes its initial risk (severity x probability), tracks its risk controls and residual risk, and threads it into the ISO 14971 risk management file."
+        />
+      ) : (
+      <>
       <AnswerLead
         tone={summary.highResidual > 0 || summary.open > 0 ? 'urgent' : 'calm'}
         eyebrow="Where the risk file stands right now"
@@ -296,7 +358,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
             <div className="rc-row"><span className="rc-k">Probability</span><span className="rc-v">{row.prob} ({probI(row.prob) + 1}){row.probR && row.probR !== row.prob && <span className="rc-move"> -- {row.probR} <span className="rc-move-tag">after controls</span></span>}</span></div>
             <div className="rc-row"><span className="rc-k">Strategy</span><span className="rc-v">{(EN.strategy.find(s => s[0] === row.strategy) || [])[1] || row.strategy} / {(EN.source.find(s => s[0] === row.source) || [])[1] || row.source}</span></div>
             <div className="rc-row"><span className="rc-k">Residual risk</span><span className="rc-v"><span className={`rd-chip tone-${row.res === 'Acceptable' ? 'ok' : 'warn'}`}>{row.res}</span></span></div>
-            <div className="rc-row"><span className="rc-k">Verification (DHF)</span><span className="rc-v">{row.ver || 'V&V record linked / ' + row.id}</span></div>
+            <div className="rc-row"><span className="rc-k">Verification (DHF)</span><span className="rc-v">{row.ver || '—'}</span></div>
           </div>
 
           <div className="pj-seclbl" style={{ margin: '14px 0 8px' }}>Risk controls <span className="s">/ ISO 14971 section 7</span></div>
@@ -318,6 +380,8 @@ export function Risk({ onAsk }: SurfaceViewProps) {
           </div>
         </aside>
       </div>
+      </>
+      )}
 
       {form && <C2CForm config={hazardFormConfig} onCancel={() => setForm(false)} onSubmit={addHazard} />}
       {ctrlForm && <C2CForm config={ctrlFormConfig} onCancel={() => setCtrlForm(false)} onSubmit={addControl} />}

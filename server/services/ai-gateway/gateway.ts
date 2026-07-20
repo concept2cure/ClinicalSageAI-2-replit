@@ -38,7 +38,11 @@ import type {
   ContentBlock,
 } from './types';
 import { GatewayAuditLogger } from './audit';
-import { GatewayPolicyEngine } from './policy';
+import {
+  GatewayPolicyEngine,
+  type ContentPolicyAction,
+  type PolicyFinding,
+} from './policy';
 import { CLOUD_MODELS } from './providers/cloud-models';
 import {
   createBedrockClient,
@@ -460,11 +464,48 @@ export class AIGateway {
     // policy or the lookup fails, behavior is unchanged (explicit-only).
     request = await this.applyOrgPlacementDefaults(request);
 
-    // Policy check
+    // Policy check (sync: token budget, prompt-injection scan, blocked
+    // patterns, rate limits)
     const policyResult = this.policyEngine.evaluate(request);
     if (!policyResult.allowed) {
+      // Content-security refusals (injection blocks) are compliance events and
+      // leave an audit trace. Budget/rate denials carry no block findings and
+      // keep their existing unaudited behavior (no rate-limit audit spam).
+      await this.logContentPolicyBlock(
+        request, strategy, requestId, startTime, policyResult.reason, policyResult.findings
+      );
       throw new GatewayPolicyError(policyResult.reason || 'Request blocked by policy');
     }
+
+    // PII/PHI content pass (async — governed ai-governance classifier).
+    // Blocks fail closed; 'redact' swaps a scrubbed COPY of the messages into
+    // the dispatch request, leaving the caller's original request untouched.
+    const piiVerdict = await this.policyEngine.evaluatePiiPolicy(request);
+    if (!piiVerdict.allowed) {
+      await this.logContentPolicyBlock(
+        request, strategy, requestId, startTime, piiVerdict.reason, piiVerdict.findings
+      );
+      throw new GatewayPolicyError(piiVerdict.reason || 'Request blocked by PII policy');
+    }
+    if (piiVerdict.action === 'redact' && piiVerdict.messages) {
+      request = { ...request, messages: piiVerdict.messages };
+    }
+
+    // Non-blocking findings (injection flags, applied redactions, coverage
+    // gaps) ride into the audit entry alongside the prompt hash.
+    const contentFindings: PolicyFinding[] = [
+      ...(policyResult.findings ?? []),
+      ...piiVerdict.findings,
+    ];
+    const contentPolicy =
+      contentFindings.length > 0
+        ? {
+            action: (piiVerdict.action === 'allow'
+              ? 'flag'
+              : piiVerdict.action) as ContentPolicyAction,
+            findings: contentFindings,
+          }
+        : undefined;
 
     // Deterministic mode
     if (this.config.deterministicMode) {
@@ -550,7 +591,7 @@ export class AIGateway {
       );
       this.recordSuccess(selectedModel.provider, response.latencyMs);
       this.recordTenantUsage(request, response, true);
-      await this.logAudit(request, response, strategy, true, undefined, triedModels);
+      await this.logAudit(request, response, strategy, true, undefined, triedModels, contentPolicy);
       return response;
     } catch (error: any) {
       lastError = error;
@@ -575,7 +616,7 @@ export class AIGateway {
         );
         this.recordSuccess(fallback.provider, response.latencyMs);
         this.recordTenantUsage(request, response, true);
-        await this.logAudit(request, response, strategy, true, undefined, triedModels);
+        await this.logAudit(request, response, strategy, true, undefined, triedModels, contentPolicy);
         return response;
       } catch (error: any) {
         lastError = error;
@@ -600,7 +641,9 @@ export class AIGateway {
       finishReason: 'error',
     };
     this.recordTenantUsage(request, errorResponse, false);
-    await this.logAudit(request, errorResponse, strategy, false, lastError?.message, triedModels);
+    await this.logAudit(
+      request, errorResponse, strategy, false, lastError?.message, triedModels, contentPolicy
+    );
 
     throw new GatewayAllProvidersFailedError(
       `All models failed. Tried: ${triedModels.join(', ')}. Last error: ${lastError?.message}`
@@ -1657,7 +1700,8 @@ export class AIGateway {
     strategy: RoutingStrategy,
     success: boolean,
     error?: string,
-    triedModels?: string[]
+    triedModels?: string[],
+    contentPolicy?: { action: ContentPolicyAction; findings: PolicyFinding[] }
   ): Promise<void> {
     if (!this.config.auditEnabled) return;
 
@@ -1706,10 +1750,66 @@ export class AIGateway {
             ? request.dataResidency
             : placement.regions[0],
         retentionPolicy: placement.zeroDataRetention ? 'zero_retention' : 'standard',
-        metadata: request.metadata,
+        // Content-policy findings carry only detector names, classes and
+        // classifier-redacted excerpts — never raw content (the prompt itself
+        // is represented by promptHash alone).
+        metadata: contentPolicy
+          ? { ...(request.metadata ?? {}), contentPolicy }
+          : request.metadata,
       });
     } catch (auditError: any) {
       log.error(`[AI Gateway] Audit log failed: ${auditError.message}`);
+    }
+  }
+
+  /**
+   * Audit a content-policy refusal (prompt-injection or PII/PHI block).
+   * Refusals are compliance events: a request the gateway declined must be as
+   * traceable as one it served. Fires only when block findings exist —
+   * budget / rate-limit denials are not content events and keep their
+   * pre-existing unaudited behavior. Records the prompt hash, never raw
+   * content; provider/model are 'none' because nothing was dispatched.
+   */
+  private async logContentPolicyBlock(
+    request: GatewayRequest,
+    strategy: RoutingStrategy,
+    requestId: string,
+    startTime: number,
+    reason?: string,
+    findings?: PolicyFinding[]
+  ): Promise<void> {
+    if (!this.config.auditEnabled) return;
+    if (!findings || !findings.some(f => f.action === 'block')) return;
+
+    try {
+      await this.auditLogger.log({
+        requestId,
+        timestamp: new Date(),
+        provider: 'none',
+        model: 'none',
+        taskType: request.taskType,
+        strategy,
+        organizationId: request.organizationId,
+        userId: request.userId,
+        projectId: request.projectId,
+        callerModule: request.callerModule,
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        estimatedCostUsd: 0,
+        latencyMs: Date.now() - startTime,
+        success: false,
+        error: reason,
+        cached: false,
+        deterministic: false,
+        promptHash: this.hashPrompt(request.messages),
+        metadata: {
+          ...(request.metadata ?? {}),
+          contentPolicy: { action: 'block' as ContentPolicyAction, findings },
+        },
+      });
+    } catch (auditError: any) {
+      log.error(`[AI Gateway] Content-policy audit log failed: ${auditError.message}`);
     }
   }
 
@@ -1844,6 +1944,11 @@ export class AIGateway {
         maxRequestsPerMinutePerUser: 30,
         blockedPatterns: [],
         contentFilters: true,
+        // Platform default posture: PII/PHI pass ON. Outbound content is
+        // classified before dispatch (policy.ts::evaluatePiiPolicy) —
+        // structured PHI blocks fail-closed, email/SSN spans are redacted
+        // from the provider payload, FP-prone identifiers are flagged into
+        // the audit trail. Opt out per-deployment with an explicit override.
         piiDetection: true,
       },
       auditEnabled: true,

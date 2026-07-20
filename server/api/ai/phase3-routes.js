@@ -3,7 +3,7 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import regulatoryAIPhase3 from '../../services/regulatoryAIServicePhase3.js';
 import { db } from '../../db.js';
-import { components, componentVersions, documentVersions } from '../../../shared/schema.js';
+import { components, componentVersions, documentVersions, organizationUsers } from '../../../shared/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { authedOrgId } from '../../utils/authedOrgId.js';
 
@@ -60,6 +60,19 @@ const globalChangeExecuteSchema = z.object({
 });
 
 /**
+ * Dev-only org-context escape hatch.
+ *
+ * The previous gate (`NODE_ENV !== 'production'`) engaged in ANY
+ * non-production environment — including staging — silently mapping
+ * unauthenticated callers into a real organization. It now requires BOTH:
+ *   1. NODE_ENV of exactly 'development' or 'test' (staging never qualifies), and
+ *   2. an explicit DEV_ORG_FALLBACK=true opt-in.
+ */
+const devOrgFallbackEnabled = () =>
+  (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') &&
+  process.env.DEV_ORG_FALLBACK === 'true';
+
+/**
  * Middleware to extract organization context from headers
  */
 const extractOrgContext = (req, res, next) => {
@@ -81,9 +94,10 @@ const extractOrgContext = (req, res, next) => {
   const jwtOrgId = authedOrgId(req);
   if (jwtOrgId != null) {
     req.organizationId = jwtOrgId;
-  } else if (process.env.NODE_ENV !== 'production') {
-    // Dev-mode escape hatch — preserves the existing developer ergonomics
-    // when no JWT is present (eg local curl). NEVER engaged in production.
+  } else if (devOrgFallbackEnabled()) {
+    // Dev-mode escape hatch — preserves developer ergonomics when no JWT is
+    // present (eg local curl). Requires NODE_ENV development/test AND
+    // DEV_ORG_FALLBACK=true; never engaged in staging or production.
     req.organizationId = req.organizationId || 2;
     if (req.userId === undefined || req.userId === null || typeof req.userId === 'string') {
       req.userId = 'dev-user';
@@ -99,6 +113,106 @@ const extractOrgContext = (req, res, next) => {
   req.sessionId = req.headers['x-session-id'] || null;
   req.ipAddress = req.headers['x-forwarded-for'] || req.connection?.remoteAddress;
   next();
+};
+
+/**
+ * Platform-level roles — mirrors PLATFORM_ROLES in
+ * server/middleware/requirePlatformAdmin.ts (implemented locally because this
+ * .js module cannot import the .ts middleware without a resolution shim; see
+ * server/utils/authedOrgId.js for the rationale). Org-scoped `admin` is
+ * deliberately NOT platform-level: a tenant administrator must never see
+ * another tenant's data.
+ */
+const PLATFORM_ROLES = new Set(['super_admin', 'platform_admin', 'support']);
+
+/** Resolved lower-cased roles for the authenticated request. */
+const rolesOf = req => {
+  const roles = req.user?.roles || [req.userRole || req.user?.role];
+  return roles.filter(Boolean).map(r => String(r).toLowerCase());
+};
+
+/** True when the caller is a platform operator (cross-tenant visibility). */
+const isPlatformAdmin = req => {
+  if (rolesOf(req).some(r => PLATFORM_ROLES.has(r))) return true;
+  const email = String(req.userEmail || req.user?.email || '').toLowerCase();
+  if (!email) return false;
+  return (process.env.PLATFORM_ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(email);
+};
+
+/**
+ * Dead-letter-queue visibility scope for this request. Platform operators see
+ * every entry (including legacy entries enqueued before org tagging existed —
+ * those carry organizationId: null and are visible ONLY here); everyone else
+ * sees their own organization's entries only.
+ */
+const dlqScopeFor = req =>
+  isPlatformAdmin(req) ? { all: true } : { organizationId: req.organizationId };
+
+/** Org-scoped roles authorized for destructive DLQ operations. */
+const DLQ_ADMIN_ORG_ROLES = new Set(['admin', 'owner']);
+
+/**
+ * Re-resolve the caller's CURRENT org-scoped role from the database.
+ *
+ * SECURITY (P1): the destructive DLQ gate must NOT trust `req.user.roles`. The
+ * `/api/ai` namespace runs a second `authenticateToken` pass (registered in
+ * server/bootstrap/register-core-routes.ts) that overwrites `req.user` with
+ * JWT-derived roles; those stay stale for up to the access-token TTL after an
+ * org role change, so a tenant admin downgraded to member would otherwise keep
+ * clearing the org's dead-letter queue until their token expired. Querying
+ * organizationUsers here makes the gate authoritative. Fails closed (null) when
+ * the DB is unavailable or the query throws — a destructive op must not proceed
+ * on an unverifiable role.
+ */
+const resolveOrgRole = async (userId, organizationId) => {
+  if (!db || !Number.isFinite(userId) || !Number.isFinite(organizationId)) return null;
+  try {
+    const rows = await db
+      .select({ role: organizationUsers.role })
+      .from(organizationUsers)
+      .where(
+        and(
+          eq(organizationUsers.userId, userId),
+          eq(organizationUsers.organizationId, organizationId)
+        )
+      )
+      .limit(1);
+    return rows.length > 0 ? String(rows[0].role || '').toLowerCase() : null;
+  } catch (error) {
+    console.error('[phase3] DLQ admin role re-resolution failed:', error?.message || error);
+    return null; // fail closed
+  }
+};
+
+/**
+ * Admin gate for destructive DLQ operations (401 unauthenticated / 403
+ * insufficient role, same error envelope as the canonical requireRole).
+ * Platform operators are recognized via isPlatformAdmin (global roles / email
+ * allowlist); the org-scoped `admin` decision is re-resolved from the DB rather
+ * than the potentially-stale in-request role (see resolveOrgRole).
+ */
+const requireDlqAdmin = async (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      error: { code: 'AUTH_003', message: 'Authentication required' },
+    });
+  }
+  if (isPlatformAdmin(req)) {
+    return next();
+  }
+  const userId = Number(req.user?.userId ?? req.user?.id ?? req.userId);
+  const orgId = Number(req.organizationId);
+  const dbRole = await resolveOrgRole(userId, orgId);
+  if (dbRole && DLQ_ADMIN_ORG_ROLES.has(dbRole)) {
+    return next();
+  }
+  return res.status(403).json({
+    error: { code: 'AUTH_004', message: 'Insufficient permissions' },
+  });
 };
 
 /**
@@ -175,6 +289,14 @@ router.post('/ai/ner-extract', async (req, res) => {
     });
   } catch (error) {
     console.error('NER extraction error:', error);
+    // Dead-letter the failure tagged with the caller's org so it can only be
+    // inspected/cleared from inside that tenant.
+    regulatoryAIPhase3.addToDeadLetterQueue({
+      operation: 'ner-extract',
+      error: error.message,
+      organizationId: req.organizationId,
+      payload: req.body,
+    });
     res.status(500).json({
       success: false,
       error: error.message,
@@ -256,6 +378,12 @@ router.post('/ai/generate-embedding', async (req, res) => {
     });
   } catch (error) {
     console.error('Embedding generation error:', error);
+    regulatoryAIPhase3.addToDeadLetterQueue({
+      operation: 'generate-embedding',
+      error: error.message,
+      organizationId: req.organizationId,
+      payload: req.body,
+    });
     res.status(500).json({
       success: false,
       error: error.message,
@@ -310,6 +438,12 @@ router.post('/ai/consistency-check', async (req, res) => {
     });
   } catch (error) {
     console.error('Compliance check error:', error);
+    regulatoryAIPhase3.addToDeadLetterQueue({
+      operation: 'consistency-check',
+      error: error.message,
+      organizationId: req.organizationId,
+      payload: req.body,
+    });
     res.status(500).json({
       success: false,
       error: error.message,
@@ -466,7 +600,8 @@ router.post('/ai/global-change/execute', async (req, res) => {
 router.get('/ai/status', (req, res) => {
   const flags = regulatoryAIPhase3.getFeatureFlags();
   const tokenBudget = regulatoryAIPhase3.getTokenBudgetStatus();
-  const deadLetterQueue = regulatoryAIPhase3.getDeadLetterQueue();
+  // Tenant-scoped view — even count/oldest metadata must not leak across orgs.
+  const deadLetterQueue = regulatoryAIPhase3.getDeadLetterQueue(dlqScopeFor(req));
 
   res.json({
     status: 'operational',
@@ -484,21 +619,38 @@ router.get('/ai/status', (req, res) => {
 
 /**
  * /ai/dead-letter-queue - Manage failed operations
+ *
+ * SECURITY: the queue is tenant-scoped. Reads return only the caller's
+ * organization's entries (platform operators see all, including legacy
+ * untagged entries); clears additionally require an admin/platform role and
+ * can only remove entries the caller is allowed to see.
  */
 router.get('/ai/dead-letter-queue', (req, res) => {
-  const queue = regulatoryAIPhase3.getDeadLetterQueue();
+  const queue = regulatoryAIPhase3.getDeadLetterQueue(dlqScopeFor(req));
   res.json({
     count: queue.length,
     items: queue,
   });
 });
 
-router.post('/ai/dead-letter-queue/clear', (req, res) => {
-  const { indices } = req.body;
-  regulatoryAIPhase3.clearDeadLetterQueue(indices);
+router.post('/ai/dead-letter-queue/clear', requireDlqAdmin, (req, res) => {
+  const { indices } = req.body || {};
+  if (
+    indices !== undefined &&
+    (!Array.isArray(indices) || indices.some(i => !Number.isInteger(i) || i < 0))
+  ) {
+    return res.status(400).json({
+      success: false,
+      error: 'indices must be an array of non-negative integers',
+    });
+  }
+  // Indices address the caller's own visible queue (the array GET returns),
+  // so a tenant admin can never clear another tenant's entries by position.
+  const cleared = regulatoryAIPhase3.clearDeadLetterQueue(indices, dlqScopeFor(req));
   res.json({
     success: true,
-    message: indices ? `Cleared ${indices.length} items` : 'Cleared all items',
+    cleared,
+    message: indices ? `Cleared ${cleared} items` : 'Cleared all items',
   });
 });
 

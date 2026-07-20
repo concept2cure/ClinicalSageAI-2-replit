@@ -48,6 +48,7 @@ import { installConsoleBridge } from './utils/consoleBridge';
 import {
   applyTelemetryMiddleware,
   applyCoreMiddleware,
+  applyAuthBoundary,
   applyDebugRequestLogging,
 } from './startup/middleware';
 import { applyAuditTrailMiddleware } from './startup/audit-trail';
@@ -116,6 +117,10 @@ applyCoreMiddleware(app, debugLog);
 // but before route registration so it observes every /api request that
 // reaches a handler. No-op unless AUDIT_TRAIL_ENABLED=true.
 applyAuditTrailMiddleware(app, pool, debugLog);
+
+// Default-deny /api auth boundary — after the audit-trail observer (401s are
+// recorded), before ANY route registration (see startup/middleware.ts).
+applyAuthBoundary(app);
 
 // Diagnostic endpoints after the security stack so they inherit CORS,
 // rate-limit, structured logging, etc.

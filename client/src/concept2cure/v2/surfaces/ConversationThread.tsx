@@ -1,14 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { EmptyState } from '../dataConnect';
+import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import {
-  CONVO_THREADS, CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
-  CT_ARTIFACT_BUILDERS, ctRespond, buildPrimedDoc,
+  CT_LINKMAP, CT_LINKIC, CT_ARTIC, CT_STATUS_LABEL,
 } from '../fixtures/conversation-thread-data';
 import type { CtTurn, CtArtifact } from '../fixtures/conversation-thread-data';
+
+/* Adapt one real AnA turn (useAnaChat → /api/ana-ri/stream) into the CtTurn
+   shape this surface renders — the model's answer, its extended-thinking, and
+   the grounding sources it actually used. Never a fabricated tool trace or a
+   Math.random()-"audited" artifact; unpopulated fields are simply omitted. */
+function toTurn(m: AnaChatMessage): CtTurn {
+  if (m.role === 'user') return { role: 'user', text: m.text };
+  const grounding = (m.groundingSources || []).map((s) => ({ src: s, ok: true }));
+  return {
+    role: 'ana',
+    answer: m.text || undefined,
+    thinking: m.thinking || undefined,
+    grounding: grounding.length ? grounding : undefined,
+  };
+}
 
 /* ---- AnA turn (thinking + tools + proposal + answer + grounding) ---- */
 
@@ -62,11 +77,11 @@ function AnaTurn({ turn, onApply, onRefine, onNav, onViewArtifact }: AnaTurnProp
                 <button className="ct-prop-accept" onClick={onApply}>{I.check} Accept and write to section {turn.proposal.section}</button>
                 <button className="ct-prop-refine" onClick={onRefine}>{I.penLine} Refine</button>
                 <button className="ct-prop-discard">Discard</button>
-                <span className="ct-prop-gov">{I.lock} Governed -- creates immutable version + audit</span>
+                <span className="ct-prop-gov">{I.lock} Governed -- immutable version + audit entry on persist</span>
               </div>
             ) : (
               <div className="ct-prop-applied">
-                {I.checkCircle || I.check} Applied to section {turn.proposal.section} / {turn.proposal.ver || 'v0.9'} / audit logged
+                {I.checkCircle || I.check} Applied in preview to section {turn.proposal.section} / {turn.proposal.ver || 'v0.9'} -- sign-off + audit pending
                 <button className="ct-prop-open" onClick={() => onNav && onNav('document-authoring')}>{I.externalLink} Open in editor</button>
               </div>
             )}
@@ -238,109 +253,71 @@ function ArtifactPanel({ artifacts, openId, setOpenId, onNav, onAdvance, collaps
 
 /* ---- Conversation thread (main export) ---- */
 
-export function ConversationThread({ onAsk, onNav }: SurfaceViewProps) {
-  const sel = ((window as any).C2C_CONVO || { id: 'c0' }) as { id: string; seed?: string | null };
-  const base = CONVO_THREADS[sel.id] || CONVO_THREADS.c0;
+export function ConversationThread({ onNav }: SurfaceViewProps) {
+  // A real thread id is placed on window.C2C_CONVO by whatever opens an existing
+  // conversation; the default is a fresh conversation.
+  const sel = ((window as any).C2C_CONVO || { id: 'new' }) as { id: string; seed?: string | null };
   const isNew = sel.id === 'new';
 
-  const seedTurns: CtTurn[] = isNew ? [] : base.turns.map(t => ({ ...t, proposal: t.proposal ? { ...t.proposal } : undefined }));
-  const [turns, setTurns] = useState<CtTurn[]>(seedTurns);
-  const [artifacts, setArtifacts] = useState<CtArtifact[]>(isNew ? [] : (base.artifacts ? base.artifacts.map(a => ({ ...a })) : []));
+  // The conversation runs on the REAL streaming assistant (POST /api/ana-ri/stream
+  // via useAnaChat): an existing thread hydrates its real persisted history, new
+  // messages stream token-by-token, and every turn is DB-persisted. Nothing is
+  // simulated — the previous canned run510k/ctRespond composer and its
+  // Math.random()-"audited" fabricated artifacts are gone.
+  const anaChat = useAnaChat({ initialThreadId: isNew ? null : sel.id, screenName: 'conversation-thread' });
+  const [loadErr, setLoadErr] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [draft, setDraft] = useState('');
-  const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const title = isNew ? 'New conversation' : base.title;
-  const section = isNew ? null : base.section;
+
+  const turns: CtTurn[] = anaChat.messages.map(toTurn);
+  const busy = anaChat.isStreaming;
+  // Governed-artifact generation from the stream (generatedDraft → a versioned,
+  // audited artifact) is a tracked follow-up; until it lands the panel shows its
+  // honest empty state rather than a fabricated artifact.
+  const artifacts: CtArtifact[] = [];
+
+  const firstUser = turns.find((t) => t.role === 'user');
+  const title = isNew
+    ? 'New conversation'
+    : firstUser?.text
+      ? firstUser.text.slice(0, 60)
+      : anaChat.isLoadingThread
+        ? 'Loading…'
+        : 'Conversation';
 
   useEffect(() => {
-    if (isNew && sel.seed) { kickoff(sel.seed); (window as any).C2C_CONVO = { ...sel, seed: null }; }
+    if (!isNew) {
+      setLoadErr(false);
+      Promise.resolve(anaChat.loadThread(sel.id)).catch(() => setLoadErr(true));
+    } else if (sel.seed) {
+      void anaChat.send(sel.seed);
+      (window as any).C2C_CONVO = { ...sel, seed: null };
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [turns, busy]);
+  useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [turns.length, busy]);
 
-  const applyProposal = (ti: number) => setTurns(ts => ts.map((t, i) => i === ti && t.proposal ? { ...t, proposal: { ...t.proposal, status: 'applied', ver: 'v0.9' } } : t));
-  const viewArtifact = (id: string) => { setPanelCollapsed(false); setOpenId(id); };
-  const advanceArtifact = (id: string, isDownload?: boolean) => {
-    if (isDownload) return;
-    setArtifacts(as => as.map(a => a.id === id ? { ...a, status: a.status === 'draft' ? 'in-review' : 'approved' } : a));
+  const send = () => {
+    const t = draft.trim();
+    if (!t || busy) return;
+    setDraft('');
+    void anaChat.send(t);
   };
 
-  function pushArtifact(builderKey: string): CtArtifact | null {
-    const builder = CT_ARTIFACT_BUILDERS[builderKey];
-    const art = builder ? builder() : null;
-    if (art) { setArtifacts(as => [...as, art]); setOpenId(art.id); }
-    return art;
-  }
-
-  function run510k(userText: string) {
-    setTurns(ts => [...ts, { role: 'user', text: userText }]);
-    setBusy(true);
-    const steps = [
-      { delay: 1100, turn: { role: 'ana',
-          thinking: 'This reads as a Class II non-invasive CGM. I will classify it against the FDA product-classification database and the EU MDR rules, then find predicates.',
-          tools: [{ name: 'classify_device', arg: 'wearable CGM patch / intended use', result: 'product code QBJ / Class II / 510(k)' }],
-          answer: 'Your device appears to be a Class II continuous glucose monitor (product code QBJ). I have produced the classification report -- Class II in the US via 510(k), Class IIb under EU MDR Rule 11.',
-          grounding: [{ src: 'FDA product classification DB', ok: true }, { src: 'EU MDR Annex VIII', ok: true }] } as CtTurn, art: 'classification' },
-      { delay: 1400, turn: { role: 'ana',
-          thinking: 'Now the predicate basis. Search the 510(k) database, score on intended-use + technological match, and screen the recall chain so we do not build on a recalled predicate.',
-          tools: [{ name: 'search_predicates', arg: 'CGM / product code QBJ', result: '6 candidates / 2 strong' }, { name: 'screen_recalls', arg: 'predicate chain', result: '1 flagged (Class II recall)' }],
-          answer: 'I found 6 predicate candidates and selected 2 (Dexcom G7 primary, FreeStyle Libre 3 reference). The recall screen excluded the Medtronic Enlite -- it has a Class II recall on record. See the predicate intelligence report.',
-          grounding: [{ src: 'openFDA 510(k)', ok: true }, { src: 'MAUDE + recall DB', ok: true }] } as CtTurn, art: 'predicate' },
-      { delay: 1500, turn: { role: 'ana',
-          thinking: 'With classification and predicates set, I can pre-populate the eSTAR from the project data -- device description, intended use, SE comparison, standards, labeling.',
-          tools: [{ name: 'build_estar', arg: 'nIVD v7.0 / 19 sections', result: '19 sections pre-populated' }],
-          answer: 'Your eSTAR is assembled -- 19 sections pre-populated from the classification, predicates, and device description. Clinical performance (section 19) is the open item. Each section is a governed artifact you can edit, review, and e-sign.',
-          links: [{ label: '510(k) eSTAR -- open in editor', kind: 'doc' }, { label: 'Predicate intelligence', kind: 'evidence' }],
-          grounding: [{ src: 'FDA eSTAR nIVD v7.0', ok: true }, { src: 'Project artifacts', ok: true }] } as CtTurn, art: 'estar' },
-    ];
-    let acc = 0;
-    steps.forEach((s, idx) => {
-      acc += s.delay;
-      setTimeout(() => {
-        const art = pushArtifact(s.art);
-        setTurns(ts => [...ts, { ...s.turn, artifactRef: art ? { id: art.id, type: art.type } : null }]);
-        if (idx === steps.length - 1) setBusy(false);
-      }, acc);
-    });
-  }
-
-  function kickoff(text: string) {
-    if (/510|glucose|cgm|classif|predicate|patch|device/i.test(text)) { run510k(text); return; }
-    runUser(text);
-  }
-
-  function runUser(text: string) {
-    const t = (text || '').trim(); if (!t) return;
-    if (/510|classif|predicate|estar/i.test(t) && /file|build|start|draft|prepare/i.test(t)) { run510k(t); return; }
-    setTurns(ts => [...ts, { role: 'user', text: t }]);
-    setBusy(true);
-    const detectDocumentTemplate = (window as any).detectDocumentTemplate;
-    const tpl = detectDocumentTemplate ? detectDocumentTemplate(t) : null;
-    let primedRef: { id: string; type: string } | null = null;
-    if (tpl && (tpl.confidence || 0) >= 0.4 && (tpl.sections || []).length) {
-      const art = buildPrimedDoc(tpl);
-      setArtifacts(as => [...as, art]); setOpenId(art.id); setPanelCollapsed(false);
-      primedRef = { id: art.id, type: art.type };
-    }
-    setTimeout(() => { setTurns(ts => [...ts, { ...ctRespond(t), doc: tpl || undefined, artifactRef: primedRef }]); setBusy(false); }, 1100);
-  }
-
-  const send = () => { const t = draft.trim(); if (!t || busy) return; setDraft(''); runUser(t); };
+  const loadingHistory = !isNew && anaChat.isLoadingThread && turns.length === 0;
 
   return (
     <div className="ct-wrap">
-      <SampleTag sample={true} />
       <div className="ct-head">
         <button className="ct-back" onClick={() => onNav && onNav('project-home')}>{I.left} Project</button>
         <div className="ct-head-mid">
           <div className="ct-head-t">{title}</div>
-          <div className="ct-head-m">{I.messageSquare} Conversation / BX-204 / NDA 212345{section ? ` / builds section ${section}` : ''}</div>
+          <div className="ct-head-m">{I.messageSquare} Conversation</div>
         </div>
         <div className="ct-head-r">
-          <span className="ct-head-model">{I.zap} Maximum</span>
-          {section && <button className="ct-head-open" onClick={() => onNav && onNav('document-authoring')}>{I.externalLink} View section {section} in editor</button>}
+          <span className="ct-head-model">{I.zap} AnA</span>
         </div>
       </div>
 
@@ -348,38 +325,35 @@ export function ConversationThread({ onAsk, onNav }: SurfaceViewProps) {
         <div className="ct-conv">
           <div className="ct-scroll" ref={scrollRef}>
             <div className="ct-col">
-              {turns.length === 0 && (
+              {loadingHistory && (
+                <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading conversation…</div>
+              )}
+              {loadErr && turns.length === 0 && (
+                <EmptyState
+                  tone="error"
+                  icon={I.alertTriangle}
+                  title="Couldn't load this conversation"
+                  hint="This conversation didn't load. It's read from your organization's governed chat store — sign in and retry, or start a new one below."
+                />
+              )}
+              {turns.length === 0 && !loadingHistory && !loadErr && (
                 <div className="ct-empty">
                   <div className="ct-empty-mk">{'✻'}</div>
-                  <h2>Talk to AnA about BX-204</h2>
-                  <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and its outputs appear as governed artifacts on the right -- ready to review, edit, approve, and export.</p>
+                  <h2>Talk to AnA</h2>
+                  <p>Ask a question, or ask AnA to do the work. AnA thinks, pulls from the evidence, and streams a grounded answer -- every turn is saved to your governed conversation store.</p>
                   <div className="ct-empty-chips">
                     {['File a 510(k) for our glucose monitoring patch', 'Is the section 2.5.4 efficacy claim defensible?', 'What blocks the Module 3 freeze?'].map((q, i) => (
-                      <button key={i} className="ct-empty-chip" onClick={() => kickoff(q)}>{q}</button>
+                      <button key={i} className="ct-empty-chip" onClick={() => { void anaChat.send(q); }}>{q}</button>
                     ))}
                   </div>
                 </div>
               )}
               {turns.map((t, i) => t.role === 'user'
                 ? (<div key={i} className="ct-turn ct-user"><div className="ct-user-b">{t.text}</div></div>)
-                : (<AnaTurn key={i} turn={t} onApply={() => applyProposal(i)} onRefine={() => runUser('Refine that -- keep it tighter and more declarative.')} onNav={onNav} onViewArtifact={viewArtifact} />)
+                : (<AnaTurn key={i} turn={t} onApply={() => undefined} onRefine={() => { void anaChat.send('Refine that -- keep it tighter and more declarative.'); }} onNav={onNav} onViewArtifact={() => undefined} />)
               )}
               {busy && (
                 <div className="ct-turn ct-ana"><div className="ct-ana-av">{'✻'}</div><div className="ct-ana-body"><div className="ct-typing"><span /><span /><span /></div></div></div>
-              )}
-              {!isNew && base.work && turns.length > 0 && (
-                <div className="ct-work">
-                  <div className="ct-work-h">{I.layers} Work done in this conversation</div>
-                  <div className="ct-work-list">
-                    {base.work.map((w, i) => (
-                      <button key={i} className="ct-work-row" data-kind={w.kind} onClick={() => onNav && onNav(CT_LINKMAP[w.kind] || 'document-authoring')}>
-                        <span className="ct-work-ic">{(I as any)[CT_LINKIC[w.kind]] || I.fileText}</span>
-                        <span className="ct-work-b"><span className="ct-work-l">{w.label}</span><span className="ct-work-m">{w.meta}</span></span>
-                        <span className="ct-work-go">{I.right}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
               )}
             </div>
           </div>
@@ -392,12 +366,12 @@ export function ConversationThread({ onAsk, onNav }: SurfaceViewProps) {
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
               <button className="ct-comp-send" disabled={!draft.trim() || busy} onClick={send}>{I.arrowUp}</button>
             </div>
-            <div className="ct-comp-foot">{I.lock} Governed -- AnA proposes; you accept. Every applied change writes an immutable version + 21 CFR section 11 audit entry.</div>
+            <div className="ct-comp-foot">{I.lock} Governed -- AnA proposes; you accept. Accepted changes are captured as immutable, 21 CFR Part 11-audited versions when persisted.</div>
           </div>
         </div>
 
         <ArtifactPanel artifacts={artifacts} openId={openId} setOpenId={setOpenId} onNav={onNav}
-          onAdvance={advanceArtifact} collapsed={panelCollapsed} setCollapsed={setPanelCollapsed} />
+          onAdvance={() => undefined} collapsed={panelCollapsed} setCollapsed={setPanelCollapsed} />
       </div>
     </div>
   );

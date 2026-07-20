@@ -13,7 +13,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLiveList } from '../dataConnect';
+import { useLive, useLiveList } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -744,19 +744,41 @@ interface PvSignal {
   term: string;
   count: number;
   prr: number;
-  owner: string;
-  age: string;
+  /** Null from live: adverse_events / safety_signals carry no owner/assignee. */
+  owner: string | null;
+  /** Null from live: no contributing-case date to derive recency from. */
+  age: string | null;
   status: string;
   _new?: boolean;
 }
 
 interface PvAgg {
-  product: string;
+  /** Null from live: periodic reports are project-scoped, carry no product label. */
+  product: string | null;
   cycle: string;
   due: string;
-  by: string;
-  reviewers: string;
+  /** Null from live: PeriodicSafetyReport has no author field. */
+  by: string | null;
+  /** Null from live: PeriodicSafetyReport has no reviewer roster. */
+  reviewers: string | null;
   status: string;
+}
+
+/**
+ * Shape of GET /api/pharmacovigilance/board as it arrives through useLive.
+ * useLive assigns the WHOLE HTTP body to `.data`, and the live body is the
+ * envelope `{ success, data: { signals, aggregateReports } }` — so the rows we
+ * render live at `board.data.data`. On any failure useLive hands back the flat
+ * fixture we passed (`{ signals, aggregateReports }`, no nested `.data`), so
+ * `.data.data` resolves to undefined and each card fails closed to its fixture.
+ */
+interface PvBoardEnvelope {
+  signals?: PvSignal[];
+  aggregateReports?: PvAgg[];
+  data?: {
+    signals?: PvSignal[] | null;
+    aggregateReports?: PvAgg[] | null;
+  };
 }
 
 const PV_SIG: PvSignal[] = [
@@ -772,7 +794,27 @@ const PV_AGG: PvAgg[] = [
 
 export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  const [sigs, addSig] = useRows<PvSignal>(PV_SIG);
+  /* live ?? fixture — the safety-surveillance board derives BOTH cards from
+     real, org-scoped data (adverse_events → disproportionality screen for the
+     "Active signals"; periodic_safety_reports for the "Aggregate reports").
+     useLive assigns the whole HTTP body to `.data`, and the live envelope is
+     `{ success, data: { signals, aggregateReports } }`, so the rows live at
+     board.data.data. Any unreachable/malformed response (or an empty live list)
+     fails closed to the flat fixture we passed, with an honest Sample pill. */
+  const board = useLive<PvBoardEnvelope>('/api/pharmacovigilance/board', { signals: PV_SIG, aggregateReports: PV_AGG });
+  const payload = board.data.data;
+  const rawSignals = payload?.signals;
+  const rawAggs = payload?.aggregateReports;
+  const liveSignals: PvSignal[] = !board.sample && Array.isArray(rawSignals) ? rawSignals : [];
+  const liveAggs: PvAgg[] = !board.sample && Array.isArray(rawAggs) ? rawAggs : [];
+
+  /* Seed the editable signal list from live when present, else the fixture;
+     drive each Sample pill honestly (on the fixture OR an empty live list). */
+  const [sigs, addSig] = useRows<PvSignal>(liveSignals.length ? liveSignals : PV_SIG);
+  const aggs = liveAggs.length ? liveAggs : PV_AGG;
+  const sigSample = board.sample || !liveSignals.length;
+  const aggSample = board.sample || !liveAggs.length;
+
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
 
@@ -805,8 +847,7 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
   /* AnswerLead computation */
   const ranked = [...sigs].sort((a, b) => (b.prr || 0) - (a.prr || 0));
   const top = ranked[0];
-  const evaluating = sigs.filter((s) => s.status === 'evaluating');
-  const agg = PV_AGG.find((a) => a.status === 'drafting') || PV_AGG[0];
+  const agg = aggs.find((a) => a.status === 'drafting') || aggs[0];
   const highPrr = top && top.prr >= 3;
 
   return (
@@ -851,14 +892,14 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
     >
       {/* PvSignalPanel placeholder -- not yet ported as a standalone component */}
       <div className="sp-sec">
-        <SpCard title="Active signals" meta="FAERS + EudraVigilance · 90d" action={<AddBtn onClick={() => setForm(true)} label="Log signal" />} foot={<SpAsk onAsk={ask} cmd="Adjudicate the immune-mediated pneumonitis signal -- pull every case narrative, run causality assessment, suggest label update." label="Adjudicate the pneumonitis signal" />}>
+        <SpCard title="Active signals" sample={sigSample} meta="FAERS + EudraVigilance · 90d" action={<AddBtn onClick={() => setForm(true)} label="Log signal" />} foot={<SpAsk onAsk={ask} cmd="Adjudicate the immune-mediated pneumonitis signal -- pull every case narrative, run causality assessment, suggest label update." label="Adjudicate the pneumonitis signal" />}>
           <div className="sp-list">
             {sigs.map((s, i) => (
               <div key={i} className={rowcls(s)}>
                 <span className="sp-tag">{s.product}</span>
                 <span className="sp-row-b">
                   <span className="sp-row-t">{s.term}</span>
-                  <span className="sp-row-s">{s.count} cases · <span className={s.prr >= 3 ? 'sp-tone-err' : s.prr >= 2 ? 'sp-tone-warn' : ''}>PRR {s.prr.toFixed(1)}</span> · owner {s.owner} · {s.age}</span>
+                  <span className="sp-row-s">{s.count} cases · <span className={s.prr >= 3 ? 'sp-tone-err' : s.prr >= 2 ? 'sp-tone-warn' : ''}>PRR {s.prr.toFixed(1)}</span>{s.owner ? <> · owner {s.owner}</> : null}{s.age ? <> · {s.age}</> : null}</span>
                 </span>
                 {pill(s.status)}
               </div>
@@ -867,14 +908,14 @@ export function Pharmacovigilance({ onAsk }: SurfaceViewProps) {
         </SpCard>
       </div>
       <div className="sp-sec">
-        <SpCard title="Aggregate reports in cycle" sample meta="PSUR + PBRER">
+        <SpCard title="Aggregate reports in cycle" sample={aggSample} meta="PSUR + PBRER">
           <div className="sp-list">
-            {PV_AGG.map((r, i) => (
+            {aggs.map((r, i) => (
               <div key={i} className="sp-row">
-                <span className="sp-tag">{r.product}</span>
+                {r.product ? <span className="sp-tag">{r.product}</span> : null}
                 <span className="sp-row-b">
                   <span className="sp-row-t">{r.cycle}</span>
-                  <span className="sp-row-s">Due {r.due} · drafted by {r.by} · reviewers {r.reviewers}</span>
+                  <span className="sp-row-s">Due {r.due}{r.by ? <> · drafted by {r.by}</> : null}{r.reviewers ? <> · reviewers {r.reviewers}</> : null}</span>
                 </span>
                 {pill(r.status)}
               </div>

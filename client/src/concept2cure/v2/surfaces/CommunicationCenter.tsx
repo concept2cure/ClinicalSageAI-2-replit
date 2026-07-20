@@ -1,106 +1,139 @@
 /**
- * Communication Center — kit app/communication-center.jsx ported
- * (registry id `communication-center`, contract-ready).
+ * Communication Center — the regulated FDA<>client loop hub.
  *
- * The regulated FDA<>client loop hub. Tabs: FDA loop (submission lifecycle
- * states, CRL response countdown, deficiency gap analysis), Agency inbox
- * (communications with urgency/response tracking), Meetings & commitments
- * (HA interactions, PMR/PMC/REMS), Authority profiles.
+ * Real-data standard (no mock in product). Every DATA slice renders real
+ * persisted data, an honest empty state, or an honest error state — never a
+ * hardcoded fixture. Self-audit of the fixture-backed slices:
  *
- * Live bindings:
- *   GET /api/communication-center/projects/:pid/agency-communications
- *   POST /api/communication-center/projects/:pid/agency-communications
- * Fixture fallback behind the SampleTag pill otherwise.
+ *   Agency inbox  → GET /api/concept2cure/projects/:pid/agency-communications
+ *                   REAL (server routes/concept2cure.ts → concept2cure_agency_communications).
+ *   Meetings      → GET /api/ha-interactions/interactions   REAL (listInteractions).
+ *   Commitments   → GET /api/ha-interactions/commitments     REAL (listCommitments).
+ *   Authority     → GET /api/concept2cure/projects/:pid/authority-profiles
+ *   profiles        REAL (server routes/concept2cure.ts → concept2cure_authority_profiles).
+ *   FDA loop      → submission-center items + CRL round-trip + deficiency gap
+ *                   analysis have NO mounted read handler on this surface's API
+ *                   (the /submission-center/items route is defined only in the
+ *                   un-mounted concept2cure-communication-center module, and no
+ *                   endpoint returns CRL deficiencies). MISSING → honest empty,
+ *                   no lifecycle/CRL/deficiency data is fabricated.
+ *
+ * NOTE on the API base: the legacy binding called `/api/communication-center/...`,
+ * which is not mounted anywhere in the server (it always fell through to the
+ * fixture). The real handlers live on the concept2cure router at
+ * `/api/concept2cure/projects/:projectId/*`; the project id comes from the
+ * runtime project channel (window.C2C_PROJECT), and parseProjectParam requires a
+ * numeric id, so with no project in context the project-scoped reads show an
+ * honest "open a project" empty.
  */
 import React from 'react';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
-import { SampleTag, useLive, connected, liveGet } from '../dataConnect';
+import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
 import {
-  CC_SUB_STATES,
-  CC_SUB_STATE_LABEL,
   CC_SOURCE_TYPES,
   CC_INTERACTION_TYPES,
-  CC_FILING,
-  CC_DEFICIENCIES,
-  CC_COMMS,
-  CC_INTERACTIONS,
-  CC_COMMITMENTS,
-  CC_AUTH_PROFILES,
   CC_TONE,
   CC_CLOSURE,
-  CC_DEF_ORDER,
-  type CcComm,
-  type CcDeficiency,
-  type CcFiling,
-  type CcSubState,
 } from '../fixtures/commcenter';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/commcenter-v2.css';
 
-/* ── Submission lifecycle loop (the FDA round-trip) ── */
+/* ── Display rows, aligned to the REAL backend columns actually returned ── */
 
-function CCLoop({ filing, onAsk }: { filing: CcFiling; onAsk: (t: string) => void }) {
-  const states = CC_SUB_STATES;
-  const curIdx = states.indexOf(filing.status);
-  const rejected = filing.status === 'rejected_or_remediation';
-  return (
-    <div className="cc-loop">
-      <div className="cc-loop-track">
-        {states.map((s, i) => {
-          const done = i < curIdx && !rejected;
-          const cur = i === curIdx;
-          return (
-            <React.Fragment key={s}>
-              <div
-                className={
-                  'cc-loop-node' +
-                  (done ? ' done' : '') +
-                  (cur ? ' cur' : '') +
-                  (s === 'rejected_or_remediation' && cur ? ' rej' : '')
-                }
-              >
-                <span className="cc-loop-dot">{done ? I.check : i + 1}</span>
-                <span className="cc-loop-lbl">{CC_SUB_STATE_LABEL[s]}</span>
-              </div>
-              {i < states.length - 1 && (
-                <span className={'cc-loop-link' + (i < curIdx && !rejected ? ' done' : '')} />
-              )}
-            </React.Fragment>
-          );
-        })}
-      </div>
-      {rejected && (
-        <div className="cc-loop-return">
-          <span className="cc-loop-return-ic">{I.rotateCcw}</span>
-          <div className="cc-loop-return-b">
-            <div className="cc-loop-return-t">
-              Response loop open — {filing.authority} {filing.center} issued a Complete Response
-              Letter
-            </div>
-            <div className="cc-loop-return-s">
-              Resolve the CRL deficiencies, hold the Type A alignment meeting, then resubmit as
-              sequence {String(Number(filing.sequenceNumber) + 1).padStart(4, '0')}. AnA is tracking
-              every item back to its section.
-            </div>
-          </div>
-          <button
-            className="cc-btn primary sm"
-            onClick={() =>
-              onAsk(
-                'Build the CRL response plan for ' +
-                  filing.title +
-                  ' — decompose every deficiency into a section-linked task and draft the response letter skeleton.',
-              )
-            }
-          >
-            {I.sparkles} Plan the resubmission
-          </button>
-        </div>
-      )}
-    </div>
-  );
+/**
+ * GET agency-communications row. The list read does NOT project a top-level
+ * taskId (task linkage is created on POST but not returned by the GET), and
+ * visibilityTier is nested under auditMetadata — both are read null-safe and
+ * never fabricated. Dates arrive as ISO strings; dueDate is nullable.
+ */
+interface CommRow {
+  id: string;
+  sourceType: string;
+  communicationType: string;
+  sourceChannel: string;
+  linkedSectionCodes: string[];
+  receivedDate: string;
+  dueDate?: string | null;
+  urgency: 'critical' | 'high' | 'medium' | 'low';
+  responseRequired: boolean;
+  extractedIssues: string[];
+  humanReviewStatus: string;
+  closureStatus: string;
+  auditMetadata?: { visibilityTier?: string | null } | null;
+  taskId?: string | null; // not returned by the list read; never fabricated
+  _new?: boolean; // client-only optimistic marker
+}
+
+/**
+ * GET /api/ha-interactions/interactions row (services/ha-interactions →
+ * listInteractions). Columns are snake_case; the per-meeting question/agreed
+ * counts are NOT returned by the list read and are never fabricated. Dates are
+ * nullable.
+ */
+interface InteractionRow {
+  id: number;
+  interaction_type: string;
+  agency: string | null;
+  title: string;
+  status: string;
+  requested_date: string | null;
+  scheduled_date: string | null;
+  held_date: string | null;
+}
+
+/**
+ * GET /api/ha-interactions/commitments returns { commitments, summary }.
+ * effectiveStatus is derived server-side; the rest are snake_case + nullable.
+ */
+interface CommitmentRow {
+  id: number;
+  commitment_type: string;
+  description: string;
+  regulatory_basis: string | null;
+  due_date: string | null;
+  status: string;
+  fulfilled_date: string | null;
+  effectiveStatus: string;
+}
+interface CommitmentsPayload {
+  commitments: CommitmentRow[];
+}
+
+/**
+ * GET authority-profiles row (concept2cure_authority_profiles), aligned to
+ * AuthorityProfileRecord (centerOrDivision / submissionTransport /
+ * acceptedFormats / validationRequirements / acknowledgmentModel).
+ */
+interface AuthProfileRow {
+  id: string;
+  authority: string;
+  centerOrDivision: string;
+  channelType: string;
+  submissionTransport: string;
+  acceptedFormats: string[];
+  validationRequirements: string[];
+  acknowledgmentModel: string;
+}
+
+/* Stable empty seed for the optimistic-row store while the live inbox is
+   loading / errored / project-less. useLiveRows synthesizes a fresh [] every
+   render in those states, which would otherwise thrash the re-seed effect. */
+const EMPTY_COMMS: CommRow[] = [];
+
+/* Active project id — the runtime channel Projects.tsx sets when a project is
+   opened (read the same way by ProjectHome / CmcModule / Inconsistency). The
+   agency-communications and authority-profiles reads are project-scoped, so with
+   no project in context there is nothing to load. */
+function currentProjectId(): string | null {
+  try {
+    const p = (window as unknown as { C2C_PROJECT?: { id?: string | number } }).C2C_PROJECT;
+    const id = p && p.id != null ? String(p.id).trim() : '';
+    return id || null;
+  } catch (_e) {
+    return null;
+  }
 }
 
 /* ── Helpers ── */
@@ -110,10 +143,42 @@ function daysTo(d: string | null | undefined): number | null {
   return Math.round((new Date(d).getTime() - Date.now()) / 86400000);
 }
 
+/* Honest loading → error → empty guard for a list slice (mirrors the reference
+   re-anchors). */
+function StateGuard({
+  loading,
+  error,
+  empty,
+  emptyTitle,
+  emptyHint,
+  errorTitle,
+  errorHint,
+  children,
+}: {
+  loading: boolean;
+  error?: string;
+  empty: boolean;
+  emptyTitle: string;
+  emptyHint?: React.ReactNode;
+  errorTitle: string;
+  errorHint?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  if (loading) {
+    return <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>;
+  }
+  if (error) {
+    return <EmptyState tone="error" icon={I.alertTriangle} title={errorTitle} hint={errorHint} />;
+  }
+  if (empty) {
+    return <EmptyState icon={I.fileText} title={emptyTitle} hint={emptyHint} />;
+  }
+  return <>{children}</>;
+}
+
 /* ── Main component ── */
 
 export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
-  const live = connected();
   const nav = (id: string) => {
     try {
       localStorage.setItem('c2c_open_surface', id);
@@ -123,7 +188,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     onNav(id);
   };
 
-  const [tab, setTab] = React.useState('loop');
+  const [tab, setTab] = React.useState('inbox');
   const [owner, setOwner] = React.useState<'all' | 'mine'>('all');
   const [form, setForm] = React.useState(false);
   const [toast, setToast] = React.useState('');
@@ -132,19 +197,27 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     setTimeout(() => setToast(''), 2800);
   };
 
-  const filing = CC_FILING;
+  const projectId = currentProjectId();
 
-  const commsState = useLive<CcComm[]>(
-    '/api/communication-center/projects/proj_bx204/agency-communications',
-    CC_COMMS,
-  );
-  const [comms, setComms] = React.useState<CcComm[]>(CC_COMMS);
-  const [commsSample, setCommsSample] = React.useState(true);
-
+  // ── Agency inbox — REAL, project-scoped ──
+  const commsPath = projectId
+    ? '/api/concept2cure/projects/' + encodeURIComponent(projectId) + '/agency-communications'
+    : null;
+  const liveComms = useLiveRows<CommRow>(commsPath);
+  // Seed a local store from the live rows so the optimistic actions below still
+  // function on top of real data. useLiveRows returns a FRESH [] every render
+  // while loading / on error / with no project, so feed a STABLE empty seed in
+  // those states to keep the re-seed effect from thrashing.
+  const seedComms =
+    !commsPath || liveComms.loading || liveComms.error ? EMPTY_COMMS : liveComms.rows;
+  const [comms, setComms] = React.useState<CommRow[]>(() => seedComms.map((c) => ({ ...c })));
+  const seedRef = React.useRef<CommRow[]>(seedComms);
   React.useEffect(() => {
-    setComms(commsState.data);
-    setCommsSample(commsState.sample);
-  }, [commsState.data, commsState.sample]);
+    if (seedComms !== seedRef.current) {
+      seedRef.current = seedComms;
+      setComms(seedComms.map((c) => ({ ...c })));
+    }
+  }, [seedComms]);
 
   const open = comms.filter((c) => c.closureStatus !== 'closed');
   const responseDue = comms.filter((c) => c.responseRequired && c.closureStatus !== 'closed');
@@ -152,34 +225,38 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
   const soonest = [...responseDue]
     .filter((c) => c.dueDate)
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())[0];
-  const autoTasks = comms.filter((c) => c.taskId).length;
 
-  const [defs, setDefs] = React.useState<CcDeficiency[]>(CC_DEFICIENCIES);
-  const defDone = defs.filter((d) => d.status === 'drafted' || d.status === 'resolved').length;
-  const defMajor = defs.filter((d) => d.severity === 'major').length;
-  const crlDays = daysTo(filing.crlDue);
+  // ── Meetings & commitments — REAL, org-scoped (no project id required) ──
+  const interState = useLiveRows<InteractionRow>('/api/ha-interactions/interactions');
+  const commitState = useLiveData<CommitmentsPayload>('/api/ha-interactions/commitments');
+  const commitments = Array.isArray(commitState.data?.commitments)
+    ? commitState.data!.commitments
+    : [];
+  const commitEmpty = !commitState.loading && !commitState.error && commitments.length === 0;
 
-  const advanceDef = (id: string) =>
-    setDefs((ds) =>
-      ds.map((d) => {
-        if (d.id !== id) return d;
-        const i = CC_DEF_ORDER.indexOf(d.status as (typeof CC_DEF_ORDER)[number]);
-        return { ...d, status: i < CC_DEF_ORDER.length - 1 ? CC_DEF_ORDER[i + 1] : d.status };
-      }),
-    );
+  // ── Authority profiles — REAL, project-scoped ──
+  const profPath = projectId
+    ? '/api/concept2cure/projects/' + encodeURIComponent(projectId) + '/authority-profiles'
+    : null;
+  const profState = useLiveRows<AuthProfileRow>(profPath);
 
+  // MOCK-ACTION FLAGS (deferred to the actions pass):
+  //  1. logComm — optimistic local add only. The real write
+  //     (POST /api/concept2cure/projects/:pid/agency-communications, which also
+  //     auto-creates the response task, sends a notification, and writes the
+  //     audit entry) is NOT wired here, so the form copy and toast no longer
+  //     claim persistence / task-creation / audit occurred, and no task id is
+  //     fabricated.
+  //  2. triage — optimistic local review/closure-state flip; there is no
+  //     mounted PATCH for agency-communication status, so nothing is persisted.
   const logComm = (v: Record<string, string>) => {
     const responseRequired = v.responseRequired === 'yes';
-    const urgency = (v.urgency || 'medium') as CcComm['urgency'];
-    const willTask = responseRequired || urgency === 'high' || urgency === 'critical';
-    const id = 'ace_' + String(comms.length + 1).padStart(2, '0');
-    const taskId = willTask ? 'T-' + (4490 + comms.length) : null;
-    const rec: CcComm = {
-      id,
+    const urgency = (v.urgency || 'medium') as CommRow['urgency'];
+    const rec: CommRow = {
+      id: 'local_' + Date.now(),
       sourceType: v.sourceType || 'manual_logged_event',
       communicationType: v.communicationType,
       sourceChannel: v.sourceChannel || 'Manually logged',
-      linkedSubmissionId: filing.id,
       linkedSectionCodes: [],
       receivedDate: new Date().toISOString().slice(0, 10),
       dueDate: v.dueDate || null,
@@ -188,21 +265,13 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       extractedIssues: v.issue ? [v.issue] : [],
       humanReviewStatus: 'pending_review',
       closureStatus: 'open',
-      visibilityTier: 'shared_client_c2c',
-      taskId,
+      auditMetadata: { visibilityTier: 'shared_client_c2c' },
+      taskId: null,
       _new: true,
     };
     setComms((cs) => [rec, ...cs]);
     setForm(false);
-    liveGet(
-      '/api/communication-center/projects/proj_bx204/agency-communications',
-      null,
-    ).catch(() => null);
-    fire(
-      willTask
-        ? 'Communication logged · task ' + taskId + ' auto-created in Tasking'
-        : 'Communication logged',
-    );
+    fire('Communication added to this view — not yet saved to the governed store');
   };
 
   const triage = (id: string) =>
@@ -225,15 +294,11 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     <div className="cc" style={{ maxWidth: 1200 }}>
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">
-            Submission · /api/communication-center{live ? ' · live' : ''}
-          </div>
-          <h1 className="sp-title">
-            Communication Center <SampleTag sample={commsSample} />
-          </h1>
+          <div className="sp-eyebrow">Submission · Communication Center</div>
+          <h1 className="sp-title">Communication Center</h1>
           <p className="sp-state">
-            The regulated FDA↔client loop for {filing.title} — every agency letter, IR, gateway ack
-            and meeting, traced to its filing and turned into governed action.
+            The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced
+            to its filing and turned into governed action.
           </p>
         </div>
         <button className="sp-primary" onClick={() => setForm(true)}>
@@ -242,20 +307,30 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       <AnswerLead
-        tone={critical.length ? 'urgent' : responseDue.length ? 'urgent' : 'calm'}
+        tone={critical.length || responseDue.length ? 'urgent' : 'calm'}
         eyebrow="What the FDA is waiting on from you"
         headline={
-          critical.length ? (
+          !projectId ? (
+            <>Open a project to load its agency communications.</>
+          ) : liveComms.error ? (
+            <>Couldn't load this project's agency communications.</>
+          ) : critical.length ? (
             <>
-              The FDA issued a <b>{critical[0].communicationType}</b> on {filing.title} — you have{' '}
-              <b>{daysTo(critical[0].dueDate)} days</b> to respond.
+              The FDA issued a <b>{critical[0].communicationType}</b>
+              {critical[0].dueDate ? (
+                <>
+                  {' '}
+                  — you have <b>{daysTo(critical[0].dueDate)} days</b> to respond
+                </>
+              ) : null}
+              .
             </>
           ) : responseDue.length ? (
             <>
               <b>{responseDue.length}</b> agency communication
               {responseDue.length === 1 ? '' : 's'}{' '}
               {responseDue.length === 1 ? 'needs' : 'need'} a response
-              {soonest ? (
+              {soonest && soonest.dueDate ? (
                 <>
                   , the soonest in <b>{daysTo(soonest.dueDate)} days</b>
                 </>
@@ -263,19 +338,13 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               .
             </>
           ) : (
-            <>No open agency communications need a response right now on {filing.title}.</>
+            <>No open agency communications need a response right now.</>
           )
         }
         body={
           <>
-            {filing.title} sits at <b>{CC_SUB_STATE_LABEL[filing.status]}</b> in its FDA lifecycle.{' '}
-            {autoTasks > 0 && (
-              <>
-                {autoTasks} response task{autoTasks === 1 ? '' : 's'}{' '}
-                {autoTasks === 1 ? 'is' : 'are'} already open in Tasking, each linked back to the
-                section it touches.
-              </>
-            )}
+            Agency letters, IRs, gateway acks and meeting minutes are tracked here and turned into
+            governed, section-linked action.
           </>
         }
         reassure="I'll decompose every deficiency into a section-linked task, draft each response, and walk the resubmission through the gateway — you review and sign."
@@ -287,14 +356,12 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                   onAsk(
                     'Draft the response to the ' +
                       responseDue[0].communicationType +
-                      ' for ' +
-                      filing.title +
                       ', addressing every extracted issue with a section-linked plan.',
                   ),
               }
-            : { label: 'Review the loop', onClick: () => setTab('loop') }
+            : { label: 'Review the inbox', onClick: () => setTab('inbox') }
         }
-        secondary="Or work the loop, inbox, meetings and commitments below."
+        secondary="Or work the inbox, meetings and commitments below."
       />
 
       <div className="cc-tabs">
@@ -316,153 +383,23 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
         ))}
       </div>
 
-      {/* ════ TAB: FDA loop ════ */}
+      {/* ════ TAB: FDA loop — MISSING backend, honest empty ════ */}
       {tab === 'loop' && (
         <>
-          {filing.status === 'rejected_or_remediation' && (
-            <div className="cc-crl">
-              <div
-                className="cc-crl-clock"
-                data-warn={(crlDays != null && crlDays < 45) || undefined}
-              >
-                <div className="cc-crl-days">
-                  {crlDays}
-                  <span className="u">days</span>
-                </div>
-                <div className="cc-crl-clock-l">
-                  to respond to the {filing.crlLetter}
-                  <span className="s">
-                    received {filing.crlReceived} · due {filing.crlDue}
-                  </span>
-                </div>
-              </div>
-              <div className="cc-crl-prog">
-                <div className="cc-crl-prog-top">
-                  <span>
-                    {defDone} of {defs.length} deficiencies resolved
-                  </span>
-                  <span className="mono">
-                    {defMajor} major · {defs.length - defMajor} minor
-                  </span>
-                </div>
-                <div className="cc-crl-bar">
-                  <div
-                    className="fill"
-                    style={{ width: (defs.length ? (defDone / defs.length) * 100 : 0) + '%' }}
-                  />
-                </div>
-                <div className="cc-crl-prog-s">
-                  Resubmission classification: <b>Class 2 (6-month review)</b> · target resubmit{' '}
-                  {filing.crlDue}
-                </div>
-              </div>
-              <button
-                className="cc-btn primary"
-                onClick={() =>
-                  onAsk(
-                    'Draft the full CRL response letter for ' +
-                      filing.title +
-                      ', with one response section per deficiency, each citing the resolving evidence and the updated eCTD section.',
-                  )
-                }
-              >
-                {I.penLine} Draft the response letter
-              </button>
-            </div>
-          )}
-
           <div className="pj-seclbl">
-            Submission lifecycle{' '}
-            <span className="s">
-              · {filing.authority} {filing.center} · {filing.submissionType} · seq{' '}
-              {filing.sequenceNumber} · {filing.transport}
-            </span>
+            Submission lifecycle <span className="s">· FDA round-trip</span>
           </div>
-          <CCLoop filing={filing} onAsk={onAsk} />
-
-          {filing.status === 'rejected_or_remediation' && (
-            <>
-              <div className="pj-seclbl">
-                CRL deficiency gap analysis{' '}
-                <span className="s">
-                  · discipline · section · severity · owner — each item is a section-linked task
-                </span>
-              </div>
-              <div className="cc-defs">
-                {defs.map((d) => (
-                  <div key={d.id} className="cc-def" data-sev={d.severity}>
-                    <div className="cc-def-l">
-                      <span className="cc-def-id mono">{d.id}</span>
-                      <span className={'cc-def-sev sev-' + d.severity}>{d.severity}</span>
-                    </div>
-                    <div className="cc-def-b">
-                      <div className="cc-def-top">
-                        <span className="cc-def-disc">{d.discipline}</span>
-                        <span className="cc-def-sec mono">§{d.section}</span>
-                        <span className="cc-def-eff">{d.effort}</span>
-                      </div>
-                      <div className="cc-def-issue">{d.issue}</div>
-                      <div className="cc-def-rat">
-                        {I.info} <span>{d.rationale}</span>
-                      </div>
-                      <div className="cc-def-foot">
-                        <span className="cc-def-owner">
-                          {I.user} {d.owner} · {d.ownerRole}
-                        </span>
-                        <span
-                          className={
-                            'rd-chip tone-' +
-                            (d.status === 'resolved' || d.status === 'drafted'
-                              ? 'ok'
-                              : d.status === 'not_started'
-                                ? 'idle'
-                                : 'warn')
-                          }
-                        >
-                          {d.status.replace(/_/g, ' ')}
-                        </span>
-                        <span style={{ flex: 1 }} />
-                        {d.task && (
-                          <button className="cc-comm-task" onClick={() => nav('tasks')}>
-                            {I.checkSquare} {d.task}
-                          </button>
-                        )}
-                        <button
-                          className="cc-btn sm primary"
-                          onClick={() =>
-                            onAsk(
-                              'Draft the response to ' +
-                                d.id +
-                                ' (' +
-                                d.discipline +
-                                ' §' +
-                                d.section +
-                                '): ' +
-                                d.issue,
-                            )
-                          }
-                        >
-                          {I.penLine} Draft with AnA
-                        </button>
-                        {d.status !== 'resolved' && (
-                          <button className="cc-btn sm" onClick={() => advanceDef(d.id)}>
-                            Advance
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
+          <EmptyState
+            icon={I.fileText}
+            title="Submission-loop tracking isn't available yet"
+            hint="The submission lifecycle, the CRL response countdown and the deficiency gap analysis are computed from a governed submission record. That read (submission-center items and CRL deficiencies) isn't wired to this surface yet — no lifecycle, CRL or deficiency data is shown rather than fabricated."
+          />
           <div className="cc-linkrow">
             <button className="cc-linkcard" onClick={() => nav('submission-center')}>
               <span className="ic">{I.rocket}</span>
               <div>
                 <div className="t">Submission Center</div>
-                <div className="s">Assemble, validate & dispatch the resubmission sequence</div>
+                <div className="s">Assemble, validate & dispatch the submission sequence</div>
               </div>
               <span className="go">{I.arrowRight}</span>
             </button>
@@ -471,7 +408,8 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               <div>
                 <div className="t">Tasking</div>
                 <div className="s">
-                  {autoTasks} response tasks auto-generated from agency communications
+                  Response tasks are auto-generated when agency communications are logged through
+                  the governed API
                 </div>
               </div>
               <span className="go">{I.arrowRight}</span>
@@ -480,7 +418,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               <span className="ic">{I.folder}</span>
               <div>
                 <div className="t">Project</div>
-                <div className="s">{filing.title} lifecycle, team & evidence</div>
+                <div className="s">Open the project lifecycle, team & evidence</div>
               </div>
               <span className="go">{I.arrowRight}</span>
             </button>
@@ -488,15 +426,13 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
         </>
       )}
 
-      {/* ════ TAB: Agency inbox ════ */}
+      {/* ════ TAB: Agency inbox — REAL ════ */}
       {tab === 'inbox' && (
         <>
           <div className="cc-inbox-head">
             <div className="pj-seclbl" style={{ margin: 0 }}>
               Agency communications{' '}
-              <span className="s">
-                · {shown.length} shown · response-required auto-generates a task
-              </span>
+              <span className="s">· {shown.length} shown · project-scoped</span>
             </div>
             <div className="cc-owner">
               <button
@@ -513,217 +449,291 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               </button>
             </div>
           </div>
-          <div className="cc-comms">
-            {shown.map((c) => (
-              <div
-                key={c.id}
-                className="cc-comm"
-                data-fresh={c._new || undefined}
-                data-urgency={c.urgency}
-              >
-                <div className="cc-comm-l">
-                  <span className={'cc-comm-dot tone-' + (CC_TONE[c.urgency] || 'idle')} />
+          {!projectId ? (
+            <EmptyState
+              icon={I.fileText}
+              title="Open a project to see its agency communications"
+              hint="Agency letters, IRs and gateway acks are scoped to a project. Open one from Projects to load its inbox."
+            />
+          ) : liveComms.loading && comms.length === 0 ? (
+            <div className="scaf-note" style={{ padding: '18px 10px' }}>
+              Loading agency communications…
+            </div>
+          ) : liveComms.error && comms.length === 0 ? (
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn't load agency communications"
+              hint="The governed agency-communications register didn't respond. Sign in and retry, or check the service is reachable."
+            />
+          ) : shown.length === 0 ? (
+            <EmptyState
+              icon={I.fileText}
+              title="No agency communications yet"
+              hint="Nothing has been logged for this project. Inbound agency letters, IRs and gateway acks appear here once captured."
+            />
+          ) : (
+            <div className="cc-comms">
+              {shown.map((c) => (
+                <div
+                  key={c.id}
+                  className="cc-comm"
+                  data-fresh={c._new || undefined}
+                  data-urgency={c.urgency}
+                >
+                  <div className="cc-comm-l">
+                    <span className={'cc-comm-dot tone-' + (CC_TONE[c.urgency] || 'idle')} />
+                  </div>
+                  <div className="cc-comm-b">
+                    <div className="cc-comm-top">
+                      <span className="cc-comm-t">{c.communicationType}</span>
+                      <span className="cc-comm-src">
+                        {CC_SOURCE_TYPES[c.sourceType] || c.sourceType}
+                      </span>
+                      {c.responseRequired && (
+                        <span className="rd-chip tone-err">response required</span>
+                      )}
+                      <span className={'rd-chip tone-' + (CC_CLOSURE[c.closureStatus] || 'idle')}>
+                        {c.closureStatus.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                    <div className="cc-comm-meta mono">
+                      {c.sourceChannel} · received {c.receivedDate}
+                      {c.dueDate
+                        ? ' · due ' +
+                          c.dueDate +
+                          (daysTo(c.dueDate) != null ? ' (' + daysTo(c.dueDate) + 'd)' : '')
+                        : ''}
+                      {c.linkedSectionCodes.length
+                        ? ' · §' + c.linkedSectionCodes.join(' §')
+                        : ''}
+                    </div>
+                    {c.extractedIssues.length > 0 && (
+                      <ul className="cc-comm-issues">
+                        {c.extractedIssues.map((iss, i) => (
+                          <li key={i}>{iss}</li>
+                        ))}
+                      </ul>
+                    )}
+                    <div className="cc-comm-foot">
+                      {c.taskId && (
+                        <button
+                          className="cc-comm-task"
+                          onClick={() => nav('tasks')}
+                          title="Open in Tasking"
+                        >
+                          {I.checkSquare} {c.taskId}
+                        </button>
+                      )}
+                      {c.responseRequired && c.closureStatus !== 'closed' && (
+                        <button
+                          className="cc-btn sm primary"
+                          onClick={() =>
+                            onAsk(
+                              'Draft the response to "' +
+                                c.communicationType +
+                                '" (' +
+                                c.id +
+                                ') addressing: ' +
+                                c.extractedIssues.join('; '),
+                            )
+                          }
+                        >
+                          {I.penLine} Draft response with AnA
+                        </button>
+                      )}
+                      {c.closureStatus !== 'closed' && (
+                        <button className="cc-btn sm" onClick={() => triage(c.id)}>
+                          {c.humanReviewStatus === 'pending_review' ? 'Triage' : 'Advance'}
+                        </button>
+                      )}
+                      {c.auditMetadata?.visibilityTier && (
+                        <span className="cc-comm-vis" title="Visibility tier">
+                          {I.eye} {c.auditMetadata.visibilityTier.replace(/_/g, ' ')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="cc-comm-b">
-                  <div className="cc-comm-top">
-                    <span className="cc-comm-t">{c.communicationType}</span>
-                    <span className="cc-comm-src">{CC_SOURCE_TYPES[c.sourceType]}</span>
-                    {c.responseRequired && (
-                      <span className="rd-chip tone-err">response required</span>
-                    )}
-                    <span className={'rd-chip tone-' + (CC_CLOSURE[c.closureStatus] || 'idle')}>
-                      {c.closureStatus.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                  <div className="cc-comm-meta mono">
-                    {c.sourceChannel} · received {c.receivedDate}
-                    {c.dueDate
-                      ? ' · due ' +
-                        c.dueDate +
-                        (daysTo(c.dueDate) != null ? ' (' + daysTo(c.dueDate) + 'd)' : '')
-                      : ''}
-                    {c.linkedSectionCodes.length
-                      ? ' · §' + c.linkedSectionCodes.join(' §')
-                      : ''}
-                  </div>
-                  {c.extractedIssues.length > 0 && (
-                    <ul className="cc-comm-issues">
-                      {c.extractedIssues.map((iss, i) => (
-                        <li key={i}>{iss}</li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="cc-comm-foot">
-                    {c.taskId && (
-                      <button
-                        className="cc-comm-task"
-                        onClick={() => nav('tasks')}
-                        title="Open in Tasking"
-                      >
-                        {I.checkSquare} {c.taskId}
-                      </button>
-                    )}
-                    {c.responseRequired && c.closureStatus !== 'closed' && (
-                      <button
-                        className="cc-btn sm primary"
-                        onClick={() =>
-                          onAsk(
-                            'Draft the response to "' +
-                              c.communicationType +
-                              '" (' +
-                              c.id +
-                              ') addressing: ' +
-                              c.extractedIssues.join('; '),
-                          )
-                        }
-                      >
-                        {I.penLine} Draft response with AnA
-                      </button>
-                    )}
-                    {c.closureStatus !== 'closed' && (
-                      <button className="cc-btn sm" onClick={() => triage(c.id)}>
-                        {c.humanReviewStatus === 'pending_review' ? 'Triage' : 'Advance'}
-                      </button>
-                    )}
-                    <span className="cc-comm-vis" title="Visibility tier">
-                      {I.eye} {c.visibilityTier.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </>
       )}
 
-      {/* ════ TAB: Meetings & commitments ════ */}
+      {/* ════ TAB: Meetings & commitments — REAL ════ */}
       {tab === 'meetings' && (
         <>
           <div className="pj-seclbl">
-            Health-authority interactions <span className="s">· /api/ha-interactions</span>
+            Health-authority interactions{' '}
+            <span className="s">· /api/ha-interactions · org-scoped</span>
           </div>
-          <div className="cc-list">
-            {CC_INTERACTIONS.map((m) => (
-              <div key={m.id} className="cc-row">
-                <span className="cc-row-tag">
-                  {CC_INTERACTION_TYPES[m.interactionType]}
-                </span>
-                <div className="cc-row-b">
-                  <div className="cc-row-t">{m.title}</div>
-                  <div className="cc-row-s mono">
-                    {m.agency.toUpperCase()} · {m.scheduledDate} · {m.agreed}/{m.questions} questions
-                    agreed
+          <StateGuard
+            loading={interState.loading}
+            error={interState.error}
+            empty={interState.empty}
+            emptyTitle="No health-authority interactions yet"
+            emptyHint="Pre-IND, End-of-Phase, Type A/B/C and scientific-advice meetings logged for your organization appear here."
+            errorTitle="Couldn't load health-authority interactions"
+            errorHint="The HA interactions service didn't respond. Sign in and retry, or check the service is reachable."
+          >
+            <div className="cc-list">
+              {interState.rows.map((m) => (
+                <div key={m.id} className="cc-row">
+                  <span className="cc-row-tag">
+                    {CC_INTERACTION_TYPES[m.interaction_type] || m.interaction_type}
+                  </span>
+                  <div className="cc-row-b">
+                    <div className="cc-row-t">{m.title}</div>
+                    <div className="cc-row-s mono">
+                      {m.agency ? m.agency.toUpperCase() : '—'}
+                      {m.scheduled_date ? ' · ' + m.scheduled_date : ''}
+                    </div>
                   </div>
+                  <span
+                    className={
+                      'rd-chip tone-' +
+                      (m.status === 'closed'
+                        ? 'ok'
+                        : m.status === 'held' || m.status === 'minutes_received'
+                          ? 'ai'
+                          : 'idle')
+                    }
+                  >
+                    {m.status ? m.status.replace(/_/g, ' ') : 'unknown'}
+                  </span>
+                  <button
+                    className="cc-btn sm"
+                    onClick={() =>
+                      onAsk(
+                        'Summarize the ' +
+                          (CC_INTERACTION_TYPES[m.interaction_type] || 'interaction') +
+                          ' outcomes and open questions for ' +
+                          m.title,
+                      )
+                    }
+                  >
+                    {I.sparkles}
+                  </button>
                 </div>
-                <span
-                  className={
-                    'rd-chip tone-' +
-                    (m.status === 'closed'
-                      ? 'ok'
-                      : m.status === 'held' || m.status === 'minutes_received'
-                        ? 'ai'
-                        : 'idle')
-                  }
-                >
-                  {m.status.replace(/_/g, ' ')}
-                </span>
-                <button
-                  className="cc-btn sm"
-                  onClick={() =>
-                    onAsk(
-                      'Summarize the ' +
-                        CC_INTERACTION_TYPES[m.interactionType] +
-                        ' outcomes and open questions for ' +
-                        m.title,
-                    )
-                  }
-                >
-                  {I.sparkles}
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </StateGuard>
           <div className="pj-seclbl">
             Regulatory commitments{' '}
             <span className="s">· PMR / PMC / REMS · /api/ha-interactions/commitments</span>
           </div>
-          <div className="cc-list">
-            {CC_COMMITMENTS.map((c) => (
-              <div key={c.id} className="cc-row">
-                <span className="cc-row-tag" data-kind={c.commitmentType}>
-                  {c.commitmentType.toUpperCase()}
-                </span>
-                <div className="cc-row-b">
-                  <div className="cc-row-t">{c.description}</div>
-                  <div className="cc-row-s mono">
-                    {c.basis} · due {c.dueDate}
+          <StateGuard
+            loading={commitState.loading}
+            error={commitState.error}
+            empty={commitEmpty}
+            emptyTitle="No regulatory commitments yet"
+            emptyHint="PMR / PMC / REMS commitments tracked for your organization appear here, with their derived on-track / due-soon status."
+            errorTitle="Couldn't load regulatory commitments"
+            errorHint="The HA commitments service didn't respond. Sign in and retry, or check the service is reachable."
+          >
+            <div className="cc-list">
+              {commitments.map((c) => (
+                <div key={c.id} className="cc-row">
+                  <span className="cc-row-tag" data-kind={c.commitment_type}>
+                    {c.commitment_type ? c.commitment_type.toUpperCase() : '—'}
+                  </span>
+                  <div className="cc-row-b">
+                    <div className="cc-row-t">{c.description}</div>
+                    <div className="cc-row-s mono">
+                      {[c.regulatory_basis, c.due_date ? 'due ' + c.due_date : null]
+                        .filter(Boolean)
+                        .join(' · ') || '—'}
+                    </div>
                   </div>
+                  <span
+                    className={
+                      'rd-chip tone-' +
+                      (c.effectiveStatus === 'on_track' || c.effectiveStatus === 'fulfilled'
+                        ? 'ok'
+                        : c.effectiveStatus === 'due_soon'
+                          ? 'warn'
+                          : 'err')
+                    }
+                  >
+                    {(c.effectiveStatus || c.status || 'unknown').replace(/_/g, ' ')}
+                  </span>
+                  <button
+                    className="cc-btn sm"
+                    onClick={() =>
+                      onAsk(
+                        'What is needed to fulfill this ' +
+                          (c.commitment_type ? c.commitment_type.toUpperCase() : 'commitment') +
+                          ' on time?',
+                      )
+                    }
+                  >
+                    {I.sparkles}
+                  </button>
                 </div>
-                <span
-                  className={
-                    'rd-chip tone-' +
-                    (c.effectiveStatus === 'on_track'
-                      ? 'ok'
-                      : c.effectiveStatus === 'due_soon'
-                        ? 'warn'
-                        : 'err')
-                  }
-                >
-                  {c.effectiveStatus.replace(/_/g, ' ')}
-                </span>
-                <button
-                  className="cc-btn sm"
-                  onClick={() =>
-                    onAsk(
-                      'What is needed to fulfill this ' +
-                        c.commitmentType.toUpperCase() +
-                        ' commitment on time?',
-                    )
-                  }
-                >
-                  {I.sparkles}
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </StateGuard>
         </>
       )}
 
-      {/* ════ TAB: Authority profiles ════ */}
+      {/* ════ TAB: Authority profiles — REAL ════ */}
       {tab === 'profiles' && (
         <>
           <div className="pj-seclbl">
             Authority profiles{' '}
             <span className="s">· channel · transport · validation · acknowledgment model</span>
           </div>
-          <div className="cc-prof-grid">
-            {CC_AUTH_PROFILES.map((p, i) => (
-              <div key={i} className="cc-prof">
-                <div className="cc-prof-h">
-                  <span className="cc-prof-a">{p.authority}</span>
-                  <span className="cc-prof-c">{p.center}</span>
-                </div>
-                <div className="cc-prof-row">
-                  <span className="k">Channel</span>
-                  <span className="v">
-                    {p.channelType} · {p.transport}
-                  </span>
-                </div>
-                <div className="cc-prof-row">
-                  <span className="k">Formats</span>
-                  <span className="v">{p.formats.join(', ')}</span>
-                </div>
-                <div className="cc-prof-row">
-                  <span className="k">Validation</span>
-                  <span className="v">{p.validation.join(', ')}</span>
-                </div>
-                <div className="cc-prof-row">
-                  <span className="k">Acknowledgment</span>
-                  <span className="v">{p.ack.replace(/_/g, ' ')}</span>
-                </div>
+          {!projectId ? (
+            <EmptyState
+              icon={I.fileText}
+              title="Open a project to see its authority profiles"
+              hint="Authority profiles (channel, transport, accepted formats, validation) are configured per project. Open one from Projects to load them."
+            />
+          ) : (
+            <StateGuard
+              loading={profState.loading}
+              error={profState.error}
+              empty={profState.empty}
+              emptyTitle="No authority profiles yet"
+              emptyHint="Configure an authority profile — channel, transport, accepted formats and validation — for this project and it appears here."
+              errorTitle="Couldn't load authority profiles"
+              errorHint="The authority-profiles register didn't respond. Sign in and retry, or check the service is reachable."
+            >
+              <div className="cc-prof-grid">
+                {profState.rows.map((p) => (
+                  <div key={p.id} className="cc-prof">
+                    <div className="cc-prof-h">
+                      <span className="cc-prof-a">{p.authority}</span>
+                      <span className="cc-prof-c">{p.centerOrDivision}</span>
+                    </div>
+                    <div className="cc-prof-row">
+                      <span className="k">Channel</span>
+                      <span className="v">
+                        {[p.channelType, p.submissionTransport].filter(Boolean).join(' · ') || '—'}
+                      </span>
+                    </div>
+                    <div className="cc-prof-row">
+                      <span className="k">Formats</span>
+                      <span className="v">{(p.acceptedFormats || []).join(', ') || '—'}</span>
+                    </div>
+                    <div className="cc-prof-row">
+                      <span className="k">Validation</span>
+                      <span className="v">
+                        {(p.validationRequirements || []).join(', ') || '—'}
+                      </span>
+                    </div>
+                    <div className="cc-prof-row">
+                      <span className="k">Acknowledgment</span>
+                      <span className="v">
+                        {p.acknowledgmentModel ? p.acknowledgmentModel.replace(/_/g, ' ') : '—'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </StateGuard>
+          )}
         </>
       )}
 
@@ -731,12 +741,12 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       {form && (
         <C2CForm
           config={{
-            eyebrow: 'Communication Center · /agency-communications',
+            eyebrow: 'Communication Center · agency communications',
             title: 'Log agency communication',
-            sub: 'Record an inbound agency event. If a response is required or the urgency is high/critical, a response task is auto-created in Tasking and a notification is sent — exactly as the backend does.',
+            sub: 'Record an inbound agency event. This adds it to the view; saving to the governed store — which is what auto-creates the response task, sends the notification and writes the audit entry — is not yet wired from this form.',
             governed:
-              'Every logged communication is org- and project-scoped and audit-logged; visibility follows the tier you set.',
-            submitLabel: 'Log communication',
+              'Once persistence is wired, logged communications are org- and project-scoped and audit-logged, with visibility following the tier you set.',
+            submitLabel: 'Add to view',
             fields: [
               {
                 key: 'communicationType',
@@ -779,7 +789,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                 type: 'select',
                 options: [
                   { value: 'no', label: 'No' },
-                  { value: 'yes', label: 'Yes — auto-create a task' },
+                  { value: 'yes', label: 'Yes' },
                 ],
                 required: true,
               },

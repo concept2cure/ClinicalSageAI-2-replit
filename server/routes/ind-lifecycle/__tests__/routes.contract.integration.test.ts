@@ -558,6 +558,22 @@ describe('persisted IND safety reports (21 CFR 312.32)', () => {
     expect(res.body.map((r: any) => r.id)).toContain(draftId);
   });
 
+  it('GET /safety-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404', async () => {
+    const got = await request(app).get(`/api/ind-lifecycle/safety-reports/${draftId}`);
+    expect(got.status).toBe(200);
+    expect(got.body.id).toBe(draftId);
+    expect(got.body.obligation).toBe('SEVEN_DAY');
+
+    currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
+    const foreign = await request(app).get(`/api/ind-lifecycle/safety-reports/${draftId}`);
+    expect(foreign.status).toBe(404);
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+
+    const missing = await request(app).get('/api/ind-lifecycle/safety-reports/00000000-0000-0000-0000-000000000000');
+    expect(missing.status).toBe(404);
+    expect(missing.body.error.code).toBe('NOT_FOUND');
+  });
+
   it('GET /safety-reports/overdue → 200 includes the unfiled past-deadline draft', async () => {
     // The reportable event's deadline is in Jan 2026; "now" is well past it.
     const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/safety-reports/overdue`);
@@ -621,6 +637,22 @@ describe('persisted IND annual reports (21 CFR 312.33)', () => {
     expect(res.body.map((r: any) => r.id)).toContain(draftId);
   });
 
+  it('GET /annual-reports/:reportId → 200 roundtrips the draft; cross-org + unknown → 404', async () => {
+    const got = await request(app).get(`/api/ind-lifecycle/annual-reports/${draftId}`);
+    expect(got.status).toBe(200);
+    expect(got.body.id).toBe(draftId);
+    expect(got.body.indNumber).toBe('123456');
+
+    currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
+    const foreign = await request(app).get(`/api/ind-lifecycle/annual-reports/${draftId}`);
+    expect(foreign.status).toBe(404);
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+
+    const missing = await request(app).get('/api/ind-lifecycle/annual-reports/00000000-0000-0000-0000-000000000000');
+    expect(missing.status).toBe(404);
+    expect(missing.body.error.code).toBe('NOT_FOUND');
+  });
+
   it('overdue with a far-future asOf includes it; filing then drops it', async () => {
     const before = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/annual-reports/overdue?asOf=2030-01-01`);
     expect(before.body.map((r: any) => r.id)).toContain(draftId);
@@ -665,6 +697,22 @@ describe('persisted IND amendments (21 CFR 312.30/.31)', () => {
     const res = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/amendments`);
     expect(res.status).toBe(200);
     expect(res.body.map((r: any) => r.id)).toContain(draftId);
+  });
+
+  it('GET /amendments/:amendmentId → 200 roundtrips the draft; cross-org + unknown → 404', async () => {
+    const got = await request(app).get(`/api/ind-lifecycle/amendments/${draftId}`);
+    expect(got.status).toBe(200);
+    expect(got.body.id).toBe(draftId);
+    expect(got.body.plan.sequenceType).toBe('amendment');
+
+    currentUser = { id: 9, organizationId: 2, roles: ['regulatory-author'] };
+    const foreign = await request(app).get(`/api/ind-lifecycle/amendments/${draftId}`);
+    expect(foreign.status).toBe(404);
+    currentUser = { id: 9, organizationId: 1, roles: ['regulatory-author'] };
+
+    const missing = await request(app).get('/api/ind-lifecycle/amendments/00000000-0000-0000-0000-000000000000');
+    expect(missing.status).toBe(404);
+    expect(missing.body.error.code).toBe('NOT_FOUND');
   });
 
   it('filing with draftId marks the amendment filed + links its sequence', async () => {

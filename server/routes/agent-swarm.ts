@@ -620,7 +620,7 @@ class SwarmManager {
    * Executes the swarm task graph for real: each ready task is run through
    * the AI gateway using its agent's system prompt, capturing the real model
    * output, token usage, and cost. HITL-required tasks pause for approval
-   * rather than auto-completing. Replaces the prior setTimeout-based mock that
+   * rather than auto-completing. Replaces the prior setTimeout-based stub that
    * fabricated "completed successfully" outputs and canned reasoning.
    *
    * Runs in the background (not awaited by the request path); swarm state is

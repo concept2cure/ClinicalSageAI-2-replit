@@ -1,40 +1,85 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { PedigreeBadge } from '../intelligence/Intelligence';
-import { liveGet, unwrapList, useLive } from '../dataConnect';
+import { liveGet, unwrapList, useLiveData, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
-import {
-  SAMPLE_DISPATCH_ASSESSMENT,
-  dispatchGateFor,
-  type DispatchReadinessAssessment,
-  type ReadinessFinding,
-} from '../fixtures/dispatch-readiness';
+import { evaluateDispatchGate, mergeDispatchGates } from '../fixtures/dispatch-readiness';
 import '../styles/project-home-v2.css';
 
+/* ── Display types — aligned to the server's dispatch-readiness assessment
+   (server/services/ectd/assess-dispatch-readiness.ts). Only the columns this
+   surface renders are modeled; the server's redundant `gate` field is
+   recomputed client-side below. `sectionCode` is NULLABLE: sequence-level
+   structural findings (EMPTY_SEQUENCE, SEQUENCE_NUMBER_FORMAT) carry no
+   section, so the server returns null there — rendered honestly, never
+   fabricated. ── */
+interface ReadinessFinding {
+  severity: 'error' | 'warning' | 'info';
+  code: string;
+  sectionCode: string | null;
+  message: string;
+}
+
+interface ReadinessSummary {
+  errors: number;
+  warnings: number;
+  infos: number;
+  findings: ReadinessFinding[];
+}
+
+interface ExternalValidation {
+  configured: boolean;
+  ran: boolean;
+  errorCount: number;
+  cleared: boolean;
+  blockers: string[];
+}
+
+interface DispatchReadinessAssessment {
+  sequenceId: number;
+  region: string;
+  sequenceStatus: string;
+  validationErrors: number;
+  unacknowledgedShadowCriticals: number;
+  shadowReviewRunCount: number;
+  shadowReviewMissing: boolean;
+  externalValidation: ExternalValidation;
+  readiness: ReadinessSummary;
+  leafCount: number;
+}
+
 /** Discover the org's newest eCTD sequence id (submissions → sequences),
- *  failing closed to null (the surface then keeps its sample assessment). */
-function useLatestSequenceId(): number | null {
+ *  failing closed: `seqId` stays null and `discovering` flips false, so the
+ *  surface renders an honest empty state (never a fabricated assessment).
+ *  Both reads hit real DB-backed endpoints; the null fixture means a failed
+ *  discovery yields no sequence rather than sample data. */
+function useLatestSequenceId(): { seqId: number | null; discovering: boolean } {
   const [seqId, setSeqId] = useState<number | null>(null);
+  const [discovering, setDiscovering] = useState(true);
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const subs = await liveGet<unknown>('/api/submissions', null);
-      if (subs.sample) return; // discovery failed → stay on sample
-      const subList = unwrapList(subs.data);
-      const first = Array.isArray(subList) ? (subList[0] as { id?: number } | undefined) : undefined;
-      if (!first?.id) return;
-      const seqs = await liveGet<unknown>(`/api/submissions/${first.id}/sequences`, null);
-      if (seqs.sample) return;
-      const seqList = unwrapList(seqs.data);
-      const rows = Array.isArray(seqList) ? (seqList as Array<{ id?: number }>) : [];
-      const latest = rows[rows.length - 1];
-      if (!cancelled && latest?.id) setSeqId(latest.id);
+      try {
+        const subs = await liveGet<unknown>('/api/submissions', null);
+        if (subs.sample) return; // discovery failed → stay on empty
+        const subList = unwrapList(subs.data);
+        const first = Array.isArray(subList) ? (subList[0] as { id?: number } | undefined) : undefined;
+        if (!first?.id) return;
+        const seqs = await liveGet<unknown>(`/api/submissions/${first.id}/sequences`, null);
+        if (seqs.sample) return;
+        const seqList = unwrapList(seqs.data);
+        const rows = Array.isArray(seqList) ? (seqList as Array<{ id?: number }>) : [];
+        const latest = rows[rows.length - 1];
+        if (!cancelled && latest?.id) setSeqId(latest.id);
+      } finally {
+        if (!cancelled) setDiscovering(false);
+      }
     })();
     return () => {
       cancelled = true;
     };
   }, []);
-  return seqId;
+  return { seqId, discovering };
 }
 
 /* ── severity → tone map ── */
@@ -48,17 +93,82 @@ const SEV_TONE: Record<string, string> = { error: 'error', warning: 'warning', i
 
 export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
   const ask = onAsk;
-  // live ?? sample: the real deterministic gate for the org's newest sequence
-  // (same engine, assessSequenceDispatchReadiness); sample when no live
-  // sequence is reachable.
-  const seqId = useLatestSequenceId();
-  const live = useLive<DispatchReadinessAssessment>(
+  // Real deterministic gate for the org's newest sequence, computed server-side
+  // by assessSequenceDispatchReadiness. Fixture-free: real assessment, honest
+  // empty (no sequence yet), or honest error — never a sample assessment.
+  const { seqId, discovering } = useLatestSequenceId();
+  const live = useLiveData<DispatchReadinessAssessment>(
     seqId === null ? null : `/api/submissions/sequences/${seqId}/dispatch-readiness`,
-    SAMPLE_DISPATCH_ASSESSMENT,
     [seqId],
   );
-  const a: DispatchReadinessAssessment = live.data;
-  const gate = useMemo(() => dispatchGateFor(a), [a]);
+  const a = live.data;
+
+  // Compose the hard gate client-side from the server-computed inputs, mirroring
+  // the server's assessSequenceDispatchReadiness (structural + external gates).
+  // evaluateDispatchGate / mergeDispatchGates are pure deterministic functions —
+  // the single source of truth for the blocker strings, not fixture data.
+  const gate = useMemo(
+    () =>
+      a
+        ? mergeDispatchGates(
+            evaluateDispatchGate({
+              validationErrors: a.validationErrors,
+              unacknowledgedShadowCriticals: a.unacknowledgedShadowCriticals,
+            }),
+            { cleared: a.externalValidation.cleared, blockers: a.externalValidation.blockers || [] },
+          )
+        : { cleared: false, blockers: [] as string[] },
+    [a],
+  );
+
+  const loading = discovering || (seqId !== null && live.loading);
+
+  /* the surface's identity — shown in every state */
+  const head = (
+    <div className="dr2-head">
+      <div className="dr2-eyebrow">
+        <span className="dr2-kicker">AnA · dispatch gate · proven, not generated</span>
+      </div>
+      <h1 className="dr2-title">Cleared to dispatch?</h1>
+    </div>
+  );
+
+  /* ── honest loading / error / empty (never a fixture) ── */
+  if (loading) {
+    return (
+      <div className="dr2">
+        {head}
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Assessing dispatch readiness…</div>
+      </div>
+    );
+  }
+  if (live.error) {
+    return (
+      <div className="dr2">
+        {head}
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't compute the dispatch gate"
+          hint="The deterministic readiness assessment didn't respond. It's computed server-side from your sequence's canonical leaves and open Shadow Review criticals — sign in and retry, or check the service is reachable."
+        />
+      </div>
+    );
+  }
+  if (!a) {
+    return (
+      <div className="dr2">
+        {head}
+        <EmptyState
+          icon={I.rocket}
+          title="No submission sequence to gate yet"
+          hint="The dispatch gate runs against your newest eCTD sequence. Create a submission and build a sequence, then AnA can prove whether it's cleared to transmit."
+        />
+      </div>
+    );
+  }
+
+  /* ── real assessment (a is non-null from here) ── */
   const ev = a.externalValidation;
   const rd = a.readiness;
 
@@ -127,11 +237,10 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
       <div className="dr2-head">
         <div className="dr2-eyebrow">
           <span className="dr2-kicker">AnA · dispatch gate · proven, not generated</span>
-          <span className={live.sample ? 'dr2-src sample' : 'dr2-src'}>{live.sample ? 'Sample data' : 'Live'}</span>
         </div>
         <h1 className="dr2-title">Cleared to dispatch?</h1>
         <div className="dr2-sub">
-          {live.sample ? 'BX-204 · BLA 761123 · sequence 0000' : `Sequence ${a.sequenceId}`} · region {String(a.region || 'fda').toUpperCase()} · {a.leafCount} leaves · status {a.sequenceStatus}
+          Sequence {a.sequenceId} · region {String(a.region || 'fda').toUpperCase()} · {a.leafCount} leaves · status {a.sequenceStatus}
         </div>
       </div>
 
@@ -206,12 +315,18 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
         {(rd.findings || []).map((f: ReadinessFinding, i: number) => (
           <div key={i} className={'dr2-find tone-' + (SEV_TONE[f.severity] || 'idle')}>
             <span className={'dr2-find-sev tone-' + (SEV_TONE[f.severity] || 'idle')}>{f.severity}</span>
-            <span className="mono dr2-find-code">{f.sectionCode}</span>
+            {f.sectionCode && <span className="mono dr2-find-code">{f.sectionCode}</span>}
             <span className="dr2-find-msg">{f.message}</span>
             {f.severity === 'error' && (
               <button
                 className="dr2-find-fix"
-                onClick={() => ask('Resolve the dispatch-blocking validation error in §' + f.sectionCode + ': ' + f.message)}
+                onClick={() =>
+                  ask(
+                    f.sectionCode
+                      ? 'Resolve the dispatch-blocking validation error in §' + f.sectionCode + ': ' + f.message
+                      : 'Resolve the dispatch-blocking validation error: ' + f.message,
+                  )
+                }
               >
                 {I.sparkles} Fix
               </button>
@@ -232,7 +347,13 @@ export function DispatchReadiness({ onAsk }: SurfaceViewProps) {
           <button
             className="dr2-transmit"
             onClick={() =>
-              ask('Prepare the governed transmit of the BX-204 BLA sequence 0000 to the FDA ESG — require the Part-11 e-signature.')
+              ask(
+                'Prepare the governed transmit of sequence ' +
+                  a.sequenceId +
+                  ' (region ' +
+                  String(a.region || 'fda').toUpperCase() +
+                  ') to the agency gateway — require the Part-11 e-signature.',
+              )
             }
           >
             {I.send} Prepare governed transmit

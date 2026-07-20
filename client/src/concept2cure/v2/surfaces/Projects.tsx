@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLiveList } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
-import {
-  PROJECTS, NP_TEAMS, WS_TONE,
-  type ProjPortfolioEntry, type NpTeamMember,
-} from '../fixtures/project-home-data';
 // The New-Project wizard drives off the global regulatory registry. Import the
 // picker + the submission-type lookup DIRECTLY from the modules that own them,
 // rather than depending on window globals that another surface may or may not
@@ -117,8 +113,11 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
   const [tpl, setTpl] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [product, setProduct] = useState('');
-  const [ta, setTa] = useState('onc');
-  const [team, setTeam] = useState<string[]>(['Jordan Chen']);
+  const [ta, setTa] = useState('onc_general');
+  // Team assignment needs a persisted project id (GET /:id/team); no endpoint
+  // lists selectable org members for a not-yet-created project, so the wizard
+  // creates the project solo and teammates are added afterward.
+  const [team] = useState<string[]>([]);
   const [target, setTarget] = useState('');
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -130,7 +129,6 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
   const selTpl: SelTpl | null = ctx
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
     : null;
-  const toggleTeam = (n: string) => setTeam(t => t.includes(n) ? t.filter(x => x !== n) : [...t, n]);
 
   // Persist a real regulatory program (POST /api/c2c/projects → regulatory_programs)
   // then navigate into it using the id the store assigns. On failure we surface
@@ -263,15 +261,15 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
 
               <div>
                 <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-300)', display: 'block', marginBottom: 6 }}>Team members</span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {NP_TEAMS.map(m => (
-                    <button key={m.name} onClick={() => toggleTeam(m.name)}
-                      style={{ padding: '5px 10px', borderRadius: 16, border: '1px solid ' + (team.includes(m.name) ? 'var(--accent-200)' : 'var(--border)'), background: team.includes(m.name) ? 'var(--accent-000)' : 'transparent', cursor: 'pointer', fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 5 }}>
-                      {team.includes(m.name) && <span style={{ color: 'var(--accent-200)', fontSize: 12 }}>{I.check}</span>}
-                      {m.name} <span style={{ color: 'var(--text-400)' }}>· {m.role}</span>
-                    </button>
-                  ))}
-                </div>
+                {/* Backend gap: no endpoint lists selectable org members for a
+                    not-yet-created project (GET /api/c2c/projects/:id/team needs a
+                    persisted project id). Rather than show a fabricated roster, the
+                    project is created solo and teammates are added afterward. */}
+                <EmptyState
+                  icon={I.info}
+                  title="Team assignment isn't available yet"
+                  hint="You'll be able to add teammates once the project exists and org members can be listed."
+                />
               </div>
             </div>
           )}
@@ -299,8 +297,6 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
                 <span>{taList.find(t => t.id === ta)?.label || ta}</span>
                 <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Target date</span>
                 <span>{target || 'Not set'}</span>
-                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Team</span>
-                <span>{team.join(', ') || 'Just you'}</span>
                 <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Pathway</span>
                 <span>{(selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</span>
                 <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Workstream</span>
@@ -339,6 +335,31 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
 
 /* ════ Projects — portfolio of programs ════ */
 
+/**
+ * Portfolio row — the display contract projected by GET /api/c2c/projects
+ * (server/routes/c2c/projects.ts), one field per real `regulatory_programs`
+ * column (progress_percent → readiness, phase → stage, target_submission_date →
+ * due, lead_user_id → lead). `blocker` is in the projection but the list query
+ * returns it as a literal NULL — no blocker is computed at list level — so it is
+ * typed nullable and rendered null-safe, never fabricated.
+ */
+interface ProjPortfolioEntry {
+  id: string;
+  title: string;
+  ws: string;
+  code: string;
+  stage: string;
+  readiness: number;
+  status: string;
+  lead: string;
+  blocker: string | null;
+  due: string;
+  activity: string;
+}
+
+/** Workstream → chip tone (presentation config, not data). */
+const WS_TONE: Record<string, string> = { MDX: 'ai', Biotech: 'ok', Pharma: 'warn', CRO: 'idle' };
+
 export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [ws, setWs] = useState('all');
   const [status, setStatus] = useState('all');
@@ -348,10 +369,11 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     return false;
   });
 
-  // live ?? fixture: the org's real program portfolio
-  // (GET /api/c2c/projects, projected from regulatory_programs).
-  const live = useLiveList<ProjPortfolioEntry>('/api/c2c/projects', PROJECTS);
-  const projects = live.data;
+  // Real program portfolio — GET /api/c2c/projects projects one field per real
+  // regulatory_programs column (server/routes/c2c/projects.ts). Fixture-free:
+  // real rows, an honest empty, or an honest error — never a "Sample data" stand-in.
+  const live = useLiveRows<ProjPortfolioEntry>('/api/c2c/projects');
+  const projects = live.rows;
 
   const list = projects.filter(p => (ws === 'all' || p.ws === ws) && (status === 'all' || p.status === status));
   const health = [
@@ -372,7 +394,6 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
 
   return (
     <div className="page-inner">
-      <SampleTag sample={live.sample} />
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Workspace</div>
@@ -414,7 +435,28 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         ))}
       </div>
 
-      {view === 'grid' ? (
+      {live.loading ? (
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading programs…</div>
+      ) : live.error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the project portfolio"
+          hint="This is the organization's real regulatory programs (projected from regulatory_programs). Sign in and retry, or check the service is reachable."
+        />
+      ) : live.empty ? (
+        <EmptyState
+          icon={I.folder}
+          title="No programs yet"
+          hint="Create a regulatory program and it appears here — every workstream across MDX, Biotech, and Pharma."
+        />
+      ) : list.length === 0 ? (
+        <EmptyState
+          icon={I.filter}
+          title="No programs match these filters"
+          hint="Adjust the workstream or status filter to see more."
+        />
+      ) : view === 'grid' ? (
         <div className="launch-grid">
           {list.map(p => (
             <button key={p.id} className="launch" onClick={() => openProj(p)}>

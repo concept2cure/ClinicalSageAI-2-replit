@@ -100,9 +100,10 @@ describe('getRefreshTokenSecret', () => {
     delete process.env.REFRESH_TOKEN_SECRET_DEV;
     delete process.env.REFRESH_TOKEN_SECRET_STAGING;
     delete process.env.REFRESH_TOKEN_SECRET_PROD;
-    // Satisfy the production MFA posture gate so these tests isolate the
-    // refresh-secret contract.
+    // Satisfy the production MFA + RLS posture gates so these tests isolate
+    // the refresh-secret contract.
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.RLS_ENFORCE = 'on';
     process.env.DATABASE_URL = 'postgres://test';
     process.env.DATABASE_URL_DEV = 'postgres://test';
     process.env.DATABASE_URL_STAGING = 'postgres://test';
@@ -182,6 +183,9 @@ describe('assertMfaKeyPosture', () => {
     process.env.JWT_SECRET = VALID_SECRET;
     process.env.JWT_SECRET_PROD = VALID_SECRET;
     process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
+    // Satisfy the production RLS posture gate (runs after the MFA gate) so
+    // the 'loads in production' case below exercises the MFA contract only.
+    process.env.RLS_ENFORCE = 'on';
     process.env.DATABASE_URL = 'postgres://test';
     process.env.DATABASE_URL_DEV = 'postgres://test';
     process.env.DATABASE_URL_PROD = 'postgres://test';
@@ -238,11 +242,12 @@ describe('getCurrentEnvironment', () => {
     process.env.DATABASE_URL_DEV = 'postgres://test';
     process.env.DATABASE_URL_PROD = 'postgres://test';
     // Production-path enforcement added alongside JWT: provide a dedicated,
-    // distinct refresh secret and a dedicated MFA key so the 'recognizes
-    // production' case below exercises env selection, not the new fail-closed
-    // gates (which have their own dedicated suites above).
+    // distinct refresh secret, a dedicated MFA key and an explicit RLS mode so
+    // the 'recognizes production' case below exercises env selection, not the
+    // fail-closed gates (which have their own dedicated suites above/below).
     process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.RLS_ENFORCE = 'on';
   });
 
   afterEach(() => {
@@ -281,5 +286,74 @@ describe('getCurrentEnvironment', () => {
     expect(config.env).toBe('test');
     expect(config.isTest).toBe(true);
     expect(config.isProduction).toBe(false);
+  });
+});
+
+describe('production RLS enforcement posture (fires on config import)', () => {
+  let originalEnv: NodeJS.ProcessEnv;
+
+  beforeEach(() => {
+    originalEnv = { ...process.env };
+    vi.resetModules();
+    delete process.env.RLS_ENFORCE;
+    delete process.env.RLS_REQUIRE_ENFORCE;
+    // Satisfy every other production gate so these tests isolate the RLS one.
+    process.env.JWT_SECRET = VALID_SECRET;
+    process.env.JWT_SECRET_PROD = VALID_SECRET;
+    process.env.REFRESH_TOKEN_SECRET = 'b'.repeat(40);
+    process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
+    process.env.DATABASE_URL = 'postgres://test';
+    process.env.DATABASE_URL_DEV = 'postgres://test';
+    process.env.DATABASE_URL_PROD = 'postgres://test';
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    vi.resetModules();
+  });
+
+  it('refuses to load in production when RLS_ENFORCE is unset', async () => {
+    process.env.NODE_ENV = 'production';
+    await expect(import('../environment')).rejects.toThrow(/REFUSING TO BOOT/);
+  });
+
+  it('refuses to load in production on an unrecognized RLS_ENFORCE value', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RLS_ENFORCE = 'onn'; // typo must not silently disable RLS
+    await expect(import('../environment')).rejects.toThrow(/unrecognized value/);
+  });
+
+  it('loads in production with RLS_ENFORCE=on', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RLS_ENFORCE = 'on';
+    const { config } = await import('../environment');
+    expect(config.isProduction).toBe(true);
+  });
+
+  it('loads (with a warning) in production when the operator explicitly sets off', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RLS_ENFORCE = 'off';
+    const { config } = await import('../environment');
+    expect(config.isProduction).toBe(true);
+  });
+
+  it('loads (with a warning) in production when the operator explicitly sets shadow', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RLS_ENFORCE = 'shadow';
+    const { config } = await import('../environment');
+    expect(config.isProduction).toBe(true);
+  });
+
+  it('fail-closes in production under RLS_REQUIRE_ENFORCE=true unless on', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.RLS_ENFORCE = 'off';
+    process.env.RLS_REQUIRE_ENFORCE = 'true';
+    await expect(import('../environment')).rejects.toThrow(/FAIL-CLOSED/);
+  });
+
+  it('does not require RLS_ENFORCE outside production', async () => {
+    process.env.NODE_ENV = 'development';
+    const { config } = await import('../environment');
+    expect(config.isDevelopment).toBe(true);
   });
 });

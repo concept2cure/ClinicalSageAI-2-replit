@@ -137,7 +137,15 @@ function describeQuery(q: CtgovIngestQuery): string {
  * (override with CORPUS_INGESTION_CRON).
  */
 export function startCorpusIngestionSchedule(): void {
-  if (process.env.ENABLE_CORPUS_INGESTION !== 'true') return;
+  if (process.env.ENABLE_CORPUS_INGESTION !== 'true') {
+    // Boot-posture line: deliberately opt-in (external CT.gov egress + DB
+    // writes), so make the OFF state visible rather than silently returning.
+    logger.info('Corpus ingestion sweep disabled (set ENABLE_CORPUS_INGESTION=true to enable)', {
+      enabled: false,
+      controlledBy: 'ENABLE_CORPUS_INGESTION',
+    });
+    return;
+  }
   const expr = process.env.CORPUS_INGESTION_CRON || '30 3 * * 0';
   try {
     cron.schedule(expr, () => {
@@ -145,7 +153,11 @@ export function startCorpusIngestionSchedule(): void {
         logger.error(`Corpus ingestion sweep failed: ${err?.message ?? String(err)}`)
       );
     });
-    logger.info(`Corpus ingestion sweep scheduled (${expr})`);
+    logger.info(`Corpus ingestion sweep scheduled (${expr})`, {
+      enabled: true,
+      controlledBy: 'ENABLE_CORPUS_INGESTION',
+      schedule: expr,
+    });
   } catch (err: any) {
     logger.error(`Failed to schedule corpus ingestion sweep: ${err?.message}`);
   }

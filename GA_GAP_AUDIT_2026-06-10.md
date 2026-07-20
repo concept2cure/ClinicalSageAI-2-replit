@@ -1,3 +1,5 @@
+> **SUPERSEDED by [docs/GA_READINESS_REGISTER_2026-07-05.md](docs/GA_READINESS_REGISTER_2026-07-05.md) (kept for history).** Status claims below reflect 2026-06-10 and are no longer current.
+
 # GA Gap Audit — code-grounded, whole-platform
 
 **Date:** 2026-06-10

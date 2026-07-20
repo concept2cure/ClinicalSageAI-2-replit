@@ -5,7 +5,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import postgres from 'postgres';
 import { authMiddleware } from '../auth';
-import { requireRole } from '../middleware/auth';
+import { requireRole, invalidateOrgMembershipCache } from '../middleware/auth';
 import { authedOrgId } from '../utils/authedOrgId';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -356,6 +356,9 @@ router.delete('/:id', requireRole('super_admin', 'platform_admin'), async (req, 
 
       // 2. Delete organization_users relationships
       await sql`DELETE FROM organization_users WHERE organization_id = ${tenantId}`;
+      // Every membership in this org just vanished — revoke cached
+      // auth-middleware membership results immediately.
+      invalidateOrgMembershipCache(undefined, tenantId);
       log.debug(`Deleted organization_users for organization ${tenantId}`);
 
       // 3. Delete client_workspaces

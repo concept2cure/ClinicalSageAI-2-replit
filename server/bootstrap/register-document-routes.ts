@@ -44,6 +44,16 @@ export async function registerDocumentRoutes({
     console.error('❌ Failed to mount Document Authoring routes:', error);
   }
 
+  // ── Document Authoring Workspace (read-model for the ui-v2 document-authoring surface) ──
+  // Coexists with the router above on /api/document-authoring; serves /workspace only.
+  try {
+    const documentAuthoringWorkspaceModule = await import('../routes/document-authoring-workspace.routes.js');
+    app.use('/api/document-authoring/workspace', authenticateToken, documentAuthoringWorkspaceModule.default());
+    console.log('✅ Document Authoring Workspace read-model routes mounted (auth-gated): /api/document-authoring/workspace');
+  } catch (error) {
+    console.error('❌ Failed to mount Document Authoring Workspace routes:', error);
+  }
+
   // ── eCTD Routes (parallelized) ──
   //
   // SECURITY: eCTD payloads ARE regulatory submissions — IP, study data,
@@ -395,6 +405,15 @@ export async function registerDocumentRoutes({
     console.log('✅ Biostatistics Platform routes mounted (7 capabilities)');
   } catch (error) {
     console.error('❌ Failed to mount Biostatistics Platform routes:', error);
+  }
+
+  // ── AnA Biostats — Governed Statistical Documents (list read-model for ui-v2) ──
+  try {
+    const anaBiostatsGovDocsModule = await import('../routes/ana-biostats-governed-documents');
+    app.use('/api/ana-biostats/governed-documents', authenticateToken, anaBiostatsGovDocsModule.default());
+    console.log('✅ AnA Biostats Governed Documents route mounted (/api/ana-biostats/governed-documents)');
+  } catch (error) {
+    console.error('❌ Failed to mount AnA Biostats Governed Documents routes:', error);
   }
 
   // ── AnA Biostats Operating Function ──

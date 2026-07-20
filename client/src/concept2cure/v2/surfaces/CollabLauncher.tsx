@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
+import { useLiveRows } from '../dataConnect';
 import {
   SURFACE_CTX, CL_MOD, CL_OPTIMAL, CL_TYPE, CL_PRI,
   TB_TEAM, TB_PROJECTS,
   type C2CTask, type ActivityItem, type TeamMember, type ProjectEntry,
 } from '../fixtures/collab-data';
-import { TB_TASKS } from '../fixtures/task-board-data';
 
 /* ================================================================
    Collaboration layer -- universal "add to tasking / assign / collaborate"
@@ -78,11 +78,28 @@ interface ToastState {
 /* ── Shared C2C store ──
    Module-level mutable state with a subscriber pattern. Deferred
    emit avoids "Cannot update a component while rendering a different
-   component" -- notifications fire on a microtask, never synchronously. */
+   component" -- notifications fire on a microtask, never synchronously.
+
+   Real-data standard: the store starts EMPTY -- no fixture seed. It holds only
+   tasks added at runtime (optimistic, in-session). The org-wide unifiedTasks
+   board is real persisted data served by GET /api/task-management/board
+   (server/routes/taskBoard.routes.ts); the launcher's "open across the org"
+   count reads that live below, and TaskBoard wires the same endpoint in its own
+   pass. C2C.list() therefore no longer hands fabricated rows to window.C2C
+   consumers -- until a live task is added it is honestly empty.
+
+   RETAINED, not dead code (audit determination): this in-session store still
+   has WRITE consumers -- TaskBoard's New task / Move / Start-workflow actions
+   and this file's own QuickTask / CollabDiscuss forms call
+   window.C2C.addTask / update. Those are MOCK, unpersisted actions (flagged at
+   each call site): their rows are orphaned from the live board above, which
+   reads the real GET /api/task-management/board. The store stays until those
+   writes are wired to POST /api/task-management/tasks in the actions pass -- it
+   is not removed while a consumer remains. */
 
 type Subscriber = () => void;
 
-let tasks: C2CTask[] = TB_TASKS.map(t => ({ ...t }));
+let tasks: C2CTask[] = [];
 const subs = new Set<Subscriber>();
 const defer = (typeof queueMicrotask === 'function')
   ? queueMicrotask
@@ -106,6 +123,13 @@ let ctx: C2CContext = {
 };
 
 export const C2C = {
+  // Fixture-backed option-sources for the QuickTask / CollabDiscuss forms, which
+  // are MOCK actions (create()/send() never POST). Backends they SHOULD read are
+  // REAL -- team: GET /api/collaboration/team (users), projects: GET /api/projects
+  // -- but live team rows are keyed by NUMERIC user id while the pickers, avatars
+  // and auto-assign (CL_OPTIMAL) are keyed on fixture SHORT-IDS (jc/mw/...) defined
+  // in shared fixture files this file can't edit; going live here would break
+  // auto-assign. Left NOT half-wired for the actions pass; not presented as live.
   team: TB_TEAM as Record<string, TeamMember>,
   projects: TB_PROJECTS as ProjectEntry[],
   mod: CL_MOD,
@@ -219,6 +243,9 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
 
   const create = (another: boolean) => {
     if (!f.title.trim()) return;
+    // MOCK ACTION (flagged): optimistic in-session add only. Does NOT call the
+    // real POST /api/task-management/tasks (taskManagement.routes.ts -> inserts
+    // unifiedTasks with server-side getOptimalAssignee). Wire in the actions pass.
     const t = C2C.addTask({
       title: f.title.trim(), project: f.project, moduleType: f.moduleType,
       taskType: f.taskType, priority: f.priority, assignee: who,
@@ -312,7 +339,7 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
         <textarea rows={2} value={f.note} onChange={e => set('note', e.target.value)} placeholder="Add context for the assignee..." />
       </div>
       <div className="cl-warn">
-        <span className="ico">{I.alertTriangle}</span>Writes <code>unifiedTasks</code> via <code>POST /api/task-management/tasks</code>. Audit (<code>task-audit.ts</code>) and notifications are stubbed in the backend.
+        <span className="ico">{I.alertTriangle}</span>Adds this to the in-session task board only. Persisting to <code>unifiedTasks</code> via <code>POST /api/task-management/tasks</code> is not yet wired here; audit (<code>task-audit.ts</code>) and notifications are stubbed in the backend.
       </div>
       <div className="cl-foot">
         <div className="cl-endpoint"><b>POST</b> /api/task-management/tasks</div>
@@ -332,6 +359,8 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
 
   const send = () => {
     if (!body.trim()) return;
+    // MOCK ACTION (flagged): does NOT call POST /api/collaboration/messages; at
+    // most it captures an optimistic in-session task below. Wire in actions pass.
     if (makeTask) {
       C2C.addTask({
         title: body.trim().slice(0, 90), project: surfaceCtx.project,
@@ -374,7 +403,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         <span><b>Also create a task</b> and assign it to {(C2C.team[to] || { n: 'them' }).n}</span>
       </button>
       <div className="cl-warn">
-        <span className="ico">{I.alertTriangle}</span>Posts to the collaboration thread + <code>/tasks/:id/notify</code>. WebSocket delivery is stubbed (<code>io.to('tasks').emit</code> commented out) -- message persists, live ping does not fire yet.
+        <span className="ico">{I.alertTriangle}</span>Posting to the collaboration thread (<code>POST /api/collaboration/messages</code>) + <code>/tasks/:id/notify</code> is not yet wired here -- the message is not persisted, and WebSocket delivery is stubbed (<code>io.to('tasks').emit</code> commented out).
       </div>
       <div className="cl-foot">
         <span className="cl-endpoint"><b>POST</b> /api/collaboration/messages</span>
@@ -393,6 +422,15 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
   const [tab, setTab] = useState('task');
   const [toast, setToast] = useState<ToastState | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Org-wide open-task count for the launcher menu -- REAL persisted data from
+  // the unifiedTasks board (GET /api/task-management/board), never the retired
+  // fixture store. Fetched only while the menu is open (fresh each open). Honest
+  // states: a real count on success (0 included), and a neutral label (no
+  // fabricated number) while loading or on a failed load. Read in render only,
+  // so there is no re-seed loop from the hook's fresh-[] identity.
+  const board = useLiveRows<{ status: string }>(menuOpen ? '/api/task-management/board' : null);
+  const openAcrossOrg = board.rows.filter(t => t.status !== 'completed').length;
 
   useEffect(() => C2C.subscribe(() => setTick(x => x + 1)), []);
 
@@ -441,7 +479,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
             </button>
             <button className="cl-fab-mi" onClick={() => { onNav?.('tasks'); setMenuOpen(false); }}>
               <span className="ico">{I.layoutPanels || I.grid}</span>
-              <span><b>Open task board</b><em>{C2C.list().filter(t => t.status !== 'completed').length} open across the org</em></span>
+              <span><b>Open task board</b><em>{board.loading || board.error ? 'View the org-wide board' : `${openAcrossOrg} open across the org`}</em></span>
             </button>
           </div>
         )}
@@ -477,13 +515,15 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
         </div>
       )}
 
-      {/* toast -- confirms the task landed in the shared store / board */}
+      {/* toast -- confirms the draft task was captured in the in-session store,
+          NOT persisted to the org board (which reads the real endpoint). Copy
+          avoids claiming a board-persistence event that did not occur. */}
       {toast && (
         <div className="cl-toast" role="status">
           <span className="cl-toast-ic">{I.check}</span>
           {toast.type === 'task' && toast.t
-            ? <span className="cl-toast-t">Task created -- <b>{toast.t.taskId}</b> assigned to {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}</span>
-            : <span className="cl-toast-t">Message sent</span>}
+            ? <span className="cl-toast-t">Captured in this session -- <b>{toast.t.taskId}</b> for {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}. Not saved to the org board yet.</span>
+            : <span className="cl-toast-t">Captured in this session -- not saved to the org board yet.</span>}
           <button className="cl-toast-go" onClick={() => { onNav?.('tasks'); setToast(null); }}>Open board {I.arrowRight}</button>
         </div>
       )}

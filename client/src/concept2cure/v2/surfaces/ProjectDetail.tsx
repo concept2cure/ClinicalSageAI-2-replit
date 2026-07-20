@@ -174,7 +174,7 @@ export function DocAuthoring({ onAsk }: SurfaceViewProps) {
       <aside className="ed-tree">
         <div className="ed-tree-h">
           <div className="ed-tree-t">Document tree</div>
-          <div className="ed-tree-m">{prog.readiness}% ready · {prog.due.replace('FDA filing · ', '')}</div>
+          <div className="ed-tree-m">{prog.readiness != null ? prog.readiness + '% ready' : 'Readiness pending'}{prog.due ? ' · ' + prog.due.replace('FDA filing · ', '') : ''}</div>
         </div>
         <div className="ed-tree-scroll">
           {DOC_TREE.map((v) => (

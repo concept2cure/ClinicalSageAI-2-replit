@@ -105,7 +105,18 @@ async function tick(): Promise<void> {
  */
 export function startScheduleOfEventsSweep(): boolean {
   if (timer || startupTimer) return false;
-  if (isDisabled()) return false;
+  if (isDisabled()) {
+    // Boot-posture line: state the decision and the env var that controls it.
+    logger.info('disabled', {
+      enabled: false,
+      controlledBy: 'SCHEDULE_OF_EVENTS_SWEEP_DISABLED',
+      reason:
+        process.env.NODE_ENV === 'test'
+          ? 'test environment'
+          : 'SCHEDULE_OF_EVENTS_SWEEP_DISABLED is set',
+    });
+    return false;
+  }
   const intervalMs = readIntervalMs();
 
   startupTimer = setTimeout(() => {
@@ -116,7 +127,12 @@ export function startScheduleOfEventsSweep(): boolean {
   }, Math.min(STARTUP_DELAY_MS, intervalMs));
   if (typeof startupTimer.unref === 'function') startupTimer.unref();
 
-  logger.info('scheduled', { intervalMs, firstRunMs: Math.min(STARTUP_DELAY_MS, intervalMs) });
+  logger.info('scheduled', {
+    enabled: true,
+    controlledBy: 'SCHEDULE_OF_EVENTS_SWEEP_DISABLED',
+    intervalMs,
+    firstRunMs: Math.min(STARTUP_DELAY_MS, intervalMs),
+  });
   return true;
 }
 

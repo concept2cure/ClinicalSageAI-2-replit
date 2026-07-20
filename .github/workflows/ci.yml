@@ -91,8 +91,57 @@ jobs:
       - name: Guardrails — route ownership matrix artifact (required review evidence)
         run: npm run ci:route-ownership-matrix:check
 
+      - name: Guardrails — AI gateway bypass (no direct LLM clients)
+        run: npm run ci:gateway-bypass
+
+      - name: Guardrails — jwt.verify pins algorithms (no alg-confusion)
+        run: npm run ci:jwt-verify-pinned
+
+      - name: Guardrails — legacy dependency quarantine (supabase-js, aws-sdk v2)
+        run: npm run ci:check-legacy-dep-quarantine
+
+      - name: Guardrails — no mock data in prod routes (no regressions)
+        run: npm run ci:no-mock-in-prod-routes
+
+      - name: Guardrails — js/ts shadow guard (no new same-basename .js/.ts pairs)
+        run: npm run ci:js-ts-shadows
+
+      - name: Guardrails — DOCX runtime canonicality (approved runtimes only)
+        run: npm run ci:check-docx-runtime
+
+      - name: Guardrails — PDF runtime canonicality (approved entry points only)
+        run: npm run ci:check-pdf-runtime
+
+      - name: Guardrails — embedding runtime canonicality (corpus policy)
+        run: npm run ci:check-embedding-runtime
+
+      - name: Guardrails — editor extension integrity (@tiptap imports declared)
+        run: npm run ci:check-editor-integrity
+
+      - name: Guardrails — Reasoning Tier readiness suite (governed exports + GA evidence)
+        # Aggregate of ci:governed-export-routes, ci:governed-export-consequence-shape,
+        # ci:reasoning-tier-ga-readiness and ci:reasoning-tier-uat-evidence — the gate
+        # named as a GA criterion in docs/release/REASONING_TIER_GA_GATES.md.
+        run: npm run ci:reasoning-tier-readiness
+
+      - name: Guardrails — design-token cascade (ADVISORY)
+        # Advisory-only: 12 pre-existing unresolved var() references live in
+        # client/src/concept2cure/{biopharma,pdev}/app.css and
+        # client/src/styles/projects-prototype.css (module-scoped --rail-*/--pdev-*
+        # layout vars plus --border-100/--border-200/--error-text aliases). The fix
+        # belongs in those stylesheets / the index.css shim. Flip to blocking once
+        # `npm run ci:token-cascade` is clean.
+        continue-on-error: true
+        run: npm run ci:token-cascade
+
       - name: Audit — repo health scan (no regressions)
         run: npm run audit:repo-health:no-regression
+
+      - name: Audit — orphaned endpoints (threshold 900)
+        # Regenerates docs/reports/orphan-endpoints-latest.{json,md} and fails
+        # if the orphan count exceeds 900 (current: ~713). Ratchet the
+        # threshold down in package.json as the backlog is triaged.
+        run: npm run audit:orphaned-endpoints:strict
 
       - name: Upload governance audit artifacts
         uses: actions/upload-artifact@v4
@@ -102,20 +151,21 @@ jobs:
             docs/reports/repo-health-scan-latest.json
             docs/reports/route-mount-audit-latest.json
             docs/reports/route-ownership-matrix-latest.md
+            docs/reports/orphan-endpoints-latest.json
+            docs/reports/orphan-endpoints-latest.md
           retention-days: 14
 
       - name: Run ESLint
         run: npm run lint
 
       - name: Run TypeScript check (no regression vs baseline)
-        # Strict `npm run typecheck` would fail on the ~2,598 pre-existing
-        # type errors that became visible when the parse error in
-        # server/routes/auth.ts:842 was fixed (tsc had been bailing on
-        # that parse error and never typechecking transitive imports).
-        # The no-regression gate pins the baseline and fails only on net
-        # new errors. Same pattern as ci:migration-prefix-collisions.
-        # Run `npm run ci:typecheck:write-baseline` after a PR reduces
-        # the count to ratchet it down.
+        # The .typecheck-baseline.json count has been ratcheted down to 0
+        # (from ~2,598 when the server/routes/auth.ts parse error was fixed
+        # and the pre-existing debt became visible), so this gate now fails
+        # on ANY type error. It stays on the no-regression harness (same
+        # pattern as ci:migration-prefix-collisions) so the baseline history
+        # is preserved and any future intentional baseline change remains an
+        # explicit, reviewed edit.
         run: npm run ci:typecheck:no-regression
 
       - name: Run beta-slice TypeScript check

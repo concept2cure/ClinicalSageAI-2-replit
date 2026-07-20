@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLiveList } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -60,19 +60,23 @@ interface TemplateSpec {
 interface TemplateRecord {
   id: string;
   name: string;
-  description: string;
-  sourceFileName: string;
-  sourceFileType: string;
+  // Nullable columns on c2c_template_specs — the store returns null (not a
+  // fabricated value) when a template is hand-built or predates a field; the
+  // render below is null-safe. Types mirror server templateStore.TemplateRecord.
+  description: string | null;
+  sourceFileName: string | null;
+  sourceFileType: 'docx' | 'pdf' | null;
   verified: boolean;
-  extractionConfidence: number;
+  extractionConfidence: number | null;
   extractionWarnings: string[];
   docTypes: string[];
   updatedAt: string;
   spec: TemplateSpec;
+  // client-only optimistic flag for a just-saved extraction (not a column)
   _new?: boolean;
 }
 
-/* ── Fixture data — real TemplateSpec shape ── */
+/* ── Default spec — merge base for the in-browser extraction preview ── */
 
 const DEFAULT_SPEC: TemplateSpec = {
   specVersion: 1,
@@ -86,22 +90,9 @@ const DEFAULT_SPEC: TemplateSpec = {
   formFields: [], namedStyles: [],
 };
 
-const TL_FIXTURE: TemplateRecord[] = [
-  { id: 'tpl-house-ctd', name: 'Concept2Cure House Style — CTD', description: 'Corporate CTD/eCTD body template', sourceFileName: 'C2C_CTD_house_style.docx', sourceFileType: 'docx', verified: true, extractionConfidence: 0.95, extractionWarnings: [], docTypes: ['CTD', 'eCTD', 'NDA', 'BLA'], updatedAt: '2026-04-30',
-    spec: { specVersion: 1, page: { size: 'letter', orientation: 'portrait', marginsInches: { top: 1, bottom: 1, left: 1.25, right: 1 } }, typography: { bodyFont: 'Times New Roman', headingFont: 'Arial', monoFont: 'Consolas', bodySizePt: 12, heading1SizePt: 16, heading2SizePt: 14, heading3SizePt: 12, lineSpacing: 1.15, paragraphSpaceAfterPt: 6 }, colors: { text: '1A1A1A', muted: '666666', accent: '2A6FDB', tableHeaderBg: 'E8EDF3', tableBorder: 'BBBBBB' }, brand: { organizationName: 'Concept2Cure', confidentialityNotice: 'CONFIDENTIAL — For Regulatory Use Only', logo: { present: true, placement: 'header' } }, header: { text: 'Concept2Cure - {docType} - Confidential', showLogo: true, alignment: 'left' }, footer: { text: '{program}', showPageNumbers: true, pageNumberFormat: 'Page {PAGE} of {PAGES}' }, table: { headerBold: true, borderSizePt: 0.5 }, formFields: [], namedStyles: [{ styleId: 'Normal', name: 'Normal', font: 'Times New Roman', sizePt: 12 }, { styleId: 'Heading1', name: 'Heading 1', font: 'Arial', sizePt: 16, bold: true, color: '2A6FDB' }, { styleId: 'Heading2', name: 'Heading 2', font: 'Arial', sizePt: 14, bold: true }, { styleId: 'Caption', name: 'Caption', font: 'Arial', sizePt: 9, italic: true, color: '666666' }] } },
-  { id: 'tpl-estar-cover', name: 'FDA eSTAR Cover Letter', description: '510(k) cover letter, CDRH format', sourceFileName: 'eSTAR_cover_letter.docx', sourceFileType: 'docx', verified: true, extractionConfidence: 0.9, extractionWarnings: [], docTypes: ['510(k)', 'eSTAR'], updatedAt: '2026-04-22',
-    spec: { specVersion: 1, page: { size: 'letter', orientation: 'portrait', marginsInches: { top: 1, bottom: 1, left: 1.25, right: 1.25 } }, typography: { bodyFont: 'Calibri', headingFont: 'Calibri', monoFont: 'Consolas', bodySizePt: 11, heading1SizePt: 13, heading2SizePt: 12, heading3SizePt: 11, lineSpacing: 1.08, paragraphSpaceAfterPt: 8 }, colors: { text: '1A1A1A', muted: '5A5A5A', accent: '1F8A5B', tableHeaderBg: 'EAF3EE', tableBorder: 'CCCCCC' }, brand: { organizationName: '{sponsor}', confidentialityNotice: '', logo: { present: true, placement: 'header' } }, header: { text: '{sponsor}', showLogo: true, alignment: 'center' }, footer: { text: '{kNumber}', showPageNumbers: true, pageNumberFormat: '{PAGE}' }, table: { headerBold: true, borderSizePt: 0.5 }, formFields: [{ key: 'sponsor', label: 'Sponsor / applicant', type: 'text', required: true }, { key: 'kNumber', label: '510(k) number', type: 'text', required: false }, { key: 'contactDate', label: 'Date', type: 'date', required: true }, { key: 'deviceName', label: 'Device name', type: 'text', required: true }, { key: 'signature', label: 'Authorized signatory', type: 'signature', required: true }], namedStyles: [{ styleId: 'Normal', name: 'Normal', font: 'Calibri', sizePt: 11 }, { styleId: 'Title', name: 'Title', font: 'Calibri', sizePt: 18, bold: true }] } },
-  { id: 'tpl-csr-e3', name: 'CSR — ICH E3 House Format', description: 'Clinical study report, ICH E3 structure', sourceFileName: 'CSR_E3_house.docx', sourceFileType: 'docx', verified: true, extractionConfidence: 0.93, extractionWarnings: [], docTypes: ['CSR'], updatedAt: '2026-03-18',
-    spec: { specVersion: 1, page: { size: 'a4', orientation: 'portrait', marginsInches: { top: 0.98, bottom: 0.98, left: 1.18, right: 0.79 } }, typography: { bodyFont: 'Times New Roman', headingFont: 'Arial', monoFont: 'Courier New', bodySizePt: 11, heading1SizePt: 14, heading2SizePt: 13, heading3SizePt: 11, lineSpacing: 1.2, paragraphSpaceAfterPt: 6 }, colors: { text: '000000', muted: '555555', accent: '8250C4', tableHeaderBg: 'EFEAF6', tableBorder: 'AAAAAA' }, brand: { organizationName: '{study}', confidentialityNotice: 'Confidential', logo: { present: true, placement: 'header' } }, header: { text: '{study} - Clinical Study Report', showLogo: true, alignment: 'left' }, footer: { text: 'Confidential', showPageNumbers: true, pageNumberFormat: 'Page {PAGE}' }, table: { headerBold: true, borderSizePt: 0.5 }, formFields: [], namedStyles: [{ styleId: 'Normal', name: 'Normal', font: 'Times New Roman', sizePt: 11 }, { styleId: 'Heading1', name: 'Heading 1', font: 'Arial', sizePt: 14, bold: true }, { styleId: 'TOC1', name: 'TOC 1', font: 'Arial', sizePt: 11 }] } },
-  { id: 'tpl-chmp-resp', name: 'EMA CHMP Response Template', description: 'Day-120 / Day-180 LoQ response', sourceFileName: 'CHMP_response.docx', sourceFileType: 'docx', verified: false, extractionConfidence: 0.72, extractionWarnings: ['Heading font not found; using Arial.', 'No embedded logo image found.'], docTypes: ['MAA', 'CHMP'], updatedAt: '2026-05-02',
-    spec: { specVersion: 1, page: { size: 'a4', orientation: 'portrait', marginsInches: { top: 0.79, bottom: 0.79, left: 0.98, right: 0.98 } }, typography: { bodyFont: 'Verdana', headingFont: 'Arial', monoFont: 'Consolas', bodySizePt: 10, heading1SizePt: 12, heading2SizePt: 11, heading3SizePt: 10, lineSpacing: 1.15, paragraphSpaceAfterPt: 6 }, colors: { text: '1A1A1A', muted: '666666', accent: 'D97757', tableHeaderBg: 'E2E8F0', tableBorder: 'BBBBBB' }, brand: { organizationName: '', confidentialityNotice: 'CONFIDENTIAL — For Regulatory Use Only', logo: { present: false, placement: 'header' } }, header: { text: 'Response to CHMP List of Questions', showLogo: false, alignment: 'right' }, footer: { text: '{procedure}', showPageNumbers: true, pageNumberFormat: 'Page {PAGE} of {PAGES}' }, table: { headerBold: true, borderSizePt: 0.5 }, formFields: [{ key: 'procedure', label: 'Procedure number', type: 'text', required: true }, { key: 'question', label: 'Question reference', type: 'text', required: false }], namedStyles: [{ styleId: 'Normal', name: 'Normal', font: 'Verdana', sizePt: 10 }] } },
-  { id: 'tpl-ib-legacy', name: 'Investigator Brochure — Legacy (PDF)', description: 'Imported from a scanned PDF', sourceFileName: 'IB_v6_signed.pdf', sourceFileType: 'pdf', verified: false, extractionConfidence: 0.28, extractionWarnings: ['PDF carries no style sheet — fonts, margins, header and footer cannot be recovered reliably. Page size was detected; everything else uses defaults. Upload the Word (.docx) source for full fidelity.'], docTypes: ['IB'], updatedAt: '2026-05-01',
-    spec: { ...DEFAULT_SPEC, brand: { ...DEFAULT_SPEC.brand, organizationName: '' }, header: { text: '', showLogo: false, alignment: 'right' }, footer: { text: '', showPageNumbers: true, pageNumberFormat: 'Page {PAGE} of {PAGES}' } } },
-];
-
 /* ── Helpers ── */
 
-function _tlConf(c: number): number { return Math.round((c || 0) * 100); }
+function _tlConf(c: number | null): number { return Math.round((c || 0) * 100); }
 const _tlHex = (h: string) => '#' + String(h || '000000').replace(/^#/, '');
 const PAGE_IN: Record<string, { w: number; h: number }> = {
   letter: { w: 8.5, h: 11 }, a4: { w: 8.27, h: 11.69 }, legal: { w: 8.5, h: 14 },
@@ -240,20 +231,26 @@ function SpecTab({ spec }: { spec: TemplateSpec }) {
 /* ── Template library surface ── */
 
 export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
-  // live ?? fixture: adopt the org's real templates once the backend responds
-  // (fail-closed to the fixture until then; templates saved before that are
-  // optimistic, mirroring the Risk surface).
-  const live = useLiveList<TemplateRecord>('/api/c2c/templates', TL_FIXTURE);
-  const [rows, setRows] = useState<TemplateRecord[]>(live.data);
-  const [selId, setSel] = useState(live.data[0].id);
-  const seededRef = useRef<TemplateRecord[]>(live.data);
+  // Real-data standard: the org's persisted templates, an honest empty state,
+  // or an honest failed-load state — never a fixture. useLiveRows unwraps the
+  // canonical { data } envelope from GET /api/c2c/templates.
+  const live = useLiveRows<TemplateRecord>('/api/c2c/templates');
+  // Local working copy so a just-saved extraction / verify toggle shows at once;
+  // seeded from the live rows once they load. The functional updaters bail out
+  // (return the same reference) when nothing changed, since useLiveRows hands
+  // back a fresh [] on every not-yet-loaded render.
+  const [rows, setRows] = useState<TemplateRecord[]>([]);
+  const [selId, setSel] = useState('');
   useEffect(() => {
-    if (live.data !== seededRef.current) {
-      seededRef.current = live.data;
-      setRows(live.data);
-      if (live.data[0]) setSel(live.data[0].id);
-    }
-  }, [live.data]);
+    if (live.loading) return;
+    setRows((prev) =>
+      prev.length === live.rows.length && prev.every((r, i) => r.id === live.rows[i].id)
+        ? prev
+        : live.rows,
+    );
+    if (live.rows[0]) setSel((cur) => cur || live.rows[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [live.loading, live.rows]);
   const [tab, setTab] = useState('preview');
   const [uploading, setUploading] = useState(false);
   const [extract, setExtract] = useState<{ name: string; confidence: number; warnings: string[]; spec: TemplateSpec } | null>(null);
@@ -304,7 +301,6 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="sp" style={{ maxWidth: 1180 }}>
-      <SampleTag sample={live.sample} />
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Authoring {I.dot} /api/c2c/templates</div>
@@ -359,6 +355,34 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
         </div>
       )}
 
+      {live.loading && rows.length === 0 ? (
+        <div className="pj-card">
+          <div className="pj-card-b" style={{ padding: 8 }}>
+            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading templates…</div>
+          </div>
+        </div>
+      ) : live.error && rows.length === 0 ? (
+        <div className="pj-card">
+          <div className="pj-card-b" style={{ padding: 8 }}>
+            <EmptyState
+              tone="error"
+              icon={I.alertTriangle}
+              title="Couldn't load templates"
+              hint="The template store didn't respond. These are the client formatting templates AnA extracts from your uploaded forms — sign in and retry, or check that the templates service is reachable."
+            />
+          </div>
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="pj-card">
+          <div className="pj-card-b" style={{ padding: 8 }}>
+            <EmptyState
+              icon={I.template || I.fileText}
+              title="No templates yet"
+              hint="Upload a form and AnA reads its OOXML to recreate the exact page geometry, typography, brand colours, header/footer and named styles as a reusable, org-scoped template. Saved templates appear here."
+            />
+          </div>
+        </div>
+      ) : (
       <div className="sp-2col" style={{ gridTemplateColumns: '320px 1fr' }}>
         <div className="pj-card">
           <div className="pj-card-h"><span className="t">Templates</span><span className="s">{rows.length}</span></div>
@@ -369,7 +393,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
                   style={{ width: '100%', textAlign: 'left', borderRadius: 8, padding: '9px 10px', border: selId === t.id ? '1px solid var(--accent-muted)' : '1px solid transparent', background: selId === t.id ? 'var(--accent-000)' : 'transparent' }}
                   onClick={() => { setSel(t.id); setTab('preview'); }}>
                   <span className="sp-q-ic">{t.sourceFileType === 'pdf' ? I.fileText : (I.template || I.fileText)}</span>
-                  <span className="sp-row-b"><span className="sp-row-t">{t.name}</span><span className="sp-row-s">{t.sourceFileName} - {_tlConf(t.extractionConfidence)}%</span></span>
+                  <span className="sp-row-b"><span className="sp-row-t">{t.name}</span><span className="sp-row-s">{t.sourceFileName || '—'} - {_tlConf(t.extractionConfidence)}%</span></span>
                   {t.verified ? <span className="rd-chip tone-ok">verified</span> : <span className="rd-chip tone-warn">review</span>}
                 </button>
               ))}
@@ -378,7 +402,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
         </div>
 
         <div className="pj-card">
-          <div className="pj-card-h"><span className="t">{sel.name}</span><span className="s">{sel.sourceFileType.toUpperCase()} - {sel.docTypes.join(' - ')}</span></div>
+          <div className="pj-card-h"><span className="t">{sel.name}</span><span className="s">{(sel.sourceFileType || 'template').toUpperCase()} - {sel.docTypes.join(' - ')}</span></div>
           <div className="pj-card-b">
             <div className="reg-tabs" style={{ marginTop: 0 }}>
               {TABS.map(([id, lb]) => (
@@ -423,7 +447,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
               <div>
                 <div className="tl-conf" style={{ marginTop: 4 }}>
                   <div className="tl-conf-bar">
-                    <span style={{ width: _tlConf(sel.extractionConfidence) + '%', background: sel.extractionConfidence >= 0.9 ? 'var(--success)' : sel.extractionConfidence >= 0.6 ? 'var(--accent-100)' : 'var(--warning)' }} />
+                    <span style={{ width: _tlConf(sel.extractionConfidence) + '%', background: (sel.extractionConfidence || 0) >= 0.9 ? 'var(--success)' : (sel.extractionConfidence || 0) >= 0.6 ? 'var(--accent-100)' : 'var(--warning)' }} />
                   </div>
                   <span className="tl-conf-l">Extraction confidence {_tlConf(sel.extractionConfidence)}%</span>
                 </div>
@@ -479,6 +503,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
