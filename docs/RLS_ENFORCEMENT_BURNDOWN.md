@@ -116,10 +116,20 @@ tenant.
 
 ## Recommended sequence
 
-1. **Decide (A) mass-adopt vs (B) auto primitive.** (B) avoids the call-site
-   migration and is highest-leverage *if* it can be made safe against pool reuse,
-   transaction semantics, and the auto-set trigger. Prototype (B) with tests; fall
-   back to (A) if the pooling semantics prove too risky.
+1. ✅ **DONE — the (B) auto primitive is built, dormant.** `instrumentPool`
+   (`server/db/poolInstrumentation.ts`) now applies the active scope's tenant vars
+   via a `set_config(..., true)` **LOCAL** micro-transaction, gated on
+   `RLS_ENFORCE==='on' && getTenantScope()`. LOCAL settings vanish at
+   COMMIT/ROLLBACK, so reset-on-release is a Postgres guarantee — cross-tenant
+   reuse is structurally impossible. Fully inert while `RLS_ENFORCE=off` (verified:
+   `server/db/__tests__/poolInstrumentation-tenant-scope.test.ts`). Ground truth
+   from the design pass: the live policy is `migrations/0021_enable_rls_everywhere.sql`
+   (has the `rls_enforce` escape clause); `server/db/tenantRls.ts` is dead legacy;
+   the RAISE-on-missing-tenant insert trigger is installed on only ~5
+   `concept2cure_*` tables. **Still needs a live-Postgres integration test** (no-leak
+   reuse + zero-row cross-tenant) before the flip — RLS row-filtering isn't
+   exercised by the mock-pool unit tests. Keep (A) `requestDb` adoption as the
+   escape hatch for hot read paths if per-statement transaction overhead bites.
 2. **Promote `requireTenantContext` to the global `/api` chain** (after the merged
    auth/default-deny gate), with a public/health/webhook allowlist. This sets up
    `req.dbClient` + AsyncLocalStorage scope for all routes — the prerequisite for
