@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState, unwrapList } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
@@ -98,6 +99,20 @@ interface LabelSymbolRow {
    thrashing (loop-safety). */
 const EMPTY_TRANS: LabelTranslation[] = [];
 
+/* The mdx-labeling POST/PATCH wrap the single updated row as { data: row }
+   (ok/created helpers). Unwrap it back to the raw row so the shared list-mapper
+   (mapLabelTranslations, which expects a list) can adopt it as one element. */
+function envRow(json: unknown): unknown {
+  return json && typeof json === 'object' && 'data' in json ? (json as { data: unknown }).data : json;
+}
+
+/* Best-effort human message from a JSON error body, falling back to the status. */
+function errText(json: unknown, status: number): string {
+  const j = json as { error?: unknown; message?: unknown } | null;
+  const m = j && (typeof j.error === 'string' ? j.error : typeof j.message === 'string' ? j.message : '');
+  return m || `HTTP ${status}`;
+}
+
 export function Labeling({ onAsk }: SurfaceViewProps) {
   const EN = LABEL_ENUMS;
 
@@ -155,32 +170,63 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
     return { total, approved, btv, pct: total ? Math.round(approved / total * 100) : 0 };
   }, [trans]);
 
-  // MOCK ACTION (flagged for the actions pass): optimistic local add + a
-  // fire-and-forget POST to the real endpoint. The toast reports success before
-  // the write is confirmed and the row is not reconciled from the response.
-  const addTrans = (v: Record<string, string>) => {
-    const id = 'TR-' + (v.language || 'xx').toLowerCase();
-    if (trans.some(t => t.language === v.language)) { fire('A translation for ' + v.language + ' already exists'); setTForm(false); return; }
-    const nt: LabelTranslation = { id, language: v.language, name: v.name || v.language, method: v.method || 'mt_postedited', btv: false, status: 'pending', _new: true };
-    setTrans(ts => [...ts, nt]); setTForm(false);
-    const api = (window as any).C2C_API;
-    if (api && api.connected() && docId) { api.post('/api/mdx/labeling/' + docId + '/translations', { language: nt.language, translationMethod: nt.method, status: 'pending' }).catch(() => {}); }
-    fire('Translation ' + v.language + ' added / status Pending');
+  // addTrans — REAL, awaited write. POSTs to the labeling backend, then adopts
+  // the SERVER's row (real numeric id, via the shared mapLabelTranslations) so
+  // the board and every later status advance act on the persisted record — no
+  // optimistic row, no fabricated TR-<lang> id. The toast reports success only
+  // after the write is confirmed; a duplicate or other failure is stated and
+  // nothing is added to the view.
+  const addTrans = async (v: Record<string, string>) => {
+    const language = v.language;
+    if (!language) { fire('Pick a target language first'); return; }
+    if (!docId) { fire('No labeling document is loaded — nothing to add a translation to'); return; }
+    if (trans.some(t => t.language === language)) { fire('A translation for ' + language + ' already exists'); setTForm(false); return; }
+    const method = v.method || 'mt_postedited';
+    try {
+      const res = await apiRequest('POST', '/api/mdx/labeling/' + docId + '/translations', { language, translationMethod: method, status: 'pending' });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fire(res.status === 409
+          ? 'A translation for ' + language + ' already exists'
+          : 'Couldn’t add the translation — ' + errText(json, res.status) + '. Nothing was saved.');
+        return;
+      }
+      const adopted = mapLabelTranslations([envRow(json)])?.[0];
+      if (!adopted) { fire('Saved, but the server returned an unexpected shape — reload to see it'); return; }
+      setTrans(ts => [...ts.filter(t => t.id !== adopted.id && t.language !== adopted.language), { ...adopted, _new: true }]);
+      setTForm(false);
+      fire('Translation ' + language + ' saved · status Pending');
+    } catch (e) {
+      fire('Couldn’t add the translation — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was saved.');
+    }
   };
-  // MOCK ACTION (flagged): optimistic local status advance + fire-and-forget
-  // PATCH to the real endpoint. Does NOT fabricate back-translation
-  // verification — btv stays at its persisted value (the backend does not set
-  // it on a status change, so the "back-trans verified" chip must not appear
-  // from a client-side advance).
-  const advTrans = (id: string) => setTrans(ts => ts.map(t => {
-    if (t.id !== id) return t;
+  // advTrans — REAL, awaited status advance. PATCHes the labeling backend, then
+  // adopts the SERVER's updated row (persisted status). btv stays at whatever the
+  // backend records — the client never sets back-translation verification, so the
+  // "back-trans verified" chip can't appear from a client advance. On failure the
+  // row is left untouched and the toast states nothing was persisted. (Rows carry
+  // the real numeric id now, so the former TR-<lang> id.replace hack is gone.)
+  const advTrans = async (id: string) => {
+    const cur = trans.find(t => t.id === id);
+    if (!cur) return;
     const order = ['pending', 'in_progress', 'review', 'approved'];
-    const i = order.indexOf(t.status);
-    const nxt = i >= 0 && i < order.length - 1 ? order[i + 1] : t.status;
-    const api = (window as any).C2C_API;
-    if (api && api.connected()) { api.patch('/api/mdx/labeling/translations/' + id.replace('TR-', ''), { status: nxt }).catch(() => {}); }
-    return { ...t, status: nxt };
-  }));
+    const i = order.indexOf(cur.status);
+    if (i < 0 || i >= order.length - 1) return;
+    const nxt = order[i + 1];
+    try {
+      const res = await apiRequest('PATCH', '/api/mdx/labeling/translations/' + encodeURIComponent(id), { status: nxt });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fire('Couldn’t advance the status — ' + errText(json, res.status) + '. Nothing was persisted.');
+        return;
+      }
+      const adopted = mapLabelTranslations([envRow(json)])?.[0];
+      setTrans(ts => ts.map(t => (t.id === id ? (adopted ?? { ...t, status: nxt }) : t)));
+      fire('Status advanced to ' + nxt.replace('_', ' '));
+    } catch (e) {
+      fire('Couldn’t advance the status — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was persisted.');
+    }
+  };
 
   const tTone: Record<string, string> = { approved: 'ok', review: 'warn', in_progress: 'ai', pending: 'idle', rejected: 'err' };
 
