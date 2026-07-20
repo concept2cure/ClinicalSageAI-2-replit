@@ -2,19 +2,18 @@
 /**
  * UsageBilling ↔ /api/billing wiring (usage/limits + invoices + credits).
  *
- * Locks the honest live adoption added to surfaces/UsageBilling.tsx:
- *  - GET /usage/limits adopted → plan label, session window %, weekly buckets
- *    (label→metric, pctUsed, resetsAt→reset) render live with Live pills;
- *    an idle session (resetsAt null) is stated, never a fabricated countdown
- *  - GET /invoices adopted → date/amount(→total)/status mapped to the display
- *    shape, hostedUrl drives a real View link; an empty or malformed list
- *    fails closed to the fixture
- *  - GET /credits adopted → balanceCents→balance, auto-reload settings
- *    (enabled/thresholdCents/topupCents) rendered truthfully
- *  - the per-category "Usage credits" pools have no backend concept (the
- *    credit ledger is one flat balance) → that panel stays Sample even when
- *    everything else is live
- *  - offline → fixtures + Sample-data pills everywhere (fail-closed)
+ * Locks the FIXTURE-FREE contract of surfaces/UsageBilling.tsx — every panel
+ * renders real persisted data, an honest empty state, or an honest error
+ * state, and never a fabricated fixture or a legacy "Live"/"Sample data" pill:
+ *  - GET /usage/limits → plan label, session window %, weekly buckets render
+ *    live; an idle session (resetsAt null) is stated, never a fabricated
+ *    countdown; a malformed/partial snapshot shows an honest empty state
+ *  - GET /invoices → date/amount(→total)/status mapped to the display shape,
+ *    hostedUrl drives a real View link; an empty list shows an honest empty
+ *  - GET /credits → balanceCents→balance + auto-reload settings, truthfully
+ *  - the per-category "Usage credits" pools have no backend (the credit ledger
+ *    is one flat balance) → that card shows an honest empty, never a fixture
+ *  - a failed fetch → each panel shows its honest error state (fail-closed)
  */
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -120,12 +119,11 @@ describe('UsageBilling — live plan usage (/api/billing/usage/limits)', () => {
     // weekly: label→metric, pctUsed — live bucket names, not the fixture's
     expect(screen.getByText('Premium models (Opus)')).toBeTruthy();
     expect(screen.getByText('37% used')).toBeTruthy();
-    expect(screen.queryByText('AnA Builder')).toBeNull(); // fixture bucket gone
-    // session + weekly cards live; per-category credit pools have no backend
-    // (flat credit_ledger balance) → that card stays honestly Sample
-    expect(screen.getAllByText('Live')).toHaveLength(2);
-    expect(screen.getAllByText('Sample data')).toHaveLength(1);
-    expect(screen.getByText('Deep-research credits')).toBeTruthy();
+    expect(screen.queryByText('AnA Builder')).toBeNull(); // no fixture bucket
+    // Fixture-free contract: real values render directly, with no legacy
+    // "Live"/"Sample data" provenance pills anywhere on the surface.
+    expect(screen.queryByText('Live')).toBeNull();
+    expect(screen.queryByText('Sample data')).toBeNull();
   });
 
   it('states an idle session honestly instead of fabricating a countdown', async () => {
@@ -140,12 +138,16 @@ describe('UsageBilling — live plan usage (/api/billing/usage/limits)', () => {
     expect(screen.queryByText(/Resets in 2 hr/)).toBeNull();
   });
 
-  it('fails closed to the fixture on a malformed snapshot', async () => {
+  it('renders honest empty states on a malformed snapshot (never a fixture)', async () => {
     mockLive({ '/api/billing/usage/limits': { plan: 'enterprise', weekly: 'nope' } });
     mount('usage');
-    expect(await screen.findByText('AnA Builder')).toBeTruthy(); // fixture bucket
-    expect(screen.getByText('professional plan')).toBeTruthy(); // fixture tier
-    expect(screen.getAllByText('Sample data')).toHaveLength(3); // no Live claims
+    // No session + a non-array weekly → each panel guards its own slice and
+    // shows its honest empty state instead of crashing or faking a fixture.
+    expect(await screen.findByText('No plan usage yet')).toBeTruthy();
+    expect(screen.getByText('No weekly usage yet')).toBeTruthy();
+    expect(screen.queryByText('AnA Builder')).toBeNull(); // no fixture bucket
+    expect(screen.queryByText('professional plan')).toBeNull(); // no fixture tier
+    expect(screen.queryByText('Sample data')).toBeNull();
     expect(screen.queryByText('Live')).toBeNull();
   });
 });
@@ -167,9 +169,10 @@ describe('UsageBilling — live billing (/api/billing/invoices + /credits)', () 
     const views = screen.getAllByText('View');
     expect(views).toHaveLength(1);
     expect(views[0].getAttribute('href')).toBe('https://stripe.example/inv_1');
-    // all three billing panels live, nothing presented as sample
-    expect(screen.getAllByText('Live')).toHaveLength(3);
-    expect(screen.queryAllByText('Sample data')).toHaveLength(0);
+    // Fixture-free: the real balance / auto-reload / invoice values render
+    // directly — no legacy "Live"/"Sample data" provenance pills.
+    expect(screen.queryByText('Live')).toBeNull();
+    expect(screen.queryByText('Sample data')).toBeNull();
   });
 
   it('renders a disabled auto-reload truthfully as Off', async () => {
@@ -185,27 +188,29 @@ describe('UsageBilling — live billing (/api/billing/invoices + /credits)', () 
     ).toBeTruthy();
   });
 
-  it('fails closed to the fixture on an empty invoice list (never blank)', async () => {
+  it('renders an honest empty state on an empty invoice list (never a fixture)', async () => {
     mockLive({ '/api/billing/invoices': { invoices: [], hasMore: false, total: 0 } });
     mount('billing');
-    expect(await screen.findByText('$16.70')).toBeTruthy(); // fixture row
-    // Wait for the live credits panel to settle too — invoices (fixture) and
-    // credits (live) resolve on independent promises, so counting the pills
-    // before the live balance appears races under load (only the invoices
-    // fixture would have rendered → 3 Sample pills instead of 1).
+    // Empty invoices → the invoices panel shows its honest empty state; the
+    // live balance still renders on its own promise. No fixture row, no pills.
+    expect(await screen.findByText('No invoices yet')).toBeTruthy();
     expect(await screen.findByText('$12.34')).toBeTruthy(); // live balance
-    // invoices card wears the Sample pill while balance/auto-reload stay live
-    expect(screen.getAllByText('Sample data')).toHaveLength(1);
-    expect(screen.getAllByText('Live')).toHaveLength(2);
+    expect(screen.queryByText('$16.70')).toBeNull(); // no fixture row
+    expect(screen.queryByText('Sample data')).toBeNull();
+    expect(screen.queryByText('Live')).toBeNull();
   });
 });
 
-describe('UsageBilling — offline', () => {
-  it('fails closed to fixtures with Sample-data pills everywhere', async () => {
+describe('UsageBilling — service unreachable', () => {
+  it('renders honest error states when the billing service is unreachable', async () => {
     apiRequest.mockRejectedValue(new Error('network down'));
     mount('billing');
-    expect(await screen.findByText('$20.64')).toBeTruthy(); // fixture balance
-    expect(screen.getAllByText('Sample data')).toHaveLength(3);
+    // Every panel fails to an honest error state — never a fabricated fixture.
+    expect(await screen.findByText("Couldn't load your balance")).toBeTruthy();
+    expect(screen.getByText("Couldn't load auto-reload")).toBeTruthy();
+    expect(screen.getByText("Couldn't load invoices")).toBeTruthy();
+    expect(screen.queryByText('$20.64')).toBeNull(); // no fixture balance
+    expect(screen.queryByText('Sample data')).toBeNull();
     expect(screen.queryByText('Live')).toBeNull();
   });
 });

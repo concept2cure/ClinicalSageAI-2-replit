@@ -41,7 +41,10 @@ interface LiveWeeklyBucket {
 interface LiveUsageSnapshot {
   plan: string;
   planLabel: string;
-  session: { pctUsed: number; resetsAt: string | null; windowHours: number };
+  // Loosely shaped on the wire: a partial/malformed snapshot may omit session
+  // or send a non-array weekly. Each panel guards its own slice and renders an
+  // honest empty state rather than crashing or falling back to a fixture.
+  session?: { pctUsed: number; resetsAt: string | null; windowHours: number };
   weekly: LiveWeeklyBucket[];
   lastUpdated: string | null;
 }
@@ -269,11 +272,13 @@ export function UsageBilling({ onAsk, surface }: SurfaceViewProps) {
                 errorHint="The plan usage windows didn't respond. They're computed from your metered API usage — sign in and retry, or check the service is reachable."
                 emptyTitle="No plan usage yet"
                 emptyHint="Usage appears here once your organization makes its first metered call."
+                isEmpty={(s) => !s.session}
               >
                 {(s) => {
-                  const resetIn = fmtResetIn(s.session.resetsAt);
+                  const sess = s.session!;
+                  const resetIn = fmtResetIn(sess.resetsAt);
                   const resetLine = !resetIn
-                    ? 'No active session — a new ' + s.session.windowHours + '-hour window starts on first use'
+                    ? 'No active session — a new ' + sess.windowHours + '-hour window starts on first use'
                     : 'Resets in ' + resetIn;
                   return (
                     <div className="ub-row">
@@ -281,8 +286,8 @@ export function UsageBilling({ onAsk, surface }: SurfaceViewProps) {
                         <div className="ub-row-t">Current session</div>
                         <div className="ub-row-s">{resetLine}</div>
                       </div>
-                      <UsageBar pct={s.session.pctUsed} />
-                      <span className="ub-pct">{s.session.pctUsed}% used</span>
+                      <UsageBar pct={sess.pctUsed} />
+                      <span className="ub-pct">{sess.pctUsed}% used</span>
                     </div>
                   );
                 }}
@@ -310,7 +315,7 @@ export function UsageBilling({ onAsk, surface }: SurfaceViewProps) {
                 errorTitle="Couldn't load weekly limits"
                 errorHint="The weekly usage windows didn't respond. Sign in and retry, or check the service is reachable."
                 emptyTitle="No weekly usage yet"
-                isEmpty={(s) => s.weekly.length === 0}
+                isEmpty={(s) => !Array.isArray(s.weekly) || s.weekly.length === 0}
               >
                 {(s) => (
                   <>
