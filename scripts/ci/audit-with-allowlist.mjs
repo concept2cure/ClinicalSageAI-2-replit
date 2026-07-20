@@ -84,6 +84,17 @@ const ACCEPTED_GHSA_IDS = new Set([
   // socket.io / socket.io-adapter / socket.io-client "transitive vulnerability via
   // unaccepted dependency" flags — that is this same ws advisory surfaced through
   // their dependency chain.
+  // brace-expansion — advisory GHSA-3jxr-9vmj-r5cp (ReDoS via crafted brace
+  // patterns), vulnerable ranges <1.1.16 / >=2.0.0 <2.1.2 / >=3.0.0 <5.0.7.
+  // Installed copies (1.1.15, 2.1.1, 5.0.6) sit within range across THREE major
+  // lines, every one reached only through build/test/lint tooling
+  // (minimatch/glob under eslint, jest, rimraf, exceljs, ts-morph,
+  // @typescript-eslint) — never fed untrusted runtime input, so the ReDoS is not
+  // reachable on a production path. A single override is unsafe here (minimatch
+  // v3 requires brace-expansion ^1, v9 requires ^2), so this is accepted as a
+  // low, BUILD-TIME-ONLY risk pending a coordinated per-tree bump to the patched
+  // 1.1.16 / 2.1.2 / 5.0.7.
+  'GHSA-3jxr-9vmj-r5cp', // brace-expansion ReDoS (build-time tooling; dep bump pending)
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {
