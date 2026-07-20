@@ -2,11 +2,11 @@
  *  ProtocolDev.tsx -- protocol development hub (C2C-17 + C2C-18..22)
  *  Ported from protocol-dev.jsx IIFE to typed React module.
  * ------------------------------------------------------------------ */
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import * as PG from './ProtocolGov';
-import { PDEV_DOC, type PdevDoc } from '../fixtures/protocol-data';
-import { SampleTag, liveGet } from '../dataConnect';
+import type { PdevDoc } from '../fixtures/protocol-data';
+import { useLiveRows, EmptyState } from '../dataConnect';
 
 const Ic = PG.Ic;
 
@@ -376,25 +376,36 @@ export function ConsentTab({ doc, onToggle }: ConsentTabProps) {
 
 /* ---- Main workspace ---- */
 export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
-  /* live ?? fixture — adopt the org's seeded protocol when the store returns the
-     full PdevDoc shape (header scalars + nested section tree, SoA grid, risk
-     register, amendments), else keep the codebase fixture so the hub is never
-     empty. Never fabricates. Endpoint returns { data: [doc], meta:{count} }. */
-  const [doc, setDoc] = useState<PdevDoc>(PDEV_DOC);
-  const [sample, setSample] = useState(true);
-  useEffect(() => {
-    let cancelled = false;
-    liveGet<{ data?: PdevDoc[] }>('/api/protocol-dev', { data: [] }).then((res) => {
-      if (cancelled) return;
-      const d = res.data?.data?.[0];
-      if (!res.sample && d && d.id && Array.isArray(d.sections) && d.sections.length > 0
-          && Array.isArray(d.risks) && d.soa && Array.isArray(d.soa.visits)) {
-        setDoc(d);
-        setSample(false);
-      }
-    });
-    return () => { cancelled = true; };
-  }, []);
+  // GET /api/protocol-dev → the org's in-development protocol(s), already shaped
+  // to the PdevDoc render contract (server/routes/protocol-dev.routes.ts reads
+  // the real c2c_protocol_dev table via pool, org-scoped, JSONB rehydrated).
+  // Real rows, an honest empty state, or an honest failed-load — never a fixture.
+  const { rows, loading, error, empty } = useLiveRows<PdevDoc>('/api/protocol-dev');
+  if (loading) {
+    return <div className="pd-wrap"><div className="scaf-note" style={{ margin: 16 }}>Loading protocol…</div></div>;
+  }
+  if (error) {
+    return (
+      <div className="pd-wrap" style={{ padding: 16 }}>
+        <EmptyState tone="error" icon={I.alertTriangle}
+          title="Couldn't load the protocol"
+          hint="The protocol authoring store didn't respond. This is the organization's in-development clinical protocol — sign in and retry, or check that the service is reachable." />
+      </div>);
+  }
+  const doc = rows[0];
+  if (empty || !doc) {
+    return (
+      <div className="pd-wrap" style={{ padding: 16 }}>
+        <EmptyState icon={I.fileText}
+          title="No protocol in development yet"
+          hint="Start a clinical protocol to author it here — sections, objectives, schedule of assessments, risk register, budget, amendments, and review threads are all governed on this document." />
+      </div>);
+  }
+  return <ProtocolWorkspaceDoc doc={doc} onAsk={onAsk} />;
+}
+
+/* ---- Workspace body — a real, loaded protocol document ---- */
+function ProtocolWorkspaceDoc({ doc, onAsk }: { doc: PdevDoc; onAsk?: (msg: string) => void }) {
   const [tab, setTab] = useState('document');
   const [activeSec, setActiveSec] = useState(doc.openSection);
   const [gov, setGov] = useState<any>(null);
@@ -414,21 +425,21 @@ export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
       case 'deviations':  return <DeviationsTab doc={doc} onAdd={() => govAct({ title: 'Report deviation', intent: 'Log a protocol deviation and open CAPA actions.', basis: 'ICH E6(R2) §4.5 — protocol compliance' })} />;
       case 'reviews':     return <ReviewsTab doc={doc} />;
       case 'consent':     return <ConsentTab doc={doc} />;
-      default:            return <DocumentTab doc={doc} sec={sec} onGenerate={generate} />;
+      default:            return sec ? <DocumentTab doc={doc} sec={sec} onGenerate={generate} /> : <div className="pd-pane"><div className="pg-empty">This protocol has no sections yet.</div></div>;
     }
   })();
   return (
     <div className="pd-wrap">
       <div className="pd-head">
         <div className="pd-head-l">
-          <span className="pd-kind">{PG.labelize(doc.kind) + ' protocol'} <SampleTag sample={sample} /></span>
+          <span className="pd-kind">{(doc.kind ? PG.labelize(doc.kind) + ' ' : '') + 'protocol'}</span>
           <div className="pd-titrow"><h1 className="pd-title">{doc.title}</h1><span className="pd-short">{doc.shortTitle}</span></div>
           <div className="pd-subrow">
             <span>{doc.sponsor}</span><span className="pd-dot" /><span>PI {doc.pi}</span><span className="pd-dot" /><PG.StatusBadge status={doc.status} />
           </div>
         </div>
         <div className="pd-head-r">
-          <span className="pd-autosave"><span className="pd-autosave-dot" />{'Autosaved · v' + doc.version + ' · ' + doc.updated}</span>
+          <span className="pd-autosave"><span className="pd-autosave-dot" />{'Autosaved · v' + (doc.version || '—') + (doc.updated ? ' · ' + doc.updated : '')}</span>
           <PG.Btn icon="sparkles" variant="outline" onClick={() => onAsk && onAsk('Review ' + doc.shortTitle + ' for completeness and list what blocks finalization.')}>Ask AnA</PG.Btn>
           <PG.Btn icon="fileText" variant="outline" onClick={() => govAct({ title: 'Export protocol', intent: 'Render the assembled protocol to DOCX / PDF.', esign: false })}>Export</PG.Btn>
         </div>
@@ -459,7 +470,34 @@ export function PIAcc({ id, title, badge, open, onToggle, children }: PIAccProps
 }
 
 export function ProtocolIntelPanel({ onAsk }: WorkspaceProps) {
-  const doc: any = PDEV_DOC; if (!doc) return null;
+  // Same real protocol document as the workspace (GET /api/protocol-dev, the
+  // c2c_protocol_dev store via pool). Honest loading / empty / error — never a
+  // fixture.
+  const { rows, loading, error, empty } = useLiveRows<PdevDoc>('/api/protocol-dev');
+  if (loading) {
+    return <div className="pi-dock"><div className="scaf-note" style={{ margin: 12 }}>Loading…</div></div>;
+  }
+  if (error) {
+    return (
+      <div className="pi-dock">
+        <EmptyState tone="error" icon={I.alertTriangle}
+          title="Couldn't load the protocol"
+          hint="The protocol store didn't respond. Sign in and retry, or check that the service is reachable." />
+      </div>);
+  }
+  const doc = rows[0];
+  if (empty || !doc) {
+    return (
+      <div className="pi-dock">
+        <EmptyState icon={I.fileText}
+          title="No protocol in development yet"
+          hint="Start a protocol to see finalization readiness, objectives, eligibility, risks, and milestones here." />
+      </div>);
+  }
+  return <ProtocolIntelDock doc={doc} onAsk={onAsk} />;
+}
+
+function ProtocolIntelDock({ doc, onAsk }: { doc: PdevDoc; onAsk?: (msg: string) => void }) {
   const [open, setOpen] = useState<string | null>('readiness');
   const tog = (k: string) => setOpen(open === k ? null : k);
   const ask = (m: string) => onAsk && onAsk(m);

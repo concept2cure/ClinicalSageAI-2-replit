@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected } from '../dataConnect';
+import { useLiveData, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { AnswerLeadProps } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -8,21 +8,62 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 
+// GI_META (enum labels/tones/authority ranks), the regulator overlay rules, and
+// the deterministic overlay/promotion-gate functions are canonical config +
+// computation — kept. Only the fixture DATA (giForSeg / GI_ASSUMPTIONS /
+// GI_DECISIONS / the sample program + findings) is retired in favor of the live
+// governed-intelligence board.
 import {
   GI_META,
-  GI_ASSUMPTIONS,
-  GI_DECISIONS,
-  giForSeg,
   giApplyOverlay,
   giPromotionGate,
 } from '../fixtures/governed-intelligence-data';
-import type { GiFinding, GiPromotionGate } from '../fixtures/governed-intelligence-data';
+import type {
+  GiFinding,
+  GiPromotionGate,
+  GiAssumption,
+  GiDecision,
+  GiCheck,
+} from '../fixtures/governed-intelligence-data';
 
 /* ── Cross-surface data (IC_FACTS from CMC surface, not in our source) ── */
 declare global {
   interface Window {
     IC_FACTS?: Array<{ id: string; label: string; value: string; refs?: unknown[] }>;
   }
+}
+
+/* ── Live board contract ──────────────────────────────────────────────────
+   GET /api/governed-intelligence-inconsistency/projects/:projectId/inconsistency
+   (server/routes/governed-intelligence-inconsistency-routes.ts). REAL read-model
+   over four org-scoped stores: projects (header), contradiction_findings,
+   assumption_records, decision_records. `useLiveData` unwraps the { success,
+   data } envelope, so the payload is the board object directly.
+
+   HONESTY (backend gaps returned as documented null/[], never fabricated):
+     - program.app / program.filing  → always null (belong to a submission
+       record, not the project row).
+     - program.code / stage / indication → nullable.
+     - finding.factId → always null (no fact-linkage column on the findings
+       table), so the CMC "change value everywhere" affordance never appears.
+     - checks → always [] (the engine persists detected contradictions, not the
+       set of cross-references it verified as consistent). */
+interface GiBoardProgram {
+  projectId: number;
+  name: string;
+  code: string | null;
+  stage: string | null;
+  indication: string | null;
+  app: string | null;
+  filing: string | null;
+}
+
+interface GiBoard {
+  program: GiBoardProgram;
+  findings: GiFinding[];
+  assumptions: GiAssumption[];
+  decisions: GiDecision[];
+  checks: GiCheck[];
 }
 
 /* ── Inline shared helpers (same pattern as Nonclinical.tsx) ── */
@@ -46,58 +87,79 @@ function C2CToast({ msg }: { msg: string }) {
   );
 }
 
-function giAudit(): string {
-  return 'AUD-' + (Math.floor(Math.random() * 9000) + 1000);
+/* Current project id — the runtime channel set by Projects.tsx when a project is
+   opened (read the same way by CmcModule / ProjectHome / VaultSources). The board
+   is project-scoped, so with no project in context there is nothing to load. */
+function currentProjectId(): string | null {
+  try {
+    const p = (window as unknown as { C2C_PROJECT?: { id?: string | number } }).C2C_PROJECT;
+    const id = p && p.id != null ? String(p.id).trim() : '';
+    return id || null;
+  } catch (_e) {
+    return null;
+  }
 }
 
 /* ════ Inconsistency -- Governed Intelligence surface ════ */
 
-export function Inconsistency({ onAsk, onNav, segment }: SurfaceViewProps) {
+export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
   const open = (id: string) => {
     try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* noop */ }
     if (onNav) onNav(id);
   };
-  const bind = giForSeg(segment);
-  const prog = bind.program;
-  const checks = bind.checks || [];
+
+  const projectId = currentProjectId();
+  const boardPath = projectId
+    ? '/api/governed-intelligence-inconsistency/projects/' + encodeURIComponent(projectId) + '/inconsistency'
+    : null;
+
+  // MOCK-ACTION FLAGS (deferred to the actions pass — real endpoints exist):
+  //  1. "Refresh findings" button — re-reads this read-model board. Triggering a
+  //     fresh DETECTION scan (POST /api/governed-intelligence/contradictions/scan/
+  //     :projectId, contradictionEngineService.scanProject) is NOT wired here.
+  //  2. resolve(f) — optimistic local review-state flip; the real transition is
+  //     POST /api/governed-intelligence/contradictions/:id/review. Not wired, so
+  //     the copy no longer claims an audit-trail write occurred.
+  //  3. reopen(f) — optimistic local review-state flip; same real endpoint.
+  //  4. propagate(v) — "change value everywhere" across the dossier has no single
+  //     persisted backing here; the trigger is also unreachable while findings
+  //     carry a null factId. Kept guarded + flagged; copy softened.
+  const [refresh, setRefresh] = useState(0);
+  const boardState = useLiveData<GiBoard>(boardPath, [boardPath, refresh]);
+  const boardData = boardState.data;
+
+  const prog = boardData ? boardData.program : null;
+  const assumptions = boardData ? boardData.assumptions : [];
+  const decisions = boardData ? boardData.decisions : [];
+  const checks = boardData ? boardData.checks : [];
+  const progCode = prog ? (prog.code || prog.name) : '';
+  // program.filing is a documented null (submission-record field) — use a neutral
+  // noun rather than fabricating a filing type.
+  const filingLabel = (prog && prog.filing) || 'submission';
 
   const [reg, setReg] = useState('FDA');
-  const [findings, setFindings] = useState<GiFinding[]>(() => (bind.findings || []).map(f => ({ ...f })));
-  const [sample, setSample] = useState(true);
-  const [scanning, setScanning] = useState(false);
-  const [scannedAt, setScannedAt] = useState<Date | null>(null);
+  // Findings carry transient review-state edits from the (unwired) resolve/reopen
+  // actions, so they live in local state seeded from the live board. Seed once per
+  // board load (gated on a ref) to avoid the re-seed render loop; a refresh
+  // refetch produces a new array identity and re-seeds honestly from persistence.
+  const [findings, setFindings] = useState<GiFinding[]>([]);
+  const liveFindings = boardData ? boardData.findings : null;
+  const seedRef = useRef<GiFinding[] | null>(null);
+  useEffect(() => {
+    if (liveFindings && liveFindings !== seedRef.current) {
+      seedRef.current = liveFindings;
+      setFindings(liveFindings.map(f => ({ ...f })));
+    }
+  }, [liveFindings]);
+
   const [form, setForm] = useState<{ id: string; label: string; value: string; refs?: unknown[] } | null>(null);
   const [toast, fireToast] = useToast();
 
-  /* AnA performs the scan -- POST /contradictions/scan/:projectId, live -> fixture. */
-  const runScan = () => {
-    setScanning(true);
-    /* In live mode, the backend scan would run here. For now, always fall through to fixture. */
-    setTimeout(() => {
-      setFindings((bind.findings || []).map(f => ({ ...f })));
-      setSample(true);
-      setScannedAt(new Date());
-      setScanning(false);
-      const n = (bind.findings || []).length;
-      fireToast(
-        n > 0
-          ? 'AnA scanned the ' + prog.code + ' dossier -- ' + n + ' potential ' + (n === 1 ? 'contradiction' : 'contradictions') + ' across governed records'
-          : 'AnA scanned the ' + prog.code + ' dossier -- no contradictions across the checked cross-references',
-      );
-    }, 780);
-  };
-
-  useEffect(() => {
-    setSample(true);
-    runScan();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [segment]);
-
-  /* Resolve one finding WITH AnA. */
+  /* Resolve one finding WITH AnA — optimistic local flip only (see flag #2). */
   const resolve = (f: GiFinding) => {
     setFindings(fs => fs.map(x => x.id === f.id ? { ...x, reviewState: 'approved_resolution', resolvedBy: 'AnA + you', resolvedAt: new Date().toISOString() } : x));
-    fireToast('Resolved -- ' + f.title + ' -- ' + giAudit());
+    fireToast('Marked "' + f.title + '" resolved in this view -- routing to the governed review workflow is not yet wired');
   };
   const reopen = (f: GiFinding) => setFindings(fs => fs.map(x => x.id === f.id ? { ...x, reviewState: 'unresolved', resolvedBy: null } : x));
 
@@ -110,15 +172,16 @@ export function Inconsistency({ onAsk, onNav, segment }: SurfaceViewProps) {
   const hasDosage = findings.some(f => f.contradictionType === 'dosage_conflict' && f.reviewState !== 'approved_resolution');
 
   /* Answer-first lead -- computed from the real gate, in AnA's voice, about the FILING. */
-  const lead: AnswerLeadProps = (() => {
+  const lead: AnswerLeadProps | null = (() => {
+    if (!prog) return null;
     if (clean) return {
       tone: 'good' as const, eyebrow: 'AnA -- path to a clean filing',
       headline: hasFindings
-        ? <>The <b>{prog.code} {prog.app.split(' -- ')[0]}</b> is clean -- every contradiction resolved.</>
-        : <>AnA scanned your <b>{prog.code} {prog.app.split(' -- ')[0]}</b> -- no contradictions.</>,
+        ? <>The <b>{progCode}</b> is clean -- every contradiction resolved.</>
+        : <>AnA scanned your <b>{progCode}</b> -- no contradictions.</>,
       body: hasFindings
         ? 'Nothing in the governed record contradicts anything else. This filing is ready to promote into the submission sequence.'
-        : 'Every governed cross-reference AnA checks on a ' + prog.filing + ' dossier is consistent -- nothing stands between this filing and a clean submission.',
+        : 'Every governed cross-reference AnA checks on a ' + filingLabel + ' dossier is consistent -- nothing stands between this filing and a clean submission.',
       reassure: 'This is what submission-ready looks like. I\'ll keep watching as new content lands.',
       action: { label: 'Promote to submission sequence', onClick: () => open('submission-center') },
     };
@@ -126,7 +189,7 @@ export function Inconsistency({ onAsk, onNav, segment }: SurfaceViewProps) {
       const b = gate.blocking[0];
       return {
         tone: 'urgent' as const, eyebrow: 'AnA -- path to a clean filing',
-        headline: <>Your <b>{prog.code} {prog.app.split(' -- ')[0]}</b> can't be filed yet -- {gate.blocking.length === 1 ? '1 issue would' : gate.blocking.length + ' issues would'} block it under {reg}.</>,
+        headline: <>Your <b>{progCode}</b> can't be filed yet -- {gate.blocking.length === 1 ? '1 issue would' : gate.blocking.length + ' issues would'} block it under {reg}.</>,
         body: b.title + '. ' + b.description,
         reassure: 'This is fixable, and I\'ll do the work with you -- one governed change and the block clears.',
         action: {
@@ -141,17 +204,17 @@ export function Inconsistency({ onAsk, onNav, segment }: SurfaceViewProps) {
     }
     if (gate.needApproval.length) return {
       tone: 'calm' as const, eyebrow: 'AnA -- path to a clean filing',
-      headline: <>{prog.code} won't be blocked under {reg}, but {gate.needApproval.length} {gate.needApproval.length === 1 ? 'item needs' : 'items need'} sign-off before filing.</>,
+      headline: <>{progCode} won't be blocked under {reg}, but {gate.needApproval.length} {gate.needApproval.length === 1 ? 'item needs' : 'items need'} sign-off before filing.</>,
       body: 'Nothing hard-blocks the submission, but these carry a "requires approval" authority under ' + reg + ' -- get them approved and the filing is clean.',
       reassure: 'You\'re close. I\'ll draft the resolutions and route them for approval.',
-      action: { label: 'Resolve the open items with AnA', onClick: () => ask('Draft resolutions for the open ' + prog.code + ' contradictions and route them for approval.') },
+      action: { label: 'Resolve the open items with AnA', onClick: () => ask('Draft resolutions for the open ' + progCode + ' contradictions and route them for approval.') },
     };
     return {
       tone: 'calm' as const, eyebrow: 'AnA -- path to a clean filing',
-      headline: <>{prog.code} has {openN} open {openN === 1 ? 'inconsistency' : 'inconsistencies'} to tidy before the filing is perfect.</>,
+      headline: <>{progCode} has {openN} open {openN === 1 ? 'inconsistency' : 'inconsistencies'} to tidy before the filing is perfect.</>,
       body: 'None of them block the submission under ' + reg + ' -- they\'re advisory or review-level -- but a perfect filing carries none of them.',
       reassure: 'I\'ll clear them with you so the dossier reads as one coherent story.',
-      action: { label: 'Clean them up with AnA', onClick: () => ask('Walk me through resolving the open ' + prog.code + ' inconsistencies.') },
+      action: { label: 'Clean them up with AnA', onClick: () => ask('Walk me through resolving the open ' + progCode + ' inconsistencies.') },
     };
   })();
 
@@ -169,7 +232,9 @@ export function Inconsistency({ onAsk, onNav, segment }: SurfaceViewProps) {
     const nv = (v.value || '').trim();
     if (!nv || !form) return;
     setForm(null);
-    fireToast('Propagated ' + form.label + ' -> ' + nv + ' across the dossier -- draft sections updated, locked flagged for re-approval -- ' + giAudit());
+    // Softened: local UI only — the cross-dossier propagation + re-approval routing
+    // is not wired (flag #4).
+    fireToast('Requested change: ' + form.label + ' -> ' + nv + ' -- cross-dossier propagation is not yet wired');
   };
 
   const PROP_FORM: C2CFormConfig | null = form ? {
@@ -184,144 +249,193 @@ export function Inconsistency({ onAsk, onNav, segment }: SurfaceViewProps) {
     ],
   } : null;
 
+  const hasBoard = Boolean(boardData && prog);
+
   return (
     <div className="sp">
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>AnA {I.dot} Governed intelligence <SampleTag sample={sample} /></div>
-          <h1 className="sp-title">{prog.code} {prog.app.split(' -- ')[0]} -- path to a clean filing</h1>
-          <p className="sp-state">{prog.name} {I.dot} {prog.stage}. AnA continuously scans every governed record -- sections, specs, data and labeling -- for anything that contradicts anything else, and clears it with you before it can reach a reviewer.</p>
+          <div className="sp-eyebrow">AnA {I.dot} Governed intelligence</div>
+          <h1 className="sp-title">{prog ? progCode + ' -- path to a clean filing' : 'Cross-document inconsistency'}</h1>
+          <p className="sp-state">{prog ? <>{prog.name}{prog.stage ? <> {I.dot} {prog.stage}</> : null}. </> : null}AnA continuously scans every governed record -- sections, specs, data and labeling -- for anything that contradicts anything else, and clears it with you before it can reach a reviewer.</p>
         </div>
-        <button className="sp-primary" onClick={runScan} disabled={scanning}>{scanning ? I.rotateCcw : I.sparkles} {scanning ? 'AnA is scanning...' : 'Re-run contradiction scan'}</button>
+        <button className="sp-primary" onClick={() => setRefresh(n => n + 1)} disabled={boardState.loading || !projectId}>{boardState.loading ? I.rotateCcw : I.sparkles} {boardState.loading ? 'AnA is checking...' : 'Refresh findings'}</button>
       </div>
 
-      <AnswerLead {...lead} />
+      {!projectId ? (
+        <EmptyState
+          icon={I.folder}
+          title="No project selected"
+          hint="Open a project to see its cross-document contradiction board. The board reads that project's governed findings, assumption registry, and decision records."
+        />
+      ) : boardState.loading && !boardData ? (
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the inconsistency board...</div>
+      ) : boardState.error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the inconsistency board"
+          hint="The governed-intelligence read-model didn't respond. It fails closed on purpose -- an empty findings set means 'ready to file', so a read failure is never shown as clean. Sign in and retry, or check the service is reachable."
+        />
+      ) : !hasBoard || !lead ? (
+        <EmptyState
+          icon={I.fileText}
+          title="No inconsistency data for this project yet"
+          hint="Once this project's governed records are scanned, detected contradictions, the assumption registry, and decision records appear here."
+        />
+      ) : (
+        <>
+          <AnswerLead {...lead} />
 
-      {/* Submission gate: the hero verdict -- can this filing go? */}
-      <div className={'gi-gate ' + (clean ? 'is-clean' : gate.blocked ? 'is-blocked' : 'is-warn')}>
-        <div className="gi-gate-main">
-          <span className="gi-gate-ico">{clean ? I.shieldCheck : gate.blocked ? I.shieldAlert : I.clock}</span>
-          <div>
-            <div className="gi-gate-verdict">{clean ? 'Submission gate -- CLEAR' : gate.blocked ? 'Submission gate -- BLOCKED' : 'Submission gate -- clear, with open items'}</div>
-            <div className="gi-gate-sub">{clean
-              ? 'No contradictions block promotion. ' + prog.code + ' can enter the submission sequence.'
-              : gate.blocked
-                ? gate.blocking.length + ' unresolved ' + (gate.blocking.length === 1 ? 'contradiction' : 'contradictions') + ' with a "blocks promotion" authority under ' + reg + '. The filing is held until resolved.'
-                : 'Nothing blocks promotion under ' + reg + ', but ' + openN + ' open ' + (openN === 1 ? 'item' : 'items') + ' should be cleared for a perfect filing.'}</div>
-          </div>
-        </div>
-        <div className="gi-gate-side">
-          <div className="gi-reg" role="group" aria-label="Regulator overlay">
-            {(['FDA', 'EMA'] as const).map(r => (
-              <button key={r} className={'gi-reg-b' + (reg === r ? ' on' : '')} onClick={() => setReg(r)}>{r}</button>
-            ))}
-          </div>
-          <div className="gi-gate-counts">
-            <span className="gi-c gi-c-bad">{gate.blocking.length} blocking</span>
-            <span className="gi-c gi-c-warn">{gate.needApproval.length} approval</span>
-            <span className="gi-c gi-c-rev">{gate.needReview.length} review</span>
-            <span className="gi-c gi-c-ok">{resolvedN}/{total} resolved</span>
-          </div>
-        </div>
-      </div>
-      {hasDosage
-        ? <div className="gi-overlay-note">{I.info} Same dossier, different regulator: the dosage conflict is <b>{reg === 'FDA' ? 'a hard filing block under FDA' : '"requires approval" under EMA -- not a hard block'}</b>. AnA re-scores authority from the active regulator's overlay rules.</div>
-        : <div className="gi-overlay-note">{I.info} AnA scores every finding's authority from the active regulator's overlay rules -- switch <b>{reg}</b> to see how {prog.filing} severity shifts by regulator.</div>}
-
-      {/* Findings -- each one a gap between here and a perfect filing */}
-      {!hasFindings && (
-        <div className="pj-card gi-checks">
-          <div className="pj-card-h"><span className="t">What AnA checked</span><span className="s">{checks.length} cross-references {I.dot} all consistent</span></div>
-          <div className="pj-card-b">
-            <div className="sp-list">
-              {checks.map((c, i) => (
-                <div key={i} className="sp-row">
-                  <span className="gi-check-ok">{I.check}</span>
-                  <span className="sp-row-b"><span className="sp-row-t">{c.k}</span><span className="sp-row-s">{c.detail}</span></span>
-                  <span className="rd-chip tone-ok">consistent</span>
-                </div>
-              ))}
+          {/* Submission gate: the hero verdict -- can this filing go? */}
+          <div className={'gi-gate ' + (clean ? 'is-clean' : gate.blocked ? 'is-blocked' : 'is-warn')}>
+            <div className="gi-gate-main">
+              <span className="gi-gate-ico">{clean ? I.shieldCheck : gate.blocked ? I.shieldAlert : I.clock}</span>
+              <div>
+                <div className="gi-gate-verdict">{clean ? 'Submission gate -- CLEAR' : gate.blocked ? 'Submission gate -- BLOCKED' : 'Submission gate -- clear, with open items'}</div>
+                <div className="gi-gate-sub">{clean
+                  ? 'No contradictions block promotion. ' + progCode + ' can enter the submission sequence.'
+                  : gate.blocked
+                    ? gate.blocking.length + ' unresolved ' + (gate.blocking.length === 1 ? 'contradiction' : 'contradictions') + ' with a "blocks promotion" authority under ' + reg + '. The filing is held until resolved.'
+                    : 'Nothing blocks promotion under ' + reg + ', but ' + openN + ' open ' + (openN === 1 ? 'item' : 'items') + ' should be cleared for a perfect filing.'}</div>
+              </div>
             </div>
-            <div className="scaf-note" style={{ marginTop: 12 }}>AnA re-runs these checks every time content changes. The moment a value disagrees with another governed record, it surfaces here as a contradiction with a consequence -- before it can reach a reviewer.</div>
+            <div className="gi-gate-side">
+              <div className="gi-reg" role="group" aria-label="Regulator overlay">
+                {(['FDA', 'EMA'] as const).map(r => (
+                  <button key={r} className={'gi-reg-b' + (reg === r ? ' on' : '')} onClick={() => setReg(r)}>{r}</button>
+                ))}
+              </div>
+              <div className="gi-gate-counts">
+                <span className="gi-c gi-c-bad">{gate.blocking.length} blocking</span>
+                <span className="gi-c gi-c-warn">{gate.needApproval.length} approval</span>
+                <span className="gi-c gi-c-rev">{gate.needReview.length} review</span>
+                <span className="gi-c gi-c-ok">{resolvedN}/{total} resolved</span>
+              </div>
+            </div>
           </div>
-        </div>
+          {hasDosage
+            ? <div className="gi-overlay-note">{I.info} Same dossier, different regulator: the dosage conflict is <b>{reg === 'FDA' ? 'a hard filing block under FDA' : '"requires approval" under EMA -- not a hard block'}</b>. AnA re-scores authority from the active regulator's overlay rules.</div>
+            : <div className="gi-overlay-note">{I.info} AnA scores every finding's authority from the active regulator's overlay rules -- switch <b>{reg}</b> to see how {filingLabel} severity shifts by regulator.</div>}
+
+          {/* No open contradictions: show the live "what AnA checked" list. The
+              engine does not persist the set of verified-consistent cross-references
+              (board.checks is always []), so when it's empty this is an honest
+              clean-state panel, not a fabricated checklist. */}
+          {!hasFindings && (
+            <div className="pj-card gi-checks">
+              <div className="pj-card-h"><span className="t">What AnA checked</span><span className="s">{checks.length > 0 ? checks.length + ' cross-references ' : ''}{I.dot} all consistent</span></div>
+              <div className="pj-card-b">
+                {checks.length > 0 ? (
+                  <div className="sp-list">
+                    {checks.map((c, i) => (
+                      <div key={i} className="sp-row">
+                        <span className="gi-check-ok">{I.check}</span>
+                        <span className="sp-row-b"><span className="sp-row-t">{c.k}</span><span className="sp-row-s">{c.detail}</span></span>
+                        <span className="rd-chip tone-ok">consistent</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={I.shieldCheck}
+                    title="No contradictions across this project's governed records"
+                    hint="AnA found nothing that contradicts anything else. The itemized list of every cross-reference it verified isn't persisted yet, so only detected contradictions are enumerated here."
+                  />
+                )}
+                <div className="scaf-note" style={{ marginTop: 12 }}>AnA re-runs these checks every time content changes. The moment a value disagrees with another governed record, it surfaces here as a contradiction with a consequence -- before it can reach a reviewer.</div>
+              </div>
+            </div>
+          )}
+
+          {hasFindings && <div className="gi-findings">
+            {ordered.map(f => {
+              const a = eff[f.id] || giApplyOverlay(f, reg);
+              const done = f.reviewState === 'approved_resolution';
+              const auth = GI_META.authority[a.authorityState!] || GI_META.authority.advisory_only;
+              return (
+                <div id={'gi-f-' + f.id} key={f.id} className={'gi-find' + (done ? ' is-done' : '') + (auth.blocks && !done ? ' is-block' : '')}>
+                  <div className="gi-find-top">
+                    <span className="sp-sev" data-s={sevS(a.severity)}>{(GI_META.severity[a.severity] || { label: a.severity }).label}</span>
+                    <span className="gi-type">{GI_META.type[f.contradictionType] || f.contradictionType}</span>
+                    <span className={'gi-auth tone-' + auth.tone}>{done ? 'Resolved' : auth.label}</span>
+                    {a.overlayApplied && !done && <span className="gi-ov">{reg} overlay</span>}
+                    <span className="gi-conf">{Math.round(f.confidenceScore * 100)}% {I.dot} {GI_META.source[f.sourceClassification]}</span>
+                  </div>
+                  <div className="gi-find-title">{f.title}</div>
+                  <div className="gi-xref">
+                    <span className="gi-obj"><span className="gi-obj-k">{f.objectA.type}</span>{f.objectA.label}</span>
+                    <span className="gi-vs">{I.gitCompare}</span>
+                    <span className="gi-obj"><span className="gi-obj-k">{f.objectB.type}</span>{f.objectB.label}</span>
+                  </div>
+                  <div className="gi-desc">{f.description}</div>
+                  <div className="gi-meta">
+                    <span title="Truth hierarchy level (1 = highest authority record)">Truth level {f.truthHierarchyLevel}</span>
+                    <span>{GI_META.llmRole[f.llmRole]}</span>
+                    {f.deterministicRule && <span className="gi-rule">{f.deterministicRule}</span>}
+                    <span>Consequence {I.dot} {String(f.consequenceType || '').replace(/_/g, ' ')}</span>
+                  </div>
+                  <div className="gi-find-actions">
+                    {!done && <button className="sp-primary gi-resolve" onClick={() => resolve(f)}>{I.check} Resolve with AnA</button>}
+                    {done && <button className="sp-ask" onClick={() => reopen(f)}>{I.undo} Re-open</button>}
+                    {/* factId is a documented null on every live finding, so this
+                        "change value everywhere" affordance stays hidden until the
+                        findings table carries a real fact linkage. */}
+                    {!done && f.factId && <button className="sp-ask" onClick={() => {
+                      const fact = (window.IC_FACTS || []).find(x => x.id === f.factId);
+                      if (fact) setForm(fact);
+                    }}>{I.gitCompare} Change value everywhere</button>}
+                    {!done && <button className="sp-ask" onClick={() => ask('For the ' + progCode + ' contradiction "' + f.title + '", draft the governed resolution and the decision record, and tell me which documents update.')}>{I.sparkles} Draft resolution</button>}
+                    <button className="sp-go" title="Open the source record" onClick={() => open(f.factId ? 'cmc' : 'document-authoring')}>{I.right}</button>
+                  </div>
+                  {done && <div className="gi-done-line">{I.check} Marked resolved by {f.resolvedBy || 'AnA'} in this view -- the governed audit-trail write + re-approval routing is not yet wired.</div>}
+                </div>
+              );
+            })}
+          </div>}
+
+          {/* Supporting: where drift starts + how it's decided (secondary) */}
+          {hasFindings && <div className="gi-support">
+            <div className="pj-card">
+              <div className="pj-card-h"><span className="t">Assumption registry</span><span className="s">drift origin</span></div>
+              <div className="pj-card-b">
+                <p className="gi-support-p">Contradictions like the dropout drift start here -- two governed assumptions sharing a category and domain but holding different values.</p>
+                {assumptions.length > 0 ? (
+                  <div className="sp-list">
+                    {assumptions.map(a => (
+                      <div key={a.id} className="sp-row">
+                        <span className="sp-tag">{a.category}</span>
+                        <span className="sp-row-b"><span className="sp-row-t">{a.title} {I.dot} <b style={{ color: 'var(--accent-200)' }}>{a.assumedValue}</b></span><span className="sp-row-s">{a.domainTrack} {I.dot} {a.source}</span></span>
+                        <span className="rd-chip tone-ok">{a.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState icon={I.fileText} title="No assumption records yet" hint="Governed assumptions for this project appear here once recorded." />
+                )}
+              </div>
+            </div>
+            <div className="pj-card">
+              <div className="pj-card-h"><span className="t">Decision records</span><span className="s">governed resolution</span></div>
+              <div className="pj-card-b">
+                <p className="gi-support-p">Every resolution AnA proposes becomes a decision record -- proposed {'->'} approved {'->'} executed, linked to the exact artifact version it changed.</p>
+                {decisions.length > 0 ? (
+                  <div className="sp-list">
+                    {decisions.map(d => (
+                      <div key={d.id} className="sp-row">
+                        <span className={'gi-dec-st st-' + d.actionState}>{d.actionState}</span>
+                        <span className="sp-row-b"><span className="sp-row-t">{d.title}</span><span className="sp-row-s">{d.rationale}{d.executedArtifactId ? ' -- artifact #' + d.executedArtifactId + ' v' + d.executedArtifactVersion : ''}</span></span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState icon={I.fileText} title="No decision records yet" hint="Governed resolutions for this project appear here as AnA proposes and you approve them." />
+                )}
+              </div>
+            </div>
+          </div>}
+        </>
       )}
-
-      {hasFindings && <div className="gi-findings">
-        {ordered.map(f => {
-          const a = eff[f.id] || giApplyOverlay(f, reg);
-          const done = f.reviewState === 'approved_resolution';
-          const auth = GI_META.authority[a.authorityState!] || GI_META.authority.advisory_only;
-          return (
-            <div id={'gi-f-' + f.id} key={f.id} className={'gi-find' + (done ? ' is-done' : '') + (auth.blocks && !done ? ' is-block' : '')}>
-              <div className="gi-find-top">
-                <span className="sp-sev" data-s={sevS(a.severity)}>{(GI_META.severity[a.severity] || { label: a.severity }).label}</span>
-                <span className="gi-type">{GI_META.type[f.contradictionType] || f.contradictionType}</span>
-                <span className={'gi-auth tone-' + auth.tone}>{done ? 'Resolved' : auth.label}</span>
-                {a.overlayApplied && !done && <span className="gi-ov">{reg} overlay</span>}
-                <span className="gi-conf">{Math.round(f.confidenceScore * 100)}% {I.dot} {GI_META.source[f.sourceClassification]}</span>
-              </div>
-              <div className="gi-find-title">{f.title}</div>
-              <div className="gi-xref">
-                <span className="gi-obj"><span className="gi-obj-k">{f.objectA.type}</span>{f.objectA.label}</span>
-                <span className="gi-vs">{I.gitCompare}</span>
-                <span className="gi-obj"><span className="gi-obj-k">{f.objectB.type}</span>{f.objectB.label}</span>
-              </div>
-              <div className="gi-desc">{f.description}</div>
-              <div className="gi-meta">
-                <span title="Truth hierarchy level (1 = highest authority record)">Truth level {f.truthHierarchyLevel}</span>
-                <span>{GI_META.llmRole[f.llmRole]}</span>
-                {f.deterministicRule && <span className="gi-rule">{f.deterministicRule}</span>}
-                <span>Consequence {I.dot} {String(f.consequenceType || '').replace(/_/g, ' ')}</span>
-              </div>
-              <div className="gi-find-actions">
-                {!done && <button className="sp-primary gi-resolve" onClick={() => resolve(f)}>{I.check} Resolve with AnA</button>}
-                {done && <button className="sp-ask" onClick={() => reopen(f)}>{I.undo} Re-open</button>}
-                {!done && f.factId && <button className="sp-ask" onClick={() => {
-                  const fact = (window.IC_FACTS || []).find(x => x.id === f.factId);
-                  if (fact) setForm(fact);
-                }}>{I.gitCompare} Change value everywhere</button>}
-                {!done && <button className="sp-ask" onClick={() => ask('For the ' + prog.code + ' contradiction "' + f.title + '", draft the governed resolution and the decision record, and tell me which documents update.')}>{I.sparkles} Draft resolution</button>}
-                <button className="sp-go" title="Open the source record" onClick={() => open(f.factId ? 'cmc' : 'document-authoring')}>{I.right}</button>
-              </div>
-              {done && <div className="gi-done-line">{I.check} Cleared by {f.resolvedBy || 'AnA'} -- logged to the audit trail, sections routed for re-approval where locked.</div>}
-            </div>
-          );
-        })}
-      </div>}
-
-      {/* Supporting: where drift starts + how it's decided (secondary) */}
-      {hasFindings && <div className="gi-support">
-        <div className="pj-card">
-          <div className="pj-card-h"><span className="t">Assumption registry</span><span className="s">drift origin</span></div>
-          <div className="pj-card-b">
-            <p className="gi-support-p">Contradictions like the dropout drift start here -- two governed assumptions sharing a category and domain but holding different values.</p>
-            <div className="sp-list">
-              {GI_ASSUMPTIONS.map(a => (
-                <div key={a.id} className="sp-row">
-                  <span className="sp-tag">{a.category}</span>
-                  <span className="sp-row-b"><span className="sp-row-t">{a.title} {I.dot} <b style={{ color: 'var(--accent-200)' }}>{a.assumedValue}</b></span><span className="sp-row-s">{a.domainTrack} {I.dot} {a.source}</span></span>
-                  <span className="rd-chip tone-ok">{a.status}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="pj-card">
-          <div className="pj-card-h"><span className="t">Decision records</span><span className="s">governed resolution</span></div>
-          <div className="pj-card-b">
-            <p className="gi-support-p">Every resolution AnA proposes becomes a decision record -- proposed {'->'} approved {'->'} executed, linked to the exact artifact version it changed.</p>
-            <div className="sp-list">
-              {GI_DECISIONS.map(d => (
-                <div key={d.id} className="sp-row">
-                  <span className={'gi-dec-st st-' + d.actionState}>{d.actionState}</span>
-                  <span className="sp-row-b"><span className="sp-row-t">{d.title}</span><span className="sp-row-s">{d.rationale}{d.executedArtifactId ? ' -- artifact #' + d.executedArtifactId + ' v' + d.executedArtifactVersion : ''}</span></span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>}
 
       {form && PROP_FORM && <C2CForm config={PROP_FORM} onCancel={() => setForm(null)} onSubmit={propagate} />}
       <C2CToast msg={toast} />

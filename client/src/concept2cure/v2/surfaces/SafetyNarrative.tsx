@@ -1,10 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
-import { SampleTag, liveGet } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
-import { SAE_CASES, composeSafetyNarrative } from '../fixtures/safety-narrative-data';
+// composeSafetyNarrative is a deterministic ICH E3 §16 generator and SaeCase is a
+// type — both retained (real computed output / types, not fixture data). Only the
+// SAE_CASES fixture array is dropped; the worklist now loads from the real backend.
+import { composeSafetyNarrative } from '../fixtures/safety-narrative-data';
 import type { SaeCase } from '../fixtures/safety-narrative-data';
 
 /* -- Constants -- */
@@ -13,10 +16,12 @@ const CRITERIA = ['death', 'life-threatening', 'hospitalization', 'disability', 
 const OUTCOMES = ['recovered', 'recovering', 'recovered with sequelae', 'not recovered', 'fatal', 'unknown'];
 const CAUSALITIES = ['related', 'probably related', 'possibly related', 'unlikely related', 'not related'];
 
-/* Live expedited-reporting-clock fields the GET /cases route computes server-side
-   (21 CFR 312.32(c) / ICH E2A) via server/services/pv/expedited-reporting-clock.ts.
-   Additive over the fixture SaeCase shape; absent on the codebase fixture, so the
-   surface falls back to the static clock/due display when they are not present. */
+/* The GET /api/safety-narratives/cases display contract. Extends the structured
+   SaeCase with the expedited-reporting-clock fields the route computes server-side
+   per 21 CFR 312.32(c) / ICH E2A (server/services/pv/expedited-reporting-clock.ts).
+   The backend returns these on every real row (the stored due/clock columns are
+   kept alongside them); the nullable clock fields are `| null` and rendered
+   null-safe. */
 type LiveSaeCase = SaeCase & {
   reportingCategory?: '7-day' | '15-day' | 'none';
   reportingClockStart?: string | null;
@@ -26,6 +31,11 @@ type LiveSaeCase = SaeCase & {
   reportingBasis?: string;
 };
 
+/* Stable empty seed for the local editable store while the live worklist is
+   loading or on error — useLiveRows synthesizes a fresh [] every render in those
+   states, which would otherwise thrash the re-seed effect into a render loop. */
+const EMPTY_CASES: LiveSaeCase[] = [];
+
 /* ================================================================
    SafetyNarrative -- SAE case-narrative writer (ICH E3 section 16).
    The generated narrative IS the hero deliverable, not a dashboard.
@@ -34,38 +44,44 @@ type LiveSaeCase = SaeCase & {
 
 export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
-  const [cases, setCases] = useState<LiveSaeCase[]>(SAE_CASES);
-  const [selId, setSelId] = useState(SAE_CASES[0].id);
-  const [sample, setSample] = useState(true);
-  const sel = cases.find((c) => c.id === selId) || cases[0];
+
+  /* Real SAE case worklist. GET /api/safety-narratives/cases queries the governed
+     c2c_sae_cases table (server/routes/safety-narrative.ts, pool.query, scoped by
+     organization) and computes each row's 21 CFR 312.32(c) / ICH E2A expedited-
+     reporting clock live. useLiveRows unwraps the { data } envelope into real
+     cases, an honest empty (an unprovisioned store fails closed to []), or an
+     honest error (no org / unreachable) — never a fixture. */
+  const live = useLiveRows<LiveSaeCase>('/api/safety-narratives/cases');
+  /* Feed the editable store a STABLE empty seed while loading / on error (see
+     EMPTY_CASES) so the re-seed effect below doesn't loop. */
+  const seed = live.loading || live.error ? EMPTY_CASES : live.rows;
+
+  /* Local editable copy. Field edits (setField / toggleCrit) are in-memory
+     drafting that re-runs the deterministic ICH E3 §16 composer over the selected
+     case; there is no case-write endpoint, so edits are not persisted (and the
+     surface never claims they are). Re-seed when the live rows resolve — their
+     identity changes once the fetch settles. */
+  const [cases, setCases] = useState<LiveSaeCase[]>(seed);
+  const [selId, setSelId] = useState<string>(seed[0]?.id ?? '');
+  const seedRef = useRef(seed);
+  useEffect(() => {
+    if (seed !== seedRef.current) {
+      seedRef.current = seed;
+      setCases(seed);
+      setSelId(seed[0]?.id ?? '');
+    }
+  }, [seed]);
+
   const [toast, setToast] = useState('');
   const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
 
-  /* live ?? fixture — adopt the org's seeded SAE worklist when the store
-     returns the full case shape, else keep the codebase fixture so the writer
-     is never empty. Local edits (setField) then work off whichever set loaded;
-     the ICH E3 §16 composer runs deterministically over the selected case. */
-  useEffect(() => {
-    let cancelled = false;
-    liveGet<{ data?: LiveSaeCase[] }>('/api/safety-narratives/cases', { data: [] }).then((res) => {
-      if (cancelled) return;
-      const list = res.data?.data;
-      if (!res.sample && Array.isArray(list) && list.length > 0 && list[0]?.id && list[0]?.event) {
-        setCases(list);
-        setSelId(list[0].id);
-        setSample(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const result = useMemo(() => composeSafetyNarrative(sel), [sel]);
-  const nMissing = result.missingFields.length;
+  const sel = cases.find((c) => c.id === selId) || cases[0];
+  const result = useMemo(() => (sel ? composeSafetyNarrative(sel) : null), [sel]);
+  const nMissing = result ? result.missingFields.length : 0;
 
   /* Answer-first lead -- context-aware to the real queue and clocks */
   const lead = useMemo(() => {
+    if (!sel || cases.length === 0) return null;
     const serious = cases.filter((c) => (c.event.seriousnessCriteria || []).length).length;
     const soonest = cases.slice().sort((a, b) => a.dueDays - b.dueDays)[0];
     const urgent = soonest && soonest.dueDays <= 3;
@@ -75,7 +91,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
         ? `${soonest.id} is due in ${soonest.dueDays} days -- ${soonest.clock}`
         : `${cases.length} case narratives in progress -- ${serious} serious`,
       body: urgent
-        ? `The clock that matters right now is ${soonest.id} (${sel.studyId}). Its narrative is drafted from the case facts below -- complete any missing fields, QC it, and it's ready to file. You have time; work the most urgent one first.`
+        ? `The clock that matters right now is ${soonest.id}${sel.studyId ? ` (${sel.studyId})` : ''}. Its narrative is drafted from the case facts below -- complete any missing fields, QC it, and it's ready to file. You have time; work the most urgent one first.`
         : 'Each SAE narrative here is written deterministically from the structured case -- the same facts, the same ICH E3 section 16 convention, every time. Nothing is invented. Pick a case, complete what\'s missing, and hand it off.',
       next: urgent
         ? `Finish ${soonest.id} and send it for medical review`
@@ -84,6 +100,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
   }, [cases, sel]);
 
   const setField = (path: string, val: string | string[]) => {
+    if (!sel) return;
     setCases((cs) =>
       cs.map((c) => {
         if (c.id !== sel.id) return c;
@@ -96,13 +113,13 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const toggleCrit = (crit: string) => {
+    if (!sel) return;
     const cur = sel.event.seriousnessCriteria || [];
     setField('event.seriousnessCriteria', cur.includes(crit) ? cur.filter((x) => x !== crit) : cur.concat([crit]));
   };
 
   return (
     <div className="sn">
-      <SampleTag sample={sample} />
       {toast && <div className="sn-toast">{I.check} {toast}</div>}
 
       <div className="sn-head">
@@ -110,12 +127,31 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
         <h1 className="sn-title">SAE case narrative writer</h1>
       </div>
 
-      <AnswerLead
-        tone={lead.tone}
-        headline={lead.head}
-        body={lead.body}
-        action={{ label: lead.next, onClick: () => ask(lead.next) }}
-      />
+      {live.loading ? (
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading SAE cases…</div>
+      ) : live.error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the SAE case worklist"
+          hint="The safety-narrative store didn't respond. These are the organization's individual SAE cases and their expedited-reporting clocks. Sign in and retry, or check the service is reachable."
+        />
+      ) : !sel || !result ? (
+        <EmptyState
+          icon={I.fileText}
+          title="No SAE cases yet"
+          hint="Individual SAE cases appear here once they are in the governed safety store. Each becomes an ICH E3 section 16 narrative, drafted deterministically from the structured case facts with its 21 CFR 312.32(c) expedited-reporting clock."
+        />
+      ) : (
+        <>
+          {lead && (
+            <AnswerLead
+              tone={lead.tone}
+              headline={lead.head}
+              body={lead.body}
+              action={{ label: lead.next, onClick: () => ask(lead.next) }}
+            />
+          )}
 
       <div className="sn-cols">
         {/* Left -- case queue + structured fields */}
@@ -131,7 +167,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                     <span className="mono sn-case-id">{c.id}</span>
                     <span className={'sn-chip ' + (serious ? 'err' : 'idle')}>{serious ? 'Serious' : 'Non-serious'}</span>
                   </div>
-                  <div className="sn-case-subj">{c.age}{c.sex === 'Female' ? 'F' : 'M'} -- {c.event.term}</div>
+                  <div className="sn-case-subj">{c.age}{c.sex === 'Female' ? 'F' : c.sex ? 'M' : ''} -- {c.event.term}</div>
                   <div className="sn-case-meta">
                     <span className="sn-case-drug">{c.studyDrug}</span>
                     <span className={'sn-due ' + (c.dueDays <= 3 ? 'urgent' : '')}>{c.due}</span>
@@ -198,7 +234,10 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                 <button className="bs-da" onClick={() => ask('Review this SAE narrative for ' + sel.id + ' (' + sel.event.term + ') and flag any medical-review or consistency issues before I file it.')}>
                   {I.sparkles} Review with AnA
                 </button>
-                <button className="bs-da alt" onClick={() => fire('Narrative version saved to ' + sel.id)}>
+                {/* MOCK ACTION (flagged): no case-narrative version-write endpoint
+                    exists, so this button persists nothing. Copy softened so it does
+                    not claim a save that did not occur. */}
+                <button className="bs-da alt" onClick={() => fire('Narrative versioning isn’t wired to the safety store yet — nothing was saved')}>
                   {I.check} Save version
                 </button>
               </div>
@@ -207,9 +246,9 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
               <div className="cm-doc-render">
                 <h1>Serious adverse event case narrative</h1>
                 <p style={{ fontFamily: 'var(--font-mono,monospace)', fontSize: 12, color: 'var(--text-400)' }}>{sel.id} -- {sel.clock}</p>
-                {/* Live expedited-reporting clock — computed server-side per 21 CFR 312.32(c)
-                    / ICH E2A from awareness date + seriousness/causality/expectedness. Shown
-                    only when present (live store); falls back to the static clock line above. */}
+                {/* Expedited-reporting clock — computed server-side per 21 CFR 312.32(c)
+                    / ICH E2A from awareness date + seriousness/causality/expectedness, and
+                    returned on every real case row. The static clock line above is the stored label. */}
                 {sel.reportingCategory && (
                   <div
                     style={{
@@ -279,6 +318,8 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }
