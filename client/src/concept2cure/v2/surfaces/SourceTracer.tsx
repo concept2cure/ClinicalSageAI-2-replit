@@ -1,56 +1,139 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { useLiveData, EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
-import {
-  ST_SOURCETYPES, ST_SECTIONS, ST_VSTATUS, stVerify,
-} from '../fixtures/source-tracer-data';
-import type { StVerifyOutput } from '../fixtures/source-tracer-data';
+import { ST_SOURCETYPES, ST_VSTATUS } from '../fixtures/source-tracer-data';
+
+/* Real source-tracer read-model — GET /api/source-tracer/sections
+   ({ data: { sections } }). Every sentence is a persisted, org-scoped
+   source_citations row joined to its document; no provenance is fabricated.
+   The service fail-closes (503) when the provenance store is unmigrated. */
+interface StSentence {
+  idx: number;
+  sourceType: string;
+  conf: number;
+  text: string;
+  sourceTitle: string;
+  sourceId: string;
+  sourceUrl?: string | null;
+  pmid?: string;
+  doi?: string;
+}
+interface StSection {
+  id: string;
+  doc: string;
+  sec: string;
+  module?: string | null;
+  status: string;
+  model: string;
+  sentences: StSentence[];
+}
+interface StVerifyResult { id?: string; status: string }
+interface StVerify {
+  results: StVerifyResult[];
+  summary: { verified: number; notFound: number; unverifiable: number; error: number };
+}
 
 /* ---- Source tracer — provenance for every sentence AnA writes ---- */
 
-export function SourceTracer({ onAsk, onNav }: SurfaceViewProps) {
+export function SourceTracer({ onAsk }: SurfaceViewProps) {
   const ST = ST_SOURCETYPES;
   const ask = onAsk || (() => {});
-  const open = (id: string) => {
-    if (!id) return;
-    try { localStorage.setItem('c2c_open_surface', id); } catch (_e) { /* swallow */ }
-    onNav && onNav(id);
-  };
-  const [selId, setSel] = useState(ST_SECTIONS[0].id);
-  const [verify, setVerify] = useState<StVerifyOutput | null>(null);
-  const [analyzed, setAnalyzed] = useState(false);
-  useEffect(() => { setVerify(null); setAnalyzed(false); }, [selId]);
+  const st = useLiveData<{ sections: StSection[] }>('/api/source-tracer/sections');
+  const sections = st.data?.sections ?? [];
 
-  const sec = ST_SECTIONS.find(s => s.id === selId) || ST_SECTIONS[0];
-  const stTone = (s: string) => s === 'approved' ? 'ok' : s === 'review' ? 'warn' : 'idle';
-  const allSents = ST_SECTIONS.flatMap(s => s.sentences);
+  const [selId, setSel] = useState<string | null>(null);
+  const [verify, setVerify] = useState<StVerify | null>(null);
+  const [verifying, setVerifying] = useState(false);
+
+  // Default the selection to the first real section once they load.
+  useEffect(() => {
+    if (selId == null && sections.length) setSel(sections[0].id);
+  }, [sections, selId]);
+  useEffect(() => { setVerify(null); }, [selId]);
+
+  const sec = sections.find(s => s.id === selId) || sections[0] || null;
+  const stTone = (s: string) => (s === 'approved' ? 'ok' : s === 'review' ? 'warn' : 'idle');
+  const allSents = sections.flatMap(s => s.sentences);
   const litAll = allSents.filter(s => s.sourceType === 'literature');
   const weak = allSents.filter(s => s.conf < 0.7);
-  const secLits = sec.sentences.filter(s => s.sourceType === 'literature');
-  const runVerify = () => setVerify(stVerify(sec));
+  const secLits = sec ? sec.sentences.filter(s => s.sourceType === 'literature') : [];
+
+  /* Real citation verification — POST /api/citations/verify checks each
+     literature citation against PubMed + CrossRef and returns a per-citation
+     status + summary. No fabricated verdict. */
+  const runVerify = async () => {
+    if (!sec || secLits.length === 0 || verifying) return;
+    setVerifying(true);
+    try {
+      const res = await apiRequest('POST', '/api/citations/verify', {
+        citations: secLits.map(s => ({
+          id: s.sourceId,
+          title: s.sourceTitle,
+          ...(s.pmid ? { pmid: s.pmid } : {}),
+          ...(s.doi ? { doi: s.doi } : {}),
+        })),
+      });
+      const body = await res.json().catch(() => null);
+      setVerify(res.ok && body?.data ? (body.data as StVerify) : null);
+    } catch {
+      setVerify(null);
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  // Four-state on the real read-model — never a fabricated stand-in.
+  if (st.loading) {
+    return (
+      <div className="sp"><div style={{ padding: 24 }}><EmptyState title="Loading source provenance…" icon={I.clock} /></div></div>
+    );
+  }
+  if (st.error) {
+    return (
+      <div className="sp"><div style={{ padding: 24 }}>
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load source provenance"
+          hint="The source-tracer service didn't respond (the provenance store may not be provisioned for this organization yet). Sign in and retry — nothing is shown from a cached sample."
+        />
+      </div></div>
+    );
+  }
+  if (!sec || sections.length === 0) {
+    return (
+      <div className="sp"><div style={{ padding: 24 }}>
+        <EmptyState
+          icon={I.shieldCheck || I.check}
+          title="No traced document sections yet"
+          hint="Once AnA writes governed document sections, every sentence's typed source and confidence appears here — provenance for each claim, checkable against PubMed and CrossRef. Nothing here is simulated."
+        />
+      </div></div>
+    );
+  }
 
   return (
     <div className="sp">
-      <SampleTag sample={true} />
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Provenance / 21 CFR Part 11</div>
-          <h1 className="sp-title">Source tracer <span className="st-pill">Sample data</span></h1>
+          <h1 className="sp-title">Source tracer</h1>
           <p className="sp-state">Every sentence AnA writes carries a typed source and a confidence score — trial data, literature, regulatory guidance, or internal data. Literature citations are checked against PubMed and CrossRef. No untraceable number reaches a submission.</p>
         </div>
-        <button className="sp-primary" onClick={runVerify}>{I.shieldCheck} Verify sources</button>
+        <button className="sp-primary" onClick={runVerify} disabled={verifying || secLits.length === 0}>{I.shieldCheck} {verifying ? 'Verifying…' : 'Verify sources'}</button>
       </div>
 
       <AnswerLead
         tone={weak.length ? 'calm' : 'good'}
         eyebrow="Whether every number in your dossier traces to a real source"
-        headline={<>Every one of the <b>{allSents.length}</b> sentences across your Module&nbsp;2 and 3 summaries traces to a typed source — each with a confidence score.</>}
+        headline={<>Every one of the <b>{allSents.length}</b> traced sentences across your generated sections carries a typed source — each with a confidence score.</>}
         body={<><b>{litAll.length}</b> of them cite published literature. I can check those against PubMed and CrossRef right now, so an untraceable citation never reaches the submission.</>}
         reassure={weak.length
-          ? <>One citation is a conference abstract I cannot confirm in PubMed — I have flagged it so it does not slip through.</>
+          ? <><b>{weak.length}</b> sentence{weak.length > 1 ? 's' : ''} carr{weak.length > 1 ? 'y' : 'ies'} a confidence below 70% — flagged so nothing unverified slips through.</>
           : <>Every citation is confirmable against a public index.</>}
         action={{
           label: 'Verify ' + sec.doc.split('/')[0].trim() + ' citations',
@@ -63,10 +146,10 @@ export function SourceTracer({ onAsk, onNav }: SurfaceViewProps) {
 
       <div className="sp-2col" style={{ gridTemplateColumns: '296px 1fr' }}>
         <div className="pj-card" style={{ alignSelf: 'start' }}>
-          <div className="pj-card-h"><span className="t">Generated sections</span><span className="s">{ST_SECTIONS.length}</span></div>
+          <div className="pj-card-h"><span className="t">Generated sections</span><span className="s">{sections.length}</span></div>
           <div className="pj-card-b" style={{ padding: 8 }}>
             <div className="sp-list">
-              {ST_SECTIONS.map(s => {
+              {sections.map(s => {
                 const lit = s.sentences.filter(x => x.sourceType === 'literature').length;
                 return (
                   <button key={s.id} className="sp-row" style={{ width: '100%', textAlign: 'left', borderRadius: 8, padding: '9px 10px', border: selId === s.id ? '1px solid var(--accent-muted)' : '1px solid transparent', background: selId === s.id ? 'var(--accent-000)' : 'transparent' }} onClick={() => setSel(s.id)}>
@@ -80,7 +163,7 @@ export function SourceTracer({ onAsk, onNav }: SurfaceViewProps) {
         </div>
 
         <div>
-          {/* Per-sentence provenance — the real SourceLink shape */}
+          {/* Per-sentence provenance — the real source_citations rows */}
           <div className="pj-card" style={{ marginBottom: 14 }}>
             <div className="pj-card-h"><span className="t">{sec.doc} / {'§'}{sec.sec}</span><span className="s">{sec.model}</span></div>
             <div className="pj-card-b">
@@ -97,23 +180,20 @@ export function SourceTracer({ onAsk, onNav }: SurfaceViewProps) {
                         <span className="st-sent-title">{s.sourceTitle}</span>
                         {s.pmid && <span className="st-pmid">PMID {s.pmid}</span>}
                         <span className={'st-conf' + (low ? ' low' : '')} title="model confidence">{Math.round(s.conf * 100)}%</span>
-                        {s.surface && <button className="sp-go" title="Open source" onClick={() => open(s.surface!)}>{I.externalLink || I.right}</button>}
+                        {s.sourceUrl && <a className="sp-go" href={s.sourceUrl} target="_blank" rel="noreferrer" title="Open source">{I.externalLink || I.right}</a>}
                       </div>
                     </div>
                   );
                 })}
               </div>
               <div className="cm-pushbar" style={{ marginTop: 14 }}>
-                <button className="sp-ask" onClick={() => { setAnalyzed(true); }}>{I.sparkles} Analyze for untraced claims</button>
+                <button className="sp-ask" onClick={() => ask('Analyze ' + sec.doc + ' ' + '§' + sec.sec + ' for any claim without a traceable source and flag each one.')}>{I.sparkles} Analyze for untraced claims</button>
                 <button className="sp-ask" onClick={() => ask('Show the full audit trail for ' + sec.doc + ' ' + '§' + sec.sec + ' including who approved each source.')}>{I.history} View audit trail</button>
               </div>
-              {analyzed && (
-                <div className="st-analyze">{I.check} AnA analyzed <b>{sec.doc}</b> via <code>/sources/analyze</code> — <b>{sec.sentences.length} claims found</b>, all {sec.sentences.length} linked to a typed source. 0 untraced.</div>
-              )}
             </div>
           </div>
 
-          {/* Citation verification — real /api/citations/verify */}
+          {/* Citation verification — real POST /api/citations/verify */}
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Citation verification</span><span className="s">PubMed + CrossRef / /api/citations/verify</span></div>
             <div className="pj-card-b">
@@ -125,12 +205,12 @@ export function SourceTracer({ onAsk, onNav }: SurfaceViewProps) {
                   <div className="sp-list">
                     {secLits.map(s => {
                       const r = verify && verify.results.find(x => x.id === s.sourceId);
-                      const st = r ? ST_VSTATUS[r.status] : null;
+                      const stv = r ? ST_VSTATUS[r.status] : null;
                       return (
                         <div key={s.sourceId} className="sp-row">
                           <span className="sp-q-ic">{I.fileText}</span>
                           <span className="sp-row-b"><span className="sp-row-t" style={{ fontSize: 12.5 }}>{s.sourceTitle}</span><span className="sp-row-s">{s.pmid ? ('PMID ' + s.pmid) : 'no index identifier'}{s.doi ? (' / DOI ' + s.doi) : ''}</span></span>
-                          {st ? <span className={'rd-chip tone-' + st.t}>{st.l}</span> : <span className="st-unchecked">not checked</span>}
+                          {stv ? <span className={'rd-chip tone-' + stv.t}>{stv.l}</span> : <span className="st-unchecked">not checked</span>}
                         </div>
                       );
                     })}
@@ -145,7 +225,7 @@ export function SourceTracer({ onAsk, onNav }: SurfaceViewProps) {
                     </div>
                   )}
                   <div className="cm-pushbar" style={{ marginTop: 12 }}>
-                    <button className="sp-primary" style={{ padding: '8px 14px' }} onClick={runVerify}>{I.shieldCheck} {verify ? 'Re-verify' : 'Verify'} against PubMed and CrossRef</button>
+                    <button className="sp-primary" style={{ padding: '8px 14px' }} onClick={runVerify} disabled={verifying}>{I.shieldCheck} {verifying ? 'Verifying…' : (verify ? 'Re-verify' : 'Verify')} against PubMed and CrossRef</button>
                   </div>
                 </>
               )}
