@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-20T04:34:55.008Z",
+  "generatedAt": "2026-07-20T23:07:10.421Z",
   "git": {
-    "sha": "350faadc27a7aa62161e02316e1d2be13cfa22da",
+    "sha": "879d9460f938d53a7e1747109cf727a12799fa94",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1120,15 +1120,6 @@
         ]
       },
       {
-        "basename": "projectdetail",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/components/concept2cure-projects/ProjectDetail.tsx",
-          "client/src/concept2cure/projects/ProjectDetail.tsx",
-          "client/src/concept2cure/v2/surfaces/ProjectDetail.tsx"
-        ]
-      },
-      {
         "basename": "projecthome",
         "count": 3,
         "paths": [
@@ -2002,6 +1993,14 @@
         "paths": [
           "tests/server/project-module-bridge.test.ts",
           "tests/services/project-module-bridge.test.ts"
+        ]
+      },
+      {
+        "basename": "projectdetail",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/components/concept2cure-projects/ProjectDetail.tsx",
+          "client/src/concept2cure/projects/ProjectDetail.tsx"
         ]
       },
       {
@@ -2898,7 +2897,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 174,
+      "duplicateGroups": 173,
       "largeByBytes": 0,
       "largeByLines": 1
     },

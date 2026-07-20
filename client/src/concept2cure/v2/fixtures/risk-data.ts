@@ -10,6 +10,11 @@ export interface RiskControl {
 
 export interface RiskRow {
   id: string;
+  /** Real numeric risk_items.id, carried for the :id write routes (PATCH /risk-
+   *  items/:id, POST /risk-items/:id/controls — both require a numeric id).
+   *  `id` above is the display ref_code; optional because a not-yet-persisted
+   *  optimistic row (should not occur now that adds are awaited) has none. */
+  dbId?: number;
   hazard: string;
   situation: string;
   harm: string;

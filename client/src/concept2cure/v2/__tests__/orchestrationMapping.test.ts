@@ -62,8 +62,9 @@ describe('mapReadiness', () => {
     });
     expect(r!.findings.rules).toHaveLength(2);
     expect(r!.findings.rules.map((f) => f.sev)).toEqual(['warning', 'advisory']);
-    // No ai-inferred class exists server-side — the group stays fixture-backed.
-    expect(r!.findings.ai.length).toBeGreaterThan(0);
+    // No ai-inferred class exists server-side — the ai group is honestly empty
+    // (the surface no longer injects a fixture for it).
+    expect(r!.findings.ai).toHaveLength(0);
   });
 
   it('marks status ready only when the engine says ready', () => {

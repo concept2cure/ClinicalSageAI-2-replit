@@ -16,7 +16,11 @@ import '../styles/ana-v2.css';
      - Recs       POST /api/orchestration/recommendations      (REAL)
      - Gate       POST /api/orchestration/pre-submission-gate  (REAL)
      - Workflows  GET  /api/orchestration/templates            (REAL)
-   The role lens below is canonical RBAC config (kept, inlined here).
+     - Run wf     POST /api/orchestration/execute              (REAL · audited)
+     - Dispatch   POST /api/ai-actions/execute                 (REAL · audited)
+   The two ACTIONS (Run a workflow, Dispatch a recommendation) now hit those
+   real executors — confirm → run → honest result, never a fabricated step
+   animation. The role lens below is canonical RBAC config (kept, inlined).
    ════════════════════════════════════════════════════════════════════════ */
 
 /* ── Canonical display config (kit constants) ── */
@@ -99,16 +103,23 @@ interface Continuity {
 }
 
 /* POST /api/orchestration/recommendations → RecommendationSet. module /
-   targetObjectTitle / actionPayload are optional in the real type. */
+   targetObjectTitle / actionPayload are optional in the real type.
+   `actionPayload` is the engine's machine-executable handle: its actionType is
+   EITHER a real AIActionType (dispatch → /api/ai-actions/execute) OR a workflow
+   template id (dispatch → /api/orchestration/execute). Dispatch routes on which
+   (see dispatchRec). When it's absent the recommendation carries no executable
+   action, so Dispatch honestly hands the suggestion to AnA instead. */
 interface Rec {
   id: string;
   severity: string;
   module?: string;
   targetObjectType: string;
+  targetObjectId: string | number;
   targetObjectTitle?: string;
   reason: string;
   evidence: string[];
   suggestedAction: string;
+  actionPayload?: { actionType: string; payload?: Record<string, unknown> };
   confidence: number;
 }
 interface RecommendationSet { recommendations: Rec[] }
@@ -131,14 +142,75 @@ interface Gate {
 }
 
 /* GET /api/orchestration/templates → { templates: [...] }. The route exposes
-   stepCount (a number), NOT the step array — so no client-side step-by-step
-   execution can be driven from real data (see the removed mock ACTION below). */
+   stepCount (a number), NOT the step array — so the Run action can't animate a
+   live step-by-step bar. Instead it awaits the synchronous executor (POST
+   /execute runs every step server-side, then returns the terminal execution)
+   and renders the REAL final step statuses. No fabricated animation. */
 interface WorkflowTpl {
   templateId: string;
   name: string;
   description: string;
   stepCount: number;
   estimatedDurationMinutes: number;
+}
+
+/* POST /api/orchestration/execute → WorkflowExecution. Runs synchronously to a
+   terminal state (completed | failed) then returns it; only the fields rendered
+   here. steps[].errors and result.* are honest server output. */
+interface ExecStep { stepId: string; name: string; status: string; errors?: { code: string; message: string }[] }
+interface ExecResult {
+  executionId: string;
+  templateId: string;
+  status: string;
+  steps: ExecStep[];
+  totalDurationMs?: number;
+  result?: {
+    summary?: string;
+    blockers?: { message: string }[];
+    createdObjects?: { type: string; id: string | number; title?: string }[];
+    updatedObjects?: { type: string; id: string | number; title?: string }[];
+  };
+}
+
+/* POST /api/ai-actions/execute → AIActionResponse (synchronous branch). status
+   may be 'queued' when the action was routed to the async worker — surfaced
+   honestly as "queued", never claimed done. */
+interface ActionResp {
+  success: boolean;
+  status: string;
+  createdObjects?: { type: string; id: string | number; title?: string }[];
+  updatedObjects?: { type: string; id: string | number; title?: string }[];
+  warnings?: string[];
+  errors?: { code: string; message: string }[];
+}
+
+/* Normalized display shape both executors fold into, so one modal renders
+   either an orchestration run or an AI-action dispatch without fabrication. */
+interface ObjRef { type: string; id: string | number; title?: string }
+interface RunOutcome {
+  ok: boolean;
+  kind: 'workflow' | 'action';
+  title: string;
+  status: string;                // terminal status token, verbatim from server
+  summary: string;
+  queued: boolean;
+  steps: { name: string; status: string; error?: string }[];
+  created: ObjRef[];
+  updated: ObjRef[];
+  blockers: string[];
+  warnings: string[];
+  errors: string[];
+}
+
+/* A pending, not-yet-confirmed run. Executing a workflow / AI action mutates
+   regulatory objects and is audited, so the modal shows this first and only
+   fires the POST on explicit confirm. */
+interface PendingRun {
+  title: string;
+  desc: string;
+  kind: 'workflow' | 'action';
+  endpoint: string;
+  body: Record<string, unknown>;
 }
 
 /* Stable empty identities so the hooks/memos below never thrash on a fresh
@@ -183,6 +255,47 @@ function useLivePost<T>(path: string, projectId: number | null, enabled = true):
   return state;
 }
 
+/* ── Executor result → RunOutcome (verbatim server fields, no fabrication) ── */
+
+function normWorkflow(e: ExecResult, title: string): RunOutcome {
+  const r = e.result;
+  const failed = e.status === 'failed';
+  return {
+    ok: e.status === 'completed',
+    kind: 'workflow',
+    title,
+    status: e.status,
+    summary: r?.summary || (failed ? 'The workflow stopped before completing.' : `Workflow ${e.status}.`),
+    queued: false,
+    steps: (e.steps || []).map(s => ({ name: s.name, status: s.status, error: s.errors?.[0]?.message })),
+    created: r?.createdObjects || [],
+    updated: r?.updatedObjects || [],
+    blockers: (r?.blockers || []).map(b => b.message),
+    warnings: [],
+    errors: failed ? (e.steps || []).flatMap(s => (s.errors || []).map(x => x.message)) : [],
+  };
+}
+
+function normAction(a: ActionResp, title: string): RunOutcome {
+  const queued = a.status === 'queued';
+  return {
+    ok: !!a.success,
+    kind: 'action',
+    title,
+    status: a.status,
+    summary: queued
+      ? 'Queued for processing — AnA will run it in the background.'
+      : a.success ? 'Action completed.' : (a.errors?.[0]?.message || 'The action did not complete.'),
+    queued,
+    steps: [],
+    created: a.createdObjects || [],
+    updated: a.updatedObjects || [],
+    blockers: [],
+    warnings: a.warnings || [],
+    errors: (a.errors || []).map(x => x.message),
+  };
+}
+
 /* ════ AnA Command Center ════ */
 
 export function AnaCommand({ onAsk }: SurfaceViewProps) {
@@ -198,6 +311,15 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
   const [gateOpen, setGateOpen] = useState(false);
   const [toast, setToast] = useState('');
   const fire = (m: string) => { setToast(m); setTimeout(() => setToast(''), 2600); };
+
+  /* Action runner — a run is staged (pending confirm), in flight, done, or
+     errored. Executing mutates + audits, so nothing fires until confirm. */
+  const [pending, setPending] = useState<PendingRun | null>(null);
+  const [running, setRunning] = useState(false);
+  const [outcome, setOutcome] = useState<RunOutcome | null>(null);
+  const [runErr, setRunErr] = useState('');
+  const runOpen = pending != null || running || outcome != null || runErr !== '';
+  const closeRun = () => { setPending(null); setRunning(false); setOutcome(null); setRunErr(''); };
 
   /* Select the first (most-attention) program once the real rollup resolves,
      and re-point if the current selection leaves the set. Loop-safe: `programs`
@@ -230,6 +352,89 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
      { templates: [...] }, so read via useLiveData and pull `.templates`. */
   const templates = useLiveData<{ templates: WorkflowTpl[] }>('/api/orchestration/templates');
   const tpls: WorkflowTpl[] = templates.data?.templates ?? EMPTY_TPLS;
+
+  /* Which actionTypes are workflow templates vs AI actions — Dispatch routes a
+     recommendation to the right executor based on this membership. */
+  const tplIds = useMemo(() => new Set(tpls.map(t => t.templateId)), [tpls]);
+
+  /* Fire a confirmed run against its real executor. Sync workflows return a
+     terminal WorkflowExecution; AI actions return an AIActionResponse (possibly
+     queued). Both fold into RunOutcome; any failure surfaces honestly. */
+  async function executeRun(p: PendingRun) {
+    setPending(null);
+    setRunErr('');
+    setOutcome(null);
+    setRunning(true);
+    try {
+      const res = await apiRequest('POST', p.endpoint, p.body);
+      const body = await res.json().catch(() => null);
+      // AI-action async-queue branch (202): honest "queued", never "done".
+      if (res.status === 202 && body?.queued) {
+        setOutcome({
+          ok: true, kind: 'action', title: p.title, status: 'queued',
+          summary: typeof body.message === 'string' ? body.message : 'Queued for background processing.',
+          queued: true, steps: [], created: [], updated: [], blockers: [], warnings: [], errors: [],
+        });
+        return;
+      }
+      if (!res.ok) {
+        const msg = body?.error || body?.errors?.[0]?.message || `The executor returned HTTP ${res.status}.`;
+        setRunErr(String(msg));
+        return;
+      }
+      setOutcome(p.kind === 'workflow'
+        ? normWorkflow(body as ExecResult, p.title)
+        : normAction(body as ActionResp, p.title));
+    } catch (e) {
+      setRunErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  /* Stage a workflow-template Run — confirm first (it mutates + audits). */
+  function askRunWorkflow(t: WorkflowTpl) {
+    if (pid == null) return;
+    setPending({
+      title: t.name,
+      desc: `Runs "${t.name}" (${t.stepCount} step${t.stepCount === 1 ? '' : 's'}, ~${t.estimatedDurationMinutes}m) against ${progLabel}. Executes real steps that may create or update objects; the run is recorded to the audit trail.`,
+      kind: 'workflow',
+      endpoint: '/api/orchestration/execute',
+      body: { templateId: t.templateId, projectId: pid },
+    });
+  }
+
+  /* Dispatch a recommendation to its real executor. Routes on actionType: a
+     workflow template → /orchestration/execute; a real AI action →
+     /ai-actions/execute. No actionPayload → honest hand-off to AnA chat. */
+  function dispatchRec(r: Rec) {
+    if (pid == null) return;
+    const label = r.targetObjectTitle || r.targetObjectType;
+    const ap = r.actionPayload;
+    if (ap && tplIds.has(ap.actionType)) {
+      setPending({
+        title: r.suggestedAction,
+        desc: `Runs the "${ap.actionType}" workflow against ${progLabel} to carry out: ${r.suggestedAction}. May create or update objects; recorded to the audit trail.`,
+        kind: 'workflow',
+        endpoint: '/api/orchestration/execute',
+        body: { templateId: ap.actionType, projectId: pid },
+      });
+    } else if (ap) {
+      const targetType = (ap.payload?.targetType as string) || r.targetObjectType;
+      const targetId = (ap.payload?.targetId as string | number | undefined) ?? r.targetObjectId;
+      setPending({
+        title: r.suggestedAction,
+        desc: `Executes "${ap.actionType}" on ${label}. May create or update objects; recorded to the audit trail.`,
+        kind: 'action',
+        endpoint: '/api/ai-actions/execute',
+        body: { actionType: ap.actionType, targetType, targetId, projectId: pid, module: r.module, payload: ap.payload ?? {}, sourceSurface: 'recommendation' },
+      });
+    } else {
+      // No machine-executable action attached — hand the suggestion to AnA.
+      fire('Sent to AnA · ' + label);
+      ask(r.suggestedAction);
+    }
+  }
 
   const roleObj = AC_ROLES.find(r => r.id === role) || AC_ROLES[0];
   const recs = useMemo(
@@ -425,11 +630,12 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                       <div className="ac-rec-ev">{(r.evidence || []).map((e, i) => (<span key={i} className="ac-rec-evi">{I.dot || null} {e}</span>))}</div>
                       <div className="ac-rec-act">
                         <span className="ac-rec-sa">{r.suggestedAction}</span>
-                        {/* Dispatch hands the recommendation to AnA in chat. FLAG: a real
-                            executor exists (POST /api/ai-actions/execute) but needs
-                            targetType + projectId the recommendation payload doesn't
-                            carry — left for the actions pass, not half-wired here. */}
-                        <button className="ac-rec-run" onClick={() => { fire('Sent to AnA · ' + (r.targetObjectTitle || r.targetObjectType)); ask(r.suggestedAction); }}>{Ico.play || I.arrowRight} Dispatch</button>
+                        {/* Dispatch routes to the recommendation's real executor:
+                            a workflow template → /orchestration/execute, a real AI
+                            action → /ai-actions/execute (both audited, confirm-gated).
+                            When the engine attached no actionPayload the button reads
+                            "Ask AnA" and honestly hands the suggestion to chat. */}
+                        <button className="ac-rec-run" onClick={() => dispatchRec(r)}>{Ico.play || I.arrowRight} {r.actionPayload ? 'Dispatch' : 'Ask AnA'}</button>
                       </div>
                     </div>
                   ))
@@ -437,14 +643,13 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
               </div>
 
               <div className="ac-sec">{Ico.workflow || Ico.gitBranch || I.dot} AnA workflows <span className="ac-sec-x">-- multi-step, run it for me</span></div>
-              {/* Workflow templates are real (GET /api/orchestration/templates). FLAG:
-                  the former "Run" opened a fabricated setTimeout step animation that
-                  claimed the workflow completed ("Draft created, validated, and
-                  routed"); that mock ACTION is removed. The route also returns only
-                  stepCount, not the step array, so no honest step-by-step client
-                  execution is possible. Running hands off to AnA; wiring the real
-                  executor (POST /api/orchestration/execute + GET /executions/:id) is
-                  an actions-pass task. */}
+              {/* Workflow templates are real (GET /api/orchestration/templates).
+                  "Run" now confirms, then POSTs the synchronous executor
+                  (/api/orchestration/execute) and renders the TERMINAL execution —
+                  real step statuses, summary, blockers, created/updated objects.
+                  The old fabricated setTimeout step animation stays removed; the
+                  executor returns terminal state (no step stream), so the in-flight
+                  UI is an honest spinner, not a faked progress bar. */}
               {templates.loading ? (
                 <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading workflows…</div>
               ) : templates.error ? (
@@ -459,7 +664,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
               ) : (
                 <div className="ac-tpls">
                   {tpls.map(t => (
-                    <button key={t.templateId} className="ac-tpl" onClick={() => ask('Run the "' + t.name + '" workflow on ' + progLabel + ' and report each step as it completes.')}>
+                    <button key={t.templateId} className="ac-tpl" onClick={() => askRunWorkflow(t)}>
                       <div className="ac-tpl-top"><span className="ac-tpl-n">{t.name}</span><span className="ac-tpl-meta">{t.stepCount} step{t.stepCount === 1 ? '' : 's'} · ~{t.estimatedDurationMinutes}m</span></div>
                       <div className="ac-tpl-d">{t.description}</div>
                       <span className="ac-tpl-run">{Ico.play || I.arrowRight} Run</span>
@@ -529,6 +734,103 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Action runner — confirm → run → honest result, for both a workflow Run
+          and a recommendation Dispatch. Renders only real executor output. */}
+      {runOpen && (
+        <div className="ac-gate-bd" onClick={closeRun}>
+          <div className="ac-gate" onClick={e => e.stopPropagation()}>
+            <div className="ac-gate-top">
+              <div>
+                <div className="ac-gate-crumb">{outcome ? outcome.title : pending ? pending.title : 'Running…'}</div>
+                <div className="ac-gate-sub">
+                  {running ? 'Executing against the real orchestration backend — every step runs server-side.'
+                    : outcome ? (outcome.kind === 'workflow' ? 'Workflow execution · recorded to the audit trail' : 'AI action dispatch · recorded to the audit trail')
+                    : 'Review before running — this executes real steps and is audited'}
+                </div>
+              </div>
+              <button className="ac-gate-x" onClick={closeRun}>{I.close}</button>
+            </div>
+
+            {runErr ? (
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="The run didn't complete"
+                hint={runErr}
+              />
+            ) : running ? (
+              <div className="scaf-note" style={{ padding: '28px 16px' }}>Running… executing every step server-side, then showing the real result.</div>
+            ) : pending ? (
+              <>
+                <p className="ac-lead-p" style={{ padding: '6px 2px 16px' }}>{pending.desc}</p>
+                <div className="ac-gate-foot">
+                  <button className="ac-gate-ask" onClick={() => executeRun(pending)}>{Ico.play || I.arrowRight} Run now</button>
+                  <button className="ac-role" onClick={closeRun}>Cancel</button>
+                </div>
+              </>
+            ) : outcome ? (
+              <>
+                <div className={'ac-gate-verdict ' + (outcome.ok ? 'ok' : outcome.queued ? 'warn' : 'err')}>
+                  <span className="ac-gate-vt">{outcome.queued ? 'QUEUED' : (outcome.status || (outcome.ok ? 'DONE' : 'FAILED')).toUpperCase()}</span>
+                  <div className="ac-gate-rat"><div className="ac-gate-rr">{outcome.summary}</div></div>
+                </div>
+
+                {outcome.steps.length > 0 && (
+                  <div className="ac-changes" style={{ marginTop: 10 }}>
+                    {outcome.steps.map((s, i) => (
+                      <div key={i} className="ac-change">
+                        <span className={'ac-change-dot ' + (s.status === 'failed' ? 'err' : s.status === 'completed' ? 'ok' : s.status === 'skipped' ? 'idle' : 'ai')} />
+                        <div><div className="ac-change-d">{s.name}</div><div className="ac-change-m">{s.status}{s.error ? ' · ' + s.error : ''}</div></div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {outcome.blockers.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <div className="ac-sec warn">{I.alertTriangle} Blockers</div>
+                    {outcome.blockers.map((b, i) => (<div key={i} className="ac-attn-row"><div className="ac-attn-t">{b}</div></div>))}
+                  </div>
+                )}
+
+                {(outcome.created.length > 0 || outcome.updated.length > 0) && (
+                  <div className="ac-two" style={{ marginTop: 10 }}>
+                    <div>
+                      <div className="ac-sec ok">{Ico.checkCircle || I.check} Created</div>
+                      {outcome.created.map((o, i) => (<div key={i} className="ac-ready-row">{o.title || (o.type + ' #' + o.id)}</div>))}
+                      {outcome.created.length === 0 && <div className="ac-empty">Nothing created.</div>}
+                    </div>
+                    <div>
+                      <div className="ac-sec">{Ico.edit || Ico.pencil || I.dot} Updated</div>
+                      {outcome.updated.map((o, i) => (<div key={i} className="ac-ready-row">{o.title || (o.type + ' #' + o.id)}</div>))}
+                      {outcome.updated.length === 0 && <div className="ac-empty">Nothing updated.</div>}
+                    </div>
+                  </div>
+                )}
+
+                {outcome.warnings.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <div className="ac-sec warn">{I.alertTriangle} Warnings</div>
+                    {outcome.warnings.map((w, i) => (<div key={i} className="ac-empty">{w}</div>))}
+                  </div>
+                )}
+                {outcome.errors.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <div className="ac-sec err">{I.alertTriangle} Errors</div>
+                    {outcome.errors.map((e, i) => (<div key={i} className="ac-empty">{e}</div>))}
+                  </div>
+                )}
+
+                <div className="ac-gate-foot">
+                  <button className="ac-gate-ask" onClick={() => { ask('Explain the "' + outcome.title + '" result on ' + progLabel + ' and what to do next.'); closeRun(); }}>{I.sparkles} Ask AnA about this</button>
+                  <span className="ac-gate-audit">{Ico.lock || Ico.shield || I.check} Recorded to the audit trail · 21 CFR Part 11</span>
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
       )}

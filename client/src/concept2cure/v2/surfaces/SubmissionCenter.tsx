@@ -2,174 +2,160 @@
  * Submission Center — kit app/submission-center.jsx ported (registry id
  * `submission-center`, contract-ready).
  *
- * The reference answer-first surface (SCREENS.md §03): opens with a
- * plain-language dispatch verdict, not a grid. The 8 workspaces are scaffolded
- * from the REAL contract SUBMISSION_WORKSPACES (@shared/types/submission-ui) —
- * never hard-coded. The portfolio list binds live to GET /api/submissions
- * (live ?? fixture behind the SampleTag pill); the per-workspace detail data
- * (leaves, findings, sequences, shadow, cross-region) stays on the kit sample
- * shapes behind the pill until each endpoint is wired.
+ * Real-data standard (no mock in product): the 8 workspaces are scaffolded from
+ * the REAL contract SUBMISSION_WORKSPACES (@shared/types/submission-ui). The
+ * portfolio list binds live to GET /api/submissions and the per-submission
+ * sequences to GET /api/submissions/:id/sequences (both DB-backed via
+ * submission-service) with a four-state render — loading → error → honest empty
+ * → real. Slices with no load-time list read (Builder leaves are per-sequence;
+ * eValidator findings, shadow-review results, and cross-region gaps are
+ * POST/AI results, not a list GET) show an honest EmptyState instead of the
+ * kit's sample data. Every fixture presented as content, plus the SampleTag,
+ * has been removed; only the canonical enum/label/state-machine maps
+ * (SC_REGIONS / SC_APPTYPES / SC_LENSES / SC_SEQ_STATUS / SC_TRANSITIONS) are
+ * kept — real regulatory reference config, not sample data.
  */
 import React from 'react';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
-import { SampleTag, useLive, connected } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import {
+  // Canonical enum / label / state-machine maps (mirror shared/types/
+  // submission-constants + the server SEQUENCE_TRANSITIONS) — reference config,
+  // NOT sample data, so they stay.
   SC_APPTYPES,
-  SC_CROSSREGION,
-  SC_FINDINGS,
-  SC_FIND_SEV,
-  SC_FIND_STATUS,
-  SC_LEAVES,
   SC_LENSES,
-  SC_LIFECYCLE_OPS,
-  SC_PATHWAYS,
   SC_REGIONS,
   SC_SEQ_STATUS,
-  SC_SEQUENCES,
-  SC_SHADOW,
-  SC_SUBMISSIONS,
   SC_TRANSITIONS,
-  type ScSequence,
-  type ScSubmission,
   type ToneMap,
 } from '../fixtures/submission';
 import '../styles/submission-v2.css';
+
+/* ── Display types aligned to the canonical submission core's ACTUAL columns
+   (shared/schema/submissions.ts; server/services/submission-service). Only
+   columns the backend returns are typed; nullable columns are `| null` and
+   rendered null-safe — never fabricated. Notably `submissions` has no
+   `pathway`/`seqCount` (pathway lives on submission_regions; sequences are a
+   separate table) and its `status` enum is planning|active|submitted|archived
+   (distinct from the sequence status enum). ── */
+
+// GET /api/submissions → listSubmissions() → `submissions` rows.
+interface SubRow {
+  id: number;
+  title: string;
+  productName: string | null;
+  applicationType: string; // ind|nda|bla|anda|maa|510k|de_novo|pma|cta (SC_APPTYPES)
+  clientType: string; // pharma|biotech|mdx|ivd
+  primaryRegion: string; // fda|eu|jp (SC_REGIONS)
+  status: string; // planning|active|submitted|archived
+  lifecycleStage: string; // planning|original|amendment|response|variation|annual|withdrawal
+}
+
+// GET /api/submissions/:id/sequences → listSequences() → `ectd_sequences` rows.
+interface SeqRow {
+  id: number;
+  sequenceNumber: string; // '0000', '0001', …
+  type: string; // original|amendment|response|variation|annual|withdrawal
+  status: string; // draft|assembling|validated|frozen|dispatched (SC_SEQ_STATUS)
+  region: string; // fda|eu|jp
+  validationStatus: string | null; // pending|passed|failed — nullable column
+}
+
+// Deterministic display tone for the submission status enum (not sample data).
+const SUB_STATUS_TONE: Record<string, string> = {
+  planning: 'idle',
+  active: 'ai',
+  submitted: 'ok',
+  archived: 'idle',
+};
 
 function Chip({ map, k }: { map: Record<string, ToneMap>; k: string }) {
   const m = map[k] ?? { l: k, t: 'idle' };
   return <span className={`rd-chip tone-${m.t}`}>{m.l}</span>;
 }
 
-export function SubmissionCenter({
-  onAsk,
-  onNav,
-}: {
-  onAsk: (text: string) => void;
-  onNav: (id: string) => void;
-}) {
+export function SubmissionCenter({ onAsk }: { onAsk: (text: string) => void }) {
   const [ws, setWs] = React.useState('portfolio');
-  const [selSub, setSelSub] = React.useState('sub-204');
+  const [selSub, setSelSub] = React.useState<number | null>(null);
   const [lens, setLens] = React.useState('fda_filing');
-  const [ran, setRan] = React.useState(false);
-  const [toast, setToast] = React.useState<string | null>(null);
-  const toastTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const fireToast = (msg: string) => {
-    setToast(msg);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 3200);
-  };
 
-  const live = connected();
-  // GET /api/submissions — live ?? fixture (SampleTag reflects which).
-  const portfolio = useLive<{ submissions?: ScSubmission[] } | ScSubmission[]>(
-    '/api/submissions',
-    SC_SUBMISSIONS,
-    []
-  );
-  const submissions: ScSubmission[] = Array.isArray(portfolio.data)
-    ? portfolio.data
-    : portfolio.data?.submissions ?? SC_SUBMISSIONS;
-  const portfolioSample = portfolio.sample || !Array.isArray(submissions) || submissions.length === 0;
-  const list = submissions.length ? submissions : SC_SUBMISSIONS;
-
-  const [seqs, setSeqs] = React.useState<ScSequence[]>(SC_SEQUENCES);
-
+  // GET /api/submissions — real DB rows, honest empty, honest error (no fixture).
+  const subs = useLiveRows<SubRow>('/api/submissions');
+  const list = subs.rows;
   const sub = list.find((s) => s.id === selSub) ?? list[0];
+
+  // GET /api/submissions/:id/sequences — keyed on the selected submission (a real
+  // numeric id). Null path while no submission is selected → the hook stays idle
+  // and returns an empty list (no fixture). Not seeded into local state, so no
+  // re-render loop.
+  const seqPath = sub ? `/api/submissions/${sub.id}/sequences` : null;
+  const seqs = useLiveRows<SeqRow>(seqPath);
+
   const appL = (v: string) => SC_APPTYPES.find((a) => a.v === v)?.l ?? v;
-  const pathL = (v: string) => SC_PATHWAYS.find((a) => a.v === v)?.l ?? v;
   const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
-
-  const transition = (i: number, to: string) => {
-    setSeqs((s) => s.map((x, k) => (k === i ? { ...x, status: to } : x)));
-    fireToast(`Sequence ${seqs[i].seq} → ${SC_SEQ_STATUS[to].l}${live ? ' · POST /transition' : ''}`);
-  };
-
-  const openFindings = SC_FINDINGS.filter((f) => f.status === 'open').length;
-  const crit = SC_FINDINGS.filter((f) => f.status === 'open' && f.severity === 'critical');
-  const top = crit[0] ?? SC_FINDINGS.filter((f) => f.status === 'open')[0];
-  const clean = openFindings === 0;
+  const lensL = SC_LENSES.find((l) => l.v === lens)?.l ?? lens;
 
   return (
     <div className="sp sc-page">
       <div className="sp-head">
         <div>
-          <div className="sp-eyebrow">Submission · /api/submissions {live ? '· live' : ''}</div>
-          <h1 className="sp-title">
-            Submission Center <SampleTag sample={portfolioSample} />
-          </h1>
+          <div className="sp-eyebrow">Submission · GET /api/submissions</div>
+          <h1 className="sp-title">Submission Center</h1>
           <p className="sp-state">
             Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2
             / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract, each
-            wired to its endpoints and AnA tools.
+            backed by the canonical submission core and AnA tools.
           </p>
         </div>
-        <select className="sc-subpick" value={sub?.id} onChange={(e) => setSelSub(e.target.value)}>
-          {list.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.program} · {appL(s.appType)} · {regL(s.region)}
-            </option>
-          ))}
-        </select>
+        {list.length > 0 && (
+          <select
+            className="sc-subpick"
+            value={sub?.id ?? ''}
+            onChange={(e) => setSelSub(Number(e.target.value))}
+          >
+            {list.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.title} · {appL(s.applicationType)} · {regL(s.primaryRegion)}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {sub && (
         <AnswerLead
-          tone={crit.length ? 'urgent' : clean ? 'good' : 'calm'}
-          eyebrow={`Is your ${regL(sub.region)} ${appL(sub.appType)} sequence ready to transmit`}
+          tone="calm"
+          eyebrow={`Where ${sub.title} stands`}
           headline={
-            clean ? (
-              <>
-                Yes — the sequence validates clean. You&#39;re clear to freeze and dispatch to{' '}
-                {sub.region === 'fda' ? 'the ESG gateway' : 'the regional gateway'}.
-              </>
-            ) : (
-              <>
-                Not yet —{' '}
-                <b>
-                  {openFindings} validation {openFindings === 1 ? 'finding' : 'findings'}
-                </b>{' '}
-                {crit.length ? <>({crit.length} critical) </> : ''}stand between you and dispatch.
-              </>
-            )
+            <>
+              {sub.title}
+              {sub.productName ? ` (${sub.productName})` : ''} — a {regL(sub.primaryRegion)}{' '}
+              {appL(sub.applicationType)} at the <b>{sub.lifecycleStage}</b> stage.
+            </>
           }
           body={
-            clean ? (
+            seqs.loading ? (
+              <>Loading this submission&#39;s sequences…</>
+            ) : seqs.error ? (
               <>
-                Every eValidator rule passes and the lifecycle is at a dispatch-ready state. Run the
-                final dispatch QC and transmit; acknowledgements will track automatically.
-              </>
-            ) : top ? (
-              <>
-                The one that blocks technical validation: <b>{top.rule}</b> —{' '}
-                {top.msg.charAt(0).toLowerCase() + top.msg.slice(1)} Clear the criticals and the
-                gateway will accept the sequence.
+                This submission&#39;s sequences couldn&#39;t be loaded right now — open the Sequences
+                workspace to retry.
               </>
             ) : (
               <>
-                Work the open findings in Validation; they must reach zero before the ESG gateway will
-                accept the sequence.
+                <b>{seqs.rows.length}</b> eCTD {seqs.rows.length === 1 ? 'sequence' : 'sequences'}{' '}
+                tracked{seqs.rows.length ? '' : ' yet'}. Plan, assemble, validate and dispatch it
+                across the workspaces below; validation findings load per sequence once it is
+                assembled.
               </>
             )
           }
-          reassure={
-            crit.length
-              ? "These are fixable before you file — I'll explain each finding and draft the corrections, then re-run the validator with you."
-              : clean
-                ? "You're at the finish line. I'll run the dispatch QC and confirm the transmission."
-                : "You're close. I'll help you close out the remaining findings."
-          }
+          reassure="I can plan the sequence from the region profile, assemble the leaves, and walk the validation and dispatch gates with you."
           action={{
-            label: clean ? 'Run dispatch QC & transmit' : 'Fix the validation findings',
-            onClick: () => setWs(clean ? 'dispatch' : 'validation'),
-            alt: top
-              ? {
-                  label: `Explain ${top.id}`,
-                  onClick: () =>
-                    onAsk(`Explain validation finding ${top.id}: ${top.rule} — ${top.msg}`),
-                }
-              : undefined,
+            label: seqs.rows.length ? 'Open the sequences' : 'Plan the submission',
+            onClick: () => setWs(seqs.rows.length ? 'sequences' : 'planner'),
           }}
           secondary="Or move through the workspaces below — plan, build, validate, dispatch."
         />
@@ -186,9 +172,6 @@ export function SubmissionCenter({
             onClick={() => setWs(w.id)}
           >
             {w.label}
-            {w.id === 'validation' && openFindings > 0 && (
-              <span className="sc-ws-badge">{openFindings}</span>
-            )}
           </button>
         ))}
       </div>
@@ -200,50 +183,70 @@ export function SubmissionCenter({
             <button
               type="button"
               className="pj-card-h-go"
-              onClick={() => fireToast('New submission (POST /api/submissions)')}
+              onClick={() => onAsk('Start a new submission — create the canonical submission record.')}
             >
               + New submission
             </button>
           </div>
           <div className="pj-card-b pj-card-b-flush">
-            <table className="ub-inv">
-              <thead>
-                <tr>
-                  <th>Program</th>
-                  <th>Region</th>
-                  <th>Type</th>
-                  <th>Pathway</th>
-                  <th>Stage</th>
-                  <th>Status</th>
-                  <th className="ub-r">Sequences</th>
-                </tr>
-              </thead>
-              <tbody>
-                {list.map((s) => (
-                  <tr
-                    key={s.id}
-                    data-cur={s.id === sub?.id || undefined}
-                    className="sc-subrow"
-                    onClick={() => {
-                      setSelSub(s.id);
-                      setWs('sequences');
-                    }}
-                  >
-                    <td>
-                      <b>{s.program}</b>
-                    </td>
-                    <td>{regL(s.region)}</td>
-                    <td>{appL(s.appType)}</td>
-                    <td>{pathL(s.pathway)}</td>
-                    <td className="sc-cap">{s.stage}</td>
-                    <td>
-                      <Chip map={SC_SEQ_STATUS} k={s.status} />
-                    </td>
-                    <td className="ub-r">{s.seqCount}</td>
+            {subs.loading ? (
+              <div className="scaf-note" style={{ padding: '18px 10px' }}>
+                Loading submissions…
+              </div>
+            ) : subs.error ? (
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn't load the submissions"
+                hint="The canonical submission core didn't respond. These are your organization's submissions — sign in and retry, or check the service is reachable."
+              />
+            ) : subs.empty ? (
+              <EmptyState
+                icon={I.fileText}
+                title="No submissions yet"
+                hint="Create your first submission to plan, assemble, validate and dispatch a regulatory sequence. Each is governed and tracked here."
+              />
+            ) : (
+              <table className="ub-inv">
+                <thead>
+                  <tr>
+                    <th>Program</th>
+                    <th>Region</th>
+                    <th>Type</th>
+                    <th>Client</th>
+                    <th>Stage</th>
+                    <th>Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {list.map((s) => (
+                    <tr
+                      key={s.id}
+                      data-cur={s.id === sub?.id || undefined}
+                      className="sc-subrow"
+                      onClick={() => {
+                        setSelSub(s.id);
+                        setWs('sequences');
+                      }}
+                    >
+                      <td>
+                        <b>{s.title}</b>
+                        {s.productName ? <span className="sp-row-s"> · {s.productName}</span> : null}
+                      </td>
+                      <td>{regL(s.primaryRegion)}</td>
+                      <td>{appL(s.applicationType)}</td>
+                      <td className="sc-cap">{s.clientType}</td>
+                      <td className="sc-cap">{s.lifecycleStage}</td>
+                      <td>
+                        <span className={`rd-chip tone-${SUB_STATUS_TONE[s.status] ?? 'idle'}`}>
+                          {s.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       )}
@@ -251,31 +254,31 @@ export function SubmissionCenter({
       {ws === 'planner' && sub && (
         <div className="pj-card">
           <div className="pj-card-h">
-            <span className="t">Planner · {sub.program}</span>
+            <span className="t">Planner · {sub.title}</span>
             <span className="s">POST /:id/plan · GET /region-profiles</span>
           </div>
           <div className="pj-card-b">
             <div className="tl-spec-grid sc-spec">
               <div className="tl-spec-row">
                 <span className="tl-spec-k">Region</span>
-                <span className="tl-spec-v">{regL(sub.region)}</span>
+                <span className="tl-spec-v">{regL(sub.primaryRegion)}</span>
               </div>
               <div className="tl-spec-row">
                 <span className="tl-spec-k">Application</span>
-                <span className="tl-spec-v">{appL(sub.appType)}</span>
+                <span className="tl-spec-v">{appL(sub.applicationType)}</span>
               </div>
               <div className="tl-spec-row">
-                <span className="tl-spec-k">Pathway</span>
-                <span className="tl-spec-v">{pathL(sub.pathway)}</span>
+                <span className="tl-spec-k">Client type</span>
+                <span className="tl-spec-v sc-cap">{sub.clientType}</span>
               </div>
               <div className="tl-spec-row">
                 <span className="tl-spec-k">Lifecycle stage</span>
-                <span className="tl-spec-v sc-cap">{sub.stage}</span>
+                <span className="tl-spec-v sc-cap">{sub.lifecycleStage}</span>
               </div>
             </div>
             <div className="scaf-note sc-mt">
               AnA builds the sequence plan from the region profile — required modules, granularity,
-              regional Module 1, and the validation profile for {regL(sub.region)}.
+              regional Module 1, and the validation profile for {regL(sub.primaryRegion)}.
             </div>
             <div className="cm-pushbar sc-mt">
               <button
@@ -283,7 +286,7 @@ export function SubmissionCenter({
                 className="sp-primary sc-btn"
                 onClick={() =>
                   onAsk(
-                    `Plan the ${regL(sub.region)} ${appL(sub.appType)} submission for ${sub.program} from the region profile.`
+                    `Plan the ${regL(sub.primaryRegion)} ${appL(sub.applicationType)} submission for ${sub.title} from the region profile.`
                   )
                 }
               >
@@ -298,32 +301,22 @@ export function SubmissionCenter({
         <div className="pj-card">
           <div className="pj-card-h">
             <span className="t">Builder · eCTD leaves</span>
-            <span className="s">classify · extract · provenance</span>
+            <span className="s">GET /sequences/:seqId/leaves</span>
           </div>
           <div className="pj-card-b">
             <div className="scaf-note sc-mb">
               Each leaf carries a lifecycle operator (new / replace / append / delete). AnA classifies
               and extracts uploaded documents into the right leaf and traces provenance.
             </div>
-            <div className="sp-list">
-              {SC_LEAVES.map((l, i) => (
-                <div key={i} className="sp-row">
-                  <span className="sp-tag2">M{l.module}</span>
-                  <span className="sp-row-b">
-                    <span className="sp-row-t">{l.title}</span>
-                    <span className="sp-row-s sc-mono">{l.path}</span>
-                  </span>
-                  <Chip map={SC_LIFECYCLE_OPS} k={l.op} />
-                  <button
-                    type="button"
-                    className="cv-open"
-                    onClick={() => onAsk(`Trace provenance for leaf ${l.path}`)}
-                  >
-                    Provenance {I.right}
-                  </button>
-                </div>
-              ))}
-            </div>
+            {/* Backend gap: the leaves list is a per-SEQUENCE read
+                (GET /api/submissions/sequences/:seqId/leaves). This surface has no
+                sequence selection yet, so there is no id to read against — show an
+                honest empty rather than the kit's sample leaves. */}
+            <EmptyState
+              icon={I.layers}
+              title="No eCTD leaves to show here yet"
+              hint="The Builder tree loads a sequence's leaves once a sequence is selected. Open a sequence from the Sequences workspace, then classify and place its documents here."
+            />
           </div>
         </div>
       )}
@@ -331,39 +324,89 @@ export function SubmissionCenter({
       {ws === 'sequences' && sub && (
         <div className="pj-card">
           <div className="pj-card-h">
-            <span className="t">Sequences · {sub.program}</span>
+            <span className="t">Sequences · {sub.title}</span>
             <span className="s">draft → assembling → validated → frozen → dispatched</span>
           </div>
           <div className="pj-card-b">
-            <div className="sp-list">
-              {seqs.map((s, i) => (
-                <div key={i} className="sp-row">
-                  <span className="sp-tag2">{s.seq}</span>
-                  <span className="sp-row-b">
-                    <span className="sp-row-t sc-cap">{s.type} sequence</span>
-                    <span className="sp-row-s">
-                      {s.leaves} leaves · {regL(s.region)} · updated {s.updated}
-                    </span>
-                  </span>
-                  <Chip map={SC_SEQ_STATUS} k={s.status} />
-                  <span className="sc-trans">
-                    {(SC_TRANSITIONS[s.status] ?? []).map((to) => (
-                      <button
-                        key={to}
-                        type="button"
-                        className="sc-trans-b"
-                        onClick={() => transition(i, to)}
-                      >
-                        {I.right} {SC_SEQ_STATUS[to].l}
-                      </button>
-                    ))}
-                    {(SC_TRANSITIONS[s.status] ?? []).length === 0 && (
-                      <span className="sp-q-s">terminal</span>
-                    )}
-                  </span>
+            {seqs.loading ? (
+              <div className="scaf-note" style={{ padding: '18px 10px' }}>
+                Loading sequences…
+              </div>
+            ) : seqs.error ? (
+              <EmptyState
+                tone="error"
+                icon={I.alertTriangle}
+                title="Couldn't load the sequences"
+                hint="The submission core didn't return this submission's eCTD sequences. Retry, or check the service is reachable."
+              />
+            ) : seqs.empty ? (
+              <>
+                <EmptyState
+                  icon={I.gitBranch}
+                  title="No sequences yet"
+                  hint="Create the first eCTD sequence (0000) to begin assembling this submission."
+                />
+                <div className="cm-pushbar sc-mt">
+                  <button
+                    type="button"
+                    className="sp-primary sc-btn"
+                    onClick={() =>
+                      onAsk(
+                        `Create the original eCTD sequence (0000) for the ${regL(sub.primaryRegion)} ${appL(sub.applicationType)} submission ${sub.title}.`
+                      )
+                    }
+                  >
+                    {I.sparkles} Start sequence 0000
+                  </button>
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <div className="sp-list">
+                {seqs.rows.map((s) => (
+                  <div key={s.id} className="sp-row">
+                    <span className="sp-tag2">{s.sequenceNumber}</span>
+                    <span className="sp-row-b">
+                      <span className="sp-row-t sc-cap">{s.type} sequence</span>
+                      <span className="sp-row-s">
+                        {regL(s.region)}
+                        {s.validationStatus ? (
+                          <>
+                            {' '}
+                            {I.dot} validation {s.validationStatus}
+                          </>
+                        ) : null}
+                      </span>
+                    </span>
+                    <Chip map={SC_SEQ_STATUS} k={s.status} />
+                    <span className="sc-trans">
+                      {/* MOCK-ACTION (flagged): the kit transitioned status with an
+                          optimistic local write + a toast claiming POST /transition.
+                          A real endpoint exists (POST /api/submissions/sequences/
+                          :seqId/transition — and governed freeze/dispatch) but wiring
+                          the write + refetch is the actions pass; hand off to AnA
+                          rather than fabricate a persisted state change. */}
+                      {(SC_TRANSITIONS[s.status] ?? []).map((to) => (
+                        <button
+                          key={to}
+                          type="button"
+                          className="sc-trans-b"
+                          onClick={() =>
+                            onAsk(
+                              `Transition sequence ${s.sequenceNumber} of ${sub.title} to ${SC_SEQ_STATUS[to]?.l ?? to}.`
+                            )
+                          }
+                        >
+                          {I.right} {SC_SEQ_STATUS[to]?.l ?? to}
+                        </button>
+                      ))}
+                      {(SC_TRANSITIONS[s.status] ?? []).length === 0 && (
+                        <span className="sp-q-s">terminal</span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -372,36 +415,25 @@ export function SubmissionCenter({
         <div className="pj-card">
           <div className="pj-card-h">
             <span className="t">Validation · eValidator</span>
-            <span className="s">{openFindings} open · POST /:id/validation/explain</span>
+            <span className="s">POST /:id/validation/explain</span>
           </div>
           <div className="pj-card-b">
-            <div className="sp-list">
-              {SC_FINDINGS.map((f) => (
-                <div key={f.id} className="sp-row">
-                  <span className="sp-tag2">{f.id}</span>
-                  <span className="sp-row-b">
-                    <span className="sp-row-t">{f.rule}</span>
-                    <span className="sp-row-s">
-                      {f.msg} · {f.loc}
-                    </span>
-                  </span>
-                  <Chip map={SC_FIND_SEV} k={f.severity} />
-                  <Chip map={SC_FIND_STATUS} k={f.status} />
-                  <button
-                    type="button"
-                    className="cv-open"
-                    onClick={() => onAsk(`Explain validation finding ${f.id}: ${f.rule}`)}
-                  >
-                    Explain
-                  </button>
-                </div>
-              ))}
-            </div>
+            {/* Backend gap: there is no load-time list read for eValidator findings
+                in this display shape — findings are produced by an assemble/validate
+                run (the dispatch-readiness gate exposes a COUNT, not this list). Show
+                an honest empty rather than the kit's sample findings. */}
+            <EmptyState
+              icon={I.fileText}
+              title="No validation findings loaded yet"
+              hint="eValidator findings surface after a sequence is assembled and validated. Ask AnA to re-validate a sequence — each finding is then explained with its rule and location."
+            />
             <div className="cm-pushbar sc-mt">
               <button
                 type="button"
                 className="sp-primary sc-btn"
-                onClick={() => fireToast('Re-running eValidator (validate_ectd_package)')}
+                onClick={() =>
+                  onAsk('Re-run the eCTD validator on the current sequence and explain each finding.')
+                }
               >
                 {I.shieldCheck} Re-validate package
               </button>
@@ -430,39 +462,24 @@ export function SubmissionCenter({
                   </option>
                 ))}
               </select>
+              {/* MOCK-ACTION (flagged): the kit flipped a local `ran` flag and showed
+                  fixture findings. A real endpoint exists (POST shadow-review + GET
+                  findings, keyed on a sequence); hand off to AnA rather than fabricate
+                  a completed run. */}
               <button
                 type="button"
                 className="sp-primary sc-btn"
-                onClick={() => {
-                  setRan(true);
-                  fireToast(`Shadow review running · ${SC_LENSES.find((l) => l.v === lens)?.l}`);
-                }}
+                onClick={() =>
+                  onAsk(`Run a ${lensL} shadow review on the current sequence and list the findings.`)
+                }
               >
                 {I.sparkles} Run shadow review
               </button>
             </div>
-            {ran ? (
-              <div className="sp-list">
-                {SC_SHADOW.map((f) => (
-                  <div key={f.id} className="sp-row">
-                    <span className="sp-tag2">{f.id}</span>
-                    <span className="sp-row-b">
-                      <span className="sp-row-t">{f.msg}</span>
-                      <span className="sp-row-s sc-mono">{f.ref}</span>
-                    </span>
-                    <Chip map={SC_FIND_SEV} k={f.severity} />
-                    <button type="button" className="cv-open" onClick={() => onNav('dossier')}>
-                      Open {I.right}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="scaf-note">
-                Run a review to see how a {SC_LENSES.find((l) => l.v === lens)?.l} reviewer would read
-                this sequence before you file — pre-empting information requests.
-              </div>
-            )}
+            <div className="scaf-note">
+              Run a review to see how a {lensL} reviewer would read this sequence before you file —
+              pre-empting information requests. Findings appear once AnA completes the run.
+            </div>
           </div>
         </div>
       )}
@@ -475,30 +492,24 @@ export function SubmissionCenter({
           </div>
           <div className="pj-card-b">
             <div className="scaf-note sc-mb">
-              What the {regL(sub.region)} sequence is missing to file the same program in other
+              What the {regL(sub.primaryRegion)} sequence is missing to file the same program in other
               regions.
             </div>
-            <div className="sp-list">
-              {SC_CROSSREGION.map((g, i) => (
-                <div key={i} className="sp-row">
-                  <span className="sp-tag2">{regL(g.region)}</span>
-                  <span className="sp-row-b">
-                    <span className="sp-row-t">{g.item}</span>
-                    <span className="sp-row-s">{g.note}</span>
-                  </span>
-                  <span className={`rd-chip tone-${g.status === 'gap' ? 'warn' : 'ok'}`}>
-                    {g.status === 'gap' ? 'gap' : 'reusable'}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {/* Backend gap: cross-region gaps are a POST/AI computation, not a
+                load-time list read — show an honest empty + CTA rather than the
+                kit's sample gaps. */}
+            <EmptyState
+              icon={I.gitBranch}
+              title="No cross-region gap analysis yet"
+              hint="Run a gap analysis to compare this sequence against another region's requirements — reusable content vs. the gaps you'd need to close to file there."
+            />
             <div className="cm-pushbar sc-mt">
               <button
                 type="button"
                 className="sp-primary sc-btn"
                 onClick={() =>
                   onAsk(
-                    `Run cross-region gap analysis for ${sub.program} EU MAA vs the FDA sequence.`
+                    `Run a cross-region gap analysis for ${sub.title}: what the ${regL(sub.primaryRegion)} sequence is missing to file in the EU and Japan.`
                   )
                 }
               >
@@ -517,52 +528,45 @@ export function SubmissionCenter({
           </div>
           <div className="pj-card-b">
             <div className="sc-dispatch">
-              <div className="sc-disp-row">
-                <span className={`rd-chip tone-${openFindings ? 'warn' : 'ok'}`}>
-                  {openFindings ? I.alertTriangle : I.check}{' '}
-                  {openFindings ? `${openFindings} open validation findings` : 'Validation clean'}
-                </span>
-                <span className="sp-row-s">
-                  Sequence must be Validated → Frozen before dispatch.
-                </span>
+              <div className="scaf-note">
+                Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and
+                clear the deterministic dispatch gate before it can be dispatched, and{' '}
+                {sub.primaryRegion === 'fda'
+                  ? 'transmission through the FDA ESG gateway'
+                  : 'export / regional transmission'}{' '}
+                only runs when the region gateway is configured. AnA runs the QC and walks the gates
+                with you.
               </div>
               <div className="sc-disp-actions">
+                {/* MOCK-ACTIONS (flagged): the kit fired toasts claiming a QC check /
+                    gateway transmit. Real endpoints exist (dispatch-qc, governed
+                    freeze/dispatch/transmit) but each is gated on e-signature + the
+                    server dispatch gate — hand off to AnA rather than fake the event. */}
                 <button
                   type="button"
                   className="sp-primary sc-btn"
-                  disabled={openFindings > 0}
-                  onClick={() => fireToast('Dispatch QC check (dispatch_qc_check)')}
+                  onClick={() =>
+                    onAsk(`Run the dispatch QC gate for the current ${regL(sub.primaryRegion)} sequence of ${sub.title}.`)
+                  }
                 >
                   {I.shieldCheck} Run dispatch QC
                 </button>
                 <button
                   type="button"
-                  className={`sp-primary sc-btn ${sub.region === 'fda' ? '' : 'sc-btn-neutral'}`}
-                  disabled={openFindings > 0}
+                  className={`sp-primary sc-btn ${sub.primaryRegion === 'fda' ? '' : 'sc-btn-neutral'}`}
                   onClick={() =>
-                    fireToast(
-                      sub.region === 'fda'
-                        ? 'Transmit via FDA ESG gateway'
-                        : 'Export eSTAR / regional package'
+                    onAsk(
+                      sub.primaryRegion === 'fda'
+                        ? `Freeze and dispatch the current sequence of ${sub.title} through the FDA ESG gateway (governed — e-signature required).`
+                        : `Freeze and export the current sequence of ${sub.title} as the ${regL(sub.primaryRegion)} regional package (governed — e-signature required).`
                     )
                   }
                 >
-                  {I.rocket} {sub.region === 'fda' ? 'Send via ESG gateway' : 'Export package'}
+                  {I.rocket} {sub.primaryRegion === 'fda' ? 'Send via ESG gateway' : 'Export package'}
                 </button>
-              </div>
-              <div className="scaf-note">
-                {sub.region === 'fda'
-                  ? 'FDA sequences transmit through the ESG gateway (acknowledgements tracked). eSTAR device submissions export a validated package instead.'
-                  : 'Regional package export with the region validation profile.'}
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {toast && (
-        <div className="sc-toast" role="status">
-          {toast}
         </div>
       )}
     </div>

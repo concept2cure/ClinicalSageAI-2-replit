@@ -30,6 +30,7 @@ import React from 'react';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { C2CForm } from '../C2CForm';
 import {
   CC_SOURCE_TYPES,
@@ -240,41 +241,61 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     : null;
   const profState = useLiveRows<AuthProfileRow>(profPath);
 
-  // MOCK-ACTION FLAGS (deferred to the actions pass):
-  //  1. logComm — optimistic local add only. The real write
-  //     (POST /api/concept2cure/projects/:pid/agency-communications, which also
-  //     auto-creates the response task, sends a notification, and writes the
-  //     audit entry) is NOT wired here, so the form copy and toast no longer
-  //     claim persistence / task-creation / audit occurred, and no task id is
-  //     fabricated.
-  //  2. triage — optimistic local review/closure-state flip; there is no
-  //     mounted PATCH for agency-communication status, so nothing is persisted.
-  const logComm = (v: Record<string, string>) => {
-    const responseRequired = v.responseRequired === 'yes';
-    const urgency = (v.urgency || 'medium') as CommRow['urgency'];
-    const rec: CommRow = {
-      id: 'local_' + Date.now(),
+  // logComm — REAL, audited write. POSTs to
+  // /api/concept2cure/projects/:pid/agency-communications, which persists the
+  // event, auto-creates a response task + notification when a response is
+  // required or urgency is high/critical, and writes the audit entry. The row
+  // adopted into the view is the SERVER's record (real id, real generated task
+  // id) — nothing is fabricated. On failure the form stays open and the toast
+  // states plainly that nothing was persisted.
+  const logComm = async (v: Record<string, string>) => {
+    if (!commsPath) {
+      fire('Select a project before logging a communication.');
+      return;
+    }
+    const body = {
       sourceType: v.sourceType || 'manual_logged_event',
       communicationType: v.communicationType,
       sourceChannel: v.sourceChannel || 'Manually logged',
-      linkedSectionCodes: [],
-      receivedDate: new Date().toISOString().slice(0, 10),
-      dueDate: v.dueDate || null,
-      urgency,
-      responseRequired,
+      linkedSectionCodes: [] as string[],
+      dueDate: v.dueDate || undefined,
+      urgency: (v.urgency || 'medium') as CommRow['urgency'],
+      responseRequired: v.responseRequired === 'yes',
       extractedIssues: v.issue ? [v.issue] : [],
-      humanReviewStatus: 'pending_review',
-      closureStatus: 'open',
-      auditMetadata: { visibilityTier: 'shared_client_c2c' },
-      taskId: null,
-      _new: true,
+      // Any role may write the shared client↔C2C tier (canViewVisibilityTier);
+      // the form does not yet collect a tier, so default to the shared one.
+      visibilityTier: 'shared_client_c2c',
     };
-    setComms((cs) => [rec, ...cs]);
-    setForm(false);
-    fire('Communication added to this view — not yet saved to the governed store');
+    try {
+      const res = await apiRequest('POST', commsPath, body);
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        fire('Couldn’t save the communication — ' + (json?.error || `HTTP ${res.status}`) + '. Nothing was persisted.');
+        return;
+      }
+      const saved = json.data as CommRow & { generatedTaskId?: number };
+      const row: CommRow = {
+        ...saved,
+        taskId: saved.generatedTaskId != null ? String(saved.generatedTaskId) : null,
+        _new: true,
+      };
+      setComms((cs) => [row, ...cs.filter((c) => c.id !== row.id)]);
+      setForm(false);
+      fire(
+        row.taskId
+          ? 'Saved to the governed store · response task created · audit entry written'
+          : 'Saved to the governed store · audit entry written',
+      );
+    } catch (e) {
+      fire('Couldn’t save the communication — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was persisted.');
+    }
   };
 
-  const triage = (id: string) =>
+  // triage — FLAG (deferred): there is no mounted PATCH for agency-communication
+  // review/closure status, so this only flips the row in the CURRENT view. The
+  // toast states that plainly; the change is not persisted and reverts on reload
+  // once the live read re-seeds. No false claim of a saved status transition.
+  const triage = (id: string) => {
     setComms((cs) =>
       cs.map((c) =>
         c.id === id
@@ -287,6 +308,8 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
           : c,
       ),
     );
+    fire('Updated in this view only — status changes aren’t persisted yet (no server endpoint).');
+  };
 
   const shown = owner === 'mine' ? open.filter((c) => c.responseRequired) : comms;
 

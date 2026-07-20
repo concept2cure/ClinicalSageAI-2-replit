@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
+import { getOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 import '../styles/insights-v2.css';
@@ -393,81 +395,6 @@ interface RenderedReport {
   sections: ROSection[];
 }
 
-/*
- * Deterministic report STRUCTURE generator. Seeded by the live flagship
- * program (real code / readiness / criticalBlockerCount from computeInitialRun),
- * it lays out each governed report's sections and shows every unsourced value
- * as "missing", never an estimate. It does NOT fabricate findings — the
- * itemized gaps, predicate matrices and consistency checks populate only when
- * the live report providers run (see FLAG on `send`: the real generation path
- * is POST /api/report-os/runs, not yet wired). No metric is originated here.
- */
-function roRenderReport(type: ReportType, p: ProgramCtx): RenderedReport {
-  const now = new Date().toISOString();
-  const S = (id: string, title: string, blocks: ROBlockData[]): ROSection => ({ id, title, blocks });
-  const disclosure: ROBlockData = { kind: 'disclosure', method: 'RIM foresight model -- deterministic + AI-refined signals', confidence: 0.0, validated: false, note: 'Advisory only -- the predictive model is not validated for regulatory decision-making. Every projected value is provisional and must be confirmed against the governed record.' };
-  let sections: ROSection[] = [];
-  const fam = type.family;
-  const id = type.typeId;
-  const filingBit = p.filing ? ' -- ' + p.filing : '';
-
-  if (id === 'readiness.executive_digest' || id === 'ema.maa_readiness_assessment' || id === 'china_nmpa.registration_dossier_readiness' || fam === 'usa_fda_pma') {
-    const r = p.readiness;
-    const readLabel = r == null ? 'not yet computed' : (r >= 85 ? 'on track' : r >= 60 ? 'in assembly' : 'early');
-    const blockers = p.criticalBlockerCount;
-    sections = [
-      S('overview', 'Executive summary', [
-        { kind: 'summary', text: `${p.code}${filingBit}${p.indication ? ' -- ' + p.indication : ''}. Submission readiness is ${r == null ? 'not yet computed' : r + '%'} (${readLabel})${blockers ? `, with ${blockers} critical item${blockers > 1 ? 's' : ''} blocking promotion` : ''}.` },
-        { kind: 'metric', label: 'Submission readiness', value: r ?? null, unit: '%', status: r == null ? 'missing' : r >= 85 ? 'ready' : 'partial', provenance: [{ sourceTable: 'submission_readiness', sourceField: 'score', recordId: p.code, transformation: 'computeInitialRun confidence' }] },
-        { kind: 'metric', label: 'Critical blockers', value: blockers, status: blockers ? 'partial' : 'ready', provenance: [{ sourceTable: 'contradiction_findings', transformation: 'authority=blocks_promotion' }] },
-        { kind: 'metric', label: 'Target action', value: p.pdufa ?? null, status: p.pdufa ? 'ready' : 'missing', provenance: p.pdufa ? [{ sourceTable: 'submission_ops', sourceField: 'pdufa_date', recordId: p.code }] : undefined },
-      ]),
-      S('readiness', 'Readiness signal', [
-        { kind: 'chart', chartType: 'readiness_ring', spec: { value: r ?? 0, label: 'Readiness' }, provenance: [{ sourceTable: 'submission_readiness', recordId: p.code }] },
-      ]),
-      S('read', 'AnA read', [
-        { kind: 'narrative', text: `${p.code} is ${readLabel}. ${blockers ? 'Clear the ' + blockers + ' critical blocker' + (blockers > 1 ? 's' : '') + ' before promoting into the submission sequence; ' : ''}open the governed readiness run for the itemized gaps.`, aiGenerated: true, disclosure: 'Narrative summarizes governed metrics; it originates no new numbers.' },
-      ]),
-    ];
-  } else if (id === 'usa_fda.estar_510k_equivalence_matrix') {
-    sections = [
-      S('se', 'Substantial-equivalence summary', [
-        { kind: 'summary', text: `${p.code}${filingBit}. The predicate comparison and performance-claim consistency populate from the governed substantial-equivalence record when the live provider runs against this scope.` },
-        { kind: 'metric', label: 'Substantial equivalence', value: null, status: 'missing', provenance: [{ sourceTable: 'substantial_equivalence', recordId: p.code }] },
-      ]),
-      S('matrix', 'Predicate equivalence matrix', [
-        { kind: 'disclosure', method: 'Governed predicate-mapping provider', validated: false, note: 'The attribute-by-attribute predicate comparison (accuracy, intended use, labeling) populates from the substantial_equivalence / predicate_mapping record — no values are estimated here.' },
-      ]),
-    ];
-  } else if (fam === 'prediction') {
-    const isPremortem = id === 'prediction.crl_rtf_premortem';
-    sections = [
-      S('forecast', isPremortem ? 'CRL / RTF pre-mortem' : 'Regulatory forecast', [
-        { kind: 'summary', text: isPremortem ? `${p.code}${filingBit}. Advisory projection of refuse-to-file and complete-response-letter risk from the deficiency-risk model. Not a prediction of the agency's decision.` : `${p.code}${filingBit}. Advisory trajectory of the submission-readiness twin toward an approval / review / deficiency outcome. Current readiness ${p.readiness == null ? 'not yet computed' : p.readiness + '%'}.` },
-        { kind: 'chart', chartType: 'forecast_band', spec: { anchor: p.readiness ?? 60, label: isPremortem ? 'Deficiency risk' : 'Readiness trajectory' }, provenance: [{ sourceTable: isPremortem ? 'deficiency_risk' : 'readiness_trend', recordId: p.code }] },
-      ]),
-      S('method', 'Method & limits', [disclosure]),
-    ];
-  } else {
-    sections = [
-      S('summary', (RO_FAMILY[fam] || {}).label || 'Report', [
-        { kind: 'summary', text: `${type.label} for ${p.code}${filingBit}. Structure and governance rules are set; concrete values populate when the live provider (${(RO_FAMILY[fam] || {}).label || fam}) runs against this scope.` },
-        { kind: 'metric', label: 'Items in scope', value: null, status: 'missing', provenance: [{ sourceTable: 'provider', transformation: 'awaiting live run' }] },
-        { kind: 'metric', label: 'Completeness', value: null, unit: '%', status: 'missing' },
-      ]),
-      S('note', 'How this fills', [
-        { kind: 'disclosure', method: 'Governed provider -- ' + (type.t && type.t.requireExplicitGaps ? 'explicit-gaps required' : 'partial allowed'), validated: false, note: 'Unsourced values are shown as missing, never estimated. Connect the live backend to populate this report from ' + type.scopes.join(' / ') + ' scope data.' },
-      ]),
-    ];
-  }
-
-  return {
-    reportTypeId: type.typeId, reportTypeLabel: type.label, scopeType: p.scope, scopeId: p.scopeId,
-    generatedAt: now, status: 'partial',
-    truthfulness: { allowedStatus: 'partial', downgradedFrom: 'final', reasons: ['Structure preview -- not connected to the live governed report providers', ...(type.t && type.t.requireDisclosure ? ['Predictive model is not validated -- advisory only'] : [])] },
-    sections,
-  };
-}
 
 /* ── AnA conversational brain ── */
 interface ThreadMsg {
@@ -487,6 +414,10 @@ interface AnaReply {
   question?: boolean;
   report: RenderedReport | null;
   dashboard: DashboardData | null;
+  /* When set, send() generates this report from the REAL governed backend
+     (POST /api/report-os/runs → GET /runs/:id/rendered) instead of the caller
+     embedding a client-built report. `report` above stays null in that case. */
+  reportType?: ReportType | null;
 }
 
 interface DashboardData {
@@ -533,7 +464,7 @@ function roAnaReply(utterance: string, seg: string, tier: string, ctx: { program
     const t = RO_TYPES.find(x => x.typeId === (isPre ? 'prediction.crl_rtf_premortem' : 'prediction.regulatory_forecast'))!;
     const dec = entitledFor(t);
     if (!dec.entitled) return lockMsg(dec.feature, t.label);
-    return { tool: name, text: `Here is the ${t.label} for ${p.code}. It is advisory -- the model is not validated, so every projected value carries a disclosure and I present it as partial, never final.`, report: roRenderReport(t, p), dashboard: null };
+    return { tool: name, text: `Running the ${t.label} for ${p.code}. It is advisory -- the model is not validated, so every projected value carries a disclosure and I present it as partial, never final.`, report: null, reportType: t, dashboard: null };
   }
   const resolved = roResolveType(utterance, seg);
   if (name === 'list_report_types' || !resolved) {
@@ -542,7 +473,7 @@ function roAnaReply(utterance: string, seg: string, tier: string, ctx: { program
   }
   const dec = entitledFor(resolved);
   if (!dec.entitled) return lockMsg(dec.feature, resolved.label);
-  return { tool: 'generate_report', text: `Here is the ${resolved.label} for ${p.code}. Every value is provenance-linked to a governed source -- I am assembling and explaining it, not originating any number. It is ${resolved.t && resolved.t.forbidFinal ? 'advisory (partial)' : 'partial until the live providers run'}.`, report: roRenderReport(resolved, p), dashboard: null };
+  return { tool: 'generate_report', text: `Running the ${resolved.label} for ${p.code} against the governed record. Every value is provenance-linked to its governed source -- I assemble and explain it, I do not originate any number.`, report: null, reportType: resolved, dashboard: null };
 }
 
 /* ── Inline helpers ── */
@@ -719,7 +650,7 @@ function ROReport({ report, onAsk, onExport, compact }: { report: RenderedReport
 }
 
 /* ── RODashboard ── */
-function RODashboard({ dashboard, program, tier, onOpen, onAsk }: { dashboard: DashboardData; program: ProgramCtx; tier: string; onOpen: (r: RenderedReport) => void; onAsk: (t: string) => void }) {
+function RODashboard({ dashboard, tier, onRun, onAsk }: { dashboard: DashboardData; tier: string; onRun: (t: ReportType) => void; onAsk: (t: string) => void }) {
   if (!dashboard) return null;
 
   if (dashboard.kind === 'portfolio') {
@@ -774,14 +705,14 @@ function RODashboard({ dashboard, program, tier, onOpen, onAsk }: { dashboard: D
               <div className="ro-pack-sub">{RO_FEATURE_LABEL[dec.feature]} -- unlock to include in this pack.</div>
             </div>
           );
-          const rep = roRenderReport(t, program);
-          const kpi = (rep.sections[0].blocks || []).find(b => b.kind === 'metric');
+          // Tiles no longer pre-generate a report client-side (that was the mock
+          // KPI preview). Each tile runs the REAL governed report on click.
           return (
-            <button key={t.typeId} className="ro-pack-card" onClick={() => onOpen && onOpen(rep)}>
+            <button key={t.typeId} className="ro-pack-card" onClick={() => onRun && onRun(t)}>
               <div className="ro-pack-fam">{fam.label}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
               <div className="ro-pack-title">{t.label}</div>
-              {kpi ? <div className="ro-pack-kpi"><span className="v">{kpi.value == null ? '--' : kpi.value}{kpi.unit || ''}</span><span className="l">{kpi.label}</span></div> : <div className="ro-pack-kpi"><span className="v">--</span><span className="l">governed report</span></div>}
-              <div className="ro-pack-open">Open report {I.right}</div>
+              <div className="ro-pack-kpi"><span className="v">--</span><span className="l">governed report</span></div>
+              <div className="ro-pack-open">Run report {I.right}</div>
             </button>
           );
         })}
@@ -813,57 +744,147 @@ export function InsightsCanvas({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [thread, setThread] = useState<ThreadMsg[]>([]);
   const [draft, setDraft] = useState('');
   const [report, setReport] = useState<RenderedReport | null>(null);
+  // The governed run id behind the displayed report (report-os run), or null for
+  // a re-shown report with no run. Drives the real finalize/seal on export.
+  const [reportRunId, setReportRunId] = useState<number | null>(null);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, fireToast] = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setThread([]); setReport(null); setDashboard(null); }, [seg]);
+  useEffect(() => { setThread([]); setReport(null); setReportRunId(null); setDashboard(null); }, [seg]);
   useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [thread, busy]);
 
   const pushCanvasTop = () => { const el = canvasRef.current; if (el) el.scrollTop = 0; };
 
-  const send = (raw?: string) => {
+  /* Generate a report from the REAL governed backend. POST /api/report-os/runs
+     computes + persists the run synchronously (no polling); GET /runs/:id/rendered
+     returns the section/block document with the truthfulness gate applied. The
+     server's RenderedReport is adopted directly (the display renders every server
+     block kind); only the display label is filled from the type and a
+     truthfulness default supplied. The run id is tracked so the report can be
+     sealed. Any failure surfaces as an honest AnA message — nothing is
+     fabricated, and an unentitled/unknown type is stated, never estimated. */
+  const runReport = async (type: ReportType): Promise<void> => {
+    if (!program) return;
+    setBusy(true);
+    setDashboard(null);
+    try {
+      const orgId = Number(getOrgId()) || 0;
+      const res = await apiRequest('POST', '/api/report-os/runs', {
+        organizationId: orgId,
+        scopeType: program.scope,
+        scopeId: program.scopeId,
+        reportTypeId: type.typeId,
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg = res.status === 403
+          ? `"${type.label}" needs a higher plan${body?.requiredTier ? ` (${body.requiredTier})` : ''} — I won't show an estimated result on a plan that hasn't unlocked the governed model.`
+          : res.status === 404
+            ? `"${type.label}" isn't in your governed report registry, so I can't run it against real data — I won't fabricate one.`
+            : `Couldn't run "${type.label}" — ${(body?.error?.message || body?.error) ?? `HTTP ${res.status}`}.`;
+        setThread(t => [...t, { role: 'ana', text: msg, tool: 'generate_report' }]);
+        return;
+      }
+      const runId: number | null = body?.data?.run?.id ?? null;
+      if (runId == null) {
+        setThread(t => [...t, { role: 'ana', text: 'The run started but returned no id — reload and retry.', tool: 'generate_report' }]);
+        return;
+      }
+      const rres = await apiRequest('GET', `/api/report-os/runs/${runId}/rendered`);
+      const rbody = await rres.json().catch(() => null);
+      const rendered = rbody?.data;
+      if (!rres.ok || !rendered || !Array.isArray(rendered.sections)) {
+        setThread(t => [...t, { role: 'ana', text: "The run completed but its rendered document didn't come back — reload and retry.", tool: 'generate_report' }]);
+        return;
+      }
+      const status = typeof rendered.status === 'string' ? rendered.status : 'partial';
+      const adopted: RenderedReport = {
+        reportTypeId: rendered.reportTypeId ?? type.typeId,
+        reportTypeLabel: type.label,
+        scopeType: rendered.scopeType ?? program.scope,
+        scopeId: rendered.scopeId ?? program.scopeId,
+        generatedAt: rendered.generatedAt ?? new Date().toISOString(),
+        status,
+        truthfulness: (rendered.truthfulness && Array.isArray(rendered.truthfulness.reasons))
+          ? rendered.truthfulness
+          : { allowedStatus: status, downgradedFrom: 'final', reasons: [] },
+        sections: rendered.sections,
+      };
+      setReport(adopted);
+      setReportRunId(runId);
+      pushCanvasTop();
+    } catch (e) {
+      setThread(t => [...t, { role: 'ana', text: `Couldn't reach the report engine — ${e instanceof Error ? e.message : String(e)}.`, tool: 'generate_report' }]);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const send = async (raw?: string) => {
     const text = (raw == null ? draft : raw).trim();
     if (!text || busy || !program || !data) return;
     setThread(t => [...t, { role: 'user', text }]);
     setDraft('');
-    setBusy(true);
-    // FLAG (mock ACTION): the reply — including any generated report/dashboard —
-    // is assembled client-side by the deterministic roAnaReply/roRenderReport
-    // engine after a simulated delay. It is seeded by the live program/portfolio
-    // and fabricates no values (unsourced fields render as "missing"), but the
-    // real generation path is the async report-run backend (POST
-    // /api/report-os/runs, /api/insights/predictions[/run]); wiring it
-    // (submit → poll → render the persisted run) is the actions pass.
-    setTimeout(() => {
-      const reply = roAnaReply(text, seg, tier, { program, portfolio: data.portfolio, report });
-      setThread(t => [...t, { role: 'ana', text: reply.text, chips: reply.chips, locked: reply.locked, question: reply.question, tool: reply.tool }]);
-      if (reply.report) { setReport(reply.report); setDashboard(null); pushCanvasTop(); }
-      else if (reply.dashboard) { setDashboard(reply.dashboard); setReport(null); pushCanvasTop(); }
-      setBusy(false);
-    }, 520);
+    // The conversational brain (roAnaReply) still routes intent, chips and the
+    // entitlement lock; when it resolves a report to run, generation now goes to
+    // the REAL backend via runReport instead of a client-built preview.
+    const reply = roAnaReply(text, seg, tier, { program, portfolio: data.portfolio, report });
+    setThread(t => [...t, { role: 'ana', text: reply.text, chips: reply.chips, locked: reply.locked, question: reply.question, tool: reply.tool }]);
+    if (reply.reportType) {
+      await runReport(reply.reportType);
+    } else if (reply.report) {
+      // A report re-shown by the brain (e.g. explain_blockers) — keep its run id.
+      setReport(reply.report); setDashboard(null); pushCanvasTop();
+    } else if (reply.dashboard) {
+      setDashboard(reply.dashboard); setReport(null); setReportRunId(null); pushCanvasTop();
+    }
   };
 
-  // FLAG (mock ACTION): builds the preset "pack" dashboard client-side (same
-  // deterministic engine as `send`; its cards are live-program-seeded and show
-  // unsourced values as "missing"). Real generation is the async report-run
-  // backend — actions pass.
+  /* The best-practice "pack" is an AnA-curated set of governed report TYPES (no
+     server bulk-run endpoint exists); each tile runs its real report on click. */
   const buildPreset = (preset: Preset) => {
     if (!preset) return;
-    setThread(t => [...t, { role: 'user', text: `Build the ${preset.label}` }, { role: 'ana', text: `Building the ${preset.label}. ${preset.why} Each tile is a governed report -- open any one for the full document. Anything the plan has not unlocked shows as locked, never as an estimate.`, tool: 'preset' }]);
+    setThread(t => [...t, { role: 'user', text: `Build the ${preset.label}` }, { role: 'ana', text: `Building the ${preset.label}. ${preset.why} Each tile runs a governed report against the live record -- pick any one to run it. Anything the plan has not unlocked shows as locked, never as an estimate.`, tool: 'preset' }]);
     setDashboard({ kind: 'pack', label: preset.label, why: preset.why, types: preset.types });
     setReport(null);
+    setReportRunId(null);
     pushCanvasTop();
   };
 
-  const openReport = (rep: RenderedReport) => { setReport(rep); setDashboard(null); pushCanvasTop(); };
-  // FLAG (mock ACTION): no export/seal actually happens here. Softened from a
-  // claim of an "immutable report record + Part-11 audit id" (a compliance event
-  // that did NOT occur) to a neutral acknowledgement. Real Part-11 sealing runs
-  // server-side against the persisted run and is the actions pass.
-  const exportRep = (rep: RenderedReport) => fireToast('Export requested -- ' + rep.reportTypeLabel);
+  /* Run a report from a pack tile (announces it in the thread, then generates). */
+  const runFromTile = (type: ReportType) => {
+    setThread(th => [...th, { role: 'user', text: `Run the ${type.label}` }, { role: 'ana', text: `Running the ${type.label} for ${program?.code ?? 'this program'} against the governed record.`, tool: 'generate_report' }]);
+    void runReport(type);
+  };
+
+  /* Seal the displayed governed run — POST /api/report-os/runs/:id/finalize locks
+     it to 'final' and returns a SealedRecord (sha256 content hash + provenance
+     atoms, aiDisclosed, sealedAt). A report the truthfulness gate holds below
+     final returns 409 and is NOT sealed — stated honestly. A re-shown report
+     with no run id cannot be sealed. This is the run's real integrity seal, not
+     a claimed event I did not create. */
+  const exportRep = async (rep: RenderedReport) => {
+    if (reportRunId == null) { fireToast('Only a freshly-run governed report can be sealed — run one first.'); return; }
+    try {
+      const res = await apiRequest('POST', `/api/report-os/runs/${reportRunId}/finalize`);
+      const body = await res.json().catch(() => null);
+      if (res.status === 409) {
+        const reasons = Array.isArray(body?.reasons) ? body.reasons.join('; ') : (body?.error || 'the truthfulness gate holds it below final');
+        fireToast(`Not sealed — "${rep.reportTypeLabel}" is held below final: ${reasons}.`);
+        return;
+      }
+      if (!res.ok) { fireToast(`Couldn't seal — ${(body?.error) ?? `HTTP ${res.status}`}.`); return; }
+      const seal = body?.data?.seal;
+      const hash = typeof seal?.contentHash === 'string' ? seal.contentHash.slice(0, 12) : null;
+      setReport(r => (r ? { ...r, status: 'final' } : r));
+      fireToast(`Sealed · ${seal?.algorithm || 'sha256'}${hash ? ' ' + hash + '…' : ''} · ${seal?.atomCount ?? 0} provenance atoms · run locked final`);
+    } catch (e) {
+      fireToast(`Couldn't seal — ${e instanceof Error ? e.message : String(e)}.`);
+    }
+  };
 
   // Four-state render: loading → honest error → honest empty (no flagship
   // program) → the live canvas. No fixture stand-in in any state.
@@ -969,7 +990,7 @@ export function InsightsCanvas({ onAsk, onNav, segment }: SurfaceViewProps) {
       {/* -- Right: the report / dashboard artifact -- */}
       <div className="rc-canvas" ref={canvasRef}>
         {report ? <ROReport report={report} onAsk={ask} onExport={exportRep} />
-          : dashboard ? <RODashboard dashboard={dashboard} program={p} tier={tier} onOpen={openReport} onAsk={ask} />
+          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} onRun={runFromTile} onAsk={ask} />
           : (
             <div className="rc-empty">
               <div className="rc-empty-mark">*</div>
