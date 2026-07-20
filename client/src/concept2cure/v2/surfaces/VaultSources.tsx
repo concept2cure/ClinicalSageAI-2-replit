@@ -7,7 +7,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
-import { useLive, liveGet, SampleTag } from '../dataConnect';
+import { useLiveData, liveGetOrNull, EmptyState } from '../dataConnect';
 import {
   VAULT_SOURCES,
   vaultSourceConnected,
@@ -140,10 +140,13 @@ interface DmsSkipped {
   reason: string;
 }
 
+/* GET /api/knowledge-base/search-connectors display contract (server
+   routes/knowledge-base.ts → services/integrations/connector-search). The route
+   is REAL and org-scoped to the JWT: an empty `documents` list with a populated
+   `skipped` means "no systems connected yet", never sample data. */
 interface DmsResult {
   documents: DmsDoc[];
   skipped: DmsSkipped[];
-  sample?: boolean;
 }
 
 interface DmsSearchProps {
@@ -151,29 +154,36 @@ interface DmsSearchProps {
   onNav?: (target: string) => void;
 }
 
-/* Honest empty result when the backend is unreachable — never fabricated docs. */
-const EMPTY_DMS: DmsResult = { documents: [], skipped: [], sample: true };
-
 export function DmsSearch({ q, onNav }: DmsSearchProps) {
   const [res, setRes] = useState<DmsResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
   const query = (q || '').trim();
 
   useEffect(() => {
-    if (!query) { setRes(null); return; }
+    if (!query) { setRes(null); setError(undefined); return; }
     let cancel = false;
     setLoading(true);
+    // Debounce keystrokes, then run the LIVE, org-scoped cross-repository search
+    // via GET /api/knowledge-base/search-connectors (services/integrations/
+    // connector-search). Fixture-free: liveGetOrNull returns null (never a
+    // fabricated document) on any non-OK / network failure — surfaced as an
+    // honest error. Connector/credential gaps come back in `skipped`, so an
+    // empty documents list means "no systems connected yet", not sample data.
     const t = setTimeout(() => {
-      /* Live cross-repository search via /api/knowledge-base/search-connectors
-         (services/integrations/connector-search). liveGet falls back to the
-         empty fixture with sample:true when the backend is unreachable, so an
-         offline shell degrades honestly rather than fabricating documents. */
-      liveGet<DmsResult>(
+      liveGetOrNull<DmsResult>(
         `/api/knowledge-base/search-connectors?q=${encodeURIComponent(query)}`,
-        EMPTY_DMS,
       )
-        .then((r) => { if (!cancel) { setRes({ ...r.data, sample: r.sample }); setLoading(false); } })
-        .catch(() => { if (!cancel) { setRes(null); setLoading(false); } });
+        .then((r) => {
+          if (cancel) return;
+          setError(r.error);
+          setRes({
+            documents: r.data && Array.isArray(r.data.documents) ? r.data.documents : [],
+            skipped: r.data && Array.isArray(r.data.skipped) ? r.data.skipped : [],
+          });
+          setLoading(false);
+        })
+        .catch(() => { if (!cancel) { setRes(null); setError('Connector search failed'); setLoading(false); } });
     }, 320);
     return () => { cancel = true; clearTimeout(t); };
   }, [query]);
@@ -181,48 +191,57 @@ export function DmsSearch({ q, onNav }: DmsSearchProps) {
   if (!query) return null;
   const docs = (res && res.documents) || [];
   const skipped = (res && res.skipped) || [];
-  const sample = !res || res.sample;
 
   return (
     <div className="dms">
       <div className="dms-head">
         <span className="dms-title">{I.search} Connected systems</span>
         {loading && <span className="dms-load">searching…</span>}
-        {!loading && <span className="dms-count">{docs.length} result{docs.length === 1 ? '' : 's'}{skipped.length ? ' · ' + skipped.length + ' skipped' : ''}</span>}
-        <span className={'dms-src ' + (sample ? 'sample' : 'live')}>{sample ? 'Sample data' : 'Live'}</span>
+        {!loading && !error && <span className="dms-count">{docs.length} result{docs.length === 1 ? '' : 's'}{skipped.length ? ' · ' + skipped.length + ' skipped' : ''}</span>}
       </div>
-      {docs.length > 0 && (
-        <div className="dms-results">
-          {docs.map((d, i) => (
-            <a key={i} className="dms-doc" href={d.url || '#'} target={d.url ? '_blank' : undefined} rel="noopener">
-              <span className="dms-conn">{d.connector}</span>
-              <span className="dms-doc-main">
-                <span className="dms-doc-title">{d.title}</span>
-                {d.summary && <span className="dms-doc-sum">{d.summary}</span>}
-              </span>
-              {d.relevanceScore != null && <span className="dms-rel">{Math.round(d.relevanceScore * 100)}%</span>}
-              {d.url && <span className="dms-open">{I.externalLink || I.arrowUpRight || '↗'}</span>}
-            </a>
-          ))}
-        </div>
-      )}
-      {docs.length === 0 && !loading && (
-        <div className="dms-empty">
-          {skipped.length
-            ? 'No connected systems to search yet. Link a system below and its documents become searchable here — nothing is fabricated in the meantime.'
-            : 'No matches in the connected systems.'}
-        </div>
-      )}
-      {skipped.length > 0 && (
-        <div className="dms-skipped">
-          {skipped.map((s, i) => (
-            <div key={i} className="dms-skip">
-              <span className="dms-skip-name">{s.connector}</span>
-              <span className="dms-skip-reason">{s.reason}</span>
-              <button className="dms-skip-cta" onClick={() => { (onNav || (() => {}))('setup'); }}>Connect →</button>
+      {error && !loading ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't search the connected systems"
+          hint="The cross-repository search didn't respond. This searches your organization's connected data sources — sign in and retry, or check the connectors are reachable."
+        />
+      ) : (
+        <>
+          {docs.length > 0 && (
+            <div className="dms-results">
+              {docs.map((d, i) => (
+                <a key={i} className="dms-doc" href={d.url || '#'} target={d.url ? '_blank' : undefined} rel="noopener">
+                  <span className="dms-conn">{d.connector}</span>
+                  <span className="dms-doc-main">
+                    <span className="dms-doc-title">{d.title}</span>
+                    {d.summary && <span className="dms-doc-sum">{d.summary}</span>}
+                  </span>
+                  {d.relevanceScore != null && <span className="dms-rel">{Math.round(d.relevanceScore * 100)}%</span>}
+                  {d.url && <span className="dms-open">{I.externalLink || I.arrowUpRight || '↗'}</span>}
+                </a>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+          {docs.length === 0 && !loading && (
+            <div className="dms-empty">
+              {skipped.length
+                ? 'No connected systems to search yet. Link a system below and its documents become searchable here — nothing is fabricated in the meantime.'
+                : 'No matches in the connected systems.'}
+            </div>
+          )}
+          {skipped.length > 0 && (
+            <div className="dms-skipped">
+              {skipped.map((s, i) => (
+                <div key={i} className="dms-skip">
+                  <span className="dms-skip-name">{s.connector}</span>
+                  <span className="dms-skip-reason">{s.reason}</span>
+                  <button className="dms-skip-cta" onClick={() => { (onNav || (() => {}))('setup'); }}>Connect →</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -375,38 +394,81 @@ interface VaultProjectStripProps {
   onAsk?: (q: string) => void;
 }
 
-export function VaultProjectStrip({ onNav, onAsk }: VaultProjectStripProps) {
-  /* C2C_PROJECT, PD_FIXTURES and PD_MODULE_LABELS are runtime window channels
-     with no typed provider yet (kit project-detail.jsx is unported); GAP RULE
-     — the reads keep their fixture fallbacks rather than inventing one. */
-  const proj = (window as any).C2C_PROJECT || null;
-  const pid = (proj && proj.id && proj.id !== 'new') ? proj.id : 'bx-301';
-  const fx = ((window as any).PD_FIXTURES ? (window as any).PD_FIXTURES(proj) : { project: {}, workstreams: [], drafts: [] });
-  const base = '/api/c2c/projects/' + encodeURIComponent(pid);
-  const P = useLive(base, fx.project, [pid]);
-  const WS = useLive(base + '/workstreams', fx.workstreams, [pid]);
-  const DR = useLive(base + '/drafts', fx.drafts, [pid]);
-  const project = P.data || fx.project || {};
-  const workstreams: any[] = WS.data || [];
-  const drafts: any[] = DR.data || [];
-  const sample = P.sample || WS.sample;
+/* Display contracts for the real, org-scoped project reads (server
+   routes/c2c/projects.ts against regulatory_programs + c2c_document_sections +
+   c2c_documents). Only the columns this strip renders are typed; nullable
+   columns are `| null` and rendered null-safe. Postgres COUNT(*) arrives as a
+   string via node-postgres, so count fields are `number | string` and coerced
+   at render — never fabricated. */
+interface VpsProjectRow {
+  code: string | null;
+  program_type: string | null;
+  progress_percent: number | null;
+}
 
-  const ready = (typeof project.completion_percentage === 'number')
-    ? project.completion_percentage
+interface VpsWorkstreamRow {
+  module: string;
+  total: number | string;
+  approved: number | string;
+  review: number | string;
+  completion_pct: number | string;
+}
+
+interface VpsDraftRow {
+  id: number | string;
+  document_id: number | string | null;
+  section_key: string;
+  label: string | null;
+  status: string;
+  draft_source: string | null;
+  updated_at: string | null;
+  doc_type: string | null;
+  document_title: string | null;
+}
+
+export function VaultProjectStrip({ onNav, onAsk }: VaultProjectStripProps) {
+  /* C2C_PROJECT is the runtime channel carrying the currently-open project (a
+     real selection, not a fixture). PD_MODULE_LABELS is untyped display config
+     (module → label / target surface) with no typed provider yet — GAP RULE, it
+     keeps its `|| {}` fallback. The former fixture fallbacks — PD_FIXTURES and a
+     hardcoded 'bx-301' project id — are removed: this strip now renders the real
+     org-scoped project reads, an honest empty, or an honest error, never a
+     fabricated project. */
+  const proj = (window as any).C2C_PROJECT || null;
+  const pid: string | null = (proj && proj.id && proj.id !== 'new') ? String(proj.id) : null;
+  const base = pid ? '/api/c2c/projects/' + encodeURIComponent(pid) : null;
+
+  // useLiveData unwraps the `{ data }` success envelope; the workstreams/drafts
+  // routes return `{ workstreams }` / `{ drafts }` objects (single non-`data`
+  // key, left intact by the unwrapper), so read those keys off the payload.
+  const P = useLiveData<VpsProjectRow>(base, [pid]);
+  const WS = useLiveData<{ workstreams: VpsWorkstreamRow[] }>(base ? base + '/workstreams' : null, [pid]);
+  const DR = useLiveData<{ drafts: VpsDraftRow[] }>(base ? base + '/drafts' : null, [pid]);
+
+  const project = P.data;
+  const workstreams: VpsWorkstreamRow[] = (WS.data && Array.isArray(WS.data.workstreams)) ? WS.data.workstreams : [];
+  const drafts: VpsDraftRow[] = (DR.data && Array.isArray(DR.data.drafts)) ? DR.data.drafts : [];
+  const loading = P.loading || WS.loading || DR.loading;
+  const error = P.error || WS.error || DR.error;
+
+  // progress_percent is the real column on regulatory_programs; fall back to the
+  // workstreams' average completion only when the project row omits it.
+  const ready = (project && typeof project.progress_percent === 'number')
+    ? project.progress_percent
     : (workstreams.length
-      ? Math.round(workstreams.reduce((s: number, w: any) => s + (w.completion_pct || 0), 0) / workstreams.length)
+      ? Math.round(workstreams.reduce((s, w) => s + (Number(w.completion_pct) || 0), 0) / workstreams.length)
       : 0);
   const labels: Record<string, any> = (window as any).PD_MODULE_LABELS || {};
   const draftTone = (s: string) => s === 'approved' ? 'good' : s === 'review' ? 'warn' : s === 'locked' ? 'info' : 'info';
 
-  const openDraft = (d: any) => {
+  const openDraft = (d: VpsDraftRow) => {
     try {
       (window as any).C2C_SECTION = { documentId: d.document_id, sectionKey: d.section_key, label: d.label };
     } catch (_e) { /* ignore */ }
     if (onNav) onNav('document-authoring', d.label || d.section_key);
   };
 
-  const _rel = (iso: string) => {
+  const _rel = (iso: string | null) => {
     if (!iso) return '';
     const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
     if (m < 60) return m + 'm ago';
@@ -415,31 +477,66 @@ export function VaultProjectStrip({ onNav, onAsk }: VaultProjectStripProps) {
     return Math.round(h / 24) + 'd ago';
   };
 
+  // Honest states — no project open, loading, or a failed load — never a fixture.
+  if (!pid) {
+    return (
+      <div className="vps">
+        <EmptyState icon={I.folder} title="No project open" hint="Open a project to see its Vault workstreams and authored documents here." />
+      </div>
+    );
+  }
+  if (loading && !project) {
+    return (
+      <div className="vps">
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading project workspace…</div>
+      </div>
+    );
+  }
+  if (error && !project) {
+    return (
+      <div className="vps">
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the project workspace"
+          hint="The project-management reads didn't respond. These are your organization's real programs and authored sections — sign in and retry, or check the service is reachable."
+        />
+      </div>
+    );
+  }
+
+  const code = (project && (project.code || project.program_type)) || 'Project';
+
   return (
     <div className="vps">
       <div className="vps-head">
         <div className="vps-t">{I.folder} From Project management
-          <span className="vps-x">— {(project.code || project.program_type || 'Project')} · {ready}% ready <SampleTag sample={sample} /></span>
+          <span className="vps-x">— {code} · {ready}% ready</span>
         </div>
         <button className="btn ghost sm" onClick={() => { if (onNav) onNav('project-home'); }}>Open project workspace {I.arrowRight || I.chevronRight}</button>
       </div>
       <div className="vps-body">
         <div className="vps-mods">
-          {workstreams.map((ws: any) => {
+          {workstreams.map((ws) => {
             const info = labels[String(ws.module).toLowerCase()] || { label: String(ws.module).toUpperCase(), surface: null };
+            const pct = Number(ws.completion_pct) || 0;
+            const approved = Number(ws.approved) || 0;
+            const total = Number(ws.total) || 0;
+            const review = Number(ws.review) || 0;
             return (
               <button key={ws.module} className="vps-mod" onClick={() => { if (info.surface && onNav) onNav(info.surface, info.label); }} title={info.desc || ''}>
-                <div className="vps-mod-h"><span className="l">{info.label}</span><span className="pct">{ws.completion_pct}%</span></div>
-                <div className="vps-bar"><div className={'fill s-' + (ws.completion_pct >= 100 ? 'ok' : ws.completion_pct >= 75 ? 'review' : ws.completion_pct >= 25 ? 'drafted' : 'todo')} style={{ width: ws.completion_pct + '%' }} /></div>
-                <div className="vps-mod-m">{ws.approved}/{ws.total} approved{ws.review ? ' · ' + ws.review + ' in review' : ''}</div>
+                <div className="vps-mod-h"><span className="l">{info.label}</span><span className="pct">{pct}%</span></div>
+                <div className="vps-bar"><div className={'fill s-' + (pct >= 100 ? 'ok' : pct >= 75 ? 'review' : pct >= 25 ? 'drafted' : 'todo')} style={{ width: pct + '%' }} /></div>
+                <div className="vps-mod-m">{approved}/{total} approved{review ? ' · ' + review + ' in review' : ''}</div>
               </button>
             );
           })}
+          {workstreams.length === 0 && <div className="vps-empty">No workstreams yet.</div>}
         </div>
         <div className="vps-drafts">
           <div className="vps-drafts-h">Authored documents <span className="n">{drafts.length}</span></div>
-          {drafts.length === 0 ? <div className="vps-empty">No sections authored yet.</div> : drafts.slice(0, 6).map((d: any, i: number) => (
-            <button key={d.id != null ? d.id : i} className="vps-draft" onClick={() => { openDraft(d); }}>
+          {drafts.length === 0 ? <div className="vps-empty">No sections authored yet.</div> : drafts.slice(0, 6).map((d, i) => (
+            <button key={d.id != null ? String(d.id) : String(i)} className="vps-draft" onClick={() => { openDraft(d); }}>
               <span className="ic">{I.fileText || I.file}</span>
               <span className="vps-draft-b">
                 <span className="t">{d.label || d.section_key}</span>
