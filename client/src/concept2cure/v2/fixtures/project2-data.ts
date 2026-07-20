@@ -6,11 +6,13 @@
 /* ---- Types ---- */
 
 export interface DocProgram {
-  title: string;
-  code: string;
-  section: string;
-  readiness: number;
-  due: string;
+  // Every field is null-able: the backend derives them from scoped rows and
+  // returns null rather than fabricating a value when a source is absent.
+  title: string | null;
+  code: string | null;
+  section: string | null;
+  readiness: number | null;
+  due: string | null;
 }
 
 export interface DocTreeItem {
