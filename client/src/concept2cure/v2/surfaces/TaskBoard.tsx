@@ -1,12 +1,12 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   TB_MOD, TB_COLS, TB_TYPE, TB_SRC, TB_PROJECTS, TB_TEAM, TB_OPTIMAL,
-  TB_TASKS, TB_WORKFLOWS,
-  type TaskItem, type TaskSource,
+  TB_WORKFLOWS,
+  type TaskSource,
 } from '../fixtures/task-board-data';
 import '../styles/project-home-v2.css';
 
@@ -19,6 +19,49 @@ import '../styles/project-home-v2.css';
    Registers as both "task-board" and "tasks" in SURFACE_VIEWS.
    ═══════════════════════════════════════════════════════════════════ */
 
+/**
+ * Display row for the org-wide unifiedTasks board. Mirrors the server
+ * TaskBoardItem shape returned by GET /api/task-management/board
+ * (server/routes/taskBoard.routes.ts). impactScore / phase / estimatedHours are
+ * REAL nullable columns and render null-safe (never fabricated); the backend
+ * returns numeric FK ids (stringified) for project / assignee / assignedBy and
+ * does NOT return blockedReason / assignmentType (client-only, optional).
+ */
+interface TaskItem {
+  taskId: string;
+  title: string;
+  /** Real project FK as a string; '' when unattached. Does NOT match the
+   *  TB_PROJECTS slugs — see the projects/roster follow-up flag. */
+  project: string;
+  moduleType: string;
+  taskType: string;
+  status: string;
+  priority: string;
+  /** Real assignee user-id FK as a string; '' when unassigned. */
+  assignee: string;
+  /** Real assigned-by user-id FK as a string; '' when unknown. */
+  assignedBy: string;
+  progress: number;
+  /** 0-10 submission impact; null when never scored (real nullable column). */
+  impactScore: number | null;
+  criticalPath: boolean;
+  regulatoryImpact: boolean;
+  approvalRequired: boolean;
+  approvalStatus: string;
+  dependsOn: string[];
+  blocks: string[];
+  comments: number;
+  attachments: number;
+  source: string;
+  due: string;
+  /** GAP: unified_tasks has no submission-phase column; always null live. */
+  phase: string | null;
+  blocked?: boolean;
+  blockedReason?: string;
+  estimatedHours?: number | null;
+  assignmentType?: string;
+}
+
 function tbAvatar(id: string): string {
   const p = TB_TEAM[id] || { n: '?' };
   return (p.n || '?').split(' ').map(s => s[0]).join('').slice(0, 2);
@@ -27,14 +70,17 @@ function tbAvatar(id: string): string {
 /* ── Main surface ── */
 
 export function TaskBoard({ onAsk }: SurfaceViewProps) {
-  /* Live from the shared store (window.C2C) -- tasks created from ANY surface
-     land here too. Falls back to the local seed if collab has not loaded. */
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const c2c = (window as any).C2C;
-    return c2c ? c2c.subscribe(() => setTick(x => x + 1)) : undefined;
-  }, []);
-  const tasks: TaskItem[] = (window as any).C2C ? (window as any).C2C.list() : TB_TASKS;
+  /* Org-wide unifiedTasks board — REAL, org-scoped read model
+     (GET /api/task-management/board -> server/routes/taskBoard.routes.ts: a real
+     drizzle query over unified_tasks + task_dependencies). Real rows, an honest
+     empty state, or an honest error state — never the fixture. The old window.C2C
+     in-browser store was seeded from the TB_TASKS fixture (CollabLauncher.tsx),
+     so reading it presented fixture data as the board; that read is retired here.
+     The New task / Start workflow / Move actions still write to window.C2C only
+     (in-memory, not persisted) and are FLAGGED as mock actions for the actions
+     pass — they intentionally do not appear on this live board. */
+  const liveTasks = useLiveRows<TaskItem>('/api/task-management/board');
+  const tasks: TaskItem[] = liveTasks.rows;
 
   const [view, setView] = useState('board');
   const [proj, setProj] = useState<string>(() => {
@@ -46,7 +92,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const [creating, setCreating] = useState(false);
   const [wf, setWf] = useState(false);
 
-  const modules = useMemo(() => ['all', ...Array.from(new Set(TB_TASKS.map(t => t.moduleType)))], []);
+  const modules = useMemo(() => ['all', ...Array.from(new Set(tasks.map(t => t.moduleType)))], [tasks]);
   const list = tasks.filter(t =>
     (proj === 'all' || t.project === proj) &&
     (!mine || t.assignee === 'jc') &&
@@ -118,7 +164,6 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
   return (
     <div className="page-inner tb">
-      <SampleTag sample={true} />
       <div className="ph">
         <div>
           <div className="ph-eyebrow">Project -- collaboration</div>
@@ -131,6 +176,23 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         </div>
       </div>
 
+      {liveTasks.loading ? (
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the task board…</div>
+      ) : liveTasks.error ? (
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the task board"
+          hint="The org-wide unifiedTasks board didn't respond. These are the organization's tasks from GET /api/task-management/board — sign in and retry, or check the service is reachable."
+        />
+      ) : liveTasks.empty ? (
+        <EmptyState
+          icon={I.checkSquare}
+          title="No tasks on the board yet"
+          hint="This is the org-wide unifiedTasks board. Create a task or start a workflow from a template and it appears here once it is persisted, with its origin store labelled."
+        />
+      ) : (
+      <>
       <AnswerLead
         tone={critBlocked || overdue.length ? 'urgent' : 'calm'}
         eyebrow="What is on the critical path -- and what needs you first"
@@ -237,8 +299,8 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               <div className="tb-path-card">
                 <div className="tb-path-t">{t.title}<span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span></div>
                 <div className="tb-path-m">
-                  <span>{t.phase}</span><span className="tb-dot">--</span><span>{(TB_TEAM[t.assignee] || { n: '' }).n}</span><span className="tb-dot">--</span>
-                  <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className="tb-dot">--</span><span>impact {t.impactScore}/10</span>
+                  <span>{t.phase || '—'}</span><span className="tb-dot">--</span><span>{(TB_TEAM[t.assignee] || { n: '' }).n}</span><span className="tb-dot">--</span>
+                  <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className="tb-dot">--</span><span>impact {t.impactScore ?? '—'}/10</span>
                   {t.blocked && <span className="tb-path-blk">{I.alertTriangle} blocked</span>}
                   <span className="sp" /><span className="tb-due" data-over={/overdue/.test(t.due) || undefined}>{t.due}</span>
                 </div>
@@ -312,8 +374,10 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           <li><b>Route note:</b> client <code>taskingService.ts</code> targets <code>/api/regulatory/tasks/*</code> while routes mount at <code>/api/task-management/*</code> (path reconciliation pending).</li>
         </ul>
       </details>
+      </>
+      )}
 
-      {creating && <TaskCreate proj={proj} onClose={() => setCreating(false)} onCreate={create} />}
+      {creating && <TaskCreate proj={proj} tasks={tasks} onClose={() => setCreating(false)} onCreate={create} />}
       {wf && <WorkflowStart proj={proj} onClose={() => setWf(false)} onInstantiate={(tasks) => { tasks.forEach(t => (window as any).C2C && (window as any).C2C.addTask(t)); setWf(false); setView('path'); }} />}
       {sel && <TaskDetail t={sel} byId={byId} projLabel={projLabel} onClose={() => setSel(null)} onAsk={onAsk} onMove={move} />}
     </div>
@@ -352,10 +416,10 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove }: TaskDetailPr
         {t.blocked && <div className="tb-blocked lg">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
         <div className="tb-detail-grid">
           <div><label>Project</label><span>{projLabel(t.project)}</span></div>
-          <div><label>Phase</label><span>{t.phase}</span></div>
+          <div><label>Phase</label><span>{t.phase || '—'}</span></div>
           <div><label>Owner</label><span>{owner.n} -- {owner.t}</span></div>
           <div><label>Assigned by</label><span>{(TB_TEAM[t.assignedBy] || { n: '' }).n || '--'}</span></div>
-          <div><label>Impact score</label><span>{t.impactScore}/10</span></div>
+          <div><label>Impact score</label><span>{t.impactScore ?? '—'}/10</span></div>
           <div><label>Due</label><span style={{ color: /overdue/.test(t.due) ? 'var(--error)' : 'inherit' }}>{t.due}</span></div>
           <div><label>Origin store</label><span>{src.l} -- <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
           <div><label>Progress</label><span>{t.progress}%</span></div>
@@ -394,6 +458,9 @@ interface TaskCreateProps {
   onClose: () => void;
   onCreate: (task: TaskItem) => void;
   proj: string;
+  /** Live board rows — the dependency picker's candidate tasks (real data from
+   *  /api/task-management/board, not the retired TB_TASKS fixture). */
+  tasks: TaskItem[];
 }
 
 interface CreateForm {
@@ -413,7 +480,7 @@ interface CreateForm {
   dependsOn: string[];
 }
 
-function TaskCreate({ onClose, onCreate, proj }: TaskCreateProps) {
+function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
   const initProj = (proj && proj !== 'all') ? proj : 'bx204';
   const [f, setF] = useState<CreateForm>({
     title: '', project: initProj, moduleType: 'Clinical', taskType: 'deliverable',
@@ -424,7 +491,7 @@ function TaskCreate({ onClose, onCreate, proj }: TaskCreateProps) {
   const set = <K extends keyof CreateForm>(k: K, v: CreateForm[K]) => setF(p => ({ ...p, [k]: v }));
   const who = f.assignee === 'auto' ? (TB_OPTIMAL[f.moduleType] || 'jc') : f.assignee;
   const whoName = (TB_TEAM[who] || { n: who }).n;
-  const allTasks = TB_TASKS;
+  const allTasks = tasks;
   const toggleDep = (id: string) => set('dependsOn', f.dependsOn.includes(id) ? f.dependsOn.filter(x => x !== id) : [...f.dependsOn, id]);
 
   const doCreate = () => {
@@ -485,10 +552,10 @@ function TaskCreate({ onClose, onCreate, proj }: TaskCreateProps) {
             </div>
           </div>
           {f.assignee === 'auto' && <div className="tb-auto-note"><span className="ico">{I.sparkles}</span><span>Auto-assign resolves to <b>{whoName}</b> for <b>{f.moduleType}</b> -- workload-balanced via <code>getOptimalAssignee()</code>.</span></div>}
-          <div className="tb-auto-note" data-warn="true"><span className="ico">{I.alertTriangle}</span><span>On create this writes <code>unifiedTasks</code> but <b>not</b> the <code>c2c_ana_actions</code> audit ledger -- <code>task-audit.ts</code> is coded but unwired. Notifications are stubbed.</span></div>
+          <div className="tb-auto-note" data-warn="true"><span className="ico">{I.alertTriangle}</span><span>Not yet wired: creating here updates the in-browser board only -- it does <b>not</b> POST <code>unifiedTasks</code> or write the <code>c2c_ana_actions</code> audit ledger (<code>task-audit.ts</code> is coded but unwired), so it will not appear on the live board. Notifications are stubbed.</span></div>
         </div>
         <div className="tb-detail-f">
-          <div className="tb-endpoint"><b>POST</b> /api/task-management/tasks</div>
+          <div className="tb-endpoint" title="Target endpoint — not yet wired to this button"><b>POST</b> /api/task-management/tasks <em>(not yet wired)</em></div>
           <button className="btn ghost" onClick={onClose}>Cancel</button>
           <button className="btn primary" disabled={!f.title.trim()} onClick={doCreate}>{I.plus} Create task</button>
         </div>
@@ -570,7 +637,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
           <button type="button" className={`tb-tog${autoAssign ? ' on' : ''}`} onClick={() => setAutoAssign(a => !a)}><span className="ico">{I.sparkles}</span>Workload-balanced auto-assign (getOptimalAssignee)</button>
         </div>
         <div className="tb-detail-f">
-          <div className="tb-endpoint"><b>POST</b> /tasks/from-template/{tid}</div>
+          <div className="tb-endpoint" title="Target endpoint — not yet wired to this button"><b>POST</b> /tasks/from-template/{tid} <em>(not yet wired)</em></div>
           <button className="btn ghost" onClick={onClose}>Cancel</button>
           <button className="btn primary" onClick={instantiate}>{I.plus} Create {tpl.tasks.length} tasks</button>
         </div>

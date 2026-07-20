@@ -158,3 +158,169 @@ export function SampleTag({ sample }: { sample: boolean }) {
     </span>
   );
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Fixture-free contract — the real-data standard.
+
+   The `live ?? fixture` helpers above (liveGet / useLive / useLiveList /
+   SampleTag) fall back to a codebase fixture with a "Sample data" pill
+   whenever the backend is unreachable or empty. For a regulated product
+   that convention is being retired: a surface must render REAL persisted
+   data, an honest EMPTY state, or an honest ERROR state — never a
+   fabricated stand-in presented as content. Surfaces are migrated onto
+   these helpers one at a time; the legacy helpers stay until the last
+   consumer is gone.
+
+     liveGetOrNull(path)  → { data: T | null, error?, status } — no fixture.
+     useLiveData(path)    → object payload hook  { data, loading, error, empty }.
+     useLiveRows(path)    → list payload hook     { rows, loading, error, empty }.
+     <EmptyState .../>    → the honest "nothing here yet" / "couldn't load" panel.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Unwrap the canonical success envelope for a single payload (object or list).
+ * `ok(res, data, meta)` returns `{ data, meta }`; some hand-rolled routes
+ * return `{ success, data, total }`. Both hold the payload under `.data`. A
+ * body that merely happens to carry a `data` field as part of its real shape
+ * (multiple keys, no envelope markers) is left untouched, so a genuine
+ * `{ program, tree, comments }` payload is never mis-unwrapped.
+ */
+function unwrapEnvelope(body: unknown): unknown {
+  if (body && typeof body === 'object' && !Array.isArray(body)) {
+    const obj = body as Record<string, unknown>;
+    const looksLikeEnvelope =
+      'data' in obj &&
+      ('success' in obj ||
+        'meta' in obj ||
+        'total' in obj ||
+        Object.keys(obj).length === 1);
+    if (looksLikeEnvelope) return obj.data;
+  }
+  return body;
+}
+
+export interface DataResult<T> {
+  data: T | null;
+  error?: string;
+  /** HTTP status; 0 on a network/parse failure before a response arrived. */
+  status: number;
+}
+
+/**
+ * Fixture-free single GET. Unwraps the `{ data }` success envelope, returns
+ * `null` (no fixture) on any non-OK / 204 / network failure. Never throws.
+ */
+export async function liveGetOrNull<T>(path: string): Promise<DataResult<T>> {
+  try {
+    const res = await apiRequest('GET', path);
+    if (!res.ok) {
+      return { data: null, error: `HTTP ${res.status} ${path}`, status: res.status };
+    }
+    if (res.status === 204) {
+      return { data: null, status: 204 };
+    }
+    const body = (await res.json()) as unknown;
+    return { data: unwrapEnvelope(body) as T, status: res.status };
+  } catch (e) {
+    return { data: null, error: e instanceof Error ? e.message : String(e), status: 0 };
+  }
+}
+
+export interface DataState<T> {
+  data: T | null;
+  loading: boolean;
+  error?: string;
+  /** Loaded successfully, but the backend genuinely has nothing to show. */
+  empty: boolean;
+}
+
+/**
+ * Fixture-free object-payload hook. `empty` is true only when the fetch
+ * succeeded and the payload is absent/blank — distinct from `error`, so a
+ * surface can render an honest "nothing here yet" separately from a
+ * "couldn't reach the backend" state, never a fabricated stand-in.
+ */
+export function useLiveData<T>(
+  path: string | null,
+  deps: React.DependencyList = [path],
+): DataState<T> {
+  const [state, setState] = React.useState<DataState<T>>({
+    data: null,
+    loading: Boolean(path),
+    empty: false,
+  });
+  React.useEffect(() => {
+    let cancelled = false;
+    if (!path) {
+      setState({ data: null, loading: false, empty: false });
+      return undefined;
+    }
+    setState((s) => ({ ...s, loading: true }));
+    liveGetOrNull<T>(path).then((r) => {
+      if (cancelled) return;
+      const isEmpty =
+        !r.error &&
+        (r.data == null || (Array.isArray(r.data) && r.data.length === 0));
+      setState({ data: r.data, loading: false, error: r.error, empty: isEmpty });
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return state;
+}
+
+export interface ListState<T> {
+  rows: T[];
+  loading: boolean;
+  error?: string;
+  /** Loaded successfully with zero rows — the honest empty state. */
+  empty: boolean;
+}
+
+/**
+ * Fixture-free list hook. `rows` is always a real array (empty on error too,
+ * so `.map` is safe without a fixture), `empty` is set only on a successful
+ * zero-row load, and `error` is set only on a fetch failure — the three
+ * states a list surface renders instead of a "Sample data" fixture.
+ */
+export function useLiveRows<T>(
+  path: string | null,
+  deps: React.DependencyList = [path],
+): ListState<T> {
+  const st = useLiveData<T[]>(path, deps);
+  const rows = Array.isArray(st.data) ? st.data : [];
+  return {
+    rows,
+    loading: st.loading,
+    error: st.error,
+    empty: !st.loading && !st.error && rows.length === 0,
+  };
+}
+
+/**
+ * The honest panel a surface shows when a real backend returns nothing, or
+ * when the fetch failed — the replacement for a fixture-backed "Sample data"
+ * card. `tone="error"` is for a failed load; the default idle tone is for a
+ * genuine empty result.
+ */
+export function EmptyState({
+  title,
+  hint,
+  icon,
+  tone = 'idle',
+}: {
+  title: string;
+  hint?: React.ReactNode;
+  icon?: React.ReactNode;
+  tone?: 'idle' | 'error';
+}) {
+  return (
+    <div className={`c2c-empty-state tone-${tone}`}>
+      {icon && <span className="c2c-empty-ic">{icon}</span>}
+      <div className="c2c-empty-t">{title}</div>
+      {hint && <div className="c2c-empty-h">{hint}</div>}
+    </div>
+  );
+}

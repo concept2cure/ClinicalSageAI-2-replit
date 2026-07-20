@@ -77,6 +77,28 @@
   border-color: color-mix(in srgb, var(--success) 30%, transparent);
 }
 
+/* the honest empty / failed-load panel (dataConnect EmptyState) — the
+   fixture-free replacement for a "Sample data" card. A real backend returned
+   nothing, or the fetch failed; either way the surface says so plainly rather
+   than rendering a fabricated stand-in. */
+.c2c-v2 .c2c-empty-state {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 6px; padding: 32px 24px;
+  border: 1px dashed var(--border-200, var(--border, rgba(0,0,0,.12)));
+  border-radius: var(--radius-md, 10px);
+  color: var(--text-400);
+  background: color-mix(in srgb, var(--text-400) 3%, transparent);
+}
+.c2c-v2 .c2c-empty-state .c2c-empty-ic { color: var(--text-400); opacity: .7; }
+.c2c-v2 .c2c-empty-state .c2c-empty-ic svg { width: 22px; height: 22px; }
+.c2c-v2 .c2c-empty-state .c2c-empty-t { font-size: 13px; font-weight: 600; color: var(--text-200); }
+.c2c-v2 .c2c-empty-state .c2c-empty-h { font-size: 12px; line-height: 1.5; max-width: 46ch; }
+.c2c-v2 .c2c-empty-state.tone-error {
+  border-color: color-mix(in srgb, var(--warning) 34%, transparent);
+  background: color-mix(in srgb, var(--warning) 6%, transparent);
+}
+.c2c-v2 .c2c-empty-state.tone-error .c2c-empty-ic { color: var(--warning); opacity: 1; }
+
 /* port helpers — the kit expressed these as one-off inline style attributes;
    classes keep the TSX clean and the CSP surface minimal */
 .c2c-v2 .ana-hidden-input { display: none; }

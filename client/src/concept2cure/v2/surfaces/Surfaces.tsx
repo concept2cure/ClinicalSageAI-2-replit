@@ -2,8 +2,9 @@
  * Core surface family — kit app/Surfaces.jsx ported:
  *   Home            — AnA-first landing (centered composer, segment context)
  *   GlobalRiBrowser — catalog-driven capability browser (`global-ri`,
- *                     contract-ready: GET /api/global-ri/catalog via the
- *                     existing useGlobalRiCatalog hook; fixture behind pill)
+ *                     GET /api/global-ri/catalog via the existing
+ *                     useGlobalRiCatalog hook; real catalog → honest empty →
+ *                     honest error, no fixture)
  *   KitSurfaceScaffold — the kit's honest "ready to install" state for
  *                     surfaces whose components haven't ported yet
  * Styles: styles/surfaces-v2.css (+ shell classes from app-v2.css).
@@ -15,7 +16,7 @@ import { useGlobalRiCatalog } from '@/hooks/useGlobalRiCatalog';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
-import { SampleTag, liveGet } from '../dataConnect';
+import { liveGetOrNull, EmptyState } from '../dataConnect';
 import {
   ANA_MODES,
   NAV_TIERS_V2,
@@ -25,15 +26,7 @@ import {
   getSegmentModules,
   getSurfaceMeta,
 } from '../registryModel';
-import {
-  GLOBAL_RI_CATALOG_FIXTURE,
-  GLOBAL_RI_RESULTS,
-  type GriCapability,
-  type GriCatalog,
-  type GriInputSchema,
-  type GriResultFixture,
-} from '../fixtures/globalRi';
-import { PedigreeBadge } from '../intelligence/Intelligence';
+import type { GlobalRiCatalog, EnrichedGlobalRiCapability } from '@shared/types/global-ri-api';
 import '../styles/surfaces-v2.css';
 
 /* ════════════ Home — AnA-first landing (centered composer) ════════════ */
@@ -258,72 +251,124 @@ export function Home({
 }
 
 /* ════════════ Global-RI capability browser (catalog-driven) ════════════ */
-function useGriCatalog(): { catalog: GriCatalog; sample: boolean } {
-  const live = useGlobalRiCatalog();
-  if (live.data && Array.isArray(live.data.capabilities) && live.data.capabilities.length) {
-    return { catalog: live.data, sample: false };
-  }
-  return { catalog: GLOBAL_RI_CATALOG_FIXTURE, sample: true };
+
+/* Minimal JSON-schema shape the dynamic form reads from a capability's AnA
+   tool (the live catalog carries it per tool as `tools[].inputSchema`). */
+interface GriInputSchema {
+  properties?: Record<
+    string,
+    { type?: string; enum?: string[]; description?: string; format?: string }
+  >;
+  required?: string[];
 }
 
-function griSeed(cap: GriCapability, form: Record<string, unknown>): GriResultFixture {
-  return (
-    GLOBAL_RI_RESULTS[cap.id] ?? {
-      pedigree: 'deterministic_registry',
-      summary: `${cap.label} returns a deterministic, citation-backed payload from the global-RI registry (${cap.routes[cap.routes.length - 1]}).`,
-      fields: Object.entries(form ?? {})
-        .filter(([, v]) => v !== '' && v !== false)
-        .map(([k, v]) => ({ k, v: String(v) })),
-      citations: ['global-ri registry'],
-      caveats: 'Seeded payload — the live route returns the structured result with its own citations and caveats.',
-    }
-  );
+/* Honest outcome of running a capability against its REAL global-RI route:
+   the real deterministic payload, or an error — never a fabricated fixture. */
+interface GriRunResult {
+  /** The real structured payload the route returned (heterogeneous per capability). */
+  data: unknown;
+  /** Set only when the run failed. */
+  error?: string;
+  /** The real HTTP route that was called (shown for provenance). */
+  route?: string;
 }
 
-/** Kit C2C_GRI.run — call the capability's real route, fixture on failure. */
+/** Render a real payload value honestly: scalars as text, nested shapes as compact JSON. */
+function renderVal(v: unknown): string {
+  if (v === null || v === undefined) return '—';
+  if (typeof v === 'object') return JSON.stringify(v);
+  return String(v);
+}
+
+/**
+ * Run a capability against its REAL global-RI route and return the real
+ * deterministic payload (or an honest error). No fixture fallback — a failed
+ * run surfaces honestly instead of a fabricated stand-in.
+ *
+ * FOLLOW-UP (actions pass): each of the ~41 capabilities returns a distinct
+ * domain shape (e.g. exclusivity → components + LOE date; strategy brief →
+ * per-market sections), none of which is the old fixture's summary/fields/
+ * citations shape. A per-capability formatted renderer + typed result contract
+ * is not built yet, so the raw structured result is shown honestly below.
+ */
 async function griRun(
-  cap: GriCapability,
+  cap: EnrichedGlobalRiCapability,
   input: Record<string, unknown>
-): Promise<{ result: GriResultFixture; sample: boolean }> {
+): Promise<GriRunResult> {
   const route = cap.routes?.[cap.routes.length - 1] ?? '';
   const m = route.match(/^(GET|POST)\s+(.+)$/);
-  if (!m) return { result: griSeed(cap, input), sample: true };
+  if (!m) return { data: null, error: `No runnable HTTP route on "${cap.label}".` };
   const path =
     '/api/global-ri' + m[2].replace(/:(\w+)/g, (_s, k: string) => encodeURIComponent(String(input?.[k] ?? '')));
   try {
     if (m[1] === 'GET') {
-      const res = await liveGet<GriResultFixture | null>(path, null);
-      if (!res.sample && res.data) return { result: res.data, sample: false };
-      return { result: griSeed(cap, input), sample: true };
+      const res = await liveGetOrNull<unknown>(path);
+      return { data: res.data, error: res.error, route: `GET ${path}` };
     }
     const res = await apiRequest('POST', path, input);
-    if (res.ok) return { result: (await res.json()) as GriResultFixture, sample: false };
-    return { result: griSeed(cap, input), sample: true };
-  } catch {
-    return { result: griSeed(cap, input), sample: true };
+    if (!res.ok) return { data: null, error: `HTTP ${res.status}`, route: `POST ${path}` };
+    return { data: (await res.json()) as unknown, route: `POST ${path}` };
+  } catch (e) {
+    return { data: null, error: e instanceof Error ? e.message : String(e), route };
   }
 }
 
 export function GlobalRiBrowser({ onAsk }: { onAsk: (text: string) => void }) {
-  const { catalog, sample } = useGriCatalog();
-  const [group, setGroup] = React.useState(catalog.groups[0]?.id);
+  // Live catalog from GET /api/global-ri/catalog (real getGlobalRiCatalog service,
+  // auth'd regulatory-author, tested). Real data → honest empty → honest error;
+  // no fixture fallback, no "Sample data" pill.
+  const { data: catalog, isLoading, isError } = useGlobalRiCatalog();
+  const [group, setGroup] = React.useState<string | undefined>(undefined);
   const [capId, setCapId] = React.useState<string | null>(null);
-  const cap = capId ? catalog.capabilities.find((c) => c.id === capId) : null;
 
-  if (cap) return <GlobalRiCapability cap={cap} onBack={() => setCapId(null)} onAsk={onAsk} />;
-  const groupMeta = catalog.groups.find((g) => g.id === group);
-  const caps = catalog.capabilities.filter((c) => c.group === group);
+  if (isLoading) {
+    return (
+      <div className="gri-main">
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the global-RI capability catalog…</div>
+      </div>
+    );
+  }
+  if (isError || !catalog) {
+    return (
+      <div className="gri-main">
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the global-RI catalog"
+          hint="The regulatory-intelligence capability catalog didn't respond. Sign in with regulatory-author access and retry, or check the /api/global-ri service is reachable."
+        />
+      </div>
+    );
+  }
+  if (!catalog.capabilities || catalog.capabilities.length === 0) {
+    return (
+      <div className="gri-main">
+        <EmptyState
+          icon={I.fileText}
+          title="No global-RI capabilities available"
+          hint="The catalog loaded but returned no capabilities for your account."
+        />
+      </div>
+    );
+  }
+
+  const cap = capId ? catalog.capabilities.find((c) => c.id === capId) : null;
+  if (cap) return <GlobalRiCapability cap={cap} catalog={catalog} onBack={() => setCapId(null)} onAsk={onAsk} />;
+
+  const activeGroup = group ?? catalog.groups[0]?.id;
+  const groupMeta = catalog.groups.find((g) => g.id === activeGroup);
+  const caps = catalog.capabilities.filter((c) => c.group === activeGroup);
   return (
     <div className="gri">
       <nav className="gri-nav">
         <div className="gri-nav-lbl">
-          {catalog.total} capabilities · {catalog.anaToolCount} AnA tools <SampleTag sample={sample} />
+          {catalog.total} capabilities · {catalog.anaToolCount} AnA tools
         </div>
         {catalog.groups.map((g) => (
           <button
             key={g.id}
             type="button"
-            className={`gri-group${group === g.id ? ' on' : ''}`}
+            className={`gri-group${activeGroup === g.id ? ' on' : ''}`}
             onClick={() => setGroup(g.id)}
           >
             <span>{g.label}</span>
@@ -348,7 +393,7 @@ export function GlobalRiBrowser({ onAsk }: { onAsk: (text: string) => void }) {
                 <span className={`rd-chip tone-${c.deterministic ? 'ok' : 'warn'}`}>
                   {c.deterministic ? 'deterministic' : 'model-assisted'}
                 </span>
-                <span className="tool">{c.anaTools[0]}</span>
+                {c.anaTools[0] ? <span className="tool">{c.anaTools[0]}</span> : null}
               </div>
             </button>
           ))}
@@ -358,21 +403,21 @@ export function GlobalRiBrowser({ onAsk }: { onAsk: (text: string) => void }) {
   );
 }
 
-/* A single capability: auto-form from inputSchema → result panel. */
+/* A single capability: auto-form from the live tool inputSchema → result panel. */
 function GlobalRiCapability({
   cap,
+  catalog,
   onBack,
   onAsk,
 }: {
-  cap: GriCapability;
+  cap: EnrichedGlobalRiCapability;
+  catalog: GlobalRiCatalog;
   onBack: () => void;
   onAsk: (text: string) => void;
 }) {
-  /* Kit fixture carries the schema flat; the live @shared catalog carries it
-     per AnA tool (tools[].inputSchema). */
-  const schema: GriInputSchema =
-    cap.inputSchema ??
-    ((cap.tools?.[0]?.inputSchema ?? { properties: {}, required: [] }) as GriInputSchema);
+  /* The live @shared catalog carries the form schema per AnA tool
+     (tools[].inputSchema). */
+  const schema = (cap.tools?.[0]?.inputSchema ?? { properties: {}, required: [] }) as GriInputSchema;
   const props = schema.properties ?? {};
   const required = schema.required ?? [];
   const [form, setForm] = React.useState<Record<string, unknown>>(() => {
@@ -382,19 +427,17 @@ function GlobalRiCapability({
     });
     return init;
   });
-  const [result, setResult] = React.useState<GriResultFixture | null>(null);
-  const [resultSample, setResultSample] = React.useState(true);
+  const [result, setResult] = React.useState<GriRunResult | null>(null);
   const [running, setRunning] = React.useState(false);
   const set = (k: string, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
   const run = () => {
     setRunning(true);
-    griRun(cap, form).then(({ result: r, sample }) => {
+    griRun(cap, form).then((r) => {
       setResult(r);
-      setResultSample(sample);
       setRunning(false);
     });
   };
-  const groupLabel = GLOBAL_RI_CATALOG_FIXTURE.groups.find((g) => g.id === cap.group)?.label;
+  const groupLabel = catalog.groups.find((g) => g.id === cap.group)?.label;
 
   return (
     <div className="gri-main">
@@ -477,31 +520,40 @@ function GlobalRiCapability({
           <div className="gri-result">
             <div className="gri-result-hdr">
               <span className="t">Result</span>
-              <PedigreeBadge level={result.pedigree} />
-              <SampleTag sample={resultSample} />
+              {result.route && <span className="scaf-tag">{result.route}</span>}
             </div>
             <div className="gri-result-body">
-              <div className="gri-result-sum">{result.summary}</div>
-              {result.fields && result.fields.length > 0 && (
-                <div className="gri-kv">
-                  {result.fields.map((f, i) => (
-                    <div key={i} className="gri-kv-cell">
-                      <div className="k">{f.k}</div>
-                      <div className="v">{f.v}</div>
-                    </div>
-                  ))}
-                </div>
+              {result.error ? (
+                <EmptyState
+                  tone="error"
+                  icon={I.alertTriangle}
+                  title="Couldn't run this capability"
+                  hint={`The global-RI service didn't return a result (${result.error}). Check the inputs and that you're signed in with regulatory-author access, then retry.`}
+                />
+              ) : result.data == null ||
+                (typeof result.data === 'object' && Object.keys(result.data as object).length === 0) ? (
+                <EmptyState
+                  icon={I.fileText}
+                  title="No result returned"
+                  hint="The capability ran but returned nothing for these inputs."
+                />
+              ) : typeof result.data !== 'object' ? (
+                <div className="gri-result-sum">{String(result.data)}</div>
+              ) : (
+                <>
+                  <div className="gri-kv">
+                    {Object.entries(result.data as Record<string, unknown>).map(([k, v]) => (
+                      <div key={k} className="gri-kv-cell">
+                        <div className="k">{labelize(k)}</div>
+                        <div className="v">{renderVal(v)}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="gri-caveat">
+                    Raw deterministic result from the global-RI service. A formatted per-capability view is being built.
+                  </div>
+                </>
               )}
-              {result.citations && (
-                <div className="gri-cite">
-                  {result.citations.map((c) => (
-                    <span key={c} className="c">
-                      {c}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {result.caveats && <div className="gri-caveat">{result.caveats}</div>}
             </div>
           </div>
         )}

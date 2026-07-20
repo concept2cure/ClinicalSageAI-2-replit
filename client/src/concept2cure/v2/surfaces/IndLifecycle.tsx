@@ -1,12 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
-import { SampleTag, liveGet } from '../dataConnect';
+import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import {
-  INDL_PROGRAM,
-  INDL_FORMS,
-  INDL_SECTIONS,
   INDL_STATUS_LABEL,
   INDL_CLOCK_STATUS,
   INDL_DELIVERABLES,
@@ -15,103 +12,67 @@ import {
 } from '../fixtures/ind-lifecycle-data';
 import type {
   IndlClockState,
-  IndlProgram,
   IndlForm,
   IndlSection,
 } from '../fixtures/ind-lifecycle-data';
 import '../styles/project-home-v2.css';
 
-/* ── Live read shape: one org-scoped IND checklist (GET /api/ind-checklist) ──
-   Combines the program record with its Module 1 forms checklist and eCTD
-   section blueprint -- the exact keys the surface renders. */
+/* ── Live read shape: one org-scoped IND checklist row (GET /api/ind-checklist).
+   Shaped by server/routes/ind-checklist.routes.ts to exactly the keys this
+   surface renders (id → code; forms/sections rehydrated from JSONB). The nullable
+   TEXT columns (drug_name, product_name, indication, sponsor_name,
+   submission_type) are `| null` and rendered null-safe — never fabricated.
+   target_receipt_offset_days is NOT NULL DEFAULT 14; forms/sections coalesce to
+   [] server-side (JSONB NOT NULL DEFAULT '[]'), so both are always arrays. */
 interface IndlChecklist {
   code: string;
-  drugName: string;
-  productName: string;
-  indication: string;
-  sponsorName: string;
-  submissionType: string;
+  drugName: string | null;
+  productName: string | null;
+  indication: string | null;
+  sponsorName: string | null;
+  submissionType: string | null;
   targetReceiptOffsetDays: number;
   forms: IndlForm[];
   sections: IndlSection[];
 }
 
-const IND_CHECKLIST_FIXTURE: IndlChecklist = {
-  ...INDL_PROGRAM,
-  forms: INDL_FORMS,
-  sections: INDL_SECTIONS,
-};
+/* Stable module-level empty seeds: useLiveRows synthesizes a fresh [] every
+   render until the checklist resolves, so feeding these to the readiness memo
+   (instead of an inline []) keeps its deps stable and avoids a render thrash. */
+const EMPTY_FORMS: IndlForm[] = [];
+const EMPTY_SECTIONS: IndlSection[] = [];
 
 /* ════ IND Lifecycle -- the deliverable-first IND workspace (21 CFR 312) ════ */
 
 export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   const ask = onAsk;
 
-  /* live ?? fixture -- render the codebase fixture immediately (no empty flash),
-     then adopt the org's seeded IND checklist only when the GET returns the full
-     display shape (program + nested forms[] + sections[]). Readiness is computed
-     locally from whichever set loaded, so the local form/section state keeps
-     working either way. Never fabricates: the pill stays "Sample" until a real
-     shape-matching row arrives. */
-  const [prog, setProg] = useState<IndlProgram>(INDL_PROGRAM);
-  const [forms, setForms] = useState<IndlForm[]>(INDL_FORMS);
-  const [sections, setSections] = useState<IndlSection[]>(INDL_SECTIONS);
-  const [sample, setSample] = useState(true);
+  /* The org's IND checklist — GET /api/ind-checklist (c2c_ind_checklist, org
+     scoped, shaped by ind-checklist.routes.ts). useLiveRows unwraps the { data }
+     envelope; the surface renders one IND, so it reads the first row. Real data,
+     an honest empty state, or an honest failed-load state — never a fixture.
+     Readiness and the 30-day clock are computed deterministically from the
+     loaded forms/sections. */
+  const { rows, loading, error } = useLiveRows<IndlChecklist>('/api/ind-checklist');
+  const checklist = rows[0] ?? null;
   const [tab, setTab] = useState<'file' | 'lifecycle'>('file');
-  const [toast, setToast] = useState('');
+
+  // Null-safe derivation with stable empty seeds while the checklist is
+  // unresolved (loading or failed load) so the readiness memo below is stable.
+  const forms = checklist?.forms ?? EMPTY_FORMS;
+  const sections = checklist?.sections ?? EMPTY_SECTIONS;
+  const offsetDays = checklist?.targetReceiptOffsetDays ?? 14;
 
   const R = useMemo(() => indlReadiness(sections, forms), [sections, forms]);
 
-  useEffect(() => {
-    let cancelled = false;
-    liveGet<{ data?: IndlChecklist[] }>('/api/ind-checklist', {
-      data: [IND_CHECKLIST_FIXTURE],
-    }).then((res) => {
-      if (cancelled) return;
-      const row = res.data?.data?.[0];
-      if (
-        !res.sample &&
-        row &&
-        row.code &&
-        Array.isArray(row.forms) &&
-        row.forms.length > 0 &&
-        Array.isArray(row.sections) &&
-        row.sections.length > 0
-      ) {
-        setProg({
-          code: row.code,
-          drugName: row.drugName,
-          productName: row.productName,
-          indication: row.indication,
-          sponsorName: row.sponsorName,
-          submissionType: row.submissionType,
-          targetReceiptOffsetDays: row.targetReceiptOffsetDays,
-        });
-        setForms(row.forms);
-        setSections(row.sections);
-        setSample(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   /* 30-day regulatory clock -- a PROJECTION until FDA receipt (not yet filed). */
   const clock = useMemo<IndlClockState>(() => {
-    const receipt = new Date(
-      Date.now() + (prog.targetReceiptOffsetDays || 14) * 86400000,
-    ).toISOString();
+    const receipt = new Date(Date.now() + offsetDays * 86400000).toISOString();
     return indlClock(receipt);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [offsetDays]);
   const receiptDate = useMemo(
-    () =>
-      new Date(
-        Date.now() + (prog.targetReceiptOffsetDays || 14) * 86400000,
-      ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    () => new Date(Date.now() + offsetDays * 86400000),
+    [offsetDays],
   );
   const clearDate = useMemo(
     () => (clock ? new Date(clock.thirtyDayDate) : null),
@@ -125,11 +86,73 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           day: 'numeric',
         })
       : '--';
+
+  /* Honest four-state render. The whole surface is one IND checklist, so a
+     loading / failed-load / genuinely-empty read replaces the dashboard rather
+     than showing a fabricated program. */
+  const kicker = (
+    <div className="surface-kicker">
+      {I.rocket} IND Lifecycle -- 21 CFR 312 -- /api/ind-checklist
+    </div>
+  );
+  if (loading) {
+    return (
+      <div className="page-inner indl" data-screen-label="IND Lifecycle">
+        <div className="surface-head">
+          <div>
+            {kicker}
+            <h1>IND Lifecycle</h1>
+          </div>
+        </div>
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>
+          Loading the IND checklist…
+        </div>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="page-inner indl" data-screen-label="IND Lifecycle">
+        <div className="surface-head">
+          <div>
+            {kicker}
+            <h1>IND Lifecycle</h1>
+          </div>
+        </div>
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the IND checklist"
+          hint="The org's IND checklist (21 CFR 312) didn't respond — this is your program's Module 1 forms and eCTD section state. Sign in and retry, or check the service is reachable."
+        />
+      </div>
+    );
+  }
+  if (!checklist) {
+    return (
+      <div className="page-inner indl" data-screen-label="IND Lifecycle">
+        <div className="surface-head">
+          <div>
+            {kicker}
+            <h1>IND Lifecycle</h1>
+          </div>
+        </div>
+        <EmptyState
+          icon={I.fileText}
+          title="No IND checklist yet"
+          hint="No Investigational New Drug application is provisioned for this organization yet. Once an IND is set up, its Module 1 forms (1571 / 1572 / 3674), eCTD section state, and 30-day safe-to-proceed clock appear here."
+        />
+      </div>
+    );
+  }
+
+  /* checklist is a real, non-null row from here down. */
+  const prog = checklist;
+  const drug = prog.drugName ?? prog.code;
   const cst = INDL_CLOCK_STATUS[clock ? clock.status : 'submitted'] || {
     label: '--',
     tone: 'info',
   };
-
   const formsDone = forms.filter((f) => f.done).length;
   const deliverables = INDL_DELIVERABLES.filter((d) => d.group === tab);
   const stLabel = INDL_STATUS_LABEL;
@@ -138,15 +161,12 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     <div className="page-inner indl" data-screen-label="IND Lifecycle">
       <div className="surface-head">
         <div>
-          <div className="surface-kicker">
-            {I.rocket} IND Lifecycle -- 21 CFR 312 -- /api/ind-checklist
-          </div>
-          <h1>
-            {prog.drugName} -- Initial IND <SampleTag sample={sample} />
-          </h1>
+          {kicker}
+          <h1>{drug} -- Initial IND</h1>
           <p className="surface-sub">
-            {prog.productName} -- {prog.indication} -- {prog.sponsorName} --
-            eCTD v4.0 (FDA)
+            {[prog.productName, prog.indication, prog.sponsorName, 'eCTD v4.0 (FDA)']
+              .filter(Boolean)
+              .join(' -- ')}
           </p>
         </div>
         <div className="surface-head-actions">
@@ -162,7 +182,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             onClick={() =>
               ask(
                 'What is the fastest path to make the ' +
-                  prog.drugName +
+                  drug +
                   ' IND submission-ready?',
               )
             }
@@ -178,19 +198,19 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         }
         eyebrow={
           'Is the ' +
-          prog.drugName +
+          drug +
           ' IND ready to file -- and what stands between you and submission'
         }
         headline={
           R.ready ? (
             <>
-              The {prog.drugName} IND is <b>ready to file</b> -- every
+              The {drug} IND is <b>ready to file</b> -- every
               required section is approved and all three Module 1 forms are
               complete.
             </>
           ) : (
             <>
-              The {prog.drugName} IND is{' '}
+              The {drug} IND is{' '}
               <b>{R.overallPercentage}% ready</b>.{' '}
               {R.blockers.length} thing
               {R.blockers.length === 1 ? '' : 's'} stand
@@ -241,11 +261,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             }
           },
         }}
-        secondary={
-          sample
-            ? "Sample checklist -- the live route returns this org's IND forms and section state, and readiness is computed from it."
-            : 'Live from GET /api/ind-checklist.'
-        }
+        secondary="Live from GET /api/ind-checklist — this org's IND forms and section state; readiness is computed from it."
       />
 
       <div className="indl-grid">
@@ -254,7 +270,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           <div className="cm-doc indl-doc">
             <div className="cm-doc-bar">
               <span className="cm-doc-name">
-                {prog.drugName}_IND_filing-readiness_312.23
+                {drug}_IND_filing-readiness_312.23
               </span>
               <div className="cm-doc-bar-r">
                 <span
@@ -267,7 +283,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                   onClick={() =>
                     ask(
                       'Generate the IND filing-readiness report (21 CFR 312.23) as a governed PDF for ' +
-                        prog.drugName +
+                        drug +
                         '.',
                     )
                   }
@@ -280,8 +296,8 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               <div className="indl-cover">
                 <h2>IND Filing Readiness -- 21 CFR 312.23</h2>
                 <div className="indl-cover-meta">
-                  <span>{prog.productName}</span>
-                  <span>{prog.sponsorName}</span>
+                  {prog.productName && <span>{prog.productName}</span>}
+                  {prog.sponsorName && <span>{prog.sponsorName}</span>}
                   <span>Initial IND -- eCTD v4.0 (FDA)</span>
                   <span>
                     Assessed{' '}
@@ -524,12 +540,6 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
           </div>
         </aside>
       </div>
-
-      {toast && (
-        <div className="etmf-toast">
-          {I.check} {toast}
-        </div>
-      )}
     </div>
   );
 }

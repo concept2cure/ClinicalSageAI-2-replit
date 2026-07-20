@@ -1,11 +1,7 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { useLiveData, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { APP_LICENSE } from '../fixtures/admin-data';
-import { GI_BY_SEG } from '../fixtures/governed-intelligence-data';
-import { AMEM_ATOMS } from './AnaMemory';
-import { PJ_PROGRAMS } from './BiopharmaJourney';
 import '../styles/project-home-v2.css';
 import '../styles/insights-v2.css';
 
@@ -123,21 +119,92 @@ const SEG_LABEL: Record<string, string> = {
 interface ProgramCtx {
   code: string;
   label: string;
-  filing: string;
-  indication: string;
+  // filing / agency / pdufa are NOT on the projects / readiness model and are
+  // returned as an explicit null by the overview endpoint — rendered null-safe,
+  // never fabricated.
+  filing: string | null;
+  indication: string | null;
   readiness: number | null;
   scope: string;
   scopeId: string;
-  agency?: string;
+  agency: string | null;
   pdufa: string | null;
+  // Real count of promotion-blocking findings from computeInitialRun.
+  criticalBlockerCount: number;
 }
 
-function roProgram(seg: string): ProgramCtx {
-  const pj = (PJ_PROGRAMS as Record<string, any>)[seg];
-  const gi = (GI_BY_SEG as Record<string, any>)[seg];
-  if (pj) return { code: pj.code, label: pj.indication, filing: (pj.app || '').split(' -- ')[0] || pj.app, indication: pj.indication, readiness: pj.readiness, scope: 'program', scopeId: pj.code, agency: pj.agency, pdufa: (pj.target && /PDUFA|action/i.test(pj.target.label)) ? pj.target.v : null };
-  if (gi) return { code: gi.program.code, label: gi.program.name, filing: gi.program.filing, indication: gi.program.indication, readiness: null, scope: gi.program.scope || 'submission', scopeId: gi.program.code, pdufa: null };
-  return { code: 'BX-204', label: 'Bextrelimab', filing: 'NDA', indication: 'Oncology', readiness: 88, scope: 'program', scopeId: 'BX-204', pdufa: null };
+/* ── Live canvas bootstrap (GET /api/insights-canvas/overview) ──
+   Mirrors the server CanvasOverview (server/routes/insights-canvas-routes.ts):
+   the org's REAL subscription tier, its derived segments, the flagship
+   program's REAL governed readiness (computeInitialRun), and the
+   enterprise-gated portfolio rollup. No metric is originated on the client;
+   filing/agency/pdufa arrive as explicit null (unsourced), never faked. */
+interface CanvasLeadProgram {
+  scope: 'program';
+  scopeId: string;
+  projectId: number;
+  code: string | null;
+  label: string;
+  indication: string | null;
+  readiness: number | null;
+  confidence: number;
+  status: string;
+  riskLevel: string;
+  criticalBlockerCount: number;
+  filing: string | null;
+  agency: string | null;
+  pdufa: string | null;
+}
+interface CanvasPortfolioProgram {
+  projectId: number;
+  code: string | null;
+  label: string;
+  indication: string | null;
+  readiness: number;
+  confidence: number;
+  status: string;
+  riskLevel: string;
+  criticalBlockerCount: number;
+}
+interface CanvasPortfolio {
+  entitled: boolean;
+  requiredTier: string;
+  summary: {
+    programCount: number;
+    avgReadiness: number;
+    avgConfidence: number;
+    worstRisk: string;
+    readyCount: number;
+    partialCount: number;
+    missingCount: number;
+    totalCriticalBlockers: number;
+    truncated: boolean;
+  } | null;
+  programs: CanvasPortfolioProgram[] | null;
+}
+interface CanvasOverview {
+  organizationId: number;
+  tier: string;
+  segments: string[];
+  leadProgram: CanvasLeadProgram | null;
+  portfolio: CanvasPortfolio;
+}
+
+/** Map the live flagship program into the surface's ProgramCtx. filing/agency/
+    pdufa are unsourced on the readiness model (explicit null) — never faked. */
+function leadToProgramCtx(lp: CanvasLeadProgram): ProgramCtx {
+  return {
+    code: lp.code ?? String(lp.projectId),
+    label: lp.label,
+    filing: lp.filing,
+    indication: lp.indication,
+    readiness: lp.readiness,
+    scope: lp.scope,
+    scopeId: lp.scopeId,
+    agency: lp.agency,
+    pdufa: lp.pdufa,
+    criticalBlockerCount: lp.criticalBlockerCount,
+  };
 }
 
 /* ── Segment helpers ── */
@@ -261,26 +328,22 @@ function roMarketsIn(utterance: string): string[] {
   return out;
 }
 
-/* ── Portfolio rollup ── */
-interface PortfolioRow { code: string; indication: string; filing: string; readiness: number; seg: string }
-function roPortfolio(): PortfolioRow[] {
-  const rows: PortfolioRow[] = [];
-  const pj = PJ_PROGRAMS as Record<string, any>;
-  Object.keys(pj).forEach(seg => { const p = pj[seg]; rows.push({ code: p.code, indication: p.indication, filing: (p.app || '').split(' -- ')[0], readiness: p.readiness, seg }); });
-  return rows;
+/* ── Portfolio rollup (live, from overview.portfolio.programs) ── */
+interface PortfolioRow { code: string; indication: string | null; readiness: number }
+function roPortfolioFrom(programs: CanvasPortfolioProgram[]): PortfolioRow[] {
+  return programs.map(p => ({ code: p.code ?? String(p.projectId), indication: p.indication, readiness: p.readiness }));
 }
 
-/* ── Suggest for client ── */
-function roSuggestForClient(seg: string) {
-  const p = roProgram(seg);
+/* ── Suggest for client (seeded by the live flagship program) ── */
+function roSuggestForClient(p: ProgramCtx, seg: string) {
   const preset = roPresetsForSeg(seg)[0];
-  const mem = AMEM_ATOMS.length;
-  const rBit = p.readiness == null ? `${p.code} is in ${p.filing} preparation` : `${p.code} is ${p.readiness}% ready`;
+  const rBit = p.readiness == null
+    ? (p.filing ? `${p.code} is in ${p.filing} preparation` : `${p.code}'s submission readiness is not yet computed`)
+    : `${p.code} is ${p.readiness}% ready`;
   const pduBit = p.pdufa ? ` with a target action date of ${p.pdufa}` : '';
-  const histBit = mem ? ` I am also drawing on ${mem} thing${mem > 1 ? 's' : ''} I remember about how you work.` : '';
   return {
     headline: 'I can build any report or dashboard you need -- just ask.',
-    body: `Looking across your portfolio, ${rBit}${pduBit}. Based on that and where each program sits, I'd start with the ${preset.label}.${histBit}`,
+    body: `Looking across your portfolio, ${rBit}${pduBit}. Based on that and where each program sits, I'd start with the ${preset.label}.`,
     preset,
     prompts: [
       `Build the ${preset.label}`,
@@ -330,58 +393,57 @@ interface RenderedReport {
   sections: ROSection[];
 }
 
-function roRenderReport(type: ReportType, seg: string): RenderedReport {
-  const p = roProgram(seg);
-  const gi = (GI_BY_SEG as Record<string, any>)[seg] || {};
-  const findings = (gi.findings || []);
-  const blockingTitles = findings.filter((f: { contradictionType: string }) => f.contradictionType === 'dosage_conflict').map((f: { title: string }) => f.title);
+/*
+ * Deterministic report STRUCTURE generator. Seeded by the live flagship
+ * program (real code / readiness / criticalBlockerCount from computeInitialRun),
+ * it lays out each governed report's sections and shows every unsourced value
+ * as "missing", never an estimate. It does NOT fabricate findings — the
+ * itemized gaps, predicate matrices and consistency checks populate only when
+ * the live report providers run (see FLAG on `send`: the real generation path
+ * is POST /api/report-os/runs, not yet wired). No metric is originated here.
+ */
+function roRenderReport(type: ReportType, p: ProgramCtx): RenderedReport {
   const now = new Date().toISOString();
   const S = (id: string, title: string, blocks: ROBlockData[]): ROSection => ({ id, title, blocks });
   const disclosure: ROBlockData = { kind: 'disclosure', method: 'RIM foresight model -- deterministic + AI-refined signals', confidence: 0.0, validated: false, note: 'Advisory only -- the predictive model is not validated for regulatory decision-making. Every projected value is provisional and must be confirmed against the governed record.' };
   let sections: ROSection[] = [];
   const fam = type.family;
   const id = type.typeId;
+  const filingBit = p.filing ? ' -- ' + p.filing : '';
 
   if (id === 'readiness.executive_digest' || id === 'ema.maa_readiness_assessment' || id === 'china_nmpa.registration_dossier_readiness' || fam === 'usa_fda_pma') {
     const r = p.readiness;
     const readLabel = r == null ? 'not yet computed' : (r >= 85 ? 'on track' : r >= 60 ? 'in assembly' : 'early');
+    const blockers = p.criticalBlockerCount;
     sections = [
       S('overview', 'Executive summary', [
-        { kind: 'summary', text: `${p.code} -- ${p.filing}${p.indication ? ' -- ' + p.indication : ''}. Submission readiness is ${r == null ? 'not yet computed' : r + '%'} (${readLabel})${blockingTitles.length ? `, with ${blockingTitles.length} item${blockingTitles.length > 1 ? 's' : ''} blocking promotion` : ''}.` },
+        { kind: 'summary', text: `${p.code}${filingBit}${p.indication ? ' -- ' + p.indication : ''}. Submission readiness is ${r == null ? 'not yet computed' : r + '%'} (${readLabel})${blockers ? `, with ${blockers} critical item${blockers > 1 ? 's' : ''} blocking promotion` : ''}.` },
         { kind: 'metric', label: 'Submission readiness', value: r ?? null, unit: '%', status: r == null ? 'missing' : r >= 85 ? 'ready' : 'partial', provenance: [{ sourceTable: 'submission_readiness', sourceField: 'score', recordId: p.code, transformation: 'computeInitialRun confidence' }] },
-        { kind: 'metric', label: 'Blocking items', value: blockingTitles.length, status: blockingTitles.length ? 'partial' : 'ready', provenance: [{ sourceTable: 'contradiction_findings', transformation: 'authority=blocks_promotion' }] },
+        { kind: 'metric', label: 'Critical blockers', value: blockers, status: blockers ? 'partial' : 'ready', provenance: [{ sourceTable: 'contradiction_findings', transformation: 'authority=blocks_promotion' }] },
         { kind: 'metric', label: 'Target action', value: p.pdufa ?? null, status: p.pdufa ? 'ready' : 'missing', provenance: p.pdufa ? [{ sourceTable: 'submission_ops', sourceField: 'pdufa_date', recordId: p.code }] : undefined },
       ]),
       S('readiness', 'Readiness signal', [
         { kind: 'chart', chartType: 'readiness_ring', spec: { value: r ?? 0, label: 'Readiness' }, provenance: [{ sourceTable: 'submission_readiness', recordId: p.code }] },
       ]),
+      S('read', 'AnA read', [
+        { kind: 'narrative', text: `${p.code} is ${readLabel}. ${blockers ? 'Clear the ' + blockers + ' critical blocker' + (blockers > 1 ? 's' : '') + ' before promoting into the submission sequence; ' : ''}open the governed readiness run for the itemized gaps.`, aiGenerated: true, disclosure: 'Narrative summarizes governed metrics; it originates no new numbers.' },
+      ]),
     ];
-    if (findings.length) sections.push(S('gaps', 'Gaps & blockers', [
-      ...(blockingTitles.length ? [{ kind: 'blocker-list', items: blockingTitles }] : []),
-      { kind: 'gap-list', items: findings.filter((f: { contradictionType: string }) => f.contradictionType !== 'dosage_conflict').map((f: { title: string; severity: string; deterministicRule?: string }) => ({ title: f.title, severity: f.severity, message: f.deterministicRule || '' })) },
-    ]));
-    sections.push(S('read', 'AnA read', [
-      { kind: 'narrative', text: `${p.code} is ${readLabel}. ${blockingTitles.length ? 'Clear the ' + blockingTitles.length + ' blocking item' + (blockingTitles.length > 1 ? 's' : '') + ' before promoting into the submission sequence; ' : ''}the remaining items are advisory and can be resolved in parallel with assembly.`, aiGenerated: true, disclosure: 'Narrative summarizes governed metrics; it originates no new numbers.' },
-    ]));
   } else if (id === 'usa_fda.estar_510k_equivalence_matrix') {
-    const checks = (gi.checks || []);
     sections = [
       S('se', 'Substantial-equivalence summary', [
-        { kind: 'summary', text: `${p.code} -- ${p.filing}. Predicate comparison and performance claims are consistent across the SE discussion, the 510(k) summary and the IFU.` },
-        { kind: 'metric', label: 'Substantial equivalence', value: 'Supported', status: 'ready', provenance: [{ sourceTable: 'substantial_equivalence', recordId: p.code }] },
+        { kind: 'summary', text: `${p.code}${filingBit}. The predicate comparison and performance-claim consistency populate from the governed substantial-equivalence record when the live provider runs against this scope.` },
+        { kind: 'metric', label: 'Substantial equivalence', value: null, status: 'missing', provenance: [{ sourceTable: 'substantial_equivalence', recordId: p.code }] },
       ]),
       S('matrix', 'Predicate equivalence matrix', [
-        { kind: 'table', columns: ['Attribute', 'Subject', 'Predicate', 'Assessment'], rows: [['Accuracy (MARD)', '8.2%', '8.7%', 'Equivalent'], ['Intended use', 'CGM', 'CGM', 'Same'], ['Labeling claim', 'Matches pivotal', '--', 'No over-statement']], provenance: [{ sourceTable: 'predicate_mapping', recordId: p.code, transformation: 'testing_coverage cross-ref' }] },
+        { kind: 'disclosure', method: 'Governed predicate-mapping provider', validated: false, note: 'The attribute-by-attribute predicate comparison (accuracy, intended use, labeling) populates from the substantial_equivalence / predicate_mapping record — no values are estimated here.' },
       ]),
     ];
-    if (checks.length) sections.push(S('checks', 'Consistency checks', [
-      { kind: 'gap-list', items: checks.map((c: { k: string; detail: string }) => ({ title: c.k + ' -- consistent', severity: 'low', message: c.detail })) },
-    ]));
   } else if (fam === 'prediction') {
     const isPremortem = id === 'prediction.crl_rtf_premortem';
     sections = [
       S('forecast', isPremortem ? 'CRL / RTF pre-mortem' : 'Regulatory forecast', [
-        { kind: 'summary', text: isPremortem ? `${p.code} -- ${p.filing}. Advisory projection of refuse-to-file and complete-response-letter risk from the deficiency-risk model. Not a prediction of the agency's decision.` : `${p.code} -- ${p.filing}. Advisory trajectory of the submission-readiness twin toward an approval / review / deficiency outcome. Current readiness ${p.readiness == null ? 'not yet computed' : p.readiness + '%'}.` },
+        { kind: 'summary', text: isPremortem ? `${p.code}${filingBit}. Advisory projection of refuse-to-file and complete-response-letter risk from the deficiency-risk model. Not a prediction of the agency's decision.` : `${p.code}${filingBit}. Advisory trajectory of the submission-readiness twin toward an approval / review / deficiency outcome. Current readiness ${p.readiness == null ? 'not yet computed' : p.readiness + '%'}.` },
         { kind: 'chart', chartType: 'forecast_band', spec: { anchor: p.readiness ?? 60, label: isPremortem ? 'Deficiency risk' : 'Readiness trajectory' }, provenance: [{ sourceTable: isPremortem ? 'deficiency_risk' : 'readiness_trend', recordId: p.code }] },
       ]),
       S('method', 'Method & limits', [disclosure]),
@@ -389,7 +451,7 @@ function roRenderReport(type: ReportType, seg: string): RenderedReport {
   } else {
     sections = [
       S('summary', (RO_FAMILY[fam] || {}).label || 'Report', [
-        { kind: 'summary', text: `${type.label} for ${p.code} -- ${p.filing}. Structure and governance rules are set; concrete values populate when the live provider (${(RO_FAMILY[fam] || {}).label || fam}) runs against this scope.` },
+        { kind: 'summary', text: `${type.label} for ${p.code}${filingBit}. Structure and governance rules are set; concrete values populate when the live provider (${(RO_FAMILY[fam] || {}).label || fam}) runs against this scope.` },
         { kind: 'metric', label: 'Items in scope', value: null, status: 'missing', provenance: [{ sourceTable: 'provider', transformation: 'awaiting live run' }] },
         { kind: 'metric', label: 'Completeness', value: null, unit: '%', status: 'missing' },
       ]),
@@ -402,7 +464,7 @@ function roRenderReport(type: ReportType, seg: string): RenderedReport {
   return {
     reportTypeId: type.typeId, reportTypeLabel: type.label, scopeType: p.scope, scopeId: p.scopeId,
     generatedAt: now, status: 'partial',
-    truthfulness: { allowedStatus: 'partial', downgradedFrom: 'final', reasons: ['Sample render -- not connected to the live governed providers', ...(type.t && type.t.requireDisclosure ? ['Predictive model is not validated -- advisory only'] : [])] },
+    truthfulness: { allowedStatus: 'partial', downgradedFrom: 'final', reasons: ['Structure preview -- not connected to the live governed report providers', ...(type.t && type.t.requireDisclosure ? ['Predictive model is not validated -- advisory only'] : [])] },
     sections,
   };
 }
@@ -437,11 +499,11 @@ interface DashboardData {
   program?: ProgramCtx;
 }
 
-function roAnaReply(utterance: string, seg: string, tier: string, ctx?: { report?: RenderedReport | null }): AnaReply {
-  const c = ctx || {};
+function roAnaReply(utterance: string, seg: string, tier: string, ctx: { program: ProgramCtx; portfolio: CanvasPortfolio; report?: RenderedReport | null }): AnaReply {
+  const c = ctx;
   const route = roRouteIntent(utterance);
   const name = route.matched ? route.name! : (route.candidates && route.candidates[0]) || 'generate_report';
-  const p = roProgram(seg);
+  const p = ctx.program;
   function cap(s: string) { return (RO_TIERS.find(t => t.id === s) || { label: s }).label; }
   const lockMsg = (feature: string, typeLabel: string): AnaReply => ({ tool: name, text: `I can set up "${typeLabel}", but it needs the ${cap(RO_FEATURE_TIER[feature])} plan -- it is a ${RO_FEATURE_LABEL[feature]} capability. I will not show an estimated result on a plan that has not unlocked the governed model. Here is what it includes and how to unlock it.`, locked: { feature, requiredTier: RO_FEATURE_TIER[feature], typeLabel }, report: null, dashboard: null });
   const entitledFor = (t: ReportType) => roDecide(t.typeId, t.family, tier);
@@ -449,7 +511,10 @@ function roAnaReply(utterance: string, seg: string, tier: string, ctx?: { report
   if (name === 'portfolio_readiness') {
     const dec = roDecide('portfolio_rollup', 'portfolio', tier);
     if (!dec.entitled) return lockMsg('portfolio_rollup', 'Portfolio readiness rollup');
-    const rows = roPortfolio();
+    // Live, enterprise-gated rollup — programs is null when the org isn't
+    // entitled or has none; show an honest empty, never a fabricated board.
+    const rows = ctx.portfolio.programs ? roPortfolioFrom(ctx.portfolio.programs) : [];
+    if (rows.length === 0) return { tool: name, text: `Your plan unlocks the portfolio rollup, but I don't see any governed programs to roll up yet. Once a program with a readiness run exists in your organization, its board view appears here.`, report: null, dashboard: null };
     return { tool: name, text: `Here is readiness across your ${rows.length} program${rows.length > 1 ? 's' : ''}. The numbers are the governed readiness scores -- I am ranking and framing them, not recomputing them.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: 'Board view across all programs', rows }, report: null };
   }
   if (name === 'compare_regions') {
@@ -468,16 +533,16 @@ function roAnaReply(utterance: string, seg: string, tier: string, ctx?: { report
     const t = RO_TYPES.find(x => x.typeId === (isPre ? 'prediction.crl_rtf_premortem' : 'prediction.regulatory_forecast'))!;
     const dec = entitledFor(t);
     if (!dec.entitled) return lockMsg(dec.feature, t.label);
-    return { tool: name, text: `Here is the ${t.label} for ${p.code}. It is advisory -- the model is not validated, so every projected value carries a disclosure and I present it as partial, never final.`, report: roRenderReport(t, seg), dashboard: null };
+    return { tool: name, text: `Here is the ${t.label} for ${p.code}. It is advisory -- the model is not validated, so every projected value carries a disclosure and I present it as partial, never final.`, report: roRenderReport(t, p), dashboard: null };
   }
   const resolved = roResolveType(utterance, seg);
   if (name === 'list_report_types' || !resolved) {
     const cands = roFilterForSegment(RO_TYPES, seg).slice(0, 6);
-    return { tool: 'list_report_types', question: true, text: `Tell me what you want to see and I will build it. For ${p.code} (${p.filing}) I can run any of these -- or describe the question in your own words and I will pick the right governed report.`, chips: cands.map(t => [t.label, `Generate the ${t.label} for ${p.code}`]), report: null, dashboard: null };
+    return { tool: 'list_report_types', question: true, text: `Tell me what you want to see and I will build it. For ${p.code}${p.filing ? ` (${p.filing})` : ''} I can run any of these -- or describe the question in your own words and I will pick the right governed report.`, chips: cands.map(t => [t.label, `Generate the ${t.label} for ${p.code}`]), report: null, dashboard: null };
   }
   const dec = entitledFor(resolved);
   if (!dec.entitled) return lockMsg(dec.feature, resolved.label);
-  return { tool: 'generate_report', text: `Here is the ${resolved.label} for ${p.code}. Every value is provenance-linked to a governed source -- I am assembling and explaining it, not originating any number. It is ${resolved.t && resolved.t.forbidFinal ? 'advisory (partial)' : 'partial until the live providers run'}.`, report: roRenderReport(resolved, seg), dashboard: null };
+  return { tool: 'generate_report', text: `Here is the ${resolved.label} for ${p.code}. Every value is provenance-linked to a governed source -- I am assembling and explaining it, not originating any number. It is ${resolved.t && resolved.t.forbidFinal ? 'advisory (partial)' : 'partial until the live providers run'}.`, report: roRenderReport(resolved, p), dashboard: null };
 }
 
 /* ── Inline helpers ── */
@@ -619,7 +684,7 @@ function ROBlock({ block }: { block: ROBlockData }) {
 }
 
 /* ── ROReport ── */
-function ROReport({ report, sample, onAsk, onExport, compact }: { report: RenderedReport; sample: boolean; onAsk: (t: string) => void; onExport: (r: RenderedReport) => void; compact?: boolean }) {
+function ROReport({ report, onAsk, onExport, compact }: { report: RenderedReport; onAsk: (t: string) => void; onExport: (r: RenderedReport) => void; compact?: boolean }) {
   if (!report) return null;
   const fam = RO_FAMILY[(RO_TYPES.find(t => t.typeId === report.reportTypeId) || { family: '' }).family] || {};
   const stTone = report.status === 'final' ? 'ok' : report.status === 'partial' ? 'warn' : 'idle';
@@ -627,7 +692,7 @@ function ROReport({ report, sample, onAsk, onExport, compact }: { report: Render
   return (
     <div className="ro-report">
       <div className="ro-rep-head">
-        <div className="ro-rep-eyebrow">{fam.label || 'Governed report'}{fam.region ? <span className="ro-region">{fam.region}</span> : null} <SampleTag sample={sample} /></div>
+        <div className="ro-rep-eyebrow">{fam.label || 'Governed report'}{fam.region ? <span className="ro-region">{fam.region}</span> : null}</div>
         <h2 className="ro-rep-title">{report.reportTypeLabel || report.reportTypeId}</h2>
         <div className="ro-rep-meta">
           <span>{report.scopeType} -- {report.scopeId}</span>
@@ -645,7 +710,7 @@ function ROReport({ report, sample, onAsk, onExport, compact }: { report: Render
       ))}
       {!compact && (
         <div className="ro-rep-actions">
-          <button className="sp-primary" onClick={() => onExport && onExport(report)}>{I.download || I.fileText} Export (Part-11 sealed)</button>
+          <button className="sp-primary" onClick={() => onExport && onExport(report)}>{I.download || I.fileText} Export report</button>
           <button className="sp-ask" onClick={() => onAsk && onAsk(`Explain the ${report.reportTypeLabel} for ${report.scopeType} ${report.scopeId} and what would move it to final.`)}>{I.sparkles} Ask AnA about this report</button>
         </div>
       )}
@@ -654,21 +719,20 @@ function ROReport({ report, sample, onAsk, onExport, compact }: { report: Render
 }
 
 /* ── RODashboard ── */
-function RODashboard({ dashboard, seg, tier, sample, onOpen, onAsk }: { dashboard: DashboardData; seg: string; tier: string; sample: boolean; onOpen: (r: RenderedReport) => void; onAsk: (t: string) => void }) {
+function RODashboard({ dashboard, program, tier, onOpen, onAsk }: { dashboard: DashboardData; program: ProgramCtx; tier: string; onOpen: (r: RenderedReport) => void; onAsk: (t: string) => void }) {
   if (!dashboard) return null;
 
   if (dashboard.kind === 'portfolio') {
     const rows = dashboard.rows || [];
-    const withReadiness = rows.filter(r => r.readiness != null);
-    const avg = withReadiness.reduce((a, r) => a + r.readiness, 0) / Math.max(1, withReadiness.length);
+    const avg = rows.reduce((a, r) => a + r.readiness, 0) / Math.max(1, rows.length);
     return (
       <div className="ro-dash">
-        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio -- board view <SampleTag sample={sample} /></div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{rows.length} programs</span><span className="ro-status st-ok">avg readiness {Math.round(avg)}%</span></div></div></div>
+        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio -- board view</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{rows.length} programs</span><span className="ro-status st-ok">avg readiness {Math.round(avg)}%</span></div></div></div>
         <div className="ro-port-grid">
           {rows.map((r, i) => (
             <div key={i} className="ro-port-card">
               <ROChart chartType="readiness_ring" spec={{ value: r.readiness || 0, label: '' }} />
-              <div className="ro-port-b"><div className="ro-port-code">{r.code}</div><div className="ro-port-ind">{r.indication}</div><div className="ro-port-filing">{r.filing}</div></div>
+              <div className="ro-port-b"><div className="ro-port-code">{r.code}</div><div className="ro-port-ind">{r.indication}</div></div>
             </div>
           ))}
         </div>
@@ -683,7 +747,7 @@ function RODashboard({ dashboard, seg, tier, sample, onOpen, onAsk }: { dashboar
     const tRows: [string, string | null][] = [['Submission readiness', prog.readiness != null ? prog.readiness + '%' : null], ['Dossier standard', 'eCTD'], ['Module completeness', null], ['Region-specific gaps', null]];
     return (
       <div className="ro-dash">
-        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Global harmonization <SampleTag sample={sample} /></div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{m.length} markets</span></div></div></div>
+        <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Global harmonization</div><h2 className="ro-rep-title">{dashboard.label}</h2><div className="ro-rep-meta"><span>{m.length} markets</span></div></div></div>
         <div className="ro-table">
           <div className="ro-thead" style={{ gridTemplateColumns: `minmax(0,1.4fr) repeat(${m.length}, minmax(0,1fr))` }}><span>Requirement</span>{m.map(x => <span key={x}>{x}</span>)}</div>
           {tRows.map((r, ri) => (<div key={ri} className="ro-trow" style={{ gridTemplateColumns: `minmax(0,1.4fr) repeat(${m.length}, minmax(0,1fr))` }}><span>{r[0]}</span>{m.map((_, ci) => <span key={ci}>{ci === 0 && r[1] != null ? r[1] : (r[1] != null && ri < 2 ? r[1] : '--')}</span>)}</div>))}
@@ -697,7 +761,7 @@ function RODashboard({ dashboard, seg, tier, sample, onOpen, onAsk }: { dashboar
   const types = (dashboard.types || []).map(id => RO_TYPES.find(t => t.typeId === id)).filter(Boolean) as ReportType[];
   return (
     <div className="ro-dash">
-      <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Best-practice pack -- AnA-curated <SampleTag sample={sample} /></div><h2 className="ro-rep-title">{dashboard.label}</h2><p className="ro-dash-why">{dashboard.why}</p></div></div>
+      <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Best-practice pack -- AnA-curated</div><h2 className="ro-rep-title">{dashboard.label}</h2><p className="ro-dash-why">{dashboard.why}</p></div></div>
       <div className="ro-pack-grid">
         {types.map(t => {
           const dec = roDecide(t.typeId, t.family, tier);
@@ -710,7 +774,7 @@ function RODashboard({ dashboard, seg, tier, sample, onOpen, onAsk }: { dashboar
               <div className="ro-pack-sub">{RO_FEATURE_LABEL[dec.feature]} -- unlock to include in this pack.</div>
             </div>
           );
-          const rep = roRenderReport(t, seg);
+          const rep = roRenderReport(t, program);
           const kpi = (rep.sections[0].blocks || []).find(b => b.kind === 'metric');
           return (
             <button key={t.typeId} className="ro-pack-card" onClick={() => onOpen && onOpen(rep)}>
@@ -726,21 +790,26 @@ function RODashboard({ dashboard, seg, tier, sample, onOpen, onAsk }: { dashboar
   );
 }
 
-/* ── Tier helper ── */
-function getInitialTier(): string {
-  const t = APP_LICENSE.tier || '';
-  return ['standard', 'professional', 'enterprise'].includes(t) ? t : 'professional';
-}
-
 /* ════ Insights -- AnA Reporting Canvas ════ */
 
 export function InsightsCanvas({ onAsk, onNav, segment }: SurfaceViewProps) {
   const seg = segment || 'pharma';
   const ask = onAsk;
-  const p = roProgram(seg);
-  const suggest = roSuggestForClient(seg);
 
-  const [tier, setTier] = useState(getInitialTier);
+  // Live canvas bootstrap — the org's REAL subscription tier, flagship program
+  // readiness (computeInitialRun) and portfolio rollup (server
+  // insights-canvas-routes.ts → GET /api/insights-canvas/overview), replacing
+  // the retired PJ_PROGRAMS / GI_BY_SEG / APP_LICENSE fixtures. Real object →
+  // honest empty (no flagship program yet) → honest error.
+  const overview = useLiveData<CanvasOverview>('/api/insights-canvas/overview');
+  const data = overview.data;
+  const program = data?.leadProgram ? leadToProgramCtx(data.leadProgram) : null;
+  const suggest = program ? roSuggestForClient(program, seg) : null;
+
+  // Real subscription tier comes from the overview; `tierOverride` is the local
+  // "preview on another plan" control (canonical entitlement UX), not persisted.
+  const [tierOverride, setTierOverride] = useState<string | null>(null);
+  const tier = tierOverride ?? data?.tier ?? 'standard';
   const [thread, setThread] = useState<ThreadMsg[]>([]);
   const [draft, setDraft] = useState('');
   const [report, setReport] = useState<RenderedReport | null>(null);
@@ -757,12 +826,19 @@ export function InsightsCanvas({ onAsk, onNav, segment }: SurfaceViewProps) {
 
   const send = (raw?: string) => {
     const text = (raw == null ? draft : raw).trim();
-    if (!text || busy) return;
+    if (!text || busy || !program || !data) return;
     setThread(t => [...t, { role: 'user', text }]);
     setDraft('');
     setBusy(true);
+    // FLAG (mock ACTION): the reply — including any generated report/dashboard —
+    // is assembled client-side by the deterministic roAnaReply/roRenderReport
+    // engine after a simulated delay. It is seeded by the live program/portfolio
+    // and fabricates no values (unsourced fields render as "missing"), but the
+    // real generation path is the async report-run backend (POST
+    // /api/report-os/runs, /api/insights/predictions[/run]); wiring it
+    // (submit → poll → render the persisted run) is the actions pass.
     setTimeout(() => {
-      const reply = roAnaReply(text, seg, tier, { report });
+      const reply = roAnaReply(text, seg, tier, { program, portfolio: data.portfolio, report });
       setThread(t => [...t, { role: 'ana', text: reply.text, chips: reply.chips, locked: reply.locked, question: reply.question, tool: reply.tool }]);
       if (reply.report) { setReport(reply.report); setDashboard(null); pushCanvasTop(); }
       else if (reply.dashboard) { setDashboard(reply.dashboard); setReport(null); pushCanvasTop(); }
@@ -770,6 +846,10 @@ export function InsightsCanvas({ onAsk, onNav, segment }: SurfaceViewProps) {
     }, 520);
   };
 
+  // FLAG (mock ACTION): builds the preset "pack" dashboard client-side (same
+  // deterministic engine as `send`; its cards are live-program-seeded and show
+  // unsourced values as "missing"). Real generation is the async report-run
+  // backend — actions pass.
   const buildPreset = (preset: Preset) => {
     if (!preset) return;
     setThread(t => [...t, { role: 'user', text: `Build the ${preset.label}` }, { role: 'ana', text: `Building the ${preset.label}. ${preset.why} Each tile is a governed report -- open any one for the full document. Anything the plan has not unlocked shows as locked, never as an estimate.`, tool: 'preset' }]);
@@ -779,15 +859,58 @@ export function InsightsCanvas({ onAsk, onNav, segment }: SurfaceViewProps) {
   };
 
   const openReport = (rep: RenderedReport) => { setReport(rep); setDashboard(null); pushCanvasTop(); };
-  const exportRep = (rep: RenderedReport) => fireToast('Sealed & exported -- ' + rep.reportTypeLabel + ' -- immutable report record + Part-11 audit id');
+  // FLAG (mock ACTION): no export/seal actually happens here. Softened from a
+  // claim of an "immutable report record + Part-11 audit id" (a compliance event
+  // that did NOT occur) to a neutral acknowledgement. Real Part-11 sealing runs
+  // server-side against the persisted run and is the actions pass.
+  const exportRep = (rep: RenderedReport) => fireToast('Export requested -- ' + rep.reportTypeLabel);
+
+  // Four-state render: loading → honest error → honest empty (no flagship
+  // program) → the live canvas. No fixture stand-in in any state.
+  if (overview.loading) {
+    return (
+      <div className="rc">
+        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+          <div className="scaf-note" style={{ padding: '40px 20px' }}>Loading the reporting canvas…</div>
+        </div>
+      </div>
+    );
+  }
+  if (overview.error) {
+    return (
+      <div className="rc">
+        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't load the reporting canvas"
+            hint="The Insights canvas read-model didn't respond. It assembles your organization's subscription tier, flagship program readiness, and portfolio rollup from the governed record — sign in and retry, or check that the service is reachable."
+          />
+        </div>
+      </div>
+    );
+  }
+  if (!program || !data || !suggest) {
+    return (
+      <div className="rc">
+        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+          <EmptyState
+            icon={I.barChart || I.fileText}
+            title="No program readiness yet"
+            hint="Once a program with a governed readiness run exists in your organization, AnA opens the reporting canvas here — flagship readiness, the portfolio rollup, and every governed report, all provenance-linked. Nothing is estimated."
+          />
+        </div>
+      </div>
+    );
+  }
+  const p = program; // narrowed non-null past the guards above
 
   return (
     <div className="rc">
       {/* -- Left: AnA intelligence / conversation -- */}
       <div className="rc-ana">
         <div className="rc-ana-head">
-          <div className="rc-ana-id"><span className="rc-ana-mark">*</span><div><div className="nm">AnA -- Reporting analyst</div><div className="sub">{p.code} -- {p.filing} -- {SEG_LABEL[seg] || seg}</div></div></div>
-          <SampleTag sample={true} />
+          <div className="rc-ana-id"><span className="rc-ana-mark">*</span><div><div className="nm">AnA -- Reporting analyst</div><div className="sub">{[p.code, p.filing, SEG_LABEL[seg] || seg].filter(Boolean).join(' -- ')}</div></div></div>
         </div>
 
         <div className="rc-ana-scroll" ref={scrollRef}>
@@ -816,7 +939,7 @@ export function InsightsCanvas({ onAsk, onNav, segment }: SurfaceViewProps) {
                     <div className="rc-lock-s">{RO_FEATURE_LABEL[m.locked.feature]} is a paid capability. I will not show an estimated result on a plan that has not unlocked the governed model.</div>
                     <div className="rc-lock-acts">
                       <button className="rc-lock-up" onClick={() => onNav && onNav('licensing')}>See plans {I.right}</button>
-                      <button className="rc-chip" onClick={() => setTier(m.locked!.requiredTier)}>Preview on {(RO_TIERS.find(t => t.id === m.locked!.requiredTier) || { label: '' }).label}</button>
+                      <button className="rc-chip" onClick={() => setTierOverride(m.locked!.requiredTier)}>Preview on {(RO_TIERS.find(t => t.id === m.locked!.requiredTier) || { label: '' }).label}</button>
                     </div>
                   </div>
                 )}
@@ -831,7 +954,7 @@ export function InsightsCanvas({ onAsk, onNav, segment }: SurfaceViewProps) {
         <div className="rc-composer">
           <div className="rc-tier" role="group" aria-label="Subscription tier">
             <span className="rc-tier-lbl">Plan</span>
-            {RO_TIERS.map(t => (<button key={t.id} className={'rc-tier-b' + (tier === t.id ? ' on' : '')} onClick={() => setTier(t.id)}>{t.label}</button>))}
+            {RO_TIERS.map(t => (<button key={t.id} className={'rc-tier-b' + (tier === t.id ? ' on' : '')} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
           </div>
           <div className="rc-input">
             <textarea rows={1} value={draft} placeholder={`Ask AnA for a report or dashboard for ${p.code}...`}
@@ -845,8 +968,8 @@ export function InsightsCanvas({ onAsk, onNav, segment }: SurfaceViewProps) {
 
       {/* -- Right: the report / dashboard artifact -- */}
       <div className="rc-canvas" ref={canvasRef}>
-        {report ? <ROReport report={report} sample={true} onAsk={ask} onExport={exportRep} />
-          : dashboard ? <RODashboard dashboard={dashboard} seg={seg} tier={tier} sample={true} onOpen={openReport} onAsk={ask} />
+        {report ? <ROReport report={report} onAsk={ask} onExport={exportRep} />
+          : dashboard ? <RODashboard dashboard={dashboard} program={p} tier={tier} onOpen={openReport} onAsk={ask} />
           : (
             <div className="rc-empty">
               <div className="rc-empty-mark">*</div>

@@ -1,8 +1,7 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected } from '../dataConnect';
+import { connected, useLiveData, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { getDossierSpine } from '../fixtures/dossier-data';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals -- runtime channels with no typed provider yet (kit
@@ -26,25 +25,34 @@ interface SpineNode {
   title?: string;
   status?: string;
   pct?: number | null;
-  preview?: string;
+  preview?: string | null;
   children?: SpineNode[];
 }
 
+/* GET /api/batch-draft/spine display contract (server batch-draft-routes.ts →
+   coauthor_documents). `program`/`standard` are always null — the co-author
+   document table persists no program entity or per-document standard label, so
+   the backend returns null rather than fabricating one — and `tree` is a FLAT
+   list of draftable leaves (the surface flattens defensively via bdFlatten). */
 interface DossierSpine {
-  tree: SpineNode[];
-  program: string;
-  standard: string;
+  program: string | null;
+  standard: string | null;
+  tree: LeafSection[];
 }
 
 interface LeafSection {
-  /** Stable unique leaf id (e.g. 'e41', 'g-ca') — used for React keys.
-   *  `num` is the display/section number and is not unique (many are '—'). */
+  /** coauthor_documents.id — stable unique leaf key.
+   *  `num` is the display/section number and is NOT unique (many are '—'). */
   id: string;
   num: string;
   title: string;
+  /** Real stored lifecycle state (draft | in-progress | review | approved |
+   *  finalized) — never remapped to the former fixture vocabulary. */
   status?: string;
+  /** completion_percentage, or null when never computed (not fabricated). */
   pct?: number | null;
-  preview?: string;
+  /** Content-derived excerpt, or null when the document has no content. */
+  preview?: string | null;
 }
 
 interface CardState {
@@ -85,6 +93,11 @@ function bdFlatten(nodes: SpineNode[], out: LeafSection[]): LeafSection[] {
   return out;
 }
 
+/* FLAG (mock ACTION output): fabricated placeholder draft prose for the drafting
+   action's offline / "Sample" path (see run() and onSectionComplete). It is
+   honestly labeled "Sample" on the card and never presented as a real AnA draft;
+   kept until the drafting action is wired to the real streaming service in the
+   actions pass. */
 function bdSample(sec: LeafSection, agency: string): string {
   const seed = sec.preview || (sec.title + ' -- integrated summary.');
   return '<h3>§' + sec.num + ' -- ' + sec.title + '</h3>'
@@ -101,37 +114,70 @@ function bdWordCount(html: string): number {
   return t ? t.split(' ').length : 0;
 }
 
-/* ════ BatchDraft -- parallel section drafting service ════ */
+/* Stable empty spine tree for the loading/error renders — useLiveData yields a
+   fresh null then, and a module-level constant keeps the todo / initialSel memos
+   from re-running on an unstable [] (loop-safety, per the re-anchor spec). */
+const EMPTY_TREE: LeafSection[] = [];
+
+/* ════ BatchDraft -- parallel section drafting service ════
+
+   Real-data standard: the draftable section spine is the org's persisted eCTD
+   Co-Author documents (GET /api/batch-draft/spine → coauthor_documents,
+   server/routes/batch-draft-routes.ts), shown as real data / honest empty /
+   honest error — never the former ../fixtures/dossier-data spine. The drafting
+   (window.C2C_AUTHORING.batchDraft) and acceptance (saveSection) are ACTIONS on
+   an untyped runtime channel; they are FLAGged in run() / accept() for the
+   actions pass, not rewired here. */
 
 export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   const seg = segment || 'biotech';
-  const spine: DossierSpine = getDossierSpine(seg);
   const agency = seg === 'pharma' || seg === 'biotech'
     ? 'FDA'
     : (seg === 'medtech' || seg === 'diagnostics' ? 'FDA CDRH' : 'FDA');
   const docId: string | null = (typeof window !== 'undefined' && (window as any).__C2C_DOC_ID) || null;
   const canLive = !!(docId && connected());
 
-  /* real leaf sections that still need drafting (not final/approved) */
+  // ── DATA: the draftable section spine is the org's persisted eCTD Co-Author
+  // documents (GET /api/batch-draft/spine → coauthor_documents). Real data,
+  // honest empty, honest error — never a fixture. useLiveData unwraps the
+  // { data } envelope, so `spine` is the { program, standard, tree } object
+  // directly (not `.data.data`).
+  const spineState = useLiveData<DossierSpine>('/api/batch-draft/spine');
+  const spine = spineState.data;
+  // useLiveData returns a fresh null while loading and on error; fall back to a
+  // module-level constant so the memos below keep a stable input (loop-safety).
+  const tree = spine ? spine.tree : EMPTY_TREE;
+
+  /* real leaf sections that still need drafting (not approved/finalized) */
   const todo = useMemo(() => {
-    const all = bdFlatten(spine.tree, []);
-    return all.filter((s) => {
-      return ['draft', 'not_started', 'missing', 'review'].indexOf(s.status || '') >= 0
+    return bdFlatten(tree, []).filter((s) => {
+      return ['draft', 'in-progress', 'review'].indexOf(s.status || '') >= 0
         && (s.pct == null || s.pct < 100);
     });
-  }, [seg]);
+  }, [tree]);
 
   /* pre-select the least-complete drafts */
   const initialSel = useMemo(() => {
     const pick = todo
-      .filter((s) => ['not_started', 'missing', 'draft'].indexOf(s.status || '') >= 0)
+      .slice()
       .sort((a, b) => (a.pct || 0) - (b.pct || 0))
       .slice(0, 5)
       .map((s) => s.num);
     return new Set(pick);
-  }, [seg]);
+  }, [todo]);
 
   const [sel, setSel] = useState<Set<string>>(initialSel);
+  // Seed the selection once the live spine resolves — useLiveData returns null on
+  // the first renders, so the useState initializer above starts empty. Seed-once
+  // via a ref so a user's later toggles are never clobbered on re-render.
+  const seededRef = useRef(false);
+  useEffect(() => {
+    if (!seededRef.current && todo.length) {
+      seededRef.current = true;
+      setSel(new Set(initialSel));
+    }
+  }, [todo, initialSel]);
+
   const [phase, setPhase] = useState<'pick' | 'drafting' | 'review'>('pick');
   const [cards, setCards] = useState<Record<string, CardState>>({});
   const startRef = useRef<Record<string, number>>({});
@@ -149,7 +195,13 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
   const doneCount = Object.values(cards).filter((c) => c.state === 'done').length;
   const acceptedCount = Object.values(cards).filter((c) => c.accepted).length;
 
-  /* fire the parallel draft */
+  /* fire the parallel draft.
+     FLAG (mock ACTION): drafting runs through the untyped runtime channel
+     window.C2C_AUTHORING.batchDraft (injected by the kit's data-connect; not
+     provided in this repo). When it is absent the `else` branch fabricates
+     "Sample" cards on a setTimeout (bdSample) — fake streaming, not a real
+     draft. A real drafting service exists (server ana batch-draft-sections);
+     wiring it is the actions pass — left intact and flagged, not half-wired. */
   const run = () => {
     if (!selList.length) return;
     const init: Record<string, CardState> = {};
@@ -216,7 +268,12 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     }
   };
 
-  /* accept one card */
+  /* accept one card.
+     FLAG (mock ACTION): the governed save goes through the untyped runtime
+     channel window.C2C_AUTHORING.saveSection (see run()); the card is marked
+     accepted even if that call rejects (.catch → mark), so acceptance is
+     optimistic — the copy below must not present it as a confirmed Part-11
+     write. Real wiring + success/failure tracking is the actions pass. */
   const accept = (key: string) => {
     const card = cards[key];
     if (!card || card.state !== 'done') return;
@@ -236,7 +293,13 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
     } else {
       mark();
     }
-    onAsk && onAsk('Accepted the AnA draft for §' + sec.num + ' ' + sec.title + ' into the working document.');
+    onAsk && onAsk(
+      (canLive ? 'Accepted the AnA draft for §' : 'Staged the AnA draft for §')
+      + sec.num + ' ' + sec.title
+      + (canLive
+        ? ' into the working document.'
+        : ' locally — connect a document to write it into the working document.'),
+    );
   };
 
   const discard = (key: string) => {
@@ -262,7 +325,10 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
         h: todo.length
           ? 'You have ' + todo.length + ' sections still to draft. I can draft ' + (selList.length || 'several') + ' of them at once -- each comes back as its own card you Accept, edit, or discard.'
           : 'Every section in this build already has a draft. Pick any to redraft and I will run them in parallel.',
-        b: 'Parallel drafting takes about as long as the slowest section, not the sum. Nothing is written to the dossier until you accept a card -- acceptance is a governed, Part-11 versioned save.',
+        b: 'Parallel drafting takes about as long as the slowest section, not the sum. Nothing is written to the dossier until you accept a card'
+          + (canLive
+            ? ' -- acceptance writes a governed, Part-11 versioned save.'
+            : ' -- connect a document to write a governed, Part-11 versioned save on acceptance.'),
       }
     : phase === 'drafting'
     ? {
@@ -271,20 +337,66 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
       }
     : {
         h: doneCount + ' drafts are ready to review' + (acceptedCount ? ' · ' + acceptedCount + ' accepted' : '') + '.',
-        b: 'Each card is a proposal. Accept writes a governed version (draftSource = ana); Edit opens it in the section editor; Discard drops it. ' + (acceptedCount ? '' : 'Nothing has been written yet.'),
+        b: 'Each card is a proposal. '
+          + (canLive
+            ? 'Accept writes a governed version (draftSource = ana); '
+            : 'Accept stages the draft — connect a document to write the governed version; ')
+          + 'Edit opens it in the section editor; Discard drops it. '
+          + (acceptedCount ? '' : 'Nothing has been written yet.'),
       };
+
+  const header = (
+    <div className="bd-head">
+      <div className="bd-eyebrow">
+        <span className="bd-kicker">AnA {I.dot} parallel section drafting</span>
+        {/* FLAG (mock ACTION): this pill reflects the drafting / accept ACTION
+            mode (canLive = a live document is connected), NOT the spine DATA,
+            which is always the live /api/batch-draft/spine read. */}
+        <span className={'bd-src ' + (canLive ? 'live' : 'sample')}>{canLive ? 'Live · governed' : 'Preview mode'}</span>
+      </div>
+      <h1 className="bd-title">{(spine && spine.program) || 'Active dossier'}</h1>
+      <div className="bd-sub">{spine && spine.standard ? spine.standard.toUpperCase() + ' · ' : ''}{agency} · batch_draft_sections</div>
+    </div>
+  );
+
+  // ── Four-state gate for the spine DATA (loading → error → empty → real) ──
+  if (spineState.loading) {
+    return (
+      <div className="bd">
+        {header}
+        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the document spine…</div>
+      </div>
+    );
+  }
+  if (spineState.error) {
+    return (
+      <div className="bd">
+        {header}
+        <EmptyState
+          tone="error"
+          icon={I.alertTriangle}
+          title="Couldn't load the document spine"
+          hint="The organization's eCTD Co-Author documents didn't respond, so no draftable sections are shown rather than a sample dossier. Sign in and retry, or check the service is reachable."
+        />
+      </div>
+    );
+  }
+  if (tree.length === 0) {
+    return (
+      <div className="bd">
+        {header}
+        <EmptyState
+          icon={I.fileText}
+          title="No dossier documents yet"
+          hint="There are no eCTD Co-Author documents in this workspace to draft. Create documents in the dossier, then run a parallel batch draft here."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="bd">
-      <SampleTag sample={true} />
-      <div className="bd-head">
-        <div className="bd-eyebrow">
-          <span className="bd-kicker">AnA {I.dot} parallel section drafting</span>
-          <span className={'bd-src ' + (canLive ? 'live' : 'sample')}>{canLive ? 'Live · governed' : 'Sample data'}</span>
-        </div>
-        <h1 className="bd-title">{spine.program || 'Active dossier'}</h1>
-        <div className="bd-sub">{spine.standard ? spine.standard.toUpperCase() + ' · ' : ''}{agency} · batch_draft_sections</div>
-      </div>
+      {header}
 
       <div className="bd-lead">
         <div className="bd-lead-ic">{I.sparkles}</div>
@@ -319,7 +431,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
                 </button>
               );
             })}
-            {!todo.length && <div className="bd-empty">No draftable sections in this build type.</div>}
+            {!todo.length && <div className="bd-empty">No draftable sections — every document is already approved or finalized.</div>}
           </div>
         </div>
       )}
@@ -393,7 +505,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
                       </div>
                     ) : (
                       <div className="bd-card-acts">
-                        <span className="bd-accepted-note">{canLive ? 'Part-11 version written · draftSource = ana' : 'Staged locally · connect to write the governed version'}</span>
+                        <span className="bd-accepted-note">{canLive ? 'Governed save requested · draftSource = ana' : 'Staged locally · connect a document to write the governed version'}</span>
                       </div>
                     )}
                   </div>
