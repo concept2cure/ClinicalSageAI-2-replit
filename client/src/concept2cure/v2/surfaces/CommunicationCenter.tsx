@@ -15,7 +15,8 @@
 import React from 'react';
 import { I } from '../icons';
 import { AnswerLead } from '../AnswerLead';
-import { SampleTag, useLive, connected, liveGet } from '../dataConnect';
+import { SampleTag, useLive, connected } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { C2CForm } from '../C2CForm';
 import {
   CC_SUB_STATES,
@@ -134,8 +135,24 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
 
   const filing = CC_FILING;
 
+  /* Agency correspondence is per-project. Read the project in context
+     (window.C2C_PROJECT, set by Projects/ProjectHome — the same channel
+     CmcModule uses) instead of a hardcoded demo id; with no project selected
+     the path is null, so useLive keeps the honest fixture with the Sample
+     pill rather than fetching someone else's project. */
+  const ctxProjectId = ((): string | null => {
+    try {
+      const p = (window as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+      const id = p && p.id != null ? String(p.id).trim() : '';
+      return id || null;
+    } catch {
+      return null;
+    }
+  })();
   const commsState = useLive<CcComm[]>(
-    '/api/communication-center/projects/proj_bx204/agency-communications',
+    ctxProjectId
+      ? `/api/communication-center/projects/${encodeURIComponent(ctxProjectId)}/agency-communications`
+      : null,
     CC_COMMS,
   );
   const [comms, setComms] = React.useState<CcComm[]>(CC_COMMS);
@@ -192,17 +209,47 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       taskId,
       _new: true,
     };
-    setComms((cs) => [rec, ...cs]);
+    setComms((cs) => [rec, ...cs]); // optimistic
     setForm(false);
-    liveGet(
-      '/api/communication-center/projects/proj_bx204/agency-communications',
-      null,
-    ).catch(() => null);
-    fire(
-      willTask
-        ? 'Communication logged · task ' + taskId + ' auto-created in Tasking'
-        : 'Communication logged',
-    );
+    const okMsg = willTask
+      ? 'Communication logged · task ' + taskId + ' auto-created in Tasking'
+      : 'Communication logged';
+    if (!ctxProjectId) {
+      // No project in context — nothing to persist to; say so rather than
+      // claim a write that did not happen.
+      fire(okMsg + ' · sample only, not persisted');
+      return;
+    }
+    // Real, audited write to the project's agency-communications ledger.
+    apiRequest(
+      'POST',
+      `/api/communication-center/projects/${encodeURIComponent(ctxProjectId)}/agency-communications`,
+      {
+        sourceType: rec.sourceType,
+        communicationType: rec.communicationType || 'Logged communication',
+        sourceChannel: rec.sourceChannel || 'Manually logged',
+        linkedSubmissionId: rec.linkedSubmissionId,
+        linkedSectionCodes: rec.linkedSectionCodes ?? [],
+        dueDate: rec.dueDate ?? undefined,
+        urgency: rec.urgency,
+        responseRequired: rec.responseRequired,
+        extractedIssues: rec.extractedIssues ?? [],
+        humanReviewStatus: 'pending_review',
+        closureStatus: 'open',
+        visibilityTier: rec.visibilityTier,
+      },
+    )
+      .then((res) => {
+        if (res.ok) fire(okMsg);
+        else {
+          setComms((cs) => cs.filter((c) => c.id !== rec.id));
+          fire('Could not log — sign in required');
+        }
+      })
+      .catch((e) => {
+        setComms((cs) => cs.filter((c) => c.id !== rec.id));
+        fire('Could not log — ' + (e instanceof Error && e.message ? e.message : 'request failed'));
+      });
   };
 
   const triage = (id: string) =>
