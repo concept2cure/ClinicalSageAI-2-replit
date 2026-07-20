@@ -766,10 +766,33 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
   };
 
   const entry = sel ? LOG.find((e) => e.id === sel) : null;
+  const [toast, fireToast] = useToast();
 
+  /** Real export: the live, hash-chained ledger as a JSON evidence file.
+      Sample mode exports nothing — it says so instead of faking a download. */
   const doExport = () => {
+    if (!ledgerLive) {
+      fireToast('Backend not reachable -- nothing exported (sample data is not evidence)');
+      return;
+    }
     setExporting(true);
-    setTimeout(() => setExporting(false), 2000);
+    try {
+      const blob = new Blob(
+        [JSON.stringify({ exportedAt: new Date().toISOString(), entries: LOG }, null, 2)],
+        { type: 'application/json' },
+      );
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'audit-ledger.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      fireToast(`Exported ${LOG.length} chained entries`);
+    } finally {
+      setExporting(false);
+    }
   };
 
   /* Hash-chain integrity check (visual) */
@@ -811,7 +834,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             </button>
             <button className="btn primary" onClick={doExport} disabled={exporting}>
               {exporting ? 'Generating...' : ''}
-              {I.scroll} Export signed PDF
+              {I.download} Export ledger (JSON)
             </button>
           </React.Fragment>
         }
@@ -1157,9 +1180,10 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
       <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
         Entries are append-only, hash-chained (SHA-256), and timestamped. Each entry's hash
         incorporates the previous entry's hash, creating a verifiable chain. Any modification to a
-        historical entry breaks the chain. Export produces a Part 11-compliant signed PDF with the
-        full verification manifest.
+        historical entry breaks the chain. Export downloads the live chained entries as a JSON
+        evidence file (full hashes included) for offline verification.
       </div>
+      <C2CToast msg={toast} />
     </div>
   );
 }
@@ -1727,6 +1751,60 @@ async function downloadValidationDoc(docId: string, filename: string): Promise<v
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
+/* Security-health panel — GET /api/admin/security-health (admin-security.ts,
+   org-admin gated, audited read). The endpoint intentionally answers 503 when
+   the panel is FAILING with the report as the body — a failing posture is the
+   most important one to show, so this hook accepts both 200 and 503 JSON
+   bodies instead of routing through useLive (which would discard the 503). */
+interface SecCheckResult {
+  name: string;
+  status: string;
+  critical: boolean;
+  reason?: string;
+  durationMs: number;
+}
+interface SecHealthReport {
+  overall: 'healthy' | 'degraded' | 'failing';
+  checkedAt: string;
+  checks: SecCheckResult[];
+}
+
+function useSecurityHealth(bump: number): { report: SecHealthReport | null; loading: boolean } {
+  const [state, setState] = useState<{ report: SecHealthReport | null; loading: boolean }>({
+    report: null,
+    loading: true,
+  });
+  useEffect(() => {
+    let cancelled = false;
+    setState((s) => ({ ...s, loading: true }));
+    fetch('/api/admin/security-health', {
+      headers: {
+        ...(getAuthToken() ? { Authorization: `Bearer ${getAuthToken()}` } : {}),
+        'x-organization-id': getOrgId(),
+      },
+      credentials: 'include',
+    })
+      .then(async (res) => {
+        if (cancelled) return;
+        if (res.status !== 200 && res.status !== 503) {
+          setState({ report: null, loading: false });
+          return;
+        }
+        const body = (await res.json().catch(() => null)) as SecHealthReport | null;
+        const valid =
+          body && typeof body.overall === 'string' && Array.isArray(body.checks);
+        setState({ report: valid ? body : null, loading: false });
+      })
+      .catch(() => {
+        if (!cancelled) setState({ report: null, loading: false });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [bump]);
+  return state;
+}
+
 /* Platform role grants — live from GET /api/admin/access/grants (the audited
    access-management router, server/routes/admin/access-management.ts). The read
    is platform-admin gated; a 401/403 or any shape mismatch fails closed to the
@@ -1877,6 +1955,66 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
     } catch (e) {
       fireToast(
         'Could not revoke -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
+      );
+    }
+  };
+
+  /* Security & SSO policy -- live from the governed org-settings store
+     (organizations.settings.security). Toggles are governed writes: a reason
+     is captured and the PATCH lands in the audit trail. */
+  const [secBump, setSecBump] = useState(0);
+  const secHealth = useSecurityHealth(secBump);
+  const orgSettingsRaw = useLive<unknown>(
+    `/api/organizations/${encodeURIComponent(orgId)}/settings`,
+    null,
+    [orgId, secBump],
+  );
+  const liveSecurity = useMemo<{ mfaEnabled: boolean | null; ssoEnabled: boolean | null } | null>(() => {
+    if (orgSettingsRaw.sample || !orgSettingsRaw.data || typeof orgSettingsRaw.data !== 'object') {
+      return null;
+    }
+    const settings = (orgSettingsRaw.data as { settings?: unknown }).settings;
+    if (!settings || typeof settings !== 'object') return null;
+    const sec = (settings as Record<string, any>).security;
+    return {
+      mfaEnabled: sec && typeof sec.mfaEnabled === 'boolean' ? sec.mfaEnabled : null,
+      ssoEnabled: sec && typeof sec.ssoEnabled === 'boolean' ? sec.ssoEnabled : null,
+    };
+  }, [orgSettingsRaw.sample, orgSettingsRaw.data]);
+  const securityLive = liveSecurity !== null;
+
+  const toggleSecurityPolicy = async (key: 'mfaEnabled' | 'ssoEnabled', next: boolean) => {
+    if (!securityLive) {
+      fireToast('Sign in as an org admin to change security policy');
+      return;
+    }
+    const label = key === 'mfaEnabled' ? 'MFA requirement' : 'SSO';
+    const reason =
+      typeof window !== 'undefined' && window.prompt
+        ? window.prompt(
+            `Reason for ${next ? 'enabling' : 'disabling'} ${label} (min 3 chars, recorded in the audit trail):`,
+          )
+        : '';
+    if (reason == null) return; // cancelled
+    if (reason.trim().length < 3) {
+      fireToast('A reason (min 3 chars) is required');
+      return;
+    }
+    try {
+      const res = await apiRequest(
+        'PATCH',
+        `/api/organizations/${encodeURIComponent(orgId)}/settings`,
+        { settings: { security: { [key]: next } }, reason: reason.trim() },
+      );
+      if (!res.ok) {
+        fireToast('Could not update -- org admin role required');
+        return;
+      }
+      setSecBump((b) => b + 1);
+      fireToast(`${label} ${next ? 'enabled' : 'disabled'} -- reason recorded -- audited`);
+    } catch (e) {
+      fireToast(
+        'Could not update -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
       );
     }
   };
@@ -2295,67 +2433,162 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
             )}
 
             {sec === 'sso' && (
-              <div className="ac-cards">
-                {(
-                  [
+              <div>
+                <div className="pj-card-h" style={{ padding: 0, marginBottom: 12 }}>
+                  <span className="t">
+                    SSO &amp; SCIM <SampleTag sample={!securityLive} />
+                  </span>
+                  <span className="s">
+                    SSO: {securityLive ? ((liveSecurity?.ssoEnabled ?? false) ? 'enabled' : 'disabled') : 'unknown'} -- governed in Security
+                  </span>
+                </div>
+                <div className="ac-cards">
+                  {(
                     [
-                      'SAML / OIDC SSO',
-                      'Enterprise SSO via authEnterprise -- IdP metadata, ACS URL, JIT provisioning',
-                      'SAML SSO on Professional+',
-                    ],
-                    [
-                      'SCIM 2.0 provisioning',
-                      'Automated user lifecycle from your IdP -- scim-tenants',
-                      'Token-scoped, per-tenant',
-                    ],
-                    [
-                      'SCIM IP allowlist',
-                      'Restrict SCIM to your IdP egress ranges -- scim-ip-allowlist',
-                      'CIDR ranges',
-                    ],
-                  ] as [string, string, string][]
-                ).map(([t, d, tag], i) => (
-                  <div key={i} className="ac-card">
-                    <div className="ac-card-t">{t}</div>
-                    <div className="ac-card-d">{d}</div>
-                    <span className="ac-card-tag">{tag}</span>
-                  </div>
-                ))}
+                      [
+                        'SAML / OIDC SSO',
+                        'Enterprise SSO via authEnterprise -- IdP metadata, ACS URL, JIT provisioning. Toggle the org policy in the Security section (governed).',
+                        securityLive
+                          ? (liveSecurity?.ssoEnabled ?? false)
+                            ? 'Enabled'
+                            : 'Disabled'
+                          : 'SAML SSO on Professional+',
+                      ],
+                      [
+                        'SCIM 2.0 provisioning',
+                        'Automated user lifecycle from your IdP (/scim/v2). Bearer tokens are minted and rotated by platform operations in Master Administration -- Identity & SCIM; contact support to connect your IdP.',
+                        'Token-scoped, per-tenant',
+                      ],
+                      [
+                        'SCIM IP allowlist',
+                        'Restricts SCIM calls to your IdP egress ranges (CIDR). Managed alongside your SCIM token by platform operations.',
+                        'CIDR ranges',
+                      ],
+                    ] as [string, string, string][]
+                  ).map(([t, d, tag], i) => (
+                    <div key={i} className="ac-card">
+                      <div className="ac-card-t">{t}</div>
+                      <div className="ac-card-d">{d}</div>
+                      <span className="ac-card-tag">{tag}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
             {sec === 'security' && (
-              <div className="ac-cards">
-                {(
-                  [
-                    [
-                      'MFA policy',
-                      'Require TOTP for all members or by role -- admin-security',
-                      'Recommended: required',
-                    ],
-                    [
-                      'IP allowlist',
-                      'Restrict app access to corporate ranges (CIDR)',
-                      'Off',
-                    ],
-                    [
-                      'Session policy',
-                      'JWT sliding 7-day refresh -- idle timeout',
-                      '7-day refresh',
-                    ],
-                    [
-                      'Audit to SIEM',
-                      'Stream the Part-11 audit log to your SIEM -- audit-siem',
-                      'Splunk / S3 / webhook',
-                    ],
-                  ] as [string, string, string][]
-                ).map(([t, d, tag], i) => (
-                  <div key={i} className="ac-card">
-                    <div className="ac-card-t">{t}</div>
-                    <div className="ac-card-d">{d}</div>
-                    <span className="ac-card-tag">{tag}</span>
+              <div>
+                <div className="pj-card-h" style={{ padding: 0, marginBottom: 12 }}>
+                  <span className="t">
+                    Security policy <SampleTag sample={!securityLive} />
+                  </span>
+                  <span className="s">organizations.settings.security -- governed</span>
+                </div>
+                <div className="txw-row">
+                  <div className="txw-row-l">
+                    MFA policy
+                    <small>Require TOTP for every member at sign-in. Governed change.</small>
                   </div>
-                ))}
+                  <div className="txw-row-r" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <button
+                      className="txw-switch"
+                      data-on={(liveSecurity?.mfaEnabled ?? true) || undefined}
+                      onClick={() => toggleSecurityPolicy('mfaEnabled', !(liveSecurity?.mfaEnabled ?? true))}
+                      aria-pressed={liveSecurity?.mfaEnabled ?? true}
+                      aria-label="MFA required"
+                    />
+                    <span className="txw-help">
+                      {(liveSecurity?.mfaEnabled ?? true) ? 'Required' : 'Optional'} -- TOTP via
+                      authenticator app
+                    </span>
+                  </div>
+                </div>
+                <div className="txw-row">
+                  <div className="txw-row-l">
+                    SSO (SAML / OIDC)
+                    <small>Centralized identity via your IdP. Governed change.</small>
+                  </div>
+                  <div className="txw-row-r" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <button
+                      className="txw-switch"
+                      data-on={(liveSecurity?.ssoEnabled ?? false) || undefined}
+                      onClick={() => toggleSecurityPolicy('ssoEnabled', !(liveSecurity?.ssoEnabled ?? false))}
+                      aria-pressed={liveSecurity?.ssoEnabled ?? false}
+                      aria-label="SSO enabled"
+                    />
+                    <span className="txw-help">
+                      {(liveSecurity?.ssoEnabled ?? false) ? 'Connected to your IdP' : 'Disabled'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pj-card-h" style={{ padding: 0, margin: '18px 0 10px' }}>
+                  <span className="t">
+                    Security health <SampleTag sample={!secHealth.report} />
+                  </span>
+                  <span className="s">
+                    /api/admin/security-health -- audited read
+                    {secHealth.report ? ` -- checked ${String(secHealth.report.checkedAt).slice(0, 16).replace('T', ' ')}` : ''}
+                  </span>
+                </div>
+                {secHealth.loading ? (
+                  <div className="scaf-note">Running the security self-test panel...</div>
+                ) : secHealth.report ? (
+                  <div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: 10,
+                        alignItems: 'center',
+                        padding: '10px 14px',
+                        borderRadius: 8,
+                        border: `1px solid ${secHealth.report.overall === 'healthy' ? 'var(--success)' : secHealth.report.overall === 'degraded' ? 'var(--warning)' : 'var(--error)'}`,
+                        background: `color-mix(in srgb,${secHealth.report.overall === 'healthy' ? 'var(--success)' : secHealth.report.overall === 'degraded' ? 'var(--warning)' : 'var(--error)'} 8%,transparent)`,
+                        marginBottom: 10,
+                        fontSize: 12.5,
+                      }}
+                    >
+                      {secHealth.report.overall === 'healthy' ? I.shieldCheck : I.alertTriangle}
+                      <b>Overall: {secHealth.report.overall}</b>
+                      <span style={{ color: 'var(--text-400)' }}>
+                        {secHealth.report.checks.length} checks
+                      </span>
+                      <button
+                        className="sp-ask"
+                        style={{ marginLeft: 'auto', padding: '2px 10px' }}
+                        onClick={() => setSecBump((b) => b + 1)}
+                      >
+                        Re-run
+                      </button>
+                    </div>
+                    <div className="sp-list">
+                      {secHealth.report.checks.map((c) => (
+                        <div key={c.name} className="sp-row">
+                          <span
+                            className={`rd-chip tone-${c.status === 'pass' ? 'ok' : c.status === 'warn' ? 'warn' : 'err'}`}
+                          >
+                            {c.status}
+                          </span>
+                          <span className="sp-row-b">
+                            <span className="sp-row-t">
+                              {c.name}
+                              {c.critical ? ' (critical)' : ''}
+                            </span>
+                            {c.reason && <span className="sp-row-s">{c.reason}</span>}
+                          </span>
+                          <span className="mono" style={{ fontSize: 10, color: 'var(--text-400)' }}>
+                            {c.durationMs}ms
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="scaf-note">
+                    Security panel unavailable -- sign in as an org admin to run the live
+                    self-test (JWT posture, audit chain, malware scanning, session policy).
+                  </div>
+                )}
               </div>
             )}
 

@@ -85,6 +85,40 @@ export const getOrgId = (): string => {
   return '1';
 };
 
+/**
+ * The organization id from the verified JWT's own claim — the authoritative
+ * source for "my own org" operations. Server-side tenant guards
+ * (validateOrgOwnership, requireTenantContext) resolve the org from this same
+ * claim, so a URL/body built from it can never mismatch the token the way a
+ * stale `currentOrganizationId` localStorage value can. Falls back to
+ * getOrgId() when no token is present or the payload can't be read.
+ */
+export const getJwtOrgId = (): string => {
+  const token = getAuthToken();
+  if (token) {
+    try {
+      const payload = token.split('.')[1];
+      if (payload) {
+        const json = JSON.parse(
+          decodeURIComponent(
+            atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+              .split('')
+              .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join(''),
+          ),
+        ) as { organizationId?: string | number };
+        const orgId = payload && json?.organizationId;
+        if (orgId !== undefined && orgId !== null && String(orgId).trim()) {
+          return String(orgId).trim();
+        }
+      }
+    } catch {
+      // malformed token — fall through to the localStorage resolver
+    }
+  }
+  return getOrgId();
+};
+
 export const getAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken();
   const orgId = getOrgId();

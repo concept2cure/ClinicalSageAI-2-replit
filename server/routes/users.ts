@@ -299,6 +299,9 @@ const PREFERENCE_KEYS = [
   'txwLangs',
   'txwRole',
   'txwAutoOpenSegments',
+  // First-run onboarding wizard: set true when the user finishes (or skips)
+  // the wizard so it never re-appears on another device/browser.
+  'onboardingComplete',
 ] as const;
 const DENSITY_VALUES = ['compact', 'comfortable', 'spacious'] as const;
 const TXW_ROLE_VALUES = ['post_editor', 'reviewer', 'observer'] as const;
@@ -338,7 +341,10 @@ function validatePreferencesPatch(patch: unknown): string | null {
         if (typeof open !== 'boolean') return 'railGroups values must be booleans';
       }
     }
-    if ((key === 'txwEnabled' || key === 'txwAutoOpenSegments') && typeof value !== 'boolean') {
+    if (
+      (key === 'txwEnabled' || key === 'txwAutoOpenSegments' || key === 'onboardingComplete') &&
+      typeof value !== 'boolean'
+    ) {
       return `${key} must be a boolean`;
     }
     if (key === 'txwLangs') {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import { SampleTag, connected, liveGet } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import { useLiveB2bPricing, useLiveDtcPricing } from '../livePricing';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   LIC_DTC,
@@ -102,7 +103,14 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
   }, []);
 
   const family = (LIC_ARCHETYPES.find((a) => a.id === arch) || { family: 'pharma' }).family;
-  const b2bTiers: B2bTier[] = LIC_PRICING[family] || LIC_PRICING.pharma;
+  /* Price cards adopt the live /api/billing price book (fail-closed to the
+     curated fixtures); checkout amounts are always computed server-side by
+     Stripe from the same book, so what renders is what gets charged. */
+  const dtcPricing = useLiveDtcPricing(LIC_DTC);
+  const b2bPricing = useLiveB2bPricing(family, LIC_PRICING[family] || LIC_PRICING.pharma);
+  const dtcTiers: DtcTier[] = dtcPricing.tiers;
+  const b2bTiers: B2bTier[] = b2bPricing.tiers;
+  const pricingLive = dtcPricing.live || b2bPricing.live;
   const bundle = licBundle(seats);
 
   const curTier = status ? status.tier : 'free';
@@ -156,7 +164,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
         <div>
           <div className="sp-eyebrow">Admin · /api/billing {live ? '· live' : ''}</div>
           <h1 className="sp-title">
-            Plans &amp; licensing <SampleTag sample={!live} />
+            Plans &amp; licensing <SampleTag sample={!live && !pricingLive} />
           </h1>
           <p className="sp-state">
             Self-service monthly tiers, or enterprise per-user pricing by
@@ -263,7 +271,7 @@ export function LicensingSurface({ onAsk, onNav }: SurfaceViewProps) {
 
       {model === 'dtc' ? (
         <div className="lic-grid">
-          {LIC_DTC.map((t: DtcTier) => {
+          {dtcTiers.map((t: DtcTier) => {
             const annual =
               t.baseMonthly != null && t.baseMonthly > 0
                 ? Math.round(t.baseMonthly * (1 - t.annualDiscountPct / 100))

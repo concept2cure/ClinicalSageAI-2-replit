@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { I } from '../icons';
 import { SampleTag, connected } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
-import { getOrgId } from '@/utils/authToken';
+import { getJwtOrgId } from '@/utils/authToken';
+import { useLiveB2bPricing, useLiveDtcPricing } from '../livePricing';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   LIC_ARCHETYPES,
@@ -75,12 +76,14 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
   const family =
     (archetypes.find((a) => a.id === org.archetype) || ({} as any)).family ||
     'pharma';
-  const dtcTiers: any[] = LIC_DTC;
-  const pricingMap: Record<string, any[]> = LIC_PRICING;
-  const tiers: any[] =
-    model === 'dtc'
-      ? dtcTiers
-      : pricingMap[family] || pricingMap.pharma || [];
+  /* Plan cards adopt the live /api/billing price book (fail-closed to the
+     curated fixtures) — the same numbers Stripe charges at checkout. */
+  const dtcPricing = useLiveDtcPricing(LIC_DTC);
+  const b2bPricing = useLiveB2bPricing(
+    family,
+    (LIC_PRICING[family] || LIC_PRICING.pharma || []) as any,
+  );
+  const tiers: any[] = model === 'dtc' ? dtcPricing.tiers : b2bPricing.tiers;
   const selTier: any = tiers.find((t: any) => t.tier === tier) || tiers[0] || {};
   const bundle = licBundleOf(seats);
   const roles: Array<{ id: string; label: string }> = ORG_ROLES;
@@ -160,7 +163,7 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
     }
 
     setBusy(true);
-    const orgId = getOrgId();
+    const orgId = getJwtOrgId();
     const archetype = archetypes.find((a) => a.id === org.archetype);
 
     // 1) Governed org-profile write (name + client type + industry mode).

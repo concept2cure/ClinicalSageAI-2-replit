@@ -32,6 +32,9 @@ import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
 import { SURFACE_VIEWS } from './surfaceViews';
 import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
+import { OnboardingWizard } from './surfaces/OnboardingWizard';
+import { connected } from './dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import {
   AI_ACTIONS,
   ANA_MODES,
@@ -76,12 +79,58 @@ function loadPrefs(): Prefs {
   return DEFAULT_PREFS;
 }
 
+/**
+ * First-run gate — show the onboarding wizard exactly once per user.
+ * Truth lives in users.preferences.onboardingComplete (server, so it follows
+ * the user across devices) with a localStorage mirror for responsiveness.
+ * Fail-open: when unauthenticated or the prefs read fails, the shell renders —
+ * the wizard must never be able to lock a user out of the product.
+ */
+function useFirstRunGate(): { showWizard: boolean; complete: () => void } {
+  const [show, setShow] = React.useState(false);
+  React.useEffect(() => {
+    let cancelled = false;
+    try {
+      if (localStorage.getItem('c2c_onboarding_done') === '1') return undefined;
+    } catch {
+      /* storage unavailable — fall through to the server truth */
+    }
+    if (!connected()) return undefined;
+    apiRequest('GET', '/api/users/me/preferences')
+      .then(async (res) => {
+        if (cancelled || !res.ok) return;
+        const body = (await res.json().catch(() => null)) as
+          | { preferences?: Record<string, unknown> }
+          | null;
+        if (!body || typeof body.preferences !== 'object' || body.preferences === null) return;
+        if (body.preferences.onboardingComplete === true) {
+          try {
+            localStorage.setItem('c2c_onboarding_done', '1');
+          } catch {
+            /* mirror only */
+          }
+          return;
+        }
+        if (!cancelled) setShow(true);
+      })
+      .catch(() => {
+        /* prefs unreachable — fail open, never block the shell */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const complete = React.useCallback(() => setShow(false), []);
+  return { showWizard: show, complete };
+}
+
 export function V2App() {
   const [location, setLocation] = useLocation();
   const [prefs, setPrefs] = React.useState<Prefs>(loadPrefs);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
   const [messages, setMessages] = React.useState<AnaMessage[]>([]);
   const [esignFor, setEsignFor] = React.useState<string | null>(null);
+  const firstRun = useFirstRunGate();
 
   const set = <K extends keyof Prefs>(k: K, v: Prefs[K]) =>
     setPrefs((p) => {
@@ -223,6 +272,12 @@ export function V2App() {
     body = <V surface={ctxSurface} onAsk={ask} onNav={nav} segment={prefs.segment} />;
   } else {
     body = <KitSurfaceScaffold surface={ctxSurface} onAsk={ask} />;
+  }
+
+  // First-run: the wizard owns the screen until the user finishes (it persists
+  // onboardingComplete to users.preferences, so it never re-appears).
+  if (firstRun.showWizard) {
+    return <OnboardingWizard onEnter={firstRun.complete} />;
   }
 
   return (
