@@ -76,8 +76,6 @@ export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, marke
   const [saved,  setSaved]  = useState(true);
   const [words,  setWords]  = useState(0);
   const [track,  setTrack]  = useState(false);
-  const [busy,   setBusy]   = useState(false);
-  const [stream, setStream] = useState('');
   const [style,  setStyle]  = useState('p');
 
   const key      = storageKey || (sec && (sec.id || sec.num)) || 'dc-default';
@@ -124,29 +122,15 @@ export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, marke
   };
   const setBlock = (tag: string) => { exec('formatBlock', tag); setStyle(tag); };
 
-  /* ── AnA generate ────────────────────────────────────────── */
+  /* ── AnA draft ─────────────────────────────────────────────
+     Sends a real drafting request to the live AnA co-author (onAsk → the
+     shell's /api/ana-ri/stream rail), which streams the grounded draft in the
+     conversation. No canned content is fabricated into the page or persisted —
+     the previous local SEED + simulated progress claimed provenance that never
+     existed. */
   const generate = () => {
     if (!onAsk) return;
-    setBusy(true);
-    setStream('');
-    const prompt = `Draft §${secNum} — ${secTitle}${guidance ? ' per ' + guidance : ''}${context ? ' for ' + context : ''}.`;
-    onAsk(prompt);
-    /* simulate stream landing in page after a delay */
-    const SEED = `<h2>${secNum} — ${secTitle}</h2><p>Based on the program evidence and applicable regulatory requirements, this section provides the required content for <strong>${secTitle}</strong>. The analysis follows ${guidance || 'the applicable guidance'} and has been cross-referenced against the linked evidence sources to ensure factual grounding and traceability.</p><p>All quantitative claims are attributed to source documents and carry provenance markers for downstream dossier assembly. Further refinement of this draft is recommended using the AnA co-author — particularly for numerical claims, subgroup data, and market-specific adaptations.</p>`;
-    const words2 = SEED.split(/\s+/).length;
-    const STEPS  = ['Reviewing evidence sources…', 'Applying regulatory structure…', 'Drafting narrative…'];
-    STEPS.forEach((s, i) => { setTimeout(() => setStream(s), 400 * (i + 1)); });
-    setTimeout(() => {
-      setBusy(false);
-      setStream('');
-      const el = bodyRef.current;
-      if (el) {
-        el.innerHTML = SEED;
-        setWords(words2);
-        localStorage.setItem('dc::' + key, SEED);
-        setSaved(true);
-      }
-    }, 400 * (STEPS.length + 1) + 200);
+    onAsk(`Draft §${secNum} — ${secTitle}${guidance ? ' per ' + guidance : ''}${context ? ' for ' + context : ''}.`);
   };
 
   const isEmpty = useMemo(() => {
@@ -250,14 +234,7 @@ export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, marke
           </div>
 
           {/* Body -- contentEditable */}
-          {busy ? (
-            <div style={{padding:'32px 0',textAlign:'center'}}>
-              <div style={{fontSize:12,color:'var(--text-400)',marginBottom:12,animation:'pulse 1.4s infinite'}}>{stream || 'AnA is drafting…'}</div>
-              <div style={{width:200,height:4,background:'var(--bg-100)',borderRadius:2,margin:'0 auto',overflow:'hidden'}}>
-                <div style={{height:'100%',width:'60%',background:'var(--accent-100)',borderRadius:2,animation:'slide 1.2s ease-in-out infinite'}}/>
-              </div>
-            </div>
-          ) : isEmpty && !isLocked ? (
+          {isEmpty && !isLocked ? (
             <div style={{padding:'32px 0 16px',borderTop:'1px solid var(--bg-100)'}}>
               <p style={{fontSize:12,color:'var(--text-400)',margin:'0 0 12px',lineHeight:1.6}}>
                 No content for {secNum ? '§' + secNum : secTitle}.{guidance ? ' Per ' + guidance + '.' : ''} Begin drafting or use AnA.
@@ -270,7 +247,7 @@ export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, marke
 
           <div
             ref={bodyRef}
-            contentEditable={!isLocked && !busy}
+            contentEditable={!isLocked}
             suppressContentEditableWarning={true}
             spellCheck={false}
             onInput={save}
@@ -285,7 +262,7 @@ export function DocCanvas({ sec, blocks, code, context, onAsk, storageKey, marke
               color:'var(--text-100)',
               minHeight: isEmpty ? 0 : 320,
               fontFamily:'Georgia, "Times New Roman", serif',
-              display: (isEmpty && !isLocked && !busy) ? 'none' : 'block',
+              display: (isEmpty && !isLocked) ? 'none' : 'block',
             }}
           />
 
