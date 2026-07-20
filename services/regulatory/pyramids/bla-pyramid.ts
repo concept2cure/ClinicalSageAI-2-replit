@@ -1,4 +1,4 @@
-import type { BaseTask, SubmissionPyramid } from './types.js';
+import type { BaseTask, PyramidPhase, SubmissionPyramid } from './types.js';
 import { buildPhase } from './types.js';
 
 export function buildBlaPyramid(): SubmissionPyramid {
