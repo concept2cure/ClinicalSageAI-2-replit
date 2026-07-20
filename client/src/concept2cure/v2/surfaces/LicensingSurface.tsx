@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, liveGet } from '../dataConnect';
+import { SampleTag, connected, liveGet } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   LIC_DTC,
@@ -42,7 +43,16 @@ function lim(n: number): string | number {
   return n === -1 ? 'Unlimited' : n;
 }
 
-/* -- Billing API helper (mirrors kit runtime setup) -- */
+/* -- Billing API helper -- the project's one fetch convention (apiRequest
+   attaches Bearer + x-organization-id). The kit's window.C2C_API bridge is
+   gone in the ported app; going through it left checkout/portal permanently
+   in sample mode even when signed in. */
+
+async function billingPost<T>(path: string, body: Record<string, unknown>): Promise<T | null> {
+  const res = await apiRequest('POST', path, body);
+  if (!res.ok) return null; // 401 passes through un-thrown; anything else throws upstream
+  return (await res.json().catch(() => null)) as T | null;
+}
 
 interface BillingApi {
   status(): Promise<BillingStatus | null>;
@@ -57,20 +67,16 @@ const billing: BillingApi = {
     return liveGet<BillingStatus | null>('/api/billing/status', null).then((r) => (r.sample ? null : r.data));
   },
   checkout(body) {
-    const api = (window as any).C2C_API;
-    return api ? api.post('/api/billing/checkout', body) : Promise.reject(new Error('offline'));
+    return billingPost('/api/billing/checkout', body);
   },
   dtcCheckout(body) {
-    const api = (window as any).C2C_API;
-    return api ? api.post('/api/billing/dtc-checkout', body) : Promise.reject(new Error('offline'));
+    return billingPost('/api/billing/dtc-checkout', body);
   },
   portal(returnUrl) {
-    const api = (window as any).C2C_API;
-    return api ? api.post('/api/billing/portal', { returnUrl }) : Promise.reject(new Error('offline'));
+    return billingPost('/api/billing/portal', { returnUrl });
   },
   connected() {
-    const api = (window as any).C2C_API;
-    return !!(api && api.connected());
+    return connected();
   },
 };
 

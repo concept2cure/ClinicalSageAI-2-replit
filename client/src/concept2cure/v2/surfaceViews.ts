@@ -57,7 +57,9 @@ import { Labeling } from './surfaces/Labeling';
 import { LabelingPI } from './surfaces/LabelingPi';
 import { SmpcLabeling } from './surfaces/SmpcLabeling';
 import { LicensingSurface } from './surfaces/LicensingSurface';
+import { BusinessCenter } from './surfaces/BusinessCenter';
 import { MaaCockpit } from './surfaces/MaaCockpit';
+import { MasterAdmin } from './surfaces/MasterAdmin';
 import { MarketAccess } from './surfaces/MarketAccess';
 import { NdaCockpit } from './surfaces/NdaCockpit';
 import { Nonclinical } from './surfaces/Nonclinical';
@@ -155,6 +157,12 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   licensing: { component: LicensingSurface },
   'lifecycle-mgmt': { component: Lifecycle },
   'maa-cockpit': { component: MaaCockpit },
+  // Internal platform consoles (HANDOFF_TO_DESIGN_master_admin_business_center):
+  // deep-link only (/concept2cure/master-admin, /concept2cure/business-center) —
+  // deliberately NOT in the client rail; access is enforced server-side and the
+  // surfaces render non-leaky denied states for non-platform users.
+  'master-admin': { component: MasterAdmin },
+  'business-center': { component: BusinessCenter },
   'market-access': { component: MarketAccess },
   'nda-cockpit': { component: NdaCockpit },
   nonclinical: { component: Nonclinical },

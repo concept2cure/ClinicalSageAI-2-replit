@@ -24,6 +24,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { eq, and, isNull } from 'drizzle-orm';
 import { db } from '../../db';
 import {
@@ -42,10 +43,14 @@ import {
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
+// ESM-safe moduleDir (package is "type": "module"; the bare CJS global
+// aborts boot on Node >= 22.7 module-syntax detection).
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+
 const logger = createScopedLogger('ingestion-service');
 
 const CANONICAL_DOCUMENT_TABLE = 'coauthor_documents';
-const PROMPTS_DIR = path.join(__dirname, '..', 'ai-gateway', 'prompts');
+const PROMPTS_DIR = path.join(moduleDir, '..', 'ai-gateway', 'prompts');
 
 // ── Standardized error surface (never leak raw provider errors) ───────────────
 

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
-import { SampleTag } from '../dataConnect';
+import { SampleTag, connected } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
+import { getOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   LIC_ARCHETYPES,
   LIC_DTC,
   LIC_PRICING,
-  LIC_ROLES,
   LIC_TIER_LEVEL,
   licBundle as licBundleOf,
 } from '../fixtures/onboarding-data';
@@ -18,10 +19,45 @@ function _lim(n: number): string | number {
   return n === -1 ? 'Unlimited' : n;
 }
 
+/* Org-membership roles — the REAL vocabulary of organization_users.role
+   (tenant-users.ts createUserSchema). Platform/business roles (owner,
+   business_admin, …) are platform_role_grants and are granted from the Admin
+   console, not from workspace onboarding. */
+const ORG_ROLES: Array<{ id: string; label: string }> = [
+  { id: 'admin', label: 'Admin' },
+  { id: 'manager', label: 'Manager' },
+  { id: 'member', label: 'Member' },
+  { id: 'viewer', label: 'Viewer' },
+];
+
+/** organizations.client_type from the chosen archetype (tenant IA segment). */
+function clientTypeForArchetype(archetypeId: string, family: string): string {
+  if (family === 'medtech') return 'medtech';
+  if (archetypeId === 'biotech' || archetypeId === 'virtual_biotech') return 'biotech';
+  if (archetypeId === 'cro') return 'cro';
+  return 'pharma';
+}
+
+/** What actually happened on activation — rendered verbatim on the done screen. */
+interface ActivationResult {
+  live: boolean;
+  profileSaved: boolean;
+  invitesCreated: number;
+  invitesPendingConsent: number;
+  inviteFailures: string[];
+  checkoutOpened: boolean;
+  error: string | null;
+}
+
 /* ── Onboarding wizard ──
-   Grounded in the real org model: organizations.industry_mode
-   (LIC_ARCHETYPES) -> pricing family -> tier -> seats/billing_cycle ->
-   tier->module provisioning -> personnel roles -> activate via /api/billing. */
+   Grounded in the real org model and wired to the real backend:
+     PATCH /api/organizations/:id/profile   (governed, audited) — org name +
+           client type from the chosen archetype
+     POST  /api/tenant-users                — one membership/invitation per
+           personnel row (organization_invitations for cross-org emails)
+     POST  /api/billing/checkout | /dtc-checkout — Stripe Checkout session
+   Offline/unauthenticated the wizard stays fully explorable but activation
+   provisions nothing and says so — it never fakes a workspace. */
 
 export function Onboarding({ onAsk }: SurfaceViewProps) {
   const [step, setStep] = useState(0);
@@ -30,8 +66,10 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
   const [tier, setTier] = useState('standard');
   const [cycle, setCycle] = useState('annual');
   const [seats, setSeats] = useState(5);
-  const [invites, setInvites] = useState([{ email: '', role: 'owner' }]);
+  const [invites, setInvites] = useState([{ email: '', role: 'admin' }]);
   const [done, setDone] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<ActivationResult | null>(null);
 
   const archetypes: Array<{ id: string; label: string; family: string }> = LIC_ARCHETYPES;
   const family =
@@ -45,7 +83,7 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
       : pricingMap[family] || pricingMap.pharma || [];
   const selTier: any = tiers.find((t: any) => t.tier === tier) || tiers[0] || {};
   const bundle = licBundleOf(seats);
-  const roles: Array<{ id: string; label: string }> = LIC_ROLES;
+  const roles: Array<{ id: string; label: string }> = ORG_ROLES;
   const tierLevel: Record<string, number> = LIC_TIER_LEVEL;
 
   const onNav = (id: string) => {
@@ -101,17 +139,104 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
     ].filter(Boolean) as string[];
   };
 
-  const activate = () => {
+  const activate = async () => {
+    if (busy) return;
+    const live = connected();
+    const res: ActivationResult = {
+      live,
+      profileSaved: false,
+      invitesCreated: 0,
+      invitesPendingConsent: 0,
+      inviteFailures: [],
+      checkoutOpened: false,
+      error: null,
+    };
+
+    if (!live) {
+      // Honest sample path — nothing is provisioned and the done screen says so.
+      setResult(res);
+      setDone(true);
+      return;
+    }
+
+    setBusy(true);
+    const orgId = getOrgId();
+    const archetype = archetypes.find((a) => a.id === org.archetype);
+
+    // 1) Governed org-profile write (name + client type + industry mode).
+    try {
+      const pr = await apiRequest(
+        'PATCH',
+        `/api/organizations/${encodeURIComponent(orgId)}/profile`,
+        {
+          name: org.name.trim(),
+          clientType: clientTypeForArchetype(org.archetype, family),
+          industryMode: org.archetype,
+          reason: `Onboarding: workspace set up as ${archetype ? archetype.label : org.archetype}`,
+        },
+      );
+      res.profileSaved = pr.ok;
+      if (!pr.ok) res.error = 'Organization profile was not saved (admin role required).';
+    } catch (e) {
+      res.error =
+        'Organization profile was not saved -- ' +
+        (e instanceof Error && e.message ? e.message : 'request failed');
+    }
+
+    // 2) Personnel — one real membership/invitation per row. Sequential so
+    // seat-licensing headers stay coherent; cross-org emails come back 202 as
+    // pending consent invitations (organization_invitations).
+    for (const inv of invites) {
+      const email = inv.email.trim();
+      if (!email) continue;
+      try {
+        const r = await apiRequest('POST', '/api/tenant-users', {
+          email,
+          name: email.split('@')[0],
+          role: inv.role,
+          organizationId: Number(orgId),
+        });
+        if (r.status === 202) res.invitesPendingConsent += 1;
+        else if (r.ok) res.invitesCreated += 1;
+        else res.inviteFailures.push(email);
+      } catch (e) {
+        res.inviteFailures.push(
+          email + (e instanceof Error && e.message ? ` (${e.message})` : ''),
+        );
+      }
+    }
+
+    // 3) Stripe Checkout — skipped for enterprise (sales-led) and free tiers.
+    if (tier !== 'enterprise' && selTier.baseMonthly !== 0) {
+      try {
+        const path = model === 'dtc' ? '/api/billing/dtc-checkout' : '/api/billing/checkout';
+        const body: Record<string, unknown> =
+          model === 'dtc'
+            ? { tier, billingCycle: cycle }
+            : { tier, billingCycle: cycle, seats };
+        const cr = await apiRequest('POST', path, body);
+        if (cr.ok) {
+          const payload = (await cr.json().catch(() => null)) as { checkoutUrl?: string } | null;
+          if (payload?.checkoutUrl) {
+            window.open(payload.checkoutUrl, '_blank', 'noopener');
+            res.checkoutOpened = true;
+          }
+        }
+      } catch (_e) {
+        /* Checkout not opening is reported on the done screen, never faked. */
+      }
+    }
+
+    setBusy(false);
+    setResult(res);
     setDone(true);
-    if (tier === 'enterprise') return;
-    /* Sample: would POST /dtc-checkout or /checkout */
   };
 
   const canNext = step === 0 ? org.name.trim().length > 1 : true;
 
   return (
     <div className="sp" style={{ maxWidth: 960 }}>
-      <SampleTag sample={true} />
+      <SampleTag sample={!connected()} />
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Onboarding {I.dot} new organization</div>
@@ -145,18 +270,71 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
           {done ? (
             <div className="ob-done">
               <div className="ob-done-ic">{I.checkCircle || I.check}</div>
-              <h2>{org.name || 'Your workspace'} is ready</h2>
-              <p>
-                {tier === 'enterprise'
-                  ? 'Our team will contact you to finalize the Enterprise agreement.'
-                  : model === 'dtc' && selTier.trialDays > 0
-                    ? selTier.trialDays +
-                      '-day trial started on the ' +
-                      selTier.name +
-                      ' plan.'
-                    : 'Provisioned on the ' + selTier.name + ' plan.'}
-                {' '}Modules for the {tier} tier are enabled.
-              </p>
+              <h2>
+                {result && !result.live
+                  ? 'Walkthrough complete -- nothing was provisioned'
+                  : `${org.name || 'Your workspace'} is set up`}
+              </h2>
+              {result && !result.live ? (
+                <p>
+                  The backend is not reachable (not signed in), so no organization profile,
+                  personnel, or billing was created. Sign in and run this wizard again to
+                  activate for real.
+                </p>
+              ) : (
+                <>
+                  <p>
+                    {tier === 'enterprise'
+                      ? 'Our team will contact you to finalize the Enterprise agreement.'
+                      : result?.checkoutOpened
+                        ? 'Stripe Checkout opened in a new tab -- the ' +
+                          selTier.name +
+                          ' plan activates when payment completes, and modules for the ' +
+                          tier +
+                          ' tier auto-provision.'
+                        : 'Plan checkout was not started -- open Plans & licensing to pick up the ' +
+                          selTier.name +
+                          ' plan.'}
+                  </p>
+                  {result && (
+                    <div
+                      className="ob-review"
+                      style={{ textAlign: 'left', margin: '12px auto 0', maxWidth: 460 }}
+                    >
+                      <div className="ob-rev-row">
+                        <span className="k">Organization profile</span>
+                        <span className="v">
+                          {result.profileSaved ? 'Saved -- audited' : 'Not saved'}
+                        </span>
+                      </div>
+                      <div className="ob-rev-row">
+                        <span className="k">Personnel</span>
+                        <span className="v">
+                          {result.invitesCreated} added
+                          {result.invitesPendingConsent > 0
+                            ? ` -- ${result.invitesPendingConsent} pending consent`
+                            : ''}
+                          {result.inviteFailures.length > 0
+                            ? ` -- ${result.inviteFailures.length} failed`
+                            : ''}
+                        </span>
+                      </div>
+                      {result.inviteFailures.length > 0 && (
+                        <div className="ob-rev-row">
+                          <span className="k">Failed invites</span>
+                          <span className="v">{result.inviteFailures.join(', ')}</span>
+                        </div>
+                      )}
+                      {result.error && (
+                        <div className="ob-rev-row">
+                          <span className="k">Attention</span>
+                          <span className="v">{result.error}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
               <div
                 className="cm-pushbar"
                 style={{ justifyContent: 'center', marginTop: 16 }}
@@ -430,9 +608,11 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
                     {I.plus} Add another
                   </button>
                   <div className="scaf-note" style={{ marginTop: 12 }}>
-                    Business-tier roles (owner, business_admin, super_admin)
-                    confer finance access and can only be granted by a business
-                    administrator.
+                    These are organization-membership roles (organization_users).
+                    Each row becomes a real member -- or, for an email that
+                    already belongs to another organization, a pending
+                    invitation that the person must accept. Platform and
+                    finance roles are granted separately in the Admin console.
                   </div>
                 </div>
               )}
@@ -502,15 +682,23 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
                     </div>
                   ))}
                   <div className="cm-pushbar" style={{ marginTop: 16 }}>
-                    <button className="sp-primary" onClick={activate}>
+                    <button className="sp-primary" onClick={activate} disabled={busy}>
                       {I.rocket || I.check}{' '}
-                      {tier === 'enterprise'
-                        ? 'Request Enterprise onboarding'
-                        : model === 'dtc' && selTier.trialDays > 0
-                          ? 'Start ' + selTier.trialDays + '-day trial'
-                          : 'Activate workspace'}
+                      {busy
+                        ? 'Activating...'
+                        : tier === 'enterprise'
+                          ? 'Request Enterprise onboarding'
+                          : model === 'dtc' && selTier.trialDays > 0
+                            ? 'Start ' + selTier.trialDays + '-day trial'
+                            : 'Activate workspace'}
                     </button>
                   </div>
+                  {!connected() && (
+                    <div className="scaf-note" style={{ marginTop: 10 }}>
+                      Not signed in -- activation will provision nothing until you
+                      authenticate.
+                    </div>
+                  )}
                 </div>
               )}
 

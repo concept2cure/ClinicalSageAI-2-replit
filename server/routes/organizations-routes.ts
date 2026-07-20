@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { db } from '../db';
 import {
   organizations,
@@ -7,6 +8,7 @@ import {
 } from '@shared/schema';
 import { eq, count, inArray } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
+import auditService from '../services/auditService';
 
 const router = Router();
 
@@ -45,6 +47,23 @@ function validateOrgOwnership(req: any, res: any, next: any) {
     });
   }
   next();
+}
+
+/**
+ * Org-admin gate for governed organization mutations. authMiddleware already
+ * re-resolved the caller's role in their own org from organization_users, and
+ * validateOrgOwnership pinned :id to that org for non-staff — so an org-role
+ * check here is a check against the *target* org. Platform staff pass.
+ */
+function requireOrgAdmin(req: any, res: any, next: any) {
+  const role = req.userRole ?? req.user?.role;
+  if (isPlatformStaff(role) || role === 'admin' || role === 'owner') {
+    return next();
+  }
+  return res.status(403).json({
+    success: false,
+    error: 'Organization admin role required for this action',
+  });
 }
 
 /**
@@ -158,6 +177,8 @@ router.get('/:id', validateOrgOwnership, async (req, res) => {
         seatsPurchased: org.seatsPurchased,
         paymentStatus: org.paymentStatus,
         industryMode: org.industryMode,
+        clientType: org.clientType,
+        tier: org.tier,
       },
     });
   } catch (error) {
@@ -216,6 +237,106 @@ router.get('/:id/clients', validateOrgOwnership, async (req, res) => {
  * Get organization settings
  * API: GET /api/organizations/:id/settings
  */
+/**
+ * Governed organization-profile update (name / client type / industry mode).
+ * API: PATCH /api/organizations/:id/profile
+ *
+ * This is the org-admin self-serve profile write behind the ui-v2 Setup and
+ * Onboarding surfaces. It is intentionally narrow: identity fields only —
+ * tier/status/billing stay owned by platform routes (/api/tenants,
+ * /api/admin/master) and Stripe. Every call requires a reason-for-change and
+ * lands in the audit trail (21 CFR Part 11 posture, same as
+ * /api/admin/master mutations).
+ */
+const profilePatchSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120).optional(),
+    clientType: z
+      .enum(['medtech', 'biotech', 'pharma', 'diagnostics', 'cro', 'health'])
+      .optional(),
+    industryMode: z.string().trim().min(2).max(64).optional(),
+    reason: z.string().trim().min(3).max(500),
+  })
+  .refine(
+    d => d.name !== undefined || d.clientType !== undefined || d.industryMode !== undefined,
+    { message: 'At least one of name, clientType, industryMode is required' }
+  );
+
+router.patch('/:id/profile', validateOrgOwnership, requireOrgAdmin, async (req, res) => {
+  try {
+    const orgId = parseInt(req.params.id, 10);
+    if (isNaN(orgId)) {
+      return res.status(400).json({ success: false, error: 'Invalid organization ID' });
+    }
+
+    const parsed = profilePatchSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: parsed.error.issues[0]?.message ?? 'Invalid profile update',
+      });
+    }
+    const { name, clientType, industryMode, reason } = parsed.data;
+
+    const [before] = await db
+      .select({
+        name: organizations.name,
+        clientType: organizations.clientType,
+        industryMode: organizations.industryMode,
+      })
+      .from(organizations)
+      .where(eq(organizations.id, orgId));
+    if (!before) {
+      return res.status(404).json({ success: false, error: 'Organization not found' });
+    }
+
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (name !== undefined) updates.name = name;
+    if (clientType !== undefined) updates.clientType = clientType;
+    if (industryMode !== undefined) updates.industryMode = industryMode;
+
+    const [updated] = await db
+      .update(organizations)
+      .set(updates)
+      .where(eq(organizations.id, orgId))
+      .returning({
+        id: organizations.id,
+        name: organizations.name,
+        clientType: organizations.clientType,
+        industryMode: organizations.industryMode,
+        updatedAt: organizations.updatedAt,
+      });
+
+    await auditService.logAction({
+      tenantId: orgId,
+      userId: req.userId ?? (req as any).user?.id,
+      action: 'data_modify',
+      resourceType: 'organization',
+      resourceId: orgId,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string,
+      details: {
+        orgAdminAction: 'organization.profile_update',
+        before,
+        after: {
+          name: updated.name,
+          clientType: updated.clientType,
+          industryMode: updated.industryMode,
+        },
+        reason,
+      },
+    });
+
+    res.json({ success: true, organization: updated });
+  } catch (error) {
+    console.error(`Error updating organization profile ${req.params.id}:`, error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update organization profile',
+    });
+  }
+});
+
 router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
   try {
     const { id } = req.params;
@@ -287,6 +408,17 @@ router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
         dataRetention: 365,
         apiRateLimit: 1000,
       },
+      // Translation-workspace policy (ui-v2 Setup surface / Document editor
+      // Trans dock). Org-wide defaults; per-user prefs live on users.preferences.
+      translation: {
+        enabled: false,
+        targets: [],
+        defaultEngine: 'C2C-RIM-MT v2.4',
+        requireBackTranslation: true,
+        twoPersonRule: true,
+        glossaryScope: 'org',
+        blockMachineApproval: true,
+      },
     };
 
     const settings = organization.settings
@@ -307,10 +439,41 @@ router.get('/:id/settings', validateOrgOwnership, async (req, res) => {
  * Update organization settings
  * API: PATCH /api/organizations/:id/settings
  */
-router.patch('/:id/settings', validateOrgOwnership, async (req, res) => {
+router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const settingsUpdate = req.body;
+
+    // Governed body form: { settings: {...}, reason: '...' }. The bare
+    // settings-partial body remains accepted (no shipped caller uses it, but
+    // the contract predates this hardening); a governed call must carry a
+    // reason of at least 3 chars. Both forms audit the changed section keys.
+    const body = req.body ?? {};
+    const isGoverned =
+      typeof body === 'object' &&
+      !Array.isArray(body) &&
+      typeof body.settings === 'object' &&
+      body.settings !== null &&
+      Object.keys(body).every(k => k === 'settings' || k === 'reason');
+    const settingsUpdate = isGoverned ? body.settings : body;
+    const reason = isGoverned && typeof body.reason === 'string' ? body.reason.trim() : null;
+
+    if (isGoverned && (!reason || reason.length < 3)) {
+      return res.status(400).json({
+        success: false,
+        error: 'A reason (min 3 chars) is required for this action',
+      });
+    }
+    if (
+      typeof settingsUpdate !== 'object' ||
+      settingsUpdate === null ||
+      Array.isArray(settingsUpdate) ||
+      Object.keys(settingsUpdate).length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: 'Settings update must be a non-empty object',
+      });
+    }
 
     const [organization] = await db
       .select()
@@ -334,6 +497,23 @@ router.patch('/:id/settings', validateOrgOwnership, async (req, res) => {
         updatedAt: new Date(),
       })
       .where(eq(organizations.id, parseInt(id)));
+
+    // Audit the changed section keys, not the values — settings sections can
+    // carry integration credentials that must not be duplicated into the log.
+    await auditService.logAction({
+      tenantId: parseInt(id),
+      userId: req.userId ?? (req as any).user?.id,
+      action: 'data_modify',
+      resourceType: 'organization_settings',
+      resourceId: parseInt(id),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string,
+      details: {
+        orgAdminAction: 'organization.settings_update',
+        sections: Object.keys(settingsUpdate),
+        reason,
+      },
+    });
 
     res.json({
       success: true,

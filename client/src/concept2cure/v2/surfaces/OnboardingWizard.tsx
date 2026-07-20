@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
+import { apiRequest } from '@/lib/queryClient';
+import { connected } from '../dataConnect';
 import '../styles/auth-entry.css';
 import '../styles/translation-v2.css';
 
@@ -56,11 +58,21 @@ export function OnboardingWizard({ onEnter, onConnectSource }: OnboardingWizardP
   const toggleLang = (id: string) => setTxwLangs(l => l.includes(id) ? l.filter(x => x !== id) : [...l, id]);
 
   const enter = () => {
+    const prefs = {
+      txwEnabled: txwOn, txwLangs, txwRole, txwAutoOpenSegments: txwAutoOpen,
+    };
     try {
-      localStorage.setItem('c2c_user_prefs', JSON.stringify({
-        txwEnabled: txwOn, txwLangs, txwRole, txwAutoOpenSegments: txwAutoOpen,
-      }));
+      localStorage.setItem('c2c_user_prefs', JSON.stringify(prefs));
     } catch (_) { /* storage unavailable */ }
+    // Persist to the real per-user store (users.preferences jsonb) when
+    // authenticated; the local mirror above keeps the session responsive and
+    // is all we have offline. Fire-and-forget — entering the workspace must
+    // not block on a slow write.
+    if (connected()) {
+      apiRequest('PUT', '/api/users/me/preferences', prefs).catch(() => {
+        /* offline/expired token — the local mirror still applies */
+      });
+    }
     onEnter();
   };
 

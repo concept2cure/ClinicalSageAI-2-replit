@@ -289,8 +289,19 @@ router.patch('/me', async (req: Request, res: Response) => {
 // column never accumulates unaudited state.
 // ───────────────────────────────────────────────────────────────────────────
 
-const PREFERENCE_KEYS = ['density', 'railGroups', 'dockOpen'] as const;
+const PREFERENCE_KEYS = [
+  'density',
+  'railGroups',
+  'dockOpen',
+  // Translation-workspace per-user prefs (ui-v2 OnboardingWizard / editor
+  // Trans dock). Org-wide policy lives on organizations.settings.translation.
+  'txwEnabled',
+  'txwLangs',
+  'txwRole',
+  'txwAutoOpenSegments',
+] as const;
 const DENSITY_VALUES = ['compact', 'comfortable', 'spacious'] as const;
+const TXW_ROLE_VALUES = ['post_editor', 'reviewer', 'observer'] as const;
 
 /**
  * Validate a preferences merge-patch body. Returns an error string when the
@@ -325,6 +336,20 @@ function validatePreferencesPatch(patch: unknown): string | null {
       for (const [gid, open] of groups) {
         if (gid.length > 64) return 'railGroups key too long';
         if (typeof open !== 'boolean') return 'railGroups values must be booleans';
+      }
+    }
+    if ((key === 'txwEnabled' || key === 'txwAutoOpenSegments') && typeof value !== 'boolean') {
+      return `${key} must be a boolean`;
+    }
+    if (key === 'txwLangs') {
+      if (!Array.isArray(value) || value.length > 24 ||
+          value.some(v => typeof v !== 'string' || v.length === 0 || v.length > 16)) {
+        return 'txwLangs must be an array of up to 24 short language tags';
+      }
+    }
+    if (key === 'txwRole') {
+      if (typeof value !== 'string' || !(TXW_ROLE_VALUES as readonly string[]).includes(value)) {
+        return `txwRole must be one of ${TXW_ROLE_VALUES.join(' | ')}`;
       }
     }
   }

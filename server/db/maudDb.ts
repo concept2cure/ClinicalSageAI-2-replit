@@ -328,12 +328,18 @@ export async function getAvailableAlgorithms(): Promise<MAUDAlgorithm[]> {
  */
 export async function runMaudMigration(): Promise<boolean> {
   try {
-    // Read the migration file
+    // Read the migration file. Resolved from process.cwd() (the repo root in
+    // both dev and prod) rather than __dirname / import.meta so this hybrid
+    // require()-style module stays loadable under Node >= 22.7 module-syntax
+    // detection (same approach as services/ocr/tesseractOcrService.ts). The
+    // old server-relative path pointed at the pre-consolidation migrations
+    // directory that no longer exists; the file lives in
+    // db/migrations/_consolidated/ since the migration consolidation.
     const fs = require('fs');
     const path = require('path');
-    const migrationPath = path.join(
-      __dirname,
-      '../migrations/20250512-create-maud-validations-table.sql'
+    const migrationPath = path.resolve(
+      process.cwd(),
+      'db/migrations/_consolidated/20250512-create-maud-validations-table.sql'
     );
 
     if (!fs.existsSync(migrationPath)) {

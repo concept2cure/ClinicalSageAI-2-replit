@@ -20,6 +20,7 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { getGateway } from '../ai-gateway';
 import { classifyGatewayError } from '../ai-gateway/gateway-error-map';
 import { evaluateDispatchGate } from '../ectd/dispatch-gate';
@@ -27,7 +28,10 @@ import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('submission-ai-service');
-const PROMPTS_DIR = path.join(__dirname, '..', 'ai-gateway', 'prompts');
+// ESM-safe __dirname (this package is "type": "module"; the bare CJS global
+// aborts boot on Node >= 22.7 module-syntax detection).
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+const PROMPTS_DIR = path.join(moduleDir, '..', 'ai-gateway', 'prompts');
 
 export class SubmissionAiError extends Error {
   constructor(

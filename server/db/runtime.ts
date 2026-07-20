@@ -25,12 +25,17 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { createScopedLogger } from '../utils/logger';
 import * as schema from '../../shared/schema';
 import { getSslConfig } from './ssl';
 import { getDatabaseUrl } from './getDatabaseUrl';
 import { instrumentPool } from './poolInstrumentation';
 import { installRlsEnforcement, assertRlsEnforcementForProduction } from './rlsEnforcement';
+
+// ESM-safe moduleDir (package is "type": "module"; the bare CJS global
+// aborts boot on Node >= 22.7 module-syntax detection).
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
 const logger = createScopedLogger('database');
 
@@ -261,7 +266,7 @@ export async function runMigrations(): Promise<void> {
 
   try {
     logger.info('Running database migrations...');
-    const migrationsFolder = path.resolve(__dirname, '../../migrations');
+    const migrationsFolder = path.resolve(moduleDir, '../../migrations');
     await migrate(db, { migrationsFolder });
     logger.info('Database migrations completed successfully');
   } catch (error: any) {

@@ -17,6 +17,11 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+// ESM-safe moduleDir (package is "type": "module"; the bare CJS global
+// aborts boot on Node >= 22.7 module-syntax detection).
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -103,7 +108,7 @@ export class RegulatoryPathwayIntelligenceEngine {
 
   private loadKnowledgeBases(): void {
     try {
-      const dataDir = path.join(__dirname, '..', 'data');
+      const dataDir = path.join(moduleDir, '..', 'data');
 
       // Load global regulatory authorities
       const authPath = path.join(dataDir, 'global-regulatory-authorities.json');
