@@ -28,7 +28,9 @@ Since this analysis was written, the following trapped capabilities have been **
 | Protocol registers (§2.5) | `ProtocolRegisterForms` — risk/milestone/amendment/deviation creates wired to the real governed routers (dialog was a no-op) | `protocol:` |
 | SSO/SCIM console (#13) | `IdentityConsole` — SCIM token issue-once/rotate/revoke, IP allowlist, SAML endpoint references | `identity:` |
 
-Still open from the top-15: submission-gateway transmittals (#5, needs running app for binary/ACK), sentence click-through (#6), template extract/render buttons (#7), IND forms panel (#11), intelligent-reports governance (#15), Yjs real-time co-authoring, and the §4.3 small wire-ups not listed above.
+**Second wave (same day):** template extract/save/render made real (#7 — `TemplateLibrary` now drives extract/from-upload/render, fake setTimeout + dead buttons removed); IND Module-1 forms panel (#11 — `IndFormsPanel` builds/QCs/downloads real 1571/1572/3674 PDFs inside IndLifecycle); sentence click-through (#6 — SourceTracer's Trace action resolves a sentence to its exact source span via `/api/audit-services/traceability/click-through`); intelligent-reports governance (#15 — `ReportGovernance` surface: list, cryptographic verify, provenance/attestations, seal/revoke with justification).
+
+Still open from the top-15: submission-gateway transmittals (#5 — binary/ACK flows, best validated against a running app), Yjs real-time co-authoring, and the remaining §4.3 small wire-ups (saved precedent queries, dossier per-section readiness, HAQ id-mapping, mounting the orphaned device surfaces).
 
 ## 0. Headline
 
