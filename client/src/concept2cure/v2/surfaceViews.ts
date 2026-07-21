@@ -89,6 +89,7 @@ import { Part11Console } from './surfaces/Part11Console';
 import { IdentityConsole } from './surfaces/IdentityConsole';
 import { ReportGovernance } from './surfaces/ReportGovernance';
 import { SubmissionTwin } from './surfaces/SubmissionTwin';
+import { GatewayTransmittals } from './surfaces/GatewayTransmittals';
 import { GlobalRiBrowser } from './surfaces/Surfaces';
 import { TaskBoard } from './surfaces/TaskBoard';
 import { TemplateLibrary } from './surfaces/TemplateLibrary';
@@ -201,6 +202,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'report-governance': { component: ReportGovernance },
   'submission-center': { component: SubmissionCenter },
   'submission-twin': { component: SubmissionTwin },
+  'gateway-transmittals': { component: GatewayTransmittals },
   'task-board': { component: TaskBoard },
   tasks: { component: TaskBoard },
   'template-library': { component: TemplateLibrary },

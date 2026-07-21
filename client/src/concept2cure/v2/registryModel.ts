@@ -420,7 +420,7 @@ export const SEGMENT_MODULES = {
       label: 'Evidence & data',
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
-    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'pyramid', 'dossier-map', 'haq-manager'] },
+    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
     { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
@@ -446,7 +446,7 @@ export const SEGMENT_MODULES = {
       label: 'Evidence & data',
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
-    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'pyramid', 'dossier-map', 'haq-manager'] },
+    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
     { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
