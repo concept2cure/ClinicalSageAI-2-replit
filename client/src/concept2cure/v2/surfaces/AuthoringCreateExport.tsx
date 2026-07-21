@@ -11,11 +11,9 @@
  *   • POST /sections        — create a section in a document (initial revision
  *                             recorded server-side); returns the persisted row
  *   • POST /docs/:id/export — publish: streams the assembled document as a
- *                             binary attachment. Word (.docx) and XML are
- *                             offered; the server's "pdf" branch currently
- *                             returns DOCX bytes under a PDF label, so a PDF
- *                             button is deliberately NOT shown rather than
- *                             handing the user a mislabeled file.
+ *                             binary attachment. Word (.docx), PDF (real PDF —
+ *                             the server's pdf branch now renders through the
+ *                             platform HTML→PDF engine), and XML are offered.
  *
  * HONESTY: creates are awaited and adopt the server's row (no client-side ids);
  * failures report with nothing persisted; the export download is the exact
@@ -119,7 +117,7 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
     }
   };
 
-  const exportDoc = async (format: 'docx' | 'xml') => {
+  const exportDoc = async (format: 'docx' | 'pdf' | 'xml') => {
     if (!docId) return;
     try {
       const res = await apiRequest('POST', `/api/authoring/docs/${docId}/export`, { format });
@@ -153,6 +151,9 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
           </button>
           <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('docx')} title="Publish the assembled document as Word">
             {I.download} Word
+          </button>
+          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('pdf')} title="Publish the assembled document as PDF (rendered server-side)">
+            {I.download} PDF
           </button>
           <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('xml')} title="Publish the assembled document as XML">
             {I.download} XML

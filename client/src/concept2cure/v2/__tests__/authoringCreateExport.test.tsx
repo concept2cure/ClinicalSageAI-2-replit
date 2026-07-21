@@ -3,9 +3,9 @@
  * AuthoringCreateExport — the create → publish half of the document loop.
  * Proves: New document POSTs /api/authoring/docs (with optional template seed)
  * and adopts the SERVER's row; New section POSTs /api/authoring/sections; and
- * Publish streams the server's binary via POST /docs/:id/export. A PDF button
- * is deliberately absent (the server's pdf branch returns mislabeled DOCX
- * bytes) — locked here so it can't quietly reappear. C2CForm is stubbed.
+ * Publish streams the server's binary via POST /docs/:id/export — Word, PDF
+ * (real PDF: the server branch now renders via the HTML→PDF engine), and XML.
+ * C2CForm is stubbed.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -83,9 +83,15 @@ describe('AuthoringCreateExport — create → publish', () => {
     expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Published DOCX/));
   });
 
-  it('offers no PDF button (the server pdf branch returns mislabeled DOCX bytes)', () => {
-    render(<AuthoringCreateExport {...base} docId="D1" />);
-    expect(screen.queryByRole('button', { name: /PDF/ })).toBeNull();
-    expect(screen.getByRole('button', { name: /XML/ })).toBeTruthy();
+  it('publishes a real PDF via POST /docs/:id/export {format: pdf}', async () => {
+    const fireToast = vi.fn();
+    render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
+    fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
+    await waitFor(() => {
+      const call = apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/authoring/docs/D1/export' && (c[2] as any)?.format === 'pdf');
+      expect(call).toBeTruthy();
+    });
+    expect(URL.createObjectURL).toHaveBeenCalled();
+    expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Published PDF/));
   });
 });
