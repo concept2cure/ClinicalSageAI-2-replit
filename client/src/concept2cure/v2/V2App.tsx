@@ -20,15 +20,7 @@
 import React from 'react';
 import { useLocation } from 'wouter';
 import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
-import {
-  AnaRail,
-  CmdK,
-  ESignGate,
-  Rail,
-  TopBar,
-  makeSampleActionResult,
-  type AnaMessage,
-} from './Shell';
+import { AnaRail, CmdK, Rail, TopBar, type AnaMessage } from './Shell';
 import { useAnaChat, type AnaChatMessage } from '../components/ana/useAnaChat';
 import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
@@ -74,22 +66,39 @@ function loadPrefs(): Prefs {
 
 /* Adapt one real AnA turn (useAnaChat → /api/ana-ri/stream) into the shell
    rail's AnaMessage shape. Replies are REAL, never stamped sample; while a
-   reply streams, the status phase stands in until the first token lands. */
+   reply streams, the status phase stands in until the first token lands. The
+   turn's REAL executedActions (what ANA actually ran) and pendingSignoffs (a
+   governed command blocked on a Part 11 e-signature) are carried through so the
+   rail renders ANA's genuine action results and the real sign-off prompt —
+   never a fabricated result card. */
 function adaptChatMessage(m: AnaChatMessage): AnaMessage {
   if (m.role === 'user') return { role: 'user', body: m.text };
   return {
     role: 'ana',
     body: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : ''),
     sample: false,
+    executedActions: m.executedActions,
+    pendingSignoffs: m.pendingSignoffs,
   };
+}
+
+/* The shell's grounding for ANA: the project currently in context (set on the
+   window by the projects surface, the same source the CMC/board surfaces read).
+   Passing it to useAnaChat lets ANA see the open program on every surface's
+   chat instead of answering blind. */
+function readShellProjectId(): string | undefined {
+  try {
+    const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+    return p && p.id != null ? String(p.id) : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function V2App() {
   const [location, setLocation] = useLocation();
   const [prefs, setPrefs] = React.useState<Prefs>(loadPrefs);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
-  const [actionMsgs, setActionMsgs] = React.useState<AnaMessage[]>([]);
-  const [esignFor, setEsignFor] = React.useState<string | null>(null);
 
   const set = <K extends keyof Prefs>(k: K, v: Prefs[K]) =>
     setPrefs((p) => {
@@ -105,11 +114,10 @@ export function V2App() {
   const activeId = surfaceIdFromLocation(location);
   /* The real AnA assistant for the whole shell — one streaming conversation
      (/api/ana-ri/stream) shared by the rail, ⌘K and every surface's onAsk. */
-  const anaChat = useAnaChat({ screenName: activeId });
+  const anaChat = useAnaChat({ screenName: activeId, projectId: readShellProjectId() });
   const nav = React.useCallback(
     (id: string) => {
       setLocation(locationForSurface(id));
-      setActionMsgs([]);
     },
     [setLocation]
   );
@@ -167,14 +175,15 @@ export function V2App() {
     void anaChat.send(clean);
   };
 
-  const runAction = (id: string, signed: boolean) => {
-    setActionMsgs((ms) => [...ms, { role: 'action', result: makeSampleActionResult(id, signed) }]);
-    if (!prefs.anaOpen) set('anaOpen', true);
-  };
+  /* Governed + ungoverned actions both execute through ANA, the real agentic
+     executor. Tapping an action chip sends its intent to /api/ana-ri/stream;
+     ANA runs it (execute_platform_command / the AI-action dispatcher) with the
+     shell's grounded project context and streams the REAL result. A governed
+     action comes back as a Part 11 sign-off prompt (rendered inline by the rail
+     via the real GovernedActionSignoff), never a fabricated result card. */
   const onAct = (id: string) => {
     const a = getAction(id);
-    if (a?.governed) setEsignFor(id);
-    else runAction(id, false);
+    ask(a?.label ?? id.replace(/_/g, ' '));
   };
 
   const view = SURFACE_VIEWS[activeId];
@@ -190,9 +199,9 @@ export function V2App() {
     body = <KitSurfaceScaffold surface={ctxSurface} onAsk={ask} />;
   }
 
-  /* The rail shows the real AnA conversation; surface-scoped governed-action
-     demos (onAct) append after it and reset on navigation. */
-  const railMessages = [...anaChat.messages.map(adaptChatMessage), ...actionMsgs];
+  /* The rail shows the real AnA conversation — including the actions ANA
+     actually executed and any governed action awaiting a Part 11 sign-off. */
+  const railMessages = anaChat.messages.map(adaptChatMessage);
 
   return (
     <div
@@ -248,16 +257,6 @@ export function V2App() {
         }}
       />
       <CollabLayer onNav={nav} />
-      {esignFor && (
-        <ESignGate
-          actionId={esignFor}
-          onCancel={() => setEsignFor(null)}
-          onConfirm={() => {
-            runAction(esignFor, true);
-            setEsignFor(null);
-          }}
-        />
-      )}
     </div>
   );
 }
