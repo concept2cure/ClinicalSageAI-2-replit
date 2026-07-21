@@ -84,6 +84,17 @@ const ACCEPTED_GHSA_IDS = new Set([
   // socket.io / socket.io-adapter / socket.io-client "transitive vulnerability via
   // unaccepted dependency" flags — that is this same ws advisory surfaced through
   // their dependency chain.
+  // brace-expansion — advisory GHSA-3jxr-9vmj-r5cp, DoS via exponential-time
+  // expansion of consecutive non-expanding {} groups. Like the esbuild entry
+  // above this is NOT a registry-lag false positive: installed copies (1.1.15 /
+  // 2.1.1 / 5.0.6, reached via glob/minimatch/rimraf across majors 1/2/5) are
+  // genuinely below the fixes (1.1.16 / 2.1.2 / 5.0.7). But the gadget is reached
+  // ONLY through glob/minimatch expanding developer-authored glob strings in
+  // build/test tooling — never attacker-controlled input on a runtime/production
+  // path — so the DoS is not reachable in our usage. Accepted as a low,
+  // BUILD-TIME-ONLY risk pending a coordinated override bump to
+  // brace-expansion >= 5.0.7 across the multi-major consumer tree.
+  'GHSA-3jxr-9vmj-r5cp', // brace-expansion regex-expansion DoS (build-time; dep bump pending)
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {
