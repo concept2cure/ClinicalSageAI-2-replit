@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-20T23:07:10.421Z",
+  "generatedAt": "2026-07-21T08:34:45.312Z",
   "git": {
-    "sha": "879d9460f938d53a7e1747109cf727a12799fa94",
+    "sha": "8f8392ee5a9ec4d2a4b9fb4a1b7b8a3dbaa907ff",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2864,16 +2864,16 @@
         "lines": 1553
       },
       {
+        "file": "server/routes/ivdr-routes.ts",
+        "lines": 1551
+      },
+      {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
         "lines": 1550
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/sop-development.ts",
         "lines": 1549
-      },
-      {
-        "file": "server/routes/ivdr-routes.ts",
-        "lines": 1546
       },
       {
         "file": "server/services/submission-twin-service.ts",
