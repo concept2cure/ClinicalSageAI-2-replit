@@ -10,11 +10,11 @@
  * so the surface can render one call instead of the 12 granular /api/mdx/rbm-*
  * reads it would otherwise fan out.
  *
- * Mounted at /api/mdx (alongside mdx-rbm.ts which owns the granular CRUD +
+ * Mounted at /api/mdx-rbm (alongside mdx-rbm.ts which owns the granular CRUD +
  * the compute/POST actions). READ-ONLY: every write path (seed, recompute,
  * central-monitoring run, patient scoring, approvals, CRUD) stays in mdx-rbm.ts.
  *
- *   GET /api/mdx/rbm-board/:programId
+ *   GET /api/mdx-rbm/rbm-board/:programId
  *     → { success: true, data: <RBM board display shape> }
  *
  * RLS: queries run through requestDb(req) (request-scoped, tenant-pinned) and
@@ -26,7 +26,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { and, eq, isNull, inArray } from 'drizzle-orm';
+import { and, eq, isNull, isNotNull, inArray, desc } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger';
 import { requestDb } from '../db/requestDb';
@@ -105,7 +105,7 @@ export default function createRbmBoardRoutes(): Router {
   const router = Router();
 
   /**
-   * GET /api/mdx/rbm-board/:programId
+   * GET /api/mdx-rbm/rbm-board/:programId
    * Aggregated read-model for the RBM shell: summary, attention feed, risk
    * review report, RACT (assessment + CtQ register), KRIs (with trend sparks),
    * QTLs, central-monitoring signals, patient profiles, site risk, site
@@ -513,6 +513,51 @@ export default function createRbmBoardRoutes(): Router {
       }
       log.error('rbm-board failed', { err: err instanceof Error ? err.message : String(err) });
       return res.status(500).json({ success: false, error: 'Failed to assemble RBM board' });
+    }
+  });
+
+  /**
+   * GET /api/mdx-rbm/rbm-programs
+   * The programs (studies) that have a real RBM risk assessment for this org —
+   * the selectable studies for the RBM shell's study picker. Ids are the same
+   * program_id UUIDs the board keys on, so a selected study always resolves.
+   * The label is the most-recent assessment title (the only program-level label
+   * the RBM store carries — there is no separate program-name column, so nothing
+   * is fabricated). Fails closed to an empty list when the store is unprovisioned.
+   * Response: { success: true, data: { id: string; label: string }[], total }
+   */
+  router.get('/rbm-programs', async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    if (orgId === null) {
+      return res.status(403).json({ success: false, error: 'Organization context required' });
+    }
+    const db = requestDb(req);
+    try {
+      const rows = await db
+        .select({
+          programId: rbmRiskAssessments.programId,
+          title: rbmRiskAssessments.title,
+        })
+        .from(rbmRiskAssessments)
+        .where(and(
+          eq(rbmRiskAssessments.organizationId, orgId),
+          isNotNull(rbmRiskAssessments.programId),
+          isNull(rbmRiskAssessments.deletedAt),
+        ))
+        .orderBy(desc(rbmRiskAssessments.updatedAt));
+
+      const seen = new Map<string, string>();
+      for (const r of rows) {
+        if (r.programId && !seen.has(r.programId)) seen.set(r.programId, r.title);
+      }
+      const data = Array.from(seen.entries()).map(([id, label]) => ({ id, label }));
+      return res.json({ success: true, data, total: data.length });
+    } catch (err: unknown) {
+      if ((err as { code?: string })?.code === UNDEFINED_TABLE) {
+        return res.json({ success: true, data: [], total: 0 });
+      }
+      log.error('rbm-programs failed', { err: err instanceof Error ? err.message : String(err) });
+      return res.status(500).json({ success: false, error: 'Failed to list RBM programs' });
     }
   });
 

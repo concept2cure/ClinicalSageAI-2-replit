@@ -9,9 +9,9 @@ import {
   RBM_VOCAB, RBM_KRIS, RBM_QTLS, RBM_SIGNALS, RBM_SITES, RBM_PATIENTS,
   RBM_SUMMARY, RBM_ATTENTION, RBM_REPORT,
   rbmBand, kriStatusOf, createRbmStore,
-  type RbmKri, type RbmRiskItem, type RbmAction, type RbmApproval,
-  type RbmNavItem,
+  type RbmAction, type RbmApproval, type RbmNavItem,
 } from '../fixtures/rbm-data';
+import type { RbmBoard } from './rbmBoard';
 import '../styles/rbm-v2.css';
 
 /* Re-export surfaces so Rbm.tsx imports from one place */
@@ -20,6 +20,18 @@ export { RbmSignals, RbmPatients, RbmSites, RbmOversight, RbmPlan } from './RbmS
 
 /* ── Shared action store (singleton) ── */
 export const RBM_STORE = createRbmStore();
+
+/**
+ * Seed the cross-surface action store from the live board. Called by the shell
+ * when the selected program changes, so the plan board and every surface that
+ * raises actions work against the real, org-scoped monitoring actions.
+ */
+export function seedRbmActionsFromBoard(board: RbmBoard): void {
+  RBM_STORE.seed(board.actions.map(a => ({
+    id: String(a.id), type: a.type, title: a.title, priority: a.priority,
+    owner: a.owner, due: a.due, status: a.status, overdue: a.overdue, origin: a.origin,
+  })));
+}
 
 export function useRbmActions(): RbmAction[] {
   const [, force] = useState(0);
@@ -47,7 +59,7 @@ export function RbmFreshness({ at }: { at: string }) {
 }
 
 /* ── RiskMatrix ── */
-export function RiskMatrix({ items, sel, onSel }: { items: RbmRiskItem[]; sel: { l: number; i: number } | null; onSel: (c: { l: number; i: number } | null) => void }) {
+export function RiskMatrix({ items, sel, onSel }: { items: { l: number; i: number }[]; sel: { l: number; i: number } | null; onSel: (c: { l: number; i: number } | null) => void }) {
   const cells: { l: number; i: number; n: number; band: string }[] = [];
   for (let im = 5; im >= 1; im--) for (let l = 1; l <= 5; l++) {
     const n = items.filter(it => it.l === l && it.i === im).length;
@@ -74,17 +86,18 @@ export function RiskMatrix({ items, sel, onSel }: { items: RbmRiskItem[]; sel: {
 }
 
 /* ── Sparkline ── */
-export function Sparkline({ values, amber, red, w = 132, h = 34 }: { values: number[]; amber: number; red: number; w?: number; h?: number }) {
+export function Sparkline({ values, amber, red, w = 132, h = 34 }: { values: number[]; amber: number | null; red: number | null; w?: number; h?: number }) {
   if (!values || values.length < 2) return <span className="rbm-spark-empty">No history -- add the first reading</span>;
-  const all = values.concat([amber, red]);
+  const refs = [amber, red].filter((n): n is number => n != null);
+  const all = values.concat(refs);
   const mn = Math.min(...all), mx = Math.max(...all), span = (mx - mn) || 1;
   const xp = (i: number) => 2 + i * (w - 4) / (values.length - 1);
   const yp = (v: number) => h - 3 - (v - mn) * (h - 6) / span;
   const pts = values.map((v, i) => `${xp(i).toFixed(1)},${yp(v).toFixed(1)}`).join(' ');
   return (
     <svg className="rbm-spark" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
-      <line x1="2" x2={w - 2} y1={yp(red)} y2={yp(red)} className="g-red" />
-      <line x1="2" x2={w - 2} y1={yp(amber)} y2={yp(amber)} className="g-amber" />
+      {red != null && <line x1="2" x2={w - 2} y1={yp(red)} y2={yp(red)} className="g-red" />}
+      {amber != null && <line x1="2" x2={w - 2} y1={yp(amber)} y2={yp(amber)} className="g-amber" />}
       <polyline points={pts} className="ln" />
       <circle cx={xp(values.length - 1)} cy={yp(values[values.length - 1])} r="2.6" className="dot" />
     </svg>
@@ -140,15 +153,15 @@ export function SeedEmpty({ title, body, actions, onRun }: { title: string; body
 }
 
 /* ── TrendTable ── */
-export function TrendTable({ kri }: { kri: RbmKri }) {
+export function TrendTable({ kri }: { kri: { name: string; unit: string; spark: number[]; dir: string; amber: number | null; red: number | null } }) {
   return (
     <table className="rbm-trend-tbl">
       <caption className="rbm-sr">Reading history for {kri.name}, in {kri.unit}</caption>
       <thead><tr><th>#</th><th>Value</th><th>Status</th></tr></thead>
       <tbody>
         {kri.spark.map((val, i) => {
-          const st = kriStatusOf(kri, val);
-          return <tr key={i}><td>{i + 1}</td><td className="mono">{val}{kri.unit}</td><td><RbmChip vocab="kri" value={st} /></td></tr>;
+          const st = (kri.amber != null && kri.red != null) ? kriStatusOf({ dir: kri.dir, amber: kri.amber, red: kri.red }, val) : null;
+          return <tr key={i}><td>{i + 1}</td><td className="mono">{val}{kri.unit}</td><td>{st ? <RbmChip vocab="kri" value={st} /> : <span className="mut">—</span>}</td></tr>;
         })}
       </tbody>
     </table>
