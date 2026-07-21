@@ -421,7 +421,7 @@ export const SEGMENT_MODULES = {
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
     { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'qmp', 'part11-console'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'qmp', 'part11-console', 'identity-console'] },
     {
       label: 'Intelligence & risk',
       items: ['precedent-intelligence', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
@@ -447,7 +447,7 @@ export const SEGMENT_MODULES = {
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
     { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'qmp', 'part11-console'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'qmp', 'part11-console', 'identity-console'] },
     {
       label: 'Intelligence & risk',
       items: ['precedent-intelligence', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
