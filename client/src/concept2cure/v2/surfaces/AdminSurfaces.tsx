@@ -524,6 +524,43 @@ export function Setup({ onAsk }: SurfaceViewProps) {
    renders real rows, an honest empty state, or an honest error (a 503 when the
    hash-chain schema isn't provisioned surfaces as the error state). */
 
+/** Fetch the signed, hash-verifiable audit export bundle and download it as a
+ *  JSON file. GET /api/audit/export/signed is Bearer-gated and returns
+ *  { export: { data, manifest, signature, verification } } — the inspection-ready
+ *  bundle an auditor can independently verify (HMAC-SHA256 over the manifest,
+ *  SHA-256 of the data). Never throws; returns an honest ok/error. */
+async function downloadSignedAuditExport(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const token = getAuthToken();
+    const res = await fetch('/api/audit/export/signed?format=json', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      return {
+        ok: false,
+        error:
+          res.status === 401 || res.status === 403
+            ? 'Admin session required to export the audit trail.'
+            : `Export failed (HTTP ${res.status}).`,
+      };
+    }
+    const json = (await res.json().catch(() => null)) as { export?: unknown } | null;
+    if (!json?.export) return { ok: false, error: 'The export response was malformed.' };
+    const blob = new Blob([JSON.stringify(json.export, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'audit-trail-signed-export.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Export failed.' };
+  }
+}
+
 export function AuditTrail({ onAsk }: SurfaceViewProps) {
   const [kind, setKind] = useState('all');
   const [q, setQ] = useState('');
@@ -564,12 +601,16 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
 
   const entry = sel ? entries.find((e) => e.id === sel) : null;
 
-  // MOCK ACTION (flagged for the actions pass): a real signed export exists at
-  // GET /api/audit/export{,/signed} — this button only spins a fake timer and
-  // produces no file. Left un-wired (DATA-pass scope), not deleted.
-  const doExport = () => {
+  // REAL, audited signed export — GET /api/audit/export/signed streams the
+  // inspection-ready bundle (data + manifest + HMAC signature) which downloads
+  // as a JSON file. Honest failure surfaced inline; nothing is faked.
+  const [exportErr, setExportErr] = useState('');
+  const doExport = async () => {
     setExporting(true);
-    setTimeout(() => setExporting(false), 2000);
+    setExportErr('');
+    const r = await downloadSignedAuditExport();
+    if (!r.ok) setExportErr(r.error || 'Could not generate the signed export.');
+    setExporting(false);
   };
 
   /* Hash-chain integrity check (visual) */
@@ -606,12 +647,16 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
               {I.link || I.network} Hash chain
             </button>
             <button className="btn primary" onClick={doExport} disabled={exporting}>
-              {exporting ? 'Generating...' : ''}
-              {I.scroll} Export signed PDF
+              {I.scroll} {exporting ? 'Generating…' : 'Export signed bundle'}
             </button>
           </React.Fragment>
         }
       />
+      {exportErr && (
+        <div className="scaf-note" role="alert" style={{ padding: '10px 12px', margin: '0 0 12px', color: 'var(--error)', border: '1px solid var(--error)', borderRadius: 8 }}>
+          {exportErr}
+        </div>
+      )}
 
       {loading ? (
         <div className="scaf-note" style={{ padding: '18px 10px', maxWidth: 680 }}>
