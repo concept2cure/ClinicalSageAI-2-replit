@@ -6,10 +6,11 @@ import { RBM_NAV, RBM_LINKS } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmProgram } from './rbmBoard';
 import { rbmBoardHasData } from './rbmBoard';
 import {
-  SeedEmpty, RbmAnaDock, rbmAnaResolve, seedRbmActionsFromBoard,
+  SeedEmpty, RbmAnaDock, seedRbmActionsFromBoard, type RbmAnaMessage,
   RbmOverview, RbmReport, RbmRact, RbmKris, RbmQtls,
   RbmSignals, RbmPatients, RbmSites, RbmOversight, RbmPlan,
 } from './RbmSurfaces';
+import { useAnaChat } from '../../components/ana/useAnaChat';
 import '../styles/project-home-v2.css';
 import '../styles/rbm-v2.css';
 
@@ -29,13 +30,6 @@ const SURFACES: Record<string, SubSurface> = {
   patients: RbmPatients, sites: RbmSites, oversight: RbmOversight,
   plan: RbmPlan,
 };
-
-/* ── AnA message type ── */
-interface AnaMsg {
-  role: string;
-  text?: string;
-  r?: ReturnType<typeof rbmAnaResolve>;
-}
 
 /* ── Seed action map ── */
 const SEED_ACTIONS: Record<string, string[]> = {
@@ -71,7 +65,6 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
   const [study, setStudy] = useState<string | null>(null);
   const [tab, setTab] = useState('overview');
   const [anaOpen, setAnaOpen] = useState(true);
-  const [anaMsgs, setAnaMsgs] = useState<AnaMsg[]>([]);
   // Bumped after a persisted write so the board re-fetches and the surface
   // re-derives from server truth (never optimistic local state).
   const [reloadKey, setReloadKey] = useState(0);
@@ -105,10 +98,22 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
   const studyLabel = selProgram?.label ?? 'the study';
   const nav = RBM_NAV.find(n => n.id === tab)!;
 
+  /* AnA — the REAL streaming assistant (/api/ana-ri/stream), grounded to the
+     selected RBM program. The former rbmAnaResolve() heuristic that fabricated
+     canned cards from fixture constants is gone: the dock now shows the real
+     turn (streamed text, executed actions, and the real Part 11 sign-off for a
+     governed command). */
+  const anaChat = useAnaChat({ screenName: 'rbm', projectId: study ?? undefined });
+  const anaMsgs: RbmAnaMessage[] = anaChat.messages.map(m => ({
+    role: m.role,
+    text: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : ''),
+    executedActions: m.executedActions,
+    pendingSignoffs: m.pendingSignoffs,
+  }));
   const askAna = (text: string) => {
     if (!text) return;
-    setAnaMsgs(m => [...m, { role: 'user', text }, { role: 'ana', r: rbmAnaResolve(text) }]);
     if (!anaOpen) setAnaOpen(true);
+    void anaChat.send(text);
   };
 
   const Body = SURFACES[tab];
@@ -242,8 +247,6 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
             study={studyLabel.split(' --')[0]}
             msgs={anaMsgs}
             onAsk={askAna}
-            onTab={setTab}
-            onNav={onNav}
             onClose={() => setAnaOpen(false)}
           />
         ) : (
