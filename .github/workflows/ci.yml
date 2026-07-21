@@ -91,11 +91,6 @@ jobs:
       - name: Guardrails — route ownership matrix artifact (required review evidence)
         run: npm run ci:route-ownership-matrix:check
 
-      - name: Guardrails — env-var documentation drift (no regressions)
-        # Fails only when a PR adds a NEW server/shared process.env.X that is not
-        # documented in .env.example (baseline: docs/reports/env-var-docs-baseline.json).
-        run: node scripts/ci/check-env-var-docs.mjs --strict-no-regression
-
       - name: Guardrails — AI gateway bypass (no direct LLM clients)
         run: npm run ci:gateway-bypass
 

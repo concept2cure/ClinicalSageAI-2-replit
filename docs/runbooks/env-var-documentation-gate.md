@@ -1,13 +1,13 @@
 # Environment-variable documentation gate
 
-**Gate:** `node scripts/ci/check-env-var-docs.mjs --strict-no-regression` (runs
-in the `Lint` job of `.github/workflows/ci.yml`)
+**Gate:** `node scripts/ci/check-env-var-docs.mjs --strict-no-regression`
 **Scanner:** `scripts/ci/check-env-var-docs.mjs`
 **Baseline:** `docs/reports/env-var-docs-baseline.json`
 
-The scanner is invoked directly (not via an `npm run` alias) so this change
-touches no `package.json` — keeping the gate self-contained to `scripts/ci/`
-and `.github/workflows/`.
+The scanner ships as a standalone check (no `npm run` alias, so it touches no
+`package.json`). To enforce it in CI, add a `Lint`-job step —
+`run: node scripts/ci/check-env-var-docs.mjs --strict-no-regression` — in a
+devops-reviewed follow-up (the `.github/workflows/` path is CODEOWNERS-gated).
 
 ## Why this exists
 
