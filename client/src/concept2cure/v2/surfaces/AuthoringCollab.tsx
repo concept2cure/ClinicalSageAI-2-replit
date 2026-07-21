@@ -89,6 +89,30 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentId, sectionId, projectId, userId]);
 
+  // Awareness heartbeat: while joined, periodically PUT our focus to the room's
+  // awareness endpoint and adopt the SERVER's returned connectedUsers as the
+  // live roster — real presence refresh over the collab service's own protocol,
+  // not a client-side simulation. (Live CRDT cursors remain the Yjs socket
+  // follow-on; this is the REST awareness the same rooms serve.)
+  useEffect(() => {
+    if (!joined || !userId) return;
+    let cancelled = false;
+    const beat = async () => {
+      try {
+        const res = await apiRequest('PUT', `/api/realtime-collab/rooms/${encodeURIComponent(roomKey)}/awareness`, {
+          userId, focusedField: sectionId || null, isTyping: false,
+        });
+        const body = await res.json().catch(() => null);
+        if (!cancelled && res.ok && Array.isArray(body?.connectedUsers)) {
+          setPeers(body.connectedUsers as RoomUser[]);
+        }
+      } catch { /* roster keeps its last server value */ }
+    };
+    void beat();
+    const t = setInterval(() => { void beat(); }, 20000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [joined, userId, roomKey, sectionId]);
+
   const myLock = locks.find((l) => l.userId === userId && (l.sectionId ?? null) === (sectionId ?? null));
   const otherLock = locks.find((l) => l.userId !== userId && (l.sectionId ?? null) === (sectionId ?? null));
 

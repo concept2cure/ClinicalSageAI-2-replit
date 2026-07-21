@@ -78,6 +78,26 @@ describe('AuthoringCollab — real presence + locks', () => {
     await waitFor(() => expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Locked by jo@acme.co/)));
   });
 
+  it('sends the awareness heartbeat and adopts the server roster from its response', async () => {
+    (window as any).C2C_PROJECT = { id: 'proj-1' };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'POST' && url === '/api/realtime-collab/rooms') return ok({ success: true, data: { room: { connectedUsers: [{ userId: 'maya@acme.co', displayName: 'Maya Lin' }] } } });
+      if (method === 'GET' && url.startsWith('/api/realtime-collab/locks/')) return ok({ success: true, data: [] });
+      if (method === 'PUT' && url === '/api/realtime-collab/rooms/D1%3AS1/awareness') {
+        return ok({ success: true, connectedUsers: [{ userId: 'maya@acme.co', displayName: 'Maya Lin' }, { userId: 'ravi@acme.co', displayName: 'Ravi Iyer' }] });
+      }
+      return ok({ success: true });
+    });
+    render(<AuthoringCollab documentId="D1" sectionId="S1" fireToast={vi.fn()} />);
+    await waitFor(() => {
+      const beat = apiRequest.mock.calls.find((c) => c[0] === 'PUT' && String(c[1]).endsWith('/awareness'));
+      expect(beat).toBeTruthy();
+      expect(beat![2]).toMatchObject({ userId: 'maya@acme.co', focusedField: 'S1' });
+    });
+    // The roster adopted the heartbeat's connectedUsers — Ravi appeared.
+    expect(await screen.findByText('RI')).toBeTruthy();
+  });
+
   it('renders nothing without a project (no join, no fabricated identity)', () => {
     const { container } = render(<AuthoringCollab documentId="D1" sectionId="S1" fireToast={vi.fn()} />);
     expect(container.firstChild).toBeNull();
