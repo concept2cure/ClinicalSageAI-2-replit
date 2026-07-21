@@ -187,7 +187,10 @@ describe('POST /api/templates/upload — magic-byte validation', () => {
 
   it('fails closed with 401 when no authenticated user is present (Part 11 attribution)', async () => {
     // Tenant context is present but the request carries no authenticated
-    // identity: the upload must not be persisted under a fabricated creator.
+    // identity: the upload must not be persisted under a fabricated creator,
+    // and the multer-stored file (which passed the safety scan) must be
+    // cleaned up rather than left lingering untracked under uploads/templates.
+    const before = listUploads();
     const res = await request(makeApp(true, false))
       .post('/api/templates/upload')
       .field('name', 'Test Template')
@@ -195,6 +198,7 @@ describe('POST /api/templates/upload — magic-byte validation', () => {
       .attach('file', PDF_BYTES, 'protocol.pdf');
     expect(res.status).toBe(401);
     expect(createTemplate).not.toHaveBeenCalled();
+    expect(listUploads()).toEqual(before);
   });
 });
 

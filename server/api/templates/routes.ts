@@ -405,6 +405,15 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
+/** Best-effort removal of a multer-persisted upload; never throws. */
+async function unlinkUploadedFile(filePath: string): Promise<void> {
+  try {
+    await fs.promises.unlink(filePath);
+  } catch {
+    /* best-effort cleanup */
+  }
+}
+
 /**
  * POST /api/templates/upload
  * Upload template file
@@ -433,11 +442,7 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
     try {
       await assertUploadSafe(req.file.path, declaredMime, req.file.originalname);
     } catch (safetyErr) {
-      try {
-        await fs.promises.unlink(req.file.path);
-      } catch {
-        /* best-effort cleanup */
-      }
+      await unlinkUploadedFile(req.file.path);
       if (safetyErr instanceof UploadSafetyError) {
         return res.status(safetyErr.status).json(safetyErr.body);
       }
@@ -447,8 +452,12 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
     const { name, category, module, description } = req.body;
 
     // Part 11 attribution: the authenticated uploader, never a hardcoded user.
+    // Fail closed if the identity is absent; the file already passed the safety
+    // scan and is on disk, so remove it rather than leave an un-owned upload
+    // lingering under uploads/templates with no template row.
     const createdBy = resolveUserId(req);
     if (!createdBy) {
+      await unlinkUploadedFile(req.file.path);
       return res.status(401).json({ error: 'Authenticated user required' });
     }
 
