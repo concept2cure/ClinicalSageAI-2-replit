@@ -85,6 +85,7 @@ import { ShadowReview } from './surfaces/ShadowReview';
 import { SourceTracer } from './surfaces/SourceTracer';
 import { SubmissionCenter } from './surfaces/SubmissionCenter';
 import { QmpWorkspace } from './surfaces/QmpWorkspace';
+import { Part11Console } from './surfaces/Part11Console';
 import { SubmissionTwin } from './surfaces/SubmissionTwin';
 import { GlobalRiBrowser } from './surfaces/Surfaces';
 import { TaskBoard } from './surfaces/TaskBoard';
@@ -193,6 +194,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'shadow-review': { component: ShadowReview, full: true },
   'source-tracer': { component: SourceTracer },
   qmp: { component: QmpWorkspace },
+  'part11-console': { component: Part11Console },
   'submission-center': { component: SubmissionCenter },
   'submission-twin': { component: SubmissionTwin },
   'task-board': { component: TaskBoard },
