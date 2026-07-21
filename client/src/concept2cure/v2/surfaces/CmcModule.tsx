@@ -598,7 +598,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
   const [releasing, setReleasing] = useState<CmcBatch | null>(null);
   const [toast, fireToast] = useToast();
   const { user } = useAuth();
-  const releasedByName = user?.displayName || user?.email || user?.name || 'current user';
+  const releasedByName = user?.displayName || user?.email || 'current user';
   const eligible = (r: CmcBatch) => r.dev === 0 && r.yield >= 90;
   const pending = rows.filter((r) => r.st === 'pending').length;
   const devs = rows.reduce((a, r) => a + r.dev, 0);
