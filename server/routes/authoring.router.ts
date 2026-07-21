@@ -4296,8 +4296,7 @@ ${sectionsResult.rows
       fileContent = Buffer.from(xmlContent, 'utf-8');
       fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.xml`;
       contentType = 'application/xml';
-    } else if (format === 'docx' || format === 'pdf') {
-      // Use existing buildDocx function for Word/PDF
+    } else if (format === 'docx') {
       const { Document, Packer, Paragraph, HeadingLevel } = require('docx');
 
       const children = [];
@@ -4314,18 +4313,32 @@ ${sectionsResult.rows
       }
 
       const docxDoc = new Document({ sections: [{ children }] });
-      const docxBuffer = await Packer.toBuffer(docxDoc);
-
-      if (format === 'docx') {
-        fileContent = docxBuffer;
-        fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`;
-        contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      } else {
-        // Convert to PDF (simplified - in production would use LibreOffice or similar)
-        fileContent = docxBuffer; // For now, return docx - full PDF conversion needs more setup
-        fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-        contentType = 'application/pdf';
-      }
+      fileContent = await Packer.toBuffer(docxDoc);
+      fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`;
+      contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    } else if (format === 'pdf') {
+      // Real PDF via the platform's HTML→PDF renderer (the same engine the
+      // template render path uses). The previous implementation returned DOCX
+      // bytes under a PDF label — a mislabeled file is worse than no file.
+      const { renderHtmlToPdf } = await import('../export/renderers');
+      const esc = (s: string) =>
+        String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+          body { font-family: Georgia, 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 1in; }
+          h1 { font-size: 18pt; } h2 { font-size: 14pt; margin-top: 1.2em; }
+          p { white-space: pre-wrap; }
+        </style></head><body>
+        <h1>${esc(doc.title)}</h1>
+        ${sectionsResult.rows
+          .map(
+            (s: { code: string; title: string; content: string | null }) =>
+              `<h2>${esc(s.code)} — ${esc(s.title)}</h2><p>${esc(s.content || '')}</p>`
+          )
+          .join('\n')}
+        </body></html>`;
+      fileContent = await renderHtmlToPdf(html);
+      fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      contentType = 'application/pdf';
     }
 
     res.setHeader('Content-Type', contentType);

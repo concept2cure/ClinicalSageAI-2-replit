@@ -39,6 +39,9 @@ interface HaqQuestion {
   // so those render honestly-empty — never fabricated. `roundId` is stamped by
   // the mapper; `_new` is a client-only optimistic-add marker.
   id: string;
+  /** Numeric feature-store row id — the key the /review//approve endpoints
+      require. Emitted by the /rounds mapper alongside the display qid. */
+  dbId?: number;
   disc: string;
   tone: string;
   status: string;
@@ -207,11 +210,31 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
   }, [effActiveId, effRoundId]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
-  // Local-only status transition (Route to review / Approve). NOTE: this does
-  // NOT persist — the /review and /approve endpoints key on a numeric db id, not
-  // the display qid, so wiring them is left for the actions pass. See report.
-  const setStatus = (id: string, st: string) =>
-    setStatusMap((m) => ({ ...m, [id]: st }));
+  // REAL status transition: POSTs to the governed HAQ store. The /rounds
+  // mapper now emits the numeric dbId each endpoint keys on, so Route-to-review
+  // and Approve persist server-side; the local statusMap is only updated after
+  // the server confirms (adopting the server's status), never optimistically.
+  const setStatus = async (q: HaqQuestion, st: 'in-review' | 'approved') => {
+    if (q.dbId == null || !q.roundId) {
+      fireToast('This question predates the id-mapped feed — reload the rounds to enable governed transitions.');
+      return;
+    }
+    const verb = st === 'approved' ? 'approve' : 'review';
+    try {
+      const res = await apiRequest('POST', `/api/haq-manager/letters/${encodeURIComponent(q.roundId)}/questions/${q.dbId}/${verb}`, {});
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !(json as any)?.success) {
+        fireToast(res.status === 401 ? 'Sign in to update the question.' : `Couldn’t ${verb} — ` + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.');
+        return;
+      }
+      const serverStatus = String((json as any)?.data?.status ?? st);
+      const display = serverStatus === 'in_review' ? 'in-review' : serverStatus;
+      setStatusMap((m) => ({ ...m, [q.id]: display }));
+      fireToast((st === 'approved' ? 'Approved ' : 'Routed to review ') + q.id + ' — persisted to the HAQ store.');
+    } catch (e) {
+      fireToast(`Couldn’t ${verb} — ` + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
   const approved = qs.filter((x) => x.status === 'approved').length;
   const pct = qs.length ? Math.round((approved / qs.length) * 100) : 0;
   const stPill = (s: string) =>
@@ -458,22 +481,22 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                       q.status === 'in-review' ? (
                         <button
                           className="haq-act pri"
-                          onClick={() => setStatus(q.id, 'approved')}
+                          onClick={() => setStatus(q, 'approved')}
                         >
                           {I.check} Approve
                         </button>
                       ) : (
                         <button
                           className="haq-act pri"
-                          onClick={() => setStatus(q.id, 'in-review')}
+                          onClick={() => setStatus(q, 'in-review')}
                         >
                           {I.arrowRight} Route to review
                         </button>
                       )
                     ) : (
                       <span className="haq-approved">
-                        {I.checkCircle} Approved locally -- e-signature &amp;
-                        package assembly not yet wired
+                        {I.checkCircle} Approved -- persisted to the HAQ store
+                        (e-signature &amp; package assembly still to come)
                       </span>
                     )}
                   </div>

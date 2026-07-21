@@ -5,6 +5,9 @@
  */
 import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
+import { GovernedActionSignoff } from '../../components/ana/GovernedActionSignoff';
+import type { PendingSignoff } from '../../components/ana/useGovernedAction';
+import type { AnaChatAction } from '../../components/ana/useAnaChat';
 import {
   RBM_VOCAB, RBM_KRIS, RBM_QTLS, RBM_SIGNALS, RBM_SITES, RBM_PATIENTS,
   RBM_SUMMARY, RBM_ATTENTION, RBM_REPORT,
@@ -250,104 +253,82 @@ export function GovernedApprovalDialog({ what, meaning, onCancel, onSigned }: {
   );
 }
 
-/* ═══════ AnA resolver ═══════ */
+/* ═══════ AnA — real streaming (no local resolver) ═══════
+   The RBM dock streams the REAL assistant (useAnaChat → /api/ana-ri/stream).
+   The former rbmAnaResolve() heuristic — which fabricated structured "AnA"
+   cards from in-file fixture constants — is removed. Messages are the real
+   turn: streamed text, the actions AnA actually executed, and, for a governed
+   command, the real Part 11 sign-off. */
 
-export interface AnaResult {
-  tool: string; verdict: string; lines: string[]; chips?: { label: string; tone: string }[];
-  links?: { label: string; nav: string; app?: boolean }[]; cites?: string[];
+export interface RbmAnaMessage {
+  role: string;
+  text?: string;
+  executedActions?: AnaChatAction[];
+  pendingSignoffs?: PendingSignoff[];
 }
 
-export function rbmAnaResolve(text: string): AnaResult {
-  const t = (text || '').toLowerCase();
-  const K = RBM_KRIS, Q = RBM_QTLS, SG = RBM_SIGNALS, ST = RBM_SITES, P = RBM_PATIENTS, S = RBM_SUMMARY;
-  const red = K.filter(k => k.status === 'red'), amber = K.filter(k => k.status === 'amber');
-  const breached = Q.filter(q => q.status === 'breached'), approaching = Q.filter(q => q.status === 'approaching');
-
-  if (/estimand|power|sample size|biostat|e9|analysis population|itt/.test(t))
-    return { tool: 'hand-off -> Biostatistics', verdict: 'Routed to Biostatistics',
-      lines: [`The breached QTL (${breached[0] ? breached[0].parameter.toLowerCase() : 'premature discontinuation'}) affects the ITT population and the treatment-policy estimand for the primary ORR analysis.`,
-        'Biostatistics owns the estimand framework (ICH E9(R1)) and the power/sample-size re-assessment.'],
-      links: [{ label: 'Open Biostatistics', nav: 'biostatistics', app: true }, { label: 'View QTLs', nav: 'qtls' }], cites: ['ICH E9(R1)'] };
-
-  if (/kri|indicator|amber|red lag|reporting lag/.test(t))
-    return { tool: 'evaluate_kris_qtls', verdict: `${red.length} red -- ${amber.length} amber`,
-      lines: [...red.map(k => `Red -- ${k.name}: ${k.current}${k.unit} vs red ${k.red}${k.unit} (${k.dir === 'higher_worse' ? 'higher worse' : 'lower worse'}).`),
-        ...amber.map(k => `Amber -- ${k.name}: ${k.current}${k.unit} vs amber ${k.amber}${k.unit}.`)],
-      chips: red.map(k => ({ label: k.name, tone: 'err' })).concat(amber.map(k => ({ label: k.name, tone: 'warn' }))),
-      links: [{ label: 'Open KRIs', nav: 'kris' }], cites: ['ICH E6(R3)', 'TransCelerate RBM'] };
-
-  if (/qtl|tolerance|breach|discontinuation/.test(t)) {
-    const links: { label: string; nav: string; app?: boolean }[] = [{ label: 'Open QTLs', nav: 'qtls' }];
-    if (breached.length) links.push({ label: 'Assess estimand impact', nav: 'biostatistics', app: true });
-    return { tool: 'evaluate_kris_qtls', verdict: `${breached.length} breached -- ${approaching.length} approaching`,
-      lines: [...breached.map(q => `Breached -- ${q.parameter}: ${q.current}${q.unit === '%' ? '%' : ''} vs threshold ${q.threshold}${q.unit === '%' ? '%' : ''}. Requires CAPA + estimand impact.`),
-        ...approaching.map(q => `Approaching -- ${q.parameter}: ${q.current}${q.unit === '%' ? '%' : ''} past early-warning ${q.secondary}${q.unit === '%' ? '%' : ''}.`)],
-      chips: breached.map(q => ({ label: q.parameter, tone: 'err' })).concat(approaching.map(q => ({ label: q.parameter, tone: 'warn' }))),
-      links, cites: ['ICH E6(R3)', 'ICH E9(R1)'] };
-  }
-
-  if (/signal|prioriti|urgent|central monitoring|outlier/.test(t)) {
-    const sevOrd: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
-    const open = SG.filter(s => !['resolved', 'dismissed'].includes(s.status)).sort((a, b) => (sevOrd[a.severity] || 3) - (sevOrd[b.severity] || 3));
-    return { tool: 'prioritize_monitoring_queries', verdict: `${open.length} open -- ${open.filter(s => s.severity === 'high' || s.severity === 'critical').length} high+`,
-      lines: open.slice(0, 4).map(s => `${s.severity[0].toUpperCase() + s.severity.slice(1)} -- ${s.title}`),
-      chips: open.slice(0, 4).map(s => ({ label: s.site !== '—' ? `site ${s.site}` : s.type, tone: s.severity === 'critical' || s.severity === 'high' ? 'err' : 'warn' })),
-      links: [{ label: 'Open central monitoring', nav: 'signals' }], cites: ['CluePoints SMART', 'ICH E6(R3)'] };
-  }
-
-  if (/site|enhanced|tier|oversight|monitor where/.test(t)) {
-    const enh = ST.filter(s => s.tier === 'enhanced');
-    return { tool: 'assess_site_risk', verdict: `${enh.length} enhanced-tier of ${S.sites.total}`,
-      lines: enh.map(s => `Site ${s.n} ${s.name} -- composite ${s.composite}. ${s.drivers[0]}.`),
-      chips: enh.map(s => ({ label: `site ${s.n}`, tone: 'err' })),
-      links: [{ label: 'Open site risk', nav: 'sites' }, { label: 'Site oversight', nav: 'oversight' }], cites: ['ICH E6(R3) 5.0'] };
-  }
-
-  if (/patient|anomal|flag|subject|atypical/.test(t)) {
-    const fl = P.filter(p => p.status === 'flagged'), rv = P.filter(p => p.status === 'review');
-    return { tool: 'scan_patient_profiles', verdict: `${fl.length} flagged -- ${rv.length} in review`,
-      lines: fl.concat(rv).slice(0, 4).map(p => `${p.sid} -- anomaly ${p.anomaly.toFixed(1)}, top dimension ${p.top}.`),
-      chips: fl.map(p => ({ label: p.sid, tone: 'err' })).concat(rv.map(p => ({ label: p.sid, tone: 'warn' }))),
-      links: [{ label: 'Open patient profiles', nav: 'patients' }], cites: ['Robust modified z-score'] };
-  }
-
-  if (/plan|strategy|action|generate/.test(t))
-    return { tool: 'generate_rbm_plan', verdict: 'Risk-based strategy -- draft',
-      lines: ['Strategy: risk-based, aligned to tier assignments (enhanced/standard/reduced).', 'AnA can draft actions from the open critical CtQ factors -- badged draft, pending Part 11 approval.'],
-      links: [{ label: 'Open monitoring plan', nav: 'plan' }], cites: ['ICH E6(R3)'] };
-
-  if (/report|inspection|regulator|review report/.test(t))
-    return { tool: 'generate_rbm_report', verdict: 'ICH E6(R3) risk review',
-      lines: [RBM_REPORT.headline], links: [{ label: 'Open risk review report', nav: 'report' }], cites: ['ICH E6(R3)'] };
-
-  return { tool: 'get_rbm_attention', verdict: `Overall risk ${S.overallRisk} -- ${RBM_ATTENTION.length} items`,
-    lines: RBM_ATTENTION.slice(0, 4).map(a => `${a.kind} -- ${a.t}`),
-    chips: [{ label: `${S.riskItems.critical} critical CtQ`, tone: 'warn' }, { label: `${S.kris.red} red KRI`, tone: 'err' }, { label: `${S.qtls.breached} QTL breach`, tone: 'err' }, { label: `${S.sites.enhanced} enhanced sites`, tone: 'warn' }],
-    links: [{ label: 'Open overview', nav: 'overview' }], cites: ['ICH E6(R3)'] };
+/** The REAL Part 11 sign-off prompts AnA returned for governed RBM commands,
+    each resolving through GovernedActionSignoff (POST /api/ana-ri/governed-action)
+    to the server's confirmation — never a fabricated result. */
+function RbmSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
+  const [outcomes, setOutcomes] = useState<Record<number, string>>({});
+  const [dismissed, setDismissed] = useState<Record<number, boolean>>({});
+  return (
+    <div className="rbm-ana-signoffs">
+      {signoffs.map((s, i) => {
+        if (dismissed[i]) return null;
+        if (outcomes[i]) {
+          return (
+            <div key={`${s.command}-${i}`} className="rbm-ana-signoff-done" role="status">
+              {I.check} {outcomes[i]}
+            </div>
+          );
+        }
+        return (
+          <GovernedActionSignoff
+            key={`${s.command}-${i}`}
+            signoff={s}
+            onResolved={(o) => setOutcomes((p) => ({ ...p, [i]: o.message }))}
+            onCancel={() => setDismissed((p) => ({ ...p, [i]: true }))}
+          />
+        );
+      })}
+    </div>
+  );
 }
 
-/* ── AnA message ── */
-function RbmAnaMsg({ m, onTab, onNav }: { m: { role: string; text?: string; r?: AnaResult }; onTab: (id: string) => void; onNav: (id: string) => void }) {
+function RbmAnaMsg({ m }: { m: RbmAnaMessage }) {
   if (m.role === 'user') return <div className="rbm-ana-user">{m.text}</div>;
-  const r = m.r!;
   return (
     <div className="rbm-ana-ai">
-      <div className="rbm-ana-who"><span className="mk">{'✻'}</span>AnA <span className="rbm-ana-tool">{r.tool}</span></div>
-      <div className="rbm-ana-verdict">{r.verdict}</div>
-      {r.chips && r.chips.length > 0 && <div className="rbm-ana-chips">{r.chips.map((c, i) => <span key={i} className="rbm-chip" data-tone={c.tone}>{(I as Record<string, React.ReactNode>)[c.tone === 'err' ? 'shieldAlert' : 'alertTriangle']}{c.label}</span>)}</div>}
-      {r.lines && <ul className="rbm-ana-lines">{r.lines.map((l, i) => <li key={i}>{l}</li>)}</ul>}
-      {r.cites && r.cites.length > 0 && <div className="rbm-ana-cites">{r.cites.map((c, i) => <span key={i} className="rbm-ana-cite">{I.bookOpen || I.fileText}{c}</span>)}</div>}
-      {r.links && r.links.length > 0 && <div className="rbm-ana-links">{r.links.map((l, i) => (
-        <button key={i} className="rbm-ana-link" data-app={l.app || undefined} onClick={() => l.app ? onNav(l.nav) : onTab(l.nav)}>{l.app ? I.externalLink : I.chevRight}{l.label}</button>
-      ))}</div>}
+      <div className="rbm-ana-who"><span className="mk">{'✻'}</span>AnA</div>
+      {m.text && <div className="rbm-ana-text">{m.text}</div>}
+      {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
+        <div className="rbm-ana-chips">
+          {m.executedActions.map((a, i) => (
+            <span
+              key={i}
+              className="rbm-chip"
+              data-tone={a.error ? 'err' : a.executed ? 'ok' : 'ai'}
+              title={a.error || a.label}
+            >
+              {(I as Record<string, React.ReactNode>)[a.error ? 'shieldAlert' : a.executed ? 'check' : 'zap']}
+              {a.label}
+            </span>
+          ))}
+        </div>
+      )}
+      {Array.isArray(m.pendingSignoffs) && m.pendingSignoffs.length > 0 && (
+        <RbmSignoffs signoffs={m.pendingSignoffs} />
+      )}
     </div>
   );
 }
 
 /* ── RbmAnaDock ── */
-export function RbmAnaDock({ nav, study, msgs, onAsk, onTab, onNav, onClose }: {
-  nav: RbmNavItem; study: string; msgs: { role: string; text?: string; r?: AnaResult }[];
-  onAsk: (t: string) => void; onTab: (id: string) => void; onNav: (id: string) => void; onClose: () => void;
+export function RbmAnaDock({ nav, study, msgs, onAsk, onClose }: {
+  nav: RbmNavItem; study: string; msgs: RbmAnaMessage[];
+  onAsk: (t: string) => void; onClose: () => void;
 }) {
   const [draft, setDraft] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
@@ -369,7 +350,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onTab, onNav, onClose }: {
           <div className="rbm-ana-starters-l">Starters for {nav.label.toLowerCase()}</div>
           {nav.starters.map((s, i) => <button key={i} className="rbm-starter" onClick={() => ask(s)}>{s}</button>)}
         </div>
-        {msgs.map((m, i) => <RbmAnaMsg key={i} m={m} onTab={onTab} onNav={onNav} />)}
+        {msgs.map((m, i) => <RbmAnaMsg key={i} m={m} />)}
       </div>
       <div className="rbm-ana-composer">
         <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') ask(draft.trim()); }} placeholder={`Ask AnA about ${study}...`} />

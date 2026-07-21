@@ -524,6 +524,43 @@ export function Setup({ onAsk }: SurfaceViewProps) {
    renders real rows, an honest empty state, or an honest error (a 503 when the
    hash-chain schema isn't provisioned surfaces as the error state). */
 
+/** Fetch the signed, hash-verifiable audit export bundle and download it as a
+ *  JSON file. GET /api/audit/export/signed is Bearer-gated and returns
+ *  { export: { data, manifest, signature, verification } } — the inspection-ready
+ *  bundle an auditor can independently verify (HMAC-SHA256 over the manifest,
+ *  SHA-256 of the data). Never throws; returns an honest ok/error. */
+async function downloadSignedAuditExport(): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const token = getAuthToken();
+    const res = await fetch('/api/audit/export/signed?format=json', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      return {
+        ok: false,
+        error:
+          res.status === 401 || res.status === 403
+            ? 'Admin session required to export the audit trail.'
+            : `Export failed (HTTP ${res.status}).`,
+      };
+    }
+    const json = (await res.json().catch(() => null)) as { export?: unknown } | null;
+    if (!json?.export) return { ok: false, error: 'The export response was malformed.' };
+    const blob = new Blob([JSON.stringify(json.export, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'audit-trail-signed-export.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Export failed.' };
+  }
+}
+
 export function AuditTrail({ onAsk }: SurfaceViewProps) {
   const [kind, setKind] = useState('all');
   const [q, setQ] = useState('');
@@ -564,12 +601,16 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
 
   const entry = sel ? entries.find((e) => e.id === sel) : null;
 
-  // MOCK ACTION (flagged for the actions pass): a real signed export exists at
-  // GET /api/audit/export{,/signed} — this button only spins a fake timer and
-  // produces no file. Left un-wired (DATA-pass scope), not deleted.
-  const doExport = () => {
+  // REAL, audited signed export — GET /api/audit/export/signed streams the
+  // inspection-ready bundle (data + manifest + HMAC signature) which downloads
+  // as a JSON file. Honest failure surfaced inline; nothing is faked.
+  const [exportErr, setExportErr] = useState('');
+  const doExport = async () => {
     setExporting(true);
-    setTimeout(() => setExporting(false), 2000);
+    setExportErr('');
+    const r = await downloadSignedAuditExport();
+    if (!r.ok) setExportErr(r.error || 'Could not generate the signed export.');
+    setExporting(false);
   };
 
   /* Hash-chain integrity check (visual) */
@@ -606,12 +647,16 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
               {I.link || I.network} Hash chain
             </button>
             <button className="btn primary" onClick={doExport} disabled={exporting}>
-              {exporting ? 'Generating...' : ''}
-              {I.scroll} Export signed PDF
+              {I.scroll} {exporting ? 'Generating…' : 'Export signed bundle'}
             </button>
           </React.Fragment>
         }
       />
+      {exportErr && (
+        <div className="scaf-note" role="alert" style={{ padding: '10px 12px', margin: '0 0 12px', color: 'var(--error)', border: '1px solid var(--error)', borderRadius: 8 }}>
+          {exportErr}
+        </div>
+      )}
 
       {loading ? (
         <div className="scaf-note" style={{ padding: '18px 10px', maxWidth: 680 }}>
@@ -1581,6 +1626,17 @@ interface ApiKeyRow {
   lastUsedAt: string | null;
 }
 
+/** Mirrors API_KEY_SCOPES in shared/schema/api-keys.ts — the backend rejects a
+ *  create with an unknown scope or zero scopes. All are read-only. */
+const API_KEY_SCOPE_OPTIONS: readonly string[] = [
+  'csr:read',
+  'regulatory:read',
+  'endpoints:read',
+  'precedent:read',
+  'trial-design:read',
+  'documents:read',
+];
+
 /** Short badge from a document's own status line (drafts ship as DRAFT). */
 function vkitBadge(status: string | null): string {
   if (!status) return 'Available';
@@ -1667,8 +1723,18 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
     sec === 'modules' ? '/api/module-subscriptions/catalog' : null,
   );
   const liveModules = (modState.data?.modules ?? []).filter(isLiveModuleEntry);
-  const keysState = useLiveData<{ keys: ApiKeyRow[] }>(sec === 'apikeys' ? '/api/api-keys' : null);
+  // keysReload is bumped after a create/revoke to re-fetch the live list.
+  const [keysReload, setKeysReload] = useState(0);
+  const keysState = useLiveData<{ keys: ApiKeyRow[] }>(
+    sec === 'apikeys' ? '/api/api-keys' : null,
+    [sec, keysReload],
+  );
   const apiKeys = Array.isArray(keysState.data?.keys) ? (keysState.data!.keys as ApiKeyRow[]) : [];
+  const [keyName, setKeyName] = useState('');
+  const [keyScopes, setKeyScopes] = useState<string[]>([]);
+  // The raw secret returned once by POST /api/api-keys — held only in local
+  // state for a single reveal, never persisted or logged, cleared on dismiss.
+  const [mintedKey, setMintedKey] = useState<{ name: string; secret: string; prefix: string } | null>(null);
   const [form, setForm] = useState<AcFormState>({ email: '', role: 'support', reason: '' });
   const [toast, fireToast] = useToast();
   const nav = (id: string) => {
@@ -1750,6 +1816,72 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
       }
       setGrants((g) => g.filter((x) => x.id !== id));
       fireToast('Grant revoked -- reason recorded -- audited');
+    } catch (e) {
+      fireToast(
+        'Could not revoke -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
+      );
+    }
+  };
+
+  const toggleKeyScope = (s: string) =>
+    setKeyScopes((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
+
+  // mintKey — REAL, audited create. POST /api/api-keys returns the raw secret
+  // exactly once (server audits creation with the prefix, never the secret).
+  // The secret is shown once via the reveal panel and never re-fetchable. Only
+  // reports success on a real 2xx; nothing is fabricated on failure.
+  const mintKey = async () => {
+    const name = keyName.trim();
+    if (!name) {
+      fireToast('Enter a name for the key');
+      return;
+    }
+    if (keyScopes.length === 0) {
+      fireToast('Select at least one scope');
+      return;
+    }
+    try {
+      const res = await apiRequest('POST', '/api/api-keys', { name, scopes: keyScopes });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast('Could not create the key -- ' + (json?.error || 'sign in as an admin'));
+        return;
+      }
+      if (json?.apiKey) {
+        setMintedKey({ name, secret: String(json.apiKey), prefix: String(json.keyPrefix ?? '') });
+      }
+      setKeyName('');
+      setKeyScopes([]);
+      setKeysReload((n) => n + 1); // re-fetch the live list to show the new key
+    } catch (e) {
+      fireToast(
+        'Could not create the key -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
+      );
+    }
+  };
+
+  // revokeKey — REAL, audited DELETE /api/api-keys/:id. Confirmed first because
+  // it immediately breaks any integration using the key. Only drops the row on
+  // a real 2xx; the live list is re-fetched to reflect the server state.
+  const revokeKey = async (id: number | string, name: string) => {
+    if (
+      typeof window !== 'undefined' &&
+      window.confirm &&
+      !window.confirm(
+        'Revoke API key "' + name + '"? Any integration using it stops working immediately. This is audited and cannot be undone.',
+      )
+    ) {
+      return;
+    }
+    try {
+      const res = await apiRequest('DELETE', '/api/api-keys/' + id);
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        fireToast('Could not revoke -- ' + (json?.error || 'sign in as an admin'));
+        return;
+      }
+      fireToast('API key revoked -- audited');
+      setKeysReload((n) => n + 1);
     } catch (e) {
       fireToast(
         'Could not revoke -- ' + (e instanceof Error && e.message ? e.message : 'request failed'),
@@ -2172,25 +2304,91 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                             {k.status && k.status !== 'active' ? ' -- ' + k.status : ''}
                           </span>
                         </span>
-                        {/* MOCK ACTION (flagged for the actions pass): revoke is a real,
-                            audited DELETE /api/api-keys/:id — not wired here; button is inert. */}
-                        <button className="ac-revoke" title="Revoke -- not yet wired">
-                          {I.close}
-                        </button>
+                        {(!k.status || k.status === 'active') && (
+                          <button
+                            className="ac-revoke"
+                            title="Revoke this API key (audited)"
+                            onClick={() => revokeKey(k.id, k.name)}
+                          >
+                            {I.close}
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
                 )}
-                {/* MOCK ACTION (flagged for the actions pass): create is a real
-                    POST /api/api-keys that returns the secret once — this button only
-                    toasts, it does not mint a key. */}
-                <button
-                  className="sp-primary"
-                  style={{ marginTop: 12, padding: '8px 14px' }}
-                  onClick={() => fireToast('Create API key -- not yet wired (POST /api/api-keys)')}
-                >
-                  {I.plus} Create API key
-                </button>
+                {/* One-time secret reveal — the raw key is returned by POST once
+                    and never retrievable again; held only in local state until
+                    dismissed, never persisted or logged. */}
+                {mintedKey && (
+                  <div
+                    style={{ marginTop: 14, padding: 14, border: '1px solid var(--accent-100, var(--border))', borderRadius: 10, background: 'var(--bg-050)' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                      <span className="sp-q-ic">{I.key || I.terminal}</span>
+                      <strong>API key “{mintedKey.name}” created</strong>
+                    </div>
+                    <p className="sp-state" style={{ margin: '0 0 8px' }}>
+                      Copy it now — it is shown once and cannot be retrieved again. Store it in your secrets manager.
+                    </p>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <code style={{ flex: 1, padding: '8px 10px', fontFamily: 'var(--font-mono)', background: 'var(--bg-000)', border: '1px solid var(--border)', borderRadius: 8, wordBreak: 'break-all' }}>
+                        {mintedKey.secret}
+                      </code>
+                      <button
+                        className="reg-mini"
+                        onClick={() => {
+                          try {
+                            void navigator.clipboard?.writeText(mintedKey.secret);
+                            fireToast('Copied to clipboard');
+                          } catch {
+                            fireToast('Copy failed — select the key and copy it manually');
+                          }
+                        }}
+                      >
+                        Copy
+                      </button>
+                      <button className="reg-mini" onClick={() => setMintedKey(null)}>
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {/* Real create — POST /api/api-keys with a name + ≥1 scope. */}
+                <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <input
+                    value={keyName}
+                    onChange={(e) => setKeyName(e.target.value)}
+                    placeholder="Key name (e.g. CI pipeline)"
+                    maxLength={255}
+                    style={{ padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--bg-000)', maxWidth: 360 }}
+                  />
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {API_KEY_SCOPE_OPTIONS.map((s) => {
+                      const on = keyScopes.includes(s);
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => toggleKeyScope(s)}
+                          aria-pressed={on}
+                          style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '4px 8px', borderRadius: 6, cursor: 'pointer', border: '1px solid ' + (on ? 'var(--accent-100, #d97757)' : 'var(--border)'), background: on ? 'var(--accent-100, #d97757)' : 'transparent', color: on ? '#fff' : 'inherit' }}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    className="sp-primary"
+                    style={{ alignSelf: 'flex-start', padding: '8px 14px' }}
+                    onClick={mintKey}
+                    disabled={!keyName.trim() || keyScopes.length === 0}
+                    title={!keyName.trim() ? 'Enter a name' : keyScopes.length === 0 ? 'Select at least one scope' : 'Create an org-scoped API key'}
+                  >
+                    {I.plus} Create API key
+                  </button>
+                </div>
               </div>
             )}
 

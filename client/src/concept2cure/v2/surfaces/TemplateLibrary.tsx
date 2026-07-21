@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { apiRequest } from '@/lib/queryClient';
+import { getAuthHeaders } from '@/utils/authToken';
 import '../styles/project-home-v2.css';
 
 /* ── TemplateSpec types (templateSpec.ts) ── */
@@ -259,33 +261,120 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
 
   const sel = rows.find((t) => t.id === selId) || rows[0];
 
-  const startExtract = () => {
+  // The picked file is kept so Save can persist the SAME bytes the preview came
+  // from (extract is preview-only server-side; from-upload extracts + saves).
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [flash, setFlash] = useState('');
+  const note = (m: string) => { setFlash(m); setTimeout(() => setFlash(''), 4200); };
+
+  const startExtract = () => fileRef.current?.click();
+
+  // REAL extraction: POST the picked file to /api/c2c/templates/extract
+  // (multipart; auth headers only — the browser sets the boundary). The
+  // preview below renders the SERVER's spec/confidence/warnings, never a canned
+  // spec. Failure is surfaced honestly and nothing is shown.
+  const onFilePicked = async (f: File | null) => {
+    if (!f) return;
+    setPendingFile(f);
     setUploading(true);
     setExtract(null);
-    setTimeout(() => {
+    try {
+      const fd = new FormData();
+      fd.append('file', f, f.name);
+      const res = await fetch('/api/c2c/templates/extract', { method: 'POST', headers: getAuthHeaders(), credentials: 'include', body: fd });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.spec) {
+        note(res.status === 401 ? 'Sign in to extract a template.' : 'Extraction failed — ' + (json?.error ?? `HTTP ${res.status}`) + '. Nothing was read.');
+        setUploading(false);
+        return;
+      }
       setExtract({
-        name: 'Uploaded form', confidence: 0.85, warnings: ['Heading font not found; using Arial.'],
-        spec: { ...DEFAULT_SPEC, typography: { ...DEFAULT_SPEC.typography, bodyFont: 'Calibri', bodySizePt: 11, headingFont: 'Calibri' }, header: { text: '{sponsor} - {docType}', showLogo: true, alignment: 'left' }, formFields: [{ key: 'sponsor', label: 'Sponsor', type: 'text', required: true }], namedStyles: [{ styleId: 'Normal', name: 'Normal', font: 'Calibri', sizePt: 11 }] },
+        name: f.name.replace(/\.(docx|pdf)$/i, ''),
+        confidence: Number(json.confidence ?? 0),
+        warnings: Array.isArray(json.warnings) ? json.warnings : [],
+        spec: json.spec as TemplateSpec,
       });
-    }, 1100);
+    } catch (e) {
+      note('Extraction failed — ' + (e instanceof Error ? e.message : String(e)) + '.');
+      setUploading(false);
+    } finally {
+      if (fileRef.current) fileRef.current.value = '';
+    }
   };
 
-  const saveExtract = () => {
-    if (!extract) return;
-    const rec: TemplateRecord = {
-      id: 'tpl-' + Date.now(), name: extract.name, description: 'Extracted from upload',
-      sourceFileName: 'upload.docx', sourceFileType: 'docx', verified: false,
-      extractionConfidence: extract.confidence, extractionWarnings: extract.warnings,
-      docTypes: ['—'], updatedAt: 'just now', spec: extract.spec, _new: true,
-    };
-    setRows((r) => [rec, ...r]);
-    setSel(rec.id);
-    setUploading(false);
-    setExtract(null);
+  // REAL persist: POST the same file to /from-upload (extract + save). Adopts
+  // the SERVER's template record (real id, persisted spec) into the list.
+  const saveExtract = async () => {
+    if (!extract || !pendingFile) return;
+    try {
+      const fd = new FormData();
+      fd.append('file', pendingFile, pendingFile.name);
+      fd.append('name', extract.name);
+      const res = await fetch('/api/c2c/templates/from-upload', { method: 'POST', headers: getAuthHeaders(), credentials: 'include', body: fd });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.template?.id) {
+        note(res.status === 401 ? 'Sign in to save the template.' : 'Couldn’t save — ' + (json?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.');
+        return;
+      }
+      const rec = { ...(json.template as TemplateRecord), _new: true };
+      setRows((r) => [rec, ...r.filter((x) => x.id !== rec.id)]);
+      setSel(rec.id);
+      setUploading(false);
+      setExtract(null);
+      setPendingFile(null);
+      note('Template saved · ' + rec.name);
+    } catch (e) {
+      note('Couldn’t save — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
   };
 
-  const toggleVerify = (t: TemplateRecord) => {
-    setRows((r) => r.map((x) => (x.id === t.id ? { ...x, verified: !x.verified } : x)));
+  // REAL verify flip: PUT /:id {verified} and adopt the server's record.
+  const toggleVerify = async (t: TemplateRecord) => {
+    try {
+      const res = await apiRequest('PUT', '/api/c2c/templates/' + t.id, { verified: !t.verified });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.template) { note('Couldn’t update verification — ' + (json?.error ?? `HTTP ${res.status}`) + '.'); return; }
+      setRows((r) => r.map((x) => (x.id === t.id ? { ...x, ...(json.template as TemplateRecord) } : x)));
+    } catch (e) {
+      note('Couldn’t update verification — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
+
+  // REAL render: POST /:id/render {format, document} and download the returned
+  // binary. The document is a clearly-labeled SPECIMEN (title + one section) so
+  // the user can proof the template's real look; content is never presented as
+  // regulatory data.
+  const renderTemplate = async (t: TemplateRecord, format: 'docx' | 'pdf') => {
+    try {
+      const res = await apiRequest('POST', '/api/c2c/templates/' + t.id + '/render', {
+        format,
+        document: {
+          metadata: { title: t.name + ' — specimen' },
+          sections: [{
+            heading: 'Template specimen',
+            paragraphs: [
+              'This specimen was rendered with the "' + t.name + '" template to proof its page geometry, typography, and header/footer.',
+            ],
+          }],
+        },
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        note(res.status === 401 ? 'Sign in to render.' : 'Render failed — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.');
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = t.name.replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_') + '_specimen.' + format;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      note('Rendered ' + format.toUpperCase() + ' with the real template engine.');
+    } catch (e) {
+      note('Render failed — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
   };
 
   const applyEdit = () => {
@@ -315,7 +404,13 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
         <button className="sp-primary" onClick={startExtract}>
           {I.upload || I.plus} Upload a form
         </button>
+        <input
+          ref={fileRef} type="file" accept=".docx,.pdf" style={{ display: 'none' }}
+          onChange={(e) => { void onFilePicked(e.target.files?.[0] ?? null); }}
+        />
       </div>
+
+      {flash && <div className="de-toast"><span className="ico">{I.checkCircle}</span>{flash}</div>}
 
       {uploading && (
         <div className="pj-card" style={{ marginBottom: 16, borderColor: 'var(--accent-muted)' }}>
@@ -487,10 +582,10 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
             </div>
 
             <div className="cm-pushbar" style={{ marginTop: 14 }}>
-              <button className="sp-primary" style={{ padding: '8px 14px' }}>
+              <button className="sp-primary" style={{ padding: '8px 14px' }} onClick={() => renderTemplate(sel, 'docx')}>
                 {I.download} Render to Word
               </button>
-              <button className="sp-primary" style={{ padding: '8px 14px', background: 'var(--bg-200)', color: 'var(--text-100)' }}>
+              <button className="sp-primary" style={{ padding: '8px 14px', background: 'var(--bg-200)', color: 'var(--text-100)' }} onClick={() => renderTemplate(sel, 'pdf')}>
                 {I.download} Render to PDF
               </button>
               <button className="sp-ask" onClick={() => toggleVerify(sel)}>

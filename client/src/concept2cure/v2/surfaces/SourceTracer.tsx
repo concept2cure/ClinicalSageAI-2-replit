@@ -37,6 +37,22 @@ interface StVerify {
   summary: { verified: number; notFound: number; unverifiable: number; error: number };
 }
 
+/* Sentence click-through — POST /api/audit-services/traceability/click-through
+   (sentenceTraceabilityService). The service takes the raw content + a char
+   offset, re-detects sentence boundaries server-side, and resolves the exact
+   source spans (file/page/excerpt + highlight range + access URL). */
+interface CtSource {
+  sourceId: string; sourceType: string; title: string; documentPath?: string;
+  pageNumber?: number; excerpt: string; relevanceScore: number; linkType: string;
+  isVerified: boolean; fullContent?: string; highlightRange?: { start: number; end: number }; accessUrl?: string;
+}
+interface CtResult {
+  sentence: { index: number; text: string; charStart: number; charEnd: number; contentHash: string };
+  sources: CtSource[];
+  relatedSentences: Array<{ index: number; text: string }>;
+  confidence: number;
+}
+
 /* ---- Source tracer — provenance for every sentence AnA writes ---- */
 
 export function SourceTracer({ onAsk }: SurfaceViewProps) {
@@ -48,6 +64,8 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
   const [selId, setSel] = useState<string | null>(null);
   const [verify, setVerify] = useState<StVerify | null>(null);
   const [verifying, setVerifying] = useState(false);
+  // Click-through state: which sentence is being traced and the server's result.
+  const [trace, setTrace] = useState<{ idx: number; state: 'loading' | 'ready' | 'none' | 'error'; result: CtResult | null; note?: string } | null>(null);
 
   // Default the selection to the first real section once they load.
   useEffect(() => {
@@ -83,6 +101,39 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
       setVerify(null);
     } finally {
       setVerifying(false);
+    }
+  };
+
+  /* Sentence click-through — resolves the clicked sentence to its exact source
+     spans via the real traceability service. The service keys on raw content +
+     a char offset (it re-detects sentence boundaries server-side), so the
+     section's own sentence texts are joined into the content and the offset
+     points inside the clicked sentence. Nothing is fabricated: no project open,
+     no trace found, or a failed call all render honestly. */
+  const clickThrough = async (idx: number) => {
+    if (!sec) return;
+    const proj = (window as unknown as { C2C_PROJECT?: { id?: string | number } }).C2C_PROJECT;
+    const projectId = proj?.id != null ? String(proj.id) : null;
+    if (!projectId) {
+      setTrace({ idx, state: 'error', result: null, note: 'Open a program first — sentence traces are resolved per project.' });
+      return;
+    }
+    setTrace({ idx, state: 'loading', result: null });
+    try {
+      const ordered = sec.sentences;
+      const pos = ordered.findIndex(x => x.idx === idx);
+      const content = ordered.map(x => x.text).join(' ');
+      const charOffset = ordered.slice(0, pos).reduce((acc, x) => acc + x.text.length + 1, 0) + 1;
+      const res = await apiRequest('POST', '/api/audit-services/traceability/click-through', { content, charOffset, projectId });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        setTrace({ idx, state: 'error', result: null, note: res.status === 401 ? 'Sign in to trace sentences.' : `Trace failed (HTTP ${res.status}).` });
+        return;
+      }
+      const ct = (body as { clickThrough?: CtResult | null })?.clickThrough ?? null;
+      setTrace({ idx, state: ct ? 'ready' : 'none', result: ct });
+    } catch (e) {
+      setTrace({ idx, state: 'error', result: null, note: 'Trace failed — ' + (e instanceof Error ? e.message : String(e)) + '.' });
     }
   };
 
@@ -181,7 +232,37 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
                         {s.pmid && <span className="st-pmid">PMID {s.pmid}</span>}
                         <span className={'st-conf' + (low ? ' low' : '')} title="model confidence">{Math.round(s.conf * 100)}%</span>
                         {s.sourceUrl && <a className="sp-go" href={s.sourceUrl} target="_blank" rel="noreferrer" title="Open source">{I.externalLink || I.right}</a>}
+                        <button className="nda-open" style={{ marginLeft: 'auto' }} onClick={() => clickThrough(s.idx)}
+                          title="Resolve this sentence to its exact source spans">
+                          {I.search} {trace?.idx === s.idx && trace.state === 'loading' ? 'Tracing…' : 'Trace'}
+                        </button>
                       </div>
+                      {trace?.idx === s.idx && trace.state !== 'loading' && (
+                        <div className="st-sent-src" style={{ display: 'block', marginTop: 6, paddingLeft: 10, borderLeft: '2px solid var(--accent-muted,#c7d7fe)' }}>
+                          {trace.state === 'error' ? (
+                            <span className="sp-tone-warn" style={{ fontSize: 12.5 }}>{trace.note}</span>
+                          ) : trace.state === 'none' || !trace.result ? (
+                            <span style={{ fontSize: 12.5, color: 'var(--text-400,#667085)' }}>No source span resolved for this sentence — the traceability service found no mapped source above its confidence floor. Nothing is fabricated.</span>
+                          ) : (
+                            <div>
+                              <div style={{ fontSize: 12, color: 'var(--text-400,#667085)', marginBottom: 4 }}>
+                                Resolved by the traceability service · confidence {Math.round((trace.result.confidence ?? 0) * 100)}% · sentence hash <span className="mono">{trace.result.sentence.contentHash}</span>
+                              </div>
+                              {trace.result.sources.length === 0 ? (
+                                <span style={{ fontSize: 12.5 }}>No mapped sources.</span>
+                              ) : trace.result.sources.map((src, i) => (
+                                <div key={i} style={{ fontSize: 12.5, marginBottom: 4 }}>
+                                  <b>{src.title}</b>
+                                  {src.pageNumber != null ? ' · p.' + src.pageNumber : ''}
+                                  {' · '}{src.sourceType}{' · relevance '}{Math.round((src.relevanceScore ?? 0) * 100)}%
+                                  {src.accessUrl && <> · <a className="sp-go" href={src.accessUrl} target="_blank" rel="noreferrer">open source</a></>}
+                                  {src.excerpt && <div style={{ color: 'var(--text-400,#667085)', marginTop: 2 }}>“{src.excerpt}”</div>}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

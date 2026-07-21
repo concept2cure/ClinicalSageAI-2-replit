@@ -19,7 +19,7 @@
  * =============================================================================
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
@@ -683,9 +683,17 @@ router.post(
  * GET /audit-trail/:entityId
  * Get the complete audit trail for an entity
  */
-router.get('/audit-trail/:entityId', async (req: Request, res: Response) => {
-  const pool: Pool = (req as any).pool || (req.app as any).pool;
+router.get('/audit-trail/:entityId', async (req: Request, res: Response, next: NextFunction) => {
   const { entityId } = req.params;
+  // `/audit-trail/chain-integrity` and `/audit-trail/seal-integrity` are
+  // dedicated GET routes registered later in this file; because this param
+  // route is registered first, Express would otherwise match them here with
+  // entityId='chain-integrity'/'seal-integrity'. Fall through so their real
+  // handlers run instead of treating the reserved word as an entity id.
+  if (entityId === 'chain-integrity' || entityId === 'seal-integrity') {
+    return next();
+  }
+  const pool: Pool = (req as any).pool || (req.app as any).pool;
   const entityType = req.query.type as string;
 
   try {
