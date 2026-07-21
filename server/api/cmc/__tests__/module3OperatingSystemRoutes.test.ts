@@ -3,12 +3,20 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
+const mockVerifyReauth = vi.fn();
 
 vi.mock('../../../db', () => ({
   getPool: () => ({
     query: mockQuery,
     connect: async () => ({ query: mockQuery, release: vi.fn() }),
   }),
+}));
+
+// The section-approve endpoint re-authenticates the signer (§11) before any
+// write; mock verifyReauth so the gate can be exercised without bcrypt/MFA.
+vi.mock('../../../routes/c2c/actions', () => ({
+  verifyReauth: (...a: unknown[]) => mockVerifyReauth(...a),
+  recordGovernedAction: vi.fn(),
 }));
 
 import router from '../module3OperatingSystemRoutes';
@@ -30,6 +38,8 @@ describe('module3OperatingSystemRoutes', () => {
 
   beforeEach(() => {
     mockQuery.mockReset();
+    mockVerifyReauth.mockReset();
+    mockVerifyReauth.mockResolvedValue({ ok: true });
   });
 
   it('returns readiness snapshot from canonical section/contradiction data', async () => {
@@ -68,6 +78,33 @@ describe('module3OperatingSystemRoutes', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.data.status).toBe('resolved');
+  });
+
+  it('section approve fails closed with 401 when re-authentication fails — before any DB write', async () => {
+    mockVerifyReauth.mockResolvedValueOnce({ ok: false, error: 'REAUTH_REQUIRED' });
+
+    const res = await request(app)
+      .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
+      .send({ reason: 'approve for filing', reauth: { password: 'wrong' } });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe('REAUTH_REQUIRED');
+    // The gate runs before the contradiction check and any write — no SQL ran.
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('section approve proceeds past the re-auth gate on success (then honors the contradiction block)', async () => {
+    mockVerifyReauth.mockResolvedValueOnce({ ok: true });
+    // First query after the gate is the critical-contradiction check.
+    mockQuery.mockResolvedValueOnce({ rows: [{ id: 'c-1' }] });
+
+    const res = await request(app)
+      .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
+      .send({ reason: 'approve for filing', reauth: { password: 'right', totp: '123456' } });
+
+    expect(mockVerifyReauth).toHaveBeenCalledWith(1, { password: 'right', totp: '123456' });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toContain('Critical contradictions');
   });
 
   it('blocks final export when not all sections approved and critical contradictions open', async () => {

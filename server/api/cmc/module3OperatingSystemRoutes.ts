@@ -11,6 +11,7 @@ import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } fro
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
+import { verifyReauth } from '../../routes/c2c/actions';
 
 const router = express.Router();
 
@@ -46,6 +47,13 @@ function getOrgId(req: express.Request): number {
   );
   if (!orgId || Number.isNaN(orgId)) throw new Error('Organization context required');
   return orgId;
+}
+
+function resolveActorUserId(req: express.Request): number {
+  const r = req as any;
+  const raw = r.userId ?? r.user?.id ?? 0;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
 router.post('/source-objects/:projectId', async (req, res) => {
@@ -491,6 +499,21 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const { projectId, sectionKey } = req.params;
+
+    // §11.10(g) / §11.200 re-authentication. Approving a Module 3 section is a
+    // signature event, so the signer's credentials are verified BEFORE any
+    // write — fail closed, consistent with the specification-approve and
+    // batch-release endpoints. The client sends `reauth: { password, totp }`.
+    const actorId = resolveActorUserId(req);
+    if (!actorId) {
+      return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+    }
+    const reauthResult = await verifyReauth(actorId, (req.body ?? {}).reauth);
+    if (!reauthResult.ok) {
+      res.setHeader('WWW-Authenticate', 'ReAuth required');
+      return res.status(401).json({ success: false, error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+    }
+
     const pool = getPool();
 
     const blocking = await pool.query(
