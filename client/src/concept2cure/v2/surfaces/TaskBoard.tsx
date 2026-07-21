@@ -108,12 +108,21 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const byCol = (id: string) => list.filter(t => t.status === id);
   const byId = (id: string) => tasks.find(t => t.taskId === id);
 
-  const move = (t: TaskItem, dir: number) => {
+  // Move a card between columns -> the real persisted status update
+  // (PATCH /api/tasks/tasks/:taskId), then refetch so the board reflects it.
+  const move = async (t: TaskItem, dir: number) => {
     const order = TB_COLS.map(c => c.id);
     const i = order.indexOf(t.status);
     const ni = Math.max(0, Math.min(order.length - 1, i + dir));
-    const patch = { status: order[ni], progress: order[ni] === 'completed' ? 100 : t.progress, blocked: order[ni] === 'completed' ? false : t.blocked };
-    if ((window as any).C2C) (window as any).C2C.update(t.taskId, patch);
+    if (ni === i) return;
+    const status = order[ni];
+    const progress = status === 'completed' ? 100 : t.progress;
+    try {
+      const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(t.taskId), { status, progress });
+      if (res.ok) setReloadKey((k) => k + 1);
+    } catch {
+      /* leave the board as-is on a failed move */
+    }
   };
 
   // New task -> the real persisted create. POST /api/tasks/tasks inserts an
