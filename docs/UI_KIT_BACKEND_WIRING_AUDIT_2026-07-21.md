@@ -43,6 +43,18 @@ The section-approval action mutated local state and toasted "not yet persisted".
 
 ---
 
+## Wave 2 — ANA (the AI agent) as the real executor (2026-07-21)
+
+**Backend study (code-grounded):** ANA is a real, production-grade agentic system, not a shell over a chatbot. `POST /api/ana-ri/stream` (SSE) runs a bounded multi-round agentic tool loop (`agentic-loop.ts`) over a **410-tool registry** (`AnaToolDefinitions.ts`) with per-tenant governance, RAG, memory, and a real model gateway (`ai-gateway/gateway.ts`, key-gated, PII + prompt-injection scanned, residency/ZDR-enforced). It executes the whole governed platform surface via `execute_platform_command` → `command-executor.ts` (4,745 lines: project/document/artifact/task/version lifecycle, CMC/Module 3, biostats, compliance, freeze/sign/export, MDX, PDEV→IND). Governed commands return `PART11_SIGNATURE_REQUIRED`; the client's real `GovernedActionSignoff` captures reason + re-auth and POSTs `/api/ana-ri/governed-action` for a server-verified §11 e-signature. `POST /api/ai-actions/execute` is a separate real HA dispatcher (8 route-allow-listed types, DB writes, Part 11 gates, circuit breaker, async queue).
+
+**Shipped (`788099f`, verified — anaRailActions test + 289-mount suite):** the v2 shell streamed real ANA chat but **faked action execution** — `onAct` appended `makeSampleActionResult` (a fabricated result card with a fake `AUD-####` id + sha256 hash) behind a demonstration e-sign gate that discarded the signature. Now ANA is the real executor on the shell: `adaptChatMessage` carries ANA's real `executedActions` + `pendingSignoffs`; the rail renders them and the real `GovernedActionSignoff`; `onAct` routes every action through ANA; the chat is grounded (`window.C2C_PROJECT` → `useAnaChat` `projectId`); and `makeSampleActionResult` / `ActionResult` / the demonstration `ESignGate` are deleted.
+
+**Remaining ANA reachability (layout/UX-sensitive — needs a running app to do at GA quality, NOT blind):**
+- **RBM dock is a mock ANA.** `rbmAnaResolve` (`RbmSurfaces.tsx:260`) fabricates structured `AnaResult` cards (verdict/chips/deep-links) from regex over in-file fixture constants — no API call. Converting to real ANA means either downgrading the dock to plain streaming text or mapping ANA's RBM-tool outputs (`run_rbm_assessment`, `evaluate_kris_qtls`, …) to the dock's rich shape. A UX decision + QA, not a blind swap.
+- **5 device surfaces blind** (`device-510k/cer/diagnostics/submission/workstream` → `DeviceWorkstream`): no ANA at all, and `hideAna:true` hides the (now-real) global rail. `document-authoring` and `ectd-coauthor` likewise hide the rail but mount no live ANA pane. Fix options: un-hide the rail (layout change to `full`/editor surfaces — needs QA) or mount a real ANA pane per surface (the grounded `components/ana/Ana.tsx` exists but isn't mounted in v2).
+- **Route allow-list under-exposes registered actions** (`shared-utils.ts` `VALID_ACTION_TYPES` = 8; ~12 registered inline-AI/template/OCR handlers 400 at `/execute`). Backend, contract-testable.
+- **Shell action vocabulary drift**: `AI_ACTIONS`/`SURFACE_ACTIONS` include ids (`compile_dossier`, `assess_filing_readiness`, `get_document`) that aren't real `AIActionType`s. Now routed through ANA chat (so they no longer 400 a direct call), but the labels should be reconciled.
+
 ## Prioritized remaining backlog (as of 2026-07-21, post-CMC/admin wiring)
 
 What's left, by what it needs — so the next push targets the right thing.
