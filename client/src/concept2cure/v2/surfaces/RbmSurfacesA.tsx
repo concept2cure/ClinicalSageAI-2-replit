@@ -239,10 +239,11 @@ export function RbmRact({ board, onReload }: SubProps) {
       {signFor && asmt && <GovernedApprovalDialog what={`Risk assessment v${asmt.version}`}
         meaning="The RACT becomes the governing risk basis for monitoring-tier assignment and the risk review report."
         onCancel={() => setSignFor(false)}
-        onSigned={async reason => {
-          const res = await apiRequest('POST', `/api/mdx-rbm/rbm-assessments/${asmt.id}/approve`, { reason });
-          if (!res.ok) return `Approval failed (HTTP ${res.status}). The assessment was not activated.`;
-          setSignFor(false); onReload?.();
+        onSigned={async ({ reason, password, mfaToken }) => {
+          const res = await apiRequest('POST', `/api/mdx/rbm-assessments/${asmt.id}/approve`, { reason, password, mfaToken });
+          if (res.ok) { setSignFor(false); onReload?.(); return; }
+          const body = await res.json().catch(() => null) as { error?: string } | null;
+          return body?.error || `Approval failed (HTTP ${res.status}). The assessment was not activated.`;
         }} />}
     </div>
   );

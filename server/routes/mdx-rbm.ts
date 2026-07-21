@@ -67,6 +67,7 @@ import {
   buildRiskReview, renderRiskReviewMarkdown, buildAttentionFeed,
 } from '../services/rbm/risk-report';
 import { loadRiskReviewInput } from '../services/rbm/risk-report-data';
+import { verifySignerCredentials, defaultSignoffDeps } from '../services/ana-ri/governed-action-signoff';
 
 const router = Router();
 const log = createScopedLogger('mdx-rbm');
@@ -1035,7 +1036,14 @@ router.post('/rbm-patient-profiles/score', async (req, res) => {
 // GOVERNED APPROVAL (reason-for-change; 21 CFR Part 11 audit via /api/mdx)
 // ════════════════════════════════════════════════════════════════════════════
 
-const approveBody = z.object({ reason: z.string().min(3).max(2000) });
+// Approval is a 21 CFR Part 11 e-signature: the reason-for-change plus the
+// signer's re-authentication credentials (password, and TOTP when the signer
+// has MFA enabled), verified server-side via verifySignerCredentials.
+const approveBody = z.object({
+  reason: z.string().min(3).max(2000),
+  password: z.string().min(1),
+  mfaToken: z.string().optional(),
+});
 
 /** Approve + activate a risk assessment, capturing the reason for change. */
 router.post('/rbm-assessments/:id/approve', async (req, res) => {
@@ -1045,6 +1053,10 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
   if (id === null) return clientError(res, 422, 'id must be numeric');
   const parsed = approveBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'A reason for change is required', parsed.error.flatten().fieldErrors);
+  const signerId = getUserId(req);
+  if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
+  const signoff = await verifySignerCredentials(defaultSignoffDeps, { userId: signerId, password: parsed.data.password, mfaToken: parsed.data.mfaToken });
+  if (!signoff.verified) return clientError(res, 401, signoff.error ?? 'Signer verification failed (21 CFR 11.200)', signoff.code ? { code: signoff.code } : undefined);
   try {
     const { rows } = await pool.query(
       `UPDATE rbm_risk_assessments
@@ -1052,7 +1064,7 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
               metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
         WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
         RETURNING *`,
-      [getUserId(req), parsed.data.reason, id, orgId],
+      [signerId, parsed.data.reason, id, orgId],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Risk assessment');
     return ok(res, rows[0]);
@@ -1067,6 +1079,10 @@ router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
   if (id === null) return clientError(res, 422, 'id must be numeric');
   const parsed = approveBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'A reason for change is required', parsed.error.flatten().fieldErrors);
+  const signerId = getUserId(req);
+  if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
+  const signoff = await verifySignerCredentials(defaultSignoffDeps, { userId: signerId, password: parsed.data.password, mfaToken: parsed.data.mfaToken });
+  if (!signoff.verified) return clientError(res, 401, signoff.error ?? 'Signer verification failed (21 CFR 11.200)', signoff.code ? { code: signoff.code } : undefined);
   try {
     const { rows } = await pool.query(
       `UPDATE rbm_monitoring_plans
@@ -1074,7 +1090,7 @@ router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
               metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
         WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
         RETURNING *`,
-      [getUserId(req), parsed.data.reason, id, orgId],
+      [signerId, parsed.data.reason, id, orgId],
     );
     if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
     return ok(res, rows[0]);

@@ -211,17 +211,21 @@ export function RbmFormModal({ title, intro, fields, initial, submitLabel, onCan
    performs the real POST and returns an error string on failure so the dialog
    can surface it honestly. */
 export function GovernedApprovalDialog({ what, meaning, onCancel, onSigned }: {
-  what: string; meaning: string; onCancel: () => void; onSigned: (reason: string) => Promise<string | void>;
+  what: string; meaning: string; onCancel: () => void;
+  onSigned: (sig: { reason: string; password: string; mfaToken: string }) => Promise<string | void>;
 }) {
   const [reason, setReason] = useState('');
   const [pw, setPw] = useState('');
   const [otp, setOtp] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const ok = reason.trim().length >= 8 && pw.length >= 4 && otp.length === 6 && !busy;
+  // The server verifies the password always and the TOTP only when the signer
+  // has MFA enabled, so the authenticator code is optional here (a wrong/absent
+  // code is rejected server-side, never waved through).
+  const ok = reason.trim().length >= 8 && pw.length >= 4 && (otp.length === 0 || otp.length === 6) && !busy;
   const submit = async () => {
     setBusy(true); setErr(null);
-    const e = await onSigned(reason.trim());
+    const e = await onSigned({ reason: reason.trim(), password: pw, mfaToken: otp });
     if (e) { setErr(e); setBusy(false); }
   };
   return (
@@ -235,7 +239,7 @@ export function GovernedApprovalDialog({ what, meaning, onCancel, onSigned }: {
           <label className="rbm-field"><span>Password</span><input type="password" value={pw} onChange={e => setPw(e.target.value)} autoComplete="off" /></label>
           <label className="rbm-field"><span>Authenticator code</span><input inputMode="numeric" maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))} placeholder="6 digits" /></label>
         </div>
-        <div className="rbm-modal-note">Signature meaning: approval (21 CFR 11.50). Signed under your authenticated session; the signer, timestamp and reason are written to the immutable audit trail server-side.</div>
+        <div className="rbm-modal-note">Signature meaning: approval (21 CFR 11.50 / 11.200). Your password -- and your authenticator code if MFA is enabled -- are verified server-side before signing; the signer, timestamp and reason are written to the immutable audit trail.</div>
         {err && <div className="rbm-modal-note" style={{ color: '#e5484d' }}>{err}</div>}
         <div className="rbm-modal-acts">
           <button className="rbm-btn" onClick={onCancel} disabled={busy}>Cancel</button>

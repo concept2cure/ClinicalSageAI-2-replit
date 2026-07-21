@@ -320,10 +320,11 @@ export function RbmPlan({ board, onReload }: SubProps) {
       {signFor && plan && <GovernedApprovalDialog what="Monitoring plan"
         meaning="The plan becomes the active monitoring commitment; visit cadence and SDV depth follow its tier definitions."
         onCancel={() => setSignFor(false)}
-        onSigned={async reason => {
-          const res = await apiRequest('POST', `/api/mdx-rbm/rbm-monitoring-plans/${plan.id}/approve`, { reason });
-          if (!res.ok) return `Approval failed (HTTP ${res.status}). The plan was not activated.`;
-          setSignFor(false); onReload?.();
+        onSigned={async ({ reason, password, mfaToken }) => {
+          const res = await apiRequest('POST', `/api/mdx/rbm-monitoring-plans/${plan.id}/approve`, { reason, password, mfaToken });
+          if (res.ok) { setSignFor(false); onReload?.(); return; }
+          const body = await res.json().catch(() => null) as { error?: string } | null;
+          return body?.error || `Approval failed (HTTP ${res.status}). The plan was not activated.`;
         }} />}
     </div>
   );
