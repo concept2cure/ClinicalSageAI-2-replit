@@ -13,6 +13,12 @@ import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/re
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', () => ({ apiRequest }));
+// The collab presence layer (AuthoringCollab) reads the auth identity; give it
+// a real-shaped user so the surface renders (it still joins no room here —
+// these tests set no C2C_PROJECT, so the collab layer honestly renders null).
+vi.mock('@/services/portal/authService', () => ({
+  useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }),
+}));
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 
