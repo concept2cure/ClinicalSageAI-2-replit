@@ -84,6 +84,7 @@ import { SafetyNarrative } from './surfaces/SafetyNarrative';
 import { ShadowReview } from './surfaces/ShadowReview';
 import { SourceTracer } from './surfaces/SourceTracer';
 import { SubmissionCenter } from './surfaces/SubmissionCenter';
+import { QmpWorkspace } from './surfaces/QmpWorkspace';
 import { SubmissionTwin } from './surfaces/SubmissionTwin';
 import { GlobalRiBrowser } from './surfaces/Surfaces';
 import { TaskBoard } from './surfaces/TaskBoard';
@@ -191,6 +192,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   setup: { component: Setup },
   'shadow-review': { component: ShadowReview, full: true },
   'source-tracer': { component: SourceTracer },
+  qmp: { component: QmpWorkspace },
   'submission-center': { component: SubmissionCenter },
   'submission-twin': { component: SubmissionTwin },
   'task-board': { component: TaskBoard },
