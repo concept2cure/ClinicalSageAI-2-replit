@@ -25,6 +25,7 @@ import { BatchDraft } from './surfaces/BatchDraft';
 import { BiopharmaJourney } from './surfaces/BiopharmaJourney';
 import { BiopharmaProject, CsrWorkflow, RegulatoryWorkspace } from './surfaces/BiopharmaProject';
 import { Pediatric, Orphan, Lifecycle, Pharmacovigilance } from './surfaces/BiopharmaSpecialty';
+import { PvCockpit } from './surfaces/PvCockpit';
 import { Biostatistics } from './surfaces/Biostatistics';
 import { ChangeAssessment } from './surfaces/ChangeAssessment';
 import { ClinicalOps } from './surfaces/ClinicalOps';
@@ -167,6 +168,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   pdev: { component: PdevInd },
   pediatric: { component: Pediatric },
   pharmacovigilance: { component: Pharmacovigilance },
+  'pv-cockpit': { component: PvCockpit },
   'precedent-intelligence': { component: PrecedentEngine },
   'program-journey': { component: BiopharmaJourney },
   'project-home': { component: ProjectHome, full: true },
