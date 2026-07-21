@@ -20,6 +20,7 @@ type SubSurface = React.ComponentType<{
   onTab?: (id: string) => void;
   onAsk?: (t: string) => void;
   onNav?: (id: string) => void;
+  onReload?: () => void;
 }>;
 
 const SURFACES: Record<string, SubSurface> = {
@@ -71,13 +72,18 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
   const [tab, setTab] = useState('overview');
   const [anaOpen, setAnaOpen] = useState(true);
   const [anaMsgs, setAnaMsgs] = useState<AnaMsg[]>([]);
+  // Bumped after a persisted write so the board re-fetches and the surface
+  // re-derives from server truth (never optimistic local state).
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey(k => k + 1);
 
   // Real studies (programs with RBM data) + the live board for the selected one.
   const programs = useLiveRows<RbmProgram>('/api/mdx-rbm/rbm-programs');
   useEffect(() => {
     if (!study && programs.rows.length) setStudy(programs.rows[0].id);
   }, [programs.rows, study]);
-  const board = useLiveData<RbmBoard>(study ? '/api/mdx-rbm/rbm-board/' + study : null);
+  const boardPath = study ? '/api/mdx-rbm/rbm-board/' + study : null;
+  const board = useLiveData<RbmBoard>(boardPath, [boardPath, reloadKey]);
   const bd = board.data;
   // useLiveData keeps the previous study's board while the next request is in
   // flight, so `bd` can still belong to the old program right after a study
@@ -220,7 +226,7 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
               <EmptyState title="Loading the RBM board…" icon={I.clock} />
             </div>
           ) : hasData ? (
-            <Body key={bd.programId} board={bd} onTab={setTab} onAsk={askAna} onNav={onNav} />
+            <Body key={bd.programId + '@' + bd.asOf} board={bd} onTab={setTab} onAsk={askAna} onNav={onNav} onReload={reload} />
           ) : (
             <SeedEmpty
               title={`No RBM data for ${studyLabel} yet`}
