@@ -65,6 +65,7 @@ export const NAV_GROUP_OF: Record<string, string> = {
   cmc: 'biopharma',
   'csr-workflow': 'biopharma',
   'ectd-coauthor': 'biopharma',
+  'ectd-compile': 'biopharma',
   pdev: 'biopharma',
   setup: 'admin',
   'audit-trail': 'admin',
@@ -350,6 +351,7 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
     'export_document',
   ],
   'ectd-coauthor': ['run_validation', 'compile_dossier', 'route_document_to_module', 'export_document'],
+  'ectd-compile': ['run_validation', 'compile_dossier', 'export_document'],
   'csr-workflow': ['run_validation', 'refine_with_validation', 'save_document_version', 'export_document'],
   'device-510k': [
     'run_validation',
@@ -468,6 +470,7 @@ export const SEGMENT_MODULES = {
         'labeling-pi',
         'doc-journey',
         'ectd-coauthor',
+        'ectd-compile',
         'template-library',
       ],
     },
@@ -546,6 +549,7 @@ export const SEGMENT_MODULES = {
         'csr-workflow',
         'doc-journey',
         'ectd-coauthor',
+        'ectd-compile',
         'template-library',
       ],
     },
@@ -1049,6 +1053,7 @@ const AUTHORING_SURFACES = [
   'labeling-pi',
   'doc-journey',
   'ectd-coauthor',
+  'ectd-compile',
   'review',
 ];
 
