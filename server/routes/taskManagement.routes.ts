@@ -321,6 +321,48 @@ router.post('/tasks', async (req: Request, res: Response) => {
   }
 });
 
+// Update a task's board column / progress — backs the ui-v2 board's drag-move
+// between columns. Org-scoped (taskId + organizationId), so no cross-org task
+// can be moved. Only status/progress change here; richer edits use other routes.
+const updateTaskStatusSchema = z.object({
+  status: z.string().min(1),
+  progress: z.number().min(0).max(100).optional(),
+});
+router.patch('/tasks/:taskId', async (req: Request, res: Response) => {
+  try {
+    const taskId = String(req.params.taskId);
+    const parsed = updateTaskStatusSchema.parse(req.body);
+    const organizationIdRaw = getSecureOrgId(req);
+    const organizationId = organizationIdRaw ? Number(organizationIdRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
+
+    const isDone = parsed.status === 'completed';
+    const progress = parsed.progress ?? (isDone ? 100 : undefined);
+    const [updated] = await storage.db
+      .update(unifiedTasks)
+      .set({
+        status: parsed.status,
+        progress,
+        completionPercentage: progress,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(unifiedTasks.taskId, taskId), eq(unifiedTasks.organizationId, organizationId)))
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Task not found' });
+    }
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: error instanceof z.ZodError ? error.errors : 'Failed to update task',
+    });
+  }
+});
+
 // Bulk create tasks
 router.post('/tasks/bulk-create', async (req: Request, res: Response) => {
   try {
