@@ -40,7 +40,16 @@ Since this analysis was written, the following trapped capabilities have been **
 - **Document CREATE + PUBLISH** — `AuthoringCreateExport`: New document (optional template seed), New section, and Word/XML publish via `/docs/:id/export`. One surface now covers create → draft → edit → history/revert → comment → presence/lock → freeze → e-sign → publish across M1–M5 — the product's core loop. (A PDF button is deliberately absent: the server's pdf branch returns mislabeled DOCX bytes — backend fix needed before it can be offered honestly.)
 - **Test suite fully green: 916/916** (66 files). The appsLive failures were a stale pre-honesty test, rewritten to lock the fixture-free behavior.
 
-Remaining (all documented, none silently open): Yjs CRDT socket sync; the DeviceSubmission de-mocking pass; the backend `pdf` export branch (returns DOCX bytes under a PDF label); full E2E validation of transmit/ACK against live gateways.
+**Fifth wave (same day) — closing the last actionables:**
+- **PDF export fixed (backend + client).** The authoring export's pdf branch no longer returns DOCX bytes under a PDF label — it composes escaped HTML from the governed sections and renders through the platform's real HTML→PDF engine. The withheld PDF publish button is now enabled; the canvas publishes Word, PDF, and XML.
+- **Awareness heartbeat.** AuthoringCollab PUTs its focus to the room's awareness endpoint every 20s and adopts the server's returned roster — live presence refresh over the collab service's own protocol.
+- **DeviceSubmission honesty guard.** Its dead governed dialog's confirm (a no-op presented with a §11 e-sign affordance) is now disabled with an explicit "not wired" notice — the fake flow can never fire, mounted or not.
+- **Suite: 1,406 passed / 143 files** (7 pre-existing skips).
+
+**Terminal remainder (cannot be closed from this environment / requires a dedicated build):**
+1. *Yjs CRDT socket co-editing* — the deps (`yjs`, `y-protocols`) and server rooms/`/ws/collab` exist; binding a CRDT provider into the canvas is an editor-infrastructure build (the REST presence/locks/awareness layer is fully wired).
+2. *DeviceSubmission spine* — its fixture `pw` contract has NO backend serving it; honest re-anchoring means designing a device-submission read-model service + rewriting DeviceIntel. The device workflows are meanwhile served for real via the MDX app.
+3. *Live-gateway E2E* — transmit/ACK against actual agency endpoints needs a running deployment with configured gateway credentials.
 
 ## 0. Headline
 
