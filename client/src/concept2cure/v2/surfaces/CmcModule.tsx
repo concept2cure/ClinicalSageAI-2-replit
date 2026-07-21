@@ -256,15 +256,48 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
   const readyTone = readyPct >= 80 ? 'ok' : readyPct >= 50 ? 'warn' : 'err';
   const stTone = (s: string) => s === 'approved' ? 'ok' : s === 'review' ? 'warn' : 'dim';
 
-  /* MOCK ACTION (flag): local-only. There is no wired section-approval / e-signature
-     endpoint from this surface — this mutates local state and does NOT persist a
-     21 CFR §11 signature or an audit entry. Copy is softened to say so. */
-  const doSign = () => {
+  // doSign — REAL, awaited section approval against the governed Module 3
+  // operating-system endpoint (POST /api/cmc/module3-os/sections/:projectId/
+  // :sectionKey/approve, server/api/cmc/module3OperatingSystemRoutes.ts). The
+  // backend blocks on unresolved critical contradictions (409), snapshots a new
+  // approved version, sets approval_state, and writes a cmc_provenance_events
+  // audit entry keyed to the authenticated user. The reason + reauth captured by
+  // the sign form are forwarded (the endpoint records the reason; server-side
+  // re-auth verification is the documented follow-up — see the wiring roadmap).
+  // Only reflects approval on a real 2xx; nothing is fabricated on failure.
+  const doSign = async (v: Record<string, string>) => {
     if (!sign) return;
-    const k = sign.key;
-    setSecs((ss) => ss.map((x) => (x.key === k ? { ...x, st: 'approved', _new: true } : x)));
-    setSign(null);
-    fireToast('Section ' + k + ' marked approved locally — not yet persisted');
+    const target = sign;
+    if (!ctxProjectId) {
+      fireToast('Open a program first — section approval is recorded per project.');
+      return;
+    }
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/cmc/module3-os/sections/' +
+          encodeURIComponent(ctxProjectId) +
+          '/' +
+          encodeURIComponent(target.key) +
+          '/approve',
+        { reason: v.reason, reauth: { password: v.password, totp: v.totp || undefined } },
+      );
+      const json = await res.json().catch(() => null);
+      if (res.status === 409) {
+        fireToast('Cannot approve ' + target.key + ' — resolve the critical contradictions first.');
+        return;
+      }
+      if (!res.ok) {
+        fireToast('Couldn’t approve section ' + target.key + ' — ' + specErr(json, res.status) + '. Nothing was persisted.');
+        return;
+      }
+      setSecs((ss) => ss.map((x) => (x.key === target.key ? { ...x, st: 'approved', _new: true } : x)));
+      const ver = (json as { versionNumber?: number })?.versionNumber;
+      fireToast('Section ' + target.key + ' approved' + (ver ? ' · v' + ver : '') + ' and versioned.');
+      setSign(null);
+    } catch (e) {
+      fireToast('Couldn’t approve section ' + target.key + ' — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
   };
 
   const rpiRankable = port.filter((p): p is CmcPortfolio & { rpi: number } => typeof p.rpi === 'number');
