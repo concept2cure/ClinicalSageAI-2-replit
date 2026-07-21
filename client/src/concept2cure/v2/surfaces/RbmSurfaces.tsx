@@ -86,17 +86,18 @@ export function RiskMatrix({ items, sel, onSel }: { items: { l: number; i: numbe
 }
 
 /* ── Sparkline ── */
-export function Sparkline({ values, amber, red, w = 132, h = 34 }: { values: number[]; amber: number; red: number; w?: number; h?: number }) {
+export function Sparkline({ values, amber, red, w = 132, h = 34 }: { values: number[]; amber: number | null; red: number | null; w?: number; h?: number }) {
   if (!values || values.length < 2) return <span className="rbm-spark-empty">No history -- add the first reading</span>;
-  const all = values.concat([amber, red]);
+  const refs = [amber, red].filter((n): n is number => n != null);
+  const all = values.concat(refs);
   const mn = Math.min(...all), mx = Math.max(...all), span = (mx - mn) || 1;
   const xp = (i: number) => 2 + i * (w - 4) / (values.length - 1);
   const yp = (v: number) => h - 3 - (v - mn) * (h - 6) / span;
   const pts = values.map((v, i) => `${xp(i).toFixed(1)},${yp(v).toFixed(1)}`).join(' ');
   return (
     <svg className="rbm-spark" width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden="true">
-      <line x1="2" x2={w - 2} y1={yp(red)} y2={yp(red)} className="g-red" />
-      <line x1="2" x2={w - 2} y1={yp(amber)} y2={yp(amber)} className="g-amber" />
+      {red != null && <line x1="2" x2={w - 2} y1={yp(red)} y2={yp(red)} className="g-red" />}
+      {amber != null && <line x1="2" x2={w - 2} y1={yp(amber)} y2={yp(amber)} className="g-amber" />}
       <polyline points={pts} className="ln" />
       <circle cx={xp(values.length - 1)} cy={yp(values[values.length - 1])} r="2.6" className="dot" />
     </svg>
@@ -159,8 +160,8 @@ export function TrendTable({ kri }: { kri: { name: string; unit: string; spark: 
       <thead><tr><th>#</th><th>Value</th><th>Status</th></tr></thead>
       <tbody>
         {kri.spark.map((val, i) => {
-          const st = kriStatusOf({ dir: kri.dir, amber: kri.amber ?? 0, red: kri.red ?? 0 }, val);
-          return <tr key={i}><td>{i + 1}</td><td className="mono">{val}{kri.unit}</td><td><RbmChip vocab="kri" value={st} /></td></tr>;
+          const st = (kri.amber != null && kri.red != null) ? kriStatusOf({ dir: kri.dir, amber: kri.amber, red: kri.red }, val) : null;
+          return <tr key={i}><td>{i + 1}</td><td className="mono">{val}{kri.unit}</td><td>{st ? <RbmChip vocab="kri" value={st} /> : <span className="mut">—</span>}</td></tr>;
         })}
       </tbody>
     </table>

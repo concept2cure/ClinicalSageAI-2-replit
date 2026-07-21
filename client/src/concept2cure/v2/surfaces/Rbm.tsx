@@ -79,15 +79,21 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
   }, [programs.rows, study]);
   const board = useLiveData<RbmBoard>(study ? '/api/mdx-rbm/rbm-board/' + study : null);
   const bd = board.data;
-  const hasData = rbmBoardHasData(bd);
+  // useLiveData keeps the previous study's board while the next request is in
+  // flight, so `bd` can still belong to the old program right after a study
+  // switch. Only treat the board as ready when it actually matches the selected
+  // study — otherwise the prior study's risk data would render (and be
+  // interactive) under the new selection until the fetch resolves.
+  const boardReady = !!bd && bd.programId === study;
+  const hasData = boardReady && rbmBoardHasData(bd);
 
-  // Seed the cross-surface action store from the live board whenever the
-  // selected program changes, so the plan board and every surface that raises
-  // actions work against the real, org-scoped monitoring actions (never a
+  // Seed the cross-surface action store from the live board once its data for
+  // the selected program arrives, so the plan board and every surface that
+  // raises actions work against the real, org-scoped monitoring actions (never a
   // fixture). Keyed on programId so in-session additions survive a refetch.
   useEffect(() => {
-    if (bd) seedRbmActionsFromBoard(bd);
-  }, [bd?.programId]);
+    if (bd && bd.programId === study) seedRbmActionsFromBoard(bd);
+  }, [study, bd?.programId]);
 
   const selProgram = programs.rows.find(p => p.id === study) || null;
   const studyLabel = selProgram?.label ?? 'the study';
@@ -133,7 +139,7 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
             )}
           </select>
           <span className="rbm-study-m">
-            {bd
+            {bd && bd.programId === study
               ? `${bd.summary.sites.total} sites -- ${bd.summary.patients.scored} subjects scored`
               : 'Live RBM read-model'}
           </span>
@@ -200,10 +206,6 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
                 hint="No study in this organization has a risk-based monitoring assessment yet. Once an RBM assessment exists for a program it appears here with its live risk, KRIs, QTLs and monitoring plan — nothing is simulated."
               />
             </div>
-          ) : board.loading && !bd ? (
-            <div style={{ padding: 24 }}>
-              <EmptyState title="Loading the RBM board…" icon={I.clock} />
-            </div>
           ) : board.error ? (
             <div style={{ padding: 24 }}>
               <EmptyState
@@ -213,7 +215,11 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
                 hint="The board didn't respond for this study. Nothing is shown from a cached sample."
               />
             </div>
-          ) : hasData && bd ? (
+          ) : !bd || bd.programId !== study ? (
+            <div style={{ padding: 24 }}>
+              <EmptyState title="Loading the RBM board…" icon={I.clock} />
+            </div>
+          ) : hasData ? (
             <Body key={bd.programId} board={bd} onTab={setTab} onAsk={askAna} onNav={onNav} />
           ) : (
             <SeedEmpty
