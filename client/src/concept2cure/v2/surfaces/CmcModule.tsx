@@ -293,7 +293,12 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
       }
       setSecs((ss) => ss.map((x) => (x.key === target.key ? { ...x, st: 'approved', _new: true } : x)));
       const ver = (json as { versionNumber?: number })?.versionNumber;
-      fireToast('Section ' + target.key + ' approved' + (ver ? ' · v' + ver : '') + ' and versioned.');
+      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
+      fireToast(
+        'Section ' + target.key + ' approved and signed' +
+          (ver ? ' · v' + ver : '') +
+          (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '') + '.',
+      );
       setSign(null);
     } catch (e) {
       fireToast('Couldn’t approve section ' + target.key + ' — ' + (e instanceof Error ? e.message : String(e)) + '.');
