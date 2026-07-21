@@ -2,11 +2,12 @@
  *  ProtocolDev.tsx -- protocol development hub (C2C-17 + C2C-18..22)
  *  Ported from protocol-dev.jsx IIFE to typed React module.
  * ------------------------------------------------------------------ */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { I } from '../icons';
 import * as PG from './ProtocolGov';
 import type { PdevDoc } from '../fixtures/protocol-data';
 import { useLiveRows, EmptyState } from '../dataConnect';
+import { ProtocolRegisterForm, type RegisterKind } from './ProtocolRegisterForms';
 
 const Ic = PG.Ic;
 
@@ -380,7 +381,10 @@ export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
   // to the PdevDoc render contract (server/routes/protocol-dev.routes.ts reads
   // the real c2c_protocol_dev table via pool, org-scoped, JSONB rehydrated).
   // Real rows, an honest empty state, or an honest failed-load — never a fixture.
-  const { rows, loading, error, empty } = useLiveRows<PdevDoc>('/api/protocol-dev');
+  // reloadKey bumps after a successful register write so the JSONB read-model
+  // refetches and the register renders the server's row (nothing local).
+  const [reloadKey, setReloadKey] = useState(0);
+  const { rows, loading, error, empty } = useLiveRows<PdevDoc>('/api/protocol-dev', ['/api/protocol-dev', reloadKey]);
   if (loading) {
     return <div className="pd-wrap"><div className="scaf-note" style={{ margin: 16 }}>Loading protocol…</div></div>;
   }
@@ -401,14 +405,32 @@ export function ProtocolWorkspace({ onAsk }: WorkspaceProps) {
           hint="Start a clinical protocol to author it here — sections, objectives, schedule of assessments, risk register, budget, amendments, and review threads are all governed on this document." />
       </div>);
   }
-  return <ProtocolWorkspaceDoc doc={doc} onAsk={onAsk} />;
+  return <ProtocolWorkspaceDoc doc={doc} onAsk={onAsk} onChanged={() => setReloadKey((k) => k + 1)} />;
 }
 
 /* ---- Workspace body — a real, loaded protocol document ---- */
-function ProtocolWorkspaceDoc({ doc, onAsk }: { doc: PdevDoc; onAsk?: (msg: string) => void }) {
+function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk?: (msg: string) => void; onChanged?: () => void }) {
   const [tab, setTab] = useState('document');
   const [activeSec, setActiveSec] = useState(doc.openSection);
   const [gov, setGov] = useState<any>(null);
+  // Which register create-form is open (risk/milestone/amendment/deviation) —
+  // these POST to the real protocol-* routers, replacing the former reason-only
+  // governed dialog whose onConfirm was a no-op.
+  const [reg, setReg] = useState<RegisterKind | null>(null);
+  const [toast, setToast] = useState('');
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fireToast = useCallback((m: string) => {
+    setToast(m);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(''), 4200);
+  }, []);
+  // The write routers key on the numeric c2c_protocol_dev id.
+  const numericDocId = Number(doc.id);
+  const canWrite = Number.isInteger(numericDocId) && numericDocId > 0;
+  const openReg = (kind: RegisterKind) => {
+    if (!canWrite) { fireToast('This protocol row has no numeric document id — register writes need the governed store.'); return; }
+    setReg(kind);
+  };
   const sec = doc.sections.find((s: any) => s.id === activeSec) || doc.sections[0];
   const onSec = (s: any) => { setActiveSec(s.id); setTab(s.tab || 'document'); };
   const generate = (s: any) => onAsk && onAsk('Draft ' + s.title + ' for ' + doc.shortTitle + ' from the linked evidence.');
@@ -418,11 +440,11 @@ function ProtocolWorkspaceDoc({ doc, onAsk }: { doc: PdevDoc; onAsk?: (msg: stri
       case 'objectives':  return <ObjectivesTab doc={doc} onAdd={() => govAct({ title: 'Add objective', intent: 'Add a study objective and its endpoint.', basis: 'ICH M11 — Objectives & Endpoints' })} />;
       case 'eligibility': return <EligibilityTab doc={doc} onAdd={() => govAct({ title: 'Add eligibility criterion', intent: 'Add an inclusion or exclusion criterion.', basis: 'ICH M11 — Study Population' })} />;
       case 'soa':         return <SoaTab doc={doc} />;
-      case 'risks':       return <RiskTab doc={doc} onAdd={() => govAct({ title: 'Add protocol risk', intent: 'Add a risk to the register with likelihood × impact.', basis: 'ICH E6(R2) §5.0 — risk-based quality management' })} />;
-      case 'milestones':  return <MilestonesTab doc={doc} onAdd={() => govAct({ title: 'Add milestone', intent: 'Add a timeline milestone with a target date.' })} />;
+      case 'risks':       return <RiskTab doc={doc} onAdd={() => openReg('risk')} />;
+      case 'milestones':  return <MilestonesTab doc={doc} onAdd={() => openReg('milestone')} />;
       case 'budget':      return <BudgetTab doc={doc} />;
-      case 'amendments':  return <AmendmentsTab doc={doc} onAdd={() => govAct({ title: 'Create amendment', intent: 'Open a new protocol amendment and define its change set.', basis: '45 CFR 46.116 / ICH E6(R2) — substantive change review', esign: false })} />;
-      case 'deviations':  return <DeviationsTab doc={doc} onAdd={() => govAct({ title: 'Report deviation', intent: 'Log a protocol deviation and open CAPA actions.', basis: 'ICH E6(R2) §4.5 — protocol compliance' })} />;
+      case 'amendments':  return <AmendmentsTab doc={doc} onAdd={() => openReg('amendment')} />;
+      case 'deviations':  return <DeviationsTab doc={doc} onAdd={() => openReg('deviation')} />;
       case 'reviews':     return <ReviewsTab doc={doc} />;
       case 'consent':     return <ConsentTab doc={doc} />;
       default:            return sec ? <DocumentTab doc={doc} sec={sec} onGenerate={generate} /> : <div className="pd-pane"><div className="pg-empty">This protocol has no sections yet.</div></div>;
@@ -454,6 +476,20 @@ function ProtocolWorkspaceDoc({ doc, onAsk }: { doc: PdevDoc; onAsk?: (msg: stri
         <div className="pd-work">{body}</div>
       </div>
       <PG.GovernedActionDialog open={!!gov} onClose={() => setGov(null)} onConfirm={() => {}} {...(gov || {})} />
+      {reg && canWrite && (
+        <ProtocolRegisterForm
+          kind={reg}
+          protocolDocumentId={numericDocId}
+          onCancel={() => setReg(null)}
+          onDone={(kind) => {
+            setReg(null);
+            fireToast('Recorded — the ' + kind + ' was written to the governed register.');
+            onChanged?.();
+          }}
+          onError={(m) => fireToast(m)}
+        />
+      )}
+      {toast && <div className="de-toast"><span className="ico">{I.checkCircle}</span>{toast}</div>}
     </div>);
 }
 
