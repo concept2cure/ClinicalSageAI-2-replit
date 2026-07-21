@@ -983,64 +983,20 @@ router.post('/authority-check', async (req: Request, res: Response) => {
  * Get system validation records (IQ/OQ/PQ)
  */
 router.get('/validation', (_req: Request, res: Response) => {
-  const records: ValidationRecord[] = [
-    {
-      id: uuidv4(),
-      systemName: 'Concept2Cure Platform',
-      validationType: 'IQ',
-      status: 'completed',
-      protocol: 'TSG-IQ-001',
-      summary:
-        'Installation Qualification verified: all components installed per specification, database connectivity confirmed, service endpoints operational.',
-      testedBy: 'QA Team',
-      approvedBy: 'QA Director',
-      executedAt: new Date('2026-01-15'),
-      completedAt: new Date('2026-01-16'),
-      deviations: [],
-      attachmentIds: [],
+  // System validation (IQ/OQ/PQ) records are formal qualification artifacts the
+  // QA organization produces and records. The platform reports the recorded set
+  // rather than shipping or fabricating qualification evidence. No in-app
+  // validation-records store is provisioned, so this honestly returns none
+  // (previously it returned hardcoded IQ/OQ/PQ records with invented protocols,
+  // testers, and dates).
+  res.json({
+    success: true,
+    data: [],
+    meta: {
+      recorded: 0,
+      note: 'No system validation (IQ/OQ/PQ) records are tracked in the platform. Qualification is performed and recorded by your QA organization.',
     },
-    {
-      id: uuidv4(),
-      systemName: 'Concept2Cure Platform',
-      validationType: 'OQ',
-      status: 'completed',
-      protocol: 'TSG-OQ-001',
-      summary:
-        'Operational Qualification verified: e-signature workflow, audit trail immutability, access controls, document versioning, and data integrity checks all passed.',
-      testedBy: 'QA Team',
-      approvedBy: 'QA Director',
-      executedAt: new Date('2026-01-20'),
-      completedAt: new Date('2026-01-22'),
-      deviations: [
-        {
-          id: uuidv4(),
-          description:
-            'Minor: Audit trail timestamp precision was millisecond instead of microsecond',
-          severity: 'minor',
-          resolution: 'Acceptable — millisecond precision exceeds FDA requirements',
-          resolved: true,
-        },
-      ],
-      attachmentIds: [],
-    },
-    {
-      id: uuidv4(),
-      systemName: 'Concept2Cure Platform',
-      validationType: 'PQ',
-      status: 'completed',
-      protocol: 'TSG-PQ-001',
-      summary:
-        'Performance Qualification verified: system performs as intended under production-equivalent conditions including concurrent users, document load testing, and audit trail stress testing.',
-      testedBy: 'QA Team',
-      approvedBy: 'VP Quality',
-      executedAt: new Date('2026-02-01'),
-      completedAt: new Date('2026-02-03'),
-      deviations: [],
-      attachmentIds: [],
-    },
-  ];
-
-  res.json({ success: true, data: records });
+  });
 });
 
 // ============================
@@ -1052,108 +1008,48 @@ router.get('/validation', (_req: Request, res: Response) => {
  * Get SOC 2 Type II control mapping and evidence status
  */
 router.get('/soc2/controls', (_req: Request, res: Response) => {
-  const controls = [
-    {
-      controlId: 'CC1.1',
-      category: 'security',
-      title: 'Control Environment — COSO Entity-Level Controls',
-      description: 'Management demonstrates commitment to integrity and ethical values',
-      evidenceStatus: 'collected',
-      evidenceCount: 3,
-    },
-    {
-      controlId: 'CC5.1',
-      category: 'security',
-      title: 'Control Activities — Logical Access',
-      description: 'Logical access controls restrict access to information assets',
-      evidenceStatus: 'collected',
-      evidenceCount: 5,
-      part11Mapping: '§11.10(d) — Authority checks limiting system access',
-    },
-    {
-      controlId: 'CC6.1',
-      category: 'security',
-      title: 'Logical and Physical Access — Authentication',
-      description: 'Multi-factor authentication for system access',
-      evidenceStatus: 'collected',
-      evidenceCount: 4,
-      part11Mapping: '§11.100 — Unique identification codes and passwords',
-    },
-    {
-      controlId: 'CC7.1',
-      category: 'security',
-      title: 'System Operations — Change Management',
-      description: 'Changes to infrastructure and software follow change management process',
-      evidenceStatus: 'collected',
-      evidenceCount: 6,
-    },
-    {
-      controlId: 'CC7.2',
-      category: 'security',
-      title: 'System Operations — Monitoring',
-      description: 'System components monitored for anomalies and security events',
-      evidenceStatus: 'collected',
-      evidenceCount: 3,
-      part11Mapping: '§11.10(e) — Audit trail monitoring',
-    },
-    {
-      controlId: 'CC8.1',
-      category: 'security',
-      title: 'Change Management — Authorization',
-      description: 'Changes authorized, designed, tested before implementation',
-      evidenceStatus: 'collected',
-      evidenceCount: 4,
-    },
-    {
-      controlId: 'A1.1',
-      category: 'availability',
-      title: 'Availability — System Availability',
-      description: 'System availability maintained per SLA commitments',
-      evidenceStatus: 'collected',
-      evidenceCount: 2,
-    },
-    {
-      controlId: 'PI1.1',
-      category: 'processing_integrity',
-      title: 'Processing Integrity — Data Accuracy',
-      description: 'Data processing is complete, valid, accurate, and timely',
-      evidenceStatus: 'collected',
-      evidenceCount: 5,
-      part11Mapping: '§11.10(a) — Validation of systems for accuracy and reliability',
-    },
-    {
-      controlId: 'C1.1',
-      category: 'confidentiality',
-      title: 'Confidentiality — Data Classification',
-      description: 'Confidential information identified and protected',
-      evidenceStatus: 'collected',
-      evidenceCount: 3,
-    },
-    {
-      controlId: 'P1.1',
-      category: 'privacy',
-      title: 'Privacy — Notice',
-      description: 'Privacy notices provide clear information about data practices',
-      evidenceStatus: 'collected',
-      evidenceCount: 2,
-    },
+  // SOC 2 Trust Services Criteria control framework (reference). Evidence
+  // collection and audit readiness are owned by the organization's GRC/audit
+  // program and are not tracked in-app, so evidence is reported honestly as
+  // not-collected and no readiness score is synthesized. (Previously every
+  // control was hardcoded as "collected" with invented evidence counts and a
+  // fabricated readiness score.)
+  const framework: {
+    controlId: string;
+    category: string;
+    title: string;
+    description: string;
+    part11Mapping?: string;
+  }[] = [
+    { controlId: 'CC1.1', category: 'security', title: 'Control Environment — COSO Entity-Level Controls', description: 'Management demonstrates commitment to integrity and ethical values' },
+    { controlId: 'CC5.1', category: 'security', title: 'Control Activities — Logical Access', description: 'Logical access controls restrict access to information assets', part11Mapping: '§11.10(d) — Authority checks limiting system access' },
+    { controlId: 'CC6.1', category: 'security', title: 'Logical and Physical Access — Authentication', description: 'Multi-factor authentication for system access', part11Mapping: '§11.100 — Unique identification codes and passwords' },
+    { controlId: 'CC7.1', category: 'security', title: 'System Operations — Change Management', description: 'Changes to infrastructure and software follow change management process' },
+    { controlId: 'CC7.2', category: 'security', title: 'System Operations — Monitoring', description: 'System components monitored for anomalies and security events', part11Mapping: '§11.10(e) — Audit trail monitoring' },
+    { controlId: 'CC8.1', category: 'security', title: 'Change Management — Authorization', description: 'Changes authorized, designed, tested before implementation' },
+    { controlId: 'A1.1', category: 'availability', title: 'Availability — System Availability', description: 'System availability maintained per SLA commitments' },
+    { controlId: 'PI1.1', category: 'processing_integrity', title: 'Processing Integrity — Data Accuracy', description: 'Data processing is complete, valid, accurate, and timely', part11Mapping: '§11.10(a) — Validation of systems for accuracy and reliability' },
+    { controlId: 'C1.1', category: 'confidentiality', title: 'Confidentiality — Data Classification', description: 'Confidential information identified and protected' },
+    { controlId: 'P1.1', category: 'privacy', title: 'Privacy — Notice', description: 'Privacy notices provide clear information about data practices' },
   ];
 
-  const totalControls = controls.length;
-  const evidenceCollected = controls.filter(c => c.evidenceStatus === 'collected').length;
-  const summary = {
-    totalControls,
-    evidenceCollected,
-    totalEvidence: controls.reduce((sum, c) => sum + c.evidenceCount, 0),
-    part11MappedControls: controls.filter(c => (c as any).part11Mapping).length,
-    // Real readiness = fraction of controls with evidence collected.
-    // Previously hardcoded 0.92.
-    readinessScore: totalControls > 0 ? Number((evidenceCollected / totalControls).toFixed(4)) : 0,
-    auditPeriod: { start: '2025-09-01', end: '2026-02-28' },
-    certificationTarget: 'SOC 2 Type II',
-  };
+  const controls = framework.map((c) => ({ ...c, evidenceStatus: 'not_collected', evidenceCount: 0 }));
 
-  res.json({ success: true, data: { controls, summary } });
+  res.json({
+    success: true,
+    data: {
+      controls,
+      summary: {
+        totalControls: controls.length,
+        evidenceCollected: 0,
+        totalEvidence: 0,
+        part11MappedControls: framework.filter((c) => c.part11Mapping).length,
+        readinessScore: null,
+        certificationTarget: 'SOC 2 Type II',
+        note: 'Control framework reference. Evidence collection and readiness are determined by your organization’s GRC/audit program; the platform does not track or attest SOC 2 evidence.',
+      },
+    },
+  });
 });
 
 /**
@@ -1198,111 +1094,58 @@ router.post(
  * Comprehensive 21 CFR Part 11 + SOC 2 compliance dashboard
  */
 router.get('/compliance-status', (_req: Request, res: Response) => {
+  // 21 CFR Part 11 / SOC 2 / GAMP 5 requirement framework mapped to the technical
+  // controls the platform provides. Compliance and audit readiness are
+  // organizational determinations made by your QA/validation and audit
+  // activities — the platform does not self-certify them, so section status is
+  // reported honestly as "not_assessed" and no readiness scores are synthesized.
+  // (Previously this returned every section as "compliant" with a fabricated
+  // 0.92 SOC 2 readiness score.)
+  const part11Controls: { code: string; title: string; platformControl: string }[] = [
+    { code: '§11.10(a)', title: 'System Validation', platformControl: 'Application engineered for validation; qualification (IQ/OQ/PQ) is performed and recorded by your QA organization' },
+    { code: '§11.10(b)', title: 'Legible Copies', platformControl: 'PDF export with rendered e-signatures' },
+    { code: '§11.10(c)', title: 'Record Protection', platformControl: 'Encrypted storage and backup policy' },
+    { code: '§11.10(d)', title: 'Authority Checks', platformControl: 'Role-based access control with audit logging' },
+    { code: '§11.10(e)', title: 'Audit Trail', platformControl: 'Hash-chained, tamper-evident audit trail' },
+    { code: '§11.10(f)', title: 'Operational Checks', platformControl: 'Version sequencing enforced' },
+    { code: '§11.10(g)', title: 'Authority Checks', platformControl: 'Role-based access with MFA' },
+    { code: '§11.10(h)', title: 'Device Checks', platformControl: 'Session management and IP logging' },
+    { code: '§11.10(i)', title: 'Training', platformControl: 'Training records tracked by your organization' },
+    { code: '§11.10(j)', title: 'Documentation Controls', platformControl: 'SOP distribution tracking' },
+    { code: '§11.10(k)', title: 'Controls for Open Systems', platformControl: 'TLS in transit, encryption at rest' },
+    { code: '§11.50', title: 'Signature Manifestation', platformControl: 'Name, date/time, and meaning displayed on signature' },
+    { code: '§11.70', title: 'Signature/Record Linking', platformControl: 'SHA-256 cryptographic binding of signature to record' },
+    { code: '§11.100', title: 'General Requirements for E-Signatures', platformControl: 'Unique identity plus password verification' },
+    { code: '§11.200', title: 'E-Signature Components', platformControl: 'Two distinct components (ID + password)' },
+    { code: '§11.300', title: 'Controls for ID Codes/Passwords', platformControl: 'Uniqueness, periodic revision, recall procedures' },
+  ];
+  const sections: Record<string, { title: string; status: string; platformControl: string }> = {};
+  for (const c of part11Controls) {
+    sections[c.code] = { title: c.title, status: 'not_assessed', platformControl: c.platformControl };
+  }
+
   res.json({
     success: true,
     data: {
-      part11: {
-        overallStatus: 'compliant',
-        sections: {
-          '§11.10(a)': {
-            title: 'System Validation',
-            status: 'compliant',
-            evidence: 'IQ/OQ/PQ completed',
-          },
-          '§11.10(b)': {
-            title: 'Legible Copies',
-            status: 'compliant',
-            evidence: 'PDF export with e-signatures',
-          },
-          '§11.10(c)': {
-            title: 'Record Protection',
-            status: 'compliant',
-            evidence: 'Encrypted storage, backup policy',
-          },
-          '§11.10(d)': {
-            title: 'Authority Checks',
-            status: 'compliant',
-            evidence: 'RBAC with audit logging',
-          },
-          '§11.10(e)': {
-            title: 'Audit Trail',
-            status: 'compliant',
-            evidence: 'Hash-chained immutable audit trail',
-          },
-          '§11.10(f)': {
-            title: 'Operational Checks',
-            status: 'compliant',
-            evidence: 'Version sequencing enforced',
-          },
-          '§11.10(g)': {
-            title: 'Authority Checks',
-            status: 'compliant',
-            evidence: 'Role-based access with MFA',
-          },
-          '§11.10(h)': {
-            title: 'Device Checks',
-            status: 'compliant',
-            evidence: 'Session management, IP logging',
-          },
-          '§11.10(i)': {
-            title: 'Training',
-            status: 'compliant',
-            evidence: 'Training records maintained',
-          },
-          '§11.10(j)': {
-            title: 'Documentation Controls',
-            status: 'compliant',
-            evidence: 'SOP distribution tracking',
-          },
-          '§11.10(k)': {
-            title: 'Controls for Open Systems',
-            status: 'compliant',
-            evidence: 'TLS 1.3, encryption at rest',
-          },
-          '§11.50': {
-            title: 'Signature Manifestation',
-            status: 'compliant',
-            evidence: 'Name, date/time, and meaning displayed',
-          },
-          '§11.70': {
-            title: 'Signature/Record Linking',
-            status: 'compliant',
-            evidence: 'SHA-256 cryptographic binding',
-          },
-          '§11.100': {
-            title: 'General Requirements for E-Signatures',
-            status: 'compliant',
-            evidence: 'Unique ID + password verification',
-          },
-          '§11.200': {
-            title: 'E-Signature Components',
-            status: 'compliant',
-            evidence: 'Two distinct components (ID + password)',
-          },
-          '§11.300': {
-            title: 'Controls for ID Codes/Passwords',
-            status: 'compliant',
-            evidence: 'Uniqueness, periodic revision, recall procedures',
-          },
-        },
-      },
+      disclaimer:
+        'This is the 21 CFR Part 11 / SOC 2 / GAMP 5 requirement framework mapped to the controls the platform provides. Compliance and audit readiness are determined by your organization; the platform does not self-certify them and does not synthesize readiness scores.',
+      part11: { overallStatus: 'not_assessed', sections },
       soc2: {
-        certificationLevel: 'Type II',
-        auditPeriod: '2025-09-01 to 2026-02-28',
-        readinessScore: 0.92,
+        certificationTarget: 'SOC 2 Type II',
+        readinessScore: null,
         trustServiceCategories: {
-          security: 'ready',
-          availability: 'ready',
-          processingIntegrity: 'ready',
-          confidentiality: 'ready',
-          privacy: 'in-progress',
+          security: 'not_assessed',
+          availability: 'not_assessed',
+          processingIntegrity: 'not_assessed',
+          confidentiality: 'not_assessed',
+          privacy: 'not_assessed',
         },
       },
       gamp5: {
         systemCategory: 'Category 5 — Custom Application',
-        riskAssessment: 'completed',
         validationApproach: 'Risk-based (GAMP 5)',
-        documentation: ['URS', 'FS', 'DS', 'IQ', 'OQ', 'PQ', 'RTM'],
+        riskAssessment: 'not_recorded',
+        expectedDocumentation: ['URS', 'FS', 'DS', 'IQ', 'OQ', 'PQ', 'RTM'],
       },
     },
   });

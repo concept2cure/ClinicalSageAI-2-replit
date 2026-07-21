@@ -154,7 +154,10 @@ export interface RbmBoardPlan {
   strategy: string;
   status: string;
   updated: string | null;
-  tiers: null;
+  // Monitoring tiers (enhanced/standard/reduced) when the plan carries them;
+  // null when the read-model has not populated them. Typed `null` previously,
+  // which collapsed `plan.tiers.enhanced` accesses in RbmSurfacesB to `never`.
+  tiers: Record<string, string> | null;
   anaDraft: boolean;
   approval: RbmBoardApproval | null;
 }

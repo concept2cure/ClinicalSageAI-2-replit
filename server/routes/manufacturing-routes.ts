@@ -184,22 +184,27 @@ export default function createManufacturingRoutes(pool: Pool): Router {
 
   router.get('/overview', async (_req: Request, res: Response) => {
     try {
-      // Attempt real DB aggregation; fall back to seed data on failure
+      // Attempt real DB aggregation; report honest zeros/nulls + dataAvailable:false on failure
       let equipmentCount = 0;
       let batchCount = 0;
       let deviationRate = 0;
       let batchesWithDeviations = 0;
       let oee = 0;
-      let releaseTimeDays = 0;
+      let releaseTimeDays: number | null = null;
       let qualityPassRate = 0;
       let ppqCompletedRuns = 0;
       let ppqTargetRuns = 3;
       let readinessPercent = 0;
+      let dataAvailable = true;
 
       try {
         const [eqRes, batchRes, devRes, qualRes] = await Promise.all([
           pool.query(`SELECT COUNT(*) AS cnt FROM manufacturing.equipment_registry WHERE status != 'DECOMMISSIONED'`),
-          pool.query(`SELECT COUNT(*) AS cnt, COUNT(*) FILTER (WHERE status = 'RELEASED') AS released FROM manufacturing.batch_execution_records`),
+          pool.query(`SELECT COUNT(*) AS cnt,
+                             COUNT(*) FILTER (WHERE status = 'RELEASED') AS released,
+                             AVG(EXTRACT(EPOCH FROM (released_at - actual_start)) / 86400.0)
+                               FILTER (WHERE released_at IS NOT NULL AND actual_start IS NOT NULL) AS avg_release_days
+                      FROM manufacturing.batch_execution_records`),
           pool.query(`SELECT COUNT(*) AS cnt FROM manufacturing.batch_execution_records WHERE deviation_count > 0`),
           pool.query(`SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE disposition = 'PASS') AS passed FROM manufacturing.quality_test_results`),
         ]);
@@ -213,7 +218,9 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         const passedTests = parseInt(qualRes.rows[0].passed, 10);
         qualityPassRate = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 100;
         oee = batchCount > 0 ? Math.round((releasedBatches / batchCount) * 100) : 0;
-        releaseTimeDays = releasedBatches > 0 ? 14 : 0; // placeholder until actual date diff
+        // Real mean release cycle time (days) from batch timestamps; null when unmeasurable
+        const avgReleaseDays = batchRes.rows[0].avg_release_days;
+        releaseTimeDays = avgReleaseDays != null ? Math.round(Number(avgReleaseDays)) : null;
 
         // Estimate readiness from completeness of equipment qualification + batch completion + quality
         const qualificationScore = equipmentCount > 0 ? 25 : 0;
@@ -222,17 +229,9 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         const ppqScore = ppqCompletedRuns >= ppqTargetRuns ? 25 : (ppqCompletedRuns / ppqTargetRuns) * 25;
         readinessPercent = Math.round(qualificationScore + batchScore + qualityScore + ppqScore);
       } catch {
-        // DB tables might not exist — use seed data
-        const seed = getSeedData();
-        equipmentCount = (seed.equipment || []).length;
-        batchCount = (seed.batches || []).length;
-        deviationRate = (seed.deviations || []).length > 0 ? 33 : 0;
-        ppqCompletedRuns = seed.validation?.ppq?.completedRuns ?? 0;
-        ppqTargetRuns = seed.validation?.ppq?.targetRuns ?? 3;
-        qualityPassRate = 95;
-        oee = 82;
-        releaseTimeDays = 14;
-        readinessPercent = 42;
+        // DB aggregation failed (e.g. tables not provisioned) — report honest
+        // empty KPIs with an error flag; never fabricate canned numbers.
+        dataAvailable = false;
       }
 
       return res.json({
@@ -243,11 +242,12 @@ export default function createManufacturingRoutes(pool: Pool): Router {
         releaseTimeDays,
         qualityPassRate,
         aiCompliance: {
-          rulesLoaded: true,
+          rulesLoaded: reviewManufacturing !== null,
           lastCheckAt: new Date().toISOString(),
         },
         equipmentCount,
         batchCount,
+        dataAvailable,
       });
     } catch (error: any) {
       return safeError(res, error, 'MFG_OVERVIEW_ERROR', 'Manufacturing overview');
@@ -825,23 +825,10 @@ export default function createManufacturingRoutes(pool: Pool): Router {
 
       const result = await pool.query(query, params);
 
-      // If no DB rows, return seed responses as fallback
-      if (result.rows.length === 0) {
-        const seed = getSeedData();
-        if (seed.responses && seed.responses.length > 0) {
-          return res.json({ responses: seed.responses, source: 'seed' });
-        }
-      }
-
+      // Return real rows only — honest empty [] when there are none. Never serve seed data as live.
       return res.json({ responses: result.rows, source: 'database' });
     } catch (error: any) {
-      // Fallback to seed on any table error
-      try {
-        const seed = getSeedData();
-        return res.json({ responses: seed.responses || [], source: 'seed_fallback' });
-      } catch {
-        return safeError(res, error, 'MFG_RESPONSES_LIST_ERROR', 'List responses');
-      }
+      return safeError(res, error, 'MFG_RESPONSES_LIST_ERROR', 'List responses');
     }
   });
 

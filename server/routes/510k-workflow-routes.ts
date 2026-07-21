@@ -272,6 +272,11 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
         },
       });
 
+      // NOTE: no fabricated `compliance` block is returned here. A hardcoded
+      // completeness:100 / issues:[] / all-zero issueCount was previously emitted on
+      // every save regardless of the saved data. Completeness and issues must be
+      // computed from real section data — use GET /:projectId/compliance-report
+      // (FDA510kComplianceTracker.generateComplianceReport) for the actual assessment.
       res.status(200).json({
         success: true,
         workflowId: workflow.id,
@@ -284,17 +289,6 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
               documents: 'Auto-populated via DocumentOrchestrationService',
             }
           : undefined,
-        compliance: {
-          auditId: `AUDIT_${projectId}_${Date.now()}`,
-          completeness: 100,
-          issues: [],
-          issueCount: {
-            critical: 0,
-            major: 0,
-            minor: 0,
-            suggestions: 0,
-          },
-        },
       });
     } catch (error) {
       console.error('[510k-workflow] Save error:', error);
@@ -344,13 +338,17 @@ export function create510kWorkflowRoutes(pool: Pool): Router {
     }
 
     try {
-      // For now, return empty workflows array to avoid database errors
-      // This allows the UI to work while we implement the full project listing
-      const workflows: any[] = [];
+      // Query the real 510(k) project store, scoped to the caller's org (the same
+      // table the save handler writes to). Returns honest results — empty only when
+      // this org genuinely has no projects.
+      const workflows = await db
+        .select()
+        .from(fda510kProjects)
+        .where(eq(fda510kProjects.organizationId, parseInt(organizationId)));
 
       res.status(200).json({
         success: true,
-        workflows: workflows,
+        workflows,
       });
     } catch (error) {
       console.error('[510k-workflow] List error:', error);
