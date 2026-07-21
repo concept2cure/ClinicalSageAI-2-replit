@@ -8,6 +8,28 @@
 
 ---
 
+## 0a. Delivery status (updated 2026-07-21, end of session)
+
+Since this analysis was written, the following trapped capabilities have been **built, tested (contract tests, no DB required), and pushed** on this branch:
+
+| Gap item | Delivered as | Commit theme |
+|---|---|---|
+| Editable authoring canvas (#2) | `DocumentAuthoring.tsx` — docs→sections→edit→auto-revisioned save→history/revert→comments on `/api/authoring` | `authoring:` |
+| E-signature chain (#4, modal half) | `Part11SignModal` — verify-password→verify-mfa→sign with §11.50 manifestation on `/api/esignature` | `esign:` |
+| Document filing (freeze + e-sign) | `AuthoringFilingBar` — freeze (sha256 seal) + PIN e-sign on `/api/authoring/docs/:id` | `authoring:` |
+| eCTD compile & export (#1, compile slice) | `EctdCompile` surface — readiness/validate/compile→backbone XML download on `/api/ectd-compile` | `ectd:` |
+| Submission Twin (#8) | `SubmissionTwin` surface on `/api/submission-twin` | `twin:` |
+| PV cockpit (#10) | `PvCockpit` — KPIs, ROR/PRR/EBGM screener, reporting clock, compliance matrix on `/api/pharmacovigilance` | `pv:` |
+| Biostat workbench (#3, first slice) | `BiostatWorkbench` — defensibility engine + assurance calculator on `/api/statistical-defensibility` + `/api/biostat` | `biostat:` |
+| RBM write layer (#9) | `RbmOperations` — KRI capture, site-risk/central-monitoring/patient-scoring on `/api/mdx/rbm-*` | `rbm:` |
+| QMP CRUD (#14) | `QmpWorkspace` on `/api/quality` | `qmp:` |
+| AI-Actions allow-list (#12) | 11 handlers unblocked in `VALID_ACTION_TYPES` + role permissions | `ai-actions:` |
+| Part 11 console (#4) | `Part11Console` — chain-integrity, §11.10 status, SOC 2 grid on `/api/part11`; **fixed the route-shadowing bug** that made chain/seal-integrity unreachable | `part11:` |
+| Protocol registers (§2.5) | `ProtocolRegisterForms` — risk/milestone/amendment/deviation creates wired to the real governed routers (dialog was a no-op) | `protocol:` |
+| SSO/SCIM console (#13) | `IdentityConsole` — SCIM token issue-once/rotate/revoke, IP allowlist, SAML endpoint references | `identity:` |
+
+Still open from the top-15: submission-gateway transmittals (#5, needs running app for binary/ACK), sentence click-through (#6), template extract/render buttons (#7), IND forms panel (#11), intelligent-reports governance (#15), Yjs real-time co-authoring, and the §4.3 small wire-ups not listed above.
+
 ## 0. Headline
 
 The backend is **far** larger than the UI exposes. This is not a "a few endpoints are unwired" problem — it is a structural one: a large fraction of production-grade, tested regulatory machinery is reachable by no human-clickable affordance at all.
