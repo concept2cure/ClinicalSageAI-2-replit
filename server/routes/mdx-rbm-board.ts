@@ -10,11 +10,11 @@
  * so the surface can render one call instead of the 12 granular /api/mdx/rbm-*
  * reads it would otherwise fan out.
  *
- * Mounted at /api/mdx (alongside mdx-rbm.ts which owns the granular CRUD +
+ * Mounted at /api/mdx-rbm (alongside mdx-rbm.ts which owns the granular CRUD +
  * the compute/POST actions). READ-ONLY: every write path (seed, recompute,
  * central-monitoring run, patient scoring, approvals, CRUD) stays in mdx-rbm.ts.
  *
- *   GET /api/mdx/rbm-board/:programId
+ *   GET /api/mdx-rbm/rbm-board/:programId
  *     → { success: true, data: <RBM board display shape> }
  *
  * RLS: queries run through requestDb(req) (request-scoped, tenant-pinned) and
@@ -105,7 +105,7 @@ export default function createRbmBoardRoutes(): Router {
   const router = Router();
 
   /**
-   * GET /api/mdx/rbm-board/:programId
+   * GET /api/mdx-rbm/rbm-board/:programId
    * Aggregated read-model for the RBM shell: summary, attention feed, risk
    * review report, RACT (assessment + CtQ register), KRIs (with trend sparks),
    * QTLs, central-monitoring signals, patient profiles, site risk, site

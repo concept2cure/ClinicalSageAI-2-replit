@@ -9,9 +9,9 @@ import {
   RBM_VOCAB, RBM_KRIS, RBM_QTLS, RBM_SIGNALS, RBM_SITES, RBM_PATIENTS,
   RBM_SUMMARY, RBM_ATTENTION, RBM_REPORT,
   rbmBand, kriStatusOf, createRbmStore,
-  type RbmKri, type RbmRiskItem, type RbmAction, type RbmApproval,
-  type RbmNavItem,
+  type RbmAction, type RbmApproval, type RbmNavItem,
 } from '../fixtures/rbm-data';
+import type { RbmBoard } from './rbmBoard';
 import '../styles/rbm-v2.css';
 
 /* Re-export surfaces so Rbm.tsx imports from one place */
@@ -20,6 +20,18 @@ export { RbmSignals, RbmPatients, RbmSites, RbmOversight, RbmPlan } from './RbmS
 
 /* ── Shared action store (singleton) ── */
 export const RBM_STORE = createRbmStore();
+
+/**
+ * Seed the cross-surface action store from the live board. Called by the shell
+ * when the selected program changes, so the plan board and every surface that
+ * raises actions work against the real, org-scoped monitoring actions.
+ */
+export function seedRbmActionsFromBoard(board: RbmBoard): void {
+  RBM_STORE.seed(board.actions.map(a => ({
+    id: String(a.id), type: a.type, title: a.title, priority: a.priority,
+    owner: a.owner, due: a.due, status: a.status, overdue: a.overdue, origin: a.origin,
+  })));
+}
 
 export function useRbmActions(): RbmAction[] {
   const [, force] = useState(0);
@@ -47,7 +59,7 @@ export function RbmFreshness({ at }: { at: string }) {
 }
 
 /* ── RiskMatrix ── */
-export function RiskMatrix({ items, sel, onSel }: { items: RbmRiskItem[]; sel: { l: number; i: number } | null; onSel: (c: { l: number; i: number } | null) => void }) {
+export function RiskMatrix({ items, sel, onSel }: { items: { l: number; i: number }[]; sel: { l: number; i: number } | null; onSel: (c: { l: number; i: number } | null) => void }) {
   const cells: { l: number; i: number; n: number; band: string }[] = [];
   for (let im = 5; im >= 1; im--) for (let l = 1; l <= 5; l++) {
     const n = items.filter(it => it.l === l && it.i === im).length;
@@ -140,14 +152,14 @@ export function SeedEmpty({ title, body, actions, onRun }: { title: string; body
 }
 
 /* ── TrendTable ── */
-export function TrendTable({ kri }: { kri: RbmKri }) {
+export function TrendTable({ kri }: { kri: { name: string; unit: string; spark: number[]; dir: string; amber: number | null; red: number | null } }) {
   return (
     <table className="rbm-trend-tbl">
       <caption className="rbm-sr">Reading history for {kri.name}, in {kri.unit}</caption>
       <thead><tr><th>#</th><th>Value</th><th>Status</th></tr></thead>
       <tbody>
         {kri.spark.map((val, i) => {
-          const st = kriStatusOf(kri, val);
+          const st = kriStatusOf({ dir: kri.dir, amber: kri.amber ?? 0, red: kri.red ?? 0 }, val);
           return <tr key={i}><td>{i + 1}</td><td className="mono">{val}{kri.unit}</td><td><RbmChip vocab="kri" value={st} /></td></tr>;
         })}
       </tbody>

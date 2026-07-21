@@ -171,11 +171,14 @@ export const RBM_STUDIES: RbmStudy[] = [
 
 /* -- Cross-app links -- */
 
+// Cross-app link cards for the RBM shell. `value` is an honest descriptor of the
+// destination — not a live count — so nothing fabricated is shown; the cards are
+// navigation affordances into the real surfaces.
 export const RBM_LINKS: Record<string, RbmLinkDef> = {
-  project: { surface: 'projects', label: 'Project management', value: 'BX-204 -- NDA 212345', note: 'Scoped to this program; posture rolls up to the project home.' },
-  vault: { surface: 'vault', label: 'Vault', value: '14 records', note: 'Monitoring reports, CAPAs and site-visit records filed to the DMS.' },
-  tasks: { surface: 'tasks', label: 'Tasking', value: '8 actions', note: 'Monitoring actions sync to the org-wide unified task board.' },
-  biostats: { surface: 'biostatistics', label: 'Biostatistics', value: 'estimand -- power', note: 'Breached QTLs route here for ICH E9(R1) estimand and power/sample-size impact.' },
+  project: { surface: 'projects', label: 'Project management', value: 'Program & project home', note: 'Scoped to this program; posture rolls up to the project home.' },
+  vault: { surface: 'vault', label: 'Vault', value: 'Monitoring reports & CAPAs', note: 'Monitoring reports, CAPAs and site-visit records filed to the DMS.' },
+  tasks: { surface: 'tasks', label: 'Tasking', value: 'Unified task board', note: 'Monitoring actions sync to the org-wide unified task board.' },
+  biostats: { surface: 'biostatistics', label: 'Biostatistics', value: 'Estimand & power impact', note: 'Breached QTLs route here for ICH E9(R1) estimand and power/sample-size impact.' },
 };
 
 /* -- Summary -- */
@@ -342,18 +345,27 @@ export const RBM_ACTIONS: RbmAction[] = [
 
 export interface RbmActionStore {
   getActions: () => RbmAction[];
+  seed: (rows: RbmAction[]) => void;
   addAction: (a: Partial<RbmAction>) => RbmAction;
   updateAction: (id: string, patch: Partial<RbmAction>) => void;
   subscribe: (fn: () => void) => () => void;
 }
 
+/**
+ * Cross-surface monitoring-action store. Starts EMPTY — the RBM shell seeds it
+ * from the live board (GET /api/mdx-rbm/rbm-board/:programId → data.actions) so
+ * the plan board renders real, org-scoped actions, never a fixture. Actions
+ * raised in-session (signal escalations, scheduled visits) are held here as an
+ * un-persisted sample layer until the write path is wired.
+ */
 export function createRbmStore(): RbmActionStore {
-  let actions = RBM_ACTIONS.slice();
+  let actions: RbmAction[] = [];
   let seq = 100;
   let listeners: (() => void)[] = [];
   const emit = () => listeners.forEach((f) => f());
   return {
     getActions: () => actions,
+    seed: (rows) => { actions = rows.slice(); emit(); },
     addAction: (a) => {
       const action: RbmAction = { id: `act-${++seq}`, status: 'open', overdue: false, origin: 'plan', type: '', title: '', priority: 'medium', owner: '', due: '—', ...a } as RbmAction;
       actions = [action, ...actions];

@@ -1,28 +1,71 @@
 /**
  * RBM surfaces 1-5: Overview, Risk review report, Risk assessment (RACT),
  * Key risk indicators, Quality tolerance limits.
+ *
+ * Every surface reads its slice from the live board
+ * (GET /api/mdx-rbm/rbm-board/:programId) passed as `board`. The in-surface edit
+ * flows (add CtQ factor, configure KRI, document breach, approve) remain an
+ * un-persisted sample layer — flagged by the shell's SampleTag — until the write
+ * path is wired; the read data they seed from is real, org-scoped RBQM data.
  */
 import React, { useState } from 'react';
 import { I } from '../icons';
 import {
-  RBM_VOCAB, RBM_SUMMARY, RBM_ATTENTION, RBM_ASSESSMENT, RBM_ITEMS, RBM_KRIS,
-  RBM_QTLS, RBM_REPORT, kriStatusOf, qtlStatusOf,
+  kriStatusOf, qtlStatusOf,
   type RbmRiskItem, type RbmKri, type RbmQtl, type RbmAssessment,
 } from '../fixtures/rbm-data';
+import type { RbmBoard, RbmBoardItem, RbmBoardKri, RbmBoardQtl } from './rbmBoard';
 import {
   RbmChip, RbmScore, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
   RbmFormModal, GovernedApprovalDialog, type FormField,
 } from './RbmSurfaces';
 import '../styles/rbm-v2.css';
 
+interface SubProps {
+  board: RbmBoard;
+  onTab?: (id: string) => void;
+  onAsk?: (t: string) => void;
+  onNav?: (id: string) => void;
+}
+
 const RACT_CATS = ['Safety', 'Endpoint', 'Data integrity', 'Enrollment', 'Site operations', 'IP handling'];
 const KRI_SOURCES = ['EDC', 'CTMS', 'EDC + safety DB', 'IRT/RTSM', 'Lab', 'Central review'];
 
+/* ── Board-row → editable view-model coercions ──
+   The board is the source of truth; these map its rows into the surfaces' view
+   types, stringifying numeric ids and coercing not-yet-scored nullables so the
+   read layer never renders a fabricated value. Client-only fields the board does
+   not carry (risk category, control, per-site drilldown) are left undefined. */
+type QtlView = RbmQtl & { breachAction?: string };
+
+function itemView(it: RbmBoardItem): RbmRiskItem {
+  return {
+    id: String(it.id), category: it.category, factor: it.factor,
+    l: it.l, i: it.i, det: it.det ?? undefined, critical: it.critical,
+    mitigation: it.mitigation, residual: it.residual ?? it.l * it.i,
+    status: it.status, owner: it.owner ?? undefined,
+  };
+}
+function kriView(k: RbmBoardKri): RbmKri {
+  return {
+    id: String(k.id), name: k.name, metric: k.metric, source: k.source, unit: k.unit,
+    dir: k.dir, amber: k.amber ?? 0, red: k.red ?? 0, current: k.current ?? 0,
+    status: k.status, at: k.at ?? '', spark: k.spark,
+  };
+}
+function qtlView(q: RbmBoardQtl): QtlView {
+  return {
+    id: String(q.id), parameter: q.parameter, rationale: q.rationale, unit: q.unit ?? '',
+    secondary: q.secondary ?? 0, threshold: q.threshold ?? 0, current: q.current ?? 0,
+    status: q.status, breachAction: q.breachActionTaken ?? undefined,
+  };
+}
+
 /* 1 -- Overview */
-export function RbmOverview({ onTab, onAsk }: { onTab: (id: string) => void; onAsk: (t: string) => void; onNav?: (id: string) => void }) {
-  const S = RBM_SUMMARY;
+export function RbmOverview({ board, onTab }: SubProps) {
+  const S = board.summary;
   const tiles = [
-    { k: 'Overall risk', v: null as string | null, chip: <RbmChip vocab="band" value={S.overallRisk} />, sub: 'rbm-engine -- L x I banding', nav: 'ract' },
+    { k: 'Overall risk', v: null as string | null, chip: <RbmChip vocab="band" value={S.overallRisk ?? 'unknown'} />, sub: 'rbm-engine -- L x I banding', nav: 'ract' },
     { k: 'Critical CtQ factors', v: String(S.riskItems.critical), chip: null, sub: `${S.riskItems.open} of ${S.riskItems.total} open`, nav: 'ract' },
     { k: 'KRIs red / amber', v: `${S.kris.red} / ${S.kris.amber}`, chip: null, sub: `${S.kris.total} indicators`, nav: 'kris', warn: S.kris.red > 0 },
     { k: 'QTLs breached', v: String(S.qtls.breached), chip: null, sub: `${S.qtls.approaching} approaching`, nav: 'qtls', err: S.qtls.breached > 0 },
@@ -33,7 +76,7 @@ export function RbmOverview({ onTab, onAsk }: { onTab: (id: string) => void; onA
     <div>
       <div className="rbm-tiles">
         {tiles.map((t, i) => (
-          <button key={i} className="rbm-tile" data-warn={(t as Record<string, unknown>).warn || undefined} data-err={(t as Record<string, unknown>).err || undefined} onClick={() => onTab(t.nav)}>
+          <button key={i} className="rbm-tile" data-warn={(t as Record<string, unknown>).warn || undefined} data-err={(t as Record<string, unknown>).err || undefined} onClick={() => onTab?.(t.nav)}>
             <span className="rbm-tile-k">{t.k}</span>
             {t.chip ? <span className="rbm-tile-chip">{t.chip}</span> : <span className="rbm-tile-v">{t.v}</span>}
             <span className="rbm-tile-s">{t.sub}</span>
@@ -42,32 +85,40 @@ export function RbmOverview({ onTab, onAsk }: { onTab: (id: string) => void; onA
       </div>
       <div className="rbm-sec-h"><h2>Needs attention now</h2><span className="rbm-sec-sub">buildAttentionFeed -- ordered by severity -- as of {S.asOf}</span></div>
       <div className="rbm-att">
-        {RBM_ATTENTION.map((a, i) => (
-          <button key={i} className="rbm-att-row" data-sev={a.sev} onClick={() => onTab(a.nav)}>
+        {board.attention.map((a, i) => (
+          <button key={i} className="rbm-att-row" data-sev={a.sev} onClick={() => onTab?.(a.nav)}>
             <RbmChip vocab="severity" value={a.sev} />
             <span className="rbm-att-kind">{a.kind}</span>
             <span className="rbm-att-body"><b>{a.t}</b><em>{a.d}</em></span>
             <span className="rbm-att-go">{I.chevRight}</span>
           </button>
         ))}
+        {board.attention.length === 0 && <div className="rbm-inbox-empty">Nothing needs attention right now for this study.</div>}
       </div>
     </div>
   );
 }
 
 /* 2 -- Report */
-export function RbmReport({ onAsk }: { onTab?: (id: string) => void; onAsk: (t: string) => void; onNav?: (id: string) => void }) {
-  const R = RBM_REPORT;
+export function RbmReport({ board, onAsk }: SubProps) {
+  const R = board.report;
+  if (!R) {
+    return (
+      <div className="rbm-report">
+        <div className="rbm-note">{I.info}No risk review is available for this study yet — it is generated from the risk assessment, KRIs, QTLs, signals and sites once they exist.</div>
+      </div>
+    );
+  }
   return (
     <div className="rbm-report">
       <div className="rbm-report-h">
         <div>
           <div className="rbm-report-fw">{R.framework}</div>
-          <h2 className="rbm-report-t">Risk review -- BX204-301</h2>
+          <h2 className="rbm-report-t">Risk review</h2>
           <div className="rbm-report-m">As of {R.asOf} -- overall risk <RbmChip vocab="band" value={R.overallRisk} /> -- {R.attentionCount} attention items -- {R.approved ? 'assessment approved' : 'assessment approval pending'}</div>
         </div>
         <div className="rbm-report-acts">
-          <button className="rbm-btn" onClick={() => onAsk('Export the risk review report as markdown')}>{I.download}Export markdown</button>
+          <button className="rbm-btn" onClick={() => onAsk?.('Export the risk review report as markdown')}>{I.download}Export markdown</button>
           <button className="rbm-btn" onClick={() => window.print()}>{I.fileText}Print</button>
         </div>
       </div>
@@ -84,10 +135,20 @@ export function RbmReport({ onAsk }: { onTab?: (id: string) => void; onAsk: (t: 
 }
 
 /* 3 -- RACT */
-export function RbmRact({ onAsk }: { onTab?: (id: string) => void; onAsk: (t: string) => void; onNav?: (id: string) => void }) {
+export function RbmRact({ board }: SubProps) {
   const [sel, setSel] = useState<{ l: number; i: number } | null>(null);
-  const [asmt, setAsmt] = useState<RbmAssessment>(RBM_ASSESSMENT);
-  const [items, setItems] = useState<RbmRiskItem[]>(RBM_ITEMS);
+  const [asmt, setAsmt] = useState<RbmAssessment | null>(() => {
+    const a = board.assessment;
+    if (!a) return null;
+    return {
+      id: String(a.id), framework: a.framework, version: a.version, status: a.status,
+      updated: a.updated ?? '', history: [],
+      approval: a.approval
+        ? { by: a.approval.by ?? '', when: a.approval.when ?? '', reason: a.approval.reason ?? '', audit: '' }
+        : undefined,
+    };
+  });
+  const [items, setItems] = useState<RbmRiskItem[]>(() => board.items.map(itemView));
   const [signFor, setSignFor] = useState(false);
   const [edit, setEdit] = useState<{ mode: string; item?: RbmRiskItem } | null>(null);
   const shown = items.filter(it => !sel || (it.l === sel.l && it.i === sel.i));
@@ -114,15 +175,19 @@ export function RbmRact({ onAsk }: { onTab?: (id: string) => void; onAsk: (t: st
   ];
   return (
     <div>
-      <div className="rbm-asmt">
-        <div className="rbm-asmt-l">
-          <b>{asmt.framework}</b>
-          <span>Version {asmt.version} -- <RbmChip vocab={asmt.status === 'active' ? 'action' : 'item'} value={asmt.status === 'active' ? 'done' : 'open'} /> {asmt.status === 'active' ? 'active' : 'draft -- approval pending'} -- {items.length} CtQ factors, {items.filter(x => x.critical).length} critical</span>
-          {asmt.approval ? <span className="rbm-audit">{I.check}Approved by {asmt.approval.by} -- {asmt.approval.when} -- &quot;{asmt.approval.reason}&quot; -- <code>{asmt.approval.audit}</code></span> : null}
+      {asmt ? (
+        <div className="rbm-asmt">
+          <div className="rbm-asmt-l">
+            <b>{asmt.framework}</b>
+            <span>Version {asmt.version} -- <RbmChip vocab={asmt.status === 'active' ? 'action' : 'item'} value={asmt.status === 'active' ? 'done' : 'open'} /> {asmt.status === 'active' ? 'active' : 'draft -- approval pending'} -- {items.length} CtQ factors, {items.filter(x => x.critical).length} critical</span>
+            {asmt.approval ? <span className="rbm-audit">{I.check}Approved by {asmt.approval.by} -- {asmt.approval.when} -- &quot;{asmt.approval.reason}&quot;</span> : null}
+          </div>
+          <div className="rbm-asmt-hist">{asmt.history.map((h, i) => <span key={i} className="rbm-hist-row">v{h.v} -- {h.status} -- {h.by} -- {h.when}</span>)}</div>
+          {asmt.status !== 'active' && <button className="rbm-btn pri" onClick={() => setSignFor(true)}>{I.lock}Approve assessment</button>}
         </div>
-        <div className="rbm-asmt-hist">{asmt.history.map((h, i) => <span key={i} className="rbm-hist-row">v{h.v} -- {h.status} -- {h.by} -- {h.when}</span>)}</div>
-        {asmt.status !== 'active' && <button className="rbm-btn pri" onClick={() => setSignFor(true)}>{I.lock}Approve assessment</button>}
-      </div>
+      ) : (
+        <div className="rbm-note">{I.info}No formal risk-assessment record exists for this study yet — the critical-to-quality register below reflects the live risk items; create and approve a framework version to govern it.</div>
+      )}
       <div className="rbm-ract-cols">
         <div className="rbm-card">
           <div className="rbm-card-h">Likelihood x impact{sel ? <button className="rbm-clear" onClick={() => setSel(null)}>{I.close}Clear filter L{sel.l} x I{sel.i}</button> : <span className="rbm-card-sub">click a cell to filter</span>}</div>
@@ -144,23 +209,25 @@ export function RbmRact({ onAsk }: { onTab?: (id: string) => void; onAsk: (t: st
                 <td><RbmChip vocab="item" value={it.status} /></td>
                 <td><button className="rbm-rowedit" title="Edit" onClick={() => setEdit({ mode: 'edit', item: it })}>{I.penLine}</button></td>
               </tr>
-            ))}</tbody></table>
+            ))}
+            {items.length === 0 && <tr><td colSpan={8} className="rbm-col-empty">No critical-to-quality factors for this study yet.</td></tr>}
+            </tbody></table>
         </div>
       </div>
       {edit && <RbmFormModal title={edit.mode === 'edit' ? 'Edit CtQ factor' : 'Add CtQ factor'}
         intro="Classify the risk (trial-wide / site / subject), score likelihood x impact x detectability, and record the mitigation, risk control and owner. A score of 15+ is flagged critical."
         fields={fields} initial={edit.item ? { ...edit.item as unknown as Record<string, string>, l: String(edit.item.l), i: String(edit.item.i), det: String(edit.item.det || 3), residual: String(edit.item.residual), riskCat: edit.item.riskCat || 'Trial-wide' } as unknown as Record<string, string> : null}
         submitLabel={edit.mode === 'edit' ? 'Save changes' : 'Add factor'} onCancel={() => setEdit(null)} onSubmit={saveItem} />}
-      {signFor && <GovernedApprovalDialog what={`Risk assessment v${asmt.version}`}
+      {signFor && asmt && <GovernedApprovalDialog what={`Risk assessment v${asmt.version}`}
         meaning="The RACT becomes the governing risk basis for monitoring-tier assignment and the risk review report."
-        onCancel={() => setSignFor(false)} onSigned={sig => { setAsmt(a => ({ ...a, status: 'active', approval: sig })); setSignFor(false); }} />}
+        onCancel={() => setSignFor(false)} onSigned={sig => { setAsmt(a => a ? { ...a, status: 'active', approval: sig } : a); setSignFor(false); }} />}
     </div>
   );
 }
 
 /* 4 -- KRIs */
-export function RbmKris({ onAsk }: { onTab?: (id: string) => void; onAsk: (t: string) => void; onNav?: (id: string) => void }) {
-  const [kris, setKris] = useState<RbmKri[]>(RBM_KRIS);
+export function RbmKris({ board }: SubProps) {
+  const [kris, setKris] = useState<RbmKri[]>(() => board.kris.map(kriView));
   const [tableFor, setTableFor] = useState<Record<string, boolean>>({});
   const [drillFor, setDrillFor] = useState<Record<string, boolean>>({});
   const [entryFor, setEntryFor] = useState<string | null>(null);
@@ -200,7 +267,7 @@ export function RbmKris({ onAsk }: { onTab?: (id: string) => void; onAsk: (t: st
             <div className="rbm-kri-v" data-st={k.status}>{k.current}<em>{k.unit}</em></div>
             {tableFor[k.id] ? <TrendTable kri={k} /> : <Sparkline values={k.spark} amber={k.amber} red={k.red} />}
           </div>
-          <div className="rbm-kri-thr">amber {k.amber}{k.unit} -- red {k.red}{k.unit} -- {k.level || 'Site'} level -- evaluated {k.at}</div>
+          <div className="rbm-kri-thr">amber {k.amber}{k.unit} -- red {k.red}{k.unit} -- {k.level || 'Site'} level -- evaluated {k.at || '—'}</div>
           {drillFor[k.id] && k.bySite && (
             <div className="rbm-kri-sub">
               <div className="rbm-kri-sub-h">By site -- {k.level || 'Site'} subgroup</div>
@@ -223,7 +290,9 @@ export function RbmKris({ onAsk }: { onTab?: (id: string) => void; onAsk: (t: st
             {k.bySite && <button className="rbm-linkbtn" aria-pressed={!!drillFor[k.id]} onClick={() => setDrillFor(d => ({ ...d, [k.id]: !d[k.id] }))}>{I.network}By site</button>}
           </div>
         </div>
-      ))}</div>
+      ))}
+        {kris.length === 0 && <div className="rbm-inbox-empty">No key risk indicators for this study yet.</div>}
+      </div>
       <div className="rbm-note">{I.info}KRIs are either seeded from the TransCelerate library or defined per study. Discrete thresholds are fixed; dynamic thresholds are statistically derived from the cohort. Appending a reading recomputes status via kriStatus() -- the UI never bands a value itself. Every trend has a data-table equivalent (WCAG 2.2 AA).</div>
       {entryFor && (() => { const k = kris.find(x => x.id === entryFor)!; return (
         <RbmFormModal title={`Add reading -- ${k.name}`}
@@ -241,15 +310,15 @@ export function RbmKris({ onAsk }: { onTab?: (id: string) => void; onAsk: (t: st
 }
 
 /* 5 -- QTLs */
-export function RbmQtls() {
-  const [qtls, setQtls] = useState<RbmQtl[]>(RBM_QTLS);
-  const [cfg, setCfg] = useState<{ mode: string; qtl?: RbmQtl } | null>(null);
-  const [breach, setBreach] = useState<RbmQtl | null>(null);
+export function RbmQtls({ board }: SubProps) {
+  const [qtls, setQtls] = useState<QtlView[]>(() => board.qtls.map(qtlView));
+  const [cfg, setCfg] = useState<{ mode: string; qtl?: QtlView } | null>(null);
+  const [breach, setBreach] = useState<QtlView | null>(null);
   const saveCfg = (f: Record<string, string>) => {
     const base = { parameter: f.parameter, rationale: f.rationale, unit: f.unit, secondary: +f.secondary, threshold: +f.threshold, current: f.current !== '' ? +f.current : 0 };
     const status = qtlStatusOf(base);
     if (cfg!.mode === 'edit') setQtls(qs => qs.map(q => q.id === cfg!.qtl!.id ? { ...q, ...base, status } : q));
-    else setQtls(qs => [...qs, { id: `qtl-${Date.now().toString().slice(-5)}`, ...base, status } as RbmQtl]);
+    else setQtls(qs => [...qs, { id: `qtl-${Date.now().toString().slice(-5)}`, ...base, status } as QtlView]);
     setCfg(null);
   };
   const saveBreach = (f: Record<string, string>) => {
@@ -275,15 +344,19 @@ export function RbmQtls() {
           <tbody>{qtls.map(q => (
             <tr key={q.id}>
               <td className="fac"><b>{q.parameter}</b></td>
-              <td className="mit">{q.rationale}{q.breachDoc && <span className="rbm-control">{I.check}Breach documented -- {q.breachDoc.when}</span>}</td>
+              <td className="mit">{q.rationale}{q.breachDoc
+                ? <span className="rbm-control">{I.check}Breach documented -- {q.breachDoc.when}</span>
+                : q.breachAction ? <span className="rbm-control">{I.check}Breach action -- {q.breachAction}</span> : null}</td>
               <td><ThresholdGauge current={q.current} secondary={q.secondary} threshold={q.threshold} unit={q.unit === '%' ? '%' : ''} /></td>
               <td><RbmChip vocab="qtl" value={q.status} /></td>
               <td><div className="rbm-qtl-acts">
                 <button className="rbm-rowedit" title="Configure" onClick={() => setCfg({ mode: 'edit', qtl: q })}>{I.penLine}</button>
-                {q.status === 'breached' && !q.breachDoc && <button className="rbm-linkbtn" onClick={() => setBreach(q)}>Document breach</button>}
+                {q.status === 'breached' && !q.breachDoc && !q.breachAction && <button className="rbm-linkbtn" onClick={() => setBreach(q)}>Document breach</button>}
               </div></td>
             </tr>
-          ))}</tbody></table>
+          ))}
+          {qtls.length === 0 && <tr><td colSpan={5} className="rbm-col-empty">No quality tolerance limits for this study yet.</td></tr>}
+          </tbody></table>
       </div>
       <div className="rbm-note">{I.info}The secondary limit (50-75% of threshold) is the RBQM early-warning band: crossing it triggers review before the tolerance itself is at stake. A breached QTL requires a documented justification, evidence and a CAPA, plus an impact assessment on the affected estimand (routed to Biostatistics).</div>
       {cfg && <RbmFormModal title={cfg.mode === 'edit' ? 'Configure QTL' : 'New quality tolerance limit'}
