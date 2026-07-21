@@ -81,6 +81,7 @@ import { SafetyNarrative } from './surfaces/SafetyNarrative';
 import { ShadowReview } from './surfaces/ShadowReview';
 import { SourceTracer } from './surfaces/SourceTracer';
 import { SubmissionCenter } from './surfaces/SubmissionCenter';
+import { SubmissionTwin } from './surfaces/SubmissionTwin';
 import { GlobalRiBrowser } from './surfaces/Surfaces';
 import { TaskBoard } from './surfaces/TaskBoard';
 import { TemplateLibrary } from './surfaces/TemplateLibrary';
@@ -185,6 +186,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'shadow-review': { component: ShadowReview, full: true },
   'source-tracer': { component: SourceTracer },
   'submission-center': { component: SubmissionCenter },
+  'submission-twin': { component: SubmissionTwin },
   'task-board': { component: TaskBoard },
   tasks: { component: TaskBoard },
   'template-library': { component: TemplateLibrary },

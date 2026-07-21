@@ -376,6 +376,7 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
     'export_document',
   ],
   'submission-center': ['compile_dossier', 'route_document_to_module', 'export_document', 'save_document_version'],
+  'submission-twin': ['run_validation', 'compile_dossier'],
   'decision-lineage': ['get_document', 'export_document', 'run_validation'],
   dossier: ['compile_dossier', 'route_document_to_module', 'export_document'],
   vault: ['promote_artifact', 'attach_sources_to_document', 'export_document'],
@@ -418,7 +419,7 @@ export const SEGMENT_MODULES = {
       label: 'Evidence & data',
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
-    { label: 'Submit & file', items: ['submission-center', 'pyramid', 'dossier-map', 'haq-manager'] },
+    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'pyramid', 'dossier-map', 'haq-manager'] },
     { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail'] },
     {
       label: 'Intelligence & risk',
@@ -444,7 +445,7 @@ export const SEGMENT_MODULES = {
       label: 'Evidence & data',
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
-    { label: 'Submit & file', items: ['submission-center', 'pyramid', 'dossier-map', 'haq-manager'] },
+    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'pyramid', 'dossier-map', 'haq-manager'] },
     { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail'] },
     {
       label: 'Intelligence & risk',
