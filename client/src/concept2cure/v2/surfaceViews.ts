@@ -27,6 +27,7 @@ import { BiopharmaProject, CsrWorkflow, RegulatoryWorkspace } from './surfaces/B
 import { Pediatric, Orphan, Lifecycle, Pharmacovigilance } from './surfaces/BiopharmaSpecialty';
 import { PvCockpit } from './surfaces/PvCockpit';
 import { Biostatistics } from './surfaces/Biostatistics';
+import { BiostatWorkbench } from './surfaces/BiostatWorkbench';
 import { ChangeAssessment } from './surfaces/ChangeAssessment';
 import { ClinicalOps } from './surfaces/ClinicalOps';
 import { ConversationThread } from './surfaces/ConversationThread';
@@ -117,6 +118,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'batch-draft': { component: BatchDraft, full: true },
   biopharma: { component: BiopharmaProject },
   biostatistics: { component: Biostatistics },
+  'biostat-workbench': { component: BiostatWorkbench },
   'change-assessment': { component: ChangeAssessment },
   'clinical-ops': { component: ClinicalOps },
   cmc: { component: CmcModule },

@@ -511,6 +511,7 @@ export const SEGMENT_MODULES = {
       label: 'Science & intelligence',
       items: [
         'biostatistics',
+        'biostat-workbench',
         'rbm',
         'clinical-ops',
         'safety-narrative',
@@ -591,6 +592,7 @@ export const SEGMENT_MODULES = {
       label: 'Science & intelligence',
       items: [
         'biostatistics',
+        'biostat-workbench',
         'rbm',
         'clinical-ops',
         'safety-narrative',
@@ -634,6 +636,7 @@ export const SEGMENT_MODULES = {
       label: 'Science & intelligence',
       items: [
         'biostatistics',
+        'biostat-workbench',
         'rbm',
         'precedent-intelligence',
         'global-ri',
