@@ -37,6 +37,7 @@ import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
+import { AuthoringFilingBar } from './AuthoringFilingBar';
 import '../styles/project-home-v2.css';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
@@ -395,6 +396,15 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
             <button className="btn ghost" style={{ height: 30 }} onClick={() => onAsk(draftPrompt)}>
               {I.sparkles} Draft with AnA
             </button>
+            {activeDoc && (
+              <AuthoringFilingBar
+                docId={activeDoc.id}
+                docTitle={activeDoc.title}
+                docStatus={activeDoc.status}
+                onChanged={() => { void loadDocs(); if (activeDocId) void loadSections(activeDocId); }}
+                fireToast={fireToast}
+              />
+            )}
           </div>
         </header>
 
