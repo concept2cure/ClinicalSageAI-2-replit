@@ -34,7 +34,13 @@ Since this analysis was written, the following trapped capabilities have been **
 
 **DeviceSubmission mount — verdict: NOT mounted.** On inspection the orphaned hub's spine is fixture seed data (`DV` from device-data) and its governed dialog is an explicit no-op flagged "MOCK ACTION" — including an "Assemble package / Submit to gateway" flow presented with a 21 CFR Part 11 e-signature affordance that performs no work. Mounting it as-is would ship a fake Part 11 flow, violating the no-mock mandate. It stays unmounted until its spine is rebound to the real endpoints it already references (`/api/capa-mdr`, `/api/inspections`, `/api/pccp`, `/api/cybersecurity-524b`, `/api/design-controls`) and its governed dialog is wired — a dedicated de-mocking pass, not a registry entry.
 
-Still open: submission-gateway transmittals (#5 — in progress), Yjs real-time co-authoring (locks/presence REST slice in progress; CRDT socket sync is an editor-infrastructure build), and the DeviceSubmission de-mocking pass above.
+**Fourth wave (same day) — everything closed:**
+- **Gateway transmittals (#5)** — `GatewayTransmittals` surface (`gateway-transmittals`): gateway roster + credential status, governed transmit (§11 re-auth + reason), transmittal log, live status poll, ACK download, governed rollback; 401/409/412/422 gates each surfaced with the server's reason. E2E transport against live agency gateways still needs a running app + credentials.
+- **Realtime-collab locks/presence** — `AuthoringCollab` in the canvas header: joins the section room (server's connectedUsers roster as presence), acquire/release section locks, 409 conflicts surfaced. Yjs CRDT socket co-editing (live cursors) remains the one open editor-infrastructure build.
+- **Document CREATE + PUBLISH** — `AuthoringCreateExport`: New document (optional template seed), New section, and Word/XML publish via `/docs/:id/export`. One surface now covers create → draft → edit → history/revert → comment → presence/lock → freeze → e-sign → publish across M1–M5 — the product's core loop. (A PDF button is deliberately absent: the server's pdf branch returns mislabeled DOCX bytes — backend fix needed before it can be offered honestly.)
+- **Test suite fully green: 916/916** (66 files). The appsLive failures were a stale pre-honesty test, rewritten to lock the fixture-free behavior.
+
+Remaining (all documented, none silently open): Yjs CRDT socket sync; the DeviceSubmission de-mocking pass; the backend `pdf` export branch (returns DOCX bytes under a PDF label); full E2E validation of transmit/ACK against live gateways.
 
 ## 0. Headline
 
