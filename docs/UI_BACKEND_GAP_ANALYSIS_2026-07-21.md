@@ -30,7 +30,11 @@ Since this analysis was written, the following trapped capabilities have been **
 
 **Second wave (same day):** template extract/save/render made real (#7 — `TemplateLibrary` now drives extract/from-upload/render, fake setTimeout + dead buttons removed); IND Module-1 forms panel (#11 — `IndFormsPanel` builds/QCs/downloads real 1571/1572/3674 PDFs inside IndLifecycle); sentence click-through (#6 — SourceTracer's Trace action resolves a sentence to its exact source span via `/api/audit-services/traceability/click-through`); intelligent-reports governance (#15 — `ReportGovernance` surface: list, cryptographic verify, provenance/attestations, seal/revoke with justification).
 
-Still open from the top-15: submission-gateway transmittals (#5 — binary/ACK flows, best validated against a running app), Yjs real-time co-authoring, and the remaining §4.3 small wire-ups (saved precedent queries, dossier per-section readiness, HAQ id-mapping, mounting the orphaned device surfaces).
+**Third wave (same day):** appsLive test suite repaired (the 4 failures locked a pre-honesty Apps iteration; rewritten to the fixture-free behavior — suite fully green); Dossier now binds `/api/dossier-readiness/:projectId` (live per-CTD-section rollups + summary); HAQ Route-to-review/Approve persist via the real store endpoints (the `/rounds` mapper now emits the numeric `dbId` they key on); PrecedentEngine saves/reloads/deletes queries on `/api/saved-precedent-queries` (chips + JSON round-trip through the free-text query column, productCode/pathway normalized into scope).
+
+**DeviceSubmission mount — verdict: NOT mounted.** On inspection the orphaned hub's spine is fixture seed data (`DV` from device-data) and its governed dialog is an explicit no-op flagged "MOCK ACTION" — including an "Assemble package / Submit to gateway" flow presented with a 21 CFR Part 11 e-signature affordance that performs no work. Mounting it as-is would ship a fake Part 11 flow, violating the no-mock mandate. It stays unmounted until its spine is rebound to the real endpoints it already references (`/api/capa-mdr`, `/api/inspections`, `/api/pccp`, `/api/cybersecurity-524b`, `/api/design-controls`) and its governed dialog is wired — a dedicated de-mocking pass, not a registry entry.
+
+Still open: submission-gateway transmittals (#5 — in progress), Yjs real-time co-authoring (locks/presence REST slice in progress; CRDT socket sync is an editor-infrastructure build), and the DeviceSubmission de-mocking pass above.
 
 ## 0. Headline
 

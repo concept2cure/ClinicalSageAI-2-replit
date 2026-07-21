@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
@@ -58,6 +58,34 @@ interface PeQuery {
   productCode: string;
 }
 
+/* Saved queries — the real org-scoped CRUD at /api/saved-precedent-queries
+   ({data} envelope; numeric ids). The full PeQuery round-trips through the
+   free-text `query` column as JSON; productCode/pathway are additionally
+   normalized into the structured `scope` for other consumers. */
+interface SavedPeQuery { id: number; label: string; query: string; scope: Record<string, unknown> | null; }
+
+const PATHWAY_OF: Record<string, string> = { '510(k)': '510k', 'PMA': 'pma', 'De Novo': 'de_novo' };
+
+function parseSavedQuery(s: SavedPeQuery): PeQuery {
+  try {
+    const p = JSON.parse(s.query) as Partial<PeQuery>;
+    if (p && typeof p === 'object' && typeof p.submissionType === 'string') {
+      return {
+        submissionType: p.submissionType,
+        therapeuticArea: String(p.therapeuticArea ?? ''),
+        indication: String(p.indication ?? ''),
+        productCode: String(p.productCode ?? ''),
+      };
+    }
+  } catch { /* fall through to the free-text mapping */ }
+  return {
+    submissionType: '510(k)',
+    therapeuticArea: '',
+    indication: s.query,
+    productCode: String((s.scope as { productCode?: string } | null)?.productCode ?? ''),
+  };
+}
+
 /* ════ PrecedentEngine — precedent intelligence workbench ════ */
 
 export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
@@ -95,6 +123,58 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
   const sel = results.find((r) => r.clearanceNumber === selK) || results[0];
 
   const runSearch = () => setApplied(q);
+
+  /* Saved queries — list on load; save/pin/reload/delete against the real CRUD. */
+  const [saved, setSaved] = useState<SavedPeQuery[]>([]);
+  const [savedNote, setSavedNote] = useState('');
+  const note = (m: string) => { setSavedNote(m); setTimeout(() => setSavedNote(''), 4200); };
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await apiRequest('GET', '/api/saved-precedent-queries/');
+        const body = await res.json().catch(() => null);
+        if (res.ok && Array.isArray(body?.data)) setSaved(body.data as SavedPeQuery[]);
+      } catch { /* list stays empty; saving still reports its own errors */ }
+    })();
+  }, []);
+
+  const saveQuery = async () => {
+    const label = [q.productCode, q.submissionType, (q.indication || q.therapeuticArea).slice(0, 60)]
+      .filter(Boolean).join(' · ').slice(0, 120) || 'Precedent query';
+    try {
+      const scope: Record<string, unknown> = {};
+      if (q.productCode.trim()) scope.productCode = q.productCode.trim().slice(0, 16);
+      if (PATHWAY_OF[q.submissionType]) scope.pathway = PATHWAY_OF[q.submissionType];
+      const res = await apiRequest('POST', '/api/saved-precedent-queries/', {
+        label, query: JSON.stringify(q), scope: Object.keys(scope).length ? scope : null,
+      });
+      const body = await res.json().catch(() => null);
+      const row = (body?.data ?? body) as SavedPeQuery | null;
+      if (!res.ok || !row?.id) { note(res.status === 401 ? 'Sign in to save queries.' : `Couldn’t save the query (HTTP ${res.status}).`); return; }
+      setSaved((s) => [row, ...s.filter((x) => x.id !== row.id)]);
+      note('Query saved · ' + row.label);
+    } catch (e) {
+      note('Couldn’t save the query — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
+
+  const applySaved = (s: SavedPeQuery) => {
+    const next = parseSavedQuery(s);
+    setQ(next);
+    setApplied(next); // run immediately
+    // Stamp lastRunAt server-side; non-blocking, the search does not wait.
+    void apiRequest('PATCH', `/api/saved-precedent-queries/${s.id}`, { refresh: true }).catch(() => {});
+  };
+
+  const deleteSaved = async (id: number) => {
+    try {
+      const res = await apiRequest('DELETE', `/api/saved-precedent-queries/${id}`);
+      if (!res.ok && res.status !== 204) { note(`Couldn’t delete the saved query (HTTP ${res.status}).`); return; }
+      setSaved((s) => s.filter((x) => x.id !== id));
+    } catch (e) {
+      note('Couldn’t delete — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
 
   const analysis: AnalysisState | null = useMemo(() => {
     const d = board.data;
@@ -298,7 +378,27 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
           >
             {I.search} {board.loading ? 'Searching...' : 'Search'}
           </button>
+          <button className="sp-ask" onClick={saveQuery} title="Save this query for reuse">
+            {I.plus} Save query
+          </button>
         </div>
+        {(saved.length > 0 || savedNote) && (
+          <div className="pj-card-b" style={{ paddingTop: 0, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            {saved.map((s) => (
+              <span key={s.id} className="rd-chip tone-dim" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <button style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', cursor: 'pointer' }}
+                  onClick={() => applySaved(s)} title="Load and run this saved query">
+                  {s.label}
+                </button>
+                <button style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', opacity: 0.6 }}
+                  onClick={() => deleteSaved(s.id)} title="Delete saved query" aria-label={'Delete ' + s.label}>
+                  ×
+                </button>
+              </span>
+            ))}
+            {savedNote && <span style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>{savedNote}</span>}
+          </div>
+        )}
       </div>
 
       <div className="sp-2col" style={{ gridTemplateColumns: '1.15fr 1fr' }}>
