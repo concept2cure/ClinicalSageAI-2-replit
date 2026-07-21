@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockQuery = vi.fn();
 const mockVerifyReauth = vi.fn();
+const mockRecordGoverned = vi.fn();
 
 vi.mock('../../../db', () => ({
   getPool: () => ({
@@ -13,10 +14,18 @@ vi.mock('../../../db', () => ({
 }));
 
 // The section-approve endpoint re-authenticates the signer (§11) before any
-// write; mock verifyReauth so the gate can be exercised without bcrypt/MFA.
+// write, then records a hash-chained governed action; mock both so the gate +
+// audit are exercised without bcrypt/MFA or a real ledger.
 vi.mock('../../../routes/c2c/actions', () => ({
   verifyReauth: (...a: unknown[]) => mockVerifyReauth(...a),
-  recordGovernedAction: vi.fn(),
+  recordGovernedAction: (...a: unknown[]) => mockRecordGoverned(...a),
+}));
+
+// Canonical governed-state evaluation is a heavyweight service call the approve
+// handler makes before the write transaction; stub it so the test drives only
+// the SQL/audit sequence (the handler already degrades gracefully if it fails).
+vi.mock('../../../services/governed-ana-execution.js', () => ({
+  buildCanonicalGovernedState: async () => ({ ok: true }),
 }));
 
 import router from '../module3OperatingSystemRoutes';
@@ -40,6 +49,8 @@ describe('module3OperatingSystemRoutes', () => {
     mockQuery.mockReset();
     mockVerifyReauth.mockReset();
     mockVerifyReauth.mockResolvedValue({ ok: true });
+    mockRecordGoverned.mockReset();
+    mockRecordGoverned.mockResolvedValue({ actionId: 'act-1', sha256Chain: 'deadbeef' });
   });
 
   it('returns readiness snapshot from canonical section/contradiction data', async () => {
@@ -105,6 +116,39 @@ describe('module3OperatingSystemRoutes', () => {
     expect(mockVerifyReauth).toHaveBeenCalledWith(1, { password: 'right', totp: '123456' });
     expect(res.status).toBe(409);
     expect(res.body.error).toContain('Critical contradictions');
+  });
+
+  it('approves a section atomically and records a hash-chained governed action (§11)', async () => {
+    mockVerifyReauth.mockResolvedValueOnce({ ok: true });
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
+      .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: {}, approval_state: 'draft' }] }) // section
+      .mockResolvedValueOnce({ rows: [{ max_version: 2 }] }) // version max
+      .mockResolvedValueOnce({ rows: [{ id: 'ver-3' }] }) // insert version
+      .mockResolvedValueOnce({}) // update section
+      .mockResolvedValueOnce({}) // provenance event
+      .mockResolvedValueOnce({}); // COMMIT
+
+    const res = await request(app)
+      .post('/api/cmc/module3-os/sections/proj-1/3.2.P.5/approve')
+      .send({ reason: 'Approved after review of the executed batch and CoA.', reauth: { password: 'ok' } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.versionNumber).toBe(3);
+    expect(res.body.approvedVersionId).toBe('ver-3');
+    // The governed-action ledger was written inside the transaction, and its
+    // chain is returned to the caller.
+    expect(mockRecordGoverned).toHaveBeenCalledTimes(1);
+    const governedArg = mockRecordGoverned.mock.calls[0][1];
+    expect(governedArg).toMatchObject({ orgId: 101, userId: 1, command: 'sign', domain: 'cmc' });
+    expect(governedArg.target).toBe('cmc_module3_section:proj-1/3.2.P.5');
+    expect(res.body.governance).toEqual({ actionId: 'act-1', sha256Chain: 'deadbeef' });
+    // The write ran as a transaction: BEGIN … COMMIT bracket the section writes.
+    const executed = mockQuery.mock.calls.map((c) => String(c[0]).trim().split(/\s+/)[0].toUpperCase());
+    expect(executed).toContain('BEGIN');
+    expect(executed).toContain('COMMIT');
   });
 
   it('blocks final export when not all sections approved and critical contradictions open', async () => {
