@@ -39,6 +39,7 @@ import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { AuthoringFilingBar } from './AuthoringFilingBar';
 import { AuthoringCollab } from './AuthoringCollab';
+import { AuthoringCreateExport } from './AuthoringCreateExport';
 import '../styles/project-home-v2.css';
 
 /* ── Server row shapes (mirror server/routes/authoring.router.ts) ── */
@@ -384,7 +385,20 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
             <span>{activeDoc?.title ?? 'No document'}</span>
             {activeSection && <><span className="sep">›</span><span className="here">{activeSection.code}</span></>}
           </div>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <AuthoringCreateExport
+              docId={activeDoc?.id ?? null}
+              docTitle={activeDoc?.title ?? null}
+              module={module}
+              fireToast={fireToast}
+              onDocCreated={(d) => {
+                // Adopt the server's document: refetch the tree and open it.
+                void loadDocs().then(() => setActiveDocId(d.id));
+              }}
+              onSectionCreated={(s) => {
+                if (activeDocId) void loadSections(activeDocId).then(() => setActiveSectionId(s.id));
+              }}
+            />
             <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'comments' ? null : 'comments')} data-active={rail === 'comments' || undefined}>
               {I.checkCircle} Comments{activeSection && num(activeSection.comment_count) > 0 ? ' ' + num(activeSection.comment_count) : ''}
             </button>
