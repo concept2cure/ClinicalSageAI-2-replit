@@ -43,6 +43,26 @@ The section-approval action mutated local state and toasted "not yet persisted".
 
 ---
 
+## Prioritized remaining backlog (as of 2026-07-21, post-CMC/admin wiring)
+
+What's left, by what it needs — so the next push targets the right thing.
+
+| Item | Effort | Needs | Notes |
+|---|---|---|---|
+| **CMC section-approve hash-chain** (`recordGovernedAction`) | S–M | contract test (runs here) | Re-auth gate shipped (`44e1e36`); this adds the hash-chained governed-action record — requires wrapping the approve handler in a transaction. Well-scoped; mirror `specificationRoutes`. |
+| **CollabLauncher task-create** | M | form refactor (not blind) | Its form uses project *slugs* + team keys, not the numeric FKs `POST /api/tasks/tasks` wants; wiring as-is creates project-unattached tasks. Refactor the form to live `useLiveRows('/api/c2c/projects')` + assignee roster (as TaskBoard does), then wire. |
+| **CMC QC workflow** (`server/routes/qc.routes.ts` — all 501) | L | schema + build + DB QA | Batch create/version, CoA, spec validation, release are greenfield (no impl). Real regulated build; wants a live DB to verify the transactional flows, not just contract tests. |
+| **CER quality metrics** (`quality-management-api.ts:451` 501) | M | — | Real aggregation over `cerSections`/`cerComplianceChecks` exists; contract-testable. Not currently consumed by a v2 surface — wire a surface too or it's backend-only value. |
+| **SSO / SCIM** (`sso.ts` 501) | L | IdP + creds | Enterprise onboarding; needs a real IdP to build+verify. |
+| **Rich-fixture surfaces** (labeling-pi/smpc, biopharma CTD/CSR/workspace, ectd-coauthor, pdev) | L | **design decision** | Fixture-free migration degrades cold-start to blank; the design system owns the empty/cold-start UX (`design-system/CLAUDE.md`). Decide the cold-start experience, then migrate to `useLiveData`/`EmptyState`. |
+| **Shell governed-action chips** (`V2App.tsx makeSampleActionResult`) | M | **design decision** + full-app QA | Generic chips lack `projectId`/target; either route them to `AnaCommand` (has context) or define how a chip resolves context. Also make `ESignGate` capture-and-forward real credentials. |
+| **Authoring UI program** | L (program) | design-owned | The platform's largest trapped-value item (`HANDOFF_TO_DESIGN_document_authoring.md`); backends exist. |
+| **Ops / procurement** | — | ops/vendor | RLS enforce flip, corpus ingestion, audit-default-on; eCTD DTDs, eSTAR, LORENZ, MedDRA, gateway creds. All seams built + fail closed. |
+
+**Biggest unblockers:** (1) a **runnable Postgres + secrets** instance — lets the QC workflow, CollabLauncher, and any transactional governed change be verified at full fidelity instead of mocked contract tests; (2) a **design decision** on cold-start UX for the rich-fixture surfaces and on shell-chip context resolution.
+
+---
+
 ## Tier 1 — mock-write → real, mounted backend (wire now; highest value, in-lane, verifiable)
 
 Each has a **real, mounted** backend; the only gap is the surface calling it. Follow the CMC template. Ordered by value.
