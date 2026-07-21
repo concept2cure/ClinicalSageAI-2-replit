@@ -87,6 +87,7 @@ import { SubmissionCenter } from './surfaces/SubmissionCenter';
 import { QmpWorkspace } from './surfaces/QmpWorkspace';
 import { Part11Console } from './surfaces/Part11Console';
 import { IdentityConsole } from './surfaces/IdentityConsole';
+import { ReportGovernance } from './surfaces/ReportGovernance';
 import { SubmissionTwin } from './surfaces/SubmissionTwin';
 import { GlobalRiBrowser } from './surfaces/Surfaces';
 import { TaskBoard } from './surfaces/TaskBoard';
@@ -197,6 +198,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   qmp: { component: QmpWorkspace },
   'part11-console': { component: Part11Console },
   'identity-console': { component: IdentityConsole },
+  'report-governance': { component: ReportGovernance },
   'submission-center': { component: SubmissionCenter },
   'submission-twin': { component: SubmissionTwin },
   'task-board': { component: TaskBoard },
