@@ -60,10 +60,19 @@ const createTaskSchema = z.object({
   category: z.string().optional(),
   taskType: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
+  // Initial board column chosen in the create form (real column). Defaults to
+  // 'pending' when omitted; honored so the form's status picker isn't dropped.
+  status: z.string().min(1).optional(),
   assigneeId: z.number().optional(),
   startDate: z.string().optional(),
   dueDate: z.string().optional(),
   estimatedHours: z.number().optional(),
+  // Governance flags collected by the ui-v2 create form — real unified_tasks
+  // columns, so the form's inputs persist instead of being silently dropped.
+  impactScore: z.number().min(0).max(10).optional(),
+  criticalPath: z.boolean().optional(),
+  regulatoryImpact: z.boolean().optional(),
+  approvalRequired: z.boolean().optional(),
   dependencies: z.array(z.string()).optional(),
   tags: z.array(z.string()).optional(),
   automationRules: jsonValueSchema.optional(),
@@ -292,7 +301,7 @@ router.post('/tasks', async (req: Request, res: Response) => {
         dueDate: dueDate ? new Date(dueDate) : undefined,
         assigneeId,
         assigneeName,
-        status: 'pending',
+        status: validatedData.status ?? 'pending',
         progress: 0,
         completionPercentage: 0,
         createdById: actorUserId ?? undefined,
