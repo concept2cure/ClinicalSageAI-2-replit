@@ -31,6 +31,12 @@ Both tabs previously did **local-only mock writes** (drafts held in component st
 
 This is the template for every item in "Tier 1" below: **real DB, real §11 governance where the action is a signature, honest empty/error, no mock.**
 
+### Admin console — API-key create + revoke wired to the real audited backend (`274d211`, fix `4ed31cc`)
+
+The API-keys admin section rendered live keys but Create only toasted and Revoke was inert. Both are now wired to the real, mounted, audited `/api/api-keys` (`server/routes/api-keys.ts`): Create takes a name + ≥1 scope (the six `API_KEY_SCOPES`), POSTs, and shows the raw secret **once** in a reveal panel (held only in local state, never persisted or logged, cleared on dismiss); Revoke is a confirmed, audited DELETE. Honest failure on any non-2xx; the live list re-fetches. **Verified: mount tests pass, full `tsc --noEmit` clean.**
+
+> **Backend finding (for a follow-up):** the CMC §3.2 **section-approve** endpoint (`server/api/cmc/module3OperatingSystemRoutes.ts:490`, `POST /api/cmc/module3-os/sections/:projectId/:sectionKey/approve`) persists the approval + a new version + a provenance event, but — unlike the specification-approve and batch-release endpoints — it does **not** require §11 re-authentication (`verifyReauth`) and does not route through the hash-chained `recordGovernedAction`. Wiring the CmcModule section-approval mock (`CmcModule.tsx` `doSign`, ~L259) to it should be paired with adding re-auth + governed-action recording to that endpoint so section approval is a real §11 e-signature consistent with specs/batch. This is a small, well-scoped backend change but touches a governed path — do it with a runtime test, not blind.
+
 ---
 
 ## Tier 1 — mock-write → real, mounted backend (wire now; highest value, in-lane, verifiable)
