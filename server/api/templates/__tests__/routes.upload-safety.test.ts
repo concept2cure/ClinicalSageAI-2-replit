@@ -33,12 +33,19 @@ import router from '../routes';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'templates');
 
-function makeApp(withTenant = true) {
+function makeApp(withTenant = true, withUser = withTenant) {
   const app = express();
   app.use((req: any, _res, next) => {
     if (withTenant) {
       req.tenantId = 7;
       req.tenantContext = { organizationId: 7 };
+    }
+    if (withUser) {
+      // Production mounts this router behind authenticateToken, which populates
+      // req.user. Mirror that here: template creation records the authenticated
+      // uploader as createdBy (no longer a hardcoded user), so an authenticated
+      // identity must be present for the write to succeed.
+      req.user = { userId: 42, id: 42, organizationId: 7 };
     }
     next();
   });
@@ -108,6 +115,8 @@ describe('POST /api/templates/upload — magic-byte validation', () => {
     expect(createTemplate.mock.calls[0][0]).toMatchObject({
       organizationId: 7,
       fileType: 'pdf',
+      // Attribution is the authenticated uploader, never a hardcoded user.
+      createdBy: 42,
     });
   });
 
@@ -174,6 +183,22 @@ describe('POST /api/templates/upload — magic-byte validation', () => {
       .attach('file', PDF_BYTES, 'protocol.pdf');
     expect(res.status).toBe(401);
     expect(createTemplate).not.toHaveBeenCalled();
+  });
+
+  it('fails closed with 401 when no authenticated user is present (Part 11 attribution)', async () => {
+    // Tenant context is present but the request carries no authenticated
+    // identity: the upload must not be persisted under a fabricated creator,
+    // and the multer-stored file (which passed the safety scan) must be
+    // cleaned up rather than left lingering untracked under uploads/templates.
+    const before = listUploads();
+    const res = await request(makeApp(true, false))
+      .post('/api/templates/upload')
+      .field('name', 'Test Template')
+      .field('category', 'General')
+      .attach('file', PDF_BYTES, 'protocol.pdf');
+    expect(res.status).toBe(401);
+    expect(createTemplate).not.toHaveBeenCalled();
+    expect(listUploads()).toEqual(before);
   });
 });
 

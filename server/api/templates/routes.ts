@@ -10,6 +10,7 @@ import { db } from '../../db';
 import { ectdTemplates } from '../../../shared/schema';
 import { eq, and, or, like, sql, type SQL } from 'drizzle-orm';
 import { SOP_TEMPLATES } from '../../services/qms/sopTemplates';
+import { resolveUserId } from '../../types/auth-request';
 
 const router = Router();
 
@@ -368,6 +369,14 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
 
+    // Part 11 attribution: record the authenticated creator, never a hardcoded
+    // user. The global /api auth gate populates req.user; fail closed if the
+    // identity is absent rather than fabricating one (previously createdBy: 1).
+    const createdBy = resolveUserId(req);
+    if (!createdBy) {
+      return res.status(401).json({ error: 'Authenticated user required' });
+    }
+
     const templateData = {
       name,
       category,
@@ -378,7 +387,7 @@ router.post('/', async (req: Request, res: Response) => {
       ichGuidance,
       tags: tags ? tags.split(',').map((tag: any) => tag.trim()) : [],
       organizationId,
-      createdBy: 1, // TODO: Get from authentication
+      createdBy,
     };
 
     const newTemplate = await templateService.createTemplate(templateData);
@@ -395,6 +404,15 @@ router.post('/', async (req: Request, res: Response) => {
     });
   }
 });
+
+/** Best-effort removal of a multer-persisted upload; never throws. */
+async function unlinkUploadedFile(filePath: string): Promise<void> {
+  try {
+    await fs.promises.unlink(filePath);
+  } catch {
+    /* best-effort cleanup */
+  }
+}
 
 /**
  * POST /api/templates/upload
@@ -424,11 +442,7 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
     try {
       await assertUploadSafe(req.file.path, declaredMime, req.file.originalname);
     } catch (safetyErr) {
-      try {
-        await fs.promises.unlink(req.file.path);
-      } catch {
-        /* best-effort cleanup */
-      }
+      await unlinkUploadedFile(req.file.path);
       if (safetyErr instanceof UploadSafetyError) {
         return res.status(safetyErr.status).json(safetyErr.body);
       }
@@ -436,6 +450,16 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
     }
 
     const { name, category, module, description } = req.body;
+
+    // Part 11 attribution: the authenticated uploader, never a hardcoded user.
+    // Fail closed if the identity is absent; the file already passed the safety
+    // scan and is on disk, so remove it rather than leave an un-owned upload
+    // lingering under uploads/templates with no template row.
+    const createdBy = resolveUserId(req);
+    if (!createdBy) {
+      await unlinkUploadedFile(req.file.path);
+      return res.status(401).json({ error: 'Authenticated user required' });
+    }
 
     const templateData = {
       organizationId,
@@ -449,7 +473,7 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       fileType: path.extname(req.file.originalname).substring(1),
       version: '1.0.0',
       tags: [category, 'uploaded'],
-      createdBy: 1,
+      createdBy,
     };
 
     const newTemplate = await templateService.createTemplate(templateData);
