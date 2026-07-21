@@ -9,6 +9,7 @@
  * path is wired; the read data they seed from is real, org-scoped RBQM data.
  */
 import React, { useState } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
 import {
   kriStatusOf, qtlStatusOf,
@@ -26,6 +27,9 @@ interface SubProps {
   onTab?: (id: string) => void;
   onAsk?: (t: string) => void;
   onNav?: (id: string) => void;
+  /** Re-fetch the live board after a persisted write, so the surface re-derives
+      from server truth instead of local optimistic state. */
+  onReload?: () => void;
 }
 
 const RACT_CATS = ['Safety', 'Endpoint', 'Data integrity', 'Enrollment', 'Site operations', 'IP handling'];
@@ -149,9 +153,9 @@ export function RbmReport({ board, onAsk }: SubProps) {
 }
 
 /* 3 -- RACT */
-export function RbmRact({ board }: SubProps) {
+export function RbmRact({ board, onReload }: SubProps) {
   const [sel, setSel] = useState<{ l: number; i: number } | null>(null);
-  const [asmt, setAsmt] = useState<RbmAssessment | null>(() => {
+  const [asmt] = useState<RbmAssessment | null>(() => {
     const a = board.assessment;
     if (!a) return null;
     return {
@@ -234,7 +238,12 @@ export function RbmRact({ board }: SubProps) {
         submitLabel={edit.mode === 'edit' ? 'Save changes' : 'Add factor'} onCancel={() => setEdit(null)} onSubmit={saveItem} />}
       {signFor && asmt && <GovernedApprovalDialog what={`Risk assessment v${asmt.version}`}
         meaning="The RACT becomes the governing risk basis for monitoring-tier assignment and the risk review report."
-        onCancel={() => setSignFor(false)} onSigned={sig => { setAsmt(a => a ? { ...a, status: 'active', approval: sig } : a); setSignFor(false); }} />}
+        onCancel={() => setSignFor(false)}
+        onSigned={async reason => {
+          const res = await apiRequest('POST', `/api/mdx-rbm/rbm-assessments/${asmt.id}/approve`, { reason });
+          if (!res.ok) return `Approval failed (HTTP ${res.status}). The assessment was not activated.`;
+          setSignFor(false); onReload?.();
+        }} />}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   RBM_VOCAB, RBM_KRIS, RBM_QTLS, RBM_SIGNALS, RBM_SITES, RBM_PATIENTS,
   RBM_SUMMARY, RBM_ATTENTION, RBM_REPORT,
   rbmBand, kriStatusOf, createRbmStore,
-  type RbmAction, type RbmApproval, type RbmNavItem,
+  type RbmAction, type RbmNavItem,
 } from '../fixtures/rbm-data';
 import type { RbmBoard } from './rbmBoard';
 import '../styles/rbm-v2.css';
@@ -204,15 +204,26 @@ export function RbmFormModal({ title, intro, fields, initial, submitLabel, onCan
   );
 }
 
-/* ── GovernedApprovalDialog ── */
-let _rbmAud = 9210;
+/* ── GovernedApprovalDialog — real audited approval ──
+   The signer identity, timestamp and audit entry are written server-side by the
+   RBM approve endpoints (approved_by = the authenticated user, approved_at =
+   NOW, reason captured in metadata), never fabricated client-side. onSigned
+   performs the real POST and returns an error string on failure so the dialog
+   can surface it honestly. */
 export function GovernedApprovalDialog({ what, meaning, onCancel, onSigned }: {
-  what: string; meaning: string; onCancel: () => void; onSigned: (sig: RbmApproval) => void;
+  what: string; meaning: string; onCancel: () => void; onSigned: (reason: string) => Promise<string | void>;
 }) {
   const [reason, setReason] = useState('');
   const [pw, setPw] = useState('');
   const [otp, setOtp] = useState('');
-  const ok = reason.trim().length >= 8 && pw.length >= 4 && otp.length === 6;
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const ok = reason.trim().length >= 8 && pw.length >= 4 && otp.length === 6 && !busy;
+  const submit = async () => {
+    setBusy(true); setErr(null);
+    const e = await onSigned(reason.trim());
+    if (e) { setErr(e); setBusy(false); }
+  };
   return (
     <div className="rbm-modal-scrim" role="dialog" aria-modal="true" aria-label={`Approve ${what}`}>
       <div className="rbm-modal">
@@ -224,10 +235,11 @@ export function GovernedApprovalDialog({ what, meaning, onCancel, onSigned }: {
           <label className="rbm-field"><span>Password</span><input type="password" value={pw} onChange={e => setPw(e.target.value)} autoComplete="off" /></label>
           <label className="rbm-field"><span>Authenticator code</span><input inputMode="numeric" maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))} placeholder="6 digits" /></label>
         </div>
-        <div className="rbm-modal-note">Signature meaning: approval (21 CFR 11.50). Signer: Jordan Chen. The entry is written to the immutable audit trail.</div>
+        <div className="rbm-modal-note">Signature meaning: approval (21 CFR 11.50). Signed under your authenticated session; the signer, timestamp and reason are written to the immutable audit trail server-side.</div>
+        {err && <div className="rbm-modal-note" style={{ color: '#e5484d' }}>{err}</div>}
         <div className="rbm-modal-acts">
-          <button className="rbm-btn" onClick={onCancel}>Cancel</button>
-          <button className="rbm-btn pri" disabled={!ok} onClick={() => onSigned({ by: 'Jordan Chen', when: '2026-07-02', reason: reason.trim(), audit: `C2C-AUD-${_rbmAud++}` })}>Sign and activate</button>
+          <button className="rbm-btn" onClick={onCancel} disabled={busy}>Cancel</button>
+          <button className="rbm-btn pri" disabled={!ok} onClick={submit}>{busy ? 'Signing…' : 'Sign and activate'}</button>
         </div>
       </div>
     </div>

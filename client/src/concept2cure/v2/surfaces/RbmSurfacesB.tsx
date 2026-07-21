@@ -11,6 +11,7 @@
  * SampleTag until the write path is wired.
  */
 import React, { useState } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
 import { RBM_VOCAB, type RbmSignal } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmBoardSignal, RbmBoardSite, RbmBoardPlan } from './rbmBoard';
@@ -25,6 +26,9 @@ interface SubProps {
   onTab?: (id: string) => void;
   onAsk?: (t: string) => void;
   onNav?: (id: string) => void;
+  /** Re-fetch the live board after a persisted write, so the surface re-derives
+      from server truth instead of local optimistic state. */
+  onReload?: () => void;
 }
 
 const SRC_LABEL: Record<string, string> = { central_stat: 'Statistical', kri: 'KRI', qtl: 'QTL', site_score: 'Site score', manual: 'Manual' };
@@ -251,8 +255,8 @@ export function RbmOversight({ board, onTab }: SubProps) {
 }
 
 /* 10 -- Plan */
-export function RbmPlan({ board }: SubProps) {
-  const [plan, setPlan] = useState<RbmBoardPlan | null>(() => board.plan);
+export function RbmPlan({ board, onReload }: SubProps) {
+  const [plan] = useState<RbmBoardPlan | null>(() => board.plan);
   const [signFor, setSignFor] = useState(false);
   const acts = useRbmActions();
   const [adding, setAdding] = useState(false);
@@ -315,7 +319,12 @@ export function RbmPlan({ board }: SubProps) {
         submitLabel="Add action" onCancel={() => setAdding(false)} onSubmit={addAction} />}
       {signFor && plan && <GovernedApprovalDialog what="Monitoring plan"
         meaning="The plan becomes the active monitoring commitment; visit cadence and SDV depth follow its tier definitions."
-        onCancel={() => setSignFor(false)} onSigned={sig => { setPlan(p => p ? { ...p, status: 'active', anaDraft: false, approval: sig } : p); setSignFor(false); }} />}
+        onCancel={() => setSignFor(false)}
+        onSigned={async reason => {
+          const res = await apiRequest('POST', `/api/mdx-rbm/rbm-monitoring-plans/${plan.id}/approve`, { reason });
+          if (!res.ok) return `Approval failed (HTTP ${res.status}). The plan was not activated.`;
+          setSignFor(false); onReload?.();
+        }} />}
     </div>
   );
 }
