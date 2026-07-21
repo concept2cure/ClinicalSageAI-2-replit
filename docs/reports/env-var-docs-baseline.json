@@ -1,13 +1,11 @@
 {
   "description": "Accepted set of env vars read by server/ + shared/ but not yet documented in .env.example. New undocumented vars fail CI; document them in .env.example (preferred) or, if intentional, re-run npm run ci:env-var-docs:write-baseline. Ratchet this list down over time.",
-  "count": 256,
+  "count": 244,
   "vars": [
-    "ADMIN_TOKEN",
     "AI_GATEWAY_DETERMINISTIC",
     "AI_GATEWAY_MAX_CONCURRENCY",
     "AI_GATEWAY_SCAN_ALL_ROLES",
     "AI_GATEWAY_STRATEGY",
-    "ALLOWED_ORIGINS",
     "ALLOWED_TEST_ASSEMBLY_TENANTS",
     "ANA_ALLOW_NONPROD_CONTROL_PLANE",
     "ANA_CITATION_MAX_SOURCES_PER_SENTENCE",
@@ -28,14 +26,12 @@
     "ANA_KERNEL_MODE",
     "ANA_KERNEL_PERSIST",
     "ANA_LOOP_TIERING",
-    "ANA_OPS_TOKEN",
     "ANA_RELATIONAL_REFLECT_EVERY_N",
     "ANA_RETRIEVAL_THRESHOLD",
     "ANA_RETRIEVAL_TOP_K",
     "ANA_REWRITE_AUTO_CITE_DISABLED",
     "ANA_REWRITE_PARAGRAPH_MIN_CHARS",
     "ANA_REWRITE_UNSUPPORTED_BLOCK_RATIO",
-    "ANA_SERVICE_TOKEN",
     "ANA_SUBMISSION_CHAT_HISTORY_TURNS",
     "ANA_SUBMISSION_CHAT_MAX_TOKENS",
     "ANA_SUBMISSION_CHAT_SWEEP_DISABLED",
@@ -47,15 +43,7 @@
     "ANA_VERIFIER_LOW_SCORE",
     "ANALYTICS_PORT",
     "ANALYTICS_SERVICE_URL",
-    "APP_BASE_URL",
-    "APP_URL",
     "APP_VERSION",
-    "AUDIT_ATTESTATION_KEY",
-    "AUDIT_ATTESTATION_KEY_ID",
-    "AUDIT_ATTESTATION_KEY_PREV",
-    "AUDIT_ATTESTATION_KEY_PREV_ID",
-    "AUDIT_EXPORT_SIGNING_KEY",
-    "AUDIT_HMAC_SECRET",
     "AUDIT_SIGNING_KEY",
     "AUDIT_TRAIL_ENABLED",
     "AUTH_ENFORCE_SECTION_PERMS",
@@ -261,6 +249,7 @@
   ],
   "_history": [
     "2026-07-21: 260 undocumented (referenced 417, documented 189).",
-    "2026-07-21: 256 undocumented (referenced 417, documented 193)."
+    "2026-07-21: 256 undocumented (referenced 417, documented 193).",
+    "2026-07-21: 244 undocumented (referenced 417, documented 205)."
   ]
 }

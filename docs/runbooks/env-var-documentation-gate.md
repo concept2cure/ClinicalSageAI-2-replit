@@ -43,21 +43,27 @@ A variable is a finding (undocumented drift) when all of the following hold:
 ## Current drift (baseline snapshot)
 
 - Referenced in `server/` + `shared/`: **417**
-- Documented in the example files: **193**
-- Undocumented (baselined): **256**
+- Documented in the example files: **205**
+- Undocumented (baselined): **244**
 
-Largest undocumented groups by prefix: `ANA_*` (36), `ENABLE_*` (17), `FDA_*`
-(10), `LUMEN_*` (9), `AUDIT_*` (8), `EXTERNAL_*` (6). The authoritative,
+Largest undocumented groups by prefix: `ANA_*` (34), `ENABLE_*` (17), `FDA_*`
+(10), `LUMEN_*` (9), `EXTERNAL_*` (6), `AI_*` (4). The authoritative,
 machine-readable list is `docs/reports/env-var-docs-baseline.json`.
 
-The first ratchet step documented the prod-unsafe development toggles
-(`ALLOW_DEV_AUTH`, `ALLOW_MOCK_VAULT`, `ALLOW_EXTENSION_DDL`,
-`ALLOW_FALLBACK_EMBEDDINGS`) in `.env.example`, since a toggle that silently
-weakens auth/storage/DB safety is the most dangerous thing to leave
-undocumented. Remaining security/ops-sensitive members worth documenting next
-include the audit-crypto keys (`AUDIT_HMAC_SECRET`, `AUDIT_EXPORT_SIGNING_KEY`,
-`AUDIT_ATTESTATION_KEY*`), the service/admin tokens (`ADMIN_TOKEN`,
-`ANA_SERVICE_TOKEN`, `ANA_OPS_TOKEN`), and CORS (`ALLOWED_ORIGINS`).
+The ratchet has run twice so far, prioritising the vars where being
+undocumented is most dangerous:
+
+1. The prod-unsafe development toggles (`ALLOW_DEV_AUTH`, `ALLOW_MOCK_VAULT`,
+   `ALLOW_EXTENSION_DDL`, `ALLOW_FALLBACK_EMBEDDINGS`) — a toggle that silently
+   weakens auth/storage/DB safety is the worst thing to leave undocumented.
+2. The audit-integrity & attestation crypto (`AUDIT_HMAC_SECRET`,
+   `AUDIT_EXPORT_SIGNING_KEY`, `AUDIT_ATTESTATION_KEY` + `_ID`/`_PREV`/`_PREV_ID`
+   — all fail-closed in production per 21 CFR Part 11), the internal
+   service/admin tokens (`ADMIN_TOKEN`, `ANA_OPS_TOKEN`, `ANA_SERVICE_TOKEN`),
+   and the CORS/URL config (`ALLOWED_ORIGINS`, `APP_URL`, `APP_BASE_URL`).
+
+The remaining 244 are lower-risk feature flags and tuning knobs (`ANA_*`,
+`ENABLE_*`, `FDA_*`, …), documented incrementally by their subsystem owners.
 
 ## When CI fails on this gate
 
