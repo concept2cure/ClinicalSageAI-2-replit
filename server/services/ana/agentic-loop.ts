@@ -423,6 +423,7 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   start_deep_investigation: i =>
     `Starting a background deep investigation${i.question ? ` — ${quoteArg(i.question)}` : ''}`,
   check_deep_investigation: () => 'Checking on the background investigation',
+  get_client_journey: () => 'Getting your bearings — from license to submission',
   // Document vault / governed reads — legible "she's reading the right thing".
   list_vault_documents: () => 'Listing the document vault',
   read_vault_document: () => 'Reading the vault document',

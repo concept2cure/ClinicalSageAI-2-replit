@@ -7104,6 +7104,23 @@ export const CONVENE_DRAFTING_COUNCIL: AnaTool = {
   },
 };
 
+export const GET_CLIENT_JOURNEY: AnaTool = {
+  name: 'get_client_journey',
+  description:
+    "Find out where this client is on their journey from starting a license all the way to a full regulatory submission, and what the next milestone is. Returns a stage (just_licensed, onboarding, project_started, authoring, in_review, submission_ready, submitted), a plain-language read of where they are, the next milestone, and the concrete thing you should offer to do right now. Use this to ORIENT a client — especially a brand-new one who just started and doesn't know where to begin, or any time the user asks 'where do I start', 'what should I do next', or 'where does my program stand'. For a brand-new licensee it will tell you to welcome them and offer to set up their first project via the onboarding questionnaire (start_intelligence_flow with project_setup). Reads live project/artifact/submission state — deterministic, no guessing; when the tenant has no data yet it lands on the earliest welcome stage.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      segment: {
+        type: 'string',
+        description:
+          "Optional segment hint if you already know it ('mdx', 'biotech', or 'pharma') — tailors the welcome framing.",
+      },
+    },
+    required: [],
+  },
+};
+
 export const START_DEEP_INVESTIGATION: AnaTool = {
   name: 'start_deep_investigation',
   description:
@@ -9068,6 +9085,7 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   DRAFT_CLINICAL_OVERVIEW_M2_5,
   BATCH_DRAFT_SECTIONS,
   CONVENE_DRAFTING_COUNCIL,
+  GET_CLIENT_JOURNEY,
   START_DEEP_INVESTIGATION,
   CHECK_DEEP_INVESTIGATION,
   DRAFT_FDA_IR_RESPONSE,

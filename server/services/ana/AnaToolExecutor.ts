@@ -14219,6 +14219,35 @@ registerToolHandler('convene_drafting_council', async (input, ctx) => {
   }
 });
 
+// Client onboarding journey (server/services/ana/client-journey.ts) — where the
+// tenant is on the license → full-submission path, and what to offer next. A
+// pure read over live state; honest-by-construction (no data → earliest welcome
+// stage). Orients a brand-new client at first contact and any time thereafter.
+registerToolHandler('get_client_journey', async (input, ctx) => {
+  const validSegments = new Set(['mdx', 'biotech', 'pharma']);
+  const segment =
+    typeof input.segment === 'string' && validSegments.has(input.segment)
+      ? (input.segment as 'mdx' | 'biotech' | 'pharma')
+      : null;
+  const orgId = ctx?.organizationId ?? null;
+  try {
+    const { getClientJourney, describeClientJourney } = await import('./client-journey.js');
+    const { getPool } = await import('../../db.js');
+    // No tenant context yet (pre-license / anonymous): still orient them with
+    // the welcome stage rather than failing.
+    const journey =
+      orgId != null
+        ? await getClientJourney(getPool(), orgId, { segment })
+        : describeClientJourney('just_licensed', { segment });
+    return JSON.stringify({ source: 'AnA client journey', ...journey });
+  } catch (error: any) {
+    return JSON.stringify({
+      error: `Could not read the client journey: ${error?.message ?? 'unknown error'}`,
+      tool: 'get_client_journey',
+    });
+  }
+});
+
 // Background deep-research investigations (server/services/ana/deep-investigation.ts).
 // start returns immediately — the run outlives this chat turn; check reports
 // honest status including stalled runs. Dynamic import breaks the static cycle
