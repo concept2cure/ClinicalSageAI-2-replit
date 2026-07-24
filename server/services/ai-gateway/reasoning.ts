@@ -136,3 +136,72 @@ export function resolveThinkingConfig(input: ResolveThinkingInput): ThinkingConf
 
   return { enabled: true, budgetTokens };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Cost-tiered model selection
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// The everyday path must not depend on an expensive flagship. These tiers keep
+// routine work on a cheap model and reserve the flagship for the genuinely
+// high-stakes turn — so the expensive model becomes the exception, not the rule.
+
+/** Model tiers, cheapest → most capable. */
+export type ModelTier = 'economy' | 'standard' | 'flagship';
+
+/**
+ * Stable gateway-registry alias id for each tier. Resolved against the live
+ * registry at the call site (so a tier is skipped if its model isn't enabled
+ * for the tenant), and deliberately NOT a wire model string — the registry owns
+ * the concrete version, and every id here is already governance-approved.
+ */
+export const TIER_MODEL_ID: Record<ModelTier, string> = {
+  economy: 'claude-haiku-4',
+  standard: 'claude-sonnet-4',
+  flagship: 'claude-opus-4',
+};
+
+/** Task types heavy enough to warrant the standard (not economy) tier. */
+const HEAVY_TASK_TYPES = new Set(['document_drafting', 'regulatory_review']);
+
+export interface ResolveModelTierInput {
+  /** Resolved effort level (fast/balanced/thorough). */
+  effort: EffortLevel;
+  /** Kernel risk tier for the turn, if known. */
+  riskTier?: RiskTier | string | null;
+  /** Detected intent lens (auto/audit/improve/risk/strategy/compare). */
+  intentLens?: string | null;
+  /** Kernel task type (e.g. document_drafting, regulatory_review, chat). */
+  taskType?: string | null;
+  /** Whether the turn is substantive (see {@link isSubstantiveTurn}). */
+  substantive?: boolean;
+}
+
+/**
+ * Choose the model tier for a turn so the everyday path stays off the expensive
+ * flagship.
+ *
+ * Policy (Balanced is the default effort):
+ *   - Fast     → economy   (the user asked for a quick, cheap turn).
+ *   - Thorough → flagship  (the user explicitly asked for maximum depth).
+ *   - Balanced →
+ *       high risk tier                      → flagship (the stakes justify it)
+ *       deep lens / heavy task / substantive → standard (real work, mid-cost)
+ *       otherwise                            → economy  (routine chat/lookups)
+ *
+ * The flagship is therefore reserved for the genuinely high-stakes turn — high
+ * kernel risk or an explicit Thorough request — not spent on greetings and
+ * simple questions. Pure; no I/O, no env reads.
+ */
+export function resolveModelTier(input: ResolveModelTierInput): ModelTier {
+  if (input.effort === 'fast') return 'economy';
+  if (input.effort === 'thorough') return 'flagship';
+
+  // Balanced (the default): escalate only when the turn warrants it.
+  if (input.riskTier === 'high') return 'flagship';
+
+  const deepLens = !!input.intentLens && DEEP_INTENT_LENSES.has(input.intentLens);
+  const heavyTask = !!input.taskType && HEAVY_TASK_TYPES.has(input.taskType);
+  if (deepLens || heavyTask || input.substantive) return 'standard';
+
+  return 'economy';
+}

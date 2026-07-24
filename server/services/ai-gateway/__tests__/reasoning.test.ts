@@ -7,6 +7,8 @@ import {
   resolveThinkingConfig,
   isSubstantiveTurn,
   resolveOutputBudget,
+  resolveModelTier,
+  TIER_MODEL_ID,
   THINKING_BUDGETS,
   OUTPUT_BUDGETS,
   SUBSTANTIVE_MESSAGE_CHARS,
@@ -103,5 +105,50 @@ describe('resolveOutputBudget', () => {
   it('falls back to the balanced budget for unknown/absent effort', () => {
     expect(resolveOutputBudget(undefined)).toBe(OUTPUT_BUDGETS.balanced);
     expect(resolveOutputBudget('nonsense')).toBe(OUTPUT_BUDGETS.balanced);
+  });
+});
+
+describe('resolveModelTier', () => {
+  it('keeps Fast on the economy tier (cheap, quick)', () => {
+    expect(resolveModelTier({ effort: 'fast', substantive: true, riskTier: 'high' })).toBe(
+      'economy',
+    );
+  });
+
+  it('puts Thorough on the flagship tier (explicit depth request)', () => {
+    expect(resolveModelTier({ effort: 'thorough' })).toBe('flagship');
+  });
+
+  it('routes routine Balanced turns to economy — the expensive model is NOT the default', () => {
+    expect(resolveModelTier({ effort: 'balanced' })).toBe('economy');
+    expect(resolveModelTier({ effort: 'balanced', intentLens: 'auto', substantive: false })).toBe(
+      'economy',
+    );
+  });
+
+  it('routes real Balanced work (substantive / deep lens / heavy task) to standard, not flagship', () => {
+    expect(resolveModelTier({ effort: 'balanced', substantive: true })).toBe('standard');
+    expect(resolveModelTier({ effort: 'balanced', intentLens: 'audit' })).toBe('standard');
+    expect(resolveModelTier({ effort: 'balanced', taskType: 'document_drafting' })).toBe('standard');
+    expect(resolveModelTier({ effort: 'balanced', taskType: 'regulatory_review' })).toBe('standard');
+  });
+
+  it('reserves the flagship for genuinely high-stakes Balanced turns', () => {
+    expect(resolveModelTier({ effort: 'balanced', riskTier: 'high' })).toBe('flagship');
+    // A high-risk turn goes straight to flagship even if also substantive.
+    expect(resolveModelTier({ effort: 'balanced', riskTier: 'high', substantive: true })).toBe(
+      'flagship',
+    );
+  });
+
+  it('does not escalate on medium/low risk alone', () => {
+    expect(resolveModelTier({ effort: 'balanced', riskTier: 'medium' })).toBe('economy');
+    expect(resolveModelTier({ effort: 'balanced', riskTier: 'low' })).toBe('economy');
+  });
+
+  it('maps every tier to a governance-approved registry alias', () => {
+    expect(TIER_MODEL_ID.economy).toBe('claude-haiku-4');
+    expect(TIER_MODEL_ID.standard).toBe('claude-sonnet-4');
+    expect(TIER_MODEL_ID.flagship).toBe('claude-opus-4');
   });
 });

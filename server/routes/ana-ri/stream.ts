@@ -32,6 +32,8 @@ import {
   resolveThinkingConfig,
   isSubstantiveTurn,
   resolveOutputBudget,
+  resolveModelTier,
+  TIER_MODEL_ID,
 } from '../../services/ai-gateway/reasoning.js';
 import { orchestrate } from '../../services/ana-ri/orchestrator.js';
 import type { IntentLens, UserRole } from '../../services/ana-ri/persona.js';
@@ -619,6 +621,35 @@ router.post('/stream', async (req: Request, res: Response) => {
       typeof gw.getModels === 'function' ? gw.getModels().filter((m) => m.enabled) : [];
     const resolvedOverride = resolveModelOverride(model_override, overrideCandidates);
 
+    // Substantive-turn signal — drives BOTH the reasoning depth and the cost
+    // tier below, computed once so they agree.
+    const substantiveTurn = isSubstantiveTurn({
+      messageLength: typeof message === 'string' ? message.length : 0,
+      intentLens: orchestration.detectedIntent?.lens,
+    });
+
+    // ── Cost-tiered model selection ──────────────────────────────────────────
+    // Keep the everyday path off the expensive flagship: Economy (Haiku) for
+    // routine turns, Standard (Sonnet) for real drafting/review, Flagship (Opus)
+    // only for a high kernel risk-tier or an explicit Thorough request. So the
+    // expensive model is the exception, not the default. This yields to an
+    // explicit user model pin and to a governance-pinned strategy, only uses
+    // already-approved registry models, and is opt-out via ANA_MODEL_TIERING=off.
+    const tieredModel = (() => {
+      if (resolvedOverride) return null; // user pinned a specific model
+      if (policyHint?.preferredStrategy) return null; // governance owns the strategy
+      if ((process.env.ANA_MODEL_TIERING ?? 'on').toLowerCase() === 'off') return null;
+      const tier = resolveModelTier({
+        effort: effortUsed,
+        riskTier: routingPlan.riskTier,
+        intentLens: orchestration.detectedIntent?.lens,
+        taskType: routingPlan.taskType,
+        substantive: substantiveTurn,
+      });
+      const match = overrideCandidates.find((m) => m.id === TIER_MODEL_ID[tier]);
+      return match ? { provider: match.provider, model: match.model, tier } : null;
+    })();
+
     let fullContent = '';
     // Structured record of the tools run this turn (persisted on the assistant
     // message's metadata for cross-turn memory; see tool-trace.ts).
@@ -645,11 +676,7 @@ router.post('/stream', async (req: Request, res: Response) => {
     // flagship reasoning-only model thinking is adaptive (self-budgeting); the
     // budget hint only bites the legacy fallback surface, where the gateway
     // clamps it below max_tokens. Gateway forces temperature=1 when thinking is
-    // enabled on that legacy surface.
-    const substantiveTurn = isSubstantiveTurn({
-      messageLength: typeof message === 'string' ? message.length : 0,
-      intentLens: orchestration.detectedIntent?.lens,
-    });
+    // enabled on that legacy surface. (substantiveTurn computed above.)
     const streamThinkingResolved = resolveThinkingConfig({
       effort: effortUsed,
       riskTier: routingPlan.riskTier,
@@ -694,12 +721,15 @@ router.post('/stream', async (req: Request, res: Response) => {
       maxTokens: routingPlan.maxTokens,
       temperature: routingPlan.temperature,
       strategy: selectedStrategy,
-      // Explicit-override path: when the user pinned a valid enabled model, hand
-      // the gateway the resolved provider+model so its selectModel() short-
-      // circuits to that exact model (still subject to placement/health).
+      // Explicit-model path: a user pin wins; otherwise the cost tier picks the
+      // model (Economy/Standard/Flagship). Either hands the gateway an explicit
+      // provider+model so selectModel() short-circuits to it (still subject to
+      // placement/health). With neither, the effort-derived strategy selects.
       ...(resolvedOverride
         ? { provider: resolvedOverride.provider, model: resolvedOverride.model }
-        : {}),
+        : tieredModel
+          ? { provider: tieredModel.provider, model: tieredModel.model }
+          : {}),
       promptCache: { enabled: true, type: 'ephemeral' },
       ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
       ...(streamTools.length > 0 ? { tools: streamTools } : {}),
@@ -943,11 +973,13 @@ router.post('/stream', async (req: Request, res: Response) => {
           maxTokens: routingPlan.maxTokens,
           temperature: routingPlan.temperature,
           strategy: roundStrategy,
-          // Keep the same explicit-model pin across the agentic follow-up rounds
-          // so a user-chosen model stays consistent for the whole turn.
+          // Keep the same explicit model (user pin or cost tier) across the
+          // agentic follow-up rounds so the whole turn stays on one tier.
           ...(resolvedOverride
             ? { provider: resolvedOverride.provider, model: resolvedOverride.model }
-            : {}),
+            : tieredModel
+              ? { provider: tieredModel.provider, model: tieredModel.model }
+              : {}),
           promptCache: { enabled: true, type: 'ephemeral' },
           ...(includeTools && streamTools.length > 0 ? { tools: streamTools } : {}),
           stream: true,
@@ -1036,6 +1068,10 @@ router.post('/stream', async (req: Request, res: Response) => {
         type: 'done',
         model: gwResponse.model,
         provider: gwResponse.provider,
+        // The cost tier the router selected (economy/standard/flagship), or null
+        // when tiering yielded (user pin / governance strategy / opt-out). Lets
+        // ops confirm the everyday path is staying off the flagship. Additive.
+        modelTier: tieredModel?.tier ?? null,
         // Echo the resolved effort back so the client can confirm what ran (the
         // effort the server actually used — which may differ from the request
         // when a governance policyHint pinned the strategy). Additive field.
