@@ -7104,6 +7104,44 @@ export const CONVENE_DRAFTING_COUNCIL: AnaTool = {
   },
 };
 
+export const START_DEEP_INVESTIGATION: AnaTool = {
+  name: 'start_deep_investigation',
+  description:
+    "Start a BACKGROUND deep investigation that keeps working after this turn ends: a thorough multi-round agentic research run (many searches, cross-checks, and verifications) whose progress and final research memo are persisted so the user can come back to it. Use ONLY when the question genuinely needs sustained multi-source research that would keep the user waiting several minutes — e.g. 'do a deep dive on predicate landscape for X', 'research everything on this pathway change and report back'. Do NOT use it for anything answerable in the current turn with a few tool calls — answer directly instead. Returns immediately with an investigation id; check on it later with check_deep_investigation. Runs at Thorough depth (deepest loop, full reasoning) on the platform's model-tier policy; concurrent background investigations are capped per tenant, and the tool says so plainly when the cap or provisioning blocks a start.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      question: {
+        type: 'string',
+        description:
+          'The research question, stated precisely and self-contained — the background run cannot ask follow-ups.',
+      },
+      context: {
+        type: 'string',
+        description:
+          'Optional background the run should ground in (program facts, constraints, prior findings).',
+      },
+    },
+    required: ['question'],
+  },
+};
+
+export const CHECK_DEEP_INVESTIGATION: AnaTool = {
+  name: 'check_deep_investigation',
+  description:
+    "Check on background deep investigations: pass an investigation_id for one run's status, progress, and (when completed) its final research memo — or omit it to list the tenant's recent investigations. Reports honestly: a run orphaned by a server restart is reported as stalled, never as eternally running. Use whenever the user asks how a research task is going, or asks for its results.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      investigation_id: {
+        type: 'string',
+        description: 'The investigation to inspect. Omit to list recent investigations instead.',
+      },
+    },
+    required: [],
+  },
+};
+
 export const DRAFT_FDA_IR_RESPONSE: AnaTool = {
   name: 'draft_fda_ir_response',
   description:
@@ -9030,6 +9068,8 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   DRAFT_CLINICAL_OVERVIEW_M2_5,
   BATCH_DRAFT_SECTIONS,
   CONVENE_DRAFTING_COUNCIL,
+  START_DEEP_INVESTIGATION,
+  CHECK_DEEP_INVESTIGATION,
   DRAFT_FDA_IR_RESPONSE,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,

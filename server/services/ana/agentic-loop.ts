@@ -420,6 +420,9 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   draft_fda_ir_response: () => 'Drafting the FDA Information Request response',
   convene_drafting_council: i =>
     `Convening the drafting council${i.section_path ? ` for ${quoteArg(i.section_path)}` : ''} — draft, verify, critique, synthesize`,
+  start_deep_investigation: i =>
+    `Starting a background deep investigation${i.question ? ` — ${quoteArg(i.question)}` : ''}`,
+  check_deep_investigation: () => 'Checking on the background investigation',
   // Document vault / governed reads — legible "she's reading the right thing".
   list_vault_documents: () => 'Listing the document vault',
   read_vault_document: () => 'Reading the vault document',

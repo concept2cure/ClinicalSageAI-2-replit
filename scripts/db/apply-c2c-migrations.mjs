@@ -32,6 +32,7 @@ const FILES = [
   '20260603_pv_operational.sql',
   '20260603_commitments.sql',
   '20260724_lumen_council_provisioning.sql',
+  '20260724_ana_deep_investigations.sql',
 ];
 
 function getDatabaseUrl() {

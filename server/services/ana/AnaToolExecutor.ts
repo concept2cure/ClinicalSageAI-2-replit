@@ -14219,6 +14219,116 @@ registerToolHandler('convene_drafting_council', async (input, ctx) => {
   }
 });
 
+// Background deep-research investigations (server/services/ana/deep-investigation.ts).
+// start returns immediately — the run outlives this chat turn; check reports
+// honest status including stalled runs. Dynamic import breaks the static cycle
+// (the runner executes this module's agentic loop). Kill-switch:
+// ANA_ENABLE_DEEP_INVESTIGATIONS=false.
+registerToolHandler('start_deep_investigation', async (input, ctx) => {
+  if ((process.env.ANA_ENABLE_DEEP_INVESTIGATIONS ?? 'true').toLowerCase() === 'false') {
+    return JSON.stringify({
+      status: 'disabled',
+      error: 'Background deep investigations are disabled in this deployment (ANA_ENABLE_DEEP_INVESTIGATIONS=false).',
+    });
+  }
+  const question = typeof input.question === 'string' ? input.question.trim() : '';
+  if (question.length < 12) {
+    return JSON.stringify({
+      error: 'A precise, self-contained research question is required — the background run cannot ask follow-ups.',
+    });
+  }
+  const context = typeof input.context === 'string' && input.context.trim() ? input.context.trim() : undefined;
+  try {
+    const { startDeepInvestigation } = await import('./deep-investigation.js');
+    const started = await startDeepInvestigation({
+      question,
+      context,
+      organizationId: ctx?.organizationId ?? null,
+      userId: ctx?.userId ?? null,
+      projectId: ctx?.projectId ?? null,
+    });
+    if (started.status === 'limit_reached') {
+      return JSON.stringify({
+        status: 'limit_reached',
+        error: `This tenant already has ${started.running} background investigation(s) active — check on those first (check_deep_investigation) or wait for one to finish.`,
+      });
+    }
+    if (started.status === 'not_provisioned') {
+      return JSON.stringify({
+        status: 'not_provisioned',
+        error:
+          'Background investigations are not provisioned in this deployment (ana_deep_investigations table missing). ' +
+          'An administrator can enable them by applying migrations (npm run db:apply-c2c).',
+      });
+    }
+    return JSON.stringify({
+      status: 'started',
+      investigation_id: started.id,
+      note:
+        'The investigation is running in the background at Thorough depth and will keep working after this reply. ' +
+        'Typical runs take a few minutes; check on it with check_deep_investigation.',
+    });
+  } catch (error: any) {
+    return JSON.stringify({
+      error: `Could not start the investigation: ${error?.message ?? 'unknown error'}`,
+      tool: 'start_deep_investigation',
+    });
+  }
+});
+
+registerToolHandler('check_deep_investigation', async (input, ctx) => {
+  const orgId = ctx?.organizationId ?? null;
+  try {
+    const { getInvestigation, listRecentInvestigations, describeInvestigationStatus } =
+      await import('./deep-investigation.js');
+    const id = typeof input.investigation_id === 'string' ? input.investigation_id.trim() : '';
+    if (!id) {
+      const recent = await listRecentInvestigations(orgId, 5);
+      return JSON.stringify({
+        investigations: recent.map(r => ({
+          investigation_id: r.id,
+          question: r.question.length > 160 ? `${r.question.slice(0, 160)}…` : r.question,
+          status: describeInvestigationStatus(r),
+          tool_calls: r.tool_call_count,
+          started_at: r.started_at,
+          completed_at: r.completed_at,
+        })),
+        note: recent.length === 0 ? 'No background investigations for this tenant yet.' : undefined,
+      });
+    }
+    const row = await getInvestigation(id, orgId);
+    if (!row) {
+      return JSON.stringify({ error: `No investigation ${id} found for this tenant.` });
+    }
+    const status = describeInvestigationStatus(row);
+    return JSON.stringify({
+      investigation_id: row.id,
+      question: row.question,
+      status,
+      tool_calls: row.tool_call_count,
+      // Recent activity so the model can narrate progress on a live run.
+      recent_progress: (Array.isArray(row.progress) ? row.progress : []).slice(-5),
+      ...(row.status === 'completed' && row.result_text
+        ? { result: capToolResultForModel(row.result_text, 6000), model: row.model, provider: row.provider }
+        : {}),
+      ...(row.status === 'failed' ? { error: row.error } : {}),
+      started_at: row.started_at,
+      completed_at: row.completed_at,
+    });
+  } catch (error: any) {
+    if (/relation .*ana_deep_investigations.* does not exist/i.test(String(error?.message))) {
+      return JSON.stringify({
+        status: 'not_provisioned',
+        error: 'Background investigations are not provisioned in this deployment (npm run db:apply-c2c enables them).',
+      });
+    }
+    return JSON.stringify({
+      error: `Could not check investigations: ${error?.message ?? 'unknown error'}`,
+      tool: 'check_deep_investigation',
+    });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop
 // ─────────────────────────────────────────────────────────────────────────────
