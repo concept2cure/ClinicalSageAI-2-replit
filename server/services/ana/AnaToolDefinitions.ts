@@ -6285,6 +6285,34 @@ export const ACK_TRAINING: AnaTool = {
   },
 };
 
+export const REVISE_QMS_DOCUMENT: AnaTool = {
+  name: 'revise_qms_document',
+  description:
+    "Open a controlled revision of a QMS document (change control). Bumps to the next major version, returns it to draft, clears the prior approval so it must be re-reviewed, and captures the reason for change (21 CFR Part 11). Use when the user wants to revise / update an effective procedure.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id: { type: 'number' },
+      reason:      { type: 'string', description: 'Reason for change (required).' },
+    },
+    required: ['document_id', 'reason'],
+  },
+};
+
+export const RETIRE_QMS_DOCUMENT: AnaTool = {
+  name: 'retire_qms_document',
+  description:
+    "Retire a controlled QMS document — the terminal lifecycle state. Captures an optional reason in the audit trail. Use when the user wants to retire / withdraw a procedure that is no longer in use.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      document_id: { type: 'number' },
+      reason:      { type: 'string' },
+    },
+    required: ['document_id'],
+  },
+};
+
 export const REGISTER_SUPPLIER: AnaTool = {
   name: 'register_supplier',
   description:
@@ -6316,6 +6344,63 @@ export const LOG_NONCONFORMING_PRODUCT: AnaTool = {
       description:   { type: 'string' },
     },
     required: ['nc_number', 'description'],
+  },
+};
+
+export const QMS_CHANGE_CREATE: AnaTool = {
+  name: 'qms_change_create',
+  description:
+    "Raise a controlled change request in the change-control log (ICH Q10 change management / EU GMP Annex 15). Starts in 'proposed'; advance it through the lifecycle with qms_change_transition, and attach related records with qms_change_link. Use when the user wants to raise, open or propose a change.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      change_number:              { type: 'string', description: 'e.g. CC-2026-001.' },
+      title:                      { type: 'string' },
+      description:                { type: 'string' },
+      change_type:                { type: 'string', enum: ['document', 'process', 'equipment', 'material', 'supplier', 'method', 'facility', 'computer_system', 'specification', 'other'] },
+      classification:             { type: 'string', enum: ['minor', 'major', 'critical'] },
+      risk_level:                 { type: 'string', enum: ['low', 'medium', 'high'] },
+      reason:                     { type: 'string', description: 'Reason for the change (captured for 21 CFR Part 11).' },
+      impact_assessment:          { type: 'string' },
+      implementation_plan:        { type: 'string' },
+      target_implementation_date: { type: 'string', description: 'ISO date (YYYY-MM-DD).' },
+      qms_document_id:            { type: 'number', description: 'Optional QMS document this change controls.' },
+    },
+    required: ['change_number', 'title'],
+  },
+};
+
+export const QMS_CHANGE_TRANSITION: AnaTool = {
+  name: 'qms_change_transition',
+  description:
+    "Advance a change through its controlled lifecycle (proposed → under_assessment → approved → in_implementation → verification → closed; or rejected/cancelled). Approval enforces segregation of duties — the approver must differ from the person who proposed the change. A reason-for-change is required (21 CFR Part 11); pass effectiveness_review when closing.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      change_id:            { type: 'number' },
+      to:                   { type: 'string', enum: ['proposed', 'under_assessment', 'approved', 'rejected', 'in_implementation', 'verification', 'closed', 'cancelled'] },
+      reason:               { type: 'string', description: 'Reason-for-change for this governed transition.' },
+      effectiveness_review: { type: 'string', description: 'Effectiveness-check outcome — provide when moving to closed.' },
+    },
+    required: ['change_id', 'to'],
+  },
+};
+
+export const QMS_CHANGE_LINK: AnaTool = {
+  name: 'qms_change_link',
+  description:
+    "Link a change to a related quality record — a deviation, CAPA, validation protocol, or controlled document — so the change-control log stays traceable end to end. Give the record's reference (its number) and how the change relates to it.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      change_id:    { type: 'number' },
+      link_type:    { type: 'string', enum: ['deviation', 'capa', 'validation', 'document', 'sop', 'supplier', 'risk', 'other'] },
+      linked_ref:   { type: 'string', description: "The record's reference, e.g. DEV-2026-014, CAPA-88, VP-7." },
+      linked_label: { type: 'string' },
+      relationship: { type: 'string', enum: ['triggered_by', 'addresses', 'requires', 'impacts', 'references'] },
+      note:         { type: 'string' },
+    },
+    required: ['change_id', 'link_type', 'linked_ref'],
   },
 };
 
@@ -8989,9 +9074,14 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   VERIFY_MEMORY_ATOM,
   CREATE_QMS_DOCUMENT,
   APPROVE_QMS_DOCUMENT,
+  REVISE_QMS_DOCUMENT,
+  RETIRE_QMS_DOCUMENT,
   ACK_TRAINING,
   REGISTER_SUPPLIER,
   LOG_NONCONFORMING_PRODUCT,
+  QMS_CHANGE_CREATE,
+  QMS_CHANGE_TRANSITION,
+  QMS_CHANGE_LINK,
   CREATE_LABELING_DOCUMENT,
   ADD_LABELING_TRANSLATION,
   ADD_LABELING_SYMBOL,
