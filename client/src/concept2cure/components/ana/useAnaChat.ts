@@ -51,6 +51,12 @@ export interface AnaToolCall {
   name: string;
   label: string;
   status: 'running' | 'success' | 'error';
+  /**
+   * Agentic-loop round this call ran in (1-based). Lets the transcript group
+   * tool steps by investigation round instead of one flat list, so a deep
+   * multi-round investigation reads as the progression it actually was.
+   */
+  round?: number;
 }
 
 /**
@@ -1010,6 +1016,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               if (name) {
                 const label: string =
                   typeof event.label === 'string' && event.label ? event.label : toolLabel(name);
+                const round: number | undefined =
+                  typeof event.round === 'number' && event.round > 0 ? event.round : undefined;
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
@@ -1018,7 +1026,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                           statusPhase: undefined,
                           toolCalls: [
                             ...(m.toolCalls || []),
-                            { name, label, status: 'running' as const },
+                            { name, label, status: 'running' as const, ...(round ? { round } : {}) },
                           ],
                         }
                       : m

@@ -56,6 +56,8 @@ export interface ToolCallView {
   name: string;
   label: string;
   status: 'running' | 'success' | 'error';
+  /** Agentic-loop round (1-based); rows are grouped by round when > 1 round ran. */
+  round?: number;
 }
 
 export interface MessageProps {
@@ -511,37 +513,50 @@ export function Message({
           </div>
         )}
 
-        {toolCalls && toolCalls.length > 0 && (
-          <div className={styles.toolCalls} role="status" aria-label="Tools AnA used">
-            {toolCalls.map((tc, i) => (
-              <div
-                key={`${tc.name}-${i}`}
-                className={styles.toolCall}
-                data-status={tc.status}
-              >
-                <span className={styles.ico}>
-                  <I.flask size={12} />
-                </span>
-                <span className={styles.toolCallLabel}>{tc.label}</span>
-                {tc.status === 'running' && (
-                  <span className={styles.typing} aria-label="running">
-                    <span />
-                    <span />
-                    <span />
-                  </span>
-                )}
-                {tc.status === 'success' && (
-                  <span className={styles.ico} aria-label="done">
-                    <I.check size={12} />
-                  </span>
-                )}
-                {tc.status === 'error' && (
-                  <span className={styles.toolCallError}>failed</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        {toolCalls && toolCalls.length > 0 && (() => {
+          // Group by agentic round so a deep investigation reads as the
+          // progression it was (round 1 needs no announcement; later rounds get
+          // a quiet header). Falls back to the classic flat list when the turn
+          // ran a single round or the server sent no round tags.
+          const multiRound = toolCalls.some(tc => (tc.round ?? 1) > 1);
+          return (
+            <div className={styles.toolCalls} role="status" aria-label="Tools AnA used">
+              {toolCalls.map((tc, i) => {
+                const round = tc.round ?? 1;
+                const prevRound = i > 0 ? (toolCalls[i - 1].round ?? 1) : 1;
+                const showRoundHeader = multiRound && round > 1 && round !== prevRound;
+                return (
+                  <div key={`${tc.name}-${i}`}>
+                    {showRoundHeader && (
+                      <div className={styles.cite}>Continuing — investigation round {round}</div>
+                    )}
+                    <div className={styles.toolCall} data-status={tc.status}>
+                      <span className={styles.ico}>
+                        <I.flask size={12} />
+                      </span>
+                      <span className={styles.toolCallLabel}>{tc.label}</span>
+                      {tc.status === 'running' && (
+                        <span className={styles.typing} aria-label="running">
+                          <span />
+                          <span />
+                          <span />
+                        </span>
+                      )}
+                      {tc.status === 'success' && (
+                        <span className={styles.ico} aria-label="done">
+                          <I.check size={12} />
+                        </span>
+                      )}
+                      {tc.status === 'error' && (
+                        <span className={styles.toolCallError}>failed</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {renderedHtml ? (
           /* Markdown-rendered assistant reply (live during streaming, final after) */

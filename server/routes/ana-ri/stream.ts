@@ -52,7 +52,7 @@ import { buildMemoryContextForChat } from '../../services/memory-context-assembl
 import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
-import { runAgenticToolLoop, resolveMaxRounds, capToolResultForModel, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
+import { runAgenticToolLoop, resolveMaxRounds, resolveRoundExtension, capToolResultForModel, budgetToolResultsForModel, buildAdaptationNote, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn, type FailedToolCall } from '../../services/ana/agentic-loop.js';
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
@@ -654,6 +654,10 @@ router.post('/stream', async (req: Request, res: Response) => {
     // Structured record of the tools run this turn (persisted on the assistant
     // message's metadata for cross-turn memory; see tool-trace.ts).
     const toolTrace: ToolTraceEntry[] = [];
+    // Failure-adaptation guidance from the most recent tool round; appended to
+    // the next model turn (then cleared) so a failed round becomes a course
+    // correction instead of an identical retry the thrash guard has to kill.
+    let pendingAdaptationNote = '';
     // Raw tool output this turn — the evidence corpus the final answer is
     // verified against in the self-verification round (see answer-grounding.ts).
     const toolEvidenceCorpus: string[] = [];
@@ -783,7 +787,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         // the client UI stays deterministic.
         for (const toolUse of calls) {
           res.write(
-            `data: ${JSON.stringify({ type: 'tool_use', name: toolUse.name, label: describeToolPlan([toolUse])[0].label, input: toolUse.input })}\n\n`
+            `data: ${JSON.stringify({ type: 'tool_use', round, name: toolUse.name, label: describeToolPlan([toolUse])[0].label, input: toolUse.input })}\n\n`
           );
         }
         const ran = await mapWithConcurrency(calls, async (toolUse) => {
@@ -825,26 +829,26 @@ router.post('/stream', async (req: Request, res: Response) => {
             errorMessage: toolErrorMessage,
             latencyMs: Date.now() - toolStart,
           });
-          return { toolUse, resultStr, toolStatus };
+          return { toolUse, resultStr, toolStatus, toolErrorMessage };
         }, 4);
 
         const entries: ToolResultEntry[] = [];
-        for (const { toolUse, resultStr, toolStatus } of ran) {
+        const roundFailures: FailedToolCall[] = [];
+        for (const { toolUse, resultStr, toolStatus, toolErrorMessage } of ran) {
           entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
           const stepLabel = describeToolPlan([toolUse])[0].label;
           // Record this call in the turn's tool-trace memory + evidence corpus.
           toolTrace.push(
             buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr),
           );
-          // Ground against what the MODEL saw, not the raw result. Oversized tool
-          // output is capped (head+tail) before it reaches the model (line below,
-          // callModel → capToolResultForModel). If the grounding round verified
-          // the answer against the full, uncapped result, a claim sitting in the
-          // truncated-away middle would be marked "grounded" though the model
-          // never read it — a false pass in the one direction that lets a
-          // fabrication through. Cap the corpus identically so the self-check
-          // sees exactly the evidence the model had.
-          toolEvidenceCorpus.push(capToolResultForModel(resultStr));
+          // Failures collected for the round's adaptation note (see below).
+          if (toolStatus !== 'success') {
+            roundFailures.push({
+              name: toolUse.name,
+              label: stepLabel,
+              error: toolErrorMessage || (toolStatus === 'not_found' ? 'no handler available' : undefined),
+            });
+          }
           // Calm, human-facing message for a non-success step so the client can
           // render an honest state ("AnA couldn't finish X") instead of a raw
           // error string — trust is the interface, including when something
@@ -857,7 +861,7 @@ router.post('/stream', async (req: Request, res: Response) => {
                 ? `This step (${humanStep}) isn't available here. AnA will work around it.`
                 : undefined;
           res.write(
-            `data: ${JSON.stringify({ type: 'tool_result', name: toolUse.name, label: stepLabel, status: toolStatus, ...(humanMessage ? { message: humanMessage } : {}), result: resultStr })}\n\n`
+            `data: ${JSON.stringify({ type: 'tool_result', round, name: toolUse.name, label: stepLabel, status: toolStatus, ...(humanMessage ? { message: humanMessage } : {}), result: resultStr })}\n\n`
           );
           if (toolStatus === 'success') {
             try {
@@ -932,7 +936,22 @@ router.post('/stream', async (req: Request, res: Response) => {
             }
           }
         }
-        return entries;
+
+        // Budget the whole round's results before they reach the model, so a
+        // many-tool round can't bloat every later round's context (deep loops
+        // carry all prior results forward). Small rounds pass through under the
+        // classic per-result caps, byte-identical to before.
+        const budgeted = budgetToolResultsForModel(entries);
+        // Ground against what the MODEL saw, not the raw results. If the
+        // grounding round verified the answer against fuller text than the model
+        // was fed, a claim sitting in the truncated-away middle would be marked
+        // "grounded" though the model never read it — a false pass in the one
+        // direction that lets a fabrication through. The corpus therefore gets
+        // exactly the budgeted strings the model gets.
+        for (const b of budgeted) toolEvidenceCorpus.push(b.content);
+        // Failure guidance for the next model turn (cleared after use).
+        pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
+        return budgeted;
       };
 
       // Call the model with the latest tool results, streaming its narration. On
@@ -945,11 +964,18 @@ router.post('/stream', async (req: Request, res: Response) => {
         includeTools: boolean,
       ): Promise<ModelTurn> => {
         loopMessages.push({ role: 'assistant', content: priorText || '' });
+        // Entries arrive pre-budgeted from executeTools, so the per-result cap
+        // here is a no-op safety net. The adaptation note (when a tool failed
+        // last round) rides the same user turn so the model course-corrects
+        // instead of retrying the identical call.
+        const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
+        pendingAdaptationNote = '';
         loopMessages.push({
           role: 'user',
-          content: results
-            .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
-            .join('\n\n'),
+          content:
+            results
+              .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
+              .join('\n\n') + adaptationSuffix,
         });
 
         // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
@@ -1011,7 +1037,12 @@ router.post('/stream', async (req: Request, res: Response) => {
         { executeTools, callModel },
         // Effort-scaled agentic depth: Thorough can chase a multi-tool
         // investigation all the way down; Balanced clears the old flat cap of 5.
-        { maxRounds: resolveMaxRounds(effortUsed) },
+        // The ceiling is soft — a loop still discovering novel ground earns up
+        // to resolveRoundExtension() extra rounds; a circling loop never does.
+        {
+          maxRounds: resolveMaxRounds(effortUsed),
+          progressExtension: resolveRoundExtension(effortUsed),
+        },
       );
     }
 

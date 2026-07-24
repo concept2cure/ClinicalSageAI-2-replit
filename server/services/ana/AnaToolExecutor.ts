@@ -147,11 +147,15 @@ import { ragRouter } from '../ragRouter';
 import {
   runAgenticToolLoop,
   resolveMaxRounds,
+  resolveRoundExtension,
   capToolResultForModel,
+  budgetToolResultsForModel,
+  buildAdaptationNote,
   mapWithConcurrency,
   type ToolCall,
   type ModelTurn,
   type ToolResultEntry,
+  type FailedToolCall,
 } from './agentic-loop.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -14146,6 +14150,11 @@ registerToolHandler('draft_fda_ir_response', async (input) => {
 export interface AgenticOptions {
   /** Maximum tool-use rounds before forcing stop */
   maxRounds?: number;
+  /**
+   * Progress-earned rounds allowed beyond maxRounds while every round tries
+   * novel work (see agentic-loop.ts). Defaults to the Balanced allowance.
+   */
+  progressExtension?: number;
   /** Streaming callback */
   onStream?: StreamCallback;
   /** Called when a tool is executed */
@@ -14181,7 +14190,10 @@ export async function executeAgenticLoop(
   // Default to the effort-scaled Balanced ceiling (6) rather than a flat 5, so a
   // caller that doesn't pin maxRounds still gets the modernized agentic depth.
   const maxRounds = options?.maxRounds || resolveMaxRounds('balanced');
+  const progressExtension = options?.progressExtension ?? resolveRoundExtension('balanced');
   const signal = options?.signal;
+  // Failure-adaptation guidance from the latest round (cleared after use).
+  let pendingAdaptationNote = '';
 
   const toToolCall = (c: AnaToolUse): ToolCall => ({
     id: c.id,
@@ -14211,7 +14223,7 @@ export async function executeAgenticLoop(
     if (signal?.aborted) return [];
     const ran = await mapWithConcurrency(
       calls,
-      async (call): Promise<{ call: ToolCall; result: string }> => {
+      async (call): Promise<{ call: ToolCall; result: string; errorMessage?: string }> => {
         const handler = toolHandlers.get(call.name);
         if (!handler) {
           return {
@@ -14220,6 +14232,7 @@ export async function executeAgenticLoop(
               error: `No handler registered for tool: ${call.name}`,
               availableTools: Array.from(toolHandlers.keys()),
             }),
+            errorMessage: 'no handler registered',
           };
         }
         try {
@@ -14232,6 +14245,7 @@ export async function executeAgenticLoop(
               error: `Tool execution failed: ${error?.message ?? 'unknown error'}`,
               tool: call.name,
             }),
+            errorMessage: error?.message ?? 'unknown error',
           };
         }
       },
@@ -14239,11 +14253,17 @@ export async function executeAgenticLoop(
     );
 
     const entries: ToolResultEntry[] = [];
-    for (const { call, result } of ran) {
+    const roundFailures: FailedToolCall[] = [];
+    for (const { call, result, errorMessage } of ran) {
       options?.onToolExecution?.(call.name, call.input, result);
       entries.push({ tool_use_id: call.id, name: call.name, content: result });
+      if (errorMessage) roundFailures.push({ name: call.name, error: errorMessage });
     }
-    return entries;
+    // Budget the whole round before it re-enters the model context (small
+    // rounds pass through byte-identical under the classic per-result caps),
+    // and stage the failure-adaptation note for the next model turn.
+    pendingAdaptationNote = buildAdaptationNote(roundFailures, calls.length);
+    return budgetToolResultsForModel(entries);
   };
 
   // Feed the latest tool results back and get the model's next turn. On the
@@ -14260,11 +14280,17 @@ export async function executeAgenticLoop(
     if (signal?.aborted) return { text: '', toolCalls: [] };
 
     loopMessages.push({ role: 'assistant', content: priorText || '' });
+    // Entries arrive pre-budgeted from executeTools (the cap here is a no-op
+    // safety net); the adaptation note rides the same user turn so a failed
+    // round becomes a course correction instead of an identical retry.
+    const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
+    pendingAdaptationNote = '';
     loopMessages.push({
       role: 'user',
-      content: results
-        .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
-        .join('\n\n'),
+      content:
+        results
+          .map(tr => `[Tool Result for ${tr.name} (${tr.tool_use_id})]:\n${capToolResultForModel(tr.content)}`)
+          .join('\n\n') + adaptationSuffix,
     });
 
     const roundRequest: GatewayRequest = { ...request, messages: loopMessages };
@@ -14281,7 +14307,7 @@ export async function executeAgenticLoop(
   await runAgenticToolLoop(
     { text: finalResponse.content || '', toolCalls: finalResponse.toolUses.map(toToolCall) },
     { executeTools, callModel },
-    { maxRounds },
+    { maxRounds, progressExtension },
   );
 
   return finalResponse;

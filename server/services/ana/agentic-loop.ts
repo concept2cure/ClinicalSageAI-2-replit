@@ -66,6 +66,16 @@ export interface AgenticLoopOptions {
   maxRounds?: number;
   /** Withdraw tools once the same (name+input) call recurs beyond this (default 2). */
   duplicateLimit?: number;
+  /**
+   * Extra rounds the loop may grant beyond `maxRounds` while the model is still
+   * making real progress. A round "makes progress" when it introduces at least
+   * one novel tool call (a name+input never tried before); a grant is only made
+   * at the ceiling, one round at a time, and never while thrashing. This turns
+   * `maxRounds` from a hard guillotine into a soft ceiling: an investigation
+   * that is still discovering new ground gets to finish, while a loop that is
+   * circling gets cut exactly as before. Default 0 (behavior unchanged).
+   */
+  progressExtension?: number;
 }
 
 /**
@@ -96,6 +106,23 @@ export function resolveMaxRounds(effort?: LoopEffort | string | null): number {
   return MAX_ROUNDS_BY_EFFORT[(effort as LoopEffort)] ?? MAX_ROUNDS_BY_EFFORT.balanced;
 }
 
+/** Effort → progress-earned rounds allowed beyond the ceiling (see progressExtension). */
+const ROUND_EXTENSION_BY_EFFORT: Record<LoopEffort, number> = {
+  fast: 0,
+  balanced: 2,
+  thorough: 4,
+};
+
+/**
+ * Resolve how many progress-earned extension rounds a turn's effort allows.
+ * Fast never extends (latency is the promise); Thorough may chase a genuinely
+ * productive investigation four rounds past the ceiling. Pure; unknown/absent
+ * effort resolves to the Balanced allowance.
+ */
+export function resolveRoundExtension(effort?: LoopEffort | string | null): number {
+  return ROUND_EXTENSION_BY_EFFORT[(effort as LoopEffort)] ?? ROUND_EXTENSION_BY_EFFORT.balanced;
+}
+
 export type StoppedReason = 'no_more_tools' | 'max_rounds' | 'duplicate_thrash';
 
 export interface AgenticLoopResult {
@@ -104,6 +131,8 @@ export interface AgenticLoopResult {
   /** Total tool calls executed across all rounds. */
   toolCallCount: number;
   stoppedReason: StoppedReason;
+  /** Progress-earned rounds granted beyond maxRounds (0 unless progressExtension was set). */
+  extendedRounds: number;
 }
 
 /** Stable key for a tool call so reordered input keys still compare equal. */
@@ -128,21 +157,26 @@ export async function runAgenticToolLoop(
 ): Promise<AgenticLoopResult> {
   const maxRounds = options.maxRounds ?? 5;
   const duplicateLimit = options.duplicateLimit ?? 2;
+  const progressExtension = Math.max(0, options.progressExtension ?? 0);
   if (maxRounds < 1) throw new Error('maxRounds must be at least 1');
 
   const seen = new Map<string, number>();
   let turn = initial;
   let round = 0;
   let toolCallCount = 0;
+  let extendedRounds = 0;
 
   while (turn.toolCalls.length > 0) {
     round++;
 
-    // Thrash detection: count how often each exact call has been requested.
+    // Thrash detection (count how often each exact call recurs) and novelty
+    // detection (did this round try anything genuinely new?) share one pass.
     let thrashing = false;
+    let novelInRound = false;
     for (const call of turn.toolCalls) {
       const key = callKey(call);
       const n = (seen.get(key) ?? 0) + 1;
+      if (n === 1) novelInRound = true;
       seen.set(key, n);
       if (n > duplicateLimit) thrashing = true;
     }
@@ -150,7 +184,19 @@ export async function runAgenticToolLoop(
     const results = await deps.executeTools(turn.toolCalls, round);
     toolCallCount += turn.toolCalls.length;
 
-    const finalRound = round >= maxRounds;
+    // Progress-earned extension: at the ceiling, a round that tried novel work
+    // (and isn't thrashing) earns one more round, up to progressExtension. A
+    // repeating or thrashing loop never extends — it is cut exactly as before.
+    if (
+      round >= maxRounds + extendedRounds &&
+      novelInRound &&
+      !thrashing &&
+      extendedRounds < progressExtension
+    ) {
+      extendedRounds++;
+    }
+
+    const finalRound = round >= maxRounds + extendedRounds;
     const includeTools = !finalRound && !thrashing;
 
     turn = await deps.callModel(results, turn.text, round, includeTools);
@@ -158,11 +204,16 @@ export async function runAgenticToolLoop(
     if (!includeTools) {
       // Tools were withdrawn → this turn is the forced final answer; stop here
       // even if the model attempted (ignored) further tool calls.
-      return { rounds: round, toolCallCount, stoppedReason: thrashing ? 'duplicate_thrash' : 'max_rounds' };
+      return {
+        rounds: round,
+        toolCallCount,
+        stoppedReason: thrashing ? 'duplicate_thrash' : 'max_rounds',
+        extendedRounds,
+      };
     }
   }
 
-  return { rounds: round, toolCallCount, stoppedReason: 'no_more_tools' };
+  return { rounds: round, toolCallCount, stoppedReason: 'no_more_tools', extendedRounds };
 }
 
 /**
@@ -185,6 +236,81 @@ export function capToolResultForModel(content: string, maxChars = 8000): string 
     content.slice(0, head) +
     `\n… [${omitted} characters truncated to fit the model context] …\n` +
     content.slice(content.length - tail)
+  );
+}
+
+export interface ToolResultBudgetOptions {
+  /** Total character budget for one round's results fed to the model (default 24000). */
+  totalBudget?: number;
+  /** Per-result ceiling, matching the classic single-result cap (default 8000). */
+  perResultMax?: number;
+  /** Floor below which a result's share is never squeezed (default 1500). */
+  minPerResult?: number;
+}
+
+/**
+ * Budget a whole round's tool results before they are fed back to the model.
+ *
+ * The classic per-result cap (8k) was written for 1–3 tool rounds; with deeper
+ * effort-scaled loops a single round can run many tools, and per-result caps
+ * alone let one round inject 30k+ chars — bloating every later round (the loop
+ * history carries all prior results). This keeps the round inside a total
+ * budget: when the per-result-capped sizes already fit, results pass through
+ * byte-identical to today; when they don't, the budget is split evenly across
+ * the round's results (never below `minPerResult`, so a squeezed result still
+ * shows its head and tail).
+ *
+ * Callers that also ground the final answer against a tool-evidence corpus MUST
+ * feed the corpus these budgeted strings — the grounding contract is that the
+ * corpus contains exactly what the model saw, no more.
+ */
+export function budgetToolResultsForModel(
+  entries: ToolResultEntry[],
+  options: ToolResultBudgetOptions = {},
+): ToolResultEntry[] {
+  const perResultMax = options.perResultMax ?? 8000;
+  const totalBudget = options.totalBudget ?? 24000;
+  const minPerResult = options.minPerResult ?? 1500;
+  if (entries.length === 0) return entries;
+
+  const capped = entries.map(e => ({ ...e, content: capToolResultForModel(e.content, perResultMax) }));
+  const total = capped.reduce((sum, e) => sum + e.content.length, 0);
+  if (total <= totalBudget) return capped;
+
+  const share = Math.max(minPerResult, Math.floor(totalBudget / entries.length));
+  return entries.map(e => ({ ...e, content: capToolResultForModel(e.content, share) }));
+}
+
+export interface FailedToolCall {
+  name: string;
+  /** Human-readable step label, when the caller has one. */
+  label?: string;
+  /** Short error description; truncated defensively in the note. */
+  error?: string;
+}
+
+/**
+ * Build a compact adaptation note for the model after a round with failures.
+ *
+ * Without this, the model sees per-tool error payloads but no cross-round
+ * guidance, and the common failure mode is retrying the identical call (which
+ * the thrash guard then kills — ending the investigation instead of adapting
+ * it). One explicit note turns a dead end into a course correction. Returns ''
+ * when nothing failed so callers can append unconditionally.
+ */
+export function buildAdaptationNote(failures: FailedToolCall[], totalCalls: number): string {
+  if (failures.length === 0) return '';
+  const describe = (f: FailedToolCall): string => {
+    const who = f.label || humanizeToolName(f.name);
+    const why = f.error ? ` — ${f.error.length > 120 ? f.error.slice(0, 120) + '…' : f.error}` : '';
+    return `${who}${why}`;
+  };
+  const plural = totalCalls === 1 ? 'call' : 'calls';
+  return (
+    `[Adaptation note] ${failures.length} of ${totalCalls} tool ${plural} failed this round: ` +
+    `${failures.map(describe).join('; ')}. Do not repeat a failed call verbatim — adapt: ` +
+    `narrow or vary the input, try an alternative tool, or continue and state plainly what ` +
+    `could not be verified.`
   );
 }
 
