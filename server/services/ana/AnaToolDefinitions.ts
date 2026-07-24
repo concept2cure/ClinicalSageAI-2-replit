@@ -10,6 +10,15 @@
  */
 
 import type { AnaTool, AnthropicServerTool, AnyAnaTool } from '../ai-gateway/types';
+// Agentic-workflow tool definitions extracted to their own module (first tranche
+// of decomposing this file). Imported so the enabled-tools array can reference
+// them exactly as before.
+import {
+  CONVENE_DRAFTING_COUNCIL,
+  GET_CLIENT_JOURNEY,
+  START_DEEP_INVESTIGATION,
+  CHECK_DEEP_INVESTIGATION,
+} from './agentic-workflow-tools.js';
 import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC, IVD_KNOWLEDGE_TOOL_SPEC } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
@@ -7075,87 +7084,6 @@ export const BATCH_DRAFT_SECTIONS: AnaTool = {
       },
     },
     required: ['sections'],
-  },
-};
-
-export const CONVENE_DRAFTING_COUNCIL: AnaTool = {
-  name: 'convene_drafting_council',
-  description:
-    "Convene the four-agent drafting council for a HIGH-ASSURANCE section draft: a Drafter writes the section, a Statistician extracts and checks every numerical claim, a Critic reviews it as a hostile agency reviewer, and a Synthesizer produces the final text with corrections applied. Use this when the user asks for a draft that is independently verified and adversarially reviewed before they see it (e.g. 'give me a reviewed draft of 2.5', 'run the council on the device description', 'I want a checked draft, not a first pass') — for a quick ordinary draft, use the normal drafting tools instead. Runs four sequential model calls (expect one to two minutes); every agent execution is Part-11 audit-logged with the model, tokens, and latency recorded. Returns the final synthesized text plus the verification and critique summaries. Nothing is auto-saved — the user promotes the final text through the governed authoring flow. If the council is not provisioned in this deployment, the tool says so instead of failing.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      section_path: {
-        type: 'string',
-        description: "The section to draft (e.g. '2.5.4', 'device_description', 'M2.7.3 safety summary').",
-      },
-      requirements: {
-        type: 'object',
-        description:
-          'Free-form drafting requirements the Drafter must honor — product/device name, indication, framework, key messages, constraints. Passed to the Drafter verbatim as JSON.',
-      },
-      context: {
-        type: 'string',
-        description:
-          'Optional source/background text the draft must be grounded in (protocol excerpts, prior sections, data summaries). The Drafter may not invent facts beyond this and the requirements.',
-      },
-    },
-    required: ['section_path'],
-  },
-};
-
-export const GET_CLIENT_JOURNEY: AnaTool = {
-  name: 'get_client_journey',
-  description:
-    "Find out where this client is on their journey from starting a license all the way to a full regulatory submission, and what the next milestone is. Returns a stage (just_licensed, onboarding, project_started, authoring, in_review, submission_ready, submitted), a plain-language read of where they are, the next milestone, and the concrete thing you should offer to do right now. Use this to ORIENT a client — especially a brand-new one who just started and doesn't know where to begin, or any time the user asks 'where do I start', 'what should I do next', or 'where does my program stand'. For a brand-new licensee it will tell you to welcome them and offer to set up their first project via the onboarding questionnaire (start_intelligence_flow with project_setup). Reads live project/artifact/submission state — deterministic, no guessing; when the tenant has no data yet it lands on the earliest welcome stage.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      segment: {
-        type: 'string',
-        description:
-          "Optional segment hint if you already know it ('mdx', 'biotech', or 'pharma') — tailors the welcome framing.",
-      },
-    },
-    required: [],
-  },
-};
-
-export const START_DEEP_INVESTIGATION: AnaTool = {
-  name: 'start_deep_investigation',
-  description:
-    "Start a BACKGROUND deep investigation that keeps working after this turn ends: a thorough multi-round agentic research run (many searches, cross-checks, and verifications) whose progress and final research memo are persisted so the user can come back to it. Use ONLY when the question genuinely needs sustained multi-source research that would keep the user waiting several minutes — e.g. 'do a deep dive on predicate landscape for X', 'research everything on this pathway change and report back'. Do NOT use it for anything answerable in the current turn with a few tool calls — answer directly instead. Returns immediately with an investigation id; check on it later with check_deep_investigation. Runs at Thorough depth (deepest loop, full reasoning) on the platform's model-tier policy; concurrent background investigations are capped per tenant, and the tool says so plainly when the cap or provisioning blocks a start.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      question: {
-        type: 'string',
-        description:
-          'The research question, stated precisely and self-contained — the background run cannot ask follow-ups.',
-      },
-      context: {
-        type: 'string',
-        description:
-          'Optional background the run should ground in (program facts, constraints, prior findings).',
-      },
-    },
-    required: ['question'],
-  },
-};
-
-export const CHECK_DEEP_INVESTIGATION: AnaTool = {
-  name: 'check_deep_investigation',
-  description:
-    "Check on background deep investigations: pass an investigation_id for one run's status, progress, and (when completed) its final research memo — or omit it to list the tenant's recent investigations. Reports honestly: a run orphaned by a server restart is reported as stalled, never as eternally running. Use whenever the user asks how a research task is going, or asks for its results.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      investigation_id: {
-        type: 'string',
-        description: 'The investigation to inspect. Omit to list recent investigations instead.',
-      },
-    },
-    required: [],
   },
 };
 
