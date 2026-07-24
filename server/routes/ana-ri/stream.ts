@@ -33,7 +33,7 @@ import {
   isSubstantiveTurn,
   resolveOutputBudget,
   resolveModelTier,
-  TIER_MODEL_ID,
+  resolveTierModel,
 } from '../../services/ai-gateway/reasoning.js';
 import { orchestrate } from '../../services/ana-ri/orchestrator.js';
 import type { IntentLens, UserRole } from '../../services/ana-ri/persona.js';
@@ -634,7 +634,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     // only for a high kernel risk-tier or an explicit Thorough request. So the
     // expensive model is the exception, not the default. This yields to an
     // explicit user model pin and to a governance-pinned strategy, only uses
-    // already-approved registry models, and is opt-out via ANA_MODEL_TIERING=off.
+    // enabled registry models (per-deployment tier remap via ANA_TIER_*_MODEL),
+    // and is opt-out via ANA_MODEL_TIERING=off.
     const tieredModel = (() => {
       if (resolvedOverride) return null; // user pinned a specific model
       if (policyHint?.preferredStrategy) return null; // governance owns the strategy
@@ -646,8 +647,7 @@ router.post('/stream', async (req: Request, res: Response) => {
         taskType: routingPlan.taskType,
         substantive: substantiveTurn,
       });
-      const match = overrideCandidates.find((m) => m.id === TIER_MODEL_ID[tier]);
-      return match ? { provider: match.provider, model: match.model, tier } : null;
+      return resolveTierModel(tier, overrideCandidates, process.env);
     })();
 
     let fullContent = '';

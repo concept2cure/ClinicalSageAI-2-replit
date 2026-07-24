@@ -14,7 +14,12 @@ import type { QueryResult, QueryResultRow } from 'pg';
 
 import { getPool } from '../../db.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
-import { resolveThinkingConfig, isSubstantiveTurn } from '../../services/ai-gateway/reasoning.js';
+import {
+  resolveThinkingConfig,
+  isSubstantiveTurn,
+  resolveModelTier,
+  resolveTierModel,
+} from '../../services/ai-gateway/reasoning.js';
 import {
   orchestrate,
   type OrchestratorInput,
@@ -501,15 +506,37 @@ router.post('/chat', async (req: Request, res: Response) => {
     // effort picker, so it resolves at the default Balanced effort: reason on
     // substantive or high-risk turns, stay quick on casual ones. The gateway
     // clamps any budget below max_tokens on the legacy thinking surface.
+    const chatSubstantive = isSubstantiveTurn({
+      messageLength: typeof message === 'string' ? message.length : 0,
+      intentLens: orchestration.detectedIntent?.lens,
+    });
     const chatThinkingResolved = resolveThinkingConfig({
       effort: 'balanced',
       riskTier: routingPlan.riskTier,
-      substantive: isSubstantiveTurn({
-        messageLength: typeof message === 'string' ? message.length : 0,
-        intentLens: orchestration.detectedIntent?.lens,
-      }),
+      substantive: chatSubstantive,
     });
     const chatThinkingConfig = chatThinkingResolved.enabled ? chatThinkingResolved : undefined;
+
+    // Cost-tiered model selection — same policy and precedence as the stream
+    // path: yields to an explicit provider preference and to a governance-
+    // pinned strategy; opt-out via ANA_MODEL_TIERING=off; tier remap via
+    // ANA_TIER_*_MODEL. Keeps this fallback path off the flagship for routine
+    // turns too.
+    const chatTieredModel = (() => {
+      if (validatedProvider) return null; // user pinned a provider
+      if (executionCtx.policyHint?.preferredStrategy) return null; // governance owns the strategy
+      if ((process.env.ANA_MODEL_TIERING ?? 'on').toLowerCase() === 'off') return null;
+      const tier = resolveModelTier({
+        effort: 'balanced',
+        riskTier: routingPlan.riskTier,
+        intentLens: orchestration.detectedIntent?.lens,
+        taskType: routingPlan.taskType,
+        substantive: chatSubstantive,
+      });
+      const enabledModels =
+        typeof gw.getModels === 'function' ? gw.getModels().filter((m) => m.enabled) : [];
+      return resolveTierModel(tier, enabledModels, process.env);
+    })();
     // Server-side tools only on this path — web_search / web_fetch /
     // code_execution resolve inside Anthropic's infrastructure and return
     // their results as content blocks, so no agentic loop is required.
@@ -526,6 +553,10 @@ router.post('/chat', async (req: Request, res: Response) => {
       promptCache: { enabled: true, type: 'ephemeral' },
       ...(chatThinkingConfig ? { thinking: chatThinkingConfig } : {}),
       ...(validatedProvider ? { provider: validatedProvider } : {}),
+      // Mutually exclusive with validatedProvider (the tier yields to it above).
+      ...(chatTieredModel
+        ? { provider: chatTieredModel.provider, model: chatTieredModel.model }
+        : {}),
       ...(chatServerTools.length > 0 ? { tools: chatServerTools } : {}),
     });
 

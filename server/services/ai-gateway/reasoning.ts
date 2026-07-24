@@ -22,7 +22,7 @@
  * @module server/services/ai-gateway/reasoning
  */
 
-import type { EffortLevel } from './types';
+import type { EffortLevel, ModelConfig } from './types';
 
 /** Kernel risk tiers that gate/scale reasoning depth. */
 export type RiskTier = 'low' | 'medium' | 'high';
@@ -204,4 +204,52 @@ export function resolveModelTier(input: ResolveModelTierInput): ModelTier {
   if (deepLens || heavyTask || input.substantive) return 'standard';
 
   return 'economy';
+}
+
+/**
+ * Per-deployment tier→model override env vars. Values may be a registry alias
+ * id ('claude-sonnet-4', 'local-default') or a wire model string — either way
+ * the result is validated against the tenant's enabled model set at the call
+ * site, so a typo or an un-deployed model degrades to strategy-based selection,
+ * never a broken turn. This is the cost-independence dial:
+ *   ANA_TIER_FLAGSHIP_MODEL=claude-sonnet-4  → strict no-Opus deployment
+ *   ANA_TIER_ECONOMY_MODEL=local-default     → self-hosted everyday tier
+ */
+export const TIER_MODEL_ENV: Record<ModelTier, string> = {
+  economy: 'ANA_TIER_ECONOMY_MODEL',
+  standard: 'ANA_TIER_STANDARD_MODEL',
+  flagship: 'ANA_TIER_FLAGSHIP_MODEL',
+};
+
+/**
+ * Resolve the tier→model mapping, applying any per-deployment env overrides on
+ * top of the defaults. Pure — the env record is a parameter (callers pass
+ * process.env); blank/whitespace values fall back to the default alias.
+ */
+export function resolveTierModelIds(
+  env: Record<string, string | undefined> = {},
+): Record<ModelTier, string> {
+  const pick = (tier: ModelTier): string => {
+    const override = env[TIER_MODEL_ENV[tier]];
+    return override && override.trim() ? override.trim() : TIER_MODEL_ID[tier];
+  };
+  return { economy: pick('economy'), standard: pick('standard'), flagship: pick('flagship') };
+}
+
+/**
+ * Resolve a tier to a concrete enabled model from the tenant's registry, or
+ * null when the tier's configured model isn't enabled (caller falls back to
+ * strategy-based selection). Matches on registry id or wire model string, same
+ * as the user model-override path. Pure.
+ */
+export function resolveTierModel(
+  tier: ModelTier,
+  enabledModels: ModelConfig[],
+  env: Record<string, string | undefined> = {},
+): { provider: ModelConfig['provider']; model: string; tier: ModelTier } | null {
+  const wanted = resolveTierModelIds(env)[tier];
+  const match = enabledModels.find(
+    (m) => m.enabled && (m.id === wanted || m.model === wanted),
+  );
+  return match ? { provider: match.provider, model: match.model, tier } : null;
 }

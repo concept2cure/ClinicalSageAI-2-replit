@@ -31,6 +31,11 @@ import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
 import { resolveMaxRounds } from '../../services/ana/agentic-loop.js';
+import {
+  isSubstantiveTurn,
+  resolveModelTier,
+  resolveTierModel,
+} from '../../services/ai-gateway/reasoning.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import { buildMemoryContextForChat, type MemoryAssemblyDiagnostics } from '../../services/memory-context-assembler.js';
@@ -676,6 +681,31 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
           : undefined;
 
+      // Cost-tiered model selection — same policy and precedence as the
+      // ana-ri paths: yields to an explicit provider preference and to a
+      // governance-pinned strategy; opt-out via ANA_MODEL_TIERING=off; tier
+      // remap via ANA_TIER_*_MODEL. No effort picker on this path, so it
+      // resolves at the default Balanced effort. The pinned model rides the
+      // whole agentic loop (the request carries it into every round).
+      const chatTieredModel = (() => {
+        if (validatedChatProvider) return null; // user pinned a provider
+        if (policyHint?.preferredStrategy) return null; // governance owns the strategy
+        if ((process.env.ANA_MODEL_TIERING ?? 'on').toLowerCase() === 'off') return null;
+        const tier = resolveModelTier({
+          effort: 'balanced',
+          riskTier: routingPlan.riskTier,
+          intentLens: orchestratorResult.detectedIntent?.lens,
+          taskType: routingPlan.taskType,
+          substantive: isSubstantiveTurn({
+            messageLength: typeof message === 'string' ? message.length : 0,
+            intentLens: orchestratorResult.detectedIntent?.lens,
+          }),
+        });
+        const enabledModels =
+          typeof gw.getModels === 'function' ? gw.getModels().filter((m) => m.enabled) : [];
+        return resolveTierModel(tier, enabledModels, process.env);
+      })();
+
       // ── Agentic tool-use loop: AnA can search, check compliance, generate docs ──
       const baseRequest = {
         taskType: routingPlan.taskType,
@@ -695,6 +725,10 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         }),
         toolChoice: 'auto' as const,
         ...(validatedChatProvider ? { provider: validatedChatProvider } : {}),
+        // Mutually exclusive with validatedChatProvider (the tier yields to it).
+        ...(chatTieredModel
+          ? { provider: chatTieredModel.provider, model: chatTieredModel.model }
+          : {}),
         // A2: cache the (large, stable) in-context corpus prefix when injected.
         ...(projectKnowledgeCorpusBlock
           ? { promptCache: { enabled: true, type: 'ephemeral' as const } }

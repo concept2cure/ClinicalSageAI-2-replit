@@ -8,11 +8,14 @@ import {
   isSubstantiveTurn,
   resolveOutputBudget,
   resolveModelTier,
+  resolveTierModelIds,
+  resolveTierModel,
   TIER_MODEL_ID,
   THINKING_BUDGETS,
   OUTPUT_BUDGETS,
   SUBSTANTIVE_MESSAGE_CHARS,
 } from '../reasoning';
+import type { ModelConfig } from '../types';
 
 describe('isSubstantiveTurn', () => {
   it('treats any tool-using turn as substantive', () => {
@@ -150,5 +153,93 @@ describe('resolveModelTier', () => {
     expect(TIER_MODEL_ID.economy).toBe('claude-haiku-4');
     expect(TIER_MODEL_ID.standard).toBe('claude-sonnet-4');
     expect(TIER_MODEL_ID.flagship).toBe('claude-opus-4');
+  });
+});
+
+describe('resolveTierModelIds — per-deployment overrides', () => {
+  it('returns the defaults with no env overrides', () => {
+    expect(resolveTierModelIds({})).toEqual(TIER_MODEL_ID);
+    expect(resolveTierModelIds()).toEqual(TIER_MODEL_ID);
+  });
+
+  it('applies an override per tier (the no-Opus dial)', () => {
+    const ids = resolveTierModelIds({ ANA_TIER_FLAGSHIP_MODEL: 'claude-sonnet-4' });
+    expect(ids.flagship).toBe('claude-sonnet-4');
+    expect(ids.economy).toBe(TIER_MODEL_ID.economy);
+    expect(ids.standard).toBe(TIER_MODEL_ID.standard);
+  });
+
+  it('supports a self-hosted economy tier', () => {
+    expect(resolveTierModelIds({ ANA_TIER_ECONOMY_MODEL: 'local-default' }).economy).toBe(
+      'local-default',
+    );
+  });
+
+  it('ignores blank/whitespace overrides', () => {
+    expect(resolveTierModelIds({ ANA_TIER_FLAGSHIP_MODEL: '  ' }).flagship).toBe(
+      TIER_MODEL_ID.flagship,
+    );
+  });
+});
+
+describe('resolveTierModel — tier → concrete enabled model', () => {
+  const mk = (over: Partial<ModelConfig>): ModelConfig => ({
+    id: 'x',
+    provider: 'anthropic',
+    model: 'x-wire',
+    contextWindow: 200000,
+    qualityScore: 90,
+    costPer1kInput: 0.001,
+    costPer1kOutput: 0.005,
+    capabilities: ['chat'],
+    enabled: true,
+    ...over,
+  });
+  const registry = [
+    mk({ id: 'claude-haiku-4', model: 'claude-haiku-4-5-20251001' }),
+    mk({ id: 'claude-sonnet-4', model: 'claude-sonnet-4-6' }),
+    mk({ id: 'claude-opus-4', model: 'claude-opus-4-8' }),
+    mk({ id: 'local-default', model: 'local-default', provider: 'local' as ModelConfig['provider'] }),
+  ];
+
+  it('resolves each tier to its enabled registry model', () => {
+    expect(resolveTierModel('economy', registry)).toMatchObject({
+      provider: 'anthropic',
+      model: 'claude-haiku-4-5-20251001',
+      tier: 'economy',
+    });
+    expect(resolveTierModel('flagship', registry)?.model).toBe('claude-opus-4-8');
+  });
+
+  it('honors an env remap — flagship can be repointed off Opus entirely', () => {
+    const resolved = resolveTierModel('flagship', registry, {
+      ANA_TIER_FLAGSHIP_MODEL: 'claude-sonnet-4',
+    });
+    expect(resolved?.model).toBe('claude-sonnet-4-6');
+  });
+
+  it('matches an override by wire model string as well as registry id', () => {
+    const resolved = resolveTierModel('economy', registry, {
+      ANA_TIER_ECONOMY_MODEL: 'claude-haiku-4-5-20251001',
+    });
+    expect(resolved?.model).toBe('claude-haiku-4-5-20251001');
+  });
+
+  it('resolves a self-hosted tier when the local model is enabled', () => {
+    const resolved = resolveTierModel('economy', registry, {
+      ANA_TIER_ECONOMY_MODEL: 'local-default',
+    });
+    expect(resolved).toMatchObject({ provider: 'local', model: 'local-default' });
+  });
+
+  it('returns null (caller falls back to strategy) when the model is absent or disabled', () => {
+    expect(resolveTierModel('flagship', [])).toBeNull();
+    const disabled = registry.map((m) =>
+      m.id === 'claude-opus-4' ? { ...m, enabled: false } : m,
+    );
+    expect(resolveTierModel('flagship', disabled)).toBeNull();
+    expect(
+      resolveTierModel('flagship', registry, { ANA_TIER_FLAGSHIP_MODEL: 'not-a-model' }),
+    ).toBeNull();
   });
 });
