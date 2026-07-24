@@ -57,7 +57,14 @@ export interface AnaToolCall {
    * multi-round investigation reads as the progression it actually was.
    */
   round?: number;
+  /** The input args AnA passed to the tool — for the audit/inspect disclosure. */
+  input?: unknown;
+  /** The tool's returned result, capped client-side — for the audit disclosure. */
+  result?: string;
 }
+
+/** Client-side cap on the tool result kept for the inspect disclosure (state size). */
+const TOOL_RESULT_VIEW_CAP = 4000;
 
 /**
  * Result of `verify_docx_against_source` — the audited "verify it against your
@@ -1026,7 +1033,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                           statusPhase: undefined,
                           toolCalls: [
                             ...(m.toolCalls || []),
-                            { name, label, status: 'running' as const, ...(round ? { round } : {}) },
+                            {
+                              name,
+                              label,
+                              status: 'running' as const,
+                              ...(round ? { round } : {}),
+                              ...(event.input !== undefined ? { input: event.input } : {}),
+                            },
                           ],
                         }
                       : m
@@ -1084,7 +1097,20 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     if (idx !== -1) {
                       const realIdx = m.toolCalls.length - 1 - idx;
                       const calls = m.toolCalls.slice();
-                      calls[realIdx] = { ...calls[realIdx], status: failed ? 'error' : 'success' };
+                      // Keep a capped copy of the result for the audit disclosure
+                      // so a reviewer can see exactly what this step returned,
+                      // without bloating message state with a huge payload.
+                      const rawResult = typeof event.result === 'string' ? event.result : undefined;
+                      const cappedResult = rawResult
+                        ? rawResult.length > TOOL_RESULT_VIEW_CAP
+                          ? `${rawResult.slice(0, TOOL_RESULT_VIEW_CAP)}\n… (truncated)`
+                          : rawResult
+                        : undefined;
+                      calls[realIdx] = {
+                        ...calls[realIdx],
+                        status: failed ? 'error' : 'success',
+                        ...(cappedResult !== undefined ? { result: cappedResult } : {}),
+                      };
                       next = { ...next, toolCalls: calls };
                     }
                   }

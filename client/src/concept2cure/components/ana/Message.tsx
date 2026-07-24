@@ -15,7 +15,7 @@
  *
  * No new tokens or selectors — every style used is already in the bundle.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { setOptions } from 'marked';
 
 import { I } from './icons';
@@ -58,6 +58,21 @@ export interface ToolCallView {
   status: 'running' | 'success' | 'error';
   /** Agentic-loop round (1-based); rows are grouped by round when > 1 round ran. */
   round?: number;
+  /** Input args AnA passed the tool — surfaced in a collapsed audit disclosure. */
+  input?: unknown;
+  /** Capped tool result — surfaced in the same collapsed disclosure. */
+  result?: string;
+}
+
+/** Pretty-print a tool input object for the audit disclosure; never throws. */
+export function formatToolInput(input: unknown): string | null {
+  if (input == null) return null;
+  try {
+    const s = typeof input === 'string' ? input : JSON.stringify(input, null, 2);
+    return s && s !== '{}' ? s : null;
+  } catch {
+    return null;
+  }
 }
 
 export interface MessageProps {
@@ -551,6 +566,43 @@ export function Message({
                         <span className={styles.toolCallError}>failed</span>
                       )}
                     </div>
+                    {(() => {
+                      // Audit disclosure — collapsed by default so it never
+                      // clutters the calm status row, but a reviewer can open it
+                      // to see exactly what this step queried and returned. Plain
+                      // text in <pre> is React-escaped (XSS-safe); result is
+                      // already capped client-side.
+                      const inputStr = formatToolInput(tc.input);
+                      const resultStr = tc.result && tc.result.trim() ? tc.result : null;
+                      if (!inputStr && !resultStr) return null;
+                      const preStyle: CSSProperties = {
+                        maxHeight: 200,
+                        overflow: 'auto',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        fontSize: 12,
+                        margin: '4px 0 0',
+                      };
+                      return (
+                        <details style={{ margin: '2px 0 0 20px' }}>
+                          <summary className={styles.cite} style={{ cursor: 'pointer' }}>
+                            Inspect this step
+                          </summary>
+                          {inputStr && (
+                            <>
+                              <div className={styles.cite}>Input</div>
+                              <pre style={preStyle}>{inputStr}</pre>
+                            </>
+                          )}
+                          {resultStr && (
+                            <>
+                              <div className={styles.cite}>Result</div>
+                              <pre style={preStyle}>{resultStr}</pre>
+                            </>
+                          )}
+                        </details>
+                      );
+                    })()}
                   </div>
                 );
               })}
