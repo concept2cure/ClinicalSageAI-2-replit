@@ -289,15 +289,15 @@ ADR that resolves C-4, and the other retired.
 
 ## Recommended resolution order
 
-1. **ADR-001 — canonical migration lineage** (resolves C-6). Nothing else is safe
+1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
    until this lands.
 2. **Environment survey.** Determine, per deployed environment, which physical
    shape each colliding table actually has. This is a *read-only* investigation
    and must precede any migration.
-3. **ADR-002 — canonical operating-system schema** (resolves C-1, C-2, C-7),
+3. **ADR-0007 — canonical operating-system schema** (resolves C-1, C-2, C-7),
    including whether approval state stays orthogonal to action state.
-4. **ADR-003 — canonical contradiction/overlay tables** (resolves C-3). Gates WO-07.
-5. **ADR-004 — resolution receipt persistence** (resolves C-4, C-5). Gates WO-03 and WO-08.
+4. **ADR-0008 — canonical contradiction/overlay tables** (resolves C-3). Gates WO-07.
+5. **ADR-0009 — resolution receipt persistence** (resolves C-4, C-5). Gates WO-03 and WO-08.
 
 ---
 
