@@ -28,6 +28,11 @@ import {
   resolveStrategyWithPrecedence,
   resolveModelOverride,
 } from '../../services/ai-gateway/effort.js';
+import {
+  resolveThinkingConfig,
+  isSubstantiveTurn,
+  resolveOutputBudget,
+} from '../../services/ai-gateway/reasoning.js';
 import { orchestrate } from '../../services/ana-ri/orchestrator.js';
 import type { IntentLens, UserRole } from '../../services/ana-ri/persona.js';
 import type { DetectedDocumentTemplatePayload } from '../../../shared/types/ana-document-detection.js';
@@ -45,7 +50,7 @@ import { buildMemoryContextForChat } from '../../services/memory-context-assembl
 import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
-import { runAgenticToolLoop, capToolResultForModel, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
+import { runAgenticToolLoop, resolveMaxRounds, capToolResultForModel, mapWithConcurrency, describeToolPlan, type ToolCall, type ToolResultEntry, type ModelTurn } from '../../services/ana/agentic-loop.js';
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import { buildTraceEntry, collectTracesFromHistory, formatTraceForContext, type ToolTraceEntry } from '../../services/ana/tool-trace.js';
 import { runStreamPostProcessing } from './post-processing.js';
@@ -567,14 +572,20 @@ router.post('/stream', async (req: Request, res: Response) => {
       })}\n\n`
     );
 
-    // Routing plan
+    // Effort (Fast/Balanced/Thorough) resolved early so output headroom and
+    // reasoning depth can both scale with it. An unknown/absent value resolves
+    // to 'balanced' (never a 4xx).
+    const effortUsed = resolveEffortLevel(effort_level);
+
+    // Routing plan — output budget scales with effort (Thorough drafting gets
+    // more room; the planner still clamps to its own [512, 8192] range).
     const routingPlan = planKernelExecution({
       route: '/api/ana-ri/stream',
       messageLength: message.length,
       intentLens: orchestration.detectedIntent.lens,
       intentConfidence: orchestration.detectedIntent.confidence,
       submissionType: orchestration.detectedSubmissionType,
-      requestedMaxTokens: 4096,
+      requestedMaxTokens: resolveOutputBudget(effortUsed),
     });
 
     const policyHint = await getKernelPolicyHint({
@@ -584,9 +595,8 @@ router.post('/stream', async (req: Request, res: Response) => {
     });
 
     // ── Model / effort picker (flag-gated client; server is permissive) ──────
-    // Effort is a calm Fast/Balanced/Thorough abstraction over routing strategy.
-    // An unknown / absent `effort_level` resolves to 'balanced' (never a 4xx).
-    const effortUsed = resolveEffortLevel(effort_level);
+    // Effort (resolved above) is a calm Fast/Balanced/Thorough abstraction over
+    // routing strategy.
     const effortStrategy = resolveEffortStrategy(effortUsed);
 
     // Governance-safe precedence: a kernel-pinned policyHint ALWAYS wins, so a
@@ -628,23 +638,25 @@ router.post('/stream', async (req: Request, res: Response) => {
 
     // Stream via gateway
     const streamGatewayStart = Date.now();
-    // Extended thinking opt-in: kernel router flags genuinely high-stakes turns
-    // (audit/risk lens, critical contradictions). Use Claude's thinking budget
-    // to deepen reasoning on those without imposing latency on conversational
-    // turns. Gateway will force temperature=1 when thinking is enabled.
-    //
-    // Effort gating (additive on top of the risk-tier signal):
-    //   - 'thorough' may enable thinking even when riskTier !== 'high'
-    //     (deeper reasoning is exactly what the user asked for), capped at the
-    //     same 10k budget so it can't run away on latency/cost.
-    //   - 'fast' suppresses thinking outright (the user wants a quick turn).
-    //   - 'balanced' leaves the existing risk-tier behavior untouched.
-    const wantThinking =
-      effortUsed === 'fast'
-        ? false
-        : routingPlan.riskTier === 'high' || effortUsed === 'thorough';
-    const streamThinkingConfig = wantThinking
-      ? { enabled: true, budgetTokens: 10_000 }
+    // Extended thinking — effort-scaled reasoning policy (see reasoning.ts).
+    // AnA reasons on genuinely substantive turns by default (Balanced), not only
+    // when the kernel flags high risk, and reasons harder on Thorough. Casual
+    // one-line turns stay Fast so greetings never pay reasoning latency. On the
+    // flagship reasoning-only model thinking is adaptive (self-budgeting); the
+    // budget hint only bites the legacy fallback surface, where the gateway
+    // clamps it below max_tokens. Gateway forces temperature=1 when thinking is
+    // enabled on that legacy surface.
+    const substantiveTurn = isSubstantiveTurn({
+      messageLength: typeof message === 'string' ? message.length : 0,
+      intentLens: orchestration.detectedIntent?.lens,
+    });
+    const streamThinkingResolved = resolveThinkingConfig({
+      effort: effortUsed,
+      riskTier: routingPlan.riskTier,
+      substantive: substantiveTurn,
+    });
+    const streamThinkingConfig = streamThinkingResolved.enabled
+      ? streamThinkingResolved
       : undefined;
     // Full tool suite on the streaming path: custom JSON-schema tools
     // (PubMed search, FDA guidance lookup, predicate device analysis, etc.)
@@ -965,7 +977,9 @@ router.post('/stream', async (req: Request, res: Response) => {
       await runAgenticToolLoop(
         { text: fullContent, toolCalls: streamToolUses.map(toToolCall) },
         { executeTools, callModel },
-        { maxRounds: 5 },
+        // Effort-scaled agentic depth: Thorough can chase a multi-tool
+        // investigation all the way down; Balanced clears the old flat cap of 5.
+        { maxRounds: resolveMaxRounds(effortUsed) },
       );
     }
 

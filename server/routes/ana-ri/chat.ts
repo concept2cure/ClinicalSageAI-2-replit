@@ -14,6 +14,7 @@ import type { QueryResult, QueryResultRow } from 'pg';
 
 import { getPool } from '../../db.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
+import { resolveThinkingConfig, isSubstantiveTurn } from '../../services/ai-gateway/reasoning.js';
 import {
   orchestrate,
   type OrchestratorInput,
@@ -495,10 +496,20 @@ router.post('/chat', async (req: Request, res: Response) => {
         ? (preferred_provider as (typeof VALID_PROVIDERS)[number])
         : undefined;
 
-    const chatThinkingConfig =
-      routingPlan.riskTier === 'high'
-        ? { enabled: true, budgetTokens: 10_000 }
-        : undefined;
+    // Extended thinking — same effort-scaled policy as the stream path (see
+    // reasoning.ts). This non-streaming evidence/Firecrawl fallback has no
+    // effort picker, so it resolves at the default Balanced effort: reason on
+    // substantive or high-risk turns, stay quick on casual ones. The gateway
+    // clamps any budget below max_tokens on the legacy thinking surface.
+    const chatThinkingResolved = resolveThinkingConfig({
+      effort: 'balanced',
+      riskTier: routingPlan.riskTier,
+      substantive: isSubstantiveTurn({
+        messageLength: typeof message === 'string' ? message.length : 0,
+        intentLens: orchestration.detectedIntent?.lens,
+      }),
+    });
+    const chatThinkingConfig = chatThinkingResolved.enabled ? chatThinkingResolved : undefined;
     // Server-side tools only on this path — web_search / web_fetch /
     // code_execution resolve inside Anthropic's infrastructure and return
     // their results as content blocks, so no agentic loop is required.

@@ -68,6 +68,34 @@ export interface AgenticLoopOptions {
   duplicateLimit?: number;
 }
 
+/**
+ * Effort levels that scale AnA's agentic depth. Kept local (not imported from
+ * the gateway) so this module stays pure orchestration logic, independent of
+ * the gateway/types as the file docstring promises.
+ */
+export type LoopEffort = 'fast' | 'balanced' | 'thorough';
+
+/** Effort → tool-round ceiling. Balanced lifts the old flat cap of 5 to 6. */
+const MAX_ROUNDS_BY_EFFORT: Record<LoopEffort, number> = {
+  fast: 4,
+  balanced: 6,
+  thorough: 10,
+};
+
+/**
+ * Resolve the tool-round ceiling for a turn from its effort level.
+ *
+ * The loop stops the moment the model stops asking for tools, so this is a
+ * *ceiling*, not a floor — raising it only lets genuinely deep investigations
+ * (extract → search → cross-check → reconcile → draft) run to completion instead
+ * of being cut off mid-chain at round 5. Fast trades a little depth for latency;
+ * Thorough lets her chase a multi-tool investigation all the way down. Pure;
+ * an unknown/absent effort resolves to the Balanced ceiling.
+ */
+export function resolveMaxRounds(effort?: LoopEffort | string | null): number {
+  return MAX_ROUNDS_BY_EFFORT[(effort as LoopEffort)] ?? MAX_ROUNDS_BY_EFFORT.balanced;
+}
+
 export type StoppedReason = 'no_more_tools' | 'max_rounds' | 'duplicate_thrash';
 
 export interface AgenticLoopResult {

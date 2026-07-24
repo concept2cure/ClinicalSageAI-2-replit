@@ -146,6 +146,7 @@ import type {
 import { ragRouter } from '../ragRouter';
 import {
   runAgenticToolLoop,
+  resolveMaxRounds,
   capToolResultForModel,
   mapWithConcurrency,
   type ToolCall,
@@ -14177,7 +14178,9 @@ export async function executeAgenticLoop(
   options?: AgenticOptions
 ): Promise<AnaGatewayResponse> {
   const gateway = getGateway();
-  const maxRounds = options?.maxRounds || 5;
+  // Default to the effort-scaled Balanced ceiling (6) rather than a flat 5, so a
+  // caller that doesn't pin maxRounds still gets the modernized agentic depth.
+  const maxRounds = options?.maxRounds || resolveMaxRounds('balanced');
   const signal = options?.signal;
 
   const toToolCall = (c: AnaToolUse): ToolCall => ({

@@ -30,6 +30,7 @@ import { interceptChatResponse } from '../../services/intelligence/rim-intercept
 import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
 import { selectToolsForTurn } from '../../services/ana/tool-selection.js';
 import { executeAgenticLoop } from '../../services/ana/AnaToolExecutor.js';
+import { resolveMaxRounds } from '../../services/ana/agentic-loop.js';
 import { logToolRun } from '../../services/toolRegistry.js';
 import type { AnaGatewayResponse } from '../../services/ai-gateway/types.js';
 import { buildMemoryContextForChat, type MemoryAssemblyDiagnostics } from '../../services/memory-context-assembler.js';
@@ -700,9 +701,11 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           : {}),
       };
 
-      // Use agentic loop for multi-turn tool execution (max 5 rounds)
+      // Use agentic loop for multi-turn tool execution. This generic path has no
+      // effort picker, so it runs at the default (Balanced) round ceiling — up
+      // from the old flat 5 so a deeper investigation can run to completion.
       const gwResponse: AnaGatewayResponse = await executeAgenticLoop(baseRequest, {
-        maxRounds: 5,
+        maxRounds: resolveMaxRounds('balanced'),
         toolContext: {
           organizationId: numericOrgId,
           userId: numericUserId || null,

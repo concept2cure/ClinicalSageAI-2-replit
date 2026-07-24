@@ -175,6 +175,36 @@ export function Message({
     if (hasText) setThinkingOpen(false);
   }, [hasText]);
 
+  // Reasoning duration — "Thought for Ns", the contemporary reasoning cue.
+  // Start is stamped when reasoning first streams in; the duration freezes once
+  // the answer begins (or streaming stops), so it reads as a completed thought.
+  // Only measured for turns we actually watched stream — a reloaded historical
+  // message keeps the plain "Show reasoning" affordance rather than a bogus time.
+  const hasThinking = !!thinking && thinking.length > 0;
+  const thinkingStartRef = useRef<number | null>(null);
+  const sawStreamingRef = useRef(false);
+  const [thinkingMs, setThinkingMs] = useState<number | null>(null);
+  useEffect(() => {
+    if (streaming) sawStreamingRef.current = true;
+  }, [streaming]);
+  useEffect(() => {
+    if (hasThinking && thinkingStartRef.current === null) {
+      thinkingStartRef.current = Date.now();
+    }
+  }, [hasThinking]);
+  useEffect(() => {
+    if (
+      sawStreamingRef.current &&
+      thinkingStartRef.current !== null &&
+      thinkingMs === null &&
+      (hasText || !streaming)
+    ) {
+      setThinkingMs(Math.max(0, Date.now() - thinkingStartRef.current));
+    }
+  }, [hasText, streaming, thinkingMs]);
+  const thinkingSeconds =
+    thinkingMs !== null ? Math.max(1, Math.round(thinkingMs / 1000)) : null;
+
   // Render markdown to HTML on every text change — marked v17 handles
   // partial input gracefully (open bold/code/table renders the content it
   // has). This gives a live "document being drafted" feel rather than
@@ -188,6 +218,13 @@ export function Message({
     // from the model's perspective (prompt injection can emit raw HTML).
     return renderSafeMarkdown(text);
   }, [role, text]);
+
+  // Reasoning rendered through the same safe-markdown pipeline as the answer,
+  // so lists / emphasis in AnA's thinking read properly (was plain paragraphs).
+  const renderedThinkingHtml = useMemo(
+    () => (hasThinking ? renderSafeMarkdown(thinking as string) : undefined),
+    [hasThinking, thinking],
+  );
 
   // After the markdown HTML mounts, decorate each <pre> block with a copy
   // button + language label. Anthropic shows these on every code block;
@@ -457,19 +494,19 @@ export function Message({
               <span className={styles.ico}>
                 <I.sparkles size={12} />
               </span>
-              {thinkingOpen ? 'Hide reasoning' : 'Show reasoning'}
-              {!text && streaming && (
-                <span className={styles.cite} style={{ marginLeft: 8, fontStyle: 'italic' }}>
-                  thinking…
-                </span>
-              )}
+              {thinkingSeconds !== null
+                ? `Thought for ${thinkingSeconds}s`
+                : streaming
+                  ? 'Thinking…'
+                  : thinkingOpen
+                    ? 'Hide reasoning'
+                    : 'Show reasoning'}
             </button>
-            {thinkingOpen && (
-              <div className={styles.thinkingBody}>
-                {thinking.split('\n\n').map((p, i) => (
-                  <p key={i}>{p}</p>
-                ))}
-              </div>
+            {thinkingOpen && renderedThinkingHtml && (
+              <div
+                className={styles.thinkingBody}
+                dangerouslySetInnerHTML={{ __html: renderedThinkingHtml }}
+              />
             )}
           </div>
         )}
