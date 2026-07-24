@@ -31,6 +31,7 @@ import { BiostatWorkbench } from './surfaces/BiostatWorkbench';
 import { ChangeAssessment } from './surfaces/ChangeAssessment';
 import { ClinicalOps } from './surfaces/ClinicalOps';
 import { ConversationThread } from './surfaces/ConversationThread';
+import { CrlLibrary } from './surfaces/CrlLibrary';
 import { CroPortfolio } from './surfaces/CroPortfolio';
 import { CmcModule } from './surfaces/CmcModule';
 import { CommunicationCenter } from './surfaces/CommunicationCenter';
@@ -131,6 +132,9 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'communication-center': { component: CommunicationCenter },
   'conversation-thread': { component: ConversationThread, hideAna: true },
   coverage: { component: CodebaseCoverage },
+  // No `full`, no `hideAna` — the AnA rail stays open on the CRL library,
+  // because the point of looking at a letter is being able to ask about it.
+  'crl-library': { component: CrlLibrary },
   'cro-portfolio': { component: CroPortfolio },
   'csr-workflow': { component: CsrWorkflow, full: true, hideAna: true },
   'decision-lineage': { component: DecisionLineage, full: true },

@@ -540,6 +540,32 @@ export const UI_SURFACES: UiSurface[] = [
     notes: 'Past approvals search + decision rationale. Slots into 510(k) §12 substantial equivalence.',
   },
   {
+    // The one new surface in the Clinical-Regulatory Intelligence Graph
+    // workstream. `specialist` tier, beside precedent-intelligence, which it is
+    // modelled on. (The design handoff proposed navTier:'biopharma' — that is a
+    // client-type rail group, a different axis; see registryModel.NAV_GROUP_OF.)
+    //
+    // readiness is `kit-only` deliberately: the routes exist behind
+    // ENABLE_CLINICAL_REGULATORY_GRAPH but the ingestion that gives them a
+    // corpus is phase 4. Promote to `routes-ready` when phase 4 lands and the
+    // route tests pass — claiming it earlier would misreport install state.
+    id: 'crl-library',
+    label: 'FDA CRL library',
+    navTier: 'specialist',
+    layoutMode: 'crl-library',
+    icon: 'gavel',
+    group: 'intelligence',
+    uiKit: 'intelligence',
+    apiPrefixes: ['/api/clinical-regulatory-evidence'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'kit-only',
+    compliance: [A11Y, TONE, PART11],
+    notes:
+      'Searchable view over the shared clinical-regulatory evidence graph — the same findings CSR workflow, study design and AnA read. Not a separate corpus, retrieval path or agent. Behind ENABLE_CLINICAL_REGULATORY_GRAPH.',
+  },
+  {
     id: 'biostatistics',
     label: 'Biostatistics',
     navTier: 'specialist',

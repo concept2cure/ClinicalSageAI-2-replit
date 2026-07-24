@@ -65,6 +65,10 @@ export const NAV_GROUP_OF: Record<string, string> = {
   biopharma: 'biopharma',
   cmc: 'biopharma',
   'csr-workflow': 'biopharma',
+  // Regulatory findings are read across device and biopharma alike — the graph
+  // carries 510(k)/PMA disciplines as well as NDA/BLA, so this is not a
+  // biopharma-only surface.
+  'crl-library': 'both',
   'ectd-coauthor': 'biopharma',
   'ectd-compile': 'biopharma',
   pdev: 'biopharma',
@@ -92,7 +96,10 @@ export const RAIL_CORE = [
   { id: 'insights', label: 'Reporting & analytics', icon: 'barChart' },
 ];
 /** Specialist science apps promoted to the rail (also in the Apps catalog) */
-export const RAIL_SPECIALIST = [{ id: 'rbm', label: 'Risk-based monitoring', icon: 'shieldCheck' }];
+export const RAIL_SPECIALIST = [
+  { id: 'rbm', label: 'Risk-based monitoring', icon: 'shieldCheck' },
+  { id: 'crl-library', label: 'FDA CRL library', icon: 'gavel' },
+];
 /** Explore section */
 export const RAIL_EXPLORE = [
   { id: 'ana-command', label: 'AnA Command', icon: 'sparkles', badge: 'AnA' },
@@ -353,7 +360,16 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
   ],
   'ectd-coauthor': ['run_validation', 'compile_dossier', 'route_document_to_module', 'export_document'],
   'ectd-compile': ['run_validation', 'compile_dossier', 'export_document'],
-  'csr-workflow': ['run_validation', 'refine_with_validation', 'save_document_version', 'export_document'],
+  // `attach_sources_to_document` added on both authoring surfaces that now read
+  // the evidence graph, so a finding can be cited straight into the artifact.
+  'csr-workflow': [
+    'run_validation',
+    'refine_with_validation',
+    'attach_sources_to_document',
+    'save_document_version',
+    'export_document',
+  ],
+  'protocol-dev': ['run_validation', 'refine_with_validation', 'attach_sources_to_document'],
   'device-510k': [
     'run_validation',
     'refine_with_validation',
@@ -388,6 +404,12 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
   'safety-narrative': ['attach_sources_to_document', 'save_document_version'],
   biostatistics: ['attach_sources_to_document', 'refine_with_validation'],
   'precedent-intelligence': ['attach_sources_to_document', 'promote_artifact'],
+  // The six §10 graph tools are read-only reasoning and are deliberately NOT
+  // governed actions (ADR-CRIG-003). Only writing a recommendation into a
+  // regulated artifact is governed, and that already exists as promote_artifact
+  // / save_document_version. Adding an e-signature gate to *reading* evidence
+  // would train users to click through signoffs that carry no meaning.
+  'crl-library': ['attach_sources_to_document', 'promote_artifact'],
   cmc: ['run_validation', 'refine_with_validation', 'save_document_version'],
   'ind-checklist': ['run_validation', 'compile_dossier', 'route_document_to_module'],
   risk: ['attach_sources_to_document', 'save_document_version'],
@@ -424,7 +446,7 @@ export const SEGMENT_MODULES = {
     { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
-      items: ['precedent-intelligence', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['precedent-intelligence', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
@@ -450,7 +472,7 @@ export const SEGMENT_MODULES = {
     { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
-      items: ['precedent-intelligence', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['precedent-intelligence', 'crl-library', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
@@ -519,6 +541,7 @@ export const SEGMENT_MODULES = {
         'pharmacovigilance',
         'pv-cockpit',
         'precedent-intelligence',
+        'crl-library',
         'global-ri',
         'intelligence-catalog',
         'deep-research',
@@ -601,6 +624,7 @@ export const SEGMENT_MODULES = {
         'pharmacovigilance',
         'pv-cockpit',
         'precedent-intelligence',
+        'crl-library',
         'global-ri',
         'intelligence-catalog',
         'deep-research',
@@ -641,6 +665,7 @@ export const SEGMENT_MODULES = {
         'biostat-workbench',
         'rbm',
         'precedent-intelligence',
+        'crl-library',
         'global-ri',
         'intelligence-catalog',
         'deep-research',
@@ -1075,6 +1100,11 @@ export const ANA_SUGGESTIONS: Record<string, string[]> = {
   projects: ['Which programs are blocked?', 'Portfolio readiness report', 'Flag filing risks this week'],
   vault: ['Find the latest biocompat report', 'Surface unsigned documents', 'Search by SHA-256'],
   tasks: ['What is due this week?', 'Open reviews assigned to me', 'Summarize blockers'],
+  'crl-library': [
+    'Findings on this endpoint class',
+    'What did FDA ask for after this deficiency?',
+    'Compare our design to this letter',
+  ],
 };
 
 /** What AnA is attached to on a surface (kit getAnaContext, verbatim logic). */
