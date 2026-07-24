@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-21T23:05:27.443Z",
+  "generatedAt": "2026-07-24T23:49:01.878Z",
   "git": {
-    "sha": "02ee0516f735b3d4761a8164dce5a5f5c24f899b",
+    "sha": "ef5f42fb274778b0d28dc923dc6c31766afef756",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 245,
+    "duplicateBasenames": 246,
     "largeFilesByBytes": 29,
     "largeFilesByLines": 83
   },
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 102,
+        "count": 103,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -64,6 +64,7 @@
           "server/services/biostats-signal-engine/index.ts",
           "server/services/cer/index.ts",
           "server/services/chem/index.ts",
+          "server/services/clinical-regulatory-evidence/index.ts",
           "server/services/cognitive-ecosystem/index.ts",
           "server/services/corpus/index.ts",
           "server/services/cortex/index.ts",
@@ -125,7 +126,7 @@
       },
       {
         "basename": "types",
-        "count": 47,
+        "count": 48,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -145,6 +146,7 @@
           "server/services/ana/therapeutic-area-profiles/types.ts",
           "server/services/biostatistics-judgment/types.ts",
           "server/services/biostats-signal-engine/types.ts",
+          "server/services/clinical-regulatory-evidence/types.ts",
           "server/services/cognitive-ecosystem/types.ts",
           "server/services/compute/types.ts",
           "server/services/conversation-os/types.ts",
@@ -1481,6 +1483,14 @@
         "paths": [
           "server/routes/coverage-analysis.ts",
           "shared/schema/coverage-analysis.ts"
+        ]
+      },
+      {
+        "basename": "coverage-service",
+        "count": 2,
+        "paths": [
+          "server/services/clinical-regulatory-evidence/coverage-service.ts",
+          "server/services/coverage-analysis/coverage-service.ts"
         ]
       },
       {
@@ -2893,7 +2903,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 391,
+      "duplicateGroups": 395,
       "largeByBytes": 26,
       "largeByLines": 72
     },
