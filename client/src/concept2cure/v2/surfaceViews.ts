@@ -85,6 +85,7 @@ import { ShadowReview } from './surfaces/ShadowReview';
 import { SourceTracer } from './surfaces/SourceTracer';
 import { SubmissionCenter } from './surfaces/SubmissionCenter';
 import { QmpWorkspace } from './surfaces/QmpWorkspace';
+import { QualityModule } from './surfaces/QualityModule';
 import { Part11Console } from './surfaces/Part11Console';
 import { IdentityConsole } from './surfaces/IdentityConsole';
 import { ReportGovernance } from './surfaces/ReportGovernance';
@@ -197,6 +198,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'shadow-review': { component: ShadowReview, full: true },
   'source-tracer': { component: SourceTracer },
   qmp: { component: QmpWorkspace },
+  quality: { component: QualityModule, full: true },
   'part11-console': { component: Part11Console },
   'identity-console': { component: IdentityConsole },
   'report-governance': { component: ReportGovernance },

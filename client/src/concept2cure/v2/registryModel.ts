@@ -51,6 +51,7 @@ export const NAV_GROUP_OF: Record<string, string> = {
   nonclinical: 'biopharma',
   registrations: 'both',
   'change-assessment': 'both',
+  quality: 'both',
   'nda-cockpit': 'biopharma',
   'maa-cockpit': 'biopharma',
   'agency-meetings': 'both',
@@ -140,6 +141,7 @@ export const NAV_HIDDEN: ReadonlySet<string> = new Set([
   'human-factors',
   'regulatory-workspace',
   'labeling-pi',
+  'quality',
 ]);
 /** Client segmentation — canonical UI axis organizations.client_type; see kit registry notes */
 export const SEGMENTS = [
@@ -421,7 +423,7 @@ export const SEGMENT_MODULES = {
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
     { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       items: ['precedent-intelligence', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
@@ -447,7 +449,7 @@ export const SEGMENT_MODULES = {
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
     { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
-    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
+    { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
       items: ['precedent-intelligence', 'risk', 'global-ri', 'intelligence-catalog', 'deep-research'],
@@ -505,6 +507,7 @@ export const SEGMENT_MODULES = {
         'tasks',
         'agency-meetings',
         'audit-trail',
+        'quality',
       ],
     },
     {
@@ -587,6 +590,7 @@ export const SEGMENT_MODULES = {
         'tasks',
         'agency-meetings',
         'audit-trail',
+        'quality',
       ],
     },
     {
