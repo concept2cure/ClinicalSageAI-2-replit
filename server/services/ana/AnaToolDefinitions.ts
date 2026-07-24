@@ -7078,6 +7078,32 @@ export const BATCH_DRAFT_SECTIONS: AnaTool = {
   },
 };
 
+export const CONVENE_DRAFTING_COUNCIL: AnaTool = {
+  name: 'convene_drafting_council',
+  description:
+    "Convene the four-agent drafting council for a HIGH-ASSURANCE section draft: a Drafter writes the section, a Statistician extracts and checks every numerical claim, a Critic reviews it as a hostile agency reviewer, and a Synthesizer produces the final text with corrections applied. Use this when the user asks for a draft that is independently verified and adversarially reviewed before they see it (e.g. 'give me a reviewed draft of 2.5', 'run the council on the device description', 'I want a checked draft, not a first pass') — for a quick ordinary draft, use the normal drafting tools instead. Runs four sequential model calls (expect one to two minutes); every agent execution is Part-11 audit-logged with the model, tokens, and latency recorded. Returns the final synthesized text plus the verification and critique summaries. Nothing is auto-saved — the user promotes the final text through the governed authoring flow. If the council is not provisioned in this deployment, the tool says so instead of failing.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      section_path: {
+        type: 'string',
+        description: "The section to draft (e.g. '2.5.4', 'device_description', 'M2.7.3 safety summary').",
+      },
+      requirements: {
+        type: 'object',
+        description:
+          'Free-form drafting requirements the Drafter must honor — product/device name, indication, framework, key messages, constraints. Passed to the Drafter verbatim as JSON.',
+      },
+      context: {
+        type: 'string',
+        description:
+          'Optional source/background text the draft must be grounded in (protocol excerpts, prior sections, data summaries). The Drafter may not invent facts beyond this and the requirements.',
+      },
+    },
+    required: ['section_path'],
+  },
+};
+
 export const DRAFT_FDA_IR_RESPONSE: AnaTool = {
   name: 'draft_fda_ir_response',
   description:
@@ -9003,6 +9029,7 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   DRAFT_510K_SUBSTANTIAL_EQUIVALENCE,
   DRAFT_CLINICAL_OVERVIEW_M2_5,
   BATCH_DRAFT_SECTIONS,
+  CONVENE_DRAFTING_COUNCIL,
   DRAFT_FDA_IR_RESPONSE,
   ANALYZE_PREDICATE_DEVICE,
   EXTRACT_DOCUMENT_STRUCTURE,

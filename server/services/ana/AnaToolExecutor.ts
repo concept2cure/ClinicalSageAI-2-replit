@@ -14143,6 +14143,82 @@ registerToolHandler('draft_fda_ir_response', async (input) => {
   });
 });
 
+// The four-agent drafting council (Drafter → Statistician → Critic →
+// Synthesizer, server/services/multi-agent-council.ts). Long-running by design
+// (four sequential gateway calls, each Part-11 audit-logged); the pre-flight
+// keeps it honest-by-construction in deployments where the lumen schema /
+// agent registry has not been provisioned (npm run db:apply-c2c seeds it).
+registerToolHandler('convene_drafting_council', async (input, ctx) => {
+  const sectionPath = typeof input.section_path === 'string' ? input.section_path.trim() : '';
+  if (!sectionPath) {
+    return JSON.stringify({ error: 'section_path is required — which section should the council draft?' });
+  }
+  const requirements =
+    input.requirements && typeof input.requirements === 'object' && !Array.isArray(input.requirements)
+      ? (input.requirements as Record<string, unknown>)
+      : {};
+  const context = typeof input.context === 'string' && input.context.trim() ? input.context.trim() : undefined;
+  // Context rides inside requirements — the Drafter template renders requirements
+  // as JSON, and the council's atom-based context store is a separate ingestion
+  // path this conversational tool doesn't populate.
+  const councilRequirements: Record<string, unknown> = {
+    ...requirements,
+    ...(context ? { source_context: context } : {}),
+  };
+
+  const { getPool } = await import('../../db.js');
+  const pool = getPool();
+
+  // Pre-flight: the council needs the provisioned lumen schema AND all four
+  // seeded agents. Answer plainly when it isn't there instead of crashing
+  // mid-pipeline — the honesty boundary for an infrastructure-backed tool.
+  const registry = await pool
+    .query(`SELECT count(*)::int AS n FROM lumen.agent_registry WHERE is_active = TRUE`)
+    .catch(() => null);
+  if (!registry || (registry.rows[0]?.n ?? 0) < 4) {
+    return JSON.stringify({
+      status: 'not_provisioned',
+      error:
+        'The drafting council is not provisioned in this deployment (lumen schema or agent registry missing). ' +
+        'An administrator can enable it by applying the council migration (npm run db:apply-c2c).',
+    });
+  }
+
+  try {
+    const { MultiAgentCouncilService } = await import('../multi-agent-council.js');
+    const council = new MultiAgentCouncilService(pool);
+    const sessionId = await council.initializeSession(sectionPath, councilRequirements, []);
+    const session = await council.executeCouncil(
+      sessionId,
+      ctx?.userId != null ? String(ctx.userId) : undefined,
+    );
+    return JSON.stringify({
+      status: 'completed',
+      session_id: session.id,
+      section_path: sectionPath,
+      final_text: session.finalText,
+      corrections_applied: session.corrections,
+      issues_found: session.issues,
+      critic_assessment: session.criticResult?.overallAssessment,
+      // Bounded detail so the model can narrate what the council caught
+      // without the payload swamping the loop context.
+      discrepancies: (session.statisticianResult?.verifications || [])
+        .filter(v => v.status === 'DISCREPANCY')
+        .slice(0, 10),
+      high_severity_issues: (session.criticResult?.issues || [])
+        .filter(i => i.severity === 'HIGH')
+        .slice(0, 10),
+      note:
+        'Four-agent audit trail persisted (lumen.agent_executions). Nothing was auto-saved — promote the final text through the governed authoring flow.',
+    });
+  } catch (error: any) {
+    return JSON.stringify({
+      error: `Council execution failed: ${error?.message ?? 'unknown error'}`,
+      tool: 'convene_drafting_council',
+    });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop
 // ─────────────────────────────────────────────────────────────────────────────
