@@ -10,6 +10,7 @@ import { describe, it, expect } from 'vitest';
 import {
   resolveClientJourneyStage,
   describeClientJourney,
+  buildClientJourneyPromptBlock,
   SUBMISSION_READY_THRESHOLD,
   FRESH_LICENSE_DAYS,
   type ClientJourneySignals,
@@ -134,6 +135,28 @@ describe('describeClientJourney — guidance tied to real capabilities', () => {
       const text = [j.label, j.whereYouAre, j.nextMilestone, j.anaOffer].join(' ');
       expect(text).not.toContain('!');
       expect(text).not.toMatch(emoji);
+    }
+  });
+});
+
+describe('buildClientJourneyPromptBlock — proactive greeting block', () => {
+  it('carries the stage, situation, milestone, and the offer, and tells AnA to lead with it', () => {
+    const journey = describeClientJourney('authoring', { signals: { artifactCount: 4 } });
+    const block = buildClientJourneyPromptBlock(journey);
+    expect(block).toContain('journey (license → submission)');
+    expect(block).toContain('`authoring`');
+    expect(block).toContain(journey.whereYouAre);
+    expect(block).toContain(journey.nextMilestone);
+    expect(block).toContain('Lead with this');
+    expect(block).toContain(journey.anaOffer);
+  });
+
+  it('honors the tone floor (no exclamation marks, no emoji)', () => {
+    const emoji = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+    for (const stage of ['just_licensed', 'submission_ready', 'submitted'] as const) {
+      const block = buildClientJourneyPromptBlock(describeClientJourney(stage, { segment: 'mdx' }));
+      expect(block).not.toContain('!');
+      expect(block).not.toMatch(emoji);
     }
   });
 });

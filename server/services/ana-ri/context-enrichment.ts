@@ -27,6 +27,7 @@ import { getDeficienciesBySubmissionType, getCriticalDeficiencies, type Submissi
 import { resolveToDeficiencyType, getSubmissionTypeContext } from '../../../shared/regulatory/submission-type-bridge.js';
 import { buildIndustryWisdomBlock, inferSegmentFromSubmissionType, inferSegmentFromMessage } from './industry-wisdom-pack.js';
 import { buildTourGuideBlock } from './use-case-playbooks.js';
+import { getClientJourney, buildClientJourneyPromptBlock } from '../ana/client-journey.js';
 import { buildChallengeBlock, detectChallengeableClaims } from './challenge-library.js';
 import { buildFirstSessionTour } from './onboarding-tour.js';
 import { buildDecisionFrameworkBlock, detectRelevantFrameworks } from './decision-frameworks.js';
@@ -568,6 +569,22 @@ async function enrichWithCRLRTF(projectId: string | number, orgId?: number): Pro
   );
 
   return liveBlock + memoryBlock;
+}
+
+/**
+ * Proactive client-journey block for the greeting path: where this tenant sits
+ * on the license → full-submission path, and the single next move. Fail-soft —
+ * returns '' on any error (or without an org), so a greeting is never blocked.
+ */
+async function enrichWithClientJourney(orgId?: number, submissionType?: string): Promise<string> {
+  if (!orgId) return '';
+  try {
+    const segment = inferSegmentFromSubmissionType(submissionType);
+    const journey = await getClientJourney(pool, orgId, { segment });
+    return buildClientJourneyPromptBlock(journey);
+  } catch {
+    return '';
+  }
 }
 
 async function enrichWithReadiness(projectId: string | number, orgId?: number): Promise<string> {
@@ -1623,12 +1640,21 @@ export async function enrichContextForChat(params: {
     const isGreeting = /^(hi|hello|hey|good\s*(morning|afternoon|evening)|what.?s up|how are you|help|what can you do)/i.test(message.trim());
     if (isGreeting && sources.length === 0) {
       triggerType = 'proactive';
-      sourcesAttempted += 2;
-      // Inject readiness + top recommendation so AnA can give a proactive status update
-      const [readinessBlock, recsBlock] = await Promise.allSettled([
+      sourcesAttempted += 3;
+      // Inject readiness + top recommendation + the license→submission journey so
+      // AnA opens a returning client's greeting with where their program stands
+      // and the next move, not a bare hello.
+      const [readinessBlock, recsBlock, journeyBlock] = await Promise.allSettled([
         enrichWithReadiness(projectId, organizationId),
         enrichWithRecommendations(projectId, organizationId),
+        enrichWithClientJourney(organizationId, submissionType),
       ]);
+      if (journeyBlock.status === 'fulfilled' && journeyBlock.value) {
+        blocks.push(journeyBlock.value);
+        sources.push('proactive-client-journey');
+      } else {
+        sourcesFailed.push('proactive-client-journey');
+      }
       if (readinessBlock.status === 'fulfilled' && readinessBlock.value) {
         blocks.push(readinessBlock.value);
         sources.push('proactive-readiness');

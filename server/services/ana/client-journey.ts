@@ -225,6 +225,24 @@ export function describeClientJourney(
   }
 }
 
+/**
+ * Render a journey into a proactive prompt block for the greeting path, so AnA
+ * leads a returning (or new) client with where their program stands and the one
+ * useful next move — instead of a bare hello. Pure. Tone floor honored (no
+ * emoji, no exclamation marks) to match the rest of the enrichment blocks.
+ */
+export function buildClientJourneyPromptBlock(journey: ClientJourney): string {
+  return (
+    `\n\n## Where this client is on their journey (license → submission)\n\n` +
+    `- **Stage:** ${journey.label} (\`${journey.stage}\`)\n` +
+    `- **Where they are:** ${journey.whereYouAre}\n` +
+    `- **Next milestone:** ${journey.nextMilestone}\n\n` +
+    `This is a greeting. Lead with this: in one or two human lines, tell them where their program ` +
+    `stands on the path to submission and the single most useful next move — do not open with a bare ` +
+    `hello or a feature list. What to offer now: ${journey.anaOffer}`
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Live signal gathering (fail-soft)
 // ─────────────────────────────────────────────────────────────────────────────
