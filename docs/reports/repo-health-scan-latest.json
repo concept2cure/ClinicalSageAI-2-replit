@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-25T21:52:22.094Z",
+  "generatedAt": "2026-07-25T21:59:37.165Z",
   "git": {
-    "sha": "45c9e1fa3e0c329cf96738851efb1b5b3651ba53",
+    "sha": "caf50b6af68dc4cb29149040cd74d117741e7bac",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2493,7 +2493,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 178892
+        "bytes": 178997
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2611,7 +2611,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4753
+        "lines": 4740
       },
       {
         "file": "server/storage.ts",
@@ -2735,7 +2735,7 @@
       },
       {
         "file": "server/services/foresight-ai-engine.ts",
-        "lines": 2007
+        "lines": 2015
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2894,10 +2894,6 @@
         "lines": 1582
       },
       {
-        "file": "server/routes/cortex-unified.ts",
-        "lines": 1553
-      },
-      {
         "file": "server/routes/ivdr-routes.ts",
         "lines": 1551
       },
@@ -2912,6 +2908,10 @@
       {
         "file": "server/services/submission-twin-service.ts",
         "lines": 1534
+      },
+      {
+        "file": "server/routes/cortex-unified.ts",
+        "lines": 1531
       }
     ]
   },
