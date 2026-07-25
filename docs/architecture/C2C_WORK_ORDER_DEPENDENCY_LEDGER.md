@@ -76,15 +76,19 @@ consumer, and their unit tests mock the database. The golden journeys will be th
 first thing to exercise this stack against a real schema. Schedule accordingly:
 WO-01 is partly a discovery exercise, not purely a harness build.
 
-### 2.6 A promotion gate currently fails open (C-8) — found in WO-02
+### 2.6 A promotion gate failed open (C-8) — found in WO-02, **FIXED 2026-07-25**
 
-`governance-boundary-service.ts` enforces three promotion gates against the
-**orphaned** Drizzle tables. Against the shape that actually deploys, two fail
-**open** and one is unsatisfiable. Master §2 requires these gates fail closed.
+Worse than first reported: the governance tables existed only in dead DDL, so the
+**entire boundary layer had never executed** — no rules, no gates, no transition
+audit trail. Callers swallowed the throws with bare `catch {}`.
 
-This is now the highest-severity open defect. It is not fixed here because the fix
-depends on the ADR-0007 direction, which C-9 has just inverted. Regression tests
-exist: `tests/schema-contract/governance-boundary-failopen.contract.test.ts`.
+Fixed in the C-9 direction: canonical DDL
+(`db/migrations/20260725_governance_boundary_tables.sql`), deployed vocabulary as
+a single shared source (`shared/constants/operating-system-vocab.ts`), fail-closed
+error handling including denial on unpersistable audit records. Proven by 7
+real-service tests against the canonical lineage
+(`tests/schema-contract/governance-boundary-gates.contract.test.ts`). Residual:
+the caller-side bare `catch {}` blocks in `authoring-actions.ts` — for WO-01.
 
 ### 2.7 The blocking question is substantially answered (C-9)
 

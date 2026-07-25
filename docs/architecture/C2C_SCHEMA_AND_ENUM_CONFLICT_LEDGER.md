@@ -20,7 +20,7 @@ names the file and line that settles it, so it can be re-verified independently.
 | C-5 | `BundleExecutionReceipt` type defined twice with different shapes | High | WO-03 |
 | C-6 | Two competing migration lineages; the manifest covers only one | **Blocking (root cause of C-1…C-3)** | all schema work |
 | C-7 | Assumption/decision service vocabularies diverge from Drizzle enums | High | WO-03 |
-| C-8 | **Governance boundary gates fail OPEN against the deployed schema** | **Critical** | WO-01, WO-03, WO-08 |
+| C-8 | **Governance boundary gates failed OPEN — FIXED 2026-07-25** (canonical DDL + deployed vocabulary + fail-closed) | ~~Critical~~ fixed | — |
 
 C-6 is the root cause. C-1 through C-3 are its symptoms. C-4 is the most
 commercially consequential finding. **C-8 is the most safety-consequential: a
@@ -355,45 +355,96 @@ WHERE table_name = 'assumption_records' ORDER BY ordinal_position;
 
 ---
 
-## C-8 — Governance boundary gates fail OPEN *(critical)*
+## C-8 — Governance boundary gates failed OPEN *(critical — FIXED 2026-07-25)*
 
 `server/services/governance-boundary-service.ts` implements promotion gates: the
 controls that stop an artifact moving to a higher governance boundary until its
 assumptions are approved, its decisions are resolved, and a confidence threshold
-is met.
+is met. Master §2: these gates must fail closed. They failed open.
 
-It queries the **orphaned Drizzle tables** (C-9). Against the deployed shape, its
-filter values do not exist — so the gates do not fire.
+### The actual mechanism — corrected from the first write-up
 
-| Gate | Line | Filter value | Deployed vocabulary | Effect |
-|---|---|---|---|---|
-| All decisions resolved | `:229` | `action_state = 'recommended_only'` | `proposed`, `under_review`, `approved`, `rejected`, `executed`, `deferred`, `escalated`, `superseded` | **FAILS OPEN** — value is not legal, so the query matches nothing and the gate never blocks |
-| Minimum confidence | `:249-252` | ladder `uncertain/provisional/moderate/strong`; reads `decision.confidence` | `definitive`, `high`, `moderate`, `low`, `speculative`; column is `confidence_level` | **FAILS OPEN or arbitrarily** — only `moderate` overlaps, so a `definitive` decision scores **0**, equal to `speculative` |
-| All assumptions approved | `:210` | `status NOT IN ('approved','superseded')` | `active`, `under_review`, `superseded`, `withdrawn`, `challenged` | **over-blocks** — `approved` is not legal, so a settled assumption can never satisfy the gate |
+The first version of this finding described the failure as "valid SQL returning
+zero rows." **That was wrong**, and the truth is worse. Verified by running the
+service's real Drizzle-generated SQL against the deployed shape:
 
-### Why this is the most serious finding
+1. `governance_boundary_rules` / `governance_boundary_transitions` existed
+   **only** in `migrations/0010` — the migration with no execution path (C-9).
+   In a deployed environment they do not exist at all, so `evaluateTransition()`
+   threw on first touch (rules fetch), before any gate ran.
+2. Even hypothetically past that, the gate queries used `database.select()` on
+   the orphaned Drizzle tables — which enumerates every mapped column by name.
+   Against the deployed `assumption_records`/`decision_records` shape, columns
+   like `confidence` do not exist: **the queries THROW, they do not silently
+   return zero rows.** (The zero-rows behavior only occurs with hand-written
+   `count(*)` SQL, which is what the first probe used — a probe artifact, not
+   the service's behavior.)
+3. Every caller wrapped the whole evaluation in a **bare `catch {}`**
+   (`authoring-actions.ts:332` and three more sites) and fell back to a
+   contradiction-only check. The throw was swallowed; role gates, assumption
+   gates, decision gates, confidence gates and the transition audit trail were
+   all silently discarded.
 
-Master work order §2 is explicit: *"Policy, review, export, approval, submission,
-and signature gates fail closed."* **Two of these three fail open**, and they do so
-**silently** — the SQL is valid and returns zero rows, so there is no error, no
-log, and no symptom. A promotion that should have been blocked simply proceeds.
+**Net effect: the entire governance boundary layer had never executed in any
+deployed environment.** No rules were ever seeded, no gate ever fired, and no
+transition audit record was ever written.
 
-The third fails closed but is unsatisfiable, which is its own defect: a gate that
-can never be cleared invites being switched off.
+Vocabulary defects that would have broken the gates even with storage present:
 
-### Regression tests
+| Gate | Defect |
+|---|---|
+| decisions resolved (`:229`) | filtered `action_state = 'recommended_only'` — not a legal deployed value; can never match |
+| minimum confidence (`:249`) | ranked `uncertain/provisional/moderate/strong`; deployed vocabulary is `definitive/high/moderate/low/speculative`, so `definitive` scored **0**, equal to `speculative`; read a `confidence` column that is `confidence_level` in deployed DDL |
+| assumptions approved (`:210`) | excluded `'approved'` — not a legal deployed value; the gate was unsatisfiable |
 
-`tests/schema-contract/governance-boundary-failopen.contract.test.ts` — 4 passing
-tests proving each failure against the deployed schema, plus a skipped acceptance
-test for the fix.
+### The fix (commit accompanying this entry)
 
-### Required fix
+1. **Canonical storage** — `db/migrations/20260725_governance_boundary_tables.sql`
+   creates both governance tables in the manifest-managed lineage, mirroring the
+   Drizzle shapes in lineage-consistent style (TEXT + CHECK, TIMESTAMPTZ, JSONB).
+   Pure additive; rollback is `DROP TABLE` on two empty tables.
+2. **Deployed vocabulary, one source of truth** —
+   `shared/constants/operating-system-vocab.ts` encodes the deployed CHECK
+   vocabularies, the approval semantics (`approved` = `active` **with**
+   `reviewed_by` set, because bare `active` is the column default), the
+   unresolved-decision set (`proposed`, `under_review`, `deferred`, `escalated`),
+   and a unified confidence ladder ranking **both** vocabularies so legacy rule
+   minimums (`moderate`, `strong`) evaluate correctly against deployed decisions.
+   Gate values as duplicated string literals — the mechanism of this defect —
+   are gone.
+3. **Fail closed, everywhere** — each gate catches its own errors and converts
+   them to a blocking reason; an unreadable rule store blocks; and an
+   **unpersistable transition audit record denies the transition** (an
+   allowed=true whose audit row was never written is local-only success
+   presented as persisted truth, which master §2 forbids).
+4. **Unknown confidence blocks** — `rankConfidence()` returns null for an
+   unrecognized value and the gate fails closed, instead of the `?? 0` default
+   that made `definitive` score lowest.
 
-Not attempted in WO-02 — it depends on the ADR-0007 revision (C-9). When that
-lands, `governance-boundary-service.ts` must be aligned to the canonical
-vocabulary, and the gate values must come from a **shared constant** rather than
-string literals duplicated between service and schema. Literal duplication is the
-mechanism that allowed the divergence.
+### Proof
+
+`tests/schema-contract/governance-boundary-gates.contract.test.ts` — the **real
+service** against a **real database** carrying the canonical lineage (the db
+module is mocked only to redirect the handle at PGlite; every query executes
+against genuine DDL). 7 tests passing:
+
+- unreviewed active assumption blocks; the same assumption reviewed does not;
+- proposed decision blocks; executed does not;
+- deployed `low` fails a legacy `moderate` minimum; deployed `high` passes it;
+- every evaluation (including denials) writes a durable transition record;
+- gate storage unreachable → **denied**, not thrown-and-swallowed;
+- audit-record persistence failure → **denied**.
+
+`governance-boundary-failopen.contract.test.ts` (4 tests) remains as the record
+of the broken vocabulary facts against the deployed schema.
+
+### Residual
+
+The four caller-side bare `catch {}` blocks in `authoring-actions.ts` still
+exist. They are now much less dangerous — the service no longer throws in the
+failure modes above and returns explicit denials instead — but a caller that
+swallows unexpected throws is still a fail-open pattern. Tightening those
+belongs to the WO-01 journey work that exercises those routes end-to-end.
 
 ---
 

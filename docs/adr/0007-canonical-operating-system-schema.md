@@ -20,6 +20,13 @@
 > against C-9 before executing anything in this ADR.** The alternative previously
 > recorded as "Option A: adopt the raw-SQL shape" is now the leading candidate.
 >
+> **Progress note (2026-07-25):** the two governance tables
+> (`governance_boundary_rules`, `governance_boundary_transitions`) are no longer
+> hostage to this decision — they were single-defined (only in dead 0010, no
+> collision semantics) and now have canonical DDL in
+> `db/migrations/20260725_governance_boundary_tables.sql`, fixing C-8. The
+> assumption/decision table reconciliation remains this ADR's open scope.
+>
 > The parts of this ADR that remain valid regardless of direction: splitting
 > `domain_track` into modality vs. discipline, keeping decision action/approval/
 > escalation orthogonal, eliminating raw SQL in favour of typed access, and the

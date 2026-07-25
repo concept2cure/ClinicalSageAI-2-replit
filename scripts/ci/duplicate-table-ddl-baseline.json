@@ -1,7 +1,7 @@
 {
-  "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it.",
-  "generatedAt": "2026-07-25T04:30:13.773Z",
-  "total": 72,
+  "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it \u2014 with ONE documented exception: governance_boundary_rules and governance_boundary_transitions collide only with migrations/0010, which has no execution path (conflict C-9); their canonical DDL was added in db/migrations/20260725_governance_boundary_tables.sql to fix the C-8 fail-open governance gates. Retiring 0010 under ADR-0006 removes both entries.",
+  "generatedAt": "2026-07-25T04:58:32.009Z",
+  "total": 74,
   "entries": {
     "api_usage_logs": [
       "db/migrations/20260319_billing_usage_budgets_alerts.sql",
@@ -189,6 +189,14 @@
     "effort_lines": [
       "migrations/20260611_effort_certification.sql",
       "scripts/db-verify/00_bootstrap_base.sql"
+    ],
+    "governance_boundary_rules": [
+      "db/migrations/20260725_governance_boundary_tables.sql",
+      "migrations/0010_operating_system_foundation.sql"
+    ],
+    "governance_boundary_transitions": [
+      "db/migrations/20260725_governance_boundary_tables.sql",
+      "migrations/0010_operating_system_foundation.sql"
     ],
     "if": [
       "migrations/20260528_phase9_document_schema.sql",
