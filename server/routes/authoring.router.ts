@@ -22,8 +22,29 @@ router.use(async (req: Request, res: Response, next: any) => {
   try {
     const auth = req.headers.authorization || (req.headers as any).Authorization;
 
+    // SECURITY (ledger C-18): drop every caller-supplied identity header BEFORE
+    // any branching. Everything downstream treats these as trusted, derived
+    // values — requireAny() reads x-roles, createAuditTrail() reads x-user-email
+    // — so a client value must never survive to a route under ANY path through
+    // this middleware. Clearing inside the Bearer branch was not enough: a
+    // non-Bearer Authorization header satisfied the check below, skipped
+    // verification entirely, and reached the routes with a forged
+    // `x-roles: ADMIN` intact. Only getTenantId() throwing prevented a write,
+    // which is luck rather than access control.
+    delete (req.headers as any)['x-roles'];
+    delete (req.headers as any)['x-user-email'];
+    delete (req.headers as any)['x-tenant-id'];
+
     // JWT is REQUIRED in all deployed environments
     if (!auth) {
+      return res
+        .status(401)
+        .json({ error: 'Authentication required for 21 CFR Part 11 compliance' });
+    }
+
+    // A present-but-unverifiable credential is not authentication. This used to
+    // fall through to next() because the verification block was conditional.
+    if (!auth.startsWith('Bearer ') || !jose) {
       return res
         .status(401)
         .json({ error: 'Authentication required for 21 CFR Part 11 compliance' });
@@ -190,9 +211,22 @@ async function canEditSection(
 }
 
 // Role-based access control helper
+/**
+ * Role gate.
+ *
+ * Reads the VERIFIED claim (req.user.roles) rather than the x-roles header.
+ * The middleware above now derives and sanitises that header, so the two agree —
+ * but authorization must not depend on a mutable header at all. One middleware
+ * ordering mistake, one route mounted without this router's own JWT middleware,
+ * and a header-reading gate is bypassable again. Reading the claim removes the
+ * whole class. See ledger C-18.
+ */
 const requireAny = (roles: string[]) => {
   return (req: Request, res: Response, next: any) => {
-    const userRoles = ((req.headers as any)['x-roles'] || '').toString().toUpperCase().split(',');
+    const claimed = ((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[];
+    const userRoles = (Array.isArray(claimed) ? claimed : [claimed]).map(r =>
+      String(r).toUpperCase()
+    );
     const hasRole = roles.some(role => userRoles.includes(role.toUpperCase()));
     if (!hasRole) {
       return res.status(403).json({ error: `Requires one of: ${roles.join(', ')}` });
@@ -4767,64 +4801,15 @@ router.get('/docs/:docId/signatures', async (req: Request, res: Response) => {
 
 // ============= FREEZE Operations =============
 
-// POST /api/authoring/docs/:docId/freeze - Freeze approved document
-router.post(
-  '/docs/:docId/freeze',
-  requireAny(['QA', 'RA_CMC', 'ADMIN']),
-  async (req: Request, res: Response) => {
-    try {
-      const { docId } = req.params;
-      const { reason } = req.body;
-      const tenantId = getTenantId(req);
-      const frozenBy = req.headers['x-user-email'] || req.body.frozen_by || 'system';
-
-      // Check document exists and is APPROVED
-      const docResult = await pool.query(
-        'SELECT id, title, module, product_code, locale, status, created_at, updated_at, created_by, template_id, submitted_at, current_workflow_id, approved_at, frozen_at, locked_at, locked_by, tenant_id, version FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
-        [docId, tenantId]
-      );
-
-      if (((docResult.rowCount ?? 0) === 0)) {
-        return res.status(404).json({ error: 'Document not found' });
-      }
-
-      const doc = docResult.rows[0];
-      if (doc.status !== 'APPROVED' && doc.status !== 'approved') {
-        return res.status(400).json({ error: 'Document must be APPROVED to freeze' });
-      }
-
-      // Update document to FROZEN
-      await pool.query(
-        `UPDATE authoring_documents
-       SET status = 'FROZEN', frozen_at = NOW(), locked_at = NOW(), locked_by = $1
-       WHERE id = $2 AND tenant_id = $3`,
-        [frozenBy, docId, tenantId]
-      );
-
-      // Create audit event
-      await createAuditEvent(
-        docId,
-        'FREEZE',
-        frozenBy as string,
-        { reason: reason || 'Document finalized and frozen' },
-        tenantId
-      );
-
-      res.json({
-        success: true,
-        message: 'Document frozen successfully',
-        frozenAt: new Date().toISOString(),
-        frozenBy,
-      });
-    } catch (error) {
-      console.error('Freeze error:', error);
-      res.status(500).json({
-        error: 'Freeze failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-  }
-);
+// The duplicate POST /docs/:docId/freeze that stood here has been removed.
+//
+// It was UNREACHABLE: an identical path is registered at the top of this file
+// (search "Freeze document with immutable snapshot") and express matches the
+// first registration, so this one never ran. It also took its attribution from
+// `x-user-email || req.body.frozen_by || 'system'` — the header-trust defect
+// fixed elsewhere in this router — which made it a live hazard the moment any
+// reordering made it reachable. Deleted rather than fixed: there is one freeze
+// endpoint, and it is the one above. See ledger C-18.
 
 // ============= AUDIT Operations =============
 

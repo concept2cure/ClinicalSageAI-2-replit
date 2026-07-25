@@ -107,6 +107,28 @@ describe('C-18: role gates must not trust the x-roles header', () => {
     expect(res.status).toBe(403);
   }, T);
 
+  it('a NON-Bearer Authorization header cannot smuggle roles past the gate', async () => {
+    // The claim-derivation block runs only inside
+    //   if (auth && auth.startsWith('Bearer ') && jose) { … }
+    // while the middleware calls next() unconditionally afterwards. A non-Bearer
+    // Authorization header therefore satisfies the "is authentication present?"
+    // check without ever being verified — and, before the fix, left the caller's
+    // x-roles header untouched all the way to requireAny.
+    const res = await request(app)
+      .post('/api/authoring/templates')
+      .set('Authorization', 'Basic dXNlcjpwYXNz')
+      .set('x-roles', 'ADMIN')
+      .send({ template_name: 'non-bearer probe', template_type: 'm3', category: 'quality' });
+
+    expect(res.status).toBe(401);
+
+    const rows = await jdb.pool.query(
+      `SELECT id FROM authoring_templates WHERE template_name = $1`,
+      ['non-bearer probe'],
+    );
+    expect(rows.rows).toHaveLength(0);
+  }, T);
+
   it('a token WITH a roles claim is still honoured', async () => {
     const token = await mint({
       userId: USER.id,

@@ -1046,22 +1046,44 @@ still works; a forged header cannot widen `roles: ['AUTHOR']`; attribution
 resolves to the verified subject and never to a forged address; a token without a
 tenant claim cannot create in a tenant it names.
 
-### Adjacent findings recorded while here
+### A second bypass, found while closing the first
 
-- **`requireAny` is header-shaped by design.** It now receives only verified
-  values, but reading authorization from a mutable header remains a fragile
-  pattern — one middleware ordering mistake re-opens it. It should read
-  `req.user.roles` directly. Not changed here because it touches every gated
-  route and deserves its own change.
-- **A duplicate `POST /docs/:docId/freeze` exists** (line 2823 and line 4638).
-  Express matches the first, so the second — which takes `frozen_by` from
-  `x-user-email || body || 'system'` — is unreachable dead code. It should be
-  deleted, but it is not currently exploitable.
-- **`POST /docs/:docId/sign`** (the rival of `/e-sign`) still takes its signer
-  from `x-user-email || body.signer_email || 'system'` and decides workflow
-  approval from `x-roles`. It writes `authoring_signatures`, a C-15 phantom, so
-  it fails before any of that matters — but it must be fixed or deleted as part
-  of the C-11 residual 1 work, not left to become live later.
+The initial fix cleared the identity headers inside the Bearer branch. That was
+**not enough**, and the follow-up test proved it:
+
+```
+Authorization: Basic dXNlcjpwYXNz
+x-roles: ADMIN
+```
+
+The middleware's `if (!auth)` check passes (an Authorization header IS present),
+the verification block is skipped entirely because it is guarded by
+`if (auth.startsWith('Bearer ') && jose)`, and `next()` runs unconditionally
+afterwards — so an unverified request reached the routes with a forged
+`x-roles: ADMIN` intact. The probe returned **500, not 403**, which is the tell:
+`requireAny` was satisfied by the forged header, and only `getTenantId()` throwing
+prevented the write. That is luck, not access control.
+
+Three layers now, so no single mistake re-opens it:
+
+1. the identity headers (`x-roles`, `x-user-email`, `x-tenant-id`) are deleted at
+   the **top** of the middleware, before any branching, so no caller value
+   survives on any path;
+2. a present-but-unverifiable credential is rejected with 401 instead of falling
+   through to `next()`;
+3. `requireAny` reads `req.user.roles` — the verified claim — so authorization no
+   longer depends on a header at all.
+
+### Adjacent findings — both now closed
+
+- **`requireAny` reads the verified claim.** Done, above.
+- **The duplicate `POST /docs/:docId/freeze` is deleted.** It was unreachable
+  (express matches the first registration) and took attribution from
+  `x-user-email || body.frozen_by || 'system'` — a live hazard the moment any
+  reordering made it reachable. Deleted rather than fixed: there is one freeze
+  endpoint.
+- **`POST /docs/:docId/sign`** — fixed with C-11 residual 1: signer from the
+  verified token, roles from `req.user.roles`.
 
 ---
 
