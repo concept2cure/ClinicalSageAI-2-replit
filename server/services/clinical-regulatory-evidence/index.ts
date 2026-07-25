@@ -12,19 +12,24 @@
  *
  * ── Phase status (read this before assuming a method is broken) ─────────────
  *
- * Phase 1 (this) lands the contracts, the facade and the fail-closed scoping.
- * Phases 2–5 land the adapters that give it something to read:
+ *   phase 1  ✅ contracts, facade, fail-closed scoping, schema
+ *   phase 2  ✅ csr-adapter.ts — projection from csr_reports/csr_details, so
+ *               coverage now counts REAL rows rather than returning zero
+ *   phase 4  ⬜ crl/* — official FDA CRL ingestion. Findings come from here, so
+ *               `searchFindings` still returns none
+ *   phase 5  ⬜ retrieval-adapter.ts — typed atoms + constrained retrieval
  *
- *   phase 2  csr-adapter.ts          projection from csr_reports/csr_details
- *   phase 4  crl/*                   official FDA CRL ingestion
- *   phase 5  retrieval-adapter.ts    typed atoms + constrained retrieval
+ * Two empty states exist and must not be merged. A tenant whose CSR corpus has
+ * been projected has real observations and zero findings: saying "nothing has
+ * been scanned" would be false, and saying "no findings match your filters"
+ * would imply FDA raised none. Both are lies of a kind a regulatory reviewer
+ * would act on, so the reasons are kept distinct.
  *
- * Until those land, every read here returns an HONEST EMPTY result: zero counts,
- * an exclusion note that says the corpus has not been ingested, and no findings.
- * That is deliberate and correct. A surface showing "no findings ingested yet" is
- * telling the truth; a surface showing sample findings would be teaching users to
- * trust fabricated regulatory evidence, which is the single worst failure mode
- * this product has. Do not "fix" these methods by seeding them.
+ * Where a read genuinely has nothing, it returns an HONEST EMPTY result with a
+ * reason. A surface showing "no findings ingested yet" tells the truth; a
+ * surface showing sample findings would teach users to trust fabricated
+ * regulatory evidence, which is the worst failure mode this product has. Do not
+ * "fix" these methods by seeding them.
  *
  * ── Fail-closed scoping (§14) ───────────────────────────────────────────────
  *
@@ -35,8 +40,12 @@
  * that privacy.
  */
 
+import { and, count, countDistinct, eq, inArray, isNotNull, isNull, or, type SQL } from 'drizzle-orm';
+
+import { db } from '../../db.js';
+import { clinicalEvidenceSources, studyResultObservations } from '@shared/schema';
 import { createScopedLogger } from '../../utils/logger.js';
-import { emptyCoverage } from './coverage-service';
+import { buildCoverage, emptyCoverage } from './coverage-service';
 import type {
   Assumption,
   DesignEvidencePanel,
@@ -52,25 +61,44 @@ import type {
 const logger = createScopedLogger('clinical-regulatory-evidence');
 
 /**
- * Why the corpus is empty in phase 1. Surfaced verbatim to the user through the
- * coverage strip's exclusion note — it explains the zero rather than leaving a
- * blank that reads as "nothing wrong here".
+ * Why the corpus is empty. Surfaced verbatim through the coverage strip's
+ * exclusion note — it explains the zero rather than leaving a blank that reads
+ * as "nothing wrong here".
  */
 const NOT_YET_INGESTED =
   'No regulatory evidence has been ingested into this corpus yet. Counts are zero because ' +
   'nothing has been scanned — not because nothing matched your filters.';
 
 /**
- * Has the evidence corpus been ingested? False through phases 1–3; flipped by
- * phase 4 when crl/source-adapter.ts and the ingestion tables land.
+ * Why findings specifically are empty even when CSR evidence exists.
  *
- * Kept as one function so there is exactly ONE place that decides whether this
- * service has data, and so the honest-empty path cannot be partially bypassed by
- * a method that forgets to check.
+ * These two states must not be conflated. A tenant with a projected CSR corpus
+ * but no ingested letters has real observations and zero findings — telling them
+ * "nothing has been scanned" would be false, and telling them "no findings
+ * match" would imply FDA raised none. Neither is true; the letters simply are
+ * not in the system yet.
  */
-function corpusAvailable(): boolean {
+const NO_LETTERS_INGESTED =
+  'No FDA letters have been ingested yet, so there are no regulatory findings to search. ' +
+  'CSR-derived evidence may still be present — this is a gap in the corpus, not a clean ' +
+  'regulatory record.';
+
+/**
+ * Are there any ingested FDA letters? Findings come from CRL ingestion, which is
+ * phase 4; CSR projection (phase 2) populates sources and observations but never
+ * findings. Kept as one function so exactly one place decides.
+ */
+function findingsAvailable(): boolean {
   return false;
 }
+
+/**
+ * Source types that could carry a clinical effect, and so belong in the
+ * `eligible` denominator. A guidance document or review memo is a legitimate
+ * source but can never yield an endpoint result, so counting it as eligible
+ * would understate how much of the *relevant* corpus was usable.
+ */
+const CLINICAL_SOURCE_TYPES = ['csr', 'protocol', 'sap', 'registry', 'publication'] as const;
 
 /** Fail closed: a scope without an organization is an error, not a wildcard. */
 function assertScoped(scope: EvidenceScope, op: string): void {
@@ -86,13 +114,103 @@ export interface CoverageArgs {
 }
 
 /**
- * §8.1 corpus coverage for a study or design node. Reported, never inferred.
+ * §8.1 corpus coverage for a study or design node. Every count is OBSERVED from
+ * the graph — nothing here estimates a number it did not count.
+ *
+ * ── All five count the same unit: SOURCES ─────────────────────────────────
+ *
+ * This matters more than it looks. The denominators are read as "18 of 31
+ * comparable studies carry a machine-readable effect", so mixing units makes the
+ * sentence false. Counting `structured` as raw observations while `eligible`
+ * counts sources produces a non-monotonic set — one CSR yielding three
+ * observations reads as 3 structured out of 1 eligible — and a reader would
+ * take that as three separate studies agreeing.
+ *
+ *   scanned     sources visible to this tenant (public + own private)
+ *   eligible    of those, sources that could carry a clinical effect
+ *   structured  of those, sources that yielded ≥1 extracted observation
+ *   verified    of those, sources with ≥1 human-reviewed observation
+ *   cited       of those, sources with ≥1 verified observation resolving to a page
+ *
+ * `cited` is the strictest deliberately: a number someone might put in a
+ * submission has to resolve to a page. CSR projections carry no spans (the
+ * source table has none), so a CSR-only corpus legitimately reports cited = 0
+ * while the other four are non-zero. That is the honest picture, not a bug.
  */
-export async function getCoverage(scope: EvidenceScope, _args: CoverageArgs = {}) {
+export async function getCoverage(scope: EvidenceScope, args: CoverageArgs = {}) {
   assertScoped(scope, 'getCoverage');
-  if (!corpusAvailable()) return emptyCoverage(NOT_YET_INGESTED);
-  // phase 5: coverage-service over the retrieval adapter's observed counts.
-  return emptyCoverage(NOT_YET_INGESTED);
+  if (!db) return emptyCoverage(NOT_YET_INGESTED);
+
+  try {
+    // Visibility filter, applied BEFORE anything else (§8.1): public evidence is
+    // global; private evidence is this tenant's only. There is no third case.
+    const visible = or(
+      isNull(clinicalEvidenceSources.organizationId),
+      eq(clinicalEvidenceSources.organizationId, scope.organizationId),
+    );
+
+    const [scannedRow] = await db
+      .select({ n: count() })
+      .from(clinicalEvidenceSources)
+      .where(visible);
+
+    const [eligibleRow] = await db
+      .select({ n: count() })
+      .from(clinicalEvidenceSources)
+      .where(and(visible, inArray(clinicalEvidenceSources.sourceType, CLINICAL_SOURCE_TYPES)));
+
+    const obsVisible = or(
+      isNull(studyResultObservations.organizationId),
+      eq(studyResultObservations.organizationId, scope.organizationId),
+    );
+
+    /** Distinct SOURCES with an observation matching `extra` — never a raw row count. */
+    const sourcesWithObservations = async (extra?: SQL) => {
+      const [row] = await db
+        .select({ n: countDistinct(studyResultObservations.sourceId) })
+        .from(studyResultObservations)
+        .where(extra ? and(obsVisible, extra) : obsVisible);
+      return row?.n ?? 0;
+    };
+
+    const scanned = scannedRow?.n ?? 0;
+    if (scanned === 0) return emptyCoverage(NOT_YET_INGESTED);
+
+    const structured = await sourcesWithObservations();
+    const verified = await sourcesWithObservations(
+      eq(studyResultObservations.verification, 'source_verified'),
+    );
+    const cited = await sourcesWithObservations(
+      and(
+        eq(studyResultObservations.verification, 'source_verified'),
+        isNotNull(studyResultObservations.sourcePage),
+      ),
+    );
+
+    return buildCoverage({
+      scanned,
+      eligible: eligibleRow?.n ?? 0,
+      structured,
+      verified,
+      cited,
+      exclusionNote:
+        verified < structured
+          ? `${structured - verified} of ${structured} sources with structured evidence are not ` +
+            'yet human-verified and are excluded from every displayed effect estimate.'
+          : null,
+      freshness: null,
+    });
+  } catch (e) {
+    // Coverage that cannot be counted is not reported as zero — a zero would
+    // read as "we looked and found nothing". Rethrow so the route surfaces an
+    // honest error state instead.
+    logger.error('coverage count failed', {
+      op: 'getCoverage',
+      designNodeId: args.designNodeId ?? null,
+      error: e instanceof Error ? e.message : String(e),
+    });
+    throw e;
+  }
 }
 
 /**
@@ -109,11 +227,18 @@ export async function searchFindings(
 ): Promise<FindingSearchResult> {
   assertScoped(scope, 'searchFindings');
   const coverage = await getCoverage(scope);
-  if (!corpusAvailable()) {
+  if (!findingsAvailable()) {
     return {
       findings: [],
       coverage,
-      insufficientEvidence: { reason: NOT_YET_INGESTED, usable: 0, total: 0 },
+      // The reason distinguishes "no letters ingested" from "nothing matched".
+      // Coverage may be non-zero here — CSR projection populates observations
+      // without producing a single finding.
+      insufficientEvidence: {
+        reason: coverage.scanned === 0 ? NOT_YET_INGESTED : NO_LETTERS_INGESTED,
+        usable: 0,
+        total: 0,
+      },
     };
   }
   // phase 5: retrieval-adapter.constrainedSearch(scope, query)
@@ -197,7 +322,7 @@ export async function runStressTest(
   _input: StressTestInput,
 ): Promise<{ scenarios: StressScenario[]; assumptions: Assumption[] }> {
   assertScoped(scope, 'runStressTest');
-  if (!corpusAvailable()) return { scenarios: [], assumptions: [] };
+  if (!findingsAvailable()) return { scenarios: [], assumptions: [] };
   // phase 6: design-risk-service selects scenarios, delegates to the simulator.
   return { scenarios: [], assumptions: [] };
 }
@@ -207,4 +332,6 @@ export { emptyCoverage, buildCoverage, isStale } from './coverage-service';
 
 /** Exposed for the routes' honest "corpus not ingested" messaging and for tests. */
 export const CORPUS_NOT_INGESTED_REASON = NOT_YET_INGESTED;
-export { corpusAvailable };
+export const NO_LETTERS_INGESTED_REASON = NO_LETTERS_INGESTED;
+export { findingsAvailable };
+export { projectCsrCorpus, projectCsrToEvidence } from './csr-adapter';
