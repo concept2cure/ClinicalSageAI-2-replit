@@ -22,14 +22,15 @@ All three have **zero production callers** (verified). They are marked `@depreca
 
 ---
 
-## Part B — Foresight path (LIVE, already Sunset-flagged): retire, don't patch internals
+## Part B — Foresight path (past-Sunset): retired — ✅ DONE
 
-The foresight path is **live but already HTTP-deprecated** — `server/bootstrap/register-integrations-routes.ts:9-14` sets `Deprecation: true` + `Sunset: 2026-04-01` on `/api/foresight`, `/api/foresight-ai`, `/api/foresight-feedback`. It also reaches users through the `compute_dose_escalation` AnA command (`server/services/ana-ri/command-executor.ts:2636-2653`) and Cortex re-mounts (`server/routes/cortex-unified.ts:1275/1284/1293`).
+The foresight path was live but past its `2026-04-01` Sunset and surfaced fabricated dose "confidence intervals" (a flat ±20 %/±25 % of the computed dose). It has now been **unmounted from every live surface** (C3 goes away with it):
 
-**Decision:** because the whole path is on a published Sunset, the correct action is **retirement of the path**, not investing in de-fabricating its internals. Retirement checklist (follow-up, reviewed):
-1. Remove/redirect the three mounted prefixes (`register-integrations-routes.ts:18-20`) and the Cortex re-mounts.
-2. Retire or redirect the `compute_dose_escalation` command to the honest dose-strategy surface — `clinical-regulatory-evidence/study-design-evidence.service.ts` `assessDoseStrategy`, which **emits no dose value** and requires a governing calculation + expert review (the honest replacement for the fabricated `±20%/±25%-of-dose` "confidence intervals" at `foresight-ai-engine.ts:400,:459` and the `confidence: 0.85 // Would calculate actual` at `:1065`).
-3. Until the path is removed, its Sunset headers already warn consumers.
+1. ✅ **Route mounts removed.** `register-integrations-routes.ts` is now a documented no-op (was `/api/foresight`, `/api/foresight-ai`, `/api/foresight-feedback`); the three Cortex re-mounts in `cortex-unified.ts` (`/clinical`, `/feedback`, `/foresight`) are gone; the `/api/foresight-ai/feedback` alias in `register-inline-routes.ts` is removed.
+2. ✅ **`compute_dose_escalation` retired.** The AnA command no longer instantiates `ForesightAIEngine`; it returns an honest guardrail — no dose value is emitted, and it states that a next dose requires a governing exposure–response/MTD calculation + clinical-pharmacology review (the honest stance of `study-design-evidence.assessDoseStrategy`). Its advertised definition was updated to match. This removed the last reader of the fabricated `±%-of-dose` CIs.
+3. ✅ **Orphaned files `@deprecated`, not deleted.** `foresight-ai-engine.ts` + the three route files carry retirement banners; they are retained only for the barrel / mock-data script / tenant-isolation contract test and are safe to delete once those references are cleaned up (mechanical follow-up).
+
+Build note: this cutover is independent of the CRE type collision — its files do not import the collided types, so it adds no new type errors.
 
 ---
 
@@ -57,5 +58,5 @@ Covered by **Part B** (retire the path); the honest dose surface is `assessDoseS
 1. **Done:** `@deprecated` banners on the 3 DEAD services + this plan (commit `d36180a`). Safe, reversible, zero behavior change.
 2. **Done:** C1 precedent-confidence de-fabrication behind the preserved numeric field shape (write-side, new rows only). Tested.
 3. **Done:** C2 — endpoint `success_rate` de-fabrication behind preserved (null-safe) field shapes: nullable success_rate emitted only from real outcomes, honest `evidence_strength`/`evidence_basis` for rank/label, no fabricated eval score. Tested.
-4. **Next (reviewed):** delete the 3 DEAD files + their dead wiring (mechanical, per Part A) once soaked.
-5. **Next (reviewed, route removal):** retire the already-Sunset foresight path (Part B) — this also removes the fabricated dose confidence intervals (C3). Deferred because it removes live mounted routes + an AnA command, which warrants a coordinated cutover.
+4. **Done:** foresight path retired (Part B) — all mounts removed, `compute_dose_escalation` returns an honest guardrail, orphaned files `@deprecated`. This also removed the last live reader of the fabricated dose CIs (C3).
+5. **Next (mechanical, once soaked):** delete the 3 DEAD services (Part A) and the 4 orphaned foresight files, plus their remaining barrel/script/contract-test references.

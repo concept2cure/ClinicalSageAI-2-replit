@@ -1,4 +1,9 @@
 /**
+ * @deprecated RETIRED (Phase 8). No longer mounted (was /api/foresight and Cortex
+ * /foresight); the Foresight path is past its 2026-04-01 Sunset and surfaced fabricated
+ * dose confidence intervals. File retained pending deletion — do NOT re-mount.
+ * See docs/architecture/CLINICAL_REGULATORY_EVIDENCE_PHASE8_RETIREMENT.md.
+ *
  * AnA Predictions™ Core API Routes
  *
  * Provides predictive scoring, pattern analysis, and recommendations

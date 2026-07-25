@@ -2627,42 +2627,28 @@ export async function computeSampleSize(
   }
 }
 
-/** Compute dose escalation design */
+/**
+ * Dose escalation — retired (Phase 8). The Foresight engine that formerly answered
+ * this attached a FABRICATED confidence interval (a flat ±20 %/±25 % of the computed
+ * dose, not a real statistical interval), so it no longer backs this command. A next
+ * dose is never emitted as a value here: selecting one requires a governing
+ * exposure–response / MTD calculation with stated assumptions and clinical-pharmacology
+ * review — it cannot be inferred from precedent (§14). The honest dose-strategy
+ * evidence surface is clinical-regulatory-evidence/study-design-evidence.assessDoseStrategy.
+ */
 export async function computeDoseEscalation(
-  ctx: CommandContext,
-  params: Record<string, unknown>
+  _ctx: CommandContext,
+  _params: Record<string, unknown>
 ): Promise<CommandResult> {
-  try {
-    const { ForesightAIEngine } = await import('../foresight-ai-engine.js').catch(() => ({
-      ForesightAIEngine: null,
-    }));
-    if (!ForesightAIEngine) {
-      return {
-        success: false,
-        action: 'compute_dose_escalation',
-        message: 'Foresight engine not available.',
-      };
-    }
-    const engine = new ForesightAIEngine();
-    const result: any = await engine.calculateOptimalDoseEscalation(
-      String(params.studyId || 'design-mode')
-    );
-    return {
-      success: true,
-      action: 'compute_dose_escalation',
-      data: result,
-      message: `Dose escalation designed. Method: ${result?.method || params.method || '3+3'}. ${
-        result?.recommendation || 'See results for details.'
-      }`,
-    };
-  } catch (err: unknown) {
-    return {
-      success: false,
-      action: 'compute_dose_escalation',
-      message: 'Dose escalation computation failed.',
-      error: err instanceof Error ? err.message : String(err),
-    };
-  }
+  return {
+    success: true,
+    action: 'compute_dose_escalation',
+    message:
+      'A dose-escalation value is not emitted here. Selecting a next dose requires a governing ' +
+      'exposure–response / MTD calculation with stated assumptions and clinical-pharmacology review; ' +
+      'it cannot be inferred from precedent. Ask for the FDA dose-selection evidence on record to ' +
+      'inform that calculation.',
+  };
 }
 
 /** Assess statistical defensibility */
@@ -4140,9 +4126,10 @@ export const COMMAND_REGISTRY: CommandDefinition[] = [
   },
   {
     name: 'compute_dose_escalation',
-    description: 'Design dose escalation with MTD estimation',
-    parameters: 'method (3plus3/boin/crm/fibonacci), startingDose, doseLevels, targetDLTRate?',
-    example: '"Design a BOIN dose escalation starting at 10mg with 5 dose levels"',
+    description:
+      'Explain dose-escalation requirements and guardrails. Does NOT emit a dose value — a next dose requires a governing exposure–response/MTD calculation and clinical-pharmacology review.',
+    parameters: 'indication?, phase?',
+    example: '"What does dose selection require for my Phase 1 program?"',
   },
   {
     name: 'assess_defensibility',

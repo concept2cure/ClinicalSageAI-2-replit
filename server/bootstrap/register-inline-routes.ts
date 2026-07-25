@@ -26,7 +26,6 @@ import { getEndpointRecommenderService } from '../services/endpoint-recommender-
 
 import deviceProjectsRouter from '../routes/device-projects';
 import predictiveSectionsRoutes from '../routes/predictive-sections';
-import foresightFeedbackRoutes from '../routes/foresight-feedback';
 import { createCsrIntelligenceRoutes } from '../routes/csr-intelligence-routes';
 import csrAnalyticsRouter from '../routes/csr-analytics';
 import { createAuditTrailRoutes } from '../routes/audit-trail-routes';
@@ -118,25 +117,8 @@ export async function registerInlineAnaIntelligenceRoutes({
   // Predictive sections.
   app.use('/api/predictive-sections', predictiveSectionsRoutes);
 
-  // Foresight AI feedback — deprecated alias.
-  try {
-    app.use(
-      '/api/foresight-ai/feedback',
-      (_req: Request, res: Response, next: () => void) => {
-        res.setHeader('Deprecation', 'true');
-        res.setHeader('Sunset', '2026-04-01');
-        res.setHeader('Link', '<https://docs.concept2cure.ai/api/cortex>; rel="canonical"');
-        next();
-      },
-      (req, _res, next) => {
-        req.url = `/feedback${req.url}`;
-        next();
-      },
-      foresightFeedbackRoutes
-    );
-  } catch (error) {
-    console.error('Failed to mount foresight-ai/feedback alias:', error);
-  }
+  // Foresight AI feedback alias retired in Phase 8 (past 2026-04-01 Sunset; the
+  // Foresight path surfaced fabricated dose confidence intervals). No longer mounted.
 
   // RAG routes (parallel startup for faster boot).
   {

@@ -1,4 +1,12 @@
 /**
+ * @deprecated RETIRED (Phase 8, Clinical Regulatory Evidence migration). Unmounted from
+ * every live surface — its dose-escalation output attached a FABRICATED confidence
+ * interval (a flat ±20 %/±25 % of the computed dose, not a statistical interval). No
+ * route or AnA command calls it any more; retained only for the barrel / mock-data
+ * script / tenant-isolation contract test pending deletion. Do NOT add callers. Honest
+ * dose-strategy evidence lives in clinical-regulatory-evidence/study-design-evidence
+ * (assessDoseStrategy). See docs/architecture/CLINICAL_REGULATORY_EVIDENCE_PHASE8_RETIREMENT.md.
+ *
  * AnA Predictions™ Advanced AI Engine
  * Leverages GPT-5 and cutting-edge transformer models for predictive clinical intelligence
  * Production-ready service for pharmaceutical companies
