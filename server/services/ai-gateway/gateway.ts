@@ -45,6 +45,10 @@ import {
 } from './policy';
 import { CLOUD_MODELS } from './providers/cloud-models';
 import {
+  parseOpenAIStreamDelta,
+  extractOpenAIReasoning,
+} from './openai-stream.js';
+import {
   createBedrockClient,
   createVertexClient,
   createAzureClient,
@@ -783,12 +787,24 @@ export class AIGateway {
     request: GatewayRequest,
     requestId: string,
     startTime: number
-  ): Promise<GatewayResponse> {
+  ): Promise<AnaGatewayResponse> {
     // Resolve the OpenAI-compatible client for this provider (openai / azure / local).
     const client = this.openaiFamilyClient(modelConfig.provider);
     if (!client) {
       throw new Error(
         `${modelConfig.provider} client not initialized (missing credentials/endpoint for ${modelConfig.provider})`
+      );
+    }
+
+    // Streaming requested — deliver tokens (and reasoning, where the provider
+    // emits it) incrementally, at parity with the Anthropic path.
+    if (request.stream && request.onStream) {
+      return this.executeOpenAICompatibleStream(
+        client,
+        modelConfig,
+        request,
+        requestId,
+        startTime
       );
     }
 
@@ -834,9 +850,11 @@ export class AIGateway {
       throw error;
     });
     const choice = completion.choices?.[0];
+    const reasoning = extractOpenAIReasoning(choice?.message);
 
     return {
       content: choice?.message?.content || '',
+      thinking: reasoning || undefined,
       provider: modelConfig.provider,
       model: modelConfig.model,
       usage: {
@@ -854,7 +872,7 @@ export class AIGateway {
       cached: false,
       deterministic: false,
       finishReason: choice?.finish_reason || 'unknown',
-    };
+    } as AnaGatewayResponse;
   }
 
   /**
@@ -1323,9 +1341,21 @@ export class AIGateway {
     request: GatewayRequest,
     requestId: string,
     startTime: number
-  ): Promise<GatewayResponse> {
+  ): Promise<AnaGatewayResponse> {
     if (!this.moonshotClient) {
       throw new Error('Moonshot client not initialized (missing KIMI_API_KEY or MOONSHOT_API_KEY)');
+    }
+
+    // Streaming requested — Kimi thinking models emit reasoning_content, so this
+    // surfaces both tokens and reasoning incrementally, at Anthropic parity.
+    if (request.stream && request.onStream) {
+      return this.executeOpenAICompatibleStream(
+        this.moonshotClient,
+        modelConfig,
+        request,
+        requestId,
+        startTime
+      );
     }
 
     const params: any = {
@@ -1356,9 +1386,11 @@ export class AIGateway {
       throw error;
     });
     const choice = completion.choices?.[0];
+    const reasoning = extractOpenAIReasoning(choice?.message);
 
     return {
       content: choice?.message?.content || '',
+      thinking: reasoning || undefined,
       provider: 'moonshot',
       model: modelConfig.model,
       usage: {
@@ -1376,7 +1408,127 @@ export class AIGateway {
       cached: false,
       deterministic: false,
       finishReason: choice?.finish_reason || 'unknown',
+    } as AnaGatewayResponse;
+  }
+
+  /**
+   * Streaming path shared by every OpenAI-compatible provider (openai / azure /
+   * local / moonshot). Delivers text and — where the provider emits it —
+   * reasoning incrementally through request.onStream, at parity with the
+   * Anthropic streaming path: same text/thinking callback contract, the same
+   * 30s per-chunk stall watchdog, and the same return-partial-on-error
+   * resilience. Usage is read from the final include_usage chunk.
+   */
+  private async executeOpenAICompatibleStream(
+    client: any,
+    modelConfig: ModelConfig,
+    request: GatewayRequest,
+    requestId: string,
+    startTime: number
+  ): Promise<AnaGatewayResponse> {
+    const onStream = request.onStream!;
+    const provider = modelConfig.provider;
+
+    const params: any = {
+      model: modelConfig.model,
+      messages: request.messages.map(m => ({ role: m.role, content: m.content })),
+      max_tokens: request.maxTokens || 2000,
+      temperature: request.temperature ?? 0.7,
+      stream: true,
+      // Ask the server to append a final usage-only chunk so cost/telemetry
+      // stay accurate on the streaming path (ignored by servers that lack it).
+      stream_options: { include_usage: true },
     };
+    if (request.seed !== undefined) params.seed = request.seed;
+    if (request.jsonMode) {
+      const supportsStrictSchema = provider !== 'local';
+      params.response_format =
+        request.jsonSchema && supportsStrictSchema
+          ? { type: 'json_schema', json_schema: { name: 'response', strict: true, schema: request.jsonSchema } }
+          : { type: 'json_object' };
+    }
+
+    const stream = await client.chat.completions.create(params);
+
+    let content = '';
+    let thinking = '';
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let totalTokens = 0;
+    let finishReason = 'unknown';
+
+    // Per-chunk watchdog — abort a stream that goes silent for 30s (mirrors the
+    // Anthropic path) so a hung provider can't wedge the turn.
+    let lastChunkTime = Date.now();
+    const chunkTimeoutMs = 30_000;
+    let streamStalled = false;
+    const chunkWatchdog = setInterval(() => {
+      if (Date.now() - lastChunkTime > chunkTimeoutMs) {
+        streamStalled = true;
+        clearInterval(chunkWatchdog);
+        log.warn(
+          `[AI Gateway] ${provider} stream stalled — no chunk for ${chunkTimeoutMs / 1000}s. ` +
+          `Accumulated ${content.length} chars. Aborting stream.`
+        );
+        try {
+          if (stream && typeof (stream as any).controller?.abort === 'function') {
+            (stream as any).controller.abort();
+          }
+        } catch { /* best-effort abort */ }
+      }
+    }, 5_000);
+
+    try {
+      for await (const chunk of stream as AsyncIterable<any>) {
+        lastChunkTime = Date.now();
+        if (streamStalled) break;
+
+        const delta = parseOpenAIStreamDelta(chunk);
+        // Reasoning precedes the answer within a turn — emit it first.
+        if (delta.reasoning) {
+          thinking += delta.reasoning;
+          onStream('', { type: 'thinking', thinkingContent: delta.reasoning });
+        }
+        if (delta.text) {
+          content += delta.text;
+          onStream(delta.text, { type: 'text' });
+        }
+        if (delta.finishReason) finishReason = delta.finishReason;
+        if (delta.usage) {
+          inputTokens = delta.usage.inputTokens;
+          outputTokens = delta.usage.outputTokens;
+          totalTokens = delta.usage.totalTokens;
+        }
+      }
+    } catch (streamErr: any) {
+      log.error(`[AI Gateway] ${provider} stream interrupted:`, streamErr?.message);
+      if (!content) throw streamErr; // nothing captured — surface the failure
+    } finally {
+      clearInterval(chunkWatchdog);
+    }
+
+    if (streamStalled && content) {
+      finishReason = 'chunk_timeout';
+      log.warn(`[AI Gateway] Returning partial ${provider} response (${content.length} chars) after stall`);
+    }
+
+    return {
+      content,
+      thinking: thinking || undefined,
+      provider,
+      model: modelConfig.model,
+      usage: {
+        inputTokens,
+        outputTokens,
+        totalTokens: totalTokens || inputTokens + outputTokens,
+        estimatedCostUsd: this.estimateCost(modelConfig, inputTokens, outputTokens),
+      },
+      latencyMs: Date.now() - startTime,
+      requestId,
+      cached: false,
+      deterministic: false,
+      finishReason,
+    } as AnaGatewayResponse;
   }
 
   // ─────────────────────────────────────────────────────────────────────────

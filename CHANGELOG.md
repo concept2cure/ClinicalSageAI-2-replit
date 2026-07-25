@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - AnA: cost-tiered model routing — economy (Haiku) for routine turns, standard (Sonnet) for real work, flagship (Opus) only for high risk-tier or Thorough; per-deployment tier remaps via `ANA_TIER_*_MODEL`; opt-out via `ANA_MODEL_TIERING`.
 - AnA: effort-scaled extended thinking (`reasoning.ts`) with a safe legacy `budget_tokens` clamp.
+- AnA: OpenAI/Moonshot streaming + reasoning parity — the cheaper fallback providers now stream tokens incrementally and surface reasoning (`reasoning_content`/`reasoning`) as "Thought for Ns", matching the Anthropic path (shared stall watchdog + partial-response resilience), so cost-tiered routing to them no longer degrades the experience.
 - AnA: deeper agentic loop — progress-earned round extension, per-round tool-result budgeting, and failure-adaptation guidance.
 - AnA: four-agent drafting council exposed as `convene_drafting_council` (idempotent `lumen` provisioning migration).
 - AnA: background deep investigations (`start_deep_investigation` / `check_deep_investigation`) that outlive the request, with heartbeat + honest stalled reporting.

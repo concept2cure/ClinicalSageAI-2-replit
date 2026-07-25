@@ -160,8 +160,8 @@ describe('§8.1 constraint parsing', () => {
     );
     // Forwarding an unknown filter would silently widen the result set while the
     // user believed they had constrained it.
-    expect(spy.mock.calls[0][1].discipline).toBeUndefined();
-    expect(spy.mock.calls[0][1].verification).toBeUndefined();
+    expect(spy.mock.calls[0][1]!.discipline).toBeUndefined();
+    expect(spy.mock.calls[0][1]!.verification).toBeUndefined();
   });
 
   it('requires the identifiers the panels are keyed to', async () => {

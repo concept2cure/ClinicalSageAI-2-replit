@@ -192,7 +192,7 @@ describe('CrlLibrary — results', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Search/ }));
     await waitFor(() => expect(apiRequest.mock.calls.length).toBeGreaterThan(before));
-    expect(String(apiRequest.mock.calls.at(-1)![1])).toContain('text=endpoint');
+    expect(String(apiRequest.mock.calls[apiRequest.mock.calls.length - 1]![1])).toContain('text=endpoint');
   });
 });
 
