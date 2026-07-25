@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-25T18:02:48.792Z",
+  "generatedAt": "2026-07-25T18:13:19.543Z",
   "git": {
-    "sha": "293e1561a45701c4b4220bb8178684812882c851",
+    "sha": "e9e002b2007fe7664fc6fb9e39d1609a61a294e5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2457,7 +2457,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 929258
+        "bytes": 931327
       },
       {
         "file": "shared/schema.ts",
@@ -2469,7 +2469,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 530760
+        "bytes": 484778
       },
       {
         "file": "server/statistics-service.ts",
@@ -2583,11 +2583,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18097
+        "lines": 18133
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 9760
+        "lines": 9030
       },
       {
         "file": "server/statistics-service.ts",
@@ -2719,7 +2719,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2035
+        "lines": 2050
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
@@ -2830,12 +2830,12 @@
         "lines": 1785
       },
       {
-        "file": "server/services/combination-products/combination-products-knowledge.ts",
-        "lines": 1726
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1761
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1712
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 1726
       },
       {
         "file": "server/services/client-intelligence-memory.ts",
