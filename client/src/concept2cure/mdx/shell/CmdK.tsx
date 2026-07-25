@@ -102,7 +102,7 @@ export function CmdK({
         {
           id: 'ask',
           label: `Ask AnA: "${q.trim()}"`,
-          hint: `Runs in ${activeMode.label} · ${activeMode.model}`,
+          hint: `Runs in ${activeMode.label}`,
           kind: 'ask' as const,
         },
         ...(MDX_SUGGESTIONS[activeNav] || []).map((s, i) => ({
@@ -177,7 +177,7 @@ export function CmdK({
           />
           <div
             className="cmdk-mode-chip"
-            title={`${activeMode.label} · ${activeMode.model}`}
+            title={activeMode.desc}
           >
             <span className="dot" />
             {activeMode.label}
@@ -242,7 +242,7 @@ export function CmdK({
                 key={m.id}
                 className={`cmdk-mode-btn${mode === m.id ? ' on' : ''}`}
                 onClick={() => setMode(m.id)}
-                title={`${m.desc} · routes to ${m.model}`}
+                title={m.desc}
               >
                 {m.label}
               </button>

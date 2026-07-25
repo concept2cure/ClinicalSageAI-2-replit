@@ -102,9 +102,12 @@ export const DEFAULT_MODELS: ModelConfig[] = [
   {
     // Internal id kept stable for alias continuity; the `model` field is the
     // actual ID sent to Anthropic and tracks the current flagship release.
+    // Bumping this string is the sanctioned way to move AnA to a newer flagship
+    // — the reasoning-only surface (adaptive thinking, no sampling params) is
+    // auto-detected from the version (see isReasoningOnlyModel).
     id: 'claude-opus-4',
     provider: 'anthropic',
-    model: 'claude-opus-4-7',
+    model: 'claude-opus-4-8',
     contextWindow: 200000,
     qualityScore: 99,
     costPer1kInput: 0.015,
@@ -122,16 +125,17 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
-    // Opus 4 legacy — dated snapshot from May 2025. Kept enabled as an
-    // intra-provider fallback if 4.7 is not yet GA for the tenant's tier
-    // or is temporarily unavailable (rate limit, overloaded). Same
-    // capabilities as 4.7, marginally lower quality score so the
-    // fallback chain prefers 4.7 when both are reachable.
+    // Opus 4.7 — the previous flagship. Kept enabled as the top intra-provider
+    // fallback rung: if 4.8 is not yet GA for the tenant's tier or is
+    // temporarily unavailable (rate limit, overloaded), the chain drops to 4.7
+    // before Sonnet. It shares the reasoning-only surface (adaptive thinking),
+    // so a fallback preserves the same reasoning behavior. Marginally lower
+    // quality score than 4.8 so the chain prefers 4.8 when both are reachable.
     id: 'claude-opus-4-legacy',
     provider: 'anthropic',
-    model: 'claude-opus-4-20250514',
+    model: 'claude-opus-4-7',
     contextWindow: 200000,
-    qualityScore: 95,
+    qualityScore: 98,
     costPer1kInput: 0.015,
     costPer1kOutput: 0.075,
     capabilities: [
@@ -882,16 +886,22 @@ export class AIGateway {
   ): void {
     if (this.isReasoningOnlyModel(modelConfig.model)) {
       if (request.thinking?.enabled) {
+        // Adaptive thinking self-budgets — the resolver's budgetTokens is a hint
+        // that only the legacy surface below consumes. Summarized display keeps
+        // the reasoning stream visible to the client on the SSE path.
         params.thinking = { type: 'adaptive', display: 'summarized' };
       }
       return;
     }
     if (request.thinking?.enabled) {
-      // Manual extended thinking requires temperature=1 and no top_p/top_k.
-      params.thinking = {
-        type: 'enabled',
-        budget_tokens: request.thinking.budgetTokens || 10000,
-      };
+      // Legacy manual extended thinking requires temperature=1 and no top_p/top_k.
+      // Anthropic also requires budget_tokens < max_tokens (thinking shares the
+      // output budget) — clamp so a large effort-scaled budget on a small
+      // max_tokens turn can never 400. Leave >=1024 headroom for the answer.
+      const maxTok = typeof params.max_tokens === 'number' ? params.max_tokens : 4096;
+      const requested = request.thinking.budgetTokens || 10000;
+      const budget = Math.max(1024, Math.min(requested, maxTok - 1024));
+      params.thinking = { type: 'enabled', budget_tokens: budget };
       params.temperature = 1;
     } else {
       params.temperature = request.temperature ?? 0.7;
@@ -1449,10 +1459,10 @@ export class AIGateway {
 
   /**
    * Build the fallback chain, exhausting the primary provider's quality
-   * ladder before crossing to a different provider. This means if Opus 4.7
-   * fails, the chain is:
+   * ladder before crossing to a different provider. This means if Opus 4.8
+   * fails, the chain is (same-provider bucket, quality-descending):
    *
-   *   Opus 4 legacy (same provider, lower quality)
+   *   Opus 4.7 (same provider, previous flagship)
    *   → Sonnet 4.6 (same provider, lower quality)
    *   → Sonnet 4 legacy (same provider, lower quality)
    *   → Haiku 4.5 (same provider, lowest Anthropic quality)
@@ -1843,6 +1853,11 @@ export class AIGateway {
         process.env.DETERMINISTIC_MODE === 'true' ||
         false,
       defaultStrategy: (process.env.AI_GATEWAY_STRATEGY as RoutingStrategy) || 'task_based',
+      // NOTE: model *selection* is driven by the DEFAULT_MODELS registry above
+      // (task/quality strategies over qualityScore), not by these per-provider
+      // `defaultModel` fields. They are a provider-level default of last resort
+      // for substrates without a registry — the flagship is set on the registry
+      // entry (`claude-opus-4` → claude-opus-4-8), not here.
       providers: [
         {
           name: 'openai',

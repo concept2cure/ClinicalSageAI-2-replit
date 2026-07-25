@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- AnA: cost-tiered model routing — economy (Haiku) for routine turns, standard (Sonnet) for real work, flagship (Opus) only for high risk-tier or Thorough; per-deployment tier remaps via `ANA_TIER_*_MODEL`; opt-out via `ANA_MODEL_TIERING`.
+- AnA: effort-scaled extended thinking (`reasoning.ts`) with a safe legacy `budget_tokens` clamp.
+- AnA: deeper agentic loop — progress-earned round extension, per-round tool-result budgeting, and failure-adaptation guidance.
+- AnA: four-agent drafting council exposed as `convene_drafting_council` (idempotent `lumen` provisioning migration).
+- AnA: background deep investigations (`start_deep_investigation` / `check_deep_investigation`) that outlive the request, with heartbeat + honest stalled reporting.
+- AnA: segment-agnostic client onboarding journey (`get_client_journey`) and proactive journey/agent-activity presence on greetings.
+- AnA: live agent surface — `GET /api/ana-ri/agent-activity` plus a home-screen activity card that polls it, so a returning user sees the background deep investigations AnA is running (or just finished) without asking.
+- AnA: auditable per-step tool I/O disclosure and round-grouped tool steps in the transcript; "Thought for Ns" reasoning display.
+- AnA: began decomposing the AnA tool mega-files — `agentic-workflow-tools.ts` (agentic workflow tools) and `bla-biologics-tool-defs.ts` (BLA 351(a) biologics + CTD nonclinical/clinical definitions), extracted verbatim with tool wiring unchanged.
 - Concept2Cure foundation migration (tables, indexes, RLS, immutability).
 - Concept2Cure signatures migration and API endpoint.
 - Concept2Cure route tests for projects, conversations, artifacts, and signatures.

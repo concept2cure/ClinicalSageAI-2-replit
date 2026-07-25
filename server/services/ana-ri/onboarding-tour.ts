@@ -119,7 +119,12 @@ export function buildFirstSessionTour(opts: {
     'Keep it short and human. Do not list commands or features as a menu.\n\n' +
     `**Framing:** ${tour.opening}\n\n` +
     `**How a first session tends to go:**\n${stepLines.join('\n')}\n\n` +
-    `**Close with this offer:** ${tour.firstOffer}` +
+    `**Close with this offer:** ${tour.firstOffer}\n\n` +
+    '**Getting their first project going:** if they are ready to start rather than just explore, offer to set up ' +
+    'their first project by walking them through a short onboarding questionnaire — start it with the project_setup ' +
+    'intelligence flow (start_intelligence_flow). Ask a few questions at a time, conversationally; never dump the ' +
+    'whole form. To place exactly where they are on the path from license to full submission at any point, and what ' +
+    'to do next, use get_client_journey.' +
     (segment
       ? ''
       : '\n\nSegment is not yet clear from the conversation. Place them with one question — device, biologic, or small molecule — before going deep.')
