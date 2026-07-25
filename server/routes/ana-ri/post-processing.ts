@@ -19,6 +19,7 @@ import {
   validateResponseStructure,
 } from '../../services/ana-ri/enforcement.js';
 import { validateEvidence } from '../../services/ana-ri/evidence-validation.js';
+import { detectUnsupportedClaims } from '../../services/clinical-regulatory-evidence/governance.js';
 import { buildTrustSummary } from '../../services/ana-ri/response-contract.js';
 import { buildQueueMeta } from '../../services/ana-ri/response-contract.js';
 import { saveChatMessage as saveMessage } from '../../services/chat-thread-helpers.js';
@@ -261,6 +262,25 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
       ? validateEvidence(finalAssistantContent, 'ana-ri')
       : null;
 
+    // §14 unsupported-claim linter (clinical-regulatory-evidence governance):
+    // a distinct, phrase-shaped prohibition set — "N% approval probability",
+    // "FDA usually accepts", "will be approved", "guaranteed approval",
+    // "three PPQ batches resolve" — complementary to the evidence-discipline and
+    // grounding checks above. Detection-only here: the turn's tokens have already
+    // streamed to the client, and these phrase patterns can legitimately appear
+    // outside a regulatory-prediction context (e.g. "the change will be approved"
+    // in QMS), so it is surfaced on post_done for the client/monitoring to flag,
+    // never a hard block that could suppress a valid reply.
+    const streamUnsupportedClaims = finalAssistantContent
+      ? detectUnsupportedClaims(finalAssistantContent)
+      : [];
+    if (streamUnsupportedClaims.length > 0) {
+      console.warn(
+        `[AnA RI Stream] ${streamUnsupportedClaims.length} unsupported claim(s) detected in reply:`,
+        streamUnsupportedClaims.map((v) => v.match).join(' | '),
+      );
+    }
+
     // RIM interception — fire sync, non-blocking, on the cleaned content.
     // Claim metrics blend the structure + evidence checks with the direct
     // grounding measurement (when claims were checkable) so RIM receives an
@@ -383,6 +403,10 @@ export async function runStreamPostProcessing(ctx: StreamPostProcessingContext):
                 grounded: streamGrounding.grounded,
                 unsupported: streamGrounding.unsupported,
               }
+            : undefined,
+        unsupportedClaims:
+          streamUnsupportedClaims.length > 0
+            ? streamUnsupportedClaims.map((v) => ({ match: v.match, reason: v.reason }))
             : undefined,
         reliability: streamReliability || undefined,
         queueMeta: streamQueueMeta,

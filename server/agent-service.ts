@@ -1,3 +1,11 @@
+/**
+ * @deprecated LEGACY / DUPLICATE — a second `StudyDesignAgentService` (HF/Mixtral) with
+ * ZERO importers anywhere in the codebase. Retired in the Clinical Regulatory Evidence
+ * migration (Phase 8); superseded by
+ * server/services/clinical-regulatory-evidence/study-design-evidence.service.ts.
+ * Slated for removal — do NOT add callers.
+ * See docs/architecture/CLINICAL_REGULATORY_EVIDENCE_PHASE8_RETIREMENT.md.
+ */
 import { queryHuggingFace, HFModel } from './huggingface-service';
 import * as fs from 'fs';
 import * as path from 'path';

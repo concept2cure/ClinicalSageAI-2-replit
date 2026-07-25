@@ -1,3 +1,12 @@
+/**
+ * @deprecated LEGACY — retired in the Clinical Regulatory Evidence migration (Phase 8).
+ * Superseded by server/services/clinical-regulatory-evidence/study-design-evidence.service.ts
+ * (evidence-composed, honesty-gated study-design analysis) behind AnA's
+ * clinical-regulatory-evidence tools. This service has no production caller — only a barrel
+ * re-export (server/services/index.ts) and a dead SERVICE_REGISTRY string — and is slated
+ * for removal. Do NOT add new callers.
+ * See docs/architecture/CLINICAL_REGULATORY_EVIDENCE_PHASE8_RETIREMENT.md.
+ */
 import { db } from '../db';
 import { csrReports } from 'shared/schema';
 import { huggingFaceService, HFModel } from '../huggingface-service';

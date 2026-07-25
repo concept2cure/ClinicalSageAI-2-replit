@@ -10,10 +10,31 @@ import { createScopedLogger } from '../utils/logger';
 const logger = createScopedLogger('endpoint-recommender');
 
 // Define types for recommendation results
+/** What an endpoint's evidence is grounded in — highest-authority basis present. */
+export type EndpointEvidenceBasis =
+  | 'regulatory_recommended'
+  | 'corpus_outcomes'
+  | 'corpus_frequency'
+  | 'academic_literature'
+  | 'ai_suggested';
+
 export interface EndpointRecommendation {
   endpoint: string;
   occurrence_count: number;
-  success_rate: number;
+  /**
+   * Empirical trial-success rate (0–100) — set ONLY when derived from real recorded
+   * trial outcomes. `null` when no outcome evidence exists: we do not fabricate a
+   * success rate (Phase 8 confidence-hygiene). Rank/UI should use `evidence_strength`.
+   */
+  success_rate: number | null;
+  /**
+   * Honest strength-of-evidence score (0–100): how well the corpus frequency,
+   * literature and regulatory guidance support proposing this endpoint. NOT a
+   * prediction of trial success. Derived transparently (see deriveEvidenceStrength).
+   */
+  evidence_strength?: number;
+  /** The highest-authority basis backing this endpoint. */
+  evidence_basis?: EndpointEvidenceBasis;
   evidence: EndpointEvidence[];
   regulatory_guidance?: RegulatoryGuidance[];
   academic_references?: AcademicReference[];
@@ -71,6 +92,48 @@ export interface AcademicReference {
   year: string;
   url?: string;
   excerpt: string;
+}
+
+// ─── Honest evidence scoring (Phase 8 confidence-hygiene) ─────────────────────────
+// Replaces the former fabricated success_rate defaults/bumps: an endpoint is ranked
+// and labeled by the strength of the evidence that actually supports it, never by a
+// synthesized trial-success probability.
+
+/** Highest-authority basis backing an endpoint, from the evidence actually present. */
+export function classifyEndpointBasis(rec: EndpointRecommendation): EndpointEvidenceBasis {
+  if (rec.regulatory_guidance && rec.regulatory_guidance.length > 0) return 'regulatory_recommended';
+  const hasCsr = rec.evidence.some((e) => e.source_type === 'csr');
+  if (hasCsr && rec.success_rate != null) return 'corpus_outcomes';   // real outcome data present
+  if (hasCsr) return 'corpus_frequency';                              // seen in the corpus, no outcome data
+  const hasAcademic = rec.evidence.some((e) => e.source_type === 'academic' && e.source_id !== 'ai-generated');
+  if (hasAcademic) return 'academic_literature';
+  return 'ai_suggested';
+}
+
+const BASIS_BASE_STRENGTH: Record<EndpointEvidenceBasis, number> = {
+  regulatory_recommended: 80,
+  corpus_outcomes: 65,
+  corpus_frequency: 45,
+  academic_literature: 30,
+  ai_suggested: 10,
+};
+
+/**
+ * Transparent strength-of-evidence score (0–100): the endpoint's evidentiary basis,
+ * plus how often it recurs across the corpus and how many independent sources
+ * corroborate it. Explicitly NOT a trial-success probability.
+ */
+export function deriveEvidenceStrength(rec: EndpointRecommendation, basis: EndpointEvidenceBasis): number {
+  const base = BASIS_BASE_STRENGTH[basis];
+  const frequency = Math.min(15, Math.max(0, rec.occurrence_count - 1) * 3);   // recurring corpus use
+  const corroboration = Math.min(10, Math.max(0, rec.evidence.length - 1) * 2); // independent sources
+  return Math.min(100, base + frequency + corroboration);
+}
+
+/** Attach evidence_basis + evidence_strength to a recommendation (pure; returns a copy). */
+export function normalizeEndpointEvidence(rec: EndpointRecommendation): EndpointRecommendation {
+  const evidence_basis = classifyEndpointBasis(rec);
+  return { ...rec, evidence_basis, evidence_strength: deriveEvidenceStrength(rec, evidence_basis) };
 }
 
 /**
@@ -214,7 +277,7 @@ export class EndpointRecommenderService {
             combinedEndpoints.push({
               endpoint: endpoint,
               occurrence_count: 1,
-              success_rate: 75, // Default moderate success rate for AI endpoints
+              success_rate: null, // No trial-outcome data for an AI-suggested endpoint — do not fabricate a rate
               evidence: [
                 {
                   source_id: 'ai-generated',
@@ -231,8 +294,12 @@ export class EndpointRecommenderService {
         }
       }
 
-      // Return top ranked recommendations based on count
-      return combinedEndpoints.slice(0, count);
+      // Attach an honest evidence_basis + evidence_strength to each recommendation and
+      // rank by that real signal (regulatory backing, corpus recurrence, corroboration)
+      // instead of a fabricated success rate.
+      const normalized = combinedEndpoints.map(normalizeEndpointEvidence);
+      normalized.sort((a, b) => (b.evidence_strength ?? 0) - (a.evidence_strength ?? 0));
+      return normalized.slice(0, count);
     } catch (error) {
       logger.error('Error generating comprehensive endpoint recommendations:', { error: error });
       return [];
@@ -265,10 +332,8 @@ export class EndpointRecommenderService {
         existing.evidence = [...existing.evidence, ...endpoint.evidence];
         existing.academic_references = endpoint.academic_references;
 
-        // Adjust success rate if academic evidence is strong
-        if (endpoint.evidence.length > 1 && existing.success_rate < 80) {
-          existing.success_rate = Math.min(90, existing.success_rate + 10);
-        }
+        // Corroborating academic evidence strengthens the evidence basis, but it is
+        // NOT a trial-success signal — do not synthesize a success rate from it.
       } else {
         // Add new endpoint
         endpointMap.set(key, endpoint);
@@ -280,12 +345,11 @@ export class EndpointRecommenderService {
       const key = endpoint.toLowerCase();
 
       if (endpointMap.has(key)) {
-        // Add regulatory guidance to existing endpoint
+        // Add regulatory guidance to existing endpoint. Regulatory backing raises the
+        // endpoint's evidence_strength (computed in the normalization pass), not a
+        // fabricated success rate.
         const existing = endpointMap.get(key)!;
         existing.regulatory_guidance = guidance;
-
-        // Boost success rate for regulatory-recommended endpoints
-        existing.success_rate = Math.min(95, existing.success_rate + 15);
       }
     }
 
@@ -306,8 +370,9 @@ export class EndpointRecommenderService {
         return bEvidenceStrength - aEvidenceStrength;
       }
 
-      // Then prioritize success rate
-      if (a.success_rate !== b.success_rate) {
+      // Then prefer a higher EMPIRICAL success rate, only when one is known for both
+      // (null = no outcome data; never treated as 0 or ranked).
+      if (a.success_rate != null && b.success_rate != null && a.success_rate !== b.success_rate) {
         return b.success_rate - a.success_rate;
       }
 
@@ -373,7 +438,7 @@ export class EndpointRecommenderService {
               academicEndpoints.set(endpoint.toLowerCase(), {
                 endpoint: endpoint,
                 occurrence_count: 1,
-                success_rate: 80, // Default good success rate for academic endpoints
+                success_rate: null, // Literature mention is not a trial-outcome rate — do not fabricate
                 evidence: [
                   {
                     source_id: result.id || 'academic-source',
@@ -813,10 +878,13 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
       return (Array.from(endpointStats.values())
         .filter(stat => stat.totalTrials > 0)
         .map(stat => {
+          // Emit an empirical rate ONLY when successful trials were actually recorded;
+          // otherwise null (do not fabricate, and do not report a misleading 0 when
+          // outcome status simply was not captured). Rank uses evidence_strength.
           const successRate =
-            stat.totalTrials > 0
+            stat.totalTrials > 0 && stat.successfulTrials > 0
               ? Math.round((stat.successfulTrials / stat.totalTrials) * 100)
-              : 75;
+              : null;
 
           return {
             endpoint: stat.endpoint,
@@ -842,8 +910,8 @@ Include only the most relevant endpoints for ${indication} ${phase || 'trials'} 
           if (a.is_primary && !b.is_primary) return -1;
           if (!a.is_primary && b.is_primary) return 1;
 
-          // Then by success rate
-          if (a.success_rate !== b.success_rate) {
+          // Then by EMPIRICAL success rate, only when known for both (null = no data)
+          if (a.success_rate != null && b.success_rate != null && a.success_rate !== b.success_rate) {
             return b.success_rate - a.success_rate;
           }
 
@@ -1012,7 +1080,7 @@ Guidelines:
     indication: string,
     phase: string = ''
   ): Promise<{
-    score: number;
+    score: number | null;   // null when the model returns no usable score — never fabricated
     feedback: string;
     similarEndpoints: string[];
   }> {
@@ -1049,15 +1117,17 @@ Provide a JSON response with:
           const similarEndpoints = await this.getSimilarEndpoints(endpoint, indication, 3);
 
           return {
-            score: evaluation.score || 75,
+            // Use the model's score only when it is a real number (0 is valid); never
+            // fabricate a fallback score when it is missing.
+            score: typeof evaluation.score === 'number' ? evaluation.score : null,
             feedback: evaluation.feedback || 'No specific feedback available',
             similarEndpoints,
           };
         }
 
-        // Fallback if JSON parsing fails
+        // Fallback if JSON parsing fails — no score is honest, not a made-up 70.
         return {
-          score: 70,
+          score: null,
           feedback:
             'Unable to parse structured feedback. Please review the endpoint for clarity and measurability.',
           similarEndpoints: await this.getSimilarEndpoints(endpoint, indication, 3),
@@ -1065,7 +1135,7 @@ Provide a JSON response with:
       } catch (parseError) {
         logger.error('Error parsing endpoint evaluation:', { error: parseError });
         return {
-          score: 65,
+          score: null,
           feedback:
             'Endpoint evaluation failed. Please ensure the endpoint is clear, specific, and measurable.',
           similarEndpoints: [],
@@ -1074,7 +1144,7 @@ Provide a JSON response with:
     } catch (error) {
       logger.error('Error evaluating endpoint:', { error: error });
       return {
-        score: 60,
+        score: null,
         feedback: 'An error occurred during evaluation. Please try again.',
         similarEndpoints: [],
       };

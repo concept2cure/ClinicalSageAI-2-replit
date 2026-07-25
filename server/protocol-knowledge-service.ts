@@ -1,3 +1,11 @@
+/**
+ * @deprecated LEGACY — retired in the Clinical Regulatory Evidence migration (Phase 8).
+ * Superseded by the evidence spine + CSR adapter
+ * (server/services/clinical-regulatory-evidence/, which map csr_reports/csr_details into the
+ * unified model non-destructively). No production caller — only a single dead import in
+ * research-companion-service.ts (itself uninvoked). Slated for removal — do NOT add callers.
+ * See docs/architecture/CLINICAL_REGULATORY_EVIDENCE_PHASE8_RETIREMENT.md.
+ */
 import { queryHuggingFace, HFModel } from './huggingface-service';
 import * as fs from 'fs';
 import * as path from 'path';

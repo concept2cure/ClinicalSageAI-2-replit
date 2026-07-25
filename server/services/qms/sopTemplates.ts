@@ -76,6 +76,30 @@ function standardSections(): SopSection[] {
   return STANDARD_SECTIONS.map((s) => ({ ...s }));
 }
 
+/**
+ * The change-control record structure — the sections an EU GMP Annex 15 /
+ * ICH Q10 change-request form captures: identify the change, justify it, assess
+ * impact and risk, list what it affects, plan implementation, capture the
+ * independent approval, then verify effectiveness before closure.
+ */
+export const CHANGE_CONTROL_SECTIONS: SopSection[] = [
+  { key: 'identification',   label: 'Change identification',       order: 1, hint: 'Change number, title, initiator, and date raised.' },
+  { key: 'description',      label: 'Description of change',       order: 2, hint: 'Current state → proposed state, in concrete terms.' },
+  { key: 'justification',    label: 'Reason / justification',      order: 3, hint: 'Why the change is needed and what triggered it.' },
+  { key: 'classification',   label: 'Classification & risk',       order: 4, hint: 'Minor / major / critical, with the risk rationale.' },
+  { key: 'impact',           label: 'Impact assessment',           order: 5, hint: 'Effect on product, process, equipment, validation state, and regulatory filings.' },
+  { key: 'affected',         label: 'Affected documents & records', order: 6, hint: 'SOPs, specifications, validation protocols, and linked deviations / CAPAs.' },
+  { key: 'implementation',   label: 'Implementation plan',         order: 7, hint: 'Actions, owners, target dates, and any pre-approval conditions.' },
+  { key: 'approval',         label: 'Approval',                    order: 8, hint: 'Independent review and approval — the approver must differ from the initiator.' },
+  { key: 'verification',     label: 'Implementation & verification', order: 9, hint: 'Confirmation the change was implemented as approved and the effectiveness check.' },
+  { key: 'closure',          label: 'Closure',                     order: 10, hint: 'Final sign-off closing the change record.' },
+];
+
+/** A defensive copy of the change-control skeleton. */
+function changeControlSections(): SopSection[] {
+  return CHANGE_CONTROL_SECTIONS.map((s) => ({ ...s }));
+}
+
 export const SOP_TEMPLATES: SopTemplate[] = [
   {
     key: 'quality_manual',
@@ -136,6 +160,26 @@ export const SOP_TEMPLATES: SopTemplate[] = [
     category: 'design',
     description: 'An IQ/OQ/PQ or process-validation protocol with acceptance criteria.',
     sections: standardSections(),
+  },
+  {
+    key: 'change_control_sop',
+    label: 'Change-control procedure',
+    docType: 'sop',
+    family: 'Quality system',
+    numberPrefix: 'SOP-CC-',
+    category: 'capa',
+    description: 'The controlled procedure that governs how change requests are raised, assessed, approved, implemented and verified — aligned to ICH Q10 and EU GMP Annex 15.',
+    sections: standardSections(),
+  },
+  {
+    key: 'change_request_form',
+    label: 'Change-request form',
+    docType: 'form',
+    family: 'Quality system',
+    numberPrefix: 'CC-',
+    category: 'capa',
+    description: 'The controlled form used to raise a change request: description, justification, risk classification, impact assessment, implementation plan, independent approval and effectiveness verification.',
+    sections: changeControlSections(),
   },
   {
     key: 'training_curriculum',
