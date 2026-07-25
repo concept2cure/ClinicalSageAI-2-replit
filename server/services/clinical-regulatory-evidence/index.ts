@@ -16,3 +16,6 @@ export * as studyDesignEvidence from './study-design-evidence.service';
 export * as crlIngestion from './crl-ingestion.service';
 export * as governance from './governance';
 export { INSUFFICIENT_EVIDENCE, UnsupportedClaimError } from './governance';
+export * as retrievalAtoms from './retrieval-atoms.service';
+export { CRE_ATOM_TYPES, CRE_ATOM_SOURCE_TYPE } from './retrieval-atoms.service';
+export type { CreAtomType, AtomDraft } from './retrieval-atoms.service';
