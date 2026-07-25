@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-25T21:59:37.165Z",
+  "generatedAt": "2026-07-25T22:48:14.662Z",
   "git": {
-    "sha": "caf50b6af68dc4cb29149040cd74d117741e7bac",
+    "sha": "cb4eb227ca8ba3013a475d9a634f5c63a484c8f8",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2485,7 +2485,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 185494
+        "bytes": 185835
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2603,7 +2603,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5591
+        "lines": 5576
       },
       {
         "file": "server/routes/ana-features.ts",
