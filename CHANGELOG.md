@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - AnA: segment-agnostic client onboarding journey (`get_client_journey`) and proactive journey/agent-activity presence on greetings.
 - AnA: live agent surface — `GET /api/ana-ri/agent-activity` plus a home-screen activity card that polls it, so a returning user sees the background deep investigations AnA is running (or just finished) without asking. Each run is clickable: a finished one opens its research memo, a live one reports where it stands (routed through `check_deep_investigation`).
 - AnA: auditable per-step tool I/O disclosure and round-grouped tool steps in the transcript; "Thought for Ns" reasoning display.
-- AnA: began decomposing the AnA tool mega-files — `agentic-workflow-tools.ts` (agentic workflow tools) and `bla-biologics-tool-defs.ts` (BLA 351(a) biologics + CTD nonclinical/clinical definitions), extracted verbatim with tool wiring unchanged.
+- AnA: began decomposing the AnA tool mega-files — `agentic-workflow-tools.ts` (agentic workflow tools), `bla-biologics-tool-defs.ts` (BLA 351(a) biologics + CTD nonclinical/clinical definitions), `document-surface-tool-defs.ts` (document view/operations), and `discovery-cheminformatics-tool-defs.ts` (discovery-stage compound search), all extracted verbatim with tool wiring unchanged.
 - Concept2Cure foundation migration (tables, indexes, RLS, immutability).
 - Concept2Cure signatures migration and API endpoint.
 - Concept2Cure route tests for projects, conversations, artifacts, and signatures.

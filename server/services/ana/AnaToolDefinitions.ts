@@ -48,6 +48,40 @@ import {
   LIST_PLATFORM_COMMANDS,
   EXECUTE_PLATFORM_COMMAND,
 } from './bla-biologics-tool-defs.js';
+// Document view + operations tool definitions extracted to their own module
+// (decomposition tranche 3). Imported so the enabled-tools array can reference
+// them exactly as before.
+import {
+  LIST_VAULT_DOCUMENTS,
+  READ_VAULT_DOCUMENT,
+  GET_DOCUMENT_VERSIONS,
+  LIST_GOVERNED_DOCUMENTS,
+  READ_GOVERNED_DOCUMENT,
+  GET_TMF_VIEW,
+  SAVE_DOCUMENT_TO_VAULT,
+  UPDATE_VAULT_DOCUMENT,
+  COMPARE_VAULT_VERSIONS,
+  SEED_TMF,
+  UPDATE_TMF_ARTIFACT_STATUS,
+  SEARCH_ALL_DOCUMENTS,
+  GET_PLAN_USAGE,
+  GET_BILLING_CREDITS,
+  GET_ORG_CAPABILITIES,
+} from './document-surface-tool-defs.js';
+// Discovery & cheminformatics tool definitions extracted to their own module
+// (decomposition tranche 3). Imported so the enabled-tools array can reference
+// them exactly as before.
+import {
+  SEARCH_CHEMBL_COMPOUND,
+  ASSESS_TRIAL_FEASIBILITY,
+  SEARCH_PREPRINTS,
+  SCREEN_COMPOUND_LIABILITIES,
+  GENERATE_SCHEDULE_OF_EVENTS,
+  AMEND_SCHEDULE_OF_EVENTS,
+  REVIEW_SCHEDULE_OF_EVENTS_HEALTH,
+  RESET_PROJECT_GOALS,
+  RECONCILE_DOSSIER_NUMBERS,
+} from './discovery-cheminformatics-tool-defs.js';
 import { ANA_ADVISORY_TOOL_SPECS, SUBMISSION_PLAN_TOOL_SPEC, PMA_ADVISORY_TOOL_SPEC, EU_TECHDOC_TOOL_SPEC, IVD_KNOWLEDGE_TOOL_SPEC } from '../ana-advisory';
 import { GLOBAL_RI_TOOL_SPECS } from '../global-ri/ana-tools';
 import { STATISTICAL_DESIGN_TOOLS } from './statisticalDesignTools';
@@ -7310,292 +7344,11 @@ export const DRAFT_FDA_IR_RESPONSE: AnaTool = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Discovery & Cheminformatics Tools
+// Discovery & cheminformatics tool definitions moved to
+// ./discovery-cheminformatics-tool-defs.ts (decomposition tranche 3) and
+// imported at the top of this file, so ALL_ANA_TOOLS_RAW references them
+// unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
-
-export const SEARCH_CHEMBL_COMPOUND: AnaTool = {
-  name: 'search_chembl_compound',
-  description:
-    'Search the curated ChEMBL database (EMBL-EBI) for a drug or compound by name. Returns ' +
-    'citeable molecule records (ChEMBL ID + canonical URL) with the curated physicochemical / ' +
-    'drug-likeness descriptors (molecular weight, cLogP, PSA, H-bond donors/acceptors, rotatable ' +
-    'bonds, rule-of-five violations, QED), the molecule type, and the highest development phase ' +
-    '(0–4, where 4 = approved). Optionally include mechanism(s) of action and molecular target(s). ' +
-    'Use for discovery / competitive-landscape / developability questions about a known compound. ' +
-    'Cite results by ChEMBL ID and link to the provided url.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      query: {
-        type: 'string',
-        description: 'Drug or compound name to search (e.g. "pembrolizumab", "osimertinib").',
-      },
-      include_mechanism: {
-        type: 'boolean',
-        description:
-          'When true, also fetch mechanism(s) of action and target(s) for the top match. Default false.',
-      },
-      max_results: {
-        type: 'number',
-        description: 'Maximum molecules to return (default: 5, max: 20).',
-      },
-    },
-    required: ['query'],
-  },
-};
-
-export const ASSESS_TRIAL_FEASIBILITY: AnaTool = {
-  name: 'assess_trial_feasibility',
-  description:
-    'Assess the OPERATIONAL feasibility of a planned clinical trial from empirical ClinicalTrials.gov ' +
-    'base rates for comparable studies (by condition, optional intervention and phase). Returns the ' +
-    'completion vs discontinuation rate among trials that reached a terminal state — each with a 95% ' +
-    'confidence interval — the realised enrollment distribution of completed comparators, the number ' +
-    'of currently-active competing trials, sponsor breadth, and a feasibility verdict. Every figure is ' +
-    'a count-based statistic; when too few comparable trials have resolved, it returns ' +
-    "'insufficient_evidence' rather than an invented number. This answers 'can the trial be run?' " +
-    "(recruitment, completion, competition) — distinct from the statistical probability of the endpoint hitting.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      condition: {
-        type: 'string',
-        description: 'Disease / condition for the planned trial, e.g. "non-small cell lung cancer".',
-      },
-      intervention: {
-        type: 'string',
-        description: 'Optional intervention / drug / device to narrow the comparator set.',
-      },
-      phase: {
-        type: 'string',
-        description: 'Optional trial phase filter, e.g. PHASE3 or 3.',
-      },
-      max_comparators: {
-        type: 'number',
-        description: 'Maximum comparable trials to analyze (default 100, max 200).',
-      },
-    },
-    required: ['condition'],
-  },
-};
-
-export const SEARCH_PREPRINTS: AnaTool = {
-  name: 'search_preprints',
-  description:
-    'Search preprints on bioRxiv / medRxiv (and other preprint servers) for emerging, ' +
-    'pre-peer-review evidence — new mechanisms, targets, biomarkers, and translational findings. ' +
-    'Backed by Europe PMC full-text preprint search. Returns records with a citeable DOI/URL, the ' +
-    'preprint server, and the posting date. IMPORTANT: preprints are NOT peer-reviewed — always ' +
-    'surface the returned caveat and label these findings as preliminary. Use to scout the leading ' +
-    'edge of a field; corroborate with search_literature (PubMed) for peer-reviewed support.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      query: {
-        type: 'string',
-        description: 'Free-text query (mechanism, target, biomarker, disease, method).',
-      },
-      server: {
-        type: 'string',
-        enum: ['biorxiv', 'medrxiv', 'any'],
-        description: "Restrict to a preprint server, or 'any' (default).",
-      },
-      max_results: {
-        type: 'number',
-        description: 'Maximum preprints to return (default: 5, max: 25).',
-      },
-    },
-    required: ['query'],
-  },
-};
-
-export const SCREEN_COMPOUND_LIABILITIES: AnaTool = {
-  name: 'screen_compound_liabilities',
-  description:
-    'Deterministic structural-alert and developability screen for a small molecule. Provide a SMILES ' +
-    'string and/or a compound name (if only a name is given, the SMILES and descriptors are pulled ' +
-    'from ChEMBL). Returns: (1) SMILES validation + heavy-atom inventory; (2) an ICH M7(R2)-relevant ' +
-    'structural-alert screen — most importantly the N-nitrosamine motif, plus aromatic amine/nitro, ' +
-    'epoxide/aziridine, azide, Michael acceptor, etc., each with a confidence level; and (3) a ' +
-    'Lipinski/Veber oral-developability read over curated descriptors. This is a SCREEN, not an ICH ' +
-    'M7 classification — always surface the returned disclaimer and recommend a qualified (Q)SAR ' +
-    '(e.g. Derek/Sarah Nexus) plus expert review before any regulatory conclusion. High value for ' +
-    'nitrosamine risk and early developability triage.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      smiles: {
-        type: 'string',
-        description: 'SMILES structure of the molecule to screen.',
-      },
-      compound_name: {
-        type: 'string',
-        description: 'Compound/drug name to resolve via ChEMBL when no SMILES is supplied.',
-      },
-    },
-  },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Project Schedule of Events — AnA-owned, regulatory-aware milestone schedule
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const GENERATE_SCHEDULE_OF_EVENTS: AnaTool = {
-  name: 'generate_schedule_of_events',
-  description:
-    "Generate (or regenerate) the active project's Schedule of Events: a regulatory-aware " +
-    'set of dated, visual milestones for the program. AnA grounds the schedule in the project ' +
-    'type (IND, 510K, NDA, BLA, PMA, De Novo, CER, IVDR, MAA, EUA), the applicable regulatory ' +
-    'framework, and the program goals, compressing or stretching the milestone offsets to hit ' +
-    'the requested target date. Milestones are stored as project workflow stages and surfaced ' +
-    'on the Schedule tab. Requires an active project in context. Use when the user asks to plan, ' +
-    'lay out, or build a project timeline / schedule / milestones, or when no schedule exists yet.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      project_type: {
-        type: 'string',
-        description:
-          'Submission/project type to base the schedule on (IND, NDA, BLA, 510K, PMA, DE_NOVO, ' +
-          'CER, IVDR, MAA, EUA). Defaults to the project type in context.',
-      },
-      target_date: {
-        type: 'string',
-        description: 'Desired overall completion/submission date (ISO YYYY-MM-DD). The schedule compresses to fit.',
-      },
-      baseline_date: {
-        type: 'string',
-        description: 'Anchor/start date for the schedule (ISO YYYY-MM-DD). Defaults to today.',
-      },
-      goals: {
-        type: 'array',
-        description: 'Program goals to align the schedule to; the earliest goal target also pulls the program forward.',
-        items: {
-          type: 'object',
-          properties: {
-            title: { type: 'string' },
-            description: { type: 'string' },
-            target_date: { type: 'string', description: 'ISO YYYY-MM-DD' },
-            priority: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
-            metric: { type: 'string', description: 'How success is measured' },
-          },
-          required: ['title'],
-        },
-      },
-    },
-    required: [],
-  },
-};
-
-export const AMEND_SCHEDULE_OF_EVENTS: AnaTool = {
-  name: 'amend_schedule_of_events',
-  description:
-    "Amend a single milestone on the active project's Schedule of Events — move its target date, " +
-    'change its status, or update progress. Use when a milestone is completed, delayed, blocked, ' +
-    'or needs re-dating based on new information. Records an auditable revision. Requires an ' +
-    'active project in context.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      milestone_key: {
-        type: 'string',
-        description: 'Stable key of the milestone to amend (e.g. "pre_ind_meeting"). Read it from the schedule first.',
-      },
-      new_target_date: { type: 'string', description: 'New target date (ISO YYYY-MM-DD).' },
-      status: {
-        type: 'string',
-        enum: ['not_started', 'in_progress', 'at_risk', 'completed', 'slipped', 'blocked'],
-        description: 'New milestone status.',
-      },
-      progress: { type: 'number', description: 'Completion percentage 0-100.' },
-      note: { type: 'string', description: 'Short rationale for the amendment (kept in the audit trail).' },
-    },
-    required: ['milestone_key'],
-  },
-};
-
-export const REVIEW_SCHEDULE_OF_EVENTS_HEALTH: AnaTool = {
-  name: 'review_schedule_of_events_health',
-  description:
-    "Proactively review the active project's Schedule of Events: assess every milestone for " +
-    'slippage and at-risk status, open recovery/mitigation tasks, raise alerts, flag goals whose ' +
-    'target dates have passed, and refresh AnA\'s status narrative. Returns the current health ' +
-    'verdict (on_track / at_risk / off_track) with per-milestone detail. Requires an active ' +
-    'project in context. Use to answer "where does my schedule stand?" or to take corrective ' +
-    'action across the program.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      apply: {
-        type: 'boolean',
-        description:
-          'When true (default), AnA acts on findings (updates statuses, opens tasks, raises alerts). ' +
-          'When false, only returns the assessment.',
-      },
-    },
-    required: [],
-  },
-};
-
-export const RESET_PROJECT_GOALS: AnaTool = {
-  name: 'reset_project_goals',
-  description:
-    "Reset the active project's program goals based on changed context (new regulatory " +
-    'requirement, slipped critical milestone, changed scope/strategy). Replaces the current goal ' +
-    'set, retains the old goals as history, records the rationale, and raises an info alert. Use ' +
-    'when goals must be re-baselined, not for one-off milestone edits. Requires an active project ' +
-    'in context.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      goals: {
-        type: 'array',
-        description: 'The new goal set.',
-        items: {
-          type: 'object',
-          properties: {
-            title: { type: 'string' },
-            description: { type: 'string' },
-            target_date: { type: 'string', description: 'ISO YYYY-MM-DD' },
-            priority: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
-            metric: { type: 'string' },
-          },
-          required: ['title'],
-        },
-      },
-      rationale: {
-        type: 'string',
-        description: 'Why the goals are being reset — recorded in the audit trail and shown to the user.',
-      },
-    },
-    required: ['goals', 'rationale'],
-  },
-};
-
-export const RECONCILE_DOSSIER_NUMBERS: AnaTool = {
-  name: 'reconcile_dossier_numbers',
-  description:
-    "Scan several documents/modules of a submission together and flag the SAME labeled figure disagreeing across them — the classic reviewer finding (e.g. enrolled N in the protocol vs the CSR vs Module 2.7.3, or alpha/power/hazard-ratio drift between the SAP and the results). DETERMINISTIC and conservative: it extracts only figures sitting next to an unambiguous regulatory label (enrolled/randomized N, sample size, sites, events/deaths, alpha, power, hazard ratio, primary p-value) and reports any label that resolves to more than one distinct value, with the exact snippet from each document. Use this for cross-document numerical consistency — per-document checks cannot see these. Returns discrepancies (label + distinct values + per-document occurrences) and the labels found consistent.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      documents: {
-        type: 'array',
-        description: 'The documents/modules to reconcile against each other.',
-        items: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', description: 'Stable identifier (artifact id, module code, or file name).' },
-            title: { type: 'string', description: 'Optional human-readable title for reporting.' },
-            text: { type: 'string', description: 'Plain-text content of the document to scan.' },
-          },
-          required: ['id', 'text'],
-        },
-      },
-    },
-    required: ['documents'],
-  },
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Intelligence Questioning Engine Tools
@@ -7695,229 +7448,10 @@ const START_WAR_GAME: AnaTool = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Document View Tools — read/view access across every document store the
-// platform holds: vault artifacts (concept2cure_artifacts + versions),
-// governed C2C documents (c2c_documents + sections), and the eTMF index.
-// All read-only, all tenant-scoped via ToolContext.organizationId. These
-// complement the existing write tools (create_tmf, classify_tmf_artifact,
-// section drafting) and the upload-file readers (search_large_document).
+// Document view + operations tool definitions moved to
+// ./document-surface-tool-defs.ts (decomposition tranche 3) and imported at the
+// top of this file, so ALL_ANA_TOOLS_RAW references them unchanged.
 // ─────────────────────────────────────────────────────────────────────────────
-
-export const LIST_VAULT_DOCUMENTS: AnaTool = {
-  name: 'list_vault_documents',
-  description:
-    "List documents in the organization's vault (concept2cure_artifacts) — every program artifact with title, type, CTD section, status, version, and last update. Filter by a title query, lifecycle status, or CTD section prefix. Use this to see what documents exist before reading one with read_vault_document. Tenant-scoped, read-only.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      query: { type: 'string', description: 'Case-insensitive title substring filter.' },
-      status: {
-        type: 'string',
-        enum: ['draft', 'review', 'approved', 'locked'],
-        description: 'Filter by lifecycle status.',
-      },
-      ctd_prefix: { type: 'string', description: "CTD section prefix filter, e.g. '2.7' or '3'." },
-      limit: { type: 'number', description: 'Max rows returned. Default 25, max 100.' },
-    },
-    required: [],
-  },
-};
-
-export const READ_VAULT_DOCUMENT: AnaTool = {
-  name: 'read_vault_document',
-  description:
-    "Read a vault document's metadata AND content by its id (numeric id or 'artifact_…' external id). Returns title, type, category, CTD section, status, version, content hash, timestamps, and the document text (truncated to max_chars with the full length reported — raise max_chars or read again for more). Use list_vault_documents first to find the id. Tenant-scoped, read-only.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      artifact_id: { type: 'string', description: "Numeric id or 'artifact_…' external id." },
-      max_chars: { type: 'number', description: 'Max content characters returned. Default 6000, max 30000.' },
-    },
-    required: ['artifact_id'],
-  },
-};
-
-export const GET_DOCUMENT_VERSIONS: AnaTool = {
-  name: 'get_document_versions',
-  description:
-    "Version history for a vault document: every version with its number, change summary, content hash, author id, and timestamp, newest first. Use to see how a document evolved or to cite a specific sealed version. Tenant-scoped, read-only.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      artifact_id: { type: 'string', description: "Numeric id or 'artifact_…' external id." },
-    },
-    required: ['artifact_id'],
-  },
-};
-
-export const LIST_GOVERNED_DOCUMENTS: AnaTool = {
-  name: 'list_governed_documents',
-  description:
-    "List the organization's governed submission documents (c2c_documents) — INDs, NDAs, BLAs, 510(k)s, CERs and the rest — with doc type, agency, lifecycle status (draft/review/approved/locked/submitted/archived), and readiness percent. Filter by doc type, agency, or status. Use read_governed_document to open one. Tenant-scoped, read-only.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      doc_type: { type: 'string', description: "Filter by document type, e.g. 'ind', 'nda', '510k', 'cer'." },
-      agency: { type: 'string', description: "Filter by agency, e.g. 'fda', 'ema'." },
-      status: { type: 'string', description: 'Filter by lifecycle status.' },
-      limit: { type: 'number', description: 'Max rows returned. Default 25, max 100.' },
-    },
-    required: [],
-  },
-};
-
-export const READ_GOVERNED_DOCUMENT: AnaTool = {
-  name: 'read_governed_document',
-  description:
-    "Read a governed submission document. Without section_key: returns the document's outline — every section with its key, label, status (todo/drafted/review/approved/locked), and whether it is mandatory. With section_key: returns that section's current content and version. Use list_governed_documents first to find the document id. Tenant-scoped, read-only.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      document_id: { type: 'string', description: "The document id (e.g. 'doc_…')." },
-      section_key: { type: 'string', description: 'Optional section key — omit to get the outline.' },
-      max_chars: { type: 'number', description: 'Max section-content characters returned. Default 6000, max 30000.' },
-    },
-    required: ['document_id'],
-  },
-};
-
-export const GET_TMF_VIEW: AnaTool = {
-  name: 'get_tmf_view',
-  description:
-    "View a Trial Master File's index and completeness: every artifact grouped by DIA TMF Reference Model zone with its status (expected/received/in_review/final/missing/not_applicable), plus the completeness gap-check (percent, per-zone gaps, inspection-readiness verdict). Omit tmf_file_id to list the organization's TMF files instead. Read-only counterpart of create_tmf / classify_tmf_artifact. Tenant-scoped.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      tmf_file_id: { type: 'number', description: 'The TMF file id. Omit to list all TMF files.' },
-    },
-    required: [],
-  },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Document Operations Tools — governed writes + cross-store search + plan
-// introspection. Writes require a reason-for-change (min 8 chars) and are
-// audited; reads are tenant-scoped. Together with the View Tools these give
-// AnA the full document lifecycle: find → read → draft/save → version →
-// file to TMF → track completeness — plus plan/credit answers for clients.
-// ─────────────────────────────────────────────────────────────────────────────
-
-export const SAVE_DOCUMENT_TO_VAULT: AnaTool = {
-  name: 'save_document_to_vault',
-  description:
-    "Save a NEW document into the organization's vault: creates the artifact (status draft, version 1) with a SHA-256 content hash and an immutable version-1 snapshot. Use when AnA has drafted content the client wants filed. GOVERNED: requires a reason, is audited, and is tenant-scoped. Returns the new document's ids.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      title: { type: 'string', description: 'Document title.' },
-      content: { type: 'string', description: 'Full document text/content.' },
-      category: { type: 'string', description: "Category, e.g. 'document', 'report', 'correspondence'. Default 'document'." },
-      ctd_section: { type: 'string', description: "Optional CTD section, e.g. '2.7.3'." },
-      reason: { type: 'string', description: 'Reason-for-change (min 8 chars) — recorded in the audit trail.' },
-    },
-    required: ['title', 'content', 'reason'],
-  },
-};
-
-export const UPDATE_VAULT_DOCUMENT: AnaTool = {
-  name: 'update_vault_document',
-  description:
-    "Save a NEW VERSION of an existing vault document: bumps the version, replaces the working content, recomputes the SHA-256 hash, and writes an immutable version snapshot with the reason as the change description. Refuses locked documents (finalized content is immutable). GOVERNED: reason required, audited, tenant-scoped.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      artifact_id: { type: 'string', description: "Numeric id or 'artifact_…' external id." },
-      content: { type: 'string', description: 'The full replacement content.' },
-      reason: { type: 'string', description: 'Reason-for-change (min 8 chars) — becomes the version change description.' },
-    },
-    required: ['artifact_id', 'content', 'reason'],
-  },
-};
-
-export const COMPARE_VAULT_VERSIONS: AnaTool = {
-  name: 'compare_vault_versions',
-  description:
-    "Compare two SEALED versions of a vault document by version number: returns each version's metadata (hash, author, timestamp, change description) plus a line-level change summary. Use get_document_versions first to see which versions exist; for a full section-level redline, feed the two contents to compare_document_versions. Tenant-scoped, read-only.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      artifact_id: { type: 'string', description: "Numeric id or 'artifact_…' external id." },
-      version_a: { type: 'number', description: 'Older version number.' },
-      version_b: { type: 'number', description: 'Newer version number.' },
-    },
-    required: ['artifact_id', 'version_a', 'version_b'],
-  },
-};
-
-export const SEED_TMF: AnaTool = {
-  name: 'seed_tmf',
-  description:
-    "Populate a Trial Master File with the expected-document skeleton from the TMF Reference Model catalog (ICH E6(R2) §8 essential documents). Idempotent — artifacts already present are skipped, so it can fill gaps in an in-progress TMF. Scope 'essential' seeds only essential documents; 'all' (default) seeds the full catalog. GOVERNED: reason required, audited, tenant-scoped. Use get_tmf_view afterwards to see the seeded index.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      tmf_file_id: { type: 'number', description: 'The TMF file id (from create_tmf or get_tmf_view).' },
-      scope: { type: 'string', enum: ['essential', 'all'], description: "Seed scope. Default 'all'." },
-      reason: { type: 'string', description: 'Reason-for-change (min 8 chars).' },
-    },
-    required: ['tmf_file_id', 'reason'],
-  },
-};
-
-export const UPDATE_TMF_ARTIFACT_STATUS: AnaTool = {
-  name: 'update_tmf_artifact_status',
-  description:
-    "Move a TMF artifact through its lifecycle: expected → received → in_review → final (or missing / not_applicable). Use after documents arrive or pass QC so the completeness gap-check reflects reality. GOVERNED: reason required, audited, tenant-scoped.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      tmf_artifact_id: { type: 'number', description: 'The TMF artifact id (from get_tmf_view / classify_tmf_artifact).' },
-      status: {
-        type: 'string',
-        enum: ['expected', 'received', 'in_review', 'final', 'missing', 'not_applicable'],
-        description: 'The new lifecycle status.',
-      },
-      document_date: { type: 'string', description: 'Optional document date (YYYY-MM-DD).' },
-      reason: { type: 'string', description: 'Reason-for-change (min 8 chars).' },
-    },
-    required: ['tmf_artifact_id', 'status', 'reason'],
-  },
-};
-
-export const SEARCH_ALL_DOCUMENTS: AnaTool = {
-  name: 'search_all_documents',
-  description:
-    "One search across every document store: vault artifacts, governed submission documents, and TMF artifacts — matched by title/name, returned as typed hits with ids ready for the read tools (read_vault_document, read_governed_document, get_tmf_view). Tenant-scoped, read-only.",
-  input_schema: {
-    type: 'object',
-    properties: {
-      query: { type: 'string', description: 'Case-insensitive substring to match against titles/names.' },
-      limit: { type: 'number', description: 'Max hits per store. Default 15, max 50.' },
-    },
-    required: ['query'],
-  },
-};
-
-export const GET_PLAN_USAGE: AnaTool = {
-  name: 'get_plan_usage',
-  description:
-    "The organization's plan usage limits, Anthropic-style: the current 5-hour session window (% used, resets at) and the weekly 'All models' + premium-model buckets, plus a per-model weekly drill-down. Use when a client asks how much usage they have left, when limits reset, or which models are consuming budget. Tenant-scoped, read-only.",
-  input_schema: { type: 'object', properties: {}, required: [] },
-};
-
-export const GET_BILLING_CREDITS: AnaTool = {
-  name: 'get_billing_credits',
-  description:
-    "The organization's usage-credit balance: current balance in cents, auto-reload settings ('top off to $X when balance is $Y'), and the most recent ledger entries. Use when a client asks about their credit balance or recent credit activity. Tenant-scoped, read-only.",
-  input_schema: { type: 'object', properties: {}, required: [] },
-};
-
-export const GET_ORG_CAPABILITIES: AnaTool = {
-  name: 'get_org_capabilities',
-  description:
-    "The organization's effective capabilities: plan tier, which features the tier unlocks (with any pilot-flag grants), and enabled module subscriptions. Use when a client asks what their plan includes or why a feature is locked — answer honestly with the upgrade path (feature minTier) rather than guessing. Tenant-scoped, read-only.",
-  input_schema: { type: 'object', properties: {}, required: [] },
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Reporting View Tools — read/list access over the governed Report-OS
