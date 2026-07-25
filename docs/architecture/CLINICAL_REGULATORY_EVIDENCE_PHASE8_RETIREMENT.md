@@ -37,10 +37,10 @@ The foresight path is **live but already HTTP-deprecated** — `server/bootstrap
 
 These three fabrications reach users through **live public-API JSON and AnA command results**. Each fix changes a user-visible number, so it is specified here for reviewed execution rather than changed blind — the honest replacement must preserve each field's *shape* so no consumer breaks.
 
-### C1 — Hardcoded `0.9` precedent confidence
-- **Write:** `server/services/intelligence/outcome-precedent-ingestor.ts:196` — every machine-ingested precedent is stamped `confidence_score = 0.9` regardless of the outcome's evidence.
-- **Readers (must be preserved):** `server/services/precedent-engine.ts:279` sorts `ORDER BY decision_date DESC NULLS LAST, confidence_score DESC`; `:1120` maps `confidenceScore: row.confidence_score ?? 1.0`. Surfaces: AnA `lookup_regulatory_precedents` (`AnaToolExecutor.ts:6297-6316`) and public API `GET /api/v1/precedent/search` (`public-api.ts:481-498`).
-- **Honest fix (behavior-preserving):** distinguish "record confidence" (the precedent is a real, verified recorded outcome → legitimately high) from a *measured* quality score. Replace the bare literal with a **named, documented** provisional constant AND stamp `metadata.confidence_basis = 'ingestor_default'` so the value is honestly labeled as a default, not a measurement. Do **not** switch to `NULL` without first changing both the `?? 1.0` map fallback (`:1120`) and the `confidence_score DESC` sort (`:279`, which is `NULLS FIRST` under DESC) — otherwise un-scored precedents get promoted to the top. This coupling is why the change is reviewed, not blind.
+### C1 — Hardcoded `0.9` precedent confidence — ✅ DONE
+- **Write:** `server/services/intelligence/outcome-precedent-ingestor.ts:196` — every machine-ingested precedent was stamped `confidence_score = 0.9` regardless of the outcome's evidence.
+- **Readers (preserved):** `server/services/precedent-engine.ts:279` sorts `ORDER BY decision_date DESC NULLS LAST, confidence_score DESC`; `:1120` maps `confidenceScore: row.confidence_score ?? 1.0`. Surfaces: AnA `lookup_regulatory_precedents` (`AnaToolExecutor.ts:6297-6316`) and public API `GET /api/v1/precedent/search` (`public-api.ts:481-498`).
+- **Fix shipped:** replaced the hardcoded literal with `deriveIngestConfidence(...)` — confidence is now DERIVED (0.5..0.9) from how complete the ingested record is (recognized decision, dated, FDA questions captured, risk factors extracted, embedded). The field stays a non-null number in-range, so the live sort and the `?? 1.0` map fallback are unaffected; only newly-ingested rows change, and 0.9 remains the ceiling a fully-documented outcome earns (>0.9 stays reserved for human-curated precedents). This avoided the `NULL` coupling with the `NULLS FIRST` sort. Test: `__tests__/outcome-precedent-ingestor.test.ts` (3/3).
 
 ### C2 — Fabricated endpoint `success_rate` / `confidence`
 - **Sites:** `server/services/endpoint-recommender-service.ts` — `:217 success_rate: 75`, `:224 confidence: 0.7`, `:270 +10`, `:288 +15`, `:376 success_rate: 80`, `:819 : 75` fallback, `:833 confidence: 0.9`, `:1052/:1060` eval fallbacks. Note `:819`'s computed rate is structurally 0 (its `reportOutcome` is always `''`), so the fabricated fallbacks dominate.
@@ -53,6 +53,7 @@ Covered by **Part B** (retire the path); the honest dose surface is `assessDoseS
 ---
 
 ## Sequencing recommendation
-1. **Now (this commit):** `@deprecated` banners on the 3 DEAD services + this plan. Safe, reversible, zero behavior change.
-2. **Next (reviewed):** delete the 3 DEAD files + their dead wiring (mechanical, per Part A) once soaked.
-3. **Next (reviewed, user-facing):** C1 then C2 behind preserved field shapes; retire the foresight path (Part B). These change numbers users see, so they land as their own reviewed commits with the field-shape guarantees above.
+1. **Done:** `@deprecated` banners on the 3 DEAD services + this plan (commit `d36180a`). Safe, reversible, zero behavior change.
+2. **Done:** C1 precedent-confidence de-fabrication behind the preserved numeric field shape (write-side, new rows only). Tested.
+3. **Next (reviewed):** delete the 3 DEAD files + their dead wiring (mechanical, per Part A) once soaked.
+4. **Next (reviewed, user-facing contract change):** C2 — the endpoint `success_rate`/`confidence` fields are fabricated *by definition* (a fake percentage is the field's meaning), so an honest fix needs a contract decision (evidence-derived rate vs. an evidence-tier enum vs. nullable + basis) and touches public API consumers; it lands as its own reviewed commit. Retire the foresight path (Part B) alongside, since its dose CIs (C3) go away with the path.
