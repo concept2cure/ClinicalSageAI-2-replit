@@ -114,6 +114,7 @@ beforeAll(async () => {
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260725_authoring_audit_trail.sql',
       'db/migrations/20260725_authoring_signatures_and_workflow.sql',
+      'db/migrations/20260725_authoring_signature_freeze_binding.sql',
     ],
   });
   h.db = jdb.db;
@@ -371,6 +372,66 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       return { count: list.length, meanings: list.map((s) => s.meaning) };
     });
 
+    // ── Evidence: the signature is BOUND to the snapshot it covers ──────────
+    // Previously recorded as an INTEGRITY GAP: freeze and signature hashes each
+    // verified independently but nothing said which snapshot a signature
+    // attested to. §11.70 makes that link the point. Now the signature carries
+    // the covered snapshot's version and hash, and its digest — computed over
+    // durable columns only, no timestamp — can be recomputed by any auditor.
+    await R.step('signature-is-cryptographically-bound-to-the-frozen-snapshot', async () => {
+      const sigs = await jdb.pool.query(
+        `SELECT signer_email, meaning, content_hash, signature_digest,
+                covered_freeze_version, covered_content_hash
+           FROM authoring_signatures WHERE doc_id = $1 AND tenant_id = 1
+          ORDER BY signed_at`,
+        [docId],
+      );
+      const froz = await jdb.pool.query(
+        `SELECT version, content_hash FROM frozen_documents
+          WHERE document_id = $1 AND tenant_id = 1 ORDER BY frozen_at`,
+        [docId],
+      );
+      const firstFreeze = froz.rows[0] as { version: string; content_hash: string };
+
+      const { createHash } = await import('node:crypto');
+      const recompute = (r: {
+        signer_email: string; meaning: string; content_hash: string;
+        covered_content_hash: string | null;
+      }) =>
+        createHash('sha256')
+          .update(
+            ['authoring-sig-v1', r.signer_email, r.meaning, r.content_hash, r.covered_content_hash ?? ''].join('|'),
+          )
+          .digest('hex');
+
+      const rows = sigs.rows as {
+        signer_email: string; meaning: string; content_hash: string;
+        signature_digest: string; covered_freeze_version: string | null;
+        covered_content_hash: string | null;
+      }[];
+      expect(rows.length).toBe(2);
+
+      for (const r of rows) {
+        // The link: each signature names the snapshot in force when it was made.
+        expect(r.covered_content_hash).toBe(firstFreeze.content_hash);
+        expect(r.covered_freeze_version).toBe(firstFreeze.version);
+        // The binding is cryptographic, and independently recomputable.
+        expect(r.signature_digest).toBe(recompute(r));
+      }
+
+      // Tampering with the covered hash must break the digest — that is what
+      // makes this a binding rather than a comment.
+      const tampered = recompute({ ...rows[0], covered_content_hash: 'not-the-snapshot' });
+      expect(tampered).not.toBe(rows[0].signature_digest);
+
+      return {
+        signatures: rows.length,
+        coveredFreezeVersion: rows[0].covered_freeze_version,
+        digestsIndependentlyRecomputed: true,
+        tamperingDetected: true,
+      };
+    });
+
     await R.expectBlocked('cross-tenant-signature-list-is-empty', async () => {
       const res = await asUser(OUTSIDER)(
         request(app).get(`/api/authoring/docs/${docId}/signatures`),
@@ -509,7 +570,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       'Fixed while building this journey: the export record is now written by logExport() AFTER the bytes are generated, so file_name and file_size are the real ones rather than placeholders, and ANA-initiated exports (command-executor) record to the same table instead of the phantom one.',
       'Fixed while building this journey: freeze queried authoring_sections.document_id — a column that does not exist (doc_id everywhere else). Freeze had never been executable.',
       'Fixed while building this journey: create-pin, freeze and e-sign took signer identity from the attacker-controlled x-user-email header; they now use the verified JWT via getActorEmail — the same fix the file had already applied to every other attribution column (Part 11 §11.100).',
-      'INTEGRITY GAP (recorded, not fixed): freeze hashes the full JSON snapshot including a frozenAt timestamp (not reproducible), while e-sign hashes the section-content join — the two chains are independently verifiable but NOT linked, so a signature cannot be cryptographically tied to the frozen snapshot it covers. Belongs to the electronic_signatures reconciliation (ledger C-11 / WO-03).',
+      'Fixed while building this journey (was recorded here as an INTEGRITY GAP): freeze and signature hashes each verified independently but nothing said WHICH snapshot a signature attested to, which is exactly what 21 CFR Part 11 §11.70 requires. Signatures now carry the covered snapshot version and hash, and signature_digest is computed over durable columns only — no timestamp — so an auditor can recompute it from the stored row and detect tampering with the signer, the meaning, the content, or the snapshot binding (ledger C-11 residual 2).',
     );
     R.limitations.push(
       'Authentication uses real HS256-signed JWTs verified by the router itself; only the upstream token-ISSUANCE flow (login/MFA) is outside this journey.',

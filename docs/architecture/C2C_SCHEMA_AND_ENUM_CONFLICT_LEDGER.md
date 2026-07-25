@@ -22,7 +22,7 @@ names the file and line that settles it, so it can be re-verified independently.
 | C-7 | Service-vs-enum divergence — **CLOSED, polarity reversed**: the services were right; the enums described a shape that never deployed. Enums deprecated. | ~~High~~ closed | — |
 | C-8 | **Governance boundary gates failed OPEN — FIXED 2026-07-25** (canonical DDL + deployed vocabulary + fail-closed) | ~~Critical~~ fixed | — |
 | C-10 | **Resolution layer storage existed only in dead DDL — FIXED 2026-07-25** (4 tables ported to canonical lineage) | ~~Critical~~ fixed | — |
-| C-11 | **Flagship authoring loop had NO DDL anywhere — FIXED 2026-07-25** (code-derived reconstruction; e-sign storage conflict + hash-chain gap remain open) | ~~Critical~~ fixed (2 residuals) | e-sign reconciliation |
+| C-11 | **Flagship authoring loop had NO DDL anywhere — FIXED 2026-07-25** (code-derived reconstruction; both residuals since resolved: authoring signature store + §11.70 signature/snapshot binding) | ~~Critical~~ **closed** | — |
 
 C-6 is the root cause. C-1 through C-3 are its symptoms. C-4 is the most
 commercially consequential finding. **C-8 is the most safety-consequential: a
@@ -1122,12 +1122,47 @@ tenant sees none of them.
 `ci:unbacked-tables` baseline 95 → 93, the two removed entries being exactly
 `authoring_signatures` and `authoring_workflow_steps`.
 
-### Residual 2 still open
+### Residual 2 — RESOLVED (2026-07-25)
 
-Freeze hashes a JSON snapshot including a non-reproducible `frozenAt`, while
-signatures hash the section-content join. Both chains verify independently but
-are not linked, so a signature still cannot be cryptographically tied to the
-frozen snapshot it covers. Unchanged by this work.
+Two independently-verifiable hash chains existed with nothing joining them:
+
+    frozen_documents.content_hash    = sha256(frozen_content)
+    authoring_signatures.content_hash = sha256(section code:content join)
+
+Both verify — Journey A recomputes each. Neither referenced the other, so a
+signature could be proven authentic and a snapshot proven unaltered while nothing
+established **which snapshot a given signature attested to**. Under §11.70 that
+link is the point: a signature not bound to a specific record version is not a
+Part 11 signature.
+
+A first reading called freeze's hash "not reproducible" because the snapshot JSON
+embeds a `frozenAt` timestamp. That was imprecise and is corrected here: the
+snapshot bytes are stored, so the hash IS verifiable against them. The defect was
+never freeze's hash — it was the missing link.
+
+**Fix** — `db/migrations/20260725_authoring_signature_freeze_binding.sql` adds
+`covered_freeze_version` and `covered_content_hash` (both nullable: a signature
+may legitimately precede any freeze, and absence is recorded as absence rather
+than backfilled with a guess). Both signing endpoints look up the snapshot in
+force at signing time and record it.
+
+The binding is made cryptographic rather than merely referential by
+`signature_digest`, now computed over a canonical, **timestamp-free** string:
+
+    authoring-sig-v1|<signer_email>|<meaning>|<content_hash>|<covered_content_hash>
+
+Every input is a stored column, so an auditor can recompute the digest from the
+row alone. This also repairs `/sign`, whose digest hashed
+`new Date().toISOString()` — a hash nobody can reproduce proves nothing.
+
+**Proof** — Journey A step 17 asserts both signatures name the snapshot in force
+(`v1.0.frozen`), recomputes each digest independently, and shows that substituting
+a different covered hash changes the digest — which is what makes it a binding and
+not a comment. Negative-tested: removing the binding in the router fails the
+journey.
+
+**C-11 is now closed.** Both residuals resolved; Journey A runs 25 steps
+(18 ok / 7 blocked) entirely on canonical migrations, with no test-only DDL.
 
 ---
 

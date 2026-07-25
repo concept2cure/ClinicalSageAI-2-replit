@@ -252,6 +252,63 @@ const getActorEmail = (req: Request): string | null => {
   return String(subject);
 };
 
+/**
+ * The frozen snapshot a signature taken right now would cover — the most recent
+ * frozen_documents row for this document, or null if it has never been frozen.
+ *
+ * Part 11 §11.70 requires a signature to be linked to the record version it
+ * attests to. Signing an unfrozen document is allowed (an author may sign before
+ * QA freezes), and that case is recorded as null rather than guessed at.
+ */
+const currentFrozenSnapshot = async (
+  docId: string | string[] | undefined,
+  tenantId: number
+): Promise<{ version: string; contentHash: string } | null> => {
+  const r = await pool.query(
+    `SELECT version, content_hash FROM frozen_documents
+      WHERE document_id = $1 AND tenant_id = $2
+      ORDER BY frozen_at DESC LIMIT 1`,
+    [docId, tenantId]
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  const row = r.rows[0] as { version: string; content_hash: string };
+  return { version: row.version, contentHash: row.content_hash };
+};
+
+/**
+ * A signature digest that an auditor can RECOMPUTE from the stored row.
+ *
+ * Every input is a durable column; nothing here is a timestamp. The previous
+ * digest on /sign hashed `new Date().toISOString()`, which made it impossible to
+ * verify — a hash nobody can reproduce proves nothing. Binding
+ * coveredContentHash into the digest is what ties the signature to a specific
+ * frozen snapshot cryptographically rather than by mere reference
+ * (ledger C-11 residual 2).
+ *
+ * The `authoring-sig-v1` prefix keeps a future scheme change distinguishable
+ * instead of silently incompatible.
+ */
+const AUTHORING_SIGNATURE_DIGEST_VERSION = 'authoring-sig-v1';
+
+const computeSignatureDigest = (input: {
+  signerEmail: string;
+  meaning: string;
+  contentHash: string;
+  coveredContentHash: string | null;
+}): string =>
+  crypto
+    .createHash('sha256')
+    .update(
+      [
+        AUTHORING_SIGNATURE_DIGEST_VERSION,
+        input.signerEmail,
+        input.meaning,
+        input.contentHash,
+        input.coveredContentHash ?? '',
+      ].join('|')
+    )
+    .digest('hex');
+
 // Helper function to compute document hash for signatures
 const computeDocHash = async (
   docId: string | string[] | undefined,
@@ -2978,11 +3035,22 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
     // The two are different concepts that collided on a name, so the authoring
     // loop now has its own store — the same one GET /docs/:docId/signatures has
     // always read. See ledger C-11 residual 1.
+    // §11.70 signature/record link: bind this signature to the snapshot in force
+    // at signing time, and cover that binding in a recomputable digest.
+    const covered = await currentFrozenSnapshot(docId, tenantId);
+    const signatureDigest = computeSignatureDigest({
+      signerEmail: email,
+      meaning,
+      contentHash: docHash,
+      coveredContentHash: covered?.contentHash ?? null,
+    });
+
     await pool.query(
       `INSERT INTO authoring_signatures
        (id, doc_id, signer_email, signer_name, meaning, reason, method,
-        content_hash, pin_verified, ip_address, user_agent, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, $10, $11)`,
+        content_hash, signature_digest, covered_freeze_version, covered_content_hash,
+        pin_verified, ip_address, user_agent, tenant_id)
+       VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, $10, $11, $12, $13, $14)`,
       [
         signatureId,
         docId,
@@ -2991,6 +3059,9 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         meaning,
         intent,
         docHash,
+        signatureDigest,
+        covered?.version ?? null,
+        covered?.contentHash ?? null,
         true,
         req.ip,
         req.headers['user-agent'],
@@ -4583,16 +4654,25 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     // Compute document hash
     const contentHash = await computeDocHash(docId, tenantId);
 
-    // Create signature digest
-    const signatureData = `${signerEmail}:${contentHash}:${reason}:${new Date().toISOString()}`;
-    const signatureDigest = crypto.createHash('sha256').update(signatureData).digest('hex');
+    // The digest used to hash `new Date().toISOString()`, which made it
+    // impossible for anyone to recompute — a hash nobody can reproduce proves
+    // nothing. It now covers only durable columns, including the frozen snapshot
+    // this signature attests to (§11.70 signature/record link, C-11 residual 2).
+    const covered = await currentFrozenSnapshot(docId, tenantId);
+    const signatureDigest = computeSignatureDigest({
+      signerEmail,
+      meaning,
+      contentHash,
+      coveredContentHash: covered?.contentHash ?? null,
+    });
 
     // Store signature
     const signatureId = crypto.randomUUID();
     await pool.query(
       `INSERT INTO authoring_signatures
-       (id, doc_id, signer_email, signer_name, meaning, reason, method, content_hash, signature_digest, tenant_id, signed_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, NOW())`,
+       (id, doc_id, signer_email, signer_name, meaning, reason, method, content_hash,
+        signature_digest, covered_freeze_version, covered_content_hash, tenant_id, signed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, $10, $11, NOW())`,
       [
         signatureId,
         docId,
@@ -4602,6 +4682,8 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         reason,
         contentHash,
         signatureDigest,
+        covered?.version ?? null,
+        covered?.contentHash ?? null,
         tenantId,
       ]
     );
