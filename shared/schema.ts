@@ -13024,70 +13024,9 @@ export const clinicalOutcomes = pgTable(
   }
 );
 
-/**
- * ForesightAI Predictions Table
- * Stores predictive scores and recommendations for studies
- */
-export const foresightPredictions = pgTable(
-  'foresight_predictions',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    studyId: varchar('study_id', { length: 255 }).notNull(),
-    phase: text('phase').notNull(),
-    predictionType: text('prediction_type').notNull(), // success_score, enrollment_rate, safety_risk
-    successScore: real('success_score'),
-    confidenceInterval: json('confidence_interval'), // {lower: 0.65, upper: 0.85}
-    riskFactors: json('risk_factors'), // [{factor: 'small_sample', impact: -0.15}]
-    recommendations: json('recommendations'), // [{type: 'protocol', action: 'increase_dose'}]
-    similarTrials: json('similar_trials'), // [{id: 'NCT123', similarity: 0.92}]
-    failurePatterns: json('failure_patterns'), // [{pattern: 'dose_toxicity', probability: 0.23}]
-    modelVersion: text('model_version'),
-    organizationId: integer('organization_id').references(() => organizations.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-    expiresAt: timestamp('expires_at'),
-  },
-  table => {
-    return {
-      studyPhaseIdx: index('prediction_study_phase_idx').on(table.studyId, table.phase),
-      orgIdx: index('prediction_org_idx').on(table.organizationId),
-    };
-  }
-);
-
-/**
- * Clinical Feedback Loop Table
- * Captures real-world outcomes for continuous learning
- */
-export const clinicalFeedback = pgTable(
-  'clinical_feedback',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    studyId: varchar('study_id', { length: 255 }).notNull(),
-    predictionId: uuid('prediction_id').references(() => foresightPredictions.id),
-    phase: text('phase'),
-    feedbackType: text('feedback_type').notNull(), // outcome, protocol_change, safety_event
-    actualOutcome: text('actual_outcome'),
-    predictedOutcome: text('predicted_outcome'),
-    accuracyScore: real('accuracy_score'),
-    learningPoints: json('learning_points'), // Extracted insights for model improvement
-    impactOnModel: json('impact_on_model'), // How this feedback affects future predictions
-    verified: boolean('verified').default(false),
-    verifiedBy: text('verified_by'),
-    organizationId: integer('organization_id').references(() => organizations.id),
-    capturedAt: timestamp('captured_at').defaultNow().notNull(),
-    processedAt: timestamp('processed_at'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-  },
-  table => {
-    return {
-      studyIdx: index('feedback_study_idx').on(table.studyId),
-      predictionIdx: index('feedback_prediction_idx').on(table.predictionId),
-      idx_clinical_feedback_org: index('idx_clinical_feedback_org').on(table.organizationId),
-    };
-  }
-);
+// foresight_predictions + clinical_feedback tables removed (Phase 8 — foresight
+// retirement). Their code was deleted; the tables are dropped in
+// db/migrations/20260725_drop_orphaned_foresight_prediction_tables.sql.
 
 /**
  * Translational Patterns Table
@@ -13132,16 +13071,6 @@ export const insertClinicalOutcomeSchema = createInsertSchemaOmit(clinicalOutcom
   createdAt: true,
 });
 
-export const insertForesightPredictionSchema = createInsertSchemaOmit(foresightPredictions, {
-  id: true,
-  createdAt: true,
-});
-
-export const insertClinicalFeedbackSchema = createInsertSchemaOmit(clinicalFeedback, {
-  id: true,
-  capturedAt: true,
-});
-
 export const insertTranslationalPatternSchema = createInsertSchemaOmit(translationalPatterns, {
   id: true,
   createdAt: true,
@@ -13159,12 +13088,6 @@ export type InsertBiomarkerEndpoint = typeof biomarkerEndpoints.$inferInsert;
 // to `{}` here) — yields the correct column shape for .values() calls.
 export type ClinicalOutcome = InferSelectModel<typeof clinicalOutcomes>;
 export type InsertClinicalOutcome = typeof clinicalOutcomes.$inferInsert;
-
-export type ForesightPrediction = InferSelectModel<typeof foresightPredictions>;
-export type InsertForesightPrediction = typeof foresightPredictions.$inferInsert;
-
-export type ClinicalFeedback = InferSelectModel<typeof clinicalFeedback>;
-export type InsertClinicalFeedback = typeof clinicalFeedback.$inferInsert;
 
 export type TranslationalPattern = InferSelectModel<typeof translationalPatterns>;
 export type InsertTranslationalPattern = typeof translationalPatterns.$inferInsert;

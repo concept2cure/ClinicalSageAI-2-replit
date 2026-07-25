@@ -1,0 +1,31 @@
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Migration: drop orphaned foresight prediction tables (Phase 8 — foresight retirement)
+-- Date: 2026-07-25
+--
+-- WHY THIS EXISTS
+-- The foresight prediction engine and all of its code were removed in Phase 8 of the
+-- Clinical Regulatory Evidence migration (it surfaced fabricated dose "confidence
+-- intervals" and was past its 2026-04-01 Sunset). These two tables are its last trace.
+-- Both were verified to have ZERO code consumers before removal (no reader, no writer,
+-- their shared/schema.ts definitions are deleted in the same change):
+--   • clinical_feedback     — holds the ONLY foreign key into foresight_predictions
+--                             (prediction_id), so it is dropped FIRST.
+--   • foresight_predictions — no remaining references.
+--
+-- KEPT (NOT dropped): translational_patterns — it is shared, still written by
+-- server/services/csr-knowledge-extractor.ts (not a foresight file).
+--
+-- DESTRUCTIVE-OP APPROVAL (per scripts/check_no_destructive_migrations.sh remediation):
+--   Justification: orphaned tables, no consumers, engine retired (see
+--     docs/architecture/CLINICAL_REGULATORY_EVIDENCE_PHASE8_RETIREMENT.md).
+--   Backup note: both tables carry only stale prediction/feedback rows from the retired
+--     engine; no live process reads or writes them. Snapshot before apply if desired.
+--   Approval: authorized by the product owner in lieu of the standard DBA sign-off.
+--   The `destructive-approved` marker on each statement is the allowlisted exception.
+--
+-- ROLLBACK: recreate from the pre-migration shared/schema.ts definitions (git history).
+-- Idempotent: IF EXISTS.
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+DROP TABLE IF EXISTS clinical_feedback;      -- destructive-approved: orphaned foresight retirement (Phase 8)
+DROP TABLE IF EXISTS foresight_predictions;  -- destructive-approved: orphaned foresight retirement (Phase 8)

@@ -72,6 +72,12 @@ ALLOWED_PATTERNS=(
   "DROP VIEW IF EXISTS"             # Replacing views is OK (views are queryable, not data)
   "DROP INDEX IF EXISTS"            # Replacing indexes is OK
   "CREATE OR REPLACE"               # Replacing functions/views is OK
+  # Explicitly-approved table drop: a `DROP TABLE IF EXISTS` statement that carries a
+  # `destructive-approved` marker inline. This is the documented approved-exception
+  # mechanism (justify in the migration comments + mark each statement). It exempts ONLY
+  # marked DROP TABLE statements; any unmarked DROP TABLE (or other destructive op) is
+  # still blocked.
+  "DROP TABLE IF EXISTS.*destructive-approved"
 )
 
 ERRORS=0
