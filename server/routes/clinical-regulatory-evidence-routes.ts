@@ -219,7 +219,7 @@ async function handleFindingDetail(req: Request, res: Response): Promise<void> {
   const scope = guard(req, res);
   if (!scope) return;
   try {
-    const finding = await evidence.getFinding(scope, req.params.id);
+    const finding = await evidence.getFinding(scope, String(req.params.id));
     if (!finding) {
       res.status(404).json({ success: false, error: 'Finding not found' });
       return;
@@ -277,7 +277,7 @@ async function handleTrace(req: Request, res: Response): Promise<void> {
   const scope = guard(req, res);
   if (!scope) return;
   try {
-    const trace = await evidence.getTrace(scope, req.params.traceId);
+    const trace = await evidence.getTrace(scope, String(req.params.traceId));
     if (!trace) {
       res.status(404).json({ success: false, error: 'Trace not found' });
       return;

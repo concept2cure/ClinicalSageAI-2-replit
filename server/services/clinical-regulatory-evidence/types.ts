@@ -183,8 +183,15 @@ export interface EvidenceMapping {
 
 // ─── Findings, outcomes, observations ────────────────────────────────────────
 
-/** One FDA finding, resolvable to source and page. */
-export interface RegulatoryFinding {
+/**
+ * One FDA finding, resolvable to source and page.
+ *
+ * NOTE: this is the resolved *domain contract* (the retrieval/facade view). The
+ * evidence-graph persistence-row shape lives below as `RegulatoryFinding`; the
+ * two workstreams landed independently and both are kept (nothing dropped).
+ * This one is renamed `Resolved*` to end the duplicate-identifier collision.
+ */
+export interface ResolvedRegulatoryFinding {
   findingId: string;
   severity: FindingSeverity;
   discipline: Discipline;
@@ -207,8 +214,9 @@ export interface RegulatoryFinding {
   source: SourceRef;
 }
 
-/** A verified application outcome. Only ever recorded, never inferred (§4.2). */
-export interface RegulatoryOutcome {
+/** A verified application outcome. Only ever recorded, never inferred (§4.2).
+ *  Resolved domain-contract view; the persistence-row `RegulatoryOutcome` is below. */
+export interface ResolvedRegulatoryOutcome {
   applicationType: string;
   applicationNumber: string;
   letterDate: string | null;
@@ -224,7 +232,7 @@ export interface RegulatoryOutcome {
  * effect AND its uncertainty — the honesty contract already held by
  * study-design/csr-evidence-source.ts, generalized (§5.3).
  */
-export interface StudyResultObservation {
+export interface ResolvedStudyResultObservation {
   observationId: string;
   endpoint: string;
   population: string;
@@ -332,9 +340,9 @@ export interface DesignEvidencePanel {
   /** objective | estimand | endpoint | population | … */
   designNodeType: string;
   comparableStudies: ComparableStudy[];
-  observations: StudyResultObservation[];
+  observations: ResolvedStudyResultObservation[];
   pooled: { measure: string; value: number; ci: [number, number]; n: number } | null;
-  findings: RegulatoryFinding[];
+  findings: ResolvedRegulatoryFinding[];
   stressScenarios: StressScenario[];
   assumptions: Assumption[];
   contradictions: Contradiction[];
@@ -379,7 +387,7 @@ export interface EvidenceScope {
 
 /** Findings plus the coverage that contextualizes them. Never one without the other. */
 export interface FindingSearchResult {
-  findings: RegulatoryFinding[];
+  findings: ResolvedRegulatoryFinding[];
   coverage: CoverageRecord;
   insufficientEvidence?: InsufficientEvidence;
 }
