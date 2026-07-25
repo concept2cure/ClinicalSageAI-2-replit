@@ -25,12 +25,14 @@ const pool = {
 // we don't exercise here (stubbed so the import resolves).
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => pool.query(s, p) }, db: {} }));
 
-import { adaptCsrReport, extractDesignFeatures } from '../csr-adapter.service';
+import { adaptCsrReport, extractDesignFeatures, atomizeCsrReport } from '../csr-adapter.service';
 import { listSources, listStudies, listRelationshipsFor } from '../evidence-spine.service';
+import { countCreAtoms } from '../retrieval-atoms.service';
 
 const ORG = 7;
 
-// Minimal live-corpus DDL (only the columns the adapter reads).
+// Minimal live-corpus DDL (only the columns the adapter reads) + the retrieval
+// corpus (lumen_data_atoms) the atomizer writes into.
 const CORPUS_DDL = `
 CREATE TABLE csr_reports (
   id serial PRIMARY KEY, organization_id int NOT NULL, report_id text NOT NULL, report_title text,
@@ -44,6 +46,12 @@ CREATE TABLE csr_details (
   dropout_rate real, blinding text, randomization text, statistical_methods text,
   endpoints jsonb, results jsonb, metadata jsonb
 );
+CREATE TABLE lumen_data_atoms (
+  id serial PRIMARY KEY, organization_id integer NOT NULL, source_type text NOT NULL, source_id text,
+  atom_type text NOT NULL, title text NOT NULL, content text NOT NULL, structured_data jsonb, tags text[],
+  confidence real NOT NULL DEFAULT 0.7, status text NOT NULL DEFAULT 'active',
+  created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now()
+);
 `;
 
 beforeAll(async () => {
@@ -56,7 +64,8 @@ beforeAll(async () => {
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => {
   await pglite.exec(`DELETE FROM cre_evidence_relationships; DELETE FROM cre_clinical_studies;
-                     DELETE FROM cre_evidence_sources; DELETE FROM csr_details; DELETE FROM csr_reports;`);
+                     DELETE FROM cre_evidence_sources; DELETE FROM csr_details; DELETE FROM csr_reports;
+                     DELETE FROM lumen_data_atoms;`);
 });
 
 async function seedCsr(over: Record<string, unknown> = {}) {
@@ -105,6 +114,25 @@ describe('adaptCsrReport', () => {
   it('returns null for a CSR not visible to the org', async () => {
     const csrId = await seedCsr();
     expect(await adaptCsrReport(999, csrId)).toBeNull();       // different org → not visible
+  });
+});
+
+describe('atomizeCsrReport (CSR design features → retrieval atoms)', () => {
+  it('materializes csr_design_feature atoms for the CSR, idempotently', async () => {
+    const csrId = await seedCsr();
+    const res = await atomizeCsrReport(ORG, csrId, { embed: null });
+    expect(res).not.toBeNull();
+    expect(res!.byType['csr_design_feature']).toBeGreaterThan(4);
+    const n = await countCreAtoms(ORG, 'csr_design_feature');
+    expect(n).toBe(res!.total);
+    // re-running does not duplicate (delete-then-insert on the business key)
+    await atomizeCsrReport(ORG, csrId, { embed: null });
+    expect(await countCreAtoms(ORG, 'csr_design_feature')).toBe(n);
+  });
+
+  it('returns null for a CSR not visible to the org', async () => {
+    const csrId = await seedCsr();
+    expect(await atomizeCsrReport(999, csrId, { embed: null })).toBeNull();
   });
 });
 

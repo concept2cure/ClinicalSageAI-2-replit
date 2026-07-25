@@ -24,6 +24,8 @@ import { pool } from '../../db';
 import { createSource, upsertStudy, addRelationship } from './evidence-spine.service';
 import type { EvidenceSource, ClinicalStudy, StudyDesignFeature, StudyResultObservation } from './types';
 import { gatherCsrEffectEvidence } from '../study-design/csr-evidence-source';
+import { projectDesignFeature, persistCsrDerivedAtoms } from './retrieval-atoms.service';
+import type { EmbedFn, GenerateResult, AtomDraft } from './retrieval-atoms.service';
 
 // csr_reports.content / .metadata and csr_details.results are free-shape JSON.
 interface CsrReportRow {
@@ -106,6 +108,29 @@ export async function adaptCsrReport(orgId: number, csrReportId: number): Promis
 
   const featureCount = extractDesignFeatures(report, detail, source.id, study.id).length;
   return { source, study, featureCount };
+}
+
+/**
+ * Materialize retrieval atoms for one CSR's §4.3 study-design features into
+ * lumen_data_atoms (via the retrieval-atoms service). Ensures the CSR is adapted
+ * into the spine first (idempotent), so the atoms carry the real cre source id as
+ * provenance. Returns null when the CSR is not visible to the org.
+ *
+ * Only report-specific design features are materialized here; result observations
+ * are indication-scoped (they span multiple CSRs) and are materialized separately
+ * so their provenance is never collapsed onto a single source.
+ */
+export async function atomizeCsrReport(orgId: number, csrReportId: number, opts: { embed?: EmbedFn | null } = {}): Promise<GenerateResult | null> {
+  const adapted = await adaptCsrReport(orgId, csrReportId);
+  if (!adapted) return null;
+  const read = await readReport(orgId, csrReportId);
+  if (!read) return null;
+  const features = extractDesignFeatures(read.report, read.detail, adapted.source.id, adapted.study.id);
+  const drafts: AtomDraft[] = [];
+  for (const f of features) {
+    drafts.push(...projectDesignFeature(f, { sourceId: adapted.source.id, indication: read.report.indication, phase: read.report.phase }));
+  }
+  return persistCsrDerivedAtoms(orgId, drafts, { embed: opts.embed });
 }
 
 async function getSourceById(orgId: number, id: number): Promise<EvidenceSource | null> {

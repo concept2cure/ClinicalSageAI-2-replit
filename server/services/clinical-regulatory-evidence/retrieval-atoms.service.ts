@@ -118,6 +118,17 @@ export function toVectorLiteral(vec: number[]): string {
   return `[${vec.join(',')}]`;
 }
 
+/**
+ * A short, stable slug for a business-key discriminator. Two atoms that share the
+ * same (studyId, featureKey/endpoint, sourceId) but differ in value MUST get
+ * distinct keys — otherwise delete-then-insert would collapse them (silent loss).
+ * Same value → same slug → still idempotent on re-run.
+ */
+export function keySlug(value: unknown, max = 48): string {
+  const s = String(value ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return (s || 'na').slice(0, max);
+}
+
 /** Assemble content from labelled parts, dropping empties, one per line. */
 function composeContent(parts: Array<[string, unknown]>): string {
   return parts
@@ -286,7 +297,8 @@ export function projectDesignFeature(feat: StudyDesignFeature, ctx: { sourceId?:
   const sourceId = feat.sourceId ?? ctx.sourceId ?? null;
   return [{
     atomType: 'csr_design_feature',
-    sourceRef: `design_feature:${feat.studyId ?? 'na'}:${feat.featureKey}:${sourceId ?? 'na'}`,
+    // include a value slug so repeated feature keys (e.g. two secondary_endpoints) don't collide
+    sourceRef: `design_feature:${feat.studyId ?? 'na'}:${feat.featureKey}:${sourceId ?? 'na'}:${keySlug(feat.value)}`,
     title: `Study-design feature: ${feat.featureKey} = ${truncateTitle(String(feat.value))}`,
     content: composeContent([
       ['Feature', feat.featureKey],
@@ -340,9 +352,12 @@ export function projectResultObservation(obs: StudyResultObservation, ctx: { sou
     ['Source location', obs.sourceLocation],
   ]);
 
+  // discriminate by source location / effect so multiple observations that the
+  // extractor labels with the same endpoint (e.g. 'primary') don't collide.
+  const baseRef = `result_observation:${obs.studyId ?? 'na'}:${keySlug(obs.endpoint)}:${sourceId ?? 'na'}:${keySlug(obs.sourceLocation ?? obs.effectMeasure)}`;
   drafts.push({
     atomType: isSafety ? 'csr_safety_signal' : 'csr_result_observation',
-    sourceRef: `result_observation:${obs.studyId ?? 'na'}:${obs.endpoint}:${sourceId ?? 'na'}`,
+    sourceRef: baseRef,
     title: `${isSafety ? 'Safety signal' : 'Result'}: ${truncateTitle(obs.endpoint)}`,
     content,
     tags: ['csr', isSafety ? 'safety_signal' : 'result_observation', obs.endpointRole].filter((t): t is string => Boolean(t)),
@@ -353,7 +368,7 @@ export function projectResultObservation(obs: StudyResultObservation, ctx: { sou
   if (obs.missingness != null && Number(obs.missingness) > 0) {
     drafts.push({
       atomType: 'csr_execution_limitation',
-      sourceRef: `result_observation:${obs.studyId ?? 'na'}:${obs.endpoint}:${sourceId ?? 'na'}:limitation`,
+      sourceRef: `${baseRef}:limitation`,
       title: `Execution limitation: missingness on ${truncateTitle(obs.endpoint)}`,
       content: composeContent([
         ['Limitation', 'Missing data recorded for this endpoint'],

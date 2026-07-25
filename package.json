@@ -49,6 +49,7 @@
     "ri:openapi": "tsx scripts/global-ri/generate-openapi.ts",
     "ai:model-cards": "tsx scripts/ai-governance/generate-model-cards.ts",
     "ai:evidence-pack": "tsx scripts/ai-governance/generate-evidence-pack.ts",
+    "cre:atoms": "tsx scripts/cre/generate-atoms.ts",
     "ai:eval-doc-quality": "tsx server/eval/doc-quality/run-eval.ts",
     "benchmark:rtf": "tsx server/services/shadow-review/benchmark/cli.ts",
     "ci:migration-prefix-collisions": "node scripts/ci/check-migration-prefix-collisions.mjs",
