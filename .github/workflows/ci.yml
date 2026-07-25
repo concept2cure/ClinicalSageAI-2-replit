@@ -61,6 +61,19 @@ jobs:
         # a silent no-op (query inside try/catch). See ledger C-14.
         run: npm run ci:unbacked-tables
 
+      - name: Guardrails — no direct Pool construction in runtime code
+        # Was enforced nowhere. Its scan list also named ten of server/'s ~35
+        # directories, so server/src, server/bootstrap, server/lib and others
+        # were invisible to it; it now scans server/ with exclusions instead.
+        run: npm run ci:ban-new-pool
+
+      - name: Guardrails — eCTD stub bundle + generated risk-code types
+        # Both were pre-push-hook only, so a `git push --no-verify` skipped them
+        # and nothing checked the branch.
+        run: |
+          npm run ci:ectd-stubs
+          npm run ci:risk-codes
+
       - name: Guardrails — security patterns (tenant / identity / role trust)
         # Existed only as a pre-commit hook, so it was skipped by any commit made
         # with --no-verify and never enforced on the branch. It now blocks in CI.

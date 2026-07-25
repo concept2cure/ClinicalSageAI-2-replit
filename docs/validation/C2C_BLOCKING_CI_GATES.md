@@ -14,6 +14,28 @@ against `.github/workflows/*.yml`.
 | **CI-covered (blocking)** | **34** |
 | Not covered | 3 (one advisory reporter, one reporter, one helper) |
 
+### Update 2026-07-25 — counting the scripts in `scripts/ci/` was the wrong denominator
+
+The measurement above answers "how many of the guards **in one directory** run in
+CI?" A later audit asked the question that actually matters — "which guard
+scripts exist **anywhere** in `package.json`, and what enforces each?" — and
+found controls that existed and were wired to nothing:
+
+| script | was | now |
+|---|---|---|
+| `check:security-patterns` | pre-commit hook only, so any `--no-verify` commit skipped it and nothing checked the branch | **blocking in CI** (and it found 11 real violations the moment the C-18 rule was added) |
+| `ci:ban-new-pool` | enforced nowhere | **blocking in CI** |
+| `ci:ectd-stubs`, `ci:risk-codes` | pre-push hook only | **blocking in CI** |
+| `ci:ui-kits` | enforced nowhere — **and exits 1 today** (7 issues, incl. a shared-scope `useState` collision) | still unwired; wiring it as-is would land CI red. Recorded, not hidden. |
+
+Of 68 scripts matching `ci:|check:|audit:|verify:`, 38 run in CI. Most of the
+remainder are `:strict` and `:write-baseline` variants that are *deliberately*
+manual, plus advisory audits (`audit:dead-code` runs knip with `--no-exit-code`).
+
+**The lesson generalises past CI:** a control that exists, looks right, and is
+attached to nothing is the same defect shape as a service that ships without
+storage (C-8, C-10, C-11, C-12, C-14, C-16). Both pass review by existing.
+
 ### Measuring this correctly
 
 Two wrong answers were produced before the right one. Both are easy to repeat:
