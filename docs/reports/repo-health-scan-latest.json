@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-24T23:49:01.878Z",
+  "generatedAt": "2026-07-25T04:47:31.945Z",
   "git": {
-    "sha": "ef5f42fb274778b0d28dc923dc6c31766afef756",
+    "sha": "0db621b3340b9485ed0480ba3a2dd0888d6664d1",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2453,7 +2453,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 824480
+        "bytes": 844659
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2567,7 +2567,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19722
+        "lines": 20107
       },
       {
         "file": "server/routes/concept2cure.ts",
