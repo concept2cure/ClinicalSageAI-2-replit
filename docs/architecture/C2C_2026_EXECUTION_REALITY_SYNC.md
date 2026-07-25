@@ -60,8 +60,8 @@ All figures parsed from code at `2a5b46d` and re-runnable.
 | — no exact literal in `client/src` | 166 (45%) | literal match |
 | — **no reference at all** (strict floor) | **134 (36%)** | neither exact path nor last path segment |
 | Registry-declared prefixes with no mount | **3** | containment-tested both directions |
-| CI guard scripts | 38 | `scripts/ci/` |
-| — wired into a workflow (blocking) | **30** | `npm run ci:*` invoked from `.github/workflows/ci.yml` |
+| CI guard scripts | 37 | `scripts/ci/` |
+| — CI-covered (blocking) | **34** | `npm run ci:*` in `ci.yml`, resolving aggregate suites |
 | Registry entries | 99 | `ui-surface-registry.ts` (49) + `.ui-v2.ts` (50) |
 | — `routes-ready` (no typed contract) | 79 | parsed `readiness` field |
 | — `contract-ready` | 5 | " |
@@ -195,7 +195,7 @@ Two things the plan treats as gaps are already built:
 `server/config/__tests__/environment.test.ts:321` asserts the app *"refuses to
 load in production when `RLS_ENFORCE` is unset."* Verified passing in this pass.
 
-**CI enforcement is broadly wired.** 30 of 38 guard scripts run as blocking gates
+**CI enforcement is broadly wired.** 34 of 37 guard scripts run as blocking gates
 in `.github/workflows/ci.yml`, including gateway-bypass (with a frozen baseline),
 tenant-isolation, RLS-allowlist-sync, tenant-column-types, no-dev-auth-in-prod,
 no-mock-in-prod-routes, regulated-delete-audit, route-mount-audit, and the
@@ -206,9 +206,7 @@ measurement error — workflows invoke guards through `npm run ci:*` aliases, no
 script filename.*
 
 **WO-02 is therefore verify-and-ratchet, not rebuild.** The genuine gaps are:
-(a) the missing schema-contract test tier (ADR-0010), and (b) two unwired
-governed-export guards (`ci:governed-export-routes`,
-`ci:governed-export-consequence-shape`) — the cheapest available wins.
+(a) the missing schema-contract test tier (ADR-0010), and (b) no guard detected duplicate table DDL across the two migration lineages — now closed by `ci:duplicate-table-ddl`.
 
 ### 5.5 The moat capabilities have no client consumer
 

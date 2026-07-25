@@ -191,31 +191,42 @@ scope. Recorded here as an open owner assignment, not a finding.
 
 ## 7. CI enforcement posture — stronger than assumed
 
-An early pass suggested most guards were unwired. **That was a measurement error**
-(workflows invoke guards through `npm run ci:*` aliases, not by script filename).
+This was measured wrong **twice**, and both errors inflated the apparent gap.
 
-Corrected: **38 guard files in `scripts/ci/`; 30 are CI-wired.** The 8 not wired:
+1. Searching workflows for each guard's *script filename* missed that workflows
+   invoke guards through `npm run ci:*` **aliases**. That produced "only ~7 of 38
+   wired."
+2. Correcting for aliases still missed that four guards run inside an **aggregate
+   suite** — `ci:reasoning-tier-readiness` executes
+   `check-governed-export-routes`, `check-governed-export-consequence-shape`,
+   `check-reasoning-tier-ga-readiness` and `check-reasoning-tier-uat-evidence`
+   (`scripts/ci/check-reasoning-tier-readiness-suite.mjs:7-10`). That produced
+   "30 of 38 wired, 2 governed-export guards unwired."
 
-| Script | npm alias | Note |
-|---|---|---|
-| `check-governed-export-routes.mjs` | `ci:governed-export-routes` | **unwired — governance-relevant** |
-| `check-governed-export-consequence-shape.mjs` | `ci:governed-export-consequence-shape` | **unwired — governance-relevant** |
-| `check-reasoning-tier-ga-readiness.mjs` | `ci:reasoning-tier-ga-readiness` | unwired |
-| `check-reasoning-tier-uat-evidence.mjs` | `ci:reasoning-tier-uat-evidence` | unwired |
-| `check-env-var-docs.mjs` | none | unwired |
-| `report-branch-drift.mjs` | `ci:report-branch-drift` | reporting only |
-| `gateway-bypass-baseline.json` | — | data file, not a guard |
-| `generate-test-summary.js` | — | helper, not a guard |
+**Verified figure: 37 guard scripts, 34 CI-covered** once aliases and aggregates
+are resolved. The three not covered are:
 
-Guards already blocking in `ci.yml` include: migration prefix collisions, RLS
-allowlist sync, tenant column types, tenant isolation (no-regression), dev-auth-in-prod,
-password hygiene, SAML fail-closed, design system, regulated delete audit, route
-mount audit, route ownership matrix, **gateway bypass**, JWT verify pinned,
-legacy dep quarantine, no-mock-in-prod-routes, JS/TS shadows, and the docx/pdf/
-embedding runtime canonicality checks.
+| Script | Nature |
+|---|---|
+| `check-env-var-docs.mjs` | **advisory reporter — exits 0.** Wiring it would be a no-op gate; making it blocking requires documenting ~40 env vars first. |
+| `report-branch-drift.mjs` | reporting, not a gate |
+| `generate-test-summary.js` | helper, not a guard |
 
-**WO-02 should verify and ratchet, not rebuild.** The two unwired governed-export
-guards are the cheapest available win.
+So **there is no meaningful unwired guard.** Guards already blocking in `ci.yml`
+include migration prefix collisions, RLS allowlist sync, tenant column types,
+tenant isolation (no-regression), dev-auth-in-prod, password hygiene, SAML
+fail-closed, design system, regulated delete audit, route mount audit, route
+ownership matrix, **gateway bypass**, JWT verify pinned, legacy dep quarantine,
+no-mock-in-prod-routes, JS/TS shadows, and the docx/pdf/embedding runtime
+canonicality checks.
+
+**The genuine gap was different:** no guard detected *duplicate table DDL across
+the two migration lineages*, which is how C-1/C-2/C-3 passed CI. WO-02 closes it
+with `scripts/ci/check-duplicate-table-ddl.mjs` (`ci:duplicate-table-ddl`),
+wired blocking, baselined at the 72 pre-existing collisions.
+
+**WO-02 should verify and ratchet, not rebuild.** The genuine gap was that no guard detected duplicate table DDL across both
+migration lineages — closed in WO-02 by `ci:duplicate-table-ddl`.
 
 ---
 

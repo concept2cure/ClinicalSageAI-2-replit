@@ -53,13 +53,12 @@ semantics, freeze enforcement for stale clients. Retain the REST lock layer as t
 *authority* control — locks and CRDT awareness are complementary, not redundant.
 
 ### 2.2 WO-02 becomes verify-and-ratchet
-30 of 38 CI guards are already wired and blocking, including gateway-bypass,
+34 of 37 CI guards are already covered and blocking, including gateway-bypass,
 tenant-isolation, RLS-allowlist-sync, and no-dev-auth-in-prod.
 `environment.ts:284` calls `assertRlsEnforcementForProduction()` at module load,
 with a test asserting production refuses to boot without `RLS_ENFORCE`.
 
-**Revised scope:** ratchet existing baselines down; wire the 2 unwired
-governed-export guards; **add the missing schema-contract test tier (ADR-0010)**,
+**Revised scope:** ratchet existing baselines down; wire the new duplicate-table-DDL guard; **add the missing schema-contract test tier (ADR-0010)**,
 which is the genuine gap. Do not rebuild enforcement infrastructure that exists.
 
 ### 2.3 WO-03 gains a prerequisite
@@ -130,7 +129,7 @@ specified.
 | Open PRs | 10 — see §5.1 |
 | Test baseline | 4 files / **98 tests, all passing**, 963ms (targeted at conflict areas) |
 | Full suite | **not run** — `singleFork` mode, 10+ min per `AGENTS.md`; no pass-rate claim made |
-| Guards | 38 in `scripts/ci/`; **30 CI-wired** |
+| Guards | 37 in `scripts/ci/`; **34 CI-covered** (aggregates resolved) |
 | Route auditor | 323 mounts, 8 errors, 7 warnings |
 | Governing instructions | one product `AGENTS.md` (root); no nested product files |
 
