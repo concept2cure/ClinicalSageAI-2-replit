@@ -34,6 +34,7 @@
     "check": "NODE_OPTIONS=\"--max-old-space-size=6144\" tsc",
     "typecheck": "NODE_OPTIONS=\"--max-old-space-size=6144\" tsc --noEmit",
     "eval:grounding": "tsx scripts/eval-grounding.ts",
+    "eval:risk-backtest": "tsx scripts/backtest-risk-model.ts",
     "check:security-patterns": "tsx scripts/check-security-patterns.ts",
     "ocr:vendor": "node scripts/vendor-tesseract-langdata.mjs",
     "lint": "eslint .",
