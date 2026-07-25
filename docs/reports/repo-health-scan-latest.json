@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-25T23:50:58.091Z",
+  "generatedAt": "2026-07-25T23:57:21.735Z",
   "git": {
-    "sha": "4288cb019359fdaf0ddf89091ac8dcb7acc2f018",
+    "sha": "4734c3d6e64b191d17058dead8a9d6314314c755",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -10,8 +10,8 @@
   },
   "summary": {
     "duplicateBasenames": 248,
-    "largeFilesByBytes": 29,
-    "largeFilesByLines": 82
+    "largeFilesByBytes": 30,
+    "largeFilesByLines": 83
   },
   "findings": {
     "duplicateBasenames": [
@@ -2476,7 +2476,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 460380
+        "bytes": 360752
       },
       {
         "file": "server/statistics-service.ts",
@@ -2575,6 +2575,10 @@
         "bytes": 105877
       },
       {
+        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "bytes": 105154
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
         "bytes": 104369
       }
@@ -2593,12 +2597,12 @@
         "lines": 18133
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 8564
-      },
-      {
         "file": "server/statistics-service.ts",
         "lines": 6893
+      },
+      {
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 6858
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2769,6 +2773,10 @@
         "lines": 1888
       },
       {
+        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "lines": 1881
+      },
+      {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
       },
@@ -2915,8 +2923,8 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 396,
-      "largeByBytes": 26,
-      "largeByLines": 71
+      "largeByBytes": 27,
+      "largeByLines": 72
     },
     {
       "owner": "Unassigned (TBD)",
