@@ -908,6 +908,88 @@ patch, and is outside Journey B's path.
 
 ---
 
+## C-17 — The Part 11 release-signature gate was provisioned on only one path *(critical — FIXED 2026-07-25)*
+
+`POST /api/submissions/:submissionId/sign-release` is the human-credential gate
+between a validated submission package and transmit. Its final step binds the
+signature to the payload:
+
+```sql
+UPDATE electronic_signatures
+   SET organization_id = $1, bound_payload_digest = $2
+ WHERE id = $3
+```
+
+Those three columns (`organization_id`, `bound_payload_digest`, `superseded_by`)
+were added by `migrations/20260629_orchestrator_awaiting_signature_status.sql` —
+a file in the **root** lineage, which is not journaled (drizzle's runtime migrate
+applies only the `0000` baseline) and which is **not in the allowlist** of
+`scripts/db/apply-c2c-migrations.mjs`. Nothing in the repository ever applied it.
+They existed only in `shared/schema.ts`, i.e. only on the `drizzle-kit push` path.
+
+**On any environment provisioned from migrations, the release gate could not be
+passed.** The route converts the failed write into `500 signature_binding_failed`
+— correctly, and with no way forward. A submission could be authored, compiled,
+validated and declared gateway-ready, and then could not be signed for release.
+
+### What this one is NOT
+
+The route is careful and correct: `signerId` comes from `req.user.id` and never
+from the body; missing and cross-org both collapse to 404; payload drift returns
+409 rather than signing something stale; §11.70 supersession is append-only. Its
+author wrote the migration too. **It was simply filed in the lineage that nothing
+runs** — the same trap as C-10, and the reason ADR-0006 matters.
+
+### A correction worth recording
+
+The first reading of this looked far worse: four `CREATE TABLE ... electronic_signatures`
+across the migration corpus, seemingly a four-way collision of the Part 11 table.
+Three of them are **schema-qualified** — `compliance.electronic_signatures`,
+`cognitive_audit.electronic_signatures`,
+`regulatory_harmonization.electronic_signatures` — and are therefore different
+tables in different Postgres schemas, not rivals. Only `public.electronic_signatures`
+(the `0000` baseline + push surface) is the one under discussion. A `grep` for
+`CREATE TABLE.*electronic_signatures` reads as a collision until the schema
+qualifier is checked.
+
+### The fix
+
+`db/migrations/20260725_esig_gate_columns_port.sql` — a **verbatim** port into the
+canonical lineage, prefixed with a provenance header. The original is idempotent
+throughout (`ADD COLUMN IF NOT EXISTS`, `DROP CONSTRAINT IF EXISTS`,
+`CREATE INDEX IF NOT EXISTS`), so applying it where push already added the columns
+is a no-op. The root-lineage original stays as the historical record.
+
+### Proof
+
+`tests/schema-contract/esig-gate-columns.contract.test.ts` — 9 tests. It asserts
+the original is in no application path, **demonstrates the failure** by running
+the route's exact UPDATE against the pre-port baseline and requiring it to throw,
+then applies the real port and runs: the same UPDATE (now succeeding), the
+orchestrator's resume-path lookup, the cross-tenant probe that must find nothing
+even knowing the digest (OQ-7), §11.70 append-only supersession leaving the
+forensic chain intact (OQ-4), and a run parking in `awaiting-signature`.
+
+### Still open — C-11 residual 1 now has a resolution path
+
+The authoring loop has **two** signature implementations, neither functional:
+
+| path | writes | state |
+|---|---|---|
+| `/e-sign` (authoring.router.ts:2946) | `electronic_signatures` | shape is incompatible with the canonical table — `doc_id` UUID vs `document_id` integer FK, and it supplies none of `version_id`, `signature_type`, `signature_purpose`, `signer_id`, `authentication_method`, `authentication_timestamp`, `signature_hash`, all NOT NULL |
+| the other signing endpoint (:4547) | `authoring_signatures` | purpose-built shape (UUID `doc_id`, `meaning`, `reason`, `method`, `content_hash`, `signature_digest`, `tenant_id`) — but the table is one of the C-15 phantoms, created by nothing |
+
+These are genuinely different concepts that collided on a name: canonical
+`electronic_signatures` signs `documents`/`document_versions` (integer-keyed
+legacy doc system); the authoring loop signs `authoring_documents` (UUID-keyed).
+The resolution is therefore **not** to widen the canonical table into a union of
+both, but to give `authoring_signatures` a code-derived migration and point
+`/e-sign` at it. That is a compliance-critical change to a signature path and
+should land with its own acceptance journey — recorded here as the next step, not
+done in passing.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
