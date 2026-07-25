@@ -18,7 +18,7 @@ Status vocabulary: **BLOCKED** (a WO-00 finding must be resolved first) ·
 |---|---|---|---|---|
 | **WO-00** | none | **IN PROGRESS → complete this pass** | — | 5 documents + 5 ADRs |
 | **WO-01** Golden journeys | WO-00 | **BLOCKED** | C-1, C-2, C-6 | ADR-0006, ADR-0007 |
-| **WO-02** Enforcement | WO-00 | **RESCOPED — verify, don't rebuild** | §7 of service map | ADR-0010 |
+| **WO-02** Enforcement | WO-00 | **COMPLETE** — guard + contract tier shipped | — | done |
 | **WO-03** Proof Packet | WO-01, WO-02 | **BLOCKED** | C-1…C-5 | ADR-0007, **ADR-0009** |
 | **WO-04** Yjs closure | WO-01, WO-02 | **RESCOPED — much smaller** | path mismatch | none new |
 | **WO-05** eCTD v4 | WO-01, WO-02 | **BLOCKED on discovery** | ≥6 packagers, 3 zip libs | canonical-publisher ADR |
@@ -75,6 +75,25 @@ is unmeetable otherwise.
 consumer, and their unit tests mock the database. The golden journeys will be the
 first thing to exercise this stack against a real schema. Schedule accordingly:
 WO-01 is partly a discovery exercise, not purely a harness build.
+
+### 2.6 A promotion gate currently fails open (C-8) — found in WO-02
+
+`governance-boundary-service.ts` enforces three promotion gates against the
+**orphaned** Drizzle tables. Against the shape that actually deploys, two fail
+**open** and one is unsatisfiable. Master §2 requires these gates fail closed.
+
+This is now the highest-severity open defect. It is not fixed here because the fix
+depends on the ADR-0007 direction, which C-9 has just inverted. Regression tests
+exist: `tests/schema-contract/governance-boundary-failopen.contract.test.ts`.
+
+### 2.7 The blocking question is substantially answered (C-9)
+
+WO-00 said only a live database could determine which schema shape deploys. That
+was too pessimistic — the execution paths are determinable from code, and all
+three converge: `migrations/0010_operating_system_foundation.sql` has **no
+execution path**, so the raw-SQL shape is what deploys. ADR-0007 must be revised
+before execution; a one-query confirmation against a live database is still
+recommended but the burden of proof has flipped.
 
 ### 2.5 WO-05 needs discovery before implementation
 At least six services can produce packages, and three ZIP libraries are installed

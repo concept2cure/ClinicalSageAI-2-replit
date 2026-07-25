@@ -20,9 +20,15 @@ names the file and line that settles it, so it can be re-verified independently.
 | C-5 | `BundleExecutionReceipt` type defined twice with different shapes | High | WO-03 |
 | C-6 | Two competing migration lineages; the manifest covers only one | **Blocking (root cause of C-1…C-3)** | all schema work |
 | C-7 | Assumption/decision service vocabularies diverge from Drizzle enums | High | WO-03 |
+| C-8 | **Governance boundary gates fail OPEN against the deployed schema** | **Critical** | WO-01, WO-03, WO-08 |
 
-C-6 is the root cause. C-1 through C-3 are its symptoms. C-4 is independent and
-is the most commercially consequential finding in this pass.
+C-6 is the root cause. C-1 through C-3 are its symptoms. C-4 is the most
+commercially consequential finding. **C-8 is the most safety-consequential: a
+promotion gate that does not fire.**
+
+**Update (WO-02):** the execution-path evidence in §C-9 below determines which
+shape actually deploys, which inverts the ADR-0007 recommendation. Read C-9
+before acting on C-1 or C-2.
 
 ---
 
@@ -284,6 +290,110 @@ The `resolution-bundle.ts` variant carries `id`, `projectId`, and `decisionId`:
 the shape of a row. It reads as a persistence design that was specified and never
 wired — consistent with C-4. Whichever is canonical must be decided in the same
 ADR that resolves C-4, and the other retired.
+
+---
+
+## C-9 — Execution-path evidence: `migrations/0010` has NO execution path *(WO-02, unblocking)*
+
+WO-00 recorded as an open question: *"which physical table shape exists in each
+deployed environment."* It stated only a live database could answer it.
+
+**That was too pessimistic.** The execution paths are determinable from code, and
+they converge on one answer.
+
+### The three candidate paths, all checked
+
+| Path | Applies | Does it create the Drizzle shape? |
+|---|---|---|
+| `drizzle-kit push` — the CI-validated deploy gate (`db-schema-validation.yml:85`) | diffs `shared/schema.ts` against the DB; **ignores migration files entirely** | **No.** `shared/schema.ts` does **not** export `./schema/operating-system` (0 references). The operating-system tables are not in the push surface. |
+| `drizzle-kit migrate` | only journaled migrations | **No.** `migrations/meta/_journal.json` contains **exactly one** entry, `0000_sweet_joseph`. `0010_operating_system_foundation` is not journaled. |
+| `scripts/db/apply-c2c-migrations.mjs` | exactly 3 named files (`20260603_ai_capability_governance`, `_pv_operational`, `_commitments`) | **No.** `0010` is not among them. |
+
+### Conclusion
+
+**`migrations/0010_operating_system_foundation.sql` has no known execution path.**
+It is almost certainly dead DDL that has never been applied to any environment.
+
+Meanwhile `db/migrations/20260323_assumption_decision_contradiction.sql` **is**
+manifest-managed (present in `migrations_manifest.json`, 202 migrations with an
+explicit `executionOrder`).
+
+**Therefore the raw-SQL shape is the deployed shape**, and:
+
+| Consumer | Status against deployed reality |
+|---|---|
+| `assumption-registry-service.ts` (raw SQL) | **correct** |
+| `decision-record-service.ts` (raw SQL) | **correct** — its `proposed`/`approved`/`rejected`/`executed`/`escalated` vocabulary matches the deployed CHECK constraint exactly |
+| `shared/schema/operating-system.ts` (Drizzle) | **orphaned** — describes a table that likely exists nowhere |
+| `governance-boundary-service.ts` (Drizzle consumer) | **broken — see C-8** |
+
+### This inverts ADR-0007
+
+ADR-0007 proposed adopting the Drizzle-typed schema as canonical, on the grounds
+that it has real enums and real foreign keys. On this evidence that is the wrong
+direction: it would migrate production data *away* from the shape that is actually
+deployed and *toward* one that has never run, to satisfy a schema file that
+nothing executes.
+
+**ADR-0007 must be revised** to either (a) adopt the deployed raw-SQL shape and
+retire the Drizzle definition, or (b) keep the Drizzle *typing* but regenerate it
+to match deployed reality. This remains subject to confirmation against a live
+database — but the burden of proof has now flipped.
+
+### Residual uncertainty — stated honestly
+
+This establishes what the *repository* can execute. It does not prove what was run
+historically: an operator could have applied `0010` manually. The confirming query
+is cheap and remains the recommended next action:
+
+```sql
+SELECT column_name FROM information_schema.columns
+WHERE table_name = 'assumption_records' ORDER BY ordinal_position;
+-- 'assumption_code' present  → raw-SQL shape (expected)
+-- 'value_type'      present  → Drizzle shape (would contradict this analysis)
+```
+
+---
+
+## C-8 — Governance boundary gates fail OPEN *(critical)*
+
+`server/services/governance-boundary-service.ts` implements promotion gates: the
+controls that stop an artifact moving to a higher governance boundary until its
+assumptions are approved, its decisions are resolved, and a confidence threshold
+is met.
+
+It queries the **orphaned Drizzle tables** (C-9). Against the deployed shape, its
+filter values do not exist — so the gates do not fire.
+
+| Gate | Line | Filter value | Deployed vocabulary | Effect |
+|---|---|---|---|---|
+| All decisions resolved | `:229` | `action_state = 'recommended_only'` | `proposed`, `under_review`, `approved`, `rejected`, `executed`, `deferred`, `escalated`, `superseded` | **FAILS OPEN** — value is not legal, so the query matches nothing and the gate never blocks |
+| Minimum confidence | `:249-252` | ladder `uncertain/provisional/moderate/strong`; reads `decision.confidence` | `definitive`, `high`, `moderate`, `low`, `speculative`; column is `confidence_level` | **FAILS OPEN or arbitrarily** — only `moderate` overlaps, so a `definitive` decision scores **0**, equal to `speculative` |
+| All assumptions approved | `:210` | `status NOT IN ('approved','superseded')` | `active`, `under_review`, `superseded`, `withdrawn`, `challenged` | **over-blocks** — `approved` is not legal, so a settled assumption can never satisfy the gate |
+
+### Why this is the most serious finding
+
+Master work order §2 is explicit: *"Policy, review, export, approval, submission,
+and signature gates fail closed."* **Two of these three fail open**, and they do so
+**silently** — the SQL is valid and returns zero rows, so there is no error, no
+log, and no symptom. A promotion that should have been blocked simply proceeds.
+
+The third fails closed but is unsatisfiable, which is its own defect: a gate that
+can never be cleared invites being switched off.
+
+### Regression tests
+
+`tests/schema-contract/governance-boundary-failopen.contract.test.ts` — 4 passing
+tests proving each failure against the deployed schema, plus a skipped acceptance
+test for the fix.
+
+### Required fix
+
+Not attempted in WO-02 — it depends on the ADR-0007 revision (C-9). When that
+lands, `governance-boundary-service.ts` must be aligned to the canonical
+vocabulary, and the gate values must come from a **shared constant** rather than
+string literals duplicated between service and schema. Literal duplication is the
+mechanism that allowed the divergence.
 
 ---
 

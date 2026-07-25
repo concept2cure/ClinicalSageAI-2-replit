@@ -2,7 +2,29 @@
 
 ## Status
 
-**Proposed**
+**Proposed — SUPERSEDED IN PART, revision required**
+
+> **WO-02 update (2026-07-25).** The core recommendation below — adopt the
+> Drizzle-typed schema as canonical — is **contradicted by execution-path
+> evidence gathered after this ADR was drafted.** See
+> `docs/architecture/C2C_SCHEMA_AND_ENUM_CONFLICT_LEDGER.md` §C-9.
+>
+> In short: `migrations/0010_operating_system_foundation.sql` has **no execution
+> path**. It is not journaled (`migrations/meta/_journal.json` has one entry),
+> `shared/schema.ts` does not export `./schema/operating-system` so `drizzle-kit
+> push` never creates it, and `apply-c2c-migrations.mjs` does not include it. The
+> **raw-SQL shape is what deploys.**
+>
+> Adopting the Drizzle shape would therefore migrate production data away from the
+> shape that exists and toward one that has never run. **Decide the direction
+> against C-9 before executing anything in this ADR.** The alternative previously
+> recorded as "Option A: adopt the raw-SQL shape" is now the leading candidate.
+>
+> The parts of this ADR that remain valid regardless of direction: splitting
+> `domain_track` into modality vs. discipline, keeping decision action/approval/
+> escalation orthogonal, eliminating raw SQL in favour of typed access, and the
+> ADR-0010 test tier.
+
 
 - Date: 2026-07-24
 - Deciders: control-tower session (WO-00); requires human approval
