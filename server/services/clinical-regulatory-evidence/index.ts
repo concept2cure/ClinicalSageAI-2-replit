@@ -14,3 +14,5 @@ export { EvidenceSpineError } from './evidence-spine.service';
 export * as csrAdapter from './csr-adapter.service';
 export * as studyDesignEvidence from './study-design-evidence.service';
 export * as crlIngestion from './crl-ingestion.service';
+export * as governance from './governance';
+export { INSUFFICIENT_EVIDENCE, UnsupportedClaimError } from './governance';
