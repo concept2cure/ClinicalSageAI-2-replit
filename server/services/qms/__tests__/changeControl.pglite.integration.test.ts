@@ -29,8 +29,14 @@ const pool = {
 vi.mock('../../../db', () => ({ pool: { query: (sql: string, params?: unknown[]) => pool.query(sql, params) } }));
 
 import * as svc from '../changeControl.service';
-// The GA demo seed (ESM). Default export: async (client, { org, admin }).
-import seedQuality from '../../../../scripts/seed/ga-demo.d/123-qms-quality.mjs';
+
+/** The GA demo seed is untyped ESM JS; load it dynamically and type at the call
+ *  site (a static import would trip TS7016 under noImplicitAny). */
+type SeedFn = (client: unknown, ctx: unknown) => Promise<void>;
+async function loadSeedQuality(): Promise<SeedFn> {
+  const mod = (await import('../../../../scripts/seed/ga-demo.d/123-qms-quality.mjs')) as { default: SeedFn };
+  return mod.default;
+}
 
 // Minimal faithful DDL (mirrors the real migrations; FK-free like the store).
 const DDL = `
@@ -83,7 +89,8 @@ beforeAll(async () => {
     INSERT INTO organization_users (organization_id, user_id, role) VALUES (1,10,'admin'), (1,11,'member'), (1,12,'member');
   `);
   // Run the GA demo seed against the same engine.
-  await (seedQuality as (client: unknown, ctx: unknown) => Promise<void>)(pool, { org: { id: ORG }, admin: { id: 10 } });
+  const seedQuality = await loadSeedQuality();
+  await seedQuality(pool, { org: { id: ORG }, admin: { id: 10 } });
 });
 afterAll(async () => {
   await pglite.close();
