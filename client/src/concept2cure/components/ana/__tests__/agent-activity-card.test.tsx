@@ -8,10 +8,15 @@
  *
  * Plain DOM assertions (no jest-dom) to match the sibling tests in this dir.
  */
-import { describe, it, expect, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { describe, it, expect, afterEach, vi } from 'vitest';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 
-import { AgentActivityCard, describeActivitySummary } from '../AgentActivityCard';
+import {
+  AgentActivityCard,
+  describeActivitySummary,
+  composeInvestigationPrompt,
+  isCompletedStatus,
+} from '../AgentActivityCard';
 import {
   hasSurfacedActivity,
   normalizeActivity,
@@ -163,5 +168,95 @@ describe('AgentActivityCard — rendering', () => {
     const text = container.textContent || '';
     expect(text.includes('!')).toBe(false);
     expect(EMOJI.test(text)).toBe(false);
+  });
+});
+
+describe('isCompletedStatus', () => {
+  it('is true only for a run that produced a memo', () => {
+    expect(isCompletedStatus('completed')).toBe(true);
+    expect(isCompletedStatus('finished')).toBe(true);
+    expect(isCompletedStatus('running (3 steps)')).toBe(false);
+    expect(isCompletedStatus('queued')).toBe(false);
+  });
+
+  it('never treats a stalled run as finished (it has no memo)', () => {
+    expect(
+      isCompletedStatus('stalled — the server restarted while this was running; start a fresh investigation'),
+    ).toBe(false);
+  });
+});
+
+describe('composeInvestigationPrompt', () => {
+  it('asks for the memo when the run finished, carrying the investigation id', () => {
+    const prompt = composeInvestigationPrompt(item({ id: 'abc-123', status: 'completed' }));
+    expect(prompt).toContain('investigation_id abc-123');
+    expect(prompt).toContain('research memo');
+    expect(prompt).toContain('Predicate landscape for a Class II CGM');
+  });
+
+  it('asks where a live run stands rather than for a memo it does not have', () => {
+    const prompt = composeInvestigationPrompt(item({ id: 'abc-123' }));
+    expect(prompt).toContain('investigation_id abc-123');
+    expect(prompt).toContain('stand');
+    expect(prompt).not.toContain('research memo');
+  });
+
+  it('asks for status (not a memo) on a stalled run', () => {
+    const prompt = composeInvestigationPrompt(
+      item({ status: 'stalled — the server restarted while this was running' }),
+    );
+    expect(prompt).not.toContain('research memo');
+    expect(prompt).toContain('honest status');
+  });
+
+  it('stays readable when the run has no recorded question', () => {
+    const prompt = composeInvestigationPrompt(item({ question: '' }));
+    expect(prompt).not.toContain('""');
+    expect(prompt).toContain('investigation_id i1');
+  });
+
+  it('honors the tone floor (no exclamation marks, no emoji)', () => {
+    const prompt = composeInvestigationPrompt(item({ status: 'completed' }));
+    expect(prompt.includes('!')).toBe(false);
+    expect(EMOJI.test(prompt)).toBe(false);
+  });
+});
+
+describe('AgentActivityCard — opening a run', () => {
+  it('stays read-only (no buttons) when no handler is passed', () => {
+    render(<AgentActivityCard summary={summary({ activeCount: 1, items: [item({})] })} />);
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('makes each listed run a button and passes the clicked run up', () => {
+    const onOpen = vi.fn();
+    render(
+      <AgentActivityCard
+        summary={summary({ activeCount: 1, items: [item({})] })}
+        onOpenInvestigation={onOpen}
+      />,
+    );
+    const btn = screen.getByRole('button');
+    fireEvent.click(btn);
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(onOpen.mock.calls[0]![0]).toMatchObject({ id: 'i1' });
+  });
+
+  it('names the action by its outcome so it is unambiguous to a screen reader', () => {
+    render(
+      <AgentActivityCard
+        summary={summary({
+          activeCount: 1,
+          recentlyCompletedCount: 1,
+          items: [
+            item({ id: 'live', question: 'Live run' }),
+            item({ id: 'done', question: 'Done run', status: 'completed' }),
+          ],
+        })}
+        onOpenInvestigation={() => {}}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Read the research memo: Done run' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Check progress: Live run' })).toBeTruthy();
   });
 });
