@@ -12,7 +12,7 @@
 import { useRef, useState } from 'react';
 
 import { I } from './icons';
-import { AgentActivityCard } from './AgentActivityCard';
+import { AgentActivityCard, composeInvestigationPrompt } from './AgentActivityCard';
 import { Composer, type ComposerReadyAttachment } from './Composer';
 import type { EffortLevel } from './ModelEffortPicker';
 import type { SafetyNarrativeSubmit } from './SafetyNarrativeAffordance';
@@ -189,7 +189,10 @@ export function EmptyState({
             )}
           </div>
         )}
-        <AgentActivityCard summary={agentActivity} />
+        <AgentActivityCard
+          summary={agentActivity}
+          onOpenInvestigation={item => send(composeInvestigationPrompt(item))}
+        />
         <Composer
           value={draft}
           onChange={setDraft}
