@@ -17,7 +17,7 @@ Status vocabulary: **BLOCKED** (a WO-00 finding must be resolved first) ·
 | WO | Plan dependency | WO-00 status | Blocking findings | Gate to clear |
 |---|---|---|---|---|
 | **WO-00** | none | **IN PROGRESS → complete this pass** | — | 5 documents + 5 ADRs |
-| **WO-01** Golden journeys | WO-00 | **PHASE 1 PASSING** — Journey C correction spine end-to-end (14 steps, service level); Journeys A/B + route/Playwright layers are phase 2 | — | in progress |
+| **WO-01** Golden journeys | WO-00 | **Journeys A + C PASSING** — C: correction spine (service level, 14 steps); A: authoring loop (route level, real JWTs, 15 steps, C-11 fixed). B + eCTD/dossier phases + Playwright remain | — | in progress |
 | **WO-02** Enforcement | WO-00 | **COMPLETE** — guard + contract tier shipped | — | done |
 | **WO-03** Proof Packet | WO-01, WO-02 | **UNBLOCKED** — ADR-0009 receipts + revised ADR-0007 both executed | — | after WO-01 |
 | **WO-04** Yjs closure | WO-01, WO-02 | **RESCOPED — much smaller** | path mismatch | none new |

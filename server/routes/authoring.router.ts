@@ -2772,7 +2772,11 @@ async function buildPdfFromDocx(docxBuffer: Buffer): Promise<Buffer> {
 router.post('/docs/:docId/create-pin', async (req: Request, res: Response) => {
   try {
     const { pin } = req.body;
-    const email = (req.headers as any)['x-user-email'];
+    // Part 11 attribution: signer identity comes from the verified JWT only.
+    // The previous x-user-email header source was attacker-controlled (same
+    // class as the getActorId fix above) — a caller could mint a PIN for any
+    // email and later sign as that identity.
+    const email = getActorEmail(req);
     const tenantId = getTenantId(req);
 
     if (!email) {
@@ -2813,7 +2817,12 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
     const { reason, version } = req.body;
-    const email = (req.headers as any)['x-user-email'] || 'system';
+    // Freeze attribution from the verified JWT; the old x-user-email ||
+    // 'system' fallback let an unauthenticated caller freeze as "system".
+    const email = getActorEmail(req) || null;
+    if (!email) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
     const tenantId = getTenantId(req);
 
     // Get current document content
@@ -2835,7 +2844,7 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
 
     // Get all sections
     const sectionsResult = await pool.query(
-      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE document_id = $1 AND tenant_id = $2 ORDER BY order_index',
+      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
       [docId, tenantId]
     );
 
@@ -2892,8 +2901,11 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
     const { pin, meaning, intent } = req.body;
-    const email = (req.headers as any)['x-user-email'];
-    const name = (req.headers as any)['x-user-name'] || email;
+    // Part 11 §11.100 attribution: the SIGNER identity on an electronic
+    // signature must come from the verified JWT, never from client-supplied
+    // headers. x-user-email here meant anyone could sign as anyone.
+    const email = getActorEmail(req);
+    const name = ((req.user as { name?: string } | undefined)?.name) || email;
     const tenantId = getTenantId(req);
 
     if (!email) {

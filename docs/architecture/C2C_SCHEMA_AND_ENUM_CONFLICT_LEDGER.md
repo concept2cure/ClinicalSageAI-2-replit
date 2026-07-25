@@ -22,6 +22,7 @@ names the file and line that settles it, so it can be re-verified independently.
 | C-7 | Service-vs-enum divergence — **CLOSED, polarity reversed**: the services were right; the enums described a shape that never deployed. Enums deprecated. | ~~High~~ closed | — |
 | C-8 | **Governance boundary gates failed OPEN — FIXED 2026-07-25** (canonical DDL + deployed vocabulary + fail-closed) | ~~Critical~~ fixed | — |
 | C-10 | **Resolution layer storage existed only in dead DDL — FIXED 2026-07-25** (4 tables ported to canonical lineage) | ~~Critical~~ fixed | — |
+| C-11 | **Flagship authoring loop had NO DDL anywhere — FIXED 2026-07-25** (code-derived reconstruction; e-sign storage conflict + hash-chain gap remain open) | ~~Critical~~ fixed (2 residuals) | e-sign reconciliation |
 
 C-6 is the root cause. C-1 through C-3 are its symptoms. C-4 is the most
 commercially consequential finding. **C-8 is the most safety-consequential: a
@@ -544,6 +545,71 @@ capture — no durable proof available," never inferred from bundle-item status.
   deployed environment. Needs a scoped decision: port the table to the canonical
   lineage or retire the linking feature. Does not block the assumption/decision
   core.
+
+---
+
+## C-11 — The flagship authoring loop had no storage at all *(critical — FIXED 2026-07-25, two residuals)*
+
+Found while building Golden Journey A. The authoring document loop
+(`server/routes/authoring.router.ts`: document create, sections, automatic
+revisions, revert, comments, citations, PIN, freeze, e-sign — the capability
+PR #1088 shipped as "the core document loop") reads and writes tables that had
+**no CREATE TABLE statement anywhere in the repository**: `authoring_documents`,
+`authoring_sections`, `authoring_comments`, `authoring_citations`,
+`frozen_documents`, `user_pins` (and `doc_revisions` only in the dead
+`_consolidated/` copy of an already-archived lineage — byte-identical to
+`docs/archive/server-deprecated-migrations/`, zero manifest entries). Not dead
+lineage — **no lineage**. The DDL existed only inside whichever development
+database the loop was demonstrated against. On a fresh deployment, every
+handler throws.
+
+Also found and FIXED in the same pass, each proven by Journey A:
+
+1. **Freeze had never been executable**: it queried
+   `authoring_sections.document_id` — a column that does not exist (`doc_id`
+   everywhere else, including `computeDocHash`). One-word fix.
+2. **Part 11 §11.100 attribution break in the signature flow itself**:
+   `create-pin`, `freeze` and `e-sign` took signer identity from the
+   attacker-controlled `x-user-email` header (freeze even defaulted to
+   `'system'`), while the file's own `getActorEmail` helper — built to fix
+   exactly this — went unused there. All three now derive identity from the
+   verified JWT.
+
+**Fix:** `db/migrations/20260725_authoring_document_loop_tables.sql` — DDL
+reconstructed from the code's own column enumerations (INSERT lists,
+full-column SELECTs, ON CONFLICT targets, `::uuid` casts). Golden Journey A
+(`tests/golden-journeys/ind-authoring.journey.test.ts`) drives the real router
+over HTTP with **real jose-verified JWTs** — 15 steps: create → author →
+revision history → revert → comment → cite → PIN → freeze (content hash) →
+e-sign (hash independently recomputed from durable state) → approver sign-off
+with auto-freeze → forged-JWT, wrong-PIN, cross-tenant and no-title
+known-bads. 11 ok, 4 blocked-as-expected, 0 failed.
+
+### Residual 1 — `electronic_signatures` shape conflict *(open)*
+
+The code inserts `(doc_id, signer_email, signature_intent, document_hash,
+pin_verified, ip_address, user_agent, tenant_id, …)`; the deployed push-surface
+table of the same name has `(document_id, version_id, signature_purpose,
+signer_id, …)`. **The e-sign INSERT fails against every real deployment.**
+Creating a second shape would recreate C-1, so the canonical migration
+deliberately EXCLUDES this table; Journey A carries the code shape as test-only
+DDL. Needs its own reconciliation decision (align code to the push shape, or
+extend the push shape) before e-sign works in production.
+
+### Residual 2 — freeze and signature hash chains are not linked *(open)*
+
+Freeze hashes the full JSON snapshot **including a `frozenAt` timestamp** (not
+reproducible from content); e-sign hashes the section-content join
+(`computeDocHash`). Each chain verifies independently — Journey A recomputes
+both from durable state — but **a signature cannot be cryptographically tied to
+the frozen snapshot it covers**. Belongs with the Residual-1 reconciliation and
+WO-03's packet design.
+
+### Guard policy update
+
+`db/migrations/_consolidated/` is now treated as archived by
+`ci:duplicate-table-ddl`, on evidence: zero `executionOrder` entries,
+byte-identical twin in `docs/archive/`. Baseline 78 → 64.
 
 ---
 

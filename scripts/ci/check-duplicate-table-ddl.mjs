@@ -55,8 +55,17 @@ const JSON_OUT = jsonIdx !== -1 ? args[jsonIdx + 1] : null;
 
 const BASELINE_PATH = path.join(repoRoot, 'scripts', 'ci', 'duplicate-table-ddl-baseline.json');
 
-/** Paths whose DDL is historical, not deployed. */
-const ARCHIVED = ['_legacy/', '_deprecated_migrations/', 'docs/archive/', 'node_modules/'];
+/**
+ * Paths whose DDL is historical, not deployed.
+ *
+ * db/migrations/_consolidated/ is included on evidence, not convention: it has
+ * ZERO entries in migrations_manifest.json's executionOrder, none of its
+ * tables are in the drizzle-kit push surface, and its files are byte-identical
+ * to docs/archive/server-deprecated-migrations/ (verified for
+ * 012_document_authoring_schema.sql) — it is a stale copy of an
+ * already-archived lineage. See ledger C-11.
+ */
+const ARCHIVED = ['_legacy/', '_deprecated_migrations/', 'docs/archive/', '_consolidated/', 'node_modules/'];
 
 const isArchived = (p) => ARCHIVED.some((a) => p.includes(a));
 
@@ -129,7 +138,10 @@ if (WRITE_BASELINE) {
       'of files that define each table. Each entry is a defect to be reconciled ' +
       'per ADR-0006, not an approved pattern. A NEW table collision, or a NEW ' +
       'file defining an already-colliding table, fails CI. Shrink this file; ' +
-      'never grow it.',
+      'never grow it. Standing exceptions (documented in ledger C-8/C-10/C-11): ' +
+      'entries whose only rival is a dead root-lineage 0010 file — their ' +
+      'canonical DDL lives in db/migrations/20260725_* and ADR-0006 retirement ' +
+      'of the dead files removes the entries.',
     generatedAt: new Date().toISOString(),
     total: collisions.length,
     entries: Object.fromEntries(collisions.map((c) => [c.table, c.files])),

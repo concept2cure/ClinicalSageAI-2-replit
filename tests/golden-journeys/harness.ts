@@ -47,22 +47,40 @@ export interface JourneyDb {
   close: () => Promise<void>;
 }
 
-export async function createJourneyDb(): Promise<JourneyDb> {
+export async function createJourneyDb(options?: {
+  /** Override the FK-prerequisite DDL (defaults to JOURNEY_PREREQUISITES). */
+  prereqSql?: string;
+  /** Override the canonical migrations to apply (repo-relative paths). */
+  migrations?: readonly string[];
+  /** Extra TEST-ONLY DDL applied after migrations (e.g. a code-shaped table
+   *  whose canonical reconciliation is still pending — must be documented in
+   *  the journey's limitations). */
+  testOnlySql?: string;
+}): Promise<JourneyDb> {
   const { PGlite } = await import('@electric-sql/pglite');
   const { drizzle } = await import('drizzle-orm/pglite');
 
   const pglite = new PGlite();
-  await pglite.exec(JOURNEY_PREREQUISITES);
-  for (const f of CANONICAL_JOURNEY_MIGRATIONS) {
+  await pglite.exec(options?.prereqSql ?? JOURNEY_PREREQUISITES);
+  for (const f of options?.migrations ?? CANONICAL_JOURNEY_MIGRATIONS) {
     await pglite.exec(fs.readFileSync(path.join(REPO_ROOT, f), 'utf8'));
   }
+  if (options?.testOnlySql) await pglite.exec(options.testOnlySql);
   return {
     pglite,
     db: drizzle(pglite),
     pool: {
+      // node-postgres result shape: handlers check rowCount as well as rows
+      // (Journey A found a 404 caused by a rows-only shim — rowCount ?? 0
+      // treated every SELECT as empty).
       query: async (text: string, params?: unknown[]) => {
         const r = await pglite.query(text, params);
-        return { rows: r.rows as unknown[] };
+        const rows = r.rows as unknown[];
+        // PGlite reports affectedRows: 0 for SELECTs, so prefer rows.length
+        // and fall back to affectedRows only for row-less commands (UPDATE
+        // without RETURNING, DELETE, …).
+        const affected = (r as { affectedRows?: number }).affectedRows ?? 0;
+        return { rows, rowCount: rows.length > 0 ? rows.length : affected };
       },
     },
     close: () => pglite.close(),

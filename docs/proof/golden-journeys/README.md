@@ -13,7 +13,7 @@ plus `<slug>.report.md` (rendered from the JSON).
 | Journey | Status | Spec |
 |---|---|---|
 | C — HA challenge → governed correction | **phase 1 PASSING** (service level, 14 steps) | `HAQ_CORRECTION_JOURNEY.md` |
-| A — IND creation → governed submission package | not started | `IND_JOURNEY.md` (pending) |
+| A — IND creation → governed submission package | **phase 1 PASSING** (route level, real JWTs, 15 steps) | `IND_JOURNEY.md` |
 | B — Marketing application authoring → release | not started | `MARKETING_APPLICATION_JOURNEY.md` (pending) |
 
 ## Honesty rules the harness enforces
