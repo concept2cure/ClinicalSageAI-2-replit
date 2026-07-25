@@ -3461,7 +3461,10 @@ export async function evaluateEndpoint(
       success: true,
       action: 'evaluate_endpoint',
       data: { evaluation },
-      message: `Endpoint "${params.endpoint}" scored ${evaluation.score}/100 for ${params.indication}. ${evaluation.feedback}`,
+      message:
+        evaluation.score != null
+          ? `Endpoint "${params.endpoint}" scored ${evaluation.score}/100 for ${params.indication}. ${evaluation.feedback}`
+          : `Endpoint "${params.endpoint}" could not be scored automatically for ${params.indication}. ${evaluation.feedback}`,
     };
   } catch (err: unknown) {
     return {
