@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-25T22:48:14.662Z",
+  "generatedAt": "2026-07-25T22:56:10.359Z",
   "git": {
-    "sha": "cb4eb227ca8ba3013a475d9a634f5c63a484c8f8",
+    "sha": "796c9ac98612b4fda10be2bf3cd4a1003165244e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -11,13 +11,13 @@
   "summary": {
     "duplicateBasenames": 248,
     "largeFilesByBytes": 29,
-    "largeFilesByLines": 83
+    "largeFilesByLines": 82
   },
   "findings": {
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 103,
+        "count": 102,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -74,7 +74,6 @@
           "server/services/entitlements/index.ts",
           "server/services/external-intelligence/index.ts",
           "server/services/fda/index.ts",
-          "server/services/foresight/index.ts",
           "server/services/global-markets/index.ts",
           "server/services/grdhe/exportGenerators/index.ts",
           "server/services/grdhe/index.ts",
@@ -2734,10 +2733,6 @@
         "lines": 2020
       },
       {
-        "file": "server/services/foresight-ai-engine.ts",
-        "lines": 2015
-      },
-      {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "lines": 2003
       },
@@ -2919,9 +2914,9 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 397,
+      "duplicateGroups": 396,
       "largeByBytes": 26,
-      "largeByLines": 72
+      "largeByLines": 71
     },
     {
       "owner": "Unassigned (TBD)",
