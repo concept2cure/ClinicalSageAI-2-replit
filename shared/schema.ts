@@ -8165,9 +8165,10 @@ export const ectdCompilations = pgTable(
     organizationId: integer('organization_id')
       .references(() => organizations.id)
       .notNull(),
-    moduleId: integer('module_id')
-      .references(() => ectdModules.id)
-      .notNull(),
+    // Nullable: a PROJECT-level compilation (POST /api/ectd-compile/:projectId/compile)
+    // spans every module and has no single module to point at. The column was
+    // NOT NULL, so that route's insert could never succeed — see ledger C-16.
+    moduleId: integer('module_id').references(() => ectdModules.id),
     compilationName: text('compilation_name').notNull(),
     compilationType: text('compilation_type').notNull(), // module, section, custom
     includedGranules: json('included_granules'), // Array of granule IDs
@@ -8176,7 +8177,9 @@ export const ectdCompilations = pgTable(
     xmlBackbone: text('xml_backbone'), // eCTD XML structure
     crossReferences: json('cross_references'), // ICH cross-references
     status: text('status').default('pending').notNull(), // pending, compiling, completed, failed
-    compiledBy: integer('compiled_by').notNull(),
+    // Nullable for the same reason: service-initiated compilations have no
+    // interactive user. The one existing writer that set it used a hardcoded 1.
+    compiledBy: integer('compiled_by'),
     compiledAt: timestamp('compiled_at'),
     version: text('version').default('1.0'),
     changeLog: json('change_log'), // Track changes in compilation

@@ -815,6 +815,99 @@ ever resolve.
 
 ---
 
+## C-16 — The eCTD compile surface could not compile, and history leaked across tenants *(critical — FIXED 2026-07-25)*
+
+Found by building Journey B (marketing application). Three defects on the
+submission spine.
+
+### 1. `project_sections` never had the columns all three endpoints read
+
+`db/migrations/20260220_ind_section_tracking.sql` is the **only** definition of
+`project_sections`, and it carries tracking fields — status, assignee, deadline,
+hours. But every eCTD compile endpoint selects `content`, `word_count` and
+`required` from it, and those values are load-bearing:
+
+- `runPreCompileValidation` flags a locked section whose content is under 50
+  characters, and sections below a per-module word-count minimum;
+- the XML backbone's `<ectd:total-files>` counts sections that have content;
+- each `DocumentStatus` reports `hasContent` / `wordCount` / `required`.
+
+`POST /compile` selects them **unguarded** → `column "content" does not exist` →
+handler catch → **500 on every call**. `/status` and `/validate` wrap theirs in an
+inner catch, so they silently reported an **empty dossier** — a submission
+readiness dashboard that always answered "nothing is ready" regardless of the
+work done. The silent variant is the more dangerous of the two: a 500 gets
+reported, a confidently empty dashboard does not.
+
+### 2. The compilation record was written with misaligned parameters
+
+```
+INSERT INTO ectd_compilations (organization_id, compilation_name, compilation_type,
+  status, xml_backbone, compiled_at, version)
+  VALUES ($1, $2, $3, $4, $5, NOW(), '1.0')
+```
+
+Five placeholders, **six** values passed, with `orgId` duplicated in second
+position. Everything after it landed one column to the left:
+
+| column | intended | actually received |
+|---|---|---|
+| `compilation_name` | `IND Compilation — Project N` | the org id |
+| `compilation_type` | `initial` | the compilation name |
+| `status` | `completed` / `failed` | `initial` |
+| `xml_backbone` | the eCTD XML | `completed` / `failed` |
+| — | — | the XML backbone, **dropped** |
+
+It could never execute in any case: `module_id` and `compiled_by` are `NOT NULL`
+and were unsupplied, and the parameter count alone is an error. All of it was
+swallowed by a catch that logged *"table not available, skipping record"* —
+blaming a missing table for a parameter-count error and two NOT NULL violations.
+**A swallowed write that misattributes its own cause is how this survived.**
+
+Compounding it: `GET /history` filters `WHERE compilation_name LIKE '%Project N%'`,
+which is the very column the writer was corrupting — so even a successful insert
+could never have been found.
+
+### 3. History leaked across tenants
+
+That same query had **no organization filter**. Any tenant could read any other
+tenant's submission history for the same project number. Submission history is
+among the most sensitive data in the platform.
+
+### The fix
+
+- `db/migrations/20260725_project_sections_content_columns.sql` — adds `content`,
+  `word_count`, `required`. `content` is documented as a compile-time tracking
+  snapshot, not a second authoring store.
+- `db/migrations/20260725_ectd_compilations_project_level.sql` — drops the two
+  `NOT NULL`s, mirrored in `shared/schema.ts`. A **project-level** compilation
+  spans every module and has no single `module_id` to point at; `compiled_by` is
+  relaxed for the same reason, and the one writer that set it used a hardcoded
+  `1`, which is not attribution.
+- The INSERT is realigned, persists the XML backbone and the validation results,
+  and its catch now reports the actual driver message.
+- History is organization-scoped and returns 401 without org context.
+
+### Proof
+
+`tests/golden-journeys/marketing-application.journey.test.ts` — 13 steps, 8 ok /
+5 blocked-as-expected. It rolls readiness up from live artifacts (asserting the
+weakest-artifact rule), runs validation and checks two specific sections are
+classified **by name**, compiles, then asserts **each individual column** of the
+persisted row holds its own value — one assertion per column the off-by-one
+corrupted. Cross-tenant history and readiness must come back empty; missing org
+context must be 401.
+
+### Recorded, not fixed
+
+`server/services/ectd/ectd-validator-hardening.ts` queries
+`ectd_compilations.sequence_number` and `.application_number`. **Neither column
+exists in any definition of that table.** The submission-sequence history that
+validator depends on has nowhere to live; that needs a schema decision, not a
+patch, and is outside Journey B's path.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
