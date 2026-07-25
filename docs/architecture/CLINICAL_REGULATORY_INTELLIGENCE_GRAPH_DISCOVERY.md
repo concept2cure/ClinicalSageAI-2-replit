@@ -7,9 +7,17 @@ implementation.
 | --- | --- |
 | Repository | `concept2cure/ClinicalSageAI-2-replit` |
 | Base branch | `concept2cure-v2` @ `2a5b46d` |
-| Feature branch | `feature/clinical-regulatory-intelligence-graph` |
+| Landed on | `concept2cure-v2` directly — see the branch note below |
 | Controlling document | `Concept2Cure_Clinical_Regulatory_Intelligence_Graph_Claude_Code_Work_Order.pdf` |
 | UI target | `Clinical-Regulatory Intelligence Graph — v2 UI Integration.dc.html` (Claude Design kit, phase 7) |
+
+> **Branch note.** The work order §16.1 mandates a
+> `feature/clinical-regulatory-intelligence-graph` branch and forbids working on the base
+> branch. This repository's pre-push hook enforces the opposite and calls it
+> NON-NEGOTIABLE: `concept2cure-v2` is the one and only branch. The conflict was raised
+> with the repository owner, who chose the repository's rule. The work therefore landed on
+> `concept2cure-v2` directly, unreviewed but dark behind
+> `ENABLE_CLINICAL_REGULATORY_GRAPH`.
 
 ---
 
@@ -339,31 +347,74 @@ Plus four framing rules that are equally binding:
 
 ---
 
-## 8. What phase 1 lands, and what it does not
+## 8. State of play
 
-**Landing now** — contracts, the facade, the routes, and the phase-7 UI rendering honest
-empty states against them:
+Kept current as phases land. Last updated after phase 2.
 
-- `server/services/clinical-regulatory-evidence/{types,index,coverage-service}.ts`
-- `shared/schema.ts` — the eight entities, and `migrations/20260725_clinical_regulatory_evidence.sql`
-  (verified against a real PostgreSQL 16: applies clean, re-applies idempotently,
-  and all eight honesty CHECK constraints reject their fabrication)
-- `server/routes/clinical-regulatory-evidence-routes.ts` (7 reads + 1 action, flag-gated)
-- `client/src/concept2cure/v2/fixtures/clinical-regulatory-evidence.ts` — **types only**
-- `client/src/concept2cure/v2/surfaces/CrlLibrary.tsx` — the one new surface
-- Registry edits: `ui-surface-registry`, `surfaceViews`, `registryModel`, `surfaceCtx`
-- `csr-workflow` + `protocol-dev` + `report-engine` extensions
-- `ENABLE_CLINICAL_REGULATORY_GRAPH` flag; flag off restores the current UI exactly
-- Tests: `crlLibrary.test.tsx`, extended `navTargets` / `surfaceRouting`
+| Phase | Work order exit deliverable | State |
+| --- | --- | --- |
+| 0 — caller and contract audit | discovery report, ADRs | ✅ this document |
+| 1 — shared evidence contracts | types, visibility, linkage, findings, outcomes, relationships, migrations, tests | ✅ landed |
+| 2 — CSR convergence | CSR adapter, extraction, source spans, verification | ⚠️ **partial** — see below |
+| 3 — Study Design evidence | generalize evidence prior, repair outcome semantics, migrate legacy callers | ⬜ not started |
+| 4 — FDA CRL ingestion | source adapter, PDF processing, finding extraction, mappings | ⬜ not started |
+| 5 — canonical retrieval | typed atoms, filters, supportive + contradictory retrieval | ⬜ not started |
+| 6 — AnA RI | enrichment source, the six §10 tools, citations | ⬜ not started |
+| 7 — v2 UX | CRL library, CSR dimensions, evidence panel, governed reports | ✅ landed (renders honest empty states) |
+| 8 — prediction governance | offline eval, calibrated influence, release gate | ⬜ not started |
+| 9 — legacy retirement | remove `study-design-agent-service.ts` after caller migration | ⬜ not started |
 
-**Explicitly not landing** — each needs its own phase and its own release gate:
+### 8.1 Phase 2 is partial, and here is exactly what is missing
 
-- Phase 2 CSR convergence (adapter, extraction expansion, AI reconciliation)
-- Phase 4 FDA CRL ingestion (source adapter, PDF processing, finding extraction)
-- Phase 5 canonical retrieval (typed atoms, constrained retrieval)
-- Phase 6 AnA tool registration (the six §10 tools)
-- Phase 8 prediction governance
-- Phase 9 legacy retirement of `study-design-agent-service.ts`
+`csr-adapter.ts` lands the projection: `csr_reports` / `csr_details` →
+`clinical_evidence_sources` + `clinical_study_identities` +
+`study_result_observations`, idempotent by projection key, reusing
+`study-design/csr-evidence-source.ts` rather than forking it (§5.3).
 
-Until phase 4 lands, every surface in this workstream renders "no findings ingested yet".
-That is the correct behaviour, not a gap.
+Three parts of the phase-2 exit deliverable are **not** done:
+
+- **Deterministic extraction expansion (§5.1).** The adapter carries over only the primary
+  effect. Arms, dose, regimen, estimand language, intercurrent-event strategy,
+  multiplicity, discontinuations, AE/SAE and PK/PD are not yet normalized.
+- **AI reconciliation (§5.2).** There is no second-stage model extraction and therefore no
+  deterministic-vs-model conflict detection. The `conflict` column exists and is enforced,
+  but nothing currently sets it.
+- **Source spans (§5.1).** `csr_reports` carries no page boundaries, so every projected
+  observation has `source_page` and `source_excerpt` NULL. This is why `cited` in the
+  coverage strip legitimately reads zero for a CSR-only corpus — a projected observation
+  cannot resolve to a page, so it is never counted as citable.
+
+### 8.2 What a reader will actually see today
+
+With the flag on and no ingestion run: the CRL library renders "No regulatory evidence has
+been ingested yet"; the CSR board's two regulatory columns render "Not verified"; the study
+design evidence accordions render empty with per-accordion reasons.
+
+After `projectCsrCorpus()` runs for a tenant: coverage counts become real, but findings
+stay empty and the reason changes to "No FDA letters have been ingested yet … this is a gap
+in the corpus, not a clean regulatory record." Those two empty states are deliberately
+distinct — conflating them would tell a user either that nothing was searched or that FDA
+raised no findings, and both would be false.
+
+### 8.3 Resuming this work
+
+- Nothing runs automatically. `projectCsrCorpus(scope)` is exported from the facade but is
+  not yet wired to a route, a job or an admin action — that is a deliberate gap, since
+  projecting a tenant's corpus is a write and needs an owner.
+- The migration has **not** been applied to any real environment. Apply via
+  `npm run db:ensure` conventions, not `drizzle-kit push` (see AGENTS.md).
+- `shared/schema.ts` and the migration are hand-maintained and can drift;
+  `server/__tests__/migrations/clinicalRegulatoryEvidenceSchema.test.ts` pins them.
+- Flag off restores the prior UI exactly. That is the rollback for everything in phase 7.
+
+### 8.4 Release gates not yet met
+
+From work order §17.2, the gates this workstream has not reached:
+
+- **Traceability** — every published finding resolves to source and page. Cannot be met
+  until phase 4 supplies spans.
+- **Citation faithfulness** — needs phase 6 AnA integration to evaluate.
+- **Prediction influence** — no holdout evaluation exists; phase 8.
+- **Isolation** — the visibility filter is implemented and verified against a live
+  PostgreSQL for coverage reads, but has not been exercised across the full retrieval path,
+  which does not exist yet.
