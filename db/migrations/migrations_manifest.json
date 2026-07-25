@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-07-24T18:24:02.826Z",
+  "generatedAt": "2026-07-25T00:00:05.104Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 209,
+  "totalMigrations": 210,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -544,7 +544,8 @@
     "20260718_bla_assessments_store.sql",
     "20260718_cmc_changes_store.sql",
     "20260718_pediatric_orphan_cards.sql",
-    "20260724_qms_change_control_store.sql"
+    "20260724_qms_change_control_store.sql",
+    "20260724_clinical_regulatory_evidence_spine.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"
