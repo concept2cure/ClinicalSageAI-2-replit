@@ -709,6 +709,112 @@ No action taken here; it is not mine to retire.
 
 ---
 
+## C-14 — The authoring loop could not export, and its Part 11 audit trail went nowhere *(critical — FIXED 2026-07-25)*
+
+Found while extending Journey A into the export path. Three separate defects, one
+root cause — **code writing to tables nothing creates**:
+
+### 1. Export was impossible on every environment
+
+`POST /docs/:docId/export` opened with an **unguarded**
+`INSERT INTO authoring_exports`. No migration, no drizzle table, no runtime DDL
+anywhere in the repo creates `authoring_exports`, and that INSERT is its **only**
+reference in the entire codebase — nothing else reads or writes it. The query
+threw `relation "authoring_exports" does not exist`, the handler's catch turned
+it into a 500, and so the flagship authoring loop could draft, revise, comment,
+cite, freeze and Part 11 e-sign a document but **could not export one**.
+
+### 2. Diff-since-export read a phantom, and hid a second bug behind it
+
+`GET /docs/:docId/diff-since-export` read `FROM doc_exports` — also created
+nowhere — likewise unguarded, likewise a permanent 500. Two writers to
+`doc_exports` existed, both deliberately wrapped in try/catch as "legacy compat",
+and they **disagreed on the column list** (`fmt, doc_sha256` vs
+`format, exported_by`), which is how we know neither was ever exercised.
+
+Because the endpoint could never get past that query, a second defect sat
+undiscovered behind it: `listDocTokens` — called from nowhere else — selected
+`s.section_number` and filtered `WHERE s.document_id`, on a table whose columns
+are `code` and `doc_id`. Exactly the C-11 freeze bug, in a second place. It was
+also missing tenant scoping.
+
+### 3. The Part 11 audit trail was never persisted — twice over
+
+`createAuditTrail` writes a rich audit record (operation, actor, before/after
+content, hashes either side, reason, IP, agent, session) for every authoring
+mutation, to `authoring_audit_trail`. That table is created by **nothing** — and
+unlike the router's seven `ensure*TableExists` helpers, it has no runtime DDL
+either. The write sits in a try/catch that logs `CRITICAL: Failed to create audit
+trail` and continues, so **every authoring operation succeeded while its audit
+record went nowhere**.
+
+Even with the table present it still failed. `createAuditEvent` (8 call sites)
+hands `createAuditTrail` a synthesized request carrying only headers, but
+`getTenantId` sources the tenant from the **verified JWT** (`req.user.organizationId`)
+since the IDOR fix — so it threw `Tenant context required`, inside the same
+swallowing catch. Two independent reasons the audit trail could not exist.
+
+### The fix
+
+| defect | fix |
+|---|---|
+| `authoring_exports` phantom | removed; the record is written by the existing `logExport()` **after** the bytes are generated, so `file_name`/`file_size` are real. A stale `// Note: the export endpoint should be modified to call logExport()` had sat in the file. |
+| `doc_exports` phantom | fully retired. The reader now baselines against `authoring_export_history` — the table the export path actually writes. ANA's `command-executor` export logging redirected there too, so ANA-initiated exports are recorded instead of discarded. |
+| `listDocTokens` | `s.code` / `s.doc_id`, plus tenant scoping threaded through the endpoint. |
+| `authoring_audit_trail` | new code-derived migration `db/migrations/20260725_authoring_audit_trail.sql` — no FKs, because an audit trail must outlive the rows it describes. |
+| synthesized request | carries `user.organizationId`, so `getTenantId` resolves. |
+
+### Proof
+
+Journey A extended from 15 to 21 steps. It now exports an approved, signed
+document, verifies the export record is durable with an independently recomputed
+`doc_sha256`, lists it, baselines a diff against it, blocks a cross-tenant export
+(404) and an unsupported format (400), and asserts the Part 11 audit trail
+contains the `EXPORT` operation attributed to a real signed-in actor. **Every one
+of those steps failed before this fix.**
+
+---
+
+## C-15 — Fourteen more phantom tables in the authoring router alone *(open, prioritized backlog)*
+
+C-14's root cause is not a one-off. A systematic scan of the authoring router
+classifies every table it touches into three groups:
+
+- **canonical migration** — the C-11 loop tables + the new audit trail
+- **runtime DDL** — seven tables created lazily by `ensure*TableExists` helpers
+- **phantom — created by nothing**: `doc_permissions`, `template_sections`,
+  `authoring_comment_activity`, `authoring_reviews`, `doc_checklist`,
+  `doc_checklist_items`, `doc_change_requests`, `authoring_workflow_steps`,
+  `authoring_signatures`, `authoring_audit_events`, `authoring_ai_suggestions`,
+  `authoring_compliance_scores`, `authoring_suggestion_feedback`, `doc_sections`
+
+Repo-wide the count is **131** tables referenced by server SQL that nothing
+creates. Each is either a permanent 500 (unguarded) or a silent no-op (guarded);
+which one depends only on whether the author wrapped the call.
+
+These are **recorded, not fixed here**. Each needs the C-11/C-14 treatment —
+derive the shape from the queries, one canonical migration, prove it with a
+journey — which is per-feature work, not a sweep. The scan is now the backlog.
+
+### The antibody: `ci:unbacked-tables`
+
+A new blocking guard fails the build when server SQL references a table that no
+migration, no drizzle `pgTable`, and no runtime DDL creates. It knows all three
+provisioning paths, because a guard that knew only one would be wrong about this
+repo. The existing 131 are baselined, pinned to their exact referencing file sets
+so a listed table cannot silently acquire new call sites.
+
+Two rounds of tightening were needed, each driven by a phantom the guard itself
+produced: a contains-a-keyword test turned `'Failed to update section'` into a
+table named `section`, and a starts-with-keyword test turned `"Update failed"`
+into one named `failed`. It now requires structurally complete statement heads
+(`UPDATE <name> SET`, `INSERT INTO <name> (`). That removed 34 phantoms and added
+none. The standard applied here is the C-12 lesson: **a phantom baseline entry is
+worse than a miss**, because it becomes an accepted "known defect" nobody can
+ever resolve.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

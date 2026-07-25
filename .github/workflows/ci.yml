@@ -54,6 +54,12 @@ jobs:
         # collisions, and neither checks table NAMES. See ADR-0006 / conflict C-6.
         run: npm run ci:duplicate-table-ddl
 
+      - name: Guardrails — server SQL references a table nothing creates
+        # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit
+        # tests vi.mock the db module so a mock accepts any table name; the
+        # failure surfaces only in production, as a 500 (unguarded query) or as
+        # a silent no-op (query inside try/catch). See ledger C-14.
+        run: npm run ci:unbacked-tables
 
       - name: Guardrails — i18n locale integrity (key/placeholder/markup parity)
         run: node scripts/ci/check-i18n-integrity.mjs

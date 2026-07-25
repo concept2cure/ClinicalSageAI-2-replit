@@ -126,7 +126,10 @@ function asUser(u: typeof AUTHOR) {
 beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
-    migrations: ['db/migrations/20260725_authoring_document_loop_tables.sql'],
+    migrations: [
+      'db/migrations/20260725_authoring_document_loop_tables.sql',
+      'db/migrations/20260725_authoring_audit_trail.sql',
+    ],
     testOnlySql: TEST_ONLY_ESIGN_DDL,
   });
   h.db = jdb.db;
@@ -367,7 +370,129 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       return { signers: sigs.rows };
     });
 
+    // ── 12. Export the approved document ────────────────────────────────────
+    // Every step below failed before the C-14 fix: POST /export inserted into
+    // `authoring_exports` and diff-since-export read `doc_exports`, neither of
+    // which any migration or runtime DDL in this repo creates. Both were
+    // unguarded, so both endpoints returned 500 unconditionally — an approved,
+    // signed IND document could not be exported at all.
+    await R.step('diff-since-export-before-any-export', async () => {
+      const res = await asUser(AUTHOR)(
+        request(app).get(`/api/authoring/docs/${docId}/diff-since-export`),
+      );
+      expect(res.status).toBe(200);
+      expect(res.body.baseline).toBeNull();
+      return { status: res.status, baseline: res.body.baseline };
+    });
+
+    const exportedAt = await R.step('export-approved-document-as-xml', async () => {
+      const res = await asUser(AUTHOR)(
+        request(app).post(`/api/authoring/docs/${docId}/export`),
+      ).send({ format: 'xml' });
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toContain('application/xml');
+      const body = res.text ?? String(res.body);
+      expect(body).toContain('<document>');
+
+      // The record must be durable, not just a successful response.
+      const rows = await jdb.pool.query(
+        `SELECT document_id, export_type, doc_sha256, exported_by, file_name, file_size, tenant_id
+           FROM authoring_export_history WHERE document_id = $1 AND tenant_id = 1`,
+        [docId],
+      );
+      expect(rows.rows).toHaveLength(1);
+      const rec = rows.rows[0] as {
+        export_type: string; doc_sha256: string; exported_by: string;
+        file_name: string; file_size: number;
+      };
+      expect(rec.export_type).toBe('xml');
+      expect(rec.exported_by).toBe(AUTHOR.email);
+      // file_name/file_size are the REAL ones — they are recorded after the
+      // bytes are generated, which is why logExport moved below generation.
+      expect(rec.file_name).toMatch(/\.xml$/);
+      expect(rec.file_size).toBeGreaterThan(0);
+
+      // doc_sha256 independently recomputed from durable section state.
+      const secs = await jdb.pool.query(
+        `SELECT code, content FROM authoring_sections WHERE doc_id = $1 AND tenant_id = 1 ORDER BY order_index`,
+        [docId],
+      );
+      const { createHash } = await import('node:crypto');
+      const expected = createHash('sha256')
+        .update(secs.rows.map((r) => `${(r as { code: string }).code}:${(r as { content: string }).content}`).join('|||'))
+        .digest('hex');
+      expect(rec.doc_sha256).toBe(expected);
+
+      return {
+        status: res.status,
+        exportType: rec.export_type,
+        fileName: rec.file_name,
+        fileSize: rec.file_size,
+        docSha256IndependentlyVerified: rec.doc_sha256 === expected,
+      };
+    });
+
+    await R.step('exports-list-shows-the-export', async () => {
+      const res = await asUser(AUTHOR)(request(app).get(`/api/authoring/docs/${docId}/exports`));
+      expect(res.status).toBe(200);
+      const list = res.body.exports ?? res.body.history ?? res.body;
+      expect(Array.isArray(list) ? list.length : 0).toBeGreaterThanOrEqual(1);
+      return { status: res.status, count: Array.isArray(list) ? list.length : 0 };
+    });
+
+    await R.step('diff-since-export-now-baselines-against-the-export', async () => {
+      const res = await asUser(AUTHOR)(
+        request(app).get(`/api/authoring/docs/${docId}/diff-since-export`),
+      );
+      expect(res.status).toBe(200);
+      // A baseline now exists, and nothing changed after the export.
+      expect(res.body.baseline).not.toBeNull();
+      expect(res.body.count ?? 0).toBe(0);
+      return { status: res.status, baseline: res.body.baseline, changed: res.body.count ?? 0 };
+    });
+
+    await R.expectBlocked('export-cross-tenant-is-not-found', async () => {
+      const res = await asUser(OUTSIDER)(
+        request(app).post(`/api/authoring/docs/${docId}/export`),
+      ).send({ format: 'xml' });
+      return { blocked: res.status === 404, status: res.status };
+    });
+
+    await R.expectBlocked('export-rejects-an-unsupported-format', async () => {
+      const res = await asUser(AUTHOR)(
+        request(app).post(`/api/authoring/docs/${docId}/export`),
+      ).send({ format: 'rtf' });
+      return { blocked: res.status === 400, status: res.status };
+    });
+
+    void exportedAt;
+
+    // ── 13. The Part 11 audit trail actually persisted ──────────────────────
+    // Nothing in the repo created authoring_audit_trail, and the write sits in a
+    // try/catch that logs and continues — so every authoring operation looked
+    // successful while its audit record went nowhere (ledger C-14). Even with the
+    // table present the write still failed: getTenantId reads the tenant from the
+    // verified JWT, and createAuditEvent handed it a headers-only stand-in.
+    await R.step('part-11-audit-trail-is-durable', async () => {
+      const rows = await jdb.pool.query(
+        `SELECT operation_type, actor_email, tenant_id, content_hash_after
+           FROM authoring_audit_trail WHERE doc_id = $1 AND tenant_id = 1
+          ORDER BY created_at`,
+        [docId],
+      );
+      expect(rows.rows.length).toBeGreaterThan(0);
+      const ops = rows.rows.map((r) => (r as { operation_type: string }).operation_type);
+      // The export we just performed must be on the record.
+      expect(ops).toContain('EXPORT');
+      // Every row is attributed to a real signed-in actor, never 'system'.
+      const actors = new Set(rows.rows.map((r) => (r as { actor_email: string }).actor_email));
+      expect(actors.has('unknown')).toBe(false);
+      return { auditRows: rows.rows.length, operations: [...new Set(ops)], actors: [...actors] };
+    });
+
     R.observations.push(
+      'Fixed while building this journey: POST /docs/:docId/export inserted into `authoring_exports` and GET /docs/:docId/diff-since-export read `doc_exports` — NEITHER table is created by any migration or any runtime DDL in this repo, and both queries were unguarded. Every export request and every diff request returned 500. The flagship authoring loop could draft, freeze and sign a document but could not export one (ledger C-14).',
+      'Fixed while building this journey: the export record is now written by logExport() AFTER the bytes are generated, so file_name and file_size are the real ones rather than placeholders, and ANA-initiated exports (command-executor) record to the same table instead of the phantom one.',
       'Fixed while building this journey: freeze queried authoring_sections.document_id — a column that does not exist (doc_id everywhere else). Freeze had never been executable.',
       'Fixed while building this journey: create-pin, freeze and e-sign took signer identity from the attacker-controlled x-user-email header; they now use the verified JWT via getActorEmail — the same fix the file had already applied to every other attribution column (Part 11 §11.100).',
       'INTEGRITY GAP (recorded, not fixed): freeze hashes the full JSON snapshot including a frozenAt timestamp (not reproducible), while e-sign hashes the section-content join — the two chains are independently verifiable but NOT linked, so a signature cannot be cryptographically tied to the frozen snapshot it covers. Belongs to the electronic_signatures reconciliation (ledger C-11 / WO-03).',

@@ -330,8 +330,15 @@ const createAuditEvent = async (
   metadata: any,
   tenantId: number
 ) => {
-  // Create a mock request for the new audit function
+  // Synthesize the request shape createAuditTrail reads from. `user` is the
+  // important part: getTenantId sources the tenant from the VERIFIED JWT
+  // (req.user.organizationId) rather than the x-tenant-id header it used to
+  // trust, so a headers-only stand-in made getTenantId throw "Tenant context
+  // required" — inside createAuditTrail's catch, which meant every audit event
+  // routed through this helper was silently dropped. The caller has already
+  // resolved the tenant from the real request; pass it through explicitly.
   const mockReq = {
+    user: { organizationId: tenantId, email: actor },
     headers: { 'x-user-email': actor, 'x-tenant-id': tenantId },
     ip: 'legacy-call',
     connection: { remoteAddress: 'legacy-call' },
@@ -3274,31 +3281,32 @@ async function logExport(
     ]
   );
 
-  // Also maintain backward compatibility with old table if it exists
-  try {
-    await pool.query(`INSERT INTO doc_exports (doc_id, fmt, doc_sha256) VALUES ($1,$2,$3)`, [
-      docId,
-      fmt,
-      docSha,
-    ]);
-  } catch (e) {
-    // Ignore if old table doesn't exist
-  }
+  // A best-effort mirror write to a legacy `doc_exports` table used to sit here.
+  // Nothing in this repo creates that table — no migration, no runtime DDL — so
+  // the write could only ever land on a database provisioned outside it, and its
+  // column list (fmt, doc_sha256) disagreed with the other writer's
+  // (format, exported_by), which is how we know neither was exercised. Removed
+  // rather than left in place: a swallowed write to a table with no definition
+  // reads as durability that does not exist. See ledger C-14.
 
   return result.rows[0];
 }
 
 // Helper: list tokens for a whole doc (with section metadata)
-async function listDocTokens(docId: string | string[] | undefined) {
+// Called only by GET /docs/:docId/diff-since-export. That endpoint could never
+// reach this helper (it read a table nothing creates — ledger C-14), which is why
+// two wrong column names survived here: authoring_sections has `code` and
+// `doc_id`, never `section_number` or `document_id`. Now tenant-scoped too.
+async function listDocTokens(docId: string | string[] | undefined, tenantId: number) {
   const result = await pool.query(
     `
-    SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.id as section_id, s.section_number as section_code, s.title as section_title
+    SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.code as section_code, s.title as section_title
     FROM authoring_citations c
     JOIN authoring_sections s ON s.id = c.section_id
-    WHERE s.document_id = $1
+    WHERE s.doc_id = $1 AND s.tenant_id = $2
     ORDER BY c.created_at ASC
   `,
-    [docId]
+    [docId, tenantId]
   );
   return result.rows;
 }
@@ -3435,13 +3443,20 @@ router.delete('/export-history/:id', async (req: Request, res: Response) => {
 // Diff since latest export = tokens created/updated after export timestamp
 router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response) => {
   try {
+    // Reads authoring_export_history — the table recordExport() actually writes.
+    // This previously read `doc_exports`, which no migration and no runtime DDL
+    // in this repo creates, so the query threw "relation does not exist" and the
+    // catch below turned every call into a 500. See ledger C-14.
+    await ensureExportHistoryTableExists();
+    const tenantId = getTenantId(req);
     const lastExportResult = await pool.query(
       `
-      SELECT created_at FROM doc_exports
-      WHERE doc_id = $1
-      ORDER BY created_at DESC LIMIT 1
+      SELECT COALESCE(exported_at, created_at) AS exported_at
+      FROM authoring_export_history
+      WHERE document_id = $1 AND tenant_id = $2
+      ORDER BY COALESCE(exported_at, created_at) DESC LIMIT 1
     `,
-      [req.params.docId]
+      [req.params.docId, tenantId]
     );
 
     if (((lastExportResult.rowCount ?? 0) === 0)) {
@@ -3449,12 +3464,12 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
     }
 
     const lastExport = lastExportResult.rows[0];
-    const tokens = await listDocTokens(req.params.docId);
-    const t0 = new Date(lastExport.created_at).getTime();
+    const tokens = await listDocTokens(req.params.docId, tenantId);
+    const t0 = new Date(lastExport.exported_at).getTime();
     const changed = tokens.filter(t => new Date(t.created_at).getTime() > t0);
 
     res.json({
-      baseline: lastExport.created_at,
+      baseline: lastExport.exported_at,
       count: changed.length,
       changed,
     });
@@ -3513,9 +3528,8 @@ router.post('/docs/:docId/refresh-all', async (req: Request, res: Response) => {
   }
 });
 
-// Step 8: Enhance existing export endpoint to log exports
-// Note: The existing export endpoint should be modified to call logExport()
-// This requires finding and updating the existing endpoint
+// Step 8: export logging — DONE. POST /docs/:docId/export calls logExport() after
+// generating the file, so the record carries the real file name and size.
 
 // ============= Step 10: Templates API =============
 
@@ -4258,15 +4272,17 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
-    // Create export record
     const exportId = crypto.randomUUID();
     const fileHash = await computeDocHash(docId, tenantId);
 
-    await pool.query(
-      `INSERT INTO authoring_exports (id, doc_id, format, options, performed_by, file_hash, tenant_id, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
-      [exportId, docId, format, JSON.stringify(options), exportedBy, fileHash, tenantId]
-    );
+    // The export record is written by logExport() AFTER the file is generated,
+    // so file_name and file_size are the real ones. This used to INSERT into
+    // `authoring_exports` — a table that no migration and no runtime DDL in this
+    // repo creates, and which nothing else in the codebase reads or writes. The
+    // insert was unguarded, so it threw "relation does not exist" and the catch
+    // below turned EVERY export request into a 500: the flagship authoring loop
+    // could draft, freeze and sign a document but could not export one. See
+    // ledger C-14.
 
     // Create audit event
     await createAuditEvent(
@@ -4352,6 +4368,19 @@ ${sectionsResult.rows
       fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
       contentType = 'application/pdf';
     }
+
+    // Durable export record — the same table GET /docs/:docId/exports lists and
+    // GET /docs/:docId/diff-since-export baselines against.
+    await logExport(
+      String(docId),
+      format,
+      fileHash,
+      exportedBy as string,
+      fileName,
+      fileContent?.length,
+      { options, exportId },
+      tenantId
+    );
 
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);

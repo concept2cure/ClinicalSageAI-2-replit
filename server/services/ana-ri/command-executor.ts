@@ -2880,14 +2880,18 @@ export async function exportDocument(
     const docId = params.docId || params.documentId;
     const format = String(params.format || 'docx');
     if (!docId) return { success: false, action: 'export_document', message: 'docId required.' };
-    // Log export event
+    // Log export event to authoring_export_history — the table the authoring
+    // router's export path writes and its diff-since-export reader reads.
+    // This previously wrote `doc_exports`, which nothing in this repo creates,
+    // so every ANA-initiated export went unrecorded. See ledger C-14.
     try {
       await pool.query(
-        `INSERT INTO doc_exports (doc_id, format, exported_by, created_at) VALUES ($1, $2, $3, NOW())`,
+        `INSERT INTO authoring_export_history (document_id, export_type, exported_by, exported_at)
+         VALUES ($1, $2, $3, NOW())`,
         [docId, format, ctx.userId]
       );
     } catch {
-      /* table might not exist */
+      /* the authoring router provisions this table lazily; skip if absent */
     }
     return {
       success: true,
