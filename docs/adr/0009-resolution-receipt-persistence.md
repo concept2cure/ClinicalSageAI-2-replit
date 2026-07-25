@@ -2,7 +2,33 @@
 
 ## Status
 
-**Proposed**
+**Accepted — phase 1 IMPLEMENTED 2026-07-25** (see execution notes)
+
+> **Execution notes (2026-07-25).** Implemented with three deviations from the
+> draft, each evidence-driven:
+>
+> 1. **Scope grew — C-10.** The resolution layer's own storage
+>    (`resolution_plans`, `resolution_bundles`, `resolution_bundle_items`,
+>    `supersession_records`) turned out to exist only in the dead lineage, so a
+>    receipt table alone was moot. All four ported to the canonical lineage in
+>    `20260725_resolution_orchestration_tables.sql`.
+> 2. **Type direction reversed (C-5).** The draft adopted
+>    `resolution-bundle.ts`'s row-shaped type. It has **zero importers** — the
+>    canonical type is `shared/types/resolution.ts` (the one the executor
+>    builds), extended with optional `receiptId`/`receiptHash`; row identity
+>    lives on the persisted row. The rival is deprecated in place.
+> 3. **Transactionality deferred to phase 2.** The draft required receipt and
+>    effects in one transaction. The executor's effects flow through the
+>    supersession engine and bundle builder, which hold their own db handles;
+>    honest same-transaction semantics require threading a tx through those
+>    modules. Phase 1 persists post-effects and **throws on persistence
+>    failure** ("effects durable but unproven — do not report complete"), which
+>    is fail-loud rather than fail-closed. Phase 2 owns the tx refactor.
+>
+> Proof: `tests/schema-contract/resolution-receipts.contract.test.ts` — 7 tests
+> driving the real executor and verifier against the canonical DDL, including
+> receipt-tamper detection, missing-object detection, tenant isolation, and the
+> loud-failure path.
 
 - Date: 2026-07-24
 - Deciders: control-tower session (WO-00); requires human approval

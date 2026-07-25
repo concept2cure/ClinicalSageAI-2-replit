@@ -232,7 +232,7 @@ export class GovernanceBoundaryService {
               AND organization_id = ${request.organizationId}
               AND NOT ${sql.raw(ASSUMPTION_SETTLED_SQL_PREDICATE)}
           `);
-          const rows = (res as { rows?: Array<{ unsettled: number }> }).rows ?? (res as unknown as Array<{ unsettled: number }>);
+          const rows = ((res as unknown as { rows?: Array<{ unsettled: number }> }).rows ?? res) as Array<{ unsettled: number }>;
           const unsettled = Number(rows[0]?.unsettled ?? 0);
           if (unsettled > 0) {
             blockedReasons.push(
@@ -266,7 +266,7 @@ export class GovernanceBoundaryService {
               AND organization_id = ${request.organizationId}
               AND action_state IN (${unresolvedStates})
           `);
-          const rows = (res as { rows?: Array<{ unresolved: number }> }).rows ?? (res as unknown as Array<{ unresolved: number }>);
+          const rows = ((res as unknown as { rows?: Array<{ unresolved: number }> }).rows ?? res) as Array<{ unresolved: number }>;
           const unresolved = Number(rows[0]?.unresolved ?? 0);
           if (unresolved > 0) {
             blockedReasons.push(
@@ -296,7 +296,7 @@ export class GovernanceBoundaryService {
             WHERE id = ${request.decisionId}
               AND organization_id = ${request.organizationId}
           `);
-          const rows = (res as { rows?: Array<{ confidence_level: string }> }).rows ?? (res as unknown as Array<{ confidence_level: string }>);
+          const rows = ((res as unknown as { rows?: Array<{ confidence_level: string }> }).rows ?? res) as Array<{ confidence_level: string }>;
           const decision = rows[0];
           if (decision) {
             const required = rankConfidence(rule.minimumConfidence);

@@ -1,7 +1,7 @@
 {
-  "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it \u2014 with ONE documented exception: governance_boundary_rules and governance_boundary_transitions collide only with migrations/0010, which has no execution path (conflict C-9); their canonical DDL was added in db/migrations/20260725_governance_boundary_tables.sql to fix the C-8 fail-open governance gates. Retiring 0010 under ADR-0006 removes both entries.",
-  "generatedAt": "2026-07-25T04:58:32.009Z",
-  "total": 74,
+  "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it \u2014 with SIX documented exceptions, all collisions with the dead root-lineage 0010 files that have no execution path (conflict C-9): governance_boundary_rules + governance_boundary_transitions (canonical DDL in 20260725_governance_boundary_tables.sql, fixes C-8) and resolution_plans + resolution_bundles + resolution_bundle_items + supersession_records (canonical DDL in 20260725_resolution_orchestration_tables.sql, fixes C-10). Retiring the dead 0010 files under ADR-0006 removes all six entries.",
+  "generatedAt": "2026-07-25T10:39:00.011Z",
+  "total": 78,
   "entries": {
     "api_usage_logs": [
       "db/migrations/20260319_billing_usage_budgets_alerts.sql",
@@ -265,6 +265,18 @@
       "migrations/20260610_ha_interactions_commitments.sql",
       "sql/create_regulatory_commitments_table.sql"
     ],
+    "resolution_bundle_items": [
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "migrations/0010_resolution_orchestration.sql"
+    ],
+    "resolution_bundles": [
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "migrations/0010_resolution_orchestration.sql"
+    ],
+    "resolution_plans": [
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "migrations/0010_resolution_orchestration.sql"
+    ],
     "risk_controls": [
       "migrations/20260507_mdx_beta_surfaces.sql",
       "migrations/20260609_design_risk.sql"
@@ -284,6 +296,10 @@
     "studies": [
       "db/migrations/_consolidated/001_create_core_tables.sql",
       "sql/cro_database_schema.sql"
+    ],
+    "supersession_records": [
+      "db/migrations/20260725_resolution_orchestration_tables.sql",
+      "migrations/0010_resolution_orchestration.sql"
     ],
     "timeline_phases": [
       "migrations/0012_project_charter_timeline.sql",

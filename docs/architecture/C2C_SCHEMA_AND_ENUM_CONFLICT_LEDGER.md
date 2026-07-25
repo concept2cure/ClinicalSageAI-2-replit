@@ -16,11 +16,12 @@ names the file and line that settles it, so it can be re-verified independently.
 | C-1 | `assumption_records` defined twice with incompatible DDL | **Blocking** | WO-01, WO-03, WO-08 |
 | C-2 | `decision_records` defined twice with incompatible DDL | **Blocking** | WO-03, WO-08 |
 | C-3 | `contradiction_findings` / `contradiction_overlay_rules` / `contradiction_consequence_log` defined twice | **Blocking** | WO-07, WO-08 |
-| C-4 | `BundleExecutionReceipt` is never persisted — no table exists | **Blocking** | WO-03, WO-08 |
-| C-5 | `BundleExecutionReceipt` type defined twice with different shapes | High | WO-03 |
+| C-4 | Receipt existed only as a mutable, unhashed memo blob — **FIXED 2026-07-25** (append-only hashed store + verifier) | ~~Blocking~~ fixed | — |
+| C-5 | Receipt type defined twice — **RESOLVED**: canonical is `shared/types/resolution.ts` (the rival had zero importers; deprecated in place) | ~~High~~ resolved | — |
 | C-6 | Two competing migration lineages; the manifest covers only one | **Blocking (root cause of C-1…C-3)** | all schema work |
 | C-7 | Assumption/decision service vocabularies diverge from Drizzle enums | High | WO-03 |
 | C-8 | **Governance boundary gates failed OPEN — FIXED 2026-07-25** (canonical DDL + deployed vocabulary + fail-closed) | ~~Critical~~ fixed | — |
+| C-10 | **Resolution layer storage existed only in dead DDL — FIXED 2026-07-25** (4 tables ported to canonical lineage) | ~~Critical~~ fixed | — |
 
 C-6 is the root cause. C-1 through C-3 are its symptoms. C-4 is the most
 commercially consequential finding. **C-8 is the most safety-consequential: a
@@ -445,6 +446,76 @@ exist. They are now much less dangerous — the service no longer throws in the
 failure modes above and returns explicit denials instead — but a caller that
 swallows unexpected throws is still a fail-open pattern. Tightening those
 belongs to the WO-01 journey work that exercises those routes end-to-end.
+
+---
+
+## C-10 — Resolution-layer storage was dead in production *(critical — FIXED 2026-07-25)*
+
+Found while executing ADR-0009. `resolution_plans`, `resolution_bundles`,
+`resolution_bundle_items` and `supersession_records` were defined **only** in
+`migrations/0010_resolution_orchestration.sql` — the same no-execution-path
+lineage as C-9: not journaled, not in the `drizzle-kit push` surface
+(`shared/schema.ts` does not export `./schema/resolution`), no `db/migrations`
+file, not in `apply-c2c-migrations.mjs`.
+
+Consequence: `executeBundle()` throws on its **first query** in any deployed
+environment. The platform's headline "detect, decide, execute, prove" loop —
+plans, bundles, supersession lineage, receipts — **has never been executable in
+production.** Same failure class as C-8, larger blast radius: it is the entire
+correction layer, not one service. (Consistent with the route matrix:
+`/api/resolution` is client-dark, so no user ever hit the failure.)
+
+**Fix:** verbatim port of the four tables into the canonical lineage —
+`db/migrations/20260725_resolution_orchestration_tables.sql` — proven by
+`tests/schema-contract/resolution-receipts.contract.test.ts`, which drives the
+real `executeBundle()` end-to-end against this DDL. Rollback: four empty tables,
+`DROP TABLE`.
+
+---
+
+## C-4 addendum — wording correction and fix record *(2026-07-25)*
+
+The original C-4 stated the receipt was "never persisted — no table exists."
+**Half right.** Executing ADR-0009 found `bundle-executor.ts` step 8 writes the
+receipt as pretty-printed JSON into `resolution_bundles.resolution_memo` — a
+**mutable text column**: overwritable by any later update, no integrity hash,
+not independently queryable, and (per C-10) on a table that did not exist in
+production anyway. The substance of C-4 stood — no verifiable proof object —
+but "never persisted anywhere" was too strong. Corrected here per the
+evidence-standard rule that this ledger's own errors get recorded, not edited
+away.
+
+**Fix (ADR-0009 phase 1):**
+
+- `db/migrations/20260725_bundle_execution_receipts.sql` — append-only receipt
+  store with `receipt_hash` (sha256 over canonical key-sorted JSON of the
+  receipt body) and `object_state_hash` (over a persist-time snapshot of the
+  durable object states the receipt asserts).
+- `server/services/resolution/receipt-store.ts` — `persistBundleExecutionReceipt`
+  and `verifyBundleExecutionReceipt`. Verification recomputes both hashes and
+  re-resolves live object state against the snapshot; verdicts are
+  `matches-snapshot` / `changed-since-execution` (informational — later
+  legitimate lifecycle) / `missing` (fails verification) /
+  `was-missing-at-execution`. **No status field is ever read as proof.**
+- `bundle-executor.ts` step 9 persists the receipt and attaches
+  `receiptId`/`receiptHash` to the returned object; the memo write remains as a
+  human-readable copy, explicitly marked as not-the-proof. **Persistence failure
+  throws** with "effects durable but unproven" context — execution is not
+  reported complete on a memory-only receipt.
+- C-5 resolved the opposite way from the ADR draft: the rival type in
+  `shared/types/resolution-bundle.ts` has **zero importers** (the whole file is
+  import-dead); it is deprecated in place, deletion deferred to the legacy
+  cleanup as its own reviewed change.
+
+**Known limitation, recorded in ADR-0009:** effects and receipt are not yet one
+transaction — that requires threading a tx handle through the supersession
+engine and bundle builder (phase 2). In the failure window, effects are durable,
+the memo is written, and the thrown error names the bundle for operator
+follow-up.
+
+**Historical bundles remain unprovable** — receipts were never written for them
+and cannot be reconstructed. WO-03 must render them as "executed before receipt
+capture — no durable proof available," never inferred from bundle-item status.
 
 ---
 

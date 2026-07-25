@@ -19,12 +19,12 @@ Status vocabulary: **BLOCKED** (a WO-00 finding must be resolved first) ·
 | **WO-00** | none | **IN PROGRESS → complete this pass** | — | 5 documents + 5 ADRs |
 | **WO-01** Golden journeys | WO-00 | **BLOCKED** | C-1, C-2, C-6 | ADR-0006, ADR-0007 |
 | **WO-02** Enforcement | WO-00 | **COMPLETE** — guard + contract tier shipped | — | done |
-| **WO-03** Proof Packet | WO-01, WO-02 | **BLOCKED** | C-1…C-5 | ADR-0007, **ADR-0009** |
+| **WO-03** Proof Packet | WO-01, WO-02 | **UNBLOCKED for receipts** — ADR-0009 phase 1 shipped; C-1/C-2 (ADR-0007 revision) remain for assumption/decision aggregation | C-1, C-2 | revised ADR-0007 |
 | **WO-04** Yjs closure | WO-01, WO-02 | **RESCOPED — much smaller** | path mismatch | none new |
 | **WO-05** eCTD v4 | WO-01, WO-02 | **BLOCKED on discovery** | ≥6 packagers, 3 zip libs | canonical-publisher ADR |
 | **WO-06** Gateway E2E | WO-05 | READY after WO-05 | — | — |
 | **WO-07** Doctrine service | WO-00, WO-02 | **BLOCKED** | C-3 | ADR-0008 |
-| **WO-08** Reviewer Room | WO-03, WO-07 | **BLOCKED** | C-3, C-4 | ADR-0008, ADR-0009 |
+| **WO-08** Reviewer Room | WO-03, WO-07 | **BLOCKED** | C-3 | ADR-0008 (ADR-0009 shipped) |
 | **WO-09** M11 compiler | WO-01, WO-02 | READY | — | StudyDesign confirmed canonical |
 | **WO-10** Claim Compiler | WO-03, WO-09 | DEFERRED | inherits WO-03 | — |
 | **WO-11** RI Graph | WO-00, WO-07 | **BLOCKED** | `data-importer.ts` writes `csr_reports` | corpus-writer ADR |
@@ -89,6 +89,16 @@ error handling including denial on unpersistable audit records. Proven by 7
 real-service tests against the canonical lineage
 (`tests/schema-contract/governance-boundary-gates.contract.test.ts`). Residual:
 the caller-side bare `catch {}` blocks in `authoring-actions.ts` — for WO-01.
+
+### 2.8 ADR-0009 executed; C-10 found and fixed (2026-07-25)
+
+Executing receipt persistence exposed that the resolution layer's own storage
+(4 tables) existed only in dead DDL — the correction layer had never been
+executable in production (C-10). Both fixed: canonical DDL ported, append-only
+hashed receipt store + verifier shipped, executor persists receipts and fails
+loudly when it cannot. 7 real-executor acceptance tests. Historical bundles
+remain unprovable and must be rendered as such in WO-03. Phase 2 (single
+transaction for effects + receipt) is recorded in ADR-0009.
 
 ### 2.7 The blocking question is substantially answered (C-9)
 
