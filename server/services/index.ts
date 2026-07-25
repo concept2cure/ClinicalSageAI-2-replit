@@ -18,7 +18,6 @@ export * as cortex from './cortex';
 export * as fda from './fda';
 export * as cer from './cer';
 export * as csr from './csr';
-export * as foresight from './foresight';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI SERVICES
@@ -32,10 +31,6 @@ export * as openaiService from './openai-service';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export { default as cortexPrimeService } from './cortexPrimeService';
-export {
-  ForesightKnowledgeGraph,
-  knowledgeGraph as foresightKnowledgeGraph,
-} from './foresight-knowledge-graph';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // FDA / REGULATORY SERVICES
@@ -52,7 +47,6 @@ export { RegulatoryIntelligenceService } from './regulatory-intelligence-service
 
 export { csrSearchService } from './csr-search-service';
 export { csrKnowledgeExtractor } from './csr-knowledge-extractor';
-export { default as csrForesightOrchestrator } from './csr-foresight-orchestrator';
 export { clinicalIntelligenceService } from './clinical-intelligence-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -95,10 +89,6 @@ export { TemplateService } from './templateService';
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export { MultiAgentCouncilService } from './multi-agent-council';
-export {
-  ForesightFeedbackOrchestrator,
-  feedbackOrchestrator,
-} from './foresight-feedback-orchestrator';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PHASE 6 SERVICES - eCTD Co-Author + Document Drafting
@@ -140,7 +130,6 @@ export const SERVICE_REGISTRY = {
 
   // Cortex
   'cortex.prime': 'cortexPrimeService',
-  'cortex.knowledge': 'foresight-knowledge-graph',
   'cortex.memory': 'memory-orchestrator',
 
   // FDA
