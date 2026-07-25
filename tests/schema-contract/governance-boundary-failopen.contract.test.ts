@@ -1,28 +1,22 @@
 /**
- * Schema-contract tests for conflict C-8: the governance boundary gate fails OPEN.
+ * Schema-contract record of conflict C-8 (FIXED 2026-07-25): the governance
+ * boundary gates originally failed OPEN.
  *
- * server/services/governance-boundary-service.ts implements promotion gates —
- * the controls that stop an artifact moving to a higher governance boundary
- * until its assumptions are approved, its decisions are resolved, and its
- * confidence threshold is met.
+ * Before the fix, governance-boundary-service.ts queried the ORPHANED Drizzle
+ * tables in shared/schema/operating-system.ts — a shape existing in no deployed
+ * environment (C-9) — so its gate queries threw, callers swallowed the throw,
+ * and promotions proceeded ungoverned. The service now queries the deployed
+ * shape with the shared vocabulary (shared/constants/operating-system-vocab.ts)
+ * and fails closed; see governance-boundary-gates.contract.test.ts for the
+ * acceptance tests.
  *
- * It queries the Drizzle-typed tables in shared/schema/operating-system.ts.
- * Those tables are NOT exported from shared/schema.ts, so `drizzle-kit push`
- * (the CI-validated deployment path, .github/workflows/db-schema-validation.yml)
- * never creates them. And migrations/0010_operating_system_foundation.sql is not
- * in migrations/meta/_journal.json, so drizzle-kit migrate never applies it
- * either. The shape that actually deploys is the manifest-managed
- * db/migrations/20260323_assumption_decision_contradiction.sql.
+ * The tests below are the PERMANENT RECORD of the deployed-vocabulary facts
+ * that made the original gates unsound (values that cannot be stored, ladders
+ * with no overlap). They assert properties of the DDL, not of the fixed
+ * service, and they must keep passing — if one fails, the deployed vocabulary
+ * itself changed and every consumer of operating-system-vocab.ts needs review.
  *
- * Against that deployed shape the service's filter VALUES do not exist, so the
- * gates do not fire. Master work order §2 requires that "policy, review, export,
- * approval, submission, and signature gates fail closed." Two of these three
- * fail OPEN.
- *
- * These tests assert the CURRENT BROKEN behavior so it is visible and cannot
- * regress silently. They become the acceptance tests for the fix.
- *
- * See docs/architecture/C2C_SCHEMA_AND_ENUM_CONFLICT_LEDGER.md (C-8).
+ * See docs/architecture/C2C_SCHEMA_AND_ENUM_CONFLICT_LEDGER.md (C-8, C-9).
  */
 
 import { describe, it, expect, afterEach } from 'vitest';
@@ -180,15 +174,8 @@ describe('C-8: governance boundary gates fail OPEN against the deployed schema',
 });
 
 /**
- * Acceptance criteria for the C-8 fix. Enable when ADR-0006/0007 reconcile the
- * vocabularies and governance-boundary-service.ts is aligned to the canonical
- * shape.
+ * The C-8 fix acceptance tests live in governance-boundary-gates.contract.test.ts,
+ * which drives the REAL service against the canonical lineage. The tests above
+ * remain as the permanent record of the deployed-vocabulary facts that made the
+ * original gates unsound.
  */
-describe.skip('post-fix: governance gates fail closed (enable with ADR-0007)', () => {
-  it('a decision in the unresolved state is detectable by the gate', async () => {
-    db = await SchemaContractDb.create([M.rawSqlShaped]);
-    // After reconciliation the gate value and the schema vocabulary agree, so an
-    // unresolved decision both stores AND blocks.
-    expect(true).toBe(true);
-  });
-});

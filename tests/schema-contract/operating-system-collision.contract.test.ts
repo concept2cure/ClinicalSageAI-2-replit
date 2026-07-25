@@ -185,29 +185,51 @@ describe('C-2: decision_records collides the same way', () => {
 });
 
 /**
- * Flip these on when ADR-0006 + ADR-0007 land. They are the acceptance tests for
- * the reconciliation: one shape, one vocabulary, and every value a service can
- * produce is storable.
+ * ADR-0007 acceptance (revised direction, executed 2026-07-25): the DEPLOYED
+ * shape is canonical. Every value the raw-SQL services can write must be
+ * storable in the canonical DDL. The order-independence acceptance (no
+ * collision regardless of application order) remains gated on ADR-0006
+ * retiring the dead 0010 files, and lives in the C-6 block above until then.
  */
-describe.skip('post-reconciliation (enable with ADR-0006 + ADR-0007)', () => {
-  it('applies the canonical lineage with no order dependence', async () => {
-    const forward = await SchemaContractDb.create([M.drizzleShaped, M.rawSqlShaped]);
-    const reverse = await SchemaContractDb.create([M.rawSqlShaped, M.drizzleShaped]);
-    try {
-      expect(await forward.columns('assumption_records')).toEqual(
-        await reverse.columns('assumption_records'),
+describe('ADR-0007 acceptance: canonical (deployed) shape stores every service value', () => {
+  /** decision-record-service.ts action states — must all be storable. */
+  const SERVICE_DECISION_ACTION_STATES = [
+    'proposed',
+    'under_review',
+    'approved',
+    'rejected',
+    'executed',
+    'deferred',
+    'escalated',
+    'superseded',
+  ] as const;
+
+  it('accepts every assumption status the service writes', async () => {
+    db = await SchemaContractDb.create([M.rawSqlShaped]);
+    for (const [i, status] of SERVICE_ASSUMPTION_STATUSES.entries()) {
+      const res = await db.tryWrite(
+        `INSERT INTO assumption_records
+           (organization_id, project_id, assumption_code, title, domain_track,
+            category, assumed_value, rationale, source_type, status, created_by)
+         VALUES (1, 1, 'ASM-ACC-${i}', 't', 'clinical', 'efficacy', 'v', 'r',
+                 'protocol', '${status}', 1)`,
       );
-    } finally {
-      await forward.close();
-      await reverse.close();
+      expect(res.ok, `canonical shape must accept status='${status}': ${res.error ?? ''}`).toBe(true);
     }
   }, DB_TIMEOUT_MS);
 
-  it('accepts every status the service can write', async () => {
-    db = await SchemaContractDb.create([M.drizzleShaped]);
-    const declared = await db.enumValues('assumption_status');
-    for (const status of SERVICE_ASSUMPTION_STATUSES) {
-      expect(declared).toContain(status);
+  it('accepts every decision action_state the service writes', async () => {
+    db = await SchemaContractDb.create([M.rawSqlShaped]);
+    for (const [i, state] of SERVICE_DECISION_ACTION_STATES.entries()) {
+      const res = await db.tryWrite(
+        `INSERT INTO decision_records
+           (organization_id, project_id, decision_code, title, domain_track,
+            recommendation_type, recommendation_summary, confidence_level,
+            action_state, decided_by)
+         VALUES (1, 1, 'DEC-ACC-${i}', 't', 'clinical', 'study_design', 's',
+                 'moderate', '${state}', 'u')`,
+      );
+      expect(res.ok, `canonical shape must accept action_state='${state}': ${res.error ?? ''}`).toBe(true);
     }
   }, DB_TIMEOUT_MS);
 });

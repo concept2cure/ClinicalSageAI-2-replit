@@ -13,13 +13,13 @@ names the file and line that settles it, so it can be re-verified independently.
 
 | # | Conflict | Severity | Blocks |
 |---|---|---|---|
-| C-1 | `assumption_records` defined twice with incompatible DDL | **Blocking** | WO-01, WO-03, WO-08 |
-| C-2 | `decision_records` defined twice with incompatible DDL | **Blocking** | WO-03, WO-08 |
+| C-1 | `assumption_records` defined twice — **RESOLVED in direction** (deployed shape canonical per revised ADR-0007; orphan deprecated, zero importers; physical dual-DDL hazard remains until ADR-0006 retires dead 0010) | ~~Blocking~~ direction resolved | ADR-0006 file retirement |
+| C-2 | `decision_records` defined twice — **RESOLVED in direction** (same as C-1; `decision-record-service` vocabulary confirmed canonical) | ~~Blocking~~ direction resolved | ADR-0006 file retirement |
 | C-3 | `contradiction_findings` / `contradiction_overlay_rules` / `contradiction_consequence_log` defined twice | **Blocking** | WO-07, WO-08 |
 | C-4 | Receipt existed only as a mutable, unhashed memo blob — **FIXED 2026-07-25** (append-only hashed store + verifier) | ~~Blocking~~ fixed | — |
 | C-5 | Receipt type defined twice — **RESOLVED**: canonical is `shared/types/resolution.ts` (the rival had zero importers; deprecated in place) | ~~High~~ resolved | — |
 | C-6 | Two competing migration lineages; the manifest covers only one | **Blocking (root cause of C-1…C-3)** | all schema work |
-| C-7 | Assumption/decision service vocabularies diverge from Drizzle enums | High | WO-03 |
+| C-7 | Service-vs-enum divergence — **CLOSED, polarity reversed**: the services were right; the enums described a shape that never deployed. Enums deprecated. | ~~High~~ closed | — |
 | C-8 | **Governance boundary gates failed OPEN — FIXED 2026-07-25** (canonical DDL + deployed vocabulary + fail-closed) | ~~Critical~~ fixed | — |
 | C-10 | **Resolution layer storage existed only in dead DDL — FIXED 2026-07-25** (4 tables ported to canonical lineage) | ~~Critical~~ fixed | — |
 
@@ -516,6 +516,34 @@ follow-up.
 **Historical bundles remain unprovable** — receipts were never written for them
 and cannot be reconstructed. WO-03 must render them as "executed before receipt
 capture — no durable proof available," never inferred from bundle-item status.
+
+---
+
+## C-1/C-2/C-7 resolution record *(2026-07-25, revised ADR-0007 executed)*
+
+- **Canonical shape:** `db/migrations/20260323_assumption_decision_contradiction.sql`.
+  The raw-SQL services were correct all along; their vocabularies are canonical,
+  encoded once in `shared/constants/operating-system-vocab.ts`.
+- **Orphan deprecated in place:** `assumptionRecords`, `assumptionHistory`,
+  `decisionRecords`, `contradictionLinks` and the never-deployed enums in
+  `shared/schema/operating-system.ts` now carry a banner; zero importers
+  verified (the last, `governance-boundary-service.ts`, migrated off in the C-8
+  fix). Deletion deferred to ADR-0006 retirement as its own reviewed change.
+- **Acceptance enforced:** the previously-skipped post-reconciliation tests are
+  replaced by live ones — every service-writable assumption status and decision
+  action_state is proven storable in the canonical DDL
+  (`operating-system-collision.contract.test.ts`, "ADR-0007 acceptance" block).
+- **What remains open:** the C-6 order-dependence hazard exists as long as the
+  dead 0010 files sit on disk (guarded by `ci:duplicate-table-ddl`); closes with
+  ADR-0006 file retirement. And schema evolution (domain_track split, pgEnum
+  typing, orthogonal approval/escalation columns) is future work on the
+  canonical shape — none of it blocks WO-01/WO-03.
+- **New residual — `contradiction_links` is a dead sub-feature in production:**
+  `assumption-registry-service.ts:173,205` writes it via raw SQL, but its DDL
+  exists only in dead `migrations/0010` (`:356`). Those writes throw in any
+  deployed environment. Needs a scoped decision: port the table to the canonical
+  lineage or retire the linking feature. Does not block the assumption/decision
+  core.
 
 ---
 

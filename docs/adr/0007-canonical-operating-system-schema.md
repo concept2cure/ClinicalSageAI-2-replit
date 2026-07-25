@@ -2,7 +2,7 @@
 
 ## Status
 
-**Proposed — SUPERSEDED IN PART, revision required**
+**Accepted (revised 2026-07-25) — direction reversed from the draft; executed**
 
 > **WO-02 update (2026-07-25).** The core recommendation below — adopt the
 > Drizzle-typed schema as canonical — is **contradicted by execution-path
@@ -96,7 +96,57 @@ driven this stack against a real database.
 
 ## Decision
 
-We will:
+**REVISED 2026-07-25.** The draft below this section proposed adopting the
+Drizzle-typed schema. C-9's execution-path evidence reversed that, and the
+revision has now been executed:
+
+1. **The deployed shape is canonical**:
+   `db/migrations/20260323_assumption_decision_contradiction.sql`. The raw-SQL
+   services — `assumption-registry-service.ts` and `decision-record-service.ts`
+   — were **correct all along**; their vocabularies are the canonical
+   vocabularies, now encoded once in
+   `shared/constants/operating-system-vocab.ts` and asserted against real DDL
+   by the schema-contract tier.
+2. **The orphaned Drizzle definitions are deprecated in place**
+   (`assumptionRecords`, `assumptionHistory`, `decisionRecords`,
+   `contradictionLinks`, and the never-deployed enums in
+   `shared/schema/operating-system.ts`). Verified zero importers as of
+   2026-07-25 — the last one, `governance-boundary-service.ts`, was migrated
+   off them in the C-8 fix. A prominent banner marks them; deletion is deferred
+   to the ADR-0006 legacy retirement as its own reviewed change. The governance
+   tables in the same file are NOT orphaned — they are canonical (C-8 fix).
+3. **C-7 closes with the polarity reversed**: the "service drift" was the
+   Drizzle enums drifting from reality, not the services drifting from the
+   schema. `decision-record-service`'s
+   `proposed/under_review/approved/rejected/executed/deferred/escalated/superseded`
+   matches the deployed CHECK constraint exactly.
+4. **No speculative typed table defs are built now.** Typed access for new
+   consumers is regenerated from the deployed DDL when a consumer actually
+   needs it (WO-01/WO-03 will be the first). Building them today would create
+   unused parallel definitions — the exact pattern that caused C-1.
+5. **Schema-evolution items from the draft survive as future work on the
+   canonical shape**, each requiring its own migration and review: splitting
+   `domain_track` (the deployed column carries *discipline*; modality needs its
+   own column when device work begins in WO-14), pgEnum-typing the TEXT CHECK
+   columns, and orthogonal approval/escalation columns if decision workflows
+   need them. None block WO-01 or WO-03.
+6. **Residual found during execution:** `contradiction_links` — which
+   `assumption-registry-service.ts:173,205` writes via raw SQL — has DDL only
+   in dead `migrations/0010`. That sub-feature (assumption↔object contradiction
+   linking) throws in production today. Porting the table or retiring the
+   feature is a scoped follow-up recorded in the conflict ledger; it does not
+   block the assumption/decision core.
+
+Acceptance is enforced by
+`tests/schema-contract/operating-system-collision.contract.test.ts` — the
+canonical-shape acceptance block asserts every status and action_state the
+services write is storable in the deployed DDL.
+
+---
+
+### Original draft decision (historical — direction reversed by C-9)
+
+We would have:
 
 1. **Wait for the ADR-0006 environment survey.** The deployed shape decides which
    definition is real. Choosing on aesthetics risks reinterpreting regulated

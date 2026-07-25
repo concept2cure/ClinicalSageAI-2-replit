@@ -17,9 +17,9 @@ Status vocabulary: **BLOCKED** (a WO-00 finding must be resolved first) ·
 | WO | Plan dependency | WO-00 status | Blocking findings | Gate to clear |
 |---|---|---|---|---|
 | **WO-00** | none | **IN PROGRESS → complete this pass** | — | 5 documents + 5 ADRs |
-| **WO-01** Golden journeys | WO-00 | **BLOCKED** | C-1, C-2, C-6 | ADR-0006, ADR-0007 |
+| **WO-01** Golden journeys | WO-00 | **UNBLOCKED** — revised ADR-0007 executed; canonical shape + vocab + fail-closed gates + receipts all real | — | ready |
 | **WO-02** Enforcement | WO-00 | **COMPLETE** — guard + contract tier shipped | — | done |
-| **WO-03** Proof Packet | WO-01, WO-02 | **UNBLOCKED for receipts** — ADR-0009 phase 1 shipped; C-1/C-2 (ADR-0007 revision) remain for assumption/decision aggregation | C-1, C-2 | revised ADR-0007 |
+| **WO-03** Proof Packet | WO-01, WO-02 | **UNBLOCKED** — ADR-0009 receipts + revised ADR-0007 both executed | — | after WO-01 |
 | **WO-04** Yjs closure | WO-01, WO-02 | **RESCOPED — much smaller** | path mismatch | none new |
 | **WO-05** eCTD v4 | WO-01, WO-02 | **BLOCKED on discovery** | ≥6 packagers, 3 zip libs | canonical-publisher ADR |
 | **WO-06** Gateway E2E | WO-05 | READY after WO-05 | — | — |
