@@ -990,6 +990,81 @@ done in passing.
 
 ---
 
+## C-18 — Authoring role gates were bypassable with a request header *(critical security — FIXED 2026-07-25)*
+
+**Demonstrated, not inferred.** A valid JWT carrying no `roles` claim, plus a
+forged `x-roles: ADMIN,QA,RA_CMC` header, returned **201 Created** on
+`POST /api/authoring/templates` — a route gated by
+`requireAny(['ADMIN','RA_CMC','QA'])`.
+
+### Mechanism
+
+`requireAny` (authoring.router.ts:164) reads roles from the `x-roles` **HTTP
+header**. The router's own JWT middleware overwrites that header from verified
+claims — but the assignments sat behind existence checks:
+
+```js
+if (claims.roles)      { req.headers['x-roles']       = …from claims… }
+if (claims.email)      { req.headers['x-user-email']  = …from claims… }
+if (claims.tenant_id)  { req.headers['x-tenant-id']   = …from claims… }
+```
+
+Overwrite without delete is only half a guard. When a claim was **absent**, the
+client's header survived untouched and everything downstream trusted it. The
+partial protection is what made this hard to see: a token that *did* carry
+`roles: ['AUTHOR']` correctly had its forged header overwritten, so the gate
+looked like it worked. Only a token missing the claim entirely opened the hole —
+and that is the ordinary shape of tokens in this system (Journey A's tokens carry
+no `roles` claim).
+
+### Blast radius
+
+Eight role-gated routes: `POST /templates`, `POST /guidance`, the change-request
+`approve` / `reject` / `apply` trio, `POST /docs/:docId/permissions`, and two
+others. Plus `x-user-email`, which `createAuditTrail` uses as the audit actor,
+and `x-tenant-id`.
+
+Attribution held up better than authorization: `getActorEmail` falls back to the
+verified JWT **subject id** when the token omits an email claim, so a forged
+`x-user-email` never became the recorded actor. Tenant scope also held —
+`getTenantId` reads `req.user.organizationId`, not the header. The role gate was
+the real hole.
+
+### The fix
+
+Claim derivation is now unconditional: set the header from the claim, and
+**delete** it when the claim is absent. Absence of a claim means absence of the
+privilege, never "whatever the caller asserted". Tenant derivation also now
+accepts `organizationId` / `orgId` alongside `tenant_id` and validates the parse.
+
+### Proof
+
+`tests/schema-contract/authoring-role-gate.contract.test.ts` — 5 tests, written
+**before** the fix and run to confirm the bypass (201 where 403 was required).
+After the fix: no-roles token + forged header → 403; a real `roles: ['QA']` token
+still works; a forged header cannot widen `roles: ['AUTHOR']`; attribution
+resolves to the verified subject and never to a forged address; a token without a
+tenant claim cannot create in a tenant it names.
+
+### Adjacent findings recorded while here
+
+- **`requireAny` is header-shaped by design.** It now receives only verified
+  values, but reading authorization from a mutable header remains a fragile
+  pattern — one middleware ordering mistake re-opens it. It should read
+  `req.user.roles` directly. Not changed here because it touches every gated
+  route and deserves its own change.
+- **A duplicate `POST /docs/:docId/freeze` exists** (line 2823 and line 4638).
+  Express matches the first, so the second — which takes `frozen_by` from
+  `x-user-email || body || 'system'` — is unreachable dead code. It should be
+  deleted, but it is not currently exploitable.
+- **`POST /docs/:docId/sign`** (the rival of `/e-sign`) still takes its signer
+  from `x-user-email || body.signer_email || 'system'` and decides workflow
+  approval from `x-roles`. It writes `authoring_signatures`, a C-15 phantom, so
+  it fails before any of that matters — but it must be fixed or deleted as part
+  of the C-11 residual 1 work, not left to become live later.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

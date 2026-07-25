@@ -50,18 +50,47 @@ router.use(async (req: Request, res: Response, next: any) => {
         return res.status(401).json({ error: 'Invalid authentication token' });
       }
 
-      // Validate and sanitize claims
-      if (claims.email) {
-        (req.headers as any)['x-user-email'] = String(claims.email).toLowerCase();
-      }
-      if (claims.roles) {
-        const arr = Array.isArray(claims.roles) ? claims.roles : String(claims.roles).split(',');
-        (req.headers as any)['x-roles'] = arr.map((r: string) => String(r).toUpperCase()).join(',');
-      }
-      // Store tenant from JWT claims for strict isolation
-      if (claims.tenant_id) {
-        (req.headers as any)['x-tenant-id'] = parseInt(claims.tenant_id);
-      }
+      // Derive the identity headers from the VERIFIED claims — and DELETE them
+      // when the corresponding claim is absent.
+      //
+      // SECURITY (ledger C-18): these assignments used to sit behind
+      // `if (claims.<x>)`. A token that simply omitted a claim left the CLIENT's
+      // header in place, and everything downstream trusts these headers:
+      // requireAny() (8 role-gated routes) reads x-roles, createAuditTrail reads
+      // x-user-email. So a valid token with no `roles` claim plus a forged
+      // `x-roles: ADMIN` header passed every role gate — demonstrated at 201 in
+      // tests/schema-contract/authoring-role-gate.contract.test.ts before this
+      // change — and a token with no `email` claim let the caller attribute
+      // records to any address it named.
+      //
+      // Absence of a claim must mean absence of the privilege, never "whatever
+      // the caller asserted". Deleting is the fail-closed half; without it the
+      // overwrite is only a partial guard.
+      const setOrClear = (header: string, value: string | number | undefined) => {
+        if (value === undefined) delete (req.headers as any)[header];
+        else (req.headers as any)[header] = value;
+      };
+
+      setOrClear('x-user-email', claims.email ? String(claims.email).toLowerCase() : undefined);
+
+      const roleClaim = claims.roles;
+      const roleList = Array.isArray(roleClaim)
+        ? roleClaim
+        : roleClaim
+          ? String(roleClaim).split(',')
+          : undefined;
+      setOrClear(
+        'x-roles',
+        roleList ? roleList.map((r: string) => String(r).toUpperCase()).join(',') : undefined,
+      );
+
+      // Tenant scope comes from the token only — strict isolation.
+      const tenantClaim = claims.tenant_id ?? claims.organizationId ?? claims.orgId;
+      const tenantId =
+        tenantClaim === undefined || tenantClaim === null
+          ? undefined
+          : Number.parseInt(String(tenantClaim), 10);
+      setOrClear('x-tenant-id', Number.isFinite(tenantId) ? tenantId : undefined);
 
       // SECURITY (21 CFR Part 11): expose the verified JWT principal on
       // req.user so actor-identity helpers (getActorId / getActorEmail) derive
