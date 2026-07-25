@@ -6404,6 +6404,91 @@ export const QMS_CHANGE_LINK: AnaTool = {
   },
 };
 
+// ── Clinical Regulatory Evidence (CSR ⇄ FDA CRL ⇄ study design) ──────────────
+// These combine CSR evidence and FDA regulatory findings through the shared
+// evidence spine. They report precedent + provenance; they never predict an FDA
+// decision, never claim a design "will be accepted", and never emit a dose value.
+
+export const SEARCH_CLINICAL_REGULATORY_EVIDENCE: AnaTool = {
+  name: 'search_clinical_regulatory_evidence',
+  description:
+    "Search the shared clinical-regulatory evidence spine — comparable study designs, structured result observations, FDA regulatory findings (CRL deficiencies), regulatory outcomes, and governed design lessons — for an indication/phase. Returns provenance-carrying records, honest about coverage. Use when asked what comparable studies did, what FDA objected to, or what evidence exists.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      indication:  { type: 'string' },
+      phase:       { type: 'string' },
+      query:       { type: 'string', description: 'Free-text keywords (endpoint, deficiency, design term).' },
+      entity_types: { type: 'array', items: { type: 'string', enum: ['studies', 'findings', 'outcomes', 'lessons'] }, description: 'Which entities to search; default all.' },
+      limit:       { type: 'number' },
+    },
+    required: [],
+  },
+};
+
+export const COMPARE_PROPOSED_DESIGN_TO_PRECEDENT: AnaTool = {
+  name: 'compare_proposed_design_to_precedent',
+  description:
+    "Compare a proposed study design to comparable precedent: design distributions, observed effects (with uncertainty), FDA objections affecting similar features, and the data limitations. Returns evidence, not a verdict — it never outputs a binary 'FDA will accept'.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      indication:    { type: 'string' },
+      phase:         { type: 'string' },
+      endpoint:      { type: 'string', description: 'The proposed primary endpoint.' },
+      design_type:   { type: 'string' },
+      modality:      { type: 'string' },
+      population:    { type: 'string' },
+      comparator:    { type: 'string' },
+    },
+    required: ['indication'],
+  },
+};
+
+export const EXPLAIN_DESIGN_RISK: AnaTool = {
+  name: 'explain_design_risk',
+  description:
+    "Explain the regulatory risk of a proposed design feature (usually an endpoint): supportive precedent, adverse FDA precedent (CRL objections), applicability, unanswered questions, evidence quality and source citations. Never asserts acceptance; absence of objection is not evidence of acceptance.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      feature:     { type: 'string', description: 'The design feature / endpoint to assess.' },
+      indication:  { type: 'string' },
+      phase:       { type: 'string' },
+    },
+    required: ['feature'],
+  },
+};
+
+export const STRESS_TEST_PROTOCOL: AnaTool = {
+  name: 'stress_test_protocol',
+  description:
+    "Select the defensible regulatory-stress scenarios for a protocol — reduced effect, higher dropout, missing-not-at-random, subgroup heterogeneity, multiplicity penalty, etc. — DRIVEN by the FDA findings on record (which stress tests are relevant, not arbitrary magnitudes). The values are then run on the existing study-design simulator.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      indication:  { type: 'string' },
+      phase:       { type: 'string' },
+      endpoint:    { type: 'string' },
+    },
+    required: ['indication'],
+  },
+};
+
+export const TRACE_DESIGN_RECOMMENDATION: AnaTool = {
+  name: 'trace_design_recommendation',
+  description:
+    "Trace the evidence chain behind a recommendation or claim — from a proposed endpoint through comparable CSR endpoints, observed effects, and FDA objections to the recommendation — so every step is inspectable with its source. Give a spine entity (source/study/finding/outcome/lesson) and its id.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      entity_type: { type: 'string', enum: ['source', 'study', 'finding', 'outcome', 'design_lesson'] },
+      entity_id:   { type: 'number' },
+    },
+    required: ['entity_type', 'entity_id'],
+  },
+};
+
 export const CREATE_LABELING_DOCUMENT: AnaTool = {
   name: 'create_labeling_document',
   description:
@@ -9082,6 +9167,11 @@ const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   QMS_CHANGE_CREATE,
   QMS_CHANGE_TRANSITION,
   QMS_CHANGE_LINK,
+  SEARCH_CLINICAL_REGULATORY_EVIDENCE,
+  COMPARE_PROPOSED_DESIGN_TO_PRECEDENT,
+  EXPLAIN_DESIGN_RISK,
+  STRESS_TEST_PROTOCOL,
+  TRACE_DESIGN_RECOMMENDATION,
   CREATE_LABELING_DOCUMENT,
   ADD_LABELING_TRANSLATION,
   ADD_LABELING_SYMBOL,

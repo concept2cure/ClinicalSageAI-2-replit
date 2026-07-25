@@ -13333,6 +13333,98 @@ registerToolHandler('qms_change_link', async (input, ctx) => {
   }
 });
 
+// ── Clinical Regulatory Evidence — CSR ⇄ FDA CRL ⇄ study design (read-only
+//    evidence; never a prediction, never a dose value, never a binary verdict).
+registerToolHandler('search_clinical_regulatory_evidence', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'search_clinical_regulatory_evidence requires tenant context.' });
+  const org = ctx.organizationId;
+  const indication = typeof input.indication === 'string' ? input.indication : undefined;
+  const phase = typeof input.phase === 'string' ? input.phase : undefined;
+  const limit = typeof input.limit === 'number' ? Math.min(Math.max(input.limit, 1), 100) : 25;
+  const types = Array.isArray(input.entity_types) && input.entity_types.length
+    ? (input.entity_types as string[]) : ['studies', 'findings', 'outcomes', 'lessons'];
+  try {
+    const spine = await import('../clinical-regulatory-evidence/evidence-spine.service.js');
+    const result: Record<string, unknown> = {};
+    if (types.includes('studies')) result.studies = await spine.listStudies(org, { indication, phase, limit });
+    if (types.includes('findings')) result.findings = await spine.listFindings(org, { limit });
+    if (types.includes('outcomes')) result.outcomes = await spine.listOutcomes(org, { limit });
+    if (types.includes('lessons')) result.designLessons = await spine.listDesignLessons(org, { limit });
+    return JSON.stringify({ ok: true, ...result, note: 'Precedent evidence from the shared spine (global-public + your org). This is evidence, not a prediction.' });
+  } catch (err) {
+    return JSON.stringify({ error: `search_clinical_regulatory_evidence failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('compare_proposed_design_to_precedent', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'compare_proposed_design_to_precedent requires tenant context.' });
+  const indication = typeof input.indication === 'string' ? input.indication : '';
+  if (!indication) return JSON.stringify({ error: 'indication is required.' });
+  const endpoint = typeof input.endpoint === 'string' ? input.endpoint : undefined;
+  try {
+    const sde = await import('../clinical-regulatory-evidence/study-design-evidence.service.js');
+    const benchmark = await sde.benchmarkDesign(ctx.organizationId, {
+      indication, phase: typeof input.phase === 'string' ? input.phase : undefined,
+      modality: typeof input.modality === 'string' ? input.modality : undefined,
+      population: typeof input.population === 'string' ? input.population : undefined,
+      endpointClass: endpoint, comparator: typeof input.comparator === 'string' ? input.comparator : undefined,
+      designType: typeof input.design_type === 'string' ? input.design_type : undefined,
+    });
+    const endpointRisk = endpoint
+      ? await sde.assessEndpointRegulatoryRisk(ctx.organizationId, endpoint, { indication, phase: typeof input.phase === 'string' ? input.phase : undefined })
+      : null;
+    return JSON.stringify({ ok: true, benchmark, endpointRisk, note: 'Evidence comparison with provenance — not a verdict on FDA acceptance.' });
+  } catch (err) {
+    return JSON.stringify({ error: `compare_proposed_design_to_precedent failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('explain_design_risk', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'explain_design_risk requires tenant context.' });
+  const feature = typeof input.feature === 'string' ? input.feature.trim() : '';
+  if (!feature) return JSON.stringify({ error: 'feature (e.g. the proposed endpoint) is required.' });
+  try {
+    const sde = await import('../clinical-regulatory-evidence/study-design-evidence.service.js');
+    const r = await sde.assessEndpointRegulatoryRisk(ctx.organizationId, feature, {
+      indication: typeof input.indication === 'string' ? input.indication : undefined,
+      phase: typeof input.phase === 'string' ? input.phase : undefined,
+    });
+    return JSON.stringify({ ok: true, ...r });
+  } catch (err) {
+    return JSON.stringify({ error: `explain_design_risk failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('stress_test_protocol', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'stress_test_protocol requires tenant context.' });
+  const indication = typeof input.indication === 'string' ? input.indication : '';
+  if (!indication) return JSON.stringify({ error: 'indication is required.' });
+  try {
+    const sde = await import('../clinical-regulatory-evidence/study-design-evidence.service.js');
+    const plan = await sde.simulateDesignWithRegulatoryStress(ctx.organizationId, {
+      indication, phase: typeof input.phase === 'string' ? input.phase : undefined,
+      endpoint: typeof input.endpoint === 'string' ? input.endpoint : undefined,
+    });
+    return JSON.stringify({ ok: true, ...plan });
+  } catch (err) {
+    return JSON.stringify({ error: `stress_test_protocol failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
+registerToolHandler('trace_design_recommendation', async (input, ctx) => {
+  if (!ctx?.organizationId) return JSON.stringify({ error: 'trace_design_recommendation requires tenant context.' });
+  const entityType = typeof input.entity_type === 'string' ? input.entity_type : '';
+  const entityId = typeof input.entity_id === 'number' ? input.entity_id : NaN;
+  if (!entityType || !Number.isFinite(entityId)) return JSON.stringify({ error: 'entity_type and numeric entity_id are required.' });
+  try {
+    const spine = await import('../clinical-regulatory-evidence/evidence-spine.service.js');
+    const chain = await spine.listRelationshipsFor(ctx.organizationId, entityType as Parameters<typeof spine.listRelationshipsFor>[1], entityId);
+    return JSON.stringify({ ok: true, entity: { type: entityType, id: entityId }, chain, note: 'Every edge is inspectable with its source; inferred edges are flagged.' });
+  } catch (err) {
+    return JSON.stringify({ error: `trace_design_recommendation failed: ${err instanceof Error ? err.message : String(err)}` });
+  }
+});
+
 registerToolHandler('register_supplier', async (input, ctx) => {
   if (!ctx?.organizationId) return JSON.stringify({ error: 'register_supplier requires tenant context.' });
   const name = typeof input.supplier_name === 'string' ? input.supplier_name.trim() : '';
