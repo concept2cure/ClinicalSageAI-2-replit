@@ -12,3 +12,4 @@ export * from './types';
 export * as evidenceSpine from './evidence-spine.service';
 export { EvidenceSpineError } from './evidence-spine.service';
 export * as csrAdapter from './csr-adapter.service';
+export * as studyDesignEvidence from './study-design-evidence.service';
