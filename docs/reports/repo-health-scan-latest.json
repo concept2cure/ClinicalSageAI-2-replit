@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-25T04:47:31.945Z",
+  "generatedAt": "2026-07-25T18:02:48.792Z",
   "git": {
-    "sha": "0db621b3340b9485ed0480ba3a2dd0888d6664d1",
+    "sha": "293e1561a45701c4b4220bb8178684812882c851",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 246,
+    "duplicateBasenames": 247,
     "largeFilesByBytes": 29,
     "largeFilesByLines": 83
   },
@@ -1726,6 +1726,14 @@
         ]
       },
       {
+        "basename": "governance",
+        "count": 2,
+        "paths": [
+          "server/routes/c2c/governance.ts",
+          "server/services/clinical-regulatory-evidence/governance.ts"
+        ]
+      },
+      {
         "basename": "governed-action-signoff.test",
         "count": 2,
         "paths": [
@@ -2449,7 +2457,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 912544
+        "bytes": 929258
       },
       {
         "file": "shared/schema.ts",
@@ -2461,7 +2469,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 521690
+        "bytes": 530760
       },
       {
         "file": "server/statistics-service.ts",
@@ -2473,7 +2481,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 178361
+        "bytes": 178533
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2575,11 +2583,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 17842
+        "lines": 18097
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 9580
+        "lines": 9760
       },
       {
         "file": "server/statistics-service.ts",
@@ -2595,7 +2603,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4746
+        "lines": 4749
       },
       {
         "file": "server/storage.ts",
@@ -2903,7 +2911,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 395,
+      "duplicateGroups": 397,
       "largeByBytes": 26,
       "largeByLines": 72
     },
