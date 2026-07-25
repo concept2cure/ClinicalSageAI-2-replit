@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-25T19:00:08.648Z",
+  "generatedAt": "2026-07-25T21:14:49.701Z",
   "git": {
-    "sha": "1aba74e2894d7d5a053a71cb512ec97876670377",
+    "sha": "87d181aac486fcc9c8e3bd69b896535b3e11e0d1",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 247,
+    "duplicateBasenames": 248,
     "largeFilesByBytes": 29,
     "largeFilesByLines": 83
   },
@@ -1774,6 +1774,14 @@
         ]
       },
       {
+        "basename": "harness",
+        "count": 2,
+        "paths": [
+          "tests/golden-journeys/harness.ts",
+          "tests/schema-contract/harness.ts"
+        ]
+      },
+      {
         "basename": "huggingface-service",
         "count": 2,
         "paths": [
@@ -2461,7 +2469,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 844659
+        "bytes": 845031
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2480,12 +2488,12 @@
         "bytes": 179637
       },
       {
-        "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 178533
+        "file": "server/routes/authoring.router.ts",
+        "bytes": 179509
       },
       {
-        "file": "server/routes/authoring.router.ts",
-        "bytes": 176582
+        "file": "server/services/ana-ri/command-executor.ts",
+        "bytes": 178892
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2575,7 +2583,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 20107
+        "lines": 20110
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2594,16 +2602,16 @@
         "lines": 6893
       },
       {
+        "file": "server/routes/authoring.router.ts",
+        "lines": 5458
+      },
+      {
         "file": "server/routes/ana-features.ts",
         "lines": 5431
       },
       {
-        "file": "server/routes/authoring.router.ts",
-        "lines": 5417
-      },
-      {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4749
+        "lines": 4753
       },
       {
         "file": "server/storage.ts",
@@ -2917,7 +2925,7 @@
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 276,
+      "duplicateGroups": 278,
       "largeByBytes": 2,
       "largeByLines": 8
     },
