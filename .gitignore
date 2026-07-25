@@ -93,3 +93,7 @@ tesseract-cache/
 # Generated SBOM (produced in CI, published as an artifact)
 sbom.cyclonedx.json
 docs/reports/workflow-audit-results.json
+
+# Golden-journey run artifacts (regenerated every run; the committed docs in
+# docs/proof/golden-journeys describe the journeys, the manifests prove a run)
+tests/golden-journeys/__reports__/

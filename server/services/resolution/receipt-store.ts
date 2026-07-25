@@ -89,19 +89,34 @@ export async function captureObjectStateSnapshot(
     });
   }
 
-  for (const supersededId of receipt.supersededObjects) {
+  for (const supersededEntry of receipt.supersededObjects) {
+    // The executor records supersededObjects as "objectType:objectId"
+    // (e.g. "assumption:<uuid>"). Resolve by BOTH parts when prefixed —
+    // querying the raw string verbatim recorded real, confirmed supersessions
+    // as was-missing-at-execution (false negative caught by Golden Journey C).
+    const sep = supersededEntry.indexOf(':');
+    const objectType = sep > 0 ? supersededEntry.slice(0, sep) : null;
+    const objectId = sep > 0 ? supersededEntry.slice(sep + 1) : supersededEntry;
     const found = await rows<{ id: string; state: string }>(
       database,
-      sql`SELECT id::text, state::text
-          FROM supersession_records
-          WHERE superseded_object_id::text = ${supersededId}
-            AND organization_id = ${organizationId}
-          ORDER BY created_at DESC
-          LIMIT 1`,
+      objectType
+        ? sql`SELECT id::text, state::text
+              FROM supersession_records
+              WHERE superseded_object_id::text = ${objectId}
+                AND superseded_object_type = ${objectType}
+                AND organization_id = ${organizationId}
+              ORDER BY created_at DESC
+              LIMIT 1`
+        : sql`SELECT id::text, state::text
+              FROM supersession_records
+              WHERE superseded_object_id::text = ${objectId}
+                AND organization_id = ${organizationId}
+              ORDER BY created_at DESC
+              LIMIT 1`,
     );
     entries.push({
       kind: 'supersession',
-      id: supersededId,
+      id: supersededEntry,
       observed: found[0] ? { recordId: found[0].id, state: found[0].state } : null,
     });
   }

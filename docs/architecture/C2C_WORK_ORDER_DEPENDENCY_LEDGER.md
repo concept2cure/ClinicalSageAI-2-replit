@@ -17,7 +17,7 @@ Status vocabulary: **BLOCKED** (a WO-00 finding must be resolved first) ·
 | WO | Plan dependency | WO-00 status | Blocking findings | Gate to clear |
 |---|---|---|---|---|
 | **WO-00** | none | **IN PROGRESS → complete this pass** | — | 5 documents + 5 ADRs |
-| **WO-01** Golden journeys | WO-00 | **UNBLOCKED** — revised ADR-0007 executed; canonical shape + vocab + fail-closed gates + receipts all real | — | ready |
+| **WO-01** Golden journeys | WO-00 | **PHASE 1 PASSING** — Journey C correction spine end-to-end (14 steps, service level); Journeys A/B + route/Playwright layers are phase 2 | — | in progress |
 | **WO-02** Enforcement | WO-00 | **COMPLETE** — guard + contract tier shipped | — | done |
 | **WO-03** Proof Packet | WO-01, WO-02 | **UNBLOCKED** — ADR-0009 receipts + revised ADR-0007 both executed | — | after WO-01 |
 | **WO-04** Yjs closure | WO-01, WO-02 | **RESCOPED — much smaller** | path mismatch | none new |
@@ -89,6 +89,17 @@ error handling including denial on unpersistable audit records. Proven by 7
 real-service tests against the canonical lineage
 (`tests/schema-contract/governance-boundary-gates.contract.test.ts`). Residual:
 the caller-side bare `catch {}` blocks in `authoring-actions.ts` — for WO-01.
+
+### 2.9 WO-01 phase 1 — Journey C passing (2026-07-25)
+
+The correction spine ran end-to-end for the first time: conflicting assumptions
+→ deterministic finding (llmRole='none') → proposed decision → promotion DENIED
+(audited) → plan → bundle → real supersession + hashed receipt → verification →
+human reapproval → promotion ALLOWED (audited) → tenant-isolation and
+honest-failure checks. 14 steps, 0 failed; manifest + rendered report emitted
+per run. Building it caught and fixed a false negative in receipt verification
+(supersededObjects type-prefix mismatch) and recorded the dual supersession
+representation for ADR-0008-adjacent cleanup.
 
 ### 2.8 ADR-0009 executed; C-10 found and fixed (2026-07-25)
 

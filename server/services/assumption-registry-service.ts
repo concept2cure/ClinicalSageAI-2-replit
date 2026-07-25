@@ -555,7 +555,7 @@ export class AssumptionRegistryService {
     const result = await pool!.query(
       `
       UPDATE assumption_records
-      SET status = $1, reviewed_by = $2, reviewed_at = CASE WHEN $2 IS NOT NULL THEN NOW() ELSE reviewed_at END, updated_at = NOW()
+      SET status = $1, reviewed_by = $2, reviewed_at = CASE WHEN $2::text IS NOT NULL THEN NOW() ELSE reviewed_at END, updated_at = NOW()
       WHERE id = $3 AND organization_id = $4
       RETURNING *
     `,
