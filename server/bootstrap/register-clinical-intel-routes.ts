@@ -233,5 +233,32 @@ export async function registerClinicalIntelRoutes({
     console.error('Failed to mount conversation thread routes:', error);
   }
 
+  // ── Clinical-Regulatory Intelligence Graph (shared evidence spine) ──
+  await mountClinicalRegulatoryEvidence(app);
+
   console.log('✅ Clinical + Intelligence route family registered');
+}
+
+/**
+ * Mount the Clinical-Regulatory Intelligence Graph routes.
+ *
+ * Behind ENABLE_CLINICAL_REGULATORY_GRAPH. Flag off ⇒ not mounted at all, so
+ * the surfaces 404 rather than rendering a corpus-empty state for a feature that
+ * is simply switched off. No half-state.
+ *
+ * Extracted rather than inlined above so the flag branch doesn't add complexity
+ * to the already-long registrar.
+ */
+async function mountClinicalRegulatoryEvidence(app: express.Express): Promise<void> {
+  try {
+    const evidenceModule = await import('../routes/clinical-regulatory-evidence-routes');
+    if (!evidenceModule.isGraphEnabled()) {
+      console.log('⏭️  Clinical-regulatory evidence routes skipped (ENABLE_CLINICAL_REGULATORY_GRAPH off)');
+      return;
+    }
+    app.use('/api/clinical-regulatory-evidence', authenticateToken, evidenceModule.default());
+    console.log('✅ Clinical-regulatory evidence routes mounted (/api/clinical-regulatory-evidence)');
+  } catch (error) {
+    console.error('Failed to mount clinical-regulatory evidence routes:', error);
+  }
 }

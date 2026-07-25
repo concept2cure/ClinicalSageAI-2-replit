@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { SampleTag, connected, liveGet } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -135,13 +136,61 @@ function genIndReadiness(_a: ParsedProtocol): string {
   return s;
 }
 
+/**
+ * The three governed evidence reports (work order §13).
+ *
+ * These are deliberately NOT produced by the local markdown generators above.
+ * They render from a TraceView through the trace service and the existing
+ * governed artifact path — an evidence-chain report assembled client-side from a
+ * pasted protocol would carry no provenance and no audit id, yet would look
+ * identical on screen to one that did. That is the exact confusion this product
+ * cannot afford.
+ *
+ * So the generator here produces only the honest explanation of where the real
+ * document comes from. Once AnA grounds a recommendation in the evidence graph,
+ * ReportGovernance renders the trace; until then a user sees this, and it tells
+ * them why.
+ *
+ * Export stays blocked while any cited finding is unverified or carries an
+ * unresolved extraction conflict — enforced on the governed artifact path, not
+ * by hiding a button.
+ */
+function genGovernedEvidenceReport(kind: string): string {
+  return (
+    `# ${kind}\n\n` +
+    `This is a governed evidence report. It is not generated from the pasted protocol — it ` +
+    `renders from the clinical-regulatory trace service through the existing governed artifact ` +
+    `path, so every figure in it carries its source, its calculation method and its audit id.\n\n` +
+    `No trace is available for this document yet. A trace is created when AnA grounds a ` +
+    `recommendation in the shared evidence graph — ask AnA to compare a design node to precedent, ` +
+    `then open the evidence chain from the artifact it produces.\n\n` +
+    `---\n` +
+    `*This report cannot be sealed or exported while any finding it cites is unverified or has an ` +
+    `unresolved extraction conflict.*\n`
+  );
+}
+
 const DOC_REGISTRY: DocDef[] = [
   { id: 'recommendations', label: 'Design Recommendations', gen: genRecommendations, needsCsr: true, blurb: 'Evidence-based protocol design recommendations vs. similar studies.' },
   { id: 'statistical', label: 'Statistical Insights', gen: (a) => genStatisticalInsights(a), blurb: 'Power analysis, dropout, randomization and modelling guidance.' },
   { id: 'ind', label: 'IND Readiness', gen: (a) => genIndReadiness(a), blurb: 'Qualitative IND readiness assessment with regulatory citations.' },
 ];
 
-function docById(id: string): DocDef | undefined { return DOC_REGISTRY.find(x => x.id === id); }
+/** Flag-gated — appended only when the Clinical-Regulatory Intelligence Graph is on. */
+const EVIDENCE_DOC_REGISTRY: DocDef[] = [
+  { id: 'evidence_chain', label: 'Evidence chain', gen: () => genGovernedEvidenceReport('Evidence chain'), blurb: 'Sources, calculations, assumptions and contradictions behind a recommendation.' },
+  { id: 'design_risk', label: 'Design risk', gen: () => genGovernedEvidenceReport('Design risk'), blurb: 'Supportive evidence, negative precedent, applicability, differences and unknowns.' },
+  { id: 'regulatory_precedent', label: 'Regulatory precedent', gen: () => genGovernedEvidenceReport('Regulatory precedent'), blurb: 'Verified FDA findings and outcomes relevant to this design, with honest coverage.' },
+];
+
+/** The document types on offer, honouring the graph flag. */
+function docRegistry(): DocDef[] {
+  return isClinicalRegulatoryGraphEnabled()
+    ? [...DOC_REGISTRY, ...EVIDENCE_DOC_REGISTRY]
+    : DOC_REGISTRY;
+}
+
+function docById(id: string): DocDef | undefined { return docRegistry().find(x => x.id === id); }
 
 /* ── Lightweight protocol parser (offline) ── */
 
@@ -290,7 +339,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
               <button className="sp-primary" onClick={analyze} disabled={busy}>{I.sparkles} {busy ? 'Analyzing...' : 'Analyze protocol'}</button>
               {analysis && (
                 <div className="ra-doctabs">
-                  {DOC_REGISTRY.map(d => <button key={d.id} className={'ra-doctab' + (docType === d.id ? ' on' : '')} onClick={() => setDocType(d.id)}>{d.label}</button>)}
+                  {docRegistry().map(d => <button key={d.id} className={'ra-doctab' + (docType === d.id ? ' on' : '')} onClick={() => setDocType(d.id)}>{d.label}</button>)}
                 </div>
               )}
             </div>

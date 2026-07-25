@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
  * Apply the c2c session migrations (AI governance, PV operational tables,
- * commitments) to the configured database, idempotently.
+ * commitments, drafting-council provisioning) to the configured database,
+ * idempotently.
  *
- * These three live in the root `migrations/` folder as raw .sql (the established
+ * These live in the root `migrations/` folder as raw .sql (the established
  * convention for phase migrations here), which drizzle's runtime migrate() does
  * NOT apply (only the journaled baseline is). This script gives a single,
  * standard, idempotent command to apply them on the out-of-band path — for the
@@ -24,11 +25,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Dependency-safe order: governance ALTERs ana_capability_registry (pre-existing),
-// PV + commitments create their own tables.
+// PV + commitments create their own tables, council provisioning creates its own
+// lumen schema + seeds the four drafting-council agents.
 const FILES = [
   '20260603_ai_capability_governance.sql',
   '20260603_pv_operational.sql',
   '20260603_commitments.sql',
+  '20260724_lumen_council_provisioning.sql',
+  '20260724_ana_deep_investigations.sql',
 ];
 
 function getDatabaseUrl() {

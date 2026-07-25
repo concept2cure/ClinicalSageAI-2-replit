@@ -31,6 +31,7 @@ import { BiostatWorkbench } from './surfaces/BiostatWorkbench';
 import { ChangeAssessment } from './surfaces/ChangeAssessment';
 import { ClinicalOps } from './surfaces/ClinicalOps';
 import { ConversationThread } from './surfaces/ConversationThread';
+import { CrlLibrary } from './surfaces/CrlLibrary';
 import { CroPortfolio } from './surfaces/CroPortfolio';
 import { CmcModule } from './surfaces/CmcModule';
 import { CommunicationCenter } from './surfaces/CommunicationCenter';
@@ -85,6 +86,7 @@ import { ShadowReview } from './surfaces/ShadowReview';
 import { SourceTracer } from './surfaces/SourceTracer';
 import { SubmissionCenter } from './surfaces/SubmissionCenter';
 import { QmpWorkspace } from './surfaces/QmpWorkspace';
+import { QualityModule } from './surfaces/QualityModule';
 import { Part11Console } from './surfaces/Part11Console';
 import { IdentityConsole } from './surfaces/IdentityConsole';
 import { ReportGovernance } from './surfaces/ReportGovernance';
@@ -131,6 +133,9 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'communication-center': { component: CommunicationCenter },
   'conversation-thread': { component: ConversationThread, hideAna: true },
   coverage: { component: CodebaseCoverage },
+  // No `full`, no `hideAna` — the AnA rail stays open on the CRL library,
+  // because the point of looking at a letter is being able to ask about it.
+  'crl-library': { component: CrlLibrary },
   'cro-portfolio': { component: CroPortfolio },
   'csr-workflow': { component: CsrWorkflow, full: true, hideAna: true },
   'decision-lineage': { component: DecisionLineage, full: true },
@@ -197,6 +202,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'shadow-review': { component: ShadowReview, full: true },
   'source-tracer': { component: SourceTracer },
   qmp: { component: QmpWorkspace },
+  quality: { component: QualityModule, full: true },
   'part11-console': { component: Part11Console },
   'identity-console': { component: IdentityConsole },
   'report-governance': { component: ReportGovernance },

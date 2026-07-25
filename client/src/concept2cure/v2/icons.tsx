@@ -9,6 +9,7 @@
  */
 import React from 'react';
 import {
+  Activity,
   AlertTriangle,
   AlignCenter,
   AlignJustify,
@@ -47,6 +48,7 @@ import {
   FileText,
   Filter,
   Folder,
+  Gavel,
   GitBranch,
   GitCompare,
   Globe,
@@ -88,6 +90,7 @@ import {
   RotateCcw,
   RotateCw,
   Rocket,
+  Route,
   Scale,
   Scroll,
   Search,
@@ -227,6 +230,11 @@ export const I: Record<string, React.ReactElement> = {
   chevRight: el(ChevronRight),
   dot: el(Dot),
   user: el(User),
+  // Clinical-Regulatory Intelligence Graph (phase 7): CRL library rail entry,
+  // the trace action, and the stress-test run.
+  gavel: el(Gavel),
+  route: el(Route),
+  activity: el(Activity),
 };
 
 export default I;

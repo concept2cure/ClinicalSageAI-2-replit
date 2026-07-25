@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-21T23:05:27.443Z",
+  "generatedAt": "2026-07-25T19:00:08.648Z",
   "git": {
-    "sha": "02ee0516f735b3d4761a8164dce5a5f5c24f899b",
+    "sha": "1aba74e2894d7d5a053a71cb512ec97876670377",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -9,7 +9,7 @@
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 245,
+    "duplicateBasenames": 247,
     "largeFilesByBytes": 29,
     "largeFilesByLines": 83
   },
@@ -17,7 +17,7 @@
     "duplicateBasenames": [
       {
         "basename": "index",
-        "count": 102,
+        "count": 103,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/index.ts",
           ".claude/skills/gstack/supabase/functions/community-pulse/index.ts",
@@ -64,6 +64,7 @@
           "server/services/biostats-signal-engine/index.ts",
           "server/services/cer/index.ts",
           "server/services/chem/index.ts",
+          "server/services/clinical-regulatory-evidence/index.ts",
           "server/services/cognitive-ecosystem/index.ts",
           "server/services/corpus/index.ts",
           "server/services/cortex/index.ts",
@@ -125,7 +126,7 @@
       },
       {
         "basename": "types",
-        "count": 47,
+        "count": 48,
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/types.ts",
           "client/src/concept2cure/components/concept2cure-projects/types.ts",
@@ -145,6 +146,7 @@
           "server/services/ana/therapeutic-area-profiles/types.ts",
           "server/services/biostatistics-judgment/types.ts",
           "server/services/biostats-signal-engine/types.ts",
+          "server/services/clinical-regulatory-evidence/types.ts",
           "server/services/cognitive-ecosystem/types.ts",
           "server/services/compute/types.ts",
           "server/services/conversation-os/types.ts",
@@ -1484,6 +1486,14 @@
         ]
       },
       {
+        "basename": "coverage-service",
+        "count": 2,
+        "paths": [
+          "server/services/clinical-regulatory-evidence/coverage-service.ts",
+          "server/services/coverage-analysis/coverage-service.ts"
+        ]
+      },
+      {
         "basename": "cybersecurity-524b",
         "count": 2,
         "paths": [
@@ -1713,6 +1723,14 @@
         "paths": [
           "client/src/services/regulatory/globalPyramids.ts",
           "services/regulatory/globalPyramids.ts"
+        ]
+      },
+      {
+        "basename": "governance",
+        "count": 2,
+        "paths": [
+          "server/routes/c2c/governance.ts",
+          "server/services/clinical-regulatory-evidence/governance.ts"
         ]
       },
       {
@@ -2439,11 +2457,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 912544
+        "bytes": 931327
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 824480
+        "bytes": 844659
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2451,7 +2469,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 521690
+        "bytes": 484778
       },
       {
         "file": "server/statistics-service.ts",
@@ -2463,7 +2481,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "bytes": 178361
+        "bytes": 178533
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2557,7 +2575,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19722
+        "lines": 20107
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2565,11 +2583,11 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 17842
+        "lines": 18133
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 9580
+        "lines": 9030
       },
       {
         "file": "server/statistics-service.ts",
@@ -2585,7 +2603,7 @@
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
-        "lines": 4746
+        "lines": 4749
       },
       {
         "file": "server/storage.ts",
@@ -2668,6 +2686,10 @@
         "lines": 2254
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 2202
+      },
+      {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2177
       },
@@ -2698,10 +2720,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
         "lines": 2059
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2035
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
@@ -2812,12 +2830,12 @@
         "lines": 1785
       },
       {
-        "file": "server/services/combination-products/combination-products-knowledge.ts",
-        "lines": 1726
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1761
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1712
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 1726
       },
       {
         "file": "server/services/client-intelligence-memory.ts",
@@ -2893,7 +2911,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 391,
+      "duplicateGroups": 397,
       "largeByBytes": 26,
       "largeByLines": 72
     },

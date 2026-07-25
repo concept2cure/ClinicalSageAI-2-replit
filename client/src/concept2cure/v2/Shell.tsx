@@ -41,6 +41,7 @@ import {
   getSurfaceActions,
   type AnaContext,
 } from './registryModel';
+import { isClinicalRegulatoryGraphEnabled } from './clinicalRegulatoryGraphFlag';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 
 export interface ShellSurfaceRef {
@@ -100,6 +101,13 @@ export function Rail({
     { sep: true },
     { label: 'Log out', ic: 'logOut', action: 'logout' },
   ];
+  /**
+   * Rail entries that a feature flag gates. Flag off ⇒ the entry is not
+   * rendered at all — not greyed out, not present-but-empty. A visible entry for
+   * a capability the deployment does not have is worse than no entry.
+   */
+  const railVisible = (s: { id: string }) =>
+    s.id === 'crl-library' ? isClinicalRegulatoryGraphEnabled() : true;
   const navItem = (s: { id: string; label: string; icon: string; badge?: string; count?: number; target?: string }) => {
     const target = s.target ?? s.id;
     return (
@@ -165,7 +173,9 @@ export function Rail({
         <div className="rail-section">Workspace</div>
         <div className="rail-nav">{RAIL_CORE.map(navItem)}</div>
         <div className="rail-section">Science &amp; intelligence</div>
-        <div className="rail-nav">{RAIL_SPECIALIST.map(navItem)}</div>
+        {/* `crl-library` is gated by ENABLE_CLINICAL_REGULATORY_GRAPH — flag off
+            and the rail entry is absent entirely, not disabled or empty. */}
+        <div className="rail-nav">{RAIL_SPECIALIST.filter(railVisible).map(navItem)}</div>
         <div className="rail-section">Explore</div>
         <div className="rail-nav">{RAIL_EXPLORE.map(navItem)}</div>
         <div className="rail-section">Quick access</div>

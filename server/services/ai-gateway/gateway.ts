@@ -45,6 +45,10 @@ import {
 } from './policy';
 import { CLOUD_MODELS } from './providers/cloud-models';
 import {
+  parseOpenAIStreamDelta,
+  extractOpenAIReasoning,
+} from './openai-stream.js';
+import {
   createBedrockClient,
   createVertexClient,
   createAzureClient,
@@ -102,9 +106,12 @@ export const DEFAULT_MODELS: ModelConfig[] = [
   {
     // Internal id kept stable for alias continuity; the `model` field is the
     // actual ID sent to Anthropic and tracks the current flagship release.
+    // Bumping this string is the sanctioned way to move AnA to a newer flagship
+    // — the reasoning-only surface (adaptive thinking, no sampling params) is
+    // auto-detected from the version (see isReasoningOnlyModel).
     id: 'claude-opus-4',
     provider: 'anthropic',
-    model: 'claude-opus-4-7',
+    model: 'claude-opus-4-8',
     contextWindow: 200000,
     qualityScore: 99,
     costPer1kInput: 0.015,
@@ -122,16 +129,17 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
-    // Opus 4 legacy — dated snapshot from May 2025. Kept enabled as an
-    // intra-provider fallback if 4.7 is not yet GA for the tenant's tier
-    // or is temporarily unavailable (rate limit, overloaded). Same
-    // capabilities as 4.7, marginally lower quality score so the
-    // fallback chain prefers 4.7 when both are reachable.
+    // Opus 4.7 — the previous flagship. Kept enabled as the top intra-provider
+    // fallback rung: if 4.8 is not yet GA for the tenant's tier or is
+    // temporarily unavailable (rate limit, overloaded), the chain drops to 4.7
+    // before Sonnet. It shares the reasoning-only surface (adaptive thinking),
+    // so a fallback preserves the same reasoning behavior. Marginally lower
+    // quality score than 4.8 so the chain prefers 4.8 when both are reachable.
     id: 'claude-opus-4-legacy',
     provider: 'anthropic',
-    model: 'claude-opus-4-20250514',
+    model: 'claude-opus-4-7',
     contextWindow: 200000,
-    qualityScore: 95,
+    qualityScore: 98,
     costPer1kInput: 0.015,
     costPer1kOutput: 0.075,
     capabilities: [
@@ -779,12 +787,24 @@ export class AIGateway {
     request: GatewayRequest,
     requestId: string,
     startTime: number
-  ): Promise<GatewayResponse> {
+  ): Promise<AnaGatewayResponse> {
     // Resolve the OpenAI-compatible client for this provider (openai / azure / local).
     const client = this.openaiFamilyClient(modelConfig.provider);
     if (!client) {
       throw new Error(
         `${modelConfig.provider} client not initialized (missing credentials/endpoint for ${modelConfig.provider})`
+      );
+    }
+
+    // Streaming requested — deliver tokens (and reasoning, where the provider
+    // emits it) incrementally, at parity with the Anthropic path.
+    if (request.stream && request.onStream) {
+      return this.executeOpenAICompatibleStream(
+        client,
+        modelConfig,
+        request,
+        requestId,
+        startTime
       );
     }
 
@@ -830,9 +850,11 @@ export class AIGateway {
       throw error;
     });
     const choice = completion.choices?.[0];
+    const reasoning = extractOpenAIReasoning(choice?.message);
 
     return {
       content: choice?.message?.content || '',
+      thinking: reasoning || undefined,
       provider: modelConfig.provider,
       model: modelConfig.model,
       usage: {
@@ -850,7 +872,7 @@ export class AIGateway {
       cached: false,
       deterministic: false,
       finishReason: choice?.finish_reason || 'unknown',
-    };
+    } as AnaGatewayResponse;
   }
 
   /**
@@ -882,16 +904,22 @@ export class AIGateway {
   ): void {
     if (this.isReasoningOnlyModel(modelConfig.model)) {
       if (request.thinking?.enabled) {
+        // Adaptive thinking self-budgets — the resolver's budgetTokens is a hint
+        // that only the legacy surface below consumes. Summarized display keeps
+        // the reasoning stream visible to the client on the SSE path.
         params.thinking = { type: 'adaptive', display: 'summarized' };
       }
       return;
     }
     if (request.thinking?.enabled) {
-      // Manual extended thinking requires temperature=1 and no top_p/top_k.
-      params.thinking = {
-        type: 'enabled',
-        budget_tokens: request.thinking.budgetTokens || 10000,
-      };
+      // Legacy manual extended thinking requires temperature=1 and no top_p/top_k.
+      // Anthropic also requires budget_tokens < max_tokens (thinking shares the
+      // output budget) — clamp so a large effort-scaled budget on a small
+      // max_tokens turn can never 400. Leave >=1024 headroom for the answer.
+      const maxTok = typeof params.max_tokens === 'number' ? params.max_tokens : 4096;
+      const requested = request.thinking.budgetTokens || 10000;
+      const budget = Math.max(1024, Math.min(requested, maxTok - 1024));
+      params.thinking = { type: 'enabled', budget_tokens: budget };
       params.temperature = 1;
     } else {
       params.temperature = request.temperature ?? 0.7;
@@ -1313,9 +1341,21 @@ export class AIGateway {
     request: GatewayRequest,
     requestId: string,
     startTime: number
-  ): Promise<GatewayResponse> {
+  ): Promise<AnaGatewayResponse> {
     if (!this.moonshotClient) {
       throw new Error('Moonshot client not initialized (missing KIMI_API_KEY or MOONSHOT_API_KEY)');
+    }
+
+    // Streaming requested — Kimi thinking models emit reasoning_content, so this
+    // surfaces both tokens and reasoning incrementally, at Anthropic parity.
+    if (request.stream && request.onStream) {
+      return this.executeOpenAICompatibleStream(
+        this.moonshotClient,
+        modelConfig,
+        request,
+        requestId,
+        startTime
+      );
     }
 
     const params: any = {
@@ -1346,9 +1386,11 @@ export class AIGateway {
       throw error;
     });
     const choice = completion.choices?.[0];
+    const reasoning = extractOpenAIReasoning(choice?.message);
 
     return {
       content: choice?.message?.content || '',
+      thinking: reasoning || undefined,
       provider: 'moonshot',
       model: modelConfig.model,
       usage: {
@@ -1366,7 +1408,127 @@ export class AIGateway {
       cached: false,
       deterministic: false,
       finishReason: choice?.finish_reason || 'unknown',
+    } as AnaGatewayResponse;
+  }
+
+  /**
+   * Streaming path shared by every OpenAI-compatible provider (openai / azure /
+   * local / moonshot). Delivers text and — where the provider emits it —
+   * reasoning incrementally through request.onStream, at parity with the
+   * Anthropic streaming path: same text/thinking callback contract, the same
+   * 30s per-chunk stall watchdog, and the same return-partial-on-error
+   * resilience. Usage is read from the final include_usage chunk.
+   */
+  private async executeOpenAICompatibleStream(
+    client: any,
+    modelConfig: ModelConfig,
+    request: GatewayRequest,
+    requestId: string,
+    startTime: number
+  ): Promise<AnaGatewayResponse> {
+    const onStream = request.onStream!;
+    const provider = modelConfig.provider;
+
+    const params: any = {
+      model: modelConfig.model,
+      messages: request.messages.map(m => ({ role: m.role, content: m.content })),
+      max_tokens: request.maxTokens || 2000,
+      temperature: request.temperature ?? 0.7,
+      stream: true,
+      // Ask the server to append a final usage-only chunk so cost/telemetry
+      // stay accurate on the streaming path (ignored by servers that lack it).
+      stream_options: { include_usage: true },
     };
+    if (request.seed !== undefined) params.seed = request.seed;
+    if (request.jsonMode) {
+      const supportsStrictSchema = provider !== 'local';
+      params.response_format =
+        request.jsonSchema && supportsStrictSchema
+          ? { type: 'json_schema', json_schema: { name: 'response', strict: true, schema: request.jsonSchema } }
+          : { type: 'json_object' };
+    }
+
+    const stream = await client.chat.completions.create(params);
+
+    let content = '';
+    let thinking = '';
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let totalTokens = 0;
+    let finishReason = 'unknown';
+
+    // Per-chunk watchdog — abort a stream that goes silent for 30s (mirrors the
+    // Anthropic path) so a hung provider can't wedge the turn.
+    let lastChunkTime = Date.now();
+    const chunkTimeoutMs = 30_000;
+    let streamStalled = false;
+    const chunkWatchdog = setInterval(() => {
+      if (Date.now() - lastChunkTime > chunkTimeoutMs) {
+        streamStalled = true;
+        clearInterval(chunkWatchdog);
+        log.warn(
+          `[AI Gateway] ${provider} stream stalled — no chunk for ${chunkTimeoutMs / 1000}s. ` +
+          `Accumulated ${content.length} chars. Aborting stream.`
+        );
+        try {
+          if (stream && typeof (stream as any).controller?.abort === 'function') {
+            (stream as any).controller.abort();
+          }
+        } catch { /* best-effort abort */ }
+      }
+    }, 5_000);
+
+    try {
+      for await (const chunk of stream as AsyncIterable<any>) {
+        lastChunkTime = Date.now();
+        if (streamStalled) break;
+
+        const delta = parseOpenAIStreamDelta(chunk);
+        // Reasoning precedes the answer within a turn — emit it first.
+        if (delta.reasoning) {
+          thinking += delta.reasoning;
+          onStream('', { type: 'thinking', thinkingContent: delta.reasoning });
+        }
+        if (delta.text) {
+          content += delta.text;
+          onStream(delta.text, { type: 'text' });
+        }
+        if (delta.finishReason) finishReason = delta.finishReason;
+        if (delta.usage) {
+          inputTokens = delta.usage.inputTokens;
+          outputTokens = delta.usage.outputTokens;
+          totalTokens = delta.usage.totalTokens;
+        }
+      }
+    } catch (streamErr: any) {
+      log.error(`[AI Gateway] ${provider} stream interrupted:`, streamErr?.message);
+      if (!content) throw streamErr; // nothing captured — surface the failure
+    } finally {
+      clearInterval(chunkWatchdog);
+    }
+
+    if (streamStalled && content) {
+      finishReason = 'chunk_timeout';
+      log.warn(`[AI Gateway] Returning partial ${provider} response (${content.length} chars) after stall`);
+    }
+
+    return {
+      content,
+      thinking: thinking || undefined,
+      provider,
+      model: modelConfig.model,
+      usage: {
+        inputTokens,
+        outputTokens,
+        totalTokens: totalTokens || inputTokens + outputTokens,
+        estimatedCostUsd: this.estimateCost(modelConfig, inputTokens, outputTokens),
+      },
+      latencyMs: Date.now() - startTime,
+      requestId,
+      cached: false,
+      deterministic: false,
+      finishReason,
+    } as AnaGatewayResponse;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -1449,10 +1611,10 @@ export class AIGateway {
 
   /**
    * Build the fallback chain, exhausting the primary provider's quality
-   * ladder before crossing to a different provider. This means if Opus 4.7
-   * fails, the chain is:
+   * ladder before crossing to a different provider. This means if Opus 4.8
+   * fails, the chain is (same-provider bucket, quality-descending):
    *
-   *   Opus 4 legacy (same provider, lower quality)
+   *   Opus 4.7 (same provider, previous flagship)
    *   → Sonnet 4.6 (same provider, lower quality)
    *   → Sonnet 4 legacy (same provider, lower quality)
    *   → Haiku 4.5 (same provider, lowest Anthropic quality)
@@ -1843,6 +2005,11 @@ export class AIGateway {
         process.env.DETERMINISTIC_MODE === 'true' ||
         false,
       defaultStrategy: (process.env.AI_GATEWAY_STRATEGY as RoutingStrategy) || 'task_based',
+      // NOTE: model *selection* is driven by the DEFAULT_MODELS registry above
+      // (task/quality strategies over qualityScore), not by these per-provider
+      // `defaultModel` fields. They are a provider-level default of last resort
+      // for substrates without a registry — the flagship is set on the registry
+      // entry (`claude-opus-4` → claude-opus-4-8), not here.
       providers: [
         {
           name: 'openai',

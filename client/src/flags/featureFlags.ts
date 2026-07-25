@@ -32,6 +32,24 @@ export const featureFlags: Record<string, FeatureFlag> = {
     defaultValue: true,
     enabled: true,
   },
+  // Clinical-Regulatory Intelligence Graph — the shared evidence spine joining
+  // CSR intelligence, FDA CRL findings, study design and AnA. Gates the
+  // `crl-library` rail entry, the CSR workflow's regulatory-outcome and
+  // FDA-findings columns, the study-design evidence accordions, and the three
+  // governed evidence report types.
+  //
+  // Ships dark. Flag off restores the current UI EXACTLY — the rail entry is
+  // absent and the added columns/accordions do not render. There is deliberately
+  // no half-state in which the chrome appears without the evidence behind it.
+  // Requires the matching server flag ENABLE_CLINICAL_REGULATORY_GRAPH.
+  ENABLE_CLINICAL_REGULATORY_GRAPH: {
+    id: 'ENABLE_CLINICAL_REGULATORY_GRAPH',
+    name: 'Clinical-Regulatory Intelligence Graph',
+    description:
+      'The shared clinical-regulatory evidence graph: FDA CRL library, regulatory outcome and FDA findings on the CSR board, the study-design evidence panel, and the governed evidence-chain reports.',
+    defaultValue: false,
+    enabled: false,
+  },
   // AnA Document Studio — split-pane authoring (chat left, live document
   // preview + verification trust-panel right). Ships dark; enable per-org.
   ENABLE_ANA_DOCUMENT_STUDIO: {

@@ -6,8 +6,14 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { I } from '../icons';
 import * as PG from './ProtocolGov';
 import type { PdevDoc } from '../fixtures/protocol-data';
-import { useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { ProtocolRegisterForm, type RegisterKind } from './ProtocolRegisterForms';
+import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
+import {
+  VERIFICATION_LABEL,
+  withDenominator,
+  type DesignEvidencePanelView,
+} from '../fixtures/clinical-regulatory-evidence';
 
 const Ic = PG.Ic;
 
@@ -579,10 +585,245 @@ function ProtocolIntelDock({ doc, onAsk }: { doc: PdevDoc; onAsk?: (msg: string)
           <span className="pi-ms-dot" data-urg={m.urgency} /><span className="pi-ms-l">{m.label}</span><span className="pi-ms-d">{m.date}</span>
         </div>))}
       </PIAcc>
+      <DesignEvidenceAccordions designNodeId={doc.id != null ? String(doc.id) : null} onAsk={onAsk} />
       <button className="pi-ask" onClick={() => ask('Review the protocol for finalization gaps and draft the missing required sections.')}>
         <Ic n="sparkles" s={13} />Ask AnA to close gaps
       </button>
     </div>);
+}
+
+/**
+ * The seven §13 evidence accordions, appended to the existing intel dock under
+ * an "Evidence" divider. The existing five accordions, the outline, the SoA grid
+ * and the register forms are untouched.
+ *
+ * ONE fetch (`design-evidence?designNodeId=`) answers all seven questions, so
+ * the dock can never show supporting evidence that has arrived beside
+ * contradictions that have not — a half-loaded evidence picture reads as a
+ * one-sided one.
+ *
+ * Flag off ⇒ renders nothing at all, and the dock is byte-identical to before.
+ */
+function DesignEvidenceAccordions({
+  designNodeId,
+  onAsk,
+}: {
+  designNodeId: string | null;
+  onAsk?: (msg: string) => void;
+}) {
+  const [open, setOpen] = useState<string | null>(null);
+  const graphOn = isClinicalRegulatoryGraphEnabled();
+  const path =
+    graphOn && designNodeId
+      ? `/api/clinical-regulatory-evidence/design-evidence?designNodeId=${encodeURIComponent(designNodeId)}`
+      : null;
+  const res = useLiveData<DesignEvidencePanelView>(path);
+
+  if (!graphOn) return null;
+
+  const tog = (k: string) => setOpen(open === k ? null : k);
+  const d = res.data;
+  const cov = d?.coverage ?? null;
+
+  /** Honest per-accordion empty text — never a blank body that reads as "none". */
+  const none = (what: string) => <div className="crl-ev-empty">No {what} in the evidence graph yet.</div>;
+
+  return (
+    <>
+      <div className="crl-ev-divider">
+        <span>Evidence</span>
+      </div>
+
+      {res.error && (
+        <div className="crl-ev-empty">
+          Couldn&apos;t reach the evidence graph. Nothing is shown from a cached sample.
+        </div>
+      )}
+
+      <PIAcc
+        id="ev-comparable"
+        title="Comparable studies"
+        badge={d?.comparableStudies.length ?? 0}
+        open={open === 'ev-comparable'}
+        onToggle={() => tog('ev-comparable')}
+      >
+        {!d || d.comparableStudies.length === 0
+          ? none('comparable studies')
+          : (() => {
+              const usable = d.comparableStudies.filter((s) => s.machineReadable).length;
+              return (
+                <>
+                  {d.comparableStudies.slice(0, 6).map((s, i) => (
+                    <div key={s.nctId ?? s.sponsorStudyId ?? i} className="pi-row">
+                      <p className="pi-row-t">
+                        {s.nctId ?? s.sponsorStudyId ?? 'unidentified study'}
+                        {s.phase ? ` · ${s.phase}` : ''}
+                        {s.indication ? ` · ${s.indication}` : ''}
+                      </p>
+                      <p className="pi-row-s">
+                        {s.designSummary}
+                        {s.machineReadable ? '' : ' · not machine-readable — excluded from every prior'}
+                      </p>
+                    </div>
+                  ))}
+                  <div className="crl-ev-empty">
+                    {withDenominator(usable, d.comparableStudies.length)} carry a machine-readable
+                    effect with uncertainty. The rest are listed but excluded from any prior.
+                  </div>
+                </>
+              );
+            })()}
+      </PIAcc>
+
+      <PIAcc
+        id="ev-observed"
+        title="Observed results"
+        badge={d?.observations.length ?? 0}
+        open={open === 'ev-observed'}
+        onToggle={() => tog('ev-observed')}
+      >
+        {!d || d.observations.length === 0 ? (
+          none('structured observations')
+        ) : (
+          <>
+            {d.pooled && (
+              <div className="pi-row">
+                <p className="pi-row-t">
+                  {d.pooled.measure} {d.pooled.value} (95% CI {d.pooled.ci[0]}–{d.pooled.ci[1]})
+                </p>
+                <p className="pi-row-s">Pooled n {d.pooled.n}</p>
+              </div>
+            )}
+            <div className="crl-ev-empty">
+              Benefit direction normalised; the transformation is recorded on each observation.
+            </div>
+          </>
+        )}
+      </PIAcc>
+
+      <PIAcc
+        id="ev-objections"
+        title="FDA objections"
+        badge={d?.findings.length ?? 0}
+        open={open === 'ev-objections'}
+        onToggle={() => tog('ev-objections')}
+      >
+        {!d || d.findings.length === 0
+          ? none('FDA findings mapped to this design node')
+          : d.findings.slice(0, 6).map((f) => (
+              <div key={f.findingId} className="pi-row">
+                <p className="pi-row-t">{f.finding}</p>
+                <p className="pi-row-s">
+                  {f.source.applicationType} {f.source.applicationNumber}
+                  {f.source.page != null ? ` · p. ${f.source.page}` : ''} ·{' '}
+                  {f.epistemicStatus === 'explicit' ? 'explicit' : 'inferred'} ·{' '}
+                  {VERIFICATION_LABEL[f.verification]}
+                </p>
+              </div>
+            ))}
+      </PIAcc>
+
+      <PIAcc
+        id="ev-stress"
+        title="Stress tests"
+        badge={d ? `${d.stressScenarios.length} selected` : 0}
+        open={open === 'ev-stress'}
+        onToggle={() => tog('ev-stress')}
+      >
+        {!d || d.stressScenarios.length === 0 ? (
+          none('selected stress scenarios')
+        ) : (
+          <>
+            {d.stressScenarios.map((s) => (
+              <div key={s.scenarioId} className="pi-row">
+                <p className="pi-row-t">{s.label}</p>
+                <p className="pi-row-s">
+                  {s.parameterSource === 'none' ? 'No numeric parameter — scenario only' : s.parameterNote}
+                </p>
+              </div>
+            ))}
+            <div className="crl-ev-empty">
+              Scenarios are selected by CRL pattern. The letters justify why each matters; they do
+              not supply the numbers.
+            </div>
+          </>
+        )}
+      </PIAcc>
+
+      <PIAcc
+        id="ev-assumptions"
+        title="Assumptions"
+        badge={d?.assumptions.length ?? 0}
+        open={open === 'ev-assumptions'}
+        onToggle={() => tog('ev-assumptions')}
+      >
+        {!d || d.assumptions.length === 0
+          ? none('recorded assumptions')
+          : d.assumptions.map((a, i) => (
+              <div key={i} className="pi-row">
+                <p className="pi-row-t">
+                  {a.label} · {a.value}
+                </p>
+                <p className="pi-row-s">Source: {a.source}</p>
+              </div>
+            ))}
+      </PIAcc>
+
+      <PIAcc
+        id="ev-contradictions"
+        title="Contradictory evidence"
+        badge={d?.contradictions.length ?? 0}
+        open={open === 'ev-contradictions'}
+        onToggle={() => tog('ev-contradictions')}
+      >
+        {/* Retrieved separately and shown separately — never averaged into support. */}
+        {!d || d.contradictions.length === 0
+          ? none('contradictory evidence')
+          : d.contradictions.map((c, i) => (
+              <div key={i} className="pi-row">
+                <p className="pi-row-t">{c.text}</p>
+                {c.source && (
+                  <p className="pi-row-s">
+                    {c.source.applicationType} {c.source.applicationNumber}
+                    {c.source.page != null ? ` · p. ${c.source.page}` : ''}
+                  </p>
+                )}
+              </div>
+            ))}
+      </PIAcc>
+
+      <PIAcc
+        id="ev-sources"
+        title="Sources"
+        badge={cov ? `${cov.cited} cited` : 0}
+        open={open === 'ev-sources'}
+        onToggle={() => tog('ev-sources')}
+      >
+        {!cov ? (
+          none('coverage')
+        ) : (
+          <div className="crl-ev-empty">
+            {cov.scanned} scanned · {withDenominator(cov.eligible, cov.scanned)} eligible ·{' '}
+            {withDenominator(cov.structured, cov.eligible)} structured ·{' '}
+            {withDenominator(cov.verified, cov.structured)} verified · {cov.cited} cited.
+            {cov.exclusionNote ? ` ${cov.exclusionNote}` : ''}
+          </div>
+        )}
+      </PIAcc>
+
+      <button
+        className="crl-trace-btn"
+        onClick={() =>
+          onAsk &&
+          onAsk(
+            'Trace this recommendation: show the sources, transformations, calculations, assumptions and contradictions behind it.',
+          )
+        }
+      >
+        <Ic n="sparkles" s={13} />Trace this recommendation
+      </button>
+    </>
+  );
 }
 
 /* ---- Bridge exports ---- */

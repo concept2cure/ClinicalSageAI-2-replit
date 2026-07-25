@@ -8,8 +8,22 @@
  */
 import React, { useEffect, useState } from 'react';
 import { I } from '../icons';
-import { SampleTag, useLive, useLiveList } from '../dataConnect';
+import { SampleTag, useLive, useLiveData, useLiveList } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
+import {
+  APPLICABILITY_LABEL,
+  OUTCOME_LABEL,
+  SEVERITY_TONE,
+  VERIFICATION_LABEL,
+  VERIFICATION_TONE,
+  isStudyAttributable,
+  withDenominator,
+  type CoverageView,
+  type FindingSearchView,
+  type RegulatoryFindingView,
+  type RegulatoryOutcomeView,
+} from '../fixtures/clinical-regulatory-evidence';
 import {
   STATUS_TONE,
   BIO_PROGRAM,
@@ -187,6 +201,229 @@ interface CsrBoard {
   sections: CsrSection[];
 }
 
+/**
+ * The ICH E3 board's grid template. The base four columns are unchanged; the two
+ * regulatory dimensions are appended only when the Clinical-Regulatory
+ * Intelligence Graph is enabled, so flag-off renders byte-identically to before.
+ */
+const CSR_COLS_BASE = '70px 1fr 100px 60px';
+const CSR_COLS_GRAPH = '62px 1fr 96px 150px 168px 34px';
+
+/**
+ * Coverage strip — §8.1 denominators for the study, above the board.
+ *
+ * Every cell shows a raw count, never a percentage: "18 verified" alongside "31
+ * structured" lets a reader compute the ratio and see the base it came from. A
+ * lone "58% verified" would hide whether the denominator was 31 or 3.
+ */
+function CoverageStrip({ coverage }: { coverage: CoverageView }) {
+  const cells: [string, number, boolean][] = [
+    ['Scanned', coverage.scanned, false],
+    ['Eligible', coverage.eligible, false],
+    ['Structured', coverage.structured, false],
+    ['Verified', coverage.verified, true],
+    ['Cited', coverage.cited, false],
+  ];
+  return (
+    <div className="pj-card" style={{ marginBottom: 18, maxWidth: 760 }}>
+      <div className="pj-card-h">
+        <span className="t">Corpus coverage for this study</span>
+        <span className="s">clinical-regulatory-evidence · coverage-service</span>
+      </div>
+      <div className="pj-card-b">
+        <div className="crl-strip">
+          {cells.map(([k, n, isVerified]) => (
+            <div key={k} className="crl-strip-cell">
+              <div className={'crl-strip-n' + (isVerified ? ' is-verified' : '')}>{n}</div>
+              <div className="crl-strip-k">{k}</div>
+            </div>
+          ))}
+        </div>
+        <div className="crl-note" style={{ marginTop: 10 }}>
+          {coverage.exclusionNote ??
+            `Denominators are reported, not inferred. ${withDenominator(
+              coverage.verified,
+              coverage.structured,
+            )} structured observations are human-verified; the rest are excluded from every displayed effect estimate.`}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * FDA findings on the selected section, plus the verified outcome and the
+ * traceability path.
+ *
+ * The two rules this panel exists to hold:
+ *   · a finding that is not study-level says so and is NOT attributed to the CSR;
+ *   · no verified outcome renders as "Not verified" — never as a blank that
+ *     reads as "fine", and never as an outcome inferred from trial status.
+ */
+function RegulatoryPanel({
+  findings,
+  outcome,
+  coverage,
+  onAsk,
+}: {
+  findings: RegulatoryFindingView[];
+  outcome: RegulatoryOutcomeView | null;
+  coverage: CoverageView | null;
+  onAsk: (t: string) => void;
+}) {
+  return (
+    <div className="sp-2col" style={{ gridTemplateColumns: '1.35fr 1fr', marginTop: 20 }}>
+      <div className="pj-card">
+        <div className="pj-card-h">
+          <span className="t">FDA findings on this study</span>
+          <span className="s">
+            {findings.length} finding{findings.length === 1 ? '' : 's'}
+          </span>
+        </div>
+        <div className="pj-card-b">
+          {findings.length === 0 ? (
+            <div className="scaf-note">
+              No FDA findings are linked to this study in the evidence graph. That is the honest
+              state of the corpus, not a clean bill of health — findings appear here only once an
+              official letter has been ingested and mapped to this application.
+            </div>
+          ) : (
+            <div className="sp-list">
+              {findings.map((f) => (
+                <div key={f.findingId} className="crl-row">
+                  <span className="crl-row-top">
+                    <span className={'rd-chip tone-' + SEVERITY_TONE[f.severity]}>{f.severity}</span>
+                    <span className="crl-meta">
+                      {f.discipline.replace(/_/g, ' ')} · {f.category}
+                    </span>
+                    <span className={'rd-chip tone-' + VERIFICATION_TONE[f.verification]}>
+                      {VERIFICATION_LABEL[f.verification]}
+                    </span>
+                  </span>
+                  <span className="crl-row-text">{f.finding}</span>
+                  {f.source.excerpt && <blockquote className="crl-quote">{f.source.excerpt}</blockquote>}
+                  {f.mappings.length > 0 && (
+                    <span className="crl-row-foot">
+                      {f.mappings.map((m, i) => (
+                        <span
+                          key={`${m.kind}-${i}`}
+                          className={'rd-chip tone-idle' + (m.status === 'inferred' ? ' crl-inferred' : '')}
+                        >
+                          {m.value} · {m.status === 'explicit' ? 'source-explicit' : 'inferred'}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                  <span className="crl-row-foot">
+                    <span className="mono crl-meta">
+                      {f.source.applicationType} {f.source.applicationNumber}
+                      {f.source.page != null ? ` · letter p. ${f.source.page}` : ''}
+                    </span>
+                    <button
+                      type="button"
+                      className="sp-go"
+                      onClick={() => onAsk(`Trace the evidence behind FDA finding ${f.findingId}.`)}
+                    >
+                      {I.route}
+                    </button>
+                  </span>
+                  {!isStudyAttributable(f) && (
+                    <span className="crl-note">
+                      {APPLICABILITY_LABEL[f.applicability]} — not attributed to this clinical study.
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <div className="pj-card" style={{ marginBottom: 14 }}>
+          <div className="pj-card-h">
+            <span className="t">Regulatory outcome</span>
+          </div>
+          <div className="pj-card-b">
+            {!outcome ? (
+              <>
+                <div className="tl-spec-grid">
+                  <div className="tl-spec-row">
+                    <span className="tl-spec-k">Outcome</span>
+                    <span className="tl-spec-v crl-outcome-none">Not verified</span>
+                  </div>
+                </div>
+                <div className="crl-note" style={{ marginTop: 10 }}>
+                  No verified regulatory outcome is recorded for this application. Trial completion
+                  is never read as regulatory success, so nothing is inferred here.
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="tl-spec-grid">
+                  <div className="tl-spec-row">
+                    <span className="tl-spec-k">Application</span>
+                    <span className="tl-spec-v mono">
+                      {outcome.applicationType} {outcome.applicationNumber}
+                    </span>
+                  </div>
+                  <div className="tl-spec-row">
+                    <span className="tl-spec-k">Letter date</span>
+                    <span className="tl-spec-v mono">{outcome.letterDate ?? 'not recorded'}</span>
+                  </div>
+                  <div className="tl-spec-row">
+                    <span className="tl-spec-k">Outcome</span>
+                    <span
+                      className={
+                        'tl-spec-v' + (outcome.outcome === 'crl' ? ' crl-outcome-crl' : '')
+                      }
+                    >
+                      {OUTCOME_LABEL[outcome.outcome]}
+                    </span>
+                  </div>
+                  <div className="tl-spec-row">
+                    <span className="tl-spec-k">Resubmission</span>
+                    <span className="tl-spec-v">{outcome.resubmissionState ?? 'Unresolved'}</span>
+                  </div>
+                  <div className="tl-spec-row">
+                    <span className="tl-spec-k">Study link</span>
+                    <span className="tl-spec-v">
+                      {outcome.studyLink?.nctId
+                        ? `${outcome.studyLink.nctId} · ${outcome.studyLink.status}`
+                        : 'No linked study'}
+                    </span>
+                  </div>
+                </div>
+                <div className="crl-note" style={{ marginTop: 10 }}>
+                  Outcome is recorded from the verified letter and resubmission record. Trial
+                  completion is never read as regulatory success.
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="pj-card">
+          <div className="pj-card-h">
+            <span className="t">Traceability path</span>
+          </div>
+          <div className="pj-card-b">
+            <div style={{ fontSize: 12, lineHeight: 1.9, color: 'var(--text-200)' }}>
+              Proposed endpoint
+              <br />↓ comparable CSR designs · {coverage?.structured ?? 0}
+              <br />↓ structured observed effects · {coverage?.verified ?? 0}
+              <br />↓ FDA findings · {findings.length}
+              <br />↓ applicability and differences
+              <br />↓ recommendation
+              <br />↓ assumptions, contradictions, sources
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
   // Live ICH E3 CSR build board (GET /api/csr-workflow/board → { success,
   // data: { program, sections } }). `useLive` assigns the whole response body to
@@ -210,6 +447,42 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
   const sections = valid ? board!.sections : CSR_SECTIONS;
   const sample = !valid;
 
+  /* ── Clinical-Regulatory Intelligence Graph (flag-gated) ──
+     Read as a SEPARATE fetch from the CSR board rather than widening the board
+     DTO. Two reasons: the board route stays untouched and keeps its own
+     contract, and evidence that fails to load degrades the two added columns
+     alone instead of taking the whole ICH E3 board down with it. */
+  const graphOn = isClinicalRegulatoryGraphEnabled();
+  const findingsRes = useLiveData<FindingSearchView>(
+    graphOn ? '/api/clinical-regulatory-evidence/findings?limit=25' : null,
+  );
+  const outcomeRes = useLiveData<RegulatoryOutcomeView>(null);
+
+  const findings: RegulatoryFindingView[] = findingsRes.data?.findings ?? [];
+  const coverage: CoverageView | null = findingsRes.data?.coverage ?? null;
+  const outcome: RegulatoryOutcomeView | null = outcomeRes.data ?? null;
+
+  /** Findings mapped to an ICH E3 section, for the per-row counts. */
+  const findingsBySection = React.useMemo(() => {
+    const bySection = new Map<string, RegulatoryFindingView[]>();
+    for (const f of findings) {
+      // Only study-level findings are attributed to a section. Application-,
+      // facility-, CMC- and labeling-level findings are shown in the panel below
+      // but deliberately never counted against a CSR section (§6.2).
+      if (!isStudyAttributable(f)) continue;
+      for (const m of f.mappings) {
+        if (m.kind !== 'ich_e3') continue;
+        const key = m.value.replace(/^§/, '');
+        const list = bySection.get(key) ?? [];
+        list.push(f);
+        bySection.set(key, list);
+      }
+    }
+    return bySection;
+  }, [findings]);
+
+  const cols = graphOn ? CSR_COLS_GRAPH : CSR_COLS_BASE;
+
   return (
     <div className="page-inner">
       <SampleTag sample={sample} />
@@ -224,28 +497,75 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
         }
       />
 
-      <div className="ctable" style={{ maxWidth: 760 }}>
-        <div className="ct-head" style={{ gridTemplateColumns: '70px 1fr 100px 60px' }}>
-          <div>§</div><div>ICH E3 section</div><div>Status</div><div></div>
+      {graphOn && coverage && <CoverageStrip coverage={coverage} />}
+
+      <div className="ctable" style={{ maxWidth: graphOn ? 1100 : 760 }}>
+        <div className="ct-head" style={{ gridTemplateColumns: cols }}>
+          <div>§</div><div>ICH E3 section</div><div>Status</div>
+          {graphOn && <div className="crl-dim-head">Regulatory outcome</div>}
+          {graphOn && <div className="crl-dim-head">FDA findings</div>}
+          <div></div>
         </div>
-        {sections.map((s, i) => (
-          <button
-            key={i}
-            className="ct-row"
-            style={{ gridTemplateColumns: '70px 1fr 100px 60px' }}
-            data-blocker={s.blocker || undefined}
-            onClick={() => onAsk(`Open CSR §${s.num} in the editor`)}
-          >
-            <div className="mono" style={{ color: 'var(--accent-200)' }}>{s.num}</div>
-            <div className="vn">
-              {s.blocker && <span className="esig" style={{ color: 'var(--error)' }}>{I.alertTriangle}</span>}
-              <span className="ct-strong">{s.label}</span>
-            </div>
-            <div><span className={`rd-chip tone-${STATUS_TONE[s.status]}`}>{s.status}</span></div>
-            <div style={{ color: 'var(--text-400)' }}>{I.arrowRight}</div>
-          </button>
-        ))}
+        {sections.map((s, i) => {
+          const secFindings = findingsBySection.get(String(s.num)) ?? [];
+          const byDiscipline = secFindings.reduce<Record<string, number>>((acc, f) => {
+            acc[f.discipline] = (acc[f.discipline] ?? 0) + 1;
+            return acc;
+          }, {});
+          return (
+            <button
+              key={i}
+              className="ct-row"
+              style={{ gridTemplateColumns: cols }}
+              data-blocker={s.blocker || undefined}
+              onClick={() => onAsk(`Open CSR §${s.num} in the editor`)}
+            >
+              <div className="mono" style={{ color: 'var(--accent-200)' }}>{s.num}</div>
+              <div className="vn">
+                {s.blocker && <span className="esig" style={{ color: 'var(--error)' }}>{I.alertTriangle}</span>}
+                <span className="ct-strong">{s.label}</span>
+              </div>
+              <div><span className={`rd-chip tone-${STATUS_TONE[s.status]}`}>{s.status}</span></div>
+              {graphOn && (
+                <div>
+                  {/* No verified outcome ⇒ "Not verified". Never a blank that
+                      reads as fine, never an outcome inferred from status. */}
+                  {outcome ? (
+                    <span className={outcome.outcome === 'crl' ? 'crl-outcome-crl' : 'crl-outcome-none'}>
+                      {OUTCOME_LABEL[outcome.outcome]}
+                    </span>
+                  ) : (
+                    <span className="crl-outcome-none">Not verified</span>
+                  )}
+                </div>
+              )}
+              {graphOn && (
+                <div className="crl-findcounts">
+                  {secFindings.length === 0 ? (
+                    <span className="crl-outcome-none">—</span>
+                  ) : (
+                    Object.entries(byDiscipline).map(([d, n]) => (
+                      <span key={d} className="rd-chip tone-warn">
+                        {n} {d.replace(/_/g, ' ')}
+                      </span>
+                    ))
+                  )}
+                </div>
+              )}
+              <div style={{ color: 'var(--text-400)' }}>{I.arrowRight}</div>
+            </button>
+          );
+        })}
       </div>
+
+      {graphOn && (
+        <RegulatoryPanel
+          findings={findings}
+          outcome={outcome}
+          coverage={coverage}
+          onAsk={onAsk}
+        />
+      )}
 
       <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
         §11 Efficacy evaluation is the gating section — open it in the document editor to draft from the SAP and TLF shells with provenance.
