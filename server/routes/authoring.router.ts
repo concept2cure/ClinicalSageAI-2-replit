@@ -2971,11 +2971,18 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
 
     // Create electronic signature record
     const signatureId = crypto.randomUUID();
+    // Writes authoring_signatures, NOT electronic_signatures. The latter is the
+    // Part 11 table for the integer-keyed legacy document system: its
+    // document_id is `INTEGER REFERENCES documents(id)` where this loop has UUID
+    // doc ids, and it carries seven NOT NULL columns this insert never supplied.
+    // The two are different concepts that collided on a name, so the authoring
+    // loop now has its own store — the same one GET /docs/:docId/signatures has
+    // always read. See ledger C-11 residual 1.
     await pool.query(
-      `INSERT INTO electronic_signatures
-       (id, doc_id, signer_email, signer_name, signature_meaning, signature_intent,
-        document_hash, pin_verified, ip_address, user_agent, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      `INSERT INTO authoring_signatures
+       (id, doc_id, signer_email, signer_name, meaning, reason, method,
+        content_hash, pin_verified, ip_address, user_agent, tenant_id)
+       VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, $10, $11)`,
       [
         signatureId,
         docId,
@@ -4549,8 +4556,18 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     const { docId } = req.params;
     const { pin, meaning = 'REVIEWER', reason } = req.body;
     const tenantId = getTenantId(req);
-    const signerEmail = req.headers['x-user-email'] || req.body.signer_email || 'system';
-    const signerName = req.body.signer_name || signerEmail;
+    // Part 11 §11.100: the signer is the VERIFIED principal. This took its
+    // identity from `x-user-email || req.body.signer_email || 'system'`, so a
+    // caller could sign as anyone — or as "system", which is nobody. The defect
+    // survived because this endpoint writes authoring_signatures, a table that
+    // did not exist, so it failed before attribution ever mattered. See C-11
+    // residual 1 and C-18.
+    const signerEmail = getActorEmail(req);
+    if (!signerEmail) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    const signerName =
+      ((req.user as { name?: string } | undefined)?.name) || signerEmail;
 
     // Validate required fields
     if (!pin || !reason) {
@@ -4589,8 +4606,13 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
       ]
     );
 
-    // Update workflow step if applicable
-    const userRoles = ((req.headers as any)['x-roles'] || '').toString().toUpperCase().split(',');
+    // Update workflow step if applicable. Roles come from the VERIFIED token
+    // (req.user.roles), not from the x-roles header — the header is derived from
+    // claims by this router's JWT middleware, but reading the claim directly
+    // means an approval decision can never depend on a mutable header at all
+    // (ledger C-18).
+    const userRoles = (((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[])
+      .map((r) => String(r).toUpperCase());
     if (userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC')) {
       await pool.query(
         `UPDATE authoring_workflow_steps

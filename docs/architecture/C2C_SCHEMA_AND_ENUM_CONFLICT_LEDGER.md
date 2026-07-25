@@ -1065,6 +1065,72 @@ tenant claim cannot create in a tenant it names.
 
 ---
 
+## C-11 residual 1 — RESOLVED: the authoring loop has its own signature store *(2026-07-25)*
+
+Recorded at C-17 as "the next step", now done.
+
+### What was wrong
+
+Two signing endpoints, storage for neither:
+
+| endpoint | wrote | why it could not work |
+|---|---|---|
+| `POST /docs/:docId/e-sign` | `electronic_signatures` | that is the Part 11 table for the **integer-keyed legacy document system** — `document_id INTEGER REFERENCES documents(id)` against this loop's UUID doc ids, plus seven NOT NULL columns (`version_id`, `signature_type`, `signature_purpose`, `signer_id`, `authentication_method`, `authentication_timestamp`, `signature_hash`) the authoring insert never supplied |
+| `POST /docs/:docId/sign` | `authoring_signatures` | the table existed nowhere (a C-15 phantom) |
+
+Meanwhile `GET /docs/:docId/signatures` — the only reader — selects from
+`authoring_signatures`. So a document could be signed twice and its signature
+list still came back empty.
+
+### Resolution: a separate table, not a wider one
+
+These are different concepts that collided on a name, so widening
+`electronic_signatures` into a union of both would have been the wrong fix.
+`db/migrations/20260725_authoring_signatures_and_workflow.sql` gives the authoring
+loop its own code-derived store, plus `authoring_workflow_steps` (equally
+unbacked, so submitting for review and approving a step both failed).
+
+Design decisions recorded in the migration itself:
+
+- **No FK on `doc_id`.** A signature is evidence about a record and must outlive
+  it; `ON DELETE CASCADE` would let deleting a document destroy proof that
+  someone signed it (§11.70).
+- **One vocabulary.** `/e-sign`'s `intent` and `/sign`'s `reason` become one
+  `reason` column.
+- **`signature_digest` stays NULL for `/e-sign`.** Giving it one would mean
+  hashing a fresh timestamp — a value no verifier could recompute. An absent
+  digest is honest; an unverifiable one is not.
+
+### `/sign` fixed rather than left to rot
+
+It took its signer from `x-user-email || body.signer_email || 'system'` and
+decided workflow approval from the `x-roles` header. Both now come from the
+verified token, and roles are read from `req.user.roles` directly rather than the
+header (the stronger form of the C-18 fix). The defect had survived precisely
+because the endpoint wrote a table that did not exist, so it failed before
+attribution ever mattered.
+
+### Proof
+
+Journey A grew from 21 to **24 steps** (17 ok / 7 blocked) and — the point of this
+change — **no longer needs TEST-ONLY DDL**. It previously stood in a code-shaped
+`electronic_signatures` because the real one could not accept the write; that
+limitation is now deleted from the journey. New steps assert the signatures list
+returns both signatures with the right meanings and method, and that a second
+tenant sees none of them.
+
+`ci:unbacked-tables` baseline 95 → 93, the two removed entries being exactly
+`authoring_signatures` and `authoring_workflow_steps`.
+
+### Residual 2 still open
+
+Freeze hashes a JSON snapshot including a non-reproducible `frozenAt`, while
+signatures hash the section-content join. Both chains verify independently but
+are not linked, so a signature still cannot be cryptographically tied to the
+frozen snapshot it covers. Unchanged by this work.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

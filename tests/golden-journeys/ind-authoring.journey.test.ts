@@ -12,10 +12,12 @@
  * until that migration. This journey is the acceptance proof that the
  * code-derived reconstruction matches what the code actually does.
  *
- * electronic_signatures is TEST-ONLY DDL here (code shape): the deployed
- * push-surface table of the same name has a DIFFERENT column set, so the
- * e-sign INSERT fails against real deployments until that reconciliation
- * lands. Recorded as a limitation, not hidden.
+ * Signatures land in `authoring_signatures` (db/migrations/20260725_authoring_signatures_and_workflow.sql).
+ * e-sign previously wrote `electronic_signatures` — the Part 11 table for the
+ * integer-keyed legacy document system, whose shape it could never satisfy — so
+ * this journey used TEST-ONLY DDL to stand in for it. That reconciliation has
+ * landed (ledger C-11 residual 1) and the journey now runs entirely on canonical
+ * migrations.
  *
  * Output: tests/golden-journeys/__reports__/ind-authoring.{manifest.json,report.md}
  */
@@ -92,24 +94,6 @@ const PREREQ = `
     ('${OUTSIDER.id}', '${OUTSIDER.name}', '${OUTSIDER.email}');
 `;
 
-/** Code-shaped electronic_signatures — TEST-ONLY (see file header). */
-const TEST_ONLY_ESIGN_DDL = `
-  CREATE TABLE electronic_signatures (
-    id UUID PRIMARY KEY,
-    doc_id UUID NOT NULL,
-    signer_email TEXT NOT NULL,
-    signer_name TEXT,
-    signature_meaning TEXT NOT NULL,
-    signature_intent TEXT NOT NULL,
-    document_hash TEXT NOT NULL,
-    pin_verified BOOLEAN NOT NULL DEFAULT FALSE,
-    ip_address TEXT,
-    user_agent TEXT,
-    tenant_id INTEGER NOT NULL,
-    signed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-  );
-`;
-
 let jdb: JourneyDb;
 let app: express.Express;
 
@@ -129,8 +113,8 @@ beforeAll(async () => {
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260725_authoring_audit_trail.sql',
+      'db/migrations/20260725_authoring_signatures_and_workflow.sql',
     ],
-    testOnlySql: TEST_ONLY_ESIGN_DDL,
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
@@ -361,13 +345,41 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     // ── Evidence: signatures are JWT-attributed, not header-attributed ───────
     await R.step('signature-attribution-evidence', async () => {
       const sigs = await jdb.pool.query(
-        `SELECT signer_email, signature_meaning, pin_verified FROM electronic_signatures
+        `SELECT signer_email, meaning, reason, method, pin_verified FROM authoring_signatures
           WHERE doc_id = $1 AND tenant_id = 1 ORDER BY signed_at`,
         [docId],
       );
       const emails = sigs.rows.map((r) => (r as { signer_email: string }).signer_email);
       expect(emails).toEqual([AUTHOR.email, APPROVER.email]);
       return { signers: sigs.rows };
+    });
+
+    // ── Evidence: the signatures LIST endpoint finally sees them ─────────────
+    // GET /docs/:docId/signatures has always read authoring_signatures while
+    // e-sign wrote electronic_signatures, so the list was empty even after a
+    // document was signed twice. One store now, so the read path agrees with the
+    // write path (ledger C-11 residual 1).
+    await R.step('signatures-list-returns-both-signatures', async () => {
+      const res = await asUser(AUTHOR)(
+        request(app).get(`/api/authoring/docs/${docId}/signatures`),
+      );
+      expect(res.status).toBe(200);
+      const list = res.body.signatures as { signer_email: string; meaning: string; method: string }[];
+      expect(list).toHaveLength(2);
+      expect(new Set(list.map((s) => s.meaning))).toEqual(new Set(['AUTHOR', 'APPROVER']));
+      expect(list.every((s) => s.method === 'PIN')).toBe(true);
+      return { count: list.length, meanings: list.map((s) => s.meaning) };
+    });
+
+    await R.expectBlocked('cross-tenant-signature-list-is-empty', async () => {
+      const res = await asUser(OUTSIDER)(
+        request(app).get(`/api/authoring/docs/${docId}/signatures`),
+      );
+      return {
+        blocked: res.status === 200 && (res.body.signatures ?? []).length === 0,
+        status: res.status,
+        rows: (res.body.signatures ?? []).length,
+      };
     });
 
     // ── 12. Export the approved document ────────────────────────────────────
@@ -491,6 +503,8 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
     });
 
     R.observations.push(
+      'Fixed while building this journey: e-sign wrote `electronic_signatures` — the Part 11 table for the INTEGER-keyed legacy document system, whose document_id is an integer FK and which carries seven NOT NULL columns the authoring insert never supplied. It could not work on any real deployment. The authoring loop now has its own store, authoring_signatures, which is what GET /docs/:docId/signatures had always read — so the list endpoint returned nothing even for a twice-signed document (ledger C-11 residual 1).',
+      'Fixed while building this journey: POST /docs/:docId/sign took its signer from `x-user-email || body.signer_email || \'system\'` and decided workflow approval from the x-roles header. Both now come from the verified token. The defect survived because that endpoint wrote authoring_signatures, which did not exist, so it failed before attribution ever mattered.',
       'Fixed while building this journey: POST /docs/:docId/export inserted into `authoring_exports` and GET /docs/:docId/diff-since-export read `doc_exports` — NEITHER table is created by any migration or any runtime DDL in this repo, and both queries were unguarded. Every export request and every diff request returned 500. The flagship authoring loop could draft, freeze and sign a document but could not export one (ledger C-14).',
       'Fixed while building this journey: the export record is now written by logExport() AFTER the bytes are generated, so file_name and file_size are the real ones rather than placeholders, and ANA-initiated exports (command-executor) record to the same table instead of the phantom one.',
       'Fixed while building this journey: freeze queried authoring_sections.document_id — a column that does not exist (doc_id everywhere else). Freeze had never been executable.',
@@ -498,7 +512,6 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       'INTEGRITY GAP (recorded, not fixed): freeze hashes the full JSON snapshot including a frozenAt timestamp (not reproducible), while e-sign hashes the section-content join — the two chains are independently verifiable but NOT linked, so a signature cannot be cryptographically tied to the frozen snapshot it covers. Belongs to the electronic_signatures reconciliation (ledger C-11 / WO-03).',
     );
     R.limitations.push(
-      'electronic_signatures here is TEST-ONLY code-shaped DDL: the deployed push-surface table of the same name has a different column set, so the e-sign INSERT fails on real deployments until that reconciliation lands (ledger C-11).',
       'Authentication uses real HS256-signed JWTs verified by the router itself; only the upstream token-ISSUANCE flow (login/MFA) is outside this journey.',
       'Templates, checklists, exports, permissions and the packager hand-off are not yet in the journey; dossier readiness and eCTD compile are the next phase of Journey A.',
     );
