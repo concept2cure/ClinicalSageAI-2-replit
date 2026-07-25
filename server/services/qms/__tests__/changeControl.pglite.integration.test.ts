@@ -30,11 +30,15 @@ vi.mock('../../../db', () => ({ pool: { query: (sql: string, params?: unknown[])
 
 import * as svc from '../changeControl.service';
 
-/** The GA demo seed is untyped ESM JS; load it dynamically and type at the call
- *  site (a static import would trip TS7016 under noImplicitAny). */
+/** The GA demo seed is untyped ESM JS with no .d.ts. Import it through a
+ *  string-typed specifier so tsc treats it as a runtime dynamic import rather
+ *  than statically resolving it — a string-literal import (static OR dynamic)
+ *  trips TS7016 under noImplicitAny. Typed at the call site; runtime unchanged.
+ *  (Same `await import(var)` idiom already used across the security contract tests.) */
 type SeedFn = (client: unknown, ctx: unknown) => Promise<void>;
+const SEED_QMS_QUALITY_PATH: string = '../../../../scripts/seed/ga-demo.d/123-qms-quality.mjs';
 async function loadSeedQuality(): Promise<SeedFn> {
-  const mod = (await import('../../../../scripts/seed/ga-demo.d/123-qms-quality.mjs')) as { default: SeedFn };
+  const mod = (await import(SEED_QMS_QUALITY_PATH)) as { default: SeedFn };
   return mod.default;
 }
 
