@@ -61,6 +61,15 @@ jobs:
         # a silent no-op (query inside try/catch). See ledger C-14.
         run: npm run ci:unbacked-tables
 
+      - name: Guardrails — security patterns (tenant / identity / role trust)
+        # Existed only as a pre-commit hook, so it was skipped by any commit made
+        # with --no-verify and never enforced on the branch. It now blocks in CI.
+        # Covers the PR #496-500 tenant-trust rules plus identity-trust-header
+        # (ledger C-18), which caught 11 further violations across four files on
+        # its first run — including a header-supplied userId passed straight into
+        # a document query.
+        run: npm run check:security-patterns
+
       - name: Proof tier — schema contracts + golden journeys
         # These run inside `npm test` too, but they get their own blocking step
         # because they are the acceptance evidence for the C-8/C-10/C-11/C-12/

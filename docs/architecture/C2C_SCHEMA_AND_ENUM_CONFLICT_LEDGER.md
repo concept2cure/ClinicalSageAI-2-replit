@@ -1188,6 +1188,48 @@ journey.
 
 ---
 
+## C-18 addendum — the same class, repo-wide *(FIXED 2026-07-25)*
+
+C-18 was found in one router. Turning it into a lint rule found it in four more
+files, on the first run.
+
+`scripts/check-security-patterns.ts` already carried tenant-trust rules from PRs
+#496-500. A new `identity-trust-header` rule extends it to identity and roles:
+`x-roles`, `x-user-email`, `x-user-name`, `x-user-id`. **11 violations** across
+four files:
+
+| file | what the header decided |
+|---|---|
+| `server/api/templates/routes.ts` (2) | `userId` passed straight into `getRecentDocuments(userId, orgId)` — a caller could read **another user's documents** by naming them |
+| `server/src/routes/stability.router.ts` (5) | GxP attribution: `stab_audit.actor`, `stab_results.reviewed_by`, `stab_chain.actor` (chain of custody), `stab_samples.collected_by` |
+| `server/api/cmc/regulatoryIR.ts` (4) | actor on regulatory information-request audit rows |
+| `server/src/mw/observability.ts` (1) | telemetry label only — **exempted**, with the same rationale the file already carries for the tenant rule |
+
+The defaults are their own finding: `|| 'user'`, `|| 'reviewer'`, `|| 'collector'`.
+A placeholder that identifies nobody still satisfies a NOT NULL attribution
+column, so the record looks complete and attributes to no one.
+
+### Fix
+
+`server/utils/authedActor.ts` — sibling of `authedOrgId`. That one answers "which
+tenant?", this one answers "who?", and both exist because the answer must come
+from the token. Exports `authedActor` (email, else subject), `authedUserId`,
+`authedActorName`, `authedRoles`.
+
+One deliberate exception: `stab_samples.collected_by` keeps its explicit body
+value, because a sample may genuinely be collected by someone other than the API
+caller — that is data entry, not impersonation. Only the header fallback and the
+`'collector'` placeholder were removed.
+
+### The guard was not enforced anywhere
+
+`check:security-patterns` existed **only as a pre-commit hook**, so any commit
+made with `--no-verify` skipped it and nothing checked the branch. It is now a
+blocking CI step — which also brings the pre-existing PR #496-500 tenant rules
+under enforcement for the first time.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe

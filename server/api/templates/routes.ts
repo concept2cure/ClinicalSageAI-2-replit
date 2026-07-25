@@ -1,3 +1,4 @@
+import { authedUserId } from '../../utils/authedActor';
 import { Request, Response, Router } from 'express';
 import { templateService } from '../../services/templateService';
 // Document templates now use ectdTemplates table
@@ -574,9 +575,12 @@ router.post('/:id/use', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Organization context required' });
     }
     const templateId = parseInt(String(req.params.id));
-    const userId = parseInt(req.headers['x-user-id'] as string);
+    // Verified subject, not the x-user-id header. GET /recent/documents passed
+    // this straight into getRecentDocuments(userId, orgId), so a caller could
+    // read another user's documents by naming them. See ledger C-18.
+    const userId = authedUserId(req);
     if (!userId) {
-      return res.status(401).json({ error: 'User context required (x-user-id header)' });
+      return res.status(401).json({ error: 'User context required' });
     }
 
     const usageType = req.body.usageType || 'create_new';
@@ -606,9 +610,12 @@ router.get('/recent/documents', async (req: Request, res: Response) => {
     if (!organizationId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
-    const userId = parseInt(req.headers['x-user-id'] as string);
+    // Verified subject, not the x-user-id header. GET /recent/documents passed
+    // this straight into getRecentDocuments(userId, orgId), so a caller could
+    // read another user's documents by naming them. See ledger C-18.
+    const userId = authedUserId(req);
     if (!userId) {
-      return res.status(401).json({ error: 'User context required (x-user-id header)' });
+      return res.status(401).json({ error: 'User context required' });
     }
 
     const recentDocs = await templateService.getRecentDocuments(userId, organizationId);
