@@ -20,9 +20,11 @@ conventions. It was checked path by path. **Its factual claims hold up: every on
 26 code paths it cites exists at the path it gives.** That is unusual and worth saying
 plainly — the architecture it proposes is not speculative.
 
-Five things in it are nonetheless wrong, imprecise, or under-specified for this platform,
+Six things in it are nonetheless wrong, imprecise, or under-specified for this platform,
 and the implementation departs from the work order on each. Each departure is recorded
-here rather than made silently.
+here rather than made silently. §0.5 is the one worth reading if you read only one: the
+outcome conflation the work order flags in one file exists in a second place it never
+names.
 
 ### 0.1 The "completion-as-success defect" is real but narrower than stated
 
@@ -108,7 +110,43 @@ contains **types only — zero data**. It is the one file in `fixtures/` with no
 it, deliberately. A reviewer looking for the kit's numbers in the codebase will not find
 them.
 
-### 0.5 The work order asks for a graph; this platform should not get one
+### 0.5 The §4.2 outcome conflation has a second site the work order missed
+
+While landing the phase-1 tables, two of the eight names the work order specifies
+turned out to be **already taken** — and one of them matters well beyond naming.
+
+`shared/schema.ts:16022` already defines `regulatory_outcomes`, belonging to the
+Regulatory Outcome Optimizer:
+
+```ts
+export const regulatoryOutcomes = pgTable('regulatory_outcomes', {
+  csrId: integer('csr_id'),          // ← keyed to a CSR, not an application
+  decision: text('decision').notNull(),  // ← free text, no allowed values
+  // …no verified_at, no verified_by, no epistemic status
+});
+```
+
+This is the **same defect §4.2 describes in `precedent-benchmark-reader`, in a
+second place the work order does not mention**. An "outcome" row here is keyed to
+a CSR, carries a free-text `decision` with no constrained vocabulary, and has
+nothing recording whether a human ever confirmed it. Nothing structurally
+prevents a decision derived from trial data from being read as a regulatory
+outcome — which is precisely the conflation the whole work order exists to
+remove.
+
+`evidence_sources` (line ~17230) also exists, as the Evidence Fabric's document
+registry. It is close in spirit, but its `organization_id` is `NOT NULL`, so it
+**cannot represent globally-readable public FDA evidence at all**.
+
+**Departure:** do not widen either table. Both have live consumers, and the work
+order forbids destructive migration. The new domain uses
+`clinical_evidence_sources` and `regulatory_application_outcomes`, and the new
+table is built so the old defect cannot recur — a resolved outcome without
+`verified_at` fails a CHECK constraint. The existing `regulatory_outcomes` is
+reclassified **transitional** in §1, with migration deferred to phase 8
+(prediction governance), where its consumers are already in scope.
+
+### 0.6 The work order asks for a graph; this platform should not get one
 
 §3.2 says the graph "does not require introducing a graph database … implement typed
 relational edges in PostgreSQL unless an ADR proves the current database cannot meet the
@@ -137,6 +175,8 @@ What exists today, and what each component becomes under the target architecture
 | AnA orchestration | `server/services/ana-ri/orchestrator.ts` | ✅ | **Canonical** — integrate |
 | AnA enrichment + CRL triggers | `server/services/ana-ri/context-enrichment.ts` | ✅ 1711 ln | **Canonical** — extend, do not fork |
 | CSR predictive flow | `csr-knowledge-extractor.ts`, `csr-foresight-orchestrator.ts` | ✅ | **Transitional** — govern before CRL influence |
+| Outcome optimizer table | `shared/schema.ts:16022` `regulatory_outcomes` | ✅ | **Transitional** — second §4.2 conflation site; see §0.5 |
+| Evidence Fabric sources | `shared/schema.ts:17230` `evidence_sources` | ✅ | **Canonical (other domain)** — `organization_id` NOT NULL, cannot hold public evidence |
 | Canonical retrieval | `enhancedEmbeddingService.ts`, `advancedRAGPipeline.ts` | ✅ | **Canonical** — reuse exclusively |
 | Legacy design agent | `server/services/study-design-agent-service.ts` | ✅ | **Legacy** — migrate callers, do not extend |
 | Shared evidence domain | `server/services/clinical-regulatory-evidence/` | ❌ absent | **New** — this workstream |
@@ -188,12 +228,12 @@ without displacing an existing table.
 
 | Required entity | Status | Migration note |
 | --- | --- | --- |
-| `evidence_sources` | new | source identity, checksum, version, visibility, provenance |
+| `clinical_evidence_sources` | new | source identity, checksum, version, visibility, provenance. Prefixed — `evidence_sources` is taken (§0.5) |
 | `clinical_study_identities` | new | NCT / sponsor / protocol / product linkage + confidence |
 | `study_result_observations` | new | effect, SE/CI, p, n, transformations, source span |
 | `regulatory_applications` | new | application type/number, sponsor, dates |
 | `regulatory_findings` | new | finding, category, discipline, CTD/E3/design mapping, epistemic status |
-| `regulatory_outcomes` | new | CRL / resubmission / approval / withdrawal / unresolved, verified only |
+| `regulatory_application_outcomes` | new | CRL / resubmission / approval / withdrawal / unresolved, verified only. Prefixed — `regulatory_outcomes` is taken (§0.5) |
 | `evidence_relationships` | new | typed edges (§4.1 vocabulary) |
 | `design_lessons` | new | derived, reversible, governed |
 
@@ -304,7 +344,10 @@ Plus four framing rules that are equally binding:
 **Landing now** — contracts, the facade, the routes, and the phase-7 UI rendering honest
 empty states against them:
 
-- `server/services/clinical-regulatory-evidence/{types,index,coverage-service,trace-service}.ts`
+- `server/services/clinical-regulatory-evidence/{types,index,coverage-service}.ts`
+- `shared/schema.ts` — the eight entities, and `migrations/20260725_clinical_regulatory_evidence.sql`
+  (verified against a real PostgreSQL 16: applies clean, re-applies idempotently,
+  and all eight honesty CHECK constraints reject their fabrication)
 - `server/routes/clinical-regulatory-evidence-routes.ts` (7 reads + 1 action, flag-gated)
 - `client/src/concept2cure/v2/fixtures/clinical-regulatory-evidence.ts` — **types only**
 - `client/src/concept2cure/v2/surfaces/CrlLibrary.tsx` — the one new surface
