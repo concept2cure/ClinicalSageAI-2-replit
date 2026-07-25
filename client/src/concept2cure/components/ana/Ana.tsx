@@ -26,6 +26,7 @@ import type { AuthoringContextPack } from '../../../../../shared/types/authoring
 import { Sidebar, type AnaView, type AccountInfo, type Recent } from './Sidebar';
 import { TopBar } from './TopBar';
 import { EmptyState, type EmptySuggestion } from './EmptyState';
+import { useAgentActivity } from './useAgentActivity';
 import { ChatView, type ChatMessageView } from './ChatView';
 import type { ExecutedActionChip } from './Message';
 import { ProjectsView, type AnaProject } from './ProjectsView';
@@ -266,6 +267,9 @@ export function Ana({
   const [view, setView] = useState<AnaView>('home');
   const [collapsed, setCollapsed] = useState(false);
   const [activeRecentId, setActiveRecentId] = useState<string | null>(null);
+  // Live agent surface: poll AnA's background deep investigations while the user
+  // is on the home screen, so the greeting card can show what she is working on.
+  const { summary: agentActivity } = useAgentActivity({ enabled: view === 'home' });
   // Tools the user pins for the next turn (additive focus). Empty = auto.
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   // Model/effort picker state (flag-gated in the Composer). Effort defaults to
@@ -1039,6 +1043,7 @@ export function Ana({
           modelOverride={modelOverride}
           onModelOverrideChange={setModelOverride}
           projectIntelligence={projectIntelligence}
+          agentActivity={agentActivity}
           onSafetyNarrative={handleSafetyNarrative}
         />
       )}
