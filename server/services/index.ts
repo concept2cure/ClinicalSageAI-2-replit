@@ -59,7 +59,6 @@ export { clinicalIntelligenceService } from './clinical-intelligence-service';
 // STUDY DESIGN SERVICES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export { studyDesignAgentService, StudyDesignAgentService } from './study-design-agent-service';
 export {
   EndpointRecommenderService,
   getEndpointRecommenderService,
@@ -153,7 +152,6 @@ export const SERVICE_REGISTRY = {
   // Clinical
   'clinical.csr': 'csr-search-service',
   'clinical.intelligence': 'clinical-intelligence-service',
-  'clinical.study-design': 'study-design-agent-service',
 
   // Infrastructure
   'infra.storage': 's3-storage',

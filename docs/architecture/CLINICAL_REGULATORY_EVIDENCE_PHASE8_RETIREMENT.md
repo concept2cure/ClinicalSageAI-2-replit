@@ -6,9 +6,9 @@
 
 ---
 
-## Part A — Legacy retirement (DEAD services: deprecated now, removable next)
+## Part A — Legacy retirement (DEAD services) — ✅ DELETED
 
-All three have **zero production callers** (verified). They are marked `@deprecated` in-code now (JSDoc banner, the house convention) and are safe to delete in a follow-up once the deprecation has soaked. Deletion steps + rollback are recorded so removal is mechanical.
+All three had **zero production callers** (re-verified against the current branch before removal). Now **deleted**, along with their only references — the barrel re-export + the never-resolved `SERVICE_REGISTRY` `'clinical.study-design'` key in `server/services/index.ts`, and the dead import in `server/research-companion-service.ts`. `ServiceCapability` is `keyof typeof SERVICE_REGISTRY`, so dropping the key narrowed the union with no downstream break. Rollback: `git revert`.
 
 | # | File | Verdict & evidence | Removal steps (when deleted) | Rollback |
 |---|---|---|---|---|
@@ -59,4 +59,5 @@ Covered by **Part B** (retire the path); the honest dose surface is `assessDoseS
 2. **Done:** C1 precedent-confidence de-fabrication behind the preserved numeric field shape (write-side, new rows only). Tested.
 3. **Done:** C2 — endpoint `success_rate` de-fabrication behind preserved (null-safe) field shapes: nullable success_rate emitted only from real outcomes, honest `evidence_strength`/`evidence_basis` for rank/label, no fabricated eval score. Tested.
 4. **Done:** foresight path retired (Part B) — all mounts removed, `compute_dose_escalation` returns an honest guardrail, orphaned files `@deprecated`. This also removed the last live reader of the fabricated dose CIs (C3).
-5. **Next (mechanical, once soaked):** delete the 3 DEAD services (Part A) and the 4 orphaned foresight files, plus their remaining barrel/script/contract-test references.
+5. **Done:** deleted the 3 DEAD services (Part A) + their barrel/registry/import references (re-verified orphaned first; typecheck clean).
+6. **Next (larger, coordinated):** delete the 4 orphaned foresight files (`foresight-ai-engine.ts` + the 3 route files). Bigger cascade — the engine is still referenced by `csr-foresight-orchestrator.ts`, the `foresight/index.ts` barrel, the mock-data script, and the tenant-isolation contract test — so it must go as a subtree, not a single file. Left `@deprecated` (unmounted, harmless) pending that coordinated pass.
