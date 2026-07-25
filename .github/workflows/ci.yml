@@ -61,6 +61,14 @@ jobs:
         # a silent no-op (query inside try/catch). See ledger C-14.
         run: npm run ci:unbacked-tables
 
+      - name: Proof tier — schema contracts + golden journeys
+        # These run inside `npm test` too, but they get their own blocking step
+        # because they are the acceptance evidence for the C-8/C-10/C-11/C-12/
+        # C-14/C-16 remediations and must fail loudly and early, not be buried in
+        # a full-suite run. They need no external database: the harness applies
+        # the real migration files to an in-process Postgres (PGlite).
+        run: npm run test:proof-tier
+
       - name: Guardrails — i18n locale integrity (key/placeholder/markup parity)
         run: node scripts/ci/check-i18n-integrity.mjs
 

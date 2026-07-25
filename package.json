@@ -60,6 +60,8 @@
     "ci:unbacked-tables:strict": "node scripts/ci/check-unbacked-tables.mjs --strict",
     "ci:unbacked-tables:write-baseline": "node scripts/ci/check-unbacked-tables.mjs --write-baseline",
     "test:schema-contract": "vitest run --config vitest.config.ts tests/schema-contract",
+    "test:golden-journeys": "vitest run --config vitest.config.ts tests/golden-journeys",
+    "test:proof-tier": "vitest run --config vitest.config.ts tests/schema-contract tests/golden-journeys",
     "ci:migration-prefix-collisions": "node scripts/ci/check-migration-prefix-collisions.mjs",
     "ci:migration-prefix-collisions:strict": "node scripts/ci/check-migration-prefix-collisions.mjs --strict",
     "ci:migration-prefix-collisions:write-baseline": "node scripts/ci/check-migration-prefix-collisions.mjs --write-baseline",
