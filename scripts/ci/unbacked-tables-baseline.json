@@ -1,7 +1,7 @@
 {
   "$comment": "Tables referenced by server SQL that NOTHING in the repo creates — no migration, no drizzle pgTable, no runtime DDL. Pinned to the exact referencing file set, so an entry cannot silently acquire new call sites. Every entry is a feature that either returns 500 (unguarded query) or silently no-ops (query inside try/catch). Each is a defect awaiting a code-derived migration or a retirement, NOT an approved pattern. Shrink this file; never grow it. See ledger C-11/C-14 for the remediation pattern: derive the shape from the queries, add one canonical migration, prove it with a golden journey.",
-  "generatedAt": "2026-07-25T20:14:20.309Z",
-  "total": 131,
+  "generatedAt": "2026-07-25T20:30:08.485Z",
+  "total": 95,
   "entries": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -55,9 +55,6 @@
     "authoring_workflow_steps": [
       "server/routes/authoring.router.ts"
     ],
-    "avg": [
-      "server/routes/mdx-analytics.ts"
-    ],
     "c2c_investigator_brochure": [
       "server/routes/investigator-brochure.routes.ts"
     ],
@@ -73,70 +70,13 @@
     "cmc_methods": [
       "server/src/routes/stability.router.ts"
     ],
-    "compliance.check_access": [
-      "server/services/cortexComplianceService.ts"
-    ],
-    "compliance.create_electronic_signature": [
-      "server/services/cortexComplianceService.ts"
-    ],
-    "compliance.write_audit_entry": [
-      "server/services/cortexComplianceService.ts"
-    ],
     "concept2cure_projects": [
       "server/services/resolution/contradiction-resolution-orchestrator.ts"
     ],
     "correspondences": [
       "server/services/ana-ri/mdx-proactive-signals.ts"
     ],
-    "cortex.detect_knowledge_gaps": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.estimate_causal_effect": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.estimate_uncertainty": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.evolve": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.execute_transfer": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.extract_regulatory_signals": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.find_transfer_candidates": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.generate_counterfactual": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.generate_intuition_prediction": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.match_rejection_patterns": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.recommend_interventions": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.record_learning_experience": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.run_distillation": [
-      "server/services/cortexPrimeService.ts"
-    ],
     "cortex.statistics": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.traverse_reasoning": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.unified_search": [
-      "server/services/cortexPrimeService.ts"
-    ],
-    "cortex.unified_search_fast": [
       "server/services/cortexPrimeService.ts"
     ],
     "created_at": [
@@ -166,13 +106,6 @@
     "ectd_v4.submissions": [
       "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
     ],
-    "ectd.get_project_folder_stats": [
-      "server/api/ectd/routes.ts"
-    ],
-    "ectd.seed_project_hierarchy": [
-      "server/api/ectd/routes.ts",
-      "server/services/ectd/ECTDScaffoldingService.ts"
-    ],
     "expected_prev": [
       "server/src/control-plane/persistent-queries.ts"
     ],
@@ -190,12 +123,6 @@
       "server/services/ana-ri/chat-context-builder.ts",
       "server/services/ana/uploaded-file-access.ts"
     ],
-    "find_atom_path": [
-      "server/services/knowledgeGraphService.ts"
-    ],
-    "get_atom_neighbors": [
-      "server/services/knowledgeGraphService.ts"
-    ],
     "ind_milestones": [
       "server/routes/preIndRoutes.ts"
     ],
@@ -205,9 +132,6 @@
     "ind_source_documents": [
       "server/routes/ind-pdf.ts"
     ],
-    "intelligent_docs.detect_impacted_links": [
-      "server/routes/intelligentDocs.ts"
-    ],
     "knowledge_documents": [
       "server/sage-plus-service.ts"
     ],
@@ -216,9 +140,6 @@
     ],
     "knowledge_graph_nodes": [
       "server/routes/graphrag.ts"
-    ],
-    "labeling.compare_documents": [
-      "server/api/labeling/routes.ts"
     ],
     "licenses": [
       "server/routes/project-hierarchy.ts"
@@ -235,16 +156,7 @@
       "server/workers/enhanced-ingestion-pipeline.ts",
       "server/workers/entity-extraction-worker.ts"
     ],
-    "lumen.find_path": [
-      "server/services/knowledge-graph.ts"
-    ],
-    "lumen.find_supporting_evidence": [
-      "server/services/knowledge-graph.ts"
-    ],
     "lumen.traceability_matrix": [
-      "server/services/knowledge-graph.ts"
-    ],
-    "lumen.traverse_graph": [
       "server/services/knowledge-graph.ts"
     ],
     "lumen.v_council_session_progress": [
@@ -267,9 +179,6 @@
     ],
     "medline": [
       "server/db/setupLiterature.ts"
-    ],
-    "now": [
-      "server/services/intelligence/pattern-maintenance.ts"
     ],
     "patent_portfolio": [
       "server/routes/concept2cure.ts"
@@ -305,18 +214,6 @@
     ],
     "regulatory_status": [
       "server/sage-plus-service.ts"
-    ],
-    "search_atoms_hybrid": [
-      "server/services/enhancedEmbeddingService.ts"
-    ],
-    "signing.create_signature_manifest": [
-      "server/api/signing/routes.ts"
-    ],
-    "signing.decline_signature": [
-      "server/api/signing/routes.ts"
-    ],
-    "signing.sign_document": [
-      "server/api/signing/routes.ts"
     ],
     "site_intel.site_scorecard": [
       "server/api/site-intel/routes.ts"
@@ -395,14 +292,8 @@
     "vault.extracted_entities": [
       "server/api/drafting/routes.ts"
     ],
-    "vault.hybrid_search": [
-      "server/api/drafting/routes.ts"
-    ],
     "vault.processing_queue": [
       "server/workers/vectorization-worker.ts"
-    ],
-    "vault.table_priority_search": [
-      "server/api/drafting/routes.ts"
     ],
     "workflow_definitions": [
       "server/services/workflow/WorkflowExecutionEngine.ts"

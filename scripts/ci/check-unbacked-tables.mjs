@@ -119,8 +119,21 @@ for (const f of collect(path.join(repoRoot, 'server'), ['.ts'])) {
 
 // ── references in raw SQL ────────────────────────────────────────────────────
 
+/**
+ * Captures the keyword, the name, and whether the name is followed by `(`.
+ *
+ * A trailing `(` means a set-returning FUNCTION when it follows FROM/JOIN —
+ * `FROM ectd.seed_project_hierarchy($1::uuid, ...)` — and a function is not
+ * storage. But it means a COLUMN LIST after INSERT INTO, where the name is a
+ * real table. The distinction has to be made per keyword, so it is made below
+ * rather than in the pattern.
+ *
+ * Deliberately NOT done with a `(?!\s*\()` lookahead: that makes the name group
+ * backtrack one character to satisfy the assertion, so `INSERT INTO users (id…)`
+ * silently yields a table named `user`. It produced 400+ off-by-one phantoms.
+ */
 const REF_RE =
-  /\b(?:FROM|JOIN|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(?:ONLY\s+)?([a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?)/gi;
+  /\b(FROM|JOIN|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(?:ONLY\s+)?([a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?)(\s*\()?/gi;
 
 /** SQL keywords and set-returning functions that follow FROM/JOIN but are not tables. */
 const NOT_A_TABLE = new Set([
@@ -180,7 +193,10 @@ for (const f of SCANNED.flatMap((d) => collect(path.join(repoRoot, d), ['.ts']))
       ),
     );
     for (const m of body.matchAll(REF_RE)) {
-      const t = m[1].toLowerCase();
+      const keyword = m[1];
+      const t = m[2].toLowerCase();
+      const looksLikeCall = Boolean(m[3]);
+      if (looksLikeCall && /^(?:FROM|JOIN)$/i.test(keyword)) continue; // set-returning function
       if (NOT_A_TABLE.has(t) || ctes.has(t)) continue;
       // System catalogs are provided by Postgres.
       if (t.startsWith('pg_') || t.startsWith('information_schema.')) continue;
