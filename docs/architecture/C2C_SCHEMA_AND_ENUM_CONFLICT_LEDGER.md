@@ -613,6 +613,102 @@ byte-identical twin in `docs/archive/`. Baseline 78 → 64.
 
 ---
 
+## C-12 — `lumen.data_atoms` defined twice, incompatibly *(high — FIXED 2026-07-25)*
+
+**Found by the guard, on its first exposure to new work.** Merging
+`origin/concept2cure-v2` (54 commits: AnA modernization, CRE spine, QMS) into this
+branch made `ci:duplicate-table-ddl` fail immediately:
+
+| definition | shape | applied by |
+|---|---|---|
+| `db/migrations/044b_gcc_lumen_schema_prerequisite.sql` (manifest #25) | 12 columns, `id UUID DEFAULT uuid_generate_v4()` | manifest lineage |
+| `migrations/20260724_lumen_council_provisioning.sql` (new) | 5 columns, `id TEXT`, no default | `npm run db:apply-c2c` |
+
+Both `CREATE TABLE IF NOT EXISTS`, applied by **different mechanisms**. Whichever
+ran first won; the loser no-opped permanently, because a losing `IF NOT EXISTS`
+never catches up. Which one won was decided by an environment's history, not by
+code.
+
+### Why the losing case is not cosmetic
+
+`server/workers/enhanced-ingestion-pipeline.ts:172` inserts
+`(id, title, content, atom_type, source_path, metadata, content_hash, created_at)`.
+The minimal shape has none of `atom_type`, `source_path`, `content_hash` — and no
+`id` default, so even a bare insert fails not-null. Ingestion breaks on exactly
+the databases where the out-of-band script ran first: **fresh preview and deploy
+databases**, which is what that script exists for. The failure is partial and so
+particularly confusing — `multi-agent-council.ts:864,1070` reads only
+`id/title/content/metadata`, which both shapes have, so the council keeps working
+while ingestion fails.
+
+The rival definition was defensive, not careless: the council migration provisions
+the whole `lumen` schema and included a minimal `data_atoms` so the schema would be
+complete. Its author had no way to see 044b — nothing in the repo linked them, and
+neither existing migration guard checks table names.
+
+### The fix
+
+1. `migrations/20260724_lumen_council_provisioning.sql` no longer defines
+   `lumen.data_atoms`; it carries a comment naming 044b as canonical and stating
+   why. The council reads only columns the canonical shape provides, so nothing
+   else changed.
+2. `scripts/db/apply-c2c-migrations.mjs` entries are now repo-relative, and it
+   applies `db/migrations/044b_...sql` **ahead of** the council file. The
+   out-of-band path now provisions the same shape the manifest lineage does
+   instead of racing it. Files that open their own transaction are no longer
+   double-wrapped.
+
+### Proof
+
+`tests/schema-contract/c2c-apply-path.contract.test.ts` (7 tests) parses the
+FILES list **out of the real script** (so a change to the real apply order changes
+what is asserted), applies both real files to PGlite in that order, and asserts the
+resulting table carries the provenance columns and accepts the ingestion pipeline's
+exact INSERT. A fourth test pins that INSERT's column list against the pipeline
+source, so the two cannot drift apart silently.
+
+Negative-tested both ways: re-adding the rival `CREATE TABLE` fails the guard *and*
+the contract test; removing it makes both pass.
+
+### Guard defect found while fixing this
+
+The guard scanned SQL **comments** as DDL. A migration header explaining that
+"both were CREATE TABLE IF NOT EXISTS, so order decided the winner" parses as a
+table named `if` — the trailing comma defeats the optional `IF NOT EXISTS` group.
+That false positive is worse than a miss: it put a phantom `if` table in the
+baseline and would then fail any new file whose comments discuss the problem —
+penalising exactly the documentation this guard is meant to encourage. Comments
+are now stripped before scanning. Baseline 64 → 63 (pure shrink; the only entry
+removed was the phantom).
+
+---
+
+## C-13 — The phase-1 evidence graph has storage on only ONE of three paths *(latent, dormant)*
+
+The merge brought in **two** clinical-regulatory evidence implementations:
+
+| | tables | migration | manifest | live callers |
+|---|---|---|---|---|
+| CRE **spine** | `cre_evidence_sources`, `cre_clinical_studies`, … | `db/migrations/20260724_clinical_regulatory_evidence_spine.sql` | ✅ journaled | ✅ `study-design-evidence.service.ts`, AnA tools, `scripts/cre/generate-atoms.ts` |
+| phase-1 **graph** | `clinical_evidence_sources`, `regulatory_findings`, … | `migrations/20260725_clinical_regulatory_evidence.sql` | ❌ not journaled, **and in no apply script's file list** | ❌ none |
+
+The phase-1 tables are declared in `shared/schema.ts`, which `drizzle.config.ts`
+names as the push surface — so `npm run db:push` creates them and a
+migration-driven environment does not. Its writer, `csr-adapter.ts`, is exported
+from the package barrel (`index.ts:337`) but **has no caller** outside its own
+module and tests; the spine's `csr-adapter.service.ts` is what live code uses.
+
+This is therefore **dormant, not broken** — and the team is tracking the
+duplication already (`aa9735e` reconciled the duplicate interfaces, `d36180a`
+opened a retirement plan for the dead legacy services). It is recorded here because
+it is a loaded gun rather than an active failure: whoever wires `projectCsrCorpus`
+up gets "relation does not exist" on every environment provisioned by migrations
+rather than by push. Resolution belongs with the team's own Phase 8 retirement
+work — retire phase-1 in favour of the spine, or give it a journaled migration.
+No action taken here; it is not mine to retire.
+
+---
+
 ## Recommended resolution order
 
 1. **ADR-0006 — canonical migration lineage** (resolves C-6). Nothing else is safe
@@ -635,9 +731,14 @@ Per the no-documents rule, the following are **open questions**, not findings:
   repo answers this; only a live database can.
 - Whether either colliding definition currently holds production rows.
 - Whether the root `migrations/` directory is executed by any deployment
-  automation. `scripts/db/apply-c2c-migrations.mjs` applies exactly **three**
-  named files from it (`20260603_ai_capability_governance.sql`,
-  `20260603_pv_operational.sql`, `20260603_commitments.sql`) and nothing else,
-  which leaves the execution path for the rest of that directory unaccounted for.
+  automation. `scripts/db/apply-c2c-migrations.mjs` applies only a hardcoded
+  allowlist from it — **five** named files as of the concept2cure-v2 merge
+  (the three `20260603_*` files plus `20260724_lumen_council_provisioning.sql`
+  and `20260724_ana_deep_investigations.sql`), now preceded by the canonical
+  044b prerequisite per C-12. It is an allowlist, not a lineage: it is gated on
+  `APPLY_C2C_MIGRATIONS=true` and runs only when someone runs it. The execution
+  path for every other file in that directory remains unaccounted for —
+  including `20260725_clinical_regulatory_evidence.sql` (C-13), which is in no
+  list at all.
 - Whether the six commands in `COMMAND_REGISTRY` (76 entries) that lack a
   `COMMAND_HANDLERS` key (70 keys) are dead, aliased, or dispatched elsewhere.

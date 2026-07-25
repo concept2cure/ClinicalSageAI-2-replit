@@ -69,18 +69,41 @@ describe('council provisioning migration — idempotency guard', () => {
     'utf8',
   );
 
-  it('creates the schema and every table the council service queries, idempotently', () => {
+  it('creates the schema and every table it owns, idempotently', () => {
     expect(sql).toContain('CREATE SCHEMA IF NOT EXISTS lumen');
     for (const table of [
       'lumen.agent_registry',
       'lumen.council_sessions',
       'lumen.agent_executions',
       'lumen.data_verifications',
-      'lumen.data_atoms',
       'lumen.data_bindings',
     ]) {
       expect(sql).toContain(`CREATE TABLE IF NOT EXISTS ${table}`);
     }
+  });
+
+  /**
+   * lumen.data_atoms is deliberately NOT owned here. This file used to define a
+   * minimal 5-column rival to the canonical 12-column definition in
+   * db/migrations/044b_gcc_lumen_schema_prerequisite.sql; because both were
+   * IF NOT EXISTS, order decided the winner and the ingestion pipeline broke on
+   * databases where this one ran first (ledger C-12). The council still needs the
+   * table to exist, so the requirement moved from "this file defines it" to "the
+   * apply script installs the canonical definition first" — which is what
+   * tests/schema-contract/c2c-apply-path.contract.test.ts executes end to end.
+   */
+  it('defers lumen.data_atoms to the canonical prerequisite, which the apply script installs first', () => {
+    expect(sql).not.toMatch(/CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?lumen\.data_atoms/i);
+
+    const script = readFileSync(
+      resolve(__dirname, '../../../../scripts/db/apply-c2c-migrations.mjs'),
+      'utf8',
+    );
+    const order = [...script.matchAll(/'([^']+\.sql)'/g)].map((m) => m[1]);
+    const canonical = order.indexOf('db/migrations/044b_gcc_lumen_schema_prerequisite.sql');
+    const council = order.indexOf('migrations/20260724_lumen_council_provisioning.sql');
+    expect(canonical).toBeGreaterThanOrEqual(0);
+    expect(canonical).toBeLessThan(council);
   });
 
   it('seeds all four council roles conflict-safely', () => {

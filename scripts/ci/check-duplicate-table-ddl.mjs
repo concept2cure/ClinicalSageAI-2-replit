@@ -97,6 +97,21 @@ function collectSql(dir, acc = []) {
 const CREATE_TABLE_RE =
   /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?)/gi;
 
+/**
+ * Strip SQL comments before scanning.
+ *
+ * Prose that merely MENTIONS DDL is not DDL. A migration header explaining that
+ * "both were CREATE TABLE IF NOT EXISTS, so order decided the winner" parses as
+ * a table literally named `if` — the trailing comma defeats the optional
+ * IF NOT EXISTS group. That false positive is worse than a miss here: it puts a
+ * phantom table in the baseline and then fails any new file whose comments
+ * discuss the same thing, which is exactly the documentation this guard is meant
+ * to encourage.
+ */
+function stripComments(sql) {
+  return sql.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
+}
+
 function tablesIn(file) {
   let sql;
   try {
@@ -105,7 +120,7 @@ function tablesIn(file) {
     return [];
   }
   const found = new Set();
-  for (const m of sql.matchAll(CREATE_TABLE_RE)) found.add(m[1].toLowerCase());
+  for (const m of stripComments(sql).matchAll(CREATE_TABLE_RE)) found.add(m[1].toLowerCase());
   return [...found];
 }
 
