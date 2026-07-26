@@ -58,6 +58,10 @@ function upload(checksum: string, over: Record<string, unknown> = {}) {
 const PROGRAM_A = '11111111-1111-4111-8111-111111111111';
 const PROGRAM_B = '22222222-2222-4222-8222-222222222222';
 
+// Standing up a WASM Postgres and applying real migration DDL costs seconds, and
+// the cost scales with how many other pglite suites are running concurrently.
+// vitest's 10s default hook timeout is a load measurement, not a correctness one:
+// these hooks went red purely because another pglite suite joined the directory.
 beforeAll(async () => {
   pglite = new PGlite();
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -72,10 +76,10 @@ beforeAll(async () => {
     '../../../../migrations/20260726_cre_source_program_scope.sql',
   );
   await pglite.exec(fs.readFileSync(programScope, 'utf8'));
-});
+}, 90_000);
 afterAll(async () => {
   await pglite.close();
-});
+}, 30_000);
 
 describe('canonical source identity (real Postgres)', () => {
   it('creates a client_document source carrying its upload provenance', async () => {

@@ -72,6 +72,17 @@ const FILES = [
   // cre_evidence_sources. Self-guarding on to_regclass, so it no-ops with a
   // NOTICE if the spine is somehow absent rather than failing the run.
   'migrations/20260726_cre_source_program_scope.sql',
+  // The authoring document loop — authoring_documents / authoring_sections /
+  // doc_revisions / authoring_comments / authoring_citations / frozen_documents /
+  // user_pins. Same gap as the CRE spine: merged and manifest-listed since
+  // 20260725, but the manifest is consumed by nothing, so the flagship authoring
+  // router has been writing to tables no durable path ever created. 12 CREATE
+  // ... IF NOT EXISTS, no data statements, no transaction of its own.
+  'db/migrations/20260725_authoring_document_loop_tables.sql',
+  // Source-usage index + column semantics on authoring_citations. MUST follow the
+  // loop tables (it indexes authoring_citations) and the spine (the convention it
+  // documents references cre_evidence_sources.id). Self-guarding on to_regclass.
+  'migrations/20260726_authoring_citation_source_usage.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

@@ -59,6 +59,61 @@ test('the data-room migrations are listed, and the spine precedes its ALTER', ()
   );
 });
 
+test('the authoring loop tables are listed, and precede the source-usage index', () => {
+  const files = migrationList();
+  const loop = files.indexOf('db/migrations/20260725_authoring_document_loop_tables.sql');
+  const sourceUsage = files.indexOf('migrations/20260726_authoring_citation_source_usage.sql');
+
+  // Same gap as the CRE spine before #1109: merged and manifest-listed, but the
+  // manifest is consumed by nothing, so the authoring router has been writing to
+  // tables no durable path ever created.
+  assert.ok(loop >= 0, 'the authoring document-loop tables must be listed — every /api/authoring write depends on them');
+  assert.ok(sourceUsage >= 0, 'the source-usage migration must be listed');
+  assert.ok(
+    loop < sourceUsage,
+    'the loop tables create authoring_citations and the source-usage migration indexes it, so the loop tables must come first',
+  );
+});
+
+test('the source-usage migration applies on top of the loop tables and yields its index', async () => {
+  const files = migrationList().filter((f) =>
+    /20260725_authoring_document_loop_tables|20260726_authoring_citation_source_usage/.test(f),
+  );
+  assert.equal(files.length, 2, 'expected both authoring migrations to be listed');
+
+  const db = new PGlite();
+  try {
+    for (const file of files) {
+      await db.exec(readFileSync(path.resolve(file), 'utf8'));
+    }
+    const idx = await db.query(
+      `SELECT indexname FROM pg_indexes
+        WHERE tablename = 'authoring_citations' AND indexname = 'authoring_citations_reference_idx'`,
+    );
+    assert.equal(
+      idx.rows.length,
+      1,
+      'the back-reference index must exist — without it "which sections cite this source" is a full scan per source',
+    );
+  } finally {
+    await db.close();
+  }
+});
+
+test('the source-usage migration no-ops when authoring_citations is absent', async () => {
+  // preview_db_test applies only the migrations a PR *adds*, so this file will run
+  // in databases where the loop tables do not exist. It must emit a NOTICE and
+  // continue rather than fail the run.
+  const db = new PGlite();
+  try {
+    await db.exec(
+      readFileSync(path.resolve('migrations/20260726_authoring_citation_source_usage.sql'), 'utf8'),
+    );
+  } finally {
+    await db.close();
+  }
+});
+
 test('the data-room migrations apply in listed order and yield the expected schema', async () => {
   const files = migrationList().filter((f) =>
     /20260724_clinical_regulatory_evidence_spine|20260726_file_uploads_tenancy|20260726_cre_source_program_scope/.test(
