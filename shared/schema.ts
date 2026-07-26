@@ -18319,6 +18319,81 @@ export const rbmKriValues = pgTable(
 );
 export type RbmKriValue = InferSelectModel<typeof rbmKriValues>;
 
+/**
+ * One ingestion attempt against a program's RBM data. Carries the provenance
+ * an indicator is meaningless without: which feed, as of what cutoff, how many
+ * rows landed and what was rejected. A green KRI computed from a feed that
+ * last succeeded three weeks ago is not evidence of control, and this is the
+ * row that lets the board say so.
+ */
+export const rbmDataRuns = pgTable(
+  'rbm_data_runs',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    source:         text('source').notNull(),
+    sourceRef:      text('source_ref'),
+    /** The date the extract represents — NOT when it was loaded. */
+    dataCutoff:     date('data_cutoff'),
+    status:         text('status').default('running').notNull(),
+    rowsReceived:   integer('rows_received').default(0).notNull(),
+    rowsAccepted:   integer('rows_accepted').default(0).notNull(),
+    rowsRejected:   integer('rows_rejected').default(0).notNull(),
+    /** Per-row reject reasons — a dropped row is never silent. */
+    rejects:        jsonb('rejects').default('[]').notNull(),
+    error:          text('error'),
+    startedAt:      timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
+    finishedAt:     timestamp('finished_at', { withTimezone: true }),
+    ingestedBy:     integer('ingested_by').references(() => users.id),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:        index('rbm_data_runs_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_data_runs_org_program_idx').on(table.organizationId, table.programId),
+    freshnessIdx:  index('rbm_data_runs_freshness_idx')
+      .on(table.organizationId, table.programId, table.source, table.startedAt),
+  }),
+);
+export type RbmDataRun = InferSelectModel<typeof rbmDataRuns>;
+
+/**
+ * A landed measurement, scoped to the study, a country, a site or a subject,
+ * and tied to the run that produced it. `numerator`/`denominator` are carried
+ * when the source supplies them: a rate over 3 subjects is not the same
+ * evidence as the same rate over 300, and `value` alone cannot express that.
+ */
+export const rbmMetricObservations = pgTable(
+  'rbm_metric_observations',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull().references(() => organizations.id),
+    programId:      uuid('program_id'),
+    runId:          integer('run_id').references(() => rbmDataRuns.id, { onDelete: 'cascade' }),
+    metricKey:      text('metric_key').notNull(),
+    scopeLevel:     text('scope_level').default('study').notNull(),
+    scopeId:        text('scope_id'),
+    value:          numeric('value', { precision: 18, scale: 6 }),
+    numerator:      numeric('numerator', { precision: 18, scale: 6 }),
+    denominator:    numeric('denominator', { precision: 18, scale: 6 }),
+    unit:           text('unit'),
+    observedAt:     timestamp('observed_at', { withTimezone: true }).defaultNow().notNull(),
+    dataCutoff:     date('data_cutoff'),
+    metadata:       jsonb('metadata').default('{}'),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:        index('rbm_metric_obs_org_idx').on(table.organizationId),
+    orgProgramIdx: index('rbm_metric_obs_org_program_idx').on(table.organizationId, table.programId),
+    runIdx:        index('rbm_metric_obs_run_idx').on(table.runId),
+    lookupIdx:     index('rbm_metric_obs_lookup_idx')
+      .on(table.organizationId, table.programId, table.metricKey, table.scopeLevel, table.scopeId, table.observedAt),
+  }),
+);
+export type RbmMetricObservation = InferSelectModel<typeof rbmMetricObservations>;
+
 export const rbmPatientProfiles = pgTable(
   'rbm_patient_profiles',
   {

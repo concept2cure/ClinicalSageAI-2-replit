@@ -61,6 +61,7 @@ import {
   type KriDirection,
 } from '../services/rbm/rbm-engine';
 import { generatePlanFromAssessment } from '../services/rbm/rbm-actuator';
+import { ingestMetrics, METRIC_SOURCES } from '../services/rbm/metric-ingestion';
 import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
 import {
   detectSiteOutliers, scorePatientCohort,
@@ -1413,6 +1414,79 @@ router.patch('/rbm-monitoring-actions/:id', async (req, res) => {
     if (rows.length === 0) return notFoundInTenant(res, 'Action');
     return ok(res, rows[0]);
   } catch (err) { return serverError(res, log, 'patch-action', err); }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// METRIC INGESTION (the load path feeding the KRI / QTL / patient engines)
+// ════════════════════════════════════════════════════════════════════════════
+
+const ingestBody = z.object({
+  programId: z.string().regex(UUID_RE),
+  source: z.enum(METRIC_SOURCES),
+  sourceRef: z.string().max(500).optional().nullable(),
+  dataCutoff: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  // Either a parsed row set or the raw delimited text. Row-level validation
+  // happens in the service so the rules are identical for both.
+  rows: z.array(z.record(z.unknown())).max(50_000).optional(),
+  csv: z.string().max(20_000_000).optional(),
+}).refine(b => b.rows !== undefined || b.csv !== undefined, {
+  message: 'Provide either `rows` or `csv`',
+});
+
+/**
+ * Land a metric extract for a program and project it onto the RBM engines.
+ * Returns the run's real accepted/rejected counts, the per-row reject reasons,
+ * and what the load actually changed — a caller must never have to assume a
+ * row landed where it wanted it to.
+ */
+router.post('/rbm-metric-ingest', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const parsed = ingestBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await ingestMetrics(client, orgId, {
+      ...parsed.data,
+      ingestedBy: getUserId(req),
+    });
+    await client.query('COMMIT');
+    return created(res, result, {
+      runId: result.runId,
+      status: result.status,
+      accepted: result.accepted,
+      rejected: result.rejected,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'metric-ingest', err);
+  } finally {
+    client.release();
+  }
+});
+
+/** A program's ingestion history — newest first. */
+router.get('/rbm-data-runs', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const programId = typeof req.query.program_id === 'string' ? req.query.program_id : undefined;
+  if (programId && !UUID_RE.test(programId)) return clientError(res, 422, 'program_id must be a UUID');
+  const filters = ['organization_id = $1'];
+  const args: unknown[] = [orgId];
+  if (programId) { args.push(programId); filters.push(`program_id = $${args.length}`); }
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM rbm_data_runs WHERE ${filters.join(' AND ')}
+        ORDER BY started_at DESC LIMIT 100`,
+      args,
+    );
+    return ok(res, rows, { count: rows.length });
+  } catch (err) {
+    if ((err as { code?: string })?.code === '42P01') return ok(res, [], { count: 0, pendingStore: true });
+    return serverError(res, log, 'list-data-runs', err);
+  }
 });
 
 // ════════════════════════════════════════════════════════════════════════════
