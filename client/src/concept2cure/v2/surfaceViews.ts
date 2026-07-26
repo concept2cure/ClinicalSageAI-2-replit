@@ -16,7 +16,8 @@
 import type React from 'react';
 import type { UiSurface } from '@shared/constants/ui-surface-registry';
 import { CapabilityIndex } from './intelligence/Intelligence';
-import { Setup, Apps, ArtifactsCenter, AdminConsole } from './surfaces/AdminSurfaces';
+import { Setup, Apps, ArtifactsCenter } from './surfaces/AdminSurfaces';
+import { AdminAccess } from './surfaces/AdminAccess';
 import { AuditTrail } from './surfaces/AdminAuditTrail';
 import { AgencyMeetings } from './surfaces/AgencyMeetings';
 import { AnaCommand } from './surfaces/AnaCommand';
@@ -105,7 +106,10 @@ export interface SurfaceView {
 /* Kit load order (app/index.html) is the port order; flags mirror the kit's
    window.SURFACE_VIEWS registrations exactly. */
 export const SURFACE_VIEWS: Record<string, SurfaceView> = {
-  'admin-console': { component: AdminConsole },
+  // The one product admin for every client type — Claude Design's canonical
+  // "Admin and Access" (5 tabs + KPIs + Part 11 audit band), wired to
+  // /api/mdx/admin. Reached from the bottom-left account menu (admin-gated).
+  'admin-console': { component: AdminAccess, full: true, hideAna: true },
   'agency-meetings': { component: AgencyMeetings },
   'ana-command': { component: AnaCommand },
   'ana-memory': { component: AnaMemory },
