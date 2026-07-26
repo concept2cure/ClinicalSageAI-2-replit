@@ -62,7 +62,7 @@ jsonschema==4.26.0
 pyyaml==6.0.3
 
 # Image processing (for document analysis)
-Pillow==12.2.0
+Pillow==12.3.0  # 12.3.0 fixes 10 HIGH CVEs (CVE-2026-54058..59205: crafted image/font DoS + heap corruption)
 pytesseract==0.3.13
 
 # Async and concurrency
