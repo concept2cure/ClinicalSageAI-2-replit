@@ -23,6 +23,7 @@ import {
 } from '../data/postmarket';
 import { PV_DOC_FRAMEWORKS, PV_DOCUMENTS } from '../data/postmarket-docs';
 import { usePostmarket } from '../hooks/usePostmarket';
+import { useTriageQueue } from '../hooks/useTriageQueue';
 import { DataGate } from '../components/DataGate';
 import { readyRows } from '../lib/dataState';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
@@ -45,6 +46,14 @@ export function PostmarketSurface({
      it is showing. */
   const signals = readyRows(live.signals);
   const capas = readyRows(live.capas);
+
+  /* Complaints, MDR events and CAPAs merged into one queue ordered by
+     regulatory urgency, with the reporting clocks computed server-side.
+     This service was fully built and consumed by nothing while the
+     surface rendered its clocks from fixtures — and an invented MDR
+     clock is a countdown to a statutory deadline shown as though it
+     were real. */
+  const triage = useTriageQueue();
   const documents = PV_DOCUMENTS as unknown as KitDocument[];
   const frameworks = PV_DOC_FRAMEWORKS as unknown as KitDocFramework[];
 
@@ -172,6 +181,89 @@ export function PostmarketSurface({
         onOpenEditor={onOpenEditor}
         onAskAna={(text) => onAskAna(text)}
       />
+
+      <section className="section">
+        <div className="section-head">
+          <h2>Reporting clocks</h2>
+          <span className="section-sub">
+            Complaints · MDR events · CAPAs — overdue first, then soonest due.
+            FDA 5-day and 30-day, EU MDR Article 87 15-day.
+          </span>
+        </div>
+        <DataGate
+          state={triage.items}
+          label="reportable items"
+          onRetry={triage.refresh}
+          emptyHint="Complaints, MDR events and CAPAs appear here as they are raised, ordered by how close they are to their reporting deadline."
+        >
+          {(items) => (
+            <>
+              <div className="metrics-row metrics-compact">
+                <div className="metric-card" data-tone={triage.overdue.length > 0 ? 'err' : 'ok'}>
+                  <div className="metric-label">Overdue</div>
+                  <div className="metric-val">{triage.overdue.length}</div>
+                  <div className="metric-meta">
+                    {triage.overdue.length === 0
+                      ? 'No reporting deadline passed'
+                      : 'Past a reporting deadline'}
+                  </div>
+                </div>
+                <div className="metric-card" data-tone={triage.dueSoon.length > 0 ? 'warn' : 'ok'}>
+                  <div className="metric-label">Due within 7 days</div>
+                  <div className="metric-val">{triage.dueSoon.length}</div>
+                  <div className="metric-meta">Clock running</div>
+                </div>
+                <div className="metric-card">
+                  <div className="metric-label">Open items</div>
+                  <div className="metric-val">{items.length}</div>
+                  <div className="metric-meta">
+                    {items.filter((i) => i.kind === 'mdr').length} MDR ·{' '}
+                    {items.filter((i) => i.kind === 'complaint').length} complaint ·{' '}
+                    {items.filter((i) => i.kind === 'capa').length} CAPA
+                  </div>
+                </div>
+              </div>
+              <div className="eng-blockers-feed">
+                {items.slice(0, 10).map((i) => (
+                  <button
+                    key={`${i.kind}-${i.id}`}
+                    className="eng-blocker-row"
+                    data-sev={i.overdue ? 'err' : i.daysToDue !== null && i.daysToDue <= 7 ? 'warn' : 'low'}
+                    data-kind={i.kind}
+                    onClick={() =>
+                      onAskAna(
+                        `${i.code} (${i.kind}) — ${i.title}. Current state ${i.state}. ` +
+                          `Walk me through what is required to close it and by when.`,
+                      )
+                    }
+                    type="button"
+                  >
+                    <span
+                      className={`eng-blocker-dot tone-${
+                        i.overdue ? 'err' : i.daysToDue !== null && i.daysToDue <= 7 ? 'warn' : 'low'
+                      }`}
+                    />
+                    <span className="eng-blocker-kind mono tiny">{i.kind}</span>
+                    <span className="mono small eng-blocker-ref">{i.code}</span>
+                    <span className="eng-blocker-title">{i.title}</span>
+                    <span className="eng-blocker-note">{i.riskOrSeverity ?? i.state}</span>
+                    <span className="eng-blocker-owner">{i.state}</span>
+                    {/* The clock is whatever the server computed. A skewed
+                        browser clock must not move a statutory deadline. */}
+                    <span className="eng-blocker-age">
+                      {i.dueAt === null
+                        ? '—'
+                        : i.overdue
+                          ? `${Math.abs(i.daysToDue ?? 0)}d overdue`
+                          : `${i.daysToDue}d left`}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </DataGate>
+      </section>
 
       <section className="section">
         <div className="section-head">
