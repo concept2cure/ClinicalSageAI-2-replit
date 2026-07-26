@@ -15,9 +15,11 @@
 import { pool } from '../../db';
 import {
   SOURCE_TYPES, VISIBILITY_CLASSES, OUTCOME_TYPES, RELATIONSHIP_TYPES, ENTITY_TYPES,
+  INGESTION_STATUSES, EXTRACTION_STATUSES,
   type EvidenceSource, type ClinicalStudy, type RegulatoryFinding, type RegulatoryOutcome,
   type EvidenceRelationship, type DesignLesson, type SourceType, type VisibilityClass,
   type OutcomeType, type RelationshipType, type EntityType,
+  type IngestionStatus, type ExtractionStatus,
 } from './types';
 
 export class EvidenceSpineError extends Error {}
@@ -53,19 +55,30 @@ export async function createSource(orgId: number, p: {
   checksum?: string | null; version?: string | null; provenance?: Record<string, unknown> | null;
   linkedCsrReportId?: number | null; linkedPrecedentId?: string | null;
   metadata?: Record<string, unknown> | null;
+  /** Defaults to 'pending'. A source whose bytes are already stored and read is
+   *  'ingested' at creation — leaving it 'pending' would misreport the corpus. */
+  ingestionStatus?: IngestionStatus;
+  /** Defaults to 'pending'. Set to 'extracted' when text was pulled at ingest;
+   *  'failed' when extraction was attempted and produced nothing usable. */
+  extractionStatus?: ExtractionStatus;
 }): Promise<EvidenceSource> {
   assertOneOf(p.sourceType, SOURCE_TYPES, 'sourceType');
   const visibility = p.visibilityClass ?? 'tenant_private';
   assertOneOf(visibility, VISIBILITY_CLASSES, 'visibilityClass');
+  const ingestionStatus = p.ingestionStatus ?? 'pending';
+  assertOneOf(ingestionStatus, INGESTION_STATUSES, 'ingestionStatus');
+  const extractionStatus = p.extractionStatus ?? 'pending';
+  assertOneOf(extractionStatus, EXTRACTION_STATUSES, 'extractionStatus');
   const { rows } = await pool.query(
     `INSERT INTO cre_evidence_sources (
        organization_id, visibility_class, client_workspace_id, source_type, agency,
        source_record_identifier, title, sponsor, product, indication, therapeutic_area, phase,
        application_type, application_number, trial_registry_identifier, document_date,
        official_url, stored_artifact_ref, checksum, version, provenance,
-       linked_csr_report_id, linked_precedent_id, metadata
+       linked_csr_report_id, linked_precedent_id, metadata,
+       ingestion_status, extraction_status
      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
-               COALESCE($21::jsonb,'{}'::jsonb),$22,$23,COALESCE($24::jsonb,'{}'::jsonb))
+               COALESCE($21::jsonb,'{}'::jsonb),$22,$23,COALESCE($24::jsonb,'{}'::jsonb),$25,$26)
      RETURNING *`,
     [
       writeOrg(orgId, visibility), visibility, p.clientWorkspaceId ?? null, p.sourceType,
@@ -76,9 +89,42 @@ export async function createSource(orgId: number, p: {
       p.version ?? null, p.provenance ? JSON.stringify(p.provenance) : null,
       p.linkedCsrReportId ?? null, p.linkedPrecedentId ?? null,
       p.metadata ? JSON.stringify(p.metadata) : null,
+      ingestionStatus, extractionStatus,
     ],
   );
   return adaptSource(rows[0]);
+}
+
+/**
+ * Find a live source by content checksum within the caller's visibility.
+ *
+ * `cre_evidence_sources` has no unique constraint on checksum, so identity has
+ * to be resolved explicitly: re-uploading the same bytes must resolve to the
+ * source that already exists rather than minting a second identity for one
+ * document. That is the whole point of a canonical source object — two rows for
+ * one file is the fragmentation this model is meant to end.
+ *
+ * Scoped like every other read here (own org plus global-public), so one
+ * tenant's checksum can never resolve to another tenant's source.
+ */
+export async function findSourceByChecksum(
+  orgId: number,
+  checksum: string,
+  opts: { sourceType?: SourceType } = {},
+): Promise<EvidenceSource | null> {
+  if (!checksum) return null;
+  const c = visibleOrgClause(orgId, 2);
+  const args: unknown[] = [checksum, c.param];
+  let where = `checksum = $1 AND ${c.sql} AND deleted_at IS NULL`;
+  if (opts.sourceType) {
+    args.push(opts.sourceType);
+    where += ` AND source_type = $${args.length}`;
+  }
+  const { rows } = await pool.query(
+    `SELECT * FROM cre_evidence_sources WHERE ${where} ORDER BY created_at ASC LIMIT 1`,
+    args,
+  );
+  return rows[0] ? adaptSource(rows[0]) : null;
 }
 
 export async function getSource(orgId: number, id: number): Promise<EvidenceSource | null> {
