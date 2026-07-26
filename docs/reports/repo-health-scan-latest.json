@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-26T00:10:52.570Z",
+  "generatedAt": "2026-07-26T00:17:14.249Z",
   "git": {
-    "sha": "b13383a7c02d358d4d44739fe1916a532bd172e9",
+    "sha": "9c356e706b6deade57e62453d9735e260652d4c5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2475,10 +2475,6 @@
         "bytes": 680498
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 269879
-      },
-      {
         "file": "server/statistics-service.ts",
         "bytes": 220035
       },
@@ -2493,6 +2489,10 @@
       {
         "file": "server/services/ana-ri/command-executor.ts",
         "bytes": 178997
+      },
+      {
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "bytes": 177893
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2609,16 +2609,16 @@
         "lines": 5431
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 5086
-      },
-      {
         "file": "server/services/ana-ri/command-executor.ts",
         "lines": 4740
       },
       {
         "file": "server/storage.ts",
         "lines": 4415
+      },
+      {
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 3673
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
