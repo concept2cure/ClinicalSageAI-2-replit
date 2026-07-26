@@ -465,13 +465,26 @@ router.post('/stream', async (req: Request, res: Response) => {
     const streamFileIds = req.body.file_ids;
     if (streamFileIds && Array.isArray(streamFileIds) && streamFileIds.length > 0) {
       try {
-        const fileResult = await dbPool.query(
-          `SELECT id, original_name, mime_type, storage_path FROM file_uploads WHERE id = ANY($1) AND organization_id = $2`,
-          [streamFileIds, orgId ? Number(orgId) : 0]
+        // Tenant scoping is enforced by the shared helper, which checks BOTH
+        // the organization column and the storage-path prefix. This route used
+        // to hand-roll `WHERE ... AND organization_id = $2` against a table
+        // whose INSERT never wrote that column, so the lookup always returned
+        // zero rows and every attachment was silently dropped.
+        const { loadUploadedFileMetadata } = await import(
+          '../../services/ana/uploaded-file-access.js'
         );
-        if (fileResult.rows.length > 0) {
-          const fileContext = fileResult.rows
-            .map((f: any) => `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`)
+        const attachedFiles = await loadUploadedFileMetadata(
+          streamFileIds,
+          orgId != null ? Number(orgId) : null
+        );
+        if (attachedFiles.length < streamFileIds.length) {
+          console.warn(
+            `[AnA RI Stream] ${streamFileIds.length - attachedFiles.length} of ${streamFileIds.length} attachment(s) not resolvable for this tenant`
+          );
+        }
+        if (attachedFiles.length > 0) {
+          const fileContext = attachedFiles
+            .map(f => `- ${f.fileName} (${f.mimeType}) [ID: ${f.fileId}]`)
             .join('\n');
           messages.push({
             role: 'user' as const,
@@ -485,38 +498,37 @@ router.post('/stream', async (req: Request, res: Response) => {
           // metadata-only mention above.
           if (isPdfIntakeEnabled()) {
             const MAX_DOC_BYTES = 30 * 1024 * 1024; // ~30MB raw, under Anthropic's limit
-            for (const f of fileResult.rows as Array<{
-              original_name: string;
-              mime_type: string;
-              storage_path: string | null;
-            }>) {
-              const mime = (f.mime_type || '').toLowerCase();
+            for (const f of attachedFiles) {
+              const mime = (f.mimeType || '').toLowerCase();
               const docMime: 'application/pdf' | 'text/plain' | null =
                 mime === 'application/pdf'
                   ? 'application/pdf'
                   : mime === 'text/plain' || mime === 'text/markdown'
                     ? 'text/plain'
                     : null;
-              if (!docMime || !f.storage_path) continue;
-              const buf = await readLocalUploadBuffer(f.storage_path);
+              if (!docMime || !f.storagePath) continue;
+              const buf = await readLocalUploadBuffer(f.storagePath);
               if (!buf || buf.length === 0 || buf.length > MAX_DOC_BYTES) continue;
               messages.push({
                 role: 'user' as const,
-                content: `Read the attached document "${f.original_name}" and use it to answer.`,
+                content: `Read the attached document "${f.fileName}" and use it to answer.`,
                 contentBlocks: [
                   {
                     type: 'document',
                     source: { type: 'base64', media_type: docMime, data: buf.toString('base64') },
-                    title: f.original_name,
+                    title: f.fileName,
                   },
-                  { type: 'text', text: `Attached document: ${f.original_name}` },
+                  { type: 'text', text: `Attached document: ${f.fileName}` },
                 ],
               });
             }
           }
         }
-      } catch {
-        /* non-blocking */
+      } catch (fileErr: any) {
+        // Non-blocking: the turn still runs without the attachment. But it must
+        // not fail silently — a swallowed error here is indistinguishable to
+        // the user from "AnA read my file and ignored it".
+        console.warn('[AnA RI Stream] Attachment context failed:', fileErr?.message);
       }
     }
 
