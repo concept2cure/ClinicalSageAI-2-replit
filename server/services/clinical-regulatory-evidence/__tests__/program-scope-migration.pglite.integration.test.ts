@@ -15,11 +15,23 @@
  * halves of the guard.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+// A pool bound to whichever PGlite instance the current test created, so
+// createSource can be exercised against a spine-only schema.
+let active: PGlite | null = null;
+vi.mock('../../../db', () => ({
+  pool: {
+    query: async (sql: string, params?: unknown[]) => {
+      const r = await active!.query(sql, params as unknown[]);
+      return { rows: r.rows as unknown[], rowCount: (r.rows as unknown[]).length };
+    },
+  },
+}));
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const SPINE = path.resolve(
@@ -65,6 +77,55 @@ describe('20260726_cre_source_program_scope (real Postgres)', () => {
       );
       expect(idx.rows).toHaveLength(1);
     } finally {
+      await db.close();
+    }
+  });
+
+  it('lets createSource write against a spine-only schema', async () => {
+    // Regression: createSource named `client_program_id` unconditionally, so
+    // every write failed with 42703 on a database that has the spine but not
+    // the program-scope migration. That is the state of production, and of the
+    // other CRE integration suites — 18 tests across 6 files went red.
+    // Callers that set no program (CSR adapter, CRL ingestion) must not depend
+    // on a column from a later migration.
+    const db = new PGlite();
+    active = db;
+    try {
+      await db.exec(sql(SPINE)); // spine only — no program-scope migration
+      const svc = await import('../evidence-spine.service');
+
+      const src = await svc.createSource(101, {
+        sourceType: 'fda_crl',
+        visibilityClass: 'global_public',
+        agency: 'FDA',
+        title: 'Complete Response Letter',
+      });
+      expect(src.id).toBeGreaterThan(0);
+      expect(src.clientProgramId).toBeNull();
+    } finally {
+      active = null;
+      await db.close();
+    }
+  });
+
+  it('fails loudly if a program scope is set but the column is missing', async () => {
+    // The opposite case must NOT be silent: dropping the scope would file the
+    // document under no project while reporting success.
+    const db = new PGlite();
+    active = db;
+    try {
+      await db.exec(sql(SPINE));
+      const svc = await import('../evidence-spine.service');
+
+      await expect(
+        svc.createSource(101, {
+          sourceType: 'client_document',
+          clientProgramId: '11111111-1111-4111-8111-111111111111',
+          title: 'scoped.pdf',
+        }),
+      ).rejects.toThrow(/client_program_id/);
+    } finally {
+      active = null;
       await db.close();
     }
   });

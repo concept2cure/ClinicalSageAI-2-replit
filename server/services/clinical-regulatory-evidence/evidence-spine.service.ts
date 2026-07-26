@@ -73,28 +73,51 @@ export async function createSource(orgId: number, p: {
   assertOneOf(ingestionStatus, INGESTION_STATUSES, 'ingestionStatus');
   const extractionStatus = p.extractionStatus ?? 'pending';
   assertOneOf(extractionStatus, EXTRACTION_STATUSES, 'extractionStatus');
+  const values: unknown[] = [
+    writeOrg(orgId, visibility), visibility, p.clientWorkspaceId ?? null, p.sourceType,
+    p.agency ?? null, p.sourceRecordIdentifier ?? null, p.title ?? null, p.sponsor ?? null,
+    p.product ?? null, p.indication ?? null, p.therapeuticArea ?? null, p.phase ?? null,
+    p.applicationType ?? null, p.applicationNumber ?? null, p.trialRegistryIdentifier ?? null,
+    p.documentDate ?? null, p.officialUrl ?? null, p.storedArtifactRef ?? null, p.checksum ?? null,
+    p.version ?? null, p.provenance ? JSON.stringify(p.provenance) : null,
+    p.linkedCsrReportId ?? null, p.linkedPrecedentId ?? null,
+    p.metadata ? JSON.stringify(p.metadata) : null,
+    ingestionStatus, extractionStatus,
+  ];
+  const columns = [
+    'organization_id', 'visibility_class', 'client_workspace_id', 'source_type', 'agency',
+    'source_record_identifier', 'title', 'sponsor', 'product', 'indication', 'therapeutic_area',
+    'phase', 'application_type', 'application_number', 'trial_registry_identifier',
+    'document_date', 'official_url', 'stored_artifact_ref', 'checksum', 'version', 'provenance',
+    'linked_csr_report_id', 'linked_precedent_id', 'metadata',
+    'ingestion_status', 'extraction_status',
+  ];
+  const placeholders = [
+    '$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$10', '$11', '$12', '$13', '$14',
+    '$15', '$16', '$17', '$18', '$19', '$20', `COALESCE($21::jsonb,'{}'::jsonb)`, '$22', '$23',
+    `COALESCE($24::jsonb,'{}'::jsonb)`, '$25', '$26',
+  ];
+
+  // `client_program_id` is added by migrations/20260726_cre_source_program_scope.sql,
+  // which is separate from the spine that creates this table. Naming the column
+  // unconditionally would break every write on a database that has the spine but
+  // not that migration — including production, and including the CSR/CRL paths
+  // that never set a program. So it is named ONLY when a caller supplies one.
+  //
+  // A caller that DOES supply one on a database missing the column still fails
+  // loudly, which is correct: silently dropping a project scope would put a
+  // document in no project while reporting success.
+  if (p.clientProgramId != null) {
+    values.push(p.clientProgramId);
+    columns.push('client_program_id');
+    placeholders.push(`$${values.length}`);
+  }
+
   const { rows } = await pool.query(
-    `INSERT INTO cre_evidence_sources (
-       organization_id, visibility_class, client_workspace_id, source_type, agency,
-       source_record_identifier, title, sponsor, product, indication, therapeutic_area, phase,
-       application_type, application_number, trial_registry_identifier, document_date,
-       official_url, stored_artifact_ref, checksum, version, provenance,
-       linked_csr_report_id, linked_precedent_id, metadata,
-       ingestion_status, extraction_status, client_program_id
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
-               COALESCE($21::jsonb,'{}'::jsonb),$22,$23,COALESCE($24::jsonb,'{}'::jsonb),$25,$26,$27)
+    `INSERT INTO cre_evidence_sources (${columns.join(', ')})
+     VALUES (${placeholders.join(',')})
      RETURNING *`,
-    [
-      writeOrg(orgId, visibility), visibility, p.clientWorkspaceId ?? null, p.sourceType,
-      p.agency ?? null, p.sourceRecordIdentifier ?? null, p.title ?? null, p.sponsor ?? null,
-      p.product ?? null, p.indication ?? null, p.therapeuticArea ?? null, p.phase ?? null,
-      p.applicationType ?? null, p.applicationNumber ?? null, p.trialRegistryIdentifier ?? null,
-      p.documentDate ?? null, p.officialUrl ?? null, p.storedArtifactRef ?? null, p.checksum ?? null,
-      p.version ?? null, p.provenance ? JSON.stringify(p.provenance) : null,
-      p.linkedCsrReportId ?? null, p.linkedPrecedentId ?? null,
-      p.metadata ? JSON.stringify(p.metadata) : null,
-      ingestionStatus, extractionStatus, p.clientProgramId ?? null,
-    ],
+    values,
   );
   return adaptSource(rows[0]);
 }
