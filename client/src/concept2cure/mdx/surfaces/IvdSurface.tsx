@@ -28,6 +28,8 @@ import {
 import { AskAnaChip } from './AskAnaChip';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
+import { useCdxPairings, useCliaCategorizations } from '../hooks/useCdxClia';
+import { DataGate } from '../components/DataGate';
 
 export interface IvdSurfaceProps {
   program: Program | null;
@@ -66,6 +68,15 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
   const sourceValid = useSampleRows(validations.rows, IVD_VALIDATIONS);
   const sourceClinical = useSampleRows(clinical.rows, IVD_CLINICAL);
   const sourceGspr = useSampleRows(gspr.rows, IVD_GSPR);
+
+  /* Companion diagnostics and CLIA — the two IVD differentiators the
+     platform review names, built and previously reachable only through
+     AnA. Both follow the selected programme, like every other panel
+     here, and render through DataGate so an empty programme reads empty
+     rather than borrowing another assay's pairings. No sample fixtures:
+     an invented CDx approval or waiver grant is a regulatory claim. */
+  const cdx = useCdxPairings(programId);
+  const clia = useCliaCategorizations(programId);
 
   const usingFixture = !classifications.rows && !validations.rows && !clinical.rows;
 
@@ -359,6 +370,113 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
                 );
               })}
             </div>
+          </div>
+
+          {/* Companion diagnostics */}
+          <div className="panel">
+            <div className="panel-hdr">
+              <div>
+                <div className="t">Companion diagnostics</div>
+                <div className="s">Drug–diagnostic pairings · FDA/EMA approval · biomarker</div>
+              </div>
+            </div>
+            <DataGate
+              state={cdx.rows}
+              label="companion diagnostic pairings"
+              onRetry={cdx.refresh}
+              emptyHint="Pair this diagnostic with a drug programme to coordinate CDx co-development."
+            >
+              {(rows) => (
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>Drug</th>
+                      <th>Biomarker</th>
+                      <th>Indication</th>
+                      <th>Status</th>
+                      <th>FDA</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r) => (
+                      <tr key={r.id}>
+                        <td>
+                          <div className="k-name">{r.drugName}</div>
+                          <div className="k-holder">{r.sponsor}</div>
+                        </td>
+                        <td style={{ color: 'var(--text-300)' }}>{r.biomarker}</td>
+                        <td style={{ color: 'var(--text-300)' }}>{r.indication}</td>
+                        <td>
+                          <span className={`status-pill ${r.approvalStatus === 'approved' ? 'complete' : 'review'}`}>
+                            {r.approvalStatus}
+                          </span>
+                        </td>
+                        <td style={{ color: 'var(--text-300)' }}>{r.fdaApprovalDate ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </DataGate>
+          </div>
+
+          {/* CLIA categorization */}
+          <div className="panel">
+            <div className="panel-hdr">
+              <div>
+                <div className="t">CLIA categorization</div>
+                <div className="s">Complexity · CLIA waiver lifecycle · CMS letter</div>
+              </div>
+            </div>
+            <DataGate
+              state={clia.rows}
+              label="CLIA categorizations"
+              onRetry={clia.refresh}
+              emptyHint="Categorize this test's CLIA complexity to plan a waiver strategy."
+            >
+              {(rows) => (
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>Test</th>
+                      <th>Analyte</th>
+                      <th>Complexity</th>
+                      <th>Waiver</th>
+                      <th>CMS letter</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r) => (
+                      <tr key={r.id}>
+                        <td className="k-name">{r.testName}</td>
+                        <td style={{ color: 'var(--text-300)' }}>{r.analyte}</td>
+                        <td>
+                          <span className={`status-pill ${r.complexity === 'waived' ? 'complete' : r.complexity === 'moderate' ? 'review' : 'draft'}`}>
+                            {r.complexity}
+                          </span>
+                        </td>
+                        <td>
+                          {/* revoked is called out, never shown as granted —
+                              a revoked waiver means operating outside the
+                              certificate. */}
+                          <span
+                            className={`status-pill ${
+                              r.waiver === 'granted' ? 'complete'
+                                : r.waiver === 'revoked' ? 'draft'
+                                : r.waiver === 'applied' ? 'review'
+                                : ''
+                            }`}
+                          >
+                            {r.waiver}
+                          </span>
+                        </td>
+                        <td style={{ color: 'var(--text-300)' }}>{r.cmsLetterRef ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </DataGate>
           </div>
         </div>
       </div>
