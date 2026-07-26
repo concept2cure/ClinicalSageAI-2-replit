@@ -11,9 +11,15 @@ import * as React from 'react';
 import { I } from '../icons';
 import { CER_EXPORT, CER_LITERATURE, CER_SIGNALS } from '../data/cer';
 import type { Program } from '../data/programs';
+import type { CerSignal, LiteratureBucket as KitLiteratureBucket } from '../data/cer';
+import type {
+  SafetySignal,
+  LiteratureBucket as LiveLiteratureBucket,
+} from '../hooks/useProgramExtras';
 import { useK510EstarSections } from '../hooks/useK510';
 import { useProgramExtras } from '../hooks/useProgramExtras';
 import { PathwayPanes } from './pathway/PathwayPanes';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface CerSurfaceProps {
   /** Active CER program from App.tsx. Sections and title come from here. */
@@ -27,12 +33,15 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
   /* CER sections live in the same cerv2_510k_sections table used by 510(k)
      and PMA — the legacy table name spans all three pathways. */
   const sectionsState = useK510EstarSections(program?.id ?? null);
-  const sourceSections = sectionsState.rows ?? CER_EXPORT.map((s, i) => ({
-    id: i + 1,
-    label: s.label,
-    status: s.status as never,
-    blocker: false,
-  }));
+  const sourceSections = useSampleRows(
+    sectionsState.rows,
+    CER_EXPORT.map((s, i) => ({
+      id: i + 1,
+      label: s.label,
+      status: s.status as never,
+      blocker: false,
+    })),
+  );
 
   /* Live safety signals (FAERS / MAUDE / Eudamed / Spontaneous / Literature)
      and year-bucketed literature corpus — both per-program. Falls back to
@@ -40,10 +49,20 @@ export function CerSurface({ program, onAskAna }: CerSurfaceProps) {
      count is "n=" style (numeric), and live safety_signals doesn't carry
      that directly; the endpoint approximates by source-grouped AE counts. */
   const extras = useProgramExtras(program?.id ?? null);
-  const sourceSignals = extras.safetySignals ?? CER_SIGNALS;
-  const sourceLiterature = extras.literature && extras.literature.length > 0
-    ? extras.literature
-    : CER_LITERATURE;
+  /* The live and fixture rows are different shapes (live safety_signals
+     carry no "assess" field), and the table below already narrows with
+     an `in` check — so the element type is the union of both. */
+  const sourceSignals = useSampleRows<SafetySignal | CerSignal>(
+    extras.safetySignals,
+    CER_SIGNALS,
+  );
+  /* Same guard in ternary form as the rest of the surface: a program
+     with no literature hits shows none, rather than another device's
+     example search results. */
+  const sourceLiterature = useSampleRows<LiveLiteratureBucket | KitLiteratureBucket>(
+    extras.literature && extras.literature.length > 0 ? extras.literature : null,
+    CER_LITERATURE,
+  );
   const maxHits = Math.max(1, ...sourceLiterature.map((l) => l.hits));
   const visibleSignals = includedOnly
     ? sourceSignals.filter(s => s.status === 'included')

@@ -27,6 +27,7 @@ import {
 } from '../hooks/useIvd';
 import { AskAnaChip } from './AskAnaChip';
 import { PathwayPanes } from './pathway/PathwayPanes';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface IvdSurfaceProps {
   program: Program | null;
@@ -57,10 +58,10 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
   const clinical = useIvdClinicalEvidence();
   const gspr = useIvdGsprMatrix(programId);
 
-  const sourceClass = classifications.rows ?? IVD_CLASSIFICATIONS;
-  const sourceValid = validations.rows ?? IVD_VALIDATIONS;
-  const sourceClinical = clinical.rows ?? IVD_CLINICAL;
-  const sourceGspr = gspr.rows ?? IVD_GSPR;
+  const sourceClass = useSampleRows(classifications.rows, IVD_CLASSIFICATIONS);
+  const sourceValid = useSampleRows(validations.rows, IVD_VALIDATIONS);
+  const sourceClinical = useSampleRows(clinical.rows, IVD_CLINICAL);
+  const sourceGspr = useSampleRows(gspr.rows, IVD_GSPR);
 
   const usingFixture = !classifications.rows && !validations.rows && !clinical.rows;
 

@@ -11,6 +11,7 @@ import { useEstarReadiness, useK510EstarSections, useK510Predicates, useK510SeMa
 import { AskAnaChip } from './AskAnaChip';
 import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import { PathwayPanes } from './pathway/PathwayPanes';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 export interface K510SurfaceProps {
   program: Program | null;
@@ -40,9 +41,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
   const officialReady = estarReadiness.readiness?.ready ?? false;
   const officialBlockers = estarReadiness.readiness?.blockers ?? [];
 
-  const sourcePredicates = predicates.rows ?? K510_PREDICATES;
-  const sourceSeRows     = seMatrix.rows  ?? K510_SE_ROWS;
-  const sourceEstar      = estar.rows     ?? K510_ESTAR;
+  const sourcePredicates = useSampleRows(predicates.rows, K510_PREDICATES);
+  const sourceSeRows     = useSampleRows(seMatrix.rows, K510_SE_ROWS);
+  const sourceEstar      = useSampleRows(estar.rows, K510_ESTAR);
   const estarBlockerCount = estar.rows ? estar.blockerCount : K510_ESTAR.filter(s => s.blocker).length;
   const estarTotal = sourceEstar.length;
 
