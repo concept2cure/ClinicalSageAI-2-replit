@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-26T00:17:14.249Z",
+  "generatedAt": "2026-07-26T00:23:47.695Z",
   "git": {
-    "sha": "9c356e706b6deade57e62453d9735e260652d4c5",
+    "sha": "90112c0d90e50b19ab14ab101c3f60c07fa8c993",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2491,10 +2491,6 @@
         "bytes": 178997
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 177893
-      },
-      {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "bytes": 150437
       },
@@ -2541,6 +2537,10 @@
       {
         "file": "server/services/submission-package-orchestrator.ts",
         "bytes": 115960
+      },
+      {
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "bytes": 115874
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2617,10 +2617,6 @@
         "lines": 4415
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 3673
-      },
-      {
         "file": "server/services/intelligent-report-engine.ts",
         "lines": 3555
       },
@@ -2655,6 +2651,10 @@
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "lines": 2609
+      },
+      {
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2603
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
