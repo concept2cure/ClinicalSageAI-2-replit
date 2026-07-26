@@ -14916,20 +14916,38 @@ registerToolHandler('assess_ivd_analytical_extensions', async (input: Record<str
 // ../regulatory-currency/currency-registry.ts.
 registerToolHandler('check_regulatory_currency', async (input: Record<string, unknown>) =>
   runStatsTool('check_regulatory_currency', async () => {
-    const { findFacts } = await import('../regulatory-currency/currency-registry.js');
+    const { findFacts, verificationAgeDays, isVerificationStale } = await import(
+      '../regulatory-currency/currency-registry.js'
+    );
     /* Resolve statuses against today. `mandatory_upcoming` is a claim
        about the future that goes wrong the moment its date arrives, and
        this tool tells AnA to report the status verbatim — so without
        `asOf` it would have said EU EUDAMED was not yet mandatory two
        months after it became mandatory. The registry stays pure; the
        clock is read here, at the boundary. */
+    const asOf = new Date().toISOString().slice(0, 10);
     const facts = findFacts({
       topic: input.topic as string | undefined,
       jurisdiction: input.jurisdiction as any,
       segment: input.segment as any,
-      asOf: new Date().toISOString().slice(0, 10),
+      asOf,
     });
-    return { matchCount: facts.length, facts };
+    /* Carry how long since each fact was confirmed against its source.
+       `lastVerified` is this module's honesty claim, and it decays
+       silently — a fact nobody has re-checked in a year still reads as
+       authoritative. Reporting the age lets AnA caveat rather than
+       assert. */
+    const annotated = facts.map((f) => ({
+      ...f,
+      verificationAgeDays: verificationAgeDays(f, asOf),
+      verificationStale: isVerificationStale(f, asOf),
+    }));
+    return {
+      matchCount: annotated.length,
+      staleCount: annotated.filter((f) => f.verificationStale).length,
+      asOf,
+      facts: annotated,
+    };
   })
 );
 

@@ -276,6 +276,62 @@ export function statusAsOf(fact: RegulatoryFact, asOf: string): CurrencyStatus {
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+/* ── Verification freshness ───────────────────────────────────────────
+   `lastVerified` is the load-bearing honesty claim in this module: it
+   asserts a human checked the fact against `sourceUrl` on that date.
+   Every entry currently carries the same date, so the whole registry was
+   verified in one pass — which is fine on the day and decays silently
+   afterwards. A fact nobody has re-checked in a year still presents as
+   authoritative, and the AnA prompt tells the model to cite it.
+
+   Age is therefore reported alongside the fact so a consumer can caveat
+   rather than assert. This does not guess whether a fact is *wrong* —
+   only how long since anyone confirmed it is right. */
+
+/**
+ * Days between `fact.lastVerified` and `asOf`, or null when either date
+ * is unusable. Negative values (a lastVerified in the future) are
+ * returned as-is rather than clamped — that is a data-entry error worth
+ * surfacing, not smoothing over.
+ */
+export function verificationAgeDays(fact: RegulatoryFact, asOf: string): number | null {
+  if (!ISO_DATE_RE.test(asOf) || !ISO_DATE_RE.test(fact.lastVerified)) return null;
+  const MS_PER_DAY = 86_400_000;
+  /* Both parsed as UTC midnight, so the difference is a whole number of
+     days regardless of the runtime's timezone. */
+  const a = Date.parse(`${asOf}T00:00:00Z`);
+  const v = Date.parse(`${fact.lastVerified}T00:00:00Z`);
+  if (Number.isNaN(a) || Number.isNaN(v)) return null;
+  return Math.round((a - v) / MS_PER_DAY);
+}
+
+/**
+ * Default re-verification interval, in days.
+ *
+ * Six months: long enough that routine guidance churn does not flag the
+ * whole registry every quarter, short enough that a fact cannot go more
+ * than two guidance cycles without someone looking at it. This is a
+ * review prompt, not a correctness claim.
+ */
+export const VERIFICATION_MAX_AGE_DAYS = 180;
+
+/**
+ * Whether `fact` is overdue for re-verification as at `asOf`.
+ *
+ * An unusable date returns `true`: a fact whose verification date cannot
+ * be read is precisely one that should be looked at, and treating it as
+ * fresh would be the unsafe default.
+ */
+export function isVerificationStale(
+  fact: RegulatoryFact,
+  asOf: string,
+  maxAgeDays: number = VERIFICATION_MAX_AGE_DAYS,
+): boolean {
+  const age = verificationAgeDays(fact, asOf);
+  if (age === null) return true;
+  return age > maxAgeDays;
+}
+
 /**
  * `fact` with its status resolved as at `asOf`. Returns the original
  * object when nothing changed, so callers can cheaply detect promotion

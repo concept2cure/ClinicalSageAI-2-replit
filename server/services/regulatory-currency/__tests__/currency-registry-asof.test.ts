@@ -20,6 +20,9 @@ import {
   statusAsOf,
   factAsOf,
   findFacts,
+  verificationAgeDays,
+  isVerificationStale,
+  VERIFICATION_MAX_AGE_DAYS,
   REGULATORY_FACTS,
   type RegulatoryFact,
 } from '../currency-registry';
@@ -139,5 +142,67 @@ describe('findFacts with asOf', () => {
     findFacts({ asOf: '2030-01-01' });
     const original = REGULATORY_FACTS.find((f) => f.id === 'eu-eudamed-mandatory')!;
     expect(original.status).toBe('mandatory_upcoming');
+  });
+});
+
+/* ── Verification freshness ─────────────────────────────────────────── */
+
+describe('verificationAgeDays', () => {
+  it('counts whole days since the fact was last verified', () => {
+    expect(verificationAgeDays({ ...upcoming, lastVerified: '2026-01-01' }, '2026-01-31')).toBe(30);
+  });
+
+  it('is zero on the verification date itself', () => {
+    expect(verificationAgeDays({ ...upcoming, lastVerified: '2026-07-26' }, '2026-07-26')).toBe(0);
+  });
+
+  it('returns null rather than a guess when a date is unusable', () => {
+    expect(verificationAgeDays({ ...upcoming, lastVerified: 'never' }, '2026-07-26')).toBeNull();
+    expect(verificationAgeDays(upcoming, 'nonsense')).toBeNull();
+  });
+
+  it('surfaces a future lastVerified as negative rather than clamping', () => {
+    /* That is a data-entry error worth seeing, not smoothing over. */
+    expect(verificationAgeDays({ ...upcoming, lastVerified: '2026-08-01' }, '2026-07-26')).toBe(-6);
+  });
+
+  it('is timezone-independent across a month boundary', () => {
+    expect(verificationAgeDays({ ...upcoming, lastVerified: '2026-02-28' }, '2026-03-01')).toBe(1);
+  });
+});
+
+describe('isVerificationStale', () => {
+  it('is fresh inside the re-verification window', () => {
+    expect(isVerificationStale({ ...upcoming, lastVerified: '2026-06-29' }, '2026-07-26')).toBe(false);
+  });
+
+  it('is stale past the window', () => {
+    expect(isVerificationStale({ ...upcoming, lastVerified: '2025-01-01' }, '2026-07-26')).toBe(true);
+  });
+
+  it('is not stale exactly on the boundary', () => {
+    const asOf = '2026-07-26';
+    const lastVerified = '2026-01-27'; // exactly 180 days earlier
+    expect(verificationAgeDays({ ...upcoming, lastVerified }, asOf)).toBe(VERIFICATION_MAX_AGE_DAYS);
+    expect(isVerificationStale({ ...upcoming, lastVerified }, asOf)).toBe(false);
+  });
+
+  it('treats an unreadable verification date as stale, not fresh', () => {
+    /* A fact whose verification date cannot be read is precisely one
+       that should be looked at. */
+    expect(isVerificationStale({ ...upcoming, lastVerified: '' }, '2026-07-26')).toBe(true);
+  });
+
+  it('honours a caller-supplied window', () => {
+    const f = { ...upcoming, lastVerified: '2026-06-29' };
+    expect(isVerificationStale(f, '2026-07-26', 10)).toBe(true);
+    expect(isVerificationStale(f, '2026-07-26', 90)).toBe(false);
+  });
+
+  it('reports every shipped fact as currently verified', () => {
+    /* Guards the registry itself: if this fails, the seed data has aged
+       out and needs a re-verification pass rather than a threshold bump. */
+    const overdue = REGULATORY_FACTS.filter((f) => isVerificationStale(f, '2026-07-26'));
+    expect(overdue.map((f) => f.id)).toEqual([]);
   });
 });
