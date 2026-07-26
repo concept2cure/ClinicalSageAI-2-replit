@@ -34,13 +34,12 @@ const ACCEPTED_GHSA_IDS = new Set([
   'GHSA-685m-2w69-288q', // unbounded protobuf recursion
   // @babel/plugin-transform-modules-systemjs — advisory range <=7.29.3, we ship 7.29.4
   'GHSA-fv7c-fp4j-7gwp', // arbitrary code generation
-  // tmp — advisory range <0.2.6; exceljs@4.4.0 (latest) declares `tmp: ^0.2.0`
-  // resolving to 0.2.5. No upgrade path exists: exceljs has no newer release that
-  // bumps tmp. The vulnerability requires attacker-controlled prefix/postfix options
-  // to tmp.tmpName(); exceljs passes fixed internal strings — not user input — so
-  // the path-traversal gadget is not reachable in our usage. Accepted until exceljs
-  // ships a release that depends on tmp >= 0.2.6.
-  'GHSA-ph9p-34f9-6g65', // tmp path traversal via unsanitized prefix/postfix
+  // tmp — entry REMOVED, the advisory is genuinely fixed. It was accepted on
+  // the basis that "exceljs@4.4.0 declares tmp: ^0.2.0 resolving to 0.2.5. No
+  // upgrade path exists". An override has since pinned tmp to 0.2.7 — above the
+  // <0.2.6 vulnerable range — so npm audit no longer flags it and the entry
+  // suppressed nothing. Verified by removing it: the scan still reports 0
+  // blocking advisories.
   // esbuild — advisory GHSA-gv7w-rqvm-qjhr, vulnerable range >=0.17.0 <0.28.1
   // (build-time RCE via NPM_CONFIG_REGISTRY during esbuild's binary fetch).
   // NOTE: unlike the entries above, this is NOT a registry-lag false positive —
@@ -192,6 +191,42 @@ for (const [pkgName, vuln] of Object.entries(vulns)) {
   }
 }
 
+// ── Stale-entry detection ───────────────────────────────────────────────────
+// Every id here suppresses a real advisory, so an entry that no longer matches
+// anything is not harmless: it is a standing risk acceptance for a problem that
+// may no longer exist, and its justification rots without anyone noticing.
+//
+// Two entries have already drifted this way. `react-router` was accepted with
+// "this app uses react-router-dom in SPA / data-router mode" — the app never
+// imported it at all. `tmp` was accepted with "no upgrade path exists" long
+// after an override had fixed it. Both read as considered decisions and
+// discouraged the check that would have found them.
+//
+// Reported, not enforced: npm audit's database moves, so an id can drop out
+// for a release and return. Failing the build on that would be worse than the
+// drift. The point is to make it visible in the log every run.
+const flaggedIds = new Set();
+for (const vuln of Object.values(vulns)) {
+  for (const adv of (vuln.via || []).filter((x) => typeof x === 'object')) {
+    const id = ghsaFromUrl(adv.url);
+    if (id) flaggedIds.add(id);
+  }
+}
+const staleAccepted = [...ACCEPTED_GHSA_IDS].filter((id) => !flaggedIds.has(id));
+
+function reportStale() {
+  if (staleAccepted.length === 0) return;
+  console.log('');
+  console.log(
+    `Note: ${staleAccepted.length} allowlist entr${staleAccepted.length === 1 ? 'y is' : 'ies are'} no longer flagged by npm audit:`,
+  );
+  for (const id of staleAccepted) console.log(`  - ${id}`);
+  console.log(
+    'Each suppresses an advisory that no longer matches. Re-verify the justification and remove it,',
+  );
+  console.log('or confirm the id has only dropped out of the advisory database temporarily.');
+}
+
 if (blocking.length === 0) {
   // Report what we accepted so the log is searchable.
   const accepted = [];
@@ -203,8 +238,11 @@ if (blocking.length === 0) {
   if (accepted.length > 0) {
     console.log('Accepted (registry-lag false positives):', accepted.join(', '));
   }
+  reportStale();
   process.exit(0);
 }
+
+reportStale();
 
 console.error(`Security Scan: ${blocking.length} blocking high/critical advisor${blocking.length === 1 ? 'y' : 'ies'} found:`);
 for (const b of blocking) {
