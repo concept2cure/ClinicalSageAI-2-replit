@@ -167,6 +167,10 @@ export interface RbmBoardPlan {
 
 export interface RbmBoardAction {
   id: number;
+  /** The plan this action belongs to. `actions` spans every plan version in the
+   *  program, so a surface showing one plan must filter on this before it
+   *  renders — or mutates — anything. */
+  planId: number | null;
   type: string;
   title: string;
   priority: string;

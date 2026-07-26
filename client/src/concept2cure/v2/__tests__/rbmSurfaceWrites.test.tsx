@@ -47,7 +47,7 @@ function board(over: Partial<RbmBoard> = {}): RbmBoard {
     sites: [{ n: '5', name: 'Mercy Clinical', country: null, composite: 71, enr: 18, qual: 20, ops: 15, tier: 'enhanced', drivers: ['quality'], at: null }],
     oversight: { 5: { open: 1, high: 1 } },
     plan: { id: 3, title: 'Monitoring plan', strategy: 'risk_based', status: 'draft', updated: null, tiers: null, anaDraft: false, approval: null },
-    actions: [{ id: 41, type: 'issue', title: 'Confirm control', priority: 'high', owner: 'Unassigned', due: '2026-08-01', status: 'open', overdue: false, origin: 'ract' }],
+    actions: [{ id: 41, planId: 3, type: 'issue', title: 'Confirm control', priority: 'high', owner: 'Unassigned', due: '2026-08-01', status: 'open', overdue: false, origin: 'ract' }],
     ...over,
   };
 }
@@ -174,6 +174,77 @@ describe('RBM v2 surfaces persist their writes', () => {
     render(<RbmPlan board={board({ plan: null, actions: [] })} onReload={vi.fn()} />);
     const add = await screen.findByRole('button', { name: /Add action/ });
     await waitFor(() => expect(add).toHaveProperty('disabled', true));
+  });
+
+  it('refuses to edit the CtQ register of an approved assessment', async () => {
+    // The e-signature attests to specific content. Editing underneath it would
+    // leave the approval block naming a signer for content they never saw.
+    const approved = board({
+      assessment: {
+        id: 7, framework: 'ich_e6r3', version: 1, status: 'active', updated: null,
+        approval: { by: 'Jordan Chen', when: '2026-06-01', reason: 'Risk review complete' }, history: [],
+      },
+    });
+    render(<RbmRact board={approved} onReload={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /Add CtQ factor/ })).toHaveProperty('disabled', true);
+    expect(screen.getByRole('button', { name: 'Approved assessment — CtQ content is fixed under the signature' }))
+      .toHaveProperty('disabled', true);
+    expect(writes()).toHaveLength(0);
+  });
+
+  it('omits fields it cannot show when editing, instead of blanking them', async () => {
+    // The board carries no risk description, owner or residual components, so
+    // the form opens blank for them. Sending those blanks would erase stored
+    // data on an unrelated edit.
+    render(<RbmRact board={board()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
+    fireEvent.change(await screen.findByLabelText(/Mitigation/), { target: { value: 'Central review + KRI' } });
+    fireEvent.click(screen.getByRole('button', { name: /Save changes/ }));
+    await waitFor(() => expect(writes().length).toBe(1));
+    const [method, url, body] = writes()[0];
+    expect(method).toBe('PATCH');
+    expect(url).toBe('/api/mdx/rbm-risk-items/21');
+    expect(body).toMatchObject({ mitigation: 'Central review + KRI' });
+    for (const k of ['riskDescription', 'assignedTo', 'residualLikelihood', 'residualImpact']) {
+      expect(body).not.toHaveProperty(k);
+    }
+  });
+
+  it('shows and mutates only the displayed plan\'s actions', async () => {
+    // An action carried on a superseded plan version must not appear under —
+    // or be advanced from — the plan on screen.
+    const multi = board({
+      actions: [
+        { id: 41, planId: 3, type: 'issue', title: 'Current plan action', priority: 'high', owner: 'Unassigned', due: '2026-08-01', status: 'open', overdue: false, origin: 'ract' },
+        { id: 99, planId: 2, type: 'issue', title: 'Superseded plan action', priority: 'high', owner: 'Unassigned', due: '2026-08-01', status: 'open', overdue: false, origin: 'ract' },
+      ],
+    });
+    render(<RbmPlan board={multi} onReload={vi.fn()} />);
+    expect(screen.getByText('Current plan action')).toBeTruthy();
+    expect(screen.queryByText('Superseded plan action')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Start/ }));
+    await waitFor(() => {
+      expect(writes()).toContainEqual(['PATCH', '/api/mdx/rbm-monitoring-actions/41', { status: 'in_progress' }]);
+    });
+  });
+
+  it('records an investigation and its follow-up action in one transactional call', async () => {
+    render(<RbmSignals board={board()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Site 5 is a quality outlier/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Document investigation/ }));
+    fireEvent.change(await screen.findByLabelText('Root cause'), { target: { value: 'Staff turnover' } });
+    fireEvent.change(screen.getByLabelText(/Action taken/), { target: { value: 'Retrain and re-monitor' } });
+    fireEvent.change(screen.getByLabelText('Follow-up action'), { target: { value: 'capa' } });
+    fireEvent.click(screen.getByRole('button', { name: /Save investigation/ }));
+    await waitFor(() => expect(writes().length).toBe(1));
+    const [method, url, body] = writes()[0];
+    // One call, not a signal PATCH followed by a separate action POST that
+    // could fail after the disposition already committed.
+    expect(method).toBe('POST');
+    expect(url).toBe('/api/mdx/rbm-signals/31/investigate');
+    expect(body).toMatchObject({ status: 'investigating' });
+    expect((body as { action: { planId: number; actionType: string } }).action)
+      .toMatchObject({ planId: 3, actionType: 'capa' });
   });
 
   it('surfaces the server error and changes nothing when a write is rejected', async () => {

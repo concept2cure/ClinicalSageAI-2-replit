@@ -124,28 +124,30 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
   };
 
   /**
-   * Record the investigation. The signal's status and resolution notes are
-   * persisted on the signal; when a follow-up action type is chosen it becomes
-   * a real monitoring action linked back to this signal, so the plan board and
-   * the attention feed both see it.
+   * Record the investigation. The disposition and the follow-up action it
+   * commits to go through ONE transactional endpoint: as two calls, the signal
+   * could commit as resolved and the action then fail, leaving a closed signal
+   * without the follow-up it promised while the dialog reported the change as
+   * unsaved. A monitoring decision and its action land together or not at all.
    */
   const saveInv = async (f: Record<string, string>) => {
     const sig = invFor!;
     const done = await mut.run(async () => {
       const notes = [f.rootCause ? `Root cause: ${f.rootCause}` : '', f.notes, f.evidence ? `Evidence: ${f.evidence}` : '']
         .filter(Boolean).join('\n');
-      await rbmWrite('PATCH', `/rbm-signals/${sig.id}`, { status: f.status, resolutionNotes: notes || null });
-      if (f.action && f.action !== 'none' && planId != null) {
-        await rbmWrite('POST', '/rbm-monitoring-actions', {
+      const raisesAction = f.action && f.action !== 'none' && planId != null;
+      await rbmWrite('POST', `/rbm-signals/${sig.id}/investigate`, {
+        status: f.status,
+        resolutionNotes: notes || null,
+        action: raisesAction ? {
           planId,
-          signalId: Number(sig.id),
           actionType: f.action,
           description: `${sig.title} — ${f.notes || 'follow-up'}`,
           priority: priorityForSeverity(sig.severity),
           owner: ownerId(f.owner),
           dueDate: dueDate(f.due),
-        });
-      }
+        } : null,
+      });
     });
     if (done) setInvFor(null);
   };
@@ -345,9 +347,11 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
 
   /* An oversight visit already scheduled for a site is a real site_visit action
      on the plan, not a page-local flag — so it survives a reload and shows up
-     on the plan board. */
+     on the plan board. Scoped to the plan on screen: an action carried over
+     from a superseded plan version is not this plan's commitment. */
   const visitFor = (siteNumber: string | null) => board.actions.find(
-    a => a.type === 'site_visit' && a.status !== 'done' && !!siteNumber && a.title.includes(`site ${siteNumber}`),
+    a => a.planId === planId && a.type === 'site_visit' && a.status !== 'done'
+      && !!siteNumber && a.title.includes(`site ${siteNumber}`),
   ) ?? null;
 
   const scheduleVisit = async (f: Record<string, string>) => {
@@ -412,7 +416,11 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
 /* 10 -- Plan */
 export function RbmPlan({ board, onReload }: SubProps) {
   const plan = board.plan;
-  const acts: RbmBoardAction[] = board.actions;
+  // board.actions spans every plan version in the program. This surface shows
+  // one plan, so it must show — and mutate — only that plan's actions;
+  // otherwise Start/Complete would PATCH an action belonging to a superseded
+  // plan while appearing to act on the one on screen.
+  const acts: RbmBoardAction[] = plan ? board.actions.filter(a => a.planId === plan.id) : [];
   const [signFor, setSignFor] = useState(false);
   const [adding, setAdding] = useState(false);
   const mut = useRbmMutation(onReload);

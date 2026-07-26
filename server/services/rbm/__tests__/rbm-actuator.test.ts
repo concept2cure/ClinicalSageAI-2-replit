@@ -161,7 +161,7 @@ describe('rbm-actuator — inference', () => {
 describe('generatePlanFromAssessment — derives the plan from the RACT', () => {
   it('derives strategy from the overall risk and seeds actions from the critical CtQs and enhanced sites', async () => {
     const { exec, calls } = mockExec([
-      [{ id: 7, title: 'RACT', overall_risk: 'high' }],                 // governing assessment
+      [{ id: 7, title: 'RACT', overall_risk: 'high', status: 'active' }],   // governing assessment
       [{ id: 21, ctq_factor: 'SAE reporting', risk_score: 20 },         // open critical factors
        { id: 22, ctq_factor: 'Consent', risk_score: 9 }],
       [{ site_number: '5', site_name: 'Mercy' }],                       // enhanced-tier sites
@@ -185,12 +185,36 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
     for (const c of calls) expect(c.args[0]).toBe(ORG);
   });
 
+  it('scopes the seeded actions to the governing assessment, not the program', async () => {
+    // A program can hold several assessment versions; seeding program-wide
+    // would let the plan claim derivation from one RACT while its actions came
+    // from a superseded or draft one.
+    const { exec, calls } = mockExec([
+      [{ id: 7, title: 'RACT v2', overall_risk: 'medium', status: 'active' }],
+      [], [], [{ id: 3 }],
+    ]);
+    await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    const factorQuery = calls[1];
+    expect(factorQuery.sql).toContain('assessment_id = $3');
+    expect(factorQuery.args).toEqual([ORG, 'p', 7]);
+  });
+
   it('generates nothing when the study has no risk assessment to derive from', async () => {
     const { exec, calls } = mockExec([[]]);
     const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
     expect(out.generated).toBe(false);
     expect(out.reason).toBe('no_assessment');
     // No plan and no actions were written.
+    expect(calls).toHaveLength(1);
+  });
+
+  it('refuses to derive a plan from an unapproved RACT', async () => {
+    // The plan-approval endpoint would otherwise activate a monitoring
+    // commitment whose risk basis nobody ever signed for. Fail closed.
+    const { exec, calls } = mockExec([[{ id: 7, title: 'RACT', overall_risk: 'high', status: 'draft' }]]);
+    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    expect(out.generated).toBe(false);
+    expect(out.reason).toBe('assessment_not_approved');
     expect(calls).toHaveLength(1);
   });
 });

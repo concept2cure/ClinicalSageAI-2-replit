@@ -410,6 +410,10 @@ export default function createRbmBoardRoutes(): Router {
           || (x.act.dueDate ?? '9999').localeCompare(y.act.dueDate ?? '9999'))
         .map(({ act, owner }) => ({
           id: act.id,
+          // A program can hold several plan versions and this list spans all of
+          // them. Surfaced so the plan surface can show — and mutate — only the
+          // actions belonging to the plan it is displaying.
+          planId: act.planId,
           type: act.actionType,
           title: act.description,
           priority: act.priority,

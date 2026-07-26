@@ -798,6 +798,83 @@ router.patch('/rbm-signals/:id', async (req, res) => {
   } catch (err) { return serverError(res, log, 'patch-signal', err); }
 });
 
+/**
+ * Record a signal investigation and, optionally, the follow-up action it
+ * raises — in ONE transaction.
+ *
+ * Doing this as two calls (PATCH the signal, then POST the action) can commit
+ * the disposition and then fail to create the action, leaving a signal marked
+ * resolved with the follow-up it promised missing, while the UI reports the
+ * change as unsaved. A monitoring decision and the action it commits to are
+ * one record; they land together or not at all.
+ */
+const investigateBody = z.object({
+  status: z.enum(SIGNAL_STATUS),
+  resolutionNotes: z.string().max(4000).optional().nullable(),
+  action: z.object({
+    planId: z.number().int().positive(),
+    actionType: z.enum(ACTION_TYPE).optional(),
+    description: z.string().min(1).max(2000),
+    priority: z.enum(PRIORITY).optional(),
+    owner: z.number().int().positive().optional().nullable(),
+    dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  }).optional().nullable(),
+});
+
+router.post('/rbm-signals/:id/investigate', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = numericId(req.params.id);
+  if (id === null) return clientError(res, 422, 'id must be numeric');
+  const parsed = investigateBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  const p = parsed.data;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: sigRows } = await client.query(
+      `UPDATE rbm_signals SET status = $1, resolution_notes = $2, updated_at = NOW()
+        WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
+        RETURNING *`,
+      [p.status, p.resolutionNotes ?? null, id, orgId],
+    );
+    if (sigRows.length === 0) {
+      await client.query('ROLLBACK');
+      return notFoundInTenant(res, 'Signal');
+    }
+
+    let action = null;
+    if (p.action) {
+      const own = await client.query(
+        `SELECT 1 FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+        [p.action.planId, orgId],
+      );
+      if (own.rows.length === 0) {
+        // Fail the whole thing: the investigation must not land without the
+        // action it committed to.
+        await client.query('ROLLBACK');
+        return notFoundInTenant(res, 'Monitoring plan');
+      }
+      const { rows } = await client.query(
+        `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, signal_id, action_type, description, priority, owner, due_date, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'open') RETURNING *`,
+        [orgId, p.action.planId, id, p.action.actionType ?? 'issue', p.action.description,
+          p.action.priority ?? 'medium', p.action.owner ?? null, p.action.dueDate ?? null],
+      );
+      action = rows[0];
+    }
+
+    await client.query('COMMIT');
+    return ok(res, { signal: sigRows[0], action });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'investigate-signal', err);
+  } finally {
+    client.release();
+  }
+});
+
 // ════════════════════════════════════════════════════════════════════════════
 // SITE RISK
 // ════════════════════════════════════════════════════════════════════════════
@@ -1178,7 +1255,9 @@ router.post('/rbm-monitoring-plans/generate', async (req, res) => {
     const result = await generatePlanFromAssessment(client, orgId, parsed.data);
     if (!result.generated) {
       await client.query('ROLLBACK');
-      return clientError(res, 409, 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan');
+      return clientError(res, 409, result.reason === 'assessment_not_approved'
+        ? 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.'
+        : 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan');
     }
     await client.query('COMMIT');
     return created(res, { ...result.plan, actions: result.actions }, {

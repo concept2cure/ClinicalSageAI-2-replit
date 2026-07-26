@@ -202,31 +202,64 @@ export function RbmRact({ board, onReload }: SubProps) {
   const shown = items.filter(it => !sel || (it.l === sel.l && it.i === sel.i));
 
   /**
+   * An approved assessment is frozen here. Its e-signature attests to specific
+   * CtQ content; editing a factor underneath it would leave the approval block
+   * still showing the original signer, time and reason for content they never
+   * saw. Until versioned amendments exist (a new draft version carrying its own
+   * reason-for-change and signature), the correct behaviour is to refuse the
+   * write rather than quietly invalidate the signature.
+   */
+  const locked = board.assessment?.status === 'active';
+
+  /**
    * Persist a CtQ factor. The inherent score and the residual score are both
    * computed server-side from likelihood × impact (rbm-engine scoreRisk), so
    * the form collects the components and never posts a score the engine did
    * not derive. `critical` follows the engine's own high band (>= 15).
+   *
+   * On edit, fields the board does not carry (risk description, the assigned
+   * user, the residual components) are OMITTED rather than sent as null. The
+   * form cannot show their stored values, so posting a blank would silently
+   * erase whatever was there — an edit to the mitigation text must not wipe
+   * the owner. The server's buildPatch skips undefined keys, so omitting is a
+   * true no-op on those columns. The cost is that they cannot be cleared from
+   * this dialog, only replaced; that is the safer failure.
+   *
+   * The residual components are sent only as a pair, because the engine
+   * derives residual_score from both and half a pair would leave the stored
+   * score inconsistent with its inputs.
    */
   const saveItem = async (form: Record<string, string>) => {
     const likelihood = Number(form.l);
     const impact = Number(form.i);
-    const body = {
+    const isEdit = edit?.mode === 'edit' && !!edit.item;
+    const residualL = optNum(form.residualL);
+    const residualI = optNum(form.residualI);
+
+    const body: Record<string, unknown> = {
       category: form.category,
       ctqFactor: form.factor,
-      riskDescription: form.riskDescription || null,
       likelihood,
       impact,
       detectability: optNum(form.det),
       isCritical: likelihood * impact >= 15,
       mitigation: form.mitigation || null,
       status: form.status,
-      assignedTo: ownerId(form.owner),
-      residualLikelihood: optNum(form.residualL),
-      residualImpact: optNum(form.residualI),
     };
+    // Only include what the operator actually supplied on an edit.
+    if (form.riskDescription) body.riskDescription = form.riskDescription;
+    else if (!isEdit) body.riskDescription = null;
+    const owner = ownerId(form.owner);
+    if (owner !== null) body.assignedTo = owner;
+    else if (!isEdit) body.assignedTo = null;
+    if (residualL !== null && residualI !== null) {
+      body.residualLikelihood = residualL;
+      body.residualImpact = residualI;
+    }
+
     const done = await mut.run(async () => {
-      if (edit?.mode === 'edit' && edit.item) {
-        await rbmWrite('PATCH', `/rbm-risk-items/${edit.item.id}`, body);
+      if (isEdit) {
+        await rbmWrite('PATCH', `/rbm-risk-items/${edit!.item!.id}`, body);
       } else {
         await rbmWrite('POST', '/rbm-risk-items', {
           ...body,
@@ -275,7 +308,9 @@ export function RbmRact({ board, onReload }: SubProps) {
         </div>
         <div className="rbm-card grow">
           <div className="rbm-card-h">Critical-to-quality register -- {shown.length} of {items.length}
-            <button className="rbm-add" onClick={() => setEdit({ mode: 'new' })}>{I.zap}Add CtQ factor</button></div>
+            <button className="rbm-add" disabled={locked || mut.busy}
+              title={locked ? 'This assessment is approved — its CtQ content is fixed under the signature' : undefined}
+              onClick={() => setEdit({ mode: 'new' })}>{I.zap}Add CtQ factor</button></div>
           <table className="rbm-tbl"><thead><tr><th>Category</th><th>CtQ factor</th><th>L x I</th><th>Inherent</th><th>Detect.</th><th>Mitigation</th><th>Residual</th><th>Status</th><th></th></tr></thead>
             <tbody>{shown.map(it => (
               <tr key={it.id} data-crit={it.critical || undefined}>
@@ -287,7 +322,9 @@ export function RbmRact({ board, onReload }: SubProps) {
                 <td className="mit">{it.mitigation}</td>
                 <td>{it.residual != null ? <RbmScore v={it.residual} /> : <span className="mut">Not assessed</span>}</td>
                 <td><RbmChip vocab="item" value={it.status} /></td>
-                <td><button className="rbm-rowedit" title="Edit" onClick={() => setEdit({ mode: 'edit', item: it })}>{I.penLine}</button></td>
+                <td><button className="rbm-rowedit" disabled={locked || mut.busy}
+                  title={locked ? 'Approved assessment — CtQ content is fixed under the signature' : 'Edit'}
+                  onClick={() => setEdit({ mode: 'edit', item: it })}>{I.penLine}</button></td>
               </tr>
             ))}
             {items.length === 0 && <tr><td colSpan={9} className="rbm-col-empty">No critical-to-quality factors for this study yet.</td></tr>}
@@ -295,6 +332,9 @@ export function RbmRact({ board, onReload }: SubProps) {
         </div>
       </div>
       <div className="rbm-note">{I.info}The governing risk score is <b>likelihood x impact</b> (rbm-engine scoreRisk), banded low &lt;8 / medium 8-14 / high 15+. Detectability is recorded against each factor for review but is <b>not</b> multiplied into the score — one scoring method, applied consistently. Residual score is derived the same way from the post-mitigation likelihood and impact.</div>
+      {locked && (
+        <div className="rbm-note">{I.lock}This assessment is <b>approved</b>, so its critical-to-quality content is fixed: the e-signature above attests to these factors as they stand. Changing them here would leave that signature pointing at content the signer never reviewed. Versioned amendments — a new draft carrying its own reason for change and signature — are not implemented yet, so the register is read-only until then.</div>
+      )}
       {edit && <RbmFormModal title={edit.mode === 'edit' ? 'Edit CtQ factor' : 'Add CtQ factor'}
         intro="Score likelihood and impact (1-5 each); the engine derives the inherent score and flags 15+ as critical. Record the mitigation, the residual likelihood/impact after it, and the risk owner."
         fields={fields}

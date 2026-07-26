@@ -297,7 +297,7 @@ export async function draftPlan(exec: Exec, organizationId: number, input: Draft
 export interface GeneratePlanResult {
   generated: boolean;
   /** Why nothing was generated, when `generated` is false. */
-  reason?: 'no_assessment';
+  reason?: 'no_assessment' | 'assessment_not_approved';
   plan?: any;
   actions?: any[];
   derivedFrom?: { assessmentId: number; overallRisk: string; criticalFactors: number; enhancedSites: number };
@@ -314,6 +314,12 @@ export interface GeneratePlanResult {
  * assessment there is nothing to derive from, and the caller is told so rather
  * than handed an empty plan that looks derived.
  *
+ * Requires an APPROVED (active) assessment. A draft RACT has not been signed
+ * for, and the plan-approval endpoint would happily activate a plan derived
+ * from it — leaving an unsigned risk basis governing a live monitoring
+ * commitment. Falling back to "the newest draft" fails open, so this fails
+ * closed instead and tells the caller to approve the RACT first.
+ *
  * The plan is created as a DRAFT: it becomes the active monitoring commitment
  * only through the governed, re-authenticated approval path.
  *
@@ -328,20 +334,28 @@ export async function generatePlanFromAssessment(
   organizationId: number,
   input: { programId: string; title?: string },
 ): Promise<GeneratePlanResult> {
-  const assessment = (await exec.query(
-    `SELECT id, title, overall_risk FROM rbm_risk_assessments
+  const anyAssessment = (await exec.query(
+    `SELECT id, title, overall_risk, status FROM rbm_risk_assessments
       WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
       ORDER BY (status = 'active') DESC, updated_at DESC LIMIT 1`,
     [organizationId, input.programId],
   )).rows[0];
-  if (!assessment) return { generated: false, reason: 'no_assessment' };
+  if (!anyAssessment) return { generated: false, reason: 'no_assessment' };
+  // Only an approved RACT may govern a plan — see the note above.
+  if (anyAssessment.status !== 'active') return { generated: false, reason: 'assessment_not_approved' };
+  const assessment = anyAssessment;
 
+  // Scoped to THIS assessment's factors, not the program's. A program can hold
+  // several assessment versions; gathering program-wide would let the plan
+  // claim derivation from the governing RACT while seeding its actions from a
+  // superseded or draft one.
   const critical = (await exec.query(
     `SELECT id, ctq_factor, risk_score FROM rbm_risk_items
       WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+        AND assessment_id = $3
         AND is_critical = true AND status IN ('open','mitigating')
       ORDER BY risk_score DESC NULLS LAST, id`,
-    [organizationId, input.programId],
+    [organizationId, input.programId, anyAssessment.id],
   )).rows;
   const enhanced = (await exec.query(
     `SELECT site_number, site_name FROM rbm_site_risk_scores
