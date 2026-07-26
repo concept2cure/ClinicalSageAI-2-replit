@@ -485,9 +485,16 @@
   font-size: 11px; color: var(--text-400);
   padding: 4px 0;
 }
-.dd-doc-dot { width: 6px; height: 6px; border-radius: 50%; }
+/* Base is the "no changes yet" tone — neutral, never a success colour,
+   so an unsaved editor cannot read as a saved one. */
+.dd-doc-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-500, var(--text-400));
+}
 .dd-doc-dot.dirty { background: var(--accent-100); }
 .dd-doc-dot.saved { background: var(--success); }
+/* A failed governed write must not read like a successful one. */
+.dd-doc-dot.err   { background: var(--error); }
 .dd-doc-hint { color: var(--text-500); margin-left: auto; }
 
 .dd-doc-edit {

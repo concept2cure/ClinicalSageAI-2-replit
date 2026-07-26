@@ -122,8 +122,23 @@ function adaptApprovals(rows: PendingApproval[]): Approval[] {
       status: 'pending',
       due: str(r.due_date) || str(r.due) || undefined,
       meaning: str(r.meaning) || undefined,
+      /* Carried through so the approval card can apply a real Part 11
+         signature. Both must be numeric for signing to be offered — a
+         signature has to identify the exact revision it covers
+         (§11.50(a)), so a missing version disables signing rather than
+         defaulting to "latest". */
+      document_id: num(r.documentId ?? r.document_id),
+      version_id: num(r.versionId ?? r.version_id),
+      approval_id: num(r.approvalId ?? r.approval_id ?? r.id),
     };
   });
+}
+
+/** Numeric coercion that refuses anything not already a clean number. */
+function num(v: unknown): number | undefined {
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string' && /^\d+$/.test(v)) return Number(v);
+  return undefined;
 }
 
 export interface PathwayTabsLive extends PathwayTabsBundle {
