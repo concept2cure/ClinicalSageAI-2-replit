@@ -8,12 +8,20 @@
  * collapse into a "Situational awareness" accordion.
  *
  * Cross-program surface (UDI is per-tenant, not per-program).
- * Port basis: design-system/ui_kits/mdx/surfaces/Udi.jsx.
+ *
+ * ## Data honesty
+ *
+ * Every panel renders through `DataGate`. The surface previously read
+ * `live.devices ?? UDI_DEVICES` — so a tenant with no UDI records at all
+ * saw five example devices carrying published GUDID states and real-
+ * looking device identifiers. Registration status is exactly the kind of
+ * claim a user acts on, so it must never be simulated.
  */
 
 import * as React from 'react';
 import { I } from '../icons';
 import { DocumentsPanel } from '../components/DocumentsPanel';
+import { DataGate } from '../components/DataGate';
 import {
   UDI_DEVICES,
   UDI_ISSUES,
@@ -22,7 +30,7 @@ import {
 } from '../data/udi';
 import { UDI_DOC_FRAMEWORKS, UDI_DOCUMENTS } from '../data/udi-docs';
 import { useUdi } from '../hooks/useUdi';
-import { SampleDataBanner } from '../components/SampleDataBanner';
+import { readyRows } from '../lib/dataState';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 
 export interface UdiSurfaceProps {
@@ -46,12 +54,35 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
 
   const live = useUdi();
-  const devices = live.devices ?? UDI_DEVICES;
-  const symbols = live.symbols ?? UDI_SYMBOLS;
-  const issues = live.issues ?? UDI_ISSUES;
-  const mri = live.mri ?? UDI_MRI;
-  const documents = UDI_DOCUMENTS as unknown as KitDocument[];
+  const issues = readyRows(live.issues);
   const frameworks = UDI_DOC_FRAMEWORKS as unknown as KitDocFramework[];
+
+  /* The "documents in flight" zone is the tenant's real labeling
+     documents (labeling_documents), mapped into the DocumentsPanel
+     shape. Approved labels count as complete; everything else is in
+     progress. No percentage is invented for states the table cannot
+     evidence. */
+  const documents = React.useMemo<KitDocument[]>(
+    () =>
+      readyRows(live.labels).map((l) => {
+        const approved = String(l.status).toLowerCase() === 'approved';
+        return {
+          id: l.id,
+          framework: 'iso15223',
+          type: l.kind,
+          title: `${l.device} — ${l.kind} (${l.lang})`,
+          ver: l.ver,
+          status: approved ? 'ready' : String(l.status).toLowerCase() === 'in-review' ? 'review' : 'draft',
+          completion: approved ? 100 : 0,
+          owner: '—',
+          lastEdit: l.updated,
+          sections: 0,
+          sectionsComplete: 0,
+          editor: 'label',
+        } as KitDocument;
+      }),
+    [live.labels],
+  );
 
   const labelDocs = documents.filter((d) => d.editor === 'label');
   const submissionDocs = documents.filter((d) => d.editor === 'data-submission');
@@ -105,29 +136,21 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
           <div className="page-eyebrow">Workstream</div>
           <h1 className="page-title">UDI and labeling</h1>
           <div className="page-sub">
-            {documents.length} label and submission artifacts to deliver. 21 CFR
-            801 · ISO 15223-1 · EU MDR Annex I · ASTM F2503.
+            21 CFR 801 · ISO 15223-1 · EU MDR Annex I · ASTM F2503.
           </div>
         </div>
         <div className="page-actions">
           <button
             className="btn ghost small"
-            onClick={() => onOpenEditor?.('doc-master-bx204')}
+            onClick={() =>
+              onAskAna('Summarise our UDI registration status and any labeling blockers.')
+            }
             type="button"
           >
-            {I.eye} Open UDI Master Record
-          </button>
-          <button
-            className="btn primary small"
-            onClick={() => onOpenEditor?.('doc-ifu-bx204-en')}
-            type="button"
-          >
-            {I.pencil} Open BX-204 IFU
+            {I.sparkles} Ask AnA
           </button>
         </div>
       </div>
-
-      <SampleDataBanner show={live.devices === null} loading={live.loading} label="device identifiers" />
 
       <div className="metrics-row metrics-compact">
         <div className="metric-card">
@@ -157,14 +180,24 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
         </div>
       </div>
 
-      <DocumentsPanel
-        title="Documents in flight"
-        subtitle="Tap any row to open in the label editor · sparkle to draft a translation or symbol revision with AnA"
-        docs={documents}
-        frameworks={frameworks}
-        onOpenEditor={onOpenEditor}
-        onAskAna={(text) => onAskAna(text)}
-      />
+      <DataGate
+        state={live.labels}
+        label="labeling documents"
+        onRetry={live.refresh}
+        sample={UDI_DOCUMENTS as never}
+        emptyHint="IFUs, package and on-device labels appear here once labeling documents are created."
+      >
+        {() => (
+          <DocumentsPanel
+            title="Documents in flight"
+            subtitle="Tap any row to open in the label editor · sparkle to draft a translation or symbol revision with AnA"
+            docs={documents}
+            frameworks={frameworks}
+            onOpenEditor={onOpenEditor}
+            onAskAna={(text) => onAskAna(text)}
+          />
+        )}
+      </DataGate>
 
       <section className="section">
         <div className="section-head">
@@ -224,126 +257,155 @@ export function UdiSurface({ onAskAna, onOpenEditor }: UdiSurfaceProps) {
               <div className="section-head" style={{ marginTop: 0 }}>
                 <h2 style={{ fontSize: 14 }}>Device registry · UDI-DI</h2>
               </div>
-              <div className="ctable">
-                <div
-                  className="ctable-head"
-                  style={{
-                    gridTemplateColumns: '1.4fr 100px 1fr 100px 1fr 100px 80px',
-                  }}
-                >
-                  <div>Device</div>
-                  <div>Class</div>
-                  <div>FDA UDI-DI</div>
-                  <div>GUDID</div>
-                  <div>EU UDI-DI</div>
-                  <div>EUDAMED</div>
-                  <div>MRI</div>
-                </div>
-                {devices.map((d) => (
-                  <div
-                    key={d.id}
-                    className="ctable-row"
-                    style={{
-                      gridTemplateColumns:
-                        '1.4fr 100px 1fr 100px 1fr 100px 80px',
-                    }}
-                  >
-                    <div>
-                      <div className="ctable-strong">{d.code}</div>
-                      <div style={{ color: 'var(--text-400)', fontSize: 12 }}>
-                        {d.name}
+              <DataGate
+                state={live.devices}
+                label="UDI records"
+                onRetry={live.refresh}
+                sample={UDI_DEVICES}
+                emptyHint="Create a UDI record to assign a device identifier and track its GUDID state."
+              >
+                {(devices) => (
+                  <div className="ctable">
+                    <div
+                      className="ctable-head"
+                      style={{
+                        gridTemplateColumns: '1.4fr 100px 1fr 100px 1fr 100px 80px',
+                      }}
+                    >
+                      <div>Device</div>
+                      <div>Class</div>
+                      <div>FDA UDI-DI</div>
+                      <div>GUDID</div>
+                      <div>EU UDI-DI</div>
+                      <div>EUDAMED</div>
+                      <div>MRI</div>
+                    </div>
+                    {devices.map((d) => (
+                      <div
+                        key={d.id}
+                        className="ctable-row"
+                        style={{
+                          gridTemplateColumns:
+                            '1.4fr 100px 1fr 100px 1fr 100px 80px',
+                        }}
+                      >
+                        <div>
+                          <div className="ctable-strong">{d.code}</div>
+                          <div style={{ color: 'var(--text-400)', fontSize: 12 }}>
+                            {d.name}
+                          </div>
+                        </div>
+                        <div>{d.class}</div>
+                        <div className="mono small-mono">{d.fda.di}</div>
+                        <div>
+                          <span className={`udi-status-pill ${d.fda.status}`}>
+                            {d.fda.status}
+                          </span>
+                        </div>
+                        <div className="mono small-mono">{d.eu.di}</div>
+                        <div>
+                          {/* EUDAMED registration is not tracked in this
+                              table — say so rather than implying a state
+                              we have never checked with the authority. */}
+                          <span className={`udi-status-pill ${d.eu.status}`} title="EUDAMED registration is not tracked in this workspace yet">
+                            {d.eu.status}
+                          </span>
+                        </div>
+                        <div>
+                          <span className={`udi-mri udi-mri-${d.mri}`}>{d.mri}</span>
+                        </div>
                       </div>
-                    </div>
-                    <div>{d.class}</div>
-                    <div className="mono small-mono">{d.fda.di}</div>
-                    <div>
-                      <span className={`udi-status-pill ${d.fda.status}`}>
-                        {d.fda.status}
-                      </span>
-                    </div>
-                    <div className="mono small-mono">{d.eu.di}</div>
-                    <div>
-                      <span className={`udi-status-pill ${d.eu.status}`}>
-                        {d.eu.status}
-                      </span>
-                    </div>
-                    <div>
-                      <span className={`udi-mri udi-mri-${d.mri}`}>{d.mri}</span>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )}
+              </DataGate>
             </section>
 
             <section>
               <div className="section-head" style={{ marginTop: 0 }}>
                 <h2 style={{ fontSize: 14 }}>ISO 15223-1 symbols</h2>
-                <span className="section-sub">
-                  {symbols.filter((s) => s.present).length} of {symbols.length}{' '}
-                  present on active labels
-                </span>
               </div>
-              <div className="udi-symbols">
-                {symbols.map((s) => (
-                  <div
-                    key={s.iso}
-                    className="udi-symbol"
-                    data-on={s.present || undefined}
-                  >
-                    <div className="udi-symbol-head">
-                      <span className="mono tiny">{s.iso}</span>
-                      {s.present ? (
-                        <span className="udi-symbol-ok">{I.check}</span>
-                      ) : (
-                        <span className="udi-symbol-warn">{I.alertCircle}</span>
-                      )}
-                    </div>
-                    <div className="udi-symbol-name">{s.name}</div>
-                    <div className="udi-symbol-req">Required: {s.required}</div>
+              <DataGate
+                state={live.symbols}
+                label="label symbols"
+                onRetry={live.refresh}
+                sample={UDI_SYMBOLS}
+                emptyHint="Symbols recorded against your labeling documents appear here."
+              >
+                {(symbols) => (
+                  <div className="udi-symbols">
+                    {symbols.map((s) => (
+                      <div
+                        key={s.iso}
+                        className="udi-symbol"
+                        data-on={s.present || undefined}
+                      >
+                        <div className="udi-symbol-head">
+                          <span className="mono tiny">{s.iso}</span>
+                          {s.present ? (
+                            <span className="udi-symbol-ok">{I.check}</span>
+                          ) : (
+                            <span className="udi-symbol-warn">{I.alertCircle}</span>
+                          )}
+                        </div>
+                        <div className="udi-symbol-name">{s.name}</div>
+                        <div className="udi-symbol-req">Required: {s.required}</div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )}
+              </DataGate>
             </section>
 
             <section>
               <div className="section-head" style={{ marginTop: 0 }}>
                 <h2 style={{ fontSize: 14 }}>MRI conditional matrix</h2>
               </div>
-              <div className="ctable">
-                <div
-                  className="ctable-head"
-                  style={{
-                    gridTemplateColumns: '90px 100px 100px 100px 110px 1fr',
-                  }}
-                >
-                  <div>Device</div>
-                  <div>Mode</div>
-                  <div>Field</div>
-                  <div>SAR</div>
-                  <div>Gradient</div>
-                  <div>Notes</div>
-                </div>
-                {mri.map((m) => (
-                  <div
-                    key={m.device}
-                    className="ctable-row"
-                    style={{
-                      gridTemplateColumns: '90px 100px 100px 100px 110px 1fr',
-                    }}
-                  >
-                    <div className="ctable-strong">{m.device}</div>
-                    <div>
-                      <span className={`udi-mri udi-mri-${m.mode}`}>{m.mode}</span>
+              <DataGate
+                state={live.mri}
+                label="MRI safety records"
+                onRetry={live.refresh}
+                sample={UDI_MRI}
+                emptyHint="Devices with an MRI safety determination appear here once recorded on the UDI record."
+              >
+                {(mri) => (
+                  <div className="ctable">
+                    <div
+                      className="ctable-head"
+                      style={{
+                        gridTemplateColumns: '90px 100px 100px 100px 110px 1fr',
+                      }}
+                    >
+                      <div>Device</div>
+                      <div>Mode</div>
+                      <div>Field</div>
+                      <div>SAR</div>
+                      <div>Gradient</div>
+                      <div>Notes</div>
                     </div>
-                    <div className="mono small-mono">{m.field}</div>
-                    <div className="mono small-mono">{m.sar}</div>
-                    <div className="mono small-mono">{m.gradient}</div>
-                    <div style={{ color: 'var(--text-300)', fontSize: 12 }}>
-                      {m.notes}
-                    </div>
+                    {mri.map((m) => (
+                      <div
+                        key={m.device}
+                        className="ctable-row"
+                        style={{
+                          gridTemplateColumns: '90px 100px 100px 100px 110px 1fr',
+                        }}
+                      >
+                        <div className="ctable-strong">{m.device}</div>
+                        <div>
+                          <span className={`udi-mri udi-mri-${m.mode}`}>{m.mode}</span>
+                        </div>
+                        <div className="mono small-mono">{m.field}</div>
+                        <div className="mono small-mono">{m.sar}</div>
+                        <div className="mono small-mono">{m.gradient}</div>
+                        <div style={{ color: 'var(--text-300)', fontSize: 12 }}>
+                          {m.notes}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )}
+              </DataGate>
             </section>
           </div>
         )}

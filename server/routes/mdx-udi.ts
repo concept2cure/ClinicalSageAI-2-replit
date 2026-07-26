@@ -76,6 +76,192 @@ const createBody = z.object({
 
 const patchBody = createBody.partial();
 
+/* ─── GET /api/mdx/udi/summary ────────────────────────────────────────
+   Aggregate read model for the UDI surface.
+
+   The surface needs five panels — devices, labels, symbols, issues and
+   MRI. The list endpoint above returns a flat `udi_records[]`, which is
+   the right shape for the record editor but not for the surface; the
+   client hook was reading `data.devices` / `data.labels` / … off that
+   flat array, getting `undefined` for all five, and silently rendering
+   design-kit fixtures. This endpoint returns the shape the surface
+   actually consumes, assembled from the real tables.
+
+   Program-scoped when `program_id` is supplied — udi_records and
+   labeling_documents both carry a program column, so unlike the
+   engineering surface this one narrows honestly and completely. ───── */
+
+router.get('/udi/summary', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const programId = typeof req.query.program_id === 'string' ? req.query.program_id : undefined;
+  if (programId !== undefined && !UUID_RE.test(programId)) {
+    return clientError(res, 422, 'program_id must be a UUID');
+  }
+
+  /** Empty rather than fatal when an optional table is not migrated. */
+  const panel = async <T extends Record<string, unknown>>(
+    name: string, sql: string, args: unknown[],
+  ): Promise<T[]> => {
+    try {
+      const { rows } = await pool.query(sql, args);
+      return rows as T[];
+    } catch (err) {
+      if ((err as { code?: string })?.code !== '42P01') {
+        log.warn(`udi panel ${name} failed`, {
+          err: err instanceof Error ? err.message : String(err),
+        });
+      }
+      return [];
+    }
+  };
+
+  const scoped = (col: string) => (programId ? ` AND ${col} = $2` : '');
+  const args: unknown[] = programId ? [orgId, programId] : [orgId];
+
+  try {
+    const udiRows = await panel<Record<string, any>>(
+      'devices',
+      `SELECT * FROM udi_records
+        WHERE organization_id = $1 AND deleted_at IS NULL${scoped('program_id')}
+        ORDER BY updated_at DESC LIMIT 500`,
+      args,
+    );
+
+    const labelRows = await panel<Record<string, any>>(
+      'labels',
+      `SELECT id, device_name, doc_kind, version, status, language, region, udi_di, updated_at
+         FROM labeling_documents
+        WHERE organization_id = $1 AND deleted_at IS NULL${scoped('program_id')}
+        ORDER BY updated_at DESC LIMIT 500`,
+      args,
+    );
+
+    /* Symbols join through the label document so the panel stays inside
+       the same program scope as everything else on the surface. */
+    const symbolRows = await panel<Record<string, any>>(
+      'symbols',
+      `SELECT s.symbol_code, s.symbol_name, s.required_by, COUNT(*)::int AS uses
+         FROM labeling_symbols s
+         JOIN labeling_documents d ON d.id = s.labeling_document_id
+        WHERE s.organization_id = $1 AND d.deleted_at IS NULL${scoped('d.program_id')}
+        GROUP BY s.symbol_code, s.symbol_name, s.required_by
+        ORDER BY s.symbol_code`,
+      args,
+    );
+
+    /* Translations that are not yet verified are the surface's issue
+       feed — an unverified back-translation is a real EU MDR labelling
+       exposure, not a cosmetic warning. */
+    const translationRows = await panel<Record<string, any>>(
+      'issues',
+      `SELECT t.id, t.language, t.status, t.back_translation_verified,
+              d.device_name, d.doc_kind, d.version, t.updated_at
+         FROM labeling_translations t
+         JOIN labeling_documents d ON d.id = t.labeling_document_id
+        WHERE t.organization_id = $1 AND d.deleted_at IS NULL${scoped('d.program_id')}
+          AND (t.back_translation_verified IS NOT TRUE OR t.status <> 'approved')
+        ORDER BY t.updated_at DESC LIMIT 200`,
+      args,
+    );
+
+    const gudidState = (s: string | null): string => {
+      const v = (s ?? 'draft').toLowerCase();
+      return v === 'submitted' ? 'in-review' : v === 'published' ? 'published' : v;
+    };
+    const iso = (d: Date | null): string => (d ? d.toISOString().slice(0, 10) : '—');
+    const mriMode = (m: string | null): string =>
+      (m ?? 'not_evaluated').replace(/^mri_/, '').replace('not_evaluated', 'na');
+
+    const labelsByDevice = new Map<string, number>();
+    for (const l of labelRows) {
+      const k = String(l.device_name ?? '');
+      labelsByDevice.set(k, (labelsByDevice.get(k) ?? 0) + 1);
+    }
+
+    const devices = udiRows.map((r) => ({
+      id: String(r.id),
+      code: r.catalog_number ?? r.version_or_model ?? r.udi_di,
+      name: r.device_name,
+      class: r.device_class ? `Class ${r.device_class}` : '—',
+      fda: {
+        di: r.udi_di,
+        gmdn: r.gmdn_code ?? '—',
+        agency: String(r.issuing_agency ?? '').toLowerCase(),
+        status: gudidState(r.gudid_status),
+        submitted: iso(r.gudid_submitted_at),
+        /* Acknowledgement is only real once GUDID has published the
+           record. Never infer it from our own submit action. */
+        acked: r.gudid_status === 'published' ? iso(r.updated_at) : '—',
+      },
+      /* EUDAMED is a separate registration with its own lifecycle and no
+         column here yet. Reporting 'not-tracked' is honest; reporting
+         'not-started' would assert something we have not checked. */
+      eu: { di: r.udi_di, risk: '—', agency: String(r.issuing_agency ?? '').toLowerCase(),
+            status: 'not-tracked', submitted: '—', acked: '—' },
+      mri: mriMode(r.mri_safety),
+      rx: r.rx_only ? 'rx-only' : 'otc',
+      sterile: Boolean(r.metadata?.sterile ?? false),
+      singleUse: Boolean(r.single_use),
+      labels: labelsByDevice.get(String(r.device_name ?? '')) ?? 0,
+      translations: 0,
+      open: 0,
+    }));
+
+    const labels = labelRows.map((l) => ({
+      id: String(l.id),
+      device: l.device_name ?? '—',
+      kind: l.doc_kind ?? '—',
+      region: l.region ?? '—',
+      lang: l.language ?? '—',
+      ver: l.version ?? '—',
+      size: '—',
+      status: l.status ?? 'draft',
+      updated: l.updated_at ? new Date(l.updated_at).toISOString().slice(0, 10) : '—',
+    }));
+
+    const symbols = symbolRows.map((s) => ({
+      iso: s.symbol_code,
+      name: s.symbol_name,
+      glyph: String(s.symbol_code ?? '').replace(/\./g, '-'),
+      required: s.required_by ?? 'always',
+      present: true,
+    }));
+
+    const issues = translationRows.map((t) => ({
+      id: `TR-${t.id}`,
+      label: `${t.device_name ?? '—'} ${t.doc_kind ?? ''} ${t.version ?? ''}`.trim(),
+      kind: 'translation',
+      severity: t.back_translation_verified === true ? 'warn' : 'err',
+      msg:
+        t.back_translation_verified === true
+          ? `${t.language} translation is back-translation verified but not approved (status ${t.status}).`
+          : `${t.language} translation has no verified back-translation.`,
+      since: t.updated_at ? new Date(t.updated_at).toISOString().slice(0, 10) : '—',
+    }));
+
+    const mri = udiRows
+      .filter((r) => r.mri_safety && r.mri_safety !== 'not_evaluated')
+      .map((r) => ({
+        device: r.catalog_number ?? r.device_name,
+        mode: mriMode(r.mri_safety),
+        field: r.metadata?.mriField ?? '—',
+        sar: r.metadata?.mriSar ?? '—',
+        gradient: r.metadata?.mriGradient ?? '—',
+        tested: r.mri_safety !== 'not_evaluated',
+        notes: r.metadata?.mriNotes ?? '—',
+      }));
+
+    return ok(
+      res,
+      { devices, labels, symbols, issues, mri },
+      { scope: programId ? 'program' : 'organization' },
+    );
+  } catch (err) {
+    return serverError(res, log, 'udi-summary', err);
+  }
+});
+
 /* ─── GET /api/mdx/udi ────────────────────────────────────────────── */
 
 router.get('/udi', async (req: Request, res: Response) => {

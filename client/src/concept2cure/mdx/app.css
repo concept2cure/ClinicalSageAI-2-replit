@@ -2868,3 +2868,68 @@ button.ctable-row { border-radius: 0; }
   display: flex; justify-content: flex-end; gap: 8px;
   margin-top: 4px;
 }
+
+/* ════════════════════════════════════════════════════════════
+   DataGate — honest data states
+   Every surface panel renders exactly one of: loading, idle,
+   error, empty, or real data. Fixtures appear only in explicit
+   sample mode, always under the standing banner below.
+   ════════════════════════════════════════════════════════════ */
+.data-gate {
+  display: flex; align-items: center; justify-content: center;
+  padding: 40px 24px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg-050);
+}
+.data-gate-dense { padding: 20px 16px; }
+
+.data-gate-inner {
+  display: flex; align-items: flex-start; gap: 12px;
+  max-width: 420px;
+}
+.data-gate-icon {
+  color: var(--text-400); flex-shrink: 0;
+  width: 16px; height: 16px; margin-top: 1px;
+}
+.data-gate-error .data-gate-icon { color: var(--error); }
+
+/* Motion is limited to the 200ms ease-out house rule; the loading
+   pulse is the one exception, and it respects reduced-motion. */
+.data-gate-icon-pulse { animation: data-gate-pulse 1.4s ease-in-out infinite; }
+@keyframes data-gate-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@media (prefers-reduced-motion: reduce) {
+  .data-gate-icon-pulse { animation: none; }
+}
+
+.data-gate-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.data-gate-title { font-size: 13px; font-weight: 500; color: var(--text-200); }
+.data-gate-error .data-gate-title { color: var(--text-100); }
+.data-gate-detail { font-size: 11px; color: var(--text-400); line-height: 1.5; }
+.data-gate-mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  word-break: break-word;
+}
+
+.data-gate-btn {
+  align-self: flex-start; margin-top: 4px;
+  padding: 5px 10px; font-size: 11px; font-weight: 500;
+  color: var(--text-200);
+  border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+  background: var(--bg-000);
+  transition: background var(--dur) ease-out, color var(--dur) ease-out;
+}
+.data-gate-btn:hover { background: var(--bg-200); color: var(--text-100); }
+
+/* Standing sample-data marker. Not dismissible by design — it must
+   remain visible for exactly as long as the example content does. */
+.data-gate-sample {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 8px 12px; margin-bottom: 12px;
+  font-size: 11px; line-height: 1.5; color: var(--text-300);
+  background: var(--warning-muted, var(--bg-100));
+  border: 1px solid var(--warning, var(--border));
+  border-radius: var(--radius-md);
+}
+.data-gate-sample .data-gate-icon { color: var(--warning, var(--text-400)); }
+.data-gate-sample-tag { color: var(--text-100); font-weight: 600; }
