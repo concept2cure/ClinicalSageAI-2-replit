@@ -62,7 +62,11 @@ jsonschema==4.26.0
 pyyaml==6.0.3
 
 # Image processing (for document analysis)
-Pillow==12.2.0
+# 12.3.0 clears ten HIGH Trivy findings against 12.2.0 (CVE-2026-54058/54059/
+# 54060/55379/55380/59197/59199/59200/59204/59205). The root requirements.txt
+# was bumped in 40b871c5 for the same blocking gate; this second pin was missed,
+# so the scan stayed red. Same patch-level bump, already in use elsewhere here.
+Pillow==12.3.0
 pytesseract==0.3.13
 
 # Async and concurrency
