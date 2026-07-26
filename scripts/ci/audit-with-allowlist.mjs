@@ -88,6 +88,28 @@ const ACCEPTED_GHSA_IDS = new Set([
   // patched versions are installed — each AT/ABOVE its fix — so this is now a
   // registry-lag false positive, accepted as resolved-in-installed.
   'GHSA-3jxr-9vmj-r5cp', // brace-expansion ReDoS (fixed in installed via overrides)
+  // brace-expansion — advisory GHSA-mh99-v99m-4gvg (DoS via unbounded expansion
+  // length -> OOM). Range <=5.0.7 covers EVERY published version, and Trivy/npm
+  // report NO fixed version yet, so unlike GHSA-3jxr above it cannot be bumped
+  // out (the overrides already pin the highest published 1.x/2.x/5.x). Reached
+  // only transitively via glob/minimatch in build & test tooling — brace
+  // patterns are never attacker-controlled at runtime here — so accepted as a
+  // low, build-time-only risk (same posture as the esbuild entry above).
+  // Accepting it also clears the large "transitive vulnerability via unaccepted
+  // dependency" cascade (@jest/*, glob, minimatch, archiver, gaxios,
+  // googleapis-common, exceljs, eslint-plugin-react, babel-*) — all of which
+  // are this same brace-expansion advisory surfaced through their dep chains.
+  // TODO(security): drop this once brace-expansion ships a patched release >5.0.7.
+  'GHSA-mh99-v99m-4gvg', // brace-expansion unbounded-expansion DoS (no fix published; build-time only)
+  // react-router — advisory GHSA-qwww-vcr4-c8h2 (RSC-mode CSRF: action runs
+  // before a 400). Range >=7.12.0 <8.3.0; the only fix is the react-router 8.x
+  // major. This app routes with wouter and uses react-router-dom only for a
+  // couple of auth screens (no RSC/data-router server actions), so the RSC CSRF
+  // path is not reachable. The *other* react-router advisory (GHSA-chx6-hx7r-
+  // mcp5, route-matching DoS) IS fixed in-range and is remediated by the
+  // react-router/react-router-dom ^7.18.1 override in package.json.
+  // TODO(security): adopt react-router 8.x in a dedicated upgrade PR, then drop this.
+  'GHSA-qwww-vcr4-c8h2', // react-router RSC-mode CSRF (needs 8.x major; RSC not used)
   // Accepting the ws advisory above also clears the engine.io / engine.io-client /
   // socket.io / socket.io-adapter / socket.io-client "transitive vulnerability via
   // unaccepted dependency" flags — that is this same ws advisory surfaced through
