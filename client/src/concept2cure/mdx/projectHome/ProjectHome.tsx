@@ -12,6 +12,8 @@ import { useProgramDetail } from '../hooks/useMdxPrograms';
 import { useWorkbenchTasks } from '../hooks/useWorkbench';
 import { useProgramExtras } from '../hooks/useProgramExtras';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
+import { useQmsReadiness } from '../hooks/useQmsReadiness';
+import { DataGate } from '../components/DataGate';
 
 interface GovernanceRow {
   role: string;
@@ -175,6 +177,7 @@ export function ProjectHome({
   const detail = useProgramDetail(program.id);
   const allTasks = useWorkbenchTasks();
   const extras = useProgramExtras(program.id);
+  const qms = useQmsReadiness();
   const livePh = detail.detail
     ? deriveGovernance(detail.detail.leadUserName, detail.detail.teamMembers)
     : null;
@@ -368,6 +371,73 @@ export function ProjectHome({
 
           <section className="ph-card">
             <header className="ph-card-h">
+              <h2>Quality system</h2>
+              {qms.readiness.status === 'ready' && (
+                <span className="ph-count" data-tone={qms.attentionCount > 0 ? 'warn' : 'ok'}>
+                  {qms.attentionCount === 0
+                    ? 'nothing needs attention'
+                    : `${qms.attentionCount} need${qms.attentionCount === 1 ? 's' : ''} attention`}
+                </span>
+              )}
+            </header>
+            {/* Organization-wide by nature — the QMS does not run per
+                submission, and saying so beats implying it does. */}
+            <DataGate
+              state={qms.readiness}
+              label="quality system readiness"
+              onRetry={qms.refresh}
+              dense
+              emptyHint="Quality records appear here once the QMS module is in use."
+            >
+              {(r) => (
+                <ul className="ph-qms">
+                  <QmsRow
+                    label="Controlled documents"
+                    available={r.documents.available}
+                    ok={`${r.documents.effective} effective · ${r.documents.draft} in draft`}
+                    attention={r.documents.reviewOverdue}
+                    attentionLabel="past periodic review"
+                  />
+                  <QmsRow
+                    label="Suppliers"
+                    available={r.suppliers.available}
+                    ok={`${r.suppliers.total} on file`}
+                    attention={r.suppliers.criticalUnapproved + r.suppliers.auditOverdue}
+                    attentionLabel={
+                      r.suppliers.criticalUnapproved > 0
+                        ? 'critical supplier not approved'
+                        : 'supplier audit overdue'
+                    }
+                  />
+                  <QmsRow
+                    label="Training"
+                    available={r.training.available}
+                    ok={`${r.training.acknowledged} acknowledgments`}
+                    attention={r.training.expired}
+                    attentionLabel="expired"
+                  />
+                  <QmsRow
+                    label="Internal audits"
+                    available={r.audits.available}
+                    ok={`${r.audits.open} open`}
+                    attention={r.audits.openMajorFindings}
+                    attentionLabel="open major findings"
+                  />
+                  <QmsRow
+                    label="Non-conforming product"
+                    available={r.nonconforming.available}
+                    ok="all dispositioned"
+                    attention={r.nonconforming.undispositioned}
+                    attentionLabel="undispositioned"
+                  />
+                </ul>
+              )}
+            </DataGate>
+            <div className="ph-qms-scope">Organization-wide · 21 CFR 820 / QMSR</div>
+          </section>
+
+          <section className="ph-card">
+            <header className="ph-card-h">
               <h2>Governance</h2>
             </header>
             <ul className="ph-gov">
@@ -403,5 +473,41 @@ export function ProjectHome({
         </aside>
       </div>
     </div>
+  );
+}
+
+
+/**
+ * One quality-system line: the healthy summary when nothing is wrong,
+ * the attention count when something is, and an explicit "not tracked"
+ * when the underlying table is absent — a zero from a system that is
+ * not running must never read as an all-clear.
+ */
+function QmsRow({
+  label,
+  available,
+  ok,
+  attention,
+  attentionLabel,
+}: {
+  label: string;
+  available: boolean;
+  ok: string;
+  attention: number;
+  attentionLabel: string;
+}) {
+  return (
+    <li className="ph-qms-row" data-state={!available ? 'na' : attention > 0 ? 'warn' : 'ok'}>
+      <span className="ph-qms-label">{label}</span>
+      {!available ? (
+        <span className="ph-qms-val na">not tracked here yet</span>
+      ) : attention > 0 ? (
+        <span className="ph-qms-val warn">
+          {attention} {attentionLabel}
+        </span>
+      ) : (
+        <span className="ph-qms-val">{ok}</span>
+      )}
+    </li>
   );
 }
