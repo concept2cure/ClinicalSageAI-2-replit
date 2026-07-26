@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
+import { IndFormsPanel } from './IndFormsPanel';
 import {
   INDL_STATUS_LABEL,
   INDL_CLOCK_STATUS,
@@ -56,6 +57,14 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   const { rows, loading, error } = useLiveRows<IndlChecklist>('/api/ind-checklist');
   const checklist = rows[0] ?? null;
   const [tab, setTab] = useState<'file' | 'lifecycle'>('file');
+  // Status note from the Module-1 forms panel (build/QC/render outcomes).
+  const [formsNote, setFormsNoteRaw] = useState('');
+  const formsNoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const setFormsNote = useCallback((m: string) => {
+    setFormsNoteRaw(m);
+    if (formsNoteTimer.current) clearTimeout(formsNoteTimer.current);
+    formsNoteTimer.current = setTimeout(() => setFormsNoteRaw(''), 4200);
+  }, []);
 
   // Null-safe derivation with stable empty seeds while the checklist is
   // unresolved (loading or failed load) so the readiness memo below is stable.
@@ -375,6 +384,15 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                   </div>
                 ))}
               </div>
+
+              <h3>
+                2a -- Build &amp; render the FDA form PDFs{' '}
+                <span className="indl-h-x">-- real form engine (/api/ind-forms)</span>
+              </h3>
+              <IndFormsPanel note={setFormsNote} />
+              {formsNote && (
+                <div className="de-toast"><span className="ico">{I.checkCircle}</span>{formsNote}</div>
+              )}
 
               <h3>
                 3 -- Blockers to filing{' '}

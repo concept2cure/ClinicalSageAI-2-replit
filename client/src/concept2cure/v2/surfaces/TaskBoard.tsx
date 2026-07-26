@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
@@ -76,10 +77,15 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
      empty state, or an honest error state — never the fixture. The old window.C2C
      in-browser store was seeded from the TB_TASKS fixture (CollabLauncher.tsx),
      so reading it presented fixture data as the board; that read is retired here.
-     The New task / Start workflow / Move actions still write to window.C2C only
-     (in-memory, not persisted) and are FLAGGED as mock actions for the actions
-     pass — they intentionally do not appear on this live board. */
-  const liveTasks = useLiveRows<TaskItem>('/api/task-management/board');
+     New task now POSTs the real persisted create (POST /api/tasks/tasks) with a
+     real project + assignee and the board refetches, so created tasks appear
+     live. Start workflow / Move still write to the in-browser window.C2C store
+     only (flagged for the actions pass) and do not persist. */
+  const [reloadKey, setReloadKey] = useState(0);
+  const liveTasks = useLiveRows<TaskItem>('/api/task-management/board', [
+    '/api/task-management/board',
+    reloadKey,
+  ]);
   const tasks: TaskItem[] = liveTasks.rows;
 
   const [view, setView] = useState('board');
@@ -102,17 +108,55 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
   const byCol = (id: string) => list.filter(t => t.status === id);
   const byId = (id: string) => tasks.find(t => t.taskId === id);
 
-  const move = (t: TaskItem, dir: number) => {
+  // Move a card between columns -> the real persisted status update
+  // (PATCH /api/tasks/tasks/:taskId), then refetch so the board reflects it.
+  const move = async (t: TaskItem, dir: number) => {
     const order = TB_COLS.map(c => c.id);
     const i = order.indexOf(t.status);
     const ni = Math.max(0, Math.min(order.length - 1, i + dir));
-    const patch = { status: order[ni], progress: order[ni] === 'completed' ? 100 : t.progress, blocked: order[ni] === 'completed' ? false : t.blocked };
-    if ((window as any).C2C) (window as any).C2C.update(t.taskId, patch);
+    if (ni === i) return;
+    const status = order[ni];
+    const progress = status === 'completed' ? 100 : t.progress;
+    try {
+      const res = await apiRequest('PATCH', '/api/tasks/tasks/' + encodeURIComponent(t.taskId), { status, progress });
+      if (res.ok) setReloadKey((k) => k + 1);
+    } catch {
+      /* leave the board as-is on a failed move */
+    }
   };
 
-  const create = (task: TaskItem) => {
-    if ((window as any).C2C) (window as any).C2C.addTask(task);
-    setCreating(false);
+  // New task -> the real persisted create. POST /api/tasks/tasks inserts an
+  // org-scoped unified_tasks row (creator-attributed) and returns it with its
+  // real taskId; selected predecessors are then linked into the real dependency
+  // DAG (best-effort). The board refetches so the created task appears live.
+  const create = async (
+    payload: TaskCreateBody,
+    dependsOn: string[],
+  ): Promise<{ ok: boolean; error?: string }> => {
+    try {
+      const res = await apiRequest('POST', '/api/tasks/tasks', payload);
+      const body = await res.json().catch(() => null);
+      if (!res.ok || !body?.data?.taskId) {
+        return { ok: false, error: body && body.error ? String(body.error) : 'Could not create the task.' };
+      }
+      const newTaskId = String(body.data.taskId);
+      for (const dep of dependsOn) {
+        try {
+          await apiRequest('POST', '/api/tasks/tasks/dependencies', {
+            predecessorTaskId: dep,
+            successorTaskId: newTaskId,
+            dependencyType: 'finish-to-start',
+          });
+        } catch {
+          /* a failed dependency link never blocks the created task */
+        }
+      }
+      setReloadKey((k) => k + 1);
+      setCreating(false);
+      return { ok: true };
+    } catch {
+      return { ok: false, error: 'Network error while creating the task.' };
+    }
   };
 
   const stats = useMemo(() => {
@@ -454,9 +498,29 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove }: TaskDetailPr
 
 /* ── New task intake -- unifiedTasks shape, POST /api/task-management/tasks ── */
 
+/** POST body for the real create — mirrors server createTaskSchema. */
+interface TaskCreateBody {
+  title: string;
+  moduleType: string;
+  taskType: string;
+  status: string;
+  priority: string;
+  projectId?: number;
+  assigneeId?: number;
+  dueDate?: string;
+  impactScore: number;
+  criticalPath: boolean;
+  regulatoryImpact: boolean;
+  approvalRequired: boolean;
+}
+/** Real org project (from GET /api/projects — a bare row array). */
+interface ProjectOpt { id: number; name: string }
+/** Real assignable org member (from GET /api/task-management/assignees). */
+interface AssigneeOpt { id: string; name: string }
+
 interface TaskCreateProps {
   onClose: () => void;
-  onCreate: (task: TaskItem) => void;
+  onCreate: (payload: TaskCreateBody, dependsOn: string[]) => Promise<{ ok: boolean; error?: string }>;
   proj: string;
   /** Live board rows — the dependency picker's candidate tasks (real data from
    *  /api/task-management/board, not the retired TB_TASKS fixture). */
@@ -481,33 +545,60 @@ interface CreateForm {
 }
 
 function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
-  const initProj = (proj && proj !== 'all') ? proj : 'bx204';
+  // Real org projects + assignable members for the pickers (never fixtures).
+  const projects = useLiveRows<ProjectOpt>('/api/projects');
+  const assignees = useLiveRows<AssigneeOpt>('/api/task-management/assignees');
+
   const [f, setF] = useState<CreateForm>({
-    title: '', project: initProj, moduleType: 'Clinical', taskType: 'deliverable',
+    title: '', project: proj && proj !== 'all' ? proj : '', moduleType: 'Clinical', taskType: 'deliverable',
     status: 'pending', priority: 'high', assignee: 'auto', impactScore: 6,
     criticalPath: false, regulatoryImpact: true, approvalRequired: false,
     dueDays: 7, phase: '', dependsOn: [],
   });
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
   const set = <K extends keyof CreateForm>(k: K, v: CreateForm[K]) => setF(p => ({ ...p, [k]: v }));
-  const who = f.assignee === 'auto' ? (TB_OPTIMAL[f.moduleType] || 'jc') : f.assignee;
-  const whoName = (TB_TEAM[who] || { n: who }).n;
+
+  // Default the project picker to the first real project once the list loads,
+  // and never leave it on a stale non-matching id (e.g. a legacy filter slug).
+  useEffect(() => {
+    if (!projects.rows.length) return;
+    const ids = projects.rows.map((p) => String(p.id));
+    if (!f.project || !ids.includes(f.project)) set('project', String(projects.rows[0].id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects.rows]);
+
   const allTasks = tasks;
   const toggleDep = (id: string) => set('dependsOn', f.dependsOn.includes(id) ? f.dependsOn.filter(x => x !== id) : [...f.dependsOn, id]);
 
-  const doCreate = () => {
-    if (!f.title.trim()) return;
-    const id = 'C2C-TASK-' + (2200 + Math.floor(Math.random() * 799));
-    onCreate({
-      taskId: id, title: f.title.trim(), project: f.project, moduleType: f.moduleType,
-      taskType: f.taskType, status: f.status, priority: f.priority, assignee: who,
-      assignedBy: 'jc', progress: 0, impactScore: f.impactScore, criticalPath: f.criticalPath,
-      regulatoryImpact: f.regulatoryImpact, approvalRequired: f.approvalRequired,
-      approvalStatus: f.approvalRequired ? 'pending' : 'not_started',
-      dependsOn: f.dependsOn, blocks: [], comments: 0, attachments: 0, source: 'unified',
-      due: f.dueDays <= 0 ? 'today' : ('in ' + f.dueDays + ' day' + (f.dueDays > 1 ? 's' : '')),
-      phase: f.phase || '--',
-      assignmentType: f.assignee === 'auto' ? 'auto' : 'manual',
-    });
+  // Build the real create body and hand it to the parent, which POSTs it and
+  // links the selected predecessors. No fabricated id — the server assigns it.
+  const doCreate = async () => {
+    if (!f.title.trim() || busy) return;
+    setBusy(true);
+    setErr('');
+    const due = new Date();
+    due.setDate(due.getDate() + (Number.isFinite(f.dueDays) ? f.dueDays : 0));
+    const body: TaskCreateBody = {
+      title: f.title.trim(),
+      moduleType: f.moduleType,
+      taskType: f.taskType,
+      status: f.status,
+      priority: f.priority,
+      projectId: Number.isFinite(Number(f.project)) && Number(f.project) > 0 ? Number(f.project) : undefined,
+      assigneeId: f.assignee && f.assignee !== 'auto' && Number.isFinite(Number(f.assignee)) ? Number(f.assignee) : undefined,
+      dueDate: due.toISOString(),
+      impactScore: f.impactScore,
+      criticalPath: f.criticalPath,
+      regulatoryImpact: f.regulatoryImpact,
+      approvalRequired: f.approvalRequired,
+    };
+    const res = await onCreate(body, f.dependsOn);
+    if (!res.ok) {
+      setErr(res.error || 'Could not create the task.');
+      setBusy(false);
+    }
+    // On success the parent closes the modal.
   };
 
   return (
@@ -520,7 +611,7 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
         <div className="tb-form">
           <div className="tb-field full"><label>Title<i>*</i></label><input type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Reconcile 2.5.4 efficacy claim with CSR-201 dataset" /></div>
           <div className="tb-frow">
-            <div className="tb-field"><label>Project</label><select value={f.project} onChange={e => set('project', e.target.value)}>{TB_PROJECTS.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}</select></div>
+            <div className="tb-field"><label>Project</label><select value={f.project} onChange={e => set('project', e.target.value)}>{projects.rows.length ? projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>) : <option value="">No projects available</option>}</select></div>
             <div className="tb-field"><label>Module</label><select value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>{Object.keys(TB_MOD).map(m => <option key={m} value={m}>{m}</option>)}</select></div>
           </div>
           <div className="tb-frow">
@@ -529,7 +620,7 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
           </div>
           <div className="tb-frow">
             <div className="tb-field"><label>Status</label><select value={f.status} onChange={e => set('status', e.target.value)}>{TB_COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
-            <div className="tb-field"><label>Assignee</label><select value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto -- getOptimalAssignee</option>{Object.keys(TB_TEAM).map(k => <option key={k} value={k}>{TB_TEAM[k].n} -- {TB_TEAM[k].t}</option>)}</select></div>
+            <div className="tb-field"><label>Assignee</label><select value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto -- optimal assignee</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
           </div>
           <div className="tb-frow">
             <div className="tb-field"><label>Impact score -- {f.impactScore}/10</label><input type="range" min="0" max="10" value={f.impactScore} onChange={e => set('impactScore', +e.target.value)} /></div>
@@ -551,13 +642,13 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
               ))}
             </div>
           </div>
-          {f.assignee === 'auto' && <div className="tb-auto-note"><span className="ico">{I.sparkles}</span><span>Auto-assign resolves to <b>{whoName}</b> for <b>{f.moduleType}</b> -- workload-balanced via <code>getOptimalAssignee()</code>.</span></div>}
-          <div className="tb-auto-note" data-warn="true"><span className="ico">{I.alertTriangle}</span><span>Not yet wired: creating here updates the in-browser board only -- it does <b>not</b> POST <code>unifiedTasks</code> or write the <code>c2c_ana_actions</code> audit ledger (<code>task-audit.ts</code> is coded but unwired), so it will not appear on the live board. Notifications are stubbed.</span></div>
+          {f.assignee === 'auto' && <div className="tb-auto-note"><span className="ico">{I.sparkles}</span><span>Auto-assign picks the lowest-workload member of this organization for <b>{f.moduleType}</b> -- balanced server-side via <code>getOptimalAssignee()</code>.</span></div>}
+          {err && <div className="tb-auto-note" data-warn="true"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
         </div>
         <div className="tb-detail-f">
-          <div className="tb-endpoint" title="Target endpoint — not yet wired to this button"><b>POST</b> /api/task-management/tasks <em>(not yet wired)</em></div>
+          <div className="tb-endpoint" title="Persists an org-scoped unified_tasks row"><b>POST</b> /api/tasks/tasks</div>
           <button className="btn ghost" onClick={onClose}>Cancel</button>
-          <button className="btn primary" disabled={!f.title.trim()} onClick={doCreate}>{I.plus} Create task</button>
+          <button className="btn primary" disabled={!f.title.trim() || busy} onClick={doCreate}>{I.plus} {busy ? 'Creating...' : 'Create task'}</button>
         </div>
       </div>
     </div>

@@ -41,6 +41,15 @@ describe('powerTwoSampleMeans — closed form', () => {
     const b = powerTwoSampleMeans(0.5, 100, ALPHA);
     expect(b).toBeGreaterThan(a);
   });
+
+  it('two-sided α=0.05 hits the canonical ~80% power at d=0.5, n=64/arm (ReportEngine path)', () => {
+    // The ReportEngine protocol-analysis insights (server/routes/analytics-routes.ts)
+    // call this with two-sided α=0.05 (oneSided=false) — the branch the one-sided
+    // cases above never exercise. Textbook anchor: ~64/arm for ~80% power at a
+    // medium effect. Guards the real power figure that surface now renders
+    // (it previously used a fabricated formula).
+    expect(powerTwoSampleMeans(0.5, 64, 0.05, false)).toBeCloseTo(0.807, 2);
+  });
 });
 
 describe('assurance — averaging', () => {

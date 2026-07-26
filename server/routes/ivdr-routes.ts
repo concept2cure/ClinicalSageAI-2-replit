@@ -1435,16 +1435,20 @@ export default function createIVDRRoutes(pool: Pool): Router {
         exportDate: new Date().toISOString(),
         regulatoryFramework: 'IVDR EU 2017/746',
         deviceIdentification: {
-          basicUdiDi: `IVDR-${orgId}-${projectId}-BUDI`,
-          udiDi: `IVDR-${orgId}-${projectId}-UDI`,
+          // UDI-DI / Basic UDI-DI / manufacturer SRN are issued by GS1/HIBCC/EUDAMED
+          // and must not be synthesized from internal IDs. No stored registration
+          // record exists for this org/project, so they are reported as null
+          // (identifiers not yet issued/recorded).
+          basicUdiDi: null,
+          udiDi: null,
           deviceName: classification?.device_name || gspr?.device_name || 'Unknown Device',
           tradeName: classification?.device_name || gspr?.device_name || null,
-          manufacturerSRN: `SRN-ORG-${orgId}`,
+          manufacturerSRN: null,
         },
         manufacturer: {
           organizationId: orgId,
           role: 'manufacturer',
-          registrationStatus: 'registered',
+          registrationStatus: 'not_registered',
         },
         classification: {
           riskClass: classification?.classification || 'Not classified',
@@ -1461,7 +1465,8 @@ export default function createIVDRRoutes(pool: Pool): Router {
         certificates: {
           euDeclarationOfConformity: classification?.classification === 'A' ? 'self-declaration' : 'notified_body_required',
           notifiedBodyRequired: classification?.classification !== 'A',
-          certificateStatus: 'pending',
+          // No certificate record is tracked here; do not fabricate a status.
+          certificateStatus: null,
         },
         clinicalEvidence: {
           totalStudies: Number(evidenceSummary.total) || 0,

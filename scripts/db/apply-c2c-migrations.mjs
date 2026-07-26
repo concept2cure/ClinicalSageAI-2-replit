@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
  * Apply the c2c session migrations (AI governance, PV operational tables,
- * commitments) to the configured database, idempotently.
+ * commitments, drafting-council provisioning) to the configured database,
+ * idempotently.
  *
- * These three live in the root `migrations/` folder as raw .sql (the established
+ * These live in the root `migrations/` folder as raw .sql (the established
  * convention for phase migrations here), which drizzle's runtime migrate() does
  * NOT apply (only the journaled baseline is). This script gives a single,
  * standard, idempotent command to apply them on the out-of-band path — for the
@@ -24,12 +25,26 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Dependency-safe order: governance ALTERs ana_capability_registry (pre-existing),
-// PV + commitments create their own tables.
+// PV + commitments create their own tables, council provisioning seeds the four
+// drafting-council agents into the lumen schema.
+//
+// Entries are repo-relative so a root-lineage file can declare a prerequisite that
+// lives in the canonical db/migrations lineage. 044b is that prerequisite: it owns
+// the ONLY definition of lumen.data_atoms, and the council file that follows it
+// reads from that table. Applying it here means this out-of-band path provisions
+// the same shape the manifest lineage does, instead of racing it under
+// CREATE TABLE IF NOT EXISTS. See ledger C-12.
 const FILES = [
-  '20260603_ai_capability_governance.sql',
-  '20260603_pv_operational.sql',
-  '20260603_commitments.sql',
+  'migrations/20260603_ai_capability_governance.sql',
+  'migrations/20260603_pv_operational.sql',
+  'migrations/20260603_commitments.sql',
+  'db/migrations/044b_gcc_lumen_schema_prerequisite.sql',
+  'migrations/20260724_lumen_council_provisioning.sql',
+  'migrations/20260724_ana_deep_investigations.sql',
 ];
+
+/** Files that open their own transaction must not be wrapped in a second one. */
+const selfTransacting = (sql) => /^\s*BEGIN\s*;/im.test(sql);
 
 function getDatabaseUrl() {
   for (const name of ['DATABASE_URL', 'DATABASE_NEON_NEW_SECRET', 'NEON_DATABASE_URL']) {
@@ -45,21 +60,22 @@ async function main() {
     process.exit(2);
   }
   const pool = new Pool({ connectionString: getDatabaseUrl(), ssl: { rejectUnauthorized: false } });
-  const migrationsDir = path.resolve(__dirname, '..', '..', 'migrations');
+  const repoRoot = path.resolve(__dirname, '..', '..');
 
   let failed = 0;
   for (const file of FILES) {
-    const full = path.join(migrationsDir, file);
+    const full = path.join(repoRoot, file);
     if (!fs.existsSync(full)) {
       console.error(`✗ missing: ${file}`);
       failed++;
       continue;
     }
     const sql = fs.readFileSync(full, 'utf8');
+    const wrap = !selfTransacting(sql);
     try {
-      await pool.query('BEGIN');
+      if (wrap) await pool.query('BEGIN');
       await pool.query(sql);
-      await pool.query('COMMIT');
+      if (wrap) await pool.query('COMMIT');
       console.info(`✓ applied: ${file}`);
     } catch (err) {
       await pool.query('ROLLBACK').catch(() => {});

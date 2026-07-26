@@ -41,21 +41,21 @@ export interface ApprovedModel {
 export const APPROVED_MODELS: ApprovedModel[] = [
   {
     id: 'claude-opus-4',
-    pinnedVersion: 'claude-opus-4-7',
+    pinnedVersion: 'claude-opus-4-8',
     provider: 'anthropic',
     role: 'primary',
-    rationale: 'Flagship reasoning + regulatory drafting model; primary for high-risk authoring and review tasks.',
-    evalReference: 'server/eval/rag/ (faithfulness); docs/validation/PQ-CORTEX-001 (PQ-007/008 accuracy targets, pending execution).',
-    lastReviewed: '2026-06-03',
+    rationale: 'Flagship reasoning + regulatory drafting model; primary for high-risk authoring and review tasks. Bumped 4.7 → 4.8 (same reasoning-only surface: adaptive thinking, no sampling params); 4.7 retained as the top intra-provider fallback.',
+    evalReference: 'server/eval/rag/ (faithfulness); same capability profile and eval harness as the 4.7 predecessor; docs/validation/PQ-CORTEX-001 (PQ-007/008 accuracy targets, pending execution).',
+    lastReviewed: '2026-07-24',
   },
   {
     id: 'claude-opus-4-legacy',
-    pinnedVersion: 'claude-opus-4-20250514',
+    pinnedVersion: 'claude-opus-4-7',
     provider: 'anthropic',
     role: 'fallback',
-    rationale: 'Dated Opus snapshot retained as intra-provider fallback when the flagship is unavailable.',
+    rationale: 'Previous flagship (Opus 4.7), retained as the top intra-provider fallback below 4.8. Shares the reasoning-only surface, so a fallback preserves the same reasoning behavior.',
     evalReference: 'Same capability profile as claude-opus-4; covered by the gateway fallback law.',
-    lastReviewed: '2026-06-03',
+    lastReviewed: '2026-07-24',
   },
   {
     id: 'claude-sonnet-4',

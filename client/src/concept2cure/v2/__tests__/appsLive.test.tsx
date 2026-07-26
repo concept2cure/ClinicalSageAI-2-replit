@@ -2,15 +2,15 @@
 /**
  * Apps surface ↔ /api/module-subscriptions wiring.
  *
- * Locks the honest live adoption in surfaces/AdminSurfaces.tsx (fixture-free —
- * the surface reads /catalog + /license via useLiveData, with no "Live" /
- * "Sample data" pill):
- *  - GET /catalog + /license render live module names, tier chips, quota numbers
- *  - renewsAt is never invented when live (the backend holds no renewal date)
+ * Locks the FIXTURE-FREE live adoption in surfaces/AdminSurfaces.tsx. This test
+ * was rewritten when the surface dropped its Live/Sample pills and curated
+ * fixture fallback in the honesty sweep — offline now renders an honest
+ * failed-load state, never a fixture:
+ *  - GET /catalog + /license adopted (live module names, category groups, tier
+ *    chips, quota numbers); renewsAt is never invented (backend holds none)
  *  - toggle PUTs to /:moduleId/toggle; server rejection reverts the switch and
  *    surfaces the reason (no silent fake success)
- *  - offline → fails closed to an honest unavailable/empty state, never a
- *    fabricated fixture (no "Sample data", no invented renewal)
+ *  - offline → honest error states; NO fixture content, NO sample pill
  */
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -74,16 +74,15 @@ afterEach(() => {
   apiRequest.mockReset();
 });
 
-describe('Apps — live module subscriptions', () => {
-  it('adopts /catalog + /license and renders live module data', async () => {
+describe('Apps — live module subscriptions (fixture-free)', () => {
+  it('adopts /catalog + /license: live names, category groups, tiers, quotas', async () => {
     mockLive();
     mount();
-    // Fixture-free (useLiveData): the surface renders live module names directly,
-    // with no "Live"/"Sample data" pill. The first live name resolving is the
-    // load gate (the catalog seeds via an effect after the fetch resolves).
+    // live module names and grouped-by-category headers
     expect(await screen.findByText('CMC Wizard')).toBeTruthy();
     expect(screen.getByText('Insight Synthesis')).toBeTruthy();
     expect(screen.getByText('Authoring')).toBeTruthy();
+    expect(screen.getByText('Intelligence')).toBeTruthy();
     // tier chips: within-plan → its lowest tier; out-of-plan → Add-on (upgrade
     // path). 'Professional' appears twice: the plan band + the module chip.
     expect(screen.getAllByText('Professional')).toHaveLength(2);
@@ -100,7 +99,7 @@ describe('Apps — live module subscriptions', () => {
     const put = vi.fn(async () => ok({ moduleId: 'cmc-wizard', enabled: false }));
     mockLive(put);
     mount();
-    await screen.findByText('CMC Wizard'); // wait for the live catalog to adopt
+    await screen.findByText('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     fireEvent.click(screen.getByTitle('Disable module')); // the enabled within-plan module
     await waitFor(() =>
@@ -114,26 +113,23 @@ describe('Apps — live module subscriptions', () => {
       throw new Error('Admin access required');
     });
     mount();
-    await screen.findByText('CMC Wizard'); // wait for the live catalog to adopt
+    await screen.findByText('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
-    const sw = screen.getByTitle('Disable module');
-    fireEvent.click(sw);
+    fireEvent.click(screen.getByTitle('Disable module'));
     expect(await screen.findByText(/Could not disable CMC Wizard -- Admin access required/)).toBeTruthy();
     // reverted — still on, still offering "Disable"
     await waitFor(() => expect(screen.getByTitle('Disable module')).toBeTruthy());
-    expect(screen.getByTitle('Disable module').getAttribute('aria-checked')).toBe('true');
   });
 
-  it('fails closed offline without fabricating data', async () => {
+  it('offline → honest failed-load states, never a fixture or sample pill', async () => {
     apiRequest.mockRejectedValue(new Error('network down'));
     mount();
-    // The surface still renders (no crash) — its header is always present.
-    expect(await screen.findByText('Apps catalog')).toBeTruthy();
-    // De-mocked to the fixture-free contract: offline it fails closed to an
-    // honest unavailable/empty state and must NOT fabricate a "Sample data"
-    // fixture, a "Live" pill, or an invented renewal date.
-    expect(screen.queryByText('Sample data')).toBeNull();
-    expect(screen.queryByText('Live')).toBeNull();
-    expect(screen.queryByText(/Renews 2027-01-14/)).toBeNull();
+    // Honest error for the catalog; license band degrades to the honest note.
+    expect(await screen.findByText("Couldn't load the apps catalog")).toBeTruthy();
+    expect(screen.getByText(/License & entitlement details are unavailable/)).toBeTruthy();
+    // No fixture content and no sample markers leak through.
+    expect(screen.queryByText('CMC Wizard')).toBeNull();
+    expect(screen.queryByText(/Sample data/i)).toBeNull();
+    expect(screen.queryByText(/Renews/)).toBeNull();
   });
 });

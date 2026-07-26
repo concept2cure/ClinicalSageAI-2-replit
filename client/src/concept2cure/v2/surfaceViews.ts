@@ -25,10 +25,13 @@ import { BatchDraft } from './surfaces/BatchDraft';
 import { BiopharmaJourney } from './surfaces/BiopharmaJourney';
 import { BiopharmaProject, CsrWorkflow, RegulatoryWorkspace } from './surfaces/BiopharmaProject';
 import { Pediatric, Orphan, Lifecycle, Pharmacovigilance } from './surfaces/BiopharmaSpecialty';
+import { PvCockpit } from './surfaces/PvCockpit';
 import { Biostatistics } from './surfaces/Biostatistics';
+import { BiostatWorkbench } from './surfaces/BiostatWorkbench';
 import { ChangeAssessment } from './surfaces/ChangeAssessment';
 import { ClinicalOps } from './surfaces/ClinicalOps';
 import { ConversationThread } from './surfaces/ConversationThread';
+import { CrlLibrary } from './surfaces/CrlLibrary';
 import { CroPortfolio } from './surfaces/CroPortfolio';
 import { CmcModule } from './surfaces/CmcModule';
 import { CommunicationCenter } from './surfaces/CommunicationCenter';
@@ -43,6 +46,7 @@ import { DocumentAuthoring } from './surfaces/DocumentAuthoring';
 import { Dossier } from './surfaces/Dossier';
 import { DossierMap } from './surfaces/DossierMap';
 import { EctdCoauthor } from './surfaces/EctdCoauthor';
+import { EctdCompile } from './surfaces/EctdCompile';
 import { Etmf } from './surfaces/Etmf';
 import { Evidence } from './surfaces/Evidence';
 import { FilingsCatalog } from './surfaces/FilingsCatalog';
@@ -70,6 +74,7 @@ import { ProjectHome } from './surfaces/ProjectHome';
 import { Projects } from './surfaces/Projects';
 import { PyramidShell } from './surfaces/Pyramid';
 import { Rbm } from './surfaces/Rbm';
+import { RbmOperations } from './surfaces/RbmOperations';
 import { RegChange } from './surfaces/RegChange';
 import { Registrations } from './surfaces/Registrations';
 import { ReportEngine } from './surfaces/ReportEngine';
@@ -80,6 +85,13 @@ import { SafetyNarrative } from './surfaces/SafetyNarrative';
 import { ShadowReview } from './surfaces/ShadowReview';
 import { SourceTracer } from './surfaces/SourceTracer';
 import { SubmissionCenter } from './surfaces/SubmissionCenter';
+import { QmpWorkspace } from './surfaces/QmpWorkspace';
+import { QualityModule } from './surfaces/QualityModule';
+import { Part11Console } from './surfaces/Part11Console';
+import { IdentityConsole } from './surfaces/IdentityConsole';
+import { ReportGovernance } from './surfaces/ReportGovernance';
+import { SubmissionTwin } from './surfaces/SubmissionTwin';
+import { GatewayTransmittals } from './surfaces/GatewayTransmittals';
 import { GlobalRiBrowser } from './surfaces/Surfaces';
 import { TaskBoard } from './surfaces/TaskBoard';
 import { TemplateLibrary } from './surfaces/TemplateLibrary';
@@ -114,12 +126,16 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'batch-draft': { component: BatchDraft, full: true },
   biopharma: { component: BiopharmaProject },
   biostatistics: { component: Biostatistics },
+  'biostat-workbench': { component: BiostatWorkbench },
   'change-assessment': { component: ChangeAssessment },
   'clinical-ops': { component: ClinicalOps },
   cmc: { component: CmcModule },
   'communication-center': { component: CommunicationCenter },
   'conversation-thread': { component: ConversationThread, hideAna: true },
   coverage: { component: CodebaseCoverage },
+  // No `full`, no `hideAna` — the AnA rail stays open on the CRL library,
+  // because the point of looking at a letter is being able to ask about it.
+  'crl-library': { component: CrlLibrary },
   'cro-portfolio': { component: CroPortfolio },
   'csr-workflow': { component: CsrWorkflow, full: true, hideAna: true },
   'decision-lineage': { component: DecisionLineage, full: true },
@@ -136,6 +152,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   dossier: { component: Dossier },
   'dossier-map': { component: DossierMap },
   'ectd-coauthor': { component: EctdCoauthor, full: true, hideAna: true },
+  'ectd-compile': { component: EctdCompile },
   etmf: { component: Etmf },
   'evidence-search': { component: Evidence },
   'filings-catalog': { component: FilingsCatalog },
@@ -164,6 +181,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   pdev: { component: PdevInd },
   pediatric: { component: Pediatric },
   pharmacovigilance: { component: Pharmacovigilance },
+  'pv-cockpit': { component: PvCockpit },
   'precedent-intelligence': { component: PrecedentEngine },
   'program-journey': { component: BiopharmaJourney },
   'project-home': { component: ProjectHome, full: true },
@@ -171,6 +189,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'protocol-dev': { component: ProtocolWorkspace, full: true, hideAna: true },
   pyramid: { component: PyramidShell },
   rbm: { component: Rbm, hideAna: true },
+  'rbm-operations': { component: RbmOperations },
   'reg-change': { component: RegChange },
   registrations: { component: Registrations },
   'regulatory-workspace': { component: RegulatoryWorkspace, full: true },
@@ -182,7 +201,14 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   setup: { component: Setup },
   'shadow-review': { component: ShadowReview, full: true },
   'source-tracer': { component: SourceTracer },
+  qmp: { component: QmpWorkspace },
+  quality: { component: QualityModule, full: true },
+  'part11-console': { component: Part11Console },
+  'identity-console': { component: IdentityConsole },
+  'report-governance': { component: ReportGovernance },
   'submission-center': { component: SubmissionCenter },
+  'submission-twin': { component: SubmissionTwin },
+  'gateway-transmittals': { component: GatewayTransmittals },
   'task-board': { component: TaskBoard },
   tasks: { component: TaskBoard },
   'template-library': { component: TemplateLibrary },

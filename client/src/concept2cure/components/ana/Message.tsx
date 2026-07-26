@@ -15,7 +15,7 @@
  *
  * No new tokens or selectors — every style used is already in the bundle.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { setOptions } from 'marked';
 
 import { I } from './icons';
@@ -56,6 +56,23 @@ export interface ToolCallView {
   name: string;
   label: string;
   status: 'running' | 'success' | 'error';
+  /** Agentic-loop round (1-based); rows are grouped by round when > 1 round ran. */
+  round?: number;
+  /** Input args AnA passed the tool — surfaced in a collapsed audit disclosure. */
+  input?: unknown;
+  /** Capped tool result — surfaced in the same collapsed disclosure. */
+  result?: string;
+}
+
+/** Pretty-print a tool input object for the audit disclosure; never throws. */
+export function formatToolInput(input: unknown): string | null {
+  if (input == null) return null;
+  try {
+    const s = typeof input === 'string' ? input : JSON.stringify(input, null, 2);
+    return s && s !== '{}' ? s : null;
+  } catch {
+    return null;
+  }
 }
 
 export interface MessageProps {
@@ -175,6 +192,36 @@ export function Message({
     if (hasText) setThinkingOpen(false);
   }, [hasText]);
 
+  // Reasoning duration — "Thought for Ns", the contemporary reasoning cue.
+  // Start is stamped when reasoning first streams in; the duration freezes once
+  // the answer begins (or streaming stops), so it reads as a completed thought.
+  // Only measured for turns we actually watched stream — a reloaded historical
+  // message keeps the plain "Show reasoning" affordance rather than a bogus time.
+  const hasThinking = !!thinking && thinking.length > 0;
+  const thinkingStartRef = useRef<number | null>(null);
+  const sawStreamingRef = useRef(false);
+  const [thinkingMs, setThinkingMs] = useState<number | null>(null);
+  useEffect(() => {
+    if (streaming) sawStreamingRef.current = true;
+  }, [streaming]);
+  useEffect(() => {
+    if (hasThinking && thinkingStartRef.current === null) {
+      thinkingStartRef.current = Date.now();
+    }
+  }, [hasThinking]);
+  useEffect(() => {
+    if (
+      sawStreamingRef.current &&
+      thinkingStartRef.current !== null &&
+      thinkingMs === null &&
+      (hasText || !streaming)
+    ) {
+      setThinkingMs(Math.max(0, Date.now() - thinkingStartRef.current));
+    }
+  }, [hasText, streaming, thinkingMs]);
+  const thinkingSeconds =
+    thinkingMs !== null ? Math.max(1, Math.round(thinkingMs / 1000)) : null;
+
   // Render markdown to HTML on every text change — marked v17 handles
   // partial input gracefully (open bold/code/table renders the content it
   // has). This gives a live "document being drafted" feel rather than
@@ -188,6 +235,13 @@ export function Message({
     // from the model's perspective (prompt injection can emit raw HTML).
     return renderSafeMarkdown(text);
   }, [role, text]);
+
+  // Reasoning rendered through the same safe-markdown pipeline as the answer,
+  // so lists / emphasis in AnA's thinking read properly (was plain paragraphs).
+  const renderedThinkingHtml = useMemo(
+    () => (hasThinking ? renderSafeMarkdown(thinking as string) : undefined),
+    [hasThinking, thinking],
+  );
 
   // After the markdown HTML mounts, decorate each <pre> block with a copy
   // button + language label. Anthropic shows these on every code block;
@@ -457,54 +511,104 @@ export function Message({
               <span className={styles.ico}>
                 <I.sparkles size={12} />
               </span>
-              {thinkingOpen ? 'Hide reasoning' : 'Show reasoning'}
-              {!text && streaming && (
-                <span className={styles.cite} style={{ marginLeft: 8, fontStyle: 'italic' }}>
-                  thinking…
-                </span>
-              )}
+              {thinkingSeconds !== null
+                ? `Thought for ${thinkingSeconds}s`
+                : streaming
+                  ? 'Thinking…'
+                  : thinkingOpen
+                    ? 'Hide reasoning'
+                    : 'Show reasoning'}
             </button>
-            {thinkingOpen && (
-              <div className={styles.thinkingBody}>
-                {thinking.split('\n\n').map((p, i) => (
-                  <p key={i}>{p}</p>
-                ))}
-              </div>
+            {thinkingOpen && renderedThinkingHtml && (
+              <div
+                className={styles.thinkingBody}
+                dangerouslySetInnerHTML={{ __html: renderedThinkingHtml }}
+              />
             )}
           </div>
         )}
 
-        {toolCalls && toolCalls.length > 0 && (
-          <div className={styles.toolCalls} role="status" aria-label="Tools AnA used">
-            {toolCalls.map((tc, i) => (
-              <div
-                key={`${tc.name}-${i}`}
-                className={styles.toolCall}
-                data-status={tc.status}
-              >
-                <span className={styles.ico}>
-                  <I.flask size={12} />
-                </span>
-                <span className={styles.toolCallLabel}>{tc.label}</span>
-                {tc.status === 'running' && (
-                  <span className={styles.typing} aria-label="running">
-                    <span />
-                    <span />
-                    <span />
-                  </span>
-                )}
-                {tc.status === 'success' && (
-                  <span className={styles.ico} aria-label="done">
-                    <I.check size={12} />
-                  </span>
-                )}
-                {tc.status === 'error' && (
-                  <span className={styles.toolCallError}>failed</span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        {toolCalls && toolCalls.length > 0 && (() => {
+          // Group by agentic round so a deep investigation reads as the
+          // progression it was (round 1 needs no announcement; later rounds get
+          // a quiet header). Falls back to the classic flat list when the turn
+          // ran a single round or the server sent no round tags.
+          const multiRound = toolCalls.some(tc => (tc.round ?? 1) > 1);
+          return (
+            <div className={styles.toolCalls} role="status" aria-label="Tools AnA used">
+              {toolCalls.map((tc, i) => {
+                const round = tc.round ?? 1;
+                const prevRound = i > 0 ? (toolCalls[i - 1].round ?? 1) : 1;
+                const showRoundHeader = multiRound && round > 1 && round !== prevRound;
+                return (
+                  <div key={`${tc.name}-${i}`}>
+                    {showRoundHeader && (
+                      <div className={styles.cite}>Continuing — investigation round {round}</div>
+                    )}
+                    <div className={styles.toolCall} data-status={tc.status}>
+                      <span className={styles.ico}>
+                        <I.flask size={12} />
+                      </span>
+                      <span className={styles.toolCallLabel}>{tc.label}</span>
+                      {tc.status === 'running' && (
+                        <span className={styles.typing} aria-label="running">
+                          <span />
+                          <span />
+                          <span />
+                        </span>
+                      )}
+                      {tc.status === 'success' && (
+                        <span className={styles.ico} aria-label="done">
+                          <I.check size={12} />
+                        </span>
+                      )}
+                      {tc.status === 'error' && (
+                        <span className={styles.toolCallError}>failed</span>
+                      )}
+                    </div>
+                    {(() => {
+                      // Audit disclosure — collapsed by default so it never
+                      // clutters the calm status row, but a reviewer can open it
+                      // to see exactly what this step queried and returned. Plain
+                      // text in <pre> is React-escaped (XSS-safe); result is
+                      // already capped client-side.
+                      const inputStr = formatToolInput(tc.input);
+                      const resultStr = tc.result && tc.result.trim() ? tc.result : null;
+                      if (!inputStr && !resultStr) return null;
+                      const preStyle: CSSProperties = {
+                        maxHeight: 200,
+                        overflow: 'auto',
+                        whiteSpace: 'pre-wrap',
+                        wordBreak: 'break-word',
+                        fontSize: 12,
+                        margin: '4px 0 0',
+                      };
+                      return (
+                        <details style={{ margin: '2px 0 0 20px' }}>
+                          <summary className={styles.cite} style={{ cursor: 'pointer' }}>
+                            Inspect this step
+                          </summary>
+                          {inputStr && (
+                            <>
+                              <div className={styles.cite}>Input</div>
+                              <pre style={preStyle}>{inputStr}</pre>
+                            </>
+                          )}
+                          {resultStr && (
+                            <>
+                              <div className={styles.cite}>Result</div>
+                              <pre style={preStyle}>{resultStr}</pre>
+                            </>
+                          )}
+                        </details>
+                      );
+                    })()}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {renderedHtml ? (
           /* Markdown-rendered assistant reply (live during streaming, final after) */

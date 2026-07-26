@@ -36,9 +36,16 @@ function GovernedActionDialog({ open, onClose, onConfirm, title, intent, basis, 
         {intent && <p style={{ fontSize: 12.5, color: 'var(--text-300)', margin: '8px 0' }}>{intent}</p>}
         {basis && <div className="ra-citation" title={basis}>{I.info} {basis}</div>}
         {esign && <div style={{ fontSize: 11, color: 'var(--text-400)', marginTop: 8 }}>Requires e-signature (21 CFR Part 11)</div>}
+        {/* HONESTY GUARD: onConfirm is a no-op in every mount of this hub (no
+            backing endpoint), so the confirm is disabled and says so — a
+            governed action that performs no work must never look confirmable.
+            Real agency dispatch lives in the gateway-transmittals surface. */}
+        <div style={{ fontSize: 11, color: 'var(--warning,#b54708)', marginTop: 8 }}>
+          Not wired to a backend yet — confirming would perform no work, so it is disabled.
+        </div>
         <div className="tb-detail-f" style={{ marginTop: 14 }}>
           <button className="btn ghost" onClick={onClose}>Cancel</button>
-          <button className="btn primary" onClick={() => { onConfirm(); onClose(); }}>{I.check} Confirm</button>
+          <button className="btn primary" disabled title="No backing endpoint — this governed action is not wired yet">{I.check} Confirm</button>
         </div>
       </div>
     </div>

@@ -328,11 +328,72 @@ export const ANA_SURFACE_CTX = {
         icon: 'shieldCheck',
         prompt: 'Check in-text ↔ appendix cross-reference integrity across the CSR.',
       },
+      // Clinical-Regulatory Intelligence Graph — read-only reasoning over the
+      // shared evidence spine. Phrased as "historical FDA precedent", never as a
+      // prediction of what the Agency will do.
+      {
+        label: 'Compare to precedent',
+        icon: 'gitCompare',
+        prompt:
+          'Compare this CSR section against comparable studies and the FDA findings on this application. State the differences and the coverage denominators.',
+      },
+      {
+        label: 'Open regulatory source',
+        icon: 'externalLink',
+        prompt:
+          'Open the official regulatory source behind the findings cited on this section, at the exact page.',
+      },
+      {
+        label: 'Trace recommendation',
+        icon: 'route',
+        prompt:
+          'Show the evidence chain behind this recommendation: sources, calculations, assumptions and contradictions.',
+      },
     ],
     suggestions: [
       'Which E3 sections are still open?',
       'Draft the disposition and deviation tables',
       'Reconcile the TLFs against the datasets',
+    ],
+  },
+  'crl-library': {
+    here: 'verified FDA findings across the shared clinical-regulatory evidence graph',
+    focus: 'FDA CRL library',
+    actions: [
+      {
+        label: 'Compare to precedent',
+        icon: 'gitCompare',
+        prompt:
+          'Compare our proposed design to the findings shown here — comparable designs, adverse findings, the differences, and what is still unanswered.',
+      },
+      {
+        label: 'Explain design risk',
+        icon: 'alertTriangle',
+        prompt:
+          'Explain the design risk these findings imply: supportive evidence, negative precedent, applicability, differences, mitigations and unknowns.',
+      },
+      {
+        label: 'Stress test protocol',
+        icon: 'activity',
+        prompt:
+          'Stress-test our protocol against the scenarios these findings select. Name the source of every parameter.',
+      },
+      {
+        label: 'Open regulatory source',
+        icon: 'externalLink',
+        prompt: 'Open the official source for this finding at the exact page and location.',
+      },
+      {
+        label: 'Trace recommendation',
+        icon: 'route',
+        prompt:
+          'Show the evidence chain: sources, transformations, calculations, assumptions and contradictions.',
+      },
+    ],
+    suggestions: [
+      'Findings on this endpoint class',
+      'What did FDA ask for after this deficiency?',
+      'Compare our design to this letter',
     ],
   },
   'ind-checklist': {

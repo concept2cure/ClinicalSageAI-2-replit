@@ -25,7 +25,6 @@ import {
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 import { computeRedirect } from '../../auth/redirectUtils';
-import { setAuthToken } from '@/utils/authToken';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
 import styles from './styles.module.css';
 
@@ -203,9 +202,6 @@ export const Concept2CureLogin: React.FC = () => {
         sessionStorage.setItem('trialsage_refresh_token', data.refreshToken || '');
         sessionStorage.setItem('trialsage_token_expiry', expiry);
         sessionStorage.setItem('trialsage_user', JSON.stringify(data.user || {}));
-        // Bridge: also populate the canonical token store the API layer reads,
-        // so requests fired before the hard-navigate reload carry the new token.
-        setAuthToken(data.accessToken);
         window.location.href = '/concept2cure';
         return;
       }

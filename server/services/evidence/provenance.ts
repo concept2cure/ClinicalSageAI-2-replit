@@ -269,6 +269,32 @@ export const EVIDENCE_SOURCES: Record<string, EvidenceSource> = {
     confidenceBasis: 'validation_based',
     lineageObjectType: 'document',
   },
+  fda_crl: {
+    id: 'fda_crl',
+    label: 'FDA Complete Response Letter',
+    type: 'regulatory_database',
+    retrievalMethod: 'corpus_lookup',
+    peerReviewed: null,
+    freshness: 'curated',
+    authority: 'primary',
+    confidenceBasis: 'validation_based',
+    lineageObjectType: 'regulatory_finding',
+    defaultCaveat:
+      'FDA Complete Response Letter — a record of deficiencies at a point in time. It is precedent, not a prediction of any future decision.',
+  },
+  clinical_regulatory_evidence: {
+    id: 'clinical_regulatory_evidence',
+    label: 'Clinical Regulatory Evidence (derived design lessons)',
+    type: 'curated_corpus',
+    retrievalMethod: 'corpus_lookup',
+    peerReviewed: null,
+    freshness: 'curated',
+    authority: 'secondary',
+    confidenceBasis: 'validation_based',
+    lineageObjectType: 'atom',
+    defaultCaveat:
+      'Derived from prior regulatory evidence — precedent-based guidance, not a prediction of acceptance.',
+  },
 };
 
 /** Look up a registered evidence source by id. */

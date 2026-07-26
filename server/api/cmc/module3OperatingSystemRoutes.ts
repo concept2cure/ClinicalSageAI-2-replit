@@ -11,6 +11,7 @@ import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } fro
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
+import { verifyReauth, recordGovernedAction } from '../../routes/c2c/actions';
 
 const router = express.Router();
 
@@ -46,6 +47,13 @@ function getOrgId(req: express.Request): number {
   );
   if (!orgId || Number.isNaN(orgId)) throw new Error('Organization context required');
   return orgId;
+}
+
+function resolveActorUserId(req: express.Request): number {
+  const r = req as any;
+  const raw = r.userId ?? r.user?.id ?? 0;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
 router.post('/source-objects/:projectId', async (req, res) => {
@@ -491,6 +499,21 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const { projectId, sectionKey } = req.params;
+
+    // §11.10(g) / §11.200 re-authentication. Approving a Module 3 section is a
+    // signature event, so the signer's credentials are verified BEFORE any
+    // write — fail closed, consistent with the specification-approve and
+    // batch-release endpoints. The client sends `reauth: { password, totp }`.
+    const actorId = resolveActorUserId(req);
+    if (!actorId) {
+      return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+    }
+    const reauthResult = await verifyReauth(actorId, (req.body ?? {}).reauth);
+    if (!reauthResult.ok) {
+      res.setHeader('WWW-Authenticate', 'ReAuth required');
+      return res.status(401).json({ success: false, error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+    }
+
     const pool = getPool();
 
     const blocking = await pool.query(
@@ -534,60 +557,100 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true };
     }
 
-    const sectionRes = await pool.query(
-      `SELECT id, deterministic_json, approval_state
-       FROM cmc_module3_sections
-       WHERE organization_id = $1 AND project_id = $2 AND section_key = $3`,
-      [orgId, projectId, sectionKey]
-    );
-    const section = sectionRes.rows[0];
-    if (!section) return res.status(404).json({ success: false, error: 'Section not found' });
+    // The version snapshot + section flip + provenance event + the hash-chained
+    // governed-action record are one atomic transaction: approval either lands
+    // as a complete §11 signature (audit chain included) or not at all —
+    // consistent with the specification-approve / batch-release endpoints.
+    const client = await pool.connect();
+    let responsePayload: Record<string, unknown>;
+    try {
+      await client.query('BEGIN');
 
-    const verRes = await pool.query(
-      `SELECT COALESCE(MAX(version_number), 0) as max_version
-       FROM cmc_module3_section_versions
-       WHERE section_id = $1`,
-      [section.id]
-    );
-    const versionNumber = Number(verRes.rows[0]?.max_version || 0) + 1;
-    const insertedVersion = await pool.query(
-      `INSERT INTO cmc_module3_section_versions (organization_id, section_id, project_id, version_number, snapshot_json, diff_summary, state, created_by)
-       VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,'approved',$7)
-       RETURNING id`,
-      [
+      const sectionRes = await client.query(
+        `SELECT id, deterministic_json, approval_state
+         FROM cmc_module3_sections
+         WHERE organization_id = $1 AND project_id = $2 AND section_key = $3`,
+        [orgId, projectId, sectionKey]
+      );
+      const section = sectionRes.rows[0];
+      if (!section) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ success: false, error: 'Section not found' });
+      }
+
+      const verRes = await client.query(
+        `SELECT COALESCE(MAX(version_number), 0) as max_version
+         FROM cmc_module3_section_versions
+         WHERE section_id = $1`,
+        [section.id]
+      );
+      const versionNumber = Number(verRes.rows[0]?.max_version || 0) + 1;
+      const insertedVersion = await client.query(
+        `INSERT INTO cmc_module3_section_versions (organization_id, section_id, project_id, version_number, snapshot_json, diff_summary, state, created_by)
+         VALUES ($1,$2,$3,$4,$5::jsonb,$6::jsonb,'approved',$7)
+         RETURNING id`,
+        [
+          orgId,
+          section.id,
+          projectId,
+          versionNumber,
+          JSON.stringify(section.deterministic_json),
+          JSON.stringify({ approvedFromState: section.approval_state }),
+          String(actorId),
+        ]
+      );
+      const approvedVersionId = insertedVersion.rows[0].id;
+      await client.query(
+        `UPDATE cmc_module3_sections
+         SET approval_state = 'approved', approved_version_id = $1, stale = false, stale_reason = null, updated_at = NOW()
+         WHERE id = $2`,
+        [approvedVersionId, section.id]
+      );
+      await client.query(
+        `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
+         VALUES ($1,$2,'section',$3,'approved',$4::jsonb,$5)`,
+        [
+          orgId,
+          projectId,
+          section.id,
+          JSON.stringify({ sectionKey, versionNumber }),
+          String(actorId),
+        ]
+      );
+
+      // §11.10(e) hash-chained governed-action record (audit_logs + c2c_ana_actions),
+      // the same ledger the specification-approve and batch-release endpoints write.
+      const governance = await recordGovernedAction(client, {
         orgId,
-        section.id,
-        projectId,
+        userId: actorId,
+        command: 'sign',
+        target: `cmc_module3_section:${projectId}/${sectionKey}`,
+        reason:
+          typeof (req.body ?? {}).reason === 'string' && (req.body as any).reason.trim()
+            ? (req.body as any).reason.trim()
+            : `Approved Module 3 section ${sectionKey}`,
+        payload: { meaning: 'approval', versionNumber, approvedVersionId },
+        domain: 'cmc',
+        surface: 'cmc-module3-section-approve',
+        idempotencyKey: (req.body ?? {}).idempotencyKey ?? null,
+      });
+
+      await client.query('COMMIT');
+      responsePayload = {
+        success: true,
+        sectionKey,
         versionNumber,
-        JSON.stringify(section.deterministic_json),
-        JSON.stringify({ approvedFromState: section.approval_state }),
-        (req as any).user?.id || 'system',
-      ]
-    );
-    await pool.query(
-      `UPDATE cmc_module3_sections
-       SET approval_state = 'approved', approved_version_id = $1, stale = false, stale_reason = null, updated_at = NOW()
-       WHERE id = $2`,
-      [insertedVersion.rows[0].id, section.id]
-    );
-    await pool.query(
-      `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-       VALUES ($1,$2,'section',$3,'approved',$4::jsonb,$5)`,
-      [
-        orgId,
-        projectId,
-        section.id,
-        JSON.stringify({ sectionKey, versionNumber }),
-        (req as any).user?.id || 'system',
-      ]
-    );
-    res.json({
-      success: true,
-      sectionKey,
-      versionNumber,
-      approvedVersionId: insertedVersion.rows[0].id,
-      canonicalGovernedState,
-    });
+        approvedVersionId,
+        canonicalGovernedState,
+        governance: { actionId: governance.actionId, sha256Chain: governance.sha256Chain },
+      };
+    } catch (txErr) {
+      try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
+      throw txErr;
+    } finally {
+      client.release();
+    }
+    res.json(responsePayload);
   } catch (error) {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });

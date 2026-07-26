@@ -2,17 +2,17 @@
  * ui-v2 shell chrome — faithful port of kit app/Shell.jsx:
  * Rail (client categories · workspace · specialist · explore · quick access)
  * · TopBar (breadcrumb · segment switcher · org · ⌘K · task/collab/bell/help)
- * · AnaRail (persistent co-author rail) · CmdK palette · ESignGate.
+ * · AnaRail (persistent co-author rail) · CmdK palette.
  *
  * Deltas from the kit prototype, all repo-seams (INSTALL_TARGET_AUDIT):
  *  - window.I → lucide map (./icons); window.* registry globals → ./registryModel.
  *  - Org identity reads TenantContext + the authenticated user (never a
  *    hard-coded "Acme Bio"); logout calls the real authService.
- *  - AnA replies and action results are PROTOTYPE fixtures until the
- *    /api/ana-ri + /api/ai-actions wiring lands (surface phases). They are
- *    ALWAYS labelled sample — a fabricated reply is never presented as live
- *    (GAP RULE). The e-sign gate is likewise demonstration-only and says so;
- *    live signing waits for the INSTALL §5 backend validator.
+ *  - AnA is LIVE: the rail streams real replies from /api/ana-ri/stream, renders
+ *    the REAL actions ANA executed, and — for a governed command — the REAL
+ *    Part 11 sign-off prompt (GovernedActionSignoff → /api/ana-ri/governed-action).
+ *    The prototype's fabricated action-result card and demonstration e-sign gate
+ *    have been removed; every action executes through ANA, never a sample.
  */
 import React from 'react';
 import { useAuth } from '@/services/portal/authService';
@@ -20,11 +20,13 @@ import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
 import { I } from './icons';
 import { SampleTag, useLive, connected } from './dataConnect';
+import { GovernedActionSignoff } from '../components/ana/GovernedActionSignoff';
+import type { PendingSignoff } from '../components/ana/useGovernedAction';
+import type { AnaChatAction } from '../components/ana/useAnaChat';
 import {
   AI_ACTIONS,
   ANA_MODES,
   CLIENT_CATEGORIES,
-  ESIGN_MEANINGS,
   NAV_TIERS_V2,
   NAV_GROUP_OF,
   PRIMARY_SEGMENTS,
@@ -33,13 +35,13 @@ import {
   RAIL_QUICK,
   RAIL_SPECIALIST,
   SEGMENTS,
-  getAction,
   getAnaContext,
   getCoauthor,
   getSegment,
   getSurfaceActions,
   type AnaContext,
 } from './registryModel';
+import { isClinicalRegulatoryGraphEnabled } from './clinicalRegulatoryGraphFlag';
 import { UI_SURFACES } from '@shared/constants/ui-surface-registry';
 
 export interface ShellSurfaceRef {
@@ -50,25 +52,15 @@ export interface ShellSurfaceRef {
 }
 
 export interface AnaMessage {
-  role: 'user' | 'ana' | 'action';
+  role: 'user' | 'ana';
   body?: string;
   model?: string;
   sample?: boolean;
   actions?: string[];
-  result?: ActionResultShape;
-}
-
-export interface ActionResultShape {
-  actionId: string;
-  label: string;
-  governed: boolean;
-  signed: boolean;
-  status: string;
-  sample: boolean;
-  created: { type: string; title: string; status: string }[];
-  warnings: string[];
-  provenance: { audit: string; hash: string; when: string };
-  next: { id: string; label: string }[];
+  /** The real actions ANA executed this turn (streamed from /api/ana-ri/stream). */
+  executedActions?: AnaChatAction[];
+  /** Governed commands ANA proposed that are blocked on a Part 11 e-signature. */
+  pendingSignoffs?: PendingSignoff[];
 }
 
 /* ── Left rail ─────────────────────────────────────────────────────────── */
@@ -109,6 +101,13 @@ export function Rail({
     { sep: true },
     { label: 'Log out', ic: 'logOut', action: 'logout' },
   ];
+  /**
+   * Rail entries that a feature flag gates. Flag off ⇒ the entry is not
+   * rendered at all — not greyed out, not present-but-empty. A visible entry for
+   * a capability the deployment does not have is worse than no entry.
+   */
+  const railVisible = (s: { id: string }) =>
+    s.id === 'crl-library' ? isClinicalRegulatoryGraphEnabled() : true;
   const navItem = (s: { id: string; label: string; icon: string; badge?: string; count?: number; target?: string }) => {
     const target = s.target ?? s.id;
     return (
@@ -174,7 +173,9 @@ export function Rail({
         <div className="rail-section">Workspace</div>
         <div className="rail-nav">{RAIL_CORE.map(navItem)}</div>
         <div className="rail-section">Science &amp; intelligence</div>
-        <div className="rail-nav">{RAIL_SPECIALIST.map(navItem)}</div>
+        {/* `crl-library` is gated by ENABLE_CLINICAL_REGULATORY_GRAPH — flag off
+            and the rail entry is absent entirely, not disabled or empty. */}
+        <div className="rail-nav">{RAIL_SPECIALIST.filter(railVisible).map(navItem)}</div>
         <div className="rail-section">Explore</div>
         <div className="rail-nav">{RAIL_EXPLORE.map(navItem)}</div>
         <div className="rail-section">Quick access</div>
@@ -351,162 +352,34 @@ export function TopBar({
   );
 }
 
-/* ── Governed action result + e-sign gate ─────────────────────────────── */
-export function ActionResult({
-  r,
-  onAct,
-}: {
-  r: ActionResultShape;
-  onAct?: (id: string) => void;
-}) {
+/** Renders the REAL Part 11 sign-off prompts ANA returned for governed actions,
+    mirroring the chat's Message signoff handling: each resolves through the real
+    GovernedActionSignoff (POST /api/ana-ri/governed-action) to the server's
+    confirmation, or is dismissed. No fabricated audit/hash — the outcome is the
+    server's, never invented. */
+function RailSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
+  const [outcomes, setOutcomes] = React.useState<Record<number, string>>({});
+  const [dismissed, setDismissed] = React.useState<Record<number, boolean>>({});
   return (
-    <div className="ana-action">
-      <div className="ana-action-h">
-        <span className="ico">{I.zap}</span>
-        <span className="t">{r.label}</span>
-        <span className="ana-action-st">{r.status}</span>
-        <SampleTag sample={r.sample} />
-      </div>
-      {r.created.map((o, i) => (
-        <div key={i} className="ana-action-obj">
-          <span className="ico">{I.fileText}</span>
-          <span className="ao-t">{o.title}</span>
-          <span className="rd-chip tone-idle">{o.status}</span>
-        </div>
-      ))}
-      {r.warnings.map((w, i) => (
-        <div key={i} className="ana-action-warn">
-          <span className="ico">{I.alertTriangle}</span>
-          {w}
-        </div>
-      ))}
-      <div className="ana-action-prov">
-        <span>
-          {r.signed ? 'Signed · ' : ''}
-          {r.provenance.audit}
-        </span>
-        <span>{r.provenance.hash}</span>
-      </div>
-      {r.next.length > 0 && (
-        <div className="ana-action-next">
-          {r.next.map((n) => (
-            <button key={n.id} type="button" className="ana-next-chip" onClick={() => onAct?.(n.id)}>
-              {I.arrowRight}
-              {n.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-let sampleAuditSeq = 8858;
-/** SAMPLE action result — demonstration shape until POST /api/ai-actions/execute
- * wires in the governance phase. Marked sample:true; renderers show the pill. */
-export function makeSampleActionResult(id: string, signed: boolean): ActionResultShape {
-  const a = getAction(id) ?? { id, label: id, verb: 'Ran', governed: false };
-  const seq = (sampleAuditSeq += 1);
-  return {
-    actionId: `ACT-${seq}`,
-    label: a.label,
-    governed: Boolean(a.governed),
-    signed,
-    status: 'completed',
-    sample: true,
-    created: [{ type: 'document', title: `${'verb' in a ? a.verb : 'Ran'} · §11 Substantial equivalence`, status: 'draft' }],
-    warnings: id === 'run_validation' ? ['1 claim-evidence mismatch in ¶9 — cite §17 evidence'] : [],
-    provenance: {
-      audit: `AUD-${seq} (sample)`,
-      // eslint-disable-next-line no-bitwise
-      hash: `sha256:${((seq * 7919) >>> 0).toString(16).slice(0, 8)}… (sample)`,
-      when: 'just now',
-    },
-    next: [
-      { id: 'run_validation', label: 'Run validation' },
-      { id: 'export_document', label: 'Export document' },
-    ],
-  };
-}
-
-export function ESignGate({
-  actionId,
-  onCancel,
-  onConfirm,
-}: {
-  actionId: string;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  const a = getAction(actionId) ?? { label: actionId };
-  const [meaning, setMeaning] = React.useState('APPROVER');
-  const [pw, setPw] = React.useState('');
-  const [totp, setTotp] = React.useState('');
-  return (
-    <div className="esign-bd" onClick={onCancel}>
-      <div className="esign-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-        <div className="esign-h">
-          <span className="ico">{I.lock}</span>
-          <span className="t">Sign to authorize · {a.label}</span>
-          <SampleTag sample />
-        </div>
-        <div className="esign-b">
-          <div className="esign-field">
-            <label>
-              Meaning of signature
-              <select value={meaning} onChange={(e) => setMeaning(e.target.value)}>
-                {ESIGN_MEANINGS.map((m) => (
-                  <option key={m} value={m}>
-                    {m.replace(/_/g, ' ')}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <div className="esign-field">
-            <label>
-              Password
-              <input
-                type="password"
-                value={pw}
-                onChange={(e) => setPw(e.target.value)}
-                placeholder="Re-enter your password"
-                autoComplete="off"
-              />
-            </label>
-          </div>
-          <div className="esign-field">
-            <label>
-              Authenticator code
-              <input
-                value={totp}
-                onChange={(e) => setTotp(e.target.value.replace(/\D/g, ''))}
-                placeholder="6-digit TOTP"
-                maxLength={6}
-                inputMode="numeric"
-              />
-            </label>
-          </div>
-          <div className="esign-manifest">
-            {a.label} is a governed action — your signature is recorded with its audit entry per 21
-            CFR §11.50. Demonstration flow: signing goes live once POST /api/esignature/sign
-            validates the meaning enum (INSTALL §5); nothing is written or signed from here yet.
-          </div>
-        </div>
-        <div className="esign-f">
-          <button type="button" className="btn ghost" onClick={onCancel}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn primary"
-            disabled={!pw || totp.length < 6}
-            onClick={onConfirm}
-          >
-            {I.shieldCheck} Sign &amp; run
-          </button>
-        </div>
-      </div>
+    <div className="ana-msg-signoffs">
+      {signoffs.map((s, i) => {
+        if (dismissed[i]) return null;
+        if (outcomes[i]) {
+          return (
+            <div key={`${s.command}-${i}`} className="ana-signoff-done" role="status">
+              {I.check} {outcomes[i]}
+            </div>
+          );
+        }
+        return (
+          <GovernedActionSignoff
+            key={`${s.command}-${i}`}
+            signoff={s}
+            onResolved={(o) => setOutcomes((p) => ({ ...p, [i]: o.message }))}
+            onCancel={() => setDismissed((p) => ({ ...p, [i]: true }))}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -686,10 +559,7 @@ export function AnaRail({
             )}
           </div>
         )}
-        {messages.map((m, i) =>
-          m.role === 'action' && m.result ? (
-            <ActionResult key={i} r={m.result} onAct={onAct} />
-          ) : (
+        {messages.map((m, i) => (
             <div key={i} className={`ana-msg ${m.role}`}>
               {m.role === 'ana' && (
                 <div className="who">
@@ -717,9 +587,26 @@ export function AnaRail({
                   })}
                 </div>
               )}
+              {m.role === 'ana' &&
+                Array.isArray(m.executedActions) &&
+                m.executedActions.length > 0 && (
+                  <div className="ana-msg-executed">
+                    {m.executedActions.map((a, i) => (
+                      <span
+                        key={i}
+                        className={`ana-exec-chip${a.executed ? ' is-done' : ''}${a.error ? ' is-err' : ''}`}
+                        title={a.error || a.label}
+                      >
+                        {a.error ? I.alertTriangle : a.executed ? I.check : I.zap} {a.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              {m.role === 'ana' &&
+                Array.isArray(m.pendingSignoffs) &&
+                m.pendingSignoffs.length > 0 && <RailSignoffs signoffs={m.pendingSignoffs} />}
             </div>
-          )
-        )}
+        ))}
       </div>
       <div className="ana-foot">
         {ac.actions && (

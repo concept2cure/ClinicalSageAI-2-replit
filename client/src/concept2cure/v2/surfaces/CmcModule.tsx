@@ -4,7 +4,24 @@ import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { EmptyState, useLiveData } from '../dataConnect';
+import { EmptyState, useLiveData, useLiveRows } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
+import {
+  specRowsFromApi,
+  specCreateBody,
+  specUpdateBody,
+  asProjectUuid,
+  type CmcSpecRow,
+  type QualitySpecApiRow,
+} from './cmcSpec';
+import {
+  batchRowsFromApi,
+  batchCreateBody,
+  batchReleaseBody,
+  type CmcBatch,
+  type BatchApiRow,
+} from './cmcBatch';
+import { useAuth } from '@/services/portal/authService';
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -33,8 +50,6 @@ import '../styles/project-home-v2.css';
 interface CmcNavItem { id: string; label: string; icon: string; }
 interface CmcPortfolio { sub: string; product: string; region: string; type: string; rpi: number | null; ir: number | null; }
 interface CmcSection { key: string; path: string; st: string; _new?: boolean; }
-interface CmcSpecRow { id: number; attr: string; material: string; method: string; release: string; shelf: string; ich: string; st: string; noMethod?: boolean; _new?: boolean; }
-interface CmcBatch { id: string; stage: string; yield: number; dev: number; st: string; _new?: boolean; }
 interface CmcChangeType { id: string; label: string; risk: string; }
 interface CmcChangeResult { type: CmcChangeType; markets: string[]; desc: string; paths: { m: string; label: string; path: string[] }[]; }
 
@@ -241,15 +256,53 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
   const readyTone = readyPct >= 80 ? 'ok' : readyPct >= 50 ? 'warn' : 'err';
   const stTone = (s: string) => s === 'approved' ? 'ok' : s === 'review' ? 'warn' : 'dim';
 
-  /* MOCK ACTION (flag): local-only. There is no wired section-approval / e-signature
-     endpoint from this surface — this mutates local state and does NOT persist a
-     21 CFR §11 signature or an audit entry. Copy is softened to say so. */
-  const doSign = () => {
+  // doSign — REAL, awaited section approval against the governed Module 3
+  // operating-system endpoint (POST /api/cmc/module3-os/sections/:projectId/
+  // :sectionKey/approve, server/api/cmc/module3OperatingSystemRoutes.ts). The
+  // backend blocks on unresolved critical contradictions (409), snapshots a new
+  // approved version, sets approval_state, and writes a cmc_provenance_events
+  // audit entry keyed to the authenticated user. The reason + reauth captured by
+  // the sign form are forwarded (the endpoint records the reason; server-side
+  // re-auth verification is the documented follow-up — see the wiring roadmap).
+  // Only reflects approval on a real 2xx; nothing is fabricated on failure.
+  const doSign = async (v: Record<string, string>) => {
     if (!sign) return;
-    const k = sign.key;
-    setSecs((ss) => ss.map((x) => (x.key === k ? { ...x, st: 'approved', _new: true } : x)));
-    setSign(null);
-    fireToast('Section ' + k + ' marked approved locally — not yet persisted');
+    const target = sign;
+    if (!ctxProjectId) {
+      fireToast('Open a program first — section approval is recorded per project.');
+      return;
+    }
+    try {
+      const res = await apiRequest(
+        'POST',
+        '/api/cmc/module3-os/sections/' +
+          encodeURIComponent(ctxProjectId) +
+          '/' +
+          encodeURIComponent(target.key) +
+          '/approve',
+        { reason: v.reason, reauth: { password: v.password, totp: v.totp || undefined } },
+      );
+      const json = await res.json().catch(() => null);
+      if (res.status === 409) {
+        fireToast('Cannot approve ' + target.key + ' — resolve the critical contradictions first.');
+        return;
+      }
+      if (!res.ok) {
+        fireToast('Couldn’t approve section ' + target.key + ' — ' + specErr(json, res.status) + '. Nothing was persisted.');
+        return;
+      }
+      setSecs((ss) => ss.map((x) => (x.key === target.key ? { ...x, st: 'approved', _new: true } : x)));
+      const ver = (json as { versionNumber?: number })?.versionNumber;
+      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
+      fireToast(
+        'Section ' + target.key + ' approved and signed' +
+          (ver ? ' · v' + ver : '') +
+          (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '') + '.',
+      );
+      setSign(null);
+    } catch (e) {
+      fireToast('Couldn’t approve section ' + target.key + ' — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
   };
 
   const rpiRankable = port.filter((p): p is CmcPortfolio & { rpi: number } => typeof p.rpi === 'number');
@@ -353,16 +406,51 @@ function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (id: stri
 
 /* ═══════════ Specifications -- create / edit / approve ═══════════ */
 
+/** Extract an honest error string from a failed CMC write response. */
+function specErr(json: unknown, status: number): string {
+  const j = json as { error?: string; message?: string; details?: Array<{ message?: string }> } | null;
+  return j?.error || j?.details?.[0]?.message || j?.message || ('HTTP ' + status);
+}
+
 function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string) => void }) {
-  /* DATA: fixture removed (was CMC_SPECROWS_SEED). No faithful org-scoped
-     specifications source in this display shape — GET /api/cmc/module3-board
-     returns specifications:null, and the per-project GET
-     /api/cmc/specifications/:projectId stores acceptance criteria / methods as
-     jsonb (material_type / acceptance_criteria / test_methods / approval_status),
-     which does not map 1:1 to the attr/release/shelf/ich columns rendered here.
-     Starts as an honest empty workbench; rows added below are LOCAL DRAFTS only
-     (see mock-action flag) until a specifications backend is wired. */
+  /* REAL slice: the specifications workbench is bound to the governed
+     quality_specifications table (server/api/cmc/specificationRoutes.ts,
+     mounted at /api/cmc/specifications). Reads GET /:projectId, creates via
+     POST /, edits via the ungoverned PUT /:id, and approves ONLY through the
+     governed POST /:id/approve endpoint (§11 re-authentication + hash-chained
+     recordGovernedAction). The jsonb ↔ display-column shape gap is crossed by
+     the reversible, unit-tested mapping in ./cmcSpec. Specifications are
+     per-project, so the surface needs a project in context (window.C2C_PROJECT,
+     the same source the board uses); without one it renders an honest prompt,
+     never a fixture, and no write is fabricated on failure. */
+  const projectId = asProjectUuid(
+    (() => {
+      try {
+        const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+        return p && p.id != null ? String(p.id) : null;
+      } catch {
+        return null;
+      }
+    })(),
+  );
+  const live = useLiveRows<QualitySpecApiRow>(
+    projectId ? '/api/cmc/specifications/' + encodeURIComponent(projectId) : null,
+  );
+  const mapped = React.useMemo<CmcSpecRow[]>(
+    () => (live.loading || live.error ? [] : specRowsFromApi(live.rows)),
+    [live.loading, live.error, live.rows],
+  );
   const [rows, setRows] = useState<CmcSpecRow[]>([]);
+  // Seed the optimistic store once the live specifications file resolves;
+  // `mapped` is a stable reference while loading/errored, so this only fires on
+  // a real resolution and never thrashes user-added optimistic rows.
+  const seededRef = React.useRef<CmcSpecRow[] | null>(null);
+  useEffect(() => {
+    if (mapped !== seededRef.current) {
+      seededRef.current = mapped;
+      setRows(mapped);
+    }
+  }, [mapped]);
   const [edit, setEdit] = useState<CmcSpecRow | 'new' | null>(null);
   const [sign, setSign] = useState<CmcSpecRow | null>(null);
   const [toast, fireToast] = useToast();
@@ -380,26 +468,83 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
       { key: 'justification', label: 'Justification', type: 'textarea', placeholder: 'Rationale for the limits and method' },
     ],
   });
-  /* MOCK ACTION (flag): local-only optimistic writes — no POST /api/cmc/specifications
-     call, so these are drafts held in component state, not persisted. */
-  const save = (v: Record<string, string>) => {
-    if (edit && edit !== 'new') { setRows((rs) => rs.map((x) => x.id === (edit as CmcSpecRow).id ? { ...x, attr: v.attr, material: v.material, method: v.method, release: v.release, shelf: v.shelf, ich: v.ich, st: v.st, noMethod: !v.method, _new: true } : x)); fireToast('Specification updated -- local draft, not yet persisted'); }
-    else { setRows((rs) => [{ id: Date.now(), attr: v.attr, material: v.material, method: v.method || '', release: v.release, shelf: v.shelf, ich: v.ich, st: v.st, noMethod: !v.method, _new: true }, ...rs]); fireToast('Specification created -- local draft, not yet persisted'); }
-    setEdit(null);
+  // save — REAL, awaited write. POST creates / PUT updates against the governed
+  // specifications file and adopts the SERVER's row (real id + persisted values).
+  // Nothing is added on failure; the success toast fires only after the write is
+  // confirmed. approval_status is never sent here — approval is governed-only.
+  const save = async (v: Record<string, string>) => {
+    if ((!edit || edit === 'new') && !projectId) {
+      fireToast('Open a program first — specifications are recorded per project.');
+      return;
+    }
+    try {
+      if (edit && edit !== 'new') {
+        const id = edit.id;
+        const res = await apiRequest('PUT', '/api/cmc/specifications/' + id, specUpdateBody(v));
+        const json = await res.json().catch(() => null);
+        if (!res.ok) { fireToast('Couldn’t save the specification — ' + specErr(json, res.status) + '. Nothing was persisted.'); return; }
+        const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
+        setRows((rs) => rs.map((x) => x.id === id ? { ...(adopted ?? x), _new: true } : x));
+        fireToast('Specification saved · ' + (adopted?.attr ?? v.attr));
+      } else {
+        const res = await apiRequest('POST', '/api/cmc/specifications', specCreateBody(v, projectId));
+        const json = await res.json().catch(() => null);
+        if (!res.ok) { fireToast('Couldn’t create the specification — ' + specErr(json, res.status) + '. Nothing was saved.'); return; }
+        const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
+        if (!adopted) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.'); return; }
+        setRows((rs) => [{ ...adopted, _new: true }, ...rs.filter((r) => r.id !== adopted.id)]);
+        fireToast('Specification created · ' + adopted.attr + ' · ' + adopted.st);
+      }
+      setEdit(null);
+    } catch (e) {
+      fireToast('Couldn’t save the specification — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
   };
-  const doSign = () => { if (!sign) return; const a = sign.attr; setRows((rs) => rs.map((x) => x.id === sign.id ? { ...x, st: 'approved', _new: true } : x)); setSign(null); fireToast('Specification "' + a + '" marked approved locally — not yet persisted'); };
+  // doSign — REAL governed approval. POSTs to the ONLY approval path
+  // (/:id/approve), which re-authenticates (password + TOTP) and records a
+  // hash-chained governed action before flipping approval_status. Adopts the
+  // server's approved row; a failed re-auth (401) is surfaced honestly and the
+  // specification stays unapproved. No local "approved" flip is fabricated.
+  const doSign = async (v: Record<string, string>) => {
+    if (!sign) return;
+    const target = sign;
+    try {
+      const res = await apiRequest('POST', '/api/cmc/specifications/' + target.id + '/approve', {
+        reason: v.reason,
+        reauth: { password: v.password, totp: v.totp || undefined },
+      });
+      const json = await res.json().catch(() => null);
+      if (res.status === 401) { fireToast('Approval not signed — re-authentication failed. The specification was not approved.'); return; }
+      if (!res.ok) { fireToast('Couldn’t approve the specification — ' + specErr(json, res.status) + '. Nothing was persisted.'); return; }
+      const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
+      setRows((rs) => rs.map((x) => x.id === target.id ? { ...(adopted ?? { ...x, st: 'approved' }), _new: true } : x));
+      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
+      fireToast('Specification "' + target.attr + '" approved and signed' + (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '') + '.');
+      setSign(null);
+    } catch (e) {
+      fireToast('Couldn’t approve the specification — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
   const noMethodCount = rows.filter((r) => r.noMethod).length;
   return (
     <div className="cm-body">
       <CmHead title="Specifications" meta="Release and shelf-life limits -- drug substance and drug product" ask={ask} suggest={CMC_SUGGEST.specs}
-        actions={<button className="nda-open" onClick={() => setEdit('new')}>{I.plus} New specification</button>} />
+        actions={<button className="nda-open" onClick={() => setEdit('new')} disabled={!projectId} title={!projectId ? 'Open a program to record specifications' : ''}>{I.plus} New specification</button>} />
       {noMethodCount > 0 && <div className="pj-con" style={{ marginBottom: 14 }}><span className="ico">{I.alertTriangle}</span><div><div className="pj-con-t">{noMethodCount} specification without a validated method</div><div className="pj-con-d">A specification cannot be approved until its analytical method is validated (ICH Q2). Add the method, or ask AnA to draft the validation justification.</div></div></div>}
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Specification table</span><span className="s">{rows.length} attributes</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {rows.length === 0 ? (
             <div style={{ padding: 12 }}>
-              <EmptyState icon={I.clipboardList} title="No specifications yet" hint="Release and shelf-life limits for your drug substance and drug product appear here. Use New specification to start a draft — persistence to the specifications backend is not yet wired." />
+              {!projectId ? (
+                <EmptyState icon={I.clipboardList} title="Open a program to manage its specifications" hint="Release and shelf-life limits are recorded per project in the governed specifications file (§3.2.S.4.1 / §3.2.P.5.1). Open a program, then create or review its specifications here." />
+              ) : live.loading ? (
+                <EmptyState icon={I.clipboardList} title="Loading specifications…" />
+              ) : live.error ? (
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load specifications" hint="The governed specifications file (GET /api/cmc/specifications) didn’t respond. Sign in to your tenant and retry." />
+              ) : (
+                <EmptyState icon={I.clipboardList} title="No specifications yet" hint="Release and shelf-life limits for your drug substance and drug product appear here. Use New specification to record the first one — it is persisted to the governed specifications file." />
+              )}
             </div>
           ) : (
             <table className="reg-tbl"><thead><tr><th>Attribute</th><th>Material</th><th>Method</th><th>Release</th><th>Shelf life</th><th>ICH</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
@@ -453,27 +598,93 @@ function CmStability({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
 /* ═══════════ Batch records -- release eligibility ═══════════ */
 
 function CmBatch({ ask }: { ask: (text: string) => void }) {
-  /* DATA: fixture removed (was CMC_BATCHES_SEED). No faithful org-scoped batch
-     source in this display shape — GET /api/cmc/module3-board returns batches:null,
-     and the per-project GET /api/cmc/batch-records/:projectId stores yield /
-     deviations as jsonb (yield_data / deviations), not the numeric yield% and
-     deviation count rendered here. Starts as an honest empty workbench; rows added
-     below are LOCAL DRAFTS only (see mock-action flag) until a batch backend is wired. */
+  /* REAL slice: bound to the governed cmc_batch_records table
+     (server/api/cmc/batchRecordRoutes.ts, mounted at /api/cmc/batch-records).
+     Reads GET /:projectId, logs a batch via POST /, and releases ONLY through
+     the governed POST /:id/release endpoint (§11 re-authentication + hash-chained
+     recordGovernedAction, carrying a disposition decision). The jsonb yield/
+     deviation columns are crossed by the reversible, unit-tested mapping in
+     ./cmcBatch. Batches are per-project; without a project in context the
+     surface renders an honest prompt, never a fixture, and no write is
+     fabricated on failure. */
+  const projectId = asProjectUuid(
+    (() => {
+      try {
+        const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+        return p && p.id != null ? String(p.id) : null;
+      } catch {
+        return null;
+      }
+    })(),
+  );
+  const live = useLiveRows<BatchApiRow>(
+    projectId ? '/api/cmc/batch-records/' + encodeURIComponent(projectId) : null,
+  );
+  const mapped = React.useMemo<CmcBatch[]>(
+    () => (live.loading || live.error ? [] : batchRowsFromApi(live.rows)),
+    [live.loading, live.error, live.rows],
+  );
   const [rows, setRows] = useState<CmcBatch[]>([]);
+  const seededRef = React.useRef<CmcBatch[] | null>(null);
+  useEffect(() => {
+    if (mapped !== seededRef.current) {
+      seededRef.current = mapped;
+      setRows(mapped);
+    }
+  }, [mapped]);
   const [form, setForm] = useState(false);
+  const [releasing, setReleasing] = useState<CmcBatch | null>(null);
   const [toast, fireToast] = useToast();
+  const { user } = useAuth();
+  const releasedByName = user?.displayName || user?.email || 'current user';
   const eligible = (r: CmcBatch) => r.dev === 0 && r.yield >= 90;
   const pending = rows.filter((r) => r.st === 'pending').length;
   const devs = rows.reduce((a, r) => a + r.dev, 0);
   const avgY = rows.length ? Math.round(rows.reduce((a, r) => a + r.yield, 0) / rows.length) : 0;
-  /* MOCK ACTION (flag): local-only optimistic writes — no POST /api/cmc/batch-records
-     or /:id/release call, so batches logged / released here are drafts, not persisted. */
-  const add = (v: Record<string, string>) => { setRows((rs) => [{ id: v.id, stage: v.stage, yield: +v.yield || 0, dev: +v.dev || 0, st: 'pending', _new: true }, ...rs]); setForm(false); fireToast('Batch logged -- local draft, not yet persisted'); };
-  const release = (id: string) => { setRows((rs) => rs.map((x) => x.id === id ? { ...x, st: 'released', _new: true } : x)); fireToast('Batch ' + id + ' marked released locally — not yet persisted'); };
+  // add — REAL, awaited create against the governed batch file; adopts the
+  // SERVER's row (real db id + persisted values). Nothing is added on failure.
+  const add = async (v: Record<string, string>) => {
+    if (!projectId) { fireToast('Open a program first — batch records are logged per project.'); return; }
+    try {
+      const res = await apiRequest('POST', '/api/cmc/batch-records', batchCreateBody(v, projectId));
+      const json = await res.json().catch(() => null);
+      if (!res.ok) { fireToast('Couldn’t log the batch — ' + specErr(json, res.status) + '. Nothing was saved.'); return; }
+      const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
+      if (!adopted) { fireToast('Saved, but the server returned an unexpected shape — reload to see it.'); return; }
+      setRows((rs) => [{ ...adopted, _new: true }, ...rs.filter((r) => r.dbId !== adopted.dbId)]);
+      setForm(false);
+      fireToast('Batch ' + adopted.id + ' logged · ' + adopted.st);
+    } catch (e) {
+      fireToast('Couldn’t log the batch — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
+  // doRelease — REAL governed release. POSTs to the ONLY release path
+  // (/:id/release): re-authenticates (password + TOTP) and records a
+  // hash-chained governed action with the disposition decision before setting
+  // the batch status. Adopts the server's row; a failed re-auth (401) is
+  // surfaced honestly and the batch stays unreleased.
+  const doRelease = async (v: Record<string, string>) => {
+    if (!releasing) return;
+    const target = releasing;
+    if (target.dbId == null) { fireToast('This batch isn’t in the governed file yet — reload before releasing it.'); return; }
+    try {
+      const res = await apiRequest('POST', '/api/cmc/batch-records/' + target.dbId + '/release', batchReleaseBody(v, releasedByName));
+      const json = await res.json().catch(() => null);
+      if (res.status === 401) { fireToast('Release not signed — re-authentication failed. The batch was not released.'); return; }
+      if (!res.ok) { fireToast('Couldn’t release the batch — ' + specErr(json, res.status) + '. Nothing was persisted.'); return; }
+      const adopted = batchRowsFromApi([(json as { data?: BatchApiRow })?.data].filter(Boolean) as BatchApiRow[])[0];
+      setRows((rs) => rs.map((x) => x.dbId === target.dbId ? { ...(adopted ?? { ...x, st: 'released' }), _new: true } : x));
+      const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
+      fireToast('Batch ' + target.id + ' ' + (adopted?.st ?? 'released') + (chain ? ' · signed ' + String(chain).slice(0, 12) + '…' : '') + '.');
+      setReleasing(null);
+    } catch (e) {
+      fireToast('Couldn’t release the batch — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  };
   return (
     <div className="cm-body">
       <CmHead title="Batch records" meta="Manufacture, yield, deviations and disposition" ask={ask} suggest={CMC_SUGGEST.batch}
-        actions={<button className="nda-open" onClick={() => setForm(true)}>{I.plus} Log batch</button>} />
+        actions={<button className="nda-open" onClick={() => setForm(true)} disabled={!projectId} title={!projectId ? 'Open a program to log batch records' : ''}>{I.plus} Log batch</button>} />
       <div className="cm-kpis">
         <Kpi l="Batches" v={rows.length} />
         <Kpi l="Pending release" v={pending} tone={pending ? 'warn' : 'ok'} />
@@ -485,28 +696,42 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
         <div className="pj-card-b" style={{ padding: 0 }}>
           {rows.length === 0 ? (
             <div style={{ padding: 12 }}>
-              <EmptyState icon={I.grid} title="No batch records yet" hint="Manufactured batches with their yield, deviations, and disposition appear here. Use Log batch to start a draft — persistence to the batch-records backend is not yet wired." />
+              {!projectId ? (
+                <EmptyState icon={I.grid} title="Open a program to manage its batch records" hint="Manufactured batches with their yield, deviations, and disposition are recorded per project in the governed batch file. Open a program, then log or release its batches here." />
+              ) : live.loading ? (
+                <EmptyState icon={I.grid} title="Loading batch records…" />
+              ) : live.error ? (
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load batch records" hint="The governed batch file (GET /api/cmc/batch-records) didn’t respond. Sign in to your tenant and retry." />
+              ) : (
+                <EmptyState icon={I.grid} title="No batch records yet" hint="Manufactured batches with their yield, deviations, and disposition appear here. Use Log batch to record the first one — it is persisted to the governed batch file." />
+              )}
             </div>
           ) : (
             <table className="reg-tbl"><thead><tr><th>Batch</th><th>Stage</th><th>Yield</th><th>Deviations</th><th>Eligible</th><th>Status</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
             <tbody>{rows.map((r) => (
-              <tr key={r.id} className={r._new ? 'de-row-new' : undefined}>
+              <tr key={r.dbId ?? r.id} className={r._new ? 'de-row-new' : undefined}>
                 <td className="mono" style={{ fontWeight: 600 }}>{r.id}</td><td>{r.stage}</td>
                 <td className={r.yield < 90 ? 'sp-tone-warn' : ''}>{r.yield}%</td>
                 <td className={r.dev ? 'sp-tone-warn' : ''}>{r.dev}</td>
                 <td>{eligible(r) ? <span className="rd-chip tone-ok">yes</span> : <span className="rd-chip tone-warn">no</span>}</td>
-                <td><span className={'rd-chip tone-' + (r.st === 'released' ? 'ok' : 'warn')}>{r.st}</span></td>
-                <td style={{ textAlign: 'right' }}>{r.st === 'pending' && <button className="nda-open" onClick={() => release(r.id)} disabled={!eligible(r)} title={!eligible(r) ? 'Resolve deviations / low yield first' : ''}>{I.check} Release</button>}</td>
+                <td><span className={'rd-chip tone-' + (r.st === 'released' ? 'ok' : r.st === 'rejected' ? 'err' : 'warn')}>{r.st}</span></td>
+                <td style={{ textAlign: 'right' }}>{r.st === 'pending' && <button className="nda-open" onClick={() => setReleasing(r)} disabled={!eligible(r)} title={!eligible(r) ? 'Resolve deviations / low yield first' : ''}>{I.check} Release</button>}</td>
               </tr>))}</tbody></table>
           )}
         </div>
       </div>
-      {form && <C2CForm config={{ eyebrow: 'Batch -- new', title: 'Log a batch record', governed: 'Disposition is computed locally from deviations and yield -- this draft is not yet persisted.', submitLabel: 'Log batch', fields: [
+      {form && <C2CForm config={{ eyebrow: 'Batch -- new', title: 'Log a batch record', sub: 'Recorded to the governed batch file for this program', submitLabel: 'Log batch', fields: [
         { key: 'id', label: 'Batch number', type: 'text', placeholder: 'e.g. BX204-DP-2407', required: true },
         { key: 'stage', label: 'Stage', type: 'select', options: ['Drug substance', 'Drug product'], required: true, half: true },
         { key: 'yield', label: 'Yield (%)', type: 'number', min: 0, max: 100, required: true, half: true },
         { key: 'dev', label: 'Open deviations', type: 'number', min: 0, default: '0' },
       ] }} onCancel={() => setForm(false)} onSubmit={add} />}
+      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition -- §11 e-signature', title: 'Release batch ' + releasing.id, sub: 'Signed disposition recorded to the hash-chained audit trail. Released by ' + releasedByName + '.', submitLabel: 'Sign & release', fields: [
+        { key: 'decision', label: 'Disposition', type: 'seg', options: ['approved', 'conditional', 'rejected'], default: 'approved', half: true },
+        { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Disposition rationale (recorded with the signature)…', required: true },
+        { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
+        { key: 'totp', label: 'Authenticator', type: 'text', placeholder: '6-digit code', half: true },
+      ] }} onCancel={() => setReleasing(null)} onSubmit={doRelease} />}
       <C2CToast msg={toast} />
     </div>
   );

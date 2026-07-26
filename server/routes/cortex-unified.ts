@@ -1270,32 +1270,10 @@ async function mountSubRouters() {
     logger.error('Failed to mount AnA 1.0 RI routes:', error);
   }
 
-  // Clinical intelligence (Foresight capabilities under Cortex gateway)
-  try {
-    const foresightAdvancedModule = await import('./foresight-ai-advanced');
-    router.use('/clinical', foresightAdvancedModule.default);
-    logger.info('Mounted: /clinical (Foresight advanced capabilities)');
-  } catch (error) {
-    logger.error('Failed to mount clinical routes:', error);
-  }
-
-  // Feedback orchestration (Foresight feedback under Cortex gateway)
-  try {
-    const foresightFeedbackModule = await import('./foresight-feedback');
-    router.use('/feedback', foresightFeedbackModule.default);
-    logger.info('Mounted: /feedback (Foresight feedback)');
-  } catch (error) {
-    logger.error('Failed to mount feedback routes:', error);
-  }
-
-  // Legacy foresight core (exposed under Cortex gateway)
-  try {
-    const foresightCoreModule = await import('./foresight-api');
-    router.use('/foresight', foresightCoreModule.default);
-    logger.info('Mounted: /foresight (Foresight core)');
-  } catch (error) {
-    logger.error('Failed to mount foresight core routes:', error);
-  }
+  // Foresight capabilities (/clinical, /feedback, /foresight) retired in Phase 8 —
+  // past their 2026-04-01 Sunset and surfaced fabricated dose confidence intervals.
+  // Honest dose-strategy evidence is served via the clinical-regulatory-evidence
+  // study-design surface; no Foresight routes are mounted under Cortex.
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

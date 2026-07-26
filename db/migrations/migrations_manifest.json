@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-07-17T16:29:14.366Z",
+  "generatedAt": "2026-07-25T23:35:41.141Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 202,
+  "totalMigrations": 221,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -543,7 +543,20 @@
     "20260718_smpc_sections_store.sql",
     "20260718_bla_assessments_store.sql",
     "20260718_cmc_changes_store.sql",
-    "20260718_pediatric_orphan_cards.sql"
+    "20260718_pediatric_orphan_cards.sql",
+    "20260724_qms_change_control_store.sql",
+    "20260724_clinical_regulatory_evidence_spine.sql",
+    "20260725_governance_boundary_tables.sql",
+    "20260725_bundle_execution_receipts.sql",
+    "20260725_resolution_orchestration_tables.sql",
+    "20260725_authoring_document_loop_tables.sql",
+    "20260725_authoring_audit_trail.sql",
+    "20260725_ectd_compilations_project_level.sql",
+    "20260725_project_sections_content_columns.sql",
+    "20260725_esig_gate_columns_port.sql",
+    "20260725_authoring_signatures_and_workflow.sql",
+    "20260725_authoring_signature_freeze_binding.sql",
+    "20260725_drop_orphaned_foresight_prediction_tables.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

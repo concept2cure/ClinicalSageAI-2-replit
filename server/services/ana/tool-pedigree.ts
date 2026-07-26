@@ -147,6 +147,11 @@ const REGISTRY_NAME_SET: ReadonlySet<string> = new Set<string>([
  * correct pedigree is `deterministic_query`, not `model_assisted`.
  */
 export const DETERMINISTIC_QUERY_NAMES: ReadonlySet<string> = new Set<string>([
+  // Client onboarding journey: a reproducible read over the tenant's live
+  // project/artifact/submission state (no LLM, no network) — the stage it
+  // reports is a deterministic function of the data, generalizing the milestone
+  // evaluators.
+  'get_client_journey',
   'code_meddra',
   'code_whodrug',
   'generate_spl_xml',

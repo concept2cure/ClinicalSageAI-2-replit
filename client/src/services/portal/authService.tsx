@@ -13,7 +13,6 @@
  */
 
 import { authLogger } from './logger';
-import { setAuthToken, clearAuthToken } from '@/utils/authToken';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TYPES & INTERFACES
@@ -844,10 +843,6 @@ export class AuthService {
       this.refreshTimer = null;
     }
     SecureStorage.clear();
-    // Bridge: also clear the canonical token store the API layer / query client
-    // read via getAuthToken. Without this a logged-out session leaves a live
-    // token behind under the canonical key.
-    clearAuthToken();
   }
 
   private storeTokens(persistent: boolean): void {
@@ -859,11 +854,6 @@ export class AuthService {
       this.tokens.expiresAt.toISOString(),
       persistent
     );
-    // Bridge: mirror the access token into the canonical store the API layer /
-    // query client read via getAuthToken. Without this a refreshed or
-    // switched-account token is written here but getAuthToken keeps returning
-    // the previous value (stale token → 401s / cross-account leakage).
-    setAuthToken(this.tokens.accessToken);
   }
 
   private storeUser(): void {
@@ -888,10 +878,6 @@ export class AuthService {
             tokenType: 'Bearer',
           };
           this.user = JSON.parse(userStr);
-          // Bridge: on a cold start (new tab / browser restart) sessionStorage is
-          // empty, so sync the restored token into the canonical store the API
-          // layer reads. Non-destructive — the persisted copy is preserved.
-          setAuthToken(accessToken);
           // Restore org to localStorage for components that read it directly
           if (this.user?.organizationId && !localStorage.getItem('currentOrganizationId')) {
             localStorage.setItem('currentOrganizationId', String(this.user.organizationId));

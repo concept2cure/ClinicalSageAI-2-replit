@@ -14,6 +14,8 @@ import { SupersessionDriver } from './supersession-driver';
 import { ArtifactDriver } from './artifact-driver';
 
 export function createMockDb(state: ResolutionTestState) {
+  /** Monotonic id source for persisted execution receipts. */
+  let receiptSeq = 0;
   const supersessionDriver = new SupersessionDriver(state);
   const artifactDriver = new ArtifactDriver(state);
 
@@ -183,8 +185,29 @@ export function createMockDb(state: ResolutionTestState) {
   // ─────────────────────────────────────────────────────────
   // EXECUTE — raw SQL for getObjectState, markSuperseded, etc.
   // ─────────────────────────────────────────────────────────
+  /**
+   * Reconstruct the SQL text of a drizzle `sql` template.
+   *
+   * This used to be `String(query?.queryChunks?.[0] || query?.sql || '')`, which
+   * stringifies a StringChunk as "[object Object]" — so EVERY branch below
+   * silently failed to match and every raw query fell through to `{ rows: [] }`.
+   * The mock looked like it modelled artifact and supersession lookups; it
+   * modelled nothing. Exposed when the ADR-0009 receipt insert needed a real
+   * RETURNING row rather than an empty result.
+   *
+   * A StringChunk holds its text in `.value` as a string[]; params are separate
+   * chunks and contribute no text.
+   */
+  function sqlText(query: any): string {
+    const chunks: any[] = query?.queryChunks ?? [];
+    if (chunks.length === 0) return String(query?.sql ?? '');
+    return chunks
+      .map(c => (Array.isArray(c?.value) ? c.value.join('') : typeof c === 'string' ? c : ''))
+      .join(' ');
+  }
+
   function mockExecute(query: any): Promise<{ rows: any[] }> {
-    const queryStr = String(query?.queryChunks?.[0] || query?.sql || '');
+    const queryStr = sqlText(query);
 
     // Artifact status lookup
     if (queryStr.includes('concept2cure_artifacts') && queryStr.includes('SELECT')) {
@@ -211,7 +234,34 @@ export function createMockDb(state: ResolutionTestState) {
       );
     }
 
-    // All other queries succeed silently
+    // Execution receipt persistence (ADR-0009).
+    //
+    // receipt-store.persistExecutionReceipt does INSERT … RETURNING id and reads
+    // inserted[0].id. The catch-all below returns { rows: [] }, so that read threw
+    // and bundle-executor — which treats an unpersistable receipt as a FAILED
+    // execution, deliberately — surfaced it as 8 orchestrator failures.
+    //
+    // The executor's behaviour is correct and is NOT relaxed here: effects that
+    // are durable but unproven must not be reported as a completed correction.
+    // What was wrong is this mock, which did not model the table the code writes.
+    if (queryStr.includes('bundle_execution_receipts')) {
+      if (queryStr.includes('INSERT')) {
+        receiptSeq += 1;
+        const id = `mock-receipt-${receiptSeq}`;
+        state.receipts.push({ id });
+        return Promise.resolve({ rows: [{ id }] });
+      }
+      // Verifier reads (matches-snapshot / changed-since-execution) have no
+      // stored rows to find in a mock run.
+      return Promise.resolve({ rows: [] });
+    }
+
+    // All other queries succeed silently.
+    //
+    // NOTE: this catch-all is the same hazard the schema-contract tier exists to
+    // close — a mock that accepts any statement and returns an empty result set
+    // cannot tell a working query from a nonexistent table. It is tolerable here
+    // only because these are decision-matrix tests, not storage tests.
     return Promise.resolve({ rows: [] });
   }
 

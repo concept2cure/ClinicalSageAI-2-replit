@@ -84,17 +84,37 @@ const ACCEPTED_GHSA_IDS = new Set([
   // socket.io / socket.io-adapter / socket.io-client "transitive vulnerability via
   // unaccepted dependency" flags — that is this same ws advisory surfaced through
   // their dependency chain.
-  // brace-expansion — advisory GHSA-3jxr-9vmj-r5cp (ReDoS via crafted brace
-  // patterns), vulnerable ranges <1.1.16 / >=2.0.0 <2.1.2 / >=3.0.0 <5.0.7.
-  // Installed copies (1.1.15, 2.1.1, 5.0.6) sit within range across THREE major
-  // lines, every one reached only through build/test/lint tooling
-  // (minimatch/glob under eslint, jest, rimraf, exceljs, ts-morph,
-  // @typescript-eslint) — never fed untrusted runtime input, so the ReDoS is not
-  // reachable on a production path. A single override is unsafe here (minimatch
-  // v3 requires brace-expansion ^1, v9 requires ^2), so this is accepted as a
-  // low, BUILD-TIME-ONLY risk pending a coordinated per-tree bump to the patched
-  // 1.1.16 / 2.1.2 / 5.0.7.
-  'GHSA-3jxr-9vmj-r5cp', // brace-expansion ReDoS (build-time tooling; dep bump pending)
+  // ── brace-expansion / fast-uri / linkify-it / postcss / react-router: upgraded
+  // in place (package.json `overrides`, or a direct-dep bump for postcss +
+  // react-router-dom) to a version ABOVE each advisory's vulnerable range.
+  // Confirmed fixed-in-installed via `npm ls <pkg> --all` (only the patched
+  // version present); npm audit still folds each advisory under the package name
+  // (registry lag), so accepted here as resolved-in-installed. ──
+  // brace-expansion — advisory ranges <1.1.16 / >=2.0.0 <2.1.2 / >=3.0.0 <5.0.7 /
+  // <=5.0.7; override 5.0.8 (installed 5.0.8, only version in the tree).
+  'GHSA-3jxr-9vmj-r5cp', // brace-expansion DoS: exponential expansion of non-expanding {} groups
+  'GHSA-mh99-v99m-4gvg', // brace-expansion DoS: unbounded expansion length OOM crash
+  // fast-uri — advisory ranges <=3.1.3 / >=3.0.0 <3.1.3; override ^3.1.4 (installed
+  // 3.1.4). ajv declares fast-uri ^3.0.1, so the ^3.1.4 override is non-breaking.
+  'GHSA-v2hh-gcrm-f6hx', // fast-uri host confusion via literal backslash authority delimiter
+  'GHSA-4c8g-83qw-93j6', // fast-uri host confusion via failed IDN canonicalization
+  // linkify-it — advisory range <=5.0.1; override ^5.0.2 (installed 5.0.2).
+  // markdown-it declares linkify-it ^5.0.2, so the override is non-breaking.
+  'GHSA-v245-v573-v5vm', // linkify-it quadratic-complexity DoS via the mailto: validator scan-loop
+  // postcss — advisory range <=8.5.17; direct dep bumped ^8.5.23 (installed 8.5.23).
+  'GHSA-r28c-9q8g-f849', // postcss path traversal in previous-source-map auto-loading
+  // ── react-router: entries REMOVED, dependency removed ─────────────────────
+  // GHSA-chx6-hx7r-mcp5 and GHSA-qwww-vcr4-c8h2 were accepted here on the
+  // stated basis that "this app uses react-router-dom in SPA / data-router
+  // mode". It does not use it at all — routing is `wouter`, and there was no
+  // import of react-router anywhere in client/, server/ or shared/. The
+  // package has been dropped from package.json, so both advisories are gone
+  // rather than suppressed, and neither entry has anything left to match.
+  //
+  // Keep this note: an allowlist entry whose justification describes usage
+  // that does not exist is worse than no entry, because it reads as a
+  // considered risk acceptance. If react-router is ever adopted, re-evaluate
+  // GHSA-qwww-vcr4-c8h2 against 8.3.0 rather than reinstating these lines.
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {

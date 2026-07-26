@@ -48,6 +48,49 @@ jobs:
       - name: Guardrails — RLS allowlist TS↔SQL parity
         run: npm run ci:rls-allowlist-sync
 
+      - name: Guardrails — duplicate CREATE TABLE across BOTH migration lineages
+        # The prefix-collision guard scans migrations/ only and the manifest
+        # generator scans db/migrations/ only — neither sees cross-lineage table
+        # collisions, and neither checks table NAMES. See ADR-0006 / conflict C-6.
+        run: npm run ci:duplicate-table-ddl
+
+      - name: Guardrails — server SQL references a table nothing creates
+        # The C-8/C-10/C-11/C-12/C-14 class: shipped code with no storage. Unit
+        # tests vi.mock the db module so a mock accepts any table name; the
+        # failure surfaces only in production, as a 500 (unguarded query) or as
+        # a silent no-op (query inside try/catch). See ledger C-14.
+        run: npm run ci:unbacked-tables
+
+      - name: Guardrails — no direct Pool construction in runtime code
+        # Was enforced nowhere. Its scan list also named ten of server/'s ~35
+        # directories, so server/src, server/bootstrap, server/lib and others
+        # were invisible to it; it now scans server/ with exclusions instead.
+        run: npm run ci:ban-new-pool
+
+      - name: Guardrails — eCTD stub bundle + generated risk-code types
+        # Both were pre-push-hook only, so a `git push --no-verify` skipped them
+        # and nothing checked the branch.
+        run: |
+          npm run ci:ectd-stubs
+          npm run ci:risk-codes
+
+      - name: Guardrails — security patterns (tenant / identity / role trust)
+        # Existed only as a pre-commit hook, so it was skipped by any commit made
+        # with --no-verify and never enforced on the branch. It now blocks in CI.
+        # Covers the PR #496-500 tenant-trust rules plus identity-trust-header
+        # (ledger C-18), which caught 11 further violations across four files on
+        # its first run — including a header-supplied userId passed straight into
+        # a document query.
+        run: npm run check:security-patterns
+
+      - name: Proof tier — schema contracts + golden journeys
+        # These run inside `npm test` too, but they get their own blocking step
+        # because they are the acceptance evidence for the C-8/C-10/C-11/C-12/
+        # C-14/C-16 remediations and must fail loudly and early, not be buried in
+        # a full-suite run. They need no external database: the harness applies
+        # the real migration files to an in-process Postgres (PGlite).
+        run: npm run test:proof-tier
+
       - name: Guardrails — i18n locale integrity (key/placeholder/markup parity)
         run: node scripts/ci/check-i18n-integrity.mjs
 

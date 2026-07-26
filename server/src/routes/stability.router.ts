@@ -19,6 +19,24 @@ import {
 // import { parse } from 'csv-parse/sync';
 import { addMonths, format } from 'date-fns';
 import { insertAllDayEvent, calendarEnabled } from '../services/calendar';
+import { authedActorName } from '../../utils/authedActor';
+
+/**
+ * The VERIFIED acting principal, for GxP attribution columns
+ * (stab_results.reviewed_by, stab_chain.actor, stab_samples.collected_by).
+ *
+ * These read `req.headers['x-user-name'] || '<placeholder>'` — attacker-
+ * controlled, and defaulting to strings like 'user', 'reviewer' and 'collector'
+ * that identify nobody while still satisfying the column. Chain-of-custody and
+ * review attribution that any caller can assert is not attribution.
+ * See ledger C-18.
+ */
+function requireActor(req: any): string {
+  const actor = authedActorName(req);
+  if (!actor) throw new Error('Actor identity required');
+  return actor;
+}
+
 // Stub for barcode generation - would import BWIPJS from "bwip-js" in production
 const BWIPJS = {
   toBuffer: (options: any) => Promise.resolve(Buffer.from('mock-barcode-data')),
@@ -153,7 +171,18 @@ async function executeInternalQuery(tenantId: string, queryText: string, params?
 
 // Helper function for audit trail
 async function audit(studyId: string, action: string, payload: any, req: any) {
-  const actor = (req.headers['x-user-name'] || req.headers['x-user-email'] || 'user').toString();
+  // 21 CFR Part 11 §11.10(e) / ICH Q1A: the audit actor is the VERIFIED
+  // principal. This read `x-user-name || x-user-email || 'user'` — both
+  // client-supplied — so any authenticated caller could attribute a stability
+  // audit record to anyone, and an omitted header recorded the literal string
+  // "user", which identifies nobody. Tenant scope on this router was already
+  // derived from the JWT (below); attribution was the half left on headers.
+  // Same rule as the authoring router's getActorEmail: email, else the token
+  // subject. See ledger C-18.
+  const actor = String(req.user?.email ?? req.user?.id ?? req.user?.userId ?? '');
+  if (!actor) {
+    throw new Error('Actor identity required for audit');
+  }
   const client = await pool.connect();
   try {
     // Set tenant context for audit — derive from JWT-validated context, not raw headers
@@ -1992,7 +2021,7 @@ router.post('/results/:resultId/review', async (req, res) => {
     [
       rid,
       (b.status || 'REVIEWED').toUpperCase(),
-      (req.headers['x-user-name'] || 'reviewer').toString(),
+      requireActor(req),
       b.reason || null,
     ]
   );
@@ -2584,7 +2613,7 @@ router.post('/studies/:id/samples/collect', async (req, res) => {
     [
       b.sample_id,
       b.collected_at || null,
-      b.collected_by || req.headers['x-user-name'] || 'collector',
+      b.collected_by || requireActor(req),
     ]
   );
   await audit(id, 'sample_collect', { sample_id: b.sample_id }, req);
@@ -2706,7 +2735,7 @@ router.post('/samples/:sampleId/chain', async (req, res) => {
   await pool.query(`insert into stab_chain (sample_id,action,actor,notes) values ($1,$2,$3,$4)`, [
     sid,
     action,
-    (req.headers['x-user-name'] || 'user').toString(),
+    requireActor(req),
     b.notes || null,
   ]);
   if (find[0]) await audit(find[0].study_id, 'coc_add', { sample_id: sid, action }, req);
@@ -2734,7 +2763,7 @@ router.post(
     );
     await pool.query(
       `insert into stab_chain (sample_id,action,actor,attachment_url) values ($1,'OTHER',$2,$3)`,
-      [sid, (req.headers['x-user-name'] || 'user').toString(), url]
+      [sid, requireActor(req), url]
     );
     if (find[0]) await audit(find[0].study_id, 'coc_upload', { sample_id: sid, url }, req);
     res.json({ ok: true, url });

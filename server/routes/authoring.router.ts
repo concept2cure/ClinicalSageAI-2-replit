@@ -22,8 +22,29 @@ router.use(async (req: Request, res: Response, next: any) => {
   try {
     const auth = req.headers.authorization || (req.headers as any).Authorization;
 
+    // SECURITY (ledger C-18): drop every caller-supplied identity header BEFORE
+    // any branching. Everything downstream treats these as trusted, derived
+    // values — requireAny() reads x-roles, createAuditTrail() reads x-user-email
+    // — so a client value must never survive to a route under ANY path through
+    // this middleware. Clearing inside the Bearer branch was not enough: a
+    // non-Bearer Authorization header satisfied the check below, skipped
+    // verification entirely, and reached the routes with a forged
+    // `x-roles: ADMIN` intact. Only getTenantId() throwing prevented a write,
+    // which is luck rather than access control.
+    delete (req.headers as any)['x-roles'];
+    delete (req.headers as any)['x-user-email'];
+    delete (req.headers as any)['x-tenant-id'];
+
     // JWT is REQUIRED in all deployed environments
     if (!auth) {
+      return res
+        .status(401)
+        .json({ error: 'Authentication required for 21 CFR Part 11 compliance' });
+    }
+
+    // A present-but-unverifiable credential is not authentication. This used to
+    // fall through to next() because the verification block was conditional.
+    if (!auth.startsWith('Bearer ') || !jose) {
       return res
         .status(401)
         .json({ error: 'Authentication required for 21 CFR Part 11 compliance' });
@@ -50,18 +71,47 @@ router.use(async (req: Request, res: Response, next: any) => {
         return res.status(401).json({ error: 'Invalid authentication token' });
       }
 
-      // Validate and sanitize claims
-      if (claims.email) {
-        (req.headers as any)['x-user-email'] = String(claims.email).toLowerCase();
-      }
-      if (claims.roles) {
-        const arr = Array.isArray(claims.roles) ? claims.roles : String(claims.roles).split(',');
-        (req.headers as any)['x-roles'] = arr.map((r: string) => String(r).toUpperCase()).join(',');
-      }
-      // Store tenant from JWT claims for strict isolation
-      if (claims.tenant_id) {
-        (req.headers as any)['x-tenant-id'] = parseInt(claims.tenant_id);
-      }
+      // Derive the identity headers from the VERIFIED claims — and DELETE them
+      // when the corresponding claim is absent.
+      //
+      // SECURITY (ledger C-18): these assignments used to sit behind
+      // `if (claims.<x>)`. A token that simply omitted a claim left the CLIENT's
+      // header in place, and everything downstream trusts these headers:
+      // requireAny() (8 role-gated routes) reads x-roles, createAuditTrail reads
+      // x-user-email. So a valid token with no `roles` claim plus a forged
+      // `x-roles: ADMIN` header passed every role gate — demonstrated at 201 in
+      // tests/schema-contract/authoring-role-gate.contract.test.ts before this
+      // change — and a token with no `email` claim let the caller attribute
+      // records to any address it named.
+      //
+      // Absence of a claim must mean absence of the privilege, never "whatever
+      // the caller asserted". Deleting is the fail-closed half; without it the
+      // overwrite is only a partial guard.
+      const setOrClear = (header: string, value: string | number | undefined) => {
+        if (value === undefined) delete (req.headers as any)[header];
+        else (req.headers as any)[header] = value;
+      };
+
+      setOrClear('x-user-email', claims.email ? String(claims.email).toLowerCase() : undefined);
+
+      const roleClaim = claims.roles;
+      const roleList = Array.isArray(roleClaim)
+        ? roleClaim
+        : roleClaim
+          ? String(roleClaim).split(',')
+          : undefined;
+      setOrClear(
+        'x-roles',
+        roleList ? roleList.map((r: string) => String(r).toUpperCase()).join(',') : undefined,
+      );
+
+      // Tenant scope comes from the token only — strict isolation.
+      const tenantClaim = claims.tenant_id ?? claims.organizationId ?? claims.orgId;
+      const tenantId =
+        tenantClaim === undefined || tenantClaim === null
+          ? undefined
+          : Number.parseInt(String(tenantClaim), 10);
+      setOrClear('x-tenant-id', Number.isFinite(tenantId) ? tenantId : undefined);
 
       // SECURITY (21 CFR Part 11): expose the verified JWT principal on
       // req.user so actor-identity helpers (getActorId / getActorEmail) derive
@@ -161,9 +211,22 @@ async function canEditSection(
 }
 
 // Role-based access control helper
+/**
+ * Role gate.
+ *
+ * Reads the VERIFIED claim (req.user.roles) rather than the x-roles header.
+ * The middleware above now derives and sanitises that header, so the two agree —
+ * but authorization must not depend on a mutable header at all. One middleware
+ * ordering mistake, one route mounted without this router's own JWT middleware,
+ * and a header-reading gate is bypassable again. Reading the claim removes the
+ * whole class. See ledger C-18.
+ */
 const requireAny = (roles: string[]) => {
   return (req: Request, res: Response, next: any) => {
-    const userRoles = ((req.headers as any)['x-roles'] || '').toString().toUpperCase().split(',');
+    const claimed = ((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[];
+    const userRoles = (Array.isArray(claimed) ? claimed : [claimed]).map(r =>
+      String(r).toUpperCase()
+    );
     const hasRole = roles.some(role => userRoles.includes(role.toUpperCase()));
     if (!hasRole) {
       return res.status(403).json({ error: `Requires one of: ${roles.join(', ')}` });
@@ -222,6 +285,63 @@ const getActorEmail = (req: Request): string | null => {
   }
   return String(subject);
 };
+
+/**
+ * The frozen snapshot a signature taken right now would cover — the most recent
+ * frozen_documents row for this document, or null if it has never been frozen.
+ *
+ * Part 11 §11.70 requires a signature to be linked to the record version it
+ * attests to. Signing an unfrozen document is allowed (an author may sign before
+ * QA freezes), and that case is recorded as null rather than guessed at.
+ */
+const currentFrozenSnapshot = async (
+  docId: string | string[] | undefined,
+  tenantId: number
+): Promise<{ version: string; contentHash: string } | null> => {
+  const r = await pool.query(
+    `SELECT version, content_hash FROM frozen_documents
+      WHERE document_id = $1 AND tenant_id = $2
+      ORDER BY frozen_at DESC LIMIT 1`,
+    [docId, tenantId]
+  );
+  if ((r.rowCount ?? 0) === 0) return null;
+  const row = r.rows[0] as { version: string; content_hash: string };
+  return { version: row.version, contentHash: row.content_hash };
+};
+
+/**
+ * A signature digest that an auditor can RECOMPUTE from the stored row.
+ *
+ * Every input is a durable column; nothing here is a timestamp. The previous
+ * digest on /sign hashed `new Date().toISOString()`, which made it impossible to
+ * verify — a hash nobody can reproduce proves nothing. Binding
+ * coveredContentHash into the digest is what ties the signature to a specific
+ * frozen snapshot cryptographically rather than by mere reference
+ * (ledger C-11 residual 2).
+ *
+ * The `authoring-sig-v1` prefix keeps a future scheme change distinguishable
+ * instead of silently incompatible.
+ */
+const AUTHORING_SIGNATURE_DIGEST_VERSION = 'authoring-sig-v1';
+
+const computeSignatureDigest = (input: {
+  signerEmail: string;
+  meaning: string;
+  contentHash: string;
+  coveredContentHash: string | null;
+}): string =>
+  crypto
+    .createHash('sha256')
+    .update(
+      [
+        AUTHORING_SIGNATURE_DIGEST_VERSION,
+        input.signerEmail,
+        input.meaning,
+        input.contentHash,
+        input.coveredContentHash ?? '',
+      ].join('|')
+    )
+    .digest('hex');
 
 // Helper function to compute document hash for signatures
 const computeDocHash = async (
@@ -330,8 +450,15 @@ const createAuditEvent = async (
   metadata: any,
   tenantId: number
 ) => {
-  // Create a mock request for the new audit function
+  // Synthesize the request shape createAuditTrail reads from. `user` is the
+  // important part: getTenantId sources the tenant from the VERIFIED JWT
+  // (req.user.organizationId) rather than the x-tenant-id header it used to
+  // trust, so a headers-only stand-in made getTenantId throw "Tenant context
+  // required" — inside createAuditTrail's catch, which meant every audit event
+  // routed through this helper was silently dropped. The caller has already
+  // resolved the tenant from the real request; pass it through explicitly.
   const mockReq = {
+    user: { organizationId: tenantId, email: actor },
     headers: { 'x-user-email': actor, 'x-tenant-id': tenantId },
     ip: 'legacy-call',
     connection: { remoteAddress: 'legacy-call' },
@@ -2772,7 +2899,11 @@ async function buildPdfFromDocx(docxBuffer: Buffer): Promise<Buffer> {
 router.post('/docs/:docId/create-pin', async (req: Request, res: Response) => {
   try {
     const { pin } = req.body;
-    const email = (req.headers as any)['x-user-email'];
+    // Part 11 attribution: signer identity comes from the verified JWT only.
+    // The previous x-user-email header source was attacker-controlled (same
+    // class as the getActorId fix above) — a caller could mint a PIN for any
+    // email and later sign as that identity.
+    const email = getActorEmail(req);
     const tenantId = getTenantId(req);
 
     if (!email) {
@@ -2813,7 +2944,12 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
     const { reason, version } = req.body;
-    const email = (req.headers as any)['x-user-email'] || 'system';
+    // Freeze attribution from the verified JWT; the old x-user-email ||
+    // 'system' fallback let an unauthenticated caller freeze as "system".
+    const email = getActorEmail(req) || null;
+    if (!email) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
     const tenantId = getTenantId(req);
 
     // Get current document content
@@ -2835,7 +2971,7 @@ router.post('/docs/:docId/freeze', async (req: Request, res: Response) => {
 
     // Get all sections
     const sectionsResult = await pool.query(
-      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE document_id = $1 AND tenant_id = $2 ORDER BY order_index',
+      'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index',
       [docId, tenantId]
     );
 
@@ -2892,8 +3028,11 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
   try {
     const { docId } = req.params;
     const { pin, meaning, intent } = req.body;
-    const email = (req.headers as any)['x-user-email'];
-    const name = (req.headers as any)['x-user-name'] || email;
+    // Part 11 §11.100 attribution: the SIGNER identity on an electronic
+    // signature must come from the verified JWT, never from client-supplied
+    // headers. x-user-email here meant anyone could sign as anyone.
+    const email = getActorEmail(req);
+    const name = ((req.user as { name?: string } | undefined)?.name) || email;
     const tenantId = getTenantId(req);
 
     if (!email) {
@@ -2923,11 +3062,29 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
 
     // Create electronic signature record
     const signatureId = crypto.randomUUID();
+    // Writes authoring_signatures, NOT electronic_signatures. The latter is the
+    // Part 11 table for the integer-keyed legacy document system: its
+    // document_id is `INTEGER REFERENCES documents(id)` where this loop has UUID
+    // doc ids, and it carries seven NOT NULL columns this insert never supplied.
+    // The two are different concepts that collided on a name, so the authoring
+    // loop now has its own store — the same one GET /docs/:docId/signatures has
+    // always read. See ledger C-11 residual 1.
+    // §11.70 signature/record link: bind this signature to the snapshot in force
+    // at signing time, and cover that binding in a recomputable digest.
+    const covered = await currentFrozenSnapshot(docId, tenantId);
+    const signatureDigest = computeSignatureDigest({
+      signerEmail: email,
+      meaning,
+      contentHash: docHash,
+      coveredContentHash: covered?.contentHash ?? null,
+    });
+
     await pool.query(
-      `INSERT INTO electronic_signatures
-       (id, doc_id, signer_email, signer_name, signature_meaning, signature_intent,
-        document_hash, pin_verified, ip_address, user_agent, tenant_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      `INSERT INTO authoring_signatures
+       (id, doc_id, signer_email, signer_name, meaning, reason, method,
+        content_hash, signature_digest, covered_freeze_version, covered_content_hash,
+        pin_verified, ip_address, user_agent, tenant_id)
+       VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, $10, $11, $12, $13, $14)`,
       [
         signatureId,
         docId,
@@ -2936,6 +3093,9 @@ router.post('/docs/:docId/e-sign', async (req: Request, res: Response) => {
         meaning,
         intent,
         docHash,
+        signatureDigest,
+        covered?.version ?? null,
+        covered?.contentHash ?? null,
         true,
         req.ip,
         req.headers['user-agent'],
@@ -3262,31 +3422,32 @@ async function logExport(
     ]
   );
 
-  // Also maintain backward compatibility with old table if it exists
-  try {
-    await pool.query(`INSERT INTO doc_exports (doc_id, fmt, doc_sha256) VALUES ($1,$2,$3)`, [
-      docId,
-      fmt,
-      docSha,
-    ]);
-  } catch (e) {
-    // Ignore if old table doesn't exist
-  }
+  // A best-effort mirror write to a legacy `doc_exports` table used to sit here.
+  // Nothing in this repo creates that table — no migration, no runtime DDL — so
+  // the write could only ever land on a database provisioned outside it, and its
+  // column list (fmt, doc_sha256) disagreed with the other writer's
+  // (format, exported_by), which is how we know neither was exercised. Removed
+  // rather than left in place: a swallowed write to a table with no definition
+  // reads as durability that does not exist. See ledger C-14.
 
   return result.rows[0];
 }
 
 // Helper: list tokens for a whole doc (with section metadata)
-async function listDocTokens(docId: string | string[] | undefined) {
+// Called only by GET /docs/:docId/diff-since-export. That endpoint could never
+// reach this helper (it read a table nothing creates — ledger C-14), which is why
+// two wrong column names survived here: authoring_sections has `code` and
+// `doc_id`, never `section_number` or `document_id`. Now tenant-scoped too.
+async function listDocTokens(docId: string | string[] | undefined, tenantId: number) {
   const result = await pool.query(
     `
-    SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.id as section_id, s.section_number as section_code, s.title as section_title
+    SELECT c.id, c.section_id, c.source, c.anchor, c.citation_text, c.reference_id, c.created_by, c.created_at, c.tenant_id, c.payload_sha256, c.frozen_at, s.code as section_code, s.title as section_title
     FROM authoring_citations c
     JOIN authoring_sections s ON s.id = c.section_id
-    WHERE s.document_id = $1
+    WHERE s.doc_id = $1 AND s.tenant_id = $2
     ORDER BY c.created_at ASC
   `,
-    [docId]
+    [docId, tenantId]
   );
   return result.rows;
 }
@@ -3423,13 +3584,20 @@ router.delete('/export-history/:id', async (req: Request, res: Response) => {
 // Diff since latest export = tokens created/updated after export timestamp
 router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response) => {
   try {
+    // Reads authoring_export_history — the table recordExport() actually writes.
+    // This previously read `doc_exports`, which no migration and no runtime DDL
+    // in this repo creates, so the query threw "relation does not exist" and the
+    // catch below turned every call into a 500. See ledger C-14.
+    await ensureExportHistoryTableExists();
+    const tenantId = getTenantId(req);
     const lastExportResult = await pool.query(
       `
-      SELECT created_at FROM doc_exports
-      WHERE doc_id = $1
-      ORDER BY created_at DESC LIMIT 1
+      SELECT COALESCE(exported_at, created_at) AS exported_at
+      FROM authoring_export_history
+      WHERE document_id = $1 AND tenant_id = $2
+      ORDER BY COALESCE(exported_at, created_at) DESC LIMIT 1
     `,
-      [req.params.docId]
+      [req.params.docId, tenantId]
     );
 
     if (((lastExportResult.rowCount ?? 0) === 0)) {
@@ -3437,12 +3605,12 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
     }
 
     const lastExport = lastExportResult.rows[0];
-    const tokens = await listDocTokens(req.params.docId);
-    const t0 = new Date(lastExport.created_at).getTime();
+    const tokens = await listDocTokens(req.params.docId, tenantId);
+    const t0 = new Date(lastExport.exported_at).getTime();
     const changed = tokens.filter(t => new Date(t.created_at).getTime() > t0);
 
     res.json({
-      baseline: lastExport.created_at,
+      baseline: lastExport.exported_at,
       count: changed.length,
       changed,
     });
@@ -3501,9 +3669,8 @@ router.post('/docs/:docId/refresh-all', async (req: Request, res: Response) => {
   }
 });
 
-// Step 8: Enhance existing export endpoint to log exports
-// Note: The existing export endpoint should be modified to call logExport()
-// This requires finding and updating the existing endpoint
+// Step 8: export logging — DONE. POST /docs/:docId/export calls logExport() after
+// generating the file, so the record carries the real file name and size.
 
 // ============= Step 10: Templates API =============
 
@@ -4246,15 +4413,17 @@ router.post('/docs/:docId/export', async (req: Request, res: Response) => {
       [docId, tenantId]
     );
 
-    // Create export record
     const exportId = crypto.randomUUID();
     const fileHash = await computeDocHash(docId, tenantId);
 
-    await pool.query(
-      `INSERT INTO authoring_exports (id, doc_id, format, options, performed_by, file_hash, tenant_id, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())`,
-      [exportId, docId, format, JSON.stringify(options), exportedBy, fileHash, tenantId]
-    );
+    // The export record is written by logExport() AFTER the file is generated,
+    // so file_name and file_size are the real ones. This used to INSERT into
+    // `authoring_exports` — a table that no migration and no runtime DDL in this
+    // repo creates, and which nothing else in the codebase reads or writes. The
+    // insert was unguarded, so it threw "relation does not exist" and the catch
+    // below turned EVERY export request into a 500: the flagship authoring loop
+    // could draft, freeze and sign a document but could not export one. See
+    // ledger C-14.
 
     // Create audit event
     await createAuditEvent(
@@ -4296,8 +4465,7 @@ ${sectionsResult.rows
       fileContent = Buffer.from(xmlContent, 'utf-8');
       fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.xml`;
       contentType = 'application/xml';
-    } else if (format === 'docx' || format === 'pdf') {
-      // Use existing buildDocx function for Word/PDF
+    } else if (format === 'docx') {
       const { Document, Packer, Paragraph, HeadingLevel } = require('docx');
 
       const children = [];
@@ -4314,19 +4482,46 @@ ${sectionsResult.rows
       }
 
       const docxDoc = new Document({ sections: [{ children }] });
-      const docxBuffer = await Packer.toBuffer(docxDoc);
-
-      if (format === 'docx') {
-        fileContent = docxBuffer;
-        fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`;
-        contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      } else {
-        // Convert to PDF (simplified - in production would use LibreOffice or similar)
-        fileContent = docxBuffer; // For now, return docx - full PDF conversion needs more setup
-        fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-        contentType = 'application/pdf';
-      }
+      fileContent = await Packer.toBuffer(docxDoc);
+      fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`;
+      contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    } else if (format === 'pdf') {
+      // Real PDF via the platform's HTML→PDF renderer (the same engine the
+      // template render path uses). The previous implementation returned DOCX
+      // bytes under a PDF label — a mislabeled file is worse than no file.
+      const { renderHtmlToPdf } = await import('../export/renderers');
+      const esc = (s: string) =>
+        String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+          body { font-family: Georgia, 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 1in; }
+          h1 { font-size: 18pt; } h2 { font-size: 14pt; margin-top: 1.2em; }
+          p { white-space: pre-wrap; }
+        </style></head><body>
+        <h1>${esc(doc.title)}</h1>
+        ${sectionsResult.rows
+          .map(
+            (s: { code: string; title: string; content: string | null }) =>
+              `<h2>${esc(s.code)} — ${esc(s.title)}</h2><p>${esc(s.content || '')}</p>`
+          )
+          .join('\n')}
+        </body></html>`;
+      fileContent = await renderHtmlToPdf(html);
+      fileName = `${doc.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      contentType = 'application/pdf';
     }
+
+    // Durable export record — the same table GET /docs/:docId/exports lists and
+    // GET /docs/:docId/diff-since-export baselines against.
+    await logExport(
+      String(docId),
+      format,
+      fileHash,
+      exportedBy as string,
+      fileName,
+      fileContent?.length,
+      { options, exportId },
+      tenantId
+    );
 
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
@@ -4466,8 +4661,18 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     const { docId } = req.params;
     const { pin, meaning = 'REVIEWER', reason } = req.body;
     const tenantId = getTenantId(req);
-    const signerEmail = req.headers['x-user-email'] || req.body.signer_email || 'system';
-    const signerName = req.body.signer_name || signerEmail;
+    // Part 11 §11.100: the signer is the VERIFIED principal. This took its
+    // identity from `x-user-email || req.body.signer_email || 'system'`, so a
+    // caller could sign as anyone — or as "system", which is nobody. The defect
+    // survived because this endpoint writes authoring_signatures, a table that
+    // did not exist, so it failed before attribution ever mattered. See C-11
+    // residual 1 and C-18.
+    const signerEmail = getActorEmail(req);
+    if (!signerEmail) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    const signerName =
+      ((req.user as { name?: string } | undefined)?.name) || signerEmail;
 
     // Validate required fields
     if (!pin || !reason) {
@@ -4483,16 +4688,25 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
     // Compute document hash
     const contentHash = await computeDocHash(docId, tenantId);
 
-    // Create signature digest
-    const signatureData = `${signerEmail}:${contentHash}:${reason}:${new Date().toISOString()}`;
-    const signatureDigest = crypto.createHash('sha256').update(signatureData).digest('hex');
+    // The digest used to hash `new Date().toISOString()`, which made it
+    // impossible for anyone to recompute — a hash nobody can reproduce proves
+    // nothing. It now covers only durable columns, including the frozen snapshot
+    // this signature attests to (§11.70 signature/record link, C-11 residual 2).
+    const covered = await currentFrozenSnapshot(docId, tenantId);
+    const signatureDigest = computeSignatureDigest({
+      signerEmail,
+      meaning,
+      contentHash,
+      coveredContentHash: covered?.contentHash ?? null,
+    });
 
     // Store signature
     const signatureId = crypto.randomUUID();
     await pool.query(
       `INSERT INTO authoring_signatures
-       (id, doc_id, signer_email, signer_name, meaning, reason, method, content_hash, signature_digest, tenant_id, signed_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, NOW())`,
+       (id, doc_id, signer_email, signer_name, meaning, reason, method, content_hash,
+        signature_digest, covered_freeze_version, covered_content_hash, tenant_id, signed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, 'PIN', $7, $8, $9, $10, $11, NOW())`,
       [
         signatureId,
         docId,
@@ -4502,12 +4716,19 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
         reason,
         contentHash,
         signatureDigest,
+        covered?.version ?? null,
+        covered?.contentHash ?? null,
         tenantId,
       ]
     );
 
-    // Update workflow step if applicable
-    const userRoles = ((req.headers as any)['x-roles'] || '').toString().toUpperCase().split(',');
+    // Update workflow step if applicable. Roles come from the VERIFIED token
+    // (req.user.roles), not from the x-roles header — the header is derived from
+    // claims by this router's JWT middleware, but reading the claim directly
+    // means an approval decision can never depend on a mutable header at all
+    // (ledger C-18).
+    const userRoles = (((req.user as { roles?: unknown } | undefined)?.roles ?? []) as unknown[])
+      .map((r) => String(r).toUpperCase());
     if (userRoles.includes(meaning) || userRoles.includes('QA') || userRoles.includes('RA_CMC')) {
       await pool.query(
         `UPDATE authoring_workflow_steps
@@ -4580,64 +4801,15 @@ router.get('/docs/:docId/signatures', async (req: Request, res: Response) => {
 
 // ============= FREEZE Operations =============
 
-// POST /api/authoring/docs/:docId/freeze - Freeze approved document
-router.post(
-  '/docs/:docId/freeze',
-  requireAny(['QA', 'RA_CMC', 'ADMIN']),
-  async (req: Request, res: Response) => {
-    try {
-      const { docId } = req.params;
-      const { reason } = req.body;
-      const tenantId = getTenantId(req);
-      const frozenBy = req.headers['x-user-email'] || req.body.frozen_by || 'system';
-
-      // Check document exists and is APPROVED
-      const docResult = await pool.query(
-        'SELECT id, title, module, product_code, locale, status, created_at, updated_at, created_by, template_id, submitted_at, current_workflow_id, approved_at, frozen_at, locked_at, locked_by, tenant_id, version FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
-        [docId, tenantId]
-      );
-
-      if (((docResult.rowCount ?? 0) === 0)) {
-        return res.status(404).json({ error: 'Document not found' });
-      }
-
-      const doc = docResult.rows[0];
-      if (doc.status !== 'APPROVED' && doc.status !== 'approved') {
-        return res.status(400).json({ error: 'Document must be APPROVED to freeze' });
-      }
-
-      // Update document to FROZEN
-      await pool.query(
-        `UPDATE authoring_documents
-       SET status = 'FROZEN', frozen_at = NOW(), locked_at = NOW(), locked_by = $1
-       WHERE id = $2 AND tenant_id = $3`,
-        [frozenBy, docId, tenantId]
-      );
-
-      // Create audit event
-      await createAuditEvent(
-        docId,
-        'FREEZE',
-        frozenBy as string,
-        { reason: reason || 'Document finalized and frozen' },
-        tenantId
-      );
-
-      res.json({
-        success: true,
-        message: 'Document frozen successfully',
-        frozenAt: new Date().toISOString(),
-        frozenBy,
-      });
-    } catch (error) {
-      console.error('Freeze error:', error);
-      res.status(500).json({
-        error: 'Freeze failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-  }
-);
+// The duplicate POST /docs/:docId/freeze that stood here has been removed.
+//
+// It was UNREACHABLE: an identical path is registered at the top of this file
+// (search "Freeze document with immutable snapshot") and express matches the
+// first registration, so this one never ran. It also took its attribution from
+// `x-user-email || req.body.frozen_by || 'system'` — the header-trust defect
+// fixed elsewhere in this router — which made it a live hazard the moment any
+// reordering made it reachable. Deleted rather than fixed: there is one freeze
+// endpoint, and it is the one above. See ledger C-18.
 
 // ============= AUDIT Operations =============
 

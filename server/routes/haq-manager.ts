@@ -64,6 +64,10 @@ router.get('/rounds', async (req: Request, res: Response) => {
       if (!byRound[rid]) continue;
       byRound[rid].push({
         id: q.qid,
+        // The numeric feature-store row id — REQUIRED by the /review, /approve,
+        // /assign and /ai-draft endpoints (which key on store.getById, not the
+        // display qid). Without this the client cannot construct those URLs.
+        dbId: q.id,
         disc: q.disc,
         tone: q.tone,
         status: q.status,

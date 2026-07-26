@@ -202,6 +202,14 @@ const VALID_ACTION_TYPES = [
   'create_document_from_artifact', 'promote_artifact', 'save_document_version',
   'run_validation', 'route_document_to_module', 'export_document',
   'attach_sources_to_document', 'refine_with_validation',
+  // Phase 2 inline-AI actions — handlers registered via handlers/register-inline-ai.ts
+  // (real implementations; previously registered but rejected here because this
+  // allow-list wasn't updated when Phase 2 shipped, leaving them dead-reachable).
+  'summarize_selection', 'explain_selection', 'rewrite_selection',
+  'extract_structured_data', 'compare_selection', 'refine_with_validation_findings',
+  'create_followup_task', 'attach_selection_as_source',
+  // Document-formatting engine + OCR — handlers registered in index.ts.
+  'extract_template_from_upload', 'render_document_with_template', 'ocr_extract_text',
 ];
 const VALID_SOURCE_SURFACES = [
   'global_panel', 'contextual_rail', 'inline_action', 'command_palette',
@@ -238,6 +246,20 @@ const ACTION_PERMISSIONS: Record<string, { resource: string; action: string; min
   'route_document_to_module':     { resource: 'documents', action: 'update', minRoles: ['editor', 'admin'] },
   'export_document':              { resource: 'documents', action: 'read',   minRoles: ['viewer', 'editor', 'admin'] },
   'attach_sources_to_document':   { resource: 'documents', action: 'update', minRoles: ['editor', 'admin'] },
+  // Inline-AI + formatting/OCR actions. Read-only analysis is viewer+; actions
+  // that mutate document content (rewrite/refine) or attach to a document/task
+  // require editor+.
+  'summarize_selection':          { resource: 'documents', action: 'read',   minRoles: ['viewer', 'editor', 'admin'] },
+  'explain_selection':            { resource: 'documents', action: 'read',   minRoles: ['viewer', 'editor', 'admin'] },
+  'compare_selection':            { resource: 'documents', action: 'read',   minRoles: ['viewer', 'editor', 'admin'] },
+  'extract_structured_data':      { resource: 'documents', action: 'read',   minRoles: ['viewer', 'editor', 'admin'] },
+  'ocr_extract_text':             { resource: 'documents', action: 'read',   minRoles: ['viewer', 'editor', 'admin'] },
+  'extract_template_from_upload': { resource: 'documents', action: 'read',   minRoles: ['viewer', 'editor', 'admin'] },
+  'render_document_with_template':{ resource: 'documents', action: 'read',   minRoles: ['viewer', 'editor', 'admin'] },
+  'rewrite_selection':            { resource: 'documents', action: 'update', minRoles: ['editor', 'admin'] },
+  'refine_with_validation_findings': { resource: 'documents', action: 'update', minRoles: ['editor', 'admin'] },
+  'attach_selection_as_source':   { resource: 'documents', action: 'update', minRoles: ['editor', 'admin'] },
+  'create_followup_task':         { resource: 'tasks',     action: 'create', minRoles: ['editor', 'admin'] },
 };
 
 /**

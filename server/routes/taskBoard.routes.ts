@@ -56,7 +56,7 @@ import { asc, eq, inArray, or } from 'drizzle-orm';
 import { createScopedLogger } from '../utils/logger.js';
 import { requestDb } from '../db/requestDb';
 import { getSecureOrgId } from '../utils/tenantContext';
-import { unifiedTasks, taskDependencies } from '../../shared/schema';
+import { unifiedTasks, taskDependencies, users, organizationUsers } from '../../shared/schema';
 
 const logger = createScopedLogger('task-board-routes');
 
@@ -258,6 +258,49 @@ export default function createTaskBoardRoutes(): Router {
         err: error instanceof Error ? error.message : String(error),
       });
       return res.status(500).json({ success: false, error: 'Failed to build task board' });
+    }
+  });
+
+  /**
+   * GET /api/task-management/assignees
+   * The org's assignable members ({ id, name }) for the create form's assignee
+   * picker. Scoped exactly like getOptimalAssignee (users ⨝ organization_users
+   * on organizationId), so no cross-org user can appear. Real rows only; fails
+   * closed to an empty roster when the store is unprovisioned.
+   * Response: { success: true, data: { id: string; name: string }[], total }
+   */
+  router.get('/assignees', async (req: Request, res: Response) => {
+    const orgRaw = getSecureOrgId(req);
+    const organizationId = orgRaw != null ? Number(orgRaw) : NaN;
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return res.status(400).json({ success: false, error: 'Organization context required' });
+    }
+
+    try {
+      const db = requestDb(req);
+      const rows = await db
+        .select({ id: users.id, name: users.name, email: users.email })
+        .from(users)
+        .innerJoin(organizationUsers, eq(organizationUsers.userId, users.id))
+        .where(eq(organizationUsers.organizationId, organizationId))
+        .orderBy(asc(users.name));
+
+      const data = rows.map(row => ({
+        id: String(row.id),
+        name: row.name || (row.email ? row.email.split('@')[0] : 'User'),
+      }));
+      return res.json({ success: true, data, total: data.length });
+    } catch (error) {
+      if (isMissingTable(error)) {
+        logger.error('task assignees: users/organization_users unprovisioned — empty roster', {
+          err: error instanceof Error ? error.message : String(error),
+        });
+        return res.json({ success: true, data: [], total: 0 });
+      }
+      logger.error('task assignees error', {
+        err: error instanceof Error ? error.message : String(error),
+      });
+      return res.status(500).json({ success: false, error: 'Failed to load assignees' });
     }
   });
 

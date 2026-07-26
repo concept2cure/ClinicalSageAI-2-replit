@@ -1,5 +1,17 @@
 # Handoff to Design — Translation Workspace (EN→JA regulatory translation)
 
+> [!CAUTION]
+> **RETRACTED AS EVIDENCE — 24 July 2026.**
+> This brief is a historical record of what was believed on its authoring date. It is
+> **not** evidence of what the code does and must not be cited as a reason to build,
+> skip, or scope anything. At least one brief in this set was materially wrong about a
+> live subsystem (`HANDOFF_TO_DESIGN_document_authoring.md` §2 — see
+> `_sync/CLAUDE_DESIGN_MASTER_WORK_ORDER_2026-07-24.md` §0.1).
+>
+> Verify every claim below against the code at the head of `concept2cure-v2`, or treat
+> it as an open question. Authoritative scope lives in
+> `_sync/CLAUDE_DESIGN_MASTER_WORK_ORDER_2026-07-24.md`.
+
 **Status:** Backend engine + data contracts + a first functional UI exist; this document is the contract Claude Design renders against. The screen turns the platform's translation engine into a usable, governed surface for converting English regulatory content into the languages a market requires (Japanese first, for PMDA).
 
 **Audience:** Claude Design + frontend building the Translation Workspace surface.

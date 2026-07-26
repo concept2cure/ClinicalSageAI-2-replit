@@ -680,7 +680,10 @@ router.get('/markets', (req, res) => {
     },
   ];
 
-  return res.status(200).json({ markets });
+  // `source: 'reference'` marks this as invariant regulatory reference data
+  // (real health authorities and their published submission requirements),
+  // not live or tenant-specific data.
+  return res.status(200).json({ markets, source: 'reference' });
 });
 
 export default router;
