@@ -14,31 +14,42 @@
 -- Only rows with NO current value are touched. A measured indicator keeps the
 -- status the engine computed for it.
 --
--- Idempotent: safe to re-run.
+-- Idempotent, and tolerant of a database where the rbm_* store was never
+-- provisioned: the RBM read routes already fail closed on an undefined table
+-- rather than erroring, and a data migration that hard-fails on a environment
+-- without these tables would block every unrelated migration behind it.
+-- Guarded with to_regclass so it is a no-op there instead.
 
--- ── KRIs: no reading, or no threshold to read against ─────────────────────
-UPDATE rbm_kris
-   SET status = 'not_evaluated',
-       updated_at = now()
- WHERE deleted_at IS NULL
-   AND status IN ('green', 'amber', 'red')
-   AND (
-     current_value IS NULL
-     OR (threshold_amber IS NULL AND threshold_red IS NULL)
-   );
+DO $$
+BEGIN
+  -- ── KRIs: no reading, or no threshold to read against ───────────────────
+  IF to_regclass('public.rbm_kris') IS NOT NULL THEN
+    UPDATE rbm_kris
+       SET status = 'not_evaluated',
+           updated_at = now()
+     WHERE deleted_at IS NULL
+       AND status IN ('green', 'amber', 'red')
+       AND (
+         current_value IS NULL
+         OR (threshold_amber IS NULL AND threshold_red IS NULL)
+       );
 
--- ── QTLs: no current value, or no tolerance limit to compare against ──────
-UPDATE rbm_qtls
-   SET status = 'not_evaluated',
-       breached = false,
-       updated_at = now()
- WHERE deleted_at IS NULL
-   AND status IN ('within', 'approaching', 'breached')
-   AND (current_value IS NULL OR threshold IS NULL);
+    -- A newly created indicator has measured nothing yet, so 'not_evaluated'
+    -- is the correct resting state; the routes set the real status explicitly
+    -- once a value exists.
+    ALTER TABLE rbm_kris ALTER COLUMN status SET DEFAULT 'not_evaluated';
+  END IF;
 
--- ── Defaults follow the same rule for rows created from here on ───────────
--- A newly created indicator has measured nothing yet, so 'not_evaluated' is
--- the correct resting state; the routes set the real status explicitly once a
--- value exists.
-ALTER TABLE rbm_kris ALTER COLUMN status SET DEFAULT 'not_evaluated';
-ALTER TABLE rbm_qtls ALTER COLUMN status SET DEFAULT 'not_evaluated';
+  -- ── QTLs: no current value, or no tolerance limit to compare against ────
+  IF to_regclass('public.rbm_qtls') IS NOT NULL THEN
+    UPDATE rbm_qtls
+       SET status = 'not_evaluated',
+           breached = false,
+           updated_at = now()
+     WHERE deleted_at IS NULL
+       AND status IN ('within', 'approaching', 'breached')
+       AND (current_value IS NULL OR threshold IS NULL);
+
+    ALTER TABLE rbm_qtls ALTER COLUMN status SET DEFAULT 'not_evaluated';
+  END IF;
+END $$;

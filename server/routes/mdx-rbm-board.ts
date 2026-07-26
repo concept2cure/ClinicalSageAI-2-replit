@@ -64,11 +64,11 @@ const PRIORITY_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2,
 // human category label. Pure display transforms of the real AttentionItem.kind.
 const NAV_BY_KIND: Record<AttentionItem['kind'], string> = {
   qtl: 'qtls', kri: 'kris', signal: 'signals', patient: 'patients',
-  action: 'plan', assessment: 'ract',
+  action: 'plan', assessment: 'ract', data: 'overview',
 };
 const KIND_LABEL: Record<AttentionItem['kind'], string> = {
   qtl: 'QTL', kri: 'KRI', signal: 'Signal', patient: 'Patient',
-  action: 'Action', assessment: 'Assessment',
+  action: 'Action', assessment: 'Assessment', data: 'Data',
 };
 
 function getOrgId(req: Request): number | null {

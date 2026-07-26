@@ -28,6 +28,14 @@ export interface RiskReviewInput {
   sites: { total: number; enhanced: number };
   patients: { total: number; flagged: number; review: number };
   actions: { open: number; overdue: { description: string; dueDate: string | null; priority: string }[] };
+  /**
+   * Per-source data freshness. Every number above is only as good as the feed
+   * behind it, so a review that reports indicators without reporting the
+   * currency of their data is overstating what it knows. Optional so callers
+   * predating the ingestion layer still type-check; absent means "not tracked",
+   * which the report says rather than treating as healthy.
+   */
+  dataSources?: { source: string; stale: boolean; ageDays: number | null; status: string }[];
 }
 
 export interface ReportSection {
@@ -120,6 +128,24 @@ export function buildRiskReview(input: RiskReviewInput): RiskReview {
     items: [`${input.patients.total} subjects profiled — ${input.patients.flagged} flagged, ${input.patients.review} for review.`],
   });
 
+  // Data sources. Stated even when nothing is tracked: an inspector asking
+  // "how current is this?" must get an answer, and "we don't know" is one.
+  const sources = input.dataSources ?? [];
+  const staleSources = sources.filter(s => s.stale);
+  sections.push({
+    title: 'Data currency',
+    status: sources.length === 0 ? 'attention' : staleSources.length ? 'attention' : 'ok',
+    items: sources.length === 0
+      ? ['No source feeds are tracked for this study — every indicator above was entered by hand, and its currency is unrecorded.']
+      : [
+        `${sources.length} source feed(s) — ${staleSources.length} stale or failed.`,
+        ...sources.map(s => {
+          const age = s.ageDays === null ? 'never loaded' : `${s.ageDays}d old`;
+          return `${s.source}: ${s.status}, ${age}${s.stale ? ' — STALE' : ''}.`;
+        }),
+      ],
+  });
+
   // Actions
   sections.push({
     title: 'Monitoring actions',
@@ -136,7 +162,11 @@ export function buildRiskReview(input: RiskReviewInput): RiskReview {
     // Unevaluated indicators are counted: an indicator nobody has read is an
     // open oversight item, and leaving it out would let the headline claim
     // "within tolerance" for a study that has measured nothing.
-    (kriUneval.length ? 1 : 0) + (qtlUneval.length ? 1 : 0);
+    (kriUneval.length ? 1 : 0) + (qtlUneval.length ? 1 : 0) +
+    // An untracked or stale feed is an open item too: without it the headline
+    // could read "Monitor: 0 item(s) need attention" while the data currency
+    // section is the very thing raising the flag.
+    (sources.length === 0 || staleSources.length ? 1 : 0);
 
   const overallRisk = (input.assessment?.overallRisk ?? 'unknown');
   const overall = worst(...sections.map(s => s.status));
@@ -184,7 +214,7 @@ export function renderRiskReviewMarkdown(r: RiskReview): string {
 
 // ── Attention feed ────────────────────────────────────────────────────────────
 
-export type AttentionKind = 'kri' | 'qtl' | 'signal' | 'patient' | 'action' | 'assessment';
+export type AttentionKind = 'kri' | 'qtl' | 'signal' | 'patient' | 'action' | 'assessment' | 'data';
 
 export interface AttentionItem {
   kind: AttentionKind;
@@ -223,6 +253,25 @@ export function buildAttentionFeed(input: RiskReviewInput): AttentionItem[] {
       label: `${qtlUneval.length} QTL(s) have no current value`,
       detail: qtlUneval.slice(0, 5).join(', '),
     });
+  }
+  // A feed nobody has loaded, or one that has gone quiet, is unmonitored risk
+  // in exactly the way an unread indicator is.
+  const feeds = input.dataSources ?? [];
+  if (feeds.length === 0) {
+    items.push({
+      kind: 'data', severity: 'medium',
+      label: 'No source feeds are tracked for this study',
+      detail: 'Indicator values are hand-entered; their currency is unrecorded.',
+    });
+  } else {
+    const staleFeeds = feeds.filter(s => s.stale);
+    if (staleFeeds.length) {
+      items.push({
+        kind: 'data', severity: 'medium',
+        label: `${staleFeeds.length} source feed(s) stale or failed`,
+        detail: staleFeeds.map(s => `${s.source} (${s.ageDays === null ? 'never loaded' : `${s.ageDays}d`})`).join(', '),
+      });
+    }
   }
   // Any unapproved assessment is flagged, not only an 'active' one: a seeded
   // RACT is created as a draft and stays the governing risk basis on screen

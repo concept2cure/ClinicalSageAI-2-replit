@@ -46,6 +46,7 @@ import mdxEngineeringRoutes from '../routes/mdx-engineering';
 import mdxUdiRoutes from '../routes/mdx-udi';
 import mdxRiskRoutes from '../routes/mdx-risk-management';
 import mdxRbmRoutes from '../routes/mdx-rbm';
+import mdxRbmDataRoutes from '../routes/mdx-rbm-data';
 import mdxSoftwareRoutes from '../routes/mdx-software';
 import mdxIvdPerformanceRoutes from '../routes/mdx-ivd-performance';
 import mdxIvdrRoutes from '../routes/mdx-ivdr';
@@ -1064,6 +1065,8 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxUdiRoutes);
   app.use('/api/mdx', mdxRiskRoutes);
   app.use('/api/mdx', mdxRbmRoutes);
+  // RBM data layer: metric ingestion + the engine runs over ingested data.
+  app.use('/api/mdx', mdxRbmDataRoutes);
   app.use('/api/mdx', mdxSoftwareRoutes);
   /* IVD + diagnostic surfaces (migration 20260508). */
   app.use('/api/mdx', mdxIvdPerformanceRoutes);

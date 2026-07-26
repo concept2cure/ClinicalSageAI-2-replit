@@ -26,11 +26,36 @@ describe('buildRiskReview', () => {
     expect(r.framework).toBe('ich_e6r3');
     expect(r.overallRisk).toBe('high');
     expect(r.approved).toBe(false);
-    expect(r.attentionCount).toBe(1 + 1 + 1 + 1 + 1 + 1); // high item, red kri, breached qtl, high signal, flagged patient, overdue action
+    // high item, red kri, breached qtl, high signal, flagged patient, overdue
+    // action — plus one for `base` tracking no source feed at all, so the
+    // headline can never claim "0 item(s) need attention" while the data
+    // currency section is the thing raising a flag.
+    expect(r.attentionCount).toBe(1 + 1 + 1 + 1 + 1 + 1 + 1);
     expect(r.headline).toMatch(/Action required/);
-    expect(r.sections.length).toBe(7);
+    expect(r.sections.length).toBe(8);
     const kriSec = r.sections.find(s => s.title.includes('Key Risk'))!;
     expect(kriSec.status).toBe('critical');
+  });
+
+  it('reports data currency, and says so when no feed is tracked', () => {
+    // "We don't know how current this is" is an answer an inspector is owed;
+    // silence would let hand-entered numbers pass as monitored data.
+    const r = buildRiskReview(base);
+    const currency = r.sections.find(s => s.title === 'Data currency')!;
+    expect(currency.status).toBe('attention');
+    expect(currency.items[0]).toMatch(/No source feeds are tracked/);
+
+    const fed = buildRiskReview({
+      ...base,
+      dataSources: [
+        { source: 'edc', stale: false, ageDays: 1, status: 'succeeded' },
+        { source: 'ctms', stale: true, ageDays: 30, status: 'succeeded' },
+      ],
+    });
+    const fedCurrency = fed.sections.find(s => s.title === 'Data currency')!;
+    expect(fedCurrency.status).toBe('attention');
+    expect(fedCurrency.items[0]).toMatch(/1 stale or failed/);
+    expect(fedCurrency.items.join(' ')).toMatch(/ctms: succeeded, 30d old — STALE/);
   });
   it('reports within-tolerance when clean', () => {
     const clean: RiskReviewInput = {
@@ -43,6 +68,7 @@ describe('buildRiskReview', () => {
       sites: { total: 10, enhanced: 0 },
       patients: { total: 50, flagged: 0, review: 0 },
       actions: { open: 1, overdue: [] },
+      dataSources: [{ source: 'edc', stale: false, ageDays: 1, status: 'succeeded' }],
     };
     const r = buildRiskReview(clean);
     expect(r.attentionCount).toBe(0);
@@ -62,6 +88,7 @@ describe('buildRiskReview', () => {
       sites: { total: 10, enhanced: 0 },
       patients: { total: 50, flagged: 0, review: 0 },
       actions: { open: 1, overdue: [] },
+      dataSources: [{ source: 'edc', stale: false, ageDays: 1, status: 'succeeded' }],
     };
     const r = buildRiskReview(unmeasured);
     expect(r.headline).not.toMatch(/Within tolerance/);
