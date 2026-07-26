@@ -14,10 +14,8 @@
 // MAINTENANCE NOTE — every version claimed in this file was audited against the
 // lockfile on 2026-07-26, and several had gone stale in ways that mattered:
 //
-//   - A react-router exception was being carried as an accepted "not reachable"
-//     risk on the stated grounds that the app used react-router-dom. It did not
-//     use it at all; the package has been removed and both its advisories are
-//     gone rather than accepted.
+//   - A react-router exception claimed usage that did not exist (see the note
+//     where those entries were, below).
 //   - The `tmp` exception claimed no upgrade path existed. One had since been
 //     applied via an `overrides` entry, so it was a risk acceptance for a
 //     vulnerability that was already fixed.
@@ -37,10 +35,10 @@ import { spawnSync } from 'node:child_process';
 const ACCEPTED_GHSA_IDS = new Set([
   // lodash — advisory range <=4.17.23, we ship 4.18.1
   'GHSA-r5fr-rjxr-66jc', // _.template code injection
-  // fast-uri — advisory ranges <=3.1.0 / <=3.1.1, we ship 3.1.2
+  // fast-uri — advisory ranges <=3.1.0 / <=3.1.1; installed 3.1.4, above range
   'GHSA-q3j6-qgpj-74h6', // percent-encoded dot traversal
   'GHSA-v39h-62p7-jpjc', // percent-encoded authority confusion
-  // protobufjs — advisory ranges <7.5.5 / <=7.5.5, we ship 7.6.0
+  // protobufjs — advisory ranges <7.5.5 / <=7.5.5; installed 7.6.4, above range
   'GHSA-xq3m-2v4x-88gg', // arbitrary code execution
   'GHSA-66ff-xgx4-vchm', // bytes field defaults code injection
   'GHSA-75px-5xx7-5xc7', // codegen gadget after prototype pollution
@@ -132,20 +130,18 @@ const ACCEPTED_GHSA_IDS = new Set([
   'GHSA-v245-v573-v5vm', // linkify-it quadratic-complexity DoS via the mailto: validator scan-loop
   // postcss — advisory range <=8.5.17; direct dep bumped ^8.5.23 (installed 8.5.23).
   'GHSA-r28c-9q8g-f849', // postcss path traversal in previous-source-map auto-loading
-  // react-router — both advisories (GHSA-chx6-hx7r-mcp5 DoS, GHSA-qwww-vcr4-c8h2
-  // RSC-mode CSRF) are GONE, not accepted: react-router-dom has been removed from
-  // the dependency tree entirely.
+  // ── react-router: entries REMOVED, dependency removed ─────────────────────
+  // GHSA-chx6-hx7r-mcp5 and GHSA-qwww-vcr4-c8h2 were accepted here on the
+  // stated basis that "this app uses react-router-dom in SPA / data-router
+  // mode". It does not use it at all — routing is `wouter`, and there was no
+  // import of react-router anywhere in client/, server/ or shared/. The
+  // package has been dropped from package.json, so both advisories are gone
+  // rather than suppressed, and neither entry has anything left to match.
   //
-  // The deferral that used to sit here rested on a claim that turned out to be
-  // false — that "this app uses react-router-dom in SPA / data-router mode".
-  // It did not use it at all. The app routes with `wouter`; react-router-dom was
-  // a declared dependency with zero imports anywhere in the repo, so the CSRF
-  // advisory was being carried as an accepted risk pending a react-router 8.x
-  // major migration that would have been migrating nothing. Removing the package
-  // closes both advisories permanently and drops the unused attack surface.
-  //
-  // If react-router is ever reintroduced, add it deliberately and re-assess these
-  // advisories against actual usage rather than restoring this exception.
+  // Keep this note: an allowlist entry whose justification describes usage
+  // that does not exist is worse than no entry, because it reads as a
+  // considered risk acceptance. If react-router is ever adopted, re-evaluate
+  // GHSA-qwww-vcr4-c8h2 against 8.3.0 rather than reinstating these lines.
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {

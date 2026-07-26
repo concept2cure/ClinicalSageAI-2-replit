@@ -4,6 +4,7 @@ import { EmptyState, useLiveData, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
+import { useChatUpload, attachmentReadLabel as readLabel } from '../../hooks/useChatUpload';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals — cross-surface project selection handoff ──
@@ -18,6 +19,8 @@ declare global {
   interface Window {
     C2C_PROJECT?: Record<string, string>;
     C2C_CONVO?: Record<string, string>;
+    /** cre_evidence_sources ids the user pinned in the data room as AnA context. */
+    C2C_SOURCE_PINS?: string[];
     C2C?: Record<string, (...args: unknown[]) => void>;
     __C2C_SEGMENT?: string;
   }
@@ -160,6 +163,279 @@ function StagePanel({ stage, onNav }: { stage: string; onNav: (id: string) => vo
   );
 }
 
+/* ════ Data room ════════════════════════════════════════════════════════════
+   The project's sources — every client document this project's documentation is
+   written from, as canonical `cre_evidence_sources` identities
+   (GET /api/c2c/projects/:id/sources).
+
+   Uploads go through the shared `useChatUpload` hook, the same path AnA's
+   composer uses, so a file dropped here and a file attached in chat produce ONE
+   identity rather than two records of the same document. */
+
+interface SourceRow {
+  id: number;
+  title: string | null;
+  checksum: string | null;
+  ingestionStatus: string | null;
+  extractionStatus: string | null;
+  createdAt: string | null;
+  mimeType: string | null;
+  fileSize: number | null;
+  artifactId: string | null;
+  origin: string | null;
+  extractionMethod: string | null;
+}
+
+function prettyBytes(n: number | null): string | null {
+  if (!n || n <= 0) return null;
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let v = n;
+  let i = 0;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return `${v < 10 && i > 0 ? v.toFixed(1) : Math.round(v)} ${units[i]}`;
+}
+
+/** Short, human label for a mime type — "PDF", "Word", "Excel", "Image". */
+function kindLabel(mime: string | null): string {
+  const m = (mime || '').toLowerCase();
+  if (m.includes('pdf')) return 'PDF';
+  if (m.includes('word') || m.includes('officedocument.wordprocessing')) return 'Word';
+  if (m.includes('sheet') || m.includes('excel') || m.includes('csv')) return 'Sheet';
+  if (m.startsWith('image/')) return 'Image';
+  if (m.startsWith('text/')) return 'Text';
+  return 'File';
+}
+
+/**
+ * Whether this source's text is actually available to draft from.
+ *
+ * Reported from the source's own `extraction_status`, never inferred. A
+ * document whose text could not be read is shown as such: it is still stored
+ * and still has an identity, but a section drafted "from" it would not be
+ * grounded in anything, and hiding that would be the worst kind of quiet
+ * failure on a regulatory surface.
+ */
+function readState(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted' } {
+  if (s.extractionStatus === 'extracted') {
+    return { label: s.extractionMethod?.includes('ocr') ? 'Read via OCR' : 'Read', tone: 'ok' };
+  }
+  if (s.extractionStatus === 'failed') return { label: 'Text not readable', tone: 'warn' };
+  return { label: 'Not processed yet', tone: 'muted' };
+}
+
+function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {
+  const [reloadKey, setReloadKey] = useState(0);
+  const [q, setQ] = useState('');
+  // Sources the user has pinned as context for the next AnA turn. Handed over
+  // via window.C2C_SOURCE_PINS, matching the window.C2C_PROJECT / C2C_CONVO
+  // convention this surface already uses for cross-surface handoff.
+  const [pinned, setPinned] = useState<number[]>([]);
+  const [dragging, setDragging] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const state = useLiveData<{ sources: SourceRow[] }>(
+    pid ? `/api/c2c/projects/${pid}/sources` : null,
+    [pid, reloadKey],
+  );
+
+  // Same upload path as AnA's composer — one file, one identity.
+  const { attachments, addFiles, uploading, statusMessage } = useChatUpload({ projectId: pid });
+
+  // Refresh the list once the last upload settles, so a dropped file appears
+  // as a real source row rather than only as a transient chip.
+  const settled = attachments.length > 0 && attachments.every(a => a.status !== 'uploading');
+  useEffect(() => {
+    if (settled) setReloadKey(k => k + 1);
+  }, [settled]);
+
+  const rows = (state.data?.sources ?? []).filter(s =>
+    q.trim() ? (s.title || '').toLowerCase().includes(q.trim().toLowerCase()) : true,
+  );
+  const total = state.data?.sources.length ?? 0;
+  const readable = (state.data?.sources ?? []).filter(s => s.extractionStatus === 'extracted').length;
+
+  return (
+    <section className="pj-sec">
+      <div className="pj-sec-h">
+        <h2>Data room</h2>
+        <span className="sec-sub">
+          {total > 0
+            ? `${total} source${total === 1 ? '' : 's'} · ${readable} readable — what this project's documents are written from`
+            : "the sources this project's documents are written from"}
+        </span>
+      </div>
+
+      {/* Drop zone — the whole panel accepts a drag, and clicking opens the picker. */}
+      <div
+        className="pj-dropzone"
+        data-dragging={dragging || undefined}
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
+        }}
+        onClick={() => fileRef.current?.click()}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileRef.current?.click(); }}
+        aria-label="Add sources to this project"
+        style={{
+          border: '1px dashed var(--border,#d0d5dd)', borderRadius: 10, padding: '14px 16px',
+          display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+          background: dragging ? 'var(--accent-muted,#eef2ff)' : 'transparent', marginBottom: 12,
+        }}
+      >
+        <span aria-hidden="true">{I.paperclip}</span>
+        <span style={{ fontSize: 13 }}>
+          <b>Add sources</b> — drop files here or click to browse. They&rsquo;re read on upload and
+          become available to AnA for this project.
+        </span>
+        <input
+          ref={fileRef}
+          type="file"
+          multiple
+          hidden
+          onChange={(e) => { if (e.target.files?.length) addFiles(e.target.files); e.target.value = ''; }}
+        />
+      </div>
+
+      {/* Live upload state, and the screen-reader announcement the hook maintains. */}
+      <div aria-live="polite" className="sr-only">{statusMessage}</div>
+      {attachments.length > 0 && (
+        <div style={{ marginBottom: 10, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {attachments.map(a => (
+            <span
+              key={a.id}
+              className={a.status === 'error' ? 'sp-tone-warn' : undefined}
+              style={{ fontSize: 12, border: '1px solid var(--border,#d0d5dd)', borderRadius: 999, padding: '2px 10px' }}
+            >
+              {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
+              {a.status === 'ready' && readLabel(a.extractionMethod, a.extractionWords)
+                ? ` · ${readLabel(a.extractionMethod, a.extractionWords)}`
+                : ''}
+              {a.status === 'error' && a.error ? ` · ${a.error}` : ''}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {total > 0 && (
+        <div style={{ marginBottom: 8 }}>
+          <input
+            className="pj-input"
+            placeholder="Search sources…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            aria-label="Search sources"
+            style={{ width: '100%', maxWidth: 320, fontSize: 13, padding: '5px 10px' }}
+          />
+        </div>
+      )}
+
+      <Anchored
+        state={state}
+        loadingText="Loading the data room…"
+        errorTitle="Couldn't load this project's sources"
+        errorHint="The sources read didn't respond. Sign in and retry, or check the service is reachable."
+        emptyTitle="No sources in this project yet"
+        emptyHint="Add the documents this project's submission will be written from — protocols, CSRs, prior correspondence. Every file is read on upload and becomes a traceable source."
+        isEmpty={(d) => (d.sources ?? []).length === 0}
+        render={() =>
+          rows.length === 0 ? (
+            <div className="scaf-note" style={{ padding: '10px' }}>
+              No source matches &ldquo;{q}&rdquo;.
+            </div>
+          ) : (
+            <div className="pj-srcs">
+              {rows.map((s) => {
+                const rs = readState(s);
+                const size = prettyBytes(s.fileSize);
+                return (
+                  <div
+                    key={s.id}
+                    className="pj-src"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
+                      borderBottom: '1px solid var(--border-subtle,#eaecf0)',
+                    }}
+                  >
+                    {/* Pin as context. Only a source whose text was actually
+                        read can ground a draft, so an unreadable one cannot be
+                        pinned — offering it would promise grounding the
+                        document cannot provide. */}
+                    <input
+                      type="checkbox"
+                      checked={pinned.includes(s.id)}
+                      disabled={s.extractionStatus !== 'extracted'}
+                      onChange={(e) =>
+                        setPinned((prev) =>
+                          e.target.checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
+                        )
+                      }
+                      aria-label={`Use ${s.title || `source ${s.id}`} as context`}
+                      title={
+                        s.extractionStatus === 'extracted'
+                          ? 'Use this source as context for AnA'
+                          : 'This source has no readable text, so it cannot ground a draft'
+                      }
+                    />
+                    <span aria-hidden="true">{I.fileText}</span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {s.title || `Source ${s.id}`}
+                      </span>
+                      <span className="sec-sub" style={{ fontSize: 11.5 }}>
+                        {kindLabel(s.mimeType)}
+                        {size ? ` · ${size}` : ''}
+                        {fmtWhen(s.createdAt) ? ` · added ${fmtWhen(s.createdAt)}` : ''}
+                      </span>
+                    </span>
+                    <span
+                      className={rs.tone === 'ok' ? 'sp-tone-ok' : rs.tone === 'warn' ? 'sp-tone-warn' : undefined}
+                      style={{ fontSize: 11.5, whiteSpace: 'nowrap' }}
+                      title="Reported by the source's own extraction status"
+                    >
+                      {rs.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )
+        }
+      />
+
+      <div className="cm-pushbar" style={{ marginTop: 12 }}>
+        <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('source-tracer')}>
+          Trace a claim to its source {I.right}
+        </button>
+        <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('document-authoring')} disabled={uploading}>
+          Write from these sources {I.right}
+        </button>
+        {pinned.length > 0 && (
+          <button
+            className="btn"
+            style={{ fontSize: 12, padding: '4px 12px' }}
+            onClick={() => {
+              // Hand the chosen set to AnA. It resolves each source back to the
+              // upload its bytes live in and grounds the turn on exactly those
+              // documents — not on whatever its own retrieval would have picked.
+              window.C2C_SOURCE_PINS = pinned.map(String);
+              onAsk(
+                `Use the ${pinned.length} source${pinned.length === 1 ? '' : 's'} I pinned in the data room as the context for this project.`,
+              );
+            }}
+          >
+            {I.sparkles} Draft with {pinned.length} pinned source{pinned.length === 1 ? '' : 's'}
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /* ════ Inline conversation composer ════
    NOTE (mock ACTION — flagged for the actions pass): the inline reply below is a
    LOCAL preview. There is no inline AnA endpoint wired on this surface — the real,
@@ -218,10 +494,13 @@ function ConversationComposer({ productName, onNav }: { productName: string; onN
 /* ════ Author workspace — real anchored slices + honest empties ════ */
 
 function AuthorWorkspace({
-  seg, onNav, teamState, activityState, wsState, draftsState,
+  seg, pid, onNav, onAsk, teamState, activityState, wsState, draftsState,
 }: {
   seg: string;
+  /** regulatory_programs UUID — scopes the data room to this project. */
+  pid: string | null;
   onNav: (id: string) => void;
+  onAsk: (q: string) => void;
   teamState: DataState<{ team: TeamRow[] }>;
   activityState: DataState<{ activity: ActivityRow[] }>;
   wsState: DataState<{ workstreams: WorkstreamRow[] }>;
@@ -290,6 +569,10 @@ function AuthorWorkspace({
             )}
           />
         </section>
+
+        {/* Data room — REAL: the project's canonical client-document sources.
+            Sits directly above the documentation sections it feeds. */}
+        <DataRoom pid={pid} onNav={onNav} onAsk={onAsk} />
 
         {/* Tasks & readiness — project_tasks / readiness engine are keyed by the
             NUMERIC projects.id, not reachable from this UUID-scoped surface. */}
@@ -419,7 +702,10 @@ function AuthorWorkspace({
 
 /* ════ ProjectHome — the full workspace surface ════ */
 
-export function ProjectHome({ onNav, segment }: SurfaceViewProps) {
+export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
+  // Other v2 surfaces treat onAsk as optional; keep that contract so ProjectHome
+  // renders standalone (and in tests) without a host wired up.
+  const ask = onAsk || (() => {});
   const sel = window.C2C_PROJECT ?? null;
 
   // Selected-project identity handed off from the Projects surface. Its `id` is
@@ -585,7 +871,9 @@ export function ProjectHome({ onNav, segment }: SurfaceViewProps) {
 
             <AuthorWorkspace
               seg={seg}
+              pid={pid}
               onNav={onNav}
+              onAsk={ask}
               teamState={teamState}
               activityState={activityState}
               wsState={wsState}

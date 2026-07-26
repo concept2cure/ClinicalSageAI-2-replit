@@ -18,12 +18,38 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { pool } from '../../db.js';
 import { resolveGovernedContext } from '../../services/concept2cure/governedDocumentContractService.js';
-import { sha256 } from './provenance.js';
+import { sha256, sha256Bytes } from './provenance.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { verifyFileSignature } from '../../utils/fileSignature';
 import { scanBuffer as scanForViruses } from '../../utils/virusScan';
 
 const logger = createScopedLogger('chat-upload');
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Resolve an incoming `projectId` into whichever project id-space it belongs to.
+ *
+ * The platform carries two, and an upload can arrive with either:
+ *   - a `regulatory_programs` UUID — what the project management module
+ *     (ProjectHome, /api/c2c/projects) selects and what the user actually has
+ *     open;
+ *   - a numeric workspace id, optionally `proj_`-prefixed — the legacy space.
+ *
+ * Treating every id as numeric is what made a UUID-scoped upload unusable: it
+ * parsed to NaN, and the governed-artifact block rejected the request outright.
+ */
+function resolveProjectScope(
+  projectId: unknown,
+): { programId: string | null; workspaceId: number | null } {
+  if (projectId == null || projectId === '') return { programId: null, workspaceId: null };
+  const raw = String(projectId).trim();
+  if (UUID_RE.test(raw)) return { programId: raw, workspaceId: null };
+  const numeric = parseInt(raw.replace(/^proj_/, ''), 10);
+  return Number.isFinite(numeric)
+    ? { programId: null, workspaceId: numeric }
+    : { programId: null, workspaceId: null };
+}
 
 export const uploadHandler = async (req: Request, res: Response) => {
   try {
@@ -117,11 +143,17 @@ export const uploadHandler = async (req: Request, res: Response) => {
       }
     }
 
-    // Save metadata to DB
+    // Save metadata to DB.
+    //
+    // `organization_id` is written alongside the tenant-scoped storage path so
+    // both halves of the tenancy contract agree (see
+    // migrations/20260726_file_uploads_tenancy.sql). Omitting it — as this
+    // INSERT previously did — made every `WHERE organization_id = $n` lookup in
+    // the chat/stream paths match zero rows, silently dropping attachments.
     await pool.query(
-      `INSERT INTO file_uploads (id, user_id, original_name, mime_type, file_size, storage_path, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'uploaded', NOW())`,
-      [fileId, userId, fileName, mimeType, fileSize, storagePath]
+      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'uploaded', NOW())`,
+      [fileId, userId, orgId != null ? Number(orgId) : null, fileName, mimeType, fileSize, storagePath]
     );
 
     // ── Text extraction (runs for every upload with a buffer) ──
@@ -147,12 +179,22 @@ export const uploadHandler = async (req: Request, res: Response) => {
       }
     }
 
+    // Which project id-space this upload arrived with, resolved once and used
+    // by both the governed-artifact block and the source identity below.
+    const projectScope = resolveProjectScope(projectId);
+
     // ── Data Room convergence: create artifact + embed for retrieval ──
+    //
+    // `concept2cure_artifacts.project_id` is an INTEGER, so this block can only
+    // run for the numeric id-space. A UUID-scoped upload skips it and still
+    // gets its canonical source identity below — previously it was rejected
+    // with a 400, which meant a file could not be uploaded at all while a
+    // UUID-keyed program was open.
     let artifactId: string | null = null;
-    if (projectId && orgId) {
-      const numericProjectId = parseInt(String(projectId).replace('proj_', ''), 10);
+    if (projectId && orgId && projectScope.workspaceId != null) {
+      const numericProjectId = projectScope.workspaceId;
       const numericOrgId = parseInt(String(orgId), 10);
-      if (isNaN(numericProjectId) || isNaN(numericOrgId)) {
+      if (isNaN(numericOrgId)) {
         return res.status(400).json({
           error: 'projectId and organizationId must be valid for governed upload',
           code: 'GOVERNED_UPLOAD_CONTEXT_INVALID',
@@ -278,12 +320,113 @@ export const uploadHandler = async (req: Request, res: Response) => {
       }
     }
 
+    // ── Canonical source identity ──────────────────────────────────────────
+    //
+    // Every uploaded file resolves to ONE `cre_evidence_sources` row of type
+    // `client_document`. This is the identity the Data Room, evidence linking
+    // and dossier relationships hang off — without it an upload exists only as
+    // a `file_uploads` row, a governed artifact and an embedding atom, none of
+    // which can answer "which dossier sections use this file, and what changed
+    // when it was replaced".
+    //
+    // Runs for any authenticated org, not just project-scoped uploads: a file
+    // attached in chat without a project still deserves an identity, otherwise
+    // it can never be adopted into one later.
+    //
+    // Idempotent on the raw-byte checksum — re-uploading the same document
+    // resolves the existing source instead of minting a second identity for it.
+    //
+    // Best-effort by design: a CRE failure must not fail an upload the user has
+    // already completed. It is logged at error level (not warn) because a miss
+    // means that file has no canonical identity, which is a real gap rather
+    // than a degraded nicety. `sourceId` is returned so callers and tests can
+    // observe whether identity resolution actually happened.
+    let sourceId: number | null = null;
+    // The org must resolve to a real numeric id. `tenantContext.organizationId`
+    // is not guaranteed numeric, and passing NaN through would write a garbage
+    // owner onto the canonical identity — worse than having no identity.
+    const numericOrgId = orgId != null ? Number(orgId) : NaN;
+    if (Number.isFinite(numericOrgId) && numericOrgId > 0) {
+      try {
+        // Checksum the raw bytes, not the truncated extracted text: file
+        // identity is the document itself. Falls back to the content hash when
+        // no buffer is present (body-only uploads).
+        const checksum =
+          fileBuffer && fileBuffer.length > 0 ? sha256Bytes(fileBuffer) : sha256(extractedText);
+        const { createSource, findSourceByChecksum } = await import(
+          '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
+        );
+
+        const existing = await findSourceByChecksum(numericOrgId, checksum, {
+          sourceType: 'client_document',
+        });
+        if (existing) {
+          sourceId = existing.id;
+          logger.info('Upload resolved to an existing source identity', {
+            fileId,
+            sourceId,
+            checksum,
+          });
+        } else {
+          // The platform has two project id-spaces and an upload may arrive
+          // with either: a `regulatory_programs` UUID (what the project
+          // management module selects) or the numeric workspace id. Stamp
+          // whichever we actually got rather than assuming one.
+          const scope = projectScope;
+          const scopedToProject = scope.programId != null || scope.workspaceId != null;
+          const created = await createSource(numericOrgId, {
+            sourceType: 'client_document',
+            // Project uploads are scoped to the project; an unscoped chat
+            // attachment stays tenant-private rather than leaking project-wide.
+            visibilityClass: scopedToProject ? 'project_private' : 'tenant_private',
+            clientProgramId: scope.programId,
+            clientWorkspaceId: scope.workspaceId,
+            title: fileName,
+            // The stored blob these bytes live at; the governed artifact (when
+            // one exists) is in metadata below.
+            storedArtifactRef: storagePath,
+            checksum,
+            // The bytes are stored and were read at ingest, so neither status
+            // is 'pending' — reporting otherwise would misstate the corpus.
+            ingestionStatus: 'ingested',
+            extractionStatus: extractionMethod ? 'extracted' : 'failed',
+            provenance: {
+              origin: 'chat_upload',
+              fileUploadId: fileId,
+              storagePath,
+              extractionMethod,
+              extractionWords,
+              uploadedByUserId: userId,
+            },
+            metadata: {
+              originalName: fileName,
+              mimeType,
+              fileSize,
+              artifactId,
+            },
+          });
+          sourceId = created.id;
+          logger.info('Upload created a canonical source identity', { fileId, sourceId });
+        }
+      } catch (sourceErr: any) {
+        logger.error('Canonical source identity not created for upload', {
+          err: sourceErr?.message,
+          fileId,
+          orgId,
+        });
+      }
+    }
+
     res.json({
       fileId,
       message: 'File uploaded successfully',
       status: 'ready',
       fileName,
       artifactId,
+      // Canonical `cre_evidence_sources` id for this document. Null means
+      // identity resolution did not happen (no org context, or a CRE failure —
+      // see the error log), not that the upload failed.
+      sourceId,
       // Extraction summary for the chat UI: which method read the file and how
       // many words landed in memory (null/0 when unscoped or extraction failed).
       extractionMethod,

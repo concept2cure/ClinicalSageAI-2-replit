@@ -546,4 +546,76 @@ router.get('/:id/vault-structure', async (req: Request, res: Response) => {
   }
 });
 
+// ════════════════════════════════════════════════════════════════════════════
+// GET /:id/sources — the project's Data Room
+//
+// Every client document this project holds, as canonical
+// `cre_evidence_sources` identities (see
+// migrations/20260726_cre_source_program_scope.sql). This is the read the
+// project management module renders, and the set that feeds the project's
+// documentation: an entry here is a real source a section can be drafted from,
+// not a loose file.
+//
+// `includeUnscoped=true` additionally returns the org's documents that belong
+// to no project yet, so they can be adopted into one. They are returned in a
+// SEPARATE field rather than mixed into the project's list — a document the
+// project does not own must never appear as though it does.
+// ════════════════════════════════════════════════════════════════════════════
+
+router.get('/:id/sources', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
+
+  try {
+    // Verify project access before reading anything scoped to it.
+    const check = await pool.query(
+      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+      [req.params.id, orgId],
+    );
+    if (check.rows.length === 0) return send404(res);
+
+    const { listClientDocuments } = await import(
+      '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
+    );
+
+    const programId = String(req.params.id);
+    const sources = await listClientDocuments(orgId, { programId });
+    const unscoped =
+      req.query.includeUnscoped === 'true'
+        ? await listClientDocuments(orgId, { includeUnscoped: true, limit: 50 })
+            // `includeUnscoped` with no scope returns ONLY ownerless rows, but
+            // filter defensively so a future change to that query can never
+            // leak another project's documents into this list.
+            .then(rows => rows.filter(r => !r.clientProgramId && !r.clientWorkspaceId))
+        : [];
+
+    const shape = (s: (typeof sources)[number]) => ({
+      id: s.id,
+      title: s.title,
+      checksum: s.checksum,
+      ingestionStatus: s.ingestionStatus,
+      extractionStatus: s.extractionStatus,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+      // Surfaced so the Data Room can show what kind of file this is and how it
+      // arrived, without a second round trip.
+      mimeType: (s.metadata as Record<string, unknown> | null)?.mimeType ?? null,
+      fileSize: (s.metadata as Record<string, unknown> | null)?.fileSize ?? null,
+      artifactId: (s.metadata as Record<string, unknown> | null)?.artifactId ?? null,
+      origin: (s.provenance as Record<string, unknown> | null)?.origin ?? null,
+      fileUploadId: (s.provenance as Record<string, unknown> | null)?.fileUploadId ?? null,
+      extractionMethod: (s.provenance as Record<string, unknown> | null)?.extractionMethod ?? null,
+    });
+
+    return res.json({
+      projectId: programId,
+      sources: sources.map(shape),
+      unscoped: unscoped.map(shape),
+    });
+  } catch (err: unknown) {
+    console.error('[c2c/projects] GET /:id/sources', err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
 export default router;

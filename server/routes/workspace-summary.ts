@@ -117,13 +117,19 @@ router.get('/workspace/summary', async (req: Request, res: Response) => {
     const threadCount = parseInt(threadCountRes.rows[0]?.n || '0', 10);
 
     // ── 7. Recent uploads ───────────────────────────────────────────────────
+    // Columns match what the upload route actually writes (`original_name`,
+    // `created_at` — see migrations/20260726_file_uploads_tenancy.sql). The
+    // previous COALESCE over `original_filename`/`filename`/`file_name` and
+    // `uploaded_at` named columns that exist on no deployment, so the query
+    // threw on every call and `sq` swallowed it — this panel has been silently
+    // empty rather than wrong-looking, which is why it went unnoticed.
     const recentDocsRes = await sq(
       `SELECT id,
-              COALESCE(original_filename, filename, file_name, 'document') AS name,
-              COALESCE(created_at, uploaded_at, NOW()) AS uploaded_at
+              COALESCE(original_name, 'document') AS name,
+              created_at AS uploaded_at
        FROM file_uploads
        WHERE organization_id = $1
-       ORDER BY COALESCE(created_at, uploaded_at) DESC LIMIT 5`,
+       ORDER BY created_at DESC LIMIT 5`,
       [orgId]
     );
 

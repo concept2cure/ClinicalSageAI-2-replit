@@ -62,11 +62,12 @@ jsonschema==4.26.0
 pyyaml==6.0.3
 
 # Image processing (for document analysis)
-# 12.3.0 closes ten HIGH advisories against 12.2.0 (CVE-2026-54058/54059/54060,
-# 55379, 55380, 59197, 59199, 59200, 59204, 59205) — crafted-image and font
-# parsing paths, which is exactly what this dependency is here to do. Patch-level
-# within the same major, and it matches the root requirements.txt, which already
-# pinned 12.3.0; the two had drifted apart.
+# 12.3.0 fixes ten HIGH advisories present in 12.2.0 (CVE-2026-54058/54059/54060,
+# CVE-2026-55379/55380, CVE-2026-59197/59199/59200/59204/59205) — memory
+# disclosure, heap out-of-bounds writes and DoS via crafted McIdas/PCF/BDF/GD/
+# JPEG2000/PDF inputs. This service OCRs untrusted uploaded documents, so those
+# code paths are directly reachable. The repo's root requirements.txt was
+# already on 12.3.0; this pin had simply drifted behind it.
 Pillow==12.3.0
 pytesseract==0.3.13
 

@@ -20,6 +20,25 @@ import { pool } from '../db';
 
 const router = Router();
 
+/**
+ * Organization id for the caller, taken only from authenticated request
+ * context — never from params, query or body.
+ *
+ * Every route here reads `project_sections`, which is tenant data. Routes that
+ * omitted this filter let one organization compile, validate or inspect the
+ * readiness of another organization's submission by guessing a numeric project
+ * id, so a null return must be treated as 401 rather than "no scope".
+ */
+function resolveOrgId(req: Request): number | null {
+  const raw =
+    (req as any).tenantId ||
+    (req as any).tenantContext?.organizationId ||
+    (req as any).organizationId ||
+    (req as any).user?.organizationId;
+  const numeric = raw != null ? Number(raw) : NaN;
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -108,20 +127,27 @@ router.post('/:projectId/compile', async (req: Request, res: Response) => {
       : null;
 
     // Derive org from auth context
-    const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId ||
-      (req as any).organizationId || (req as any).user?.organizationId;
+    const orgId = resolveOrgId(req);
     if (!orgId) {
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    // 1. Gather all project sections from DB (with org filter)
+    // 1. Gather all project sections from DB.
+    //
+    // TENANCY: filtered by organization_id as well as project_id. The org
+    // filter was described in this comment but absent from the SQL, so any
+    // authenticated organization could compile a submission from another
+    // organization's sections just by guessing a numeric project id.
+    // `project_sections.organization_id` is NOT NULL (see
+    // db/migrations/20260220_ind_section_tracking.sql), so this cannot
+    // legitimately exclude rows that belong to the caller.
     const sectionsResult = await pool.query(
       `SELECT section_code, title, status, content, word_count, assigned_to, module,
               required, updated_at
        FROM project_sections
-       WHERE project_id = $1
+       WHERE project_id = $1 AND organization_id = $2
        ORDER BY section_code`,
-      [projectId]
+      [projectId, Number(orgId)]
     );
     const sections = sectionsResult.rows;
 
@@ -253,16 +279,21 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
   const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
+  const orgId = resolveOrgId(req);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
+
   try {
-    // Get project sections
+    // Get project sections (tenant-scoped — readiness is tenant data)
     let sections: any[] = [];
     try {
       const result = await pool.query(
         `SELECT section_code, title, status, module, required,
                 word_count, updated_at
-         FROM project_sections WHERE project_id = $1
+         FROM project_sections WHERE project_id = $1 AND organization_id = $2
          ORDER BY section_code`,
-        [projectId]
+        [projectId, orgId]
       );
       sections = result.rows;
     } catch {
@@ -333,8 +364,7 @@ router.get('/:projectId/history', async (req: Request, res: Response) => {
   // Compilation history is tenant data. The name-LIKE filter alone matched every
   // organization's compilations for the same project number, so one tenant could
   // read another's submission history. See ledger C-16.
-  const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId ||
-    (req as any).organizationId || (req as any).user?.organizationId;
+  const orgId = resolveOrgId(req);
   if (!orgId) {
     return res.status(401).json({ error: 'Organization context required' });
   }
@@ -371,6 +401,11 @@ router.post('/:projectId/validate', async (req: Request, res: Response) => {
   const projectId = parseInt(String(req.params.projectId), 10);
   if (!projectId) return res.status(400).json({ error: 'Valid project ID required' });
 
+  const orgId = resolveOrgId(req);
+  if (!orgId) {
+    return res.status(401).json({ error: 'Organization context required' });
+  }
+
   try {
     const { region = 'FDA' } = req.body;
 
@@ -378,8 +413,8 @@ router.post('/:projectId/validate', async (req: Request, res: Response) => {
     try {
       const result = await pool.query(
         `SELECT section_code, title, status, content, word_count, module, required
-         FROM project_sections WHERE project_id = $1`,
-        [projectId]
+         FROM project_sections WHERE project_id = $1 AND organization_id = $2`,
+        [projectId, orgId]
       );
       sections = result.rows;
     } catch {
