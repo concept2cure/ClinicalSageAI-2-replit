@@ -172,6 +172,50 @@ export async function listClientDocuments(orgId: number, opts: {
 }
 
 /**
+ * Resolve chosen source identities to the uploads their bytes live in.
+ *
+ * This is what lets a user pick documents in the Data Room and have AnA
+ * actually read them: a selected `cre_evidence_sources` id maps back to the
+ * `file_uploads` row recorded in its provenance, and the turn is then grounded
+ * through the same tenant-scoped attachment path a freshly-attached file uses.
+ * One grounding mechanism, two ways of choosing — rather than a second,
+ * differently-scoped reader for selected sources.
+ *
+ * Tenant-scoped like every read here. Sources the caller does not own simply do
+ * not resolve, so a guessed id yields nothing rather than another tenant's
+ * bytes. Sources with no recorded upload (a CSR projection, an ingested CRL)
+ * resolve to nothing too — they have no file to read, and inventing one would
+ * ground a draft in a document that does not exist.
+ *
+ * Returns the upload ids in the order the sources were requested, de-duplicated.
+ */
+export async function resolveSourceUploadIds(
+  orgId: number,
+  sourceIds: Array<number | string>,
+): Promise<string[]> {
+  const ids = (Array.isArray(sourceIds) ? sourceIds : [])
+    .map((id) => Number(id))
+    .filter((id) => Number.isFinite(id) && id > 0);
+  if (ids.length === 0) return [];
+
+  const c = visibleOrgClause(orgId, 2);
+  const { rows } = await pool.query<{ id: number; file_upload_id: string | null }>(
+    `SELECT id, provenance->>'fileUploadId' AS file_upload_id
+       FROM cre_evidence_sources
+      WHERE id = ANY($1) AND ${c.sql} AND deleted_at IS NULL`,
+    [ids, c.param],
+  );
+
+  const byId = new Map(rows.map((r) => [Number(r.id), r.file_upload_id]));
+  const ordered: string[] = [];
+  for (const id of ids) {
+    const uploadId = byId.get(id);
+    if (uploadId && !ordered.includes(uploadId)) ordered.push(uploadId);
+  }
+  return ordered;
+}
+
+/**
  * Find a live source by content checksum within the caller's visibility.
  *
  * `cre_evidence_sources` has no unique constraint on checksum, so identity has

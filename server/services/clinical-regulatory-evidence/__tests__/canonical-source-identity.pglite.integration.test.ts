@@ -263,3 +263,64 @@ describe('data room listing (real Postgres)', () => {
     expect(rows.every(r => r.sourceType === 'client_document')).toBe(true);
   });
 });
+
+describe('context builder — resolving selected sources to readable uploads (real Postgres)', () => {
+  it('resolves a selected source back to the upload its bytes live in', async () => {
+    const src = await svc.createSource(
+      ORG_A,
+      upload('cb-one', { provenance: { origin: 'chat_upload', fileUploadId: 'file_one' } }),
+    );
+    expect(await svc.resolveSourceUploadIds(ORG_A, [src.id])).toEqual(['file_one']);
+  });
+
+  it('preserves the requested order and de-duplicates', async () => {
+    const a = await svc.createSource(
+      ORG_A,
+      upload('cb-a', { provenance: { fileUploadId: 'file_a' } }),
+    );
+    const b = await svc.createSource(
+      ORG_A,
+      upload('cb-b', { provenance: { fileUploadId: 'file_b' } }),
+    );
+    expect(await svc.resolveSourceUploadIds(ORG_A, [b.id, a.id, b.id])).toEqual([
+      'file_b',
+      'file_a',
+    ]);
+  });
+
+  it('does not resolve another tenant\'s source', async () => {
+    // A guessed id must yield nothing, never another tenant's bytes.
+    const theirs = await svc.createSource(
+      ORG_B,
+      upload('cb-theirs', { provenance: { fileUploadId: 'file_theirs' } }),
+    );
+    expect(await svc.resolveSourceUploadIds(ORG_A, [theirs.id])).toEqual([]);
+    expect(await svc.resolveSourceUploadIds(ORG_B, [theirs.id])).toEqual(['file_theirs']);
+  });
+
+  it('skips a source that has no readable upload', async () => {
+    // A CSR projection or ingested CRL has no file behind it. Inventing one
+    // would ground a draft in a document that does not exist.
+    const projected = await svc.createSource(ORG_A, {
+      sourceType: 'csr',
+      visibilityClass: 'tenant_private',
+      title: 'projected CSR',
+      checksum: 'cb-projected',
+    });
+    expect(await svc.resolveSourceUploadIds(ORG_A, [projected.id])).toEqual([]);
+  });
+
+  it('returns the readable subset of a mixed selection', async () => {
+    const readable = await svc.createSource(
+      ORG_A,
+      upload('cb-mixed', { provenance: { fileUploadId: 'file_mixed' } }),
+    );
+    const out = await svc.resolveSourceUploadIds(ORG_A, [readable.id, 999999]);
+    expect(out).toEqual(['file_mixed']);
+  });
+
+  it('ignores malformed ids without querying', async () => {
+    expect(await svc.resolveSourceUploadIds(ORG_A, [])).toEqual([]);
+    expect(await svc.resolveSourceUploadIds(ORG_A, ['abc' as any, -1, 0])).toEqual([]);
+  });
+});

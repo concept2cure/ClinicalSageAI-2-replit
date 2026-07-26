@@ -461,9 +461,44 @@ router.post('/stream', async (req: Request, res: Response) => {
       }
     }
 
-    // Inject file context if file_ids provided
-    const streamFileIds = req.body.file_ids;
-    if (streamFileIds && Array.isArray(streamFileIds) && streamFileIds.length > 0) {
+    // Inject file context from freshly-attached files AND from sources the user
+    // picked in the Data Room.
+    //
+    // `source_ids` are cre_evidence_sources identities; they resolve back to the
+    // uploads their bytes live in and then take exactly the same tenant-scoped
+    // path as an attachment. One grounding mechanism, two ways of choosing — a
+    // separate reader for selected sources would be a second thing to get
+    // tenancy wrong in.
+    const streamFileIds: string[] = [];
+    if (Array.isArray(req.body.file_ids)) {
+      for (const id of req.body.file_ids) {
+        if (typeof id === 'string' && id && !streamFileIds.includes(id)) streamFileIds.push(id);
+      }
+    }
+    if (Array.isArray(req.body.source_ids) && req.body.source_ids.length > 0) {
+      try {
+        const { resolveSourceUploadIds } = await import(
+          '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
+        );
+        const fromSources = await resolveSourceUploadIds(
+          Number(orgId),
+          req.body.source_ids as Array<number | string>
+        );
+        if (fromSources.length < req.body.source_ids.length) {
+          // A selected source with no readable upload must not pass silently —
+          // the user chose it expecting it to be read.
+          console.warn(
+            `[AnA RI Stream] ${req.body.source_ids.length - fromSources.length} of ${req.body.source_ids.length} selected source(s) have no readable upload`
+          );
+        }
+        for (const id of fromSources) {
+          if (!streamFileIds.includes(id)) streamFileIds.push(id);
+        }
+      } catch (srcErr: any) {
+        console.warn('[AnA RI Stream] Source selection resolution failed:', srcErr?.message);
+      }
+    }
+    if (streamFileIds.length > 0) {
       try {
         // Tenant scoping is enforced by the shared helper, which checks BOTH
         // the organization column and the storage-path prefix. This route used

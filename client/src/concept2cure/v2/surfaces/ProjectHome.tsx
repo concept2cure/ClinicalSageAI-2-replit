@@ -19,6 +19,8 @@ declare global {
   interface Window {
     C2C_PROJECT?: Record<string, string>;
     C2C_CONVO?: Record<string, string>;
+    /** cre_evidence_sources ids the user pinned in the data room as AnA context. */
+    C2C_SOURCE_PINS?: string[];
     C2C?: Record<string, (...args: unknown[]) => void>;
     __C2C_SEGMENT?: string;
   }
@@ -221,9 +223,13 @@ function readState(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted'
   return { label: 'Not processed yet', tone: 'muted' };
 }
 
-function DataRoom({ pid, onNav }: { pid: string | null; onNav: (id: string) => void }) {
+function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {
   const [reloadKey, setReloadKey] = useState(0);
   const [q, setQ] = useState('');
+  // Sources the user has pinned as context for the next AnA turn. Handed over
+  // via window.C2C_SOURCE_PINS, matching the window.C2C_PROJECT / C2C_CONVO
+  // convention this surface already uses for cross-surface handoff.
+  const [pinned, setPinned] = useState<number[]>([]);
   const [dragging, setDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -355,6 +361,26 @@ function DataRoom({ pid, onNav }: { pid: string | null; onNav: (id: string) => v
                       borderBottom: '1px solid var(--border-subtle,#eaecf0)',
                     }}
                   >
+                    {/* Pin as context. Only a source whose text was actually
+                        read can ground a draft, so an unreadable one cannot be
+                        pinned — offering it would promise grounding the
+                        document cannot provide. */}
+                    <input
+                      type="checkbox"
+                      checked={pinned.includes(s.id)}
+                      disabled={s.extractionStatus !== 'extracted'}
+                      onChange={(e) =>
+                        setPinned((prev) =>
+                          e.target.checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
+                        )
+                      }
+                      aria-label={`Use ${s.title || `source ${s.id}`} as context`}
+                      title={
+                        s.extractionStatus === 'extracted'
+                          ? 'Use this source as context for AnA'
+                          : 'This source has no readable text, so it cannot ground a draft'
+                      }
+                    />
                     <span aria-hidden="true">{I.fileText}</span>
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ display: 'block', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -388,6 +414,23 @@ function DataRoom({ pid, onNav }: { pid: string | null; onNav: (id: string) => v
         <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('document-authoring')} disabled={uploading}>
           Write from these sources {I.right}
         </button>
+        {pinned.length > 0 && (
+          <button
+            className="btn"
+            style={{ fontSize: 12, padding: '4px 12px' }}
+            onClick={() => {
+              // Hand the chosen set to AnA. It resolves each source back to the
+              // upload its bytes live in and grounds the turn on exactly those
+              // documents — not on whatever its own retrieval would have picked.
+              window.C2C_SOURCE_PINS = pinned.map(String);
+              onAsk(
+                `Use the ${pinned.length} source${pinned.length === 1 ? '' : 's'} I pinned in the data room as the context for this project.`,
+              );
+            }}
+          >
+            {I.sparkles} Draft with {pinned.length} pinned source{pinned.length === 1 ? '' : 's'}
+          </button>
+        )}
       </div>
     </section>
   );
@@ -451,12 +494,13 @@ function ConversationComposer({ productName, onNav }: { productName: string; onN
 /* ════ Author workspace — real anchored slices + honest empties ════ */
 
 function AuthorWorkspace({
-  seg, pid, onNav, teamState, activityState, wsState, draftsState,
+  seg, pid, onNav, onAsk, teamState, activityState, wsState, draftsState,
 }: {
   seg: string;
   /** regulatory_programs UUID — scopes the data room to this project. */
   pid: string | null;
   onNav: (id: string) => void;
+  onAsk: (q: string) => void;
   teamState: DataState<{ team: TeamRow[] }>;
   activityState: DataState<{ activity: ActivityRow[] }>;
   wsState: DataState<{ workstreams: WorkstreamRow[] }>;
@@ -528,7 +572,7 @@ function AuthorWorkspace({
 
         {/* Data room — REAL: the project's canonical client-document sources.
             Sits directly above the documentation sections it feeds. */}
-        <DataRoom pid={pid} onNav={onNav} />
+        <DataRoom pid={pid} onNav={onNav} onAsk={onAsk} />
 
         {/* Tasks & readiness — project_tasks / readiness engine are keyed by the
             NUMERIC projects.id, not reachable from this UUID-scoped surface. */}
@@ -658,7 +702,10 @@ function AuthorWorkspace({
 
 /* ════ ProjectHome — the full workspace surface ════ */
 
-export function ProjectHome({ onNav, segment }: SurfaceViewProps) {
+export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
+  // Other v2 surfaces treat onAsk as optional; keep that contract so ProjectHome
+  // renders standalone (and in tests) without a host wired up.
+  const ask = onAsk || (() => {});
   const sel = window.C2C_PROJECT ?? null;
 
   // Selected-project identity handed off from the Projects surface. Its `id` is
@@ -826,6 +873,7 @@ export function ProjectHome({ onNav, segment }: SurfaceViewProps) {
               seg={seg}
               pid={pid}
               onNav={onNav}
+              onAsk={ask}
               teamState={teamState}
               activityState={activityState}
               wsState={wsState}
