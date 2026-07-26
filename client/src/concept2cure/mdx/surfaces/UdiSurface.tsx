@@ -24,7 +24,6 @@ import { DocumentsPanel } from '../components/DocumentsPanel';
 import { DataGate } from '../components/DataGate';
 import {
   UDI_DEVICES,
-  UDI_ISSUES,
   UDI_MRI,
   UDI_SYMBOLS,
 } from '../data/udi';

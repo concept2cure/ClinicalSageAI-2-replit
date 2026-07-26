@@ -18,14 +18,13 @@ import { I } from '../icons';
 import { DocumentsPanel } from '../components/DocumentsPanel';
 import {
   PV_CAPA_STAGES,
-  PV_CAPAS,
   PV_PMS_PLAN,
-  PV_SIGNALS,
   PV_TRENDS,
 } from '../data/postmarket';
 import { PV_DOC_FRAMEWORKS, PV_DOCUMENTS } from '../data/postmarket-docs';
 import { usePostmarket } from '../hooks/usePostmarket';
-import { SampleDataBanner } from '../components/SampleDataBanner';
+import { DataGate } from '../components/DataGate';
+import { readyRows } from '../lib/dataState';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
 
 export interface PostmarketSurfaceProps {
@@ -40,10 +39,12 @@ export function PostmarketSurface({
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
 
   const live = usePostmarket();
-  const signals = live.signals ?? PV_SIGNALS;
-  const capas = live.capas ?? PV_CAPAS;
-  const pmsPlan = live.pmsPlan ?? PV_PMS_PLAN;
-  const trends = live.trends ?? PV_TRENDS;
+  /* No fixture fallbacks. On a vigilance surface an example feed reading
+     "0 critical signals" is indistinguishable from a genuine all-clear,
+     so every panel below states which of loading / error / empty / real
+     it is showing. */
+  const signals = readyRows(live.signals);
+  const capas = readyRows(live.capas);
   const documents = PV_DOCUMENTS as unknown as KitDocument[];
   const frameworks = PV_DOC_FRAMEWORKS as unknown as KitDocFramework[];
 
@@ -133,7 +134,6 @@ export function PostmarketSurface({
         </div>
       </div>
 
-      <SampleDataBanner show={live.signals === null} loading={live.loading} label="safety signals" />
 
       <div className="metrics-row metrics-compact">
         <div className="metric-card" data-tone="err">
@@ -287,6 +287,15 @@ export function PostmarketSurface({
                 <div className="section-head" style={{ marginTop: 0 }}>
                   <h2 style={{ fontSize: 14 }}>Vigilance trending</h2>
                 </div>
+                <DataGate
+                  state={live.trends}
+                  label="vigilance trends"
+                  onRetry={live.refresh}
+                  sample={PV_TRENDS}
+                  dense
+                  emptyHint="Trend series are not yet computed from the complaint feed in this workspace."
+                >
+                {(trends) => (
                 <div className="pv-trends">
                   {trends.map((t) => {
                     const total = t.weeks.reduce((s, v) => s + v, 0);
@@ -317,11 +326,22 @@ export function PostmarketSurface({
                     );
                   })}
                 </div>
+                )}
+                </DataGate>
               </section>
               <section>
                 <div className="section-head" style={{ marginTop: 0 }}>
                   <h2 style={{ fontSize: 14 }}>PMS plan execution</h2>
                 </div>
+                <DataGate
+                  state={live.pmsPlan}
+                  label="PMS plan rows"
+                  onRetry={live.refresh}
+                  sample={PV_PMS_PLAN}
+                  dense
+                  emptyHint="Post-market surveillance plans are not yet tracked in this workspace."
+                >
+                {(pmsPlan) => (
                 <div className="ctable">
                   <div
                     className="ctable-head"
@@ -357,6 +377,8 @@ export function PostmarketSurface({
                     </div>
                   ))}
                 </div>
+                )}
+                </DataGate>
               </section>
             </div>
           </div>
