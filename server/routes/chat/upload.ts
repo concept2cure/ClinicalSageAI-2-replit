@@ -25,6 +25,32 @@ import { scanBuffer as scanForViruses } from '../../utils/virusScan';
 
 const logger = createScopedLogger('chat-upload');
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Resolve an incoming `projectId` into whichever project id-space it belongs to.
+ *
+ * The platform carries two, and an upload can arrive with either:
+ *   - a `regulatory_programs` UUID — what the project management module
+ *     (ProjectHome, /api/c2c/projects) selects and what the user actually has
+ *     open;
+ *   - a numeric workspace id, optionally `proj_`-prefixed — the legacy space.
+ *
+ * Treating every id as numeric is what made a UUID-scoped upload unusable: it
+ * parsed to NaN, and the governed-artifact block rejected the request outright.
+ */
+function resolveProjectScope(
+  projectId: unknown,
+): { programId: string | null; workspaceId: number | null } {
+  if (projectId == null || projectId === '') return { programId: null, workspaceId: null };
+  const raw = String(projectId).trim();
+  if (UUID_RE.test(raw)) return { programId: raw, workspaceId: null };
+  const numeric = parseInt(raw.replace(/^proj_/, ''), 10);
+  return Number.isFinite(numeric)
+    ? { programId: null, workspaceId: numeric }
+    : { programId: null, workspaceId: null };
+}
+
 export const uploadHandler = async (req: Request, res: Response) => {
   try {
     const fileBuffer: Buffer | undefined = (req as any).file?.buffer;
@@ -153,12 +179,22 @@ export const uploadHandler = async (req: Request, res: Response) => {
       }
     }
 
+    // Which project id-space this upload arrived with, resolved once and used
+    // by both the governed-artifact block and the source identity below.
+    const projectScope = resolveProjectScope(projectId);
+
     // ── Data Room convergence: create artifact + embed for retrieval ──
+    //
+    // `concept2cure_artifacts.project_id` is an INTEGER, so this block can only
+    // run for the numeric id-space. A UUID-scoped upload skips it and still
+    // gets its canonical source identity below — previously it was rejected
+    // with a 400, which meant a file could not be uploaded at all while a
+    // UUID-keyed program was open.
     let artifactId: string | null = null;
-    if (projectId && orgId) {
-      const numericProjectId = parseInt(String(projectId).replace('proj_', ''), 10);
+    if (projectId && orgId && projectScope.workspaceId != null) {
+      const numericProjectId = projectScope.workspaceId;
       const numericOrgId = parseInt(String(orgId), 10);
-      if (isNaN(numericProjectId) || isNaN(numericOrgId)) {
+      if (isNaN(numericOrgId)) {
         return res.status(400).json({
           error: 'projectId and organizationId must be valid for governed upload',
           code: 'GOVERNED_UPLOAD_CONTEXT_INVALID',
@@ -332,16 +368,19 @@ export const uploadHandler = async (req: Request, res: Response) => {
             checksum,
           });
         } else {
-          const numericProjectId = projectId
-            ? parseInt(String(projectId).replace('proj_', ''), 10)
-            : NaN;
-          const scopedToProject = Number.isFinite(numericProjectId);
+          // The platform has two project id-spaces and an upload may arrive
+          // with either: a `regulatory_programs` UUID (what the project
+          // management module selects) or the numeric workspace id. Stamp
+          // whichever we actually got rather than assuming one.
+          const scope = projectScope;
+          const scopedToProject = scope.programId != null || scope.workspaceId != null;
           const created = await createSource(numericOrgId, {
             sourceType: 'client_document',
-            // Project uploads are scoped to the workspace; an unscoped chat
+            // Project uploads are scoped to the project; an unscoped chat
             // attachment stays tenant-private rather than leaking project-wide.
             visibilityClass: scopedToProject ? 'project_private' : 'tenant_private',
-            clientWorkspaceId: scopedToProject ? numericProjectId : null,
+            clientProgramId: scope.programId,
+            clientWorkspaceId: scope.workspaceId,
             title: fileName,
             // The stored blob these bytes live at; the governed artifact (when
             // one exists) is in metadata below.

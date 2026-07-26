@@ -485,6 +485,9 @@ export interface EvidenceSource {
   organizationId: number | null;          // null = GLOBAL_PUBLIC
   visibilityClass: VisibilityClass;
   clientWorkspaceId: number | null;
+  /** regulatory_programs.id (UUID) — the project-management id-space. Null when
+   *  the source is scoped by clientWorkspaceId instead, or not project-scoped. */
+  clientProgramId: string | null;
   sourceType: SourceType;
   agency: string | null;
   sourceRecordIdentifier: string | null;

@@ -55,14 +55,23 @@ function upload(checksum: string, over: Record<string, unknown> = {}) {
   };
 }
 
+const PROGRAM_A = '11111111-1111-4111-8111-111111111111';
+const PROGRAM_B = '22222222-2222-4222-8222-222222222222';
+
 beforeAll(async () => {
   pglite = new PGlite();
   const here = path.dirname(fileURLToPath(import.meta.url));
-  const migration = path.resolve(
+  const spine = path.resolve(
     here,
     '../../../../db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
   );
-  await pglite.exec(fs.readFileSync(migration, 'utf8'));
+  await pglite.exec(fs.readFileSync(spine, 'utf8'));
+  // The additive program-scope migration must apply on top of the spine.
+  const programScope = path.resolve(
+    here,
+    '../../../../migrations/20260726_cre_source_program_scope.sql',
+  );
+  await pglite.exec(fs.readFileSync(programScope, 'utf8'));
 });
 afterAll(async () => {
   await pglite.close();
@@ -159,6 +168,15 @@ describe('canonical source identity (real Postgres)', () => {
     expect(await svc.findSourceByChecksum(ORG_A, 'sha-typed')).not.toBeNull();
   });
 
+  it('scopes a source to a UUID-keyed program', async () => {
+    const src = await svc.createSource(
+      ORG_A,
+      upload('sha-prog', { clientProgramId: PROGRAM_A, clientWorkspaceId: null }),
+    );
+    expect(src.clientProgramId).toBe(PROGRAM_A);
+    expect(src.clientWorkspaceId).toBeNull();
+  });
+
   it('rejects an invalid status rather than writing it', async () => {
     await expect(
       svc.createSource(ORG_A, upload('sha-bad', { ingestionStatus: 'done' as any })),
@@ -166,5 +184,82 @@ describe('canonical source identity (real Postgres)', () => {
     await expect(
       svc.createSource(ORG_A, upload('sha-bad2', { extractionStatus: 'ok' as any })),
     ).rejects.toThrow(/extractionStatus/);
+  });
+});
+
+describe('data room listing (real Postgres)', () => {
+  it('returns only the requested program\'s documents', async () => {
+    const mine = await svc.createSource(
+      ORG_A,
+      upload('dr-mine', { clientProgramId: PROGRAM_A, clientWorkspaceId: null, title: 'mine.pdf' }),
+    );
+    await svc.createSource(
+      ORG_A,
+      upload('dr-other', { clientProgramId: PROGRAM_B, clientWorkspaceId: null, title: 'other.pdf' }),
+    );
+
+    const rows = await svc.listClientDocuments(ORG_A, { programId: PROGRAM_A });
+    const ids = rows.map(r => r.id);
+    expect(ids).toContain(mine.id);
+    expect(rows.every(r => r.clientProgramId === PROGRAM_A)).toBe(true);
+    expect(rows.map(r => r.title)).not.toContain('other.pdf');
+  });
+
+  it('never returns another tenant\'s documents for the same program id', async () => {
+    await svc.createSource(
+      ORG_B,
+      upload('dr-tenantb', { clientProgramId: PROGRAM_A, clientWorkspaceId: null, title: 'theirs.pdf' }),
+    );
+    const rows = await svc.listClientDocuments(ORG_A, { programId: PROGRAM_A });
+    expect(rows.map(r => r.title)).not.toContain('theirs.pdf');
+  });
+
+  it('does not widen to the whole tenant when a scope matches nothing', async () => {
+    // A project showing another project's documents because a filter silently
+    // widened is the failure a data room cannot have.
+    const rows = await svc.listClientDocuments(ORG_A, {
+      programId: '33333333-3333-4333-8333-333333333333',
+    });
+    expect(rows).toEqual([]);
+  });
+
+  it('returns ownerless documents only when asked, and never mixes them in', async () => {
+    await svc.createSource(
+      ORG_A,
+      upload('dr-unscoped', {
+        clientProgramId: null,
+        clientWorkspaceId: null,
+        visibilityClass: 'tenant_private' as const,
+        title: 'unassigned.pdf',
+      }),
+    );
+
+    const scoped = await svc.listClientDocuments(ORG_A, { programId: PROGRAM_A });
+    expect(scoped.map(r => r.title)).not.toContain('unassigned.pdf');
+
+    const unscoped = await svc.listClientDocuments(ORG_A, { includeUnscoped: true });
+    expect(unscoped.map(r => r.title)).toContain('unassigned.pdf');
+    expect(unscoped.every(r => !r.clientProgramId && !r.clientWorkspaceId)).toBe(true);
+  });
+
+  it('still supports the numeric workspace id-space', async () => {
+    await svc.createSource(
+      ORG_A,
+      upload('dr-ws', { clientProgramId: null, clientWorkspaceId: 4242, title: 'legacy.pdf' }),
+    );
+    const rows = await svc.listClientDocuments(ORG_A, { workspaceId: 4242 });
+    expect(rows.map(r => r.title)).toContain('legacy.pdf');
+  });
+
+  it('lists only client documents, not CSRs or letters', async () => {
+    await svc.createSource(ORG_A, {
+      sourceType: 'fda_crl',
+      visibilityClass: 'tenant_private',
+      clientProgramId: PROGRAM_A,
+      title: 'a-letter',
+      checksum: 'dr-crl',
+    });
+    const rows = await svc.listClientDocuments(ORG_A, { programId: PROGRAM_A });
+    expect(rows.every(r => r.sourceType === 'client_document')).toBe(true);
   });
 });

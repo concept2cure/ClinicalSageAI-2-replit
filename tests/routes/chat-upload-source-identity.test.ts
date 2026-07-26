@@ -156,11 +156,28 @@ describe('chat upload → canonical source identity', () => {
     expect(payload(res).sourceId).toBe(4242);
   });
 
-  it('scopes a project upload to the workspace', async () => {
+  it('scopes a numeric project upload to the workspace', async () => {
     await runUpload({ projectId: 'proj_12' });
     const [, params] = mockCreateSource.mock.calls[0];
     expect(params.visibilityClass).toBe('project_private');
     expect(params.clientWorkspaceId).toBe(12);
+    expect(params.clientProgramId).toBeNull();
+  });
+
+  it('scopes a UUID-keyed program upload instead of rejecting it', async () => {
+    // The project management module is keyed on regulatory_programs UUIDs.
+    // upload.ts used to parseInt every projectId and return 400
+    // GOVERNED_UPLOAD_CONTEXT_INVALID on the NaN, so a file could not be
+    // uploaded at all while a UUID-keyed program was open.
+    const uuid = '11111111-1111-4111-8111-111111111111';
+    const res = await runUpload({ projectId: uuid });
+
+    expect(res.status).not.toHaveBeenCalledWith(400);
+    const [, params] = mockCreateSource.mock.calls[0];
+    expect(params.clientProgramId).toBe(uuid);
+    expect(params.clientWorkspaceId).toBeNull();
+    expect(params.visibilityClass).toBe('project_private');
+    expect(payload(res).status).toBe('ready');
   });
 
   it('keeps an unscoped chat attachment tenant-private, not project-wide', async () => {

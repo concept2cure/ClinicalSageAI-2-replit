@@ -47,6 +47,10 @@ function assertOneOf<T extends string>(value: T, allowed: readonly T[], field: s
 
 export async function createSource(orgId: number, p: {
   sourceType: SourceType; visibilityClass?: VisibilityClass; clientWorkspaceId?: number | null;
+  /** regulatory_programs.id (UUID) — the project-management id-space. Set this
+   *  OR clientWorkspaceId depending on which scope the caller actually has;
+   *  see migrations/20260726_cre_source_program_scope.sql. */
+  clientProgramId?: string | null;
   agency?: string | null; sourceRecordIdentifier?: string | null; title?: string | null;
   sponsor?: string | null; product?: string | null; indication?: string | null;
   therapeuticArea?: string | null; phase?: string | null; applicationType?: string | null;
@@ -76,9 +80,9 @@ export async function createSource(orgId: number, p: {
        application_type, application_number, trial_registry_identifier, document_date,
        official_url, stored_artifact_ref, checksum, version, provenance,
        linked_csr_report_id, linked_precedent_id, metadata,
-       ingestion_status, extraction_status
+       ingestion_status, extraction_status, client_program_id
      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
-               COALESCE($21::jsonb,'{}'::jsonb),$22,$23,COALESCE($24::jsonb,'{}'::jsonb),$25,$26)
+               COALESCE($21::jsonb,'{}'::jsonb),$22,$23,COALESCE($24::jsonb,'{}'::jsonb),$25,$26,$27)
      RETURNING *`,
     [
       writeOrg(orgId, visibility), visibility, p.clientWorkspaceId ?? null, p.sourceType,
@@ -89,10 +93,59 @@ export async function createSource(orgId: number, p: {
       p.version ?? null, p.provenance ? JSON.stringify(p.provenance) : null,
       p.linkedCsrReportId ?? null, p.linkedPrecedentId ?? null,
       p.metadata ? JSON.stringify(p.metadata) : null,
-      ingestionStatus, extractionStatus,
+      ingestionStatus, extractionStatus, p.clientProgramId ?? null,
     ],
   );
   return adaptSource(rows[0]);
+}
+
+/**
+ * The Data Room read: every client document a project holds, newest first.
+ *
+ * Scoped by whichever project id-space the caller has — a `regulatory_programs`
+ * UUID (what the project-management module is keyed on) or the numeric
+ * workspace id. Both are supported because both are real and in use; see
+ * migrations/20260726_cre_source_program_scope.sql.
+ *
+ * Deliberately NOT falling back to "all tenant sources" when a scope is
+ * supplied but matches nothing: a project showing another project's documents
+ * because a filter silently widened is exactly the failure a Data Room cannot
+ * have. Unscoped tenant documents are opt-in via `includeUnscoped`, so they can
+ * be surfaced for adoption into a project without being implied to belong to it.
+ */
+export async function listClientDocuments(orgId: number, opts: {
+  programId?: string | null;
+  workspaceId?: number | null;
+  includeUnscoped?: boolean;
+  limit?: number;
+} = {}): Promise<EvidenceSource[]> {
+  const c = visibleOrgClause(orgId, 1);
+  const args: unknown[] = [c.param];
+  let where = `${c.sql} AND deleted_at IS NULL AND source_type = 'client_document'`;
+
+  const scopes: string[] = [];
+  if (opts.programId) {
+    args.push(opts.programId);
+    scopes.push(`client_program_id = $${args.length}`);
+  }
+  if (opts.workspaceId != null && Number.isFinite(opts.workspaceId)) {
+    args.push(opts.workspaceId);
+    scopes.push(`client_workspace_id = $${args.length}`);
+  }
+  if (opts.includeUnscoped) {
+    scopes.push(`(client_program_id IS NULL AND client_workspace_id IS NULL)`);
+  }
+  if (scopes.length > 0) where += ` AND (${scopes.join(' OR ')})`;
+
+  args.push(Math.min(Math.max(opts.limit ?? 200, 1), 500));
+  const { rows } = await pool.query(
+    `SELECT * FROM cre_evidence_sources
+      WHERE ${where}
+      ORDER BY created_at DESC
+      LIMIT $${args.length}`,
+    args,
+  );
+  return rows.map(adaptSource);
 }
 
 /**
@@ -412,7 +465,8 @@ const arr = (v: any) => (v == null ? [] : typeof v === 'string' ? JSON.parse(v) 
 function adaptSource(r: any): EvidenceSource {
   return {
     id: r.id, organizationId: r.organization_id, visibilityClass: r.visibility_class,
-    clientWorkspaceId: r.client_workspace_id, sourceType: r.source_type, agency: r.agency,
+    clientWorkspaceId: r.client_workspace_id, clientProgramId: r.client_program_id ?? null,
+    sourceType: r.source_type, agency: r.agency,
     sourceRecordIdentifier: r.source_record_identifier, title: r.title, sponsor: r.sponsor,
     product: r.product, indication: r.indication, therapeuticArea: r.therapeutic_area, phase: r.phase,
     applicationType: r.application_type, applicationNumber: r.application_number,
