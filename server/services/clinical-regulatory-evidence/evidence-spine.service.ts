@@ -15,9 +15,11 @@
 import { pool } from '../../db';
 import {
   SOURCE_TYPES, VISIBILITY_CLASSES, OUTCOME_TYPES, RELATIONSHIP_TYPES, ENTITY_TYPES,
+  INGESTION_STATUSES, EXTRACTION_STATUSES,
   type EvidenceSource, type ClinicalStudy, type RegulatoryFinding, type RegulatoryOutcome,
   type EvidenceRelationship, type DesignLesson, type SourceType, type VisibilityClass,
   type OutcomeType, type RelationshipType, type EntityType,
+  type IngestionStatus, type ExtractionStatus,
 } from './types';
 
 export class EvidenceSpineError extends Error {}
@@ -45,6 +47,10 @@ function assertOneOf<T extends string>(value: T, allowed: readonly T[], field: s
 
 export async function createSource(orgId: number, p: {
   sourceType: SourceType; visibilityClass?: VisibilityClass; clientWorkspaceId?: number | null;
+  /** regulatory_programs.id (UUID) — the project-management id-space. Set this
+   *  OR clientWorkspaceId depending on which scope the caller actually has;
+   *  see migrations/20260726_cre_source_program_scope.sql. */
+  clientProgramId?: string | null;
   agency?: string | null; sourceRecordIdentifier?: string | null; title?: string | null;
   sponsor?: string | null; product?: string | null; indication?: string | null;
   therapeuticArea?: string | null; phase?: string | null; applicationType?: string | null;
@@ -53,32 +59,148 @@ export async function createSource(orgId: number, p: {
   checksum?: string | null; version?: string | null; provenance?: Record<string, unknown> | null;
   linkedCsrReportId?: number | null; linkedPrecedentId?: string | null;
   metadata?: Record<string, unknown> | null;
+  /** Defaults to 'pending'. A source whose bytes are already stored and read is
+   *  'ingested' at creation — leaving it 'pending' would misreport the corpus. */
+  ingestionStatus?: IngestionStatus;
+  /** Defaults to 'pending'. Set to 'extracted' when text was pulled at ingest;
+   *  'failed' when extraction was attempted and produced nothing usable. */
+  extractionStatus?: ExtractionStatus;
 }): Promise<EvidenceSource> {
   assertOneOf(p.sourceType, SOURCE_TYPES, 'sourceType');
   const visibility = p.visibilityClass ?? 'tenant_private';
   assertOneOf(visibility, VISIBILITY_CLASSES, 'visibilityClass');
+  const ingestionStatus = p.ingestionStatus ?? 'pending';
+  assertOneOf(ingestionStatus, INGESTION_STATUSES, 'ingestionStatus');
+  const extractionStatus = p.extractionStatus ?? 'pending';
+  assertOneOf(extractionStatus, EXTRACTION_STATUSES, 'extractionStatus');
+  const values: unknown[] = [
+    writeOrg(orgId, visibility), visibility, p.clientWorkspaceId ?? null, p.sourceType,
+    p.agency ?? null, p.sourceRecordIdentifier ?? null, p.title ?? null, p.sponsor ?? null,
+    p.product ?? null, p.indication ?? null, p.therapeuticArea ?? null, p.phase ?? null,
+    p.applicationType ?? null, p.applicationNumber ?? null, p.trialRegistryIdentifier ?? null,
+    p.documentDate ?? null, p.officialUrl ?? null, p.storedArtifactRef ?? null, p.checksum ?? null,
+    p.version ?? null, p.provenance ? JSON.stringify(p.provenance) : null,
+    p.linkedCsrReportId ?? null, p.linkedPrecedentId ?? null,
+    p.metadata ? JSON.stringify(p.metadata) : null,
+    ingestionStatus, extractionStatus,
+  ];
+  const columns = [
+    'organization_id', 'visibility_class', 'client_workspace_id', 'source_type', 'agency',
+    'source_record_identifier', 'title', 'sponsor', 'product', 'indication', 'therapeutic_area',
+    'phase', 'application_type', 'application_number', 'trial_registry_identifier',
+    'document_date', 'official_url', 'stored_artifact_ref', 'checksum', 'version', 'provenance',
+    'linked_csr_report_id', 'linked_precedent_id', 'metadata',
+    'ingestion_status', 'extraction_status',
+  ];
+  const placeholders = [
+    '$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', '$9', '$10', '$11', '$12', '$13', '$14',
+    '$15', '$16', '$17', '$18', '$19', '$20', `COALESCE($21::jsonb,'{}'::jsonb)`, '$22', '$23',
+    `COALESCE($24::jsonb,'{}'::jsonb)`, '$25', '$26',
+  ];
+
+  // `client_program_id` is added by migrations/20260726_cre_source_program_scope.sql,
+  // which is separate from the spine that creates this table. Naming the column
+  // unconditionally would break every write on a database that has the spine but
+  // not that migration — including production, and including the CSR/CRL paths
+  // that never set a program. So it is named ONLY when a caller supplies one.
+  //
+  // A caller that DOES supply one on a database missing the column still fails
+  // loudly, which is correct: silently dropping a project scope would put a
+  // document in no project while reporting success.
+  if (p.clientProgramId != null) {
+    values.push(p.clientProgramId);
+    columns.push('client_program_id');
+    placeholders.push(`$${values.length}`);
+  }
+
   const { rows } = await pool.query(
-    `INSERT INTO cre_evidence_sources (
-       organization_id, visibility_class, client_workspace_id, source_type, agency,
-       source_record_identifier, title, sponsor, product, indication, therapeutic_area, phase,
-       application_type, application_number, trial_registry_identifier, document_date,
-       official_url, stored_artifact_ref, checksum, version, provenance,
-       linked_csr_report_id, linked_precedent_id, metadata
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
-               COALESCE($21::jsonb,'{}'::jsonb),$22,$23,COALESCE($24::jsonb,'{}'::jsonb))
+    `INSERT INTO cre_evidence_sources (${columns.join(', ')})
+     VALUES (${placeholders.join(',')})
      RETURNING *`,
-    [
-      writeOrg(orgId, visibility), visibility, p.clientWorkspaceId ?? null, p.sourceType,
-      p.agency ?? null, p.sourceRecordIdentifier ?? null, p.title ?? null, p.sponsor ?? null,
-      p.product ?? null, p.indication ?? null, p.therapeuticArea ?? null, p.phase ?? null,
-      p.applicationType ?? null, p.applicationNumber ?? null, p.trialRegistryIdentifier ?? null,
-      p.documentDate ?? null, p.officialUrl ?? null, p.storedArtifactRef ?? null, p.checksum ?? null,
-      p.version ?? null, p.provenance ? JSON.stringify(p.provenance) : null,
-      p.linkedCsrReportId ?? null, p.linkedPrecedentId ?? null,
-      p.metadata ? JSON.stringify(p.metadata) : null,
-    ],
+    values,
   );
   return adaptSource(rows[0]);
+}
+
+/**
+ * The Data Room read: every client document a project holds, newest first.
+ *
+ * Scoped by whichever project id-space the caller has — a `regulatory_programs`
+ * UUID (what the project-management module is keyed on) or the numeric
+ * workspace id. Both are supported because both are real and in use; see
+ * migrations/20260726_cre_source_program_scope.sql.
+ *
+ * Deliberately NOT falling back to "all tenant sources" when a scope is
+ * supplied but matches nothing: a project showing another project's documents
+ * because a filter silently widened is exactly the failure a Data Room cannot
+ * have. Unscoped tenant documents are opt-in via `includeUnscoped`, so they can
+ * be surfaced for adoption into a project without being implied to belong to it.
+ */
+export async function listClientDocuments(orgId: number, opts: {
+  programId?: string | null;
+  workspaceId?: number | null;
+  includeUnscoped?: boolean;
+  limit?: number;
+} = {}): Promise<EvidenceSource[]> {
+  const c = visibleOrgClause(orgId, 1);
+  const args: unknown[] = [c.param];
+  let where = `${c.sql} AND deleted_at IS NULL AND source_type = 'client_document'`;
+
+  const scopes: string[] = [];
+  if (opts.programId) {
+    args.push(opts.programId);
+    scopes.push(`client_program_id = $${args.length}`);
+  }
+  if (opts.workspaceId != null && Number.isFinite(opts.workspaceId)) {
+    args.push(opts.workspaceId);
+    scopes.push(`client_workspace_id = $${args.length}`);
+  }
+  if (opts.includeUnscoped) {
+    scopes.push(`(client_program_id IS NULL AND client_workspace_id IS NULL)`);
+  }
+  if (scopes.length > 0) where += ` AND (${scopes.join(' OR ')})`;
+
+  args.push(Math.min(Math.max(opts.limit ?? 200, 1), 500));
+  const { rows } = await pool.query(
+    `SELECT * FROM cre_evidence_sources
+      WHERE ${where}
+      ORDER BY created_at DESC
+      LIMIT $${args.length}`,
+    args,
+  );
+  return rows.map(adaptSource);
+}
+
+/**
+ * Find a live source by content checksum within the caller's visibility.
+ *
+ * `cre_evidence_sources` has no unique constraint on checksum, so identity has
+ * to be resolved explicitly: re-uploading the same bytes must resolve to the
+ * source that already exists rather than minting a second identity for one
+ * document. That is the whole point of a canonical source object — two rows for
+ * one file is the fragmentation this model is meant to end.
+ *
+ * Scoped like every other read here (own org plus global-public), so one
+ * tenant's checksum can never resolve to another tenant's source.
+ */
+export async function findSourceByChecksum(
+  orgId: number,
+  checksum: string,
+  opts: { sourceType?: SourceType } = {},
+): Promise<EvidenceSource | null> {
+  if (!checksum) return null;
+  const c = visibleOrgClause(orgId, 2);
+  const args: unknown[] = [checksum, c.param];
+  let where = `checksum = $1 AND ${c.sql} AND deleted_at IS NULL`;
+  if (opts.sourceType) {
+    args.push(opts.sourceType);
+    where += ` AND source_type = $${args.length}`;
+  }
+  const { rows } = await pool.query(
+    `SELECT * FROM cre_evidence_sources WHERE ${where} ORDER BY created_at ASC LIMIT 1`,
+    args,
+  );
+  return rows[0] ? adaptSource(rows[0]) : null;
 }
 
 export async function getSource(orgId: number, id: number): Promise<EvidenceSource | null> {
@@ -366,7 +488,8 @@ const arr = (v: any) => (v == null ? [] : typeof v === 'string' ? JSON.parse(v) 
 function adaptSource(r: any): EvidenceSource {
   return {
     id: r.id, organizationId: r.organization_id, visibilityClass: r.visibility_class,
-    clientWorkspaceId: r.client_workspace_id, sourceType: r.source_type, agency: r.agency,
+    clientWorkspaceId: r.client_workspace_id, clientProgramId: r.client_program_id ?? null,
+    sourceType: r.source_type, agency: r.agency,
     sourceRecordIdentifier: r.source_record_identifier, title: r.title, sponsor: r.sponsor,
     product: r.product, indication: r.indication, therapeuticArea: r.therapeutic_area, phase: r.phase,
     applicationType: r.application_type, applicationNumber: r.application_number,

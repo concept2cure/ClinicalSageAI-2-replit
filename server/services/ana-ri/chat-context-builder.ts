@@ -552,20 +552,27 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
   const fileIds = req.body.file_ids;
   if (fileIds && Array.isArray(fileIds) && fileIds.length > 0) {
     try {
-      const fileResult = await pool.query(
-        `SELECT id, original_name, mime_type FROM file_uploads WHERE id = ANY($1)`,
-        [fileIds]
+      // SECURITY: this lookup previously had NO tenant filter at all — any
+      // caller who supplied (or guessed) an upload id received that file's
+      // name and MIME type regardless of which organization owned it. The
+      // shared helper enforces both the organization column and the
+      // storage-path prefix. See uploaded-file-access.ts.
+      const { loadUploadedFileMetadata } = await import(
+        '../ana/uploaded-file-access.js'
       );
-      if (fileResult.rows.length > 0) {
-        const fileContext = fileResult.rows.map((f: any) =>
-          `- ${f.original_name} (${f.mime_type}) [ID: ${f.id}]`
+      const attachedFiles = await loadUploadedFileMetadata(fileIds, numericOrgId);
+      if (attachedFiles.length > 0) {
+        const fileContext = attachedFiles.map(f =>
+          `- ${f.fileName} (${f.mimeType}) [ID: ${f.fileId}]`
         ).join('\n');
         messages.push({
           role: 'user' as const,
           content: `[The user has attached the following files:\n${fileContext}\nReference these files when relevant.]`,
         });
       }
-    } catch { /* Non-blocking */ }
+    } catch (fileErr: any) {
+      console.warn('[AnA chat-context] Attachment context failed:', fileErr?.message);
+    }
   }
 
   // Add the actual user message
