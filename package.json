@@ -428,9 +428,7 @@
     "ws": "$ws",
     "http-proxy-middleware": "^3.0.7",
     "nodemailer": "^9.0.1",
-    "brace-expansion@1": "1.1.16",
-    "brace-expansion@2": "2.1.2",
-    "brace-expansion@5": "5.0.7"
+    "brace-expansion": "5.0.8"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8",
