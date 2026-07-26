@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-25T23:57:21.735Z",
+  "generatedAt": "2026-07-26T00:10:52.570Z",
   "git": {
-    "sha": "4734c3d6e64b191d17058dead8a9d6314314c755",
+    "sha": "b13383a7c02d358d4d44739fe1916a532bd172e9",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -11,7 +11,7 @@
   "summary": {
     "duplicateBasenames": 248,
     "largeFilesByBytes": 30,
-    "largeFilesByLines": 83
+    "largeFilesByLines": 84
   },
   "findings": {
     "duplicateBasenames": [
@@ -2476,7 +2476,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 360752
+        "bytes": 269879
       },
       {
         "file": "server/statistics-service.ts",
@@ -2601,16 +2601,16 @@
         "lines": 6893
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 6858
-      },
-      {
         "file": "server/routes/authoring.router.ts",
         "lines": 5576
       },
       {
         "file": "server/routes/ana-features.ts",
         "lines": 5431
+      },
+      {
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 5086
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2777,6 +2777,10 @@
         "lines": 1881
       },
       {
+        "file": "server/services/ana/evidence-literature-tool-defs.ts",
+        "lines": 1876
+      },
+      {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
       },
@@ -2924,7 +2928,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 396,
       "largeByBytes": 27,
-      "largeByLines": 72
+      "largeByLines": 73
     },
     {
       "owner": "Unassigned (TBD)",
