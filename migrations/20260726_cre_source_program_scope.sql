@@ -44,14 +44,36 @@
 -- Rollback loses only the program scope, not the sources.
 -- ═══════════════════════════════════════════════════════════════════════════
 
-ALTER TABLE cre_evidence_sources
-  ADD COLUMN IF NOT EXISTS client_program_id UUID;
+-- PREREQUISITE, AND WHY THIS IS GUARDED
+-- `cre_evidence_sources` is created by
+-- db/migrations/20260724_clinical_regulatory_evidence_spine.sql. That file is
+-- merged, but it is NOT in the allowlist in scripts/db/apply-c2c-migrations.mjs
+-- and CI only applies migrations a PR *adds* — to an ephemeral preview branch
+-- that is deleted when the PR closes. So the spine can be absent from a real
+-- database even though its migration is on the default branch, and an
+-- unguarded ALTER here fails with 'relation "cre_evidence_sources" does not
+-- exist'.
+--
+-- Rather than fail the whole migration run, this no-ops with a NOTICE when the
+-- spine is absent. It is idempotent and safe to re-run: once the spine is
+-- applied, run this again and the column appears. Do NOT assume the column
+-- exists just because this migration reported success — check the NOTICE.
+DO $$
+BEGIN
+  IF to_regclass('public.cre_evidence_sources') IS NULL THEN
+    RAISE NOTICE 'cre_evidence_sources is not present; skipping client_program_id. Apply db/migrations/20260724_clinical_regulatory_evidence_spine.sql first, then re-run this migration (it is idempotent).';
+    RETURN;
+  END IF;
 
-COMMENT ON COLUMN cre_evidence_sources.client_program_id IS
-  'regulatory_programs.id (UUID) this source is scoped to. Complements client_workspace_id, which scopes to the numeric project id-space. No FK: cre_* deliberately avoids hard cross-schema references (see the spine migration).';
+  ALTER TABLE cre_evidence_sources
+    ADD COLUMN IF NOT EXISTS client_program_id UUID;
 
--- The Data Room lists a program''s sources; that read filters on
--- (organization_id, client_program_id) and this is the half the org index
--- cannot serve.
-CREATE INDEX IF NOT EXISTS cre_src_program_idx
-  ON cre_evidence_sources (client_program_id);
+  COMMENT ON COLUMN cre_evidence_sources.client_program_id IS
+    'regulatory_programs.id (UUID) this source is scoped to. Complements client_workspace_id, which scopes to the numeric project id-space. No FK: cre_* deliberately avoids hard cross-schema references (see the spine migration).';
+
+  -- The Data Room lists a program's sources; that read filters on
+  -- (organization_id, client_program_id) and this is the half the org index
+  -- cannot serve.
+  CREATE INDEX IF NOT EXISTS cre_src_program_idx
+    ON cre_evidence_sources (client_program_id);
+END $$;
