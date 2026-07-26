@@ -10,7 +10,6 @@
  * Fields the RBM store has no column for are documented here as always-null /
  * always-empty, and the surfaces neither render nor collect them — a form that
  * captured them would drop them on save:
- *   - assessment.history        → always []      (no version history store)
  *   - assessment/plan.approval  → { by, when, reason } only — NO `audit` id
  *   - items.riskCat / .control  → absent          (board exposes refCode instead)
  *   - kris: no threshold method, analysis level or per-site drilldown
@@ -60,6 +59,23 @@ export interface RbmBoardApproval {
   reason: string | null;
 }
 
+/**
+ * One version in the assessment chain. An amendment creates a new draft version
+ * and approving it archives the version it supersedes, so every entry here is a
+ * version that existed — the approved ones carrying the signature they were
+ * approved under. `amendmentReason` is why the version was opened; `reason` is
+ * why it was approved.
+ */
+export interface RbmBoardAssessmentVersion {
+  id: number;
+  v: number;
+  status: string;
+  by: string | null;
+  when: string | null;
+  reason: string | null;
+  amendmentReason: string | null;
+}
+
 export interface RbmBoardAssessment {
   id: number;
   framework: string;
@@ -67,7 +83,9 @@ export interface RbmBoardAssessment {
   status: string;
   updated: string | null;
   approval: RbmBoardApproval | null;
-  history: unknown[];
+  /** Newest version first. The board shows the highest version, so with an
+   *  amendment open this is the draft and the approved version is below it. */
+  history: RbmBoardAssessmentVersion[];
 }
 
 export interface RbmBoardItem {

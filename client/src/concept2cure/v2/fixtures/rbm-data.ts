@@ -25,15 +25,6 @@ export interface RbmLinkDef {
 
 /* View types for the surfaces that shape a board row before rendering it. */
 
-export interface RbmApproval { by: string; when: string; reason: string; audit: string }
-export interface RbmAssessment {
-  id: string; framework: string; version: number; status: string; updated: string;
-  /** Always empty: the RBM store keeps a single integer version, not a
-   *  reason-for-change chain. Kept so the surface renders it null-safe. */
-  history: { v: number; status: string; by: string; when: string; reason: string }[];
-  approval?: RbmApproval;
-}
-
 export interface RbmSignal {
   id: string; source: string; type: string; severity: string; title: string;
   site: string; detail: string; detected: string; status: string;

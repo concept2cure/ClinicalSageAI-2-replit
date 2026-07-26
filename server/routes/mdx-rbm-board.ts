@@ -95,6 +95,15 @@ function iso(v: unknown): string | null {
   return String(v);
 }
 
+/** Read metadata.amendmentReason off a jsonb column without throwing. */
+function amendmentReason(metadata: unknown): string | null {
+  if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+    const r = (metadata as Record<string, unknown>).amendmentReason;
+    return typeof r === 'string' ? r : null;
+  }
+  return null;
+}
+
 /** Read metadata.approvalReason off a jsonb column without throwing. */
 function approvalReason(metadata: unknown): string | null {
   if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
@@ -266,10 +275,16 @@ export default function createRbmBoardRoutes(): Router {
       }
 
       // ── Choose the governing assessment/plan (active, else most-recent). ────
+      // Highest version wins, so an open draft amendment is what the RACT
+      // surface shows and edits. The APPROVED version remains the governing
+      // risk basis for the risk review and the attention feed — those read
+      // through loadRiskReviewInput, which orders active first — so an
+      // unapproved draft can never be reported as the study's risk position.
       const sortedAssessments = [...assessmentRows].sort(
-        (x, y) => (iso(y.a.updatedAt) ?? '').localeCompare(iso(x.a.updatedAt) ?? ''),
+        (x, y) => (y.a.version ?? 0) - (x.a.version ?? 0)
+          || (iso(y.a.updatedAt) ?? '').localeCompare(iso(x.a.updatedAt) ?? ''),
       );
-      const chosenAssessment = sortedAssessments.find(r => r.a.status === 'active') ?? sortedAssessments[0] ?? null;
+      const chosenAssessment = sortedAssessments[0] ?? null;
 
       const sortedPlans = [...planRows].sort(
         (x, y) => (iso(y.p.updatedAt) ?? '').localeCompare(iso(x.p.updatedAt) ?? ''),
@@ -356,7 +371,14 @@ export default function createRbmBoardRoutes(): Router {
       }
 
       // ── Shape each section to what the surface JSX consumes. ────────────────
-      const items = [...itemRows]
+      // Scoped to the assessment being shown. Fetching program-wide would
+      // concatenate the registers of every version once an amendment is open.
+      // When the program has no assessment at all, every item is shown — those
+      // rows have nowhere else to belong.
+      const scopedItems = chosenAssessment
+        ? itemRows.filter(r => r.it.assessmentId === chosenAssessment.a.id)
+        : itemRows;
+      const items = [...scopedItems]
         .sort((x, y) => (y.it.riskScore ?? 0) - (x.it.riskScore ?? 0))
         .map(({ it, owner }) => ({
           id: it.id,
@@ -479,9 +501,19 @@ export default function createRbmBoardRoutes(): Router {
           when: iso(chosenAssessment.a.approvedAt),
           reason: approvalReason(chosenAssessment.a.metadata),
         } : null,
-        // Version history is not modelled as a reason-for-change chain; the
-        // rbm_risk_assessments row carries a single integer version only.
-        history: [] as { v: number; status: string; by: string; when: string; reason: string }[],
+        // The real version chain. An amendment creates a new draft version and
+        // approving it archives the one it supersedes, so every row here is a
+        // version that existed — the approved ones with the signature they were
+        // approved under. Newest first.
+        history: sortedAssessments.map(r => ({
+          id: r.a.id,
+          v: r.a.version,
+          status: r.a.status,
+          by: r.approver ?? null,
+          when: iso(r.a.approvedAt),
+          reason: approvalReason(r.a.metadata),
+          amendmentReason: amendmentReason(r.a.metadata),
+        })),
       } : null;
 
       const plan = chosenPlan ? {

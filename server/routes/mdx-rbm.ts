@@ -60,7 +60,7 @@ import {
   DEFAULT_CTQ_FACTORS, DEFAULT_KRIS, DEFAULT_QTLS,
   type KriDirection,
 } from '../services/rbm/rbm-engine';
-import { generatePlanFromAssessment } from '../services/rbm/rbm-actuator';
+import { generatePlanFromAssessment, amendAssessment } from '../services/rbm/rbm-actuator';
 import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
 import {
   detectSiteOutliers, scorePatientCohort,
@@ -936,8 +936,10 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
   if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
   const signoff = await verifySignerCredentials(defaultSignoffDeps, { userId: signerId, password: parsed.data.password, mfaToken: parsed.data.mfaToken });
   if (!signoff.verified) return clientError(res, 401, signoff.error ?? 'Signer verification failed (21 CFR 11.200)', signoff.code ? { code: signoff.code } : undefined);
+  const client = await pool.connect();
   try {
-    const { rows } = await pool.query(
+    await client.query('BEGIN');
+    const { rows } = await client.query(
       `UPDATE rbm_risk_assessments
           SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
               metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
@@ -945,9 +947,75 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
         RETURNING *`,
       [signerId, parsed.data.reason, id, orgId],
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Risk assessment');
+    if (rows.length === 0) {
+      await client.query('ROLLBACK');
+      return notFoundInTenant(res, 'Risk assessment');
+    }
+    // Approving a version supersedes the one it replaces: the prior active
+    // version is archived in the SAME transaction, so a program never has two
+    // assessments claiming to be the governing risk basis at once. The archived
+    // row and its items are left untouched — that is the signed record.
+    if (rows[0].program_id) {
+      await client.query(
+        `UPDATE rbm_risk_assessments SET status = 'archived', updated_at = NOW()
+          WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+            AND id <> $3 AND status = 'active'`,
+        [orgId, rows[0].program_id, id],
+      );
+    }
+    await client.query('COMMIT');
     return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'approve-assessment', err); }
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'approve-assessment', err);
+  } finally {
+    client.release();
+  }
+});
+
+/**
+ * Open a versioned amendment to an approved risk assessment — a new draft
+ * carrying a copy of the register, leaving the signed version intact as the
+ * historical record. See amendAssessment for why this is a new version rather
+ * than an in-place edit.
+ *
+ * Opening an amendment is not itself a signed act, so it takes a reason for the
+ * record but no e-signature; the signature is required to approve the result.
+ */
+const amendBody = z.object({ reason: z.string().min(3).max(2000) });
+
+router.post('/rbm-assessments/:id/amend', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = numericId(req.params.id);
+  if (id === null) return clientError(res, 422, 'id must be numeric');
+  const parsed = amendBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'A reason for the amendment is required', parsed.error.flatten().fieldErrors);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await amendAssessment(client, orgId, {
+      assessmentId: id, reason: parsed.data.reason, openedBy: getUserId(req),
+    });
+    if (!result.amended) {
+      await client.query('ROLLBACK');
+      if (result.reason === 'not_found') return notFoundInTenant(res, 'Risk assessment');
+      return clientError(res, 409, result.reason === 'amendment_already_open'
+        ? 'A draft amendment is already open for this study — approve or archive it before opening another.'
+        : 'Only an approved assessment can be amended. This one is still a draft, so edit it directly.');
+    }
+    await client.query('COMMIT');
+    return created(res, { ...result.assessment, items: result.items }, {
+      supersedes: result.supersedes,
+      itemsCopied: result.items?.length ?? 0,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'amend-assessment', err);
+  } finally {
+    client.release();
+  }
 });
 
 /** Approve + activate a monitoring plan, capturing the reason for change. */

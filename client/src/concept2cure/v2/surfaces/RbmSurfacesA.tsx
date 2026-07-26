@@ -17,7 +17,6 @@
 import React, { useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
-import type { RbmAssessment } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmBoardItem, RbmBoardKri, RbmBoardQtl, RbmBoardFreshness } from './rbmBoard';
 import {
   RbmChip, RbmScore, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
@@ -231,17 +230,21 @@ export function RbmRact({ board, onReload }: SubProps) {
   const [sel, setSel] = useState<{ l: number; i: number } | null>(null);
   const [signFor, setSignFor] = useState(false);
   const [edit, setEdit] = useState<{ mode: string; item?: ItemView } | null>(null);
+  const [amending, setAmending] = useState(false);
   const mut = useRbmMutation(onReload);
   const owners = useRbmOwners();
 
-  const asmt: RbmAssessment | null = board.assessment ? {
-    id: String(board.assessment.id), framework: board.assessment.framework,
-    version: board.assessment.version, status: board.assessment.status,
-    updated: board.assessment.updated ?? '', history: [],
-    approval: board.assessment.approval
-      ? { by: board.assessment.approval.by ?? '', when: board.assessment.approval.when ?? '', reason: board.assessment.approval.reason ?? '', audit: '' }
-      : undefined,
-  } : null;
+  const asmt = board.assessment;
+  const history = asmt?.history ?? [];
+
+  /** Open a versioned amendment. The signed version is left untouched; the new
+      draft starts from a copy of its register and needs its own signature. */
+  const amend = async (f: Record<string, string>) => {
+    const done = await mut.run(async () => {
+      await rbmWrite('POST', `/rbm-assessments/${asmt!.id}/amend`, { reason: f.reason });
+    });
+    if (done) setAmending(false);
+  };
 
   const items = board.items.map(itemView);
   const shown = items.filter(it => !sel || (it.l === sel.l && it.i === sel.i));
@@ -250,11 +253,11 @@ export function RbmRact({ board, onReload }: SubProps) {
    * An approved assessment is frozen here. Its e-signature attests to specific
    * CtQ content; editing a factor underneath it would leave the approval block
    * still showing the original signer, time and reason for content they never
-   * saw. Until versioned amendments exist (a new draft version carrying its own
-   * reason-for-change and signature), the correct behaviour is to refuse the
-   * write rather than quietly invalidate the signature.
+   * saw. Revising it goes through "Amend", which opens a new draft version
+   * carrying a copy of the register — so the signed version stays as signed and
+   * the revision is approved in its own right.
    */
-  const locked = board.assessment?.status === 'active';
+  const locked = asmt?.status === 'active';
 
   /**
    * Persist a CtQ factor. The inherent score and the residual score are both
@@ -340,7 +343,24 @@ export function RbmRact({ board, onReload }: SubProps) {
             <span>Version {asmt.version} -- <RbmChip vocab={asmt.status === 'active' ? 'action' : 'item'} value={asmt.status === 'active' ? 'done' : 'open'} /> {asmt.status === 'active' ? 'active' : 'draft -- approval pending'} -- {items.length} CtQ factors, {items.filter(x => x.critical).length} critical</span>
             {asmt.approval ? <span className="rbm-audit">{I.check}Approved by {asmt.approval.by} -- {asmt.approval.when} -- &quot;{asmt.approval.reason}&quot;</span> : null}
           </div>
-          {asmt.status !== 'active' && <button className="rbm-btn pri" onClick={() => setSignFor(true)}>{I.lock}Approve assessment</button>}
+          {history.length > 1 && (
+            <div className="rbm-asmt-hist">
+              {history.map(h => (
+                <span key={h.id} className="rbm-hist-row" data-cur={h.id === asmt.id || undefined}>
+                  v{h.v} — {h.status}
+                  {h.when ? ` — approved ${h.when}${h.by ? ` by ${h.by}` : ''}` : ''}
+                  {h.reason ? ` — "${h.reason}"` : h.amendmentReason ? ` — opened: "${h.amendmentReason}"` : ''}
+                </span>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7, alignItems: 'flex-end' }}>
+            {asmt.status !== 'active' && <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setSignFor(true)}>{I.lock}Approve assessment</button>}
+            {/* An approved RACT is frozen, but a study's risks change. Amending
+                opens a new draft version carrying a copy of the register, so the
+                signed version stays exactly as signed. */}
+            {locked && <button className="rbm-btn" disabled={mut.busy} onClick={() => setAmending(true)}>{I.penLine}Amend — new version</button>}
+          </div>
         </div>
       ) : (
         <div className="rbm-note">{I.info}No formal risk-assessment record exists for this study yet — the critical-to-quality register below reflects the live risk items; create and approve a framework version to govern it.</div>
@@ -378,7 +398,7 @@ export function RbmRact({ board, onReload }: SubProps) {
       </div>
       <div className="rbm-note">{I.info}The governing risk score is <b>likelihood x impact</b> (rbm-engine scoreRisk), banded low &lt;8 / medium 8-14 / high 15+. Detectability is recorded against each factor for review but is <b>not</b> multiplied into the score — one scoring method, applied consistently. Residual score is derived the same way from the post-mitigation likelihood and impact.</div>
       {locked && (
-        <div className="rbm-note">{I.lock}This assessment is <b>approved</b>, so its critical-to-quality content is fixed: the e-signature above attests to these factors as they stand. Changing them here would leave that signature pointing at content the signer never reviewed. Versioned amendments — a new draft carrying its own reason for change and signature — are not implemented yet, so the register is read-only until then.</div>
+        <div className="rbm-note">{I.lock}This assessment is <b>approved</b>, so its critical-to-quality content is fixed: the e-signature above attests to these factors as they stand. To revise it, use <b>Amend</b> — that opens the next version as a draft carrying a copy of this register, leaving v{asmt?.version} and its signature intact as the historical record. The amendment governs nothing until it is approved in its own right.</div>
       )}
       {edit && <RbmFormModal title={edit.mode === 'edit' ? 'Edit CtQ factor' : 'Add CtQ factor'}
         intro="Score likelihood and impact (1-5 each); the engine derives the inherent score and flags 15+ as critical. Record the mitigation, the residual likelihood/impact after it, and the risk owner."
@@ -390,6 +410,11 @@ export function RbmRact({ board, onReload }: SubProps) {
         } : null}
         busy={mut.busy} error={mut.error}
         submitLabel={edit.mode === 'edit' ? 'Save changes' : 'Add factor'} onCancel={() => { setEdit(null); mut.clearError(); }} onSubmit={saveItem} />}
+      {amending && asmt && <RbmFormModal title={`Amend risk assessment v${asmt.version}`}
+        intro={`This creates version ${asmt.version + 1} as a draft, carrying a copy of the ${items.length} current CtQ factor(s). Version ${asmt.version} and its e-signature are left exactly as approved — they become the historical record. The new version governs nothing until it is approved in its own right.`}
+        fields={[{ key: 'reason', label: 'Why is the assessment being amended?', type: 'textarea' }]}
+        busy={mut.busy} error={mut.error}
+        submitLabel="Open amendment" onCancel={() => { setAmending(false); mut.clearError(); }} onSubmit={amend} />}
       {signFor && asmt && <GovernedApprovalDialog what={`Risk assessment v${asmt.version}`}
         meaning="The RACT becomes the governing risk basis for monitoring-tier assignment and the risk review report."
         onCancel={() => setSignFor(false)}

@@ -294,6 +294,105 @@ export async function draftPlan(exec: Exec, organizationId: number, input: Draft
   return { plan: rows[0], inferred: { strategy, fromOverallRisk: overall } };
 }
 
+export interface AmendAssessmentResult {
+  amended: boolean;
+  reason?: 'not_found' | 'not_approved' | 'amendment_already_open';
+  assessment?: any;
+  items?: any[];
+  /** The version this amendment was opened from. */
+  supersedes?: number;
+}
+
+/**
+ * Open a versioned amendment to an APPROVED risk assessment.
+ *
+ * An approved RACT is frozen: its e-signature attests to specific CtQ content,
+ * so editing in place would leave the signature pointing at content the signer
+ * never saw. But a study's risks genuinely change, so "frozen" cannot mean
+ * "never revisable" — that would push people to work around the module rather
+ * than in it.
+ *
+ * So an amendment is a NEW DRAFT version: the approved row and its items stay
+ * exactly as signed and become the historical record, while the draft carries a
+ * copy of the CtQ register that is free to edit and must be signed in its own
+ * right before it governs anything. Nothing is mutated in place, which is what
+ * makes the version chain an audit trail rather than a changelog.
+ *
+ * Refuses when there is already an open amendment: two concurrent drafts off
+ * one approved version have no defined merge, and silently picking one would
+ * discard the other's work.
+ *
+ * The caller owns the transaction.
+ */
+export async function amendAssessment(
+  exec: Exec,
+  organizationId: number,
+  input: { assessmentId: number; reason: string; openedBy?: number | null },
+): Promise<AmendAssessmentResult> {
+  const current = (await exec.query(
+    `SELECT * FROM rbm_risk_assessments
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [input.assessmentId, organizationId],
+  )).rows[0];
+  if (!current) return { amended: false, reason: 'not_found' };
+  // Only an approved version can be amended. A draft is already editable, so
+  // amending one would fork it for no reason.
+  if (current.status !== 'active') return { amended: false, reason: 'not_approved' };
+
+  const open = (await exec.query(
+    `SELECT id FROM rbm_risk_assessments
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+        AND status = 'draft' LIMIT 1`,
+    [organizationId, current.program_id],
+  )).rows[0];
+  if (open) return { amended: false, reason: 'amendment_already_open' };
+
+  const { rows: maxRows } = await exec.query(
+    `SELECT COALESCE(MAX(version), 0) AS v FROM rbm_risk_assessments
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
+    [organizationId, current.program_id],
+  );
+  const nextVersion = Number(maxRows[0].v) + 1;
+
+  // The new draft carries NO approval fields: it has not been signed, and
+  // copying the previous signer forward would be forging one.
+  const draft = (await exec.query(
+    `INSERT INTO rbm_risk_assessments (
+       organization_id, program_id, title, framework, overall_risk, status, version, metadata
+     ) VALUES ($1,$2,$3,$4,$5,'draft',$6,$7) RETURNING *`,
+    [
+      organizationId, current.program_id, current.title, current.framework,
+      current.overall_risk, nextVersion,
+      JSON.stringify({
+        amendmentOf: current.id,
+        amendmentOfVersion: current.version,
+        amendmentReason: input.reason,
+        amendmentOpenedBy: input.openedBy ?? null,
+      }),
+    ],
+  )).rows[0];
+
+  // Copy the register forward so the amendment starts from the approved content
+  // rather than a blank sheet. residual_score is recomputed by the engine on
+  // edit; it is copied as-is here because nothing has changed yet.
+  const items = (await exec.query(
+    `INSERT INTO rbm_risk_items (
+       organization_id, assessment_id, program_id, ref_code, category, ctq_factor,
+       risk_description, likelihood, impact, detectability, risk_score, is_critical,
+       mitigation, residual_likelihood, residual_impact, residual_score, status, assigned_to
+     )
+     SELECT organization_id, $1, program_id, ref_code, category, ctq_factor,
+            risk_description, likelihood, impact, detectability, risk_score, is_critical,
+            mitigation, residual_likelihood, residual_impact, residual_score, status, assigned_to
+       FROM rbm_risk_items
+      WHERE organization_id = $2 AND assessment_id = $3 AND deleted_at IS NULL
+     RETURNING *`,
+    [draft.id, organizationId, current.id],
+  )).rows;
+
+  return { amended: true, assessment: draft, items, supersedes: current.version };
+}
+
 export interface GeneratePlanResult {
   generated: boolean;
   /** Why nothing was generated, when `generated` is false. */

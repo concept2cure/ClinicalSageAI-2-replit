@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   addCtqFactor, defineKri, recordKriReading, setQtl, raiseSignal, triageSignal,
-  draftPlan, generatePlanFromAssessment, createAction, updateAction, approveAssessment,
+  draftPlan, generatePlanFromAssessment, amendAssessment, createAction, updateAction, approveAssessment,
   inferSecondaryLimit, type Exec,
 } from '../rbm-actuator';
 
@@ -216,5 +216,61 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
     expect(out.generated).toBe(false);
     expect(out.reason).toBe('assessment_not_approved');
     expect(calls).toHaveLength(1);
+  });
+});
+
+describe('amendAssessment — versioned revision of a signed RACT', () => {
+  const approved = { id: 7, program_id: 'p', title: 'RACT', framework: 'ich_e6r3', overall_risk: 'high', status: 'active', version: 2 };
+
+  it('opens the next version as a draft, copying the register forward', async () => {
+    const { exec, calls } = mockExec([
+      [approved],            // load the assessment
+      [],                    // no open draft
+      [{ v: 2 }],            // max version
+      [{ id: 9, version: 3, status: 'draft' }],  // insert draft
+      [{ id: 101 }, { id: 102 }],                 // copied items
+    ]);
+    const out = await amendAssessment(exec, ORG, { assessmentId: 7, reason: 'New safety signal', openedBy: 4 });
+    expect(out.amended).toBe(true);
+    expect(out.supersedes).toBe(2);
+    expect(out.items).toHaveLength(2);
+
+    const insert = calls[3];
+    // Draft, next version, and NO approval fields — copying the previous
+    // signer forward would be forging a signature.
+    expect(insert.sql).toContain("'draft'");
+    expect(insert.args).toContain(3);
+    expect(insert.sql).not.toContain('approved_by');
+    expect(String(insert.args[insert.args.length - 1])).toContain('New safety signal');
+
+    // The register is copied to the NEW assessment id, read from the old one.
+    const copy = calls[4];
+    expect(copy.args).toEqual([9, ORG, 7]);
+    expect(copy.sql).toContain('INSERT INTO rbm_risk_items');
+    for (const c of calls) expect(c.args).toContain(ORG);
+  });
+
+  it('refuses to amend a draft — a draft is already editable', async () => {
+    const { exec, calls } = mockExec([[{ ...approved, status: 'draft' }]]);
+    const out = await amendAssessment(exec, ORG, { assessmentId: 7, reason: 'x' });
+    expect(out.amended).toBe(false);
+    expect(out.reason).toBe('not_approved');
+    expect(calls).toHaveLength(1);
+  });
+
+  it('refuses a second concurrent amendment', async () => {
+    // Two drafts off one approved version have no defined merge, and silently
+    // picking one would discard the other's work.
+    const { exec } = mockExec([[approved], [{ id: 8 }]]);
+    const out = await amendAssessment(exec, ORG, { assessmentId: 7, reason: 'x' });
+    expect(out.amended).toBe(false);
+    expect(out.reason).toBe('amendment_already_open');
+  });
+
+  it('reports not_found for an assessment outside the tenant', async () => {
+    const { exec } = mockExec([[]]);
+    const out = await amendAssessment(exec, ORG, { assessmentId: 999, reason: 'x' });
+    expect(out.amended).toBe(false);
+    expect(out.reason).toBe('not_found');
   });
 });

@@ -38,7 +38,7 @@ function board(over: Partial<RbmBoard> = {}): RbmBoard {
     attention: [],
     report: null,
     reportMarkdown: null,
-    assessment: { id: 7, framework: 'ich_e6r3', version: 1, status: 'draft', updated: null, approval: null, history: [] },
+    assessment: { id: 7, framework: 'ich_e6r3', version: 1, status: 'draft', updated: null, approval: null, history: [{ id: 7, v: 1, status: 'draft', by: null, when: null, reason: null, amendmentReason: null }] },
     items: [{ id: 21, category: 'safety', factor: 'SAE reporting', l: 3, i: 5, det: 2, critical: true, mitigation: 'Central review', residual: null, status: 'open', owner: null, refCode: 'R-1' }],
     kris: [{ id: 5, name: 'Query rate', metric: 'Open queries', source: 'edc', unit: '%', dir: 'higher_worse', amber: 10, red: 20, current: 12, status: 'amber', at: null, spark: [11, 12] }],
     qtls: [{ id: 9, parameter: 'Dropout rate', rationale: 'Power', unit: null, secondary: 0.15, threshold: 0.2, current: 0.24, status: 'breached', breachActionTaken: null }],
@@ -351,5 +351,53 @@ describe('RBM metric ingest — reports what the load actually did', () => {
     expect(await screen.findByText(/matched no configured KRI or QTL/)).toBeTruthy();
     expect(screen.getByText(/Screen fail rate, AE onset lag/)).toBeTruthy();
     expect(screen.getByText(/Nothing on this study changed as a result of this load/)).toBeTruthy();
+  });
+});
+
+describe('RBM RACT — versioned amendment of a signed assessment', () => {
+  const approvedBoard = () => board({
+    assessment: {
+      id: 7, framework: 'ich_e6r3', version: 2, status: 'active', updated: null,
+      approval: { by: 'Jordan Chen', when: '2026-06-01', reason: 'Risk review complete' },
+      history: [
+        { id: 7, v: 2, status: 'active', by: 'Jordan Chen', when: '2026-06-01', reason: 'Risk review complete', amendmentReason: 'Enrollment risk revised' },
+        { id: 4, v: 1, status: 'archived', by: 'Sam Okafor', when: '2026-04-02', reason: 'Initial approval', amendmentReason: null },
+      ],
+    },
+  });
+
+  it('offers Amend on an approved assessment instead of dead-ending the register', () => {
+    render(<RbmRact board={approvedBoard()} onReload={vi.fn()} />);
+    // Editing in place stays refused...
+    expect(screen.getByRole('button', { name: /Add CtQ factor/ })).toHaveProperty('disabled', true);
+    // ...but there is a governed way forward.
+    expect(screen.getByRole('button', { name: /Amend — new version/ })).toHaveProperty('disabled', false);
+  });
+
+  it('opens the amendment with a reason, and says the signed version is preserved', async () => {
+    render(<RbmRact board={approvedBoard()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Amend — new version/ }));
+    // The dialog must be explicit that v2 and its signature survive.
+    expect(await screen.findByText(/creates version 3 as a draft/)).toBeTruthy();
+    expect(screen.getByText(/left exactly as approved/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/Why is the assessment being amended/), {
+      target: { value: 'Dropout rate exceeded plan assumptions' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Open amendment/ }));
+    await waitFor(() => {
+      expect(writes()).toContainEqual(['POST', '/api/mdx/rbm-assessments/7/amend', { reason: 'Dropout rate exceeded plan assumptions' }]);
+    });
+  });
+
+  it('renders the version chain with each version\'s own signature', () => {
+    render(<RbmRact board={approvedBoard()} onReload={vi.fn()} />);
+    expect(screen.getByText(/v2 — active — approved 2026-06-01 by Jordan Chen/)).toBeTruthy();
+    expect(screen.getByText(/v1 — archived — approved 2026-04-02 by Sam Okafor/)).toBeTruthy();
+  });
+
+  it('does not offer Amend on a draft — a draft is already editable', () => {
+    render(<RbmRact board={board()} onReload={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /Amend — new version/ })).toBeNull();
+    expect(screen.getByRole('button', { name: /Add CtQ factor/ })).toHaveProperty('disabled', false);
   });
 });
