@@ -53,9 +53,13 @@ export function IvdSurface({ program, onAskAna, onOpenEditor }: IvdSurfaceProps)
   /* Live IVDR data — org-scoped lists + program-scoped GSPR matrix. Each
      falls back to the kit fixture on load/error so the surface is usable
      even before any IVDR record exists for the tenant. */
-  const classifications = useIvdClassifications();
-  const validations = useIvdValidations();
-  const clinical = useIvdClinicalEvidence();
+  /* All four panels now follow the programme named in the header. They
+     previously read the whole organisation while the header named one
+     device, so a user could attribute another assay's Class C
+     determination, LoD or sensitivity to the device in front of them. */
+  const classifications = useIvdClassifications(programId);
+  const validations = useIvdValidations(programId);
+  const clinical = useIvdClinicalEvidence(programId);
   const gspr = useIvdGsprMatrix(programId);
 
   const sourceClass = useSampleRows(classifications.rows, IVD_CLASSIFICATIONS);

@@ -41,15 +41,23 @@ const EMPTY: readonly never[] = Object.freeze([]);
 /**
  * Resolve a list panel.
  *
+ * Sample content substitutes for an unresolved source *and* for a
+ * resolved-but-empty one, matching `DataGate` — which renders its
+ * `sample` for every non-ready state, `empty` included. Without that
+ * alignment the same tenant would see example rows through one helper
+ * and a blank panel through the other, purely because `[]` is truthy.
+ * A demo on a fresh workspace needs the empty case to populate.
+ *
+ * Real rows always win, so sample mode can never mask live data.
+ *
  * @param live   Rows from the backend, or null when unresolved.
  * @param sample Canonical example rows for this panel.
- * @returns `live` when present; `sample` only in explicit sample mode;
- *          otherwise an empty array.
  */
 export function useSampleRows<T>(live: T[] | null | undefined, sample: readonly T[]): T[] {
   const sampleOn = useSampleMode();
-  if (live) return live;
-  return sampleOn ? (sample as T[]) : (EMPTY as unknown as T[]);
+  if (live && live.length > 0) return live;
+  if (sampleOn) return sample as T[];
+  return live ?? (EMPTY as unknown as T[]);
 }
 
 /**

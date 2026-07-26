@@ -89,6 +89,27 @@ export default function createIVDRRoutes(pool: Pool): Router {
     return n;
   }
 
+  /* ── Optional programme scoping ───────────────────────────────────────
+     The IVD workbench names one diagnostic programme in its header but its
+     classification, validation and clinical-evidence panels were reading the
+     whole organisation. A user could attribute another assay's Class C
+     determination, LoD or sensitivity to the device in front of them.
+
+     `program_id` is optional so existing callers keep the portfolio-wide
+     view. A malformed value is rejected rather than ignored: silently
+     returning the unscoped list for a typo'd UUID is how a scoped panel
+     starts showing everything again. */
+  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  /** Sentinel distinguishing "absent" (undefined) from "present but bad". */
+  const INVALID = Symbol('invalid-program-id');
+
+  function parseProgramId(req: Request): string | undefined | typeof INVALID {
+    const raw = req.query.program_id;
+    if (raw === undefined || raw === '') return undefined;
+    if (typeof raw !== 'string' || !UUID_RE.test(raw)) return INVALID;
+    return raw;
+  }
+
   /**
    * Safe error response — never leaks raw error.message to client.
    * Returns 503 IVDR_NOT_PROVISIONED for missing IVDR tables (42P01).
@@ -250,11 +271,28 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/classifications', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
+      /* Optional narrowing to one diagnostic programme. Without it the IVD
+         workbench showed every classification in the organisation while its
+         header named a single programme — so a user reading "Class C, Rule 3"
+         could attribute another assay's classification to the device in front
+         of them. program_id is guaranteed present by 20260524_ivdr_cdx.sql,
+         which adds it idempotently regardless of which of the three competing
+         CREATE TABLE definitions for this table won on a given deployment. */
+      const programId = parseProgramId(req);
+      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+
+      const scoped = programId !== undefined;
       const result = await pool.query(
-        `SELECT id, device_name, intended_purpose, classification, is_cdx, is_self_test, is_near_patient, rule_trace, analytes, organization_id, created_at FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC`,
-        [orgId]
+        `SELECT id, device_name, intended_purpose, classification, is_cdx, is_self_test, is_near_patient, rule_trace, analytes, organization_id, created_at
+           FROM ivdr_classifications
+          WHERE organization_id = $1${scoped ? ' AND program_id = $2' : ''}
+          ORDER BY created_at DESC`,
+        scoped ? [orgId, programId] : [orgId]
       );
-      return res.json({ classifications: result.rows });
+      return res.json({
+        classifications: result.rows,
+        meta: { scope: scoped ? 'program' : 'organization' },
+      });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_LIST_CLASS_ERROR', 'List classifications');
     }
@@ -371,15 +409,27 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/validations', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
+      const programId = parseProgramId(req);
+      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+
+      /* Validations reach a programme through their classification. The join
+         stays LEFT so an unclassified validation is still visible in the
+         portfolio view; adding the programme predicate necessarily excludes
+         those rows when scoping, which is correct — a validation with no
+         classification cannot be claimed for a programme. */
+      const scoped = programId !== undefined;
       const result = await pool.query(
         `SELECT v.*, c.classification, c.is_cdx
          FROM ivdr_analytical_validations v
          LEFT JOIN ivdr_classifications c ON v.classification_id = c.id
-         WHERE v.organization_id = $1
+         WHERE v.organization_id = $1${scoped ? ' AND c.program_id = $2' : ''}
          ORDER BY v.created_at DESC`,
-        [orgId]
+        scoped ? [orgId, programId] : [orgId]
       );
-      return res.json({ validations: result.rows });
+      return res.json({
+        validations: result.rows,
+        meta: { scope: scoped ? 'program' : 'organization' },
+      });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_LIST_VALID_ERROR', 'List validations');
     }
@@ -602,15 +652,25 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/clinical-evidence', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
+      const programId = parseProgramId(req);
+      if (programId === INVALID) return res.status(422).json({ error: 'program_id must be a UUID' });
+
+      /* Same reachability as validations: clinical evidence belongs to a
+         programme via its classification. Sensitivity and specificity are
+         exactly the numbers a user must not read off the wrong assay. */
+      const scoped = programId !== undefined;
       const result = await pool.query(
         `SELECT e.*, c.device_name, c.classification, c.is_cdx
          FROM ivdr_clinical_evidence e
          LEFT JOIN ivdr_classifications c ON e.classification_id = c.id
-         WHERE e.organization_id = $1
+         WHERE e.organization_id = $1${scoped ? ' AND c.program_id = $2' : ''}
          ORDER BY e.created_at DESC`,
-        [orgId]
+        scoped ? [orgId, programId] : [orgId]
       );
-      return res.json({ evidence: result.rows });
+      return res.json({
+        evidence: result.rows,
+        meta: { scope: scoped ? 'program' : 'organization' },
+      });
     } catch (error: any) {
       return safeError(res, error, 'IVDR_LIST_EVID_ERROR', 'List clinical evidence');
     }
