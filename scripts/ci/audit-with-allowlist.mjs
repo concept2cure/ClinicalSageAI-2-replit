@@ -103,16 +103,18 @@ const ACCEPTED_GHSA_IDS = new Set([
   'GHSA-v245-v573-v5vm', // linkify-it quadratic-complexity DoS via the mailto: validator scan-loop
   // postcss — advisory range <=8.5.17; direct dep bumped ^8.5.23 (installed 8.5.23).
   'GHSA-r28c-9q8g-f849', // postcss path traversal in previous-source-map auto-loading
-  // react-router — DoS advisory range >=7.0.0 <7.18.0; bumped react-router-dom to
-  // ^7.18.1 (installed react-router 7.18.1, above range). Genuinely fixed.
-  'GHSA-chx6-hx7r-mcp5', // react-router unauthenticated DoS via inefficient route matching
-  // react-router — RSC-mode CSRF advisory range >=7.12.0 <8.3.0. NOT a registry-lag
-  // false positive: the fix lands in 8.3.0 (a major upgrade). This is an RSC /
-  // framework-mode-only bypass (actions executing before a 400 in React Server
-  // Components mode); this app uses react-router-dom in SPA / data-router mode with
-  // no RSC server actions, so the vector is not reachable. Accepted as a
-  // not-reachable risk pending a coordinated react-router 8.x major upgrade.
-  'GHSA-qwww-vcr4-c8h2', // react-router RSC-mode CSRF bypass (SPA usage; 8.x upgrade deferred)
+  // ── react-router: entries REMOVED, dependency removed ─────────────────────
+  // GHSA-chx6-hx7r-mcp5 and GHSA-qwww-vcr4-c8h2 were accepted here on the
+  // stated basis that "this app uses react-router-dom in SPA / data-router
+  // mode". It does not use it at all — routing is `wouter`, and there was no
+  // import of react-router anywhere in client/, server/ or shared/. The
+  // package has been dropped from package.json, so both advisories are gone
+  // rather than suppressed, and neither entry has anything left to match.
+  //
+  // Keep this note: an allowlist entry whose justification describes usage
+  // that does not exist is worse than no entry, because it reads as a
+  // considered risk acceptance. If react-router is ever adopted, re-evaluate
+  // GHSA-qwww-vcr4-c8h2 against 8.3.0 rather than reinstating these lines.
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {
