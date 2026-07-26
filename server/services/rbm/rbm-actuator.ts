@@ -24,6 +24,7 @@
 
 import {
   scoreRisk,
+  bandFromScore,
   kriStatus,
   qtlStatus,
   defaultPlanStrategy,
@@ -291,6 +292,119 @@ export async function draftPlan(exec: Exec, organizationId: number, input: Draft
     [organizationId, input.programId ?? null, input.assessmentId ?? null, title, strategy],
   );
   return { plan: rows[0], inferred: { strategy, fromOverallRisk: overall } };
+}
+
+export interface GeneratePlanResult {
+  generated: boolean;
+  /** Why nothing was generated, when `generated` is false. */
+  reason?: 'no_assessment';
+  plan?: any;
+  actions?: any[];
+  derivedFrom?: { assessmentId: number; overallRisk: string; criticalFactors: number; enhancedSites: number };
+}
+
+/**
+ * Derive a monitoring plan from the program's governing risk assessment.
+ *
+ * ICH E6(R3) expects the monitoring approach to follow from the identified
+ * risks, so nothing here is invented: the strategy comes from the assessment's
+ * overall risk band (defaultPlanStrategy), and the opening actions come from
+ * the assessment's own open critical CtQ factors — each linked back to its risk
+ * item — plus the enhanced-tier sites the site-risk engine scored. With no
+ * assessment there is nothing to derive from, and the caller is told so rather
+ * than handed an empty plan that looks derived.
+ *
+ * The plan is created as a DRAFT: it becomes the active monitoring commitment
+ * only through the governed, re-authenticated approval path.
+ *
+ * Unlike draftPlan() — which creates the plan shell alone — this is the full
+ * derivation, and it is the single implementation behind both
+ * POST /api/mdx/rbm-monitoring-plans/generate and the AnA plan tools.
+ *
+ * The caller owns the transaction: pass a pooled client inside BEGIN/COMMIT.
+ */
+export async function generatePlanFromAssessment(
+  exec: Exec,
+  organizationId: number,
+  input: { programId: string; title?: string },
+): Promise<GeneratePlanResult> {
+  const assessment = (await exec.query(
+    `SELECT id, title, overall_risk FROM rbm_risk_assessments
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+      ORDER BY (status = 'active') DESC, updated_at DESC LIMIT 1`,
+    [organizationId, input.programId],
+  )).rows[0];
+  if (!assessment) return { generated: false, reason: 'no_assessment' };
+
+  const critical = (await exec.query(
+    `SELECT id, ctq_factor, risk_score FROM rbm_risk_items
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+        AND is_critical = true AND status IN ('open','mitigating')
+      ORDER BY risk_score DESC NULLS LAST, id`,
+    [organizationId, input.programId],
+  )).rows;
+  const enhanced = (await exec.query(
+    `SELECT site_number, site_name FROM rbm_site_risk_scores
+      WHERE organization_id = $1 AND program_id = $2 AND monitoring_tier = 'enhanced'
+      ORDER BY composite_risk DESC NULLS LAST`,
+    [organizationId, input.programId],
+  )).rows;
+
+  const overall = (assessment.overall_risk === 'low' || assessment.overall_risk === 'high')
+    ? assessment.overall_risk
+    : 'medium';
+  const strategy = defaultPlanStrategy(overall);
+
+  const plan = (await exec.query(
+    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, metadata)
+     VALUES ($1,$2,$3,$4,$5,'draft',$6) RETURNING *`,
+    [
+      organizationId, input.programId, assessment.id,
+      input.title ?? `Monitoring plan — ${assessment.title}`, strategy,
+      JSON.stringify({
+        generatedFrom: 'rbm_risk_assessment',
+        assessmentId: assessment.id,
+        overallRisk: overall,
+        criticalFactors: critical.length,
+        enhancedSites: enhanced.length,
+      }),
+    ],
+  )).rows[0];
+
+  const actions: any[] = [];
+  // One action per open critical CtQ factor, linked to the risk item so the
+  // plan board can show where each action came from. Priority follows the
+  // engine's own banding of the factor's score.
+  for (const it of critical) {
+    const band = bandFromScore(num(it.risk_score) ?? 0);
+    const priority = band === 'high' ? 'high' : band === 'medium' ? 'medium' : 'low';
+    actions.push((await exec.query(
+      `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, risk_item_id, action_type, description, priority, due_date, status)
+       VALUES ($1,$2,$3,'issue',$4,$5, CURRENT_DATE + INTERVAL '14 days','open') RETURNING *`,
+      [organizationId, plan.id, it.id, `Confirm the monitoring control for: ${it.ctq_factor}`, priority],
+    )).rows[0]);
+  }
+  // One oversight visit per enhanced-tier site — the tier is what drives visit
+  // cadence under a risk-proportionate plan.
+  for (const s of enhanced) {
+    actions.push((await exec.query(
+      `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, action_type, description, priority, due_date, status)
+       VALUES ($1,$2,'site_visit',$3,'high', CURRENT_DATE + INTERVAL '30 days','open') RETURNING *`,
+      [organizationId, plan.id, `Enhanced-tier oversight visit — site ${s.site_number ?? '—'}${s.site_name ? ` (${s.site_name})` : ''}`],
+    )).rows[0]);
+  }
+
+  return {
+    generated: true,
+    plan,
+    actions,
+    derivedFrom: {
+      assessmentId: assessment.id,
+      overallRisk: overall,
+      criticalFactors: critical.length,
+      enhancedSites: enhanced.length,
+    },
+  };
 }
 
 export interface CreateActionInput {

@@ -37,6 +37,8 @@
  *   Monitoring plan + actions
  *     GET   /api/mdx/rbm-monitoring-plans?program_id=
  *     POST  /api/mdx/rbm-monitoring-plans       GET .../:id (plan + actions)
+ *     POST  /api/mdx/rbm-monitoring-plans/generate  (derive a draft plan + actions
+ *                                                    from the governing RACT)
  *     PATCH /api/mdx/rbm-monitoring-plans/:id
  *     GET   /api/mdx/rbm-monitoring-actions?plan_id=&program_id=
  *     POST  /api/mdx/rbm-monitoring-actions     PATCH .../:id
@@ -54,10 +56,11 @@ import {
 } from '../lib/api-response';
 import { pool } from '../db';
 import {
-  scoreRisk, overallRiskFromScores, kriStatus, qtlStatus, defaultPlanStrategy,
+  scoreRisk, overallRiskFromScores, kriStatus, qtlStatus,
   DEFAULT_CTQ_FACTORS, DEFAULT_KRIS, DEFAULT_QTLS,
   type KriDirection,
 } from '../services/rbm/rbm-engine';
+import { generatePlanFromAssessment } from '../services/rbm/rbm-actuator';
 import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
 import {
   detectSiteOutliers, scorePatientCohort,
@@ -195,9 +198,14 @@ router.post('/rbm-assessments/seed', async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // Seeded as DRAFT. A seeded RACT is a starting library, not an approved
+    // risk basis: activation is a governed, re-authenticated signature
+    // (POST /rbm-assessments/:id/approve). Inserting it 'active' would let an
+    // unreviewed default library govern monitoring-tier assignment and the
+    // risk review report without anyone having signed for it.
     const { rows: aRows } = await client.query(
       `INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status)
-       VALUES ($1,$2,$3,$4,$5,'active') RETURNING *`,
+       VALUES ($1,$2,$3,$4,$5,'draft') RETURNING *`,
       [orgId, programId, parsed.data.title ?? 'Risk assessment (RACT)', parsed.data.framework ?? 'ich_e6r3', overall],
     );
     const assessment = aRows[0];
@@ -456,9 +464,11 @@ router.post('/rbm-kris/seed', async (req, res) => {
   try {
     const out: unknown[] = [];
     for (const k of DEFAULT_KRIS) {
+      // Seeded KRIs carry thresholds but no reading yet — 'not_evaluated',
+      // never 'green'. A freshly seeded library has measured nothing.
       const { rows } = await pool.query(
         `INSERT INTO rbm_kris (organization_id, program_id, name, metric_definition, data_source, unit, direction, threshold_amber, threshold_red, status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'green') RETURNING *`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'not_evaluated') RETURNING *`,
         [orgId, programId, k.name, k.metricDefinition, k.dataSource, k.unit, k.direction, k.thresholdAmber, k.thresholdRed],
       );
       out.push(rows[0]);
@@ -645,9 +655,12 @@ router.post('/rbm-qtls/seed', async (req, res) => {
     const out: unknown[] = [];
     for (const q of DEFAULT_QTLS) {
       const secondary = Math.round(q.threshold * q.secondaryFraction * 10000) / 10000;
+      // Seeded with limits but no current value — 'not_evaluated'. Reporting a
+      // never-measured parameter as 'within' would claim tolerance the study
+      // has not demonstrated.
       const { rows } = await pool.query(
         `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit, status)
-         VALUES ($1,$2,$3,$4,$5,$6,'within') RETURNING *`,
+         VALUES ($1,$2,$3,$4,$5,$6,'not_evaluated') RETURNING *`,
         [orgId, programId, q.parameter, q.rationale, q.threshold, secondary],
       );
       out.push(rows[0]);
@@ -1142,6 +1155,45 @@ router.post('/rbm-monitoring-plans', async (req, res) => {
   } catch (err) { return serverError(res, log, 'create-plan', err); }
 });
 
+/**
+ * Derive a draft monitoring plan (and its opening actions) from the program's
+ * governing risk assessment. The derivation itself lives in the RBM actuator so
+ * this route and the AnA tools run the same code; see
+ * generatePlanFromAssessment for what is derived and why.
+ */
+const generatePlanBody = z.object({
+  programId: z.string().regex(UUID_RE),
+  title: z.string().min(1).max(300).optional(),
+});
+
+router.post('/rbm-monitoring-plans/generate', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const parsed = generatePlanBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await generatePlanFromAssessment(client, orgId, parsed.data);
+    if (!result.generated) {
+      await client.query('ROLLBACK');
+      return clientError(res, 409, 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan');
+    }
+    await client.query('COMMIT');
+    return created(res, { ...result.plan, actions: result.actions }, {
+      derivedFrom: { assessmentId: result.derivedFrom!.assessmentId, overallRisk: result.derivedFrom!.overallRisk },
+      criticalFactors: result.derivedFrom!.criticalFactors,
+      enhancedSites: result.derivedFrom!.enhancedSites,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'generate-plan', err);
+  } finally {
+    client.release();
+  }
+});
+
 router.get('/rbm-monitoring-plans/:id', async (req, res) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -1305,13 +1357,15 @@ router.get('/rbm-summary/:programId', async (req, res) => {
       pool.query(
         `SELECT COUNT(*)::int AS total,
                 COUNT(*) FILTER (WHERE status = 'red')::int AS red,
-                COUNT(*) FILTER (WHERE status = 'amber')::int AS amber
+                COUNT(*) FILTER (WHERE status = 'amber')::int AS amber,
+                COUNT(*) FILTER (WHERE status = 'not_evaluated')::int AS "notEvaluated"
            FROM rbm_kris WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
         [orgId, programId]),
       pool.query(
         `SELECT COUNT(*)::int AS total,
                 COUNT(*) FILTER (WHERE status = 'breached')::int AS breached,
-                COUNT(*) FILTER (WHERE status = 'approaching')::int AS approaching
+                COUNT(*) FILTER (WHERE status = 'approaching')::int AS approaching,
+                COUNT(*) FILTER (WHERE status = 'not_evaluated')::int AS "notEvaluated"
            FROM rbm_qtls WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
         [orgId, programId]),
       pool.query(

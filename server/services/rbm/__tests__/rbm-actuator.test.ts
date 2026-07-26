@@ -10,8 +10,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   addCtqFactor, defineKri, recordKriReading, setQtl, raiseSignal, triageSignal,
-  draftPlan, createAction, updateAction, approveAssessment, inferSecondaryLimit,
-  type Exec,
+  draftPlan, generatePlanFromAssessment, createAction, updateAction, approveAssessment,
+  inferSecondaryLimit, type Exec,
 } from '../rbm-actuator';
 
 function mockExec(script: any[][]) {
@@ -155,5 +155,42 @@ describe('rbm-actuator — inference', () => {
     const { exec } = mockExec([[]]);
     const row = await approveAssessment(exec, ORG, 7, 999, 'reason');
     expect(row).toBeNull();
+  });
+});
+
+describe('generatePlanFromAssessment — derives the plan from the RACT', () => {
+  it('derives strategy from the overall risk and seeds actions from the critical CtQs and enhanced sites', async () => {
+    const { exec, calls } = mockExec([
+      [{ id: 7, title: 'RACT', overall_risk: 'high' }],                 // governing assessment
+      [{ id: 21, ctq_factor: 'SAE reporting', risk_score: 20 },         // open critical factors
+       { id: 22, ctq_factor: 'Consent', risk_score: 9 }],
+      [{ site_number: '5', site_name: 'Mercy' }],                       // enhanced-tier sites
+      [{ id: 3, strategy: 'hybrid' }],                                  // plan insert
+      [{ id: 41 }], [{ id: 42 }], [{ id: 43 }],                         // action inserts
+    ]);
+    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    expect(out.generated).toBe(true);
+    expect(out.derivedFrom).toMatchObject({ assessmentId: 7, overallRisk: 'high', criticalFactors: 2, enhancedSites: 1 });
+    // High overall risk → hybrid strategy, per defaultPlanStrategy.
+    expect(calls[3].args).toContain('hybrid');
+    // The plan is a DRAFT until it is signed for.
+    expect(calls[3].sql).toContain("'draft'");
+    // One action per critical factor (priority banded off its own score) plus
+    // one visit per enhanced-tier site.
+    expect(out.actions).toHaveLength(3);
+    expect(calls[4].args).toContain('high');    // score 20 → high band
+    expect(calls[5].args).toContain('medium');  // score 9  → medium band
+    expect(calls[6].sql).toContain('site_visit');
+    // Tenant scope on every write.
+    for (const c of calls) expect(c.args[0]).toBe(ORG);
+  });
+
+  it('generates nothing when the study has no risk assessment to derive from', async () => {
+    const { exec, calls } = mockExec([[]]);
+    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    expect(out.generated).toBe(false);
+    expect(out.reason).toBe('no_assessment');
+    // No plan and no actions were written.
+    expect(calls).toHaveLength(1);
   });
 });

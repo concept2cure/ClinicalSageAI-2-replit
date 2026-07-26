@@ -3,30 +3,33 @@
  * (GET /api/mdx-rbm/rbm-board/:programId, assembled in
  * server/routes/mdx-rbm-board.ts). Mirrors the server's `data` shape exactly.
  *
- * The RBM sub-surfaces read their slices from a `board` of this type instead of
- * the rbm-data fixtures. Several fields the fixtures carried have NO real source
- * and are documented here as always-null / always-empty so the sub-surfaces
- * render them null-safe (never fabricated):
+ * The RBM sub-surfaces read their slices from a `board` of this type. Writes go
+ * to the granular /api/mdx/rbm-* routes and the shell then re-fetches this
+ * board, so the board is the single source of truth on screen.
+ *
+ * Fields the RBM store has no column for are documented here as always-null /
+ * always-empty, and the surfaces neither render nor collect them — a form that
+ * captured them would drop them on save:
  *   - assessment.history        → always []      (no version history store)
  *   - assessment/plan.approval  → { by, when, reason } only — NO `audit` id
  *   - items.riskCat / .control  → absent          (board exposes refCode instead)
- *   - kris.bySite/method/level  → absent
- *   - qtls.unit                 → always null; qtls.breachDoc absent
- *     (board exposes a flat breachActionTaken instead)
- *   - signals.investigation     → absent (board exposes resolution only)
+ *   - kris: no threshold method, analysis level or per-site drilldown
+ *   - qtls.unit                 → always null; the breach response is the flat
+ *     breachActionTaken narrative, not a structured breach record
+ *   - signals: resolution notes only, no structured investigation record
  *   - patients.metrics          → always []
  *   - sites.country             → always null
  *   - plan.version/basis        → absent; plan.tiers → always null; anaDraft false
- *   - actions[].ana             → absent
- * RBM_CSM_RUN (central-monitoring run) has no board source at all.
  */
 
 export interface RbmBoardSummary {
   overallRisk: string | null;
   asOf: string;
   riskItems: { total: number; critical: number; open: number; high: number };
-  kris: { total: number; red: number; amber: number };
-  qtls: { total: number; breached: number; approaching: number };
+  // `notEvaluated` counts indicators with no reading (or no threshold to read
+  // against). They are surfaced, not folded into the healthy remainder.
+  kris: { total: number; red: number; amber: number; notEvaluated: number };
+  qtls: { total: number; breached: number; approaching: number; notEvaluated: number };
   signals: { total: number; open: number; high: number };
   sites: { total: number; enhanced: number };
   patients: { scored: number; flagged: number; review: number };

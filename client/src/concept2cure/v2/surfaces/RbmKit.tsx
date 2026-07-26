@@ -22,10 +22,12 @@ import { rbmBand, kriStatusOf, qtlStatusOf, type RbmNavItem } from '../fixtures/
 export {
   RbmChip, RiskMatrix, Sparkline, ThresholdGauge, DimBars, SeedEmpty,
   RbmScore, RbmFreshness, TrendTable, RbmFormModal, GovernedApprovalDialog,
-  useRbmActions, RBM_STORE,
 } from './RbmSurfaces';
 export type { FormField } from './RbmSurfaces';
 export { rbmBand, kriStatusOf, qtlStatusOf };
+/* The RBM write layer: every surface mutation goes through these rather than a
+   page-local action store (the former RBM_STORE / useRbmActions, now removed). */
+export { useRbmMutation, useRbmOwners, rbmWrite, rbmWriteWithMeta, RbmWriteError, RbmWriteNote } from './rbmWrites';
 
 /* -- RbmStarters -- per-surface AnA starters, inline in the surface body.
    Surface actions and AnA tools are one system; each chip fires a real ask

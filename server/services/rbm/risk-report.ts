@@ -19,8 +19,11 @@ export interface RiskReviewInput {
   asOf: string;
   assessment: { title?: string | null; framework?: string | null; overallRisk?: string | null; status?: string | null; approvedAt?: string | null } | null;
   riskItems: { total: number; critical: number; open: number; high: number; openCritical: string[] };
-  kris: { total: number; red: string[]; amber: string[] };
-  qtls: { total: number; breached: string[]; approaching: string[] };
+  /** `notEvaluated` are indicators with no reading (or no threshold to read
+   *  against). They are an oversight gap, not a clean bill of health, so the
+   *  report states them rather than folding them into the silent remainder. */
+  kris: { total: number; red: string[]; amber: string[]; notEvaluated: string[] };
+  qtls: { total: number; breached: string[]; approaching: string[]; notEvaluated: string[] };
   signals: { open: number; high: string[] };
   sites: { total: number; enhanced: number };
   patients: { total: number; flagged: number; review: number };
@@ -66,25 +69,30 @@ export function buildRiskReview(input: RiskReviewInput): RiskReview {
     ],
   });
 
-  // KRIs
+  // KRIs. An unevaluated indicator is an oversight gap: it is reported as
+  // "attention", never rolled up as though the indicator were green.
+  const kriUneval = input.kris.notEvaluated ?? [];
   sections.push({
     title: 'Key Risk Indicators',
-    status: input.kris.red.length ? 'critical' : input.kris.amber.length ? 'attention' : 'ok',
+    status: input.kris.red.length ? 'critical' : (input.kris.amber.length || kriUneval.length) ? 'attention' : 'ok',
     items: [
-      `${input.kris.total} KRIs tracked — ${input.kris.red.length} red, ${input.kris.amber.length} amber.`,
+      `${input.kris.total} KRIs tracked — ${input.kris.red.length} red, ${input.kris.amber.length} amber, ${kriUneval.length} not evaluated.`,
       ...(input.kris.red.length ? [`Red: ${input.kris.red.join(', ')}.`] : []),
       ...(input.kris.amber.length ? [`Amber: ${input.kris.amber.join(', ')}.`] : []),
+      ...(kriUneval.length ? [`No current reading (not evaluated): ${kriUneval.join(', ')}.`] : []),
     ],
   });
 
   // QTLs
+  const qtlUneval = input.qtls.notEvaluated ?? [];
   sections.push({
     title: 'Quality Tolerance Limits',
-    status: input.qtls.breached.length ? 'critical' : input.qtls.approaching.length ? 'attention' : 'ok',
+    status: input.qtls.breached.length ? 'critical' : (input.qtls.approaching.length || qtlUneval.length) ? 'attention' : 'ok',
     items: [
-      `${input.qtls.total} QTLs — ${input.qtls.breached.length} breached, ${input.qtls.approaching.length} approaching.`,
+      `${input.qtls.total} QTLs — ${input.qtls.breached.length} breached, ${input.qtls.approaching.length} approaching, ${qtlUneval.length} not evaluated.`,
       ...(input.qtls.breached.length ? [`Breached: ${input.qtls.breached.join(', ')}.`] : []),
       ...(input.qtls.approaching.length ? [`Approaching: ${input.qtls.approaching.join(', ')}.`] : []),
+      ...(qtlUneval.length ? [`No current value (not evaluated): ${qtlUneval.join(', ')}.`] : []),
     ],
   });
 
@@ -124,7 +132,11 @@ export function buildRiskReview(input: RiskReviewInput): RiskReview {
 
   const attentionCount =
     input.riskItems.high + input.kris.red.length + input.qtls.breached.length +
-    input.signals.high.length + input.patients.flagged + input.actions.overdue.length;
+    input.signals.high.length + input.patients.flagged + input.actions.overdue.length +
+    // Unevaluated indicators are counted: an indicator nobody has read is an
+    // open oversight item, and leaving it out would let the headline claim
+    // "within tolerance" for a study that has measured nothing.
+    (kriUneval.length ? 1 : 0) + (qtlUneval.length ? 1 : 0);
 
   const overallRisk = (input.assessment?.overallRisk ?? 'unknown');
   const overall = worst(...sections.map(s => s.status));
@@ -193,8 +205,33 @@ export function buildAttentionFeed(input: RiskReviewInput): AttentionItem[] {
   for (const a of input.actions.overdue) items.push({ kind: 'action', severity: a.priority === 'high' ? 'high' : 'medium', label: `Overdue action: ${a.description}`, detail: a.dueDate ?? undefined });
   for (const p of input.qtls.approaching) items.push({ kind: 'qtl', severity: 'medium', label: `QTL approaching: ${p}` });
   for (const k of input.kris.amber) items.push({ kind: 'kri', severity: 'medium', label: `KRI amber: ${k}` });
-  if (input.assessment && input.assessment.status === 'active' && !input.assessment.approvedAt) {
-    items.push({ kind: 'assessment', severity: 'medium', label: 'Active risk assessment not yet approved' });
+  // Unevaluated indicators are aggregated into one item apiece — a seeded
+  // library would otherwise flood the feed with one row per metric — but they
+  // are never silently dropped: an unread indicator is unmonitored risk.
+  const kriUneval = input.kris.notEvaluated ?? [];
+  const qtlUneval = input.qtls.notEvaluated ?? [];
+  if (kriUneval.length) {
+    items.push({
+      kind: 'kri', severity: 'medium',
+      label: `${kriUneval.length} KRI(s) have no current reading`,
+      detail: kriUneval.slice(0, 5).join(', '),
+    });
+  }
+  if (qtlUneval.length) {
+    items.push({
+      kind: 'qtl', severity: 'medium',
+      label: `${qtlUneval.length} QTL(s) have no current value`,
+      detail: qtlUneval.slice(0, 5).join(', '),
+    });
+  }
+  // Any unapproved assessment is flagged, not only an 'active' one: a seeded
+  // RACT is created as a draft and stays the governing risk basis on screen
+  // until someone signs for it.
+  if (input.assessment && !input.assessment.approvedAt) {
+    items.push({
+      kind: 'assessment', severity: 'medium',
+      label: `Risk assessment not approved (${input.assessment.status ?? 'draft'})`,
+    });
   }
   return items.sort((a, b) => SEV_RANK[a.severity] - SEV_RANK[b.severity]);
 }

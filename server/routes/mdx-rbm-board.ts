@@ -54,8 +54,10 @@ const HIGH_SEV = new Set(['high', 'critical']);
 const OPEN_ITEM = new Set(['open', 'mitigating']);
 
 const SIGNAL_SEV_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
-const KRI_STATUS_RANK: Record<string, number> = { red: 0, amber: 1, green: 2 };
-const QTL_STATUS_RANK: Record<string, number> = { breached: 0, approaching: 1, within: 2 };
+// `not_evaluated` sorts above green/within: an indicator nobody has read is an
+// oversight gap the monitor should see before the healthy ones.
+const KRI_STATUS_RANK: Record<string, number> = { red: 0, amber: 1, not_evaluated: 2, green: 3 };
+const QTL_STATUS_RANK: Record<string, number> = { breached: 0, approaching: 1, not_evaluated: 2, within: 3 };
 const PRIORITY_RANK: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
 // Attention-feed kind → the sub-surface tab it deep-links to, and a short
@@ -243,9 +245,11 @@ export default function createRbmBoardRoutes(): Router {
 
       const redKris = kriRows.filter(k => k.status === 'red').map(k => k.name);
       const amberKris = kriRows.filter(k => k.status === 'amber').map(k => k.name);
+      const unevalKris = kriRows.filter(k => k.status === 'not_evaluated').map(k => k.name);
 
       const breachedQtls = qtlRows.filter(q => q.status === 'breached').map(q => q.parameter);
       const approachingQtls = qtlRows.filter(q => q.status === 'approaching').map(q => q.parameter);
+      const unevalQtls = qtlRows.filter(q => q.status === 'not_evaluated').map(q => q.parameter);
 
       const openSignals = signalRows.filter(s => OPEN_SIGNAL.has(s.status));
       const highSignals = openSignals.filter(s => HIGH_SEV.has(s.severity)).map(s => s.title);
@@ -278,8 +282,8 @@ export default function createRbmBoardRoutes(): Router {
           high: highItems.length,
           openCritical,
         },
-        kris: { total: kriRows.length, red: redKris, amber: amberKris },
-        qtls: { total: qtlRows.length, breached: breachedQtls, approaching: approachingQtls },
+        kris: { total: kriRows.length, red: redKris, amber: amberKris, notEvaluated: unevalKris },
+        qtls: { total: qtlRows.length, breached: breachedQtls, approaching: approachingQtls, notEvaluated: unevalQtls },
         signals: { open: openSignals.length, high: highSignals },
         sites: { total: siteRows.length, enhanced: enhancedSites },
         patients: { total: patientRows.length, flagged: flaggedPatients, review: reviewPatients },
@@ -459,8 +463,8 @@ export default function createRbmBoardRoutes(): Router {
           open: openItems.length,
           high: highItems.length,
         },
-        kris: { total: kriRows.length, red: redKris.length, amber: amberKris.length },
-        qtls: { total: qtlRows.length, breached: breachedQtls.length, approaching: approachingQtls.length },
+        kris: { total: kriRows.length, red: redKris.length, amber: amberKris.length, notEvaluated: unevalKris.length },
+        qtls: { total: qtlRows.length, breached: breachedQtls.length, approaching: approachingQtls.length, notEvaluated: unevalQtls.length },
         signals: { total: signalRows.length, open: openSignals.length, high: highSignals.length },
         sites: { total: siteRows.length, enhanced: enhancedSites },
         patients: { scored: patientRows.length, flagged: flaggedPatients, review: reviewPatients },
@@ -498,8 +502,8 @@ export default function createRbmBoardRoutes(): Router {
             summary: {
               overallRisk: null, asOf,
               riskItems: { total: 0, critical: 0, open: 0, high: 0 },
-              kris: { total: 0, red: 0, amber: 0 },
-              qtls: { total: 0, breached: 0, approaching: 0 },
+              kris: { total: 0, red: 0, amber: 0, notEvaluated: 0 },
+              qtls: { total: 0, breached: 0, approaching: 0, notEvaluated: 0 },
               signals: { total: 0, open: 0, high: 0 },
               sites: { total: 0, enhanced: 0 },
               patients: { scored: 0, flagged: 0, review: 0 },

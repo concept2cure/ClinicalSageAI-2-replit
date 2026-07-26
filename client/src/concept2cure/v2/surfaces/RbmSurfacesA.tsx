@@ -3,23 +3,27 @@
  * Key risk indicators, Quality tolerance limits.
  *
  * Every surface reads its slice from the live board
- * (GET /api/mdx-rbm/rbm-board/:programId) passed as `board`. The in-surface edit
- * flows (add CtQ factor, configure KRI, document breach, approve) remain an
- * un-persisted sample layer — flagged by the shell's SampleTag — until the write
- * path is wired; the read data they seed from is real, org-scoped RBQM data.
+ * (GET /api/mdx-rbm/rbm-board/:programId) passed as `board`, and every edit
+ * flow — add/edit CtQ factor, configure a KRI, append a reading, configure a
+ * QTL, document a breach, approve the assessment — performs the real write
+ * against /api/mdx/rbm-* and then re-fetches the board. Nothing is held in
+ * local optimistic state: what is on screen is what the server stored.
+ *
+ * Only fields the RBM store actually persists are offered. Attributes the
+ * schema has no column for (risk category, a separate "risk control" narrative,
+ * KRI threshold method / analysis level / per-site drilldown, QTL unit) are not
+ * collected — a form that captured them would silently drop them on save.
  */
 import React, { useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
-import {
-  kriStatusOf, qtlStatusOf,
-  type RbmRiskItem, type RbmKri, type RbmQtl, type RbmAssessment,
-} from '../fixtures/rbm-data';
+import type { RbmAssessment } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmBoardItem, RbmBoardKri, RbmBoardQtl } from './rbmBoard';
 import {
   RbmChip, RbmScore, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
   RbmFormModal, GovernedApprovalDialog, type FormField,
 } from './RbmSurfaces';
+import { useRbmMutation, useRbmOwners, ownerId, rbmWrite, RbmWriteError } from './rbmWrites';
 import '../styles/rbm-v2.css';
 
 interface SubProps {
@@ -32,61 +36,86 @@ interface SubProps {
   onReload?: () => void;
 }
 
-const RACT_CATS = ['Safety', 'Endpoint', 'Data integrity', 'Enrollment', 'Site operations', 'IP handling'];
-const KRI_SOURCES = ['EDC', 'CTMS', 'EDC + safety DB', 'IRT/RTSM', 'Lab', 'Central review'];
+/* The persisted CtQ categories — the rbm_risk_items.category enum, not a
+   free-form list. The previous UI offered labels ("Endpoint", "Enrollment",
+   "Site operations", "IP handling") that no column accepts. */
+const CTQ_CATEGORIES = ['safety', 'efficacy', 'data_integrity', 'compliance', 'operational'];
+const CTQ_CATEGORY_LABEL: Record<string, string> = {
+  safety: 'Safety', efficacy: 'Efficacy', data_integrity: 'Data integrity',
+  compliance: 'Compliance', operational: 'Operational',
+};
+/* The persisted KRI data sources — the rbm_kris.data_source enum. */
+const KRI_SOURCES = ['edc', 'ctms', 'site_intel', 'central_stats', 'manual'];
+const KRI_SOURCE_LABEL: Record<string, string> = {
+  edc: 'EDC', ctms: 'CTMS', site_intel: 'Site intelligence',
+  central_stats: 'Central statistics', manual: 'Manual entry',
+};
+const SCALE = ['1', '2', '3', '4', '5'];
 
 /* ── Board-row → editable view-model coercions ──
    The board is the source of truth; these map its rows into the surfaces' view
    types, stringifying numeric ids. A not-yet-scored/configured KRI or QTL leaves
    its thresholds and current value NULL — never coerced to 0, which would
    fabricate a real-looking limit and drive a false red/breached state. Nulls are
-   carried through and rendered as an honest "not yet scored". Client-only fields
-   the board does not carry (risk category, control, per-site drilldown) are left
-   undefined; the read layer always shows the engine's real `status`. */
+   carried through and rendered as an honest "not yet scored". */
+interface ItemView {
+  id: number; category: string; factor: string; l: number; i: number;
+  det: number | null; critical: boolean; mitigation: string;
+  residual: number | null; status: string; owner: string | null;
+}
 interface KriView {
-  id: string; name: string; metric: string; source: string; unit: string;
+  id: number; name: string; metric: string; source: string; unit: string;
   dir: string; amber: number | null; red: number | null; current: number | null;
   status: string; at: string; spark: number[];
-  method?: string; level?: string; bySite?: [string, number][];
 }
 interface QtlView {
-  id: string; parameter: string; rationale: string; unit: string;
+  id: number; parameter: string; rationale: string;
   secondary: number | null; threshold: number | null; current: number | null;
-  status: string; breachAction?: string;
-  breachDoc?: { justification: string; evidence: string; capa: string; when: string; by: string };
+  status: string; breachAction: string | null;
 }
 
-function itemView(it: RbmBoardItem): RbmRiskItem {
+function itemView(it: RbmBoardItem): ItemView {
   return {
-    id: String(it.id), category: it.category, factor: it.factor,
-    l: it.l, i: it.i, det: it.det ?? undefined, critical: it.critical,
-    mitigation: it.mitigation, residual: it.residual ?? it.l * it.i,
-    status: it.status, owner: it.owner ?? undefined,
+    id: it.id, category: it.category, factor: it.factor,
+    l: it.l, i: it.i, det: it.det, critical: it.critical,
+    mitigation: it.mitigation, residual: it.residual,
+    status: it.status, owner: it.owner,
   };
 }
 function kriView(k: RbmBoardKri): KriView {
   return {
-    id: String(k.id), name: k.name, metric: k.metric, source: k.source, unit: k.unit,
+    id: k.id, name: k.name, metric: k.metric, source: k.source, unit: k.unit,
     dir: k.dir, amber: k.amber, red: k.red, current: k.current,
     status: k.status, at: k.at ?? '', spark: k.spark,
   };
 }
 function qtlView(q: RbmBoardQtl): QtlView {
   return {
-    id: String(q.id), parameter: q.parameter, rationale: q.rationale, unit: q.unit ?? '',
+    id: q.id, parameter: q.parameter, rationale: q.rationale,
     secondary: q.secondary, threshold: q.threshold, current: q.current,
-    status: q.status, breachAction: q.breachActionTaken ?? undefined,
+    status: q.status, breachAction: q.breachActionTaken,
   };
+}
+
+/** Optional numeric form field → number | null (never a silent 0). */
+function optNum(v: string | undefined): number | null {
+  if (v == null || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 /* 1 -- Overview */
 export function RbmOverview({ board, onTab }: SubProps) {
   const S = board.summary;
+  // Unevaluated KRIs/QTLs are shown on the tile, not hidden in the remainder:
+  // an indicator nobody has read is an oversight gap, not a healthy one.
+  const kriUneval = S.kris.notEvaluated ?? 0;
+  const qtlUneval = S.qtls.notEvaluated ?? 0;
   const tiles = [
     { k: 'Overall risk', v: null as string | null, chip: <RbmChip vocab="band" value={S.overallRisk ?? 'unknown'} />, sub: 'rbm-engine -- L x I banding', nav: 'ract' },
     { k: 'Critical CtQ factors', v: String(S.riskItems.critical), chip: null, sub: `${S.riskItems.open} of ${S.riskItems.total} open`, nav: 'ract' },
-    { k: 'KRIs red / amber', v: `${S.kris.red} / ${S.kris.amber}`, chip: null, sub: `${S.kris.total} indicators`, nav: 'kris', warn: S.kris.red > 0 },
-    { k: 'QTLs breached', v: String(S.qtls.breached), chip: null, sub: `${S.qtls.approaching} approaching`, nav: 'qtls', err: S.qtls.breached > 0 },
+    { k: 'KRIs red / amber', v: `${S.kris.red} / ${S.kris.amber}`, chip: null, sub: `${S.kris.total} indicators -- ${kriUneval} not evaluated`, nav: 'kris', warn: S.kris.red > 0 || kriUneval > 0 },
+    { k: 'QTLs breached', v: String(S.qtls.breached), chip: null, sub: `${S.qtls.approaching} approaching -- ${qtlUneval} not evaluated`, nav: 'qtls', err: S.qtls.breached > 0 },
     { k: 'Open signals', v: String(S.signals.open), chip: null, sub: `${S.signals.high} high severity`, nav: 'signals', warn: S.signals.high > 0 },
     { k: 'Enhanced-tier sites', v: String(S.sites.enhanced), chip: null, sub: `of ${S.sites.total} sites`, nav: 'sites' },
   ];
@@ -147,7 +176,7 @@ export function RbmReport({ board, onAsk }: SubProps) {
           <ul>{s.items.map((it, j) => <li key={j}>{it}</li>)}</ul>
         </div>
       ))}
-      <div className="rbm-note">{I.info}This report renders the same buildRiskReview output AnA returns from generate_rbm_report -- the on-screen and in-chat answers are identical by construction.</div>
+      <div className="rbm-note">{I.info}This report renders the same buildRiskReview output AnA returns from generate_rbm_report -- the on-screen and in-chat answers are identical by construction. It is generated live from the current data; it is not yet a versioned, filed review record.</div>
     </div>
   );
 }
@@ -155,44 +184,77 @@ export function RbmReport({ board, onAsk }: SubProps) {
 /* 3 -- RACT */
 export function RbmRact({ board, onReload }: SubProps) {
   const [sel, setSel] = useState<{ l: number; i: number } | null>(null);
-  const [asmt] = useState<RbmAssessment | null>(() => {
-    const a = board.assessment;
-    if (!a) return null;
-    return {
-      id: String(a.id), framework: a.framework, version: a.version, status: a.status,
-      updated: a.updated ?? '', history: [],
-      approval: a.approval
-        ? { by: a.approval.by ?? '', when: a.approval.when ?? '', reason: a.approval.reason ?? '', audit: '' }
-        : undefined,
-    };
-  });
-  const [items, setItems] = useState<RbmRiskItem[]>(() => board.items.map(itemView));
   const [signFor, setSignFor] = useState(false);
-  const [edit, setEdit] = useState<{ mode: string; item?: RbmRiskItem } | null>(null);
+  const [edit, setEdit] = useState<{ mode: string; item?: ItemView } | null>(null);
+  const mut = useRbmMutation(onReload);
+  const owners = useRbmOwners();
+
+  const asmt: RbmAssessment | null = board.assessment ? {
+    id: String(board.assessment.id), framework: board.assessment.framework,
+    version: board.assessment.version, status: board.assessment.status,
+    updated: board.assessment.updated ?? '', history: [],
+    approval: board.assessment.approval
+      ? { by: board.assessment.approval.by ?? '', when: board.assessment.approval.when ?? '', reason: board.assessment.approval.reason ?? '', audit: '' }
+      : undefined,
+  } : null;
+
+  const items = board.items.map(itemView);
   const shown = items.filter(it => !sel || (it.l === sel.l && it.i === sel.i));
-  const saveItem = (form: Record<string, string>) => {
-    const l = +form.l, im = +form.i, score = l * im;
-    const rec: Partial<RbmRiskItem> = { category: form.category, riskCat: form.riskCat, factor: form.factor, l, i: im, det: +form.det, critical: score >= 15,
-      mitigation: form.mitigation, control: form.control, owner: form.owner, residual: form.residual !== '' ? +form.residual : score, status: form.status };
-    if (edit!.mode === 'edit') setItems(xs => xs.map(x => x.id === edit!.item!.id ? { ...x, ...rec } as RbmRiskItem : x));
-    else setItems(xs => [...xs, { id: `ctq-${Date.now().toString().slice(-5)}`, ...rec } as RbmRiskItem]);
-    setEdit(null);
+
+  /**
+   * Persist a CtQ factor. The inherent score and the residual score are both
+   * computed server-side from likelihood × impact (rbm-engine scoreRisk), so
+   * the form collects the components and never posts a score the engine did
+   * not derive. `critical` follows the engine's own high band (>= 15).
+   */
+  const saveItem = async (form: Record<string, string>) => {
+    const likelihood = Number(form.l);
+    const impact = Number(form.i);
+    const body = {
+      category: form.category,
+      ctqFactor: form.factor,
+      riskDescription: form.riskDescription || null,
+      likelihood,
+      impact,
+      detectability: optNum(form.det),
+      isCritical: likelihood * impact >= 15,
+      mitigation: form.mitigation || null,
+      status: form.status,
+      assignedTo: ownerId(form.owner),
+      residualLikelihood: optNum(form.residualL),
+      residualImpact: optNum(form.residualI),
+    };
+    const done = await mut.run(async () => {
+      if (edit?.mode === 'edit' && edit.item) {
+        await rbmWrite('PATCH', `/rbm-risk-items/${edit.item.id}`, body);
+      } else {
+        await rbmWrite('POST', '/rbm-risk-items', {
+          ...body,
+          programId: board.programId,
+          assessmentId: board.assessment?.id ?? null,
+        });
+      }
+    });
+    if (done) setEdit(null);
   };
+
   const fields: FormField[] = [
-    { key: 'riskCat', label: 'Risk category', type: 'select', options: ['Trial-wide', 'Site', 'Subject'] },
-    { key: 'category', label: 'Domain', type: 'select', options: RACT_CATS },
+    { key: 'category', label: 'Category', type: 'select', options: CTQ_CATEGORIES, labels: CTQ_CATEGORY_LABEL },
     { key: 'factor', label: 'Critical-to-quality factor', type: 'textarea' },
-    { key: 'l', label: 'Likelihood (1-5)', type: 'select', options: ['1', '2', '3', '4', '5'] },
-    { key: 'i', label: 'Impact (1-5)', type: 'select', options: ['1', '2', '3', '4', '5'] },
-    { key: 'det', label: 'Detectability (1 easy - 5 hard)', type: 'select', options: ['1', '2', '3', '4', '5'] },
-    { key: 'mitigation', label: 'Mitigation', type: 'textarea' },
-    { key: 'control', label: 'Risk control / monitoring method', type: 'textarea', optional: true },
-    { key: 'owner', label: 'Risk owner', type: 'text', optional: true },
-    { key: 'residual', label: 'Residual score (after mitigation)', type: 'number', min: 1, max: 25, optional: true },
+    { key: 'riskDescription', label: 'Risk description (what could go wrong)', type: 'textarea', optional: true },
+    { key: 'l', label: 'Likelihood (1-5)', type: 'select', options: SCALE },
+    { key: 'i', label: 'Impact (1-5)', type: 'select', options: SCALE },
+    { key: 'det', label: 'Detectability (1 easy - 5 hard)', type: 'select', options: SCALE, optional: true, hint: 'Recorded against the factor for review. The governing risk score is likelihood x impact; detectability is not multiplied into it.' },
+    { key: 'mitigation', label: 'Mitigation / monitoring control', type: 'textarea' },
+    { key: 'residualL', label: 'Residual likelihood after mitigation (1-5)', type: 'select', options: ['', ...SCALE], optional: true, labels: { '': 'Not assessed', '1': '1', '2': '2', '3': '3', '4': '4', '5': '5' } },
+    { key: 'residualI', label: 'Residual impact after mitigation (1-5)', type: 'select', options: ['', ...SCALE], optional: true, labels: { '': 'Not assessed', '1': '1', '2': '2', '3': '3', '4': '4', '5': '5' } },
+    { key: 'owner', label: 'Risk owner', type: 'select', options: owners.options, labels: owners.labels, optional: true },
     { key: 'status', label: 'Status', type: 'select', options: ['open', 'mitigating', 'accepted', 'closed'], labels: { open: 'Open', mitigating: 'Mitigating', accepted: 'Accepted', closed: 'Closed' } },
   ];
+
   return (
     <div>
+      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
       {asmt ? (
         <div className="rbm-asmt">
           <div className="rbm-asmt-l">
@@ -200,7 +262,6 @@ export function RbmRact({ board, onReload }: SubProps) {
             <span>Version {asmt.version} -- <RbmChip vocab={asmt.status === 'active' ? 'action' : 'item'} value={asmt.status === 'active' ? 'done' : 'open'} /> {asmt.status === 'active' ? 'active' : 'draft -- approval pending'} -- {items.length} CtQ factors, {items.filter(x => x.critical).length} critical</span>
             {asmt.approval ? <span className="rbm-audit">{I.check}Approved by {asmt.approval.by} -- {asmt.approval.when} -- &quot;{asmt.approval.reason}&quot;</span> : null}
           </div>
-          <div className="rbm-asmt-hist">{asmt.history.map((h, i) => <span key={i} className="rbm-hist-row">v{h.v} -- {h.status} -- {h.by} -- {h.when}</span>)}</div>
           {asmt.status !== 'active' && <button className="rbm-btn pri" onClick={() => setSignFor(true)}>{I.lock}Approve assessment</button>}
         </div>
       ) : (
@@ -215,27 +276,35 @@ export function RbmRact({ board, onReload }: SubProps) {
         <div className="rbm-card grow">
           <div className="rbm-card-h">Critical-to-quality register -- {shown.length} of {items.length}
             <button className="rbm-add" onClick={() => setEdit({ mode: 'new' })}>{I.zap}Add CtQ factor</button></div>
-          <table className="rbm-tbl"><thead><tr><th>Category</th><th>CtQ factor</th><th>L x I x D</th><th>Inherent</th><th>Mitigation</th><th>Residual</th><th>Status</th><th></th></tr></thead>
+          <table className="rbm-tbl"><thead><tr><th>Category</th><th>CtQ factor</th><th>L x I</th><th>Inherent</th><th>Detect.</th><th>Mitigation</th><th>Residual</th><th>Status</th><th></th></tr></thead>
             <tbody>{shown.map(it => (
               <tr key={it.id} data-crit={it.critical || undefined}>
-                <td className="cat">{it.category}{it.riskCat && <span className="rbm-riskcat">{it.riskCat}</span>}{it.critical && <span className="rbm-crit" title="Critical CtQ (score 15+)">critical</span>}</td>
+                <td className="cat">{CTQ_CATEGORY_LABEL[it.category] ?? it.category}{it.critical && <span className="rbm-crit" title="Critical CtQ (likelihood x impact 15+)">critical</span>}</td>
                 <td className="fac">{it.factor}{it.owner && <span className="rbm-owner">owner: {it.owner}</span>}</td>
-                <td className="mono">{it.l}x{it.i}{it.det ? `x${it.det}` : ''}</td>
+                <td className="mono">{it.l}x{it.i}</td>
                 <td><RbmScore v={it.l * it.i} /></td>
-                <td className="mit">{it.mitigation}{it.control && <span className="rbm-control">{I.shieldCheck}{it.control}</span>}</td>
-                <td><RbmScore v={it.residual} /></td>
+                <td className="mono">{it.det ?? <span className="mut">—</span>}</td>
+                <td className="mit">{it.mitigation}</td>
+                <td>{it.residual != null ? <RbmScore v={it.residual} /> : <span className="mut">Not assessed</span>}</td>
                 <td><RbmChip vocab="item" value={it.status} /></td>
                 <td><button className="rbm-rowedit" title="Edit" onClick={() => setEdit({ mode: 'edit', item: it })}>{I.penLine}</button></td>
               </tr>
             ))}
-            {items.length === 0 && <tr><td colSpan={8} className="rbm-col-empty">No critical-to-quality factors for this study yet.</td></tr>}
+            {items.length === 0 && <tr><td colSpan={9} className="rbm-col-empty">No critical-to-quality factors for this study yet.</td></tr>}
             </tbody></table>
         </div>
       </div>
+      <div className="rbm-note">{I.info}The governing risk score is <b>likelihood x impact</b> (rbm-engine scoreRisk), banded low &lt;8 / medium 8-14 / high 15+. Detectability is recorded against each factor for review but is <b>not</b> multiplied into the score — one scoring method, applied consistently. Residual score is derived the same way from the post-mitigation likelihood and impact.</div>
       {edit && <RbmFormModal title={edit.mode === 'edit' ? 'Edit CtQ factor' : 'Add CtQ factor'}
-        intro="Classify the risk (trial-wide / site / subject), score likelihood x impact x detectability, and record the mitigation, risk control and owner. A score of 15+ is flagged critical."
-        fields={fields} initial={edit.item ? { ...edit.item as unknown as Record<string, string>, l: String(edit.item.l), i: String(edit.item.i), det: String(edit.item.det || 3), residual: String(edit.item.residual), riskCat: edit.item.riskCat || 'Trial-wide' } as unknown as Record<string, string> : null}
-        submitLabel={edit.mode === 'edit' ? 'Save changes' : 'Add factor'} onCancel={() => setEdit(null)} onSubmit={saveItem} />}
+        intro="Score likelihood and impact (1-5 each); the engine derives the inherent score and flags 15+ as critical. Record the mitigation, the residual likelihood/impact after it, and the risk owner."
+        fields={fields}
+        initial={edit.item ? {
+          category: edit.item.category, factor: edit.item.factor, riskDescription: '',
+          l: String(edit.item.l), i: String(edit.item.i), det: edit.item.det != null ? String(edit.item.det) : '',
+          mitigation: edit.item.mitigation ?? '', residualL: '', residualI: '', owner: '', status: edit.item.status,
+        } : null}
+        busy={mut.busy} error={mut.error}
+        submitLabel={edit.mode === 'edit' ? 'Save changes' : 'Add factor'} onCancel={() => { setEdit(null); mut.clearError(); }} onSubmit={saveItem} />}
       {signFor && asmt && <GovernedApprovalDialog what={`Risk assessment v${asmt.version}`}
         meaning="The RACT becomes the governing risk basis for monitoring-tier assignment and the risk review report."
         onCancel={() => setSignFor(false)}
@@ -250,152 +319,196 @@ export function RbmRact({ board, onReload }: SubProps) {
 }
 
 /* 4 -- KRIs */
-export function RbmKris({ board }: SubProps) {
-  const [kris, setKris] = useState<KriView[]>(() => board.kris.map(kriView));
-  const [tableFor, setTableFor] = useState<Record<string, boolean>>({});
-  const [drillFor, setDrillFor] = useState<Record<string, boolean>>({});
-  const [entryFor, setEntryFor] = useState<string | null>(null);
+export function RbmKris({ board, onReload }: SubProps) {
+  const kris = board.kris.map(kriView);
+  const [tableFor, setTableFor] = useState<Record<number, boolean>>({});
+  const [entryFor, setEntryFor] = useState<number | null>(null);
   const [cfg, setCfg] = useState<{ mode: string; kri?: KriView } | null>(null);
-  const addReading = (id: string, val: string) => setKris(ks => ks.map(k => {
-    if (k.id !== id) return k; const spark = [...k.spark.slice(-9), +val];
-    return { ...k, spark, current: +val, at: 'just now',
-      status: (k.amber != null && k.red != null) ? kriStatusOf({ dir: k.dir, amber: k.amber, red: k.red }, +val) : k.status };
-  }));
-  const saveCfg = (f: Record<string, string>) => {
-    const base = { name: f.name, metric: f.metric, source: f.source, unit: f.unit, dir: f.dir, method: f.method, amber: +f.amber, red: +f.red, level: f.level };
-    if (cfg!.mode === 'edit') setKris(ks => ks.map(k => k.id === cfg!.kri!.id
-      ? { ...k, ...base, status: k.current != null ? kriStatusOf({ dir: base.dir, amber: base.amber, red: base.red }, k.current) : k.status }
-      : k));
-    else setKris(ks => [...ks, { id: `kri-${Date.now().toString().slice(-5)}`, ...base, current: +f.amber, status: 'amber', at: 'just now', spark: [+f.amber] } as KriView]);
-    setCfg(null);
+  const mut = useRbmMutation(onReload);
+
+  /** Append a reading. The server appends to rbm_kri_values, rolls the value
+   *  onto the KRI and recomputes its status via kriStatus() — the UI never
+   *  bands the value itself. */
+  const addReading = async (id: number, val: string) => {
+    const done = await mut.run(async () => {
+      await rbmWrite('POST', `/rbm-kris/${id}/values`, { value: Number(val) });
+    });
+    if (done) setEntryFor(null);
   };
+
+  const saveCfg = async (f: Record<string, string>) => {
+    const body = {
+      name: f.name,
+      metricDefinition: f.metric || null,
+      dataSource: f.source,
+      unit: f.unit || null,
+      direction: f.dir,
+      thresholdAmber: optNum(f.amber),
+      thresholdRed: optNum(f.red),
+    };
+    const done = await mut.run(async () => {
+      if (cfg?.mode === 'edit' && cfg.kri) {
+        await rbmWrite('PATCH', `/rbm-kris/${cfg.kri.id}`, body);
+      } else {
+        await rbmWrite('POST', '/rbm-kris', { ...body, programId: board.programId, assessmentId: board.assessment?.id ?? null });
+      }
+    });
+    if (done) setCfg(null);
+  };
+
   const cfgFields: FormField[] = [
     { key: 'name', label: 'Indicator name', type: 'text' },
     { key: 'metric', label: 'Metric definition', type: 'textarea' },
-    { key: 'source', label: 'Data source', type: 'select', options: KRI_SOURCES },
+    { key: 'source', label: 'Data source', type: 'select', options: KRI_SOURCES, labels: KRI_SOURCE_LABEL },
     { key: 'unit', label: 'Unit', type: 'text' },
     { key: 'dir', label: 'Direction', type: 'select', options: ['higher_worse', 'lower_worse'], labels: { higher_worse: 'Higher is worse', lower_worse: 'Lower is worse' } },
-    { key: 'method', label: 'Threshold method', type: 'select', options: ['discrete', 'dynamic'], labels: { discrete: 'Discrete (fixed limits)', dynamic: 'Dynamic (statistical / study-adjusted)' } },
-    { key: 'amber', label: 'Amber threshold', type: 'number' },
-    { key: 'red', label: 'Red threshold', type: 'number' },
-    { key: 'level', label: 'Analysis level', type: 'select', options: ['Site', 'Region', 'Country', 'Patient'] },
+    { key: 'amber', label: 'Amber threshold', type: 'number', optional: true },
+    { key: 'red', label: 'Red threshold', type: 'number', optional: true },
   ];
+
   return (
     <div>
+      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
       <div className="rbm-bar">
         <span className="rbm-bar-info">{kris.length} indicators -- seed from the TransCelerate library or define study-specific KRIs</span>
-        <button className="rbm-btn pri" onClick={() => setCfg({ mode: 'new' })}>{I.zap}New KRI</button>
+        <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setCfg({ mode: 'new' })}>{I.zap}New KRI</button>
       </div>
       <div className="rbm-kri-grid">{kris.map(k => (
         <div key={k.id} className="rbm-kri" data-st={k.status}>
           <div className="rbm-kri-h"><b>{k.name}</b><RbmChip vocab="kri" value={k.status} /></div>
-          <div className="rbm-kri-m">{k.metric} -- {k.source} -- {k.dir === 'higher_worse' ? 'higher is worse' : 'lower is worse'}{k.method === 'dynamic' ? ' -- dynamic threshold' : ''}</div>
+          <div className="rbm-kri-m">{k.metric} -- {KRI_SOURCE_LABEL[k.source] ?? k.source} -- {k.dir === 'higher_worse' ? 'higher is worse' : 'lower is worse'}</div>
           <div className="rbm-kri-body">
             <div className="rbm-kri-v" data-st={k.status}>{k.current ?? '—'}<em>{k.unit}</em></div>
             {tableFor[k.id] ? <TrendTable kri={k} /> : <Sparkline values={k.spark} amber={k.amber} red={k.red} />}
           </div>
-          <div className="rbm-kri-thr">amber {k.amber ?? '—'}{k.unit} -- red {k.red ?? '—'}{k.unit} -- {k.level || 'Site'} level -- evaluated {k.at || '—'}</div>
-          {drillFor[k.id] && k.bySite && (
-            <div className="rbm-kri-sub">
-              <div className="rbm-kri-sub-h">By site -- {k.level || 'Site'} subgroup</div>
-              {k.bySite.slice().sort((a, b) => k.dir === 'lower_worse' ? a[1] - b[1] : b[1] - a[1]).map(([site, val]) => {
-                const stt = kriStatusOf({ dir: k.dir, amber: k.amber ?? 0, red: k.red ?? 0 }, val);
-                return (
-                  <div key={site} className="rbm-kri-sub-row">
-                    <span className="mono">site {site}</span>
-                    <span className="bar"><span data-st={stt} style={{ width: `${Math.min(100, val / ((k.red ?? 0) * 1.4) * 100)}%` }} /></span>
-                    <span className="mono v">{val}{k.unit}</span><RbmChip vocab="kri" value={stt} />
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <div className="rbm-kri-thr">amber {k.amber ?? '—'}{k.unit} -- red {k.red ?? '—'}{k.unit} -- {k.at ? `evaluated ${k.at}` : 'never evaluated'}</div>
           <div className="rbm-kri-acts">
-            <button className="rbm-linkbtn" onClick={() => setEntryFor(k.id)}>{I.zap}Add reading</button>
-            <button className="rbm-linkbtn" onClick={() => setCfg({ mode: 'edit', kri: k })}>{I.penLine}Configure</button>
+            <button className="rbm-linkbtn" disabled={mut.busy} onClick={() => setEntryFor(k.id)}>{I.zap}Add reading</button>
+            <button className="rbm-linkbtn" disabled={mut.busy} onClick={() => setCfg({ mode: 'edit', kri: k })}>{I.penLine}Configure</button>
             <button className="rbm-linkbtn" aria-pressed={!!tableFor[k.id]} onClick={() => setTableFor(t => ({ ...t, [k.id]: !t[k.id] }))}>{I.table}{tableFor[k.id] ? 'Trend' : 'Table'}</button>
-            {k.bySite && <button className="rbm-linkbtn" aria-pressed={!!drillFor[k.id]} onClick={() => setDrillFor(d => ({ ...d, [k.id]: !d[k.id] }))}>{I.network}By site</button>}
           </div>
         </div>
       ))}
         {kris.length === 0 && <div className="rbm-inbox-empty">No key risk indicators for this study yet.</div>}
       </div>
-      <div className="rbm-note">{I.info}KRIs are either seeded from the TransCelerate library or defined per study. Discrete thresholds are fixed; dynamic thresholds are statistically derived from the cohort. Appending a reading recomputes status via kriStatus() -- the UI never bands a value itself. Every trend has a data-table equivalent (WCAG 2.2 AA).</div>
-      {entryFor && (() => { const k = kris.find(x => x.id === entryFor)!; return (
+      <div className="rbm-note">{I.info}KRIs are seeded from the TransCelerate library or defined per study, with fixed amber/red limits. Appending a reading recomputes status server-side via kriStatus() -- the UI never bands a value itself. An indicator with no reading, or with no threshold to read against, is <b>not evaluated</b>, never green. Every trend has a data-table equivalent (WCAG 2.2 AA). Thresholds are study-level and fixed: statistically-derived limits and per-site/country drilldown are not implemented.</div>
+      {entryFor != null && (() => { const k = kris.find(x => x.id === entryFor)!; return (
         <RbmFormModal title={`Add reading -- ${k.name}`}
-          intro={`Current ${k.current ?? '—'}${k.unit}. Amber ${k.amber ?? '—'}${k.unit}, red ${k.red ?? '—'}${k.unit} (${k.dir === 'higher_worse' ? 'higher is worse' : 'lower is worse'}). Status recomputes on save.`}
+          intro={`Current ${k.current ?? '—'}${k.unit}. Amber ${k.amber ?? '—'}${k.unit}, red ${k.red ?? '—'}${k.unit} (${k.dir === 'higher_worse' ? 'higher is worse' : 'lower is worse'}). The server appends the reading and recomputes status.`}
           fields={[{ key: 'value', label: `New reading (${k.unit})`, type: 'number' }]} submitLabel="Append reading"
-          onCancel={() => setEntryFor(null)} onSubmit={v => { addReading(entryFor, v.value); setEntryFor(null); }} />
+          busy={mut.busy} error={mut.error}
+          onCancel={() => { setEntryFor(null); mut.clearError(); }} onSubmit={v => addReading(entryFor, v.value)} />
       ); })()}
       {cfg && <RbmFormModal title={cfg.mode === 'edit' ? 'Configure KRI' : 'New key risk indicator'}
-        intro="Define what the indicator measures, its source and direction, the threshold method (discrete or dynamic/statistical), and the amber/red limits. Status is computed from these -- never entered directly."
+        intro="Define what the indicator measures, its source and direction, and the amber/red limits. Status is computed from these server-side -- never entered directly. Leave a threshold blank and the indicator stays 'not evaluated' against it."
         fields={cfgFields}
-        initial={cfg.kri ? { ...cfg.kri as unknown as Record<string, string>, amber: cfg.kri.amber != null ? String(cfg.kri.amber) : '', red: cfg.kri.red != null ? String(cfg.kri.red) : '', level: cfg.kri.level || 'Site', method: cfg.kri.method || 'discrete' } : { dir: 'higher_worse', method: 'discrete', source: 'EDC', level: 'Site', unit: '%' }}
-        submitLabel={cfg.mode === 'edit' ? 'Save configuration' : 'Create KRI'} onCancel={() => setCfg(null)} onSubmit={saveCfg} />}
+        initial={cfg.kri ? {
+          name: cfg.kri.name, metric: cfg.kri.metric ?? '', source: cfg.kri.source, unit: cfg.kri.unit ?? '',
+          dir: cfg.kri.dir, amber: cfg.kri.amber != null ? String(cfg.kri.amber) : '', red: cfg.kri.red != null ? String(cfg.kri.red) : '',
+        } : { dir: 'higher_worse', source: 'edc', unit: '%' }}
+        busy={mut.busy} error={mut.error}
+        submitLabel={cfg.mode === 'edit' ? 'Save configuration' : 'Create KRI'} onCancel={() => { setCfg(null); mut.clearError(); }} onSubmit={saveCfg} />}
     </div>
   );
 }
 
 /* 5 -- QTLs */
-export function RbmQtls({ board }: SubProps) {
-  const [qtls, setQtls] = useState<QtlView[]>(() => board.qtls.map(qtlView));
+export function RbmQtls({ board, onReload }: SubProps) {
+  const qtls = board.qtls.map(qtlView);
   const [cfg, setCfg] = useState<{ mode: string; qtl?: QtlView } | null>(null);
   const [breach, setBreach] = useState<QtlView | null>(null);
-  const saveCfg = (f: Record<string, string>) => {
-    const base = { parameter: f.parameter, rationale: f.rationale, unit: f.unit, secondary: +f.secondary, threshold: +f.threshold, current: f.current !== '' ? +f.current : 0 };
-    const status = qtlStatusOf(base);
-    if (cfg!.mode === 'edit') setQtls(qs => qs.map(q => q.id === cfg!.qtl!.id ? { ...q, ...base, status } : q));
-    else setQtls(qs => [...qs, { id: `qtl-${Date.now().toString().slice(-5)}`, ...base, status } as QtlView]);
-    setCfg(null);
+  const mut = useRbmMutation(onReload);
+
+  const saveCfg = async (f: Record<string, string>) => {
+    const body = {
+      parameter: f.parameter,
+      rationale: f.rationale || null,
+      secondaryLimit: optNum(f.secondary),
+      threshold: optNum(f.threshold),
+      currentValue: optNum(f.current),
+    };
+    const done = await mut.run(async () => {
+      if (cfg?.mode === 'edit' && cfg.qtl) {
+        await rbmWrite('PATCH', `/rbm-qtls/${cfg.qtl.id}`, body);
+      } else {
+        await rbmWrite('POST', '/rbm-qtls', { ...body, programId: board.programId });
+      }
+    });
+    if (done) setCfg(null);
   };
-  const saveBreach = (f: Record<string, string>) => {
-    setQtls(qs => qs.map(q => q.id === breach!.id ? { ...q, breachDoc: { justification: f.justification, evidence: f.evidence, capa: f.capa, when: 'just now', by: 'Jordan Chen' } } : q));
-    setBreach(null);
+
+  /**
+   * Record the breach response. rbm_qtls carries one narrative column
+   * (breach_action_taken), so the three parts are written into it under
+   * explicit headings rather than being collected into fields the store would
+   * drop. A structured breach record — participants, estimand impact,
+   * effectiveness check, closure sign-off — is not modelled yet, and the note
+   * below says so instead of implying otherwise.
+   */
+  const saveBreach = async (f: Record<string, string>) => {
+    const text = [
+      `Root cause: ${f.justification}`,
+      `Evidence: ${f.evidence}`,
+      `CAPA: ${f.capa}`,
+    ].join('\n');
+    const done = await mut.run(async () => {
+      await rbmWrite('PATCH', `/rbm-qtls/${breach!.id}`, { breachActionTaken: text });
+    });
+    if (done) setBreach(null);
   };
+
   const cfgFields: FormField[] = [
     { key: 'parameter', label: 'Parameter', type: 'text' },
     { key: 'rationale', label: 'Rationale (required for a QTL)', type: 'textarea' },
-    { key: 'unit', label: 'Unit', type: 'select', options: ['%', 'events', 'count'] },
-    { key: 'secondary', label: 'Secondary (early-warning) limit', type: 'number' },
-    { key: 'threshold', label: 'Primary tolerance limit', type: 'number' },
-    { key: 'current', label: 'Current value', type: 'number', optional: true },
+    { key: 'secondary', label: 'Secondary (early-warning) limit', type: 'number', optional: true },
+    { key: 'threshold', label: 'Primary tolerance limit', type: 'number', optional: true },
+    { key: 'current', label: 'Current value', type: 'number', optional: true, hint: 'Leave blank until the parameter is measured — the QTL then reads "not evaluated" rather than "within".' },
   ];
+
   return (
     <div>
+      <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
       <div className="rbm-bar">
         <span className="rbm-bar-info">{qtls.length} tolerance limits -- study-level -- secondary limit is the RBQM early warning</span>
-        <button className="rbm-btn pri" onClick={() => setCfg({ mode: 'new' })}>{I.zap}New QTL</button>
+        <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setCfg({ mode: 'new' })}>{I.zap}New QTL</button>
       </div>
       <div className="rbm-card">
         <table className="rbm-tbl qtl"><thead><tr><th>Parameter</th><th>Rationale</th><th style={{ width: 260 }}>Current vs limits</th><th>Status</th><th></th></tr></thead>
           <tbody>{qtls.map(q => (
             <tr key={q.id}>
               <td className="fac"><b>{q.parameter}</b></td>
-              <td className="mit">{q.rationale}{q.breachDoc
-                ? <span className="rbm-control">{I.check}Breach documented -- {q.breachDoc.when}</span>
-                : q.breachAction ? <span className="rbm-control">{I.check}Breach action -- {q.breachAction}</span> : null}</td>
+              <td className="mit">{q.rationale}{q.breachAction
+                ? <span className="rbm-control">{I.check}Breach response recorded</span> : null}</td>
               <td>{q.threshold != null && q.current != null
-                ? <ThresholdGauge current={q.current} secondary={q.secondary ?? q.threshold} threshold={q.threshold} unit={q.unit === '%' ? '%' : ''} />
-                : <span className="mut">Not yet scored</span>}</td>
+                ? <ThresholdGauge current={q.current} secondary={q.secondary ?? q.threshold} threshold={q.threshold} unit="" />
+                : <span className="mut">Not yet measured</span>}</td>
               <td><RbmChip vocab="qtl" value={q.status} /></td>
               <td><div className="rbm-qtl-acts">
-                <button className="rbm-rowedit" title="Configure" onClick={() => setCfg({ mode: 'edit', qtl: q })}>{I.penLine}</button>
-                {q.status === 'breached' && !q.breachDoc && !q.breachAction && <button className="rbm-linkbtn" onClick={() => setBreach(q)}>Document breach</button>}
+                <button className="rbm-rowedit" title="Configure" disabled={mut.busy} onClick={() => setCfg({ mode: 'edit', qtl: q })}>{I.penLine}</button>
+                {q.status === 'breached' && !q.breachAction && <button className="rbm-linkbtn" disabled={mut.busy} onClick={() => setBreach(q)}>Document breach</button>}
               </div></td>
             </tr>
           ))}
           {qtls.length === 0 && <tr><td colSpan={5} className="rbm-col-empty">No quality tolerance limits for this study yet.</td></tr>}
           </tbody></table>
       </div>
-      <div className="rbm-note">{I.info}The secondary limit (50-75% of threshold) is the RBQM early-warning band: crossing it triggers review before the tolerance itself is at stake. A breached QTL requires a documented justification, evidence and a CAPA, plus an impact assessment on the affected estimand (routed to Biostatistics).</div>
+      <div className="rbm-note">{I.info}The secondary limit (50-75% of threshold) is the RBQM early-warning band: crossing it triggers review before the tolerance itself is at stake. A parameter with no current value reads <b>not evaluated</b> -- it has not been shown to be within tolerance. Limits are upper-bound only (higher = worse); lower-bound and two-sided QTLs are not supported yet. The breach response is stored as a single narrative on the QTL: a structured breach record (review participants, estimand impact, effectiveness check, closure sign-off) is not modelled.</div>
       {cfg && <RbmFormModal title={cfg.mode === 'edit' ? 'Configure QTL' : 'New quality tolerance limit'}
-        intro="A QTL governs a study-level parameter. Rationale is mandatory. Status is computed from the current value against the secondary and primary limits."
-        fields={cfgFields} initial={cfg.qtl ? { ...cfg.qtl as unknown as Record<string, string>, secondary: cfg.qtl.secondary != null ? String(cfg.qtl.secondary) : '', threshold: cfg.qtl.threshold != null ? String(cfg.qtl.threshold) : '', current: cfg.qtl.current != null ? String(cfg.qtl.current) : '' } : { unit: '%' }}
-        submitLabel={cfg.mode === 'edit' ? 'Save limit' : 'Create QTL'} onCancel={() => setCfg(null)} onSubmit={saveCfg} />}
+        intro="A QTL governs a study-level parameter. Rationale is mandatory. Status is computed server-side from the current value against the secondary and primary limits."
+        fields={cfgFields}
+        initial={cfg.qtl ? {
+          parameter: cfg.qtl.parameter, rationale: cfg.qtl.rationale ?? '',
+          secondary: cfg.qtl.secondary != null ? String(cfg.qtl.secondary) : '',
+          threshold: cfg.qtl.threshold != null ? String(cfg.qtl.threshold) : '',
+          current: cfg.qtl.current != null ? String(cfg.qtl.current) : '',
+        } : null}
+        busy={mut.busy} error={mut.error}
+        submitLabel={cfg.mode === 'edit' ? 'Save limit' : 'Create QTL'} onCancel={() => { setCfg(null); mut.clearError(); }} onSubmit={saveCfg} />}
       {breach && <RbmFormModal title={`Document breach -- ${breach.parameter}`}
-        intro={`${breach.current ?? '—'}${breach.unit === '%' ? '%' : ''} exceeds the ${breach.threshold ?? '—'}${breach.unit === '%' ? '%' : ''} tolerance. Record the root-cause justification, the supporting evidence, and the CAPA. This is the auditable breach record.`}
+        intro={`${breach.current ?? '—'} exceeds the ${breach.threshold ?? '—'} tolerance. Record the root-cause justification, the supporting evidence and the CAPA. All three are stored together on the QTL as the breach response.`}
         fields={[{ key: 'justification', label: 'Root-cause justification', type: 'textarea' }, { key: 'evidence', label: 'Supporting evidence (documents, datasets)', type: 'textarea' }, { key: 'capa', label: 'CAPA / corrective action', type: 'textarea' }]}
-        submitLabel="Record breach" onCancel={() => setBreach(null)} onSubmit={saveBreach} />}
+        busy={mut.busy} error={mut.error}
+        submitLabel="Record breach response" onCancel={() => { setBreach(null); mut.clearError(); }} onSubmit={saveBreach} />}
     </div>
   );
 }
