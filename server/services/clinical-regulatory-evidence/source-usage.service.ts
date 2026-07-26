@@ -1,18 +1,15 @@
 /**
  * Source usage — the link between an authored section and the sources it was
- * drafted from.
+ * drafted from, in both directions.
  *
  * The Data Room gave every uploaded document a canonical identity; the authoring
  * loop holds the sections. Nothing joined them, so the platform could not answer
- * the questions that make a source library more than a file list:
+ * either direction of the questions that make a source library more than a file
+ * list:
  *
  *   forward   "what is this section written from?"       → listSectionSources
- *   backward  "where is this source used?"               → next change
- *   change    "this source moved; what does it affect?"  → next change
- *
- * This change lands the record and the forward read. The back-reference and the
- * change report are the same rows queried the other way round; they follow
- * immediately, and the checksum captured here is what makes them possible.
+ *   backward  "where is this source used?"               → summarizeSourceUsage
+ *   change    "this source moved; what does it affect?"  → listChangedSourceUsages
  *
  * NO NEW TABLE. `authoring_citations` already is that link. It is read by the
  * document assembler, the freeze path and the citation APIs, so a second
@@ -93,6 +90,31 @@ export interface SectionSourceUsage {
     fileUploadId: string | null;
     updatedAt: string | null;
   } | null;
+}
+
+export interface SourceUsageSummary {
+  sourceId: number;
+  /** Distinct sections citing this source. */
+  sections: number;
+  /** Distinct documents those sections belong to. */
+  documents: number;
+  /** Sections whose citation is against superseded content. */
+  changedSections: number;
+}
+
+export interface ChangedSourceUsage {
+  citationId: string;
+  sectionId: string;
+  sectionCode: string | null;
+  sectionTitle: string | null;
+  documentId: string | null;
+  documentTitle: string | null;
+  sourceId: number;
+  sourceTitle: string | null;
+  citedChecksum: string;
+  currentChecksum: string;
+  citedAt: string | null;
+  sourceUpdatedAt: string | null;
 }
 
 /** Positive-integer source ids only; anything else is dropped rather than cast. */
@@ -241,6 +263,188 @@ export async function listSectionSources(orgId: number, sectionId: string): Prom
   );
 
   return (rows as Array<Record<string, unknown>>).map(adaptUsageRow);
+}
+
+/**
+ * Backward direction — for each requested source, how many sections and documents
+ * cite it, and how many of those citations are against superseded content.
+ *
+ * Sources with no usage are simply ABSENT from the map. The caller reports that as
+ * "not cited yet", which is a real and useful state: an uploaded document nothing
+ * was written from is exactly what a reviewer wants to notice.
+ *
+ * One query for a whole page of sources rather than one per row.
+ */
+export async function summarizeSourceUsage(
+  orgId: number,
+  sourceIds: Array<number | string>,
+): Promise<Map<number, SourceUsageSummary>> {
+  const ids = numericIds(sourceIds);
+  const out = new Map<number, SourceUsageSummary>();
+  if (ids.length === 0) return out;
+
+  const { rows } = await pool.query(
+    `SELECT src.id AS source_id,
+            COUNT(DISTINCT c.section_id)                        AS sections,
+            COUNT(DISTINCT sec.doc_id)                          AS documents,
+            COUNT(DISTINCT CASE
+              WHEN c.payload_sha256 IS NOT NULL
+               AND src.checksum IS NOT NULL
+               AND src.checksum <> c.payload_sha256
+              THEN c.section_id END)                            AS changed_sections
+       FROM cre_evidence_sources src
+       JOIN authoring_citations c
+              ON c.reference_id = src.id::text
+             AND c.tenant_id = $2
+             AND c.source = $3
+       LEFT JOIN authoring_sections sec
+              ON sec.id = c.section_id AND sec.tenant_id = c.tenant_id
+      WHERE src.id = ANY($1::int[])
+        AND (src.organization_id IS NULL OR src.organization_id = $2)
+        AND src.deleted_at IS NULL
+      GROUP BY src.id`,
+    [ids, orgId, CRE_SOURCE_CITATION],
+  );
+
+  for (const r of rows as Array<Record<string, unknown>>) {
+    out.set(Number(r.source_id), {
+      sourceId: Number(r.source_id),
+      sections: Number(r.sections) || 0,
+      documents: Number(r.documents) || 0,
+      changedSections: Number(r.changed_sections) || 0,
+    });
+  }
+  return out;
+}
+
+/**
+ * Change propagation — every citation written against content its source no longer
+ * has.
+ *
+ * Deliberately a REPORT, not a rewrite. A source moving does not tell us how the
+ * section that cited it should now read, and silently regenerating regulated text
+ * is not something a platform should do. What was missing is that the affected
+ * sections were not discoverable at all, so a superseded protocol left no trace in
+ * the documents written from it.
+ *
+ * Scope to a project with `programId` to answer "what in this project is stale?".
+ */
+export async function listChangedSourceUsages(
+  orgId: number,
+  opts: { programId?: string | null; sourceId?: number | string | null; limit?: number } = {},
+): Promise<ChangedSourceUsage[]> {
+  const args: unknown[] = [orgId, CRE_SOURCE_CITATION];
+  let scope = '';
+  if (opts.programId) {
+    args.push(opts.programId);
+    scope += ` AND src.client_program_id = $${args.length}`;
+  }
+  const [only] = numericIds(opts.sourceId == null ? [] : [opts.sourceId]);
+  if (only) {
+    args.push(only);
+    scope += ` AND src.id = $${args.length}`;
+  }
+  args.push(Math.min(Math.max(opts.limit ?? 100, 1), 500));
+
+  const { rows } = await pool.query(
+    `SELECT c.id, c.section_id, c.payload_sha256, c.created_at,
+            sec.code AS section_code, sec.title AS section_title, sec.doc_id,
+            doc.title AS document_title,
+            src.id AS source_id, src.title AS source_title, src.checksum,
+            src.updated_at AS source_updated_at
+       FROM authoring_citations c
+       JOIN cre_evidence_sources src
+              ON src.id::text = c.reference_id
+             AND (src.organization_id IS NULL OR src.organization_id = $1)
+             AND src.deleted_at IS NULL
+       LEFT JOIN authoring_sections sec
+              ON sec.id = c.section_id AND sec.tenant_id = c.tenant_id
+       LEFT JOIN authoring_documents doc
+              ON doc.id = sec.doc_id AND doc.tenant_id = c.tenant_id
+      WHERE c.tenant_id = $1
+        AND c.source = $2
+        AND c.payload_sha256 IS NOT NULL
+        AND src.checksum IS NOT NULL
+        AND src.checksum <> c.payload_sha256
+        ${scope}
+      ORDER BY src.updated_at DESC NULLS LAST, c.created_at ASC
+      LIMIT $${args.length}`,
+    args,
+  );
+
+  return (rows as Array<Record<string, unknown>>).map((r) => ({
+    citationId: String(r.id),
+    sectionId: String(r.section_id),
+    sectionCode: (r.section_code as string) ?? null,
+    sectionTitle: (r.section_title as string) ?? null,
+    documentId: r.doc_id ? String(r.doc_id) : null,
+    documentTitle: (r.document_title as string) ?? null,
+    sourceId: Number(r.source_id),
+    sourceTitle: (r.source_title as string) ?? null,
+    citedChecksum: String(r.payload_sha256),
+    currentChecksum: String(r.checksum),
+    citedAt: r.created_at ? new Date(r.created_at as string).toISOString() : null,
+    sourceUpdatedAt: r.source_updated_at ? new Date(r.source_updated_at as string).toISOString() : null,
+  }));
+}
+
+/**
+ * Re-resolve one citation against its source's content today.
+ *
+ * This replaces a simulated refresh that bumped `created_at` to NOW() and returned
+ * `sha256(cite_id + Date.now())` as the refreshed hash — a manufactured content
+ * identity on a regulated surface, and a `created_at` that then claimed the
+ * citation had just been made. Nothing was ever re-read.
+ *
+ * Here the checksum comes from the source row, `created_at` is left alone (a
+ * citation was made when it was made), and the result reports plainly whether the
+ * content moved. A frozen citation is immutable and is reported as such rather than
+ * quietly skipped.
+ */
+export async function refreshSourceCitation(
+  orgId: number,
+  citationId: string,
+): Promise<
+  | { ok: true; changed: boolean; previousChecksum: string | null; currentChecksum: string | null; sourceId: number }
+  | { ok: false; reason: 'not_found' | 'not_a_source_citation' | 'unresolved_source' | 'frozen' }
+> {
+  const cite = await pool.query<{
+    id: string;
+    source: string | null;
+    reference_id: string | null;
+    payload_sha256: string | null;
+    frozen_at: string | null;
+  }>(
+    `SELECT id, source, reference_id, payload_sha256, frozen_at
+       FROM authoring_citations WHERE id = $1 AND tenant_id = $2 LIMIT 1`,
+    [citationId, orgId],
+  );
+  if (cite.rows.length === 0) return { ok: false, reason: 'not_found' };
+  const row = cite.rows[0];
+  if (row.frozen_at) return { ok: false, reason: 'frozen' };
+  if (row.source !== CRE_SOURCE_CITATION) return { ok: false, reason: 'not_a_source_citation' };
+
+  const [sourceId] = numericIds([row.reference_id ?? '']);
+  if (!sourceId) return { ok: false, reason: 'unresolved_source' };
+
+  const c = visibleOrgClause(orgId, 2);
+  const src = await pool.query<{ checksum: string | null }>(
+    `SELECT checksum FROM cre_evidence_sources
+      WHERE id = $1 AND ${c.sql} AND deleted_at IS NULL LIMIT 1`,
+    [sourceId, c.param],
+  );
+  if (src.rows.length === 0) return { ok: false, reason: 'unresolved_source' };
+
+  const currentChecksum = src.rows[0].checksum ?? null;
+  const previousChecksum = row.payload_sha256 ?? null;
+  if (currentChecksum !== previousChecksum) {
+    await pool.query(`UPDATE authoring_citations SET payload_sha256 = $1 WHERE id = $2 AND tenant_id = $3`, [
+      currentChecksum,
+      citationId,
+      orgId,
+    ]);
+  }
+  return { ok: true, changed: currentChecksum !== previousChecksum, previousChecksum, currentChecksum, sourceId };
 }
 
 /** The joined source, or null when the reference did not resolve for this caller. */

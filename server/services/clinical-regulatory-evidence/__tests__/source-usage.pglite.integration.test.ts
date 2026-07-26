@@ -1,7 +1,8 @@
 /**
  * Source usage — END-TO-END against in-process PGlite.
  *
- * "What was this section written from?" had no answer anywhere in the platform:
+ * "What was this section written from?", "where is this source used?" and "this
+ * source changed — what does that affect?" had no answer anywhere in the platform:
  * canonical sources existed, authored sections existed, and nothing joined them.
  *
  * These tests apply the REAL migration DDL — CRE spine, program scope, the
@@ -206,6 +207,176 @@ describe('recording what a section was drafted from', () => {
     await expect(
       usage.citeSource(ORG_A, { sectionId, sourceId: 'not-an-id', createdBy: ACTOR }),
     ).rejects.toThrow(/positive integer/i);
+  });
+});
+
+describe('change propagation', () => {
+  it('reports the affected section and document, scoped to the project', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-prop-1'));
+    const { sectionId } = await makeSection(ORG_A, 'Module 3 quality', 'Q.1');
+    await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
+    await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-prop-2' WHERE id = $1`, [src.id]);
+
+    const changes = await usage.listChangedSourceUsages(ORG_A, { programId: PROGRAM_A, sourceId: src.id });
+    expect(changes).toHaveLength(1);
+    expect(changes[0].sectionId).toBe(sectionId);
+    expect(changes[0].sectionCode).toBe('Q.1');
+    expect(changes[0].documentTitle).toBe('Module 3 quality');
+    expect(changes[0].citedChecksum).toBe('sha-prop-1');
+    expect(changes[0].currentChecksum).toBe('sha-prop-2');
+
+    // Another project's scope must not surface it.
+    expect(
+      await usage.listChangedSourceUsages(ORG_A, { programId: PROGRAM_B, sourceId: src.id }),
+    ).toHaveLength(0);
+  });
+
+  it('a citation whose checksum still matches is not reported as changed', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-stable'));
+    const { sectionId } = await makeSection(ORG_A, 'Stable doc', 'T.1');
+    await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
+    expect(await usage.listChangedSourceUsages(ORG_A, { sourceId: src.id })).toHaveLength(0);
+  });
+
+  it("does not leak another tenant's changed citations", async () => {
+    const src = await spine.createSource(ORG_B, clientDoc('sha-b-1', { clientProgramId: PROGRAM_B }));
+    const { sectionId } = await makeSection(ORG_B, 'Their doc', 'B.1');
+    await usage.citeSource(ORG_B, { sectionId, sourceId: src.id, createdBy: ACTOR });
+    await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-b-2' WHERE id = $1`, [src.id]);
+
+    expect(await usage.listChangedSourceUsages(ORG_A, { sourceId: src.id })).toHaveLength(0);
+    expect(await usage.listChangedSourceUsages(ORG_B, { sourceId: src.id })).toHaveLength(1);
+  });
+});
+
+describe('the back-reference', () => {
+  it('counts the sections and documents a source is used in', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-used'));
+    const one = await makeSection(ORG_A, 'Doc one', 'U.1');
+    const two = await makeSection(ORG_A, 'Doc two', 'U.2');
+    await usage.citeSource(ORG_A, { sectionId: one.sectionId, sourceId: src.id, createdBy: ACTOR });
+    await usage.citeSource(ORG_A, { sectionId: two.sectionId, sourceId: src.id, createdBy: ACTOR });
+
+    const summary = await usage.summarizeSourceUsage(ORG_A, [src.id]);
+    expect(summary.get(src.id)).toEqual({
+      sourceId: src.id,
+      sections: 2,
+      documents: 2,
+      changedSections: 0,
+    });
+  });
+
+  it('counts only the sections whose citation is against superseded content', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-mixed-1'));
+    const stale = await makeSection(ORG_A, 'Written earlier', 'M.1');
+    await usage.citeSource(ORG_A, { sectionId: stale.sectionId, sourceId: src.id, createdBy: ACTOR });
+
+    await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-mixed-2' WHERE id = $1`, [src.id]);
+    const fresh = await makeSection(ORG_A, 'Written after', 'M.2');
+    await usage.citeSource(ORG_A, { sectionId: fresh.sectionId, sourceId: src.id, createdBy: ACTOR });
+
+    const summary = await usage.summarizeSourceUsage(ORG_A, [src.id]);
+    expect(summary.get(src.id)?.sections).toBe(2);
+    expect(summary.get(src.id)?.changedSections).toBe(1);
+  });
+
+  it('leaves an uncited source out of the map, so "not cited yet" is visible', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-orphan'));
+    expect((await usage.summarizeSourceUsage(ORG_A, [src.id])).has(src.id)).toBe(false);
+  });
+
+  it("does not count another tenant's citations of the same source id", async () => {
+    const mine = await spine.createSource(ORG_A, clientDoc('sha-scoped'));
+    const { sectionId } = await makeSection(ORG_A, 'Mine', 'S.9');
+    await usage.citeSource(ORG_A, { sectionId, sourceId: mine.id, createdBy: ACTOR });
+
+    expect(await usage.summarizeSourceUsage(ORG_B, [mine.id])).toEqual(new Map());
+  });
+
+  it('drops non-numeric ids rather than casting them', async () => {
+    expect(await usage.summarizeSourceUsage(ORG_A, ['abc', '-1', '0', ''])).toEqual(new Map());
+  });
+});
+
+describe('re-resolving a citation', () => {
+  it('reads the checksum from the source instead of manufacturing one', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-refresh-1'));
+    const { sectionId } = await makeSection(ORG_A, 'Refresh me', 'R.1');
+    const cited = await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
+    const before = await pool.query(`SELECT created_at FROM authoring_citations WHERE id = $1`, [
+      cited.citationId,
+    ]);
+
+    await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-refresh-2' WHERE id = $1`, [src.id]);
+    const outcome = await usage.refreshSourceCitation(ORG_A, cited.citationId);
+
+    expect(outcome).toMatchObject({
+      ok: true,
+      changed: true,
+      previousChecksum: 'sha-refresh-1',
+      currentChecksum: 'sha-refresh-2',
+      sourceId: src.id,
+    });
+
+    // created_at is left alone. The previous implementation set it to NOW(), which
+    // claimed the citation had just been made.
+    const after = await pool.query(
+      `SELECT created_at, payload_sha256 FROM authoring_citations WHERE id = $1`,
+      [cited.citationId],
+    );
+    expect(String((after.rows[0] as any).created_at)).toBe(String((before.rows[0] as any).created_at));
+    expect((after.rows[0] as any).payload_sha256).toBe('sha-refresh-2');
+  });
+
+  it('reports unchanged content as unchanged', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-same'));
+    const { sectionId } = await makeSection(ORG_A, 'Unchanged', 'R.2');
+    const cited = await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
+    expect(await usage.refreshSourceCitation(ORG_A, cited.citationId)).toMatchObject({
+      ok: true,
+      changed: false,
+    });
+  });
+
+  it('refuses a citation that references no canonical source', async () => {
+    const { sectionId } = await makeSection(ORG_A, 'Token only', 'R.3');
+    const citationId = crypto.randomUUID();
+    await pool.query(
+      `INSERT INTO authoring_citations (id, section_id, source, reference_id, created_by, tenant_id)
+       VALUES ($1, $2, 'lims_result', 'BATCH-9', $3, $4)`,
+      [citationId, sectionId, ACTOR, ORG_A],
+    );
+    // Honest refusal, not a hash of cite_id + Date.now().
+    expect(await usage.refreshSourceCitation(ORG_A, citationId)).toEqual({
+      ok: false,
+      reason: 'not_a_source_citation',
+    });
+  });
+
+  it('refuses to touch a frozen citation', async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-frozen-refresh'));
+    const { sectionId } = await makeSection(ORG_A, 'Frozen', 'R.4');
+    const cited = await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
+    await pool.query(`UPDATE authoring_citations SET frozen_at = NOW() WHERE id = $1`, [cited.citationId]);
+    await pool.query(`UPDATE cre_evidence_sources SET checksum = 'sha-frozen-refresh-2' WHERE id = $1`, [
+      src.id,
+    ]);
+
+    expect(await usage.refreshSourceCitation(ORG_A, cited.citationId)).toEqual({ ok: false, reason: 'frozen' });
+    const { rows } = await pool.query(`SELECT payload_sha256 FROM authoring_citations WHERE id = $1`, [
+      cited.citationId,
+    ]);
+    expect((rows[0] as any).payload_sha256).toBe('sha-frozen-refresh');
+  });
+
+  it("cannot re-resolve another tenant's citation", async () => {
+    const src = await spine.createSource(ORG_A, clientDoc('sha-xrefresh'));
+    const { sectionId } = await makeSection(ORG_A, 'Mine', 'R.5');
+    const cited = await usage.citeSource(ORG_A, { sectionId, sourceId: src.id, createdBy: ACTOR });
+    expect(await usage.refreshSourceCitation(ORG_B, cited.citationId)).toEqual({
+      ok: false,
+      reason: 'not_found',
+    });
   });
 });
 
