@@ -14917,10 +14917,17 @@ registerToolHandler('assess_ivd_analytical_extensions', async (input: Record<str
 registerToolHandler('check_regulatory_currency', async (input: Record<string, unknown>) =>
   runStatsTool('check_regulatory_currency', async () => {
     const { findFacts } = await import('../regulatory-currency/currency-registry.js');
+    /* Resolve statuses against today. `mandatory_upcoming` is a claim
+       about the future that goes wrong the moment its date arrives, and
+       this tool tells AnA to report the status verbatim — so without
+       `asOf` it would have said EU EUDAMED was not yet mandatory two
+       months after it became mandatory. The registry stays pure; the
+       clock is read here, at the boundary. */
     const facts = findFacts({
       topic: input.topic as string | undefined,
       jurisdiction: input.jurisdiction as any,
       segment: input.segment as any,
+      asOf: new Date().toISOString().slice(0, 10),
     });
     return { matchCount: facts.length, facts };
   })

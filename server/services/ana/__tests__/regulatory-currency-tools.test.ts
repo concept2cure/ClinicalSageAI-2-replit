@@ -50,8 +50,14 @@ describe('check_regulatory_currency', () => {
     const pmda = out.result.facts.find((f: any) => f.id === 'pmda-ectd-v4-mandatory');
     expect(pmda, 'PMDA eCTD v4.0 fact must be returned for JP').toBeTruthy();
     expect(pmda.jurisdiction).toBe('JP');
-    expect(pmda.status).toBe('mandatory_upcoming');
     expect(pmda.effectiveDate).toBe('2026-04-01');
+    /* This asserted 'mandatory_upcoming' — the stored value — which was
+       already wrong by the time it ran: the mandate took effect on
+       2026-04-01. The tool now resolves statuses against today, so a
+       future obligation is reported as in force once its date arrives.
+       The assertion is stable because the promotion is monotonic: a date
+       that has passed does not un-pass. */
+    expect(pmda.status).toBe('in_force');
     // Every returned JP fact must actually be JP.
     expect(out.result.facts.every((f: any) => f.jurisdiction === 'JP')).toBe(true);
   });
