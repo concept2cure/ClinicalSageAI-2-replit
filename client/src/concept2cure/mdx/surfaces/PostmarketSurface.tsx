@@ -27,15 +27,23 @@ import { useTriageQueue } from '../hooks/useTriageQueue';
 import { DataGate } from '../components/DataGate';
 import { readyRows } from '../lib/dataState';
 import type { KitDocFramework, KitDocument } from '../components/DocumentsPanel';
+import type { Program } from '../data/programs';
 
 export interface PostmarketSurfaceProps {
   onAskAna: (text: string, opts?: { tool?: string }) => void;
   onOpenEditor?: (docId: string) => void;
+  /**
+   * Selected program, when the shell has one. Vigilance is legitimately
+   * a portfolio-level view, but the reporting-clock queue must say which
+   * it is showing — a deadline count is read as "mine" by default.
+   */
+  program?: Program | null;
 }
 
 export function PostmarketSurface({
   onAskAna,
   onOpenEditor,
+  program = null,
 }: PostmarketSurfaceProps) {
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
 
@@ -53,7 +61,7 @@ export function PostmarketSurface({
      surface rendered its clocks from fixtures — and an invented MDR
      clock is a countdown to a statutory deadline shown as though it
      were real. */
-  const triage = useTriageQueue();
+  const triage = useTriageQueue({ programId: program?.id ?? null });
   const documents = PV_DOCUMENTS as unknown as KitDocument[];
   const frameworks = PV_DOC_FRAMEWORKS as unknown as KitDocFramework[];
 
@@ -186,8 +194,9 @@ export function PostmarketSurface({
         <div className="section-head">
           <h2>Reporting clocks</h2>
           <span className="section-sub">
-            Complaints · MDR events · CAPAs — overdue first, then soonest due.
-            FDA 5-day and 30-day, EU MDR Article 87 15-day.
+            {program ? `${program.code} only` : 'All programs'} · complaints · MDR
+            events · CAPAs — overdue first, then soonest due. FDA 5-day and
+            30-day, EU MDR Article 87 15-day.
           </span>
         </div>
         <DataGate
