@@ -44,7 +44,8 @@
  *     GET   /api/mdx/rbm-attention/:programId
  *
  * Two sibling modules complete the surface, mounted at the same /api/mdx prefix:
- *   mdx-rbm-plans.ts  the monitoring plan and its actions
+ *   mdx-rbm-plans.ts  the monitoring plan and its actions (versioned; an
+ *                     approved plan is read-only)
  *   mdx-rbm-data.ts   metric ingestion and the engine runs over ingested data
  *                     (site-risk recompute, central monitoring, patient scoring)
  */

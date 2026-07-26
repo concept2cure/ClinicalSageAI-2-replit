@@ -18,7 +18,7 @@
  *   - signals: resolution notes only, no structured investigation record
  *   - patients.metrics          → always []
  *   - sites.country             → always null
- *   - plan.version/basis        → absent; plan.tiers → always null; anaDraft false
+ *   - plan.basis                → absent; plan.tiers → always null; anaDraft false
  */
 
 export interface RbmBoardSummary {
@@ -179,7 +179,12 @@ export interface RbmBoardPlan {
   title: string;
   strategy: string;
   status: string;
+  /** Plans version like assessments; the board shows the highest version, so
+   *  with an amendment open this is the draft. */
+  version: number;
   updated: string | null;
+  /** Newest version first. Same shape as the assessment chain. */
+  history: RbmBoardAssessmentVersion[];
   // Monitoring tiers (enhanced/standard/reduced) when the plan carries them;
   // null when the read-model has not populated them. Typed `null` previously,
   // which collapsed `plan.tiers.enhanced` accesses in RbmSurfacesB to `never`.

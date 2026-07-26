@@ -1068,7 +1068,7 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxRbmRoutes);
   // RBM data layer: metric ingestion + the engine runs over ingested data.
   app.use('/api/mdx', mdxRbmDataRoutes);
-  // RBM monitoring plan + its actions.
+  // RBM monitoring plan + its actions (versioned; an approved plan is read-only).
   app.use('/api/mdx', mdxRbmPlanRoutes);
   app.use('/api/mdx', mdxSoftwareRoutes);
   /* IVD + diagnostic surfaces (migration 20260508). */

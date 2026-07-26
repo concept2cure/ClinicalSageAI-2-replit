@@ -286,10 +286,16 @@ export default function createRbmBoardRoutes(): Router {
       );
       const chosenAssessment = sortedAssessments[0] ?? null;
 
+      // Plans version like assessments, so the same rule applies: highest
+      // version wins, and an open draft amendment is what the plan surface shows
+      // and edits. Ordered by version rather than updated_at, because touching
+      // an archived row (an action closing out under it) must not promote it
+      // back to being the plan on screen.
       const sortedPlans = [...planRows].sort(
-        (x, y) => (iso(y.p.updatedAt) ?? '').localeCompare(iso(x.p.updatedAt) ?? ''),
+        (x, y) => (y.p.version ?? 0) - (x.p.version ?? 0)
+          || (iso(y.p.updatedAt) ?? '').localeCompare(iso(x.p.updatedAt) ?? ''),
       );
-      const chosenPlan = sortedPlans.find(r => r.p.status === 'active') ?? sortedPlans[0] ?? null;
+      const chosenPlan = sortedPlans[0] ?? null;
 
       // ── Derived aggregates for the summary + the report/attention builders. ─
       const criticalItems = itemRows.filter(r => r.it.isCritical);
@@ -524,6 +530,7 @@ export default function createRbmBoardRoutes(): Router {
         title: chosenPlan.p.title,
         strategy: chosenPlan.p.strategy,
         status: chosenPlan.p.status,
+        version: chosenPlan.p.version,
         updated: iso(chosenPlan.p.updatedAt),
         // Not persisted per-plan: tier→visit-cadence text, the AnA-draft
         // provenance flag, and the plan "basis" narrative. Returned null/false
@@ -535,6 +542,18 @@ export default function createRbmBoardRoutes(): Router {
           when: iso(chosenPlan.p.approvedAt),
           reason: approvalReason(chosenPlan.p.metadata),
         } : null,
+        // The plan's version chain, same construction as the assessment's:
+        // every row is a version that existed, the approved ones carrying the
+        // signature they were approved under. Newest first.
+        history: sortedPlans.map(r => ({
+          id: r.p.id,
+          v: r.p.version,
+          status: r.p.status,
+          by: r.approver ?? null,
+          when: iso(r.p.approvedAt),
+          reason: approvalReason(r.p.metadata),
+          amendmentReason: amendmentReason(r.p.metadata),
+        })),
       } : null;
 
       const summary = {

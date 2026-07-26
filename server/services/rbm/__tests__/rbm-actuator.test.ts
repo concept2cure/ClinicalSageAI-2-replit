@@ -11,7 +11,7 @@ import { describe, it, expect } from 'vitest';
 import {
   addCtqFactor, defineKri, recordKriReading, setQtl, raiseSignal, triageSignal,
   draftPlan, generatePlanFromAssessment, amendAssessment, createAction, updateAction, approveAssessment,
-  inferSecondaryLimit, type Exec,
+  amendMonitoringPlan, nextPlanVersion, inferSecondaryLimit, type Exec,
 } from '../rbm-actuator';
 
 function mockExec(script: any[][]) {
@@ -165,6 +165,8 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
       [{ id: 21, ctq_factor: 'SAE reporting', risk_score: 20 },         // open critical factors
        { id: 22, ctq_factor: 'Consent', risk_score: 9 }],
       [{ site_number: '5', site_name: 'Mercy' }],                       // enhanced-tier sites
+      [],                                                               // no open draft version
+      [{ v: 0 }],                                                       // max version — first plan
       [{ id: 3, strategy: 'hybrid' }],                                  // plan insert
       [{ id: 41 }], [{ id: 42 }], [{ id: 43 }],                         // action inserts
     ]);
@@ -172,15 +174,16 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
     expect(out.generated).toBe(true);
     expect(out.derivedFrom).toMatchObject({ assessmentId: 7, overallRisk: 'high', criticalFactors: 2, enhancedSites: 1 });
     // High overall risk → hybrid strategy, per defaultPlanStrategy.
-    expect(calls[3].args).toContain('hybrid');
-    // The plan is a DRAFT until it is signed for.
-    expect(calls[3].sql).toContain("'draft'");
+    expect(calls[5].args).toContain('hybrid');
+    // The plan is a DRAFT until it is signed for, and lands as v1.
+    expect(calls[5].sql).toContain("'draft'");
+    expect(calls[5].args).toContain(1);
     // One action per critical factor (priority banded off its own score) plus
     // one visit per enhanced-tier site.
     expect(out.actions).toHaveLength(3);
-    expect(calls[4].args).toContain('high');    // score 20 → high band
-    expect(calls[5].args).toContain('medium');  // score 9  → medium band
-    expect(calls[6].sql).toContain('site_visit');
+    expect(calls[6].args).toContain('high');    // score 20 → high band
+    expect(calls[7].args).toContain('medium');  // score 9  → medium band
+    expect(calls[8].sql).toContain('site_visit');
     // Tenant scope on every write.
     for (const c of calls) expect(c.args[0]).toBe(ORG);
   });
@@ -191,9 +194,14 @@ describe('generatePlanFromAssessment — derives the plan from the RACT', () => 
     // from a superseded or draft one.
     const { exec, calls } = mockExec([
       [{ id: 7, title: 'RACT v2', overall_risk: 'medium', status: 'active' }],
-      [], [], [{ id: 3 }],
+      [],           // critical factors
+      [],           // enhanced sites
+      [],           // no open draft version
+      [{ v: 0 }],   // max version
+      [{ id: 3 }],  // plan insert
     ]);
-    await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    expect(out.generated).toBe(true);
     const factorQuery = calls[1];
     expect(factorQuery.sql).toContain('assessment_id = $3');
     expect(factorQuery.args).toEqual([ORG, 'p', 7]);
@@ -272,5 +280,115 @@ describe('amendAssessment — versioned revision of a signed RACT', () => {
     const out = await amendAssessment(exec, ORG, { assessmentId: 999, reason: 'x' });
     expect(out.amended).toBe(false);
     expect(out.reason).toBe('not_found');
+  });
+});
+
+describe('amendMonitoringPlan — versioned revision of an approved plan', () => {
+  const active = {
+    id: 3, program_id: 'p', assessment_id: 7, title: 'Monitoring plan',
+    strategy: 'hybrid', status: 'active', version: 2,
+  };
+
+  it('opens the next version as a draft, carrying unfinished actions forward', async () => {
+    const { exec, calls } = mockExec([
+      [active],                                   // load the plan
+      [],                                         // no open draft
+      [{ v: 2 }],                                 // max version
+      [{ id: 11, version: 3, status: 'draft' }],  // insert draft
+      [{ id: 201 }, { id: 202 }],                 // copied actions
+    ]);
+    const out = await amendMonitoringPlan(exec, ORG, { planId: 3, reason: 'Two sites moved to enhanced', openedBy: 4 });
+    expect(out.amended).toBe(true);
+    expect(out.supersedes).toBe(2);
+    expect(out.actions).toHaveLength(2);
+
+    const insert = calls[3];
+    // Draft, next version, and NO approval fields — copying the previous
+    // signer forward would be forging a signature.
+    expect(insert.sql).toContain("'draft'");
+    expect(insert.args).toContain(3);
+    expect(insert.sql).not.toContain('approved_by');
+    expect(String(insert.args[insert.args.length - 1])).toContain('Two sites moved to enhanced');
+
+    // Actions are copied to the NEW plan id, read from the old one.
+    const copy = calls[4];
+    expect(copy.args).toEqual([11, ORG, 3]);
+    expect(copy.sql).toContain('INSERT INTO rbm_monitoring_actions');
+    // Completed work stays with the version it was completed under, and every
+    // copy reopens: crediting progress to a plan version that did not exist when
+    // the work was done would misstate the record.
+    expect(copy.sql).toContain("status <> 'done'");
+    expect(copy.sql).toContain("'open'");
+    for (const c of calls) expect(c.args).toContain(ORG);
+  });
+
+  it('refuses to amend a draft plan — a draft is already editable', async () => {
+    const { exec, calls } = mockExec([[{ ...active, status: 'draft' }]]);
+    const out = await amendMonitoringPlan(exec, ORG, { planId: 3, reason: 'x' });
+    expect(out.amended).toBe(false);
+    expect(out.reason).toBe('not_approved');
+    expect(calls).toHaveLength(1);
+  });
+
+  it('refuses a second concurrent plan amendment', async () => {
+    const { exec } = mockExec([[active], [{ id: 12, version: 3 }]]);
+    const out = await amendMonitoringPlan(exec, ORG, { planId: 3, reason: 'x' });
+    expect(out.amended).toBe(false);
+    expect(out.reason).toBe('amendment_already_open');
+  });
+
+  it('reports not_found for a plan outside the tenant', async () => {
+    const { exec } = mockExec([[]]);
+    const out = await amendMonitoringPlan(exec, ORG, { planId: 999, reason: 'x' });
+    expect(out.amended).toBe(false);
+    expect(out.reason).toBe('not_found');
+  });
+});
+
+describe('nextPlanVersion', () => {
+  it('numbers past every version on file, including archived ones', async () => {
+    // Reusing a version number would make two different signed documents
+    // indistinguishable in the audit trail.
+    const { exec, calls } = mockExec([[{ v: 4 }]]);
+    expect(await nextPlanVersion(exec, ORG, 'p')).toBe(5);
+    expect(calls[0].sql).not.toContain('status');
+    expect(calls[0].args).toEqual([ORG, 'p']);
+  });
+
+  it('starts a study with no plans at version 1', async () => {
+    const { exec } = mockExec([[{ v: 0 }]]);
+    expect(await nextPlanVersion(exec, ORG, 'p')).toBe(1);
+  });
+});
+
+describe('generatePlanFromAssessment — versioning', () => {
+  it('refuses to generate alongside an open draft version', async () => {
+    // Two drafts off one study have no defined merge, and generating a third
+    // plan silently would discard whichever the operator was not looking at.
+    const { exec } = mockExec([
+      [{ id: 7, title: 'RACT', overall_risk: 'high', status: 'active' }], // assessment
+      [],                        // critical items
+      [],                        // enhanced sites
+      [{ id: 12, version: 3 }],  // an open draft plan already exists
+    ]);
+    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    expect(out.generated).toBe(false);
+    expect(out.reason).toBe('draft_already_open');
+  });
+
+  it('lands the generated plan as the next version, not always v1', async () => {
+    const { exec, calls } = mockExec([
+      [{ id: 7, title: 'RACT', overall_risk: 'medium', status: 'active' }],
+      [],                                         // no critical items
+      [],                                         // no enhanced sites
+      [],                                         // no open draft
+      [{ v: 2 }],                                 // max version
+      [{ id: 13, version: 3, status: 'draft' }],  // insert
+    ]);
+    const out = await generatePlanFromAssessment(exec, ORG, { programId: 'p' });
+    expect(out.generated).toBe(true);
+    const insert = calls[5];
+    expect(insert.sql).toContain('INSERT INTO rbm_monitoring_plans');
+    expect(insert.args).toContain(3);
   });
 });

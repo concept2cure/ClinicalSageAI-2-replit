@@ -46,7 +46,7 @@ function board(over: Partial<RbmBoard> = {}): RbmBoard {
     patients: [],
     sites: [{ n: '5', name: 'Mercy Clinical', country: null, composite: 71, enr: 18, qual: 20, ops: 15, tier: 'enhanced', drivers: ['quality'], at: null }],
     oversight: { 5: { open: 1, high: 1 } },
-    plan: { id: 3, title: 'Monitoring plan', strategy: 'risk_based', status: 'draft', updated: null, tiers: null, anaDraft: false, approval: null },
+    plan: { id: 3, title: 'Monitoring plan', strategy: 'risk_based', status: 'draft', version: 1, updated: null, tiers: null, anaDraft: false, approval: null, history: [{ id: 3, v: 1, status: 'draft', by: null, when: null, reason: null, amendmentReason: null }] },
     actions: [{ id: 41, planId: 3, type: 'issue', title: 'Confirm control', priority: 'high', owner: 'Unassigned', due: '2026-08-01', status: 'open', overdue: false, origin: 'ract' }],
     freshness: [],
     ...over,
@@ -445,5 +445,60 @@ describe('RBM RACT — versioned amendment of a signed assessment', () => {
     render(<RbmRact board={board()} onReload={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /Amend — new version/ })).toBeNull();
     expect(screen.getByRole('button', { name: /Add CtQ factor/ })).toHaveProperty('disabled', false);
+  });
+});
+
+describe('RBM plan — versioned amendment of an approved plan', () => {
+  const approvedPlanBoard = () => board({
+    plan: {
+      id: 3, title: 'Monitoring plan', strategy: 'hybrid', status: 'active', version: 2,
+      updated: '2026-06-10', tiers: null, anaDraft: false,
+      approval: { by: 'Jordan Chen', when: '2026-06-10', reason: 'Tier review complete' },
+      history: [
+        { id: 3, v: 2, status: 'active', by: 'Jordan Chen', when: '2026-06-10', reason: 'Tier review complete', amendmentReason: 'Two sites moved to enhanced' },
+        { id: 1, v: 1, status: 'archived', by: 'Sam Okafor', when: '2026-03-04', reason: 'Initial plan', amendmentReason: null },
+      ],
+    },
+  });
+
+  it('offers Amend on an approved plan and shows its version', () => {
+    render(<RbmPlan board={approvedPlanBoard()} onReload={vi.fn()} />);
+    expect(screen.getByText(/Version 2/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Amend — new version/ })).toHaveProperty('disabled', false);
+  });
+
+  it('keeps an approved plan executable — approval freezes the commitment, not the work', () => {
+    render(<RbmPlan board={approvedPlanBoard()} onReload={vi.fn()} />);
+    // Adding and advancing actions must stay available: responding to a signal
+    // is what an active plan is for. Locking these would make an approved plan
+    // unusable and push the work outside the module.
+    expect(screen.getByRole('button', { name: /Add action/ })).toHaveProperty('disabled', false);
+    expect(screen.getByRole('button', { name: /Start/ })).toHaveProperty('disabled', false);
+  });
+
+  it('opens the amendment with a reason, stating what carries forward', async () => {
+    render(<RbmPlan board={approvedPlanBoard()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Amend — new version/ }));
+    expect(await screen.findByText(/opens v3 as a draft/)).toBeTruthy();
+    // The dialog must be explicit that completed work stays where it was done.
+    expect(screen.getByText(/stay with the version they were completed under/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/Why is the monitoring plan being amended/), {
+      target: { value: 'Central monitoring moved two sites to enhanced' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Open amendment/ }));
+    await waitFor(() => {
+      expect(writes()).toContainEqual(['POST', '/api/mdx/rbm-monitoring-plans/3/amend', { reason: 'Central monitoring moved two sites to enhanced' }]);
+    });
+  });
+
+  it('renders the plan version chain with each version\'s own signature', () => {
+    render(<RbmPlan board={approvedPlanBoard()} onReload={vi.fn()} />);
+    expect(screen.getByText(/v2 — active — approved 2026-06-10 by Jordan Chen/)).toBeTruthy();
+    expect(screen.getByText(/v1 — archived — approved 2026-03-04 by Sam Okafor/)).toBeTruthy();
+  });
+
+  it('does not offer Amend on a draft plan', () => {
+    render(<RbmPlan board={board()} onReload={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /Amend — new version/ })).toBeNull();
   });
 });

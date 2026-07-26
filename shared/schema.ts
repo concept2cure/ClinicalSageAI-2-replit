@@ -18525,6 +18525,10 @@ export const rbmMonitoringPlans = pgTable(
     title:          text('title').notNull(),
     strategy:       text('strategy').default('risk_based').notNull(),
     status:         text('status').default('draft').notNull(),
+    /** Plans version like assessments: an approved plan is read-only, and
+     *  revising it opens a new draft version rather than editing content the
+     *  approver's signature is already attached to. */
+    version:        integer('version').default(1).notNull(),
     approvedBy:     integer('approved_by').references(() => users.id),
     approvedAt:     timestamp('approved_at', { withTimezone: true }),
     metadata:       jsonb('metadata').default('{}'),
@@ -18535,6 +18539,8 @@ export const rbmMonitoringPlans = pgTable(
   table => ({
     orgIdx:        index('rbm_plans_org_idx').on(table.organizationId),
     orgProgramIdx: index('rbm_plans_org_program_idx').on(table.organizationId, table.programId),
+    orgProgramVersionIdx: index('rbm_plans_org_program_version_idx')
+      .on(table.organizationId, table.programId, table.version),
   }),
 );
 export type RbmMonitoringPlan = InferSelectModel<typeof rbmMonitoringPlans>;

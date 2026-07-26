@@ -10,12 +10,18 @@
  *     GET   /api/mdx/rbm-monitoring-plans?program_id=
  *     POST  /api/mdx/rbm-monitoring-plans        GET .../:id  (plan + actions)
  *     POST  /api/mdx/rbm-monitoring-plans/generate  derive a draft from the RACT
- *     PATCH /api/mdx/rbm-monitoring-plans/:id
- *     POST  /api/mdx/rbm-monitoring-plans/:id/approve   e-signed
+ *     PATCH /api/mdx/rbm-monitoring-plans/:id    refused on an approved plan
+ *     POST  /api/mdx/rbm-monitoring-plans/:id/approve  e-signed; archives the
+ *                                                      version it supersedes
+ *     POST  /api/mdx/rbm-monitoring-plans/:id/amend    opens the next version
  *
  *   Monitoring actions
  *     GET   /api/mdx/rbm-monitoring-actions?plan_id=&program_id=&status=
  *     POST  /api/mdx/rbm-monitoring-actions      PATCH .../:id
+ *
+ * Plans are VERSIONED and an approved plan is read-only — see
+ * amendMonitoringPlan in the RBM actuator for why revision opens a new version
+ * rather than editing content a signature is already attached to.
  *
  * Mounted at /api/mdx alongside mdx-rbm.ts. Same conventions throughout: raw
  * parameterized SQL over the shared pool, the api-response envelope, Zod
@@ -32,7 +38,9 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
-import { generatePlanFromAssessment } from '../services/rbm/rbm-actuator';
+import {
+  generatePlanFromAssessment, amendMonitoringPlan, nextPlanVersion,
+} from '../services/rbm/rbm-actuator';
 import { verifySignerCredentials, defaultSignoffDeps } from '../services/ana-ri/governed-action-signoff';
 
 const router = Router();
@@ -91,6 +99,14 @@ const approveBody = z.object({
   mfaToken: z.string().optional(),
 });
 
+/** Opening an amendment is not itself a signed act, so it takes a reason for
+ *  the record but no e-signature; the signature is required to approve it. */
+const amendBody = z.object({ reason: z.string().min(3).max(2000) });
+
+// ════════════════════════════════════════════════════════════════════════════
+// MONITORING PLANS + ACTIONS
+// ════════════════════════════════════════════════════════════════════════════
+
 /** Approve + activate a monitoring plan, capturing the reason for change. */
 router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
   const orgId = getOrgId(req);
@@ -103,8 +119,10 @@ router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
   if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
   const signoff = await verifySignerCredentials(defaultSignoffDeps, { userId: signerId, password: parsed.data.password, mfaToken: parsed.data.mfaToken });
   if (!signoff.verified) return clientError(res, 401, signoff.error ?? 'Signer verification failed (21 CFR 11.200)', signoff.code ? { code: signoff.code } : undefined);
+  const client = await pool.connect();
   try {
-    const { rows } = await pool.query(
+    await client.query('BEGIN');
+    const { rows } = await client.query(
       `UPDATE rbm_monitoring_plans
           SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
               metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
@@ -112,14 +130,33 @@ router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
         RETURNING *`,
       [signerId, parsed.data.reason, id, orgId],
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
-    return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'approve-plan', err); }
+    if (rows.length === 0) {
+      await client.query('ROLLBACK');
+      return notFoundInTenant(res, 'Monitoring plan');
+    }
+    // Approving a version supersedes the one it replaces, in the SAME
+    // transaction, so a study never has two plans claiming to direct monitoring
+    // at once. The archived row and its actions are left untouched — that is the
+    // signed record of what was being done before.
+    const superseded = await client.query(
+      `UPDATE rbm_monitoring_plans SET status = 'archived', updated_at = NOW()
+        WHERE organization_id = $1 AND program_id IS NOT DISTINCT FROM $2
+          AND deleted_at IS NULL AND id <> $3 AND status = 'active'
+        RETURNING version`,
+      [orgId, rows[0].program_id, id],
+    );
+    await client.query('COMMIT');
+    return ok(res, rows[0], {
+      supersededVersions: superseded.rows.map((r: { version: number }) => r.version),
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'approve-plan', err);
+  } finally {
+    client.release();
+  }
 });
 
-// ════════════════════════════════════════════════════════════════════════════
-// MONITORING PLANS + ACTIONS
-// ════════════════════════════════════════════════════════════════════════════
 
 router.get('/rbm-monitoring-plans', async (req, res) => {
   const orgId = getOrgId(req);
@@ -153,10 +190,13 @@ router.post('/rbm-monitoring-plans', async (req, res) => {
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
   try {
+    // A hand-created plan takes the next version in the study's chain rather
+    // than always being v1, so it cannot collide with a version already on file.
+    const version = await nextPlanVersion(pool, orgId, p.programId ?? null);
     const { rows } = await pool.query(
-      `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [orgId, p.programId ?? null, p.assessmentId ?? null, p.title, p.strategy ?? 'risk_based', p.status ?? 'draft'],
+      `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, version)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [orgId, p.programId ?? null, p.assessmentId ?? null, p.title, p.strategy ?? 'risk_based', p.status ?? 'draft', version],
     );
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'create-plan', err); }
@@ -185,6 +225,10 @@ router.post('/rbm-monitoring-plans/generate', async (req, res) => {
     const result = await generatePlanFromAssessment(client, orgId, parsed.data);
     if (!result.generated) {
       await client.query('ROLLBACK');
+      if (result.reason === 'draft_already_open') {
+        return clientError(res, 409,
+          'A draft monitoring plan version is already open for this study — approve or archive it before generating another.');
+      }
       return clientError(res, 409, result.reason === 'assessment_not_approved'
         ? 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.'
         : 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan');
@@ -235,8 +279,25 @@ router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const patch = buildPatch(parsed.data, PLAN_COL);
   if (!patch) return clientError(res, 422, 'No updatable fields in body');
-  patch.args.push(id, orgId);
   try {
+    const cur = await pool.query(
+      `SELECT status, version FROM rbm_monitoring_plans
+        WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      [id, orgId],
+    );
+    if (cur.rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
+    // An approved plan is read-only. Its e-signature attests to a specific
+    // strategy and set of actions, so editing in place would leave the
+    // approver's name and timestamp attached to content they never saw. The
+    // amend endpoint opens a new draft version instead. `status` itself is
+    // exempt so a plan can still be archived without being amended.
+    const statusOnly = Object.keys(parsed.data).every(k => k === 'status');
+    if (cur.rows[0].status === 'active' && !statusOnly) {
+      return clientError(res, 409,
+        `Monitoring plan v${cur.rows[0].version} is approved and cannot be edited. `
+        + `POST /rbm-monitoring-plans/${id}/amend to open a new draft version — the signed version stays on file.`);
+    }
+    patch.args.push(id, orgId);
     const { rows } = await pool.query(
       `UPDATE rbm_monitoring_plans SET ${patch.setSql}, updated_at = NOW()
         WHERE id = $${patch.args.length - 1} AND organization_id = $${patch.args.length} AND deleted_at IS NULL
@@ -246,6 +307,48 @@ router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
     if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
     return ok(res, rows[0]);
   } catch (err) { return serverError(res, log, 'patch-plan', err); }
+});
+
+/**
+ * Open a versioned amendment to an approved monitoring plan — a new draft
+ * carrying the unfinished actions forward, leaving the signed version intact.
+ * See amendMonitoringPlan for why this is a new version rather than an edit.
+ *
+ * Opening an amendment is not itself a signed act, so it takes a reason for the
+ * record but no e-signature; the signature is required to approve the result.
+ */
+router.post('/rbm-monitoring-plans/:id/amend', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = numericId(req.params.id);
+  if (id === null) return clientError(res, 422, 'id must be numeric');
+  const parsed = amendBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'A reason for the amendment is required', parsed.error.flatten().fieldErrors);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await amendMonitoringPlan(client, orgId, {
+      planId: id, reason: parsed.data.reason, openedBy: getUserId(req),
+    });
+    if (!result.amended) {
+      await client.query('ROLLBACK');
+      if (result.reason === 'not_found') return notFoundInTenant(res, 'Monitoring plan');
+      return clientError(res, 409, result.reason === 'amendment_already_open'
+        ? 'A draft plan version is already open for this study — approve or archive it before opening another.'
+        : 'Only an approved monitoring plan can be amended. This one is still a draft, so edit it directly.');
+    }
+    await client.query('COMMIT');
+    return created(res, { ...result.plan, actions: result.actions }, {
+      supersedes: result.supersedes,
+      actionsCopied: result.actions?.length ?? 0,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'amend-plan', err);
+  } finally {
+    client.release();
+  }
 });
 
 const actionListQuery = z.object({
@@ -344,4 +447,5 @@ router.patch('/rbm-monitoring-actions/:id', async (req, res) => {
     return ok(res, rows[0]);
   } catch (err) { return serverError(res, log, 'patch-action', err); }
 });
+
 export default router;
