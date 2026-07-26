@@ -198,7 +198,27 @@ export interface RbmBoard {
   oversight: Record<string, { open: number; high: number }>;
   plan: RbmBoardPlan | null;
   actions: RbmBoardAction[];
+  freshness: RbmBoardFreshness[];
   pendingStore?: boolean;
+}
+
+/**
+ * Per-source data freshness — the newest ingestion run for each feed.
+ * `stale` is the engine's call (see FRESHNESS_STALE_DAYS), measured from the
+ * extract's cutoff rather than the load time: a job that ran this morning
+ * against a three-week-old export is not fresh data. An empty array means no
+ * feed is tracked at all, which the surface states rather than treating as
+ * healthy.
+ */
+export interface RbmBoardFreshness {
+  source: string;
+  lastRunAt: string | null;
+  dataCutoff: string | null;
+  status: string;
+  rowsAccepted: number;
+  rowsRejected: number;
+  stale: boolean;
+  ageDays: number | null;
 }
 
 /** A program (study) that has real RBM data — GET /api/mdx-rbm/rbm-programs. */

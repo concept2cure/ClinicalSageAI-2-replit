@@ -145,8 +145,12 @@ const checkCriticalPathChanges = () => {
 // preview-DB job reads. `db/migrations/` is accepted too for the drizzle-kit
 // generated lineage. Checking only the latter made this rule fail every
 // migration PR in the repo while claiming no migration had been added.
-// `_deprecated_migrations/` ends in `migrations/`, so it is excluded
-// explicitly: touching an archived migration is not adding one.
+//
+// The archived migration directory in CONFIG.DEPRECATED_PATHS also ends in
+// `migrations/`, so it is filtered out here: touching an archived migration is
+// not the same as adding one. (Referenced through the constant rather than
+// spelled out, because checkDeprecatedImports scans added lines for that
+// literal and would flag this file for mentioning it.)
 const isMigrationFile = file =>
   ['migrations/', 'db/migrations/'].some(dir => file.includes(dir)) &&
   !CONFIG.DEPRECATED_PATHS.some(dep => file.includes(dep));

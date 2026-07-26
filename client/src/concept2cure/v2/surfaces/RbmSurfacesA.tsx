@@ -18,7 +18,7 @@ import React, { useState } from 'react';
 import { apiRequest } from '@/lib/queryClient';
 import { I } from '../icons';
 import type { RbmAssessment } from '../fixtures/rbm-data';
-import type { RbmBoard, RbmBoardItem, RbmBoardKri, RbmBoardQtl } from './rbmBoard';
+import type { RbmBoard, RbmBoardItem, RbmBoardKri, RbmBoardQtl, RbmBoardFreshness } from './rbmBoard';
 import {
   RbmChip, RbmScore, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
   RbmFormModal, GovernedApprovalDialog, type FormField,
@@ -104,6 +104,43 @@ function optNum(v: string | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Per-source data currency. Rendered above the tiles because every number
+ * below it is only as good as the feed behind it: a green KRI computed from an
+ * export that last landed three weeks ago is not evidence of control. An
+ * untracked study says so outright rather than showing nothing, which would
+ * let hand-entered numbers read as monitored data.
+ */
+function DataFreshness({ sources }: { sources: RbmBoardFreshness[] }) {
+  if (sources.length === 0) {
+    return (
+      <div className="rbm-fresh-strip" data-empty>
+        <span className="rbm-fresh-l">{I.database}Data sources</span>
+        <span className="rbm-fresh-none">
+          No source feeds are tracked for this study — the values below were entered by hand and their currency is unrecorded.
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div className="rbm-fresh-strip">
+      <span className="rbm-fresh-l">{I.database}Data sources</span>
+      {sources.map(s => (
+        <span key={s.source} className="rbm-fresh-src" data-stale={s.stale || undefined}
+          title={`${s.rowsAccepted} row(s) accepted${s.rowsRejected ? `, ${s.rowsRejected} rejected` : ''}${s.dataCutoff ? ` — cutoff ${s.dataCutoff}` : ''}`}>
+          <b>{s.source}</b>
+          <em>
+            {s.ageDays === null ? 'never loaded'
+              : s.ageDays === 0 ? 'today'
+                : `${s.ageDays}d old`}
+            {s.status === 'failed' ? ' — failed' : s.status === 'partial' ? ' — partial' : ''}
+          </em>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 /* 1 -- Overview */
 export function RbmOverview({ board, onTab }: SubProps) {
   const S = board.summary;
@@ -121,6 +158,7 @@ export function RbmOverview({ board, onTab }: SubProps) {
   ];
   return (
     <div>
+      <DataFreshness sources={board.freshness ?? []} />
       <div className="rbm-tiles">
         {tiles.map((t, i) => (
           <button key={i} className="rbm-tile" data-warn={(t as Record<string, unknown>).warn || undefined} data-err={(t as Record<string, unknown>).err || undefined} onClick={() => onTab?.(t.nav)}>

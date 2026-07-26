@@ -12,7 +12,7 @@ import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/re
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', () => ({ apiRequest }));
 
-import { RbmKris, RbmQtls, RbmRact } from '../surfaces/RbmSurfacesA';
+import { RbmKris, RbmQtls, RbmRact, RbmOverview } from '../surfaces/RbmSurfacesA';
 import { RbmSignals, RbmSites, RbmPlan } from '../surfaces/RbmSurfacesB';
 import type { RbmBoard } from '../surfaces/rbmBoard';
 
@@ -48,6 +48,7 @@ function board(over: Partial<RbmBoard> = {}): RbmBoard {
     oversight: { 5: { open: 1, high: 1 } },
     plan: { id: 3, title: 'Monitoring plan', strategy: 'risk_based', status: 'draft', updated: null, tiers: null, anaDraft: false, approval: null },
     actions: [{ id: 41, planId: 3, type: 'issue', title: 'Confirm control', priority: 'high', owner: 'Unassigned', due: '2026-08-01', status: 'open', overdue: false, origin: 'ract' }],
+    freshness: [],
     ...over,
   };
 }
@@ -245,6 +246,28 @@ describe('RBM v2 surfaces persist their writes', () => {
     expect(body).toMatchObject({ status: 'investigating' });
     expect((body as { action: { planId: number; actionType: string } }).action)
       .toMatchObject({ planId: 3, actionType: 'capa' });
+  });
+
+  it('states outright when no source feed is tracked', () => {
+    // Showing nothing would let hand-entered indicator values read as
+    // monitored data of unknown age.
+    render(<RbmOverview board={board({ freshness: [] })} onTab={vi.fn()} />);
+    expect(screen.getByText(/No source feeds are tracked for this study/)).toBeTruthy();
+  });
+
+  it('marks a stale feed on the overview rather than showing its age neutrally', () => {
+    render(<RbmOverview board={board({
+      freshness: [
+        { source: 'edc', lastRunAt: '2026-07-01T00:00:00.000Z', dataCutoff: '2026-06-30', status: 'succeeded', rowsAccepted: 400, rowsRejected: 0, stale: false, ageDays: 1 },
+        { source: 'ctms', lastRunAt: '2026-07-01T00:00:00.000Z', dataCutoff: '2026-06-01', status: 'succeeded', rowsAccepted: 90, rowsRejected: 2, stale: true, ageDays: 30 },
+      ],
+    })} onTab={vi.fn()} />);
+    expect(screen.getByText('edc')).toBeTruthy();
+    expect(screen.getByText('30d old')).toBeTruthy();
+    const ctms = screen.getByText('ctms').closest('.rbm-fresh-src')!;
+    expect(ctms.getAttribute('data-stale')).toBe('true');
+    const edc = screen.getByText('edc').closest('.rbm-fresh-src')!;
+    expect(edc.getAttribute('data-stale')).toBeNull();
   });
 
   it('surfaces the server error and changes nothing when a write is rejected', async () => {

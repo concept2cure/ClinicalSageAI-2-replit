@@ -33,12 +33,13 @@ import { requestDb } from '../db/requestDb';
 import {
   rbmRiskAssessments, rbmRiskItems, rbmKris, rbmKriValues, rbmQtls,
   rbmSignals, rbmSiteRiskScores, rbmPatientProfiles, rbmMonitoringPlans,
-  rbmMonitoringActions, users,
+  rbmMonitoringActions, rbmDataRuns, users,
 } from '../../shared/schema';
 import {
   buildRiskReview, renderRiskReviewMarkdown, buildAttentionFeed,
   type RiskReviewInput, type AttentionItem,
 } from '../services/rbm/risk-report';
+import { freshnessFromRun, type SourceFreshness } from '../services/rbm/metric-ingestion';
 
 const log = createScopedLogger('mdx-rbm-board');
 
@@ -222,6 +223,48 @@ export default function createRbmBoardRoutes(): Router {
           eq(rbmMonitoringPlans.programId, programId),
         ));
 
+      // ── Per-source data freshness: the newest run per feed. ────────────────
+      // Queried defensively in its own try/catch rather than inside the board's
+      // outer one: an older database can carry the rbm_* store without the
+      // ingestion tables, and a missing rbm_data_runs must not blank the whole
+      // board. No runs simply means no feed is tracked, which the surface says
+      // outright rather than treating as healthy.
+      let freshness: SourceFreshness[] = [];
+      try {
+        const runRows = await db.select({
+          source: rbmDataRuns.source,
+          startedAt: rbmDataRuns.startedAt,
+          dataCutoff: rbmDataRuns.dataCutoff,
+          status: rbmDataRuns.status,
+          rowsAccepted: rbmDataRuns.rowsAccepted,
+          rowsRejected: rbmDataRuns.rowsRejected,
+        })
+          .from(rbmDataRuns)
+          .where(and(
+            eq(rbmDataRuns.organizationId, orgId),
+            eq(rbmDataRuns.programId, programId),
+          ))
+          .orderBy(desc(rbmDataRuns.startedAt))
+          .limit(500);
+
+        const newestBySource = new Map<string, typeof runRows[number]>();
+        for (const r of runRows) if (!newestBySource.has(r.source)) newestBySource.set(r.source, r);
+        const now = new Date(asOf);
+        freshness = [...newestBySource.values()]
+          .map(r => freshnessFromRun({
+            source: r.source,
+            startedAt: iso(r.startedAt),
+            dataCutoff: r.dataCutoff ? String(r.dataCutoff) : null,
+            status: r.status,
+            rowsAccepted: r.rowsAccepted,
+            rowsRejected: r.rowsRejected,
+          }, now))
+          // Stale first — the feed that stopped is the one worth seeing.
+          .sort((x, y) => Number(y.stale) - Number(x.stale) || x.source.localeCompare(y.source));
+      } catch (err) {
+        if ((err as { code?: string })?.code !== UNDEFINED_TABLE) throw err;
+      }
+
       // ── Choose the governing assessment/plan (active, else most-recent). ────
       const sortedAssessments = [...assessmentRows].sort(
         (x, y) => (iso(y.a.updatedAt) ?? '').localeCompare(iso(x.a.updatedAt) ?? ''),
@@ -288,6 +331,7 @@ export default function createRbmBoardRoutes(): Router {
         sites: { total: siteRows.length, enhanced: enhancedSites },
         patients: { total: patientRows.length, flagged: flaggedPatients, review: reviewPatients },
         actions: { open: openActions, overdue: overdueActions },
+        dataSources: freshness.map(f => ({ source: f.source, stale: f.stale, ageDays: f.ageDays, status: f.status })),
       };
       const report = buildRiskReview(reviewInput);
       const attention = buildAttentionFeed(reviewInput).map(a => ({
@@ -493,6 +537,7 @@ export default function createRbmBoardRoutes(): Router {
           oversight,
           plan,
           actions,
+          freshness,
         },
       });
     } catch (err) {
@@ -515,6 +560,7 @@ export default function createRbmBoardRoutes(): Router {
             attention: [], report: null, reportMarkdown: null,
             assessment: null, items: [], kris: [], qtls: [], signals: [],
             patients: [], sites: [], oversight: {}, plan: null, actions: [],
+            freshness: [],
             pendingStore: true,
           },
         });

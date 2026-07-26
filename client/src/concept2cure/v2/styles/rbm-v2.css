@@ -420,3 +420,16 @@
   }
 
 }
+
+  /* Data currency strip — the feed provenance behind every number below it. */
+  .rbm-fresh-strip{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 13px;margin-bottom:13px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);}
+  .rbm-fresh-strip[data-empty]{border-style:dashed;}
+  .rbm-fresh-l{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;color:var(--text-400);text-transform:uppercase;letter-spacing:.04em;}
+  .rbm-fresh-l svg{width:13px;height:13px;}
+  .rbm-fresh-none{font-size:11.5px;color:var(--text-400);}
+  .rbm-fresh-src{display:inline-flex;align-items:baseline;gap:6px;padding:3px 9px;border-radius:999px;background:var(--bg-100);font-size:11.5px;}
+  .rbm-fresh-src b{color:var(--text-100);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.03em;}
+  .rbm-fresh-src em{font-style:normal;color:var(--text-400);}
+  /* A feed that has gone quiet reads as a warning, not as neutral chrome. */
+  .rbm-fresh-src[data-stale]{background:var(--warning-muted);}
+  .rbm-fresh-src[data-stale] em{color:var(--warning);font-weight:600;}
