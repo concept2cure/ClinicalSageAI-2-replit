@@ -117,11 +117,17 @@ export const uploadHandler = async (req: Request, res: Response) => {
       }
     }
 
-    // Save metadata to DB
+    // Save metadata to DB.
+    //
+    // `organization_id` is written alongside the tenant-scoped storage path so
+    // both halves of the tenancy contract agree (see
+    // migrations/20260726_file_uploads_tenancy.sql). Omitting it — as this
+    // INSERT previously did — made every `WHERE organization_id = $n` lookup in
+    // the chat/stream paths match zero rows, silently dropping attachments.
     await pool.query(
-      `INSERT INTO file_uploads (id, user_id, original_name, mime_type, file_size, storage_path, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, 'uploaded', NOW())`,
-      [fileId, userId, fileName, mimeType, fileSize, storagePath]
+      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'uploaded', NOW())`,
+      [fileId, userId, orgId != null ? Number(orgId) : null, fileName, mimeType, fileSize, storagePath]
     );
 
     // ── Text extraction (runs for every upload with a buffer) ──

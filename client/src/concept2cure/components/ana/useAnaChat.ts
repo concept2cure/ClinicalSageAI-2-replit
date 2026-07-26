@@ -768,9 +768,20 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           }
         : undefined;
 
+      // Server file ids for this turn's attachments. Without these the stream
+      // route has no way to know which upload the user attached: the chips
+      // rendered in the thread are client-only state, so a user could attach a
+      // file, watch it appear in chat, send, and have AnA never receive it.
+      // Only `ready` attachments carry a fileId; any still uploading are
+      // omitted rather than sent as undefined.
+      const attachedFileIds = (attachments ?? [])
+        .map(a => a.fileId)
+        .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
       const body = JSON.stringify({
         message: text,
         thread_id: threadIdRef.current || undefined,
+        file_ids: attachedFileIds.length > 0 ? attachedFileIds : undefined,
         project_id: options.projectId || ac?.projectId || undefined,
         submission_type: submissionTypeForContext,
         user_role: options.userRole || undefined,

@@ -161,7 +161,7 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
         <EmptyState
           icon={I.shieldCheck || I.check}
           title="No traced document sections yet"
-          hint="Once AnA writes governed document sections, every sentence's typed source and confidence appears here — provenance for each claim, checkable against PubMed and CrossRef. Nothing here is simulated."
+          hint="Once AnA writes governed document sections, each sentence that has a stored citation appears here with its typed source and confidence — checkable against PubMed and CrossRef. Nothing here is simulated."
         />
       </div></div>
     );
@@ -173,19 +173,19 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
         <div>
           <div className="sp-eyebrow">Provenance / 21 CFR Part 11</div>
           <h1 className="sp-title">Source tracer</h1>
-          <p className="sp-state">Every sentence AnA writes carries a typed source and a confidence score — trial data, literature, regulatory guidance, or internal data. Literature citations are checked against PubMed and CrossRef. No untraceable number reaches a submission.</p>
+          <p className="sp-state">Every sentence shown here carries a typed source and a confidence score — trial data, literature, regulatory guidance, or internal data. Literature citations can be checked against PubMed and CrossRef. This surface reports what is traced; it does not by itself block an untraced claim from reaching a submission.</p>
         </div>
         <button className="sp-primary" onClick={runVerify} disabled={verifying || secLits.length === 0}>{I.shieldCheck} {verifying ? 'Verifying…' : 'Verify sources'}</button>
       </div>
 
       <AnswerLead
         tone={weak.length ? 'calm' : 'good'}
-        eyebrow="Whether every number in your dossier traces to a real source"
-        headline={<>Every one of the <b>{allSents.length}</b> traced sentences across your generated sections carries a typed source — each with a confidence score.</>}
-        body={<><b>{litAll.length}</b> of them cite published literature. I can check those against PubMed and CrossRef right now, so an untraceable citation never reaches the submission.</>}
+        eyebrow="Which claims in your dossier trace to a real source"
+        headline={<><b>{allSents.length}</b> traced sentence{allSents.length === 1 ? '' : 's'} across your generated sections carr{allSents.length === 1 ? 'ies' : 'y'} a typed source — each with a confidence score. Sentences with no stored citation do not appear here.</>}
+        body={<><b>{litAll.length}</b> of them cite published literature. I can check those against PubMed and CrossRef right now.</>}
         reassure={weak.length
-          ? <><b>{weak.length}</b> sentence{weak.length > 1 ? 's' : ''} carr{weak.length > 1 ? 'y' : 'ies'} a confidence below 70% — flagged so nothing unverified slips through.</>
-          : <>Every citation is confirmable against a public index.</>}
+          ? <><b>{weak.length}</b> sentence{weak.length > 1 ? 's' : ''} carr{weak.length > 1 ? 'y' : 'ies'} a confidence below 70% — review these before relying on them.</>
+          : <>Every citation here is confirmable against a public index.</>}
         action={{
           label: 'Verify ' + sec.doc.split('/')[0].trim() + ' citations',
           icon: I.shieldCheck,
@@ -255,6 +255,22 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
                                   <b>{src.title}</b>
                                   {src.pageNumber != null ? ' · p.' + src.pageNumber : ''}
                                   {' · '}{src.sourceType}{' · relevance '}{Math.round((src.relevanceScore ?? 0) * 100)}%
+                                  {/* Verification state, from the service's own
+                                      `isVerified` flag. The tracer resolves some
+                                      links by AI/keyword matching at click time;
+                                      those start unverified and must not be
+                                      presented as settled lineage. */}
+                                  {' · '}
+                                  <span
+                                    className={src.isVerified ? 'sp-tone-ok' : 'sp-tone-warn'}
+                                    title={
+                                      src.isVerified
+                                        ? 'A stored source link a person has confirmed.'
+                                        : 'Matched by the traceability service and not yet confirmed by a person.'
+                                    }
+                                  >
+                                    {src.isVerified ? 'verified link' : 'unverified match'}
+                                  </span>
                                   {src.accessUrl && <> · <a className="sp-go" href={src.accessUrl} target="_blank" rel="noreferrer">open source</a></>}
                                   {src.excerpt && <div style={{ color: 'var(--text-400,#667085)', marginTop: 2 }}>“{src.excerpt}”</div>}
                                 </div>
