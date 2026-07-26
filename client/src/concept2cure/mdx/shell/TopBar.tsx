@@ -5,6 +5,8 @@
 
 import * as React from 'react';
 import { I } from '../icons';
+import { useSampleMode } from '../components/DataGate';
+import { sampleModeAvailable, setSampleMode } from '../lib/sampleMode';
 import type { Program } from '../data/programs';
 
 export interface TopBarProps {
@@ -14,6 +16,7 @@ export interface TopBarProps {
 }
 
 export function TopBar({ hereLabel, program, onOpenPalette }: TopBarProps) {
+  const sampleOn = useSampleMode();
   return (
     <header className="topbar">
       <div className="crumbs">
@@ -43,6 +46,26 @@ export function TopBar({ hereLabel, program, onOpenPalette }: TopBarProps) {
         <span className="lbl">Ask AnA, jump to…</span>
         <span className="kbd">⌘K</span>
       </button>
+
+      {/* Sample mode is the only way canonical example content reaches a
+          surface. It is deliberately loud while on: a user must never be
+          unsure whether they are looking at their own regulated data.
+          Absent entirely from production builds. */}
+      {sampleModeAvailable() && (
+        <button
+          className={`tb-sample${sampleOn ? ' on' : ''}`}
+          onClick={() => setSampleMode(!sampleOn)}
+          aria-pressed={sampleOn}
+          title={
+            sampleOn
+              ? 'Showing canonical sample content where your workspace has no data. Click to show your own data only.'
+              : 'Show canonical sample content where your workspace has no data.'
+          }
+        >
+          {sampleOn ? I.alertCircle : I.database}
+          <span>{sampleOn ? 'Sample data on' : 'Sample data'}</span>
+        </button>
+      )}
 
       <div className="tb-actions">
         <button className="tb-btn" title="Filter">{I.filter}</button>

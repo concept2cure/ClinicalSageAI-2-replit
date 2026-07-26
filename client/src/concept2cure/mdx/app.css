@@ -2946,3 +2946,23 @@ button.ctable-row { border-radius: 0; }
   border: 1px solid var(--error); border-radius: var(--radius-md);
 }
 .ap-sign-error svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+
+/* Sample-mode toggle. Muted when off so it reads as a developer
+   affordance; unmistakable when on, because the cost of a user not
+   realising they are looking at example data is a misread submission. */
+.tb-sample {
+  display: flex; align-items: center; gap: 6px;
+  height: 26px; padding: 0 10px; margin-right: 8px;
+  font-size: 11px; font-weight: 500;
+  color: var(--text-400);
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  transition: color var(--dur) ease-out, background var(--dur) ease-out,
+              border-color var(--dur) ease-out;
+}
+.tb-sample svg { width: 13px; height: 13px; }
+.tb-sample:hover { color: var(--text-200); background: var(--bg-200); }
+.tb-sample.on {
+  color: var(--warning, var(--text-100));
+  background: var(--warning-muted, var(--bg-200));
+  border-color: var(--warning, var(--border-strong));
+}
