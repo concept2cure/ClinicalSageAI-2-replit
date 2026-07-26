@@ -11,7 +11,7 @@
  */
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
-import { SampleTag, connected, liveGet } from '../dataConnect';
+import { SampleTag, connected, liveGetOrNull } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -177,56 +177,43 @@ const ECTD_ARTIFACT: EctdArtifactData = {
   ],
 };
 
-const ECTD_THREAD: EctdThreadMessage[] = [
-  { role: 'user', text: 'Draft Section 2.5 efficacy from the locked pivotal CSR.' },
-  { role: 'ai',
-    tools: [
-      { label: 'attach_sources_to_document', detail: 'CSR BX301-301 §11 (locked)', done: true },
-      { label: 'run_validation', detail: 'eCTD structure -- ICH M4E(R2)', done: true },
-    ],
-    body: 'I drafted §2.5.4 from the locked BX301-301 dataset -- overall response rate 38.6% (95% CI 30.2–47.5) by IRC. Every claim is traced to the source paragraph; hover any paragraph in the artifact to see provenance.',
-    artifact: { title: 'Clinical Overview -- §2.5', meta: 'v0.7 -- 6 paragraphs -- 4 citations' },
-  },
-];
+/* The thread starts empty.
+   It was previously seeded with a fabricated exchange in which AnA reported
+   two COMPLETED tool calls (`attach_sources_to_document` against "CSR
+   BX301-301 §11 (locked)" and `run_validation`) and claimed to have drafted
+   §2.5.4 from a locked dataset. No request was ever issued and no sources were
+   ever attached — the ticks were literals. Showing a finished governed action
+   that never ran is the one thing a provenance surface must never do. */
+const ECTD_THREAD: EctdThreadMessage[] = [];
 
-/* ---- Local live-first data + validation/compliance actions ---- */
+/* ---- Validation / compliance actions ----
 
-function runValidateAction(docId: number): Promise<ValidationResult> {
-  const local = (): ValidationResult => ({
-    isValid: false, errorCount: 1, warningCount: 2, totalSections: 19,
-    validatedAt: new Date().toISOString(),
-    findings: [
-      { type: 'missing-section', severity: 'error', module: '3', sectionId: '3.2.P', message: 'Required eCTD section 3.2.P is missing content from Module 3 (Quality).' },
-      { type: 'incomplete-section', severity: 'warning', sectionId: '2.7', message: 'Section "Clinical summary" (2.7) has status "draft".' },
-      { type: 'broken-reference', severity: 'warning', sectionId: '2.5', message: 'Section "Clinical overview" (2.5) references "2.7.4" which is not yet approved.' },
-    ],
-  });
-  if ((window as any).C2C_API) {
-    return (window as any).C2C_API.post('/api/coauthor/documents/' + docId + '/validate', {})
-      .then((r: any) => (r && r.validation) || local())
-      .catch(local);
-  }
-  return Promise.resolve(local());
+   These call the real coauthor endpoints and return nothing when the endpoint
+   is unreachable or returns no payload.
+
+   They previously fell back to a hardcoded `local()` result — invented eCTD
+   findings ("Required eCTD section 3.2.P is missing content") and an invented
+   ICH M4 compliance score of 78%, rendered identically to a real server
+   response. A reviewer had no way to tell a genuine validation failure from a
+   fixture, which is exactly the kind of claim that must never be fabricated on
+   a regulatory surface. The UI now renders an explicit unavailable state
+   instead. */
+
+function runValidateAction(docId: number): Promise<ValidationResult | null> {
+  if (!(window as any).C2C_API) return Promise.resolve(null);
+  return (window as any).C2C_API.post('/api/coauthor/documents/' + docId + '/validate', {})
+    .then((r: any) => (r && r.validation) || null)
+    .catch(() => null);
 }
 
-function runComplianceAction(docId: number): Promise<ComplianceResult> {
-  const local = (): ComplianceResult => ({
-    standard: 'ICH M4', complianceScore: 78, totalChecks: 9,
-    compliantCount: 7, nonCompliantCount: 2, checkedAt: new Date().toISOString(),
-    checks: [
-      { ruleId: 'M4-001', description: 'Module 1 regional administrative information present', status: 'compliant', module: '1' },
-      { ruleId: 'M4-002', description: 'Module 2 CTD summaries present', status: 'compliant', module: '2' },
-      { ruleId: 'M4-003', description: 'Module 3 quality data present', status: 'compliant', module: '3' },
-      { ruleId: 'M4-004', description: 'Module 2.5 Clinical Overview or 2.7 Clinical Summary present', status: 'compliant', module: '2.5' },
-      { ruleId: 'M4-005', description: 'Module 3.2.S Drug Substance present', status: 'compliant', module: '3.2.S' },
-      { ruleId: 'M4-006', description: 'Module 3.2.P Drug Product present', status: 'non-compliant', module: '3.2.P' },
-      { ruleId: 'M4-DOC-001', description: 'Document has a title', status: 'compliant' },
-      { ruleId: 'M4-DOC-002', description: 'Document has content or sections', status: 'compliant' },
-      { ruleId: 'M4-DOC-003', description: 'All sections have assigned module numbers', status: 'non-compliant' },
-    ],
-  });
-  return liveGet<{ compliance?: ComplianceResult } | null>('/api/coauthor/documents/' + docId + '/compliance', { compliance: local() })
-    .then((r) => (r.data && r.data.compliance) || local());
+function runComplianceAction(docId: number): Promise<ComplianceResult | null> {
+  // liveGetOrNull is the fixture-free helper (dataConnect's "real-data
+  // standard"): it returns null rather than substituting sample data.
+  return liveGetOrNull<{ compliance?: ComplianceResult }>(
+    '/api/coauthor/documents/' + docId + '/compliance',
+  )
+    .then((r) => r.data?.compliance || null)
+    .catch(() => null);
 }
 
 /* ---- Provenance-traced paragraph ---- */
@@ -266,6 +253,11 @@ export function EctdCoauthor({ onAsk, onNav }: SurfaceViewProps) {
   const [busy, setBusy] = useState('');
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [compliance, setCompliance] = useState<ComplianceResult | null>(null);
+  // Distinguishes "ran and the endpoint gave us nothing" from "not run yet".
+  // Without this the panels would show their idle prompt after a failed call,
+  // which reads as "no problems found".
+  const [validationUnavailable, setValidationUnavailable] = useState(false);
+  const [complianceUnavailable, setComplianceUnavailable] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   /* Section rollup for the answer-first lead + tree footer */
@@ -282,22 +274,36 @@ export function EctdCoauthor({ onAsk, onNav }: SurfaceViewProps) {
   const runValidate = () => {
     setBusy('validate');
     setTab('validation');
-    runValidateAction(art.docId).then((v) => { setValidation(v); setBusy(''); });
+    runValidateAction(art.docId).then((v) => {
+      setValidation(v);
+      setValidationUnavailable(v === null);
+      setBusy('');
+    });
   };
   const runCompliance = () => {
     setBusy('compliance');
     setTab('compliance');
-    runComplianceAction(art.docId).then((c) => { setCompliance(c); setBusy(''); });
+    runComplianceAction(art.docId).then((c) => {
+      setCompliance(c);
+      setComplianceUnavailable(c === null);
+      setBusy('');
+    });
   };
 
   const send = () => {
     const q = draft.trim();
     if (!q) return;
-    setThread((t) => [...t,
-      { role: 'user', text: q },
-      { role: 'ai', body: 'Working in §' + activeId + ' — I’ll draft against the linked evidence and keep every claim traced. Open the artifact to review the reveal.', tools: [{ label: 'attach_sources_to_document', detail: 'linked evidence for §' + activeId, done: true }] },
-    ]);
+    // Hand the question to the real AnA surface rather than answering it here.
+    //
+    // This used to append a canned assistant turn claiming it had drafted
+    // against linked evidence, together with a fake completed
+    // `attach_sources_to_document` tool chip — no request was ever made and no
+    // sources were ever attached. A user could not tell that reply from a real
+    // one. Until this pane is wired to /api/ana-ri/stream, routing to AnA is
+    // the only honest behaviour.
+    setThread((t) => [...t, { role: 'user', text: q }]);
     setDraft('');
+    ask?.(q + ' (eCTD §' + activeId + ')');
     setTimeout(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, 60);
   };
 
@@ -309,9 +315,15 @@ export function EctdCoauthor({ onAsk, onNav }: SurfaceViewProps) {
       {/* Top bar */}
       <div className="ec-topbar">
         <button className="ec-topbtn" onClick={() => setTreeCollapsed((v) => !v)} title="Toggle eCTD tree">{I.sidebar || I.menu || I.layers}</button>
-        <div className="ec-crumbs"><b>{art.program}</b><span className="sep">/</span>{art.app}<span className="sep">/</span><b>&sect;{art.sectionId} {art.title}</b></div>
+        {/* The eCTD tree, the artifact and its provenance are module-level
+            fixtures, not project data — `SampleTag` was imported here but
+            never rendered, so fabricated content (including audit ids and
+            trial results) displayed exactly like live data. Marked with the
+            platform's standard sample pill until this surface reads from the
+            real content-assembly routes. */}
+        <div className="ec-crumbs"><b>{art.program}</b><span className="sep">/</span>{art.app}<span className="sep">/</span><b>&sect;{art.sectionId} {art.title}</b> <SampleTag sample /></div>
         <div className="ec-spacer"></div>
-        <span className="ec-autosave">{I.check} Autosaved -- {art.version} -- {art.savedAt}</span>
+        <span className="ec-autosave">{I.check} Sample artifact -- {art.version}</span>
         <button className="ec-topbtn" onClick={() => setFocus((v) => !v)} title="Focus mode">{focus ? (I.minimize || I.x) : (I.maximize || I.expand || I.layers)}</button>
         <button className="ec-topbtn primary" onClick={runValidate}>{I.shieldCheck || I.shield} Validate</button>
       </div>
@@ -352,6 +364,9 @@ export function EctdCoauthor({ onAsk, onNav }: SurfaceViewProps) {
         <div className="ec-intel-head"><b>AnA</b><span className="hint">co-authoring &sect;{activeId} -- {live ? 'live' : 'bound to dossier'}</span></div>
         <div className="ec-intel-scroll" ref={scrollRef}>
           <div className="ec-thread">
+            {thread.length === 0 && (
+              <div className="ec-empty">Ask a question about &sect;{activeId} and it opens in AnA, where the answer is generated and traced. This pane does not draft on its own.</div>
+            )}
             {thread.map((m, i) => m.role === 'user'
               ? <div key={i} className="ec-msg-user">{m.text}</div>
               : <div key={i} className="ec-msg-ai">
@@ -389,6 +404,7 @@ export function EctdCoauthor({ onAsk, onNav }: SurfaceViewProps) {
         <div className="ec-art-head">
           <span className="ec-art-title">{art.title}</span>
           <span className="ec-art-meta">&sect;{art.sectionId} -- {art.num}</span>
+          <SampleTag sample />
           <span className="ec-spacer"></span>
           <div className="ec-art-tabs">
             {(['document', 'validation', 'compliance'] as const).map((k) => (
@@ -440,7 +456,12 @@ export function EctdCoauthor({ onAsk, onNav }: SurfaceViewProps) {
                 <div><div className="ec-panel-t">eCTD structural validation</div><div className="ec-panel-s">POST /api/coauthor/documents/{art.docId}/validate -- ICH M4 eCTD rules {live ? '-- live' : ''}</div></div>
                 <button className="ec-topbtn primary" onClick={runValidate}>{busy === 'validate' ? 'Validating...' : <>{I.refresh || I.check} Re-validate</>}</button>
               </div>
-              {!validation && busy !== 'validate' && <div className="ec-empty">Run validation to check module structure, cross-references and section status against the eCTD backbone.</div>}
+              {!validation && !validationUnavailable && busy !== 'validate' && <div className="ec-empty">Run validation to check module structure, cross-references and section status against the eCTD backbone.</div>}
+              {validationUnavailable && busy !== 'validate' && (
+                <div className="ec-empty sp-tone-warn">
+                  The validation service did not return a result. No findings are shown because none were produced — this is not a clean result.
+                </div>
+              )}
               {busy === 'validate' && <div className="ec-empty">Validating {total} sections against ICH M4 structure...</div>}
               {validation && (
                 <>
@@ -469,7 +490,12 @@ export function EctdCoauthor({ onAsk, onNav }: SurfaceViewProps) {
                 <div><div className="ec-panel-t">ICH M4 compliance</div><div className="ec-panel-s">GET /api/coauthor/documents/{art.docId}/compliance {live ? '-- live' : ''}</div></div>
                 <button className="ec-topbtn primary" onClick={runCompliance}>{busy === 'compliance' ? 'Checking...' : <>{I.refresh || I.check} Re-check</>}</button>
               </div>
-              {!compliance && busy !== 'compliance' && <div className="ec-empty">Run the ICH M4 compliance check across the organisation of the CTD.</div>}
+              {!compliance && !complianceUnavailable && busy !== 'compliance' && <div className="ec-empty">Run the ICH M4 compliance check across the organisation of the CTD.</div>}
+              {complianceUnavailable && busy !== 'compliance' && (
+                <div className="ec-empty sp-tone-warn">
+                  The compliance service did not return a result. No score is shown because none was computed — this is not a passing score.
+                </div>
+              )}
               {busy === 'compliance' && <div className="ec-empty">Checking ICH M4 organisation...</div>}
               {compliance && (
                 <>
