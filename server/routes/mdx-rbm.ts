@@ -30,24 +30,26 @@
  *     GET   /api/mdx/rbm-signals?program_id=&status=&severity=
  *     POST  /api/mdx/rbm-signals         PATCH /api/mdx/rbm-signals/:id
  *
- *   Site risk
+ *   Site risk (read)
  *     GET   /api/mdx/rbm-site-risk?program_id=
- *     POST  /api/mdx/rbm-site-risk/recompute   (derives from site_intel)
  *
- *   Monitoring plan + actions
- *     GET   /api/mdx/rbm-monitoring-plans?program_id=
- *     POST  /api/mdx/rbm-monitoring-plans       GET .../:id (plan + actions)
- *     POST  /api/mdx/rbm-monitoring-plans/generate  (derive a draft plan + actions
- *                                                    from the governing RACT)
- *     PATCH /api/mdx/rbm-monitoring-plans/:id
- *     GET   /api/mdx/rbm-monitoring-actions?plan_id=&program_id=
- *     POST  /api/mdx/rbm-monitoring-actions     PATCH .../:id
+ *   Governance
+ *     POST  /api/mdx/rbm-assessments/:id/approve   e-signed; archives the
+ *                                                  version it supersedes
+ *     POST  /api/mdx/rbm-assessments/:id/amend     opens the next version
  *
- *   Program summary
+ *   Program summary + risk review
  *     GET   /api/mdx/rbm-summary/:programId
+ *     GET   /api/mdx/rbm-report/:programId
+ *     GET   /api/mdx/rbm-attention/:programId
+ *
+ * Two sibling modules complete the surface, mounted at the same /api/mdx prefix:
+ *   mdx-rbm-plans.ts  the monitoring plan and its actions
+ *   mdx-rbm-data.ts   metric ingestion and the engine runs over ingested data
+ *                     (site-risk recompute, central monitoring, patient scoring)
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request } from 'express';
 import { z } from 'zod';
 
 import { createScopedLogger } from '../utils/logger';
@@ -60,12 +62,7 @@ import {
   DEFAULT_CTQ_FACTORS, DEFAULT_KRIS, DEFAULT_QTLS,
   type KriDirection,
 } from '../services/rbm/rbm-engine';
-import { generatePlanFromAssessment, amendAssessment } from '../services/rbm/rbm-actuator';
-import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
-import {
-  detectSiteOutliers, scorePatientCohort,
-  type SiteMetric, type PatientMetric,
-} from '../services/rbm/central-statistical-monitoring';
+import { amendAssessment } from '../services/rbm/rbm-actuator';
 import {
   buildRiskReview, renderRiskReviewMarkdown, buildAttentionFeed,
 } from '../services/rbm/risk-report';
@@ -100,11 +97,10 @@ const KRI_SOURCE = ['edc', 'ctms', 'site_intel', 'central_stats', 'manual'] as c
 const SIGNAL_SOURCE = ['central_stat', 'kri', 'qtl', 'site_score', 'manual'] as const;
 const SEVERITY = ['low', 'medium', 'high', 'critical'] as const;
 const SIGNAL_STATUS = ['new', 'triaged', 'investigating', 'resolved', 'dismissed'] as const;
-const PLAN_STRATEGY = ['centralized', 'risk_based', 'on_site', 'hybrid'] as const;
-const PLAN_STATUS = ['draft', 'active', 'archived'] as const;
+// Action vocabularies live here too because the signal-investigation endpoint
+// raises a follow-up action; the plan/action ROUTES are in mdx-rbm-plans.ts.
 const ACTION_TYPE = ['issue', 'capa', 'site_visit', 'query', 'escalation'] as const;
 const PRIORITY = ['low', 'medium', 'high'] as const;
-const ACTION_STATUS = ['open', 'in_progress', 'done'] as const;
 
 /** Build a partial UPDATE from a camelCase→column map. Returns null if empty. */
 function buildPatch(
@@ -1071,260 +1067,6 @@ router.post('/rbm-assessments/:id/amend', async (req, res) => {
   } finally {
     client.release();
   }
-});
-
-/** Approve + activate a monitoring plan, capturing the reason for change. */
-router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const id = numericId(req.params.id);
-  if (id === null) return clientError(res, 422, 'id must be numeric');
-  const parsed = approveBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'A reason for change is required', parsed.error.flatten().fieldErrors);
-  const signerId = getUserId(req);
-  if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
-  const signoff = await verifySignerCredentials(defaultSignoffDeps, { userId: signerId, password: parsed.data.password, mfaToken: parsed.data.mfaToken });
-  if (!signoff.verified) return clientError(res, 401, signoff.error ?? 'Signer verification failed (21 CFR 11.200)', signoff.code ? { code: signoff.code } : undefined);
-  try {
-    const { rows } = await pool.query(
-      `UPDATE rbm_monitoring_plans
-          SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
-              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
-        WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
-        RETURNING *`,
-      [signerId, parsed.data.reason, id, orgId],
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
-    return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'approve-plan', err); }
-});
-
-// ════════════════════════════════════════════════════════════════════════════
-// MONITORING PLANS + ACTIONS
-// ════════════════════════════════════════════════════════════════════════════
-
-router.get('/rbm-monitoring-plans', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const programId = typeof req.query.program_id === 'string' ? req.query.program_id : undefined;
-  if (programId && !UUID_RE.test(programId)) return clientError(res, 422, 'program_id must be a UUID');
-  const filters = [`organization_id = $1`, `deleted_at IS NULL`];
-  const args: unknown[] = [orgId];
-  if (programId) { args.push(programId); filters.push(`program_id = $${args.length}`); }
-  try {
-    const { rows } = await pool.query(
-      `SELECT * FROM rbm_monitoring_plans WHERE ${filters.join(' AND ')} ORDER BY updated_at DESC`,
-      args,
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'list-plans', err); }
-});
-
-const createPlanBody = z.object({
-  programId: z.string().regex(UUID_RE).optional().nullable(),
-  assessmentId: z.number().int().positive().optional().nullable(),
-  title: z.string().min(1).max(300),
-  strategy: z.enum(PLAN_STRATEGY).optional(),
-  status: z.enum(PLAN_STATUS).optional(),
-});
-
-router.post('/rbm-monitoring-plans', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = createPlanBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
-  try {
-    const { rows } = await pool.query(
-      `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [orgId, p.programId ?? null, p.assessmentId ?? null, p.title, p.strategy ?? 'risk_based', p.status ?? 'draft'],
-    );
-    return created(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'create-plan', err); }
-});
-
-/**
- * Derive a draft monitoring plan (and its opening actions) from the program's
- * governing risk assessment. The derivation itself lives in the RBM actuator so
- * this route and the AnA tools run the same code; see
- * generatePlanFromAssessment for what is derived and why.
- */
-const generatePlanBody = z.object({
-  programId: z.string().regex(UUID_RE),
-  title: z.string().min(1).max(300).optional(),
-});
-
-router.post('/rbm-monitoring-plans/generate', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = generatePlanBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const result = await generatePlanFromAssessment(client, orgId, parsed.data);
-    if (!result.generated) {
-      await client.query('ROLLBACK');
-      return clientError(res, 409, result.reason === 'assessment_not_approved'
-        ? 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.'
-        : 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan');
-    }
-    await client.query('COMMIT');
-    return created(res, { ...result.plan, actions: result.actions }, {
-      derivedFrom: { assessmentId: result.derivedFrom!.assessmentId, overallRisk: result.derivedFrom!.overallRisk },
-      criticalFactors: result.derivedFrom!.criticalFactors,
-      enhancedSites: result.derivedFrom!.enhancedSites,
-    });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
-    return serverError(res, log, 'generate-plan', err);
-  } finally {
-    client.release();
-  }
-});
-
-router.get('/rbm-monitoring-plans/:id', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const id = numericId(req.params.id);
-  if (id === null) return clientError(res, 422, 'id must be numeric');
-  try {
-    const { rows } = await pool.query(
-      `SELECT * FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [id, orgId],
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
-    const actions = await pool.query(
-      `SELECT * FROM rbm_monitoring_actions WHERE plan_id = $1 AND organization_id = $2 ORDER BY
-        CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END, due_date NULLS LAST, id`,
-      [id, orgId],
-    );
-    return ok(res, { ...rows[0], actions: actions.rows });
-  } catch (err) { return serverError(res, log, 'get-plan', err); }
-});
-
-const patchPlanBody = createPlanBody.partial();
-const PLAN_COL: Record<string, string> = { title: 'title', strategy: 'strategy', status: 'status' };
-
-router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const id = numericId(req.params.id);
-  if (id === null) return clientError(res, 422, 'id must be numeric');
-  const parsed = patchPlanBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const patch = buildPatch(parsed.data, PLAN_COL);
-  if (!patch) return clientError(res, 422, 'No updatable fields in body');
-  patch.args.push(id, orgId);
-  try {
-    const { rows } = await pool.query(
-      `UPDATE rbm_monitoring_plans SET ${patch.setSql}, updated_at = NOW()
-        WHERE id = $${patch.args.length - 1} AND organization_id = $${patch.args.length} AND deleted_at IS NULL
-        RETURNING *`,
-      patch.args,
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
-    return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'patch-plan', err); }
-});
-
-const actionListQuery = z.object({
-  plan_id: z.string().regex(/^\d+$/).optional(),
-  program_id: z.string().regex(UUID_RE).optional(),
-  status: z.enum(ACTION_STATUS).optional(),
-});
-
-router.get('/rbm-monitoring-actions', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = actionListQuery.safeParse(req.query);
-  if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
-  const filters = [`a.organization_id = $1`];
-  const args: unknown[] = [orgId];
-  if (parsed.data.plan_id) { args.push(Number(parsed.data.plan_id)); filters.push(`a.plan_id = $${args.length}`); }
-  if (parsed.data.status) { args.push(parsed.data.status); filters.push(`a.status = $${args.length}`); }
-  if (parsed.data.program_id) { args.push(parsed.data.program_id); filters.push(`p.program_id = $${args.length}`); }
-  try {
-    const { rows } = await pool.query(
-      `SELECT a.* FROM rbm_monitoring_actions a
-         LEFT JOIN rbm_monitoring_plans p ON p.id = a.plan_id
-        WHERE ${filters.join(' AND ')}
-        ORDER BY CASE a.priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END, a.due_date NULLS LAST, a.id`,
-      args,
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'list-actions', err); }
-});
-
-const createActionBody = z.object({
-  planId: z.number().int().positive(),
-  riskItemId: z.number().int().positive().optional().nullable(),
-  signalId: z.number().int().positive().optional().nullable(),
-  actionType: z.enum(ACTION_TYPE).optional(),
-  description: z.string().min(1).max(2000),
-  priority: z.enum(PRIORITY).optional(),
-  owner: z.number().int().positive().optional().nullable(),
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-});
-
-router.post('/rbm-monitoring-actions', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = createActionBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
-  // Verify the plan belongs to the caller's org.
-  const own = await pool.query(
-    `SELECT 1 FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-    [p.planId, orgId],
-  );
-  if (own.rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
-  try {
-    const { rows } = await pool.query(
-      `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, risk_item_id, signal_id, action_type, description, priority, owner, due_date, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'open') RETURNING *`,
-      [orgId, p.planId, p.riskItemId ?? null, p.signalId ?? null, p.actionType ?? 'issue',
-        p.description, p.priority ?? 'medium', p.owner ?? null, p.dueDate ?? null],
-    );
-    return created(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'create-action', err); }
-});
-
-const patchActionBody = z.object({
-  actionType: z.enum(ACTION_TYPE).optional(),
-  description: z.string().min(1).max(2000).optional(),
-  priority: z.enum(PRIORITY).optional(),
-  owner: z.number().int().positive().optional().nullable(),
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-  status: z.enum(ACTION_STATUS).optional(),
-});
-const ACTION_COL: Record<string, string> = {
-  actionType: 'action_type', description: 'description', priority: 'priority',
-  owner: 'owner', dueDate: 'due_date', status: 'status',
-};
-
-router.patch('/rbm-monitoring-actions/:id', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const id = numericId(req.params.id);
-  if (id === null) return clientError(res, 422, 'id must be numeric');
-  const parsed = patchActionBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const patch = buildPatch(parsed.data, ACTION_COL);
-  if (!patch) return clientError(res, 422, 'No updatable fields in body');
-  patch.args.push(id, orgId);
-  try {
-    const { rows } = await pool.query(
-      `UPDATE rbm_monitoring_actions SET ${patch.setSql}, updated_at = NOW()
-        WHERE id = $${patch.args.length - 1} AND organization_id = $${patch.args.length}
-        RETURNING *`,
-      patch.args,
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Action');
-    return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'patch-action', err); }
 });
 
 // ════════════════════════════════════════════════════════════════════════════
