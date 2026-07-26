@@ -87,6 +87,70 @@ interface AuthComment {
   created_at: string | null;
 }
 
+/**
+ * A recorded citation of a canonical source, as the server reports it
+ * (server/services/clinical-regulatory-evidence/source-usage.service.ts).
+ *
+ * `state` is the citation's standing against the source's content TODAY:
+ *   current      the checksum recorded at cite time still matches
+ *   changed      the source's content moved after this section cited it
+ *   unverified   no checksum was recorded — nothing to compare, nothing claimed
+ *   unresolved   the source no longer resolves for this tenant
+ * Never inferred here; it is computed server-side from stored checksums.
+ */
+interface SectionSource {
+  citationId: string;
+  citedAt: string | null;
+  citationText: string | null;
+  citedChecksum: string | null;
+  state: 'current' | 'changed' | 'unverified' | 'unresolved';
+  source: {
+    id: number;
+    title: string | null;
+    checksum: string | null;
+    extractionStatus: string | null;
+    mimeType: string | null;
+  } | null;
+}
+
+/** A source in the project's Data Room, for the "add a source" picker. */
+interface ProjectSource {
+  id: number;
+  title: string | null;
+  extractionStatus: string | null;
+}
+
+/** How each citation state reads to an author. */
+function sourceStateLabel(s: SectionSource): { text: string; tone: 'ok' | 'warn' | 'muted'; hint: string } {
+  switch (s.state) {
+    case 'current':
+      return {
+        text: 'Content unchanged since cited',
+        tone: 'ok',
+        hint: 'The checksum recorded when this section cited the source still matches the source today.',
+      };
+    case 'changed':
+      return {
+        text: 'Source changed since cited',
+        tone: 'warn',
+        hint:
+          'This section was drafted from earlier content. Nothing has been rewritten — re-read the source and decide whether it changes what this section says.',
+      };
+    case 'unresolved':
+      return {
+        text: 'Source no longer available',
+        tone: 'warn',
+        hint: 'The citation is recorded but the source does not resolve in this organization — it may have been deleted.',
+      };
+    default:
+      return {
+        text: 'Not checked against content',
+        tone: 'muted',
+        hint: 'No checksum was recorded for this citation, so no claim is made about whether the source has changed.',
+      };
+  }
+}
+
 /* ── Small toast (local per-surface pattern, matches sibling surfaces) ── */
 function useToast(): [string, (m: string) => void] {
   const [msg, setMsg] = useState('');
@@ -160,11 +224,18 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
   const [savedContent, setSavedContent] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Right rail: revision history or comments.
-  const [rail, setRail] = useState<'history' | 'comments' | null>(null);
+  // Right rail: revision history, comments, or the section's sources.
+  const [rail, setRail] = useState<'history' | 'comments' | 'sources' | null>(null);
   const [revisions, setRevisions] = useState<AuthRevision[]>([]);
   const [comments, setComments] = useState<AuthComment[]>([]);
   const [newComment, setNewComment] = useState('');
+
+  // What the active section is drafted from, plus the project's Data Room for the
+  // picker. Both are live reads; neither has a fixture fallback.
+  const [sources, setSources] = useState<SectionSource[]>([]);
+  const [sourcesState, setSourcesState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [projectSources, setProjectSources] = useState<ProjectSource[]>([]);
+  const [picking, setPicking] = useState(false);
 
   const [toast, fireToast] = useToast();
 
@@ -228,10 +299,96 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
     setComments(Array.isArray(body?.comments) ? body!.comments! : []);
   }, []);
 
+  /* ── The sources this section is drafted from ──
+     Live read, honest failure. An error is reported as an error rather than as
+     an empty list: "we could not load what this section cites" and "this section
+     cites nothing" are different facts, and on a regulated surface conflating
+     them is the more dangerous mistake. */
+  const loadSources = useCallback(async (sectionId: string) => {
+    setSourcesState('loading');
+    const { ok, body } = await readJson<{ sources?: SectionSource[] }>(
+      `/api/authoring/sections/${encodeURIComponent(sectionId)}/sources`,
+    );
+    if (!ok || !body) { setSourcesState('error'); setSources([]); return; }
+    setSources(Array.isArray(body.sources) ? body.sources : []);
+    setSourcesState('ready');
+  }, []);
+
+  /* ── The project's Data Room, for the picker ──
+     The project comes from window.C2C_PROJECT, the same runtime channel the
+     sibling surfaces use. With no project in context there is nothing to offer,
+     and the picker says so instead of listing every source in the org. */
+  const loadProjectSources = useCallback(async () => {
+    const p = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+    const pid = p?.id == null ? null : String(p.id);
+    if (!pid) { setProjectSources([]); return; }
+    const { ok, body } = await readJson<{ sources?: ProjectSource[] }>(
+      `/api/c2c/projects/${encodeURIComponent(pid)}/sources`,
+    );
+    setProjectSources(ok && Array.isArray(body?.sources) ? body!.sources! : []);
+  }, []);
+
   useEffect(() => {
     if (rail === 'history' && activeSectionId) void loadHistory(activeSectionId);
     if (rail === 'comments' && activeDocId) void loadComments(activeDocId);
-  }, [rail, activeSectionId, activeDocId, loadHistory, loadComments]);
+    if (rail === 'sources' && activeSectionId) {
+      void loadSources(activeSectionId);
+      void loadProjectSources();
+    }
+  }, [rail, activeSectionId, activeDocId, loadHistory, loadComments, loadSources, loadProjectSources]);
+
+  /* ── Record that this section is drafted from a source ── */
+  const citeSource = useCallback(async (sourceId: number) => {
+    if (!activeSectionId) return;
+    try {
+      const res = await apiRequest('POST', `/api/authoring/sections/${activeSectionId}/cite-source`, {
+        source_id: sourceId,
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        fireToast('Couldn’t record the source — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was saved.');
+        return;
+      }
+      fireToast(
+        (json as any)?.created
+          ? 'Source recorded — this section now cites it, with the source’s current checksum.'
+          : 'Source re-resolved against its current content.',
+      );
+      setPicking(false);
+      void loadSources(activeSectionId);
+    } catch (e) {
+      fireToast('Couldn’t record the source — ' + (e instanceof Error ? e.message : String(e)) + '.');
+    }
+  }, [activeSectionId, fireToast, loadSources]);
+
+  /* ── Stop citing a source ── */
+  const uncite = useCallback(async (sourceId: number) => {
+    if (!activeSectionId) return;
+    const res = await apiRequest('DELETE', `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`);
+    if (!res.ok) {
+      fireToast('Couldn’t remove the citation — a frozen citation is immutable. Nothing was changed.');
+      return;
+    }
+    fireToast('Citation removed.');
+    void loadSources(activeSectionId);
+  }, [activeSectionId, fireToast, loadSources]);
+
+  /* ── Re-read the source and record what it says now ──
+     The server re-resolves against the stored source; it does not invent a hash.
+     A citation whose source is gone, or which is frozen, is refused with a reason. */
+  const reresolve = useCallback(async (citationId: string) => {
+    if (!activeSectionId) return;
+    const res = await apiRequest('POST', `/api/authoring/sections/${activeSectionId}/refresh-token`, {
+      cite_id: citationId,
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok) {
+      fireToast((json as any)?.message ?? 'Couldn’t re-read the source. Nothing was changed.');
+      return;
+    }
+    fireToast((json as any)?.message ?? 'Source re-read.');
+    void loadSources(activeSectionId);
+  }, [activeSectionId, fireToast, loadSources]);
 
   /* ── Save the section content (real, awaited, auto-revisioned) ── */
   const save = useCallback(async () => {
@@ -405,6 +562,9 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
             <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'history' ? null : 'history')} data-active={rail === 'history' || undefined}>
               {I.clock} History{activeSection && num(activeSection.revision_count) > 0 ? ' ' + num(activeSection.revision_count) : ''}
             </button>
+            <button className="btn ghost" style={{ height: 30 }} onClick={() => setRail(rail === 'sources' ? null : 'sources')} data-active={rail === 'sources' || undefined}>
+              {I.fileText} Sources{activeSection && num(activeSection.citation_count) > 0 ? ' ' + num(activeSection.citation_count) : ''}
+            </button>
             <button className="btn primary" style={{ height: 30 }} onClick={save} disabled={!dirty || saving}>
               {I.check} {saving ? 'Saving…' : dirty ? 'Save' : 'Saved'}
             </button>
@@ -491,6 +651,110 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
                 </div>
               </div>
             ))
+          )}
+        </aside>
+      )}
+
+      {/* ── Right: what this section is drafted from ──
+          The source context that had to be held in the author's head. Every row
+          is a citation someone recorded, with its standing against the source's
+          content today computed server-side from stored checksums — nothing here
+          is inferred from the draft text. */}
+      {rail === 'sources' && (
+        <aside className="ed-comments">
+          <div className="ed-comments-h">Drafted from</div>
+          {!activeSection ? (
+            <EmptyState icon={I.fileText} title="No section selected"
+              hint="Select a section to see the sources it is drafted from." />
+          ) : sourcesState === 'loading' ? (
+            <div className="scaf-note" style={{ padding: 12 }}>Loading this section’s sources…</div>
+          ) : sourcesState === 'error' ? (
+            <EmptyState icon={I.alertTriangle} title="Couldn’t load this section’s sources"
+              hint="The read failed, so nothing is shown — this is not the same as the section citing nothing. Sign in and retry, or check the service is reachable." />
+          ) : (
+            <>
+              <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}>
+                {!picking ? (
+                  <button className="btn ghost" style={{ height: 28, fontSize: 12 }} onClick={() => setPicking(true)}>
+                    {I.plus} Record a source
+                  </button>
+                ) : projectSources.length === 0 ? (
+                  <div style={{ fontSize: 12, opacity: 0.8 }}>
+                    No project sources available. Add documents to the project’s data room first, or
+                    open this document from its project so the data room is in context.
+                    <button className="nda-open" style={{ marginLeft: 8 }} onClick={() => setPicking(false)}>Close</button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'grid', gap: 4 }}>
+                    <span style={{ fontSize: 11.5, opacity: 0.75 }}>
+                      Choose a source from this project’s data room. Its current checksum is recorded
+                      with the citation.
+                    </span>
+                    {projectSources.map((ps) => (
+                      <button
+                        key={ps.id}
+                        className="nda-open"
+                        style={{ textAlign: 'left' }}
+                        disabled={ps.extractionStatus !== 'extracted'}
+                        title={
+                          ps.extractionStatus === 'extracted'
+                            ? 'Record this section as drafted from this source'
+                            : 'This source has no readable text, so it cannot ground a draft'
+                        }
+                        onClick={() => void citeSource(ps.id)}
+                      >
+                        {ps.title || `Source ${ps.id}`}
+                        {ps.extractionStatus !== 'extracted' ? ' — text not readable' : ''}
+                      </button>
+                    ))}
+                    <button className="nda-open" onClick={() => setPicking(false)}>Cancel</button>
+                  </div>
+                )}
+              </div>
+
+              {sources.length === 0 ? (
+                <EmptyState icon={I.fileText} title="No sources recorded for this section"
+                  hint="Record the documents this section is written from. Each citation stores the source’s content identity, so if the source later changes this section is flagged rather than quietly left behind." />
+              ) : (
+                sources.map((s) => {
+                  const st = sourceStateLabel(s);
+                  return (
+                    <div key={s.citationId} className="cmt">
+                      <div className="cmt-meta">
+                        <b style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {s.source?.title ?? `Source ${s.citationId.slice(0, 8)}`}
+                        </b>
+                        <span className="cmt-when">· cited {relTime(s.citedAt)}</span>
+                      </div>
+                      <div className="cmt-body" style={{ display: 'grid', gap: 4 }}>
+                        <span className={st.tone === 'ok' ? 'sp-tone-ok' : st.tone === 'warn' ? 'sp-tone-warn' : undefined}
+                          style={{ fontSize: 12 }} title={st.hint}>
+                          {st.text}
+                        </span>
+                        {s.citationText && <span style={{ fontSize: 12, opacity: 0.85 }}>{s.citationText}</span>}
+                        <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          <button className="nda-open" onClick={() => void reresolve(s.citationId)}>
+                            {I.rotateCcw} Re-read source
+                          </button>
+                          {s.source && (
+                            <button className="nda-open" onClick={() => void uncite(s.source!.id)}>
+                              Remove
+                            </button>
+                          )}
+                          {s.state === 'changed' && (
+                            <button className="nda-open" onClick={() => onAsk(
+                              `The source "${s.source?.title ?? 'this document'}" changed after section ${activeSection.code} was drafted from it. Read the current source and tell me what in this section no longer matches. Do not rewrite it yet.`,
+                            )}>
+                              {I.sparkles} Ask what changed
+                            </button>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </>
           )}
         </aside>
       )}

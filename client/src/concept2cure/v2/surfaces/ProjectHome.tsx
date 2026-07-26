@@ -184,6 +184,55 @@ interface SourceRow {
   artifactId: string | null;
   origin: string | null;
   extractionMethod: string | null;
+  /** Recorded citations of this source. Absent on a server that predates it. */
+  usage?: { sections: number; documents: number; changedSections: number } | null;
+}
+
+/** A section drafted from a source that has since changed. */
+interface ChangedUsageRow {
+  citationId: string;
+  sectionId: string;
+  sectionCode: string | null;
+  sectionTitle: string | null;
+  documentTitle: string | null;
+  sourceId: number;
+  sourceTitle: string | null;
+  citedAt: string | null;
+}
+
+/**
+ * "Used in" — the back-reference, from recorded citations only.
+ *
+ * A source nothing was written from says so. That is the state a reviewer most
+ * wants to see, and collapsing it into the same silence as a cited source would
+ * hide it. Nothing here is inferred from filenames or text similarity: a usage
+ * exists because a section recorded a citation of this source.
+ *
+ * Returns null when the server sent no `usage` field at all — an older server is
+ * not the same as "cited nowhere", and guessing would be the fabrication this
+ * surface exists to avoid.
+ */
+function usedIn(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted'; title: string } | null {
+  if (!s.usage) return null;
+  const { sections, documents, changedSections } = s.usage;
+  if (sections === 0) {
+    return {
+      label: 'Not cited yet',
+      tone: 'muted',
+      title: 'No section records a citation of this source',
+    };
+  }
+  const where = `Used in ${sections} section${sections === 1 ? '' : 's'}`;
+  const docs = documents > 0 ? ` · ${documents} document${documents === 1 ? '' : 's'}` : '';
+  if (changedSections > 0) {
+    return {
+      label: `${where}${docs} · ${changedSections} written against older content`,
+      tone: 'warn',
+      title:
+        'This source changed after those sections cited it. They were drafted from the earlier content — review them; nothing is rewritten automatically.',
+    };
+  }
+  return { label: `${where}${docs}`, tone: 'ok', title: 'Sections that recorded a citation of this source' };
 }
 
 function prettyBytes(n: number | null): string | null {
@@ -237,6 +286,16 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
     pid ? `/api/c2c/projects/${pid}/sources` : null,
     [pid, reloadKey],
   );
+
+  // Sections in this project drafted from a source that has since changed. Read
+  // separately because it answers a different question from the source list, and
+  // an older server that does not serve it simply yields nothing rather than a
+  // fabricated all-clear.
+  const changed = useLiveData<{ changes: ChangedUsageRow[]; count: number }>(
+    pid ? `/api/c2c/projects/${pid}/source-changes` : null,
+    [pid, reloadKey],
+  );
+  const changes = changed.data?.changes ?? [];
 
   // Same upload path as AnA's composer — one file, one identity.
   const { attachments, addFiles, uploading, statusMessage } = useChatUpload({ projectId: pid });
@@ -301,6 +360,44 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         />
       </div>
 
+      {/* ── Sections drafted from content that has since changed ──────────────
+          Reported, never repaired. A source moving does not tell us how the
+          section written from it should now read, and silently regenerating
+          regulated text is not something this surface should do. The point is
+          that the affected sections are findable at all: before this they left
+          no trace anywhere. */}
+      {changes.length > 0 && (
+        <div
+          className="sp-tone-warn"
+          role="status"
+          style={{
+            border: '1px solid var(--border,#d0d5dd)', borderRadius: 10,
+            padding: '10px 12px', marginBottom: 12, fontSize: 12.5,
+          }}
+        >
+          <b>
+            {changes.length} section{changes.length === 1 ? '' : 's'} in this project{' '}
+            {changes.length === 1 ? 'was' : 'were'} drafted from a source that has since changed.
+          </b>
+          <div style={{ marginTop: 6, display: 'grid', gap: 3 }}>
+            {changes.slice(0, 6).map((c) => (
+              <span key={c.citationId}>
+                {c.documentTitle || 'Untitled document'}
+                {c.sectionCode ? ` · ${c.sectionCode}` : ''}
+                {' — cited '}
+                {c.sourceTitle || `source ${c.sourceId}`}
+                {fmtWhen(c.citedAt) ? ` ${fmtWhen(c.citedAt)}` : ''}
+              </span>
+            ))}
+            {changes.length > 6 && <span>…and {changes.length - 6} more.</span>}
+          </div>
+          <div style={{ marginTop: 6, opacity: 0.85 }}>
+            Nothing has been rewritten. Open each section to decide whether the newer content
+            changes what it says.
+          </div>
+        </div>
+      )}
+
       {/* Live upload state, and the screen-reader announcement the hook maintains. */}
       <div aria-live="polite" className="sr-only">{statusMessage}</div>
       {attachments.length > 0 && (
@@ -351,6 +448,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             <div className="pj-srcs">
               {rows.map((s) => {
                 const rs = readState(s);
+                const use = usedIn(s);
                 const size = prettyBytes(s.fileSize);
                 return (
                   <div
@@ -391,6 +489,18 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                         {size ? ` · ${size}` : ''}
                         {fmtWhen(s.createdAt) ? ` · added ${fmtWhen(s.createdAt)}` : ''}
                       </span>
+                      {/* Where this source is actually used. Reported from
+                          recorded citations; omitted entirely when the server
+                          sent no usage field rather than shown as zero. */}
+                      {use && (
+                        <span
+                          className={use.tone === 'ok' ? 'sp-tone-ok' : use.tone === 'warn' ? 'sp-tone-warn' : undefined}
+                          style={{ display: 'block', fontSize: 11.5, opacity: use.tone === 'muted' ? 0.7 : 1 }}
+                          title={use.title}
+                        >
+                          {use.label}
+                        </span>
+                      )}
                     </span>
                     <span
                       className={rs.tone === 'ok' ? 'sp-tone-ok' : rs.tone === 'warn' ? 'sp-tone-warn' : undefined}
