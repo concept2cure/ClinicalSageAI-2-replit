@@ -60,14 +60,58 @@ describe('kriStatus', () => {
 });
 
 describe('qtlStatus', () => {
-  it('breached at/above threshold, approaching at/above secondary', () => {
-    expect(qtlStatus(0.2, 0.15, 0.1)).toBe('breached');
-    expect(qtlStatus(0.12, 0.15, 0.1)).toBe('approaching');
-    expect(qtlStatus(0.05, 0.15, 0.1)).toBe('within');
+  // "Important protocol deviation rate <= 15%": worse as it rises.
+  const upper = { threshold: 0.15, secondaryLimit: 0.1 };
+  // "Primary endpoint data completeness >= 90%": worse as it falls.
+  const lower = { threshold: 0.9, secondaryLimit: 0.95, direction: 'lower' as const };
+  // "Randomisation ratio within 0.9–1.1": breached at either end.
+  const twoSided = {
+    threshold: 1.1,
+    secondaryLimit: 1.05,
+    thresholdLower: 0.9,
+    secondaryLimitLower: 0.95,
+    direction: 'two_sided' as const,
+  };
+
+  it('upper: breached at/above threshold, approaching at/above secondary', () => {
+    expect(qtlStatus(0.2, upper)).toBe('breached');
+    expect(qtlStatus(0.12, upper)).toBe('approaching');
+    expect(qtlStatus(0.05, upper)).toBe('within');
   });
+
+  it('upper is the default direction, so an unspecified limit keeps its meaning', () => {
+    expect(qtlStatus(0.2, { threshold: 0.15 })).toBe('breached');
+    expect(qtlStatus(0.05, { threshold: 0.15 })).toBe('within');
+  });
+
+  it('lower: breached at/below threshold — an attainment limit is not inverted', () => {
+    // The defect this direction exists for: 40% completeness against a 90%
+    // limit is a breach. Read as an upper bound it reported "within tolerance".
+    expect(qtlStatus(0.4, lower)).toBe('breached');
+    expect(qtlStatus(0.9, lower)).toBe('breached');
+    expect(qtlStatus(0.93, lower)).toBe('approaching');
+    expect(qtlStatus(0.99, lower)).toBe('within');
+  });
+
+  it('two_sided: breached beyond either bound, approaching inside either', () => {
+    expect(qtlStatus(1.2, twoSided)).toBe('breached');
+    expect(qtlStatus(0.8, twoSided)).toBe('breached');
+    expect(qtlStatus(1.07, twoSided)).toBe('approaching');
+    expect(qtlStatus(0.93, twoSided)).toBe('approaching');
+    expect(qtlStatus(1.0, twoSided)).toBe('within');
+  });
+
   it('a QTL with no value or no limit is not evaluated — never within', () => {
-    expect(qtlStatus(null, 0.15, 0.1)).toBe('not_evaluated');
-    expect(qtlStatus(0.05, null, 0.1)).toBe('not_evaluated');
+    expect(qtlStatus(null, upper)).toBe('not_evaluated');
+    expect(qtlStatus(undefined, upper)).toBe('not_evaluated');
+    expect(qtlStatus(0.05, { threshold: null, secondaryLimit: 0.1 })).toBe('not_evaluated');
+  });
+
+  it('two_sided with only one bound configured is not evaluated', () => {
+    // Half a range cannot say whether a value sits inside it; assuming the
+    // missing side would invent a tolerance nobody approved.
+    expect(qtlStatus(1.0, { threshold: 1.1, direction: 'two_sided' })).toBe('not_evaluated');
+    expect(qtlStatus(1.0, { threshold: null, thresholdLower: 0.9, direction: 'two_sided' })).toBe('not_evaluated');
   });
 });
 

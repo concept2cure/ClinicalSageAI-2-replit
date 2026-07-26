@@ -190,7 +190,9 @@ export interface SetQtlInput {
  *  when omitted, and the within/approaching/breached status from the value. */
 export async function setQtl(exec: Exec, organizationId: number, input: SetQtlInput) {
   const secondary = input.secondaryLimit ?? inferSecondaryLimit(input.threshold);
-  const status = qtlStatus(input.currentValue ?? null, input.threshold ?? null, secondary);
+  const status = qtlStatus(input.currentValue ?? null, {
+    threshold: input.threshold ?? null, secondaryLimit: secondary, direction: 'upper',
+  });
   const { rows } = await exec.query(
     `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit, current_value, breached, status)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,

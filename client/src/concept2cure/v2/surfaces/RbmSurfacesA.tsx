@@ -20,7 +20,7 @@ import { I } from '../icons';
 import type { RbmBoard, RbmBoardItem, RbmBoardKri, RbmBoardQtl, RbmBoardFreshness } from './rbmBoard';
 import {
   RbmChip, RbmScore, RiskMatrix, Sparkline, ThresholdGauge, TrendTable,
-  RbmFormModal, GovernedApprovalDialog, type FormField,
+  RbmFormModal, GovernedApprovalDialog, type FormField, type GaugeDirection,
 } from './RbmSurfaces';
 import { useRbmMutation, useRbmOwners, ownerId, rbmWrite, RbmWriteError } from './rbmWrites';
 import { RbmIngestDialog } from './RbmIngest';
@@ -71,6 +71,8 @@ interface KriView {
 interface QtlView {
   id: number; parameter: string; rationale: string;
   secondary: number | null; threshold: number | null; current: number | null;
+  /** 'upper' | 'lower' | 'two_sided' — which way the limit bites. */
+  direction: string; thresholdLower: number | null; secondaryLower: number | null;
   status: string; breachAction: string | null;
 }
 
@@ -93,8 +95,24 @@ function qtlView(q: RbmBoardQtl): QtlView {
   return {
     id: q.id, parameter: q.parameter, rationale: q.rationale,
     secondary: q.secondary, threshold: q.threshold, current: q.current,
+    direction: q.direction || 'upper',
+    thresholdLower: q.thresholdLower, secondaryLower: q.secondaryLower,
     status: q.status, breachAction: q.breachActionTaken,
   };
+}
+
+/** How each direction reads in prose, for labels and the breach narrative. */
+const QTL_DIRECTION_LABEL: Record<string, string> = {
+  upper: 'Upper bound — breached as the value rises',
+  lower: 'Lower bound — breached as the value falls',
+  two_sided: 'Two-sided — breached outside either bound',
+};
+
+/** The relationship a breach represents, in the operator's words. */
+function qtlBreachVerb(direction: string): string {
+  if (direction === 'lower') return 'has fallen to or below';
+  if (direction === 'two_sided') return 'is outside';
+  return 'has reached or exceeded';
 }
 
 /** Optional numeric form field → number | null (never a silent 0). */
@@ -530,11 +548,18 @@ export function RbmQtls({ board, onReload }: SubProps) {
   const mut = useRbmMutation(onReload);
 
   const saveCfg = async (f: Record<string, string>) => {
+    const direction = f.direction || 'upper';
     const body = {
       parameter: f.parameter,
       rationale: f.rationale || null,
       secondaryLimit: optNum(f.secondary),
       threshold: optNum(f.threshold),
+      direction,
+      // The lower bound belongs to a two-sided range only. Sending it on an
+      // upper/lower limit would leave a bound stored that nothing evaluates —
+      // so it is cleared, not carried over, when the direction changes.
+      thresholdLower: direction === 'two_sided' ? optNum(f.thresholdLower) : null,
+      secondaryLimitLower: direction === 'two_sided' ? optNum(f.secondaryLower) : null,
       currentValue: optNum(f.current),
     };
     const done = await mut.run(async () => {
@@ -570,8 +595,15 @@ export function RbmQtls({ board, onReload }: SubProps) {
   const cfgFields: FormField[] = [
     { key: 'parameter', label: 'Parameter', type: 'text' },
     { key: 'rationale', label: 'Rationale (required for a QTL)', type: 'textarea' },
-    { key: 'secondary', label: 'Secondary (early-warning) limit', type: 'number', optional: true },
-    { key: 'threshold', label: 'Primary tolerance limit', type: 'number', optional: true },
+    {
+      key: 'direction', label: 'Direction', type: 'select',
+      options: ['upper', 'lower', 'two_sided'], labels: QTL_DIRECTION_LABEL,
+      hint: 'Deviation and dropout rates are upper bounds. Anything expressed as attainment — endpoint completeness, consent documentation, enrollment against target — is a lower bound.',
+    },
+    { key: 'threshold', label: 'Primary tolerance limit (upper bound for a two-sided range)', type: 'number', optional: true },
+    { key: 'secondary', label: 'Secondary (early-warning) limit', type: 'number', optional: true, hint: 'Sits inside the primary limit on the same side: below it for an upper bound, above it for a lower bound.' },
+    { key: 'thresholdLower', label: 'Lower tolerance limit (two-sided only)', type: 'number', optional: true },
+    { key: 'secondaryLower', label: 'Lower early-warning limit (two-sided only)', type: 'number', optional: true },
     { key: 'current', label: 'Current value', type: 'number', optional: true, hint: 'Leave blank until the parameter is measured — the QTL then reads "not evaluated" rather than "within".' },
   ];
 
@@ -590,7 +622,8 @@ export function RbmQtls({ board, onReload }: SubProps) {
               <td className="mit">{q.rationale}{q.breachAction
                 ? <span className="rbm-control">{I.check}Breach response recorded</span> : null}</td>
               <td>{q.threshold != null && q.current != null
-                ? <ThresholdGauge current={q.current} secondary={q.secondary ?? q.threshold} threshold={q.threshold} unit="" />
+                ? <ThresholdGauge current={q.current} secondary={q.secondary ?? q.threshold} threshold={q.threshold}
+                    direction={q.direction as GaugeDirection} thresholdLower={q.thresholdLower} secondaryLower={q.secondaryLower} unit="" />
                 : <span className="mut">Not yet measured</span>}</td>
               <td><RbmChip vocab="qtl" value={q.status} /></td>
               <td><div className="rbm-qtl-acts">
@@ -602,20 +635,25 @@ export function RbmQtls({ board, onReload }: SubProps) {
           {qtls.length === 0 && <tr><td colSpan={5} className="rbm-col-empty">No quality tolerance limits for this study yet.</td></tr>}
           </tbody></table>
       </div>
-      <div className="rbm-note">{I.info}The secondary limit (50-75% of threshold) is the RBQM early-warning band: crossing it triggers review before the tolerance itself is at stake. A parameter with no current value reads <b>not evaluated</b> -- it has not been shown to be within tolerance. Limits are upper-bound only (higher = worse); lower-bound and two-sided QTLs are not supported yet. The breach response is stored as a single narrative on the QTL: a structured breach record (review participants, estimand impact, effectiveness check, closure sign-off) is not modelled.</div>
+      <div className="rbm-note">{I.info}The secondary limit is the RBQM early-warning band: crossing it triggers review before the tolerance itself is at stake. A parameter with no current value reads <b>not evaluated</b> -- it has not been shown to be within tolerance. Each limit declares its <b>direction</b>, so an attainment parameter (endpoint completeness, consent documentation) is evaluated as the lower bound it is rather than being read backwards. The breach response is stored as a single narrative on the QTL: a structured breach record (review participants, estimand impact, effectiveness check, closure sign-off) is not modelled.</div>
       {cfg && <RbmFormModal title={cfg.mode === 'edit' ? 'Configure QTL' : 'New quality tolerance limit'}
         intro="A QTL governs a study-level parameter. Rationale is mandatory. Status is computed server-side from the current value against the secondary and primary limits."
         fields={cfgFields}
         initial={cfg.qtl ? {
           parameter: cfg.qtl.parameter, rationale: cfg.qtl.rationale ?? '',
+          direction: cfg.qtl.direction,
           secondary: cfg.qtl.secondary != null ? String(cfg.qtl.secondary) : '',
           threshold: cfg.qtl.threshold != null ? String(cfg.qtl.threshold) : '',
+          thresholdLower: cfg.qtl.thresholdLower != null ? String(cfg.qtl.thresholdLower) : '',
+          secondaryLower: cfg.qtl.secondaryLower != null ? String(cfg.qtl.secondaryLower) : '',
           current: cfg.qtl.current != null ? String(cfg.qtl.current) : '',
         } : null}
         busy={mut.busy} error={mut.error}
         submitLabel={cfg.mode === 'edit' ? 'Save limit' : 'Create QTL'} onCancel={() => { setCfg(null); mut.clearError(); }} onSubmit={saveCfg} />}
       {breach && <RbmFormModal title={`Document breach -- ${breach.parameter}`}
-        intro={`${breach.current ?? '—'} exceeds the ${breach.threshold ?? '—'} tolerance. Record the root-cause justification, the supporting evidence and the CAPA. All three are stored together on the QTL as the breach response.`}
+        intro={`${breach.current ?? '—'} ${qtlBreachVerb(breach.direction)} the ${breach.direction === 'two_sided'
+          ? `${breach.thresholdLower ?? '—'}–${breach.threshold ?? '—'} range`
+          : `${breach.threshold ?? '—'} tolerance`}. Record the root-cause justification, the supporting evidence and the CAPA. All three are stored together on the QTL as the breach response.`}
         fields={[{ key: 'justification', label: 'Root-cause justification', type: 'textarea' }, { key: 'evidence', label: 'Supporting evidence (documents, datasets)', type: 'textarea' }, { key: 'capa', label: 'CAPA / corrective action', type: 'textarea' }]}
         busy={mut.busy} error={mut.error}
         submitLabel="Record breach response" onCancel={() => { setBreach(null); mut.clearError(); }} onSubmit={saveBreach} />}

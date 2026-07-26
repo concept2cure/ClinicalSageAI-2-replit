@@ -617,12 +617,43 @@ router.get('/rbm-qtls', async (req, res) => {
   } catch (err) { return serverError(res, log, 'list-qtls', err); }
 });
 
+const QTL_DIRECTION = ['upper', 'lower', 'two_sided'] as const;
+
+/**
+ * Reject a two-sided limit that is not a usable range, rather than storing it.
+ *
+ * With one bound missing the engine cannot say whether a value sits inside the
+ * range, and with the bounds inverted no value ever does — either way the QTL
+ * would read `not_evaluated` or `breached` permanently, and the operator would
+ * have no indication the limit itself is the problem. Upper and lower limits
+ * need only their single `threshold`, which may legitimately be set later.
+ */
+function qtlRangeError(l: {
+  direction?: string | null;
+  threshold?: number | null;
+  thresholdLower?: number | null;
+}): string | null {
+  if ((l.direction ?? 'upper') !== 'two_sided') return null;
+  if (l.threshold == null || l.thresholdLower == null) {
+    return 'A two-sided tolerance limit requires both bounds: threshold (upper) and thresholdLower (lower).';
+  }
+  if (l.thresholdLower >= l.threshold) {
+    return 'thresholdLower must be below threshold for a two-sided tolerance limit.';
+  }
+  return null;
+}
+
 const createQtlBody = z.object({
   programId: z.string().regex(UUID_RE).optional().nullable(),
   parameter: z.string().min(1).max(300),
   rationale: z.string().max(2000).optional().nullable(),
   threshold: z.number().optional().nullable(),
   secondaryLimit: z.number().optional().nullable(),
+  /** Which way the limit bites. Defaults to `upper` — the historical behaviour. */
+  direction: z.enum(QTL_DIRECTION).optional(),
+  /** two_sided only: the lower bound and its early-warning limit. */
+  thresholdLower: z.number().optional().nullable(),
+  secondaryLimitLower: z.number().optional().nullable(),
   currentValue: z.number().optional().nullable(),
   breachActionTaken: z.string().max(2000).optional().nullable(),
 });
@@ -633,13 +664,23 @@ router.post('/rbm-qtls', async (req, res) => {
   const parsed = createQtlBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
-  const status = qtlStatus(p.currentValue ?? null, p.threshold ?? null, p.secondaryLimit ?? null);
+  const rangeErr = qtlRangeError(p);
+  if (rangeErr) return clientError(res, 422, rangeErr);
+  const status = qtlStatus(p.currentValue ?? null, {
+    threshold: p.threshold ?? null,
+    secondaryLimit: p.secondaryLimit ?? null,
+    direction: p.direction ?? 'upper',
+    thresholdLower: p.thresholdLower ?? null,
+    secondaryLimitLower: p.secondaryLimitLower ?? null,
+  });
   try {
     const { rows } = await pool.query(
-      `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit, current_value, breached, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit,
+         direction, threshold_lower, secondary_limit_lower, current_value, breached, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [orgId, p.programId ?? null, p.parameter, p.rationale ?? null, p.threshold ?? null,
-        p.secondaryLimit ?? null, p.currentValue ?? null, status === 'breached', status],
+        p.secondaryLimit ?? null, p.direction ?? 'upper', p.thresholdLower ?? null,
+        p.secondaryLimitLower ?? null, p.currentValue ?? null, status === 'breached', status],
     );
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'create-qtl', err); }
@@ -673,6 +714,7 @@ const patchQtlBody = createQtlBody.partial();
 const QTL_COL: Record<string, string> = {
   parameter: 'parameter', rationale: 'rationale', threshold: 'threshold',
   secondaryLimit: 'secondary_limit', currentValue: 'current_value', breachActionTaken: 'breach_action_taken',
+  direction: 'direction', thresholdLower: 'threshold_lower', secondaryLimitLower: 'secondary_limit_lower',
 };
 
 router.patch('/rbm-qtls/:id', async (req, res) => {
@@ -686,15 +728,28 @@ router.patch('/rbm-qtls/:id', async (req, res) => {
   if (!patch) return clientError(res, 422, 'No updatable fields in body');
   try {
     const cur = await pool.query(
-      `SELECT threshold, secondary_limit, current_value FROM rbm_qtls WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      `SELECT threshold, secondary_limit, direction, threshold_lower, secondary_limit_lower, current_value
+         FROM rbm_qtls WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
       [id, orgId],
     );
     if (cur.rows.length === 0) return notFoundInTenant(res, 'QTL');
     const row = cur.rows[0];
-    const threshold = parsed.data.threshold ?? num(row.threshold);
-    const secondary = parsed.data.secondaryLimit ?? num(row.secondary_limit);
-    const value = parsed.data.currentValue ?? num(row.current_value);
-    const status = qtlStatus(value, threshold, secondary);
+    // Status is recomputed against the row's EFFECTIVE limits — the patched
+    // value where given, the stored one otherwise — so changing only the
+    // direction re-bands the existing value rather than leaving a stale status.
+    const limits = {
+      threshold: parsed.data.threshold ?? num(row.threshold),
+      secondaryLimit: parsed.data.secondaryLimit ?? num(row.secondary_limit),
+      direction: (parsed.data.direction ?? (row.direction ?? 'upper')) as (typeof QTL_DIRECTION)[number],
+      thresholdLower: parsed.data.thresholdLower ?? num(row.threshold_lower),
+      secondaryLimitLower: parsed.data.secondaryLimitLower ?? num(row.secondary_limit_lower),
+    };
+    // Validated on the merged limits, not the patch: switching an existing
+    // upper-bound QTL to two_sided without supplying a lower bound has to fail
+    // here, even though the patch body on its own looks complete.
+    const rangeErr = qtlRangeError(limits);
+    if (rangeErr) return clientError(res, 422, rangeErr);
+    const status = qtlStatus(parsed.data.currentValue ?? num(row.current_value), limits);
     patch.args.push(status, status === 'breached');
     patch.setSql += `, status = $${patch.args.length - 1}, breached = $${patch.args.length}`;
     patch.args.push(id, orgId);

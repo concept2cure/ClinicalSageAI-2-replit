@@ -30,7 +30,7 @@
 
 import { parse as parseCsvSync } from 'csv-parse/sync';
 
-import { kriStatus, qtlStatus, type KriDirection } from './rbm-engine';
+import { kriStatus, qtlStatus, type KriDirection, type QtlDirection } from './rbm-engine';
 
 /** Minimal pg-compatible executor — matches rbm-actuator's `Exec`. */
 export interface Exec {
@@ -233,7 +233,7 @@ export interface IngestResult {
 function latestByKey(observations: ParsedObservation[]): Map<string, ParsedObservation> {
   const out = new Map<string, ParsedObservation>();
   for (const o of observations) {
-    const key = `${o.scopeLevel} ${o.scopeId ?? ''} ${o.metricKey.toLowerCase()}`;
+    const key = `${o.scopeLevel}\u0000${o.scopeId ?? ''}\u0000${o.metricKey.toLowerCase()}`;
     const prev = out.get(key);
     if (!prev || (o.observedAt ?? '') >= (prev.observedAt ?? '')) out.set(key, o);
   }
@@ -333,7 +333,8 @@ export async function ingestMetrics(
     }
 
     const qtl = (await exec.query(
-      `SELECT id, threshold, secondary_limit FROM rbm_qtls
+      `SELECT id, threshold, secondary_limit, direction, threshold_lower, secondary_limit_lower
+         FROM rbm_qtls
         WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
           AND LOWER(parameter) = LOWER($3)
         LIMIT 1`,
@@ -341,11 +342,17 @@ export async function ingestMetrics(
     )).rows[0];
 
     if (qtl) {
-      const status = qtlStatus(
-        o.value,
-        qtl.threshold === null ? null : Number(qtl.threshold),
-        qtl.secondary_limit === null ? null : Number(qtl.secondary_limit),
-      );
+      // Direction comes from the QTL row, never assumed: an attainment
+      // parameter ingested against an `upper` reading would report the study in
+      // control at exactly the point it fell out of it.
+      const status = qtlStatus(o.value, {
+        threshold: qtl.threshold === null ? null : Number(qtl.threshold),
+        secondaryLimit: qtl.secondary_limit === null ? null : Number(qtl.secondary_limit),
+        direction: (qtl.direction ?? 'upper') as QtlDirection,
+        thresholdLower: qtl.threshold_lower === null ? null : Number(qtl.threshold_lower),
+        secondaryLimitLower:
+          qtl.secondary_limit_lower === null ? null : Number(qtl.secondary_limit_lower),
+      });
       await exec.query(
         `UPDATE rbm_qtls SET current_value = $1, status = $2, breached = $3, updated_at = NOW()
           WHERE id = $4 AND organization_id = $5`,

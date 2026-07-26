@@ -18431,6 +18431,13 @@ export const rbmQtls = pgTable(
     rationale:         text('rationale'),
     threshold:         numeric('threshold', { precision: 12, scale: 4 }),
     secondaryLimit:    numeric('secondary_limit', { precision: 12, scale: 4 }),
+    /** Which way the limit bites: upper | lower | two_sided. Assuming "higher is
+     *  worse" silently inverts every attainment parameter (endpoint
+     *  completeness, consent documentation), so it is explicit. */
+    direction:         text('direction').default('upper').notNull(),
+    /** two_sided only: the lower bound and its early-warning limit. */
+    thresholdLower:    numeric('threshold_lower', { precision: 12, scale: 4 }),
+    secondaryLimitLower: numeric('secondary_limit_lower', { precision: 12, scale: 4 }),
     currentValue:      numeric('current_value', { precision: 12, scale: 4 }),
     breached:          boolean('breached').default(false),
     breachActionTaken: text('breach_action_taken'),

@@ -41,7 +41,7 @@ function board(over: Partial<RbmBoard> = {}): RbmBoard {
     assessment: { id: 7, framework: 'ich_e6r3', version: 1, status: 'draft', updated: null, approval: null, history: [{ id: 7, v: 1, status: 'draft', by: null, when: null, reason: null, amendmentReason: null }] },
     items: [{ id: 21, category: 'safety', factor: 'SAE reporting', l: 3, i: 5, det: 2, critical: true, mitigation: 'Central review', residual: null, status: 'open', owner: null, refCode: 'R-1' }],
     kris: [{ id: 5, name: 'Query rate', metric: 'Open queries', source: 'edc', unit: '%', dir: 'higher_worse', amber: 10, red: 20, current: 12, status: 'amber', at: null, spark: [11, 12] }],
-    qtls: [{ id: 9, parameter: 'Dropout rate', rationale: 'Power', unit: null, secondary: 0.15, threshold: 0.2, current: 0.24, status: 'breached', breachActionTaken: null }],
+    qtls: [{ id: 9, parameter: 'Dropout rate', rationale: 'Power', unit: null, secondary: 0.15, threshold: 0.2, direction: 'upper', thresholdLower: null, secondaryLower: null, current: 0.24, status: 'breached', breachActionTaken: null }],
     signals: [{ id: 31, source: 'central_stat', type: 'outlier_quality', severity: 'high', title: 'Site 5 is a quality outlier', site: '5', detail: 'robust z 3.4', detected: null, status: 'new', resolution: null }],
     patients: [],
     sites: [{ n: '5', name: 'Mercy Clinical', country: null, composite: 71, enr: 18, qual: 20, ops: 15, tier: 'enhanced', drivers: ['quality'], at: null }],
@@ -110,6 +110,52 @@ describe('RBM v2 surfaces persist their writes', () => {
     expect(method).toBe('PATCH');
     expect(url).toBe('/api/mdx/rbm-qtls/9');
     expect((body as { breachActionTaken: string }).breachActionTaken).toContain('Site 5 attrition');
+  });
+
+  it('posts a lower-bound QTL with its direction, so the server does not read it backwards', async () => {
+    render(<RbmQtls board={board()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /New QTL/ }));
+    fireEvent.change(screen.getByLabelText('Parameter'), { target: { value: 'Primary endpoint completeness' } });
+    fireEvent.change(screen.getByLabelText(/Rationale/), { target: { value: 'Estimand integrity' } });
+    fireEvent.change(screen.getByLabelText(/^Direction/), { target: { value: 'lower' } });
+    fireEvent.change(screen.getByLabelText(/^Primary tolerance limit/), { target: { value: '0.9' } });
+    fireEvent.change(screen.getByLabelText(/^Current value/), { target: { value: '0.4' } });
+    fireEvent.click(screen.getByRole('button', { name: /Create QTL/ }));
+    await waitFor(() => expect(writes().length).toBe(1));
+    const [method, url, body] = writes()[0];
+    expect(method).toBe('POST');
+    expect(url).toBe('/api/mdx/rbm-qtls');
+    // Direction travels with the limit. Without it the server bands 0.4 against
+    // a 0.9 upper bound and reports the study within tolerance at 40%.
+    expect(body).toMatchObject({ direction: 'lower', threshold: 0.9, currentValue: 0.4 });
+    // The lower-bound columns belong to a two-sided range only.
+    expect(body).toMatchObject({ thresholdLower: null, secondaryLimitLower: null });
+  });
+
+  it('carries both bounds for a two-sided QTL', async () => {
+    render(<RbmQtls board={board()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /New QTL/ }));
+    fireEvent.change(screen.getByLabelText('Parameter'), { target: { value: 'Randomisation ratio' } });
+    fireEvent.change(screen.getByLabelText(/Rationale/), { target: { value: 'Allocation balance' } });
+    fireEvent.change(screen.getByLabelText(/^Direction/), { target: { value: 'two_sided' } });
+    fireEvent.change(screen.getByLabelText(/^Primary tolerance limit/), { target: { value: '1.1' } });
+    fireEvent.change(screen.getByLabelText(/^Lower tolerance limit/), { target: { value: '0.9' } });
+    fireEvent.click(screen.getByRole('button', { name: /Create QTL/ }));
+    await waitFor(() => expect(writes().length).toBe(1));
+    expect(writes()[0][2]).toMatchObject({ direction: 'two_sided', threshold: 1.1, thresholdLower: 0.9 });
+  });
+
+  it('describes a lower-bound breach as a shortfall, not an excess', () => {
+    render(<RbmQtls board={board({
+      qtls: [{
+        id: 12, parameter: 'Primary endpoint completeness', rationale: 'Estimand integrity',
+        unit: null, secondary: 0.95, threshold: 0.9, direction: 'lower',
+        thresholdLower: null, secondaryLower: null, current: 0.4,
+        status: 'breached', breachActionTaken: null,
+      }],
+    })} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Document breach/ }));
+    expect(screen.getByText(/has fallen to or below the 0\.9 tolerance/)).toBeTruthy();
   });
 
   it('posts a CtQ factor with the components, letting the engine derive the score', async () => {

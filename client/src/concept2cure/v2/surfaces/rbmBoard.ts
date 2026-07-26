@@ -125,6 +125,11 @@ export interface RbmBoardQtl {
   unit: null;
   secondary: number | null;
   threshold: number | null;
+  /** Which way the limit bites: 'upper' | 'lower' | 'two_sided'. */
+  direction: string;
+  /** two_sided only: the lower bound and its early-warning limit. */
+  thresholdLower: number | null;
+  secondaryLower: number | null;
   current: number | null;
   status: string;
   breachActionTaken: string | null;

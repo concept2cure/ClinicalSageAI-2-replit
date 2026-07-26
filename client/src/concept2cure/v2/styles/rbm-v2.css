@@ -270,6 +270,12 @@
   .rbm-gauge-fill[data-tone="err"]{background:var(--error);}
   .rbm-gauge-tick{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--warning);}
   .rbm-gauge-tick.hard{background:var(--error);}
+  /* two_sided reading: the domain is a window around the acceptable range, not
+     0..max, so the current value is a needle rather than a bar from the left. */
+  .rbm-gauge-needle{position:absolute;top:0;bottom:0;width:3px;margin-left:-1px;border-radius:2px;box-shadow:0 0 0 1px var(--bg-000);}
+  .rbm-gauge-needle[data-tone="ok"]{background:var(--success);}
+  .rbm-gauge-needle[data-tone="warn"]{background:var(--warning);}
+  .rbm-gauge-needle[data-tone="err"]{background:var(--error);}
   .rbm-gauge-lbl{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;margin-top:4px;font-variant-numeric:tabular-nums;}
   .rbm-gauge-lbl span:first-child{font-weight:700;color:var(--text-100);}
   .rbm-tbl.qtl td{vertical-align:middle;}
