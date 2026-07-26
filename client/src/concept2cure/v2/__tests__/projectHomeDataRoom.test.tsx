@@ -154,3 +154,59 @@ describe('ProjectHome — data room', () => {
     expect(await screen.findByLabelText('Add sources to this project')).toBeTruthy();
   });
 });
+
+describe('ProjectHome — pinning sources as context', () => {
+  afterEach(() => { delete (window as any).C2C_SOURCE_PINS; });
+
+  it('cannot pin a source whose text was never read', async () => {
+    // Pinning promises AnA will be grounded in the document. A source with no
+    // extracted text cannot ground anything, so offering it would be a lie.
+    mockApi(() =>
+      ok({
+        projectId: PID,
+        sources: [
+          source({ id: 1, title: 'good.pdf', extractionStatus: 'extracted' }),
+          source({ id: 2, title: 'scanned.pdf', extractionStatus: 'failed' }),
+        ],
+        unscoped: [],
+      }),
+    );
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('good.pdf');
+
+    expect((screen.getByLabelText('Use good.pdf as context') as HTMLInputElement).disabled).toBe(false);
+    expect((screen.getByLabelText('Use scanned.pdf as context') as HTMLInputElement).disabled).toBe(true);
+  });
+
+  it('hands the pinned set to AnA', async () => {
+    mockApi(() =>
+      ok({
+        projectId: PID,
+        sources: [
+          source({ id: 11, title: 'a.pdf' }),
+          source({ id: 22, title: 'b.pdf' }),
+        ],
+        unscoped: [],
+      }),
+    );
+    const p = props();
+    render(<ProjectHome {...p} />);
+    await screen.findByText('a.pdf');
+
+    fireEvent.click(screen.getByLabelText('Use a.pdf as context'));
+    fireEvent.click(screen.getByLabelText('Use b.pdf as context'));
+
+    const draft = await screen.findByText(/Draft with 2 pinned sources/);
+    fireEvent.click(draft);
+
+    expect((window as any).C2C_SOURCE_PINS).toEqual(['11', '22']);
+    expect(p.onAsk).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers no pin action until something is pinned', async () => {
+    mockApi(() => ok({ projectId: PID, sources: [source()], unscoped: [] }));
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('protocol-v2.pdf');
+    expect(screen.queryByText(/Draft with .* pinned source/)).toBeNull();
+  });
+});

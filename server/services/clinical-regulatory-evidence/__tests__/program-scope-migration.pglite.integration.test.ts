@@ -54,18 +54,34 @@ async function columnExists(db: PGlite): Promise<boolean> {
 }
 
 describe('20260726_cre_source_program_scope (real Postgres)', () => {
-  it('applies cleanly when the CRE spine is absent, instead of failing the run', async () => {
+  // Each case needs a DIFFERENT migration state, so they cannot share one
+  // database — but they are deliberately consolidated to THREE PGlite
+  // instances rather than one per assertion. Every other suite here spins up
+  // one; this file spinning up five was enough extra concurrent WASM Postgres
+  // to tip the wider run into worker failures when unrelated tests were added.
+  // Keep the instance count down when extending this file.
+
+  it('applies with no spine, then adds the column once the spine lands, and is re-runnable', async () => {
     const db = new PGlite();
     try {
-      // No spine — exactly the preview database's state.
+      // 1. No spine — exactly the preview database's state. Must not fail the run.
       await expect(db.exec(sql(PROGRAM_SCOPE))).resolves.toBeDefined();
       expect(await columnExists(db)).toBe(false);
+
+      // 2. Spine arrives, migration re-run — the column must appear.
+      await db.exec(sql(SPINE));
+      await db.exec(sql(PROGRAM_SCOPE));
+      expect(await columnExists(db)).toBe(true);
+
+      // 3. A third run changes nothing.
+      await db.exec(sql(PROGRAM_SCOPE));
+      expect(await columnExists(db)).toBe(true);
     } finally {
       await db.close();
     }
   });
 
-  it('adds the column and index when the spine is present', async () => {
+  it('adds the column and its index when the spine is present', async () => {
     const db = new PGlite();
     try {
       await db.exec(sql(SPINE));
@@ -81,13 +97,16 @@ describe('20260726_cre_source_program_scope (real Postgres)', () => {
     }
   });
 
-  it('lets createSource write against a spine-only schema', async () => {
+  it('lets a program-less write through on a spine-only schema, but fails a scoped one loudly', async () => {
     // Regression: createSource named `client_program_id` unconditionally, so
     // every write failed with 42703 on a database that has the spine but not
-    // the program-scope migration. That is the state of production, and of the
-    // other CRE integration suites — 18 tests across 6 files went red.
-    // Callers that set no program (CSR adapter, CRL ingestion) must not depend
-    // on a column from a later migration.
+    // the program-scope migration — the state of production, and of the other
+    // CRE suites (18 tests across 6 files went red). Callers that set no
+    // program (CSR adapter, CRL ingestion) must not depend on a later
+    // migration's column.
+    //
+    // The opposite case must NOT be silent: dropping a supplied scope would
+    // file the document under no project while reporting success.
     const db = new PGlite();
     active = db;
     try {
@@ -102,20 +121,6 @@ describe('20260726_cre_source_program_scope (real Postgres)', () => {
       });
       expect(src.id).toBeGreaterThan(0);
       expect(src.clientProgramId).toBeNull();
-    } finally {
-      active = null;
-      await db.close();
-    }
-  });
-
-  it('fails loudly if a program scope is set but the column is missing', async () => {
-    // The opposite case must NOT be silent: dropping the scope would file the
-    // document under no project while reporting success.
-    const db = new PGlite();
-    active = db;
-    try {
-      await db.exec(sql(SPINE));
-      const svc = await import('../evidence-spine.service');
 
       await expect(
         svc.createSource(101, {
@@ -126,26 +131,6 @@ describe('20260726_cre_source_program_scope (real Postgres)', () => {
       ).rejects.toThrow(/client_program_id/);
     } finally {
       active = null;
-      await db.close();
-    }
-  });
-
-  it('is re-runnable, so it can be applied again after the spine lands', async () => {
-    const db = new PGlite();
-    try {
-      // First run: no spine, no-op.
-      await db.exec(sql(PROGRAM_SCOPE));
-      expect(await columnExists(db)).toBe(false);
-
-      // Spine arrives, migration re-run — the column must appear.
-      await db.exec(sql(SPINE));
-      await db.exec(sql(PROGRAM_SCOPE));
-      expect(await columnExists(db)).toBe(true);
-
-      // And running it a third time changes nothing.
-      await db.exec(sql(PROGRAM_SCOPE));
-      expect(await columnExists(db)).toBe(true);
-    } finally {
       await db.close();
     }
   });

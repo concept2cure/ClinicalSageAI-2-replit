@@ -550,6 +550,17 @@ export interface UseAnaChatOptions {
    */
   selectedTools?: string[];
   /**
+   * Data Room sources the user has pinned as context for the turn, as
+   * `cre_evidence_sources` ids. Sent as `source_ids`; the server resolves each
+   * back to the upload its bytes live in and grounds the turn through the same
+   * tenant-scoped path an attachment uses.
+   *
+   * This is the explicit half of context selection: an attachment is a file the
+   * user just added, a pinned source is one they deliberately chose from the
+   * project's data room.
+   */
+  selectedSourceIds?: Array<number | string> | null;
+  /**
    * Response effort the user picked in the Composer (Fast/Balanced/Thorough).
    * Sent as `effort_level` when set; the server maps it to a routing strategy
    * (governance-pinned policy still wins). Omitted → server default 'balanced'.
@@ -782,6 +793,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         message: text,
         thread_id: threadIdRef.current || undefined,
         file_ids: attachedFileIds.length > 0 ? attachedFileIds : undefined,
+        // Data Room sources pinned as context for this turn. Omitted when the
+        // user has pinned nothing, so the server keeps its own context
+        // assembly rather than being handed an empty selection to honour.
+        source_ids:
+          options.selectedSourceIds && options.selectedSourceIds.length > 0
+            ? options.selectedSourceIds
+            : undefined,
         project_id: options.projectId || ac?.projectId || undefined,
         submission_type: submissionTypeForContext,
         user_role: options.userRole || undefined,

@@ -85,3 +85,41 @@ describe('useAnaChat — attachment handoff', () => {
     expect(sentBody()).not.toHaveProperty('file_ids');
   });
 });
+
+describe('useAnaChat — pinned data-room sources', () => {
+  async function sendWithSources(selectedSourceIds?: Array<number | string> | null) {
+    const { result } = renderHook(() => useAnaChat({ projectId: 'proj_12', selectedSourceIds }));
+    await act(async () => {
+      await result.current.send('draft the clinical overview');
+    });
+  }
+
+  it('sends the pinned source ids', async () => {
+    await sendWithSources([12, 34]);
+    expect(sentBody().source_ids).toEqual([12, 34]);
+  });
+
+  it('omits source_ids when nothing is pinned', async () => {
+    await sendWithSources([]);
+    expect(sentBody()).not.toHaveProperty('source_ids');
+
+    fetchMock.mockClear();
+    await sendWithSources(null);
+    expect(sentBody()).not.toHaveProperty('source_ids');
+  });
+
+  it('carries pinned sources alongside a fresh attachment', async () => {
+    // The two are independent ways of choosing context and must not displace
+    // each other: a user can pin a stored source AND attach a new file.
+    const { result } = renderHook(() =>
+      useAnaChat({ projectId: 'proj_12', selectedSourceIds: [7] }),
+    );
+    await act(async () => {
+      await result.current.send('compare these', [
+        { id: 'a1', name: 'new.pdf', fileId: 'file_new' },
+      ]);
+    });
+    expect(sentBody().source_ids).toEqual([7]);
+    expect(sentBody().file_ids).toEqual(['file_new']);
+  });
+});
