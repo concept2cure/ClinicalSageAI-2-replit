@@ -84,9 +84,9 @@ const ACCEPTED_GHSA_IDS = new Set([
   // socket.io / socket.io-adapter / socket.io-client "transitive vulnerability via
   // unaccepted dependency" flags — that is this same ws advisory surfaced through
   // their dependency chain.
-  // ── brace-expansion / fast-uri / linkify-it / postcss / react-router: upgraded
-  // in place (package.json `overrides`, or a direct-dep bump for postcss +
-  // react-router-dom) to a version ABOVE each advisory's vulnerable range.
+  // ── brace-expansion / fast-uri / linkify-it / postcss: upgraded in place
+  // (package.json `overrides`, or a direct-dep bump for postcss) to a version
+  // ABOVE each advisory's vulnerable range.
   // Confirmed fixed-in-installed via `npm ls <pkg> --all` (only the patched
   // version present); npm audit still folds each advisory under the package name
   // (registry lag), so accepted here as resolved-in-installed. ──
@@ -103,16 +103,20 @@ const ACCEPTED_GHSA_IDS = new Set([
   'GHSA-v245-v573-v5vm', // linkify-it quadratic-complexity DoS via the mailto: validator scan-loop
   // postcss — advisory range <=8.5.17; direct dep bumped ^8.5.23 (installed 8.5.23).
   'GHSA-r28c-9q8g-f849', // postcss path traversal in previous-source-map auto-loading
-  // react-router — DoS advisory range >=7.0.0 <7.18.0; bumped react-router-dom to
-  // ^7.18.1 (installed react-router 7.18.1, above range). Genuinely fixed.
-  'GHSA-chx6-hx7r-mcp5', // react-router unauthenticated DoS via inefficient route matching
-  // react-router — RSC-mode CSRF advisory range >=7.12.0 <8.3.0. NOT a registry-lag
-  // false positive: the fix lands in 8.3.0 (a major upgrade). This is an RSC /
-  // framework-mode-only bypass (actions executing before a 400 in React Server
-  // Components mode); this app uses react-router-dom in SPA / data-router mode with
-  // no RSC server actions, so the vector is not reachable. Accepted as a
-  // not-reachable risk pending a coordinated react-router 8.x major upgrade.
-  'GHSA-qwww-vcr4-c8h2', // react-router RSC-mode CSRF bypass (SPA usage; 8.x upgrade deferred)
+  // react-router — both advisories (GHSA-chx6-hx7r-mcp5 DoS, GHSA-qwww-vcr4-c8h2
+  // RSC-mode CSRF) are GONE, not accepted: react-router-dom has been removed from
+  // the dependency tree entirely.
+  //
+  // The deferral that used to sit here rested on a claim that turned out to be
+  // false — that "this app uses react-router-dom in SPA / data-router mode".
+  // It did not use it at all. The app routes with `wouter`; react-router-dom was
+  // a declared dependency with zero imports anywhere in the repo, so the CSRF
+  // advisory was being carried as an accepted risk pending a react-router 8.x
+  // major migration that would have been migrating nothing. Removing the package
+  // closes both advisories permanently and drops the unused attack surface.
+  //
+  // If react-router is ever reintroduced, add it deliberately and re-assess these
+  // advisories against actual usage rather than restoring this exception.
 ]);
 
 const proc = spawnSync('npm', ['audit', '--audit-level=high', '--json'], {
