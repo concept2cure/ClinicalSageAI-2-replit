@@ -286,3 +286,70 @@ describe('RBM v2 surfaces persist their writes', () => {
     expect(reload).not.toHaveBeenCalled();
   });
 });
+
+describe('RBM metric ingest — reports what the load actually did', () => {
+  const ingestResult = (over: Record<string, unknown> = {}) => ({
+    runId: 12, status: 'succeeded', received: 2, accepted: 2, rejected: 0, rejects: [],
+    projection: { kriReadings: 1, qtlUpdates: 1, subjectProfiles: 0, siteObservations: 0, unmatched: [] },
+    ...over,
+  });
+
+  function mockIngest(payload: unknown, status = 201) {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET') return envelope({ data: [] });
+      if (url === '/api/mdx/rbm-metric-ingest') return envelope({ data: payload }, status);
+      return envelope({ data: {} }, 201);
+    });
+  }
+
+  it('posts the pasted extract with its source and cutoff', async () => {
+    mockIngest(ingestResult());
+    render(<RbmOverview board={board()} onTab={vi.fn()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Load extract…/ }));
+    fireEvent.change(await screen.findByLabelText(/paste the rows/), {
+      target: { value: 'metric_key,value\nQuery rate,12.5\n' },
+    });
+    fireEvent.change(screen.getByLabelText(/Data cutoff/), { target: { value: '2026-07-20' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Load extract' }));
+    await waitFor(() => {
+      const call = apiRequest.mock.calls.find((c: unknown[]) => c[1] === '/api/mdx/rbm-metric-ingest');
+      expect(call).toBeTruthy();
+      expect(call![2]).toMatchObject({ programId: PROGRAM, source: 'edc', dataCutoff: '2026-07-20' });
+    });
+    expect(await screen.findByText(/Run 12 — succeeded/)).toBeTruthy();
+  });
+
+  it('shows the rejected rows and their reasons on a partial load', async () => {
+    // A partial load must not read as a success — the rejected rows are the
+    // whole point of surfacing the run.
+    mockIngest(ingestResult({
+      status: 'partial', received: 3, accepted: 1, rejected: 2,
+      rejects: [
+        { row: 2, reason: 'denominator is zero — a rate cannot be computed' },
+        { row: 3, reason: 'metric_key is missing' },
+      ],
+    }));
+    render(<RbmOverview board={board()} onTab={vi.fn()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Load extract…/ }));
+    fireEvent.change(await screen.findByLabelText(/paste the rows/), { target: { value: 'x' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Load extract' }));
+    expect(await screen.findByText(/Run 12 — partial/)).toBeTruthy();
+    expect(screen.getByText(/denominator is zero/)).toBeTruthy();
+    expect(screen.getByText('metric_key is missing')).toBeTruthy();
+  });
+
+  it('calls out metrics that matched no indicator, even when nothing was rejected', async () => {
+    // "2 accepted, 0 rejected" would otherwise read as a clean load while every
+    // indicator stayed unevaluated.
+    mockIngest(ingestResult({
+      projection: { kriReadings: 0, qtlUpdates: 0, subjectProfiles: 0, siteObservations: 0, unmatched: ['Screen fail rate', 'AE onset lag'] },
+    }));
+    render(<RbmOverview board={board()} onTab={vi.fn()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Load extract…/ }));
+    fireEvent.change(await screen.findByLabelText(/paste the rows/), { target: { value: 'x' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Load extract' }));
+    expect(await screen.findByText(/matched no configured KRI or QTL/)).toBeTruthy();
+    expect(screen.getByText(/Screen fail rate, AE onset lag/)).toBeTruthy();
+    expect(screen.getByText(/Nothing on this study changed as a result of this load/)).toBeTruthy();
+  });
+});

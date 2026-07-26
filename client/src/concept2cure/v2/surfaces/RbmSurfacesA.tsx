@@ -24,6 +24,7 @@ import {
   RbmFormModal, GovernedApprovalDialog, type FormField,
 } from './RbmSurfaces';
 import { useRbmMutation, useRbmOwners, ownerId, rbmWrite, RbmWriteError } from './rbmWrites';
+import { RbmIngestDialog } from './RbmIngest';
 import '../styles/rbm-v2.css';
 
 interface SubProps {
@@ -111,7 +112,7 @@ function optNum(v: string | undefined): number | null {
  * untracked study says so outright rather than showing nothing, which would
  * let hand-entered numbers read as monitored data.
  */
-function DataFreshness({ sources }: { sources: RbmBoardFreshness[] }) {
+function DataFreshness({ sources, onLoad }: { sources: RbmBoardFreshness[]; onLoad: () => void }) {
   if (sources.length === 0) {
     return (
       <div className="rbm-fresh-strip" data-empty>
@@ -119,6 +120,7 @@ function DataFreshness({ sources }: { sources: RbmBoardFreshness[] }) {
         <span className="rbm-fresh-none">
           No source feeds are tracked for this study — the values below were entered by hand and their currency is unrecorded.
         </span>
+        <button className="rbm-btn pri rbm-fresh-load" onClick={onLoad}>{I.arrowUp}Load extract…</button>
       </div>
     );
   }
@@ -137,12 +139,14 @@ function DataFreshness({ sources }: { sources: RbmBoardFreshness[] }) {
           </em>
         </span>
       ))}
+      <button className="rbm-btn rbm-fresh-load" onClick={onLoad}>{I.arrowUp}Load extract…</button>
     </div>
   );
 }
 
 /* 1 -- Overview */
-export function RbmOverview({ board, onTab }: SubProps) {
+export function RbmOverview({ board, onTab, onReload }: SubProps) {
+  const [ingesting, setIngesting] = useState(false);
   const S = board.summary;
   // Unevaluated KRIs/QTLs are shown on the tile, not hidden in the remainder:
   // an indicator nobody has read is an oversight gap, not a healthy one.
@@ -158,7 +162,10 @@ export function RbmOverview({ board, onTab }: SubProps) {
   ];
   return (
     <div>
-      <DataFreshness sources={board.freshness ?? []} />
+      <DataFreshness sources={board.freshness ?? []} onLoad={() => setIngesting(true)} />
+      {ingesting && (
+        <RbmIngestDialog programId={board.programId} onClose={() => setIngesting(false)} onReload={onReload} />
+      )}
       <div className="rbm-tiles">
         {tiles.map((t, i) => (
           <button key={i} className="rbm-tile" data-warn={(t as Record<string, unknown>).warn || undefined} data-err={(t as Record<string, unknown>).err || undefined} onClick={() => onTab?.(t.nav)}>
