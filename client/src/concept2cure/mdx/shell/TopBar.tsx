@@ -7,6 +7,7 @@ import * as React from 'react';
 import { I } from '../icons';
 import { useSampleMode } from '../components/DataGate';
 import { sampleModeAvailable, setSampleMode } from '../lib/sampleMode';
+import { NotificationsBell } from './NotificationsBell';
 import type { Program } from '../data/programs';
 
 export interface TopBarProps {
@@ -68,9 +69,11 @@ export function TopBar({ hereLabel, program, onOpenPalette }: TopBarProps) {
       )}
 
       <div className="tb-actions">
-        <button className="tb-btn" title="Filter">{I.filter}</button>
-        <button className="tb-btn" title="Notifications">{I.bell}</button>
-        <button className="tb-btn" title="Help">{I.help}</button>
+        {/* Filter and Help have no backend behind them yet. Rather than
+            wire them to nothing — the dead-control pattern this work has
+            been removing — they are left out until they do something.
+            The bell is here because /api/mdx/notifications is real. */}
+        <NotificationsBell />
       </div>
     </header>
   );
