@@ -4730,7 +4730,7 @@ export async function executeCommands(
             message:
               'Part 11 governance policy could not be loaded; refusing this governed command under the regulated profile (fail closed).',
           });
-          console.log(`[AnA Command] Blocked ${cmd.command}: PART11_POLICY_UNAVAILABLE`);
+          console.warn(`[AnA Command] Blocked ${cmd.command}: PART11_POLICY_UNAVAILABLE`);
           continue;
         }
         if (ctx.part11Enforce) {
@@ -4738,7 +4738,7 @@ export async function executeCommands(
           if (!v.ok) {
             const blocked = buildSignatureRequiredResult(cmd.command, v, cmd.params as Record<string, unknown>);
             results.push(blocked);
-            console.log(`[AnA Command] Blocked ${cmd.command}: PART11_SIGNATURE_REQUIRED (${v.code})`);
+            console.warn(`[AnA Command] Blocked ${cmd.command}: PART11_SIGNATURE_REQUIRED (${v.code})`);
             continue;
           }
         }
