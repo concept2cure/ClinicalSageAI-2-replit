@@ -175,9 +175,16 @@ export function DocumentAuthoring({ onAsk }: SurfaceViewProps) {
   /* ── Load documents for the current module/status ── */
   const loadDocs = useCallback(async () => {
     setDocsState('loading');
-    const { ok, body } = await readJson<{ documents?: AuthDoc[] }>(
-      `/api/authoring/docs?module=${encodeURIComponent(module)}&status=${encodeURIComponent(status)}`,
-    );
+    // Scope to the open project when one is set on the runtime channel
+    // (window.C2C_PROJECT — the same convention every project-aware surface
+    // reads). A string id is a regulatory_programs UUID; absent or non-string →
+    // org-wide, so the editor still works with no project open.
+    const proj = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+    const programId = proj && typeof proj.id === 'string' ? proj.id : null;
+    const url =
+      `/api/authoring/docs?module=${encodeURIComponent(module)}&status=${encodeURIComponent(status)}` +
+      (programId ? `&programId=${encodeURIComponent(programId)}` : '');
+    const { ok, body } = await readJson<{ documents?: AuthDoc[] }>(url);
     if (!ok || !body) { setDocsState('error'); setDocs([]); return; }
     const list = Array.isArray(body.documents) ? body.documents : [];
     setDocs(list);

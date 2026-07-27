@@ -72,6 +72,18 @@ const FILES = [
   // cre_evidence_sources. Self-guarding on to_regclass, so it no-ops with a
   // NOTICE if the spine is somehow absent rather than failing the run.
   'migrations/20260726_cre_source_program_scope.sql',
+  // ── Authoring lineage (added 2026-07-27) ───────────────────────────────────
+  // Same reasoning as the CRE spine: the flagship authoring-loop tables have a
+  // CREATE only in db/migrations/20260725_authoring_document_loop_tables.sql,
+  // which the fractured applier can leave absent from a real database. Listing
+  // the loop tables here provisions them on the durable path so the program
+  // scope that follows has its prerequisite. The file is CREATE TABLE IF NOT
+  // EXISTS throughout, so it no-ops wherever the loop is already applied.
+  'db/migrations/20260725_authoring_document_loop_tables.sql',
+  // Program scope for authoring documents. MUST follow the loop tables: it
+  // ALTERs authoring_documents. Self-guarding on to_regclass, so it no-ops with
+  // a NOTICE if the table is somehow absent rather than failing the run.
+  'migrations/20260727_authoring_document_program_scope.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
