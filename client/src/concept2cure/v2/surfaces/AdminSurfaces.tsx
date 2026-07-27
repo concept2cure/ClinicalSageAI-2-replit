@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { SampleTag, useLiveData, useLiveRows, EmptyState } from '../dataConnect';
+import { IndustryProfileCard } from './IndustryProfileCard';
 import { apiRequest } from '@/lib/queryClient';
 import { getAuthToken } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -88,7 +89,6 @@ function C2CToast({ msg }: { msg: string }) {
 
 interface SetupSettings {
   orgName: string;
-  clientType: string;
   mfaRequired: boolean;
   ssoEnabled: boolean;
   txwEnabled: boolean;
@@ -112,17 +112,23 @@ interface LangOption {
    server (server/routes/setup.ts) are the first-run installer — GET /status
    ({ initialized }) and the self-closing POST /initialize that creates the
    first org + admin on an empty database. Neither can truthfully read or
-   persist this panel's org-config fields (orgName, clientType, MFA/SSO,
-   translation-workspace policy), so these settings stay in localStorage and
-   the surface carries the Sample-data pill instead of pretending to be an
-   org-wide governed write. Do not wire this panel to /api/setup — calling the
-   installer from here would be destructive, not persistence. */
+   persist this panel's remaining org-config fields (orgName, MFA/SSO,
+   translation-workspace policy), so those stay in localStorage and the surface
+   carries the Sample-data pill instead of pretending to be an org-wide governed
+   write. Do not wire this panel to /api/setup — calling the installer from here
+   would be destructive, not persistence.
+
+   The INDUSTRY FOCUS setting is no longer among them. It moved to
+   IndustryProfileCard, backed by /api/admin/industry-profile: tenant-scoped,
+   role-gated, audited, and requiring a reason for a material change. It had to
+   move, because it is the one field on this page that governs regulated project
+   behaviour — which study archetypes, filing types and terminology every project
+   in the organization is offered — and a per-browser value cannot do that. */
 
 export function Setup({ onAsk }: SurfaceViewProps) {
   const [s, setS] = useState<SetupSettings>(() => {
     const def: SetupSettings = {
       orgName: 'Acme Bio',
-      clientType: 'biotech',
       mfaRequired: true,
       ssoEnabled: false,
       txwEnabled: true,
@@ -203,7 +209,7 @@ export function Setup({ onAsk }: SurfaceViewProps) {
             Setup <SampleTag sample={true} />
           </React.Fragment>
         }
-        sub="Organization profile, security defaults, and module configuration. Saved in this browser only -- the governed org-settings backend is not wired yet."
+        sub="Organization profile, security defaults, and module configuration. Industry focus is governed and persisted server-side; the remaining fields on this page are still saved in this browser only."
         actions={
           <button className="btn ghost" onClick={() => onAsk && onAsk('Summarize my org configuration')}>
             {I.sparkles} Ask AnA
@@ -212,6 +218,10 @@ export function Setup({ onAsk }: SurfaceViewProps) {
       />
 
       <div className="txw-settings">
+        {/* Governed, server-persisted. Rendered first because it is the setting
+            that presets everything the other panels configure within. */}
+        <IndustryProfileCard />
+
         {/* -- Org profile -- */}
         <div className="txw-set-card">
           <div className="txw-set-head">
@@ -246,23 +256,21 @@ export function Setup({ onAsk }: SurfaceViewProps) {
                 />
               </div>
             </div>
+            {/* The client-type chips that used to live here wrote to localStorage
+                while claiming to drive templates, pathways and AnA context across
+                every project. A per-browser value cannot govern that: two users in
+                one organization would get different study menus for the same
+                study. The governed equivalent is the Industry focus card below,
+                which persists server-side and is audited. */}
             <div className="txw-row">
               <div className="txw-row-l">
-                Client type<small>Sets the default rail focus and AnA framing.</small>
+                Industry focus
+                <small>Moved to its own governed setting — see Industry focus below.</small>
               </div>
               <div className="txw-row-r">
-                <div className="txw-row-r-grid">
-                  {['medtech', 'biotech', 'pharma', 'diagnostics', 'cro', 'health'].map((t) => (
-                    <button
-                      key={t}
-                      className="txw-pchip"
-                      data-on={s.clientType === t || undefined}
-                      onClick={() => set('clientType', t)}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
+                <span className="mut" style={{ fontSize: 12 }}>
+                  Declared once for the organization, not per browser.
+                </span>
               </div>
             </div>
             <div className="txw-row">
