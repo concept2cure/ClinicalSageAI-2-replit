@@ -26,27 +26,25 @@
  */
 
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { authMiddleware } from '../auth';
-import { createRedisRateLimiter } from '../middleware/redisRateLimiter';
 import { pool } from '../db';
 import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
 const log = createScopedLogger('client-portal');
 
-// Rate limit ahead of auth. The global /api limiter already covers this route at
-// runtime; this per-router limit is defence-in-depth and keeps the guarantee
-// local to the endpoint (an authenticated handler must be rate-limited).
-const portalRateLimiter = createRedisRateLimiter({
-  rules: {
-    clientPortal: {
-      windowMs: 60 * 1000, // 1 minute
-      maxRequests: 60,
-      message: 'Rate limit exceeded for the client portal. Please wait.',
-    },
-  },
-  perOrganization: true,
-  keyPrefix: 'client-portal:',
+// Rate limit ahead of auth. The global /api limiter (redisRateLimiter) already
+// covers this route at runtime; this per-router limit is defence-in-depth and
+// keeps the guarantee local to the endpoint (an authenticated handler must be
+// rate-limited). Uses express-rate-limit to match the repo convention
+// (server/middleware/enterprise-security.ts).
+const portalRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Rate limit exceeded for the client portal. Please wait.' },
 });
 
 router.use(portalRateLimiter);
