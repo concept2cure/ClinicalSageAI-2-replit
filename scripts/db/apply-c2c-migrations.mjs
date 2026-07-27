@@ -19,7 +19,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
-import { applyAuthoringSubsystem, AUTHORING_SUBSYSTEM_FILES } from './authoring-subsystem.mjs';
+import { applyAuthoringSubsystem } from './authoring-subsystem.mjs';
 import { ensureJournal, recordApplied } from './migration-journal.mjs';
 dotenv.config();
 
@@ -193,12 +193,14 @@ async function main() {
   } catch (err) {
     console.warn(`⚠ migration journal unavailable (continuing without it): ${err.message}`);
   }
-  const journal = async (file) => {
+  // Record an applied file's exact bytes in the ledger. `sqlText` is the content
+  // the applier already read for the apply — nothing is re-read here (so no
+  // second path.join over the file list). Best-effort: a ledger failure must
+  // never abort a real migration.
+  const journal = async (file, sqlText) => {
     if (!journalReady) return;
     try {
-      const abs = path.join(repoRoot, file);
-      if (!fs.existsSync(abs)) return;
-      const res = await recordApplied(query, file, fs.readFileSync(abs, 'utf8'));
+      const res = await recordApplied(query, file, sqlText);
       if (res.status === 'drift') {
         drift.push(file);
         console.warn(
@@ -218,7 +220,6 @@ async function main() {
   // simply no-op if the subsystem did not come up).
   try {
     await applyAuthoringSubsystem(pool, repoRoot, { log: (m) => console.info(m) });
-    for (const f of AUTHORING_SUBSYSTEM_FILES) await journal(f);
   } catch (err) {
     console.error(`✗ failed:  authoring subsystem — ${err.message}`);
     failed++;
@@ -238,7 +239,7 @@ async function main() {
       await pool.query(sql);
       if (wrap) await pool.query('COMMIT');
       console.info(`✓ applied: ${file}`);
-      await journal(file);
+      await journal(file, sql);
     } catch (err) {
       await pool.query('ROLLBACK').catch(() => {});
       console.error(`✗ failed:  ${file} — ${err.message}${err.detail ? ` (${err.detail})` : ''}`);

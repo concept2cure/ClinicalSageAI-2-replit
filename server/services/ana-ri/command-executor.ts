@@ -4710,7 +4710,7 @@ export async function executeCommands(
         message: `Not authorized to run ${cmd.command}: ${authz.reason}`,
         data: { authorization: authz },
       });
-      console.log(`[AnA Command] Denied ${cmd.command}: ${authz.reason} (policy ${authz.policyVersion})`);
+      console.warn(`[AnA Command] Denied ${cmd.command}: ${authz.reason} (policy ${authz.policyVersion})`);
       continue;
     }
 
