@@ -182,7 +182,7 @@ describe('POST /api/onboarding/commit — governed, server-authoritative', () =>
 
   it('403s a non-admin member (fail-closed authorization)', async () => {
     const runId = await ingestAsAdmin();
-    const res = await commit({ runId, approvals: [{ id: 'p0-org_profile.name' }], reason: 'reviewed' }, 'TestToken 2');
+    const res = await commit({ runId, approvals: [{ id: 'p0-org_profile.name' }], reason: 'reviewed against the uploaded profile' }, 'TestToken 2');
     expect(res.status).toBe(403);
     expect(auditMock).not.toHaveBeenCalled();
   });
@@ -195,7 +195,7 @@ describe('POST /api/onboarding/commit — governed, server-authoritative', () =>
   });
 
   it('410s an expired or unknown review session rather than trusting the body', async () => {
-    const res = await commit({ runId: 'made-up-run', approvals: [{ id: 'x' }], reason: 'reviewed' });
+    const res = await commit({ runId: 'made-up-run', approvals: [{ id: 'x' }], reason: 'reviewed against the uploaded profile' });
     expect(res.status).toBe(410);
     expect(auditMock).not.toHaveBeenCalled();
   });
@@ -226,7 +226,7 @@ describe('POST /api/onboarding/commit — governed, server-authoritative', () =>
       runId,
       // Forged id + attacker-supplied provenance-looking fields are ignored.
       approvals: [{ id: 'forged', value: 'Attacker Corp' }],
-      reason: 'attempted injection',
+      reason: 'attempted injection scenario',
     });
     expect(res.status).toBe(200);
     expect(res.body.data.writes).toEqual([]);
@@ -235,11 +235,32 @@ describe('POST /api/onboarding/commit — governed, server-authoritative', () =>
     expect(auditMock).not.toHaveBeenCalled();
   });
 
+  it('is registered as a Part 11 governed command at the reason-only tier', async () => {
+    const gov = await import('../../services/ana-ri/part11-governance');
+    expect(gov.requiresPart11Signoff('onboarding.apply_proposals')).toBe(true);
+    // Deliberately NOT e-sign tier — first-run setup should not demand re-auth.
+    expect(gov.requiresEsignature('onboarding.apply_proposals')).toBe(false);
+  });
+
+  it('enforces the governed minimum reason length, not a token one', async () => {
+    const runId = await ingestAsAdmin();
+    const res = await commit({ runId, approvals: [{ id: 'p0-org_profile.name' }], reason: 'ok' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/at least 10/);
+    expect(auditMock).not.toHaveBeenCalled();
+  });
+
+  it('records the governed command name in the audit entry', async () => {
+    const runId = await ingestAsAdmin();
+    await commit({ runId, approvals: [{ id: 'p0-org_profile.name' }], reason: 'reviewed against the uploaded profile' });
+    expect(auditMock.mock.calls[0][0].details.part11Command).toBe('onboarding.apply_proposals');
+  });
+
   it('rejects a human edit that the canonical governed PATCH would reject', async () => {
     const runId = await ingestAsAdmin();
     // A one-character name violates the 2–120 rule enforced by
     // PATCH /organizations/:id/profile; this path must not be a way around it.
-    const res = await commit({ runId, approvals: [{ id: 'p0-org_profile.name', value: 'X' }], reason: 'reviewed' });
+    const res = await commit({ runId, approvals: [{ id: 'p0-org_profile.name', value: 'X' }], reason: 'reviewed against the uploaded profile' });
     expect(res.status).toBe(200);
     expect(res.body.data.writes).toEqual([]);
     expect(res.body.data.applied[0]).toMatchObject({ ok: false });
@@ -266,7 +287,7 @@ describe('POST /api/onboarding/commit — governed, server-authoritative', () =>
       warnings: [],
     });
     const runId = await ingestAsAdmin();
-    const res = await commit({ runId, approvals: [{ id: 'p0-program.code' }], reason: 'reviewed' });
+    const res = await commit({ runId, approvals: [{ id: 'p0-program.code' }], reason: 'reviewed against the uploaded profile' });
     expect(res.status).toBe(200);
     expect(res.body.data.writes).toEqual([]);
     expect(res.body.data.applied[0]).toMatchObject({ targetField: 'program.code', ok: false });

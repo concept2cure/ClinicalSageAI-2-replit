@@ -38,6 +38,11 @@ import { createScopedLogger } from '../utils/logger';
 import { extractUploadedText } from '../services/projects/extract-text';
 import { extractOnboardingProposals } from '../services/onboarding/proposal-extraction';
 import { discardRun, resolveApprovals, saveRun } from '../services/onboarding/proposal-store';
+import { MIN_REASON_FOR_CHANGE_LEN, requiresEsignature } from '../services/ana-ri/part11-governance';
+
+/** The governed command name this route performs. Registered in
+ *  services/ana-ri/part11-governance.ts so its tier is policy, not code here. */
+const ONBOARDING_COMMIT_COMMAND = 'onboarding.apply_proposals';
 
 const router = Router();
 const log = createScopedLogger('onboarding-proposals');
@@ -172,9 +177,28 @@ router.post('/commit', async (req: Request, res: Response) => {
     ? (body.approvals as Array<{ id: string; value?: string | null }>)
     : [];
 
-  // The reason is the human's own words — never synthesized on their behalf.
-  if (reason.length < 3) {
-    return res.status(400).json({ success: false, error: 'A reason for this change is required.' });
+  // Part 11 governance for this action is defined centrally
+  // (services/ana-ri/part11-governance.ts), not hardcoded here, so policy can
+  // be tightened in one place.
+  //
+  // FAIL CLOSED: if the action is ever escalated to the e-signature tier, this
+  // route stops accepting it rather than continuing to apply changes on the
+  // weaker reason-only path — the caller must go through
+  // /api/ana-ri/governed-action, which re-verifies the signer server-side.
+  if (requiresEsignature(ONBOARDING_COMMIT_COMMAND)) {
+    return res.status(403).json({
+      success: false,
+      code: 'PART11_SIGNATURE_REQUIRED',
+      error: 'Applying these changes now requires a verified electronic signature.',
+    });
+  }
+  // The reason is the human's own words — never synthesized on their behalf —
+  // and must meet the same minimum length as every other governed command.
+  if (reason.length < MIN_REASON_FOR_CHANGE_LEN) {
+    return res.status(400).json({
+      success: false,
+      error: `A reason for this change of at least ${MIN_REASON_FOR_CHANGE_LEN} characters is required.`,
+    });
   }
   if (!runId || approvals.length === 0) {
     return res.status(400).json({ success: false, error: 'Nothing was approved to apply.' });
@@ -247,7 +271,10 @@ router.post('/commit', async (req: Request, res: Response) => {
       tableName: 'organizations',
       recordId: String(orgId),
       details: {
-        orgAdminAction: 'onboarding.apply_proposals',
+        orgAdminAction: ONBOARDING_COMMIT_COMMAND,
+        // The governed command this satisfied, so an auditor can tie the entry
+        // back to the Part 11 policy that applied at the time.
+        part11Command: ONBOARDING_COMMIT_COMMAND,
         // Attribution: AnA proposed, a named human approved.
         actorKind: 'ana_on_behalf_of_user',
         before,
