@@ -96,8 +96,12 @@ function recordPermissionAudit(input: {
     });
 }
 
+// This router is mounted once at `/api` before the legacy `/api/authoring`
+// router. Including `/authoring` in each path avoids a second static mount at the
+// same prefix, preserving the route-mount no-regression contract.
+
 // GET /api/authoring/docs/:docId/permissions
-router.get('/docs/:docId/permissions', async (req: Request, res: Response) => {
+router.get('/authoring/docs/:docId/permissions', async (req: Request, res: Response) => {
   try {
     const ctx = await requirePermissionManager(req, res);
     if (!ctx) return;
@@ -119,7 +123,7 @@ router.get('/docs/:docId/permissions', async (req: Request, res: Response) => {
 // POST /api/authoring/docs/:docId/permissions
 // Reviewer and approver authority is explicit: it exists only after this
 // owner/admin-controlled grant, never because a user carries a broad QA/RA role.
-router.post('/docs/:docId/permissions', async (req: Request, res: Response) => {
+router.post('/authoring/docs/:docId/permissions', async (req: Request, res: Response) => {
   try {
     const ctx = await requirePermissionManager(req, res);
     if (!ctx) return;
@@ -202,64 +206,67 @@ router.post('/docs/:docId/permissions', async (req: Request, res: Response) => {
 });
 
 // DELETE /api/authoring/docs/:docId/permissions/:permissionId
-router.delete('/docs/:docId/permissions/:permissionId', async (req: Request, res: Response) => {
-  try {
-    const ctx = await requirePermissionManager(req, res);
-    if (!ctx) return;
+router.delete(
+  '/authoring/docs/:docId/permissions/:permissionId',
+  async (req: Request, res: Response) => {
+    try {
+      const ctx = await requirePermissionManager(req, res);
+      if (!ctx) return;
 
-    const permissionId = String(req.params.permissionId ?? '').trim();
-    const reason = req.body?.reason == null ? null : String(req.body.reason).trim();
-    const permission = await revokeAuthoringPermission({
-      pool: getPool(),
-      tenantId: ctx.tenantId,
-      docId: ctx.docId,
-      permissionId,
-      revokedBy: ctx.principal.id,
-      reason,
-    });
-
-    if (!permission) {
-      return res.status(404).json({
-        error: {
-          code: 'AUTHORING_PERMISSION_NOT_FOUND',
-          message: 'Active authoring permission not found.',
-        },
-      });
-    }
-
-    recordPermissionAudit({
-      tenantId: ctx.tenantId,
-      actorId: ctx.principal.id,
-      action: 'authoring.permission.revoke',
-      docId: ctx.docId,
-      permissionId: permission.id,
-      details: {
-        principalId: permission.principal_id,
-        role: permission.role,
-        sectionId: permission.section_id,
+      const permissionId = String(req.params.permissionId ?? '').trim();
+      const reason = req.body?.reason == null ? null : String(req.body.reason).trim();
+      const permission = await revokeAuthoringPermission({
+        pool: getPool(),
+        tenantId: ctx.tenantId,
+        docId: ctx.docId,
+        permissionId,
+        revokedBy: ctx.principal.id,
         reason,
-      },
-    });
+      });
 
-    return res.json({ success: true, permission });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    if (message === 'LAST_OWNER') {
-      return res.status(409).json({
+      if (!permission) {
+        return res.status(404).json({
+          error: {
+            code: 'AUTHORING_PERMISSION_NOT_FOUND',
+            message: 'Active authoring permission not found.',
+          },
+        });
+      }
+
+      recordPermissionAudit({
+        tenantId: ctx.tenantId,
+        actorId: ctx.principal.id,
+        action: 'authoring.permission.revoke',
+        docId: ctx.docId,
+        permissionId: permission.id,
+        details: {
+          principalId: permission.principal_id,
+          role: permission.role,
+          sectionId: permission.section_id,
+          reason,
+        },
+      });
+
+      return res.json({ success: true, permission });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message === 'LAST_OWNER') {
+        return res.status(409).json({
+          error: {
+            code: 'AUTHORING_LAST_OWNER_REQUIRED',
+            message: 'A document must retain at least one active owner.',
+          },
+        });
+      }
+      logger.error('Failed to revoke authoring permission', { error: message });
+      return res.status(503).json({
         error: {
-          code: 'AUTHORING_LAST_OWNER_REQUIRED',
-          message: 'A document must retain at least one active owner.',
+          code: 'AUTHORING_AUTHORIZATION_UNAVAILABLE',
+          message: 'Authoring permission could not be revoked.',
         },
       });
     }
-    logger.error('Failed to revoke authoring permission', { error: message });
-    return res.status(503).json({
-      error: {
-        code: 'AUTHORING_AUTHORIZATION_UNAVAILABLE',
-        message: 'Authoring permission could not be revoked.',
-      },
-    });
-  }
-});
+  },
+);
 
 export default router;
