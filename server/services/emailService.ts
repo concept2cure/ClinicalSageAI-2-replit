@@ -36,6 +36,16 @@ function getTransporter(): nodemailer.Transporter | null {
 
 const FROM_ADDRESS = process.env.SMTP_FROM || 'noreply@concept2cure.pro';
 
+/**
+ * True when SMTP is configured enough to actually deliver mail. Login OTP is
+ * the default mandatory 2FA, so when this is false in production NO user can
+ * complete a login — callers use this to fail loud at boot rather than let the
+ * failure surface silently one tester at a time.
+ */
+export function isEmailConfigured(): boolean {
+  return Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+}
+
 // ---------------------------------------------------------------------------
 // HTML Email Template
 // ---------------------------------------------------------------------------
@@ -260,7 +270,16 @@ export async function sendLoginOtpEmail(email: string, code: string): Promise<vo
   const transporter = getTransporter();
 
   if (!transporter) {
-    log.warn('SMTP not configured — login OTP email not sent', { to: email });
+    if (process.env.NODE_ENV === 'production') {
+      // Loud: the user just requested a login code that can never arrive.
+      // Never log the code itself in production.
+      log.error(
+        'SMTP not configured — login OTP could NOT be delivered; this user cannot complete login. Set SMTP_HOST/SMTP_USER/SMTP_PASS.',
+        { to: email },
+      );
+      return;
+    }
+    log.warn('SMTP not configured — login OTP email not sent (dev)', { to: email });
     log.debug('Dev OTP code', { to: email, code });
     return;
   }

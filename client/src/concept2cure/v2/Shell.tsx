@@ -85,12 +85,19 @@ export function Rail({
   const initials =
     (user?.firstName?.[0] ?? '') + (user?.lastName?.[0] ?? '') || name.slice(0, 2).toUpperCase();
   const role = user?.roles?.[0] ?? '';
+  const isOrgAdmin = (user?.roles ?? []).some((r) =>
+    ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(String(r).toLowerCase()),
+  );
   const acctGo = (id?: string) => {
     setAcct(false);
     if (id) onNav(id);
   };
   const ACCT_ITEMS: ({ label: string; ic: string; to?: string; action?: 'logout' } | { sep: true })[] = [
-    { label: 'Settings', ic: 'settings', to: 'admin-console' },
+    // Admin is reached from the bottom-left account menu — the same place and
+    // gesture as Claude's admin/settings. Gated to org admins; admin-console
+    // itself renders a non-leaky denied state, but we hide the entry entirely
+    // for non-admins to mirror Claude exactly.
+    ...(isOrgAdmin ? [{ label: 'Admin', ic: 'shieldCheck', to: 'admin-console' }] : []),
     { label: 'Usage & limits', ic: 'barChart', to: 'usage' },
     { label: 'Billing', ic: 'creditCard', to: 'billing' },
     { sep: true },

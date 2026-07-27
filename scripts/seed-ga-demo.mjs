@@ -200,6 +200,30 @@ async function seed() {
     // ════════════════════════════════════════════════════════════════
     console.log('[4/6] Creating demo projects...');
 
+    // Several core tables (projects, documents, …) have a NOT NULL
+    // client_workspace_id. Ensure a default workspace exists for the org and
+    // reuse its id across the seed.
+    let workspaceId = null;
+    const wsTableExists = await client.query(
+      `SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'client_workspaces')`,
+    );
+    if (wsTableExists.rows[0].exists) {
+      const wsRes = await client.query(
+        `INSERT INTO client_workspaces (organization_id, name, slug, status, created_by_id)
+         VALUES ($1, 'Default Workspace', 'default', 'active', $2)
+         ON CONFLICT DO NOTHING
+         RETURNING id`,
+        [org.id, admin.id],
+      );
+      workspaceId = wsRes.rows[0]?.id
+        ?? (await client.query(
+              `SELECT id FROM client_workspaces WHERE organization_id = $1 ORDER BY id LIMIT 1`,
+              [org.id],
+           )).rows[0]?.id
+        ?? null;
+      console.log(`   ✓ Client workspace: Default Workspace (id ${workspaceId})`);
+    }
+
     // Check if projects table exists
     const projectsTableExists = await client.query(`
       SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'projects')
@@ -255,11 +279,11 @@ async function seed() {
 
       for (const proj of projects) {
         await client.query(`
-          INSERT INTO projects (organization_id, name, code, description, status, type,
+          INSERT INTO projects (organization_id, client_workspace_id, name, code, description, status, type,
             depth, priority, progress, risk_level, created_by_id, owner_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)
           ON CONFLICT DO NOTHING
-        `, [org.id, proj.name, proj.code, proj.description, proj.status, proj.type,
+        `, [org.id, workspaceId, proj.name, proj.code, proj.description, proj.status, proj.type,
             proj.depth, proj.priority, proj.progress, proj.riskLevel, admin.id]);
         console.log(`   ✓ Project: ${proj.name} (${proj.progress}%)`);
       }
@@ -362,11 +386,11 @@ async function seed() {
 
       for (const doc of documents) {
         await client.query(`
-          INSERT INTO documents (organization_id, title, document_type, category, status,
+          INSERT INTO documents (organization_id, client_workspace_id, title, document_type, category, status,
             document_code, compliance_level, owner_id, created_by_id)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9)
           ON CONFLICT DO NOTHING
-        `, [org.id, doc.title, doc.docType, doc.category, doc.status,
+        `, [org.id, workspaceId, doc.title, doc.docType, doc.category, doc.status,
             doc.code, doc.compliance, admin.id]);
         console.log(`   ✓ Doc: ${doc.title}`);
       }
@@ -782,11 +806,10 @@ async function seed() {
           if (!studyId) {
             const ins = await client.query(
               `INSERT INTO nonclinical_studies
-                 (organization_id, study_number, title, study_type, species, glp_compliant, status,
-                  duration_label, key_finding, finding_class, created_by)
-               VALUES ($1,$2,$3,$4,$5,true,$6,$7,$8,$9,$10)
+                 (organization_id, study_number, title, study_type, species, glp_compliant, status, created_by)
+               VALUES ($1,$2,$3,$4,$5,true,$6,$7)
                RETURNING id`,
-              [org.id, r.num, `${r.num} — ${r.species} ${r.dur}`, r.type, r.species, r.status, r.dur, r.finding, r.cls, admin.id],
+              [org.id, r.num, `${r.num} — ${r.species} ${r.dur}`, r.type, r.species, r.status, admin.id],
             );
             studyId = ins.rows[0].id;
           }
@@ -895,14 +918,33 @@ async function seed() {
       const domainDir = path.join(path.dirname(fileURLToPath(import.meta.url)), 'seed', 'ga-demo.d');
       if (fs.existsSync(domainDir)) {
         const files = fs.readdirSync(domainDir).filter((f) => f.endsWith('.mjs')).sort();
+        let domainOk = 0;
+        let domainSkipped = 0;
         for (const file of files) {
           const mod = await import(pathToFileURL(path.join(domainDir, file)).href);
-          if (typeof mod.default === 'function') {
-            await mod.default(client, { org, admin });
-          } else {
+          if (typeof mod.default !== 'function') {
             console.log(`   ⚠ ${file} has no default export — skipped`);
+            continue;
+          }
+          // Isolate each domain module in a SAVEPOINT so one whose backing table
+          // is not provisioned (a surface whose backend isn't built yet) skips
+          // cleanly instead of aborting the whole seed transaction. Populates
+          // every built surface; reports the rest honestly.
+          await client.query('SAVEPOINT domain_mod');
+          try {
+            await mod.default(client, { org, admin });
+            await client.query('RELEASE SAVEPOINT domain_mod');
+            domainOk++;
+          } catch (e) {
+            await client.query('ROLLBACK TO SAVEPOINT domain_mod');
+            domainSkipped++;
+            console.log(
+              `   ⚠ ${file} skipped — ${String(e.message || e).split('\n')[0]} ` +
+                `(backing table/columns not provisioned for this surface)`,
+            );
           }
         }
+        console.log(`   Domain modules: ${domainOk} seeded, ${domainSkipped} skipped (unbuilt surfaces).`);
       }
     }
 

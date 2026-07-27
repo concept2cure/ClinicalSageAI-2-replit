@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-26T22:45:58.685Z",
+  "generatedAt": "2026-07-27T01:48:43.852Z",
   "git": {
-    "sha": "9857cd03e3d1fd6c402f4324d0b6dec1b35f527a",
+    "sha": "3340ae6db7e3d601b569457803c353a676380fb4",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2478,7 +2478,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 185835
+        "bytes": 187452
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2600,7 +2600,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5576
+        "lines": 5608
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2696,7 +2696,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2202
+        "lines": 2246
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",

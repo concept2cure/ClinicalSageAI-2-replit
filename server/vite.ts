@@ -1,4 +1,4 @@
-import express, { type Express, type Request, type Response } from 'express';
+import express, { type Express, type Request, type Response, type NextFunction } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { createServer as createViteServer, createLogger } from 'vite';
@@ -100,19 +100,13 @@ export function serveStatic(app: Express) {
     })
   );
 
-  // Non-hashed files (index.html, favicon, etc.) — short cache with revalidation
-  app.use(
-    express.static(distPath, {
-      maxAge: 0,
-      etag: true,
-    })
-  );
-
-  // SPA fallback — read index.html on each request so we can inject the
-  // per-request CSP nonce into <script> tags. Cache-Control: no-cache so
-  // the nonce is fresh on every navigation.
+  // Serve index.html through the per-request CSP nonce injector. The raw
+  // build file still contains the literal __CSP_NONCE__ placeholder and
+  // un-nonced <script> tags; under the prod CSP (nonce + strict-dynamic,
+  // which ignores 'self') the browser blocks that bundle and the page
+  // renders blank. Every HTML entry point must go through this path.
   const indexPath = path.resolve(distPath, 'index.html');
-  app.use('{*path}', async (_req: Request, res: Response, next) => {
+  const sendInjectedIndex = async (res: Response, next: NextFunction) => {
     try {
       const template = await fs.promises.readFile(indexPath, 'utf-8');
       const page = injectCspNonce(template, readNonce(res));
@@ -121,5 +115,28 @@ export function serveStatic(app: Express) {
     } catch (e) {
       next(e);
     }
-  });
+  };
+
+  // Intercept the literal /index.html BEFORE express.static can answer it
+  // with the raw file. index:false (below) only disables directory-index
+  // resolution for "/", not a direct file match on "/index.html".
+  app.get('/index.html', (_req: Request, res: Response, next: NextFunction) =>
+    sendInjectedIndex(res, next)
+  );
+
+  // Non-hashed files (favicon, etc.) — short cache with revalidation.
+  // index:false keeps express.static from answering "/" with the raw
+  // index.html, forcing it through the injector via the SPA fallback below.
+  app.use(
+    express.static(distPath, {
+      maxAge: 0,
+      etag: true,
+      index: false,
+    })
+  );
+
+  // SPA fallback — inject a fresh per-request nonce on every navigation.
+  app.use('{*path}', (_req: Request, res: Response, next: NextFunction) =>
+    sendInjectedIndex(res, next)
+  );
 }

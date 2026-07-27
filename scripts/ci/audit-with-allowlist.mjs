@@ -42,6 +42,30 @@
 // and the scan exits 0 with an EMPTY allowlist. All 32 entries on the base were
 // dead. The dependency work in the same range (Pillow bump, react-router
 // removal, the tmp override) is what cleared them.
+//
+// SECOND MERGE, against #1057, which added two more entries. Both were checked
+// the way this header requires and both were dropped:
+//
+//   brace-expansion (GHSA-3jxr-9vmj-r5cp) — `npm ls brace-expansion --all` shows
+//     a single copy at 5.0.8, above every vulnerable range, via the
+//     "brace-expansion": "5.0.8" override. Registry lag at most; suppresses
+//     nothing today.
+//
+//   react-router (GHSA-qwww-vcr4-c8h2) — the note read "this app routes with
+//     wouter and uses react-router-dom only for a couple of auth screens" and
+//     referenced "the react-router/react-router-dom ^7.18.1 override in
+//     package.json". None of that holds: there is NO react-router import in
+//     client/src, server/ or shared/ (the only match is the word inside a code
+//     comment), no react-router entry in dependencies, devDependencies or
+//     overrides, and `npm ls react-router react-router-dom --all` returns
+//     nothing. The package is not installed.
+//
+// That is the SECOND time this exact advisory has been re-added with a usage
+// claim that does not survive checking — #1106 removed the first one, which said
+// the app used react-router "in SPA / data-router mode". Twice is a pattern, and
+// it is the reason the rules at the top of this file are stated as rules rather
+// than left as etiquette: the failure is not carelessness, it is that writing a
+// plausible justification is easier than running `npm ls`.
 
 import { spawnSync } from 'node:child_process';
 

@@ -24,7 +24,6 @@ import { UdiSurface } from './surfaces/UdiSurface';
 import { PostmarketSurface } from './surfaces/PostmarketSurface';
 import { AnalyticsSurface } from './surfaces/AnalyticsSurface';
 import { MemorySurface } from './surfaces/MemorySurface';
-import { AdminSurface } from './surfaces/AdminSurface';
 import { VaultSurface } from './surfaces/VaultSurface';
 import {
   TasksSurface,
@@ -240,9 +239,9 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
       case 'memory':
         surface = <MemorySurface onAskAna={askAna} />;
         break;
-      case 'admin':
-        surface = <AdminSurface onAskAna={askAna} />;
-        break;
+      // 'admin' intentionally removed — admin is product-level (ui-v2
+      // AdminConsole), shared by all client types, not a per-workstream
+      // surface. A stale stored activeNav='admin' falls through to Overview.
       case 'k510':
         surface = <K510Surface program={programForContext} onAskAna={askAna} onOpenEditor={() => openAuthoring('k510')} />;
         break;
