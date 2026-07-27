@@ -495,7 +495,7 @@ function gateSmtp() {
   // send proves delivery.
   const proof =
     'NOTE: configuration present != mail delivered — wrong credentials, a rejected sender domain, or spam filtering all still block login. ' +
-    'Prove real end-to-end delivery with `npm run pilot:verify-otp <address>` before opening the pilot.';
+    'Prove real end-to-end delivery with `npm run pilot:verify-otp -- <address>` (the `--` is required to forward the address) before opening the pilot.';
 
   // The per-variable state is reported unconditionally (not just on success) —
   // an operator debugging a failure needs to see which vars ARE set, not only
