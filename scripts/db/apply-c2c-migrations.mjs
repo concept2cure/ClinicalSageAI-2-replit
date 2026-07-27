@@ -72,16 +72,36 @@ const FILES = [
   // cre_evidence_sources. Self-guarding on to_regclass, so it no-ops with a
   // NOTICE if the spine is somehow absent rather than failing the run.
   'migrations/20260726_cre_source_program_scope.sql',
-  // The authoring document loop — authoring_documents / authoring_sections /
-  // doc_revisions / authoring_comments / authoring_citations / frozen_documents /
-  // user_pins. Same gap as the CRE spine: merged and manifest-listed since
-  // 20260725, but the manifest is consumed by nothing, so the flagship authoring
-  // router has been writing to tables no durable path ever created. 12 CREATE
-  // ... IF NOT EXISTS, no data statements, no transaction of its own.
-  'db/migrations/20260725_authoring_document_loop_tables.sql',
-  // Source-usage index + column semantics on authoring_citations. MUST follow the
-  // loop tables (it indexes authoring_citations) and the spine (the convention it
-  // documents references cre_evidence_sources.id). Self-guarding on to_regclass.
+  // ── Authoring program scope (added 2026-07-27, from #1131) ────────────────
+  // Program scope for authoring documents: a guarded ALTER that adds
+  // client_program_id to authoring_documents. This is deliberately the ONLY
+  // authoring entry here. The loop tables and their compliance companions
+  // (20260725_authoring_audit_trail, _signatures_and_workflow,
+  // _signature_freeze_binding) are a subsystem that must be provisioned
+  // TOGETHER — provisioning the loop tables alone would stand up freeze/e-sign
+  // without their audit/signature tables (unaudited freeze, failing e-sign).
+  // That subsystem is owned by the db/migrations lineage, not this
+  // supplementary applier, so this ALTER just adds one column WHERE the
+  // subsystem is provisioned: it self-guards on to_regclass and no-ops with a
+  // NOTICE where authoring_documents is not (yet) present, rather than failing
+  // the run or provisioning half a subsystem.
+  'migrations/20260727_authoring_document_program_scope.sql',
+  // Source-usage index + column semantics on authoring_citations.
+  //
+  // CEDED TO THE RULE ABOVE. This branch also listed
+  // db/migrations/20260725_authoring_document_loop_tables.sql here, arguing that
+  // the authoring router writes to tables no durable path creates. That gap is
+  // real, but the fix was wrong: the loop tables create frozen_documents and
+  // user_pins, while authoring_audit_trail and authoring_signatures live in
+  // separate files. Applying the loop tables ALONE makes freeze succeed with no
+  // audit row (router L387) and e-sign fail outright (L3083) — a working freeze
+  // with no audit trail is worse on a Part 11 surface than tables that are
+  // plainly absent. The entry was removed rather than reworded.
+  //
+  // What remains is one guarded index, matching the pattern above exactly: it
+  // self-guards on to_regclass and no-ops with a NOTICE where authoring_citations
+  // is absent, so it adds an index WHERE the subsystem is provisioned and does
+  // nothing where it is not.
   'migrations/20260726_authoring_citation_source_usage.sql',
 ];
 

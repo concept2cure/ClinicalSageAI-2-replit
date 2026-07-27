@@ -57,9 +57,12 @@ EXPOSE 5000
 # Switch to non-root user
 USER appuser
 
-# Health check for ECS / ALB target group registration
+# Health check for ECS / ALB target group registration.
+# Probe /readyz (not /api/health): /api/health is a static liveness ping that
+# returns 200 even against a missing-schema DB, whereas /readyz fails closed on
+# a down database or a positively-verified missing schema.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD ["node", "-e", "const h=require('http');h.get('http://localhost:5000/api/health',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
+  CMD ["node", "-e", "const h=require('http');h.get('http://localhost:5000/readyz',r=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
 
 # Start the application
 CMD ["npm", "run", "start"]

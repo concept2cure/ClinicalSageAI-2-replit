@@ -2,6 +2,18 @@
 
 *For the Claude design team — June 2026*
 
+> **Status note added 2026-07-26.** This document describes the RBM module as it
+> stood in June 2026 and is kept as a point-in-time record, not a current
+> specification. Several of the files it references no longer exist. The standalone
+> RBM app (`client/src/concept2cure/rbm/` — `RbmRoute.tsx`, `App.tsx`, `data/nav.ts`),
+> the second `rbm-operations` surface, and the `services/rbmService.ts` +
+> `hooks/useRbm.ts` client layer were all removed when RBM was consolidated onto a
+> single UI. The live module is `client/src/concept2cure/v2/surfaces/Rbm.tsx` with
+> `RbmSurfacesA/B.tsx`, reading the aggregated board
+> (`GET /api/mdx-rbm/rbm-board/:programId`) and writing through
+> `surfaces/rbmWrites.tsx` to the granular `/api/mdx/rbm-*` routes. Treat file
+> paths below as historical.
+
 The Risk-Based Monitoring (RBM / RBQM) module is **functionally complete**: data
 model, API, deterministic scoring engine, AnA tools, and a wired-in **functional
 scaffold** UI that renders live data. This document hands the **visual/UX design**

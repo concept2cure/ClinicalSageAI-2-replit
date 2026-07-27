@@ -78,14 +78,25 @@ DECLARE
 BEGIN
   FOR rec IN
     SELECT
-      table_schema,
-      table_name,
-      column_name,
-      data_type
-    FROM information_schema.columns
-    WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
-      AND column_name IN ('organization_id', 'org_id', 'tenant_id')
-    ORDER BY table_schema, table_name, column_name
+      c.table_schema,
+      c.table_name,
+      c.column_name,
+      c.data_type
+    FROM information_schema.columns c
+    WHERE c.table_schema NOT IN ('pg_catalog', 'information_schema')
+      AND c.column_name IN ('organization_id', 'org_id', 'tenant_id')
+      -- Only BASE TABLES: information_schema.columns also lists VIEW columns, and
+      -- ALTER TABLE ... ENABLE ROW LEVEL SECURITY errors on a view/matview. A
+      -- tenant-scoped VIEW inherits isolation from its underlying tables, so
+      -- skipping it here is correct, not a gap. (Without this filter a view such
+      -- as v_fact_drift_candidates aborts the whole rollout.)
+      AND EXISTS (
+        SELECT 1 FROM information_schema.tables t
+        WHERE t.table_schema = c.table_schema
+          AND t.table_name = c.table_name
+          AND t.table_type = 'BASE TABLE'
+      )
+    ORDER BY c.table_schema, c.table_name, c.column_name
   LOOP
     -- Skip allowlist
     IF rec.table_name = ANY (allowlist) THEN

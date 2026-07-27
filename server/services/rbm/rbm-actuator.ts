@@ -24,6 +24,7 @@
 
 import {
   scoreRisk,
+  bandFromScore,
   kriStatus,
   qtlStatus,
   defaultPlanStrategy,
@@ -291,6 +292,232 @@ export async function draftPlan(exec: Exec, organizationId: number, input: Draft
     [organizationId, input.programId ?? null, input.assessmentId ?? null, title, strategy],
   );
   return { plan: rows[0], inferred: { strategy, fromOverallRisk: overall } };
+}
+
+export interface AmendAssessmentResult {
+  amended: boolean;
+  reason?: 'not_found' | 'not_approved' | 'amendment_already_open';
+  assessment?: any;
+  items?: any[];
+  /** The version this amendment was opened from. */
+  supersedes?: number;
+}
+
+/**
+ * Open a versioned amendment to an APPROVED risk assessment.
+ *
+ * An approved RACT is frozen: its e-signature attests to specific CtQ content,
+ * so editing in place would leave the signature pointing at content the signer
+ * never saw. But a study's risks genuinely change, so "frozen" cannot mean
+ * "never revisable" — that would push people to work around the module rather
+ * than in it.
+ *
+ * So an amendment is a NEW DRAFT version: the approved row and its items stay
+ * exactly as signed and become the historical record, while the draft carries a
+ * copy of the CtQ register that is free to edit and must be signed in its own
+ * right before it governs anything. Nothing is mutated in place, which is what
+ * makes the version chain an audit trail rather than a changelog.
+ *
+ * Refuses when there is already an open amendment: two concurrent drafts off
+ * one approved version have no defined merge, and silently picking one would
+ * discard the other's work.
+ *
+ * The caller owns the transaction.
+ */
+export async function amendAssessment(
+  exec: Exec,
+  organizationId: number,
+  input: { assessmentId: number; reason: string; openedBy?: number | null },
+): Promise<AmendAssessmentResult> {
+  const current = (await exec.query(
+    `SELECT * FROM rbm_risk_assessments
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [input.assessmentId, organizationId],
+  )).rows[0];
+  if (!current) return { amended: false, reason: 'not_found' };
+  // Only an approved version can be amended. A draft is already editable, so
+  // amending one would fork it for no reason.
+  if (current.status !== 'active') return { amended: false, reason: 'not_approved' };
+
+  const open = (await exec.query(
+    `SELECT id FROM rbm_risk_assessments
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+        AND status = 'draft' LIMIT 1`,
+    [organizationId, current.program_id],
+  )).rows[0];
+  if (open) return { amended: false, reason: 'amendment_already_open' };
+
+  const { rows: maxRows } = await exec.query(
+    `SELECT COALESCE(MAX(version), 0) AS v FROM rbm_risk_assessments
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
+    [organizationId, current.program_id],
+  );
+  const nextVersion = Number(maxRows[0].v) + 1;
+
+  // The new draft carries NO approval fields: it has not been signed, and
+  // copying the previous signer forward would be forging one.
+  const draft = (await exec.query(
+    `INSERT INTO rbm_risk_assessments (
+       organization_id, program_id, title, framework, overall_risk, status, version, metadata
+     ) VALUES ($1,$2,$3,$4,$5,'draft',$6,$7) RETURNING *`,
+    [
+      organizationId, current.program_id, current.title, current.framework,
+      current.overall_risk, nextVersion,
+      JSON.stringify({
+        amendmentOf: current.id,
+        amendmentOfVersion: current.version,
+        amendmentReason: input.reason,
+        amendmentOpenedBy: input.openedBy ?? null,
+      }),
+    ],
+  )).rows[0];
+
+  // Copy the register forward so the amendment starts from the approved content
+  // rather than a blank sheet. residual_score is recomputed by the engine on
+  // edit; it is copied as-is here because nothing has changed yet.
+  const items = (await exec.query(
+    `INSERT INTO rbm_risk_items (
+       organization_id, assessment_id, program_id, ref_code, category, ctq_factor,
+       risk_description, likelihood, impact, detectability, risk_score, is_critical,
+       mitigation, residual_likelihood, residual_impact, residual_score, status, assigned_to
+     )
+     SELECT organization_id, $1, program_id, ref_code, category, ctq_factor,
+            risk_description, likelihood, impact, detectability, risk_score, is_critical,
+            mitigation, residual_likelihood, residual_impact, residual_score, status, assigned_to
+       FROM rbm_risk_items
+      WHERE organization_id = $2 AND assessment_id = $3 AND deleted_at IS NULL
+     RETURNING *`,
+    [draft.id, organizationId, current.id],
+  )).rows;
+
+  return { amended: true, assessment: draft, items, supersedes: current.version };
+}
+
+export interface GeneratePlanResult {
+  generated: boolean;
+  /** Why nothing was generated, when `generated` is false. */
+  reason?: 'no_assessment' | 'assessment_not_approved';
+  plan?: any;
+  actions?: any[];
+  derivedFrom?: { assessmentId: number; overallRisk: string; criticalFactors: number; enhancedSites: number };
+}
+
+/**
+ * Derive a monitoring plan from the program's governing risk assessment.
+ *
+ * ICH E6(R3) expects the monitoring approach to follow from the identified
+ * risks, so nothing here is invented: the strategy comes from the assessment's
+ * overall risk band (defaultPlanStrategy), and the opening actions come from
+ * the assessment's own open critical CtQ factors — each linked back to its risk
+ * item — plus the enhanced-tier sites the site-risk engine scored. With no
+ * assessment there is nothing to derive from, and the caller is told so rather
+ * than handed an empty plan that looks derived.
+ *
+ * Requires an APPROVED (active) assessment. A draft RACT has not been signed
+ * for, and the plan-approval endpoint would happily activate a plan derived
+ * from it — leaving an unsigned risk basis governing a live monitoring
+ * commitment. Falling back to "the newest draft" fails open, so this fails
+ * closed instead and tells the caller to approve the RACT first.
+ *
+ * The plan is created as a DRAFT: it becomes the active monitoring commitment
+ * only through the governed, re-authenticated approval path.
+ *
+ * Unlike draftPlan() — which creates the plan shell alone — this is the full
+ * derivation, and it is the single implementation behind both
+ * POST /api/mdx/rbm-monitoring-plans/generate and the AnA plan tools.
+ *
+ * The caller owns the transaction: pass a pooled client inside BEGIN/COMMIT.
+ */
+export async function generatePlanFromAssessment(
+  exec: Exec,
+  organizationId: number,
+  input: { programId: string; title?: string },
+): Promise<GeneratePlanResult> {
+  const anyAssessment = (await exec.query(
+    `SELECT id, title, overall_risk, status FROM rbm_risk_assessments
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+      ORDER BY (status = 'active') DESC, updated_at DESC LIMIT 1`,
+    [organizationId, input.programId],
+  )).rows[0];
+  if (!anyAssessment) return { generated: false, reason: 'no_assessment' };
+  // Only an approved RACT may govern a plan — see the note above.
+  if (anyAssessment.status !== 'active') return { generated: false, reason: 'assessment_not_approved' };
+  const assessment = anyAssessment;
+
+  // Scoped to THIS assessment's factors, not the program's. A program can hold
+  // several assessment versions; gathering program-wide would let the plan
+  // claim derivation from the governing RACT while seeding its actions from a
+  // superseded or draft one.
+  const critical = (await exec.query(
+    `SELECT id, ctq_factor, risk_score FROM rbm_risk_items
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+        AND assessment_id = $3
+        AND is_critical = true AND status IN ('open','mitigating')
+      ORDER BY risk_score DESC NULLS LAST, id`,
+    [organizationId, input.programId, anyAssessment.id],
+  )).rows;
+  const enhanced = (await exec.query(
+    `SELECT site_number, site_name FROM rbm_site_risk_scores
+      WHERE organization_id = $1 AND program_id = $2 AND monitoring_tier = 'enhanced'
+      ORDER BY composite_risk DESC NULLS LAST`,
+    [organizationId, input.programId],
+  )).rows;
+
+  const overall = (assessment.overall_risk === 'low' || assessment.overall_risk === 'high')
+    ? assessment.overall_risk
+    : 'medium';
+  const strategy = defaultPlanStrategy(overall);
+
+  const plan = (await exec.query(
+    `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, metadata)
+     VALUES ($1,$2,$3,$4,$5,'draft',$6) RETURNING *`,
+    [
+      organizationId, input.programId, assessment.id,
+      input.title ?? `Monitoring plan — ${assessment.title}`, strategy,
+      JSON.stringify({
+        generatedFrom: 'rbm_risk_assessment',
+        assessmentId: assessment.id,
+        overallRisk: overall,
+        criticalFactors: critical.length,
+        enhancedSites: enhanced.length,
+      }),
+    ],
+  )).rows[0];
+
+  const actions: any[] = [];
+  // One action per open critical CtQ factor, linked to the risk item so the
+  // plan board can show where each action came from. Priority follows the
+  // engine's own banding of the factor's score.
+  for (const it of critical) {
+    const band = bandFromScore(num(it.risk_score) ?? 0);
+    const priority = band === 'high' ? 'high' : band === 'medium' ? 'medium' : 'low';
+    actions.push((await exec.query(
+      `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, risk_item_id, action_type, description, priority, due_date, status)
+       VALUES ($1,$2,$3,'issue',$4,$5, CURRENT_DATE + INTERVAL '14 days','open') RETURNING *`,
+      [organizationId, plan.id, it.id, `Confirm the monitoring control for: ${it.ctq_factor}`, priority],
+    )).rows[0]);
+  }
+  // One oversight visit per enhanced-tier site — the tier is what drives visit
+  // cadence under a risk-proportionate plan.
+  for (const s of enhanced) {
+    actions.push((await exec.query(
+      `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, action_type, description, priority, due_date, status)
+       VALUES ($1,$2,'site_visit',$3,'high', CURRENT_DATE + INTERVAL '30 days','open') RETURNING *`,
+      [organizationId, plan.id, `Enhanced-tier oversight visit — site ${s.site_number ?? '—'}${s.site_name ? ` (${s.site_name})` : ''}`],
+    )).rows[0]);
+  }
+
+  return {
+    generated: true,
+    plan,
+    actions,
+    derivedFrom: {
+      assessmentId: assessment.id,
+      overallRisk: overall,
+      criticalFactors: critical.length,
+      enhancedSites: enhanced.length,
+    },
+  };
 }
 
 export interface CreateActionInput {

@@ -8,6 +8,21 @@ permissions:
   contents: read
 
 jobs:
+  # Semgrep runs in its own job. As a container action it executes as root in
+  # the shared workspace, and the files it leaves behind are root-owned — which
+  # is why the dependency install in this workflow failed with EACCES on
+  # package-lock.json on every run. Isolating it keeps the SAST scan while
+  # giving the validation job a workspace it owns.
+  semgrep:
+    name: Semgrep (SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Semgrep (SAST)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/ci
+
   pr-validation:
     name: PR Validation
     runs-on: ubuntu-latest
@@ -16,18 +31,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Semgrep (SAST)
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: p/ci
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
+      # `npm ci` rather than `npm install`: it installs exactly what the
+      # lockfile pins instead of resolving and rewriting it, which is both the
+      # reproducible choice for CI and the convention in this repo's other
+      # workflows.
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Set PR base ref
         run: echo "BASE_REF=${{ github.base_ref }}" >> $GITHUB_ENV

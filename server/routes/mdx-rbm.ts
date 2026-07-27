@@ -37,6 +37,8 @@
  *   Monitoring plan + actions
  *     GET   /api/mdx/rbm-monitoring-plans?program_id=
  *     POST  /api/mdx/rbm-monitoring-plans       GET .../:id (plan + actions)
+ *     POST  /api/mdx/rbm-monitoring-plans/generate  (derive a draft plan + actions
+ *                                                    from the governing RACT)
  *     PATCH /api/mdx/rbm-monitoring-plans/:id
  *     GET   /api/mdx/rbm-monitoring-actions?plan_id=&program_id=
  *     POST  /api/mdx/rbm-monitoring-actions     PATCH .../:id
@@ -54,10 +56,11 @@ import {
 } from '../lib/api-response';
 import { pool } from '../db';
 import {
-  scoreRisk, overallRiskFromScores, kriStatus, qtlStatus, defaultPlanStrategy,
+  scoreRisk, overallRiskFromScores, kriStatus, qtlStatus,
   DEFAULT_CTQ_FACTORS, DEFAULT_KRIS, DEFAULT_QTLS,
   type KriDirection,
 } from '../services/rbm/rbm-engine';
+import { generatePlanFromAssessment, amendAssessment } from '../services/rbm/rbm-actuator';
 import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
 import {
   detectSiteOutliers, scorePatientCohort,
@@ -195,9 +198,14 @@ router.post('/rbm-assessments/seed', async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // Seeded as DRAFT. A seeded RACT is a starting library, not an approved
+    // risk basis: activation is a governed, re-authenticated signature
+    // (POST /rbm-assessments/:id/approve). Inserting it 'active' would let an
+    // unreviewed default library govern monitoring-tier assignment and the
+    // risk review report without anyone having signed for it.
     const { rows: aRows } = await client.query(
       `INSERT INTO rbm_risk_assessments (organization_id, program_id, title, framework, overall_risk, status)
-       VALUES ($1,$2,$3,$4,$5,'active') RETURNING *`,
+       VALUES ($1,$2,$3,$4,$5,'draft') RETURNING *`,
       [orgId, programId, parsed.data.title ?? 'Risk assessment (RACT)', parsed.data.framework ?? 'ich_e6r3', overall],
     );
     const assessment = aRows[0];
@@ -456,9 +464,11 @@ router.post('/rbm-kris/seed', async (req, res) => {
   try {
     const out: unknown[] = [];
     for (const k of DEFAULT_KRIS) {
+      // Seeded KRIs carry thresholds but no reading yet — 'not_evaluated',
+      // never 'green'. A freshly seeded library has measured nothing.
       const { rows } = await pool.query(
         `INSERT INTO rbm_kris (organization_id, program_id, name, metric_definition, data_source, unit, direction, threshold_amber, threshold_red, status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'green') RETURNING *`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'not_evaluated') RETURNING *`,
         [orgId, programId, k.name, k.metricDefinition, k.dataSource, k.unit, k.direction, k.thresholdAmber, k.thresholdRed],
       );
       out.push(rows[0]);
@@ -645,9 +655,12 @@ router.post('/rbm-qtls/seed', async (req, res) => {
     const out: unknown[] = [];
     for (const q of DEFAULT_QTLS) {
       const secondary = Math.round(q.threshold * q.secondaryFraction * 10000) / 10000;
+      // Seeded with limits but no current value — 'not_evaluated'. Reporting a
+      // never-measured parameter as 'within' would claim tolerance the study
+      // has not demonstrated.
       const { rows } = await pool.query(
         `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit, status)
-         VALUES ($1,$2,$3,$4,$5,$6,'within') RETURNING *`,
+         VALUES ($1,$2,$3,$4,$5,$6,'not_evaluated') RETURNING *`,
         [orgId, programId, q.parameter, q.rationale, q.threshold, secondary],
       );
       out.push(rows[0]);
@@ -785,6 +798,83 @@ router.patch('/rbm-signals/:id', async (req, res) => {
   } catch (err) { return serverError(res, log, 'patch-signal', err); }
 });
 
+/**
+ * Record a signal investigation and, optionally, the follow-up action it
+ * raises — in ONE transaction.
+ *
+ * Doing this as two calls (PATCH the signal, then POST the action) can commit
+ * the disposition and then fail to create the action, leaving a signal marked
+ * resolved with the follow-up it promised missing, while the UI reports the
+ * change as unsaved. A monitoring decision and the action it commits to are
+ * one record; they land together or not at all.
+ */
+const investigateBody = z.object({
+  status: z.enum(SIGNAL_STATUS),
+  resolutionNotes: z.string().max(4000).optional().nullable(),
+  action: z.object({
+    planId: z.number().int().positive(),
+    actionType: z.enum(ACTION_TYPE).optional(),
+    description: z.string().min(1).max(2000),
+    priority: z.enum(PRIORITY).optional(),
+    owner: z.number().int().positive().optional().nullable(),
+    dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  }).optional().nullable(),
+});
+
+router.post('/rbm-signals/:id/investigate', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = numericId(req.params.id);
+  if (id === null) return clientError(res, 422, 'id must be numeric');
+  const parsed = investigateBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  const p = parsed.data;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: sigRows } = await client.query(
+      `UPDATE rbm_signals SET status = $1, resolution_notes = $2, updated_at = NOW()
+        WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
+        RETURNING *`,
+      [p.status, p.resolutionNotes ?? null, id, orgId],
+    );
+    if (sigRows.length === 0) {
+      await client.query('ROLLBACK');
+      return notFoundInTenant(res, 'Signal');
+    }
+
+    let action = null;
+    if (p.action) {
+      const own = await client.query(
+        `SELECT 1 FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+        [p.action.planId, orgId],
+      );
+      if (own.rows.length === 0) {
+        // Fail the whole thing: the investigation must not land without the
+        // action it committed to.
+        await client.query('ROLLBACK');
+        return notFoundInTenant(res, 'Monitoring plan');
+      }
+      const { rows } = await client.query(
+        `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, signal_id, action_type, description, priority, owner, due_date, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'open') RETURNING *`,
+        [orgId, p.action.planId, id, p.action.actionType ?? 'issue', p.action.description,
+          p.action.priority ?? 'medium', p.action.owner ?? null, p.action.dueDate ?? null],
+      );
+      action = rows[0];
+    }
+
+    await client.query('COMMIT');
+    return ok(res, { signal: sigRows[0], action });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'investigate-signal', err);
+  } finally {
+    client.release();
+  }
+});
+
 // ════════════════════════════════════════════════════════════════════════════
 // SITE RISK
 // ════════════════════════════════════════════════════════════════════════════
@@ -821,217 +911,6 @@ router.get('/rbm-site-risk', async (req, res) => {
   }
 });
 
-router.post('/rbm-site-risk/recompute', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = seedProgramBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  try {
-    const snapshots = await recomputeSiteRisk(orgId, parsed.data.programId);
-    return ok(res, snapshots, { count: snapshots.length });
-  } catch (err) { return serverError(res, log, 'recompute-site-risk', err); }
-});
-
-// ════════════════════════════════════════════════════════════════════════════
-// CENTRAL STATISTICAL MONITORING (CluePoints SMART-style cross-site outliers)
-// ════════════════════════════════════════════════════════════════════════════
-
-/**
- * Run unsupervised cross-site outlier detection over the program's site-risk
- * snapshot and raise a signal for each flagged site×dimension. Replaces prior
- * untriaged (status='new') central_stat signals so re-runs don't pile up;
- * triaged/investigating signals are preserved.
- */
-router.post('/rbm-central-monitoring/run', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = seedProgramBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const { programId } = parsed.data;
-  try {
-    const { rows: sites } = await pool.query(
-      `SELECT site_id, site_number, composite_risk, enrollment_risk, quality_risk, operational_risk
-         FROM rbm_site_risk_scores WHERE organization_id = $1 AND program_id = $2`,
-      [orgId, programId],
-    );
-    const cohort: SiteMetric[] = sites.map((s: any) => ({
-      siteId: s.site_id ?? null,
-      siteNumber: s.site_number ?? null,
-      metrics: {
-        composite: num(s.composite_risk),
-        enrollment: num(s.enrollment_risk),
-        quality: num(s.quality_risk),
-        operational: num(s.operational_risk),
-      },
-    }));
-    const findings = detectSiteOutliers(cohort);
-
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      await client.query(
-        `DELETE FROM rbm_signals WHERE organization_id = $1 AND program_id = $2
-           AND source = 'central_stat' AND status = 'new'`,
-        [orgId, programId],
-      );
-      const inserted: unknown[] = [];
-      for (const f of findings) {
-        const { rows } = await client.query(
-          `INSERT INTO rbm_signals (organization_id, program_id, site_id, source, signal_type, severity, title, detail, statistic, status)
-           VALUES ($1,$2,$3,'central_stat',$4,$5,$6,$7,$8,'new') RETURNING *`,
-          [
-            orgId, programId, f.siteId, `outlier_${f.dimension}`, f.severity,
-            `Site ${f.siteNumber ?? f.siteId ?? '?'} is a ${f.dimension}-risk outlier`,
-            `Central statistical monitoring flagged this site: ${f.dimension} risk score ${f.value} is an outlier vs the study cohort (robust z ${f.score}).`,
-            JSON.stringify({ dimension: f.dimension, value: f.value, score: f.score }),
-          ],
-        );
-        inserted.push(rows[0]);
-      }
-      await client.query('COMMIT');
-      return ok(res, { findings, signals: inserted }, { cohortSize: cohort.length, flagged: findings.length });
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => {});
-      throw err;
-    } finally {
-      client.release();
-    }
-  } catch (err) { return serverError(res, log, 'central-monitoring-run', err); }
-});
-
-// ════════════════════════════════════════════════════════════════════════════
-// SITE OVERSIGHT (SPOT-style per-site profile)
-// ════════════════════════════════════════════════════════════════════════════
-
-/** Per-site oversight profile: risk + tier + drivers + open-signal count. */
-router.get('/rbm-site-oversight/:programId', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const programId = String(req.params.programId);
-  if (!UUID_RE.test(programId)) return clientError(res, 422, 'programId must be a UUID');
-  try {
-    const { rows } = await pool.query(
-      `SELECT sr.site_id, sr.site_number, sr.site_name, sr.composite_risk, sr.monitoring_tier, sr.drivers,
-              COALESCE(sig.open_signals, 0)::int AS open_signals,
-              COALESCE(sig.high_signals, 0)::int AS high_signals
-         FROM rbm_site_risk_scores sr
-         LEFT JOIN (
-           SELECT site_id,
-                  COUNT(*) FILTER (WHERE status IN ('new','triaged','investigating')) AS open_signals,
-                  COUNT(*) FILTER (WHERE status IN ('new','triaged','investigating') AND severity IN ('high','critical')) AS high_signals
-             FROM rbm_signals
-            WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
-            GROUP BY site_id
-         ) sig ON sig.site_id = sr.site_id
-        WHERE sr.organization_id = $1 AND sr.program_id = $2
-        ORDER BY sr.composite_risk DESC NULLS LAST, sr.site_number`,
-      [orgId, programId],
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'site-oversight', err); }
-});
-
-// ════════════════════════════════════════════════════════════════════════════
-// PATIENT PROFILES (CluePoints-style patient-level anomaly detection)
-// ════════════════════════════════════════════════════════════════════════════
-
-const PATIENT_STATUS = ['normal', 'review', 'flagged'] as const;
-
-const patientListQuery = z.object({
-  program_id: z.string().regex(UUID_RE).optional(),
-  status: z.enum(PATIENT_STATUS).optional(),
-});
-
-router.get('/rbm-patient-profiles', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = patientListQuery.safeParse(req.query);
-  if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
-  const filters = [`organization_id = $1`, `deleted_at IS NULL`];
-  const args: unknown[] = [orgId];
-  if (parsed.data.program_id) { args.push(parsed.data.program_id); filters.push(`program_id = $${args.length}`); }
-  if (parsed.data.status) { args.push(parsed.data.status); filters.push(`status = $${args.length}`); }
-  try {
-    const { rows } = await pool.query(
-      `SELECT * FROM rbm_patient_profiles WHERE ${filters.join(' AND ')}
-        ORDER BY anomaly_score DESC NULLS LAST, subject_id`,
-      args,
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'list-patients', err); }
-});
-
-const upsertPatientBody = z.object({
-  programId: z.string().regex(UUID_RE),
-  subjectId: z.string().min(1).max(120),
-  siteId: z.string().max(120).optional().nullable(),
-  metrics: z.record(z.number()).default({}),
-});
-
-router.post('/rbm-patient-profiles', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = upsertPatientBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
-  try {
-    const { rows } = await pool.query(
-      `INSERT INTO rbm_patient_profiles (organization_id, program_id, site_id, subject_id, metrics)
-       VALUES ($1,$2,$3,$4,$5)
-       ON CONFLICT (organization_id, program_id, subject_id)
-       DO UPDATE SET site_id = EXCLUDED.site_id, metrics = EXCLUDED.metrics, updated_at = NOW()
-       RETURNING *`,
-      [orgId, p.programId, p.siteId ?? null, p.subjectId, JSON.stringify(p.metrics)],
-    );
-    return created(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'upsert-patient', err); }
-});
-
-/** Run patient-level anomaly scoring across the program's cohort. */
-router.post('/rbm-patient-profiles/score', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = seedProgramBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const { programId } = parsed.data;
-  try {
-    const { rows } = await pool.query(
-      `SELECT id, subject_id, site_id, metrics FROM rbm_patient_profiles
-        WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
-      [orgId, programId],
-    );
-    const cohort: PatientMetric[] = rows.map((r: any) => ({
-      subjectId: r.subject_id,
-      siteId: r.site_id ?? null,
-      metrics: (r.metrics && typeof r.metrics === 'object') ? r.metrics : {},
-    }));
-    const scored = scorePatientCohort(cohort);
-    const byId = new Map(rows.map((r: any, i: number) => [r.id, scored[i]]));
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      for (const r of rows) {
-        const s = byId.get(r.id)!;
-        await client.query(
-          `UPDATE rbm_patient_profiles
-              SET anomaly_score = $1, top_dimension = $2, status = $3, scored_at = NOW(), updated_at = NOW()
-            WHERE id = $4 AND organization_id = $5`,
-          [s.anomalyScore, s.topDimension, s.status, r.id, orgId],
-        );
-      }
-      await client.query('COMMIT');
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => {});
-      throw err;
-    } finally {
-      client.release();
-    }
-    const flagged = scored.filter(s => s.status === 'flagged').length;
-    const review = scored.filter(s => s.status === 'review').length;
-    return ok(res, scored, { cohortSize: cohort.length, flagged, review });
-  } catch (err) { return serverError(res, log, 'score-patients', err); }
-});
-
 // ════════════════════════════════════════════════════════════════════════════
 // GOVERNED APPROVAL (reason-for-change; 21 CFR Part 11 audit via /api/mdx)
 // ════════════════════════════════════════════════════════════════════════════
@@ -1057,8 +936,10 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
   if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
   const signoff = await verifySignerCredentials(defaultSignoffDeps, { userId: signerId, password: parsed.data.password, mfaToken: parsed.data.mfaToken });
   if (!signoff.verified) return clientError(res, 401, signoff.error ?? 'Signer verification failed (21 CFR 11.200)', signoff.code ? { code: signoff.code } : undefined);
+  const client = await pool.connect();
   try {
-    const { rows } = await pool.query(
+    await client.query('BEGIN');
+    const { rows } = await client.query(
       `UPDATE rbm_risk_assessments
           SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
               metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
@@ -1066,9 +947,75 @@ router.post('/rbm-assessments/:id/approve', async (req, res) => {
         RETURNING *`,
       [signerId, parsed.data.reason, id, orgId],
     );
-    if (rows.length === 0) return notFoundInTenant(res, 'Risk assessment');
+    if (rows.length === 0) {
+      await client.query('ROLLBACK');
+      return notFoundInTenant(res, 'Risk assessment');
+    }
+    // Approving a version supersedes the one it replaces: the prior active
+    // version is archived in the SAME transaction, so a program never has two
+    // assessments claiming to be the governing risk basis at once. The archived
+    // row and its items are left untouched — that is the signed record.
+    if (rows[0].program_id) {
+      await client.query(
+        `UPDATE rbm_risk_assessments SET status = 'archived', updated_at = NOW()
+          WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+            AND id <> $3 AND status = 'active'`,
+        [orgId, rows[0].program_id, id],
+      );
+    }
+    await client.query('COMMIT');
     return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'approve-assessment', err); }
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'approve-assessment', err);
+  } finally {
+    client.release();
+  }
+});
+
+/**
+ * Open a versioned amendment to an approved risk assessment — a new draft
+ * carrying a copy of the register, leaving the signed version intact as the
+ * historical record. See amendAssessment for why this is a new version rather
+ * than an in-place edit.
+ *
+ * Opening an amendment is not itself a signed act, so it takes a reason for the
+ * record but no e-signature; the signature is required to approve the result.
+ */
+const amendBody = z.object({ reason: z.string().min(3).max(2000) });
+
+router.post('/rbm-assessments/:id/amend', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const id = numericId(req.params.id);
+  if (id === null) return clientError(res, 422, 'id must be numeric');
+  const parsed = amendBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'A reason for the amendment is required', parsed.error.flatten().fieldErrors);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await amendAssessment(client, orgId, {
+      assessmentId: id, reason: parsed.data.reason, openedBy: getUserId(req),
+    });
+    if (!result.amended) {
+      await client.query('ROLLBACK');
+      if (result.reason === 'not_found') return notFoundInTenant(res, 'Risk assessment');
+      return clientError(res, 409, result.reason === 'amendment_already_open'
+        ? 'A draft amendment is already open for this study — approve or archive it before opening another.'
+        : 'Only an approved assessment can be amended. This one is still a draft, so edit it directly.');
+    }
+    await client.query('COMMIT');
+    return created(res, { ...result.assessment, items: result.items }, {
+      supersedes: result.supersedes,
+      itemsCopied: result.items?.length ?? 0,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'amend-assessment', err);
+  } finally {
+    client.release();
+  }
 });
 
 /** Approve + activate a monitoring plan, capturing the reason for change. */
@@ -1140,6 +1087,47 @@ router.post('/rbm-monitoring-plans', async (req, res) => {
     );
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'create-plan', err); }
+});
+
+/**
+ * Derive a draft monitoring plan (and its opening actions) from the program's
+ * governing risk assessment. The derivation itself lives in the RBM actuator so
+ * this route and the AnA tools run the same code; see
+ * generatePlanFromAssessment for what is derived and why.
+ */
+const generatePlanBody = z.object({
+  programId: z.string().regex(UUID_RE),
+  title: z.string().min(1).max(300).optional(),
+});
+
+router.post('/rbm-monitoring-plans/generate', async (req, res) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) return orgRequired(res);
+  const parsed = generatePlanBody.safeParse(req.body ?? {});
+  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await generatePlanFromAssessment(client, orgId, parsed.data);
+    if (!result.generated) {
+      await client.query('ROLLBACK');
+      return clientError(res, 409, result.reason === 'assessment_not_approved'
+        ? 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.'
+        : 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan');
+    }
+    await client.query('COMMIT');
+    return created(res, { ...result.plan, actions: result.actions }, {
+      derivedFrom: { assessmentId: result.derivedFrom!.assessmentId, overallRisk: result.derivedFrom!.overallRisk },
+      criticalFactors: result.derivedFrom!.criticalFactors,
+      enhancedSites: result.derivedFrom!.enhancedSites,
+    });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    return serverError(res, log, 'generate-plan', err);
+  } finally {
+    client.release();
+  }
 });
 
 router.get('/rbm-monitoring-plans/:id', async (req, res) => {
@@ -1305,13 +1293,15 @@ router.get('/rbm-summary/:programId', async (req, res) => {
       pool.query(
         `SELECT COUNT(*)::int AS total,
                 COUNT(*) FILTER (WHERE status = 'red')::int AS red,
-                COUNT(*) FILTER (WHERE status = 'amber')::int AS amber
+                COUNT(*) FILTER (WHERE status = 'amber')::int AS amber,
+                COUNT(*) FILTER (WHERE status = 'not_evaluated')::int AS "notEvaluated"
            FROM rbm_kris WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
         [orgId, programId]),
       pool.query(
         `SELECT COUNT(*)::int AS total,
                 COUNT(*) FILTER (WHERE status = 'breached')::int AS breached,
-                COUNT(*) FILTER (WHERE status = 'approaching')::int AS approaching
+                COUNT(*) FILTER (WHERE status = 'approaching')::int AS approaching,
+                COUNT(*) FILTER (WHERE status = 'not_evaluated')::int AS "notEvaluated"
            FROM rbm_qtls WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL`,
         [orgId, programId]),
       pool.query(

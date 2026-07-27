@@ -87,6 +87,15 @@ const extractOrgContext = (req, res, next) => {
   if (req.path.startsWith('/tenants')) {
     return next();
   }
+  // Public price cards: /api/billing/dtc-pricing is on the platform's open
+  // (unauthenticated) prefix list, so no verified JWT — and therefore no org —
+  // ever reaches this middleware for it. Without this skip the public pricing
+  // endpoint 403s for everyone (signed-in callers included, since the open
+  // prefix bypasses token verification entirely). Tenant-scoped /api/billing
+  // routes are unaffected — they authenticate before this middleware runs.
+  if (req.path === '/billing/dtc-pricing' && req.method === 'GET') {
+    return next();
+  }
 
   // Source organization id from the verified JWT, never from headers.
   // The previous header path (`x-organization-id`) was attacker-
