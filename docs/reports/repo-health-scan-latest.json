@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-27T14:35:39.431Z",
+  "generatedAt": "2026-07-27T17:04:24.822Z",
   "git": {
-    "sha": "f0b9db1f7a15ae4acda9c43a4ad4ef8d95a36901",
+    "sha": "b4d49245bf9cc56a4a5543ef8beabf8a3b1f4bcd",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2470,7 +2470,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 932442
+        "bytes": 932950
       },
       {
         "file": "shared/schema.ts",
@@ -2486,7 +2486,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 192974
+        "bytes": 197070
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2537,16 +2537,16 @@
         "bytes": 117471
       },
       {
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "bytes": 116366
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
         "bytes": 115960
-      },
-      {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 115874
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2600,7 +2600,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18158
+        "lines": 18159
       },
       {
         "file": "server/statistics-service.ts",
@@ -2608,7 +2608,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5687
+        "lines": 5764
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2660,7 +2660,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2603
+        "lines": 2607
       },
       {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
