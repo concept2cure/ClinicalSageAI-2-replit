@@ -2687,11 +2687,22 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
   if (orgId == null) {
     return JSON.stringify({ source: 'AnA RBM', error: 'Organization context required.' });
   }
-  const { recomputeSiteRisk } = await import('../rbm/site-risk-engine.js');
+  const { recomputeSiteRisk, SITE_READ_MESSAGE } = await import('../rbm/site-risk-engine.js');
   const { getPool } = await import('../../db.js');
   let sites: any[];
+  // recomputeSiteRisk now reports WHY it produced nothing. That matters more here
+  // than in the UI: an assistant handed an empty array would tell the user the
+  // study has no site data, when the real answer may be that Site Intelligence is
+  // unavailable or that this study is not theirs. Returning the reason keeps the
+  // model from asserting a clean bill of health it has no evidence for.
   if (input.persist === true) {
-    sites = await recomputeSiteRisk(orgId, programId);
+    const out = await recomputeSiteRisk(orgId, programId);
+    if (!out.ok) {
+      return JSON.stringify({
+        source: 'AnA RBM Site Risk', error: SITE_READ_MESSAGE[out.reason], reason: out.reason,
+      });
+    }
+    sites = out.snapshots;
   } else {
     const { rows } = await getPool().query(
       `SELECT site_number, site_name, composite_risk, monitoring_tier, drivers FROM rbm_site_risk_scores
@@ -2699,7 +2710,15 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
       [orgId, programId],
     );
     sites = rows;
-    if (sites.length === 0) sites = await recomputeSiteRisk(orgId, programId);
+    if (sites.length === 0) {
+      const out = await recomputeSiteRisk(orgId, programId);
+      if (!out.ok) {
+        return JSON.stringify({
+          source: 'AnA RBM Site Risk', error: SITE_READ_MESSAGE[out.reason], reason: out.reason,
+        });
+      }
+      sites = out.snapshots;
+    }
   }
   const tiers = { reduced: 0, standard: 0, enhanced: 0 } as Record<string, number>;
   for (const s of sites) tiers[s.monitoringTier ?? s.monitoring_tier] = (tiers[s.monitoringTier ?? s.monitoring_tier] ?? 0) + 1;
@@ -2709,7 +2728,11 @@ registerToolHandler('assess_site_risk', async (input, ctx) => {
     siteCount: sites.length,
     tierCounts: tiers,
     sites,
-    note: sites.length === 0 ? 'No Site Intelligence data found for this program.' : undefined,
+    // Only reachable on a SUCCESSFUL read that found nothing — so this now means
+    // what it says, instead of standing in for every failure mode.
+    note: sites.length === 0
+      ? 'Site Intelligence was read successfully and holds no sites for this program.'
+      : undefined,
   });
 });
 

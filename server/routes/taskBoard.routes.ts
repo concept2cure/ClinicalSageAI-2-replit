@@ -51,12 +51,18 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { asc, eq, inArray, or } from 'drizzle-orm';
+import { and, asc, eq, inArray, or } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { requestDb } from '../db/requestDb';
 import { getSecureOrgId } from '../utils/tenantContext';
-import { unifiedTasks, taskDependencies, users, organizationUsers } from '../../shared/schema';
+import {
+  unifiedTasks, taskDependencies, taskRegulatoryLinks, users, organizationUsers,
+} from '../../shared/schema';
+import {
+  isLifecyclePhase, LIFECYCLE_PHASE_LABEL, describeBlocking,
+  type TaskRegulatoryLinkView,
+} from '../../shared/regulatory/mdx-lifecycle';
 
 const logger = createScopedLogger('task-board-routes');
 
@@ -88,8 +94,24 @@ interface TaskBoardItem {
   attachments: number;
   source: string;
   due: string;
-  /** GAP: unified_tasks has no submission-phase column; always null. */
+  /**
+   * Where this task sits in the regulatory lifecycle, from
+   * unified_tasks.lifecycle_phase. Null means NOT YET CLASSIFIED — every task
+   * predating the column is in that state, deliberately not backfilled, because
+   * assigning a phase nobody chose would render a manufactured breakdown.
+   */
   phase: string | null;
+  /** Display label for `phase`; null whenever phase is. */
+  lifecyclePhaseLabel: string | null;
+  /** mdx | biopharma | pdev, denormalized from the resolved project context. */
+  vertical: string | null;
+  /** internal | client_visible | client_action_required | authority_ready. */
+  clientVisibility: string;
+  /** What this task supports or blocks. Empty when nothing is declared — the
+   *  board does not infer links from module_type. */
+  regulatoryLinks: TaskRegulatoryLinkView[];
+  /** One line naming what this task blocks, or null when it blocks nothing. */
+  blocking: string | null;
   blocked: boolean;
   estimatedHours: number | null;
 }
@@ -197,6 +219,39 @@ export default function createTaskBoardRoutes(): Router {
             )
         : [];
 
+      // What each task supports or blocks. Queried defensively in its own
+      // try/catch: an older database can carry unified_tasks without the MDX link
+      // table, and a missing table must degrade to "no links" rather than blanking
+      // the whole board.
+      const linkMap = new Map<string, TaskRegulatoryLinkView[]>();
+      if (taskIds.length > 0) {
+        try {
+          const linkRows = await db
+            .select()
+            .from(taskRegulatoryLinks)
+            .where(and(
+              eq(taskRegulatoryLinks.organizationId, organizationId),
+              inArray(taskRegulatoryLinks.taskId, taskIds),
+            ));
+          for (const l of linkRows) {
+            const arr = linkMap.get(l.taskId) ?? [];
+            arr.push({
+              entityType: l.entityType as TaskRegulatoryLinkView['entityType'],
+              entityId: l.entityId,
+              entityLabel: l.entityLabel,
+              relationship: l.relationship as TaskRegulatoryLinkView['relationship'],
+              market: l.market,
+              pathway: l.pathway,
+              filingType: l.filingType,
+              filingSection: l.filingSection,
+            });
+            linkMap.set(l.taskId, arr);
+          }
+        } catch (err) {
+          if (!isMissingTable(err)) throw err;
+        }
+      }
+
       const dependsOnMap = new Map<string, string[]>();
       const blocksMap = new Map<string, string[]>();
       for (const dep of deps) {
@@ -240,7 +295,18 @@ export default function createTaskBoardRoutes(): Router {
           attachments: jsonArrayLength(row.attachments),
           source: mapSource(row.sourceEntityType),
           due: humanizeDue(row.dueDate, status),
-          phase: null,
+          // Real now. Still null for a task nobody has classified — that is an
+          // honest "not yet classified", not a gap in the model.
+          phase: isLifecyclePhase(row.lifecyclePhase) ? row.lifecyclePhase : null,
+          lifecyclePhaseLabel: isLifecyclePhase(row.lifecyclePhase)
+            ? LIFECYCLE_PHASE_LABEL[row.lifecyclePhase]
+            : null,
+          vertical: row.industryVertical ?? null,
+          clientVisibility: row.clientVisibility ?? 'internal',
+          regulatoryLinks: linkMap.get(row.taskId) ?? [],
+          // The one-line "why this matters" a card needs, or null when this task
+          // blocks nothing — an empty string would render as missing data.
+          blocking: describeBlocking(linkMap.get(row.taskId) ?? []),
           blocked,
           estimatedHours: row.estimatedHours ?? null,
         };
@@ -309,7 +375,13 @@ export default function createTaskBoardRoutes(): Router {
 
 /*
  * ── HONESTY NOTES (gaps returned as documented nulls / omissions, never faked) ──
- *  - phase: null            — unified_tasks has no submission-phase column.
+ *  - phase                   — REAL as of MDX-TASK-01: unified_tasks.lifecycle_phase.
+ *    Still null for a task nobody has classified, which is an honest "not yet
+ *    classified" rather than a missing column. Tasks predating the column are all
+ *    in that state; they were deliberately not backfilled, because assigning a
+ *    phase nobody chose would render a lifecycle breakdown that is manufactured.
+ *  - regulatoryLinks         — REAL, from task_regulatory_links. Empty for a task
+ *    with no declared links; the board does not infer them from module_type.
  *  - impactScore: null      — when the row was never scored (real nullable column).
  *  - project/assignee/assignedBy: real numeric FKs stringified; the surface's
  *    TB_PROJECTS / TB_TEAM fixtures map their own slugs/codes, so names+avatars

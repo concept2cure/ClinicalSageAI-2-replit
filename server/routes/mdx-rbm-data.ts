@@ -28,10 +28,11 @@ import { z } from 'zod';
 
 import { createScopedLogger } from '../utils/logger';
 import {
-  ok, created, clientError, orgRequired, serverError,
+  ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
-import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
+import { getRequestDbClient } from '../middleware/tenantContext';
+import { recomputeSiteRisk, SITE_READ_MESSAGE } from '../services/rbm/site-risk-engine';
 import {
   detectSiteOutliers, scorePatientCohort,
   type SiteMetric, type PatientMetric,
@@ -71,8 +72,22 @@ router.post('/rbm-site-risk/recompute', async (req, res) => {
   const parsed = seedProgramBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   try {
-    const snapshots = await recomputeSiteRisk(orgId, parsed.data.programId);
-    return ok(res, snapshots, { count: snapshots.length });
+    const out = await recomputeSiteRisk(orgId, parsed.data.programId, getRequestDbClient(req));
+    if (!out.ok) {
+      // A failed source read is reported as a failure, never as a study with no
+      // sites. The prior snapshot is intact, and the response says so.
+      log.warn('site-risk recompute did not run', {
+        reason: out.reason, programId: parsed.data.programId, detail: out.detail,
+      });
+      if (out.reason === 'not_in_tenant') {
+        return notFoundInTenant(res, 'Study');
+      }
+      // 502 for every remaining case: each is a dependency this route could not
+      // read (Site Intelligence, or the RBQM store itself), not a bad request.
+      // `reason` is machine-readable so the surface can say which.
+      return clientError(res, 502, SITE_READ_MESSAGE[out.reason], { reason: out.reason });
+    }
+    return ok(res, out.snapshots, { count: out.snapshots.length });
   } catch (err) { return serverError(res, log, 'recompute-site-risk', err); }
 });
 
@@ -256,11 +271,20 @@ router.post('/rbm-patient-profiles/score', async (req, res) => {
       await client.query('BEGIN');
       for (const r of rows) {
         const s = byId.get(r.id)!;
+        // The per-dimension z breakdown is persisted alongside the score, under
+        // metadata.dimensionScores, because a score without it is not actionable:
+        // a monitor cannot tell one bad dimension from a patient who is atypical
+        // across the board. It is derived, not source data, so it is replaced
+        // wholesale on every scoring run rather than merged — a dimension that
+        // has dropped out of the cohort must disappear, not linger at its old z.
         await client.query(
           `UPDATE rbm_patient_profiles
-              SET anomaly_score = $1, top_dimension = $2, status = $3, scored_at = NOW(), updated_at = NOW()
-            WHERE id = $4 AND organization_id = $5`,
-          [s.anomalyScore, s.topDimension, s.status, r.id, orgId],
+              SET anomaly_score = $1, top_dimension = $2, status = $3,
+                  metadata = COALESCE(metadata, '{}'::jsonb)
+                             || jsonb_build_object('dimensionScores', $4::jsonb),
+                  scored_at = NOW(), updated_at = NOW()
+            WHERE id = $5 AND organization_id = $6`,
+          [s.anomalyScore, s.topDimension, s.status, JSON.stringify(s.dimensions), r.id, orgId],
         );
       }
       await client.query('COMMIT');
@@ -289,6 +313,12 @@ const ingestBody = z.object({
   // happens in the service so the rules are identical for both.
   rows: z.array(z.record(z.unknown())).max(50_000).optional(),
   csv: z.string().max(20_000_000).optional(),
+  // Deliberately re-load content already ingested under this source. Refused
+  // without a reason: a reprocess replaces what an earlier run established, and
+  // an unexplained replacement leaves a supersession in the audit trail with no
+  // rationale attached to it.
+  reprocess: z.boolean().optional(),
+  reprocessReason: z.string().min(3).max(2000).optional().nullable(),
 }).refine(b => b.rows !== undefined || b.csv !== undefined, {
   message: 'Provide either `rows` or `csv`',
 });
@@ -312,12 +342,33 @@ router.post('/rbm-metric-ingest', async (req, res) => {
       ...parsed.data,
       ingestedBy: getUserId(req),
     });
+    if (!result.ok) {
+      // Nothing was written, so nothing needs rolling back beyond closing the
+      // transaction. Refusing loudly is the point: re-loading an extract appends
+      // KRI readings, so a silent skip would look like a successful no-op while a
+      // genuine second load would corrupt every trend computed over them.
+      await client.query('ROLLBACK');
+      if (result.reason === 'reprocess_reason_required') {
+        return clientError(res, 422, 'A reason is required to reprocess an extract that is already loaded.');
+      }
+      const p = result.priorRun;
+      return clientError(res, 409,
+        `This exact extract is already loaded for this source — run #${p?.runId} on `
+        + `${p?.startedAt?.slice(0, 10) ?? 'an earlier date'}`
+        + `${p?.dataCutoff ? ` (cutoff ${p.dataCutoff})` : ''}, ${p?.rowsAccepted ?? 0} row(s) accepted. `
+        + 'Loading it again would append duplicate readings. To replace that run deliberately, '
+        + 'resubmit with reprocess and a reason.',
+        { reason: result.reason, priorRun: p });
+    }
     await client.query('COMMIT');
     return created(res, result, {
       runId: result.runId,
       status: result.status,
       accepted: result.accepted,
       rejected: result.rejected,
+      contentHash: result.contentHash,
+      supersededRunId: result.supersededRunId,
+      retractedReadings: result.retractedReadings,
     });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});

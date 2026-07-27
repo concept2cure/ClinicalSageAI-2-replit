@@ -117,6 +117,11 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
   const [csv, setCsv] = useState('');
   const [fileName, setFileName] = useState<string | null>(null);
   const [result, setResult] = useState<IngestResult | null>(null);
+  // A refusal because this exact extract is already loaded. Held separately from
+  // mut.error so the reprocess path can be offered in place, with the operator's
+  // file and cutoff still in the form.
+  const [duplicate, setDuplicate] = useState<string | null>(null);
+  const [reprocessReason, setReprocessReason] = useState('');
   const mut = useRbmMutation(onReload);
 
   const readFile = (file: File | undefined) => {
@@ -127,15 +132,34 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
     reader.readAsText(file);
   };
 
-  const submit = () => mut.run(async () => {
-    const data = await rbmWrite<IngestResult>('POST', '/rbm-metric-ingest', {
-      programId,
-      source,
-      sourceRef: fileName,
-      dataCutoff: cutoff || null,
-      csv,
-    });
-    setResult(data);
+  /**
+   * Load the extract. `reprocess` is only ever set by the operator explicitly
+   * accepting the duplicate warning — a retry must not silently become a second
+   * load, because a second load appends KRI readings rather than doing nothing.
+   */
+  const submit = (reprocess = false) => mut.run(async () => {
+    try {
+      const data = await rbmWrite<IngestResult>('POST', '/rbm-metric-ingest', {
+        programId,
+        source,
+        sourceRef: fileName,
+        dataCutoff: cutoff || null,
+        csv,
+        ...(reprocess ? { reprocess: true, reprocessReason: reprocessReason.trim() } : {}),
+      });
+      setDuplicate(null);
+      setResult(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // The server's 409 already explains which run holds this content and when.
+      // Surfacing it as its own state — rather than a generic error — is what
+      // makes the deliberate path discoverable instead of a dead end.
+      if (/already loaded/i.test(msg)) {
+        setDuplicate(msg);
+        return;
+      }
+      throw err;
+    }
   });
 
   return (
@@ -179,6 +203,28 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
         </label>
 
         <RbmWriteError error={mut.error} onDismiss={mut.clearError} />
+
+        {duplicate && !result && (
+          <div className="rbm-modal-note" role="alert" style={{ borderLeft: '3px solid var(--warning)' }}>
+            <b>Already loaded.</b> {duplicate}
+            <label className="rbm-field" style={{ marginTop: 8 }}>
+              <span>Reason for reprocessing</span>
+              <textarea rows={2} value={reprocessReason} disabled={mut.busy}
+                placeholder="e.g. the unit mapping for query_rate was corrected"
+                onChange={e => setReprocessReason(e.target.value)} />
+              <em className="rbm-field-hint">
+                Reprocessing supersedes the earlier run and retracts the readings it
+                appended, so the history is replaced rather than doubled. The earlier run
+                stays on file with this reason recorded against its replacement.
+              </em>
+            </label>
+            <button className="rbm-btn" disabled={mut.busy || reprocessReason.trim().length < 3}
+              onClick={() => submit(true)}>
+              {mut.busy ? 'Reprocessing…' : 'Reprocess and replace that run'}
+            </button>
+          </div>
+        )}
+
         {result && <IngestOutcome result={result} />}
 
         <div className="rbm-modal-note">
@@ -188,7 +234,7 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
         </div>
         <div className="rbm-modal-acts">
           <button className="rbm-btn" onClick={onClose} disabled={mut.busy}>{result ? 'Close' : 'Cancel'}</button>
-          <button className="rbm-btn pri" disabled={mut.busy || !csv.trim()} onClick={submit}>
+          <button className="rbm-btn pri" disabled={mut.busy || !csv.trim()} onClick={() => submit()}>
             {mut.busy ? 'Loading…' : result ? 'Load again' : 'Load extract'}
           </button>
         </div>

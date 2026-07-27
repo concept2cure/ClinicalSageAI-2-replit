@@ -86,21 +86,114 @@ export function Sparkline({ values, amber, red, w = 132, h = 34 }: { values: num
   );
 }
 
-/* ── ThresholdGauge ── */
-export function ThresholdGauge({ current, secondary, threshold, unit }: { current: number; secondary: number; threshold: number; unit: string }) {
-  const max = Math.max(threshold * 1.25, current * 1.05);
-  const pc = (v: number) => Math.min(100, v / max * 100);
-  const tone = current >= threshold ? 'err' : current >= secondary ? 'warn' : 'ok';
+/* ── ThresholdGauge ──
+ *
+ * Direction-aware, because the danger band has to sit on the side the limit
+ * actually bites. An attainment parameter — "primary endpoint completeness
+ * >= 90%" — is breached BELOW its threshold. Drawn as a single upper bound, a
+ * study sitting at 40% would render with its needle in clear space and the red
+ * band far off to the right: a picture of control at the exact point of losing
+ * it. Same defect the engine had, and a gauge that disagrees with the engine is
+ * worse than no gauge.
+ *
+ * `upper` and `lower` fill from the left (the domain starts at zero, so bar
+ * length reads as magnitude). `two_sided` shows a needle instead — its domain is
+ * a window around the acceptable range, so a bar from the left edge would be
+ * measuring from an arbitrary origin.
+ */
+export type GaugeDirection = 'upper' | 'lower' | 'two_sided';
+
+export function ThresholdGauge({
+  current,
+  secondary,
+  threshold,
+  unit,
+  direction = 'upper',
+  thresholdLower = null,
+  secondaryLower = null,
+}: {
+  current: number;
+  secondary: number;
+  threshold: number;
+  unit: string;
+  direction?: GaugeDirection;
+  /** two_sided only: the lower bound. Without it the range is not drawable. */
+  thresholdLower?: number | null;
+  secondaryLower?: number | null;
+}) {
+  // A two_sided limit missing its lower bound is not a range; fall back to the
+  // upper reading rather than inventing the other side.
+  const twoSided = direction === 'two_sided' && thresholdLower != null;
+  const lower = direction === 'lower';
+
+  let lo = 0;
+  let hi = Math.max(threshold * 1.25, secondary * 1.1, current * 1.05, 1e-9);
+  if (twoSided) {
+    const span = Math.max(threshold - (thresholdLower as number), 1e-9);
+    const pad = span * 0.4;
+    lo = Math.min((thresholdLower as number) - pad, current);
+    hi = Math.max(threshold + pad, current);
+    if ((thresholdLower as number) >= 0) lo = Math.max(0, lo);
+  }
+  const pc = (v: number) => {
+    const span = hi - lo || 1;
+    return Math.min(100, Math.max(0, ((v - lo) / span) * 100));
+  };
+  // Band widths are clamped at zero so a misconfigured limit (secondary on the
+  // wrong side of the threshold) collapses the band instead of inverting it.
+  const band = (from: number, to: number) => ({ left: `${from}%`, width: `${Math.max(0, to - from)}%` });
+
+  // Tone mirrors qtlStatus so the colour never contradicts the stored status.
+  const tone = twoSided
+    ? current >= threshold || current <= (thresholdLower as number)
+      ? 'err'
+      : current >= secondary || (secondaryLower != null && current <= secondaryLower)
+        ? 'warn'
+        : 'ok'
+    : lower
+      ? current <= threshold ? 'err' : current <= secondary ? 'warn' : 'ok'
+      : current >= threshold ? 'err' : current >= secondary ? 'warn' : 'ok';
+
+  const limitText = twoSided
+    ? `range ${thresholdLower}${unit} to ${threshold}${unit}`
+    : lower
+      ? `limit ${threshold}${unit} -- warn below ${secondary}${unit}`
+      : `warn ${secondary}${unit} -- limit ${threshold}${unit}`;
+
   return (
-    <div className="rbm-gauge" role="img" aria-label={`Current ${current}${unit} against early-warning limit ${secondary}${unit} and threshold ${threshold}${unit}`}>
+    <div className="rbm-gauge" role="img" aria-label={`Current ${current}${unit} against ${limitText}`}>
       <div className="rbm-gauge-bar">
-        <div className="rbm-gauge-band warn" style={{ left: `${pc(secondary)}%`, width: `${pc(threshold) - pc(secondary)}%` }} />
-        <div className="rbm-gauge-band err" style={{ left: `${pc(threshold)}%`, right: 0 }} />
-        <div className="rbm-gauge-fill" data-tone={tone} style={{ width: `${pc(current)}%` }} />
-        <div className="rbm-gauge-tick" style={{ left: `${pc(secondary)}%` }} title={`Secondary (early warning) ${secondary}${unit}`} />
-        <div className="rbm-gauge-tick hard" style={{ left: `${pc(threshold)}%` }} title={`Primary threshold ${threshold}${unit}`} />
+        {twoSided ? (
+          <>
+            <div className="rbm-gauge-band err" style={{ left: 0, width: `${pc(thresholdLower as number)}%` }} />
+            <div className="rbm-gauge-band err" style={{ left: `${pc(threshold)}%`, right: 0 }} />
+            {secondaryLower != null && (
+              <div className="rbm-gauge-band warn" style={band(pc(thresholdLower as number), pc(secondaryLower))} />
+            )}
+            <div className="rbm-gauge-band warn" style={band(pc(secondary), pc(threshold))} />
+            <div className="rbm-gauge-tick hard" style={{ left: `${pc(thresholdLower as number)}%` }} title={`Lower tolerance limit ${thresholdLower}${unit}`} />
+            <div className="rbm-gauge-tick hard" style={{ left: `${pc(threshold)}%` }} title={`Upper tolerance limit ${threshold}${unit}`} />
+            <div className="rbm-gauge-needle" data-tone={tone} style={{ left: `${pc(current)}%` }} title={`Current ${current}${unit}`} />
+          </>
+        ) : lower ? (
+          <>
+            <div className="rbm-gauge-band err" style={{ left: 0, width: `${pc(threshold)}%` }} />
+            <div className="rbm-gauge-band warn" style={band(pc(threshold), pc(secondary))} />
+            <div className="rbm-gauge-fill" data-tone={tone} style={{ width: `${pc(current)}%` }} />
+            <div className="rbm-gauge-tick hard" style={{ left: `${pc(threshold)}%` }} title={`Primary threshold ${threshold}${unit}`} />
+            <div className="rbm-gauge-tick" style={{ left: `${pc(secondary)}%` }} title={`Secondary (early warning) ${secondary}${unit}`} />
+          </>
+        ) : (
+          <>
+            <div className="rbm-gauge-band warn" style={band(pc(secondary), pc(threshold))} />
+            <div className="rbm-gauge-band err" style={{ left: `${pc(threshold)}%`, right: 0 }} />
+            <div className="rbm-gauge-fill" data-tone={tone} style={{ width: `${pc(current)}%` }} />
+            <div className="rbm-gauge-tick" style={{ left: `${pc(secondary)}%` }} title={`Secondary (early warning) ${secondary}${unit}`} />
+            <div className="rbm-gauge-tick hard" style={{ left: `${pc(threshold)}%` }} title={`Primary threshold ${threshold}${unit}`} />
+          </>
+        )}
       </div>
-      <div className="rbm-gauge-lbl"><span>{current}{unit}</span><span className="mut">warn {secondary}{unit} -- limit {threshold}{unit}</span></div>
+      <div className="rbm-gauge-lbl"><span>{current}{unit}</span><span className="mut">{limitText}</span></div>
     </div>
   );
 }

@@ -1137,6 +1137,73 @@ export type ClientWorkspace = InferSelectModel<typeof clientWorkspaces>;
 export type InsertClientWorkspace = z.infer<typeof insertClientWorkspaceSchema>;
 
 /**
+ * Governed industry context — the setting that tailors the one self-tailoring
+ * workspace. See shared/regulatory/mdx-specialization.ts for the vocabularies
+ * and migrations/20260730_industry_context_profiles.sql for why these are
+ * database records rather than a browser-local preference.
+ *
+ * Neither table affects navigation. The left rail is fixed; these change what
+ * the existing modules offer inside themselves.
+ */
+export const organizationIndustryProfiles = pgTable(
+  'organization_industry_profiles',
+  {
+    id:                   serial('id').primaryKey(),
+    organizationId:       integer('organization_id').notNull().unique()
+                            .references(() => organizations.id, { onDelete: 'cascade' }),
+    primaryIndustry:      text('primary_industry').notNull(),
+    /** 'unspecified' is a real state — see the module docs. Never inferred. */
+    mdxSpecialization:    text('mdx_specialization').default('unspecified').notNull(),
+    defaultMarkets:       jsonb('default_markets').default('[]').notNull(),
+    defaultPathways:      jsonb('default_pathways').default('[]').notNull(),
+    defaultApprovalRigor: text('default_approval_rigor').default('regulated_dual_review').notNull(),
+    /** Declared effective date, distinct from the row's last write. */
+    effectiveAt:          timestamp('effective_at', { withTimezone: true }).defaultNow().notNull(),
+    changeReason:         text('change_reason'),
+    updatedBy:            integer('updated_by').references(() => users.id),
+    createdAt:            timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:            timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx: index('org_industry_profiles_org_idx').on(table.organizationId),
+  }),
+);
+export type OrganizationIndustryProfile = InferSelectModel<typeof organizationIndustryProfiles>;
+
+export const projectIndustryProfiles = pgTable(
+  'project_industry_profiles',
+  {
+    id:                 serial('id').primaryKey(),
+    organizationId:     integer('organization_id').notNull()
+                          .references(() => organizations.id, { onDelete: 'cascade' }),
+    projectId:          integer('project_id').notNull().unique()
+                          .references(() => projects.id, { onDelete: 'cascade' }),
+    clientWorkspaceId:  integer('client_workspace_id')
+                          .references(() => clientWorkspaces.id, { onDelete: 'set null' }),
+    /** True while the project is reading the org default rather than its own. */
+    inheritedFromOrg:   boolean('inherited_from_org').default(true).notNull(),
+    /** Null means inherit. A service organization's project should set this. */
+    vertical:           text('vertical'),
+    specialization:     text('specialization'),
+    productType:        text('product_type'),
+    lifecycleStage:     text('lifecycle_stage'),
+    targetMarkets:      jsonb('target_markets').default('[]').notNull(),
+    regulatoryPathways: jsonb('regulatory_pathways').default('[]').notNull(),
+    filingTypes:        jsonb('filing_types').default('[]').notNull(),
+    projectPurpose:     text('project_purpose'),
+    updatedBy:          integer('updated_by').references(() => users.id),
+    createdAt:          timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:          timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    orgIdx:     index('project_industry_profiles_org_idx').on(table.organizationId),
+    projectIdx: index('project_industry_profiles_project_idx').on(table.projectId),
+    clientIdx:  index('project_industry_profiles_client_idx').on(table.clientWorkspaceId),
+  }),
+);
+export type ProjectIndustryProfile = InferSelectModel<typeof projectIndustryProfiles>;
+
+/**
  * Client Access (User-Client Workspace Junction Table)
  *
  * Maps users to client workspaces with role information.
@@ -7034,6 +7101,20 @@ export const unifiedTasks = pgTable(
     automationEnabled: boolean('automation_enabled').default(true),
     aiSuggestions: json('ai_suggestions'),
 
+    // ── MDX regulatory context (MDX-TASK-01) ──────────────────────────────
+    // Where this task sits in the regulatory lifecycle. NULLABLE on purpose: a
+    // task with no declared phase reads as "not yet classified", which is true.
+    // Defaulting existing tasks to a phase would show a lifecycle breakdown
+    // nobody assigned.
+    lifecyclePhase: text('lifecycle_phase'),
+    // Denormalized from the resolved project context so the board can filter
+    // without resolving per task. The project profile stays the source of truth.
+    industryVertical: text('industry_vertical'),
+    mdxSpecialization: text('mdx_specialization'),
+    // Releasing work to a client is an act; defaulting to visible would publish
+    // internal regulatory strategy by omission.
+    clientVisibility: text('client_visibility').default('internal').notNull(),
+
     // Metadata
     tags: text('tags').array(),
     attachments: json('attachments'),
@@ -7048,6 +7129,8 @@ export const unifiedTasks = pgTable(
   },
   table => ({
     taskIdIdx: index('unified_task_id_idx').on(table.taskId),
+    lifecyclePhaseIdx: index('unified_tasks_lifecycle_phase_idx').on(table.organizationId, table.lifecyclePhase),
+    verticalIdx: index('unified_tasks_vertical_idx').on(table.organizationId, table.industryVertical),
     moduleIdx: index('unified_module_idx').on(table.moduleType),
     statusIdx: index('unified_status_idx').on(table.status),
     assigneeIdx: index('unified_assignee_idx').on(table.assigneeId),
@@ -7057,6 +7140,43 @@ export const unifiedTasks = pgTable(
     idx_unified_tasks_org: index('idx_unified_tasks_org').on(table.organizationId),
   })
 );
+
+/**
+ * What a task supports — the relationship layer from MDX-TASK-01.
+ *
+ * unified_tasks.source_entity_id records where a task CAME FROM. This records
+ * what it exists to advance, which is many-per-task and carries its own market
+ * and pathway, so it cannot be columns on the task.
+ */
+export const taskRegulatoryLinks = pgTable(
+  'task_regulatory_links',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull()
+                      .references(() => organizations.id, { onDelete: 'cascade' }),
+    /** Matches unified_tasks.taskId (the text business key used across the graph). */
+    taskId:         text('task_id').notNull(),
+    entityType:     text('entity_type').notNull(),
+    /** Free-form: the linked entities live in different stores with different key types. */
+    entityId:       text('entity_id').notNull(),
+    entityLabel:    text('entity_label'),
+    relationship:   text('relationship').default('supports').notNull(),
+    /** Coordinates of THIS LINK — one task can support a US filing and an EU one. */
+    market:         text('market'),
+    pathway:        text('pathway'),
+    filingType:     text('filing_type'),
+    filingSection:  text('filing_section'),
+    createdBy:      integer('created_by').references(() => users.id),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    taskIdx:   index('task_regulatory_links_task_idx').on(table.organizationId, table.taskId),
+    entityIdx: index('task_regulatory_links_entity_idx').on(table.organizationId, table.entityType, table.entityId),
+    filingIdx: index('task_regulatory_links_filing_idx').on(table.organizationId, table.filingType),
+  }),
+);
+export type TaskRegulatoryLink = InferSelectModel<typeof taskRegulatoryLinks>;
 
 // Unified Task Insert Schema
 export const insertUnifiedTaskSchema = createInsertSchemaOmit(unifiedTasks, {
@@ -18393,6 +18513,13 @@ export const rbmQtls = pgTable(
     rationale:         text('rationale'),
     threshold:         numeric('threshold', { precision: 12, scale: 4 }),
     secondaryLimit:    numeric('secondary_limit', { precision: 12, scale: 4 }),
+    /** Which way the limit bites: upper | lower | two_sided. Assuming "higher is
+     *  worse" silently inverts every attainment parameter (endpoint
+     *  completeness, consent documentation), so it is explicit. */
+    direction:         text('direction').default('upper').notNull(),
+    /** two_sided only: the lower bound and its early-warning limit. */
+    thresholdLower:    numeric('threshold_lower', { precision: 12, scale: 4 }),
+    secondaryLimitLower: numeric('secondary_limit_lower', { precision: 12, scale: 4 }),
     currentValue:      numeric('current_value', { precision: 12, scale: 4 }),
     breached:          boolean('breached').default(false),
     breachActionTaken: text('breach_action_taken'),
@@ -18480,6 +18607,10 @@ export const rbmMonitoringPlans = pgTable(
     title:          text('title').notNull(),
     strategy:       text('strategy').default('risk_based').notNull(),
     status:         text('status').default('draft').notNull(),
+    /** Plans version like assessments: an approved plan is read-only, and
+     *  revising it opens a new draft version rather than editing content the
+     *  approver's signature is already attached to. */
+    version:        integer('version').default(1).notNull(),
     approvedBy:     integer('approved_by').references(() => users.id),
     approvedAt:     timestamp('approved_at', { withTimezone: true }),
     metadata:       jsonb('metadata').default('{}'),
@@ -18490,6 +18621,8 @@ export const rbmMonitoringPlans = pgTable(
   table => ({
     orgIdx:        index('rbm_plans_org_idx').on(table.organizationId),
     orgProgramIdx: index('rbm_plans_org_program_idx').on(table.organizationId, table.programId),
+    orgProgramVersionIdx: index('rbm_plans_org_program_version_idx')
+      .on(table.organizationId, table.programId, table.version),
   }),
 );
 export type RbmMonitoringPlan = InferSelectModel<typeof rbmMonitoringPlans>;

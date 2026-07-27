@@ -28,9 +28,11 @@
  * transactional load and projection; the caller owns BEGIN/COMMIT.
  */
 
+import { createHash } from 'node:crypto';
+
 import { parse as parseCsvSync } from 'csv-parse/sync';
 
-import { kriStatus, qtlStatus, type KriDirection } from './rbm-engine';
+import { kriStatus, qtlStatus, type KriDirection, type QtlDirection } from './rbm-engine';
 
 /** Minimal pg-compatible executor — matches rbm-actuator's `Exec`. */
 export interface Exec {
@@ -204,6 +206,91 @@ export interface IngestInput {
   rows?: Record<string, unknown>[];
   csv?: string;
   ingestedBy?: number | null;
+  /**
+   * Deliberately re-load content already ingested under this source, replacing
+   * the earlier run's projection. Requires `reprocessReason`. Without this, an
+   * identical payload is refused rather than appended — see `contentHash`.
+   */
+  reprocess?: boolean;
+  reprocessReason?: string | null;
+  /** Bumped when the interpretation of a source changes. */
+  mappingVersion?: string;
+}
+
+/** Current mapping/transformation version stamped on every run. */
+export const MAPPING_VERSION = 'v1';
+
+/**
+ * Content identity for a load: SHA-256 of the exact payload that will be parsed.
+ *
+ * Hashing the CONTENT rather than the filename or export id, because two exports
+ * can share a name and differ, and identical content routinely arrives under
+ * different names. Row input is hashed over its canonical JSON so that the same
+ * rows in the same order hash the same regardless of how the caller framed them.
+ */
+export function contentHash(input: Pick<IngestInput, 'csv' | 'rows'>): string {
+  const payload = input.csv !== undefined
+    ? input.csv
+    : JSON.stringify(input.rows ?? []);
+  return createHash('sha256').update(payload, 'utf8').digest('hex');
+}
+
+/** A prior run holding the same content, and therefore blocking this load. */
+export interface PriorRun {
+  runId: number;
+  status: string;
+  dataCutoff: string | null;
+  startedAt: string | null;
+  rowsAccepted: number;
+  mappingVersion: string | null;
+}
+
+/**
+ * Has this exact content already been loaded for this source?
+ *
+ * Only a run that actually landed and has not been superseded counts. A FAILED
+ * run's content was not (fully) landed, so reloading it is the correct action and
+ * must not be blocked; a SUPERSEDED run has already been deliberately replaced.
+ */
+export async function findPriorRun(
+  exec: Exec,
+  organizationId: number,
+  input: { programId: string; source: MetricSource; hash: string },
+): Promise<PriorRun | null> {
+  const { rows } = await exec.query(
+    `SELECT id, status, data_cutoff, started_at, rows_accepted, mapping_version
+       FROM rbm_data_runs
+      WHERE organization_id = $1 AND program_id = $2 AND source = $3
+        AND content_hash = $4
+        AND superseded_at IS NULL
+        AND status IN ('succeeded', 'partial')
+      ORDER BY id DESC LIMIT 1`,
+    [organizationId, input.programId, input.source, input.hash],
+  );
+  const r = rows[0];
+  if (!r) return null;
+  return {
+    runId: r.id,
+    status: r.status,
+    dataCutoff: r.data_cutoff ? String(r.data_cutoff).slice(0, 10) : null,
+    startedAt: r.started_at ? new Date(r.started_at).toISOString() : null,
+    rowsAccepted: Number(r.rows_accepted ?? 0),
+    mappingVersion: r.mapping_version ?? null,
+  };
+}
+
+/** Why an ingest did not run. */
+export type IngestRefusal =
+  /** Identical content is already loaded under this source. */
+  | 'duplicate_content'
+  /** A reprocess was requested without a reason for the record. */
+  | 'reprocess_reason_required';
+
+export interface IngestRefused {
+  ok: false;
+  reason: IngestRefusal;
+  /** Present for duplicate_content: the run that already holds this content. */
+  priorRun?: PriorRun;
 }
 
 export interface IngestProjection {
@@ -220,6 +307,8 @@ export interface IngestProjection {
 }
 
 export interface IngestResult {
+  /** Discriminant against IngestRefused — narrow on this, not on a field probe. */
+  ok: true;
   runId: number;
   status: 'succeeded' | 'partial' | 'failed';
   received: number;
@@ -227,13 +316,24 @@ export interface IngestResult {
   rejected: number;
   rejects: RowReject[];
   projection: IngestProjection;
+  /** SHA-256 of the payload this run landed — its content identity. */
+  contentHash: string;
+  mappingVersion: string;
+  /** Set on a reprocess: the run this one replaced. */
+  supersededRunId: number | null;
+  /**
+   * KRI readings retracted from the superseded run. Reported because it is a
+   * deletion the operator should see: a reprocess that silently removed readings
+   * would be indistinguishable from one that appended to them.
+   */
+  retractedReadings: number;
 }
 
 /** Latest observation wins when a file reports the same metric/scope twice. */
 function latestByKey(observations: ParsedObservation[]): Map<string, ParsedObservation> {
   const out = new Map<string, ParsedObservation>();
   for (const o of observations) {
-    const key = `${o.scopeLevel} ${o.scopeId ?? ''} ${o.metricKey.toLowerCase()}`;
+    const key = `${o.scopeLevel}\u0000${o.scopeId ?? ''}\u0000${o.metricKey.toLowerCase()}`;
     const prev = out.get(key);
     if (!prev || (o.observedAt ?? '') >= (prev.observedAt ?? '')) out.set(key, o);
   }
@@ -262,7 +362,29 @@ export async function ingestMetrics(
   exec: Exec,
   organizationId: number,
   input: IngestInput,
-): Promise<IngestResult> {
+): Promise<IngestResult | IngestRefused> {
+  const hash = contentHash(input);
+  const mappingVersion = input.mappingVersion ?? MAPPING_VERSION;
+
+  // ── Replay guard ────────────────────────────────────────────────────────
+  // A second load of the same extract is NOT a no-op: each study-scope
+  // observation appends a row to rbm_kri_values, so a duplicate silently doubles
+  // the KRI history that every trend and every robust z-score is computed over.
+  // Refusing is the safe default; reloading is available but has to be asked for.
+  const prior = await findPriorRun(exec, organizationId, {
+    programId: input.programId, source: input.source, hash,
+  });
+  if (prior && !input.reprocess) {
+    return { ok: false, reason: 'duplicate_content', priorRun: prior };
+  }
+  // A reprocess replaces what an earlier run established, so the record has to
+  // say why. Silently accepting an unexplained replacement would leave the
+  // supersession in the audit trail with no rationale attached to it.
+  const reprocessReason = input.reprocessReason?.trim() || null;
+  if (input.reprocess && !reprocessReason) {
+    return { ok: false, reason: 'reprocess_reason_required' };
+  }
+
   const parsed = input.csv !== undefined
     ? parseMetricCsv(input.csv)
     : parseMetricRows(input.rows ?? []);
@@ -270,11 +392,40 @@ export async function ingestMetrics(
   const cutoff = input.dataCutoff ?? null;
 
   const run = (await exec.query(
-    `INSERT INTO rbm_data_runs (organization_id, program_id, source, source_ref, data_cutoff, status, ingested_by)
-     VALUES ($1,$2,$3,$4,$5,'running',$6) RETURNING id`,
-    [organizationId, input.programId, input.source, input.sourceRef ?? null, cutoff, input.ingestedBy ?? null],
+    `INSERT INTO rbm_data_runs (
+       organization_id, program_id, source, source_ref, data_cutoff, status,
+       ingested_by, content_hash, mapping_version, supersedes_run_id, reprocess_reason
+     ) VALUES ($1,$2,$3,$4,$5,'running',$6,$7,$8,$9,$10) RETURNING id`,
+    [
+      organizationId, input.programId, input.source, input.sourceRef ?? null, cutoff,
+      input.ingestedBy ?? null, hash, mappingVersion,
+      prior?.runId ?? null, reprocessReason,
+    ],
   )).rows[0];
   const runId: number = run.id;
+
+  // Mark the run this one replaces. It stays on file — it is the record of what
+  // was believed at the time — but it no longer participates in freshness or in
+  // replay detection, so the next identical upload is checked against THIS run.
+  let retractedReadings = 0;
+  if (prior) {
+    await exec.query(
+      `UPDATE rbm_data_runs SET superseded_at = NOW(), updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2`,
+      [prior.runId, organizationId],
+    );
+    // Retract exactly the KRI readings the superseded run appended. Without this
+    // a reprocess would still double the history — the corruption the replay
+    // guard exists to prevent, reached by the deliberate path instead of the
+    // accidental one. Scoped on run_id, so hand-entered readings (run_id NULL)
+    // and other runs' readings are untouched. The superseded run's raw
+    // observations stay: they are attributable source data, not derived values.
+    const gone = await exec.query(
+      `DELETE FROM rbm_kri_values WHERE organization_id = $1 AND run_id = $2 RETURNING id`,
+      [organizationId, prior.runId],
+    );
+    retractedReadings = gone.rows.length;
+  }
 
   const projection: IngestProjection = {
     kriReadings: 0, qtlUpdates: 0, subjectProfiles: 0, siteObservations: 0, unmatched: [],
@@ -319,9 +470,9 @@ export async function ingestMetrics(
         (kri.direction ?? 'higher_worse') as KriDirection,
       );
       await exec.query(
-        `INSERT INTO rbm_kri_values (organization_id, kri_id, value, status, observed_at, note)
-         VALUES ($1,$2,$3,$4, COALESCE($5::timestamptz, NOW()), $6)`,
-        [organizationId, kri.id, o.value, status, o.observedAt, `Ingested from ${input.source}${input.sourceRef ? ` (${input.sourceRef})` : ''}`],
+        `INSERT INTO rbm_kri_values (organization_id, kri_id, value, status, observed_at, note, run_id)
+         VALUES ($1,$2,$3,$4, COALESCE($5::timestamptz, NOW()), $6, $7)`,
+        [organizationId, kri.id, o.value, status, o.observedAt, `Ingested from ${input.source}${input.sourceRef ? ` (${input.sourceRef})` : ''}`, runId],
       );
       await exec.query(
         `UPDATE rbm_kris SET current_value = $1, status = $2, evaluated_at = COALESCE($3::timestamptz, NOW()), updated_at = NOW()
@@ -333,7 +484,8 @@ export async function ingestMetrics(
     }
 
     const qtl = (await exec.query(
-      `SELECT id, threshold, secondary_limit FROM rbm_qtls
+      `SELECT id, threshold, secondary_limit, direction, threshold_lower, secondary_limit_lower
+         FROM rbm_qtls
         WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
           AND LOWER(parameter) = LOWER($3)
         LIMIT 1`,
@@ -341,11 +493,17 @@ export async function ingestMetrics(
     )).rows[0];
 
     if (qtl) {
-      const status = qtlStatus(
-        o.value,
-        qtl.threshold === null ? null : Number(qtl.threshold),
-        qtl.secondary_limit === null ? null : Number(qtl.secondary_limit),
-      );
+      // Direction comes from the QTL row, never assumed: an attainment
+      // parameter ingested against an `upper` reading would report the study in
+      // control at exactly the point it fell out of it.
+      const status = qtlStatus(o.value, {
+        threshold: qtl.threshold === null ? null : Number(qtl.threshold),
+        secondaryLimit: qtl.secondary_limit === null ? null : Number(qtl.secondary_limit),
+        direction: (qtl.direction ?? 'upper') as QtlDirection,
+        thresholdLower: qtl.threshold_lower === null ? null : Number(qtl.threshold_lower),
+        secondaryLimitLower:
+          qtl.secondary_limit_lower === null ? null : Number(qtl.secondary_limit_lower),
+      });
       await exec.query(
         `UPDATE rbm_qtls SET current_value = $1, status = $2, breached = $3, updated_at = NOW()
           WHERE id = $4 AND organization_id = $5`,
@@ -402,12 +560,17 @@ export async function ingestMetrics(
   );
 
   return {
+    ok: true,
     runId, status,
     received: parsed.received,
     accepted,
     rejected,
     rejects: parsed.rejects,
     projection,
+    contentHash: hash,
+    mappingVersion,
+    supersededRunId: prior?.runId ?? null,
+    retractedReadings,
   };
 }
 

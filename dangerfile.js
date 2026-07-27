@@ -293,18 +293,77 @@ const checkPRDescription = () => {
     );
   }
 
-  // Check for required sections from PR template
-  const requiredSections = ['## Summary', '## Type of Change', '## Testing'];
-  const missingSections = requiredSections.filter(section => !pr.body?.includes(section));
+  // Check for required sections from PR template.
+  //
+  // The section list is READ FROM THE TEMPLATES rather than hardcoded. The
+  // hardcoded list previously required '## Summary', '## Type of Change' and
+  // '## Testing' — headings no template in this repo provides ('## Change
+  // Summary', '## Description', and '### Testing' as a sub-heading), so the rule
+  // fired on every PR regardless of how carefully the template was filled in. A
+  // warning that can never be satisfied trains reviewers to skip the whole
+  // Danger comment, including the critical-path and migration notices that
+  // matter. Deriving the list means it cannot drift from the templates again.
+  if (pr.body && pr.body.length > 50) {
+    const templates = readPrTemplates();
+    // Nothing to check against, and nothing to invent: stay silent.
+    if (templates.length > 0) {
+      const scored = templates
+        .map(t => ({
+          ...t,
+          missing: t.sections.filter(s => !pr.body.includes(s)),
+        }))
+        // The repo has more than one sanctioned template. Judge the PR against
+        // the one the author actually used — fewest missing sections — instead
+        // of demanding the union of every template's headings.
+        .sort((a, b) => a.missing.length - b.missing.length);
+      const best = scored[0];
 
-  if (missingSections.length > 0 && pr.body && pr.body.length > 50) {
-    warn(
-      `📋 **PR Template Sections Missing**:\n\n` +
-        missingSections.map(s => `- ${s}`).join('\n') +
-        '\n\n' +
-        `Please use the PR template for consistent reviews.`
-    );
+      if (best.missing.length > 0) {
+        warn(
+          `📋 **PR Template Sections Missing** (against \`${best.path}\`):\n\n` +
+            best.missing.map(s => `- ${s}`).join('\n') +
+            '\n\n' +
+            `Please use the PR template for consistent reviews.`
+        );
+      }
+    }
   }
+};
+
+/**
+ * The PR templates present in the repo, with their top-level (`## `) headings.
+ *
+ * GitHub resolves the template filename case-insensitively across the root,
+ * `.github/` and `docs/`, so every location it would honour is checked here.
+ * Returns `[]` when no template exists, which the caller treats as "no rule to
+ * enforce" rather than "the author skipped the template".
+ */
+const readPrTemplates = () => {
+  const fs = require('fs');
+  const candidates = [
+    '.github/pull_request_template.md',
+    '.github/PULL_REQUEST_TEMPLATE.md',
+    'docs/pull_request_template.md',
+    'docs/PULL_REQUEST_TEMPLATE.md',
+    'pull_request_template.md',
+    'PULL_REQUEST_TEMPLATE.md',
+  ];
+  const seen = new Set();
+  const templates = [];
+  for (const path of candidates) {
+    // A case-insensitive filesystem resolves several candidates to one file;
+    // dedupe on content so it is not counted (and reported) twice.
+    if (!fs.existsSync(path)) continue;
+    const body = fs.readFileSync(path, 'utf8');
+    if (seen.has(body)) continue;
+    seen.add(body);
+    const sections = body
+      .split('\n')
+      .filter(line => /^##\s+\S/.test(line))
+      .map(line => line.trimEnd());
+    if (sections.length > 0) templates.push({ path, sections });
+  }
+  return templates;
 };
 
 // ┌─────────────────────────────────────────────────────────────────────────────┐

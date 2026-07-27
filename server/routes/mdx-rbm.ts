@@ -30,24 +30,27 @@
  *     GET   /api/mdx/rbm-signals?program_id=&status=&severity=
  *     POST  /api/mdx/rbm-signals         PATCH /api/mdx/rbm-signals/:id
  *
- *   Site risk
+ *   Site risk (read)
  *     GET   /api/mdx/rbm-site-risk?program_id=
- *     POST  /api/mdx/rbm-site-risk/recompute   (derives from site_intel)
  *
- *   Monitoring plan + actions
- *     GET   /api/mdx/rbm-monitoring-plans?program_id=
- *     POST  /api/mdx/rbm-monitoring-plans       GET .../:id (plan + actions)
- *     POST  /api/mdx/rbm-monitoring-plans/generate  (derive a draft plan + actions
- *                                                    from the governing RACT)
- *     PATCH /api/mdx/rbm-monitoring-plans/:id
- *     GET   /api/mdx/rbm-monitoring-actions?plan_id=&program_id=
- *     POST  /api/mdx/rbm-monitoring-actions     PATCH .../:id
+ *   Governance
+ *     POST  /api/mdx/rbm-assessments/:id/approve   e-signed; archives the
+ *                                                  version it supersedes
+ *     POST  /api/mdx/rbm-assessments/:id/amend     opens the next version
  *
- *   Program summary
+ *   Program summary + risk review
  *     GET   /api/mdx/rbm-summary/:programId
+ *     GET   /api/mdx/rbm-report/:programId
+ *     GET   /api/mdx/rbm-attention/:programId
+ *
+ * Two sibling modules complete the surface, mounted at the same /api/mdx prefix:
+ *   mdx-rbm-plans.ts  the monitoring plan and its actions (versioned; an
+ *                     approved plan is read-only)
+ *   mdx-rbm-data.ts   metric ingestion and the engine runs over ingested data
+ *                     (site-risk recompute, central monitoring, patient scoring)
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request } from 'express';
 import { z } from 'zod';
 
 import { createScopedLogger } from '../utils/logger';
@@ -60,12 +63,7 @@ import {
   DEFAULT_CTQ_FACTORS, DEFAULT_KRIS, DEFAULT_QTLS,
   type KriDirection,
 } from '../services/rbm/rbm-engine';
-import { generatePlanFromAssessment, amendAssessment } from '../services/rbm/rbm-actuator';
-import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
-import {
-  detectSiteOutliers, scorePatientCohort,
-  type SiteMetric, type PatientMetric,
-} from '../services/rbm/central-statistical-monitoring';
+import { amendAssessment } from '../services/rbm/rbm-actuator';
 import {
   buildRiskReview, renderRiskReviewMarkdown, buildAttentionFeed,
 } from '../services/rbm/risk-report';
@@ -100,11 +98,10 @@ const KRI_SOURCE = ['edc', 'ctms', 'site_intel', 'central_stats', 'manual'] as c
 const SIGNAL_SOURCE = ['central_stat', 'kri', 'qtl', 'site_score', 'manual'] as const;
 const SEVERITY = ['low', 'medium', 'high', 'critical'] as const;
 const SIGNAL_STATUS = ['new', 'triaged', 'investigating', 'resolved', 'dismissed'] as const;
-const PLAN_STRATEGY = ['centralized', 'risk_based', 'on_site', 'hybrid'] as const;
-const PLAN_STATUS = ['draft', 'active', 'archived'] as const;
+// Action vocabularies live here too because the signal-investigation endpoint
+// raises a follow-up action; the plan/action ROUTES are in mdx-rbm-plans.ts.
 const ACTION_TYPE = ['issue', 'capa', 'site_visit', 'query', 'escalation'] as const;
 const PRIORITY = ['low', 'medium', 'high'] as const;
-const ACTION_STATUS = ['open', 'in_progress', 'done'] as const;
 
 /** Build a partial UPDATE from a camelCase→column map. Returns null if empty. */
 function buildPatch(
@@ -617,12 +614,43 @@ router.get('/rbm-qtls', async (req, res) => {
   } catch (err) { return serverError(res, log, 'list-qtls', err); }
 });
 
+const QTL_DIRECTION = ['upper', 'lower', 'two_sided'] as const;
+
+/**
+ * Reject a two-sided limit that is not a usable range, rather than storing it.
+ *
+ * With one bound missing the engine cannot say whether a value sits inside the
+ * range, and with the bounds inverted no value ever does — either way the QTL
+ * would read `not_evaluated` or `breached` permanently, and the operator would
+ * have no indication the limit itself is the problem. Upper and lower limits
+ * need only their single `threshold`, which may legitimately be set later.
+ */
+function qtlRangeError(l: {
+  direction?: string | null;
+  threshold?: number | null;
+  thresholdLower?: number | null;
+}): string | null {
+  if ((l.direction ?? 'upper') !== 'two_sided') return null;
+  if (l.threshold == null || l.thresholdLower == null) {
+    return 'A two-sided tolerance limit requires both bounds: threshold (upper) and thresholdLower (lower).';
+  }
+  if (l.thresholdLower >= l.threshold) {
+    return 'thresholdLower must be below threshold for a two-sided tolerance limit.';
+  }
+  return null;
+}
+
 const createQtlBody = z.object({
   programId: z.string().regex(UUID_RE).optional().nullable(),
   parameter: z.string().min(1).max(300),
   rationale: z.string().max(2000).optional().nullable(),
   threshold: z.number().optional().nullable(),
   secondaryLimit: z.number().optional().nullable(),
+  /** Which way the limit bites. Defaults to `upper` — the historical behaviour. */
+  direction: z.enum(QTL_DIRECTION).optional(),
+  /** two_sided only: the lower bound and its early-warning limit. */
+  thresholdLower: z.number().optional().nullable(),
+  secondaryLimitLower: z.number().optional().nullable(),
   currentValue: z.number().optional().nullable(),
   breachActionTaken: z.string().max(2000).optional().nullable(),
 });
@@ -633,13 +661,23 @@ router.post('/rbm-qtls', async (req, res) => {
   const parsed = createQtlBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
-  const status = qtlStatus(p.currentValue ?? null, p.threshold ?? null, p.secondaryLimit ?? null);
+  const rangeErr = qtlRangeError(p);
+  if (rangeErr) return clientError(res, 422, rangeErr);
+  const status = qtlStatus(p.currentValue ?? null, {
+    threshold: p.threshold ?? null,
+    secondaryLimit: p.secondaryLimit ?? null,
+    direction: p.direction ?? 'upper',
+    thresholdLower: p.thresholdLower ?? null,
+    secondaryLimitLower: p.secondaryLimitLower ?? null,
+  });
   try {
     const { rows } = await pool.query(
-      `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit, current_value, breached, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+      `INSERT INTO rbm_qtls (organization_id, program_id, parameter, rationale, threshold, secondary_limit,
+         direction, threshold_lower, secondary_limit_lower, current_value, breached, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [orgId, p.programId ?? null, p.parameter, p.rationale ?? null, p.threshold ?? null,
-        p.secondaryLimit ?? null, p.currentValue ?? null, status === 'breached', status],
+        p.secondaryLimit ?? null, p.direction ?? 'upper', p.thresholdLower ?? null,
+        p.secondaryLimitLower ?? null, p.currentValue ?? null, status === 'breached', status],
     );
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'create-qtl', err); }
@@ -673,6 +711,7 @@ const patchQtlBody = createQtlBody.partial();
 const QTL_COL: Record<string, string> = {
   parameter: 'parameter', rationale: 'rationale', threshold: 'threshold',
   secondaryLimit: 'secondary_limit', currentValue: 'current_value', breachActionTaken: 'breach_action_taken',
+  direction: 'direction', thresholdLower: 'threshold_lower', secondaryLimitLower: 'secondary_limit_lower',
 };
 
 router.patch('/rbm-qtls/:id', async (req, res) => {
@@ -686,15 +725,28 @@ router.patch('/rbm-qtls/:id', async (req, res) => {
   if (!patch) return clientError(res, 422, 'No updatable fields in body');
   try {
     const cur = await pool.query(
-      `SELECT threshold, secondary_limit, current_value FROM rbm_qtls WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+      `SELECT threshold, secondary_limit, direction, threshold_lower, secondary_limit_lower, current_value
+         FROM rbm_qtls WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
       [id, orgId],
     );
     if (cur.rows.length === 0) return notFoundInTenant(res, 'QTL');
     const row = cur.rows[0];
-    const threshold = parsed.data.threshold ?? num(row.threshold);
-    const secondary = parsed.data.secondaryLimit ?? num(row.secondary_limit);
-    const value = parsed.data.currentValue ?? num(row.current_value);
-    const status = qtlStatus(value, threshold, secondary);
+    // Status is recomputed against the row's EFFECTIVE limits — the patched
+    // value where given, the stored one otherwise — so changing only the
+    // direction re-bands the existing value rather than leaving a stale status.
+    const limits = {
+      threshold: parsed.data.threshold ?? num(row.threshold),
+      secondaryLimit: parsed.data.secondaryLimit ?? num(row.secondary_limit),
+      direction: (parsed.data.direction ?? (row.direction ?? 'upper')) as (typeof QTL_DIRECTION)[number],
+      thresholdLower: parsed.data.thresholdLower ?? num(row.threshold_lower),
+      secondaryLimitLower: parsed.data.secondaryLimitLower ?? num(row.secondary_limit_lower),
+    };
+    // Validated on the merged limits, not the patch: switching an existing
+    // upper-bound QTL to two_sided without supplying a lower bound has to fail
+    // here, even though the patch body on its own looks complete.
+    const rangeErr = qtlRangeError(limits);
+    if (rangeErr) return clientError(res, 422, rangeErr);
+    const status = qtlStatus(parsed.data.currentValue ?? num(row.current_value), limits);
     patch.args.push(status, status === 'breached');
     patch.setSql += `, status = $${patch.args.length - 1}, breached = $${patch.args.length}`;
     patch.args.push(id, orgId);
@@ -1016,260 +1068,6 @@ router.post('/rbm-assessments/:id/amend', async (req, res) => {
   } finally {
     client.release();
   }
-});
-
-/** Approve + activate a monitoring plan, capturing the reason for change. */
-router.post('/rbm-monitoring-plans/:id/approve', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const id = numericId(req.params.id);
-  if (id === null) return clientError(res, 422, 'id must be numeric');
-  const parsed = approveBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'A reason for change is required', parsed.error.flatten().fieldErrors);
-  const signerId = getUserId(req);
-  if (signerId === null) return clientError(res, 401, 'An authenticated signer is required to approve');
-  const signoff = await verifySignerCredentials(defaultSignoffDeps, { userId: signerId, password: parsed.data.password, mfaToken: parsed.data.mfaToken });
-  if (!signoff.verified) return clientError(res, 401, signoff.error ?? 'Signer verification failed (21 CFR 11.200)', signoff.code ? { code: signoff.code } : undefined);
-  try {
-    const { rows } = await pool.query(
-      `UPDATE rbm_monitoring_plans
-          SET status = 'active', approved_by = $1, approved_at = NOW(), updated_at = NOW(),
-              metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('approvalReason', $2::text)
-        WHERE id = $3 AND organization_id = $4 AND deleted_at IS NULL
-        RETURNING *`,
-      [signerId, parsed.data.reason, id, orgId],
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
-    return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'approve-plan', err); }
-});
-
-// ════════════════════════════════════════════════════════════════════════════
-// MONITORING PLANS + ACTIONS
-// ════════════════════════════════════════════════════════════════════════════
-
-router.get('/rbm-monitoring-plans', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const programId = typeof req.query.program_id === 'string' ? req.query.program_id : undefined;
-  if (programId && !UUID_RE.test(programId)) return clientError(res, 422, 'program_id must be a UUID');
-  const filters = [`organization_id = $1`, `deleted_at IS NULL`];
-  const args: unknown[] = [orgId];
-  if (programId) { args.push(programId); filters.push(`program_id = $${args.length}`); }
-  try {
-    const { rows } = await pool.query(
-      `SELECT * FROM rbm_monitoring_plans WHERE ${filters.join(' AND ')} ORDER BY updated_at DESC`,
-      args,
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'list-plans', err); }
-});
-
-const createPlanBody = z.object({
-  programId: z.string().regex(UUID_RE).optional().nullable(),
-  assessmentId: z.number().int().positive().optional().nullable(),
-  title: z.string().min(1).max(300),
-  strategy: z.enum(PLAN_STRATEGY).optional(),
-  status: z.enum(PLAN_STATUS).optional(),
-});
-
-router.post('/rbm-monitoring-plans', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = createPlanBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
-  try {
-    const { rows } = await pool.query(
-      `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [orgId, p.programId ?? null, p.assessmentId ?? null, p.title, p.strategy ?? 'risk_based', p.status ?? 'draft'],
-    );
-    return created(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'create-plan', err); }
-});
-
-/**
- * Derive a draft monitoring plan (and its opening actions) from the program's
- * governing risk assessment. The derivation itself lives in the RBM actuator so
- * this route and the AnA tools run the same code; see
- * generatePlanFromAssessment for what is derived and why.
- */
-const generatePlanBody = z.object({
-  programId: z.string().regex(UUID_RE),
-  title: z.string().min(1).max(300).optional(),
-});
-
-router.post('/rbm-monitoring-plans/generate', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = generatePlanBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const result = await generatePlanFromAssessment(client, orgId, parsed.data);
-    if (!result.generated) {
-      await client.query('ROLLBACK');
-      return clientError(res, 409, result.reason === 'assessment_not_approved'
-        ? 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.'
-        : 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan');
-    }
-    await client.query('COMMIT');
-    return created(res, { ...result.plan, actions: result.actions }, {
-      derivedFrom: { assessmentId: result.derivedFrom!.assessmentId, overallRisk: result.derivedFrom!.overallRisk },
-      criticalFactors: result.derivedFrom!.criticalFactors,
-      enhancedSites: result.derivedFrom!.enhancedSites,
-    });
-  } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
-    return serverError(res, log, 'generate-plan', err);
-  } finally {
-    client.release();
-  }
-});
-
-router.get('/rbm-monitoring-plans/:id', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const id = numericId(req.params.id);
-  if (id === null) return clientError(res, 422, 'id must be numeric');
-  try {
-    const { rows } = await pool.query(
-      `SELECT * FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-      [id, orgId],
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
-    const actions = await pool.query(
-      `SELECT * FROM rbm_monitoring_actions WHERE plan_id = $1 AND organization_id = $2 ORDER BY
-        CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END, due_date NULLS LAST, id`,
-      [id, orgId],
-    );
-    return ok(res, { ...rows[0], actions: actions.rows });
-  } catch (err) { return serverError(res, log, 'get-plan', err); }
-});
-
-const patchPlanBody = createPlanBody.partial();
-const PLAN_COL: Record<string, string> = { title: 'title', strategy: 'strategy', status: 'status' };
-
-router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const id = numericId(req.params.id);
-  if (id === null) return clientError(res, 422, 'id must be numeric');
-  const parsed = patchPlanBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const patch = buildPatch(parsed.data, PLAN_COL);
-  if (!patch) return clientError(res, 422, 'No updatable fields in body');
-  patch.args.push(id, orgId);
-  try {
-    const { rows } = await pool.query(
-      `UPDATE rbm_monitoring_plans SET ${patch.setSql}, updated_at = NOW()
-        WHERE id = $${patch.args.length - 1} AND organization_id = $${patch.args.length} AND deleted_at IS NULL
-        RETURNING *`,
-      patch.args,
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
-    return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'patch-plan', err); }
-});
-
-const actionListQuery = z.object({
-  plan_id: z.string().regex(/^\d+$/).optional(),
-  program_id: z.string().regex(UUID_RE).optional(),
-  status: z.enum(ACTION_STATUS).optional(),
-});
-
-router.get('/rbm-monitoring-actions', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = actionListQuery.safeParse(req.query);
-  if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
-  const filters = [`a.organization_id = $1`];
-  const args: unknown[] = [orgId];
-  if (parsed.data.plan_id) { args.push(Number(parsed.data.plan_id)); filters.push(`a.plan_id = $${args.length}`); }
-  if (parsed.data.status) { args.push(parsed.data.status); filters.push(`a.status = $${args.length}`); }
-  if (parsed.data.program_id) { args.push(parsed.data.program_id); filters.push(`p.program_id = $${args.length}`); }
-  try {
-    const { rows } = await pool.query(
-      `SELECT a.* FROM rbm_monitoring_actions a
-         LEFT JOIN rbm_monitoring_plans p ON p.id = a.plan_id
-        WHERE ${filters.join(' AND ')}
-        ORDER BY CASE a.priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 ELSE 2 END, a.due_date NULLS LAST, a.id`,
-      args,
-    );
-    return ok(res, rows, { count: rows.length });
-  } catch (err) { return serverError(res, log, 'list-actions', err); }
-});
-
-const createActionBody = z.object({
-  planId: z.number().int().positive(),
-  riskItemId: z.number().int().positive().optional().nullable(),
-  signalId: z.number().int().positive().optional().nullable(),
-  actionType: z.enum(ACTION_TYPE).optional(),
-  description: z.string().min(1).max(2000),
-  priority: z.enum(PRIORITY).optional(),
-  owner: z.number().int().positive().optional().nullable(),
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-});
-
-router.post('/rbm-monitoring-actions', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const parsed = createActionBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const p = parsed.data;
-  // Verify the plan belongs to the caller's org.
-  const own = await pool.query(
-    `SELECT 1 FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
-    [p.planId, orgId],
-  );
-  if (own.rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
-  try {
-    const { rows } = await pool.query(
-      `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, risk_item_id, signal_id, action_type, description, priority, owner, due_date, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'open') RETURNING *`,
-      [orgId, p.planId, p.riskItemId ?? null, p.signalId ?? null, p.actionType ?? 'issue',
-        p.description, p.priority ?? 'medium', p.owner ?? null, p.dueDate ?? null],
-    );
-    return created(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'create-action', err); }
-});
-
-const patchActionBody = z.object({
-  actionType: z.enum(ACTION_TYPE).optional(),
-  description: z.string().min(1).max(2000).optional(),
-  priority: z.enum(PRIORITY).optional(),
-  owner: z.number().int().positive().optional().nullable(),
-  dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
-  status: z.enum(ACTION_STATUS).optional(),
-});
-const ACTION_COL: Record<string, string> = {
-  actionType: 'action_type', description: 'description', priority: 'priority',
-  owner: 'owner', dueDate: 'due_date', status: 'status',
-};
-
-router.patch('/rbm-monitoring-actions/:id', async (req, res) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  const id = numericId(req.params.id);
-  if (id === null) return clientError(res, 422, 'id must be numeric');
-  const parsed = patchActionBody.safeParse(req.body ?? {});
-  if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
-  const patch = buildPatch(parsed.data, ACTION_COL);
-  if (!patch) return clientError(res, 422, 'No updatable fields in body');
-  patch.args.push(id, orgId);
-  try {
-    const { rows } = await pool.query(
-      `UPDATE rbm_monitoring_actions SET ${patch.setSql}, updated_at = NOW()
-        WHERE id = $${patch.args.length - 1} AND organization_id = $${patch.args.length}
-        RETURNING *`,
-      patch.args,
-    );
-    if (rows.length === 0) return notFoundInTenant(res, 'Action');
-    return ok(res, rows[0]);
-  } catch (err) { return serverError(res, log, 'patch-action', err); }
 });
 
 // ════════════════════════════════════════════════════════════════════════════

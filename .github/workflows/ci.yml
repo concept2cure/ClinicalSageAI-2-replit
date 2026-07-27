@@ -128,6 +128,9 @@ jobs:
       - name: Guardrails — regulated-data delete audit coverage (Part 11)
         run: npm run ci:regulated-delete-audit
 
+      - name: Guardrails — migrations reach a durable apply path (no new gaps)
+        run: npm run ci:migration-apply-coverage
+
       - name: Guardrails — route mount authority audit (no regressions)
         run: npm run ci:audit-route-mounts:no-regression
 

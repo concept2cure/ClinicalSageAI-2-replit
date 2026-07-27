@@ -12,6 +12,8 @@ import { ProjectWorkstreams } from './components/ProjectWorkstreams';
 import { ProjectThread } from './components/ProjectThread';
 import { ProjectDrafts } from './components/ProjectDrafts';
 import { ProjectAside } from './components/ProjectAside';
+import { ProjectRegulatoryPlan } from './components/ProjectRegulatoryPlan';
+import { useRegulatoryContext } from './components/useRegulatoryContext';
 import './project.css';
 
 /* ─── types ──────────────────────────────────────────────────── */
@@ -145,6 +147,12 @@ export function ProjectDetail({
 }: ProjectDetailProps) {
   const { project, workstreams, drafts, team, evidence, activity, loading, error } = useProjectData(projectId);
 
+  // Separate from useProjectData on purpose: that hook's Promise.all rejects the
+  // whole cockpit if any request fails, and a contextual enhancement must never
+  // be able to blank the surface it enhances. Null here renders nothing, which is
+  // also what every non-MDX project gets. See useRegulatoryContext.
+  const regulatoryPlan = useRegulatoryContext(projectId);
+
   if (loading) {
     return (
       <div className="pj-shell">
@@ -194,6 +202,13 @@ export function ProjectDetail({
                 onOpen={onOpenWorkstream}
               />
             </div>
+
+            {/* The contextual regulatory sections — MDX-PM-01. Sections INSIDE
+                this surface, not a route and not a tab group: the acceptance
+                criterion is that the same URL renders different content for a
+                device programme than for a pharmaceutical one. Renders null for
+                every non-MDX project, so their cockpit is unchanged. */}
+            <ProjectRegulatoryPlan plan={regulatoryPlan} />
 
             <div className="pj-sec">
               <div className="pj-sec-head">

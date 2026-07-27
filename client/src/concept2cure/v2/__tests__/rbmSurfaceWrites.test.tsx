@@ -13,7 +13,7 @@ const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', () => ({ apiRequest }));
 
 import { RbmKris, RbmQtls, RbmRact, RbmOverview } from '../surfaces/RbmSurfacesA';
-import { RbmSignals, RbmSites, RbmPlan } from '../surfaces/RbmSurfacesB';
+import { RbmSignals, RbmSites, RbmPlan, RbmPatients } from '../surfaces/RbmSurfacesB';
 import type { RbmBoard } from '../surfaces/rbmBoard';
 
 const PROGRAM = '11111111-2222-3333-4444-555555555555';
@@ -41,12 +41,12 @@ function board(over: Partial<RbmBoard> = {}): RbmBoard {
     assessment: { id: 7, framework: 'ich_e6r3', version: 1, status: 'draft', updated: null, approval: null, history: [{ id: 7, v: 1, status: 'draft', by: null, when: null, reason: null, amendmentReason: null }] },
     items: [{ id: 21, category: 'safety', factor: 'SAE reporting', l: 3, i: 5, det: 2, critical: true, mitigation: 'Central review', residual: null, status: 'open', owner: null, refCode: 'R-1' }],
     kris: [{ id: 5, name: 'Query rate', metric: 'Open queries', source: 'edc', unit: '%', dir: 'higher_worse', amber: 10, red: 20, current: 12, status: 'amber', at: null, spark: [11, 12] }],
-    qtls: [{ id: 9, parameter: 'Dropout rate', rationale: 'Power', unit: null, secondary: 0.15, threshold: 0.2, current: 0.24, status: 'breached', breachActionTaken: null }],
+    qtls: [{ id: 9, parameter: 'Dropout rate', rationale: 'Power', unit: null, secondary: 0.15, threshold: 0.2, direction: 'upper', thresholdLower: null, secondaryLower: null, current: 0.24, status: 'breached', breachActionTaken: null }],
     signals: [{ id: 31, source: 'central_stat', type: 'outlier_quality', severity: 'high', title: 'Site 5 is a quality outlier', site: '5', detail: 'robust z 3.4', detected: null, status: 'new', resolution: null }],
     patients: [],
     sites: [{ n: '5', name: 'Mercy Clinical', country: null, composite: 71, enr: 18, qual: 20, ops: 15, tier: 'enhanced', drivers: ['quality'], at: null }],
     oversight: { 5: { open: 1, high: 1 } },
-    plan: { id: 3, title: 'Monitoring plan', strategy: 'risk_based', status: 'draft', updated: null, tiers: null, anaDraft: false, approval: null },
+    plan: { id: 3, title: 'Monitoring plan', strategy: 'risk_based', status: 'draft', version: 1, updated: null, tiers: null, anaDraft: false, approval: null, history: [{ id: 3, v: 1, status: 'draft', by: null, when: null, reason: null, amendmentReason: null }] },
     actions: [{ id: 41, planId: 3, type: 'issue', title: 'Confirm control', priority: 'high', owner: 'Unassigned', due: '2026-08-01', status: 'open', overdue: false, origin: 'ract' }],
     freshness: [],
     ...over,
@@ -110,6 +110,52 @@ describe('RBM v2 surfaces persist their writes', () => {
     expect(method).toBe('PATCH');
     expect(url).toBe('/api/mdx/rbm-qtls/9');
     expect((body as { breachActionTaken: string }).breachActionTaken).toContain('Site 5 attrition');
+  });
+
+  it('posts a lower-bound QTL with its direction, so the server does not read it backwards', async () => {
+    render(<RbmQtls board={board()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /New QTL/ }));
+    fireEvent.change(screen.getByLabelText('Parameter'), { target: { value: 'Primary endpoint completeness' } });
+    fireEvent.change(screen.getByLabelText(/Rationale/), { target: { value: 'Estimand integrity' } });
+    fireEvent.change(screen.getByLabelText(/^Direction/), { target: { value: 'lower' } });
+    fireEvent.change(screen.getByLabelText(/^Primary tolerance limit/), { target: { value: '0.9' } });
+    fireEvent.change(screen.getByLabelText(/^Current value/), { target: { value: '0.4' } });
+    fireEvent.click(screen.getByRole('button', { name: /Create QTL/ }));
+    await waitFor(() => expect(writes().length).toBe(1));
+    const [method, url, body] = writes()[0];
+    expect(method).toBe('POST');
+    expect(url).toBe('/api/mdx/rbm-qtls');
+    // Direction travels with the limit. Without it the server bands 0.4 against
+    // a 0.9 upper bound and reports the study within tolerance at 40%.
+    expect(body).toMatchObject({ direction: 'lower', threshold: 0.9, currentValue: 0.4 });
+    // The lower-bound columns belong to a two-sided range only.
+    expect(body).toMatchObject({ thresholdLower: null, secondaryLimitLower: null });
+  });
+
+  it('carries both bounds for a two-sided QTL', async () => {
+    render(<RbmQtls board={board()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /New QTL/ }));
+    fireEvent.change(screen.getByLabelText('Parameter'), { target: { value: 'Randomisation ratio' } });
+    fireEvent.change(screen.getByLabelText(/Rationale/), { target: { value: 'Allocation balance' } });
+    fireEvent.change(screen.getByLabelText(/^Direction/), { target: { value: 'two_sided' } });
+    fireEvent.change(screen.getByLabelText(/^Primary tolerance limit/), { target: { value: '1.1' } });
+    fireEvent.change(screen.getByLabelText(/^Lower tolerance limit/), { target: { value: '0.9' } });
+    fireEvent.click(screen.getByRole('button', { name: /Create QTL/ }));
+    await waitFor(() => expect(writes().length).toBe(1));
+    expect(writes()[0][2]).toMatchObject({ direction: 'two_sided', threshold: 1.1, thresholdLower: 0.9 });
+  });
+
+  it('describes a lower-bound breach as a shortfall, not an excess', () => {
+    render(<RbmQtls board={board({
+      qtls: [{
+        id: 12, parameter: 'Primary endpoint completeness', rationale: 'Estimand integrity',
+        unit: null, secondary: 0.95, threshold: 0.9, direction: 'lower',
+        thresholdLower: null, secondaryLower: null, current: 0.4,
+        status: 'breached', breachActionTaken: null,
+      }],
+    })} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Document breach/ }));
+    expect(screen.getByText(/has fallen to or below the 0\.9 tolerance/)).toBeTruthy();
   });
 
   it('posts a CtQ factor with the components, letting the engine derive the score', async () => {
@@ -399,5 +445,92 @@ describe('RBM RACT — versioned amendment of a signed assessment', () => {
     render(<RbmRact board={board()} onReload={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /Amend — new version/ })).toBeNull();
     expect(screen.getByRole('button', { name: /Add CtQ factor/ })).toHaveProperty('disabled', false);
+  });
+});
+
+describe('RBM plan — versioned amendment of an approved plan', () => {
+  const approvedPlanBoard = () => board({
+    plan: {
+      id: 3, title: 'Monitoring plan', strategy: 'hybrid', status: 'active', version: 2,
+      updated: '2026-06-10', tiers: null, anaDraft: false,
+      approval: { by: 'Jordan Chen', when: '2026-06-10', reason: 'Tier review complete' },
+      history: [
+        { id: 3, v: 2, status: 'active', by: 'Jordan Chen', when: '2026-06-10', reason: 'Tier review complete', amendmentReason: 'Two sites moved to enhanced' },
+        { id: 1, v: 1, status: 'archived', by: 'Sam Okafor', when: '2026-03-04', reason: 'Initial plan', amendmentReason: null },
+      ],
+    },
+  });
+
+  it('offers Amend on an approved plan and shows its version', () => {
+    render(<RbmPlan board={approvedPlanBoard()} onReload={vi.fn()} />);
+    expect(screen.getByText(/Version 2/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Amend — new version/ })).toHaveProperty('disabled', false);
+  });
+
+  it('keeps an approved plan executable — approval freezes the commitment, not the work', () => {
+    render(<RbmPlan board={approvedPlanBoard()} onReload={vi.fn()} />);
+    // Adding and advancing actions must stay available: responding to a signal
+    // is what an active plan is for. Locking these would make an approved plan
+    // unusable and push the work outside the module.
+    expect(screen.getByRole('button', { name: /Add action/ })).toHaveProperty('disabled', false);
+    expect(screen.getByRole('button', { name: /Start/ })).toHaveProperty('disabled', false);
+  });
+
+  it('opens the amendment with a reason, stating what carries forward', async () => {
+    render(<RbmPlan board={approvedPlanBoard()} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Amend — new version/ }));
+    expect(await screen.findByText(/opens v3 as a draft/)).toBeTruthy();
+    // The dialog must be explicit that completed work stays where it was done.
+    expect(screen.getByText(/stay with the version they were completed under/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/Why is the monitoring plan being amended/), {
+      target: { value: 'Central monitoring moved two sites to enhanced' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Open amendment/ }));
+    await waitFor(() => {
+      expect(writes()).toContainEqual(['POST', '/api/mdx/rbm-monitoring-plans/3/amend', { reason: 'Central monitoring moved two sites to enhanced' }]);
+    });
+  });
+
+  it('renders the plan version chain with each version\'s own signature', () => {
+    render(<RbmPlan board={approvedPlanBoard()} onReload={vi.fn()} />);
+    expect(screen.getByText(/v2 — active — approved 2026-06-10 by Jordan Chen/)).toBeTruthy();
+    expect(screen.getByText(/v1 — archived — approved 2026-03-04 by Sam Okafor/)).toBeTruthy();
+  });
+
+  it('does not offer Amend on a draft plan', () => {
+    render(<RbmPlan board={board()} onReload={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: /Amend — new version/ })).toBeNull();
+  });
+});
+
+describe('RBM patient profiles — the score has to be explainable', () => {
+  const scored = (metrics: { k: string; z: number }[]) => board({
+    patients: [{
+      sid: 'S-014', site: '5', anomaly: 4.8, top: 'queries',
+      status: 'flagged', at: '2026-07-01', metrics,
+    }],
+    summary: { ...board().summary, patients: { scored: 1, flagged: 1, review: 0 } },
+  });
+
+  it('renders each dimension with its signed z, not just the top one', () => {
+    render(<RbmPatients board={scored([
+      { k: 'queries', z: 4.8 },
+      { k: 'aes', z: -3.9 },
+      { k: 'deviations', z: 0.4 },
+    ])} onReload={vi.fn()} />);
+    // The sign is the finding: an AE count below the cohort is under-reporting,
+    // and rendering it as 3.9 would hide which direction the patient deviates.
+    expect(screen.getByText('-3.9')).toBeTruthy();
+    expect(screen.getByText('+4.8')).toBeTruthy();
+    expect(screen.getByText('aes')).toBeTruthy();
+    expect(screen.getByText('deviations')).toBeTruthy();
+  });
+
+  it('says why there is no breakdown instead of implying the patient is typical', () => {
+    render(<RbmPatients board={scored([])} onReload={vi.fn()} />);
+    // "Not comparable" and "typical" are different claims; the surface must not
+    // let an empty breakdown read as the second.
+    expect(screen.getByText(/No dimension was comparable/)).toBeTruthy();
+    expect(screen.getByText(/not comparable/i)).toBeTruthy();
   });
 });

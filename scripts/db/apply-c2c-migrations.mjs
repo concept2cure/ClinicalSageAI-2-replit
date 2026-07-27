@@ -84,6 +84,47 @@ const FILES = [
   // on to_regclass; likewise lands for real now that the subsystem is
   // provisioned ahead of this loop.
   'migrations/20260726_authoring_citation_source_usage.sql',
+  // ── Risk-Based Monitoring lineage (added 2026-07-27) ──────────────────────
+  // Same failure mode as the CRE spine above, and for the same reason: these
+  // have been merged since 20260629 but were never listed here, so the durable
+  // path never created them. Every rbm_* write — the whole RBQM module: risk
+  // assessments, CtQ registers, KRIs, QTLs, signals, site risk, patient
+  // profiles, monitoring plans, metric ingestion — has been addressing tables
+  // that only ever existed on the ephemeral preview branch a PR created and
+  // then deleted. The module could not have worked on a real database.
+  //
+  // ORDER MATTERS. rbm_surfaces creates the eight base tables; everything after
+  // it either creates a table referencing them or ALTERs one of them:
+  //   kri_values         -> FK rbm_kris
+  //   patient_profiles   -> the cohort scorer's store
+  //   metric_ingestion   -> rbm_data_runs + rbm_metric_observations, the load path
+  //   not_evaluated      -> backfills status on rbm_kris / rbm_qtls
+  //   qtl_direction      -> ALTERs rbm_qtls
+  //   plan_versioning    -> ALTERs rbm_monitoring_plans
+  //
+  // All seven are idempotent (every CREATE TABLE / CREATE INDEX / ADD COLUMN is
+  // IF NOT EXISTS; the three that touch existing rows are to_regclass-guarded
+  // and re-runnable), none opens its own transaction, and none contains DROP or
+  // TRUNCATE — so they are safe under this script's repeated-run contract.
+  'migrations/20260629_rbm_surfaces.sql',
+  'migrations/20260630_rbm_kri_values.sql',
+  'migrations/20260701_rbm_patient_profiles.sql',
+  'migrations/20260726_rbm_metric_ingestion.sql',
+  'migrations/20260726_rbm_not_evaluated_backfill.sql',
+  'migrations/20260727_rbm_qtl_direction.sql',
+  'migrations/20260728_rbm_plan_versioning.sql',
+  // ALTERs rbm_data_runs, so it must follow metric_ingestion above.
+  'migrations/20260729_rbm_ingest_idempotency.sql',
+  // Governed industry context. Creates its own tables and backfills the org
+  // profile from organizations.industry_mode; references organizations, projects
+  // and client_workspaces, all of which exist in the journaled baseline.
+  'migrations/20260730_industry_context_profiles.sql',
+  // ALTERs unified_tasks (additive) and creates task_regulatory_links.
+  'migrations/20260731_mdx_task_regulatory_context.sql',
+  // ALTERs project_industry_profiles, so it must follow the context profiles
+  // above. Creates regulatory_work_packages and its decision records, both
+  // to_regclass-guarded on regulatory_programs.
+  'migrations/20260801_regulatory_work_packages.sql',
 ];
 
 // The four db/migrations/20260725_authoring_* files that back the IND authoring

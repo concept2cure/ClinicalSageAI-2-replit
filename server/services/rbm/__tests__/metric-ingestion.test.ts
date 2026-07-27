@@ -11,7 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   parseMetricRows, parseMetricCsv, ingestMetrics, freshnessFromRun, ageInDays,
-  FRESHNESS_STALE_DAYS, type Exec,
+  FRESHNESS_STALE_DAYS, contentHash, type Exec,
 } from '../metric-ingestion';
 
 const ORG = 42;
@@ -111,18 +111,29 @@ describe('parseMetricCsv', () => {
   });
 });
 
+/**
+ * ingestMetrics returns IngestResult | IngestRefused. These tests assert the
+ * landed path, so narrow explicitly rather than casting — a refusal reaching a
+ * test that expects a load should fail loudly with its reason.
+ */
+function landed(out: Awaited<ReturnType<typeof ingestMetrics>>) {
+  if (!out.ok) throw new Error(`expected the extract to land, but it was refused: ${out.reason}`);
+  return out;
+}
+
 describe('ingestMetrics — projection onto the engines', () => {
   it('lands a study metric as a KRI reading with the engine-computed status', async () => {
     const { exec, calls } = mockExec([
+      [],                                                                           // findPriorRun: none
       [{ id: 1 }],                                                                  // run insert
       [],                                                                           // observation insert
       [{ id: 5, direction: 'higher_worse', threshold_amber: '10', threshold_red: '20' }], // KRI lookup
       [], [],                                                                       // value insert + KRI roll-up
       [],                                                                           // run finalize
     ]);
-    const out = await ingestMetrics(exec, ORG, {
+    const out = landed(await ingestMetrics(exec, ORG, {
       programId: PROGRAM, source: 'edc', rows: [{ metric_key: 'Query rate', value: '25' }],
-    });
+    }));
     expect(out.status).toBe('succeeded');
     expect(out.projection.kriReadings).toBe(1);
     // 25 is at/above the red threshold of 20 — banded by the engine, not here.
@@ -137,14 +148,15 @@ describe('ingestMetrics — projection onto the engines', () => {
     // Otherwise "1 row ingested, 0 rejected" would read as success while every
     // indicator stayed unevaluated.
     const { exec } = mockExec([
+      [],                                                                           // findPriorRun: none
       [{ id: 1 }], [],
       [],   // no KRI
       [],   // no QTL
       [],
     ]);
-    const out = await ingestMetrics(exec, ORG, {
+    const out = landed(await ingestMetrics(exec, ORG, {
       programId: PROGRAM, source: 'edc', rows: [{ metric_key: 'Unconfigured metric', value: '3' }],
-    });
+    }));
     expect(out.projection.kriReadings).toBe(0);
     expect(out.projection.unmatched).toEqual(['Unconfigured metric']);
   });
@@ -152,11 +164,11 @@ describe('ingestMetrics — projection onto the engines', () => {
   it('merges subject metrics rather than replacing the profile', async () => {
     // One feed rarely carries every dimension; replacing would delete metrics
     // another source supplied.
-    const { exec, calls } = mockExec([[{ id: 1 }], [], [], []]);
-    const out = await ingestMetrics(exec, ORG, {
+    const { exec, calls } = mockExec([[], [{ id: 1 }], [], [], []]);
+    const out = landed(await ingestMetrics(exec, ORG, {
       programId: PROGRAM, source: 'edc',
       rows: [{ metric_key: 'ae_count', scope_level: 'subject', scope_id: 'S-01', value: '4' }],
-    });
+    }));
     expect(out.projection.subjectProfiles).toBe(1);
     const upsert = calls.find(c => c.sql.includes('rbm_patient_profiles'))!;
     expect(upsert.sql).toContain('||');
@@ -164,11 +176,11 @@ describe('ingestMetrics — projection onto the engines', () => {
   });
 
   it('marks a run partial when some rows landed and some were rejected', async () => {
-    const { exec, calls } = mockExec([[{ id: 1 }], [], [], [], []]);
-    const out = await ingestMetrics(exec, ORG, {
+    const { exec, calls } = mockExec([[], [{ id: 1 }], [], [], [], []]);
+    const out = landed(await ingestMetrics(exec, ORG, {
       programId: PROGRAM, source: 'edc',
       rows: [{ metric_key: 'Query rate', value: '12' }, { metric_key: 'bad' }],
-    });
+    }));
     expect(out.status).toBe('partial');
     expect(out.accepted).toBe(1);
     expect(out.rejected).toBe(1);
@@ -178,10 +190,10 @@ describe('ingestMetrics — projection onto the engines', () => {
   });
 
   it('marks a run failed when nothing usable arrived', async () => {
-    const { exec } = mockExec([[{ id: 1 }], []]);
-    const out = await ingestMetrics(exec, ORG, {
+    const { exec } = mockExec([[], [{ id: 1 }], []]);
+    const out = landed(await ingestMetrics(exec, ORG, {
       programId: PROGRAM, source: 'edc', rows: [{ metric_key: 'bad' }],
-    });
+    }));
     expect(out.status).toBe('failed');
     expect(out.accepted).toBe(0);
   });
@@ -230,5 +242,115 @@ describe('freshness', () => {
   it('ageInDays returns null for an absent or unparseable timestamp', () => {
     expect(ageInDays(null, now)).toBeNull();
     expect(ageInDays('not a date', now)).toBeNull();
+  });
+});
+
+describe('ingestMetrics — replay guard', () => {
+  const ROWS = [{ metric_key: 'Query rate', value: '25' }];
+
+  it('hashes content, not the filename', () => {
+    // Two exports can share a name and differ; identical content routinely
+    // arrives under different names. Identity has to be the bytes.
+    const a = contentHash({ rows: ROWS });
+    const b = contentHash({ rows: ROWS });
+    const c = contentHash({ rows: [{ metric_key: 'Query rate', value: '26' }] });
+    expect(a).toBe(b);
+    expect(a).not.toBe(c);
+    expect(a).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('refuses a second load of the same extract, naming the run that holds it', async () => {
+    // The defect: a second load is not a no-op — each study-scope observation
+    // appends a row to rbm_kri_values, so a duplicate doubles the KRI history
+    // every trend and every robust z-score is computed over.
+    const { exec, calls } = mockExec([
+      [{ id: 7, status: 'succeeded', data_cutoff: '2026-07-01', started_at: '2026-07-02T00:00:00Z', rows_accepted: 12, mapping_version: 'v1' }],
+    ]);
+    const out = await ingestMetrics(exec, ORG, { programId: PROGRAM, source: 'edc', rows: ROWS });
+    expect(out.ok).toBe(false);
+    if (!out.ok) {
+      expect(out.reason).toBe('duplicate_content');
+      expect(out.priorRun?.runId).toBe(7);
+      expect(out.priorRun?.rowsAccepted).toBe(12);
+    }
+    // Nothing was written: no run row, no observation, no reading.
+    expect(calls).toHaveLength(1);
+    expect(calls[0].sql).toContain('FROM rbm_data_runs');
+  });
+
+  it('only counts a landed, un-superseded run as a duplicate', async () => {
+    const { exec, calls } = mockExec([[], [{ id: 9 }]]);
+    await ingestMetrics(exec, ORG, { programId: PROGRAM, source: 'edc', rows: ROWS });
+    const lookup = calls[0].sql;
+    // A FAILED run's content was not landed, so reloading it is correct and must
+    // not be blocked; a SUPERSEDED run was already deliberately replaced.
+    expect(lookup).toContain("status IN ('succeeded', 'partial')");
+    expect(lookup).toContain('superseded_at IS NULL');
+    expect(calls[0].args).toEqual([ORG, PROGRAM, 'edc', contentHash({ rows: ROWS })]);
+  });
+
+  it('refuses a reprocess with no reason', async () => {
+    // A reprocess replaces what an earlier run established; an unexplained
+    // replacement leaves a supersession in the audit trail with no rationale.
+    const { exec, calls } = mockExec([
+      [{ id: 7, status: 'succeeded', data_cutoff: null, started_at: null, rows_accepted: 1, mapping_version: 'v1' }],
+    ]);
+    const out = await ingestMetrics(exec, ORG, {
+      programId: PROGRAM, source: 'edc', rows: ROWS, reprocess: true, reprocessReason: '  ',
+    });
+    expect(out.ok).toBe(false);
+    if (!out.ok) expect(out.reason).toBe('reprocess_reason_required');
+    expect(calls).toHaveLength(1);
+  });
+
+  it('a reprocess supersedes the prior run AND retracts its readings', async () => {
+    // Superseding the run record while leaving its appended readings behind
+    // would still double the history — the same corruption, reached through the
+    // deliberate path. So the retraction is part of what reprocess means.
+    const { exec, calls } = mockExec([
+      [{ id: 7, status: 'succeeded', data_cutoff: null, started_at: null, rows_accepted: 3, mapping_version: 'v1' }], // prior
+      [{ id: 9 }],                       // new run insert
+      [],                                // supersede update
+      [{ id: 91 }, { id: 92 }],          // retracted readings
+      [],                                // observation insert
+      [{ id: 5, direction: 'higher_worse', threshold_amber: '10', threshold_red: '20' }],
+      [], [],                            // value insert + roll-up
+      [],                                // finalize
+    ]);
+    const out = landed(await ingestMetrics(exec, ORG, {
+      programId: PROGRAM, source: 'edc', rows: ROWS,
+      reprocess: true, reprocessReason: 'Corrected unit mapping',
+    }));
+    expect(out.supersededRunId).toBe(7);
+    expect(out.retractedReadings).toBe(2);
+
+    const insert = calls.find(c => c.sql.includes('INSERT INTO rbm_data_runs'))!;
+    expect(insert.args).toContain('Corrected unit mapping');
+    expect(insert.args).toContain(7);              // supersedes_run_id
+    expect(insert.args).toContain(out.contentHash);
+
+    const supersede = calls.find(c => c.sql.includes('superseded_at = NOW()'))!;
+    expect(supersede.args).toEqual([7, ORG]);
+
+    // The retraction is scoped on run_id, so hand-entered readings (run_id NULL)
+    // and other runs' readings are untouched.
+    const retract = calls.find(c => c.sql.includes('DELETE FROM rbm_kri_values'))!;
+    expect(retract.sql).toContain('run_id = $2');
+    expect(retract.args).toEqual([ORG, 7]);
+  });
+
+  it('stamps every ingested reading with its run, so it can be retracted later', async () => {
+    const { exec, calls } = mockExec([
+      [],                                // no prior run
+      [{ id: 9 }], [],
+      [{ id: 5, direction: 'higher_worse', threshold_amber: '10', threshold_red: '20' }],
+      [], [], [],
+    ]);
+    const out = landed(await ingestMetrics(exec, ORG, { programId: PROGRAM, source: 'edc', rows: ROWS }));
+    expect(out.supersededRunId).toBeNull();
+    expect(out.retractedReadings).toBe(0);
+    const valueInsert = calls.find(c => c.sql.includes('INSERT INTO rbm_kri_values'))!;
+    expect(valueInsert.sql).toContain('run_id');
+    expect(valueInsert.args).toContain(9);
   });
 });

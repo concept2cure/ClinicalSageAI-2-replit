@@ -104,6 +104,31 @@ function amendmentReason(metadata: unknown): string | null {
   return null;
 }
 
+/**
+ * Read metadata.dimensionScores — the per-dimension z breakdown the cohort
+ * scorer wrote — off a jsonb column, tolerating anything unexpected.
+ *
+ * Defensive because the column is jsonb: an older row scored before the
+ * breakdown existed has no key at all, and a partially-written or hand-edited
+ * value must degrade to "no breakdown" rather than putting a NaN on screen next
+ * to a real z score. Every entry is validated individually, so one bad element
+ * does not discard the others.
+ */
+function dimensionScores(metadata: unknown): { k: string; z: number }[] {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return [];
+  const raw = (metadata as Record<string, unknown>).dimensionScores;
+  if (!Array.isArray(raw)) return [];
+  const out: { k: string; z: number }[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') continue;
+    const { dimension, z } = entry as { dimension?: unknown; z?: unknown };
+    const n = num(z);
+    if (typeof dimension !== 'string' || dimension === '' || n === null) continue;
+    out.push({ k: dimension, z: n });
+  }
+  return out;
+}
+
 /** Read metadata.approvalReason off a jsonb column without throwing. */
 function approvalReason(metadata: unknown): string | null {
   if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
@@ -286,10 +311,16 @@ export default function createRbmBoardRoutes(): Router {
       );
       const chosenAssessment = sortedAssessments[0] ?? null;
 
+      // Plans version like assessments, so the same rule applies: highest
+      // version wins, and an open draft amendment is what the plan surface shows
+      // and edits. Ordered by version rather than updated_at, because touching
+      // an archived row (an action closing out under it) must not promote it
+      // back to being the plan on screen.
       const sortedPlans = [...planRows].sort(
-        (x, y) => (iso(y.p.updatedAt) ?? '').localeCompare(iso(x.p.updatedAt) ?? ''),
+        (x, y) => (y.p.version ?? 0) - (x.p.version ?? 0)
+          || (iso(y.p.updatedAt) ?? '').localeCompare(iso(x.p.updatedAt) ?? ''),
       );
-      const chosenPlan = sortedPlans.find(r => r.p.status === 'active') ?? sortedPlans[0] ?? null;
+      const chosenPlan = sortedPlans[0] ?? null;
 
       // ── Derived aggregates for the summary + the report/attention builders. ─
       const criticalItems = itemRows.filter(r => r.it.isCritical);
@@ -421,6 +452,9 @@ export default function createRbmBoardRoutes(): Router {
           unit: null,
           secondary: num(q.secondaryLimit),
           threshold: num(q.threshold),
+          direction: q.direction ?? 'upper',
+          thresholdLower: num(q.thresholdLower),
+          secondaryLower: num(q.secondaryLimitLower),
           current: num(q.currentValue),
           status: q.status,
           breachActionTaken: q.breachActionTaken,
@@ -452,7 +486,10 @@ export default function createRbmBoardRoutes(): Router {
           top: p.topDimension,
           status: p.status,
           at: iso(p.scoredAt),
-          metrics: [] as { k: string; z: number }[],
+          // The per-dimension breakdown the cohort scorer produced. Without it a
+          // flag reads "4.8, top dimension: query rate" and a monitor cannot tell
+          // one bad dimension from a patient atypical across the board.
+          metrics: dimensionScores(p.metadata),
         }));
 
       const sites = [...siteRows]
@@ -521,6 +558,7 @@ export default function createRbmBoardRoutes(): Router {
         title: chosenPlan.p.title,
         strategy: chosenPlan.p.strategy,
         status: chosenPlan.p.status,
+        version: chosenPlan.p.version,
         updated: iso(chosenPlan.p.updatedAt),
         // Not persisted per-plan: tier→visit-cadence text, the AnA-draft
         // provenance flag, and the plan "basis" narrative. Returned null/false
@@ -532,6 +570,18 @@ export default function createRbmBoardRoutes(): Router {
           when: iso(chosenPlan.p.approvedAt),
           reason: approvalReason(chosenPlan.p.metadata),
         } : null,
+        // The plan's version chain, same construction as the assessment's:
+        // every row is a version that existed, the approved ones carrying the
+        // signature they were approved under. Newest first.
+        history: sortedPlans.map(r => ({
+          id: r.p.id,
+          v: r.p.version,
+          status: r.p.status,
+          by: r.approver ?? null,
+          when: iso(r.p.approvedAt),
+          reason: approvalReason(r.p.metadata),
+          amendmentReason: amendmentReason(r.p.metadata),
+        })),
       } : null;
 
       const summary = {
