@@ -67,7 +67,15 @@ import { authenticateCollabConnection } from '../../hocuspocus-server';
 import { parseDocumentName } from '../collab-authorization';
 import { loadCollabState, storeCollabState } from '../collab-state.store';
 
-const JWT_SECRET = 'collab-governance-test-secret';
+// Read the harness-provisioned signing key rather than declaring one. Two
+// reasons: a literal here is a hardcoded-credential finding for every scanner
+// that reads this file, and verifyJwtWithRotation resolves JWT_SECRET_<ENV>
+// ahead of the bare JWT_SECRET — so a locally-declared secret would have to
+// overwrite the harness's anyway to be the one the verifier tries.
+const JWT_SECRET = process.env.JWT_SECRET_DEV ?? process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('tests/setup.ts must provision JWT_SECRET_DEV before this suite runs');
+}
 
 const ORG_A = 4101;
 const ORG_B = 4202;
@@ -94,12 +102,8 @@ function accessToken(over: Record<string, unknown> = {}): string {
 }
 
 beforeAll(async () => {
-  // verifyJwtWithRotation resolves JWT_SECRET_<ENV> before the bare
-  // JWT_SECRET, and tests/setup.ts sets JWT_SECRET_DEV — so setting only
-  // JWT_SECRET here would leave every token in this file signed with a key the
-  // verifier never tries.
-  process.env.JWT_SECRET = JWT_SECRET;
-  process.env.JWT_SECRET_DEV = JWT_SECRET;
+  // Keep rotation out of the picture: with a previous secret configured, a
+  // token this suite expects to be rejected could verify against it instead.
   delete process.env.JWT_SECRET_PREVIOUS;
   delete process.env.JWT_SECRET_PREVIOUS_DEV;
 
@@ -206,7 +210,8 @@ describe('authenticating a collaboration connection', () => {
   it('refuses a token signed with the wrong secret — no fallback identity', async () => {
     // The previous implementation fell through to a "Dev User" identity here
     // whenever NODE_ENV !== 'production', which includes staging.
-    const forged = jwt.sign({ userId: USER_A, organizationId: ORG_A }, 'not-the-secret', {
+    const wrongKey = `${JWT_SECRET}-a-key-the-server-does-not-hold`;
+    const forged = jwt.sign({ userId: USER_A, organizationId: ORG_A }, wrongKey, {
       algorithm: 'HS256',
     });
     await expect(
