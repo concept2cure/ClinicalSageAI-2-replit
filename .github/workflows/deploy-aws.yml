@@ -305,6 +305,11 @@ jobs:
                      | .command = ["npm", "run", "db:migrate:deploy"]
                      | .essential = true
                      | del(.portMappings, .healthCheck)
+                     # Inter-container wiring that can only refer to the sidecars
+                     # dropped above. Left in place, register-task-definition
+                     # rejects the whole revision for naming a container that is
+                     # no longer in the definition.
+                     | del(.dependsOn, .links, .volumesFrom)
                    )
                )
              ' /tmp/api-td.json > /tmp/migrate-td.json
@@ -319,6 +324,13 @@ jobs:
             --no-cli-pager \
             --query 'taskDefinition.taskDefinitionArn' \
             --output text)
+          # `--output text` yields the literal "None" when the query misses,
+          # which is a string the next step would happily pass to run-task.
+          # Catch it here, where the cause is still visible.
+          if [[ -z "$TD_ARN" || "$TD_ARN" == "None" ]]; then
+            echo "::error::register-task-definition returned no ARN for family '$ECS_MIGRATE_TASK_FAMILY'."
+            exit 1
+          fi
           echo "Registered migration task def: $TD_ARN"
           echo "task_def_arn=$TD_ARN" >> "$GITHUB_OUTPUT"
 
