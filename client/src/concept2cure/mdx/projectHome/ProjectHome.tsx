@@ -11,9 +11,11 @@ import type { Program } from '../data/programs';
 import { useProgramDetail } from '../hooks/useMdxPrograms';
 import { useWorkbenchTasks } from '../hooks/useWorkbench';
 import { useProgramExtras } from '../hooks/useProgramExtras';
+import { useEffectiveContext } from '../hooks/useEffectiveContext';
 import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 import { useQmsReadiness } from '../hooks/useQmsReadiness';
 import { DataGate } from '../components/DataGate';
+import { contextSummaryRows, humanizeToken } from '../lib/industryContext';
 
 interface GovernanceRow {
   role: string;
@@ -136,6 +138,26 @@ function ReadinessRing({ value, size = 132, stroke = 12 }: { value: number; size
   );
 }
 
+/** One labelled chip row of the Program context card (pathways, markets). */
+function ContextTagRow({ label, values }: { label: string; values: string[] }) {
+  return (
+    <div className="ph-ctx-tags">
+      <span className="ph-gov-role">{label}</span>
+      {values.length === 0 ? (
+        <span className="ph-ctx-none">None set</span>
+      ) : (
+        <div className="ph-impact-aff">
+          {values.map((v) => (
+            <span key={v} className="ph-impact-tag">
+              {humanizeToken(v)}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SecBar({ label, n, total, tone }: { label: string; n: number; total: number; tone: string }) {
   const pct = Math.round((n / total) * 100);
   return (
@@ -178,6 +200,10 @@ export function ProjectHome({
   const allTasks = useWorkbenchTasks();
   const extras = useProgramExtras(program.id);
   const qms = useQmsReadiness();
+  /* Resolved industry context (project → org → license default) for the
+     read-first "Program context" card. program.id is the
+     regulatory_programs uuid for live programs; fixture ids stay idle. */
+  const industryCtx = useEffectiveContext(program.id);
   const livePh = detail.detail
     ? deriveGovernance(detail.detail.leadUserName, detail.detail.teamMembers)
     : null;
@@ -341,6 +367,33 @@ export function ProjectHome({
         </div>
 
         <aside className="ph-side">
+          <section className="ph-card">
+            <header className="ph-card-h">
+              <h2>Program context</h2>
+            </header>
+            <DataGate
+              state={industryCtx.context}
+              label="program context"
+              onRetry={industryCtx.refresh}
+              dense
+            >
+              {(ctx) => (
+                <div className="ph-ctx">
+                  <ul className="ph-gov">
+                    {contextSummaryRows(ctx).map((row) => (
+                      <li key={row.label} className="ph-gov-row ph-ctx-row">
+                        <span className="ph-gov-role">{row.label}</span>
+                        <span className="ph-gov-name">{row.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <ContextTagRow label="Pathways" values={ctx.pathways} />
+                  <ContextTagRow label="Markets" values={ctx.markets} />
+                </div>
+              )}
+            </DataGate>
+          </section>
+
           <section className="ph-card">
             <header className="ph-card-h">
               <h2>Change impact</h2>
