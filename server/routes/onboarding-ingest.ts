@@ -18,7 +18,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import { organizations } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
@@ -125,14 +125,18 @@ router.post('/commit', async (req: Request, res: Response) => {
   }
 
   try {
-    const [before] = await db
+    // Request-scoped Drizzle: runs on the connection carrying this request's
+    // RLS session vars (app.current_tenant_id), so Postgres enforces the tenant
+    // boundary on the governed write in addition to the app-layer gate above.
+    const rdb = requestDb(req);
+    const [before] = await rdb
       .select({ name: organizations.name, clientType: organizations.clientType, industryMode: organizations.industryMode })
       .from(organizations)
       .where(eq(organizations.id, orgId));
     if (!before) return res.status(404).json({ success: false, error: 'Organization not found' });
 
     updates.updatedAt = new Date();
-    const [updated] = await db
+    const [updated] = await rdb
       .update(organizations)
       .set(updates)
       .where(eq(organizations.id, orgId))

@@ -34,7 +34,11 @@ function chainableUpdate() {
   return ret;
 }
 
-vi.mock('../../db', () => ({ db: { select: () => chainableSelect(), update: () => chainableUpdate() } }));
+// The route uses the REQUEST-SCOPED Drizzle (RLS session vars on this request's
+// connection), not the shared pool — mock that helper.
+vi.mock('../../db/requestDb', () => ({
+  requestDb: () => ({ select: () => chainableSelect(), update: () => chainableUpdate() }),
+}));
 vi.mock('@shared/schema', () => {
   const fakeTable = (name: string) => ({ _: { name } });
   return {
