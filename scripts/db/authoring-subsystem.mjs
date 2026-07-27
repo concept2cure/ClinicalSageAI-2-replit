@@ -75,12 +75,10 @@ export const AUTHORING_SUBSYSTEM_FILES = [
  * already run and will never revisit a new table — an RLS-less table under
  * RLS_ENFORCE is readable across tenants, i.e. every tenant's section grants.
  *
- * SYNC DEBT (declared, not hidden): the twin literal in
- * server/db/ensureCoreTables.ts still lists ten tables and is owned elsewhere,
- * so /readyz does not yet gate on doc_permissions. That is a weaker readiness
- * contract than this one, never a weaker isolation guarantee — provisioning and
- * RLS are driven from THIS list. Adding the eleventh entry there is a one-line
- * follow-up (its prose says "the ten tables" and needs the same bump).
+ * The twin literal in server/db/ensureCoreTables.ts carries the SAME twelve
+ * entries, so /readyz gates on doc_permissions too. (That sync was completed
+ * when the CRDT and section-authorization changes were integrated — each was
+ * authored against a tree that had only its own addition.)
  */
 export const AUTHORING_SUBSYSTEM_TABLES = [
   'authoring_documents',
