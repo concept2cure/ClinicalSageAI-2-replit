@@ -72,6 +72,10 @@ const FILES = [
   // cre_evidence_sources. Self-guarding on to_regclass, so it no-ops with a
   // NOTICE if the spine is somehow absent rather than failing the run.
   'migrations/20260726_cre_source_program_scope.sql',
+  // Industry-context tailoring: organization_industry_profiles +
+  // project_industry_profiles. Fully idempotent (CREATE TABLE/INDEX IF NOT
+  // EXISTS, no data statements).
+  'db/migrations/20260727_industry_context_profiles.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

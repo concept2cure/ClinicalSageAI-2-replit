@@ -173,6 +173,57 @@ export const organizations = pgTable('organizations', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// Industry-context tailoring — governed profiles that preset one self-tailoring
+// workspace (see docs/MDX_INDUSTRY_CONTEXT_GAP_ANALYSIS.md). Replaces the
+// free-text industry_mode column, the localStorage admin blob, and the
+// onboarding mock as the authoritative source of a tenant's industry context.
+export const organizationIndustryProfiles = pgTable('organization_industry_profiles', {
+  id: serial('id').primaryKey(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .unique()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  // medical_device_diagnostics | biotech_pharma | cro | regulatory_consulting | academic_research
+  primaryIndustry: text('primary_industry').notNull(),
+  // medical_device | ivd_diagnostics | both | samd | companion_diagnostic | combination_product
+  mdxSpecialization: text('mdx_specialization'),
+  defaultMarkets: jsonb('default_markets').$type<string[]>().default([]).notNull(),
+  defaultPathways: jsonb('default_pathways').$type<string[]>().default([]).notNull(),
+  // single_reviewer | regulated_dual_review | qa_lock | signoff_required
+  defaultApprovalRigor: text('default_approval_rigor'),
+  effectiveAt: timestamp('effective_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedBy: integer('updated_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+// organization_id is UNIQUE, so Postgres already indexes it — no extra index.
+
+// Per-project override, keyed on the canonical project id space
+// (regulatory_programs.id uuid) that clinical_studies / rbm_* / cdisc_prm share.
+// Inherits org defaults; a project may refine vertical/specialization/pathways
+// without changing navigation.
+export const projectIndustryProfiles = pgTable('project_industry_profiles', {
+  id: serial('id').primaryKey(),
+  programId: uuid('program_id').notNull().unique(),
+  organizationId: integer('organization_id')
+    .notNull()
+    .references(() => organizations.id, { onDelete: 'cascade' }),
+  vertical: text('vertical'), // mdx | biopharma
+  specialization: text('specialization'),
+  productType: text('product_type'),
+  lifecycleStage: text('lifecycle_stage'),
+  targetMarkets: jsonb('target_markets').$type<string[]>().default([]).notNull(),
+  regulatoryPathways: jsonb('regulatory_pathways').$type<string[]>().default([]).notNull(),
+  filingTypes: jsonb('filing_types').$type<string[]>().default([]).notNull(),
+  inheritedFromOrg: boolean('inherited_from_org').default(true).notNull(),
+  updatedBy: integer('updated_by'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  // program_id is UNIQUE (auto-indexed); org needs its own index for list scans.
+  pipOrgIdx: index('pip_org_idx').on(t.organizationId),
+}));
+
 // Organization Insert Schema
 export const insertOrganizationSchema = createInsertSchemaOmit(organizations, {
   id: true,

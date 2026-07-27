@@ -59,6 +59,7 @@ import mdxAdminRoutes from '../routes/mdx-admin';
 import mdxTemplatesRoutes from '../routes/mdx-templates';
 import mdxPostmarketRoutes from '../routes/mdx-postmarket';
 import mdxClinicalStudiesRoutes from '../routes/mdx-clinical-studies';
+import mdxIndustryContextRoutes from '../routes/mdx-industry-context';
 import mdxAnaMemoryRoutes from '../routes/mdx-ana-memory';
 import mdxQmsRoutes from '../routes/mdx-qms';
 import mdxLabelingRoutes from '../routes/mdx-labeling';
@@ -1065,6 +1066,7 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxRiskRoutes);
   app.use('/api/mdx', mdxRbmRoutes);
   app.use('/api/mdx', mdxSoftwareRoutes);
+  app.use('/api/mdx', mdxIndustryContextRoutes);
   /* IVD + diagnostic surfaces (migration 20260508). */
   app.use('/api/mdx', mdxIvdPerformanceRoutes);
   app.use('/api/mdx', mdxIvdrRoutes);
