@@ -27,6 +27,20 @@
 -- so behavior is unchanged until the platform flips it.
 --
 -- Idempotent: safe to re-run.
+--
+-- Additive only: this creates ONE new table and touches no existing table,
+-- column or row, so there is no data migration and nothing to break for
+-- existing tenants. Deployment order does not matter — the application falls
+-- back to refusing a review session ("please upload the document again") if the
+-- table is not yet present, which is the same behaviour as an expired run.
+--
+-- ROLLBACK:
+--   DROP TABLE IF EXISTS onboarding_proposal_runs;
+--   -- Drops the table's indexes and RLS policy with it. Safe at any time: the
+--   -- rows are short-lived working artifacts of an in-flight onboarding review,
+--   -- never a regulated record. Everything that was COMMITTED is already in the
+--   -- sha256-chained audit trail and is unaffected. The only loss is any review
+--   -- still in progress, whose client is told to re-upload.
 -- ============================================================================
 
 BEGIN;
