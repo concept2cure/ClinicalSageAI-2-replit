@@ -182,7 +182,7 @@ router.get('/:id', validateOrgOwnership, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(`Error fetching organization ${req.params.id}:`, error);
+    console.error('Error fetching organization:', req.params.id, error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch organization details',
@@ -225,7 +225,7 @@ router.get('/:id/clients', validateOrgOwnership, async (req, res) => {
 
     res.json({ success: true, clients });
   } catch (error) {
-    console.error(`Error fetching clients for organization ${req.params.id}:`, error);
+    console.error('Error fetching clients for organization:', req.params.id, error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch client workspaces',
@@ -329,7 +329,7 @@ router.patch('/:id/profile', validateOrgOwnership, requireOrgAdmin, async (req, 
 
     res.json({ success: true, organization: updated });
   } catch (error) {
-    console.error(`Error updating organization profile ${req.params.id}:`, error);
+    console.error('Error updating organization profile:', req.params.id, error);
     res.status(500).json({
       success: false,
       error: 'Failed to update organization profile',
