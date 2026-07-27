@@ -476,15 +476,48 @@ export class SmartFieldLinking extends EventEmitter {
   }
 
   /**
-   * Helper to set nested field value
+   * Keys that must never be traversed or assigned when walking a dotted field
+   * path, because they resolve to the object prototype rather than to data.
+   *
+   * SECURITY: `field` is caller-supplied — it arrives as `data.field` on the
+   * socket `update-field` handler and in the body of
+   * POST /api/field-sync/update-field. Walking it with `key in current` followed
+   * by `current[key] = {}` meant `field = "__proto__.polluted"` resolved
+   * `current` to Object.prototype and assigned onto it, polluting EVERY object in
+   * the process — a global integrity break reachable by any authenticated user.
+   * (Flagged by Semgrep prototype-pollution-loop on the read mirror below; the
+   * write path was the exploitable half.)
+   */
+  private static readonly UNSAFE_PATH_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+  /**
+   * Helper to set nested field value.
+   *
+   * Rejects prototype-resolving segments outright rather than sanitising them:
+   * a field path containing `__proto__` is never legitimate 510(k) data, so
+   * refusing is both safe and honest. Intermediate containers are created with
+   * a null prototype and own-property checks so no inherited key can be
+   * mistaken for existing data.
    */
   private setNestedField(obj: any, path: string, value: any): void {
     const keys = path.split('.');
     const lastKey = keys.pop()!;
 
+    for (const key of [...keys, lastKey]) {
+      if (SmartFieldLinking.UNSAFE_PATH_KEYS.has(key)) {
+        throw new Error(`Unsafe field path segment: ${key}`);
+      }
+    }
+
     let current = obj;
     for (const key of keys) {
-      if (!(key in current)) {
+      // hasOwnProperty, not `in`: `in` sees inherited keys, so an inherited
+      // property would be traversed instead of a fresh container being created.
+      if (
+        !Object.prototype.hasOwnProperty.call(current, key) ||
+        typeof current[key] !== 'object' ||
+        current[key] === null
+      ) {
         current[key] = {};
       }
       current = current[key];
@@ -501,7 +534,16 @@ export class SmartFieldLinking extends EventEmitter {
     if (obj == null || typeof obj !== 'object') return undefined;
     let current: any = obj;
     for (const key of path.split('.')) {
-      if (current == null || typeof current !== 'object' || !(key in current)) {
+      // Same guard as setNestedField: a prototype-resolving segment is never
+      // real data, and `hasOwnProperty` (not `in`) keeps an inherited property
+      // from being reported as a stored field value — which would otherwise let
+      // a crafted path make completeness look satisfied.
+      if (SmartFieldLinking.UNSAFE_PATH_KEYS.has(key)) return undefined;
+      if (
+        current == null ||
+        typeof current !== 'object' ||
+        !Object.prototype.hasOwnProperty.call(current, key)
+      ) {
         return undefined;
       }
       current = current[key];

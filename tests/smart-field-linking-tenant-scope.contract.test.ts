@@ -16,7 +16,7 @@
  * Each `it` below fails on the parent commit.
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { createJourneyDb, type JourneyDb } from './golden-journeys/harness';
 
 const T = 60_000;
@@ -246,4 +246,41 @@ describe('C2C-DEVICE-002: field completeness reflects stored data, not a stub', 
       smartFieldLinking.checkFieldCompleteness(PROJECT_A, ORG_B),
     ).rejects.toThrow('project_not_in_organization');
   }, T);
+});
+
+/**
+ * Prototype-pollution regression (Semgrep prototype-pollution-loop).
+ *
+ * `field` is caller-supplied — it arrives as `data.field` on the socket
+ * update-field handler and in the body of POST /api/field-sync/update-field.
+ * The nested-path walker used `key in current`, so "__proto__.polluted"
+ * resolved to Object.prototype and assigned onto it, polluting every object in
+ * the process. These pin the refusal and prove legitimate paths still work.
+ */
+describe('nested field paths cannot reach the object prototype', () => {
+  const setNested = (svc: any, obj: any, path: string, value: unknown) =>
+    (svc as any).setNestedField(obj, path, value);
+
+  afterEach(() => {
+    delete (Object.prototype as any).polluted;
+  });
+
+  it('refuses a __proto__ segment instead of polluting Object.prototype', () => {
+    const svc: any = smartFieldLinking;
+    expect(() => setNested(svc, {}, '__proto__.polluted', 'PWNED')).toThrow(/Unsafe field path segment/);
+    expect(({} as any).polluted).toBeUndefined();
+  });
+
+  it('refuses constructor and prototype segments too', () => {
+    const svc: any = smartFieldLinking;
+    expect(() => setNested(svc, {}, 'constructor.x', 1)).toThrow(/Unsafe field path segment/);
+    expect(() => setNested(svc, {}, 'a.prototype.x', 1)).toThrow(/Unsafe field path segment/);
+  });
+
+  it('still sets a legitimate nested device field', () => {
+    const svc: any = smartFieldLinking;
+    const target: any = {};
+    setNested(svc, target, 'device.deviceName', 'Acme Widget');
+    expect(target.device.deviceName).toBe('Acme Widget');
+  });
 });

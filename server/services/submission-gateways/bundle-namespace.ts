@@ -82,6 +82,15 @@ export function hasUnsafePathSyntax(candidate: unknown): boolean {
 export function isPathWithinBundleRoot(candidate: unknown): boolean {
   if (hasUnsafePathSyntax(candidate)) return false;
   const root = submissionBundleRoot();
+  // nosemgrep: javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal
+  // -- Semgrep flags path.resolve() on a non-literal argument. Here the resolve
+  // IS the sanitiser, not the sink: this function returns a BOOLEAN and reads no
+  // file. `candidate` has already been rejected for NUL and `..` segments above,
+  // and the containment comparison on the next line is what makes the result
+  // safe — resolve() collapses any remaining traversal before the prefix test,
+  // and an ABSOLUTE candidate (which resolve() would let override `root`)
+  // likewise fails that test unless it genuinely lives under the root. Callers
+  // only open a path once this has returned true.
   const resolved = path.resolve(root, candidate as string);
   return resolved === root || resolved.startsWith(root + path.sep);
 }
