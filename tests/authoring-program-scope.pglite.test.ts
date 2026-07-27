@@ -20,6 +20,11 @@ import { createJourneyDb, type JourneyDb } from './golden-journeys/harness';
 
 const JWT_SECRET = 'authoring-program-scope-secret-0727';
 process.env.JWT_SECRET = JWT_SECRET;
+// The authoring router verifies via the CANONICAL verifyJwtWithRotation, which in
+// test env (NODE_ENV=test → suffix DEV) reads JWT_SECRET_DEV ?? JWT_SECRET. This
+// file overrides JWT_SECRET for isolation, so it must override the env-suffixed
+// secret the verifier actually reads, or every token 401s.
+process.env.JWT_SECRET_DEV = JWT_SECRET;
 
 const AUTHOR = {
   id: '4a2b3c10-0000-4000-8000-000000000001',
