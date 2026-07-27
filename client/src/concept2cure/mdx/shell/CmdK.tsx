@@ -16,6 +16,7 @@ const NAV_ROUTES = [
   { id: 'k510',        label: '510(k) submissions',      hint: 'Predicate, SE matrix, eSTAR' },
   { id: 'pma',         label: 'PMA submissions',         hint: '10-phase workflow · modules' },
   { id: 'cer',         label: 'CER generator',           hint: 'Signals · literature · Article 61' },
+  { id: 'clinical-studies', label: 'Clinical studies',   hint: 'IDE · enrollment · deviations · AEs' },
   { id: 'predicate',   label: 'Precedent intelligence',  hint: 'Cross-agency patterns' },
   { id: 'tasks',       label: 'Tasks and reviews',       hint: 'Kanban + list' },
   { id: 'vault',       label: 'Document vault',          hint: 'Files · versions · audit' },
