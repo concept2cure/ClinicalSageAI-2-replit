@@ -77,8 +77,16 @@ describe('seedGaDemoUser — SEED_DEMO_USER gate', () => {
 });
 
 describe('seedGaDemoUser — demo password source', () => {
-  // Pre-computed bcrypt("pass-word", 12) baked into the seed as the fallback.
-  const KNOWN_HASH = '$2b$12$ZE1acJqmLIAbDLl2h2eUiOeXLXCunsidscRZDA7Wt4.kiYBiNgFnu';
+  // The seed's fallback is a pre-computed bcrypt of this password. Asserted by
+  // COMPARING against it rather than pinning the hash literal: a bcrypt string in
+  // source is flagged as a secret by scanners, and comparing proves the thing that
+  // actually matters — which password the seeded credential accepts.
+  const KNOWN_PASSWORD = 'pass-word';
+
+  /** True when the seeded hash is the publicly-known fallback credential. */
+  async function isKnownFallback(hash: unknown): Promise<boolean> {
+    return typeof hash === 'string' && bcrypt.compare(KNOWN_PASSWORD, hash);
+  }
 
   /** Params of the `INSERT INTO users` call. */
   function insertedUserParams(client: PoolClient): unknown[] {
@@ -97,9 +105,9 @@ describe('seedGaDemoUser — demo password source', () => {
     await seedGaDemoUser(client);
 
     const hash = insertedUserParams(client)[2] as string;
-    expect(hash).not.toBe(KNOWN_HASH);
+    expect(await isKnownFallback(hash)).toBe(false);
     expect(hash.startsWith('$2')).toBe(true);
-    expect(hash.split('$')[2]).toBe('12'); // same bcrypt cost as the constant
+    expect(hash.split('$')[2]).toBe('12'); // same bcrypt cost as the built-in fallback
     expect(await bcrypt.compare('a-non-guessable-pilot-secret', hash)).toBe(true);
     // Override in play: nothing publicly known was seeded, so no warning.
     expect(mockLog.warn).not.toHaveBeenCalled();
@@ -112,7 +120,7 @@ describe('seedGaDemoUser — demo password source', () => {
 
     await seedGaDemoUser(client);
 
-    expect(insertedUserParams(client)[2]).toBe(KNOWN_HASH);
+    expect(await isKnownFallback(insertedUserParams(client)[2])).toBe(true);
   });
 
   it('warns loudly when the publicly-known password is seeded outside local dev', async () => {
@@ -122,7 +130,7 @@ describe('seedGaDemoUser — demo password source', () => {
 
     await seedGaDemoUser(client);
 
-    expect(insertedUserParams(client)[2]).toBe(KNOWN_HASH);
+    expect(await isKnownFallback(insertedUserParams(client)[2])).toBe(true);
     expect(mockLog.warn).toHaveBeenCalledTimes(1);
     const warning = mockLog.warn.mock.calls[0][0] as string;
     expect(warning).toContain('jm.smith@concept2cure.pro');
@@ -137,7 +145,7 @@ describe('seedGaDemoUser — demo password source', () => {
 
     await seedGaDemoUser(client);
 
-    expect(insertedUserParams(client)[2]).toBe(KNOWN_HASH);
+    expect(await isKnownFallback(insertedUserParams(client)[2])).toBe(true);
     expect(mockLog.warn).not.toHaveBeenCalled();
   });
 });
