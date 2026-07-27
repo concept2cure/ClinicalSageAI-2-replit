@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | **Document ID** | C2C-PILOT-DATA-AGREEMENT-001 |
-| **Version** | 1.0 |
+| **Version** | 1.1 |
 | **Effective date** | _______________ (**FILL IN**) |
 | **Pilot sponsor** | Concept2Cure, Inc. |
 
@@ -38,11 +38,15 @@ Before any content leaves the Platform, the AI gateway enforces **automated PHI/
 
 ## 4. Data retention and deletion
 
-Pilot data and associated audit logs are retained only for the duration of the pilot and for a limited evaluation window thereafter. **All tester-submitted pilot data will be deleted no later than:**
+Pilot data and associated audit logs are retained only for the duration of the pilot and for a limited evaluation window thereafter. The retention policy is fixed:
 
-> **Pilot-data deletion date: _______________  (FILL IN — required)**
+> **All tester-submitted pilot data and associated audit logs are deleted no later than 90 days after the pilot closes.**
 
-Because the Platform enforces Part 11-style immutable, tamper-evident records during the pilot, individual entries generally cannot be selectively erased mid-pilot; deletion occurs as a scoped purge of the pilot dataset on or before the date above.
+> **Pilot close date: _______________  (FILL IN — required)**
+>
+> Deletion deadline: the pilot close date above **+ 90 days**.
+
+Because the Platform enforces Part 11-style immutable, tamper-evident records during the pilot, individual entries generally cannot be selectively erased mid-pilot; deletion occurs as a scoped purge of the pilot dataset on or before that deadline.
 
 ## 5. Evaluation only; no warranty
 
@@ -61,4 +65,4 @@ I have read and understand this Agreement. I will submit **synthetic, non-PHI, n
 
 ---
 
-*Concept2Cure, Inc. — Pilot Data Agreement, Document ID C2C-PILOT-DATA-AGREEMENT-001, v1.0. This document covers a non-production pilot and is not a validation, certification, or business-associate agreement.*
+*Concept2Cure, Inc. — Pilot Data Agreement, Document ID C2C-PILOT-DATA-AGREEMENT-001, v1.1. This document covers a non-production pilot and is not a validation, certification, or business-associate agreement.*
