@@ -311,7 +311,19 @@ const checkPRDescription = () => {
 // │                           RULE: PACKAGE.JSON CHANGES                         │
 // └─────────────────────────────────────────────────────────────────────────────┘
 
-/** package.json fields whose contents the lockfile actually pins. */
+/**
+ * package.json fields whose contents npm's lockfile actually pins.
+ *
+ * `overrides` is npm's version-pinning field and IS reflected in
+ * package-lock.json. Yarn's `resolutions` is deliberately absent: this
+ * repository installs with `npm ci` and ships only package-lock.json, and npm
+ * ignores `resolutions` — so demanding a lockfile update for a resolutions-only
+ * edit would recreate exactly the impossible-to-satisfy failure this rule
+ * exists to remove. Add it back only alongside Yarn/resolution tooling.
+ *
+ * `workspaces` is included because adding one pulls in a package whose
+ * dependencies npm installs and links; that belongs in the security checklist.
+ */
 const DEPENDENCY_FIELDS = [
   'dependencies',
   'devDependencies',
@@ -320,7 +332,7 @@ const DEPENDENCY_FIELDS = [
   'bundledDependencies',
   'bundleDependencies',
   'overrides',
-  'resolutions',
+  'workspaces',
 ];
 
 /**
