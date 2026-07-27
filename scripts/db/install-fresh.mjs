@@ -57,6 +57,7 @@ import {
   applyAuthoringSubsystem,
   AUTHORING_SUBSYSTEM_TABLES,
 } from './authoring-subsystem.mjs';
+import { resolveDatabaseUrl, sslFor, INSTALL_URL_VARS } from './connection.mjs';
 
 dotenv.config();
 
@@ -77,29 +78,7 @@ const RLS_MIGRATIONS = [
   '20260612_rls_research_admin.sql',
 ];
 
-function getDatabaseUrl() {
-  for (const name of ['DATABASE_URL', 'DATABASE_URL_ADMIN', 'NEON_DATABASE_URL', 'NEON_DATABASE_URL_ADMIN']) {
-    const v = process.env[name];
-    if (v) return v.replace(/^psql\s+'?/i, '').replace(/'?\s*$/, '');
-  }
-  throw new Error('No DATABASE_URL found in environment');
-}
-
-/**
- * Local/non-SSL Postgres vs a remote managed DB (Neon). Remote connections
- * verify the server certificate (rejectUnauthorized: true) — Neon presents a
- * publicly-trusted cert, and disabling verification would expose the
- * provisioning connection to MITM. Local sockets use no TLS.
- */
-function sslFor(url) {
-  const u = url.toLowerCase();
-  if (u.includes('sslmode=disable') || u.includes('@localhost') || u.includes('@127.0.0.1')) {
-    return false;
-  }
-  return { rejectUnauthorized: true };
-}
-
-const url = getDatabaseUrl();
+const url = resolveDatabaseUrl(INSTALL_URL_VARS);
 const pool = new Pool({ connectionString: url, ssl: sslFor(url) });
 
 async function step(label, fn) {

@@ -44,6 +44,12 @@ env:
   ECS_WORKER_TASK_FAMILY: c2c-production-worker
   ECS_API_CONTAINER_NAME: api
   ECS_WORKER_CONTAINER_NAME: worker
+  # Family for the one-off schema-migration task (see the `migrate` job). It is
+  # registered fresh on every deploy by deriving it from the API task def, so it
+  # inherits the same DATABASE_URL secret, execution role and log config without
+  # a second place to configure them. ECS creates the family on first register,
+  # so this needs no pre-existing infrastructure.
+  ECS_MIGRATE_TASK_FAMILY: c2c-production-migrate
   FRONTEND_BUCKET: c2c-prod-frontend
   CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
 
@@ -217,10 +223,226 @@ jobs:
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
           echo "Worker image pushed: $ECR_REGISTRY/$ECR_WORKER_REPO:$IMAGE_TAG @ $DIGEST"
 
+  # ── Migrate the database BEFORE any service rolls ─────────────────────────
+  #
+  # C2C-DB-001 / REM-7. Until this job existed there was no production migration
+  # mechanism at all: the container CMD is `npm run start` (which applies
+  # nothing), this workflow contained zero migration references, and the runtime
+  # image did not even carry db/migrations or scripts/db. Schema reached real
+  # databases only when a human remembered to run an applier by hand — which is
+  # the mechanism behind "merged ≠ applied": code that reads a table ships on a
+  # deploy, the table does not.
+  #
+  # Shape: run scripts/db/deploy-migrate.mjs as a one-off Fargate task built from
+  # the SAME digest-pinned image the services are about to run, inside the same
+  # VPC/subnets/security groups as the API service — the database is on private
+  # RDS subnets (terraform/modules/rds), so a GitHub-hosted runner cannot reach
+  # it and running the migration from the runner is not an option.
+  #
+  # deploy-api and deploy-worker both `needs: migrate`, so a failed or halted
+  # migration blocks the rollout instead of shipping code onto a schema that
+  # cannot serve it.
+  migrate:
+    name: Migrate Database (one-off ECS task)
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Register migration task definition (pinned to the deploying image)
+        id: register-migrate-td
+        env:
+          IMAGE_DIGEST: ${{ needs.build-push.outputs.api_digest }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        # Derived from the API task def so the migration runs with the identical
+        # DATABASE_URL secret, execution role and log configuration the app uses.
+        # Deliberate differences from the API definition:
+        #   • only the app container is kept — log routers / APM sidecars would
+        #     keep a batch task alive after the migration exits;
+        #   • portMappings + healthCheck are dropped — a one-off task registers
+        #     with no load balancer and must not be killed by an HTTP probe;
+        #   • command is the migration entrypoint.
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$IMAGE_DIGEST" || "$IMAGE_DIGEST" != sha256:* ]]; then
+            echo "::error::No API image digest available, so there is no image to migrate from."
+            echo "::error::A deploy that skips the API image cannot migrate the schema. Re-run with deploy_api enabled,"
+            echo "::error::or run 'npm run db:migrate:deploy' out of band before deploying."
+            exit 1
+          fi
+
+          PINNED_IMAGE="$ECR_REGISTRY/$ECR_API_REPO@$IMAGE_DIGEST"
+          echo "Migration task image: $PINNED_IMAGE"
+
+          aws ecs describe-task-definition \
+            --task-definition "$ECS_API_TASK_FAMILY" \
+            --no-cli-pager \
+            --query 'taskDefinition' > /tmp/api-td.json
+
+          jq --arg img "$PINNED_IMAGE" \
+             --arg api_container "$ECS_API_CONTAINER_NAME" \
+             --arg family "$ECS_MIGRATE_TASK_FAMILY" \
+             '
+             {taskRoleArn, executionRoleArn, networkMode, containerDefinitions, volumes, placementConstraints, requiresCompatibilities, cpu, memory, runtimePlatform, ipcMode, pidMode, proxyConfiguration, ephemeralStorage}
+             | with_entries(select(.value != null))
+             | .family = $family
+             | .containerDefinitions = (
+                 .containerDefinitions
+                 | map(select(.name == $api_container))
+                 | map(
+                     .image = $img
+                     | .command = ["npm", "run", "db:migrate:deploy"]
+                     | .essential = true
+                     | del(.portMappings, .healthCheck)
+                     # Inter-container wiring that can only refer to the sidecars
+                     # dropped above. Left in place, register-task-definition
+                     # rejects the whole revision for naming a container that is
+                     # no longer in the definition.
+                     | del(.dependsOn, .links, .volumesFrom)
+                   )
+               )
+             ' /tmp/api-td.json > /tmp/migrate-td.json
+
+          if [[ "$(jq '.containerDefinitions | length' /tmp/migrate-td.json)" != "1" ]]; then
+            echo "::error::Container '$ECS_API_CONTAINER_NAME' not found in task def '$ECS_API_TASK_FAMILY'."
+            exit 1
+          fi
+
+          TD_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file:///tmp/migrate-td.json \
+            --no-cli-pager \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+          # `--output text` yields the literal "None" when the query misses,
+          # which is a string the next step would happily pass to run-task.
+          # Catch it here, where the cause is still visible.
+          if [[ -z "$TD_ARN" || "$TD_ARN" == "None" ]]; then
+            echo "::error::register-task-definition returned no ARN for family '$ECS_MIGRATE_TASK_FAMILY'."
+            exit 1
+          fi
+          echo "Registered migration task def: $TD_ARN"
+          echo "task_def_arn=$TD_ARN" >> "$GITHUB_OUTPUT"
+
+          # Log location for the failure tail below — read off the definition so
+          # it stays correct if the API's log config changes.
+          jq -r '.containerDefinitions[0].logConfiguration.options["awslogs-group"] // ""' \
+            /tmp/migrate-td.json > /tmp/log-group
+          jq -r '.containerDefinitions[0].logConfiguration.options["awslogs-stream-prefix"] // ""' \
+            /tmp/migrate-td.json > /tmp/log-prefix
+
+      - name: Run migration task and wait for it to finish
+        env:
+          TD_ARN: ${{ steps.register-migrate-td.outputs.task_def_arn }}
+        # Network configuration is read off the running API service rather than
+        # hard-coded: the migration must land on the same subnets and security
+        # groups that are already allowed through to RDS, and duplicating those
+        # IDs here would be a second place to get them wrong.
+        run: |
+          set -euo pipefail
+
+          NETWORK_CONFIG=$(aws ecs describe-services \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_API_SERVICE" \
+            --no-cli-pager \
+            --query 'services[0].networkConfiguration' \
+            --output json)
+
+          if [[ -z "$NETWORK_CONFIG" || "$NETWORK_CONFIG" == "null" ]]; then
+            echo "::error::Could not read networkConfiguration from service '$ECS_API_SERVICE'."
+            echo "::error::Without it the migration task would launch outside the VPC that can reach the database."
+            exit 1
+          fi
+          # The service runs tasks with a public IP disabled/enabled per its own
+          # config; reuse it verbatim so the migration has the same egress path
+          # (NAT / VPC endpoints) the app has for Secrets Manager and ECR.
+          echo "$NETWORK_CONFIG" | jq '{awsvpcConfiguration: .awsvpcConfiguration}' > /tmp/netcfg.json
+
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$ECS_CLUSTER" \
+            --task-definition "$TD_ARN" \
+            --launch-type FARGATE \
+            --network-configuration file:///tmp/netcfg.json \
+            --started-by "deploy-${GITHUB_RUN_ID}" \
+            --no-cli-pager \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          if [[ -z "$TASK_ARN" || "$TASK_ARN" == "None" ]]; then
+            echo "::error::run-task returned no task ARN — the migration never started."
+            aws ecs run-task \
+              --cluster "$ECS_CLUSTER" \
+              --task-definition "$TD_ARN" \
+              --launch-type FARGATE \
+              --network-configuration file:///tmp/netcfg.json \
+              --no-cli-pager \
+              --query 'failures' --output json || true
+            exit 1
+          fi
+          echo "Migration task: $TASK_ARN"
+          echo "$TASK_ARN" > /tmp/task-arn
+
+          # `wait tasks-stopped` polls for up to 10 minutes. A migration that runs
+          # longer than that is itself a problem worth failing the deploy on.
+          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN"
+
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" --no-cli-pager \
+            --query "tasks[0].containers[?name=='${ECS_API_CONTAINER_NAME}'].exitCode | [0]" \
+            --output text)
+          STOPPED_REASON=$(aws ecs describe-tasks \
+            --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" --no-cli-pager \
+            --query 'tasks[0].stoppedReason' --output text)
+
+          echo "Migration task exit code: $EXIT_CODE (stoppedReason: $STOPPED_REASON)"
+
+          # Always surface the migration's own output — it is the only place the
+          # per-file apply log and the readiness-contract verification appear.
+          LOG_GROUP=$(cat /tmp/log-group)
+          LOG_PREFIX=$(cat /tmp/log-prefix)
+          if [[ -n "$LOG_GROUP" && -n "$LOG_PREFIX" ]]; then
+            TASK_ID="${TASK_ARN##*/}"
+            echo "── migration log ──────────────────────────────────────────────"
+            aws logs get-log-events \
+              --log-group-name "$LOG_GROUP" \
+              --log-stream-name "${LOG_PREFIX}/${ECS_API_CONTAINER_NAME}/${TASK_ID}" \
+              --no-cli-pager --query 'events[].message' --output text || \
+              echo "(log stream not available)"
+            echo "───────────────────────────────────────────────────────────────"
+          fi
+
+          case "$EXIT_CODE" in
+            0)
+              echo "Schema migration succeeded — services may roll."
+              ;;
+            3)
+              echo "::error::The database has never been provisioned (deploy-migrate.mjs exit 3)."
+              echo "::error::Run the one-time from-scratch installer against it before deploying:"
+              echo "::error::  DATABASE_URL='…' node scripts/db/install-fresh.mjs"
+              exit 1
+              ;;
+            *)
+              echo "::error::Schema migration failed (exit ${EXIT_CODE}). Services were NOT rolled."
+              exit 1
+              ;;
+          esac
+
   # ── Deploy API to ECS ────────────────────────────────────────────────────
   deploy-api:
     name: Deploy API → ECS
-    needs: build-push
+    # `migrate` is a hard gate: rolling the API onto a schema whose migration
+    # failed is exactly the outcome this deploy path is meant to prevent.
+    needs: [build-push, migrate]
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.deploy_api != 'false' }}
     environment: production
@@ -310,7 +532,9 @@ jobs:
   # ── Deploy Worker to ECS ──────────────────────────────────────────────────
   deploy-worker:
     name: Deploy Worker → ECS
-    needs: build-push
+    # Same hard gate as deploy-api. The worker reads the same schema, so a failed
+    # migration must block it too.
+    needs: [build-push, migrate]
     runs-on: ubuntu-latest
     if: ${{ github.event.inputs.deploy_worker != 'false' }}
     environment: production

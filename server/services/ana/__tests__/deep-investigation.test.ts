@@ -8,6 +8,7 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
 import { describe, it, expect, afterEach } from 'vitest';
+import { C2C_MIGRATION_FILES } from '../../../../scripts/db/migration-set.mjs';
 
 import {
   isInvestigationStale,
@@ -165,11 +166,10 @@ describe('provisioning migration — idempotency guard', () => {
     }
   });
 
-  it('is wired into the standard apply script', () => {
-    const script = readFileSync(
-      resolve(__dirname, '../../../../scripts/db/apply-c2c-migrations.mjs'),
-      'utf8',
-    );
-    expect(script).toContain('20260724_ana_deep_investigations.sql');
+  it('is wired into the standard apply set', () => {
+    // The ordered set both appliers consume — the manual one and the deploy-time
+    // one (scripts/db/deploy-migrate.mjs). Asserting membership here means the
+    // migration is on the PRODUCTION path, not merely on one a human might run.
+    expect(C2C_MIGRATION_FILES).toContain('migrations/20260724_ana_deep_investigations.sql');
   });
 });

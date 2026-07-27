@@ -184,7 +184,7 @@ Completed and written down **before the first tester signs in**:
 
 1. Neon **PITR / branching confirmed on** for the pilot database.
 2. One real **`pg_dump`** taken, stored off the pilot host, restore target identified.
-3. One **restore into a scratch Neon branch**, executed and verified against table and RLS-policy counts — the same counts the installer verifies (hundreds of tables · hundreds of RLS policies · core route tables · **10/10 authoring-subsystem tables** on a clean install).
+3. One **restore into a scratch Neon branch**, executed and verified against table and RLS-policy counts — the same counts the installer verifies (hundreds of tables · hundreds of RLS policies · core route tables · **11/11 authoring-subsystem tables** on a clean install).
 4. Both operations **timed**. The recovery-time number is a fact we know, not one we estimate during an incident.
 
 Reprovisioning from empty is a single command —
@@ -192,11 +192,52 @@ Reprovisioning from empty is a single command —
 re-run. It provisions the app schema, the RLS policies, **and the authoring
 subsystem as an atomic unit** (the four `db/migrations/20260725_authoring_*`
 files — the flagship IND loop that no path provisioned before); the installer's
-final step fails loudly if any of those ten tables is absent, so a half-built
+final step fails loudly if any of those eleven tables is absent, so a half-built
 authoring surface can never ship green. On an already-provisioned database the
 same unit can be (re)applied on its own with
 `APPLY_C2C_MIGRATIONS=true npm run db:apply-c2c`. A reprovision is not a
 restore — only the rehearsal above gets data back.
+
+### Two commands, and which one you want
+
+There are exactly two supported paths, and they are not interchangeable.
+
+| | **First provisioning** | **Every deploy after** |
+| --- | --- | --- |
+| Command | `node scripts/db/install-fresh.mjs` | `npm run db:migrate:deploy` |
+| Runs from | a repo checkout (needs devDependencies — it shells out to `drizzle-kit`) | the production image, as a one-off ECS task |
+| Against a blank DB | provisions it | **refuses, exit 3** |
+| Who runs it | a human, once per database | the `migrate` job in `deploy-aws.yml`, automatically |
+
+**Deploys migrate the database themselves now.** Before this existed there was
+no production migration mechanism at all: the container command applies nothing,
+the deploy workflow had zero migration steps, and the runtime image did not even
+carry `db/migrations` or `scripts/db`. Schema reached a real database only when
+somebody remembered to run an applier by hand — which is how *merged* and
+*applied* drifted apart, and why routes shipped reading tables that were not
+there. `deploy-aws.yml` now runs `scripts/db/deploy-migrate.mjs` as a one-off
+Fargate task on the **same digest-pinned image** the services are about to run,
+inside the same VPC as the database, and `deploy-api` / `deploy-worker` both
+`needs: migrate` — a failed migration blocks the rollout instead of shipping
+code onto a schema that cannot serve it.
+
+The deploy migration deliberately **will not bootstrap a blank database**
+(exit 3, and the deploy fails with the installer command in the error). Applying
+the incremental set onto an empty schema would leave an island of tables with
+nothing under them and let the app boot against a schema it does not own.
+Absent is honest and `/readyz` reports it; half-provisioned is the state nobody
+can reason about.
+
+It also verifies, before reporting success, the same contract `/readyz` enforces
+at boot: 11/11 authoring tables, 4/4 tenant-parentage FKs, and
+`tenant_isolation_policy` on every one of those tables. A deploy therefore
+cannot go green and then have every task fail its readiness probe.
+
+**Proven, not asserted.** CI job `blank-db-provisioning` runs the whole sequence
+against a genuinely empty Postgres on every PR: the deploy migration refuses the
+blank database and creates nothing → the installer provisions it → the deploy
+migration succeeds → running it a second time is a no-op → the readiness
+contract is re-verified independently from `psql`.
 
 **Retrofit onto a database that already holds authoring rows.** The unit also
 installs composite **tenant-parentage** foreign keys (a child's

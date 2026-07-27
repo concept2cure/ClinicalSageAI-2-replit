@@ -31,6 +31,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 import fs from 'node:fs';
 import path from 'node:path';
+import { C2C_MIGRATION_FILES } from '../../scripts/db/migration-set.mjs';
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const PORT_MIGRATION = 'db/migrations/20260725_esig_gate_columns_port.sql';
@@ -102,9 +103,18 @@ const INSERT_SIGNATURE = `
 
 describe('C-17: the e-sig gate columns are only in the push surface', () => {
   it('the root-lineage original is in NO application path', () => {
-    const applyScript = read('scripts/db/apply-c2c-migrations.mjs');
-    // The allowlist is the only thing that applies root-lineage files.
-    expect(applyScript).not.toContain('20260629_orchestrator_awaiting_signature_status.sql');
+    // The allowlist is the only thing that applies root-lineage files, and it
+    // is now shared by the manual applier AND the deploy-time one — so this
+    // absence check covers the production deploy path too.
+    //
+    // Imported, not scraped from the applier's source: a substring check
+    // against a file that no longer holds the list would pass vacuously, which
+    // is worse than failing.
+    expect(
+      C2C_MIGRATION_FILES.some((f: string) =>
+        f.endsWith('20260629_orchestrator_awaiting_signature_status.sql'),
+      ),
+    ).toBe(false);
     // And the root lineage's journal carries only the 0000 baseline.
     const journal = JSON.parse(read('migrations/meta/_journal.json'));
     expect(journal.entries.map((e: { tag: string }) => e.tag)).toEqual(['0000_sweet_joseph']);
