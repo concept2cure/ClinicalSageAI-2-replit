@@ -1,0 +1,188 @@
+/**
+ * The out-of-band migration set — the ordered list of .sql files that no other
+ * durable path applies, plus the loop that applies them.
+ *
+ * WHY THIS MODULE EXISTS. Two entrypoints need the exact same set:
+ *   • scripts/db/apply-c2c-migrations.mjs — the manual/preview applier.
+ *   • scripts/db/deploy-migrate.mjs       — the production deploy-time applier
+ *                                           run as a one-off ECS task before
+ *                                           the API/worker services roll.
+ * Holding the list in one place is what stops the deploy path and the manual
+ * path from silently diverging — which is the failure mode that produced the
+ * gap these files close in the first place (merged ≠ applied).
+ *
+ * These files live in the root `migrations/` tree (the established convention
+ * for phase migrations) or in `db/migrations/` without the `_gcc_` infix, so
+ * NOTHING else applies them: drizzle's runtime migrate() replays only the
+ * journaled baseline, the CI psql loop matches only `db/migrations/*_gcc_*.sql`,
+ * and install-fresh's overlay covers only the root tree. Every file here is
+ * CREATE/ALTER ... IF NOT EXISTS, so the set is safe to apply repeatedly.
+ */
+
+import fs from 'node:fs';
+import path from 'node:path';
+
+// Dependency-safe order: governance ALTERs ana_capability_registry (pre-existing),
+// PV + commitments create their own tables, council provisioning seeds the four
+// drafting-council agents into the lumen schema.
+//
+// Entries are repo-relative so a root-lineage file can declare a prerequisite that
+// lives in the canonical db/migrations lineage. 044b is that prerequisite: it owns
+// the ONLY definition of lumen.data_atoms, and the council file that follows it
+// reads from that table. Applying it here means this out-of-band path provisions
+// the same shape the manifest lineage does, instead of racing it under
+// CREATE TABLE IF NOT EXISTS. See ledger C-12.
+// ── Data-room / evidence lineage (added 2026-07-26) ────────────────────────
+// ORDER MATTERS. The spine creates cre_evidence_sources; the program-scope
+// migration ALTERs it. The spine entry is repo-relative into db/migrations for
+// the same reason 044b is: a root-lineage file declares a prerequisite that
+// lives in the canonical lineage.
+//
+// Why the spine is listed here at all: it has been merged since 20260724 and IS
+// present in db/migrations/migrations_manifest.json, but NOTHING consumes that
+// manifest — it is ordering metadata, and readiness-audit.mjs only reports. The
+// other applier, preview_db_test, applies only migrations a PR *adds*, to an
+// ephemeral Neon branch deleted when the PR closes. So the spine was applied
+// once to a throwaway branch and never to a real database, and every cre_*
+// write (CSR adapter, CRL ingestion, chat-upload source identity) has been
+// hitting a table that does not exist. This list is the only durable path, so
+// it is where the gap gets closed.
+//
+// The wider problem stands: merged and applied have diverged silently across
+// 358 migrations because the manifest is not authoritative for anything. Making
+// something consume it is a separate change to how schema ships.
+export const C2C_MIGRATION_FILES = [
+  'migrations/20260603_ai_capability_governance.sql',
+  'migrations/20260603_pv_operational.sql',
+  'migrations/20260603_commitments.sql',
+  'db/migrations/044b_gcc_lumen_schema_prerequisite.sql',
+  'migrations/20260724_lumen_council_provisioning.sql',
+  'migrations/20260724_ana_deep_investigations.sql',
+  // Clinical-Regulatory Evidence spine — creates cre_evidence_sources and the
+  // rest of the cre_* graph. Fully idempotent: 6 CREATE TABLE IF NOT EXISTS,
+  // 22 CREATE INDEX IF NOT EXISTS, no data statements, no unguarded DDL.
+  'db/migrations/20260724_clinical_regulatory_evidence_spine.sql',
+  // file_uploads tenancy contract — codifies the columns the upload route
+  // writes, adds organization_id idempotently, backfills it from the
+  // uploads/org-{id}/ storage-path prefix.
+  'migrations/20260726_file_uploads_tenancy.sql',
+  // Program scope for canonical sources. MUST follow the spine: it ALTERs
+  // cre_evidence_sources. Self-guarding on to_regclass, so it no-ops with a
+  // NOTICE if the spine is somehow absent rather than failing the run.
+  'migrations/20260726_cre_source_program_scope.sql',
+  // ── Authoring program scope (added 2026-07-27, from #1131) ────────────────
+  // Program scope for authoring documents: a guarded ALTER that adds
+  // client_program_id to authoring_documents. It self-guards on to_regclass.
+  // Callers provision the authoring subsystem (below) BEFORE this loop runs, so
+  // on a fresh DB the table is now present and this ALTER applies for real
+  // rather than no-opping.
+  'migrations/20260727_authoring_document_program_scope.sql',
+  // Source-usage index + column semantics on authoring_citations. Also guarded
+  // on to_regclass; likewise lands for real now that the subsystem is
+  // provisioned ahead of this loop.
+  'migrations/20260726_authoring_citation_source_usage.sql',
+  // Industry-context tailoring: organization_industry_profiles +
+  // project_industry_profiles. Fully idempotent (CREATE TABLE/INDEX IF NOT
+  // EXISTS, no data statements).
+  'db/migrations/20260727_industry_context_profiles.sql',
+  // MDx task metadata: additive nullable columns on unified_tasks
+  // (lifecycle_phase, market, filing_type, study_id, deliverable_id,
+  // client_visibility) + lifecycle_phase index. Fully idempotent
+  // (ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS, no data statements).
+  'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
+  // ── Risk-Based Monitoring lineage (added 2026-07-27) ──────────────────────
+  // These five migration files exist in migrations/ and create the ENTIRE rbm_*
+  // schema, but none was on any durable apply path: not here, not in the Drizzle
+  // journaled baseline (shared/schema.ts defines no rbm_* table), not in
+  // migrations/meta. Yet the RBM/RBQM module writes to these tables on every
+  // action — rbm-actuator, metric-ingestion, site-risk-engine, the mdx-rbm* routes
+  // and the AnA tools all issue INSERT/UPDATE/SELECT against rbm_*. So the whole
+  // module has only ever addressed tables that existed on the ephemeral Neon
+  // preview branch a PR created and then deleted; on any real database those
+  // writes hit a table that is not there. This list is the only durable path, so
+  // it is where the gap gets closed.
+  //
+  // ORDER MATTERS. rbm_surfaces creates the eight base tables; the rest either
+  // create a table referencing them or backfill a column on one:
+  //   kri_values        -> rbm_kri_values (FK rbm_kris)
+  //   patient_profiles  -> rbm_patient_profiles (the cohort scorer's store)
+  //   metric_ingestion  -> rbm_data_runs + rbm_metric_observations (the load path)
+  //   not_evaluated     -> backfills status on rbm_kris / rbm_qtls
+  //
+  // All five are idempotent (every CREATE TABLE / CREATE INDEX / ADD COLUMN is
+  // IF NOT EXISTS; the backfill is to_regclass-guarded and re-runnable), none
+  // opens its own transaction, and none contains DROP or TRUNCATE — safe under
+  // the repeated-run contract.
+  'migrations/20260629_rbm_surfaces.sql',
+  'migrations/20260630_rbm_kri_values.sql',
+  'migrations/20260701_rbm_patient_profiles.sql',
+  'migrations/20260726_rbm_metric_ingestion.sql',
+  'migrations/20260726_rbm_not_evaluated_backfill.sql',
+  // ── Collaboration state (added 2026-07-27) ────────────────────────────────
+  // Durable Y.js CRDT state for the /collab socket. Fully self-contained: one
+  // CREATE TABLE IF NOT EXISTS that references nothing, plus an ON DELETE
+  // CASCADE FK to authoring_documents added only inside a to_regclass guard.
+  // Listed after the authoring entries so that on a fresh database — where
+  // applyAuthoringSubsystem() has already run — the guard finds the table and
+  // the cascade actually lands, instead of leaving CRDT state that outlives the
+  // document it belongs to.
+  //
+  // Without this entry the collaboration server has nowhere to persist: its
+  // store reports the table missing, onLoadDocument refuses the connection, and
+  // the subsystem is off anyway until ENABLE_COLLAB_CRDT is set. Listing it
+  // here is what makes turning that flag on a configuration change rather than
+  // a schema migration.
+  'db/migrations/20260727_collab_document_state.sql',
+];
+
+/** Files that open their own transaction must not be wrapped in a second one. */
+const selfTransacting = (sql) => /^\s*BEGIN\s*;/im.test(sql);
+
+/**
+ * Apply `files` (repo-relative) against `pool`, one transaction per file.
+ *
+ * `stopOnFirstFailure` is the difference between the two callers. The manual
+ * applier reports every problem in one run (false) so an operator sees the full
+ * picture; the deploy applier stops at the first failure (true) so a faulted
+ * migration never leaves a deploy applying further DDL on top of a schema it has
+ * already failed to move — the half-applied state is the one nobody can reason
+ * about.
+ *
+ * @returns {Promise<{ applied: string[], failures: Array<{ file: string, error: string }> }>}
+ */
+export async function applyMigrationFiles(
+  pool,
+  repoRoot,
+  files,
+  { log = () => {}, error = () => {}, stopOnFirstFailure = false } = {},
+) {
+  const applied = [];
+  const failures = [];
+
+  for (const file of files) {
+    const full = path.join(repoRoot, file);
+    if (!fs.existsSync(full)) {
+      failures.push({ file, error: 'missing from repo' });
+      error(`✗ missing: ${file}`);
+      if (stopOnFirstFailure) return { applied, failures };
+      continue;
+    }
+    const sql = fs.readFileSync(full, 'utf8');
+    const wrap = !selfTransacting(sql);
+    try {
+      if (wrap) await pool.query('BEGIN');
+      await pool.query(sql);
+      if (wrap) await pool.query('COMMIT');
+      applied.push(file);
+      log(`✓ applied: ${file}`);
+    } catch (err) {
+      await pool.query('ROLLBACK').catch(() => {});
+      const detail = `${err.message}${err.detail ? ` (${err.detail})` : ''}`;
+      failures.push({ file, error: detail });
+      error(`✗ failed:  ${file} — ${detail}`);
+      if (stopOnFirstFailure) return { applied, failures };
+    }
+  }
+
+  return { applied, failures };
+}

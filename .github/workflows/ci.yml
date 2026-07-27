@@ -517,6 +517,149 @@ jobs:
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
+  # ── Blank-database provisioning + deploy-migration proof ──────────────────
+  #
+  # C2C-DB-001 / REM-7. Proves, against a genuinely empty Postgres, that:
+  #   1. the deploy-time migration REFUSES an unprovisioned database (exit 3)
+  #      instead of laying an island of tables onto an empty schema;
+  #   2. the from-scratch installer turns that empty database into the full
+  #      application schema;
+  #   3. the deploy-time migration then succeeds and its readiness contract
+  #      holds — the same contract /readyz enforces at boot; and
+  #   4. re-running it is a no-op, because a deploy runs it on every release.
+  #
+  # This exists because "the provisioning path works" was, until now, a claim no
+  # job tested. Every other DB-backed job here runs against a schema some earlier
+  # step already created, so a break in the from-scratch path would surface for
+  # the first time on a real deployment.
+  blank-db-provisioning:
+    name: Blank DB Provisioning + Deploy Migration
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      postgres:
+        # pgvector, not stock postgres: the installer creates the `vector`
+        # extension, which stock postgres cannot provide.
+        image: pgvector/pgvector:pg15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: c2c_blank_proof
+          # Auth method = trust; no credential literal in the workflow.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # sslmode=disable so scripts/db/connection.mjs selects the local, no-TLS
+      # branch rather than trying to verify a certificate the service has none of.
+      DATABASE_URL: postgresql://postgres@localhost:5432/c2c_blank_proof?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          for attempt in 1 2 3; do
+            npm ci && exit 0
+            echo "::warning::npm ci failed (attempt $attempt/3); retrying after backoff…"
+            sleep $((attempt * 15))
+          done
+          echo "::error::npm ci failed after 3 attempts"; exit 1
+
+      - name: Install Postgres client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Assert the database really is blank
+        run: |
+          COUNT=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'")
+          echo "public tables before provisioning: $COUNT"
+          [[ "$COUNT" == "0" ]] || { echo "::error::Fixture is not a blank database"; exit 1; }
+
+      - name: Deploy migration must REFUSE an unprovisioned database
+        # The fail-closed leg. Exit 3 is deploy-migrate.mjs's distinct
+        # "never provisioned" code; any other outcome — success included — is a
+        # failure of this test, because succeeding here would mean the deploy
+        # path is willing to half-provision production.
+        run: |
+          set +e
+          node scripts/db/deploy-migrate.mjs
+          CODE=$?
+          set -e
+          echo "exit code: $CODE (expected 3)"
+          [[ "$CODE" == "3" ]] || { echo "::error::Expected exit 3 on a blank DB, got $CODE"; exit 1; }
+
+          AFTER=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public'")
+          echo "public tables after refusal: $AFTER"
+          [[ "$AFTER" == "0" ]] || { echo "::error::Refused run still created $AFTER tables"; exit 1; }
+
+      - name: Provision from scratch
+        run: node scripts/db/install-fresh.mjs
+
+      - name: Deploy migration succeeds on the provisioned database
+        run: node scripts/db/deploy-migrate.mjs
+
+      - name: Deploy migration is idempotent (every release re-runs it)
+        run: node scripts/db/deploy-migrate.mjs
+
+      - name: Verify the readiness contract independently
+        # deploy-migrate.mjs checks this itself; asserting it again from psql
+        # means a regression in the script's own verification cannot hide a
+        # regression in the schema.
+        run: |
+          set -euo pipefail
+          check() {
+            local label="$1" expected="$2" sql="$3"
+            local actual
+            actual=$(psql "$DATABASE_URL" -tAc "$sql")
+            echo "$label: $actual (expected $expected)"
+            [[ "$actual" == "$expected" ]] || { echo "::error::$label = $actual, expected $expected"; exit 1; }
+          }
+
+          check "authoring subsystem tables" 11 "
+            SELECT count(*) FROM information_schema.tables
+             WHERE table_schema='public' AND table_name IN (
+               'authoring_documents','authoring_sections','doc_revisions','authoring_comments',
+               'authoring_citations','frozen_documents','user_pins','authoring_audit_trail',
+               'authoring_signatures','authoring_workflow_steps','doc_permissions')"
+
+          check "tenant-parentage FKs" 4 "
+            SELECT count(*) FROM pg_constraint WHERE conname IN (
+              'authoring_sections_doc_tenant_fkey','doc_revisions_section_tenant_fkey',
+              'authoring_comments_section_tenant_fkey','authoring_citations_section_tenant_fkey')"
+
+          check "authoring tables carrying tenant_isolation_policy" 11 "
+            SELECT count(*) FROM pg_policies
+             WHERE schemaname='public' AND policyname='tenant_isolation_policy'
+               AND tablename IN (
+                 'authoring_documents','authoring_sections','doc_revisions','authoring_comments',
+                 'authoring_citations','frozen_documents','user_pins','authoring_audit_trail',
+                 'authoring_signatures','authoring_workflow_steps','doc_permissions')"
+
+          # Lineages that reached real databases through no durable path before
+          # the migration set existed — their absence is what made the RBM and
+          # evidence-graph routes write to tables that were not there.
+          check "collaboration CRDT state table" 1 "
+            SELECT count(*) FROM information_schema.tables
+             WHERE table_schema='public' AND table_name='collab_document_state'"
+
+          RBM=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'rbm\\_%'")
+          CRE=$(psql "$DATABASE_URL" -tAc \
+            "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name LIKE 'cre\\_%'")
+          echo "rbm_* tables: $RBM · cre_* tables: $CRE"
+          [[ "$RBM" -ge 8 ]] || { echo "::error::RBM lineage did not land ($RBM tables)"; exit 1; }
+          [[ "$CRE" -ge 6 ]] || { echo "::error::Evidence spine did not land ($CRE tables)"; exit 1; }
+
   aios-audit-assets:
     name: AIOS Audit Assets
     runs-on: ubuntu-latest
