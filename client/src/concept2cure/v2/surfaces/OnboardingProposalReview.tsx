@@ -86,6 +86,14 @@ export function OnboardingProposalReview({
       return next;
     });
 
+  /* The reason-for-change is the human's own rationale in a 21 CFR Part 11
+     record. It is NEVER synthesized on their behalf — a generated sentence would
+     assert that a review happened in words the reviewer never wrote, and would
+     make unrelated changes indistinguishable in the audit trail. Apply stays
+     disabled until they write one. Matches the governed routes' min length. */
+  const REASON_MIN = 10;
+  const reasonOk = reason.trim().length >= REASON_MIN;
+
   const commit = () => {
     const approved: OnboardingProposalField[] = allFields
       .filter((f) => state[f.id]?.status === 'approved' && (state[f.id]?.value ?? '').trim().length > 0)
@@ -93,10 +101,8 @@ export function OnboardingProposalReview({
         const st = state[f.id];
         return { ...f, value: st.value.trim(), status: 'approved' as const };
       });
-    if (approved.length === 0) return;
-    const finalReason =
-      reason.trim() || `Applied ${approved.length} AnA onboarding proposal(s) after human review.`;
-    onCommit(approved, finalReason);
+    if (approved.length === 0 || !reasonOk) return;
+    onCommit(approved, reason.trim());
   };
 
   return (
@@ -197,10 +203,16 @@ export function OnboardingProposalReview({
         <input
           className="opr-reason"
           value={reason}
-          placeholder="Reason for change (recorded in the Part 11 audit) — optional"
+          placeholder="Reason for change (recorded in the Part 11 audit) — required"
+          aria-label="Reason for change"
           onChange={(e) => setReason(e.target.value)}
           disabled={committing}
         />
+        {approvedCount > 0 && !reasonOk && (
+          <div className="opr-reason-hint">
+            Add your reason for this change — it is recorded in the audit trail and cannot be generated for you.
+          </div>
+        )}
         <div className="opr-commit-actions">
           {onCancel && (
             <button type="button" className="opr-cancel" onClick={onCancel} disabled={committing}>
@@ -211,7 +223,7 @@ export function OnboardingProposalReview({
             type="button"
             className="opr-commit-btn"
             onClick={commit}
-            disabled={committing || approvedCount === 0}
+            disabled={committing || approvedCount === 0 || !reasonOk}
           >
             {committing ? 'Applying…' : `Apply ${approvedCount} approved field${approvedCount === 1 ? '' : 's'}`}
           </button>

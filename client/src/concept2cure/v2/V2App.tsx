@@ -23,6 +23,8 @@ import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registr
 import { AnaRail, CmdK, Rail, TopBar, type AnaMessage } from './Shell';
 import { useAnaChat, type AnaChatMessage } from '../components/ana/useAnaChat';
 import { useAuth } from '@/services/portal/authService';
+import { getJwtOrgId } from '@/utils/authToken';
+import { useLive } from './dataConnect';
 import { welcomeFor } from './onboardingWelcome';
 import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
@@ -121,6 +123,18 @@ export function V2App() {
      (/api/ana-ri/stream) shared by the rail, ⌘K and every surface's onAsk. */
   const anaChat = useAnaChat({ screenName: activeId, projectId: readShellProjectId() });
   const { user } = useAuth();
+  /* The onboarding welcome must reflect the TENANT's real client type
+     (organizations.client_type), not `prefs.segment` — that is a browser-local
+     view toggle defaulting to 'biotech', so a device/diagnostics/CRO client
+     would otherwise be greeted with biotech prompts, and a user switching
+     tenants would inherit the previous tenant's stored segment. */
+  const jwtOrgId = getJwtOrgId();
+  const orgLive = useLive<{ organization?: { clientType?: string } } | null>(
+    jwtOrgId ? `/api/organizations/${encodeURIComponent(jwtOrgId)}` : null,
+    null,
+    [jwtOrgId]
+  );
+  const tenantClientType = orgLive.sample ? null : orgLive.data?.organization?.clientType ?? null;
   const nav = React.useCallback(
     (id: string) => {
       setLocation(locationForSurface(id));
@@ -217,7 +231,7 @@ export function V2App() {
   const firstName = (user?.firstName || user?.displayName || '').trim().split(/\s+/)[0] || '';
   const welcome =
     railMessages.length === 0 && !prefs.welcomeDismissed
-      ? welcomeFor(prefs.segment, firstName)
+      ? welcomeFor(tenantClientType ?? prefs.segment, firstName)
       : null;
 
   return (

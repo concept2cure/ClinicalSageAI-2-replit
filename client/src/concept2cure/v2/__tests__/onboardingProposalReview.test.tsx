@@ -36,17 +36,37 @@ describe('OnboardingProposalReview — approval gate', () => {
     const approveButtons = screen.getAllByRole('button', { name: /Approve$/i });
     fireEvent.click(approveButtons[0]);
 
+    // Still blocked: a Part 11 reason-for-change is the human's own words and is
+    // never synthesized for them.
     const apply1 = screen.getByRole('button', { name: /Apply 1 approved field/i }) as HTMLButtonElement;
-    expect(apply1.disabled).toBe(false);
+    expect(apply1.disabled).toBe(true);
     fireEvent.click(apply1);
+    expect(onCommit).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText(/Reason for change/i), {
+      target: { value: 'Confirmed against the uploaded company profile.' },
+    });
+    expect((screen.getByRole('button', { name: /Apply 1 approved field/i }) as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: /Apply 1 approved field/i }));
 
     expect(onCommit).toHaveBeenCalledTimes(1);
     const [approved, reason] = onCommit.mock.calls[0];
     expect(approved).toHaveLength(1);
     expect(approved[0].targetField).toBe('org_profile.name');
     expect(approved[0].status).toBe('approved');
-    expect(typeof reason).toBe('string');
-    expect(reason.length).toBeGreaterThan(0);
+    // The human's own rationale, verbatim — not a generated sentence.
+    expect(reason).toBe('Confirmed against the uploaded company profile.');
+  });
+
+  it('never fabricates a reason: a blank/too-short reason blocks Apply', () => {
+    const onCommit = vi.fn();
+    render(<OnboardingProposalReview groups={groups} onCommit={onCommit} />);
+    fireEvent.click(screen.getAllByRole('button', { name: /Approve$/i })[0]);
+    fireEvent.change(screen.getByLabelText(/Reason for change/i), { target: { value: 'too short' } });
+    const apply = screen.getByRole('button', { name: /Apply 1 approved field/i }) as HTMLButtonElement;
+    expect(apply.disabled).toBe(true);
+    fireEvent.click(apply);
+    expect(onCommit).not.toHaveBeenCalled();
   });
 
   it('surfaces low-confidence fields as "needs review"', () => {
