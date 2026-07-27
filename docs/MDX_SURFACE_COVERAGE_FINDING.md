@@ -18,22 +18,32 @@ declared paths.
 
 ## Result
 
-Nine route modules have **no client consumer anywhere** in `client/src`:
+Nine route modules had **no client consumer anywhere** in `client/src` when
+this was first measured. The status column tracks what has since been surfaced.
 
-| Route | Domain | AnA tool handlers |
+| Route | Domain | Status |
 | --- | --- | --- |
-| `/api/mdx/cdx` | companion diagnostics pairing | `design_cdx_codevelopment`, `pair_companion_diagnostic` |
-| `/api/mdx/clia` | CLIA complexity categorisation | `categorize_clia_complexity` |
-| `/api/mdx/software` | IEC 62304 software lifecycle | `create_software_lifecycle_item` | *(surfaced — "Software lifecycle")* |
-| `/api/mdx/ldt` | LDT inventory | `register_ldt` |
-| `/api/mdx/clinical-studies` | device clinical studies | 3 | *(surfaced — "Clinical studies")* |
-| `/api/mdx/rbm-board` | risk-based monitoring board | 6 |
-| `/api/mdx/notifications` | notifications | 1 |
-| `/api/mdx/search` | cross-surface search | 30 |
-| `/api/mdx/ana-drafts` | AnA draft persistence | — |
+| `/api/mdx/cdx` | companion diagnostics pairing | **surfaced** — CDx panel on the IVD workbench |
+| `/api/mdx/clia` | CLIA complexity categorisation | **surfaced** — CLIA panel on the IVD workbench |
+| `/api/mdx/software` | IEC 62304 software lifecycle | **surfaced** — "Software lifecycle" surface (SBOM/SRS/etc.) |
+| `/api/mdx/ldt` | LDT inventory | screenless; engine retired, `legalStatus` returned |
+| `/api/mdx/clinical-studies` | device clinical studies | **surfaced** — "Clinical studies" surface |
+| `/api/mdx/rbm-board` | risk-based monitoring board | screenless |
+| `/api/mdx/notifications` | notifications | **surfaced** — notifications bell |
+| `/api/mdx/search` | cross-surface search | **surfaced** — ⌘K palette |
+| `/api/mdx/ana-drafts` | AnA draft persistence | screenless |
 
-Every one of them is reachable **conversationally through AnA**. None of them
-is reachable by clicking.
+The remaining screenless routes (`ldt`, `rbm-board`, `ana-drafts`) are
+reachable **conversationally through AnA** but not by clicking. `qms` (a tenth,
+consumed only by the separate `quality/*` app) now also has an MDX-shell
+readiness view.
+
+Placement note for the surfaced ones: each went to the surface the platform
+review named for it — CDx and CLIA into the IVD programme workspace, software
+lifecycle and clinical studies onto their own surfaces, search into the ⌘K
+palette, notifications into the shell bell. `rbm-board` and `ana-drafts` do not
+have an obvious single home, so their placement is left as a product decision
+rather than an engineering guess.
 
 Separately, `/api/mdx/qms` *is* consumed — but by `client/src/concept2cure/
 quality/*`, a different module from the MDX device shell. A device team working
