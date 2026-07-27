@@ -55,13 +55,20 @@ describe('registry completeness', () => {
 });
 
 describe('coverage is declared, not implied', () => {
-  it('reports which archetypes are outline-level', () => {
-    // Published so a consumer can label them honestly. A registry that looks
-    // uniformly authoritative when part of it is scaffolding is worse than one
-    // that says which part.
-    const needing = archetypesNeedingDetail();
-    expect(needing.length).toBeGreaterThan(0);
-    for (const a of needing) expect(a.detail).toBe('outline');
+  it('every archetype is specified to full depth', () => {
+    // The registry started half scaffold; it is now fully specified. This pins
+    // that state so a NEW archetype slipped in at outline depth fails here rather
+    // than shipping as though it were reviewed content.
+    expect(archetypesNeedingDetail()).toEqual([]);
+    expect(registryCoverage().outline).toBe(0);
+    expect(registryCoverage().full).toBe(allArchetypes().length);
+  });
+
+  it('still reports any outline archetype through the retained mechanism', () => {
+    // The detail axis is kept even at full coverage: archetypesNeedingDetail must
+    // only ever return outline-detail entries, so the honesty signal works the day
+    // a scaffold archetype is added.
+    for (const a of archetypesNeedingDetail()) expect(a.detail).toBe('outline');
   });
 
   it('coverage numbers add up and carry the version', () => {
@@ -213,5 +220,81 @@ describe('content correctness on the archetypes most likely to be misapplied', (
     expect(a.protocolSections).toContain('Adverse device effects');
     expect(a.protocolSections).toContain('Suspension and stopping criteria');
     expect(a.references.join(' ')).toMatch(/ISO 14155/);
+  });
+});
+
+describe('expert content on the elevated archetypes — the traps a specialist watches for', () => {
+  it('carryover names the Broughton ratio and EP10, not a generic difference test', () => {
+    const a = getArchetype('carryover')!;
+    expect(a.statisticalMethods.join(' ')).toMatch(/Broughton/);
+    expect(a.references.join(' ')).toMatch(/EP10/);
+  });
+
+  it('matrix equivalence uses method-comparison regression, framed as equivalence not accuracy', () => {
+    // Deming / Passing-Bablok against a reference matrix — a t-test of means would
+    // hide a proportional bias that matters at the decision point.
+    const a = getArchetype('matrix_equivalence')!;
+    expect(a.statisticalMethods.join(' ')).toMatch(/Deming|Passing-Bablok/);
+    expect(a.references.join(' ')).toMatch(/EP09/);
+    expect(a.typicalAcceptanceCriteria.join(' ')).toMatch(/decision point/i);
+  });
+
+  it('the flex study is framed as failing safe, not as passing under stress', () => {
+    // The whole point of a flex study: prove the assay flags or invalidates under
+    // stress rather than returning a wrong result an untrained user trusts.
+    const a = getArchetype('clia_waiver_flex')!;
+    expect(a.purpose).toMatch(/fails safe/i);
+    expect(a.typicalAcceptanceCriteria.join(' ')).toMatch(/fails safe|invalidat/i);
+  });
+
+  it('PMCF and PMPF both require a documented justification when none is planned', () => {
+    // "No PMCF" is a defensible position only if it is justified and written down;
+    // MDCG 2020-7 requires the justification, and its absence is a common finding.
+    for (const id of ['pmcf', 'pmpf'] as const) {
+      const a = getArchetype(id)!;
+      expect(a.protocolSections.join(' '), id).toMatch(/[Jj]ustification where no/);
+      expect(a.designQuestions.join(' '), id).toMatch(/no PM[CP]F is planned|justified and documented/i);
+    }
+  });
+
+  it('the RWE study turns on fitness-for-purpose and target-trial emulation', () => {
+    // The two things that separate regulatory-grade RWE from a database query:
+    // the data must be shown relevant and reliable, and the causal question made
+    // explicit through target-trial emulation rather than assumed.
+    const a = getArchetype('real_world_evidence')!;
+    expect(a.protocolSections.join(' ')).toMatch(/relevance and reliability/i);
+    expect(a.designQuestions.join(' ')).toMatch(/target-trial[- ]emulation/i);
+    expect(a.typicalAcceptanceCriteria.join(' ')).toMatch(/relevant and reliable/i);
+  });
+
+  it('the comparative study pins the non-inferiority margin and both analysis populations', () => {
+    const a = getArchetype('comparative_device_study')!;
+    expect(a.designQuestions.join(' ')).toMatch(/margin/i);
+    expect(a.statisticalMethods.join(' ')).toMatch(/ITT and per-protocol/i);
+  });
+
+  it('scientific validity is the IVDR pillar that precedes performance, evidenced from literature', () => {
+    const a = getArchetype('scientific_validity')!;
+    expect(a.references.join(' ')).toMatch(/IVDR 2017\/746 Annex XIII Part A/);
+    expect(a.statisticalMethods.join(' ')).toMatch(/literature appraisal|PRISMA/i);
+  });
+
+  it('every elevated archetype names at least one governing standard', () => {
+    // Full depth means the content cites the standard that governs it, not that it
+    // reads plausibly. This is the difference between a protocol that starts in the
+    // right shape and one a reviewer sends back.
+    const elevated = [
+      'cross_reactivity', 'carryover', 'matrix_equivalence', 'specimen_stability',
+      'reagent_stability', 'scientific_validity', 'prospective_clinical_performance',
+      'retrospective_specimen', 'untrained_operator', 'clia_waiver_flex', 'pmpf',
+      'feasibility', 'early_feasibility', 'comparative_device_study',
+      'human_factors_formative', 'pmcf', 'registry', 'postmarket_study', 'real_world_evidence',
+    ];
+    const standard = /CLSI|ISO |IEC |21 CFR|IVDR|MDR|MDCG|FDA|STARD|ASTM|ICH|ENCePP|ISPOR/;
+    for (const id of elevated) {
+      const a = getArchetype(id)!;
+      expect(a.detail, id).toBe('full');
+      expect(a.references.join(' '), id).toMatch(standard);
+    }
   });
 });

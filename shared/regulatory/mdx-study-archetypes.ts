@@ -17,16 +17,22 @@
  *
  * ── Coverage is declared, not implied ─────────────────────────────────────────
  *
- * Every archetype in mdx-specialization.ts appears here, but they are NOT all
- * specified to the same depth. `detail: 'full'` means the sections, endpoints,
- * acceptance criteria and statistics below were written deliberately for that
- * archetype. `detail: 'outline'` means the archetype is real and correctly
- * classified but its content is a starting frame, not a reviewed specification.
+ * Every archetype in mdx-specialization.ts appears here, and every one is now
+ * specified to full depth: `detail: 'full'` means the sections, endpoints,
+ * acceptance criteria, statistics and references below were written deliberately
+ * for that archetype, naming the standard that governs it (CLSI EP series for the
+ * analytical panel, ISO 14155 and 21 CFR 812 for device investigations,
+ * IEC 62366-1 for human factors, the IVDR/MDR annexes for performance evaluation
+ * and post-market follow-up). The `detail` axis and `archetypesNeedingDetail()`
+ * are retained so a NEW archetype added at scaffold depth is flagged rather than
+ * passed off as reviewed — the mechanism outlives the current full coverage.
  *
- * That distinction is published (see `archetypesNeedingDetail`) rather than hidden,
- * because a registry that looks uniformly authoritative when half of it is
- * scaffolding is worse than one that says which half. A regulatory writer given an
- * outline-level protocol skeleton and told it is complete will ship the gaps.
+ * Depth is not the same as sign-off. Full means the content was written by
+ * someone who knows the field; it does NOT mean a regulatory specialist has
+ * ratified every acceptance criterion for a specific product's intended use. The
+ * acceptance criteria are deliberately phrased as claims a sponsor must justify,
+ * never as thresholds the platform asserts, precisely because that ratification
+ * is the sponsor's and the reviewer's to make — not this table's.
  *
  * Versioned: REGISTRY_VERSION changes whenever an archetype's content changes, so
  * a protocol can record which version of the registry it was generated from and a
@@ -45,7 +51,7 @@ import {
 } from './mdx-specialization';
 
 /** Bump on any content change, so a generated protocol can cite its source. */
-export const REGISTRY_VERSION = '2026.07.1';
+export const REGISTRY_VERSION = '2026.07.2';
 
 /** How thoroughly this archetype has been specified. See the module docs. */
 export type ArchetypeDetail = 'full' | 'outline';
@@ -143,33 +149,6 @@ const DEVICE_CLINICAL_FILINGS: MdxFilingType[] = [
   'ide', 'us_510k', 'de_novo', 'pma', 'pma_supplement',
   'eu_mdr_technical_documentation', 'cer',
 ];
-
-/** An archetype specified only to outline depth — see the coverage note above. */
-function outline(
-  id: MdxStudyType,
-  label: string,
-  evidenceClass: EvidenceClass,
-  purpose: string,
-  sections: string[],
-  filings: MdxFilingType[],
-): StudyArchetype {
-  return {
-    id, label, detail: 'outline', evidenceClass, purpose,
-    protocolSections: sections,
-    designQuestions: [
-      'What claim does this study support, and in which filing section does it land?',
-      'What is the acceptance criterion, and on what basis is it justified?',
-      'What population, specimen set or use environment makes the result generalizable?',
-    ],
-    endpoints: [],
-    typicalAcceptanceCriteria: [],
-    statisticalMethods: [],
-    requiredSupportingPlans: ['Statistical analysis plan'],
-    supportsFilings: filings,
-    references: [],
-    approvalRequired: true,
-  };
-}
 
 // ── IVD analytical performance ───────────────────────────────────────────────
 
@@ -364,26 +343,212 @@ const IVD_ANALYTICAL: StudyArchetype[] = [
     references: ['CLSI EP07-Ed3', 'FDA guidance on analytical specificity for microbial assays'],
     approvalRequired: true,
   },
-  outline('cross_reactivity', 'Cross-reactivity', 'analytical_performance',
-    'Characterize response to closely related analytes or organisms that could produce a false result.',
-    [...IVD_COMMON_SECTIONS, 'Cross-reactant panel and rationale'], IVD_ANALYTICAL_FILINGS),
-  outline('carryover', 'Carryover', 'analytical_performance',
-    'Show that a high-concentration specimen does not contaminate the result of the specimen that follows it.',
-    [...IVD_COMMON_SECTIONS, 'High/low sequence design'], IVD_ANALYTICAL_FILINGS),
-  outline('matrix_equivalence', 'Matrix equivalence', 'analytical_performance',
-    'Show that claimed specimen types perform equivalently, so a claim in one matrix transfers to another.',
-    [...IVD_COMMON_SECTIONS, 'Matrix comparison design'], IVD_ANALYTICAL_FILINGS),
-  outline('specimen_stability', 'Specimen stability', 'analytical_performance',
-    'Establish the storage and transport conditions and durations over which a specimen remains valid.',
-    [...IVD_COMMON_SECTIONS, 'Stability time points and conditions'], IVD_ANALYTICAL_FILINGS),
-  outline('reagent_stability', 'Reagent stability', 'analytical_performance',
-    'Establish shelf life, in-use stability and transport conditions for the reagents.',
-    [...IVD_COMMON_SECTIONS, 'Real-time and accelerated stability design'], IVD_ANALYTICAL_FILINGS),
-  outline('scientific_validity', 'Scientific validity', 'analytical_performance',
-    'Establish that the analyte is associated with the clinical condition the assay is claimed for — the IVDR '
-    + 'performance-evaluation limb that precedes analytical and clinical performance.',
-    ['Intended purpose', 'Analyte-condition association', 'Literature and evidence appraisal', 'State of the art', 'Conclusion'],
-    ['eu_ivdr_technical_documentation', 'performance_evaluation_report']),
+  {
+    id: 'cross_reactivity',
+    label: 'Cross-reactivity',
+    detail: 'full',
+    evidenceClass: 'analytical_performance',
+    purpose:
+      'Characterize whether closely related analytes, metabolites or organisms are detected as the '
+      + 'measurand and produce a false result — the structural-similarity companion to interference.',
+    protocolSections: [...IVD_COMMON_SECTIONS, 'Cross-reactant panel and rationale', 'Concentration and dose-response design'],
+    designQuestions: [
+      'Which related analytes or organisms are tested, and how was the list derived from the measurand, the differential diagnosis and the specimen population?',
+      'At what concentrations are cross-reactants challenged — at or above the highest concentration plausible in a real specimen?',
+      'For a microbial assay, does the panel cover the phylogenetically nearest organisms and the commensal flora of the specimen site?',
+      'Is a paired or dose-response design used, and how is a cross-reacting substance distinguished from ordinary analytical non-specificity?',
+    ],
+    endpoints: [
+      'Result and bias for each cross-reactant at the tested concentration',
+      'Highest cross-reactant concentration at which no clinically significant false result occurs',
+      'Any cross-reactivity identified, with the concentration at which it appears',
+    ],
+    typicalAcceptanceCriteria: [
+      'No clinically significant false result from any panel member at concentrations plausible in the intended specimen',
+      'Any cross-reactivity found is characterized and reflected in the IFU limitations',
+    ],
+    statisticalMethods: [
+      'Descriptive; proportion positive per challenge with exact (Clopper-Pearson) confidence intervals (CLSI EP07)',
+      'Dose-response characterization where cross-reactivity is detected',
+    ],
+    requiredSupportingPlans: ['Statistical analysis plan', 'Cross-reactant sourcing and value-assignment plan', 'Panel justification'],
+    supportsFilings: IVD_ANALYTICAL_FILINGS,
+    references: ['CLSI EP07-Ed3', 'FDA guidance on establishing analytical specificity for infectious-disease assays'],
+    approvalRequired: true,
+  },
+  {
+    id: 'carryover',
+    label: 'Carryover',
+    detail: 'full',
+    evidenceClass: 'analytical_performance',
+    purpose:
+      'Show that a high-concentration specimen does not contaminate the result of the specimen that '
+      + 'follows it on an automated analyzer, where a carried-over trace can turn a true negative positive.',
+    protocolSections: [...IVD_COMMON_SECTIONS, 'High/low sequence design', 'Carryover calculation and acceptance'],
+    designQuestions: [
+      'What high concentration drives the challenge — the top of the measuring range, or the highest plausible clinical value?',
+      'How many high–low–low sequences and replicates, and are specimen-to-specimen and reagent carryover distinguished?',
+      'What carryover is clinically allowable, given the decision point a low result sits near?',
+      'Are the washing and probe protocols the production configuration, not an optimized bench setup?',
+    ],
+    endpoints: [
+      'Carryover index — the low result following a high, relative to a low following a low',
+      'Carryover expressed at the concentrations bracketing the medical decision point',
+      'Presence or absence of carryover above the allowable limit',
+    ],
+    typicalAcceptanceCriteria: [
+      'Carryover below a pre-specified limit that keeps a low or negative result clinically unaffected by a preceding high specimen',
+      'The claim demonstrated in the production configuration, not an idealized one',
+    ],
+    statisticalMethods: [
+      'Carryover ratio (Broughton) with confidence interval',
+      'Comparison of low-after-high against low-after-low with a pre-specified allowable difference (CLSI EP10)',
+    ],
+    requiredSupportingPlans: ['Statistical analysis plan', 'High/low sequence panel plan'],
+    supportsFilings: IVD_ANALYTICAL_FILINGS,
+    references: ['CLSI EP10-A3-AMD', 'Manufacturer carryover evaluation protocols'],
+    approvalRequired: true,
+  },
+  {
+    id: 'matrix_equivalence',
+    label: 'Matrix equivalence',
+    detail: 'full',
+    evidenceClass: 'analytical_performance',
+    purpose:
+      'Show that the specimen types claimed perform equivalently, so a performance claim established in '
+      + 'one matrix transfers to another and a result does not depend on the tube it was drawn into.',
+    protocolSections: [...IVD_COMMON_SECTIONS, 'Matrix comparison design', 'Split-sample and paired analysis'],
+    designQuestions: [
+      'Which specimen types and collection tubes are claimed (serum, plasma by anticoagulant, whole blood), and is each in the panel?',
+      'Is a split-sample paired design used, so matrix is the only variable between paired results?',
+      'Do the paired specimens span the measuring range, including near the medical decision point?',
+      'How many paired specimens per matrix pair, and how is a matrix effect distinguished from ordinary imprecision?',
+    ],
+    endpoints: [
+      'Slope, intercept and bias between each claimed matrix and the reference matrix',
+      'Mean difference at the medical decision points',
+      'Concentration range over which equivalence is demonstrated',
+    ],
+    typicalAcceptanceCriteria: [
+      'Differences between matrices within a pre-specified clinically allowable limit across the measuring range',
+      'Equivalence demonstrated at the decision points specifically, not only on average',
+    ],
+    statisticalMethods: [
+      'Deming or Passing-Bablok regression with confidence intervals on slope and intercept (CLSI EP09)',
+      'Bland-Altman difference analysis at the decision points',
+    ],
+    requiredSupportingPlans: ['Statistical analysis plan', 'Matched-specimen collection plan'],
+    supportsFilings: IVD_ANALYTICAL_FILINGS,
+    references: ['CLSI EP09-Ed3', 'CLSI EP35'],
+    approvalRequired: true,
+  },
+  {
+    id: 'specimen_stability',
+    label: 'Specimen stability',
+    detail: 'full',
+    evidenceClass: 'analytical_performance',
+    purpose:
+      'Establish the storage conditions, transport conditions and durations over which a specimen remains '
+      + 'valid — the hold-time and handling claims printed in the IFU.',
+    protocolSections: [...IVD_COMMON_SECTIONS, 'Stability conditions and time points', 'Baseline and difference-from-baseline design'],
+    designQuestions: [
+      'Which storage conditions, transport conditions and freeze-thaw cycles are claimed, and is each under test?',
+      'What time points bracket the claimed hold time, and do they extend beyond the claim to establish its edge?',
+      'How many specimens span the measuring range, and are decision-point concentrations included?',
+      'What change from baseline is clinically allowable, and is the claim demonstrated by real-time data rather than extrapolated?',
+    ],
+    endpoints: [
+      'Change from baseline at each time point and condition',
+      'Longest duration at each condition within the allowable change — the claimed stability',
+      'Effect of freeze-thaw cycles where claimed',
+    ],
+    typicalAcceptanceCriteria: [
+      'Change from baseline within the pre-specified clinically allowable limit at the claimed duration and condition',
+      'The claim demonstrated at its stated edge, not inferred from a shorter interval',
+    ],
+    statisticalMethods: [
+      'Difference-from-baseline with confidence intervals at each time point (CLSI EP25)',
+      'Regression to estimate the time at which the allowable-change limit is reached',
+    ],
+    requiredSupportingPlans: ['Statistical analysis plan', 'Specimen sourcing and aliquoting plan'],
+    supportsFilings: IVD_ANALYTICAL_FILINGS,
+    references: ['CLSI EP25-A'],
+    approvalRequired: true,
+  },
+  {
+    id: 'reagent_stability',
+    label: 'Reagent stability',
+    detail: 'full',
+    evidenceClass: 'analytical_performance',
+    purpose:
+      'Establish shelf life, in-use, on-board and open-vial stability and transport conditions for the '
+      + 'reagents and calibrators — the dating and handling the label commits to.',
+    protocolSections: [...IVD_COMMON_SECTIONS, 'Real-time and accelerated stability design', 'Shelf-life and in-use claim'],
+    designQuestions: [
+      'Which claims are made — shelf life, in-use, on-board, open-vial, calibration stability — and is each supported by real-time data?',
+      'How many reagent lots enter the study, so the claim is not a property of a single favorable lot?',
+      'Is accelerated (e.g. Arrhenius) data used only to bracket and support, with the label claim resting on real-time data?',
+      'Are transport conditions simulated, including any excursion the distribution chain allows?',
+    ],
+    endpoints: [
+      'Performance drift over time at each storage condition, per lot',
+      'Longest duration meeting acceptance at each condition — the claimed dating',
+      'On-board, open-vial and calibration stability where claimed',
+    ],
+    typicalAcceptanceCriteria: [
+      'Each dating claim supported by real-time data across multiple lots; accelerated data is supportive, never a substitute',
+      'Drift within the pre-specified allowable change at the claimed dating',
+    ],
+    statisticalMethods: [
+      'Degradation regression to the allowable-change limit, with confidence intervals (CLSI EP25)',
+      'Lot-to-lot comparison so the claim holds across manufacturing variation',
+    ],
+    requiredSupportingPlans: ['Statistical analysis plan', 'Multi-lot stability plan', 'Transport simulation plan'],
+    supportsFilings: IVD_ANALYTICAL_FILINGS,
+    references: ['CLSI EP25-A', 'ASTM D4169 for transport simulation'],
+    approvalRequired: true,
+  },
+  {
+    id: 'scientific_validity',
+    label: 'Scientific validity',
+    detail: 'full',
+    evidenceClass: 'analytical_performance',
+    purpose:
+      'Establish that the analyte is associated with the clinical condition the assay is claimed for — the '
+      + 'IVDR performance-evaluation limb that precedes analytical and clinical performance, and is '
+      + 'evidenced from the literature rather than generated in the laboratory.',
+    protocolSections: [
+      'Intended purpose and claimed association',
+      'Analyte-condition association',
+      'Literature search protocol and reproducibility',
+      'Evidence appraisal and grading',
+      'State of the art',
+      'Conclusion and residual uncertainty',
+    ],
+    designQuestions: [
+      'What association between the analyte and the clinical condition is claimed, and is it established in the literature or does it need to be demonstrated?',
+      'What search strategy makes the literature review reproducible, and is it documented to a recognized standard?',
+      'How is the body of evidence appraised and graded, and are conflicting findings represented rather than omitted?',
+      'Is the claimed association consistent with the current state of the art, and where it is novel, is that stated?',
+    ],
+    endpoints: [
+      'A documented, reproducible analyte-condition association',
+      'An appraised and graded body of evidence, including contradictory findings',
+      'A state-of-the-art comparison situating the claim',
+    ],
+    typicalAcceptanceCriteria: [
+      'The association demonstrated to a level defensible for the specific intended purpose, not asserted',
+      'The literature search reproducible and the appraisal transparent about the strength of the evidence',
+    ],
+    statisticalMethods: [
+      'Systematic literature appraisal with a documented, reproducible search (PRISMA-style reporting)',
+      'Structured evidence grading; descriptive rather than hypothesis-testing',
+    ],
+    requiredSupportingPlans: ['Literature search protocol', 'Evidence appraisal and grading plan'],
+    supportsFilings: ['eu_ivdr_technical_documentation', 'performance_evaluation_report'],
+    references: ['EU IVDR 2017/746 Annex XIII Part A', 'MDCG 2022-2'],
+    approvalRequired: true,
+  },
 ];
 
 // ── IVD clinical performance ─────────────────────────────────────────────────
@@ -569,25 +734,179 @@ const IVD_CLINICAL: StudyArchetype[] = [
     references: ['FDA In Vitro Companion Diagnostic Devices guidance', 'FDA/EMA co-development principles'],
     approvalRequired: true,
   },
-  outline('prospective_clinical_performance', 'Prospective clinical performance study', 'clinical_performance',
-    'Enroll subjects prospectively in the intended use setting to estimate clinical performance without selection bias.',
-    [...IVD_COMMON_SECTIONS, 'Prospective enrollment plan', 'Site and investigator selection'], IVD_CLINICAL_FILINGS),
-  outline('retrospective_specimen', 'Retrospective specimen study', 'clinical_performance',
-    'Use banked specimens to estimate performance, with explicit treatment of selection and spectrum bias.',
-    [...IVD_COMMON_SECTIONS, 'Banked specimen provenance', 'Selection-bias assessment'], IVD_CLINICAL_FILINGS),
-  outline('untrained_operator', 'Untrained-operator study', 'usability',
-    'Show operators representative of the waived setting obtain correct results without specialized training.',
-    [...IVD_COMMON_SECTIONS, 'Operator population', 'Training prohibition and observation protocol'],
-    ['dual_510k_clia_waiver', 'ivd_510k']),
-  outline('clia_waiver_flex', 'CLIA waiver flex study', 'analytical_performance',
-    'Stress the assay across environmental and handling conditions plausible outside a laboratory, to show '
-    + 'it fails safe rather than producing a wrong result.',
-    [...IVD_COMMON_SECTIONS, 'Flex condition matrix', 'Failure-mode and fail-safe analysis'],
-    ['dual_510k_clia_waiver']),
-  outline('pmpf', 'Post-market performance follow-up (PMPF)', 'postmarket',
-    'Continue confirming performance and safety after IVDR certification, feeding the periodic performance report.',
-    ['PMPF objectives', 'Methods and data sources', 'Analysis plan', 'Reporting and PER linkage'],
-    ['pmpf_plan', 'eu_ivdr_technical_documentation', 'performance_evaluation_report']),
+  {
+    id: 'prospective_clinical_performance',
+    label: 'Prospective clinical performance study',
+    detail: 'full',
+    evidenceClass: 'clinical_performance',
+    purpose:
+      'Estimate clinical performance in subjects enrolled prospectively in the intended use setting, where '
+      + 'consecutive enrollment avoids the spectrum and selection bias that banked specimens invite.',
+    protocolSections: [...IVD_COMMON_SECTIONS, 'Prospective enrollment plan', 'Site and investigator selection', 'Reference standard and adjudication'],
+    designQuestions: [
+      'Is enrollment consecutive or otherwise protected against spectrum bias, and does the population reflect the intended use?',
+      'What reference standard defines true status, and is it applied to every subject regardless of the assay result?',
+      'Are interpreters blinded to the comparator, and is the sample size adequate for the rarer class and the key subgroups?',
+      'Are sites and investigators representative of the intended use setting rather than centers of excellence only?',
+    ],
+    endpoints: [
+      'Clinical sensitivity and specificity (or PPA/NPA where the comparator is not a reference standard) with two-sided confidence intervals',
+      'Predictive values at the prevalence of the intended use population, with the prevalence source cited',
+      'Performance across pre-specified subgroups and sites',
+    ],
+    typicalAcceptanceCriteria: [
+      'Lower confidence bounds above pre-specified limits justified by the consequence of a false negative and a false positive',
+      'A subject spectrum representative of the intended use population, not enriched to flatter the estimate',
+    ],
+    statisticalMethods: [
+      'Sensitivity/specificity or agreement with score (Wilson) confidence intervals',
+      'Pre-specified subgroup and site analyses, reported whether or not favorable; STARD-conformant reporting',
+    ],
+    requiredSupportingPlans: ['Statistical analysis plan', 'Enrollment and blinding plan', 'Reference-standard procedure', 'Clinical monitoring plan'],
+    supportsFilings: IVD_CLINICAL_FILINGS,
+    references: ['FDA statistical guidance on diagnostic test studies', 'STARD 2015', 'EU IVDR 2017/746 Annex XIII'],
+    approvalRequired: true,
+  },
+  {
+    id: 'retrospective_specimen',
+    label: 'Retrospective specimen study',
+    detail: 'full',
+    evidenceClass: 'clinical_performance',
+    purpose:
+      'Estimate clinical performance from banked specimens, where the central task is not the measurement '
+      + 'but the honest treatment of the selection and spectrum bias that banking introduces.',
+    protocolSections: [...IVD_COMMON_SECTIONS, 'Banked specimen provenance', 'Selection- and spectrum-bias assessment', 'Specimen characterization'],
+    designQuestions: [
+      'What is the provenance and chain of custody of the bank, and how were specimens selected — does that selection bias the spectrum?',
+      'How long were specimens stored, and could storage have altered the analyte relative to fresh collection?',
+      'Is the banked spectrum representative of the intended use population, and how is non-availability of some specimens handled?',
+      'Are interpreters blinded, and was the reference status assigned independently of the assay result?',
+    ],
+    endpoints: [
+      'Clinical sensitivity/specificity or agreement in the banked set, with confidence intervals',
+      'Comparison of the banked spectrum against the intended use population',
+      'Sensitivity analyses for selection and verification bias',
+    ],
+    typicalAcceptanceCriteria: [
+      'Performance reported with an explicit selection-bias assessment, not as though the bank were a random sample',
+      'The banked spectrum shown comparable to the intended use population, or the limitation disclosed in the claim',
+    ],
+    statisticalMethods: [
+      'Sensitivity/specificity or agreement with score confidence intervals',
+      'Pre-specified sensitivity analyses for selection, spectrum and verification bias',
+    ],
+    requiredSupportingPlans: ['Statistical analysis plan', 'Specimen provenance and inventory plan', 'Bias-assessment plan'],
+    supportsFilings: IVD_CLINICAL_FILINGS,
+    references: ['FDA statistical guidance on diagnostic test studies', 'STARD 2015', 'CLSI EP12-A2'],
+    approvalRequired: true,
+  },
+  {
+    id: 'untrained_operator',
+    label: 'Untrained-operator study',
+    detail: 'full',
+    evidenceClass: 'usability',
+    purpose:
+      'Show operators representative of the waived, non-laboratory setting obtain correct results from the '
+      + 'labeling alone — the human limb of a CLIA waiver, where the labeling, not the operator, is under test.',
+    protocolSections: [...IVD_COMMON_SECTIONS, 'Operator population and recruitment', 'Training prohibition and observation protocol', 'Result comprehension assessment'],
+    designQuestions: [
+      'Are operators recruited to represent the waived-setting population — the sites and backgrounds where the test will actually run — rather than laboratory staff?',
+      'Is any training, demonstration or prompting given? (Any is a protocol deviation: the labeling is what is under test.)',
+      'How is observer non-interference enforced and documented, and are specimens of known concentration used, especially near the cutoff?',
+      'Is comprehension of the result and of the IFU assessed, not just the numerical agreement?',
+    ],
+    endpoints: [
+      'Agreement between untrained-operator and trained-operator or reference results',
+      'Performance near the medical decision point specifically',
+      'Observed use errors and their clinical consequence',
+      'Comprehension of the result and of the IFU',
+    ],
+    typicalAcceptanceCriteria: [
+      'Untrained-operator agreement comparable to trained-operator performance, with the confidence bound pre-specified',
+      'No use error with a clinically significant consequence left unmitigated by the labeling',
+    ],
+    statisticalMethods: [
+      'Percent agreement with score confidence intervals, reported separately near the cutoff',
+      'Use-error frequency with descriptive analysis of consequence',
+    ],
+    requiredSupportingPlans: ['Statistical analysis plan', 'Recruitment and representativeness plan', 'Labeling under test (versioned)', 'Human-factors use-error analysis'],
+    supportsFilings: ['dual_510k_clia_waiver', 'ivd_510k'],
+    references: ['FDA CLIA Waiver by Application guidance', 'FDA human factors guidance (IEC 62366-1 aligned)'],
+    approvalRequired: true,
+  },
+  {
+    id: 'clia_waiver_flex',
+    label: 'CLIA waiver flex study',
+    detail: 'full',
+    evidenceClass: 'analytical_performance',
+    purpose:
+      'Stress the assay across the environmental and handling conditions plausible outside a laboratory, to '
+      + 'show it fails safe — flags or invalidates — rather than returning a wrong result an untrained user would trust.',
+    protocolSections: [...IVD_COMMON_SECTIONS, 'Flex condition matrix', 'Failure-mode and fail-safe analysis', 'Stress-range justification'],
+    designQuestions: [
+      'Which stresses are exercised — temperature, humidity, timing, sample volume, specimen handling, power interruption, altitude — and are the ranges beyond what the waived setting plausibly imposes?',
+      'Are stresses applied singly, and are the clinically important combinations also tested?',
+      'For each stress: does the assay detect the condition and invalidate, or can it return a wrong result?',
+      'What failure alerts exist, and does an untrained user know what to do when one fires?',
+    ],
+    endpoints: [
+      'Performance under each stress condition relative to baseline',
+      'Conditions under which the assay invalidates versus conditions under which it returns a wrong result',
+      'Effectiveness of failure alerts and fail-safe mechanisms',
+    ],
+    typicalAcceptanceCriteria: [
+      'Across the plausible stress envelope, the assay fails safe rather than producing a wrong result',
+      'Failure alerts are effective and the recovery action is within an untrained user\'s reach',
+    ],
+    statisticalMethods: [
+      'Descriptive per condition; bias or agreement against baseline with the robustness envelope characterized',
+      'Pre-specified definition of a fail-safe versus a wrong-result outcome',
+    ],
+    requiredSupportingPlans: ['Statistical analysis plan', 'Flex-matrix plan', 'Failure-mode and fail-safe analysis', 'IFU environmental and handling claims'],
+    supportsFilings: ['dual_510k_clia_waiver'],
+    references: ['FDA CLIA Waiver by Application guidance', 'FDA Dual 510(k) and CLIA Waiver by Application guidance'],
+    approvalRequired: true,
+  },
+  {
+    id: 'pmpf',
+    label: 'Post-market performance follow-up (PMPF)',
+    detail: 'full',
+    evidenceClass: 'postmarket',
+    purpose:
+      'Proactively confirm performance and safety after IVDR certification against the residual '
+      + 'uncertainties named at certification, feeding the performance evaluation report rather than waiting for complaints.',
+    protocolSections: [
+      'PMPF objectives and residual performance uncertainties',
+      'Methods and data sources',
+      'General versus specific PMPF activities',
+      'Analysis plan',
+      'Reporting and PER linkage',
+      'Justification where no PMPF is planned',
+    ],
+    designQuestions: [
+      'What residual performance uncertainty is this follow-up designed to reduce, and is it traceable to the performance evaluation?',
+      'Which method answers it — literature surveillance, a registry, a user survey, or a dedicated performance study — and why is it sufficient?',
+      'At what interval is the performance evaluation report updated, and how do findings feed the benefit-risk conclusion?',
+      'Where no PMPF is planned, is that justified and documented rather than simply absent?',
+    ],
+    endpoints: [
+      'Confirmed performance and safety in real-world use against the premarket claims',
+      'Emerging risks, performance drift, or off-label use',
+      'Updated inputs to the benefit-risk determination',
+    ],
+    typicalAcceptanceCriteria: [
+      'Residual uncertainties addressed on a documented plan, with the PER kept current',
+      'A deviation from the expected performance triggers CAPA and, where warranted, a field safety corrective action',
+    ],
+    statisticalMethods: [
+      'Descriptive trending against the premarket performance claims',
+      'Pre-specified thresholds that distinguish expected variation from a signal',
+    ],
+    requiredSupportingPlans: ['PMPF plan', 'Performance evaluation report update procedure', 'Vigilance and trending linkage'],
+    supportsFilings: ['pmpf_plan', 'eu_ivdr_technical_documentation', 'performance_evaluation_report'],
+    references: ['EU IVDR 2017/746 Annex XIII Part B', 'EU IVDR 2017/746 Articles 78-81'],
+    approvalRequired: true,
+  },
 ];
 
 // ── Device clinical / usability / software ───────────────────────────────────
@@ -713,35 +1032,306 @@ const DEVICE: StudyArchetype[] = [
     references: ['IEC 62304', 'FDA SaMD clinical evaluation guidance', 'FDA predetermined change control plan guidance'],
     approvalRequired: true,
   },
-  outline('feasibility', 'Feasibility study', 'clinical_safety_effectiveness',
-    'Gather early data on device function and safety to inform the pivotal design.',
-    DEVICE_COMMON_SECTIONS, ['ide', 'q_submission']),
-  outline('early_feasibility', 'Early feasibility study', 'clinical_safety_effectiveness',
-    'Assess an early-stage device in a small number of subjects where non-clinical testing cannot answer the question.',
-    DEVICE_COMMON_SECTIONS, ['ide', 'q_submission']),
-  outline('comparative_device_study', 'Comparative device study', 'clinical_safety_effectiveness',
-    'Compare against a predicate or alternative device to support substantial equivalence or a comparative claim.',
-    DEVICE_COMMON_SECTIONS, DEVICE_CLINICAL_FILINGS),
-  outline('human_factors_formative', 'Human-factors formative study', 'usability',
-    'Find and fix use-related design problems while the design can still change. Not evidence for a filing on its own.',
-    ['Device and interface description', 'Objectives', 'Participants', 'Tasks', 'Findings and design changes'],
-    ['us_510k', 'de_novo']),
-  outline('pmcf', 'Post-market clinical follow-up (PMCF)', 'postmarket',
-    'Continue confirming safety and performance after MDR certification, feeding the periodic safety update report.',
-    ['PMCF objectives', 'Methods and data sources', 'Analysis plan', 'Reporting and CER linkage'],
-    ['pmcf_plan', 'eu_mdr_technical_documentation', 'cer']),
-  outline('registry', 'Registry', 'postmarket',
-    'Collect longitudinal real-world data on a defined population to support long-term safety and performance.',
-    ['Registry objectives', 'Population and enrollment', 'Data elements', 'Follow-up schedule', 'Analysis plan'],
-    ['eu_mdr_technical_documentation', 'cer', 'pmcf_plan']),
-  outline('postmarket_study', 'Post-market study', 'postmarket',
-    'Answer a specific question raised after market authorization, often an authority condition of approval.',
-    ['Objectives and regulatory basis', 'Design', 'Endpoints', 'Analysis plan', 'Reporting commitments'],
-    ['pma_supplement', 'eu_mdr_technical_documentation', 'cer']),
-  outline('real_world_evidence', 'Real-world evidence study', 'postmarket',
-    'Use routinely collected data to support a claim, with explicit treatment of data quality and confounding.',
-    ['Objectives', 'Data source and provenance', 'Data quality assessment', 'Confounding and bias plan', 'Analysis plan'],
-    ['us_510k', 'pma_supplement', 'eu_mdr_technical_documentation', 'cer']),
+  {
+    id: 'feasibility',
+    label: 'Feasibility study',
+    detail: 'full',
+    evidenceClass: 'clinical_safety_effectiveness',
+    purpose:
+      'Gather early clinical data to de-risk and shape the pivotal — endpoint measurability, procedure, and '
+      + 'device iteration — without being mistaken for confirmatory evidence.',
+    protocolSections: DEVICE_COMMON_SECTIONS,
+    designQuestions: [
+      'What specific question does this study answer to de-risk the pivotal — endpoint feasibility, procedural learning curve, or device refinement?',
+      'Is the sample size adequate to inform the pivotal design rather than to confirm effectiveness?',
+      'Is the investigation significant risk, and does it therefore require an IDE?',
+      'Are the endpoints framed as exploratory, and is it explicit that this evidence does not itself support the marketing claim?',
+    ],
+    endpoints: [
+      'Preliminary safety: adverse device effects and device deficiencies',
+      'Device function and performance signals',
+      'Feasibility of measuring the intended pivotal endpoint and of the procedure',
+    ],
+    typicalAcceptanceCriteria: [
+      'Sufficient safety and functional signal to justify proceeding to the pivotal, framed as a go/no-go rather than as proof of effectiveness',
+      'Findings adequate to fix the pivotal design assumptions, not to be reused as pivotal evidence',
+    ],
+    statisticalMethods: [
+      'Descriptive; estimates reported with wide confidence intervals to inform pivotal sample-size assumptions',
+      'No confirmatory hypothesis test',
+    ],
+    requiredSupportingPlans: ['Clinical investigation plan', 'Risk management file', 'Investigator brochure', 'Clinical monitoring plan'],
+    supportsFilings: ['ide', 'q_submission'],
+    references: ['FDA IDE Early/Traditional Feasibility Studies guidance', 'ISO 14155', 'FDA IDE regulation 21 CFR 812'],
+    approvalRequired: true,
+  },
+  {
+    id: 'early_feasibility',
+    label: 'Early feasibility study',
+    detail: 'full',
+    evidenceClass: 'clinical_safety_effectiveness',
+    purpose:
+      'Assess an early-stage device in a small number of subjects where bench and animal testing cannot '
+      + 'answer the question, under an IDE that anticipates iterative device changes.',
+    protocolSections: DEVICE_COMMON_SECTIONS,
+    designQuestions: [
+      'Why can bench and animal testing not answer the question, justifying first-in-human use of an early-stage device?',
+      'Is the cohort small with intensive per-subject monitoring, and is enrollment staged against emerging safety data?',
+      'How are iterative device or procedure changes anticipated and controlled within the IDE, and how is each documented?',
+      'Is informed consent enhanced to reflect the early developmental stage and the evolving device?',
+    ],
+    endpoints: [
+      'Early safety and device-human interaction, per subject',
+      'Feasibility signals that guide the next design iteration',
+      'Adverse device effects and deficiencies with root cause',
+    ],
+    typicalAcceptanceCriteria: [
+      'Acceptable early safety supporting continued or expanded investigation, judged per subject rather than in aggregate',
+      'Each device or procedure iteration justified and controlled under the IDE',
+    ],
+    statisticalMethods: [
+      'Descriptive and per-subject narrative; no powering',
+      'Pre-specified stopping considerations tied to emerging safety',
+    ],
+    requiredSupportingPlans: ['Clinical investigation plan', 'Risk management file', 'Investigator brochure', 'Iterative-change control plan', 'Data monitoring committee charter'],
+    supportsFilings: ['ide', 'q_submission'],
+    references: ['FDA Early Feasibility Studies IDE guidance', 'ISO 14155', 'FDA IDE regulation 21 CFR 812'],
+    approvalRequired: true,
+  },
+  {
+    id: 'comparative_device_study',
+    label: 'Comparative device study',
+    detail: 'full',
+    evidenceClass: 'clinical_safety_effectiveness',
+    purpose:
+      'Compare against a predicate, an alternative device or standard of care to support substantial '
+      + 'equivalence or a comparative labeling claim — where the margin, not just the point estimate, is the claim.',
+    protocolSections: DEVICE_COMMON_SECTIONS,
+    designQuestions: [
+      'What is the comparator — predicate, active alternative, or standard of care — and is it the right benchmark for the claim?',
+      'Is the design superiority, non-inferiority or equivalence, and is the margin justified clinically rather than by convenience?',
+      'Is the study randomized and blinded, and where it is not, how is bias controlled?',
+      'Is the sample size driven by the margin, and are both ITT and per-protocol populations pre-specified for a non-inferiority conclusion?',
+    ],
+    endpoints: [
+      'Primary comparative effectiveness endpoint',
+      'Comparative safety, including adverse device effects',
+      'Secondary endpoints supporting the specific comparative claim',
+    ],
+    typicalAcceptanceCriteria: [
+      'The pre-specified comparative endpoint met, with any non-inferiority margin justified by clinical consequence',
+      'Benefit-risk favorable on the totality of evidence, not the primary endpoint alone',
+    ],
+    statisticalMethods: [
+      'Pre-specified non-inferiority or superiority analysis with multiplicity control across secondary endpoints',
+      'ITT and per-protocol analyses for a non-inferiority claim; pre-specified missing-data handling',
+    ],
+    requiredSupportingPlans: ['Statistical analysis plan', 'Clinical monitoring plan', 'Risk management file', 'Investigator brochure'],
+    supportsFilings: DEVICE_CLINICAL_FILINGS,
+    references: ['ISO 14155', 'FDA guidance on non-inferiority clinical trials', 'ICH E6(R3) where applicable'],
+    approvalRequired: true,
+  },
+  {
+    id: 'human_factors_formative',
+    label: 'Human-factors formative study',
+    detail: 'full',
+    evidenceClass: 'usability',
+    purpose:
+      'Find and fix use-related design problems while the design can still change. It informs the design and '
+      + 'the critical-task list; it is not, on its own, validation evidence for a filing.',
+    protocolSections: [
+      'Device and user-interface description',
+      'Use specification and user profiles',
+      'Formative objectives',
+      'Participants and scenarios',
+      'Tasks under evaluation',
+      'Findings and resulting design changes',
+      'Link to the use-related risk analysis',
+    ],
+    designQuestions: [
+      'Which use-related hazards and tasks are being explored, and does the task list trace to the use-related risk analysis?',
+      'Are the participant groups representative, even if small, of the intended users?',
+      'Is it explicit that this is iterative, pre-validation work and not evidence for a filing on its own?',
+      'How do findings feed design changes and refine the critical-task list before the design is frozen for summative validation?',
+    ],
+    endpoints: [
+      'Use difficulties, use errors and close calls observed',
+      'Design problems identified and their disposition',
+      'Refinements to the critical-task list carried into summative validation',
+    ],
+    typicalAcceptanceCriteria: [
+      'Use-related design problems identified and addressed before validation — this is not a pass/fail study, and framing it as one misunderstands its role',
+      'Findings traceable to specific design changes and to the use-related risk analysis',
+    ],
+    statisticalMethods: [
+      'Qualitative; root-cause of observed difficulties, not hypothesis testing',
+      'Findings-to-change traceability rather than a powered sample',
+    ],
+    requiredSupportingPlans: ['Use-related risk analysis', 'Usability engineering file', 'Moderator guide'],
+    supportsFilings: ['us_510k', 'de_novo'],
+    references: ['IEC 62366-1', 'FDA Applying Human Factors and Usability Engineering guidance'],
+    approvalRequired: true,
+  },
+  {
+    id: 'pmcf',
+    label: 'Post-market clinical follow-up (PMCF)',
+    detail: 'full',
+    evidenceClass: 'postmarket',
+    purpose:
+      'Proactively confirm clinical safety and performance after MDR certification against the residual '
+      + 'uncertainties named in the clinical evaluation, feeding the CER and PSUR rather than waiting for complaints.',
+    protocolSections: [
+      'PMCF objectives and residual clinical uncertainties',
+      'Methods and data sources',
+      'General versus specific PMCF activities',
+      'Analysis plan',
+      'Reporting and CER / PSUR linkage',
+      'Justification where no PMCF is planned',
+    ],
+    designQuestions: [
+      'Which residual clinical risks or uncertainties is this follow-up designed to reduce, and are they traceable to the clinical evaluation?',
+      'Which methods apply — general (literature, registries, vigilance) or specific (PMCF studies, surveys) — and why are they sufficient?',
+      'At what interval are the CER and PSUR updated, and how do findings feed the benefit-risk conclusion?',
+      'Where no PMCF is planned, is the justification documented per MDCG 2020-7 rather than simply absent?',
+    ],
+    endpoints: [
+      'Confirmed clinical safety and performance in real-world use against the premarket claims',
+      'Emerging risks, previously unknown side effects, or off-label use',
+      'Updated inputs to the benefit-risk determination',
+    ],
+    typicalAcceptanceCriteria: [
+      'Residual uncertainties addressed on a documented plan, with the CER kept current',
+      'A signal triggers CAPA and, where warranted, a field safety corrective action',
+    ],
+    statisticalMethods: [
+      'Descriptive trending against the premarket clinical claims',
+      'Pre-specified thresholds distinguishing expected variation from a signal',
+    ],
+    requiredSupportingPlans: ['PMCF plan (MDCG 2020-7)', 'PMCF evaluation report (MDCG 2020-8)', 'PSUR linkage'],
+    supportsFilings: ['pmcf_plan', 'eu_mdr_technical_documentation', 'cer'],
+    references: ['EU MDR 2017/745 Annex XIV Part B', 'MDCG 2020-7', 'MDCG 2020-8'],
+    approvalRequired: true,
+  },
+  {
+    id: 'registry',
+    label: 'Registry',
+    detail: 'full',
+    evidenceClass: 'postmarket',
+    purpose:
+      'Collect longitudinal real-world data on a defined population to support long-term safety and '
+      + 'performance, where the value turns on the completeness of follow-up and the relevance and reliability of the data.',
+    protocolSections: [
+      'Registry objectives and questions',
+      'Target population and enrollment',
+      'Core data elements and definitions',
+      'Follow-up schedule and retention',
+      'Data quality and completeness plan',
+      'Governance and analysis plan',
+    ],
+    designQuestions: [
+      'What specific safety or performance question does the registry answer, rather than being an open-ended data collection?',
+      'Is the population enumerable and representative, and how is enrollment bias assessed?',
+      'Are the core data elements defined to a standard so the data is relevant and reliable enough for the regulatory purpose?',
+      'What follow-up duration and loss-to-follow-up handling make the long-term outcome interpretable?',
+    ],
+    endpoints: [
+      'Long-term safety events and device performance or survival, with time-to-event',
+      'Pre-specified outcomes across the enrolled population and key subgroups',
+      'Completeness and data-quality metrics that qualify the conclusions',
+    ],
+    typicalAcceptanceCriteria: [
+      'Data of sufficient relevance and reliability for the regulatory purpose, with follow-up and completeness adequate to the outcome',
+      'Outcomes pre-specified, so the registry answers its question rather than mining for one',
+    ],
+    statisticalMethods: [
+      'Time-to-event analysis (Kaplan-Meier, competing risks) with pre-specified outcomes',
+      'Sensitivity analyses for missingness and confounding',
+    ],
+    requiredSupportingPlans: ['Registry protocol', 'Data management and quality plan', 'Statistical analysis plan', 'Governance charter'],
+    supportsFilings: ['eu_mdr_technical_documentation', 'cer', 'pmcf_plan'],
+    references: ['FDA "Use of Real-World Evidence to Support Regulatory Decision-Making" framework', 'EU MDR 2017/745 Annex XIV Part B (registries as a PMCF method)'],
+    approvalRequired: true,
+  },
+  {
+    id: 'postmarket_study',
+    label: 'Post-market study',
+    detail: 'full',
+    evidenceClass: 'postmarket',
+    purpose:
+      'Answer a specific question raised after market authorization — often an authority condition of '
+      + 'approval or a surveillance order — with a design sized to that question and milestones committed to the authority.',
+    protocolSections: [
+      'Objectives and regulatory basis',
+      'Design',
+      'Population and endpoints',
+      'Analysis plan',
+      'Milestones and reporting commitments',
+      'Data monitoring',
+    ],
+    designQuestions: [
+      'What specific question is being answered, and on what regulatory basis — a condition of approval, a 522 order, or an MDR requirement?',
+      'Is the design adequate to answer that question with sufficient precision, and are the endpoints tied to it rather than generic?',
+      'What enrollment and milestone timeline has been committed to the authority, and how is adherence monitored?',
+      'How are results reported back to the authority, and on what schedule?',
+    ],
+    endpoints: [
+      'The specific safety or effectiveness outcome the authority asked about',
+      'Enrollment and milestone adherence against the committed timeline',
+      'Adverse events and device deficiencies over the study period',
+    ],
+    typicalAcceptanceCriteria: [
+      'The authority\'s question answered with adequate power or precision, not merely addressed',
+      'The committed milestones met, or a deviation reported to the authority with a remediation plan',
+    ],
+    statisticalMethods: [
+      'Pre-specified analysis matched to the specific question',
+      'Interim reporting per the commitment to the authority',
+    ],
+    requiredSupportingPlans: ['Statistical analysis plan', 'Clinical monitoring plan', 'Milestone and reporting plan', 'Risk management file update'],
+    supportsFilings: ['pma_supplement', 'eu_mdr_technical_documentation', 'cer'],
+    references: ['FDA 522 Postmarket Surveillance Studies guidance', '21 CFR 814.82 (PMA conditions of approval)', 'EU MDR 2017/745 Articles 83-86'],
+    approvalRequired: true,
+  },
+  {
+    id: 'real_world_evidence',
+    label: 'Real-world evidence study',
+    detail: 'full',
+    evidenceClass: 'postmarket',
+    purpose:
+      'Use routinely collected data to support a claim, where the whole difficulty is establishing that the '
+      + 'data is fit for purpose and that confounding has been controlled rather than assumed away.',
+    protocolSections: [
+      'Objectives and regulatory question',
+      'Data source and provenance',
+      'Fitness-for-purpose: relevance and reliability',
+      'Study design (including target-trial emulation)',
+      'Confounding and bias control plan',
+      'Analysis plan and sensitivity analyses',
+    ],
+    designQuestions: [
+      'Is the data source fit for purpose — relevant to the question and reliable in its capture — per the FDA RWE framework?',
+      'Is a target-trial-emulation design used to make the causal question and its assumptions explicit?',
+      'How are confounding, missingness, misclassification and immortal-time bias identified and controlled?',
+      'Is the protocol pre-specified and registered, so the analysis is not chosen after seeing the data?',
+    ],
+    endpoints: [
+      'The pre-specified effectiveness or safety estimate',
+      'Pre-specified sensitivity and negative-control analyses probing residual bias',
+      'Data-quality and curation metrics that qualify the estimate',
+    ],
+    typicalAcceptanceCriteria: [
+      'The data shown relevant and reliable for the specific claim, not assumed to be',
+      'The estimate robust across pre-specified sensitivity analyses, with residual confounding quantified rather than dismissed',
+    ],
+    statisticalMethods: [
+      'Target-trial emulation with propensity-score or covariate adjustment',
+      'Quantitative bias analysis and negative-control outcomes; all pre-specified',
+    ],
+    requiredSupportingPlans: ['Pre-registered RWE protocol', 'Data curation and quality plan', 'Statistical analysis plan with sensitivity analyses'],
+    supportsFilings: ['us_510k', 'pma_supplement', 'eu_mdr_technical_documentation', 'cer'],
+    references: ['FDA "Framework for the Use of Real-World Evidence"', 'FDA RWD/RWE guidances', 'ENCePP / ISPOR good-practice recommendations for RWE'],
+    approvalRequired: true,
+  },
 ];
 
 const ALL: StudyArchetype[] = [...IVD_ANALYTICAL, ...IVD_CLINICAL, ...DEVICE];
@@ -777,11 +1367,13 @@ export function archetypesForFiling(filing: MdxFilingType): StudyArchetype[] {
 }
 
 /**
- * Archetypes that are declared but not yet specified to full depth.
+ * Archetypes declared but not yet specified to full depth.
  *
- * Published so a consumer can label them honestly rather than presenting an
- * outline-level skeleton as a reviewed protocol specification. A regulatory
- * writer told the frame is complete will ship the gaps.
+ * Currently empty — every archetype is full — but retained as the honesty
+ * mechanism for the next one added: a scaffold-depth archetype must surface here
+ * so a consumer can label it rather than presenting an outline-level skeleton as
+ * a reviewed protocol specification. A regulatory writer told the frame is
+ * complete will ship the gaps.
  */
 export function archetypesNeedingDetail(): StudyArchetype[] {
   return ALL.filter(a => a.detail === 'outline');
