@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-26T00:23:47.695Z",
+  "generatedAt": "2026-07-26T22:45:58.685Z",
   "git": {
-    "sha": "90112c0d90e50b19ab14ab101c3f60c07fa8c993",
+    "sha": "9857cd03e3d1fd6c402f4324d0b6dec1b35f527a",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -179,7 +179,7 @@
       },
       {
         "basename": "app",
-        "count": 42,
+        "count": 41,
         "paths": [
           "client/public/design-system/ui_kits/ana_ri/App.jsx",
           "client/public/design-system/ui_kits/ectd_coauthor/App.jsx",
@@ -195,7 +195,6 @@
           "client/src/concept2cure/mdx/App.tsx",
           "client/src/concept2cure/pdev/App.tsx",
           "client/src/concept2cure/quality/App.tsx",
-          "client/src/concept2cure/rbm/App.tsx",
           "client/src/concept2cure/risk/App.tsx",
           "client/src/concept2cure/submission/App.tsx",
           "client/src/concept2cure/tasking/App.tsx",
@@ -334,24 +333,6 @@
         ]
       },
       {
-        "basename": "nav",
-        "count": 12,
-        "paths": [
-          "client/src/concept2cure/biopharma/data/nav.ts",
-          "client/src/concept2cure/cmc/data/nav.ts",
-          "client/src/concept2cure/communication/data/nav.ts",
-          "client/src/concept2cure/labeling/data/nav.ts",
-          "client/src/concept2cure/mdx/data/nav.ts",
-          "client/src/concept2cure/pdev/data/nav.ts",
-          "client/src/concept2cure/rbm/data/nav.ts",
-          "client/src/concept2cure/risk/data/nav.ts",
-          "client/src/concept2cure/submission/data/nav.ts",
-          "client/src/concept2cure/tasking/data/nav.ts",
-          "design-system/ui_kits/mdx/data/nav.js",
-          "ui_kits/mdx/data/nav.js"
-        ]
-      },
-      {
         "basename": "topbar",
         "count": 12,
         "paths": [
@@ -367,6 +348,23 @@
           "client/src/concept2cure/risk/shell/TopBar.tsx",
           "client/src/concept2cure/submission/shell/TopBar.tsx",
           "client/src/concept2cure/tasking/shell/TopBar.tsx"
+        ]
+      },
+      {
+        "basename": "nav",
+        "count": 11,
+        "paths": [
+          "client/src/concept2cure/biopharma/data/nav.ts",
+          "client/src/concept2cure/cmc/data/nav.ts",
+          "client/src/concept2cure/communication/data/nav.ts",
+          "client/src/concept2cure/labeling/data/nav.ts",
+          "client/src/concept2cure/mdx/data/nav.ts",
+          "client/src/concept2cure/pdev/data/nav.ts",
+          "client/src/concept2cure/risk/data/nav.ts",
+          "client/src/concept2cure/submission/data/nav.ts",
+          "client/src/concept2cure/tasking/data/nav.ts",
+          "design-system/ui_kits/mdx/data/nav.js",
+          "ui_kits/mdx/data/nav.js"
         ]
       },
       {
@@ -2468,7 +2466,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 841828
+        "bytes": 845826
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2586,7 +2584,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 20033
+        "lines": 20108
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2938,7 +2936,7 @@
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
-      "duplicateGroups": 174,
+      "duplicateGroups": 172,
       "largeByBytes": 0,
       "largeByLines": 1
     },

@@ -42,7 +42,7 @@
 - `conversation-thread`: Contract detail: concept2cureConversations/Messages
 - `haq-manager`: Contract ref (not yet a @shared file): @shared/types/haq
 - `pyramid`: Contract ref (not yet a @shared file): services/regulatory/SubmissionPyramidEngine.ts · globalPyramids.ts · submission-type-bridge.ts
-- `rbm`: Contract ref (not yet a @shared file): client/src/concept2cure/services/rbmService.ts · hooks/useRbm.ts
+- `rbm`: Contract ref (not yet a @shared file): client/src/concept2cure/v2/surfaces/rbmWrites.tsx (the write layer; the former services/rbmService.ts · hooks/useRbm.ts pair was removed 2026-07-26 when RBM consolidated onto one UI)
 - `intelligence-catalog`: Contract ref (not yet a @shared file): server/services/ana/tool-pedigree.ts
 - `insights`: Contract ref (not yet a @shared file): server/services/report-os/taxonomy.ts
 

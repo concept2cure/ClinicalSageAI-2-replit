@@ -30,10 +30,13 @@ export async function loadRiskReviewInput(
       `SELECT ctq_factor FROM rbm_risk_items
         WHERE organization_id=$1 AND program_id=$2 AND deleted_at IS NULL AND is_critical=true AND status IN ('open','mitigating')
         ORDER BY risk_score DESC NULLS LAST LIMIT 10`, [orgId, programId]),
+    // Every KRI/QTL, not just the flagged ones: `total` must be the real count
+    // (it previously reported only the red+amber rows as the total), and an
+    // unevaluated indicator has to be visible in the report.
     pool.query(
-      `SELECT name, status FROM rbm_kris WHERE organization_id=$1 AND program_id=$2 AND deleted_at IS NULL AND status IN ('red','amber')`, [orgId, programId]),
+      `SELECT name, status FROM rbm_kris WHERE organization_id=$1 AND program_id=$2 AND deleted_at IS NULL`, [orgId, programId]),
     pool.query(
-      `SELECT parameter, status FROM rbm_qtls WHERE organization_id=$1 AND program_id=$2 AND deleted_at IS NULL AND status IN ('breached','approaching')`, [orgId, programId]),
+      `SELECT parameter, status FROM rbm_qtls WHERE organization_id=$1 AND program_id=$2 AND deleted_at IS NULL`, [orgId, programId]),
     pool.query(
       `SELECT title, severity, status FROM rbm_signals
         WHERE organization_id=$1 AND program_id=$2 AND deleted_at IS NULL AND status IN ('new','triaged','investigating')`, [orgId, programId]),
@@ -72,8 +75,18 @@ export async function loadRiskReviewInput(
       total: items.rows[0].total, critical: items.rows[0].critical, open: items.rows[0].open, high: items.rows[0].high,
       openCritical: openCrit.rows.map((r: any) => r.ctq_factor),
     },
-    kris: { total: krisRows.length, red: krisRows.filter(r => r.status === 'red').map(r => r.name), amber: krisRows.filter(r => r.status === 'amber').map(r => r.name) },
-    qtls: { total: qtlRows.length, breached: qtlRows.filter(r => r.status === 'breached').map(r => r.parameter), approaching: qtlRows.filter(r => r.status === 'approaching').map(r => r.parameter) },
+    kris: {
+      total: krisRows.length,
+      red: krisRows.filter(r => r.status === 'red').map(r => r.name),
+      amber: krisRows.filter(r => r.status === 'amber').map(r => r.name),
+      notEvaluated: krisRows.filter(r => r.status === 'not_evaluated').map(r => r.name),
+    },
+    qtls: {
+      total: qtlRows.length,
+      breached: qtlRows.filter(r => r.status === 'breached').map(r => r.parameter),
+      approaching: qtlRows.filter(r => r.status === 'approaching').map(r => r.parameter),
+      notEvaluated: qtlRows.filter(r => r.status === 'not_evaluated').map(r => r.parameter),
+    },
     signals: { open: sigRows.length, high: sigRows.filter(r => r.severity === 'high' || r.severity === 'critical').map(r => r.title) },
     sites: { total: sites.rows[0].total, enhanced: sites.rows[0].enhanced },
     patients: { total: patients.rows[0].total, flagged: patients.rows[0].flagged, review: patients.rows[0].review },

@@ -74,7 +74,6 @@ import { ProjectHome } from './surfaces/ProjectHome';
 import { Projects } from './surfaces/Projects';
 import { PyramidShell } from './surfaces/Pyramid';
 import { Rbm } from './surfaces/Rbm';
-import { RbmOperations } from './surfaces/RbmOperations';
 import { RegChange } from './surfaces/RegChange';
 import { Registrations } from './surfaces/Registrations';
 import { ReportEngine } from './surfaces/ReportEngine';
@@ -189,7 +188,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'protocol-dev': { component: ProtocolWorkspace, full: true, hideAna: true },
   pyramid: { component: PyramidShell },
   rbm: { component: Rbm, hideAna: true },
-  'rbm-operations': { component: RbmOperations },
   'reg-change': { component: RegChange },
   registrations: { component: Registrations },
   'regulatory-workspace': { component: RegulatoryWorkspace, full: true },

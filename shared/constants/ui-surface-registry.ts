@@ -597,22 +597,11 @@ export const UI_SURFACES: UiSurface[] = [
     compliance: [A11Y, TONE],
     notes: 'Real statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation.',
   },
-  {
-    id: 'rbm-operations',
-    label: 'RBM operations',
-    navTier: 'specialist',
-    layoutMode: 'biostatistics',
-    icon: 'shieldCheck',
-    group: 'clinical',
-    uiKit: null,
-    apiPrefixes: ['/api/mdx', '/api/mdx-rbm'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: 'RBM write/compute layer: KRI value capture (status recompute), site-risk recompute, central monitoring, patient scoring, live signals (/api/mdx/rbm-*).',
-  },
+  // 'rbm-operations' is retired. It was a second, thinner RBM destination
+  // holding the write/compute layer (KRI value capture, site-risk recompute,
+  // central monitoring, patient scoring) while the `rbm` surface was read-only.
+  // Those writes now live in the `rbm` shell itself, so keeping a peer nav entry
+  // would offer two RBM destinations with one of them a strict subset.
   {
     id: 'report-engine',
     label: 'Report engine',

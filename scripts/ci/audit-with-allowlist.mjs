@@ -28,6 +28,20 @@
 // As of 2026-07-26 this list was reduced from 27 entries to 1. Every other
 // package had ONLY versions above its advisory range (verified per package
 // with `npm ls <pkg> --all`), so those entries suppressed nothing.
+//
+// RECONCILED with the parallel audit that landed on concept2cure-v2 in #1111
+// (5522c1cb). That change reached the SAME findings from the same evidence —
+// react-router's justification described usage that did not exist, tmp's
+// "no upgrade path" had been overtaken by an overrides entry, and several
+// version claims had drifted — but kept the entries and corrected their notes.
+// This keeps the removals instead, because a correctly-documented entry that
+// suppresses nothing is still a standing risk acceptance nobody will re-check.
+//
+// The merge was decided by measurement, not preference: against the tree at that
+// commit, `npm audit --audit-level=high` reports ZERO high/critical advisories,
+// and the scan exits 0 with an EMPTY allowlist. All 32 entries on the base were
+// dead. The dependency work in the same range (Pillow bump, react-router
+// removal, the tmp override) is what cleared them.
 
 import { spawnSync } from 'node:child_process';
 
@@ -42,6 +56,16 @@ const ACCEPTED_GHSA_IDS = new Set([
   // tooling, never a runtime path) pending a coordinated bump across
   // vite / tsx / drizzle-kit. Re-check with `npm ls esbuild --all` before
   // renewing this — the moment no in-range copy remains, delete it.
+  //
+  // KEPT DESPITE BEING UNFLAGGED. The stale report below now names this id:
+  // npm audit has stopped reporting the advisory entirely (it currently reports
+  // zero high/critical advisories of any kind). That is the "dropped out of the
+  // database temporarily" case the report is there to distinguish, and it is why
+  // the report is advisory rather than enforcing. The exposure itself is
+  // unchanged — three in-range copies remain installed, re-verified with
+  // `npm ls esbuild --all` at this commit — so the entry stays. Deleting it on
+  // the strength of a quiet scan would be the exact mistake this file's rules
+  // warn about, run in the opposite direction.
   //
   // Accepting this also clears the tsx/vite "transitive vulnerability" flags,
   // which are this same advisory surfaced through their bundled esbuild.

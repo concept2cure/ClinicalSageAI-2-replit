@@ -11,8 +11,15 @@
  */
 
 export type RiskBand = 'low' | 'medium' | 'high';
-export type KriStatus = 'green' | 'amber' | 'red';
-export type QtlStatus = 'within' | 'approaching' | 'breached';
+/**
+ * `not_evaluated` is a first-class KRI/QTL state, not a rendering nicety. An
+ * indicator with no reading — or with no threshold to read against — has not
+ * been shown to be in control, so banding it green/within would assert an
+ * assurance the data does not support. Callers must distinguish "measured and
+ * within range" from "never measured".
+ */
+export type KriStatus = 'green' | 'amber' | 'red' | 'not_evaluated';
+export type QtlStatus = 'within' | 'approaching' | 'breached' | 'not_evaluated';
 export type MonitoringTier = 'reduced' | 'standard' | 'enhanced';
 export type KriDirection = 'higher_worse' | 'lower_worse';
 
@@ -49,6 +56,10 @@ export function overallRiskFromScores(scores: number[]): RiskBand {
 /**
  * KRI status from current value against amber/red thresholds. `direction`
  * captures whether a higher or a lower value is worse.
+ *
+ * Returns `not_evaluated` when there is no reading, or when neither threshold
+ * is configured — absence of a measurement is not evidence of a green
+ * indicator, and banding it green would hide an unmonitored risk.
  */
 export function kriStatus(
   value: number | null | undefined,
@@ -56,7 +67,8 @@ export function kriStatus(
   red: number | null | undefined,
   direction: KriDirection = 'higher_worse',
 ): KriStatus {
-  if (value == null) return 'green';
+  if (value == null) return 'not_evaluated';
+  if (amber == null && red == null) return 'not_evaluated';
   const worseAbove = direction === 'higher_worse';
   const breach = (threshold: number | null | undefined) => {
     if (threshold == null) return false;
@@ -71,13 +83,18 @@ export function kriStatus(
  * QTL status. A breach is value beyond the primary threshold; "approaching" is
  * beyond the secondary (early-warning) limit, conventionally 50–75% of the
  * primary per TransCelerate. Assumes a higher value is worse.
+ *
+ * Returns `not_evaluated` when the parameter has no current value, or no
+ * tolerance limit to compare it against: an unmeasured QTL has not been shown
+ * to be within tolerance, and reporting it as `within` would overstate the
+ * study's demonstrated quality.
  */
 export function qtlStatus(
   value: number | null | undefined,
   threshold: number | null | undefined,
   secondaryLimit: number | null | undefined,
 ): QtlStatus {
-  if (value == null || threshold == null) return 'within';
+  if (value == null || threshold == null) return 'not_evaluated';
   if (value >= threshold) return 'breached';
   if (secondaryLimit != null && value >= secondaryLimit) return 'approaching';
   return 'within';

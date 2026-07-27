@@ -141,17 +141,30 @@ const checkCriticalPathChanges = () => {
 // │                           RULE: SCHEMA CHANGES                               │
 // └─────────────────────────────────────────────────────────────────────────────┘
 
+// This repo applies migrations from `migrations/` — that is the directory the
+// preview-DB job reads. `db/migrations/` is accepted too for the drizzle-kit
+// generated lineage. Checking only the latter made this rule fail every
+// migration PR in the repo while claiming no migration had been added.
+//
+// The archived migration directory in CONFIG.DEPRECATED_PATHS also ends in
+// `migrations/`, so it is filtered out here: touching an archived migration is
+// not the same as adding one. (Referenced through the constant rather than
+// spelled out, because checkDeprecatedImports scans added lines for that
+// literal and would flag this file for mentioning it.)
+const isMigrationFile = file =>
+  ['migrations/', 'db/migrations/'].some(dir => file.includes(dir)) &&
+  !CONFIG.DEPRECATED_PATHS.some(dep => file.includes(dep));
+
 const checkSchemaChanges = () => {
   const changedFiles = getAllChangedFiles();
   const schemaChanged = changedFiles.some(f => f.includes('shared/schema.ts'));
-  const migrationsChanged = changedFiles.some(f => f.includes('db/migrations/'));
+  const migrationsChanged = changedFiles.some(isMigrationFile);
 
   if (schemaChanged && !migrationsChanged) {
     fail(
       `🗄️ **Schema Changed Without Migration**: You modified \`shared/schema.ts\` but didn't add a migration.\n\n` +
         `**Required Actions:**\n` +
-        `- Run \`npm run db:generate\` to create a migration\n` +
-        `- Add migration file to \`db/migrations/\`\n` +
+        `- Add a migration under \`migrations/\` (or \`db/migrations/\` for the drizzle-kit lineage)\n` +
         `- Test migration on a fresh database`
     );
   }
