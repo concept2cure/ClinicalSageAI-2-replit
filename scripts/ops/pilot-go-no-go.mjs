@@ -485,9 +485,21 @@ async function main() {
       !/sslmode=disable/i.test(url) &&
       (/sslmode=(require|prefer|verify-ca|verify-full)/i.test(url) ||
         /\.neon\.tech|\.rds\.amazonaws\.com|\.supabase\.|\.azure\.com/i.test(url));
+    // TLS is VERIFIED against the trusted CA store. Managed Postgres (Neon,
+    // RDS, Supabase) presents a publicly-trusted certificate, so verification
+    // succeeds — and a tool whose job is to certify a pilot is safe has no
+    // business disabling transport security to do it. A self-signed/internal CA
+    // deployment can opt out explicitly with PILOT_DB_SSL_NO_VERIFY=true, which
+    // is reported in the output so it can never be an invisible downgrade.
+    const noVerify = (process.env.PILOT_DB_SSL_NO_VERIFY ?? '').trim().toLowerCase() === 'true';
+    if (noVerify) {
+      console.warn(
+        '  ⚠ PILOT_DB_SSL_NO_VERIFY=true — database TLS certificate verification is DISABLED for this run.',
+      );
+    }
     const pool = new Pool({
       connectionString: url,
-      ...(wantsSsl ? { ssl: { rejectUnauthorized: false } } : {}),
+      ...(wantsSsl ? { ssl: noVerify ? { rejectUnauthorized: false } : true } : {}),
       connectionTimeoutMillis: 10000,
       query_timeout: 15000,
       statement_timeout: 15000,
