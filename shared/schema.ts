@@ -2828,11 +2828,7 @@ export const fda510kSubmissions = pgTable(
     // Submission Information
     submissionNumber: text('submission_number').unique(), // K-number when assigned
     submissionType: text('submission_type').notNull(), // traditional, special, abbreviated
-    // draft, in_review, ready_for_transmission, submitted, cleared, rejected.
-    // `ready_for_transmission` = validated and e-signed locally, NOT sent to FDA;
-    // only the gateway path (which obtains an agency receipt) may write
-    // `submitted`. See medicalDeviceService.submit510kToFDA.
-    submissionStatus: text('submission_status').default('draft'),
+    submissionStatus: text('submission_status').default('draft'), // draft, in_review, submitted, cleared, rejected
 
     // Predicate Device Information
     predicateDeviceName: text('predicate_device_name'),

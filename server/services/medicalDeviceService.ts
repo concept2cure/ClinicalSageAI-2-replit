@@ -439,6 +439,11 @@ class MedicalDeviceService {
       // transmission lives on the gateway path (server/services/submission-
       // gateways, surfaced as Gateway Transmittals), which obtains and stores an
       // actual agency receipt.
+      // `submission_status` is a free-text column. The values in play are
+      // draft | in_review | ready_for_transmission | submitted | cleared |
+      // rejected. `ready_for_transmission` means validated and e-signed locally
+      // but NOT sent; only the gateway path — which obtains and stores a real
+      // agency receipt — may ever write `submitted`.
       await this.update510kSubmission(
         organizationId,
         submissionId,
