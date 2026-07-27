@@ -1133,6 +1133,18 @@ router.post('/docs', async (req: Request, res: Response) => {
       });
     }
 
+    // Reject a malformed program id with a clean 400 rather than letting the
+    // UUID column cast throw a 500. Cross-org mis-scoping is already prevented
+    // downstream: every read is gated on tenant_id, so a document tagged with
+    // another org's program id never surfaces in that org's tree.
+    if (
+      client_program_id !== undefined &&
+      client_program_id !== null &&
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(client_program_id))
+    ) {
+      return res.status(400).json({ success: false, error: 'client_program_id must be a valid UUID' });
+    }
+
     // Build the INSERT so the new program-scope column is referenced ONLY when
     // supplied. A create without client_program_id (the org-wide path and the
     // golden-journey harness) emits the exact original statement, so databases

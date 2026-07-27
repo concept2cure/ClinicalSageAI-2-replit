@@ -144,4 +144,13 @@ describe('authoring documents — program scoping (over HTTP, canonical DDL)', (
     );
     expect(all.body.documents.length).toBe(2);
   });
+
+  it('rejects a malformed client_program_id with 400, not a 500', async () => {
+    const res = await auth(request(app).post('/api/authoring/docs')).send({
+      title: 'Bad program id',
+      module: 'M3',
+      client_program_id: 'not-a-uuid',
+    });
+    expect(res.status).toBe(400);
+  });
 });
