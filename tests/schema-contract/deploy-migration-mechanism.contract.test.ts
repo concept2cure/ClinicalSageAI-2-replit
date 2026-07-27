@@ -109,8 +109,15 @@ describe('deploy migration mechanism', () => {
       // "what a deploy runs" drift apart — the failure this whole mechanism
       // exists to prevent.
       for (const applier of ['apply-c2c-migrations.mjs', 'deploy-migrate.mjs']) {
-        expect(read(path.join('scripts', 'db', applier))).toMatch(
+        const src = read(path.join('scripts', 'db', applier));
+        expect(src).toMatch(
           /import \{[^}]*C2C_MIGRATION_FILES[^}]*\} from '\.\/migration-set\.mjs'/,
+        );
+        // And no local copy alongside the import. A second list that is only
+        // *mostly* the same is worse than an obviously separate one, because
+        // the divergence shows up as a missing table on one path only.
+        expect(src, `${applier} must not define its own file list`).not.toMatch(
+          /const\s+FILES\s*=\s*\[/,
         );
       }
     });

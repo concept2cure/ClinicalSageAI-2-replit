@@ -273,6 +273,8 @@ jobs:
         #     with no load balancer and must not be killed by an HTTP probe;
         #   • command is the migration entrypoint.
         run: |
+          set -euo pipefail
+
           if [[ -z "$IMAGE_DIGEST" || "$IMAGE_DIGEST" != sha256:* ]]; then
             echo "::error::No API image digest available, so there is no image to migrate from."
             echo "::error::A deploy that skips the API image cannot migrate the schema. Re-run with deploy_api enabled,"
