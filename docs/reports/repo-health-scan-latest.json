@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-27T14:13:33.415Z",
+  "generatedAt": "2026-07-27T14:30:55.511Z",
   "git": {
-    "sha": "3364a479321ff24cc356a5376b75cc2520776597",
+    "sha": "b1bf5ee54bbba974b34276ea7ad38ce421e482a3",
     "branch": "integrate-c2c-v2"
   },
   "thresholds": {
@@ -2486,7 +2486,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 193863
+        "bytes": 192974
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2608,7 +2608,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 5716
+        "lines": 5687
       },
       {
         "file": "server/routes/ana-features.ts",
