@@ -75,7 +75,19 @@ function mapLive(payload: unknown): CpData | null {
 
 export function ClientPortal({ onAsk, onNav }: SurfaceViewProps) {
   const [ctxOpen, setCtxOpen] = useState(true);
-  const raw = useLive<unknown>('/api/client-portal/overview', null);
+  // Forward ?clientWorkspaceId= so CRO staff can preview a specific client, and
+  // a multi-workspace client can pick one. The backend still authorizes it
+  // (staff → own-org ownership; client → a matching client_access row); this
+  // only carries the intent. Numeric-only, so nothing arbitrary hits the query.
+  const wsId =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('clientWorkspaceId')
+      : null;
+  const path =
+    wsId && /^\d+$/.test(wsId)
+      ? `/api/client-portal/overview?clientWorkspaceId=${wsId}`
+      : '/api/client-portal/overview';
+  const raw = useLive<unknown>(path, null);
   const live = useMemo(() => (raw.sample ? null : mapLive(raw.data)), [raw.sample, raw.data]);
   const isLive = live !== null;
   const cp: CpData = live ?? CP;

@@ -32,6 +32,22 @@ function getOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Org-admin roles that may read this tenant's admin data. Mirrors the ui-v2
+ * Shell gate (isOrgAdmin) and client-portal's STAFF_ROLES. This is the
+ * SERVER-SIDE authorization: the global /api boundary authenticates the caller
+ * but does not authorize a role, and the ui-v2 Shell only HIDES the nav item —
+ * so without this gate any authenticated tenant member could read API-key
+ * names/scopes, audit targets and SSO/security config.
+ */
+const ADMIN_ROLES = new Set(['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin']);
+function isAdminCaller(req: Request): boolean {
+  const u = (req as any).user ?? {};
+  const single = String(u.role ?? (req as any).userRole ?? '').toLowerCase();
+  if (ADMIN_ROLES.has(single)) return true;
+  return Array.isArray(u.roles) && u.roles.some((r: unknown) => ADMIN_ROLES.has(String(r).toLowerCase()));
+}
+
 const initials = (name: string | null, email: string | null): string => {
   if (name) {
     const parts = name.trim().split(/\s+/);
@@ -63,6 +79,11 @@ interface MemberRow {
 router.get('/admin', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
+  // Fail-closed authorization (AGENTS.md §Repository Safety: gates fail closed).
+  // Non-leaky 403 — reveal nothing about the org's admin estate to non-admins.
+  if (!isAdminCaller(req)) {
+    return res.status(403).json({ error: 'Organization admin access required.' });
+  }
 
   try {
     const { rows } = await pool.query<MemberRow>(

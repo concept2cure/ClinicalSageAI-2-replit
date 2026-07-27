@@ -21,9 +21,10 @@ beforeAll(async () => {
   const router = (await import('../mdx-admin')).default;
   app = express();
   app.use(express.json());
-  // Stand in for authMiddleware (applied at mount in the real app): set the org.
+  // Stand in for authMiddleware (applied at mount in the real app): set the org
+  // and an admin role (the route is org-admin gated).
   app.use((req: any, _res, next) => {
-    req.user = { organizationId: 2 };
+    req.user = { organizationId: 2, role: 'admin' };
     next();
   });
   app.use('/api/mdx', router);
@@ -151,5 +152,22 @@ describe('GET /api/mdx/admin — real facets', () => {
     bare.use('/api/mdx', router);
     const res = await request(bare).get('/api/mdx/admin');
     expect(res.status).toBe(403);
+  });
+
+  it('403s an authenticated NON-admin member (fail-closed authorization)', async () => {
+    // A real org member with a valid org context but a non-admin role must not
+    // reach the admin estate — the UI hiding the nav item is not authorization.
+    const member = express();
+    member.use(express.json());
+    member.use((req: any, _res, next) => {
+      req.user = { organizationId: 2, role: 'manager' };
+      next();
+    });
+    const router = (await import('../mdx-admin')).default;
+    member.use('/api/mdx', router);
+    const res = await request(member).get('/api/mdx/admin');
+    expect(res.status).toBe(403);
+    // No estate data leaks in the denial.
+    expect(res.body.data).toBeUndefined();
   });
 });

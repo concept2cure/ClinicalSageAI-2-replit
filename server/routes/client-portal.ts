@@ -94,16 +94,24 @@ async function resolveScope(req: Request): Promise<ResolvedScope | null> {
   const uid = callerId(req);
   if (!uid) return null;
 
-  // 1. External client — self-scoped via client_access. Query param ignored.
+  // 1. External client — self-scoped via client_access. A ?clientWorkspaceId=
+  //    is honored ONLY when the caller has a matching client_access row: the
+  //    requested workspace sorts first, but the WHERE still restricts to the
+  //    caller's own grants, so a multi-workspace client can pick one and can
+  //    NEVER pivot to a workspace they lack. No/invalid param, or a param they
+  //    aren't granted, falls back to the lowest id — the stable single-
+  //    workspace behavior — rather than a confusing denial.
+  const reqWs = Number(req.query.clientWorkspaceId);
+  const wantWs = Number.isFinite(reqWs) && reqWs > 0 ? reqWs : null;
   const access = await pool.query(
     `SELECT ca.client_workspace_id, cw.name AS client_name, o.name AS cro_name
        FROM client_access ca
        JOIN client_workspaces cw ON cw.id = ca.client_workspace_id
        LEFT JOIN organizations o ON o.id = cw.organization_id
       WHERE ca.user_id = $1
-      ORDER BY ca.client_workspace_id
+      ORDER BY (ca.client_workspace_id = $2::int) DESC NULLS LAST, ca.client_workspace_id
       LIMIT 1`,
-    [uid],
+    [uid, wantWs],
   );
   if (access.rows.length) {
     const r = access.rows[0];
