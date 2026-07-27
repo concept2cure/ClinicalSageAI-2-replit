@@ -29,6 +29,8 @@ import type { Pool } from 'pg';
 import { authMiddleware } from '../auth.js';
 import { isStaticDataEnabled } from '../middleware/staticDataGuard';
 import { createCircuitBreakerMiddleware } from '../middleware/circuitBreaker';
+import { authoringObjectAuthorization } from '../middleware/authoringObjectAuthorization';
+import authoringPermissionsRouter from '../routes/authoring-permissions';
 import type { CircuitBreakerMiddleware } from '../bootstrap/types';
 import { buildStaticBusinessDataGuard } from '../bootstrap/static-data-guard';
 
@@ -123,6 +125,14 @@ export async function registerPreStartRoutes(
   await registerAiRoutes({ app, pool, aiCircuitBreaker });
   registerConcept2CureRoutes(app);
   registerAdminRoutes(app);
+
+  // Authoring object security is mounted ahead of the legacy authoring router.
+  // Permission-management routes are owner/admin controlled and terminate their
+  // own requests; every other document/section mutation must pass the mandatory,
+  // fail-closed object authorization middleware. This makes the old
+  // AUTH_ENFORCE_SECTION_PERMS opt-out irrelevant to the production route path.
+  app.use('/api/authoring', authoringPermissionsRouter);
+  app.use('/api/authoring', authoringObjectAuthorization);
 
   // Slot 5 — Authoring router + authoring actions + AnA platform control +
   // AI actions (+ Redis / queue init) + Phase 3 orchestration.
