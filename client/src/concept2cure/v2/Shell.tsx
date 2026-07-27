@@ -20,6 +20,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import brandMark from '@/assets/concept2cure-icon.svg';
 import { I } from './icons';
 import { SampleTag, useLive, connected } from './dataConnect';
+import type { OnboardingWelcome } from './onboardingWelcome';
 import { GovernedActionSignoff } from '../components/ana/GovernedActionSignoff';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
 import type { AnaChatAction } from '../components/ana/useAnaChat';
@@ -402,6 +403,8 @@ export function AnaRail({
   messages,
   onSend,
   onAct,
+  welcome,
+  onDismissWelcome,
 }: {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -412,6 +415,10 @@ export function AnaRail({
   messages: AnaMessage[];
   onSend: (text: string) => void;
   onAct: (id: string) => void;
+  /** First-run AnA welcome (P1, assist-only). Null once the client has started
+   *  a conversation or dismissed it — the rail only renders it when present. */
+  welcome?: OnboardingWelcome | null;
+  onDismissWelcome?: () => void;
 }) {
   const [draft, setDraft] = React.useState('');
   const [files, setFiles] = React.useState<string[]>([]);
@@ -477,6 +484,34 @@ export function AnaRail({
         </div>
       </div>
       <div className="ana-body" aria-live="polite">
+        {welcome && (
+          <div className="ana-welcome">
+            <div className="ana-welcome-greet">
+              <span className="ana-welcome-mark">✻</span> {welcome.greeting}
+            </div>
+            <div className="ana-welcome-sub">{welcome.subline}</div>
+            <div className="ana-welcome-starters">
+              {welcome.starters.map((s) => (
+                <button
+                  key={s.label}
+                  type="button"
+                  className="ana-welcome-starter"
+                  onClick={() => onSend(s.prompt)}
+                >
+                  <span className="ico">
+                    {(s.iconKey ? (I as Record<string, React.ReactNode>)[s.iconKey] : null) ?? I.sparkles}
+                  </span>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            {onDismissWelcome && (
+              <button type="button" className="ana-welcome-dismiss" onClick={onDismissWelcome}>
+                Skip for now
+              </button>
+            )}
+          </div>
+        )}
         {ac.module && (
           <div className="ana-ctx">
             <div className="ana-ctx-module">

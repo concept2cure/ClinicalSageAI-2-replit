@@ -22,6 +22,8 @@ import { useLocation } from 'wouter';
 import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
 import { AnaRail, CmdK, Rail, TopBar, type AnaMessage } from './Shell';
 import { useAnaChat, type AnaChatMessage } from '../components/ana/useAnaChat';
+import { useAuth } from '@/services/portal/authService';
+import { welcomeFor } from './onboardingWelcome';
 import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
 import { SURFACE_VIEWS } from './surfaceViews';
@@ -44,6 +46,8 @@ interface Prefs {
   anaOpen: boolean;
   anaMode: string;
   segment: string;
+  /** Set once the client dismisses (or outgrows) the first-run AnA welcome. */
+  welcomeDismissed: boolean;
 }
 
 const DEFAULT_PREFS: Prefs = {
@@ -52,6 +56,7 @@ const DEFAULT_PREFS: Prefs = {
   anaOpen: false,
   anaMode: 'standard',
   segment: 'biotech',
+  welcomeDismissed: false,
 };
 
 function loadPrefs(): Prefs {
@@ -115,6 +120,7 @@ export function V2App() {
   /* The real AnA assistant for the whole shell — one streaming conversation
      (/api/ana-ri/stream) shared by the rail, ⌘K and every surface's onAsk. */
   const anaChat = useAnaChat({ screenName: activeId, projectId: readShellProjectId() });
+  const { user } = useAuth();
   const nav = React.useCallback(
     (id: string) => {
       setLocation(locationForSurface(id));
@@ -203,6 +209,17 @@ export function V2App() {
      actually executed and any governed action awaiting a Part 11 sign-off. */
   const railMessages = anaChat.messages.map(adaptChatMessage);
 
+  /* First-run AnA welcome (task #13 P1, assist-only): a client-type-aware
+     greeting the new client sees before the conversation starts. Shown while
+     the AnA conversation is still empty and the client hasn't dismissed it —
+     it naturally gives way the moment they send their first message. Scripted
+     copy, LIVE responses (the starters call the real /api/ana-ri/stream). */
+  const firstName = (user?.firstName || user?.displayName || '').trim().split(/\s+/)[0] || '';
+  const welcome =
+    railMessages.length === 0 && !prefs.welcomeDismissed
+      ? welcomeFor(prefs.segment, firstName)
+      : null;
+
   return (
     <div
       className={`c2c-v2 shell${prefs.dark ? ' dark' : ''}`}
@@ -244,6 +261,8 @@ export function V2App() {
           messages={railMessages}
           onSend={ask}
           onAct={onAct}
+          welcome={welcome}
+          onDismissWelcome={() => set('welcomeDismissed', true)}
         />
       )}
       <CmdK
