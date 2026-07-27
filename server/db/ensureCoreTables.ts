@@ -124,6 +124,24 @@ const AUTHORING_SUBSYSTEM_TABLES = [
   'authoring_workflow_steps',
 ];
 
+/**
+ * Tenant-consistent parentage (P0 #4): the four composite (parent_id, tenant_id)
+ * → (id, tenant_id) foreign keys the loop-tables migration installs on the
+ * working-content child links. Tables can exist WITHOUT these constraints — a DB
+ * provisioned before the migration landed, or a retrofit whose ADD CONSTRAINT
+ * rolled back — and such a DB is NOT ready for a Part 11 authoring workload: RLS
+ * filters each row by its own tenant but only these FKs stop a child from
+ * structurally pointing at another tenant's parent. Their absence while the
+ * tables are present fails readiness closed. Keep in sync with the DO-block in
+ * db/migrations/20260725_authoring_document_loop_tables.sql.
+ */
+const AUTHORING_SUBSYSTEM_FK_CONSTRAINTS = [
+  'authoring_sections_doc_tenant_fkey',
+  'doc_revisions_section_tenant_fkey',
+  'authoring_comments_section_tenant_fkey',
+  'authoring_citations_section_tenant_fkey',
+];
+
 export type SubsystemState = 'present' | 'partial' | 'absent';
 
 export interface SubsystemStatus {
@@ -462,6 +480,36 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
       result.warnings.push(
         'Authoring subsystem absent, but AUTHORING_SUBSYSTEM_OPTIONAL=true — readiness not failed. Authoring routes will error until it is provisioned (npm run db:apply-c2c).',
       );
+    }
+
+    // Tenant-consistent parentage (P0 #4): tables present but their composite-FK
+    // integrity constraints absent means the subsystem was provisioned before
+    // that migration landed, or a retrofit's ADD CONSTRAINT rolled back — either
+    // way it is NOT ready for a Part 11 authoring workload. Verify the four FKs
+    // and, if any is missing while the tables exist, downgrade to partial (fails
+    // /readyz closed). Fail closed if the check itself errors — never claim ready
+    // on unverifiable integrity.
+    if (authoring.state === 'present') {
+      try {
+        const cons = await pool.query(
+          `SELECT conname FROM pg_constraint WHERE conname = ANY($1::text[])`,
+          [AUTHORING_SUBSYSTEM_FK_CONSTRAINTS],
+        );
+        const have = new Set(cons.rows.map(r => r.conname));
+        const missingFks = AUTHORING_SUBSYSTEM_FK_CONSTRAINTS.filter(c => !have.has(c));
+        if (missingFks.length > 0) {
+          authoring.state = 'partial';
+          authoring.missing = missingFks;
+          authoring.readinessFailing = true;
+        }
+      } catch (err: any) {
+        authoring.state = 'partial';
+        authoring.missing = ['<integrity-constraint-check-failed>'];
+        authoring.readinessFailing = true;
+        result.warnings.push(
+          `Could not verify authoring tenant-parentage constraints: ${err?.message ?? String(err)}`,
+        );
+      }
     }
 
     result.duration = Date.now() - startTime;
