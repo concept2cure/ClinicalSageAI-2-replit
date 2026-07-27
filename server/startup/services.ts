@@ -329,7 +329,18 @@ export async function initializeParallelServices(httpServer: Server, pool: Pool)
   if (hocuspocus.status === 'fulfilled') {
     try {
       hocuspocus.value.attachHocuspocusToServer(httpServer);
-      console.log('[Hocuspocus] CRDT collaboration server initialized');
+      // Report the state that is actually true. attachHocuspocusToServer is a
+      // no-op unless ENABLE_COLLAB_CRDT is on, and logging "initialized"
+      // unconditionally is how the previous transport break stayed invisible:
+      // boot said the collaboration server was up every single time, including
+      // for the entire period when no socket could physically connect to it.
+      if (hocuspocus.value.isCollabEnabled()) {
+        console.log('[Hocuspocus] CRDT collaboration server attached at /collab');
+      } else {
+        console.log(
+          'ℹ️ [Hocuspocus] CRDT collaboration not attached (ENABLE_COLLAB_CRDT is not "true")'
+        );
+      }
     } catch (err: any) {
       console.warn('[Hocuspocus] Failed to initialize (non-blocking):', err?.message);
     }

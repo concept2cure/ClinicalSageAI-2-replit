@@ -561,7 +561,8 @@
     "20260727_drop_clinical_evidence_duplicate_lineage.sql",
     "20260727_industry_context_profiles.sql",
     "20260727_unified_tasks_mdx_metadata.sql",
-    "20260727_prm_program_link.sql"
+    "20260727_prm_program_link.sql",
+    "20260727_collab_document_state.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"
