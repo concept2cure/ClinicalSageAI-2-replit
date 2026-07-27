@@ -84,6 +84,10 @@ const FILES = [
   // on to_regclass; likewise lands for real now that the subsystem is
   // provisioned ahead of this loop.
   'migrations/20260726_authoring_citation_source_usage.sql',
+  // Industry-context tailoring: organization_industry_profiles +
+  // project_industry_profiles. Fully idempotent (CREATE TABLE/INDEX IF NOT
+  // EXISTS, no data statements).
+  'db/migrations/20260727_industry_context_profiles.sql',
 ];
 
 // The four db/migrations/20260725_authoring_* files that back the IND authoring

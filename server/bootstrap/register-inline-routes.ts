@@ -60,6 +60,7 @@ import mdxAdminRoutes from '../routes/mdx-admin';
 import mdxTemplatesRoutes from '../routes/mdx-templates';
 import mdxPostmarketRoutes from '../routes/mdx-postmarket';
 import mdxClinicalStudiesRoutes from '../routes/mdx-clinical-studies';
+import mdxIndustryContextRoutes from '../routes/mdx-industry-context';
 import mdxAnaMemoryRoutes from '../routes/mdx-ana-memory';
 import mdxQmsRoutes from '../routes/mdx-qms';
 import mdxLabelingRoutes from '../routes/mdx-labeling';
@@ -1068,6 +1069,7 @@ export function registerInlineSubmissionWorkflowRoutes({
   // RBM data layer: metric ingestion + the engine runs over ingested data.
   app.use('/api/mdx', mdxRbmDataRoutes);
   app.use('/api/mdx', mdxSoftwareRoutes);
+  app.use('/api/mdx', mdxIndustryContextRoutes);
   /* IVD + diagnostic surfaces (migration 20260508). */
   app.use('/api/mdx', mdxIvdPerformanceRoutes);
   app.use('/api/mdx', mdxIvdrRoutes);
