@@ -19,7 +19,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { and, eq } from 'drizzle-orm';
 
-import { db } from '../db';
+import { requestDb } from '../db/requestDb';
 import {
   organizationIndustryProfiles,
   projectIndustryProfiles,
@@ -76,6 +76,7 @@ router.get('/industry-profile', async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   try {
+    const db = requestDb(req);
     const [row] = await db
       .select()
       .from(organizationIndustryProfiles)
@@ -104,6 +105,7 @@ router.patch('/industry-profile', async (req: Request, res: Response) => {
     if ('defaultPathways' in body) fields.defaultPathways = p.defaultPathways ?? [];
     if ('defaultApprovalRigor' in body) fields.defaultApprovalRigor = p.defaultApprovalRigor ?? null;
     const now = new Date();
+    const db = requestDb(req);
     const [row] = await db
       .insert(organizationIndustryProfiles)
       .values({ organizationId: orgId, updatedBy: userId, updatedAt: now, ...fields } as any)
@@ -144,6 +146,7 @@ router.get('/projects/:programId/industry-profile', async (req: Request, res: Re
   const programId = String(req.params.programId);
   if (!UUID_RE.test(programId)) return clientError(res, 422, 'programId must be a UUID');
   try {
+    const db = requestDb(req);
     const [row] = await db
       .select()
       .from(projectIndustryProfiles)
@@ -169,6 +172,7 @@ router.patch('/projects/:programId/industry-profile', async (req: Request, res: 
   const p = parsed.data;
   const userId = getUserId(req);
   try {
+    const db = requestDb(req);
     // Ownership: the program must belong to the caller's org. program_id has no
     // FK to regulatory_programs, so without this a caller could squat or
     // overwrite a profile for another tenant's program id.
