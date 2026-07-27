@@ -85,9 +85,15 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
   const createDoc = async (v: Record<string, string>) => {
     try {
       const tpl = templates.find((t) => templateLabel(t) === v.template);
+      // Tag the new document to the open project (window.C2C_PROJECT) when one
+      // is set, so it lands in that project's authoring tree. A string id is a
+      // regulatory_programs UUID; absent or non-string → org-wide (unchanged).
+      const proj = (window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT;
+      const clientProgramId = proj && typeof proj.id === 'string' ? proj.id : null;
       const res = await apiRequest('POST', '/api/authoring/docs', {
         title: v.title, module: v.module || module,
         ...(tpl ? { template_id: tpl.id } : {}),
+        ...(clientProgramId ? { client_program_id: clientProgramId } : {}),
       });
       const json = await res.json().catch(() => null);
       if (res.status === 401) { fireToast('Not created — your session isn’t authenticated.'); return; }

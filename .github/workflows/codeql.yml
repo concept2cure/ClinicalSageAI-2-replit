@@ -2,9 +2,9 @@ name: CodeQL
 
 on:
   push:
-    branches: ['concept2cure-V2', 'main', 'master']
+    branches: ['concept2cure-v2', 'main', 'master']
   pull_request:
-    branches: ['concept2cure-V2', 'main', 'master']
+    branches: ['concept2cure-v2', 'main', 'master']
   schedule:
     - cron: '0 3 * * 1'
   workflow_dispatch:

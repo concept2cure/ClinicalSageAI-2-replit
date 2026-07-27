@@ -145,3 +145,61 @@ CREATE TABLE IF NOT EXISTS user_pins (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (email, tenant_id)
 );
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- Tenant-consistent parentage at the DB boundary (P0 #4).
+--
+-- The reconstructed FKs above reference only the parent id (or, for comments and
+-- citations, nothing). RLS (tenant_isolation_policy) filters each row by its OWN
+-- tenant_id but never checks that a child and its parent share a tenant — so a
+-- request authenticated for tenant A could create a child that structurally
+-- points at a tenant-B parent. Referential-integrity checks BYPASS RLS, so a
+-- composite (parent_id, tenant_id) → (id, tenant_id) foreign key is a physical
+-- invariant that holds independent of session vars: defense in depth beneath
+-- FORCE ROW LEVEL SECURITY.
+--
+-- The Part 11 EVIDENCE tables (frozen_documents, authoring_signatures,
+-- authoring_audit_trail, authoring_workflow_steps) are DELIBERATELY excluded —
+-- their own migration headers state the evidence must outlive the records it
+-- describes, so they carry no FK by design. This constrains only the four
+-- working-content child links.
+--
+-- Idempotent (guarded on pg_constraint), so it is safe on a fresh DB, on an
+-- already-provisioned DB, and to re-run. On a retrofit where pre-existing rows
+-- violate a new FK the validated ADD CONSTRAINT raises and the whole
+-- provisioning transaction rolls back (fail-closed at provision time); see the
+-- retrofit runbook in docs/pilot/PILOT_PLAN.md.
+-- ═══════════════════════════════════════════════════════════════════════════════
+DO $$
+BEGIN
+  -- Composite-FK targets: parents need a UNIQUE(id, tenant_id) to be referenced.
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'authoring_documents_id_tenant_key' AND conrelid = 'public.authoring_documents'::regclass) THEN
+    ALTER TABLE public.authoring_documents ADD CONSTRAINT authoring_documents_id_tenant_key UNIQUE (id, tenant_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'authoring_sections_id_tenant_key' AND conrelid = 'public.authoring_sections'::regclass) THEN
+    ALTER TABLE public.authoring_sections ADD CONSTRAINT authoring_sections_id_tenant_key UNIQUE (id, tenant_id);
+  END IF;
+
+  -- sections.doc_id → documents(id, tenant_id): replace the single-column inline
+  -- FK (Postgres auto-names it authoring_sections_doc_id_fkey); keep ON DELETE CASCADE.
+  ALTER TABLE public.authoring_sections DROP CONSTRAINT IF EXISTS authoring_sections_doc_id_fkey;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'authoring_sections_doc_tenant_fkey' AND conrelid = 'public.authoring_sections'::regclass) THEN
+    ALTER TABLE public.authoring_sections ADD CONSTRAINT authoring_sections_doc_tenant_fkey FOREIGN KEY (doc_id, tenant_id) REFERENCES public.authoring_documents (id, tenant_id) ON DELETE CASCADE;
+  END IF;
+
+  -- doc_revisions.section_id → sections(id, tenant_id): replace single-column inline FK.
+  ALTER TABLE public.doc_revisions DROP CONSTRAINT IF EXISTS doc_revisions_section_id_fkey;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'doc_revisions_section_tenant_fkey' AND conrelid = 'public.doc_revisions'::regclass) THEN
+    ALTER TABLE public.doc_revisions ADD CONSTRAINT doc_revisions_section_tenant_fkey FOREIGN KEY (section_id, tenant_id) REFERENCES public.authoring_sections (id, tenant_id) ON DELETE CASCADE;
+  END IF;
+
+  -- comments.section_id → sections(id, tenant_id): NO prior FK; adds RI + tenant match.
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'authoring_comments_section_tenant_fkey' AND conrelid = 'public.authoring_comments'::regclass) THEN
+    ALTER TABLE public.authoring_comments ADD CONSTRAINT authoring_comments_section_tenant_fkey FOREIGN KEY (section_id, tenant_id) REFERENCES public.authoring_sections (id, tenant_id) ON DELETE CASCADE;
+  END IF;
+
+  -- citations.section_id → sections(id, tenant_id): NO prior FK.
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'authoring_citations_section_tenant_fkey' AND conrelid = 'public.authoring_citations'::regclass) THEN
+    ALTER TABLE public.authoring_citations ADD CONSTRAINT authoring_citations_section_tenant_fkey FOREIGN KEY (section_id, tenant_id) REFERENCES public.authoring_sections (id, tenant_id) ON DELETE CASCADE;
+  END IF;
+END $$;

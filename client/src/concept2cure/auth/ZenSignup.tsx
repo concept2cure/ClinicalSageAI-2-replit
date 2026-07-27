@@ -1020,7 +1020,7 @@ export const ZenSignup: React.FC = () => {
         <div className="max-w-md mx-auto">
           <div className="flex items-center justify-center gap-2 text-xs text-stone-400 mb-2">
             <ShieldIcon />
-            <span>FDA 21 CFR Part 11 Compliant</span>
+            <span>Built to support FDA 21 CFR Part 11 workflows</span>
           </div>
           <p className="text-center text-xs text-stone-400">
             © {new Date().getFullYear()} Concept2Cure. All rights reserved.
