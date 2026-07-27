@@ -14,6 +14,7 @@ export async function registerTenantRoutes({ app, pool }: TenantBootstrapContext
       { path: '/api/organizations', mod: '../routes/organizations-routes.js', name: 'Organizations' },
       { path: '/api/clients', mod: '../routes/clients-routes.js', name: 'Clients' },
       { path: '/api/client-portal', mod: '../routes/client-portal.js', name: 'Client Portal' },
+      { path: '/api/onboarding', mod: '../routes/onboarding-ingest.js', name: 'Onboarding Ingest' },
       { path: '/api/tenant-users', mod: '../routes/tenant-users.js', name: 'Tenant Users' },
     ] as const;
     const tenantCoreResults = await Promise.allSettled(tenantCoreConfig.map(c => import(c.mod)));
