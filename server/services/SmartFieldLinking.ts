@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import CrossReferenceMapper from './CrossReferenceMapping.js';
 import { db } from '../db';
-import { fda510kDocuments, fda510kStageProgress } from '@shared/schema';
+import { fda510kDocuments, fda510kStageProgress, fda510kProjects } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 
 interface FieldLink {
@@ -27,6 +27,33 @@ interface FieldUpdate {
   timestamp: Date;
   userId?: number;
   metadata?: Record<string, any>;
+}
+
+/**
+ * The tenant scope every propagated write MUST carry. Field propagation mutates
+ * 510(k) documents and stage progress; without an (organization, project) scope
+ * the data layer selected a row by `document_type` / stage name alone and
+ * mutated whichever tenant's row Postgres returned first — a cross-tenant write
+ * (C2C-DEVICE-002 / assessment G-08). The scope arrives on
+ * `FieldUpdate.metadata` (set by the authenticated route/socket from the
+ * VERIFIED principal, never the request body) and is enforced in every WHERE.
+ */
+interface UpdateScope {
+  organizationId: number;
+  projectId: number;
+}
+
+/**
+ * Read and validate the tenant scope from an update's metadata. Returns null
+ * when either identifier is absent or not a positive integer, so callers fail
+ * closed rather than write unscoped.
+ */
+function readScope(update: FieldUpdate): UpdateScope | null {
+  const organizationId = Number(update.metadata?.organizationId);
+  const projectId = Number(update.metadata?.projectId);
+  if (!Number.isInteger(organizationId) || organizationId <= 0) return null;
+  if (!Number.isInteger(projectId) || projectId <= 0) return null;
+  return { organizationId, projectId };
 }
 
 export class SmartFieldLinking extends EventEmitter {
@@ -222,6 +249,16 @@ export class SmartFieldLinking extends EventEmitter {
     const link = this.fieldLinks.get(update.field);
     if (!link) return;
 
+    // Fail closed: a propagation with no proven (organization, project) scope
+    // must not reach the data layer, or it would mutate a document selected by
+    // document_type alone — across tenants.
+    const scope = readScope(update);
+    if (!scope) {
+      throw new Error(
+        'SmartFieldLinking: refusing workflow propagation without organization/project scope'
+      );
+    }
+
     // Validate field value
     if (link.validation) {
       const validationResult = this.validateField(update.value, link.validation);
@@ -239,6 +276,7 @@ export class SmartFieldLinking extends EventEmitter {
         docField.documentType,
         docField.fieldPath,
         transformedValue,
+        scope,
         update.userId
       );
     }
@@ -248,16 +286,24 @@ export class SmartFieldLinking extends EventEmitter {
    * Propagate changes from document to workflow
    */
   private async propagateFromDocument(update: FieldUpdate): Promise<void> {
+    // Fail closed: same rule as workflow propagation — no scope, no write.
+    const scope = readScope(update);
+    if (!scope) {
+      throw new Error(
+        'SmartFieldLinking: refusing document propagation without organization/project scope'
+      );
+    }
+
     const [documentType, ...fieldPathParts] = update.field.split('.');
     const fieldPath = fieldPathParts.join('.');
-    
+
     const key = `${documentType}.${fieldPath}`;
     const workflowFields = this.fieldSubscriptions.get(key);
-    
+
     if (!workflowFields) return;
 
     for (const workflowField of workflowFields) {
-      await this.updateWorkflowField(workflowField, update.value, update.userId);
+      await this.updateWorkflowField(workflowField, update.value, scope, update.userId);
     }
   }
 
@@ -268,30 +314,39 @@ export class SmartFieldLinking extends EventEmitter {
     documentType: string,
     fieldPath: string,
     value: any,
+    scope: UpdateScope,
     userId?: number
   ): Promise<void> {
     if (!db) {
       console.error('Database connection not available');
       return;
     }
-    
-    // Implementation would update the specific field in the document
-    // This is a simplified version - real implementation would handle nested paths
+
+    // Scope the lookup to the caller's tenant AND project. Matching on
+    // document_type alone (the prior behaviour) selected whichever tenant's row
+    // Postgres returned first — a cross-tenant write. organization_id and
+    // project_id are both columns on fda_510k_documents.
     const documents = await db
       .select()
       .from(fda510kDocuments)
-      .where(eq(fda510kDocuments.documentType, documentType))
+      .where(
+        and(
+          eq(fda510kDocuments.documentType, documentType),
+          eq(fda510kDocuments.organizationId, scope.organizationId),
+          eq(fda510kDocuments.projectId, scope.projectId)
+        )
+      )
       .limit(1);
 
     if (documents.length > 0) {
       const document = documents[0];
-      const content = typeof document.content === 'string' 
-        ? JSON.parse(document.content) 
+      const content = typeof document.content === 'string'
+        ? JSON.parse(document.content)
         : document.content;
-      
+
       // Update nested field using path
       this.setNestedField(content, fieldPath, value);
-      
+
       await db
         .update(fda510kDocuments)
         .set({
@@ -299,7 +354,14 @@ export class SmartFieldLinking extends EventEmitter {
           updatedBy: userId || document.updatedBy,
           updatedAt: new Date()
         })
-        .where(eq(fda510kDocuments.id, document.id));
+        // Re-assert the tenant scope on the write itself (defence in depth):
+        // the id came from a scoped read, but the UPDATE states the invariant.
+        .where(
+          and(
+            eq(fda510kDocuments.id, document.id),
+            eq(fda510kDocuments.organizationId, scope.organizationId)
+          )
+        );
     }
   }
 
@@ -309,16 +371,17 @@ export class SmartFieldLinking extends EventEmitter {
   private async updateWorkflowField(
     fieldPath: string,
     value: any,
+    scope: UpdateScope,
     userId?: number
   ): Promise<void> {
     if (!db) {
       console.error('Database connection not available');
       return;
     }
-    
+
     // Parse field path to determine stage and section
     const [category, fieldName] = fieldPath.split('.');
-    
+
     // Map category to stage/section (simplified)
     const stageMapping: Record<string, { stage: string; section: string }> = {
       'device': { stage: 'setup', section: 'device_info' },
@@ -332,12 +395,24 @@ export class SmartFieldLinking extends EventEmitter {
     const mapping = stageMapping[category];
     if (!mapping) return;
 
-    // Get existing progress
+    // fda_510k_stage_progress has no organization_id column — it is scoped by
+    // project. Prove the project belongs to the caller's organization before
+    // touching it, or a caller supplying another tenant's project id (the socket
+    // path can) would mutate that tenant's stage data.
+    const owned = await this.assertProjectInOrg(scope.projectId, scope.organizationId);
+    if (!owned) {
+      throw new Error(
+        'SmartFieldLinking: refusing stage-progress write — project is not in the caller organization'
+      );
+    }
+
+    // Get existing progress, scoped to the (proven) project.
     const progress = await db
       .select()
       .from(fda510kStageProgress)
       .where(
         and(
+          eq(fda510kStageProgress.projectId, scope.projectId),
           eq(fda510kStageProgress.stageName, mapping.stage),
           eq(fda510kStageProgress.sectionName, mapping.section)
         )
@@ -347,15 +422,41 @@ export class SmartFieldLinking extends EventEmitter {
     if (progress.length > 0) {
       const data = progress[0].collectedData || {};
       this.setNestedField(data, fieldPath, value);
-      
+
       await db
         .update(fda510kStageProgress)
         .set({
           collectedData: data,
           updatedAt: new Date()
         })
-        .where(eq(fda510kStageProgress.id, progress[0].id));
+        .where(
+          and(
+            eq(fda510kStageProgress.id, progress[0].id),
+            eq(fda510kStageProgress.projectId, scope.projectId)
+          )
+        );
     }
+  }
+
+  /**
+   * True when `projectId` belongs to `organizationId`. Scopes writes to
+   * tenant-owned children that carry a project id but no organization id of
+   * their own (e.g. fda_510k_stage_progress). Fails closed (false) when the
+   * database is unavailable.
+   */
+  private async assertProjectInOrg(projectId: number, organizationId: number): Promise<boolean> {
+    if (!db) return false;
+    const rows = await db
+      .select({ id: fda510kProjects.id })
+      .from(fda510kProjects)
+      .where(
+        and(
+          eq(fda510kProjects.id, projectId),
+          eq(fda510kProjects.organizationId, organizationId)
+        )
+      )
+      .limit(1);
+    return rows.length > 0;
   }
 
   /**

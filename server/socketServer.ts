@@ -709,7 +709,13 @@ export function initializeSocketServer(server: Server) {
 
       // Process field update through SmartFieldLinking
       try {
-        const numericUserId = Number(userId);
+        // Attribution AND tenant scope come from the VERIFIED socket session
+        // (set from the JWT at handshake), never the client payload: `userId`
+        // in `data` is attacker-controlled, and the write must carry the
+        // organization so SmartFieldLinking scopes it (assessment G-08).
+        const numericUserId = Number(socket.authUserId);
+        const numericOrgId = Number(orgId);
+        const numericProjectId = Number(projectId);
         await smartFieldLinking.updateField({
           source,
           field,
@@ -717,17 +723,21 @@ export function initializeSocketServer(server: Server) {
           previousValue,
           userId: Number.isFinite(numericUserId) ? numericUserId : undefined,
           timestamp: new Date(),
-          metadata: { projectId }
+          metadata: {
+            projectId: Number.isFinite(numericProjectId) ? numericProjectId : undefined,
+            organizationId: Number.isFinite(numericOrgId) ? numericOrgId : undefined
+          }
         });
 
-        // Broadcast field update to all subscribers in the project
+        // Broadcast field update to all subscribers in the project. Attribution
+        // is the verified session user, not the spoofable payload `userId`.
         io?.to(roomName).emit('field-updated', {
           projectId,
           source,
           field,
           value,
           previousValue,
-          userId,
+          userId: socket.authUserId,
           userName,
           timestamp: new Date()
         });
