@@ -258,7 +258,7 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
         surface = <IvdSurface program={programForContext} onAskAna={askAna} onOpenEditor={() => openAuthoring('device-diagnostics-workbench')} />;
         break;
       case 'clinical-studies':
-        surface = <ClinicalStudiesSurface onAskAna={askAna} />;
+        surface = <ClinicalStudiesSurface program={programForContext} onAskAna={askAna} />;
         break;
       case 'predicate':
         surface = <PrecedentSurface onAskAna={askAna} />;
