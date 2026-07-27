@@ -124,12 +124,24 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Only organizations whose industry_mode maps to a KNOWN primary industry are
+  -- backfilled. An organization with a null or unrecognized industry_mode is left
+  -- WITHOUT a profile row, deliberately: creating one would fabricate a governed,
+  -- audited record asserting an organization-level declaration that was never
+  -- made, and — because the resolver treats a profile row as source
+  -- 'organization' — it would silently present that guessed vertical as decided,
+  -- with no needsDeclaration to say otherwise and a change_reason that falsely
+  -- claims the value came from industry_mode. An org with no row falls through to
+  -- the resolver's runtime handling, which reports its source honestly (legacy
+  -- column or license default) and prompts for a declaration where one is owed.
+  -- This is the same "never manufacture a regulatory fact" rule the rest of the
+  -- module follows; the ELSE 'biotech_pharma' default this replaces broke it.
   INSERT INTO organization_industry_profiles (
     organization_id, primary_industry, mdx_specialization, default_approval_rigor, change_reason
   )
   SELECT
     o.id,
-    CASE LOWER(COALESCE(o.industry_mode, ''))
+    CASE LOWER(o.industry_mode)
       WHEN 'medtech'         THEN 'medical_device_diagnostics'
       WHEN 'biotech'         THEN 'biotech_pharma'
       WHEN 'pharma'          THEN 'biotech_pharma'
@@ -137,13 +149,15 @@ BEGIN
       WHEN 'regulatory'      THEN 'regulatory_consulting'
       WHEN 'academic'        THEN 'academic_research'
       WHEN 'medical_writing' THEN 'regulatory_consulting'
-      ELSE 'biotech_pharma'
     END,
     'unspecified',
     'regulated_dual_review',
     'Backfilled from organizations.industry_mode when the governed profile was introduced'
   FROM organizations o
-  WHERE NOT EXISTS (
-    SELECT 1 FROM organization_industry_profiles p WHERE p.organization_id = o.id
-  );
+  WHERE LOWER(o.industry_mode) IN (
+      'medtech', 'biotech', 'pharma', 'cro', 'regulatory', 'academic', 'medical_writing'
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM organization_industry_profiles p WHERE p.organization_id = o.id
+    );
 END $$;

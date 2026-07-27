@@ -175,12 +175,18 @@ router.get('/rbm-monitoring-plans', async (req, res) => {
   } catch (err) { return serverError(res, log, 'list-plans', err); }
 });
 
+// `status` is deliberately NOT accepted here. A hand-created plan is always a
+// draft: 'active' attests to a signed approval and must be reached only through
+// POST /rbm-monitoring-plans/:id/approve, which verifies the signer's
+// credentials, stamps approved_by/approved_at, and archives the superseded
+// version in one transaction. Letting the create body set status:'active' would
+// mint an approved-looking plan with none of that — an unsigned plan wearing a
+// signature's authority.
 const createPlanBody = z.object({
   programId: z.string().regex(UUID_RE).optional().nullable(),
   assessmentId: z.number().int().positive().optional().nullable(),
   title: z.string().min(1).max(300),
   strategy: z.enum(PLAN_STRATEGY).optional(),
-  status: z.enum(PLAN_STATUS).optional(),
 });
 
 router.post('/rbm-monitoring-plans', async (req, res) => {
@@ -195,8 +201,8 @@ router.post('/rbm-monitoring-plans', async (req, res) => {
     const version = await nextPlanVersion(pool, orgId, p.programId ?? null);
     const { rows } = await pool.query(
       `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, version)
-       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [orgId, p.programId ?? null, p.assessmentId ?? null, p.title, p.strategy ?? 'risk_based', p.status ?? 'draft', version],
+       VALUES ($1,$2,$3,$4,$5,'draft',$6) RETURNING *`,
+      [orgId, p.programId ?? null, p.assessmentId ?? null, p.title, p.strategy ?? 'risk_based', version],
     );
     return created(res, rows[0]);
   } catch (err) { return serverError(res, log, 'create-plan', err); }
@@ -267,7 +273,12 @@ router.get('/rbm-monitoring-plans/:id', async (req, res) => {
   } catch (err) { return serverError(res, log, 'get-plan', err); }
 });
 
-const patchPlanBody = createPlanBody.partial();
+// PATCH keeps `status` — a draft can be archived (abandoned) and an approved
+// plan retired — but activation is refused below, because 'active' is the signed
+// state and the create body cannot supply it either.
+const patchPlanBody = createPlanBody.partial().extend({
+  status: z.enum(PLAN_STATUS).optional(),
+});
 const PLAN_COL: Record<string, string> = { title: 'title', strategy: 'strategy', status: 'status' };
 
 router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
@@ -277,6 +288,16 @@ router.patch('/rbm-monitoring-plans/:id', async (req, res) => {
   if (id === null) return clientError(res, 422, 'id must be numeric');
   const parsed = patchPlanBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
+  // Activation is a signed act. A status-only PATCH to 'active' would set the
+  // approved state without verifying the signer, without stamping approved_by /
+  // approved_at, and without archiving the superseded version — exactly what the
+  // approve endpoint exists to do atomically. Refuse it here; a draft reaches
+  // 'active' only through POST /rbm-monitoring-plans/:id/approve.
+  if (parsed.data.status === 'active') {
+    return clientError(res, 409,
+      `A monitoring plan is activated only by signed approval. `
+      + `POST /rbm-monitoring-plans/${id}/approve with your credentials to activate it.`);
+  }
   const patch = buildPatch(parsed.data, PLAN_COL);
   if (!patch) return clientError(res, 422, 'No updatable fields in body');
   try {
@@ -396,12 +417,22 @@ router.post('/rbm-monitoring-actions', async (req, res) => {
   const parsed = createActionBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   const p = parsed.data;
-  // Verify the plan belongs to the caller's org.
+  // Verify the plan belongs to the caller's org AND is still a draft. Adding an
+  // action to an approved or archived plan changes the set of actions the
+  // approver's signature attests to, and leaves the signed historical record
+  // mutable — the versioning contract says a signature is over a specific set of
+  // actions. New actions go on a draft; to add one to an approved plan, amend it
+  // (POST /rbm-monitoring-plans/:id/amend), which opens a new draft version.
   const own = await pool.query(
-    `SELECT 1 FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    `SELECT status FROM rbm_monitoring_plans WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
     [p.planId, orgId],
   );
   if (own.rows.length === 0) return notFoundInTenant(res, 'Monitoring plan');
+  if (own.rows[0].status !== 'draft') {
+    return clientError(res, 409,
+      `Monitoring plan is ${own.rows[0].status}, not a draft, so its actions are frozen. `
+      + `POST /rbm-monitoring-plans/${p.planId}/amend to open a new draft version and add actions there.`);
+  }
   try {
     const { rows } = await pool.query(
       `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, risk_item_id, signal_id, action_type, description, priority, owner, due_date, status)

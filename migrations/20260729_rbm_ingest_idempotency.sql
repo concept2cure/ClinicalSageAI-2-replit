@@ -52,11 +52,24 @@ BEGIN
   --   * a FAILED run's content was not (fully) landed, so re-loading it is the
   --     correct thing to do and must not be blocked;
   --   * a SUPERSEDED run has already been deliberately replaced.
-  -- Not UNIQUE: uniqueness is enforced at the service layer so the refusal can
-  -- name the earlier run and offer the reprocess path, rather than surfacing a
-  -- constraint violation the operator cannot act on. The index is what makes
-  -- that lookup cheap.
-  CREATE INDEX IF NOT EXISTS rbm_data_runs_replay_idx
+  --
+  -- UNIQUE, as a backstop under concurrency. The service layer still does the
+  -- graceful check first — findPriorRun names the earlier run and offers the
+  -- reprocess path rather than surfacing a raw constraint violation — and that
+  -- remains the path every ordinary duplicate takes. But that check is a
+  -- read-then-write: two workers ingesting the SAME extract can both run
+  -- findPriorRun before either commits, both see no landed run, and both append
+  -- observations and KRI readings, doubling the very history the guard protects.
+  -- The unique index closes that window: a run enters it only when it finalizes
+  -- to succeeded/partial, so the second of two concurrent identical loads fails
+  -- at finalize and its transaction rolls back, leaving no duplicate behind. A
+  -- constraint violation in that rare race is the correct safe outcome; the
+  -- common case never reaches it.
+  --
+  -- DROP first so an environment that already built the non-unique version is
+  -- upgraded in place; both statements are re-runnable.
+  DROP INDEX IF EXISTS rbm_data_runs_replay_idx;
+  CREATE UNIQUE INDEX IF NOT EXISTS rbm_data_runs_replay_idx
     ON rbm_data_runs (organization_id, program_id, source, content_hash)
     WHERE content_hash IS NOT NULL
       AND superseded_at IS NULL

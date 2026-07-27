@@ -731,22 +731,30 @@ router.patch('/rbm-qtls/:id', async (req, res) => {
     );
     if (cur.rows.length === 0) return notFoundInTenant(res, 'QTL');
     const row = cur.rows[0];
-    // Status is recomputed against the row's EFFECTIVE limits — the patched
-    // value where given, the stored one otherwise — so changing only the
-    // direction re-bands the existing value rather than leaving a stale status.
+    // Status is recomputed against the row's EFFECTIVE limits — the patched value
+    // where the field was GIVEN, the stored one where it was OMITTED. The
+    // distinction is `undefined` (omitted) vs `null` (explicitly cleared): a
+    // `??` would treat an explicit `{ threshold: null }` as "keep the old
+    // threshold" and recompute a within/approaching/breached status for a QTL
+    // that now has no limit — the DB stores the null via buildPatch, so the row
+    // would carry no limit while still reporting a band. `given()` returns the
+    // patched value whenever the key was present, so clearing a limit correctly
+    // drives qtlStatus to `not_evaluated`.
+    const given = <T>(patched: T | null | undefined, stored: T | null): T | null =>
+      patched !== undefined ? patched : stored;
     const limits = {
-      threshold: parsed.data.threshold ?? num(row.threshold),
-      secondaryLimit: parsed.data.secondaryLimit ?? num(row.secondary_limit),
+      threshold: given(parsed.data.threshold, num(row.threshold)),
+      secondaryLimit: given(parsed.data.secondaryLimit, num(row.secondary_limit)),
       direction: (parsed.data.direction ?? (row.direction ?? 'upper')) as (typeof QTL_DIRECTION)[number],
-      thresholdLower: parsed.data.thresholdLower ?? num(row.threshold_lower),
-      secondaryLimitLower: parsed.data.secondaryLimitLower ?? num(row.secondary_limit_lower),
+      thresholdLower: given(parsed.data.thresholdLower, num(row.threshold_lower)),
+      secondaryLimitLower: given(parsed.data.secondaryLimitLower, num(row.secondary_limit_lower)),
     };
     // Validated on the merged limits, not the patch: switching an existing
     // upper-bound QTL to two_sided without supplying a lower bound has to fail
     // here, even though the patch body on its own looks complete.
     const rangeErr = qtlRangeError(limits);
     if (rangeErr) return clientError(res, 422, rangeErr);
-    const status = qtlStatus(parsed.data.currentValue ?? num(row.current_value), limits);
+    const status = qtlStatus(given(parsed.data.currentValue, num(row.current_value)), limits);
     patch.args.push(status, status === 'breached');
     patch.setSql += `, status = $${patch.args.length - 1}, breached = $${patch.args.length}`;
     patch.args.push(id, orgId);
