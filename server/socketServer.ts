@@ -796,10 +796,20 @@ export function initializeSocketServer(server: Server) {
 
     // Subscribe to field updates for a project (tenant-scoped). The subscriber
     // is recorded under the authenticated actor, not a payload userId.
-    socket.on('subscribe-fields', (data: { projectId: string; fields?: string[] }) => {
+    socket.on('subscribe-fields', async (data: { projectId: string; fields?: string[] }) => {
       const projectId = String(data?.projectId ?? '');
       if (!projectId) {
         refuse('subscribe-fields', 'INVALID_PROJECT');
+        return;
+      }
+      // Prove the caller's organization owns this project before joining its
+      // field room. The room name is already org-scoped, so this is not a
+      // cross-tenant hole — but without it any member of the org can subscribe
+      // to any project in the org, while the HTTP SSE route
+      // (server/routes/fieldSync.routes.ts) verifies ownership. Same object,
+      // two transports: they must agree, and isProjectInOrg fails closed.
+      if (!(await isProjectInOrg(orgId, projectId))) {
+        refuse('subscribe-fields', 'FORBIDDEN_PROJECT');
         return;
       }
       const roomName = projectFieldsRoom(orgId, projectId);
@@ -1070,11 +1080,12 @@ export function getSocketServer(): SocketIOServer | null {
   return io;
 }
 
-export function broadcastToRoom(room: string, event: string, data: any) {
-  if (io) {
-    io.to(room).emit(event, data);
-  }
-}
+// `broadcastToRoom(room, event, data)` was removed with the other unscoped
+// publish primitives (C2C-COLLAB-003). It took a caller-chosen room STRING with
+// no tenant in it, so any future caller could publish into another
+// organization's room — the same class of defect as the deleted
+// `broadcastToAll` / `notifyTaskChange` helpers, and it had zero callers
+// repo-wide. Use `emitToOrg` below, which requires an organization id.
 
 /**
  * Server-initiated publish to ONE organization (C2C-COLLAB-003).
