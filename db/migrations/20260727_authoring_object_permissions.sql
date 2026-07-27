@@ -1,3 +1,26 @@
+-- =============================================================================
+-- eCTD REGULATORY AUDIT CONTEXT
+-- System: Concept2Cure — governed submission authoring
+-- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
+-- Purpose: Provision durable, tenant-safe document and section permissions for
+--          the canonical authoring workflow.
+--
+-- eCTD/CTD Context:
+--   - Module(s): Modules 1-5 authoring and dossier content lifecycle
+--   - Integrity Risk Addressed: same-tenant unauthorized mutation, false actor
+--     authority, permission drift, and cross-tenant parentage
+--
+-- Determinism Contract:
+--   - Permission decisions are derived from durable rows and exact object scope.
+--   - Document creators are seeded as OWNER + AUTHOR in the same DB operation.
+--   - Any schema change to role/action semantics requires service and test update.
+--
+-- Notes:
+--   - This file is the fifth member of the atomic authoring subsystem.
+--   - RLS and composite foreign keys enforce tenant consistency.
+--   - The migration is idempotent and safe to re-run.
+-- =============================================================================
+
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Concept2Cure authoring object permissions
 --
