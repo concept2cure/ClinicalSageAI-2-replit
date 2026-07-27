@@ -31,6 +31,7 @@ import * as https from 'node:https';
 import { URL } from 'url';
 import { pool } from '../../db';
 import { readVerifiedBundle } from './bundle-integrity';
+import { platformTransmittalRecord } from './acknowledgement';
 import {
   CredentialError, GatewayError, TransportError,
   resolveToRegistryEntry, getSubmissionTypeLabel,
@@ -366,11 +367,15 @@ export class HealthCanadaGateway implements SubmissionGateway {
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
     }
     const r = rows[0];
-    const text = `Health Canada CESG Acknowledgement\nReceipt: ${r.transmission_id}\nStatus: ${r.status}\nReceived: ${r.ack_received_at?.toISOString() ?? 'pending'}\n`;
-    return {
-      transmittalId, transmissionId: r.transmission_id,
-      contentType: 'text/plain', buffer: Buffer.from(text, 'utf8'),
-      receivedAt: r.ack_received_at ?? new Date(),
-    };
+    // Not an agency acknowledgement — this platform's own record of the
+    // transmission, titled as such. See ./acknowledgement.ts.
+    return platformTransmittalRecord({
+      transmittalId,
+      transmissionId: r.transmission_id,
+      gatewayLabel: 'Health Canada CESG (hc_cesg)',
+      status: r.status,
+      ackReceivedAt: r.ack_received_at,
+      extra: { 'Receipt': r.transmission_id },
+    });
   }
 }

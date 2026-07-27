@@ -8225,47 +8225,48 @@ registerToolHandler('transmit_submission', async (input, ctx) => {
   if (!VALID_GATEWAYS.includes(gateway)) {
     return JSON.stringify({ error: `gateway must be one of: ${VALID_GATEWAYS.join(' / ')}.` });
   }
-  try {
-    const { getGateway, CredentialError, GatewayError, TransportError } = await import('../submission-gateways/index.js');
-    const gw = getGateway(region as any, gateway as any);
-    const environment = input.environment === 'staging' ? 'staging' : 'production';
-    const result = await gw.transmit({
-      organizationId: ctx.organizationId,
-      userId:         ctx.userId ?? null,
-      programId:      typeof input.program_id === 'string' && UUID_RE.test(input.program_id) ? input.program_id : null,
-      packageId:      typeof input.package_id === 'number' ? input.package_id : null,
-      bundle: {
-        path:        String(input.bundle_path),
-        sha256:      String(input.bundle_sha256),
-        sizeBytes:   Number(input.bundle_size_bytes),
-        format:      String(input.format) as 'ectd' | 'estar' | 'eudamed_register' | 'pmda_ectd',
-      },
-      environment,
-      submissionType: typeof input.submission_type === 'string' ? input.submission_type : undefined,
-      metadata: {
-        applicationId: input.application_id,
-        sequence:      input.sequence,
-        environment,
-      },
-    });
-    return JSON.stringify({ ok: true, ...result });
-  } catch (err: unknown) {
-    /* CredentialError / GatewayError / TransportError surfaced as user-
-       readable messages with the original class preserved so AnA can
-       suggest the right remediation (set env var vs. retry vs. validate). */
-    if (err instanceof Error && err.name === 'CredentialError') {
-      return JSON.stringify({ error: err.message, errorClass: 'auth' });
-    }
-    if (err instanceof Error && err.name === 'TransportError') {
-      return JSON.stringify({ error: err.message, errorClass: 'transport' });
-    }
-    if (err instanceof Error && err.name === 'GatewayError') {
-      return JSON.stringify({ error: err.message, errorClass: 'gateway' });
-    }
-    return JSON.stringify({
-      error: `transmit_submission failed: ${err instanceof Error ? err.message : String(err)}`,
-    });
-  }
+  // ── This tool no longer transmits. ──────────────────────────────────────────
+  //
+  // It used to call gw.transmit() directly, guarded only by "is there a tenant
+  // context?". `environment` defaulted to 'production' when the model omitted
+  // it, so a conversation could put bytes on the real FDA ESG endpoint with no
+  // human in the loop: no re-authentication, no Part 11 signature, no reason
+  // recorded, no eCTD structural gate, and no governed-action ledger entry.
+  // The comments elsewhere in this codebase asserting that "transmit stays
+  // behind the governed transmit_submission tool + Part 11 e-sign"
+  // (server/routes/submissions.ts) described the HTTP route, not this path.
+  //
+  // Transmission is the one irreversible action in the platform — nothing here
+  // can un-send bytes to an agency — so it is now reachable only from a caller
+  // that can name the human gate it passed. The gateway layer enforces that
+  // independently (TransmitAuthorization in submission-gateways/types.ts, and
+  // the guard in submission-gateways/index.ts), so even this refusal being
+  // reverted would not reopen the hole.
+  //
+  // What the agent can still do: everything up to the wire — package the
+  // sequence, verify the bundle digest, check status, read acknowledgements.
+  // The last step belongs to a person.
+  const environment = input.environment === 'staging' ? 'staging' : 'production';
+  return JSON.stringify({
+    ok: false,
+    refused: 'human_authorization_required',
+    message:
+      `Transmitting to ${region.toUpperCase()} ${gateway} (${environment}) cannot be done from a conversation. ` +
+      'Agency transmission is irreversible and requires a person: re-authentication, a recorded reason, ' +
+      'the eCTD structural gate and a Part 11 governed signature.',
+    next_step: {
+      surface: 'Gateway transmittals',
+      endpoint: `POST /api/mdx/gateways/${region}/${gateway}/transmit`,
+      requires: ['reauth (password/TOTP)', 'reason (>= 8 characters)', 'bundle_path + bundle_sha256'],
+    },
+    bundle: {
+      path:      typeof input.bundle_path === 'string' ? input.bundle_path : null,
+      sha256:    typeof input.bundle_sha256 === 'string' ? input.bundle_sha256 : null,
+      sizeBytes: Number.isFinite(Number(input.bundle_size_bytes)) ? Number(input.bundle_size_bytes) : null,
+      format:    typeof input.format === 'string' ? input.format : null,
+    },
+  });
+
 });
 
 registerToolHandler('check_submission_status', async (input, ctx) => {
