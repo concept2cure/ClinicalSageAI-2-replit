@@ -35,6 +35,12 @@ import {
 } from '../services/submission-gateways/fda-esg';
 import { recordGovernedAction, verifyReauth } from './c2c/actions';
 import { getBundle } from '../services/submission-bundle-storage';
+import {
+  bundleTrustEnforced,
+  hasUnsafePathSyntax,
+  isBundleStorageKey,
+  isPathWithinBundleRoot,
+} from '../services/submission-gateways/bundle-namespace';
 import { promises as fsp } from 'fs';
 import { dirname } from 'path';
 
@@ -83,6 +89,11 @@ async function ensureBundleLocal(bundle: {
 const REGION_SET   = ['fda', 'ema', 'pmda', 'ca'] as const;
 const GATEWAY_SET  = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] as const;
 const UUID_RE      = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SHA256_RE    = /^[0-9a-f]{64}$/i;
+
+/** Transmit formats a bundle descriptor may declare. */
+const BUNDLE_FORMAT_SET = ['ectd', 'estar', 'eudamed_register', 'pmda_ectd'] as const;
+type BundleFormat = typeof BUNDLE_FORMAT_SET[number];
 
 /* ─── GET /api/mdx/gateways ──────────────────────────────────────── */
 
@@ -176,6 +187,14 @@ const transmitBody = z.object({
   packageId:      z.number().int().positive().optional().nullable(),
   environment:    z.enum(['staging', 'production']).default('production'),
   submissionType: z.string().max(60).optional(),
+  /**
+   * DEPRECATED / DEV-ONLY (C2C-SUB-003). A caller-supplied descriptor names a
+   * server filesystem path plus its own expected digest, so it is attacker-
+   * controlled input upstream of every control. It is REFUSED whenever
+   * `bundleTrustEnforced()` is true (i.e. anywhere but a declared local
+   * development/test environment). Production callers must pass `packageId`
+   * and let the tenant-scoped lookup below produce the descriptor.
+   */
   bundle: z.object({
     path:        z.string().min(1),
     sha256:      z.string().regex(/^[0-9a-f]{64}$/i),
@@ -219,14 +238,37 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
     return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
   }
 
-  // Resolve the bundle. An explicit `bundle` in the body always wins (back-compat).
-  // Otherwise, if a `packageId` is provided, load the stored bundle descriptor that
-  // the assemble endpoint persisted on c2c_submission_packages.metadata.bundle.
+  // ─── C2C-SUB-003: the bundle descriptor is a trust boundary ──────────
+  //
+  // A descriptor names the bytes that get shipped to a real regulator. When it
+  // comes from the request body the client picks BOTH the server-side path and
+  // the digest it will be checked against, so every downstream control
+  // (package ownership, structural validation, hash/size verification) is
+  // satisfied by construction while reading an arbitrary server-readable file.
+  //
+  // Outside a declared local development/test environment the ONLY admissible
+  // source is the server-generated descriptor the tenant-scoped assemble route
+  // persisted on c2c_submission_packages.metadata.bundle. Fail closed: an
+  // unset, blank or unknown NODE_ENV refuses the client descriptor.
+  if (p.bundle && bundleTrustEnforced()) {
+    return clientError(
+      res,
+      422,
+      'Client-supplied bundle descriptors are not accepted in this environment; ' +
+      'transmit a tenant-owned packageId (POST /api/submission-ops/packages/:packageId/assemble first).',
+    );
+  }
+
+  // Resolve the bundle. In dev/test an explicit `bundle` in the body still wins
+  // (back-compat for local flows); the guard above makes that branch
+  // unreachable everywhere else. Otherwise, if a `packageId` is provided, load
+  // the stored bundle descriptor that the assemble endpoint persisted on
+  // c2c_submission_packages.metadata.bundle under the caller's org.
   let bundle: {
     path: string;
     sha256: string;
     sizeBytes: number;
-    format: 'ectd' | 'estar' | 'eudamed_register' | 'pmda_ectd';
+    format: BundleFormat;
     displayName?: string;
     storage?: { provider: 'local' } | { provider: 's3'; bucket: string; key: string };
     validation?: { errorCount: number; warningCount?: number; infoCount?: number; findings?: unknown[] };
@@ -240,18 +282,25 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
         [p.packageId, orgId],
       );
       const stored = rows[0]?.metadata?.bundle;
+      // Shape-check the stored descriptor rather than trusting the JSONB blob:
+      // sha256 must be a real 64-hex digest, sizeBytes a non-negative integer,
+      // and format one of the known transmit formats. A malformed descriptor is
+      // treated as "no bundle" (422 below), never coerced.
       if (
         stored &&
         typeof stored.path === 'string' &&
         typeof stored.sha256 === 'string' &&
+        SHA256_RE.test(stored.sha256) &&
         typeof stored.sizeBytes === 'number' &&
-        typeof stored.format === 'string'
+        Number.isInteger(stored.sizeBytes) &&
+        stored.sizeBytes >= 0 &&
+        BUNDLE_FORMAT_SET.includes(stored.format)
       ) {
         bundle = {
           path:        stored.path,
           sha256:      stored.sha256,
           sizeBytes:   stored.sizeBytes,
-          format:      stored.format,
+          format:      stored.format as BundleFormat,
           displayName: typeof stored.displayName === 'string' ? stored.displayName : undefined,
           // Carry the durable-storage descriptor (if any) so ensureBundleLocal can
           // rematerialize the local file after a container recycle. Not passed to
@@ -275,13 +324,66 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
     );
   }
 
+  // Path-syntax guard — unconditional, every environment. A `..` component or
+  // an embedded NUL is never a legitimate assembled-bundle location, whatever
+  // produced the descriptor.
+  if (hasUnsafePathSyntax(bundle.path)) {
+    return clientError(
+      res,
+      422,
+      'Bundle path is not a well-formed bundle location; re-assemble the package before transmitting.',
+    );
+  }
+
+  // ─── C2C-SUB-003: trusted-descriptor gate ────────────────────────────
+  // Runs AFTER the re-auth gate (governance order unchanged) and BEFORE
+  // ensureBundleLocal — which writes to bundle.path — so neither the read nor
+  // the write can escape the namespace.
+  if (bundleTrustEnforced()) {
+    // (a) Structural-validation evidence. MISSING evidence is UNKNOWN, and
+    //     UNKNOWN is blocking — it is NOT "zero errors". Only the assemble
+    //     route writes this block, so requiring it also proves the descriptor
+    //     is server-generated rather than reconstructed.
+    if (!bundle.validation || typeof bundle.validation.errorCount !== 'number') {
+      return clientError(
+        res,
+        422,
+        'Bundle carries no internal structural-validation evidence, so its structural state is UNKNOWN; ' +
+        're-assemble the package before transmitting.',
+      );
+    }
+    // (b) Namespace confinement. Defence in depth even for a stored descriptor:
+    //     if metadata.bundle were ever tampered with, the path still cannot
+    //     leave the directory the assemble route writes to.
+    //     NOTE: lexical confinement — a symlink planted inside the root is not
+    //     detected. Out of scope for the request-body vector; realpath()
+    //     hardening is a separate, filesystem-level change.
+    if (!isPathWithinBundleRoot(bundle.path)) {
+      return clientError(
+        res,
+        422,
+        'Bundle path is outside the permitted submission-bundle storage namespace; ' +
+        're-assemble the package before transmitting.',
+      );
+    }
+    // (c) Durable-copy key confinement — ensureBundleLocal fetches this key and
+    //     writes the bytes to disk, so it must stay inside the bundle prefix.
+    if (bundle.storage?.provider === 's3' && !isBundleStorageKey(bundle.storage.key)) {
+      return clientError(
+        res,
+        422,
+        'Bundle durable-storage key is outside the permitted submission-bundle namespace.',
+      );
+    }
+  }
+
   // Internal eCTD structural-validation hard-gate. If the stored descriptor
   // recorded error-severity findings at assemble-time, refuse the transmit and
   // return the findings so the caller can re-assemble after fixing. Warnings do
-  // NOT block. A missing `validation` field is treated as zero errors
-  // (back-compat: explicit-bundle callers and pre-existing descriptors). This
-  // runs AFTER the re-auth gate — governance order is unchanged. Note: this is
-  // INTERNAL structural validation only, not an agency validator.
+  // NOT block. The `?? 0` fallback is reachable ONLY in a declared local
+  // development/test environment — gate (a) above guarantees the field is
+  // present everywhere else. Note: this is INTERNAL structural validation only,
+  // not an agency validator.
   const errorCount = bundle.validation?.errorCount ?? 0;
   if (errorCount > 0) {
     return clientError(
