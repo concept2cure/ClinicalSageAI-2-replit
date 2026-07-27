@@ -7097,7 +7097,7 @@ export const unifiedTasks = pgTable(
     filingType: text('filing_type'), // e.g. 510(k), PMA, IVDR, IND, NDA
     studyId: integer('study_id'), // linked study (no FK; tenant-provisioned store)
     deliverableId: integer('deliverable_id'), // linked deliverable (no FK)
-    clientVisibility: text('client_visibility'), // CLIENT_VISIBILITY domain (shared/client-visibility.ts)
+    clientVisibility: text('client_visibility'), // internal | client_visible
 
     // Audit
     createdById: integer('created_by_id').references(() => users.id),
@@ -7134,20 +7134,6 @@ export const LIFECYCLE_PHASES = [
   'postmarket',
 ] as const;
 export type LifecyclePhase = (typeof LIFECYCLE_PHASES)[number];
-
-/**
- * Canonical client-visibility domain for unified_tasks.client_visibility
- * (internal | client_visible | client_action_required | authority_ready).
- * Defined in its own dependency-free module so client bundles can import
- * the domain without pulling in the whole schema; re-exported here for
- * discoverability next to LIFECYCLE_PHASES.
- */
-export {
-  CLIENT_VISIBILITY,
-  CLIENT_REVIEW_STATES,
-  type ClientVisibility,
-  type ClientReviewState,
-} from './client-visibility';
 
 // Unified Task Insert Schema
 export const insertUnifiedTaskSchema = createInsertSchemaOmit(unifiedTasks, {
