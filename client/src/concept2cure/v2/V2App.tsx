@@ -277,6 +277,7 @@ export function V2App() {
           onAct={onAct}
           welcome={welcome}
           onDismissWelcome={() => set('welcomeDismissed', true)}
+          onNav={nav}
         />
       )}
       <CmdK

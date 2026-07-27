@@ -828,6 +828,23 @@ export const UI_V2_SURFACES: UiSurface[] = [
     notes: 'Client onboarding wizard: org archetype → pricing model → tier → seats → personnel → module provisioning → activate.',
   },
   {
+    id: 'onboarding-ingest',
+    label: 'Set up from a document',
+    navTier: 'admin',
+    layoutMode: 'onboarding',
+    group: 'admin',
+    icon: 'upload',
+    uiKit: null,
+    apiPrefixes: ['/api/onboarding'],
+    anaToolFamilies: [],
+    sharedContract: null,
+    discoveryCatalog: null,
+    readiness: 'routes-ready',
+    compliance: [A11Y, TONE],
+    notes:
+      'Upload an onboarding document; AnA proposes values whose provenance it verified against the document text, the human reviews and approves, and approved org-profile fields are applied through the governed, audited commit.',
+  },
+  {
     id: 'usage',
     label: 'Usage & limits',
     navTier: 'admin',

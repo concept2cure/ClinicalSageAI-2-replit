@@ -49,6 +49,18 @@ describe('welcomeFor — client-type-aware first-run welcome', () => {
     }
   });
 
+  it('routes the upload starter to the real ingest flow, not a conversation about it', () => {
+    for (const seg of ['biotech', 'device', 'cro', 'other']) {
+      const upload = welcomeFor(seg, 'X').starters.find((s) => /upload/i.test(s.label))!;
+      // navTo opens the actual file-picker + review gate; a prompt alone would
+      // only have AnA talk about uploading.
+      expect(upload.navTo).toBe('onboarding-ingest');
+    }
+    // Type-specific starters stay conversational (they begin a live AnA turn).
+    const setupStarter = welcomeFor('biotech', 'X').starters.find((s) => /IND/i.test(s.label))!;
+    expect(setupStarter.navTo).toBeUndefined();
+  });
+
   it('every starter carries a label and a non-empty live prompt', () => {
     const w = welcomeFor('biotech', 'X');
     for (const s of w.starters) {

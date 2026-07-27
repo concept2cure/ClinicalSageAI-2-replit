@@ -405,6 +405,7 @@ export function AnaRail({
   onAct,
   welcome,
   onDismissWelcome,
+  onNav,
 }: {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -419,6 +420,8 @@ export function AnaRail({
    *  a conversation or dismissed it — the rail only renders it when present. */
   welcome?: OnboardingWelcome | null;
   onDismissWelcome?: () => void;
+  /** Lets a welcome starter open a real surface (e.g. the upload flow). */
+  onNav?: (id: string) => void;
 }) {
   const [draft, setDraft] = React.useState('');
   const [files, setFiles] = React.useState<string[]>([]);
@@ -496,7 +499,9 @@ export function AnaRail({
                   key={s.label}
                   type="button"
                   className="ana-welcome-starter"
-                  onClick={() => onSend(s.prompt)}
+                  // A starter either opens a real flow (upload) or begins a
+                  // live AnA turn — never a canned reply either way.
+                  onClick={() => (s.navTo && onNav ? onNav(s.navTo) : onSend(s.prompt))}
                 >
                   <span className="ico">
                     {(s.iconKey ? (I as Record<string, React.ReactNode>)[s.iconKey] : null) ?? I.sparkles}
