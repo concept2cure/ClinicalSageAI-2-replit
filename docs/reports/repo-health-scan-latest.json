@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-07-27T14:30:55.511Z",
+  "generatedAt": "2026-07-27T14:35:39.431Z",
   "git": {
-    "sha": "b1bf5ee54bbba974b34276ea7ad38ce421e482a3",
-    "branch": "integrate-c2c-v2"
+    "sha": "f0b9db1f7a15ae4acda9c43a4ad4ef8d95a36901",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
