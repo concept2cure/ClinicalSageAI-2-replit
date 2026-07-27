@@ -72,6 +72,35 @@ const FILES = [
   // cre_evidence_sources. Self-guarding on to_regclass, so it no-ops with a
   // NOTICE if the spine is somehow absent rather than failing the run.
   'migrations/20260726_cre_source_program_scope.sql',
+  // ── Risk-Based Monitoring lineage (added 2026-07-27) ──────────────────────
+  // Same failure mode as the CRE spine above, and for the same reason: these
+  // have been merged since 20260629 but were never listed here, so the durable
+  // path never created them. Every rbm_* write — the whole RBQM module: risk
+  // assessments, CtQ registers, KRIs, QTLs, signals, site risk, patient
+  // profiles, monitoring plans, metric ingestion — has been addressing tables
+  // that only ever existed on the ephemeral preview branch a PR created and
+  // then deleted. The module could not have worked on a real database.
+  //
+  // ORDER MATTERS. rbm_surfaces creates the eight base tables; everything after
+  // it either creates a table referencing them or ALTERs one of them:
+  //   kri_values         -> FK rbm_kris
+  //   patient_profiles   -> the cohort scorer's store
+  //   metric_ingestion   -> rbm_data_runs + rbm_metric_observations, the load path
+  //   not_evaluated      -> backfills status on rbm_kris / rbm_qtls
+  //   qtl_direction      -> ALTERs rbm_qtls
+  //   plan_versioning    -> ALTERs rbm_monitoring_plans
+  //
+  // All seven are idempotent (every CREATE TABLE / CREATE INDEX / ADD COLUMN is
+  // IF NOT EXISTS; the three that touch existing rows are to_regclass-guarded
+  // and re-runnable), none opens its own transaction, and none contains DROP or
+  // TRUNCATE — so they are safe under this script's repeated-run contract.
+  'migrations/20260629_rbm_surfaces.sql',
+  'migrations/20260630_rbm_kri_values.sql',
+  'migrations/20260701_rbm_patient_profiles.sql',
+  'migrations/20260726_rbm_metric_ingestion.sql',
+  'migrations/20260726_rbm_not_evaluated_backfill.sql',
+  'migrations/20260727_rbm_qtl_direction.sql',
+  'migrations/20260728_rbm_plan_versioning.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

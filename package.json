@@ -87,6 +87,7 @@
     "audit:evidence-pack": "node scripts/audits/generate-evidence-pack.mjs",
     "ci:check-editor-integrity": "node scripts/ci/check-editor-extension-integrity.mjs",
     "ci:check-legacy-dep-quarantine": "node scripts/ci/check-legacy-dep-quarantine.mjs",
+    "ci:migration-apply-coverage": "node scripts/ci/check-migration-apply-coverage.mjs",
     "ci:audit-route-mounts:no-regression": "node scripts/ci/audit-route-mounts.mjs --strict-no-regression --baseline docs/reports/route-mount-audit-baseline.json --owners docs/reports/route-mount-owners.json --write-json docs/reports/route-mount-audit-latest.json",
     "ci:audit-route-mounts:strict": "node scripts/ci/audit-route-mounts.mjs --strict-no-regression --baseline docs/reports/route-mount-audit-baseline.json --owners docs/reports/route-mount-owners.json --write-json docs/reports/route-mount-audit-latest.json",
     "ci:audit-route-mounts:full-strict": "node scripts/ci/audit-route-mounts.mjs --max-warnings 0 --owners docs/reports/route-mount-owners.json --write-json docs/reports/route-mount-audit-latest.json",

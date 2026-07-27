@@ -304,7 +304,13 @@ export function RbmSites({ board, onReload }: SubProps) {
   const recompute = () => mut.run(async () => {
     const { meta } = await rbmWriteWithMeta<unknown[]>('POST', '/rbm-site-risk/recompute', { programId: board.programId });
     const n = Number(meta.count ?? 0);
-    return `Rescored ${n} site${n === 1 ? '' : 's'} from Site Intelligence.`;
+    // Reaching here means the source read SUCCEEDED. A failure — Site
+    // Intelligence unavailable, a schema it cannot read, a study not in this
+    // organization — throws with the server's own reason and lands in
+    // RbmWriteError, so zero can no longer stand in for "the read failed".
+    return n === 0
+      ? 'Site Intelligence was read successfully and holds no sites for this study, so there is nothing to score.'
+      : `Rescored ${n} site${n === 1 ? '' : 's'} from Site Intelligence.`;
   });
 
   return (

@@ -28,10 +28,11 @@ import { z } from 'zod';
 
 import { createScopedLogger } from '../utils/logger';
 import {
-  ok, created, clientError, orgRequired, serverError,
+  ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
-import { recomputeSiteRisk } from '../services/rbm/site-risk-engine';
+import { getRequestDbClient } from '../middleware/tenantContext';
+import { recomputeSiteRisk, SITE_READ_MESSAGE } from '../services/rbm/site-risk-engine';
 import {
   detectSiteOutliers, scorePatientCohort,
   type SiteMetric, type PatientMetric,
@@ -71,8 +72,22 @@ router.post('/rbm-site-risk/recompute', async (req, res) => {
   const parsed = seedProgramBody.safeParse(req.body ?? {});
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   try {
-    const snapshots = await recomputeSiteRisk(orgId, parsed.data.programId);
-    return ok(res, snapshots, { count: snapshots.length });
+    const out = await recomputeSiteRisk(orgId, parsed.data.programId, getRequestDbClient(req));
+    if (!out.ok) {
+      // A failed source read is reported as a failure, never as a study with no
+      // sites. The prior snapshot is intact, and the response says so.
+      log.warn('site-risk recompute did not run', {
+        reason: out.reason, programId: parsed.data.programId, detail: out.detail,
+      });
+      if (out.reason === 'not_in_tenant') {
+        return notFoundInTenant(res, 'Study');
+      }
+      // 502 for every remaining case: each is a dependency this route could not
+      // read (Site Intelligence, or the RBQM store itself), not a bad request.
+      // `reason` is machine-readable so the surface can say which.
+      return clientError(res, 502, SITE_READ_MESSAGE[out.reason], { reason: out.reason });
+    }
+    return ok(res, out.snapshots, { count: out.snapshots.length });
   } catch (err) { return serverError(res, log, 'recompute-site-risk', err); }
 });
 
