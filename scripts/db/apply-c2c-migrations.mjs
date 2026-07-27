@@ -19,7 +19,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
-import { applyAuthoringSubsystem } from './authoring-subsystem.mjs';
+import { applyAuthoringSubsystem, AUTHORING_SUBSYSTEM_FILES } from './authoring-subsystem.mjs';
+import { ensureJournal, recordApplied } from './migration-journal.mjs';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -178,6 +179,38 @@ async function main() {
   const repoRoot = path.resolve(__dirname, '..', '..');
 
   let failed = 0;
+  const drift = []; // files whose bytes changed since a prior apply (G-03)
+
+  // Executable migration journal (G-03): record the sha256 of the exact bytes
+  // applied for every file, and surface DRIFT — an already-applied file whose
+  // content changed, which the idempotent apply path will not re-run. Journal
+  // writes are BEST-EFFORT: a ledger failure must never abort a real migration.
+  const query = (sql, params) => pool.query(sql, params);
+  let journalReady = false;
+  try {
+    await ensureJournal(query);
+    journalReady = true;
+  } catch (err) {
+    console.warn(`⚠ migration journal unavailable (continuing without it): ${err.message}`);
+  }
+  const journal = async (file) => {
+    if (!journalReady) return;
+    try {
+      const abs = path.join(repoRoot, file);
+      if (!fs.existsSync(abs)) return;
+      const res = await recordApplied(query, file, fs.readFileSync(abs, 'utf8'));
+      if (res.status === 'drift') {
+        drift.push(file);
+        console.warn(
+          `⚠ DRIFT: ${file} was applied before with different bytes ` +
+            `(was ${res.priorSha.slice(0, 12)}…, now ${res.sha.slice(0, 12)}…). ` +
+            'The idempotent apply path will not have re-applied the change.',
+        );
+      }
+    } catch (err) {
+      console.warn(`⚠ journal record skipped for ${file}: ${err.message}`);
+    }
+  };
 
   // Authoring subsystem FIRST — as an atomic unit, so the two guarded authoring
   // ALTERs in FILES below find their tables present. A failure here is counted
@@ -185,6 +218,7 @@ async function main() {
   // simply no-op if the subsystem did not come up).
   try {
     await applyAuthoringSubsystem(pool, repoRoot, { log: (m) => console.info(m) });
+    for (const f of AUTHORING_SUBSYSTEM_FILES) await journal(f);
   } catch (err) {
     console.error(`✗ failed:  authoring subsystem — ${err.message}`);
     failed++;
@@ -204,6 +238,7 @@ async function main() {
       await pool.query(sql);
       if (wrap) await pool.query('COMMIT');
       console.info(`✓ applied: ${file}`);
+      await journal(file);
     } catch (err) {
       await pool.query('ROLLBACK').catch(() => {});
       console.error(`✗ failed:  ${file} — ${err.message}${err.detail ? ` (${err.detail})` : ''}`);
@@ -212,8 +247,23 @@ async function main() {
   }
 
   await pool.end();
-  console.info(failed === 0 ? '\nAll c2c migrations applied.' : `\n${failed} file(s) failed.`);
-  process.exit(failed === 0 ? 0 : 1);
+
+  // Drift is a schema-truth problem, not an apply failure: the files all applied,
+  // but at least one had been applied before with different bytes. In strict mode
+  // (a release gate) this fails the run; otherwise it is reported and the run
+  // still succeeds so an operator is not blocked mid-incident.
+  const strict = process.env.C2C_MIGRATION_JOURNAL_STRICT === 'true';
+  if (drift.length > 0) {
+    console.warn(
+      `\n⚠ ${drift.length} migration(s) drifted (edited after apply): ${drift.join(', ')}.` +
+        (strict ? ' Failing (C2C_MIGRATION_JOURNAL_STRICT).' : ' Set C2C_MIGRATION_JOURNAL_STRICT=true to fail on this.'),
+    );
+  }
+  const driftFail = strict && drift.length > 0;
+  console.info(
+    failed === 0 && !driftFail ? '\nAll c2c migrations applied.' : `\n${failed} file(s) failed.`,
+  );
+  process.exit(failed === 0 && !driftFail ? 0 : 1);
 }
 
 main().catch((err) => {
