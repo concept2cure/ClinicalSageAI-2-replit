@@ -92,11 +92,22 @@ test('the authoring entries on the list are guarded, additive ALTERs only', () =
   const sourceUsage = files.indexOf('migrations/20260726_authoring_citation_source_usage.sql');
   assert.ok(sourceUsage >= 0, 'the source-usage index migration must be listed');
 
-  // Both authoring entries must be self-guarding: they add a column or an index
-  // WHERE the subsystem is already provisioned, and no-op with a NOTICE where it
-  // is not. That is what makes them safe on this path when the loop tables are
-  // not.
-  for (const file of files.filter((f) => /authoring/.test(f))) {
+  // The authoring SUBSYSTEM ALTERs must be self-guarding: they add a column or an
+  // index WHERE the subsystem is already provisioned, and no-op with a NOTICE
+  // where it is not. That is what makes them safe on this path when the loop
+  // tables are not.
+  //
+  // 20260728_authoring_supplementary_tables.sql is EXCLUDED: it is a legitimate
+  // CREATOR of INDEPENDENT authoring-router stores (suggestions / reviews /
+  // checklists / change-requests / compliance / comment-activity / audit-events /
+  // template+doc sections). It is NOT the Part 11 subsystem (frozen_documents /
+  // user_pins / authoring_audit_trail / authoring_signatures — asserted absent
+  // above), so the half-a-subsystem hazard the no-CREATE-TABLE rule guards does
+  // not apply to it.
+  const subsystemAlters = files.filter(
+    (f) => /authoring/.test(f) && !/authoring_supplementary_tables/.test(f),
+  );
+  for (const file of subsystemAlters) {
     const sql = readFileSync(file, 'utf8');
     assert.match(
       sql,

@@ -92,6 +92,13 @@ const FILES = [
   // fresh DB the constraint lands for real. Without this table the section-edit
   // permission control cannot be enabled (42P01) and the grant endpoints 500.
   'db/migrations/20260728_doc_permissions.sql',
+  // Authoring-router supplementary stores (G-02): eleven independent tables the
+  // router / command-executor read/write (AI suggestions, reviews, checklists,
+  // change-requests, compliance scores, comment activity, audit-events,
+  // template/doc sections) that no migration created. Self-contained CREATE TABLE
+  // IF NOT EXISTS + intra-cluster FKs only — no dependency on the authoring
+  // subsystem, so it is order-independent here. NOT the Part 11 subsystem.
+  'db/migrations/20260728_authoring_supplementary_tables.sql',
   // Industry-context tailoring: organization_industry_profiles +
   // project_industry_profiles. Fully idempotent (CREATE TABLE/INDEX IF NOT
   // EXISTS, no data statements).
