@@ -24,7 +24,7 @@ Nine route modules have **no client consumer anywhere** in `client/src`:
 | --- | --- | --- |
 | `/api/mdx/cdx` | companion diagnostics pairing | `design_cdx_codevelopment`, `pair_companion_diagnostic` |
 | `/api/mdx/clia` | CLIA complexity categorisation | `categorize_clia_complexity` |
-| `/api/mdx/software` | IEC 62304 software lifecycle | `create_software_lifecycle_item` |
+| `/api/mdx/software` | IEC 62304 software lifecycle | `create_software_lifecycle_item` | *(surfaced — "Software lifecycle")* |
 | `/api/mdx/ldt` | LDT inventory | `register_ldt` |
 | `/api/mdx/clinical-studies` | device clinical studies | 3 | *(surfaced — "Clinical studies")* |
 | `/api/mdx/rbm-board` | risk-based monitoring board | 6 |
