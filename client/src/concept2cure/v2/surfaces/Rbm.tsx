@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { SampleTag, useLiveData, useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { RBM_NAV, RBM_LINKS } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmProgram } from './rbmBoard';
 import { rbmBoardHasData } from './rbmBoard';
 import {
-  SeedEmpty, RbmAnaDock, seedRbmActionsFromBoard, type RbmAnaMessage,
+  SeedEmpty, RbmAnaDock, type RbmAnaMessage,
   RbmOverview, RbmReport, RbmRact, RbmKris, RbmQtls,
   RbmSignals, RbmPatients, RbmSites, RbmOversight, RbmPlan,
 } from './RbmSurfaces';
@@ -56,9 +56,13 @@ const LINK_ICONS: Record<string, string> = {
    The study picker lists the real programs that have RBM data
    (GET /api/mdx-rbm/rbm-programs); selecting one loads its live board and the
    sub-surfaces render from it. When the org has no RBM data, or a study has none
-   yet, an honest empty / seed state is shown — never a fixture. The in-surface
-   AnA dock and the sub-surfaces' edit flows are still sample (SampleTag stays)
-   pending their own wiring; the read data below it is real.
+   yet, an honest empty / seed state is shown — never a fixture.
+
+   Every control that appears to change something writes to the server
+   (/api/mdx/rbm-*) and then bumps `reloadKey` so the board is re-fetched and the
+   surface re-derives from what was actually stored. There is no local
+   optimistic layer and no sample data anywhere in this shell, which is why the
+   "Sample data" tag is gone rather than merely hidden.
    ════════════════════════════════════════════════════════════════════ */
 
 export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
@@ -86,14 +90,6 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
   const boardReady = !!bd && bd.programId === study;
   const hasData = boardReady && rbmBoardHasData(bd);
 
-  // Seed the cross-surface action store from the live board once its data for
-  // the selected program arrives, so the plan board and every surface that
-  // raises actions work against the real, org-scoped monitoring actions (never a
-  // fixture). Keyed on programId so in-session additions survive a refetch.
-  useEffect(() => {
-    if (bd && bd.programId === study) seedRbmActionsFromBoard(bd);
-  }, [study, bd?.programId]);
-
   const selProgram = programs.rows.find(p => p.id === study) || null;
   const studyLabel = selProgram?.label ?? 'the study';
   const nav = RBM_NAV.find(n => n.id === tab)!;
@@ -120,8 +116,6 @@ export function Rbm({ onAsk, onNav }: SurfaceViewProps) {
 
   return (
     <div className="rbm" data-screen-label={`RBM -- ${nav.label}`}>
-      <SampleTag sample={true} />
-
       <div className="reg-h">
         <div>
           <div className="ph-eyebrow">Clinical -- risk-based quality management</div>

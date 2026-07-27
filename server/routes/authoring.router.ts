@@ -1061,7 +1061,7 @@ router.post(
 // GET /api/authoring/docs?module=M3 - List documents by module
 router.get('/docs', async (req: Request, res: Response) => {
   try {
-    const { module = 'M3', product_code, status = 'draft' } = req.query;
+    const { module = 'M3', product_code, status = 'draft', programId } = req.query;
     const tenantId = getTenantId(req);
 
     let query = `
@@ -1103,6 +1103,15 @@ router.get('/docs', async (req: Request, res: Response) => {
       params.push(status);
     }
 
+    // Project scope (optional): filter to one regulatory_programs UUID. The
+    // new column is referenced ONLY when programId is supplied, so the org-wide
+    // path — and any database without the 20260727 migration — is untouched.
+    if (programId) {
+      paramCount++;
+      query += ` AND d.client_program_id = $${paramCount}`;
+      params.push(programId);
+    }
+
     query += ` GROUP BY d.id ORDER BY d.updated_at DESC`;
 
     const result = await pool.query(query, params);
@@ -1111,7 +1120,7 @@ router.get('/docs', async (req: Request, res: Response) => {
       success: true,
       documents: result.rows,
       count: result.rowCount,
-      filters: { module, product_code, status },
+      filters: { module, product_code, status, programId },
     });
   } catch (error) {
     console.error('Error listing documents:', error);
@@ -1126,7 +1135,7 @@ router.get('/docs', async (req: Request, res: Response) => {
 // POST /api/authoring/docs - Create new document
 router.post('/docs', async (req: Request, res: Response) => {
   try {
-    const { title, module = 'M3', product_code, locale = 'en-US', template_id } = req.body;
+    const { title, module = 'M3', product_code, locale = 'en-US', template_id, client_program_id } = req.body;
     const tenantId = getTenantId(req);
     const docId = crypto.randomUUID();
     const createdBy = getActorId(req);
@@ -1141,12 +1150,35 @@ router.post('/docs', async (req: Request, res: Response) => {
       });
     }
 
+    // Reject a malformed program id with a clean 400 rather than letting the
+    // UUID column cast throw a 500. Cross-org mis-scoping is already prevented
+    // downstream: every read is gated on tenant_id, so a document tagged with
+    // another org's program id never surfaces in that org's tree.
+    if (
+      client_program_id !== undefined &&
+      client_program_id !== null &&
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(client_program_id))
+    ) {
+      return res.status(400).json({ success: false, error: 'client_program_id must be a valid UUID' });
+    }
+
+    // Build the INSERT so the new program-scope column is referenced ONLY when
+    // supplied. A create without client_program_id (the org-wide path and the
+    // golden-journey harness) emits the exact original statement, so databases
+    // that lack the 20260727 migration keep working.
+    const cols = ['id', 'title', 'module', 'product_code', 'locale', 'status', 'created_by', 'created_at', 'updated_at', 'tenant_id', 'template_id'];
+    const vals = ['$1', '$2', '$3', '$4', '$5', `'draft'`, '$6', 'NOW()', 'NOW()', '$7', '$8'];
+    const args: any[] = [docId, title, module, product_code, locale, createdBy, tenantId, template_id];
+    if (client_program_id) {
+      args.push(client_program_id);
+      cols.push('client_program_id');
+      vals.push(`$${args.length}`);
+    }
     const result = await pool.query(
-      `INSERT INTO authoring_documents
-       (id, title, module, product_code, locale, status, created_by, created_at, updated_at, tenant_id, template_id)
-       VALUES ($1, $2, $3, $4, $5, 'draft', $6, NOW(), NOW(), $7, $8)
+      `INSERT INTO authoring_documents (${cols.join(', ')})
+       VALUES (${vals.join(', ')})
        RETURNING *`,
-      [docId, title, module, product_code, locale, createdBy, tenantId, template_id]
+      args,
     );
 
     // If template_id provided, copy sections from template

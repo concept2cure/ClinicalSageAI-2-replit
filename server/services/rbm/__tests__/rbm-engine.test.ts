@@ -45,8 +45,17 @@ describe('kriStatus', () => {
     expect(kriStatus(0.7, 0.8, 0.6, 'lower_worse')).toBe('amber');
     expect(kriStatus(0.9, 0.8, 0.6, 'lower_worse')).toBe('green');
   });
-  it('null value is green', () => {
-    expect(kriStatus(null, 2, 5)).toBe('green');
+  it('an indicator with no reading is not evaluated — never green', () => {
+    expect(kriStatus(null, 2, 5)).toBe('not_evaluated');
+    expect(kriStatus(undefined, 2, 5)).toBe('not_evaluated');
+  });
+  it('an indicator with no threshold to read against is not evaluated', () => {
+    expect(kriStatus(3, null, null)).toBe('not_evaluated');
+  });
+  it('one configured threshold is enough to evaluate', () => {
+    expect(kriStatus(6, null, 5, 'higher_worse')).toBe('red');
+    expect(kriStatus(3, 2, null, 'higher_worse')).toBe('amber');
+    expect(kriStatus(1, 2, null, 'higher_worse')).toBe('green');
   });
 });
 
@@ -55,6 +64,10 @@ describe('qtlStatus', () => {
     expect(qtlStatus(0.2, 0.15, 0.1)).toBe('breached');
     expect(qtlStatus(0.12, 0.15, 0.1)).toBe('approaching');
     expect(qtlStatus(0.05, 0.15, 0.1)).toBe('within');
+  });
+  it('a QTL with no value or no limit is not evaluated — never within', () => {
+    expect(qtlStatus(null, 0.15, 0.1)).toBe('not_evaluated');
+    expect(qtlStatus(0.05, null, 0.1)).toBe('not_evaluated');
   });
 });
 

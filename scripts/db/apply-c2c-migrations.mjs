@@ -19,6 +19,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
+import { applyAuthoringSubsystem } from './authoring-subsystem.mjs';
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -72,18 +73,31 @@ const FILES = [
   // cre_evidence_sources. Self-guarding on to_regclass, so it no-ops with a
   // NOTICE if the spine is somehow absent rather than failing the run.
   'migrations/20260726_cre_source_program_scope.sql',
-  // The authoring document loop — authoring_documents / authoring_sections /
-  // doc_revisions / authoring_comments / authoring_citations / frozen_documents /
-  // user_pins. Same gap as the CRE spine: merged and manifest-listed since
-  // 20260725, but the manifest is consumed by nothing, so the flagship authoring
-  // router has been writing to tables no durable path ever created. 12 CREATE
-  // ... IF NOT EXISTS, no data statements, no transaction of its own.
-  'db/migrations/20260725_authoring_document_loop_tables.sql',
-  // Source-usage index + column semantics on authoring_citations. MUST follow the
-  // loop tables (it indexes authoring_citations) and the spine (the convention it
-  // documents references cre_evidence_sources.id). Self-guarding on to_regclass.
+  // ── Authoring program scope (added 2026-07-27, from #1131) ────────────────
+  // Program scope for authoring documents: a guarded ALTER that adds
+  // client_program_id to authoring_documents. It self-guards on to_regclass.
+  // main() provisions the authoring subsystem (below) BEFORE this loop runs, so
+  // on a fresh DB the table is now present and this ALTER applies for real
+  // rather than no-opping.
+  'migrations/20260727_authoring_document_program_scope.sql',
+  // Source-usage index + column semantics on authoring_citations. Also guarded
+  // on to_regclass; likewise lands for real now that the subsystem is
+  // provisioned ahead of this loop.
   'migrations/20260726_authoring_citation_source_usage.sql',
 ];
+
+// The four db/migrations/20260725_authoring_* files that back the IND authoring
+// loop. They are provisioned as ONE atomic unit by applyAuthoringSubsystem()
+// BEFORE the FILES loop above, so the two guarded authoring ALTERs in that list
+// find their tables present.
+//
+// This supersedes an earlier cession that removed the loop-tables file from
+// FILES. That cession was right to refuse adding the loop tables ALONE (loop
+// tables without the audit/signature companions = a working freeze with no
+// audit row and a failing e-sign, worse on a Part 11 surface than plain
+// absence). The correct resolution is not to omit the subsystem but to
+// provision all four files TOGETHER, atomically — which is what the helper does.
+// See scripts/db/authoring-subsystem.mjs.
 
 /** Files that open their own transaction must not be wrapped in a second one. */
 const selfTransacting = (sql) => /^\s*BEGIN\s*;/im.test(sql);
@@ -105,6 +119,18 @@ async function main() {
   const repoRoot = path.resolve(__dirname, '..', '..');
 
   let failed = 0;
+
+  // Authoring subsystem FIRST — as an atomic unit, so the two guarded authoring
+  // ALTERs in FILES below find their tables present. A failure here is counted
+  // like any other and does not abort the rest of the run (the guarded ALTERs
+  // simply no-op if the subsystem did not come up).
+  try {
+    await applyAuthoringSubsystem(pool, repoRoot, { log: (m) => console.info(m) });
+  } catch (err) {
+    console.error(`✗ failed:  authoring subsystem — ${err.message}`);
+    failed++;
+  }
+
   for (const file of FILES) {
     const full = path.join(repoRoot, file);
     if (!fs.existsSync(full)) {

@@ -1,5 +1,11 @@
-const TOKEN_KEY = 'token';
-const LEGACY_TOKEN_KEYS = ['auth_token', 'trialsage_access_token'];
+// Single source of truth for the bearer token. Every real auth path
+// (authService.SecureStorage, ZenLogin, Concept2CureLogin, token refresh) reads
+// and writes this exact key, so getAuthToken must too — no separate canonical
+// mirror to drift out of sync with logout / refresh / remember-me.
+const TOKEN_KEY = 'trialsage_access_token';
+// Keys older builds may have written. Read-only fallback: never migrated or
+// deleted, so a stale mirror can never outlive the canonical token.
+const LEGACY_TOKEN_KEYS = ['token', 'auth_token'];
 const ORG_ID_KEY = 'currentOrganizationId';
 const LEGACY_ORG_ID_KEYS = ['currentOrganization', 'organizationId'];
 
@@ -40,23 +46,31 @@ const removeLocalStorage = (key: string): void => {
   }
 };
 
+/**
+ * Resolve the current bearer token. Reads the canonical key fresh on every call
+ * — sessionStorage first (per-tab session logins), then localStorage
+ * (remember-me), then legacy keys, then the in-memory fallback — and NEVER
+ * mutates storage. Reading fresh is what makes a token refresh propagate (D3);
+ * not mutating is what keeps a remember-me token alive across the first API call
+ * (D2). No separate mirror is written, so nothing survives clearAuthToken (D1).
+ */
 export const getAuthToken = (): string | null => {
-  if (!canUseSessionStorage()) {
-    return memoryToken;
+  const sessionAvailable = canUseSessionStorage();
+
+  if (sessionAvailable) {
+    const fromSession = sessionStorage.getItem(TOKEN_KEY);
+    if (fromSession) return fromSession;
   }
 
-  const token = sessionStorage.getItem(TOKEN_KEY);
-  if (token) return token;
+  const fromLocal = readLocalStorage(TOKEN_KEY);
+  if (fromLocal) return fromLocal;
 
+  // Read-only legacy fallback for sessions minted by older builds. Never
+  // migrated or deleted — a fallback that mutated storage is exactly the desync
+  // this module exists to prevent.
   for (const key of LEGACY_TOKEN_KEYS) {
-    const legacyToken = sessionStorage.getItem(key) || readLocalStorage(key) || readLocalStorage(TOKEN_KEY);
-    if (legacyToken) {
-      sessionStorage.setItem(TOKEN_KEY, legacyToken);
-      removeLocalStorage(key);
-      removeLocalStorage(TOKEN_KEY);
-      memoryToken = legacyToken;
-      return legacyToken;
-    }
+    const legacy = (sessionAvailable ? sessionStorage.getItem(key) : null) || readLocalStorage(key);
+    if (legacy) return legacy;
   }
 
   return memoryToken;
@@ -85,6 +99,40 @@ export const getOrgId = (): string => {
   return '1';
 };
 
+/**
+ * The organization id from the verified JWT's own claim — the authoritative
+ * source for "my own org" operations. Server-side tenant guards
+ * (validateOrgOwnership, requireTenantContext) resolve the org from this same
+ * claim, so a URL/body built from it can never mismatch the token the way a
+ * stale `currentOrganizationId` localStorage value can. Falls back to
+ * getOrgId() when no token is present or the payload can't be read.
+ */
+export const getJwtOrgId = (): string => {
+  const token = getAuthToken();
+  if (token) {
+    try {
+      const payload = token.split('.')[1];
+      if (payload) {
+        const json = JSON.parse(
+          decodeURIComponent(
+            atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+              .split('')
+              .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join(''),
+          ),
+        ) as { organizationId?: string | number };
+        const orgId = payload && json?.organizationId;
+        if (orgId !== undefined && orgId !== null && String(orgId).trim()) {
+          return String(orgId).trim();
+        }
+      }
+    } catch {
+      // malformed token — fall through to the localStorage resolver
+    }
+  }
+  return getOrgId();
+};
+
 export const getAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken();
   const orgId = getOrgId();
@@ -95,35 +143,46 @@ export const getAuthHeaders = (): Record<string, string> => {
   };
 };
 
+/**
+ * Store the token in exactly ONE tier. Writes the canonical key to
+ * sessionStorage and removes it from localStorage plus every legacy key from
+ * both tiers, so getAuthToken always resolves this one value and no second copy
+ * can drift or linger.
+ */
 export const setAuthToken = (token: string): void => {
   memoryToken = token;
 
   if (canUseSessionStorage()) {
     sessionStorage.setItem(TOKEN_KEY, token);
-    // Keep legacy session key in sync while old hooks migrate to canonical auth access.
-    sessionStorage.setItem('trialsage_access_token', token);
+    for (const key of LEGACY_TOKEN_KEYS) {
+      sessionStorage.removeItem(key);
+    }
   }
 
+  // Keep the token in a single tier (sessionStorage): clear the localStorage
+  // copy of the canonical key and every legacy key.
   removeLocalStorage(TOKEN_KEY);
-  removeLocalStorage('trialsage_access_token');
   for (const key of LEGACY_TOKEN_KEYS) {
     removeLocalStorage(key);
   }
 };
 
+/**
+ * Wipe every trace of the token from both tiers and memory. Removing the
+ * canonical key from both storages (not just one mirror) is what guarantees no
+ * stale bearer survives logout (D1).
+ */
 export const clearAuthToken = (): void => {
   memoryToken = null;
 
   if (canUseSessionStorage()) {
     sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem('trialsage_access_token');
     for (const key of LEGACY_TOKEN_KEYS) {
       sessionStorage.removeItem(key);
     }
   }
 
   removeLocalStorage(TOKEN_KEY);
-  removeLocalStorage('trialsage_access_token');
   for (const key of LEGACY_TOKEN_KEYS) {
     removeLocalStorage(key);
   }

@@ -96,6 +96,90 @@ const OPTIONAL_TABLES = [
   'audit_trail',
 ];
 
+/**
+ * Regulated subsystems that must be provisioned AS A UNIT. Unlike the flat
+ * table tiers above, a subsystem is judged whole/partial/absent together,
+ * because a half-provisioned regulated surface is worse than an absent one.
+ *
+ * Authoring: the ten tables the four db/migrations/20260725_authoring_* files
+ * create. This list is the readiness half of the contract whose provisioning
+ * half is scripts/db/authoring-subsystem.mjs (AUTHORING_SUBSYSTEM_TABLES) — keep
+ * the two in sync. A PARTIAL subsystem (e.g. the loop tables without their audit
+ * and signature companions) always fails readiness: it stands up freeze/e-sign
+ * with no Part 11 evidence, which is worse than tables plainly absent. A wholly
+ * ABSENT subsystem also fails readiness by default (authoring routes would throw
+ * against it), unless AUTHORING_SUBSYSTEM_OPTIONAL=true is set to acknowledge a
+ * deployment that intentionally does not offer authoring.
+ */
+const AUTHORING_SUBSYSTEM_TABLES = [
+  'authoring_documents',
+  'authoring_sections',
+  'doc_revisions',
+  'authoring_comments',
+  'authoring_citations',
+  'frozen_documents',
+  'user_pins',
+  'authoring_audit_trail',
+  'authoring_signatures',
+  'authoring_workflow_steps',
+];
+
+/**
+ * Tenant-consistent parentage (P0 #4): the four composite (parent_id, tenant_id)
+ * → (id, tenant_id) foreign keys the loop-tables migration installs on the
+ * working-content child links. Tables can exist WITHOUT these constraints — a DB
+ * provisioned before the migration landed, or a retrofit whose ADD CONSTRAINT
+ * rolled back — and such a DB is NOT ready for a Part 11 authoring workload: RLS
+ * filters each row by its own tenant but only these FKs stop a child from
+ * structurally pointing at another tenant's parent. Their absence while the
+ * tables are present fails readiness closed. Keep in sync with the DO-block in
+ * db/migrations/20260725_authoring_document_loop_tables.sql.
+ */
+const AUTHORING_SUBSYSTEM_FK_CONSTRAINTS = [
+  'authoring_sections_doc_tenant_fkey',
+  'doc_revisions_section_tenant_fkey',
+  'authoring_comments_section_tenant_fkey',
+  'authoring_citations_section_tenant_fkey',
+];
+
+export type SubsystemState = 'present' | 'partial' | 'absent';
+
+export interface SubsystemStatus {
+  name: string;
+  expected: string[];
+  present: string[];
+  missing: string[];
+  state: SubsystemState;
+  /** True when this state must fail /readyz (partial always; absent unless opted out). */
+  readinessFailing: boolean;
+}
+
+/**
+ * Judge a regulated subsystem as a unit. Pure (no I/O) so the readiness rule is
+ * testable without a database.
+ *
+ * - present  → all expected tables exist. Never fails readiness.
+ * - partial  → some but not all exist. ALWAYS fails readiness: a half-built
+ *              regulated surface (e.g. freeze/e-sign with no audit or signature
+ *              storage) is worse than one plainly absent. `optional` cannot
+ *              rescue a partial subsystem — that is the whole point.
+ * - absent   → none exist. Fails readiness by default (routes would throw);
+ *              `optional: true` downgrades ONLY this case to a non-failing state.
+ */
+export function evaluateSubsystem(
+  name: string,
+  expected: string[],
+  existing: ReadonlySet<string>,
+  opts: { optional?: boolean } = {},
+): SubsystemStatus {
+  const present = expected.filter(t => existing.has(t));
+  const missing = expected.filter(t => !existing.has(t));
+  const state: SubsystemState =
+    missing.length === 0 ? 'present' : present.length === 0 ? 'absent' : 'partial';
+  const readinessFailing = state === 'partial' || (state === 'absent' && !opts.optional);
+  return { name, expected, present, missing, state, readinessFailing };
+}
+
 export interface EnsureTablesResult {
   success: boolean;
   existingSchemas: string[];
@@ -105,6 +189,7 @@ export interface EnsureTablesResult {
   missingImportant: string[];
   missingOptional: string[];
   missingExtensions: string[];
+  subsystems: SubsystemStatus[];
   warnings: string[];
   errors: string[];
   duration: number;
@@ -143,6 +228,7 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
     missingImportant: [],
     missingOptional: [],
     missingExtensions: [],
+    subsystems: [],
     warnings: [],
     errors: [],
     duration: 0,
@@ -384,6 +470,48 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
     }
 
     result.existingTables = Array.from(existingTables);
+
+    // Regulated subsystems — judged as a unit (present / partial / absent).
+    const authoring = evaluateSubsystem('authoring', AUTHORING_SUBSYSTEM_TABLES, existingTables, {
+      optional: process.env.AUTHORING_SUBSYSTEM_OPTIONAL === 'true',
+    });
+    result.subsystems.push(authoring);
+    if (authoring.state === 'absent' && !authoring.readinessFailing) {
+      result.warnings.push(
+        'Authoring subsystem absent, but AUTHORING_SUBSYSTEM_OPTIONAL=true — readiness not failed. Authoring routes will error until it is provisioned (npm run db:apply-c2c).',
+      );
+    }
+
+    // Tenant-consistent parentage (P0 #4): tables present but their composite-FK
+    // integrity constraints absent means the subsystem was provisioned before
+    // that migration landed, or a retrofit's ADD CONSTRAINT rolled back — either
+    // way it is NOT ready for a Part 11 authoring workload. Verify the four FKs
+    // and, if any is missing while the tables exist, downgrade to partial (fails
+    // /readyz closed). Fail closed if the check itself errors — never claim ready
+    // on unverifiable integrity.
+    if (authoring.state === 'present') {
+      try {
+        const cons = await pool.query(
+          `SELECT conname FROM pg_constraint WHERE conname = ANY($1::text[])`,
+          [AUTHORING_SUBSYSTEM_FK_CONSTRAINTS],
+        );
+        const have = new Set(cons.rows.map(r => r.conname));
+        const missingFks = AUTHORING_SUBSYSTEM_FK_CONSTRAINTS.filter(c => !have.has(c));
+        if (missingFks.length > 0) {
+          authoring.state = 'partial';
+          authoring.missing = missingFks;
+          authoring.readinessFailing = true;
+        }
+      } catch (err: any) {
+        authoring.state = 'partial';
+        authoring.missing = ['<integrity-constraint-check-failed>'];
+        authoring.readinessFailing = true;
+        result.warnings.push(
+          `Could not verify authoring tenant-parentage constraints: ${err?.message ?? String(err)}`,
+        );
+      }
+    }
+
     result.duration = Date.now() - startTime;
 
     // Success if no critical tables/schemas/extensions are missing and no hard errors
@@ -407,6 +535,13 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
       console.warn(
         `[ensureCoreTables] ⚠️ Important tables missing: ${result.missingImportant.join(', ')}`
       );
+    }
+
+    for (const sub of result.subsystems) {
+      if (sub.state === 'present') continue;
+      const line = `[ensureCoreTables] ${sub.readinessFailing ? '❌' : '⚠️'} ${sub.name} subsystem ${sub.state} — missing: ${sub.missing.join(', ')}`;
+      if (sub.readinessFailing) console.error(line);
+      else console.warn(line);
     }
 
     if (result.missingSchemas.length > 0) {
@@ -497,6 +632,15 @@ export async function getDatabaseDiagnostics(connectionString?: string): Promise
   if (result.missingImportant.length > 0) {
     lines.push(`Important Missing (${result.missingImportant.length}):`);
     lines.push(...result.missingImportant.map(t => `  ⚠️ ${t}`));
+    lines.push('');
+  }
+
+  for (const sub of result.subsystems) {
+    const glyph = sub.state === 'present' ? '✅' : sub.readinessFailing ? '❌' : '⚠️';
+    lines.push(`Subsystem "${sub.name}": ${glyph} ${sub.state} (${sub.present.length}/${sub.expected.length} tables)`);
+    if (sub.missing.length > 0) {
+      lines.push(...sub.missing.map(t => `  ${sub.readinessFailing ? '❌' : '⚠️'} ${t}`));
+    }
     lines.push('');
   }
 

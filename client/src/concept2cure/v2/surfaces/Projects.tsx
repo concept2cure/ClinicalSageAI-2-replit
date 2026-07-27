@@ -1,28 +1,29 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
+import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
+// The New-Project wizard drives off the global regulatory registry. Import the
+// picker + the submission-type lookup DIRECTLY from the modules that own them,
+// rather than depending on window globals that another surface may or may not
+// have set first (it hadn't — window.RegistryPicker was never assigned, so the
+// wizard's first step hung on "Loading registry…" and could never complete).
+// Importing RegistryBridge also runs its side effects, which populate the
+// window.GLOBAL_REGISTRY / REG_SEGMENTS that RegistryPicker reads.
+import { RegistryPicker } from './AnaVerbs';
+import { getSubmissionTypeContext } from './RegistryBridge';
 import '../styles/project-home-v2.css';
 
-/* ── Window globals — gap until registry / submission-type modules port ── */
+/* ── Window global owned by this surface (the app shell sets it to auto-open
+   the wizard on navigation). C2C_PROJECT / __C2C_SEGMENT / C2C are declared by
+   sibling surfaces and merge into the global Window type. ── */
 declare global {
   interface Window {
     __C2C_NEW_PROJECT?: boolean;
-    RegistryPicker?: React.ComponentType<{ value: string | null; onChange: (v: string) => void; initialSegment?: string }>;
-    SEGMENT_CONTEXT?: Record<string, { label: string }>;
-    getSubmissionTypeContext?: (id: string) => {
-      id: string; displayName: string; pathwayKey?: string;
-      agency?: string; region?: string; dossierStandard?: string;
-      ctdModule?: string; submissionFormat?: string;
-    } | null;
-    REG_TA_GROUPS?: { id: string; label: string }[];
-    REG_TA?: { id: string; label: string; group: string }[];
-    REG_PATHWAYS?: Record<string, { kind: string; tree: { items: unknown[] }[] }>;
-    REG_TEMPLATES?: Record<string, { items: unknown[] }[]>;
   }
 }
 
-/* ════ New Project Wizard (registry-driven) ════ */
+/* ════ New Project Wizard (registry-driven, persists to regulatory_programs) ══ */
 
 interface SelTpl {
   id: string;
@@ -35,56 +36,152 @@ interface SelTpl {
   submissionFormat?: string;
 }
 
+// UI segment → regulatory registry segment (RegistryPicker's initial tab).
 const SEG2REG: Record<string, string | null> = {
   biotech: 'pharma_biotech', pharma: 'pharma_biotech',
   medtech: 'medical_devices', diagnostics: 'diagnostics_ivd',
   cro: null, health: 'pharma_biotech',
 };
 
+// UI segment → portfolio workstream label (card chip / filter tab).
 const SEG2WS: Record<string, string> = {
   biotech: 'Biotech', pharma: 'Pharma', medtech: 'MDX',
   diagnostics: 'MDX', cro: 'CRO', health: 'Biotech',
 };
+
+// UI segment → regulatory_programs.product_type (what the store persists).
+const SEG2PRODUCT: Record<string, string> = {
+  biotech: 'biologic', pharma: 'drug', medtech: 'device',
+  diagnostics: 'ivd', cro: 'drug', health: 'biologic',
+};
+
+// UI segment → human label, for the wizard's "Tailored for …" banner.
+const SEG_LABELS: Record<string, string> = {
+  biotech: 'Biotech', pharma: 'Pharma', medtech: 'Medical Devices',
+  diagnostics: 'Diagnostics & IVD', cro: 'CRO / Services', health: 'Digital Health',
+};
+
+/* ── Therapeutic areas — the create form's indication axis (self-contained) ── */
+const TA_GROUPS: { id: string; label: string }[] = [
+  { id: 'onc', label: 'Oncology' },
+  { id: 'neuro', label: 'Neurology & Neuromuscular' },
+  { id: 'immuno', label: 'Immunology & Inflammation' },
+  { id: 'cardio', label: 'Cardiovascular & Metabolic' },
+  { id: 'id', label: 'Infectious Disease & Vaccines' },
+  { id: 'rare', label: 'Rare & Genetic Disease' },
+  { id: 'resp', label: 'Respiratory' },
+  { id: 'other', label: 'Other' },
+];
+const TA_LIST: { id: string; label: string; group: string }[] = [
+  { id: 'onc_solid', label: 'Solid tumors', group: 'onc' },
+  { id: 'onc_heme', label: 'Hematologic malignancies', group: 'onc' },
+  { id: 'onc_general', label: 'Oncology (general)', group: 'onc' },
+  { id: 'neuro_cns', label: 'CNS / neurodegeneration', group: 'neuro' },
+  { id: 'neuro_nmj', label: 'Neuromuscular', group: 'neuro' },
+  { id: 'immuno_rheum', label: 'Rheumatology / autoimmune', group: 'immuno' },
+  { id: 'immuno_derm', label: 'Dermatology / inflammation', group: 'immuno' },
+  { id: 'cardio_hf', label: 'Heart failure / cardiology', group: 'cardio' },
+  { id: 'cardio_metab', label: 'Metabolic / endocrine', group: 'cardio' },
+  { id: 'id_vaccine', label: 'Vaccines', group: 'id' },
+  { id: 'id_amr', label: 'Anti-infectives', group: 'id' },
+  { id: 'rare_genetic', label: 'Rare genetic disease', group: 'rare' },
+  { id: 'resp_obstructive', label: 'COPD / asthma', group: 'resp' },
+  { id: 'other_unspec', label: 'Other / not specified', group: 'other' },
+];
+
+/** Map a chosen registry template + segment → a canonical program_type the
+ *  backend accepts (server VALID_PROGRAM_TYPES) and WS_CASE buckets. */
+function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
+  const id = (sel?.id ?? '').toLowerCase();
+  const pw = (sel?.pathway ?? '').toLowerCase();
+  if (id.includes('510k')) return '510k';
+  if (id.includes('de_novo') || pw === 'denovo') return 'de_novo';
+  if (id.includes('pma')) return 'pma';
+  if (id === 'cer' || pw === 'cer') return 'cer';
+  if (pw === 'ide' || id === 'ide') return 'ide';
+  if (id.includes('jnda') || id.includes('jp_')) return 'jnda';
+  if (id.includes('bla') || pw === 'bla') return 'bla';
+  if (id.includes('maa') || pw === 'maa') return 'maa';
+  if (id.includes('anda') || pw === 'anda') return 'anda';
+  if (id.includes('nda') || pw === 'ctd') return 'nda';
+  if (id.includes('ind') || pw === 'ind') return 'ind';
+  return uiSeg === 'medtech' ? '510k' : uiSeg === 'diagnostics' ? 'ivd' : 'ind';
+}
 
 function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id: string) => void }) {
   const [step, setStep] = useState(0);
   const [tpl, setTpl] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [product, setProduct] = useState('');
-  const [ta, setTa] = useState('onc');
+  const [ta, setTa] = useState('onc_general');
+  // Team assignment needs a persisted project id (GET /:id/team); no endpoint
+  // lists selectable org members for a not-yet-created project, so the wizard
+  // creates the project solo and teammates are added afterward.
   const [team] = useState<string[]>([]);
   const [target, setTarget] = useState('');
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const uiSeg = (typeof window !== 'undefined' && window.__C2C_SEGMENT) || 'biotech';
   const regSeg = SEG2REG[uiSeg];
-  const segLabel = window.SEGMENT_CONTEXT?.[uiSeg]?.label || uiSeg;
-  const ctx = tpl && window.getSubmissionTypeContext ? window.getSubmissionTypeContext(tpl) : null;
+  const segLabel = SEG_LABELS[uiSeg] || uiSeg;
+  const ctx = tpl ? getSubmissionTypeContext(tpl) : null;
   const selTpl: SelTpl | null = ctx
     ? { ...ctx, label: ctx.displayName, pathway: ctx.pathwayKey || 'ctd' }
     : null;
 
-  const doCreate = () => {
-    // MOCK ACTION — flagged for the actions pass. No create endpoint exists
-    // (server/routes/c2c/projects.ts has only reads + POST /:id/evidence), so
-    // nothing is persisted to regulatory_programs: this stages the choice into an
-    // ephemeral window.C2C_PROJECT and navigates. Wire to a real POST once it exists.
+  // Persist a real regulatory program (POST /api/c2c/projects → regulatory_programs)
+  // then navigate into it using the id the store assigns. On failure we surface
+  // the error instead of pretending the project was created.
+  const doCreate = async () => {
     setCreating(true);
+    setError(null);
+    const taLabel = TA_LIST.find(t => t.id === ta)?.label ?? null;
+    const body = {
+      name: name || selTpl?.label || 'New project',
+      productName: product || name || (selTpl?.label ?? ''),
+      programType: programTypeFor(selTpl, uiSeg),
+      productType: SEG2PRODUCT[uiSeg] || 'drug',
+      primaryAgency: selTpl?.agency || 'FDA',
+      submissionTypeId: selTpl?.id,
+      indication: taLabel,
+      targetSubmissionDate: target || null,
+      teamMembers: team,
+    };
     try {
-      window.C2C_PROJECT = {
-        id: 'new',
-        title: name || selTpl?.label || 'New project',
-        product,
-        code: selTpl?.label || '',
-        ws: SEG2WS[uiSeg] || 'Biotech',
-        status: 'active',
-      };
-    } catch (_) { /* noop */ }
-    setTimeout(() => { onClose(); onNav('project-home'); }, 1200);
+      const res = await apiRequest('POST', '/api/c2c/projects', body);
+      if (!res.ok) {
+        let msg = `Could not create the project (HTTP ${res.status}).`;
+        try {
+          const j = await res.json();
+          if (typeof j?.error === 'string') msg = j.error;
+        } catch { /* keep the default message */ }
+        setError(msg);
+        setCreating(false);
+        return;
+      }
+      const j = await res.json();
+      const created = (j?.data ?? {}) as Partial<ProjPortfolioEntry> & { id?: string };
+      try {
+        window.C2C_PROJECT = {
+          id: created.id || 'new',
+          title: created.title || body.name,
+          product: body.productName,
+          code: created.code || '',
+          ws: created.ws || SEG2WS[uiSeg] || 'Biotech',
+          status: created.status || 'active',
+        };
+      } catch { /* noop */ }
+      onClose();
+      onNav('project-home');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Network error creating the project.');
+      setCreating(false);
+    }
   };
 
-  const taGroups = window.REG_TA_GROUPS || [];
-  const taList = window.REG_TA || [];
+  const taGroups = TA_GROUPS;
+  const taList = TA_LIST;
 
   return (
     <div className="esign-bd" onClick={onClose}>
@@ -120,9 +217,7 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
                 </div>
               </div>
               <div style={{ maxHeight: 440, overflowY: 'auto' }}>
-                {window.RegistryPicker
-                  ? <window.RegistryPicker value={tpl} onChange={setTpl} initialSegment={regSeg || undefined} />
-                  : <p style={{ color: 'var(--text-400)', fontSize: 12 }}>Loading registry...</p>}
+                <RegistryPicker value={tpl ?? ''} onChange={(id) => setTpl(id)} initialSegment={regSeg || undefined} />
               </div>
             </div>
           )}
@@ -168,8 +263,8 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
                 <span style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--text-300)', display: 'block', marginBottom: 6 }}>Team members</span>
                 {/* Backend gap: no endpoint lists selectable org members for a
                     not-yet-created project (GET /api/c2c/projects/:id/team needs a
-                    persisted project id). The fabricated NP_TEAMS roster was removed
-                    rather than shown as real teammates. */}
+                    persisted project id). Rather than show a fabricated roster, the
+                    project is created solo and teammates are added afterward. */}
                 <EmptyState
                   icon={I.info}
                   title="Team assignment isn't available yet"
@@ -202,22 +297,27 @@ function NewProjectWizard({ onClose, onNav }: { onClose: () => void; onNav: (id:
                 <span>{taList.find(t => t.id === ta)?.label || ta}</span>
                 <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Target date</span>
                 <span>{target || 'Not set'}</span>
-                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Team</span>
-                <span>{team.join(', ') || 'Just you'}</span>
                 <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Pathway</span>
-                <span>{(selTpl.pathway || '').toUpperCase()} — {(window.REG_PATHWAYS || {})[selTpl.pathway]?.kind || selTpl.submissionFormat || selTpl.pathway}</span>
-                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Sections</span>
-                <span>{((window.REG_PATHWAYS || {})[selTpl.pathway]?.tree || []).reduce((s: number, v: { items: unknown[] }) => s + v.items.length, 0) || '—'} sections in this pathway</span>
-                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Templates</span>
-                <span>{((window.REG_TEMPLATES || {})[selTpl.pathway] || []).reduce((s: number, g: { items: unknown[] }) => s + g.items.length, 0) || '—'} document templates available</span>
+                <span>{(selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</span>
+                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Workstream</span>
+                <span>{SEG2WS[uiSeg] || 'Biotech'}</span>
+                <span style={{ color: 'var(--text-400)', fontWeight: 500 }}>Recorded as</span>
+                <span>{programTypeFor(selTpl, uiSeg).toUpperCase().replace(/_/g, ' ')} · {SEG2PRODUCT[uiSeg] || 'drug'}</span>
               </div>
 
               <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 6, background: 'color-mix(in srgb,var(--success) 8%,transparent)', border: '1px solid var(--success)', fontSize: 11.5, display: 'flex', gap: 8, alignItems: 'center' }}>
-                {I.sparkles}<span>AnA will analyze your project context and suggest an initial schedule, instructions, and memory once the project is created.</span>
+                {I.sparkles}<span>Your project is saved to the portfolio and opens in its workspace, where you can add documents and author sections with AnA.</span>
               </div>
             </div>
           )}
         </div>
+
+        {/* Create error — surfaced honestly instead of a fake "created" toast */}
+        {error && (
+          <div style={{ margin: '0 20px', padding: '9px 13px', borderRadius: 6, background: 'color-mix(in srgb,var(--danger,#e5484d) 10%,transparent)', border: '1px solid var(--danger,#e5484d)', color: 'var(--danger,#e5484d)', fontSize: 11.5, display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span className="ico">{I.alertTriangle}</span><span>{error}</span>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="esign-f" style={{ borderTop: '1px solid var(--border)', padding: '12px 20px' }}>

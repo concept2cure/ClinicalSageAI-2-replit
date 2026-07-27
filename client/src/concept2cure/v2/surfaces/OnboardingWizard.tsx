@@ -1,9 +1,31 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
+import { apiRequest } from '@/lib/queryClient';
+import { getJwtOrgId } from '@/utils/authToken';
+import { connected } from '../dataConnect';
 import '../styles/auth-entry.css';
 import '../styles/translation-v2.css';
 
 const INDUSTRIES = ['Biotech', 'Pharma', 'Medical device', 'IVD / diagnostics', 'CRO', 'Academic'];
+
+/** organizations.client_type from the chosen industry chip. */
+const INDUSTRY_CLIENT_TYPE: Record<string, string> = {
+  Biotech: 'biotech',
+  Pharma: 'pharma',
+  'Medical device': 'medtech',
+  'IVD / diagnostics': 'diagnostics',
+  CRO: 'cro',
+  Academic: 'pharma',
+};
+
+/** What actually happened when the wizard finished — rendered on the Ready step. */
+interface WizardResult {
+  live: boolean;
+  profileSaved: boolean;
+  invitesCreated: number;
+  invitesPendingConsent: number;
+  inviteFailures: number;
+}
 const ROLES = ['Regulatory affairs', 'Clinical', 'Quality', 'CMC', 'Executive', 'Medical writing'];
 const MODULES = [
   { id: 'mdx', label: 'Medical Device & Diagnostics' },
@@ -52,15 +74,84 @@ export function OnboardingWizard({ onEnter, onConnectSource }: OnboardingWizardP
   const [txwRole, setTxwRole] = useState('post_editor');
   const [txwAutoOpen, setTxwAutoOpen] = useState(true);
 
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<WizardResult | null>(null);
+
   const toggle = (id: string) => setMods(m => m.includes(id) ? m.filter(x => x !== id) : [...m, id]);
   const toggleLang = (id: string) => setTxwLangs(l => l.includes(id) ? l.filter(x => x !== id) : [...l, id]);
 
-  const enter = () => {
+  /** Step 4 → 5: perform the REAL setup — governed org-profile write + one
+      membership/invitation per teammate — and report what happened on the
+      Ready step. Offline nothing is provisioned and the step says so. */
+  const finishSetup = async () => {
+    if (busy) return;
+    const live = connected();
+    const res: WizardResult = {
+      live,
+      profileSaved: false,
+      invitesCreated: 0,
+      invitesPendingConsent: 0,
+      inviteFailures: 0,
+    };
+    if (!live) {
+      setResult(res);
+      setStep(5);
+      return;
+    }
+    setBusy(true);
+    const orgId = getJwtOrgId();
     try {
-      localStorage.setItem('c2c_user_prefs', JSON.stringify({
-        txwEnabled: txwOn, txwLangs, txwRole, txwAutoOpenSegments: txwAutoOpen,
-      }));
+      const pr = await apiRequest(
+        'PATCH',
+        `/api/organizations/${encodeURIComponent(orgId)}/profile`,
+        {
+          name: org.trim(),
+          clientType: INDUSTRY_CLIENT_TYPE[industry] || 'pharma',
+          reason: `First-run onboarding: workspace set up as ${industry}`,
+        },
+      );
+      res.profileSaved = pr.ok;
+    } catch (_e) {
+      // Non-admins cannot write the org profile — reported, not faked.
+    }
+    for (const email of invites.map(v => v.trim()).filter(Boolean)) {
+      try {
+        const r = await apiRequest('POST', '/api/tenant-users', {
+          email,
+          name: email.split('@')[0],
+          role: 'member',
+          organizationId: Number(orgId),
+        });
+        if (r.status === 202) res.invitesPendingConsent += 1;
+        else if (r.ok) res.invitesCreated += 1;
+        else res.inviteFailures += 1;
+      } catch (_e) {
+        res.inviteFailures += 1;
+      }
+    }
+    setBusy(false);
+    setResult(res);
+    setStep(5);
+  };
+
+  const enter = () => {
+    const prefs = {
+      txwEnabled: txwOn, txwLangs, txwRole, txwAutoOpenSegments: txwAutoOpen,
+      onboardingComplete: true,
+    };
+    try {
+      localStorage.setItem('c2c_user_prefs', JSON.stringify(prefs));
+      localStorage.setItem('c2c_onboarding_done', '1');
     } catch (_) { /* storage unavailable */ }
+    // Persist to the real per-user store (users.preferences jsonb) when
+    // authenticated; the local mirror above keeps the session responsive and
+    // is all we have offline. Fire-and-forget — entering the workspace must
+    // not block on a slow write.
+    if (connected()) {
+      apiRequest('PUT', '/api/users/me/preferences', prefs).catch(() => {
+        /* offline/expired token — the local mirror still applies */
+      });
+    }
     onEnter();
   };
 
@@ -166,13 +257,41 @@ export function OnboardingWizard({ onEnter, onConnectSource }: OnboardingWizardP
                 </div>
               ))}
               <button className="auth-link" onClick={() => setInvites([...invites, ''])}>+ Add another</button>
-              <div className="ob-nav" style={{ marginTop: 18 }}><button className="auth-btn ghost" onClick={() => setStep(3)}>Back</button><button className="auth-btn" onClick={() => setStep(5)}>Continue {I.arrowRight}</button></div>
+              {!connected() && (
+                <p className="auth-p" style={{ marginTop: 10, fontSize: 12 }}>
+                  Not signed in -- finishing will save nothing until you authenticate.
+                </p>
+              )}
+              <div className="ob-nav" style={{ marginTop: 18 }}><button className="auth-btn ghost" onClick={() => setStep(3)} disabled={busy}>Back</button><button className="auth-btn" disabled={busy} onClick={() => void finishSetup()}>{busy ? 'Setting up...' : <>Finish setup {I.arrowRight}</>}</button></div>
             </>}
 
             {step === 5 && <>
               <div className="ob-done">{I.check}</div>
-              <h2 className="auth-h" style={{ textAlign: 'center' }}>Workspace ready{org ? `, ${org.split(' ')[0]}` : ''}</h2>
-              <p className="auth-p" style={{ textAlign: 'center' }}>AnA has your context and your modules are live.</p>
+              <h2 className="auth-h" style={{ textAlign: 'center' }}>
+                {result && !result.live ? 'Walkthrough complete' : `Workspace ready${org ? `, ${org.split(' ')[0]}` : ''}`}
+              </h2>
+              {result && !result.live ? (
+                <p className="auth-p" style={{ textAlign: 'center' }}>
+                  You were not signed in, so no organization profile or teammates were saved --
+                  run this again from Admin once authenticated.
+                </p>
+              ) : (
+                <p className="auth-p" style={{ textAlign: 'center' }}>
+                  {result?.profileSaved
+                    ? 'Organization profile saved -- audited. '
+                    : 'Organization profile unchanged (admin role required). '}
+                  {result && (result.invitesCreated > 0 || result.invitesPendingConsent > 0)
+                    ? `${result.invitesCreated} teammate${result.invitesCreated === 1 ? '' : 's'} added` +
+                      (result.invitesPendingConsent > 0
+                        ? ` -- ${result.invitesPendingConsent} pending consent`
+                        : '') +
+                      (result.inviteFailures > 0 ? ` -- ${result.inviteFailures} failed` : '') +
+                      '.'
+                    : result && result.inviteFailures > 0
+                      ? `${result.inviteFailures} invite${result.inviteFailures === 1 ? '' : 's'} failed -- retry from Admin.`
+                      : 'Invite teammates anytime from Admin.'}
+                </p>
+              )}
               <div className="auth-bring">
                 <div className="auth-bring-h">{I.folder} Bring your documents</div>
                 <div className="auth-bring-b">Concept2Cure works alongside Veeva Vault, SharePoint and OneDrive — connect a source and import runs detect, classify, and approve into governed artifacts. No rip-and-replace.</div>

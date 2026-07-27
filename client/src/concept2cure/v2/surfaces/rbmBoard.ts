@@ -3,30 +3,32 @@
  * (GET /api/mdx-rbm/rbm-board/:programId, assembled in
  * server/routes/mdx-rbm-board.ts). Mirrors the server's `data` shape exactly.
  *
- * The RBM sub-surfaces read their slices from a `board` of this type instead of
- * the rbm-data fixtures. Several fields the fixtures carried have NO real source
- * and are documented here as always-null / always-empty so the sub-surfaces
- * render them null-safe (never fabricated):
- *   - assessment.history        → always []      (no version history store)
+ * The RBM sub-surfaces read their slices from a `board` of this type. Writes go
+ * to the granular /api/mdx/rbm-* routes and the shell then re-fetches this
+ * board, so the board is the single source of truth on screen.
+ *
+ * Fields the RBM store has no column for are documented here as always-null /
+ * always-empty, and the surfaces neither render nor collect them — a form that
+ * captured them would drop them on save:
  *   - assessment/plan.approval  → { by, when, reason } only — NO `audit` id
  *   - items.riskCat / .control  → absent          (board exposes refCode instead)
- *   - kris.bySite/method/level  → absent
- *   - qtls.unit                 → always null; qtls.breachDoc absent
- *     (board exposes a flat breachActionTaken instead)
- *   - signals.investigation     → absent (board exposes resolution only)
+ *   - kris: no threshold method, analysis level or per-site drilldown
+ *   - qtls.unit                 → always null; the breach response is the flat
+ *     breachActionTaken narrative, not a structured breach record
+ *   - signals: resolution notes only, no structured investigation record
  *   - patients.metrics          → always []
  *   - sites.country             → always null
  *   - plan.version/basis        → absent; plan.tiers → always null; anaDraft false
- *   - actions[].ana             → absent
- * RBM_CSM_RUN (central-monitoring run) has no board source at all.
  */
 
 export interface RbmBoardSummary {
   overallRisk: string | null;
   asOf: string;
   riskItems: { total: number; critical: number; open: number; high: number };
-  kris: { total: number; red: number; amber: number };
-  qtls: { total: number; breached: number; approaching: number };
+  // `notEvaluated` counts indicators with no reading (or no threshold to read
+  // against). They are surfaced, not folded into the healthy remainder.
+  kris: { total: number; red: number; amber: number; notEvaluated: number };
+  qtls: { total: number; breached: number; approaching: number; notEvaluated: number };
   signals: { total: number; open: number; high: number };
   sites: { total: number; enhanced: number };
   patients: { scored: number; flagged: number; review: number };
@@ -57,6 +59,23 @@ export interface RbmBoardApproval {
   reason: string | null;
 }
 
+/**
+ * One version in the assessment chain. An amendment creates a new draft version
+ * and approving it archives the version it supersedes, so every entry here is a
+ * version that existed — the approved ones carrying the signature they were
+ * approved under. `amendmentReason` is why the version was opened; `reason` is
+ * why it was approved.
+ */
+export interface RbmBoardAssessmentVersion {
+  id: number;
+  v: number;
+  status: string;
+  by: string | null;
+  when: string | null;
+  reason: string | null;
+  amendmentReason: string | null;
+}
+
 export interface RbmBoardAssessment {
   id: number;
   framework: string;
@@ -64,7 +83,9 @@ export interface RbmBoardAssessment {
   status: string;
   updated: string | null;
   approval: RbmBoardApproval | null;
-  history: unknown[];
+  /** Newest version first. The board shows the highest version, so with an
+   *  amendment open this is the draft and the approved version is below it. */
+  history: RbmBoardAssessmentVersion[];
 }
 
 export interface RbmBoardItem {
@@ -164,6 +185,10 @@ export interface RbmBoardPlan {
 
 export interface RbmBoardAction {
   id: number;
+  /** The plan this action belongs to. `actions` spans every plan version in the
+   *  program, so a surface showing one plan must filter on this before it
+   *  renders — or mutates — anything. */
+  planId: number | null;
   type: string;
   title: string;
   priority: string;
@@ -191,7 +216,27 @@ export interface RbmBoard {
   oversight: Record<string, { open: number; high: number }>;
   plan: RbmBoardPlan | null;
   actions: RbmBoardAction[];
+  freshness: RbmBoardFreshness[];
   pendingStore?: boolean;
+}
+
+/**
+ * Per-source data freshness — the newest ingestion run for each feed.
+ * `stale` is the engine's call (see FRESHNESS_STALE_DAYS), measured from the
+ * extract's cutoff rather than the load time: a job that ran this morning
+ * against a three-week-old export is not fresh data. An empty array means no
+ * feed is tracked at all, which the surface states rather than treating as
+ * healthy.
+ */
+export interface RbmBoardFreshness {
+  source: string;
+  lastRunAt: string | null;
+  dataCutoff: string | null;
+  status: string;
+  rowsAccepted: number;
+  rowsRejected: number;
+  stale: boolean;
+  ageDays: number | null;
 }
 
 /** A program (study) that has real RBM data — GET /api/mdx-rbm/rbm-programs. */

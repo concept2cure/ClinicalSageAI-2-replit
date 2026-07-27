@@ -47,12 +47,18 @@ export interface InsightsSurfaceProps {
   onAsk?: (prompt: string) => void;
 }
 
-/** Read the persisted org id used elsewhere in the client as a fallback. */
+/**
+ * Read the persisted org id the rest of the client actually writes. authService
+ * persists 'currentOrganizationId' (with legacy 'currentOrganization'); the old
+ * 'trialsage_org_id' key is never written, so reading it always yielded
+ * undefined. Returns undefined (an honest "no org selected") when nothing is
+ * persisted, which the surface renders as the sign-in prompt.
+ */
 function readPersistedOrgId(): number | undefined {
   if (typeof window === 'undefined') return undefined;
   const raw =
-    window.sessionStorage.getItem('trialsage_org_id') ||
-    window.localStorage.getItem('trialsage_org_id');
+    window.localStorage.getItem('currentOrganizationId') ||
+    window.localStorage.getItem('currentOrganization');
   if (!raw) return undefined;
   const parsed = Number(raw);
   return Number.isFinite(parsed) ? parsed : undefined;
