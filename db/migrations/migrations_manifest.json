@@ -558,7 +558,8 @@
     "20260725_authoring_signature_freeze_binding.sql",
     "20260725_drop_orphaned_foresight_prediction_tables.sql",
     "20260727_drop_source_citations_phantom.sql",
-    "20260727_drop_clinical_evidence_duplicate_lineage.sql"
+    "20260727_drop_clinical_evidence_duplicate_lineage.sql",
+    "20260727_collab_document_state.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

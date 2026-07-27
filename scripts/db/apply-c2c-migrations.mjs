@@ -84,6 +84,21 @@ const FILES = [
   // on to_regclass; likewise lands for real now that the subsystem is
   // provisioned ahead of this loop.
   'migrations/20260726_authoring_citation_source_usage.sql',
+  // ── Collaboration state (added 2026-07-27) ────────────────────────────────
+  // Durable Y.js CRDT state for the /collab socket. Fully self-contained: one
+  // CREATE TABLE IF NOT EXISTS that references nothing, plus an ON DELETE
+  // CASCADE FK to authoring_documents added only inside a to_regclass guard.
+  // Listed after the authoring entries so that on a fresh database — where
+  // applyAuthoringSubsystem() has already run — the guard finds the table and
+  // the cascade actually lands, instead of leaving CRDT state that outlives the
+  // document it belongs to.
+  //
+  // Without this entry the collaboration server has nowhere to persist: its
+  // store reports the table missing, onLoadDocument refuses the connection, and
+  // the subsystem is off anyway until ENABLE_COLLAB_CRDT is set. Listing it
+  // here is what makes turning that flag on a configuration change rather than
+  // a schema migration.
+  'db/migrations/20260727_collab_document_state.sql',
 ];
 
 // The four db/migrations/20260725_authoring_* files that back the IND authoring
