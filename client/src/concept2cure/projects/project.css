@@ -249,3 +249,62 @@ input, textarea { font-family: inherit; color: inherit; outline: none; }
 .pj-evidence .kind { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-400); font-weight: 600; }
 .pj-evidence .title { color: var(--text-100); font-weight: 500; margin: 2px 0 1px; }
 .pj-evidence .meta { color: var(--text-400); font-size: 11px; }
+
+/* ── Contextual regulatory plan (MDX-PM-01) ─────────────────────────────────
+   Sections inside this surface, styled to sit alongside the existing ones
+   rather than announce themselves as a different product. Reuses the same
+   variables, borders and radii as .pj-stream-card above. */
+
+.pj-wp-group { margin-bottom: 14px; }
+.pj-wp-phase {
+  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-400); font-weight: 600; margin: 0 0 6px 2px;
+}
+
+.pj-wp-card {
+  background: var(--background); border: 1px solid #e8e6dc; border-radius: 9px;
+  padding: 11px 13px; margin-bottom: 7px;
+}
+.pj-wp-card .head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pj-wp-card .head .lbl { font-weight: 600; color: var(--text-100); font-size: 13px; }
+.pj-wp-card .purpose { font-size: 12px; color: var(--text-300); line-height: 1.45; margin-top: 5px; }
+.pj-wp-card .condition {
+  font-size: 11.5px; color: var(--text-300); line-height: 1.45; margin-top: 6px;
+  padding: 6px 8px; background: var(--bg-050); border-radius: 6px;
+}
+.pj-wp-card .condition strong { color: var(--text-200); font-weight: 600; }
+.pj-wp-card .meta { font-size: 11px; color: var(--text-400); margin-top: 6px; }
+.pj-wp-card .unsettled { font-size: 11px; color: #b4762a; margin-top: 5px; }
+
+.pj-wp-state { margin-left: auto; font-size: 11px; color: var(--text-400); white-space: nowrap; }
+
+.pj-wp-tag {
+  font-size: 10px; letter-spacing: 0.03em; font-weight: 600;
+  padding: 1px 6px; border-radius: 4px; white-space: nowrap;
+}
+.pj-wp-tag.conditional { color: #2f5a85; background: rgba(106,155,204,0.12); }
+.pj-wp-tag.offplan     { color: #b4762a; background: rgba(217,119,6,0.12); }
+
+.pj-wp-list { font-size: 12px; }
+.pj-wp-list .block { margin-bottom: 12px; }
+.pj-wp-list .block-head {
+  font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-400); font-weight: 600; margin-bottom: 4px;
+}
+.pj-wp-list .row {
+  display: flex; gap: 12px; align-items: baseline;
+  padding: 6px 0; border-top: 1px solid #f2f0e8;
+}
+.pj-wp-list .row:first-of-type { border-top: 0; }
+.pj-wp-list .row .name { color: var(--text-200); line-height: 1.45; }
+.pj-wp-list .row .note { margin-left: auto; color: var(--text-400); font-size: 11px; white-space: nowrap; }
+
+.pj-wp-empty, .pj-wp-note, .pj-wp-limit, .pj-wp-declare {
+  font-size: 12px; color: var(--text-300); line-height: 1.5;
+  background: var(--bg-050); border: 1px solid #e8e6dc; border-radius: 8px;
+  padding: 10px 12px;
+}
+.pj-wp-note { margin-bottom: 10px; }
+.pj-wp-limit { margin-top: 10px; }
+.pj-wp-limit strong, .pj-wp-declare strong { color: var(--text-200); font-weight: 600; }
+.pj-wp-declare .hint { color: var(--text-400); font-size: 11.5px; margin-top: 6px; }
