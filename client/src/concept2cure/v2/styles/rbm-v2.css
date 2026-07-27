@@ -240,6 +240,8 @@
   .rbm-kri{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:13px 15px;}
   .rbm-kri[data-st="red"]{border-left:3px solid var(--error);}
   .rbm-kri[data-st="amber"]{border-left:3px solid var(--warning);}
+  /* An indicator with no reading reads as unresolved, not as a healthy one. */
+  .rbm-kri[data-st="not_evaluated"]{border-left:3px dashed var(--border-strong);}
   .rbm-kri-h{display:flex;align-items:center;justify-content:space-between;gap:8px;}
   .rbm-kri-h b{font-size:13px;color:var(--text-100);}
   .rbm-kri-m{font-size:10.5px;color:var(--text-400);margin:3px 0 10px;}
@@ -248,6 +250,7 @@
   .rbm-kri-v em{font-style:normal;font-size:11px;color:var(--text-400);margin-left:3px;}
   .rbm-kri-v[data-st="red"]{color:var(--error);}
   .rbm-kri-v[data-st="amber"]{color:var(--warning);}
+  .rbm-kri-v[data-st="not_evaluated"]{color:var(--text-400);}
   .rbm-kri-thr{font-size:10px;color:var(--text-400);margin-top:9px;border-top:1px solid var(--bg-100);padding-top:7px;}
   .rbm-spark .ln{fill:none;stroke:var(--text-300);stroke-width:1.5;}
   .rbm-spark .dot{fill:var(--text-100);}
@@ -299,6 +302,8 @@
   .rbm-run{border:1px solid var(--success-muted);border-radius:var(--radius-lg);background:var(--bg-000);padding:12px 15px;margin-bottom:13px;}
   .rbm-run-h{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--success);}
   .rbm-run-h svg{width:14px;height:14px;}
+  .rbm-run[data-tone="err"]{border-color:var(--error);}
+  .rbm-run[data-tone="err"] .rbm-run-h{color:var(--error);}
   .rbm-run-m{font-size:11px;color:var(--text-400);margin:3px 0 9px;}
   .rbm-run-rows{display:flex;flex-direction:column;gap:5px;}
   .rbm-run-row{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--text-200);flex-wrap:wrap;}
@@ -395,6 +400,9 @@
   .rbm-field input,.rbm-field textarea{border:1px solid var(--border-strong);border-radius:var(--radius-md);padding:8px 10px;font-size:12.5px;background:var(--bg-000);color:var(--text-100);resize:vertical;}
   .rbm-field input:focus,.rbm-field textarea:focus{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
   .rbm-field-row{display:flex;gap:10px;}
+  .rbm-field-hint{font-style:normal;font-size:10.5px;line-height:1.45;color:var(--text-400);text-transform:none;letter-spacing:0;}
+  .rbm-field select{border:1px solid var(--border-strong);border-radius:var(--radius-md);padding:8px 10px;font-size:12.5px;background:var(--bg-000);color:var(--text-100);}
+  .rbm-field input:disabled,.rbm-field textarea:disabled,.rbm-field select:disabled{opacity:.6;cursor:not-allowed;}
   .rbm-modal-note{font-size:10.5px;line-height:1.5;color:var(--text-400);margin:2px 0 14px;}
   .rbm-modal-acts{display:flex;justify-content:flex-end;gap:8px;}
 
@@ -412,3 +420,44 @@
   }
 
 }
+
+  /* Data currency strip — the feed provenance behind every number below it. */
+  .rbm-fresh-strip{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 13px;margin-bottom:13px;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);}
+  .rbm-fresh-strip[data-empty]{border-style:dashed;}
+  .rbm-fresh-l{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;color:var(--text-400);text-transform:uppercase;letter-spacing:.04em;}
+  .rbm-fresh-l svg{width:13px;height:13px;}
+  .rbm-fresh-none{font-size:11.5px;color:var(--text-400);}
+  .rbm-fresh-src{display:inline-flex;align-items:baseline;gap:6px;padding:3px 9px;border-radius:999px;background:var(--bg-100);font-size:11.5px;}
+  .rbm-fresh-src b{color:var(--text-100);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.03em;}
+  .rbm-fresh-src em{font-style:normal;color:var(--text-400);}
+  /* A feed that has gone quiet reads as a warning, not as neutral chrome. */
+  .rbm-fresh-src[data-stale]{background:var(--warning-muted);}
+  .rbm-fresh-src[data-stale] em{color:var(--warning);font-weight:600;}
+
+  /* Metric ingest — the operator end of the load path. */
+  .rbm-fresh-load{margin-left:auto;flex-shrink:0;}
+  .rbm-modal-wide{max-width:720px;}
+  .rbm-ingest-out{border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 13px;margin:4px 0 12px;}
+  .rbm-ingest-out[data-tone="ok"]{border-color:var(--success-muted);}
+  .rbm-ingest-out[data-tone="warn"]{border-color:var(--warning);}
+  .rbm-ingest-out[data-tone="err"]{border-color:var(--error);}
+  .rbm-ingest-out-h{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--text-100);}
+  .rbm-ingest-out-h svg{width:14px;height:14px;}
+  .rbm-ingest-out[data-tone="ok"] .rbm-ingest-out-h{color:var(--success);}
+  .rbm-ingest-out[data-tone="warn"] .rbm-ingest-out-h{color:var(--warning);}
+  .rbm-ingest-out[data-tone="err"] .rbm-ingest-out-h{color:var(--error);}
+  .rbm-ingest-out-counts{display:flex;gap:14px;margin:7px 0 4px;font-size:11.5px;color:var(--text-400);}
+  .rbm-ingest-out-counts b{color:var(--text-100);font-variant-numeric:tabular-nums;}
+  .rbm-ingest-out-counts span[data-bad] b{color:var(--error);}
+  .rbm-ingest-out-proj{font-size:11px;color:var(--text-400);}
+  /* A row that landed against no indicator is a finding, not a footnote. */
+  .rbm-ingest-warn{display:flex;gap:6px;align-items:flex-start;margin-top:9px;padding:8px 10px;border-radius:var(--radius-md);background:var(--warning-muted);font-size:11px;line-height:1.5;color:var(--text-200);}
+  .rbm-ingest-warn svg{width:13px;height:13px;flex-shrink:0;margin-top:1px;}
+  .rbm-ingest-rejects{margin-top:10px;}
+  .rbm-ingest-rejects-h{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);margin-bottom:5px;}
+  .rbm-ingest-more{font-size:10.5px;color:var(--text-400);margin-top:5px;}
+
+  /* The version chain. The row being shown/edited is marked so an approved
+     version below it is never mistaken for the one on screen. */
+  .rbm-hist-row[data-cur]{color:var(--text-100);font-weight:600;}
+  .rbm-hist-row[data-cur]::before{content:"› ";}

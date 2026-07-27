@@ -11,7 +11,7 @@
 import { Router, Request, Response } from 'express';
 import * as crypto from 'crypto';
 import { authMiddleware } from '../../auth';
-import { requireRole } from '../../middleware/auth';
+import { requirePlatformAdmin } from '../../middleware/requirePlatformAdmin';
 import { query } from '../../db';
 import { createScopedLogger } from '../../utils/logger';
 
@@ -19,7 +19,11 @@ const logger = createScopedLogger('admin-scim-tenants');
 const router = Router();
 
 router.use(authMiddleware);
-const requireAdmin = requireRole('super_admin', 'platform_admin');
+// DB-authoritative platform gate (roles + PLATFORM_ADMIN_EMAILS +
+// platform_role_grants, fail-closed) — the same gate as /api/admin/master.
+// requireRole was unusable here: its legacy org-'admin' bypass let every
+// customer org admin reach this cross-tenant router.
+const requireAdmin = requirePlatformAdmin;
 
 function newToken(): { token: string; tokenHash: string } {
   // URL-safe, high-entropy bearer token. Only the hash is stored.

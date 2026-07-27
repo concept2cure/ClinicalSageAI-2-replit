@@ -8,39 +8,18 @@ import { I } from '../icons';
 import { GovernedActionSignoff } from '../../components/ana/GovernedActionSignoff';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AnaChatAction } from '../../components/ana/useAnaChat';
-import {
-  RBM_VOCAB, RBM_KRIS, RBM_QTLS, RBM_SIGNALS, RBM_SITES, RBM_PATIENTS,
-  RBM_SUMMARY, RBM_ATTENTION, RBM_REPORT,
-  rbmBand, kriStatusOf, createRbmStore,
-  type RbmAction, type RbmNavItem,
-} from '../fixtures/rbm-data';
-import type { RbmBoard } from './rbmBoard';
+import { RBM_VOCAB, rbmBand, kriStatusOf, type RbmNavItem } from '../fixtures/rbm-data';
 import '../styles/rbm-v2.css';
 
 /* Re-export surfaces so Rbm.tsx imports from one place */
 export { RbmOverview, RbmReport, RbmRact, RbmKris, RbmQtls } from './RbmSurfacesA';
 export { RbmSignals, RbmPatients, RbmSites, RbmOversight, RbmPlan } from './RbmSurfacesB';
 
-/* ── Shared action store (singleton) ── */
-export const RBM_STORE = createRbmStore();
-
-/**
- * Seed the cross-surface action store from the live board. Called by the shell
- * when the selected program changes, so the plan board and every surface that
- * raises actions work against the real, org-scoped monitoring actions.
- */
-export function seedRbmActionsFromBoard(board: RbmBoard): void {
-  RBM_STORE.seed(board.actions.map(a => ({
-    id: String(a.id), type: a.type, title: a.title, priority: a.priority,
-    owner: a.owner, due: a.due, status: a.status, overdue: a.overdue, origin: a.origin,
-  })));
-}
-
-export function useRbmActions(): RbmAction[] {
-  const [, force] = useState(0);
-  useEffect(() => RBM_STORE.subscribe(() => force(n => n + 1)), []);
-  return RBM_STORE.getActions();
-}
+/* The cross-surface in-memory action store that used to live here is gone.
+   Monitoring actions raised anywhere in RBM — signal escalations, oversight
+   visits, plan items — are now written to /api/mdx/rbm-monitoring-actions and
+   read back off the board, so the plan column counts reflect the database and
+   survive a reload instead of a page-local singleton. */
 
 /* ── Tone icons ── */
 const TONE_ICON: Record<string, string> = { ok: 'check', warn: 'alertTriangle', err: 'shieldAlert', ai: 'info', neutral: 'info' };
@@ -172,11 +151,17 @@ export function TrendTable({ kri }: { kri: { name: string; unit: string; spark: 
 }
 
 /* ── Form fields type ── */
-export interface FormField { key: string; label: string; type: string; options?: string[]; labels?: Record<string, string>; min?: number; max?: number; optional?: boolean }
+export interface FormField { key: string; label: string; type: string; options?: string[]; labels?: Record<string, string>; min?: number; max?: number; optional?: boolean; hint?: string }
 
-/* ── RbmFormModal ── */
-export function RbmFormModal({ title, intro, fields, initial, submitLabel, onCancel, onSubmit }: {
+/* ── RbmFormModal ──
+   Every RBM form writes to the server. `busy` disables the dialog while the
+   write is in flight, and `error` shows the server's own rejection in place —
+   the dialog stays open with the operator's input intact, because closing it on
+   a failed save would imply the change was accepted. The caller closes the
+   dialog only after the write actually lands. */
+export function RbmFormModal({ title, intro, fields, initial, submitLabel, busy, error, onCancel, onSubmit }: {
   title: string; intro?: string; fields: FormField[]; initial?: Record<string, string> | null; submitLabel?: string;
+  busy?: boolean; error?: string | null;
   onCancel: () => void; onSubmit: (v: Record<string, string>) => void;
 }) {
   const [v, setV] = useState<Record<string, string>>(() => {
@@ -186,6 +171,7 @@ export function RbmFormModal({ title, intro, fields, initial, submitLabel, onCan
   });
   const set = (k: string, val: string) => setV(s => ({ ...s, [k]: val }));
   const missing = fields.some(f => !f.optional && (v[f.key] === '' || v[f.key] == null));
+  const inputType = (t: string) => (t === 'number' ? 'number' : t === 'date' ? 'date' : 'text');
   return (
     <div className="rbm-modal-scrim" role="dialog" aria-modal="true" aria-label={title}>
       <div className="rbm-modal">
@@ -193,14 +179,16 @@ export function RbmFormModal({ title, intro, fields, initial, submitLabel, onCan
         {intro && <div className="rbm-modal-what">{intro}</div>}
         {fields.map(f => (
           <label key={f.key} className="rbm-field"><span>{f.label}</span>
-            {f.type === 'textarea' ? <textarea rows={2} value={v[f.key]} onChange={e => set(f.key, e.target.value)} />
-              : f.type === 'select' && f.options ? <select value={v[f.key]} onChange={e => set(f.key, e.target.value)}>{f.options.map(o => <option key={o} value={o}>{f.labels ? f.labels[o] : o}</option>)}</select>
-              : <input type={f.type === 'number' ? 'number' : 'text'} min={f.min} max={f.max} value={v[f.key]} onChange={e => set(f.key, e.target.value)} />}
+            {f.type === 'textarea' ? <textarea rows={2} value={v[f.key]} disabled={busy} onChange={e => set(f.key, e.target.value)} />
+              : f.type === 'select' && f.options ? <select value={v[f.key]} disabled={busy} onChange={e => set(f.key, e.target.value)}>{f.options.map(o => <option key={o} value={o}>{f.labels ? f.labels[o] : o}</option>)}</select>
+              : <input type={inputType(f.type)} min={f.min} max={f.max} disabled={busy} value={v[f.key]} onChange={e => set(f.key, e.target.value)} />}
+            {f.hint && <em className="rbm-field-hint">{f.hint}</em>}
           </label>
         ))}
+        {error && <div className="rbm-modal-note" role="alert" style={{ color: '#e5484d' }}>{error}</div>}
         <div className="rbm-modal-acts">
-          <button className="rbm-btn" onClick={onCancel}>Cancel</button>
-          <button className="rbm-btn pri" disabled={missing} onClick={() => onSubmit(v)}>{submitLabel || 'Save'}</button>
+          <button className="rbm-btn" onClick={onCancel} disabled={busy}>Cancel</button>
+          <button className="rbm-btn pri" disabled={missing || busy} onClick={() => onSubmit(v)}>{busy ? 'Saving…' : (submitLabel || 'Save')}</button>
         </div>
       </div>
     </div>

@@ -46,8 +46,11 @@ export const MDX_NAV_V2: NavItem[] = [
   { id: 'analytics',    label: 'Analytics',             icon: 'barChart3',    group: 'intelligence' },
   { id: 'memory',       label: 'Claude Memory',         icon: 'database',     group: 'intelligence' },
 
-  // System — admin + the only link that exits the workstream.
-  { id: 'admin',        label: 'Admin and Access',      icon: 'userCheck',    group: 'system' },
+  // System — deliberately empty. Admin is a PRODUCT-level surface, not a
+  // per-workstream one: the device/diagnostics workstream embeds this module
+  // inside the ui-v2 product shell, whose single AdminConsole serves every
+  // client type. Keeping a separate "Admin and Access" here produced two
+  // admins (one per client type); it was removed so there is one product admin.
 ];
 
 export interface StubInfo {

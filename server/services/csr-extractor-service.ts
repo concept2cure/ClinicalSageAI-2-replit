@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'node:url';
 import { sql } from 'drizzle-orm';
 import { db } from '../db';
 import { huggingFaceService } from '../huggingface-service';
@@ -9,6 +10,9 @@ import { getOpenAIClient } from './openai-client';
 
 import { createScopedLogger } from '../utils/logger';
 const logger = createScopedLogger('csr-extractor');
+
+// ESM has no module-scope __dirname; recreate it from import.meta.url.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const openaiService: any = openaiServiceModule;
 
