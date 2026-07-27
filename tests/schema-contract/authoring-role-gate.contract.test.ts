@@ -28,6 +28,11 @@ import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
 
 const JWT_SECRET = 'role-gate-contract-secret-0725';
 process.env.JWT_SECRET = JWT_SECRET;
+// The authoring router now verifies via the CANONICAL verifyJwtWithRotation,
+// which in test env (NODE_ENV=test → suffix DEV) reads JWT_SECRET_DEV ?? JWT_SECRET.
+// This file overrides JWT_SECRET for isolation, so it must override the
+// env-suffixed secret the verifier actually reads, or every token 401s.
+process.env.JWT_SECRET_DEV = JWT_SECRET;
 
 const T = 120_000;
 
