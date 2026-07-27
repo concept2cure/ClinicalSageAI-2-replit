@@ -45,6 +45,16 @@ BEGIN
   -- harmless if the authoring subsystem is not yet present — the applier
   -- provisions that subsystem BEFORE this file runs, so on a fresh DB the guard
   -- finds the key and the constraint actually lands.
+  --
+  -- to_regclass() (returns NULL, never throws) rather than a bare ::regclass
+  -- cast (throws 42P01): the Neon preview-db check applies this migration ALONE,
+  -- on a branch where authoring_documents may not exist, and the cast would
+  -- abort the whole file. Skip the FK there; it lands on the real apply path.
+  IF to_regclass('public.authoring_documents') IS NULL THEN
+    RAISE NOTICE 'doc_permissions: authoring_documents absent; composite FK skipped';
+    RETURN;
+  END IF;
+
   IF EXISTS (
         SELECT 1 FROM pg_constraint
         WHERE conname = 'authoring_documents_id_tenant_key'
