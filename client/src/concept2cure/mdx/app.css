@@ -2656,6 +2656,27 @@ button.ctable-row { border-radius: 0; }
 
 /* Governance */
 .ph-gov { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+/* Quality-system readiness rows. The "na" tone is deliberately distinct
+   from healthy: an absent QMS table renders as "not tracked here yet",
+   never as a zero that reads like an all-clear. */
+.ph-qms { list-style: none; margin: 0; padding: 0; }
+.ph-qms-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.ph-qms-row:last-child { border-bottom: 0; }
+.ph-qms-label { color: var(--text-200); }
+.ph-qms-val { color: var(--text-300); text-align: right; }
+.ph-qms-val.warn { color: var(--warning, var(--text-100)); font-weight: 500; }
+.ph-qms-val.na { color: var(--text-400); font-style: italic; }
+.ph-qms-scope {
+  margin-top: 8px; font-size: 10px; color: var(--text-400);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.ph-count[data-tone="warn"] { color: var(--warning, var(--text-100)); }
+
 .ph-gov-row {
   display: grid; grid-template-columns: 70px 1fr auto;
   gap: 8px; align-items: center;
