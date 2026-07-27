@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-07-26T00:23:47.695Z",
+  "generatedAt": "2026-07-27T04:40:53.789Z",
   "git": {
-    "sha": "90112c0d90e50b19ab14ab101c3f60c07fa8c993",
-    "branch": "concept2cure-v2"
+    "sha": "5e33142a7a1ceeb1b9473ea6eea810e36434afd2",
+    "branch": "claude/c2c-mdx-context-foundation"
   },
   "thresholds": {
     "maxBytes": 100000,
     "maxLines": 1500
   },
   "summary": {
-    "duplicateBasenames": 248,
+    "duplicateBasenames": 249,
     "largeFilesByBytes": 30,
     "largeFilesByLines": 84
   },
@@ -2213,6 +2213,14 @@
         ]
       },
       {
+        "basename": "resolver",
+        "count": 2,
+        "paths": [
+          "server/services/entitlements/resolver.ts",
+          "server/services/industry-context/resolver.ts"
+        ]
+      },
+      {
         "basename": "review",
         "count": 2,
         "paths": [
@@ -2464,11 +2472,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 931327
+        "bytes": 932442
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 841828
+        "bytes": 844788
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2586,7 +2594,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 20033
+        "lines": 20084
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2594,7 +2602,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18133
+        "lines": 18158
       },
       {
         "file": "server/statistics-service.ts",
@@ -2881,6 +2889,10 @@
         "lines": 1623
       },
       {
+        "file": "server/routes/ivdr-routes.ts",
+        "lines": 1611
+      },
+      {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
         "lines": 1606
       },
@@ -2901,10 +2913,6 @@
         "lines": 1582
       },
       {
-        "file": "server/routes/ivdr-routes.ts",
-        "lines": 1551
-      },
-      {
         "file": ".claude/skills/gstack/test/skill-validation.test.ts",
         "lines": 1550
       },
@@ -2922,11 +2930,18 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 1,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 396,
+      "duplicateGroups": 398,
       "largeByBytes": 27,
       "largeByLines": 73
     },
