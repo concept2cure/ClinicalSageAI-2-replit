@@ -76,6 +76,11 @@ const FILES = [
   // project_industry_profiles. Fully idempotent (CREATE TABLE/INDEX IF NOT
   // EXISTS, no data statements).
   'db/migrations/20260727_industry_context_profiles.sql',
+  // MDx task metadata: additive nullable columns on unified_tasks
+  // (lifecycle_phase, market, filing_type, study_id, deliverable_id,
+  // client_visibility) + lifecycle_phase index. Fully idempotent
+  // (ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS, no data statements).
+  'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

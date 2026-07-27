@@ -7091,6 +7091,14 @@ export const unifiedTasks = pgTable(
     comments: json('comments'),
     metadata: json('metadata'),
 
+    // MDx / regulatory task metadata (20260727_unified_tasks_mdx_metadata.sql)
+    lifecyclePhase: text('lifecycle_phase'), // see LIFECYCLE_PHASES below
+    market: text('market'), // target market/jurisdiction (e.g. US, EU, JP)
+    filingType: text('filing_type'), // e.g. 510(k), PMA, IVDR, IND, NDA
+    studyId: integer('study_id'), // linked study (no FK; tenant-provisioned store)
+    deliverableId: integer('deliverable_id'), // linked deliverable (no FK)
+    clientVisibility: text('client_visibility'), // internal | client_visible
+
     // Audit
     createdById: integer('created_by_id').references(() => users.id),
     lastModifiedBy: integer('last_modified_by').references(() => users.id),
@@ -7106,8 +7114,26 @@ export const unifiedTasks = pgTable(
     priorityIdx: index('unified_priority_idx').on(table.priority),
     projectIdx: index('unified_project_idx').on(table.projectId),
     idx_unified_tasks_org: index('idx_unified_tasks_org').on(table.organizationId),
+    lifecyclePhaseIdx: index('unified_lifecycle_phase_idx').on(table.lifecyclePhase),
   })
 );
+
+/**
+ * Canonical lifecycle phases for unified_tasks.lifecycle_phase (device/IVD
+ * development lifecycle through post-market). App-enforced domain — the column
+ * stays plain text so the migration remains purely additive.
+ */
+export const LIFECYCLE_PHASES = [
+  'strategy',
+  'design',
+  'verification',
+  'clinical_performance',
+  'submission_prep',
+  'authority_review',
+  'market_authorization',
+  'postmarket',
+] as const;
+export type LifecyclePhase = (typeof LIFECYCLE_PHASES)[number];
 
 // Unified Task Insert Schema
 export const insertUnifiedTaskSchema = createInsertSchemaOmit(unifiedTasks, {
