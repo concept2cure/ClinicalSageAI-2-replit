@@ -7101,6 +7101,20 @@ export const unifiedTasks = pgTable(
     automationEnabled: boolean('automation_enabled').default(true),
     aiSuggestions: json('ai_suggestions'),
 
+    // ── MDX regulatory context (MDX-TASK-01) ──────────────────────────────
+    // Where this task sits in the regulatory lifecycle. NULLABLE on purpose: a
+    // task with no declared phase reads as "not yet classified", which is true.
+    // Defaulting existing tasks to a phase would show a lifecycle breakdown
+    // nobody assigned.
+    lifecyclePhase: text('lifecycle_phase'),
+    // Denormalized from the resolved project context so the board can filter
+    // without resolving per task. The project profile stays the source of truth.
+    industryVertical: text('industry_vertical'),
+    mdxSpecialization: text('mdx_specialization'),
+    // Releasing work to a client is an act; defaulting to visible would publish
+    // internal regulatory strategy by omission.
+    clientVisibility: text('client_visibility').default('internal').notNull(),
+
     // Metadata
     tags: text('tags').array(),
     attachments: json('attachments'),
@@ -7115,6 +7129,8 @@ export const unifiedTasks = pgTable(
   },
   table => ({
     taskIdIdx: index('unified_task_id_idx').on(table.taskId),
+    lifecyclePhaseIdx: index('unified_tasks_lifecycle_phase_idx').on(table.organizationId, table.lifecyclePhase),
+    verticalIdx: index('unified_tasks_vertical_idx').on(table.organizationId, table.industryVertical),
     moduleIdx: index('unified_module_idx').on(table.moduleType),
     statusIdx: index('unified_status_idx').on(table.status),
     assigneeIdx: index('unified_assignee_idx').on(table.assigneeId),
@@ -7124,6 +7140,43 @@ export const unifiedTasks = pgTable(
     idx_unified_tasks_org: index('idx_unified_tasks_org').on(table.organizationId),
   })
 );
+
+/**
+ * What a task supports — the relationship layer from MDX-TASK-01.
+ *
+ * unified_tasks.source_entity_id records where a task CAME FROM. This records
+ * what it exists to advance, which is many-per-task and carries its own market
+ * and pathway, so it cannot be columns on the task.
+ */
+export const taskRegulatoryLinks = pgTable(
+  'task_regulatory_links',
+  {
+    id:             serial('id').primaryKey(),
+    organizationId: integer('organization_id').notNull()
+                      .references(() => organizations.id, { onDelete: 'cascade' }),
+    /** Matches unified_tasks.taskId (the text business key used across the graph). */
+    taskId:         text('task_id').notNull(),
+    entityType:     text('entity_type').notNull(),
+    /** Free-form: the linked entities live in different stores with different key types. */
+    entityId:       text('entity_id').notNull(),
+    entityLabel:    text('entity_label'),
+    relationship:   text('relationship').default('supports').notNull(),
+    /** Coordinates of THIS LINK — one task can support a US filing and an EU one. */
+    market:         text('market'),
+    pathway:        text('pathway'),
+    filingType:     text('filing_type'),
+    filingSection:  text('filing_section'),
+    createdBy:      integer('created_by').references(() => users.id),
+    createdAt:      timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  table => ({
+    taskIdx:   index('task_regulatory_links_task_idx').on(table.organizationId, table.taskId),
+    entityIdx: index('task_regulatory_links_entity_idx').on(table.organizationId, table.entityType, table.entityId),
+    filingIdx: index('task_regulatory_links_filing_idx').on(table.organizationId, table.filingType),
+  }),
+);
+export type TaskRegulatoryLink = InferSelectModel<typeof taskRegulatoryLinks>;
 
 // Unified Task Insert Schema
 export const insertUnifiedTaskSchema = createInsertSchemaOmit(unifiedTasks, {

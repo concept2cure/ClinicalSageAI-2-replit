@@ -107,6 +107,8 @@ const FILES = [
   // profile from organizations.industry_mode; references organizations, projects
   // and client_workspaces, all of which exist in the journaled baseline.
   'migrations/20260730_industry_context_profiles.sql',
+  // ALTERs unified_tasks (additive) and creates task_regulatory_links.
+  'migrations/20260731_mdx_task_regulatory_context.sql',
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */
