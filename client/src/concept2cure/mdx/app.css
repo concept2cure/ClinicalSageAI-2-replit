@@ -3055,3 +3055,61 @@ button.ctable-row { border-radius: 0; }
   background: var(--warning-muted, var(--bg-200));
   border-color: var(--warning, var(--border-strong));
 }
+
+/* ════════════════════════════════════════════════════════════
+   CLIENT REVIEW ROOM (MDX-CLIENT-01)
+   Read-first zone: the tasks a client is allowed to see,
+   grouped by visibility state. Internal work is excluded by
+   the endpoint's SQL whitelist, never merely hidden here.
+   ════════════════════════════════════════════════════════════ */
+.crz { margin-top: 28px; }
+.crz-groups {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+.crz-group {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-lg);
+  background: var(--bg-000);
+}
+.crz-group-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.crz-group-title { font-size: 12px; font-weight: 600; color: var(--text-200); }
+.crz-group-count {
+  font-size: 11px; font-weight: 500; color: var(--text-400);
+  padding: 1px 7px;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: var(--bg-100);
+}
+.crz-list {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.crz-row {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 4px;
+  border-radius: var(--radius-md);
+}
+.crz-row:hover { background: var(--bg-100); }
+.crz-row-icon {
+  color: var(--text-400); flex-shrink: 0;
+  width: 14px; height: 14px; margin-top: 2px;
+}
+.crz-row-icon svg { width: 14px; height: 14px; }
+.crz-row-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.crz-row-title {
+  font-size: 13px; color: var(--text-100); line-height: 1.4;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.crz-row-meta {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  font-size: 11px; color: var(--text-400);
+}
+.crz-row-meta > span + span::before { content: '·'; margin-right: 6px; color: var(--text-500, var(--text-400)); }
+.crz-row-due {
+  flex-shrink: 0; margin-top: 2px;
+  font-size: 11px; color: var(--text-400); white-space: nowrap;
+}
+.crz-row-due.overdue { color: var(--error); }
