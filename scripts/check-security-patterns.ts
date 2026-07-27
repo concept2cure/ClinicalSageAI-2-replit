@@ -32,6 +32,13 @@
  *   5. `?? 1` or `|| 1` following organizationId reads
  *      → never default a tenant id; always 403 instead
  *
+ *   6. namespace-global Socket.IO publishes (`.broadcast.emit(` and a publish
+ *      straight off the server handle, e.g. `io.emit(`)
+ *      → use emitToOrgPeers / emitToOrg from server/socket/tenantBroadcast,
+ *        which can only address the room derived from the verified principal
+ *        (C2C-COLLAB-003). Ordinary EventEmitter publishes such as
+ *        `this.emit('fieldUpdated', …)` are NOT matched.
+ *
  * Exemptions:
  *   - Test files (*.test.ts, *.spec.ts, __tests__/**) — they
  *     deliberately construct bad-input fixtures.
@@ -162,6 +169,34 @@ const PATTERNS: Pattern[] = [
       'Use verifyJwtWithRotation from server/utils/jwtVerify instead of jwt.verify ' +
       'directly — needed for zero-downtime JWT secret rotation (PR #500).',
     exemptFiles: [/(?:^|\/)server\/utils\/jwtVerify\.ts$/],
+  },
+  {
+    // Ledger C2C-COLLAB-003. Eleven Socket.IO handlers re-published task,
+    // notification, compliance and timer payloads with the namespace-global
+    // primitives. Those ignore room membership, and because every tenant's
+    // sockets share the default namespace, org A's task titles, assignees and
+    // compliance findings reached org B's authenticated clients.
+    //
+    // Matches ONLY the two global primitives:
+    //   - any `<x>.broadcast.emit(...)`
+    //   - a publish straight off the Socket.IO server handle
+    //     (`io.emit(...)`, `io?.emit(...)`, `ioInstance.emit(...)`,
+    //      `ioServer.emit(...)`, `socketServer.emit(...)`)
+    // It deliberately does NOT match ordinary EventEmitter publishes
+    // (`this.emit('fieldUpdated', …)`, `engine.emit(…)`,
+    // `smartFieldLinking.emit(…)`), a reply to one socket (`socket.emit(…)`),
+    // or an already room-scoped send (`io.to(room).emit(…)`,
+    // `socket.to(room).emit(…)`).
+    name: 'socket-global-broadcast',
+    regex:
+      /\.\s*broadcast\s*\.\s*emit\s*\(|\b(?:io|ioInstance|ioServer|socketServer)\s*\??\s*\.\s*emit\s*\(/,
+    message:
+      'Do not publish tenant data with a namespace-global Socket.IO broadcast — ' +
+      'it reaches every connected socket in every organization. Use ' +
+      'emitToOrgPeers(socket, event, payload) or emitToOrg(io, orgId, event, ' +
+      'payload) from server/socket/tenantBroadcast, which address only the room ' +
+      'derived from the verified principal (socket.orgId). See finding ' +
+      'C2C-COLLAB-003.',
   },
   {
     name: 'org-id-fallback',
