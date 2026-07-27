@@ -60,6 +60,7 @@ import mdxTemplatesRoutes from '../routes/mdx-templates';
 import mdxPostmarketRoutes from '../routes/mdx-postmarket';
 import mdxClinicalStudiesRoutes from '../routes/mdx-clinical-studies';
 import mdxIndustryContextRoutes from '../routes/mdx-industry-context';
+import mdxWorkPackagesRoutes from '../routes/mdx-work-packages';
 import mdxAnaMemoryRoutes from '../routes/mdx-ana-memory';
 import mdxQmsRoutes from '../routes/mdx-qms';
 import mdxLabelingRoutes from '../routes/mdx-labeling';
@@ -1067,6 +1068,9 @@ export function registerInlineSubmissionWorkflowRoutes({
   app.use('/api/mdx', mdxRbmRoutes);
   app.use('/api/mdx', mdxSoftwareRoutes);
   app.use('/api/mdx', mdxIndustryContextRoutes);
+  /* Regulatory work-package compiler (MDX-PM-02) — read-only deterministic
+     plan derived from the effective industry context; no persistence. */
+  app.use('/api/mdx', mdxWorkPackagesRoutes);
   /* IVD + diagnostic surfaces (migration 20260508). */
   app.use('/api/mdx', mdxIvdPerformanceRoutes);
   app.use('/api/mdx', mdxIvdrRoutes);
