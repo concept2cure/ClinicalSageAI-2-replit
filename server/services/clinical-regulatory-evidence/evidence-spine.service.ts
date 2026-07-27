@@ -339,7 +339,15 @@ export async function createFinding(orgId: number, p: {
   explicitOrInferred?: 'explicit' | 'inferred'; extractionConfidence?: number | null;
   verificationStatus?: string | null; metadata?: Record<string, unknown> | null;
 }): Promise<RegulatoryFinding> {
-  const visibility = p.visibilityClass ?? 'global_public';
+  // DEFAULT CHANGED from 'global_public' (2026-07-27). This module's contract
+  // is "writes are stamped with the caller's org unless an explicit governed
+  // global write is requested" — a global default inverted that: any caller
+  // omitting visibilityClass published its tenant's finding to every tenant.
+  // Proven by test before the fix (facade-convergence suite: a tenant-private
+  // CRL's finding was readable by another org). The one caller that WANTS
+  // global writes, crl-ingestion of the public FDA corpus, already passes
+  // 'global_public' explicitly, so nothing legitimate changes.
+  const visibility = p.visibilityClass ?? 'tenant_private';
   assertOneOf(visibility, VISIBILITY_CLASSES, 'visibilityClass');
   const { rows } = await pool.query(
     `INSERT INTO cre_regulatory_findings (
@@ -363,6 +371,17 @@ export async function createFinding(orgId: number, p: {
     ],
   );
   return adaptFinding(rows[0]);
+}
+
+/** One finding by id, scoped like every read here. Null when absent or invisible. */
+export async function getFindingById(orgId: number, id: number): Promise<RegulatoryFinding | null> {
+  if (!Number.isInteger(id) || id <= 0) return null;
+  const c = visibleOrgClause(orgId, 2);
+  const { rows } = await pool.query(
+    `SELECT * FROM cre_regulatory_findings WHERE id = $1 AND ${c.sql} AND deleted_at IS NULL`,
+    [id, c.param],
+  );
+  return rows[0] ? adaptFinding(rows[0]) : null;
 }
 
 export async function listFindings(orgId: number, opts: {
@@ -391,7 +410,9 @@ export async function createOutcome(orgId: number, p: {
   metadata?: Record<string, unknown> | null;
 }): Promise<RegulatoryOutcome> {
   assertOneOf(p.outcomeType, OUTCOME_TYPES, 'outcomeType');
-  const visibility = p.visibilityClass ?? 'global_public';
+  // Same fail-safe default as createFinding above: private unless a governed
+  // global write is explicit. See the note there.
+  const visibility = p.visibilityClass ?? 'tenant_private';
   assertOneOf(visibility, VISIBILITY_CLASSES, 'visibilityClass');
   const { rows } = await pool.query(
     `INSERT INTO cre_regulatory_outcomes (
