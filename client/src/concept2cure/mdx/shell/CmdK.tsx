@@ -9,13 +9,39 @@
 import * as React from 'react';
 import { I } from '../icons';
 import { ANA_MODES, ANA_TOOLS, MDX_SUGGESTIONS, type AnaMode } from '../data/nav';
+import { useMdxSearch, type SearchHitType } from '../hooks/useMdxSearch';
 import type { Program } from '../data/programs';
+
+/* Where each search-hit type lives. Selecting a result navigates
+   directly to its owning surface via setActiveNav — a governed
+   navigation, not an AnA prompt, since the review flags forwarding
+   direct operations through AnA. Every target is a real surface id
+   (see App.tsx), so a hit can never route nowhere. */
+const HIT_SURFACE: Record<SearchHitType, string> = {
+  program:  'overview',
+  artifact: 'vault',
+  labeling: 'udi',
+  q_sub:    'pre-sub',
+  audit:    'overview',
+  thread:   'overview',
+};
+
+const HIT_TYPE_LABEL: Record<SearchHitType, string> = {
+  program:  'Program',
+  artifact: 'Document',
+  labeling: 'Label',
+  q_sub:    'Q-Sub',
+  audit:    'Audit event',
+  thread:   'AnA thread',
+};
 
 const NAV_ROUTES = [
   { id: 'overview',    label: 'Overview',                hint: 'Portfolio health · programs' },
   { id: 'k510',        label: '510(k) submissions',      hint: 'Predicate, SE matrix, eSTAR' },
   { id: 'pma',         label: 'PMA submissions',         hint: '10-phase workflow · modules' },
   { id: 'cer',         label: 'CER generator',           hint: 'Signals · literature · Article 61' },
+  { id: 'clinical-studies', label: 'Clinical studies',   hint: 'IDE · enrollment · deviations · AEs' },
+  { id: 'software',    label: 'Software lifecycle',       hint: 'IEC 62304 · SBOM · cybersecurity' },
   { id: 'predicate',   label: 'Precedent intelligence',  hint: 'Cross-agency patterns' },
   { id: 'tasks',       label: 'Tasks and reviews',       hint: 'Kanban + list' },
   { id: 'vault',       label: 'Document vault',          hint: 'Files · versions · audit' },
@@ -28,7 +54,9 @@ interface PaletteItem {
   id: string;
   label: string;
   hint: string;
-  kind: 'nav' | 'tool' | 'ask' | 'suggest' | 'hint';
+  kind: 'nav' | 'tool' | 'ask' | 'suggest' | 'hint' | 'record';
+  /** Owning surface for a `record` item — where selection navigates. */
+  recordSurface?: string;
 }
 
 export interface CmdKProps {
@@ -73,7 +101,28 @@ export function CmdK({
     : 'mixed';
   const term = q.replace(/^[/>]\s?/, '').toLowerCase();
 
-  const items: PaletteItem[] = React.useMemo(() => {
+  /* Live record search runs for plain-text queries (ask / mixed) — not
+     for the "/" nav or ">" tool prefixes, which match their own static
+     lists. The hook debounces and ignores queries under 2 chars. */
+  const searchTerm = promptMode === 'ask' || promptMode === 'mixed' ? term : '';
+  const search = useMdxSearch(searchTerm);
+
+  /* Found records as palette items, capped so the list stays scannable.
+     Kept separate from the useMemo below because it depends on async
+     state; it is spliced in at render-list assembly. */
+  const recordItems: PaletteItem[] = React.useMemo(
+    () =>
+      search.hits.slice(0, 8).map((h) => ({
+        id: `rec-${h.type}-${h.id}`,
+        label: h.title,
+        hint: HIT_TYPE_LABEL[h.type] + (h.snippet ? ` · ${h.snippet}` : ''),
+        kind: 'record' as const,
+        recordSurface: HIT_SURFACE[h.type],
+      })),
+    [search.hits],
+  );
+
+  const baseItems: PaletteItem[] = React.useMemo(() => {
     if (promptMode === 'nav') {
       return NAV_ROUTES.filter(
         r =>
@@ -126,13 +175,25 @@ export function CmdK({
     ];
   }, [q, promptMode, term, activeNav, mode]);
 
+  /* Splice found records into the list. In "ask" mode they sit after the
+     primary "Ask AnA" action — so Enter still asks by default — and
+     before the surface suggestions, where they are arrow-reachable. */
+  const items: PaletteItem[] = React.useMemo(() => {
+    if (promptMode === 'ask' && recordItems.length > 0) {
+      const [askItem, ...rest] = baseItems;
+      return askItem ? [askItem, ...recordItems, ...rest] : [...recordItems, ...rest];
+    }
+    return baseItems;
+  }, [baseItems, recordItems, promptMode]);
+
   const run = (item: PaletteItem | undefined) => {
     if (!item) return;
-    if (item.kind === 'nav')          setActiveNav(item.id);
-    else if (item.kind === 'tool')    onAskAna(`>${item.id}`, { tool: item.id });
-    else if (item.kind === 'ask')     onAskAna(q.trim());
-    else if (item.kind === 'suggest') onAskAna(item.label);
-    else if (item.kind === 'hint')    return;
+    if (item.kind === 'nav')            setActiveNav(item.id);
+    else if (item.kind === 'tool')      onAskAna(`>${item.id}`, { tool: item.id });
+    else if (item.kind === 'ask')       onAskAna(q.trim());
+    else if (item.kind === 'suggest')   onAskAna(item.label);
+    else if (item.kind === 'record')    { if (item.recordSurface) setActiveNav(item.recordSurface); }
+    else if (item.kind === 'hint')      return;
     onClose();
   };
 
@@ -215,6 +276,7 @@ export function CmdK({
                 {item.kind === 'tool'    && I.zap}
                 {item.kind === 'ask'     && I.sparkles}
                 {item.kind === 'suggest' && I.sparkles}
+                {item.kind === 'record'  && I.fileText}
                 {item.kind === 'hint'    && I.help}
               </span>
               <span className="cmdk-label">{item.label}</span>

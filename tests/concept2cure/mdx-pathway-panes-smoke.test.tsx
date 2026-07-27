@@ -207,22 +207,122 @@ describe('dossierStore round-trip', () => {
 
 // Operational flows a human user actually performs (interaction, not just render).
 describe('pathway panes — operational flows', () => {
-  it('Approvals: a pending e-sign can be completed (Part 11 flow)', () => {
+  /* ── Part 11 e-signature ────────────────────────────────────────────
+     This used to assert that clicking "Apply signature" immediately
+     rendered `.ap-card.signed`. That passed because the handler was
+     `setSigned(true)` — the password was collected and discarded, the
+     record number came from Math.random(), and nothing left the browser.
+     The test was locking in signature theatre.
+
+     Signing now goes through POST /api/esignature/sign, so these tests
+     assert the properties that make it real: a signature needs a
+     document *and* a revision to identify what was signed (§11.50(a)),
+     the server has to confirm it, and a rejection must not produce a
+     signed card. */
+
+  /** A pending approval assigned to "You", carrying document + revision. */
+  const SIGNABLE_APPROVAL = {
+    id: 901,
+    approvalId: 901,
+    documentId: 12,
+    versionId: 3,
+    stage: 'regulatory',
+    target: 'Device description',
+    requested_at: '2026-07-01T09:00:00Z',
+    requested_by: 'Jordan Chen',
+    assigned_to: 'You',
+    role: 'Reg Lead',
+  };
+
+  /** Route the approvals feed to `approvals`; everything else 404s. */
+  function mockApprovalsFeed(approvals: unknown[], signResponse?: { status: number; body: unknown }) {
+    globalThis.fetch = vi.fn().mockImplementation(async (url: string, init?: RequestInit) => {
+      const u = String(url);
+      if (u.includes('/api/approval-workflows/pending')) {
+        return { ok: true, status: 200, text: async () => '', json: async () => ({ approvals }) };
+      }
+      if (u.includes('/api/esignature/sign') && init?.method === 'POST') {
+        const r = signResponse ?? { status: 200, body: {} };
+        return {
+          ok: r.status >= 200 && r.status < 300,
+          status: r.status,
+          text: async () => JSON.stringify(r.body),
+          json: async () => r.body,
+        };
+      }
+      return { ok: false, status: 404, text: async () => 'Not Found', json: async () => ({ data: null }) };
+    }) as unknown as typeof fetch;
+  }
+
+  async function openSignForm(container: HTMLElement, getAllByRole: (r: string) => HTMLElement[]) {
+    fireEvent.click(getAllByRole('tab')[3]); // Approvals
+    const esign = await waitFor(() => {
+      const b = container.querySelector('.ap-sign-btn') as HTMLButtonElement | null;
+      if (!b || b.disabled) throw new Error('sign button not enabled yet');
+      return b;
+    });
+    fireEvent.click(esign);
+    return container.querySelectorAll('.ap-sign-input');
+  }
+
+  it('Approvals: disables signing when the approval names no document revision', async () => {
+    /* The kit fixture approvals carry no documentId/versionId. A
+       signature that cannot say which revision it covers is not a
+       compliant signature, so the control is disabled rather than
+       pinning one to a guessed version. */
+    mockApprovalsFeed([{ ...SIGNABLE_APPROVAL, documentId: undefined, versionId: undefined }]);
     const { getAllByRole, container } = renderWithClient(
       <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
     );
-    fireEvent.click(getAllByRole('tab')[3]); // Approvals
-    const esign = container.querySelector('.ap-sign-btn') as HTMLElement | null;
-    expect(esign).toBeTruthy(); // the "signer = You" pending card
-    fireEvent.click(esign!);
-    const inputs = container.querySelectorAll('.ap-sign-input');
+    fireEvent.click(getAllByRole('tab')[3]);
+    await waitFor(() => expect(container.querySelector('.ap-sign-btn')).toBeTruthy());
+    const btn = container.querySelector('.ap-sign-btn') as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    assertNoReactErrors();
+  });
+
+  it('Approvals: a confirmed signature renders the server-issued record', async () => {
+    mockApprovalsFeed([SIGNABLE_APPROVAL], {
+      status: 200,
+      body: { signatureId: 4471, signatureHash: 'a1b2c3d4e5f6a7b8', signedAt: '2026-07-26T12:00:00Z' },
+    });
+    const { getAllByRole, container } = renderWithClient(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+    );
+
+    const inputs = await openSignForm(container, getAllByRole);
     expect(inputs.length).toBeGreaterThanOrEqual(2); // meaning + password
-    fireEvent.change(inputs[1], { target: { value: 'pw-123456' } }); // password ≥ 6
-    const confirm = container.querySelector('.ap-sign-confirm') as HTMLButtonElement | null;
-    expect(confirm).toBeTruthy();
-    expect(confirm!.disabled).toBe(false);
-    fireEvent.click(confirm!);
-    expect(container.querySelector('.ap-card.signed')).toBeTruthy(); // signed state rendered
+    fireEvent.change(inputs[0], { target: { value: 'Reviewed and approved' } });
+    fireEvent.change(inputs[1], { target: { value: 'pw-123456' } });
+
+    const confirm = container.querySelector('.ap-sign-confirm') as HTMLButtonElement;
+    expect(confirm.disabled).toBe(false);
+    fireEvent.click(confirm);
+
+    await waitFor(() => expect(container.querySelector('.ap-card.signed')).toBeTruthy());
+    /* The identifier on the card is the server's, not a local random. */
+    expect(container.querySelector('.ap-card.signed')!.textContent).toContain('4471');
+    assertNoReactErrors();
+  });
+
+  it('Approvals: a rejected signature shows the reason and stays unsigned', async () => {
+    mockApprovalsFeed([SIGNABLE_APPROVAL], {
+      status: 401,
+      body: { error: 'Signature rejected: password verification failed (§11.200)' },
+    });
+    const { getAllByRole, container } = renderWithClient(
+      <PathwayPanes pathway="k510" workspace={<div />} onAskAna={askAna} onOpenEditor={openEditor} />,
+    );
+
+    const inputs = await openSignForm(container, getAllByRole);
+    fireEvent.change(inputs[0], { target: { value: 'Reviewed and approved' } });
+    fireEvent.change(inputs[1], { target: { value: 'wrong-password' } });
+    fireEvent.click(container.querySelector('.ap-sign-confirm') as HTMLButtonElement);
+
+    await waitFor(() => expect(container.querySelector('.ap-sign-error')).toBeTruthy());
+    expect(container.querySelector('.ap-sign-error')!.textContent).toContain('password verification failed');
+    /* The critical assertion: no signed card on a rejected signature. */
+    expect(container.querySelector('.ap-card.signed')).toBeNull();
     assertNoReactErrors();
   });
 

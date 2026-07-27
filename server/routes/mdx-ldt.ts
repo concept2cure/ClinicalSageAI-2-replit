@@ -1,7 +1,5 @@
 /**
- * Laboratory-developed tests (LDT) — backs Surface 12 in the gap inventory.
- * Tracks LDT inventory per laboratory and per-test FDA LDT-rule phase
- * milestones (FDA 2024 final rule transitions through 2028).
+ * Laboratory-developed tests (LDT) — inventory and historical phase records.
  *
  *   GET    /api/mdx/ldt                            list inventory
  *   POST   /api/mdx/ldt                            register an LDT
@@ -10,6 +8,31 @@
  *   POST   /api/mdx/ldt/:id/milestones             add a milestone
  *   PATCH  /api/mdx/ldt/milestones/:msId           update milestone status
  *   GET    /api/mdx/ldt-phase-summary              per-org phase counts
+ *
+ * ## The phase schedule this module was built around no longer exists
+ *
+ * The `current_phase` column and the milestone machinery encode the FDA
+ * 2024 LDT final rule's four-stage phase-out of enforcement discretion,
+ * running to 2028. That rule was VACATED IN ITS ENTIRETY by the US
+ * District Court for the Eastern District of Texas on 2025-03-31, and
+ * FDA formally rescinded the regulatory text on 2025-09-19, reverting
+ * 21 CFR 809 to its pre-2024 form.
+ *
+ * The platform's regulatory-currency registry already records this
+ * correctly (fact `us-ldt-final-rule-void`), and AnA is instructed not
+ * to advise that LDTs require 510(k)/PMA under the phase-out timeline.
+ * The workflow layer had not caught up: it kept presenting phases and
+ * milestone due dates as live compliance obligations. A laboratory
+ * reading this surface would have been driven toward submissions that
+ * no federal rule requires.
+ *
+ * Rather than delete the data — existing records are a real history of
+ * work a customer did, and the litigation posture could change again —
+ * every response now carries a `legalStatus` block sourced from the
+ * registry, and phase/milestone fields are labelled historical. The
+ * status is read from the registry rather than hard-coded here so a
+ * single registry update moves the whole platform if the position
+ * changes.
  */
 
 import { Router, Request, Response } from 'express';
@@ -20,9 +43,51 @@ import {
   ok, created, clientError, orgRequired, notFoundInTenant, serverError,
 } from '../lib/api-response';
 import { pool } from '../db';
+import { findFacts } from '../services/regulatory-currency/currency-registry';
 
 const router = Router();
 const log = createScopedLogger('mdx-ldt');
+
+/** Shape returned alongside every LDT payload. */
+interface LdtLegalStatus {
+  /** True while the phase schedule has no legal effect. */
+  phaseScheduleVoid: boolean;
+  status: string;
+  summary: string;
+  sourceUrl: string | null;
+  /** When the cited fact was last verified against its official source. */
+  lastVerified: string | null;
+}
+
+/**
+ * Current legal standing of the LDT phase-out, read from the currency
+ * registry. Falls back to treating the schedule as void when the fact
+ * cannot be found: for a rule that has actually been struck down,
+ * failing closed means declining to assert an obligation, not asserting
+ * one nobody owes.
+ */
+function ldtLegalStatus(): LdtLegalStatus {
+  const fact = findFacts({ jurisdiction: 'US' }).find(
+    (f) => f.id === 'us-ldt-final-rule-void',
+  );
+  if (!fact) {
+    return {
+      phaseScheduleVoid: true,
+      status: 'void',
+      summary:
+        'The FDA 2024 LDT final rule was vacated (2025-03-31) and rescinded (2025-09-19). Phase and milestone records here are historical and impose no current federal obligation.',
+      sourceUrl: null,
+      lastVerified: null,
+    };
+  }
+  return {
+    phaseScheduleVoid: fact.status === 'void' || fact.status === 'vacated' || fact.status === 'rescinded',
+    status: fact.status,
+    summary: fact.note,
+    sourceUrl: fact.sourceUrl,
+    lastVerified: fact.lastVerified,
+  };
+}
 
 function getOrgId(req: Request): number | null {
   const raw = (req as any).user?.organizationId;
@@ -88,7 +153,7 @@ router.get('/ldt', async (req: Request, res: Response) => {
         ORDER BY lab_name, test_name`,
       args,
     );
-    return ok(res, rows, { count: rows.length });
+    return ok(res, rows, { count: rows.length, legalStatus: ldtLegalStatus() });
   } catch (err) {
     return serverError(res, log, 'list', err);
   }
@@ -118,7 +183,7 @@ router.post('/ldt', async (req: Request, res: Response) => {
         p.fdaPathway ?? null, p.currentPhase ?? null,
       ],
     );
-    return created(res, rows[0]);
+    return created(res, rows[0], { legalStatus: ldtLegalStatus() });
   } catch (err) {
     return serverError(res, log, 'create', err);
   }
@@ -139,7 +204,7 @@ router.get('/ldt/:id', async (req: Request, res: Response) => {
       `SELECT * FROM ldt_phase_milestones WHERE ldt_id = $1 ORDER BY phase, due_date NULLS LAST`,
       [id],
     );
-    return ok(res, { ...rows[0], milestones: ms.rows });
+    return ok(res, { ...rows[0], milestones: ms.rows }, { legalStatus: ldtLegalStatus() });
   } catch (err) {
     return serverError(res, log, 'get', err);
   }
@@ -179,7 +244,7 @@ router.patch('/ldt/:id', async (req: Request, res: Response) => {
       args,
     );
     if (rows.length === 0) return notFoundInTenant(res, 'LDT');
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { legalStatus: ldtLegalStatus() });
   } catch (err) {
     return serverError(res, log, 'patch', err);
   }
@@ -211,7 +276,7 @@ router.post('/ldt/:id/milestones', async (req: Request, res: Response) => {
         p.evidenceRef ?? null, p.status ?? null,
       ],
     );
-    return created(res, rows[0]);
+    return created(res, rows[0], { legalStatus: ldtLegalStatus() });
   } catch (err) {
     return serverError(res, log, 'ms-create', err);
   }
@@ -251,7 +316,7 @@ router.patch('/ldt/milestones/:msId', async (req: Request, res: Response) => {
       args,
     );
     if (rows.length === 0) return notFoundInTenant(res, 'LDT milestone');
-    return ok(res, rows[0]);
+    return ok(res, rows[0], { legalStatus: ldtLegalStatus() });
   } catch (err) {
     return serverError(res, log, 'ms-patch', err);
   }
@@ -272,10 +337,14 @@ router.get('/ldt-phase-summary', async (req: Request, res: Response) => {
     /* Fill in 1..5 with zero where there are no rows so the kit's
        summary chart renders all phases. */
     const byPhase = new Map(rows.map((r) => [r.current_phase, r.n]));
-    return ok(res, {
-      phases: [1, 2, 3, 4, 5].map((p) => ({ phase: p, count: byPhase.get(p) ?? 0 })),
-      total:  rows.reduce((s, r) => s + r.n, 0),
-    });
+    return ok(
+      res,
+      {
+        phases: [1, 2, 3, 4, 5].map((p) => ({ phase: p, count: byPhase.get(p) ?? 0 })),
+        total: rows.reduce((s, r) => s + r.n, 0),
+      },
+      { legalStatus: ldtLegalStatus() },
+    );
   } catch (err) {
     return serverError(res, log, 'phase-summary', err);
   }

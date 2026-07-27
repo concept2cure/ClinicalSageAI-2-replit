@@ -33,7 +33,9 @@
  *                          'in N days' | 'overdue N days' | '')
  *   blocked             -> status === 'blocked' || blockedBy[] non-empty
  *   source              -> best-effort reflection of sourceEntityType (see note)
- *   phase               -> GAP: no column; always null
+ *   phase               -> lifecycle_phase column (20260727_unified_tasks_mdx_
+ *                          metadata.sql; LIFECYCLE_PHASES domain in
+ *                          shared/schema.ts); null when never set
  *
  * RLS (CI gate ci:requestdb-coverage): queries `unified_tasks` /
  * `task_dependencies` through the request-scoped Drizzle client
@@ -88,7 +90,10 @@ interface TaskBoardItem {
   attachments: number;
   source: string;
   due: string;
-  /** GAP: unified_tasks has no submission-phase column; always null. */
+  /**
+   * Real `lifecycle_phase` column (LIFECYCLE_PHASES domain, shared/schema.ts:
+   * strategy … postmarket); null when the task has never been phased.
+   */
   phase: string | null;
   blocked: boolean;
   estimatedHours: number | null;
@@ -240,7 +245,7 @@ export default function createTaskBoardRoutes(): Router {
           attachments: jsonArrayLength(row.attachments),
           source: mapSource(row.sourceEntityType),
           due: humanizeDue(row.dueDate, status),
-          phase: null,
+          phase: row.lifecyclePhase ?? null,
           blocked,
           estimatedHours: row.estimatedHours ?? null,
         };
@@ -309,7 +314,8 @@ export default function createTaskBoardRoutes(): Router {
 
 /*
  * ── HONESTY NOTES (gaps returned as documented nulls / omissions, never faked) ──
- *  - phase: null            — unified_tasks has no submission-phase column.
+ *  - phase                  — now backed by the real `lifecycle_phase` column
+ *    (20260727_unified_tasks_mdx_metadata.sql); null only when never set.
  *  - impactScore: null      — when the row was never scored (real nullable column).
  *  - project/assignee/assignedBy: real numeric FKs stringified; the surface's
  *    TB_PROJECTS / TB_TEAM fixtures map their own slugs/codes, so names+avatars

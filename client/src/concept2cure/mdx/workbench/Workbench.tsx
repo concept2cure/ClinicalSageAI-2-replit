@@ -26,6 +26,7 @@ import {
 import { useSubmissions, useSubmissionDetail } from '../hooks/useSubmissions';
 import { useWorkbenchTasks, useWorkbenchTemplates, useWorkbenchValidation } from '../hooks/useWorkbench';
 import { useMdxPrograms } from '../hooks/useMdxPrograms';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tasks
@@ -43,8 +44,8 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
      Falls back to the kit fixture during load and on error so the Kanban
      never renders with empty columns. */
   const live = useWorkbenchTasks();
-  const sourceTasks = live.tasks ?? TASKS;
-  const sourceMetrics = live.metrics ?? TASKS_METRICS;
+  const sourceTasks = useSampleRows(live.tasks, TASKS);
+  const sourceMetrics = useSampleRows(live.metrics, TASKS_METRICS);
 
   const byCol = (id: string) =>
     sourceTasks.filter(t => t.col === id && (owner === 'all' || t.assignee === owner));
@@ -209,9 +210,9 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
   const programsState = useMdxPrograms();
   const programsList = programsState.programs ?? [];
   const validation = useWorkbenchValidation(programsList);
-  const sourceRules    = validation.rules    ?? VALIDATION_RULES;
-  const sourcePrograms = validation.programs ?? VALIDATION_PROGRAMS;
-  const sourceSummary  = validation.summary  ?? VALIDATION_SUMMARY;
+  const sourceRules    = useSampleRows(validation.rules, VALIDATION_RULES);
+  const sourcePrograms = useSampleRows(validation.programs, VALIDATION_PROGRAMS);
+  const sourceSummary  = useSampleRows(validation.summary, VALIDATION_SUMMARY);
 
   const rules = sourceRules.filter(
     r =>
@@ -374,7 +375,7 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
      pane doesn't render with zero counts. When live data returns zero,
      the empty state below is intentional. */
   const live = useSubmissions();
-  const sourceSubmissions = live.submissions ?? SUBMISSIONS;
+  const sourceSubmissions = useSampleRows(live.submissions, SUBMISSIONS);
 
   /* Default selection re-syncs to the first row of the live list when it
      arrives — avoids clicking onto a stale fixture id. */
@@ -624,7 +625,7 @@ export function TemplatesSurface({ onAskAna }: WorkbenchProps) {
      documentTemplates + ectdTemplates server-side). Falls back to fixture
      during load + on error. */
   const live = useWorkbenchTemplates();
-  const sourceTemplates = live.templates ?? TEMPLATES;
+  const sourceTemplates = useSampleRows(live.templates, TEMPLATES);
   return (
     <>
       <div className="page-header">

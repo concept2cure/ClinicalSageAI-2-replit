@@ -80,15 +80,24 @@ export interface UseIvdRows<T> {
   refresh: () => void;
 }
 
-export function useIvdClassifications(): UseIvdRows<IvdClassification> {
+/**
+ * @param programId Narrows to one diagnostic programme. Pass null for the
+ *                  organisation-wide portfolio view.
+ */
+export function useIvdClassifications(programId?: string | null): UseIvdRows<IvdClassification> {
   const { data, loading, error, refresh } = useFetchJson<{ classifications?: ServerClassification[] }>(
-    '/api/ivdr/classifications',
+    programId
+      ? `/api/ivdr/classifications?program_id=${encodeURIComponent(programId)}`
+      : '/api/ivdr/classifications',
   );
   if (!data) return { rows: null, loading, error, refresh };
   const rows = (data.classifications ?? [])
     .map(adaptClassification)
     .filter((r): r is IvdClassification => r !== null);
-  return { rows: rows.length ? rows : null, loading, error, refresh };
+  /* A resolved-but-empty result returns [] rather than null: null means
+     "never asked", and collapsing the two hides the difference between a
+     programme with no classifications and a request that never ran. */
+  return { rows, loading, error, refresh };
 }
 
 /* ─── analytical validations ────────────────────────────────────────── */
@@ -118,13 +127,15 @@ function adaptValidation(v: ServerValidation): IvdValidation {
   };
 }
 
-export function useIvdValidations(): UseIvdRows<IvdValidation> {
+export function useIvdValidations(programId?: string | null): UseIvdRows<IvdValidation> {
   const { data, loading, error, refresh } = useFetchJson<{ validations?: ServerValidation[] }>(
-    '/api/ivdr/validations',
+    programId
+      ? `/api/ivdr/validations?program_id=${encodeURIComponent(programId)}`
+      : '/api/ivdr/validations',
   );
   if (!data) return { rows: null, loading, error, refresh };
   const rows = (data.validations ?? []).map(adaptValidation);
-  return { rows: rows.length ? rows : null, loading, error, refresh };
+  return { rows, loading, error, refresh };
 }
 
 /* ─── clinical evidence (2×2) ───────────────────────────────────────── */
@@ -160,13 +171,15 @@ function adaptEvidence(e: ServerEvidence): IvdClinicalEvidence {
   };
 }
 
-export function useIvdClinicalEvidence(): UseIvdRows<IvdClinicalEvidence> {
+export function useIvdClinicalEvidence(programId?: string | null): UseIvdRows<IvdClinicalEvidence> {
   const { data, loading, error, refresh } = useFetchJson<{ evidence?: ServerEvidence[] }>(
-    '/api/ivdr/clinical-evidence',
+    programId
+      ? `/api/ivdr/clinical-evidence?program_id=${encodeURIComponent(programId)}`
+      : '/api/ivdr/clinical-evidence',
   );
   if (!data) return { rows: null, loading, error, refresh };
   const rows = (data.evidence ?? []).map(adaptEvidence);
-  return { rows: rows.length ? rows : null, loading, error, refresh };
+  return { rows, loading, error, refresh };
 }
 
 /* ─── GSPR matrix (Annex I) ─────────────────────────────────────────── */

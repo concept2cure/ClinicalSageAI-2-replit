@@ -55,7 +55,10 @@ interface TaskItem {
   attachments: number;
   source: string;
   due: string;
-  /** GAP: unified_tasks has no submission-phase column; always null live. */
+  /**
+   * Real `unified_tasks.lifecycle_phase` column (LIFECYCLE_PHASES domain,
+   * shared/schema.ts: strategy … postmarket); null when never set.
+   */
   phase: string | null;
   blocked?: boolean;
   blockedReason?: string;

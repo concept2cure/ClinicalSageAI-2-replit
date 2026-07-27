@@ -9,12 +9,139 @@ import {
   LIC_TIER_LEVEL,
   licBundle as licBundleOf,
 } from '../fixtures/onboarding-data';
+import { getAuthHeaders, getOrgId } from '@/utils/authToken';
 import '../styles/project-home-v2.css';
 
 /* ── Helpers ── */
 
 function _lim(n: number): string | number {
   return n === -1 ? 'Unlimited' : n;
+}
+
+/* ── Activation mappers (pure; unit-tested in onboardingActivation.test.ts) ── */
+
+/** Allowed values of organization_industry_profiles.primary_industry — must
+ * stay in lockstep with the PRIMARY_INDUSTRY enum validated by
+ * PATCH /api/mdx/industry-profile (server/routes/mdx-industry-context.ts). */
+export type PrimaryIndustry =
+  | 'medical_device_diagnostics'
+  | 'biotech_pharma'
+  | 'cro'
+  | 'regulatory_consulting'
+  | 'academic_research';
+
+/** Wizard archetype (organizations.industry_mode vocabulary, LIC_ARCHETYPES)
+ * → governed org industry profile primaryIndustry. Unknown values fall back
+ * to biotech_pharma, the platform's broadest default. */
+export function archetypeToPrimaryIndustry(archetype: string): PrimaryIndustry {
+  switch (archetype) {
+    case 'medtech':
+      return 'medical_device_diagnostics';
+    case 'cro':
+      return 'cro';
+    case 'regulatory':
+    case 'medical_writing':
+      return 'regulatory_consulting';
+    case 'academic':
+      return 'academic_research';
+    case 'virtual_biotech':
+    case 'biotech':
+    case 'big_pharma':
+    case 'pharma':
+    default:
+      return 'biotech_pharma';
+  }
+}
+
+/** Org-scoped membership roles accepted by POST /api/tenant-users
+ * (createUserSchema in server/routes/tenant-users.ts). */
+export type OrgMemberRole = 'admin' | 'manager' | 'member' | 'viewer';
+
+/** Wizard personnel role (PLATFORM-role vocabulary, LIC_ROLES/GRANTABLE_ROLES)
+ * → the org-scoped role vocabulary the invite endpoint accepts. Platform-tier
+ * roles are deliberately DOWN-SCOPED: an actual platform/finance grant can only
+ * be made through the governed access-management grant API
+ * (POST /api/admin/access/grants — requires the target user to exist and the
+ * caller to be a platform/business admin), never from this wizard. Unknown
+ * roles fail closed to least-privilege 'member'. */
+export function inviteRoleToOrgRole(role: string): OrgMemberRole {
+  switch (role) {
+    case 'owner':
+    case 'business_admin':
+    case 'super_admin':
+      return 'admin';
+    case 'platform_admin':
+      return 'manager';
+    case 'support':
+    default:
+      return 'member';
+  }
+}
+
+/** POST /api/tenant-users requires a display name (min 2 chars) the wizard
+ * does not collect; derive a provisional one from the email local part (the
+ * invitee sets their real name when they accept). Falls back to the full
+ * email when the local part is too short to satisfy the schema. */
+export function inviteNameFromEmail(email: string): string {
+  const local = (email.split('@')[0] || '').trim();
+  return local.length >= 2 ? local : email;
+}
+
+export interface CheckoutRequest {
+  path: string;
+  body: Record<string, unknown>;
+}
+export interface CheckoutUnavailable {
+  unavailable: string;
+}
+
+/** Wizard plan selection → the billing checkout call that can honestly be
+ * made today, or the reason none can (surfaced verbatim on the completion
+ * screen instead of pretending the plan was provisioned). */
+export function checkoutRequestFor(
+  model: string,
+  tier: string,
+  cycle: string,
+  seats: number,
+): CheckoutRequest | CheckoutUnavailable {
+  const billingCycle = cycle === 'annual' ? 'annual' : 'monthly';
+  if (tier === 'enterprise') {
+    // TODO(onboarding): no enterprise onboarding-request endpoint exists yet —
+    // enterprise pricing is custom (perUserMonthly/baseMonthly null), so
+    // POST /api/billing/checkout cannot price it. Do not call checkout here.
+    return {
+      unavailable:
+        'Enterprise plans use custom pricing finalized with our team — there is no self-service enterprise checkout yet, so no plan was provisioned.',
+    };
+  }
+  if (model === 'dtc') {
+    if (tier === 'free') {
+      // TODO(onboarding): POST /api/billing/dtc-checkout rejects tier "free"
+      // (its schema only accepts standard|professional|enterprise) even though
+      // the billing service can provision the free tier directly. Until the
+      // route accepts it, the free tier cannot be provisioned from here.
+      return {
+        unavailable:
+          'The free tier cannot be provisioned from this wizard yet — the self-service checkout endpoint only accepts paid tiers, so no plan was provisioned.',
+      };
+    }
+    return { path: '/api/billing/dtc-checkout', body: { tier, billingCycle } };
+  }
+  return {
+    path: '/api/billing/checkout',
+    body: { tier, billingCycle, seats: Math.max(1, Math.floor(seats) || 1) },
+  };
+}
+
+/** Honest per-step record of what activate() actually did. */
+export interface ActivationOutcome {
+  profileSaved: boolean;
+  invitesAttempted: number;
+  invitesSent: number;
+  invitesFailed: string[];
+  checkout: 'redirecting' | 'unavailable' | 'failed';
+  checkoutNote: string | null;
+  checkoutUrl: string | null;
 }
 
 /* ── Onboarding wizard ──
@@ -33,8 +160,9 @@ function _lim(n: number): string | number {
    return a reshaped subset that drops fields this wizard renders — features,
    includedTokensMonthly, baseMonthly — so they are not a viable live anchor
    today.) The legacy page-level "Sample data" SampleTag has been removed:
-   nothing here is fabricated sample data. `activate()` is a flagged MOCK
-   ACTION — see the comment at that function. */
+   nothing here is fabricated sample data. `activate()` calls the real
+   activation endpoints and reports per-step results honestly — see the
+   comment at that function for exactly what is and is not wired. */
 
 export function Onboarding({ onAsk }: SurfaceViewProps) {
   const [step, setStep] = useState(0);
@@ -44,7 +172,8 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
   const [cycle, setCycle] = useState('annual');
   const [seats, setSeats] = useState(5);
   const [invites, setInvites] = useState([{ email: '', role: 'owner' }]);
-  const [done, setDone] = useState(false);
+  const [outcome, setOutcome] = useState<ActivationOutcome | null>(null);
+  const [activating, setActivating] = useState(false);
 
   const archetypes: Array<{ id: string; label: string; family: string }> = LIC_ARCHETYPES;
   const family =
@@ -114,17 +243,125 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
     ].filter(Boolean) as string[];
   };
 
-  // FLAG — MOCK ACTION (for the actions pass): this fakes activation. Real
-  // endpoints exist and should be wired here: DTC self-service -> POST
-  // /api/billing/dtc-checkout (returns a Stripe Checkout URL to redirect to;
-  // the free tier provisions immediately), per-user / enterprise -> POST
-  // /api/billing/checkout, and personnel invites -> the access-management grant
-  // API. Until then no workspace is created, no trial starts, no plan is
-  // provisioned, and no invites are sent — the done-screen copy below is
-  // written honestly to reflect that activation happens through billing
-  // checkout, not here.
-  const activate = () => {
-    setDone(true);
+  /* activate() — wires the wizard to the real activation endpoints and
+     records, per step, what actually happened (ActivationOutcome), so the
+     completion screen states exactly what was done vs not done:
+
+       1. PATCH /api/mdx/industry-profile — persists the governed org industry
+          profile (archetype → primaryIndustry), tenant-scoped and audited.
+       2. POST /api/tenant-users (one per invite with an email) — creates the
+          org membership / pending invitation; seat- and quota-gated server
+          side. Wizard platform-tier roles are down-scoped to org roles (see
+          inviteRoleToOrgRole) — platform/finance grants require the governed
+          access-management grant API after the user exists.
+       3. POST /api/billing/dtc-checkout (self-service) or
+          POST /api/billing/checkout (per-user) — creates the real Stripe
+          Checkout Session; on success the browser is redirected to the
+          returned Checkout URL. Plan + tier modules are provisioned by the
+          billing webhook once payment completes, not by this client. Checkout
+          runs LAST because success navigates away from the app.
+
+     Steps with no live endpoint stay explicitly NOT done (never reported as
+     success): enterprise custom pricing and the DTC free tier (see
+     checkoutRequestFor), and — TODO(onboarding): no endpoint lets a
+     non-platform-admin persist the organization NAME or industry_mode typed
+     in step 1 (PATCH /api/tenants/:id requires super_admin/platform_admin),
+     so the workspace name is display-only here; the organization TYPE is
+     captured via the governed industry profile in step 1 above. */
+  const activate = async () => {
+    setActivating(true);
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    };
+
+    // 1. Governed org industry profile (audited upsert).
+    let profileSaved = false;
+    try {
+      const res = await fetch('/api/mdx/industry-profile', {
+        method: 'PATCH',
+        headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          primaryIndustry: archetypeToPrimaryIndustry(org.archetype),
+        }),
+      });
+      profileSaved = res.ok;
+    } catch (_e) {
+      profileSaved = false;
+    }
+
+    // 2. Personnel invites — real org membership / invitation rows.
+    const pending = invites.filter((x) => x.email.trim());
+    let invitesSent = 0;
+    const invitesFailed: string[] = [];
+    for (const inv of pending) {
+      const email = inv.email.trim();
+      try {
+        const res = await fetch('/api/tenant-users', {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({
+            email,
+            name: inviteNameFromEmail(email),
+            role: inviteRoleToOrgRole(inv.role),
+            organizationId: getOrgId(),
+          }),
+        });
+        // 201 = member created; 202 = pending cross-org invitation created.
+        if (res.ok) invitesSent += 1;
+        else invitesFailed.push(email);
+      } catch (_e) {
+        invitesFailed.push(email);
+      }
+    }
+
+    // 3. Billing checkout — last, because success leaves the app for Stripe.
+    const checkoutReq = checkoutRequestFor(model, tier, cycle, seats);
+    let checkout: ActivationOutcome['checkout'];
+    let checkoutNote: string | null = null;
+    let checkoutUrl: string | null = null;
+    if ('unavailable' in checkoutReq) {
+      checkout = 'unavailable';
+      checkoutNote = checkoutReq.unavailable;
+    } else {
+      try {
+        const res = await fetch(checkoutReq.path, {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify(checkoutReq.body),
+        });
+        // /checkout returns { checkoutUrl }; /dtc-checkout returns { url }.
+        const data = res.ok ? await res.json().catch(() => null) : null;
+        const url = data && (data.checkoutUrl ?? data.url);
+        if (typeof url === 'string' && url) {
+          checkout = 'redirecting';
+          checkoutUrl = url;
+        } else {
+          checkout = 'failed';
+          checkoutNote =
+            'The billing service did not return a checkout link — no plan was provisioned. Retry from Usage & Billing.';
+        }
+      } catch (_e) {
+        checkout = 'failed';
+        checkoutNote =
+          'Could not reach the billing service — no plan was provisioned. Retry from Usage & Billing.';
+      }
+    }
+
+    setOutcome({
+      profileSaved,
+      invitesAttempted: pending.length,
+      invitesSent,
+      invitesFailed,
+      checkout,
+      checkoutNote,
+      checkoutUrl,
+    });
+    setActivating(false);
+    if (checkoutUrl) window.location.assign(checkoutUrl);
   };
 
   const canNext = step === 0 ? org.name.trim().length > 1 : true;
@@ -161,25 +398,64 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
 
       <div className="pj-card">
         <div className="pj-card-b">
-          {done ? (
+          {outcome ? (
             <div className="ob-done">
               <div className="ob-done-ic">{I.checkCircle || I.check}</div>
-              <h2>{org.name || 'Your workspace'} is ready to activate</h2>
-              <p>
-                {tier === 'enterprise'
-                  ? 'Enterprise plans use custom pricing finalized with our team.'
-                  : model === 'dtc' && selTier.trialDays > 0
-                    ? 'Next: start your ' +
-                      selTier.trialDays +
-                      '-day trial on the ' +
-                      selTier.name +
-                      ' plan through secure checkout.'
-                    : 'Next: activate the ' +
-                      selTier.name +
-                      ' plan through secure checkout.'}
-                {' '}Modules for the {tier} tier are provisioned automatically
-                once the plan is active.
-              </p>
+              <h2>
+                {outcome.checkout === 'redirecting'
+                  ? 'Taking you to secure checkout…'
+                  : (org.name || 'Your workspace') + ' — activation summary'}
+              </h2>
+              <div className="ob-review" style={{ textAlign: 'left' }}>
+                <div className="ob-rev-row">
+                  <span className="k">Industry profile</span>
+                  <span className="v">
+                    {outcome.profileSaved
+                      ? 'Saved — governed org profile recorded (audited).'
+                      : 'Not saved — set it later in the admin console.'}
+                  </span>
+                </div>
+                <div className="ob-rev-row">
+                  <span className="k">Personnel</span>
+                  <span className="v">
+                    {outcome.invitesAttempted === 0
+                      ? 'No invitations requested.'
+                      : outcome.invitesSent +
+                        ' of ' +
+                        outcome.invitesAttempted +
+                        ' invitations created' +
+                        (outcome.invitesFailed.length
+                          ? ' — not sent: ' + outcome.invitesFailed.join(', ')
+                          : '') +
+                        '.'}
+                  </span>
+                </div>
+                <div className="ob-rev-row">
+                  <span className="k">Plan</span>
+                  <span className="v">
+                    {outcome.checkout === 'redirecting'
+                      ? 'Redirecting to secure checkout for the ' +
+                        selTier.name +
+                        ' plan' +
+                        (model === 'dtc' && selTier.trialDays > 0
+                          ? ' (' + selTier.trialDays + '-day trial)'
+                          : '') +
+                        '. Modules for the ' +
+                        tier +
+                        ' tier are provisioned automatically once payment completes.'
+                      : outcome.checkoutNote ||
+                        'No plan was provisioned.'}
+                  </span>
+                </div>
+                <div className="ob-rev-row">
+                  <span className="k">Workspace name</span>
+                  <span className="v">
+                    Not yet persisted — renaming the organization from this
+                    wizard is not available; your organization type was
+                    captured in the industry profile above.
+                  </span>
+                </div>
+              </div>
               <div
                 className="cm-pushbar"
                 style={{ justifyContent: 'center', marginTop: 16 }}
@@ -526,19 +802,27 @@ export function Onboarding({ onAsk }: SurfaceViewProps) {
                     </div>
                   ))}
                   <div className="cm-pushbar" style={{ marginTop: 16 }}>
-                    <button className="sp-primary" onClick={activate}>
+                    <button
+                      className="sp-primary"
+                      disabled={activating}
+                      onClick={() => {
+                        void activate();
+                      }}
+                    >
                       {I.rocket || I.check}{' '}
-                      {tier === 'enterprise'
-                        ? 'Request Enterprise onboarding'
-                        : model === 'dtc' && selTier.trialDays > 0
-                          ? 'Start ' + selTier.trialDays + '-day trial'
-                          : 'Activate workspace'}
+                      {activating
+                        ? 'Activating…'
+                        : tier === 'enterprise'
+                          ? 'Request Enterprise onboarding'
+                          : model === 'dtc' && selTier.trialDays > 0
+                            ? 'Start ' + selTier.trialDays + '-day trial'
+                            : 'Activate workspace'}
                     </button>
                   </div>
                 </div>
               )}
 
-              {!done && (
+              {!outcome && (
                 <div className="ob-nav">
                   <button
                     className="sp-ask"

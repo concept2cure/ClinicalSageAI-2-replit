@@ -68,12 +68,23 @@ router.get('/postmarket', async (req: Request, res: Response) => {
       };
     });
 
+    /* capa_records carries no organization_id of its own — per its
+       migration, tenancy is derived entirely by joining
+       regulatory_programs.organization_id.
+
+       This was previously a LEFT JOIN with `OR p.organization_id IS
+       NULL`, which meant any CAPA whose text program_id failed to match
+       a regulatory_programs row produced a NULL org and was returned to
+       *every* tenant. An INNER JOIN is the only correct form here: a
+       CAPA that cannot be attributed to a program in this organization
+       must not be visible to it. Orphaned rows now surface nowhere
+       rather than everywhere. */
     const capaRes = await pool.query<CapaRow>(
       `SELECT c.id, c.capa_code, c.title, p.code AS program_code, c.state,
               c.assigned_to, c.created_at, c.risk_level, c.source_refs
          FROM capa_records c
-         LEFT JOIN regulatory_programs p ON p.id::text = c.program_id::text
-        WHERE p.organization_id = $1 OR p.organization_id IS NULL
+         JOIN regulatory_programs p ON p.id::text = c.program_id::text
+        WHERE p.organization_id = $1
         ORDER BY c.created_at DESC NULLS LAST
         LIMIT 500`,
       [orgId],

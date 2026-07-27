@@ -11,6 +11,11 @@ import type { Program } from '../data/programs';
 import { useProgramDetail } from '../hooks/useMdxPrograms';
 import { useWorkbenchTasks } from '../hooks/useWorkbench';
 import { useProgramExtras } from '../hooks/useProgramExtras';
+import { useEffectiveContext } from '../hooks/useEffectiveContext';
+import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
+import { useQmsReadiness } from '../hooks/useQmsReadiness';
+import { DataGate } from '../components/DataGate';
+import { contextSummaryRows, humanizeToken } from '../lib/industryContext';
 
 interface GovernanceRow {
   role: string;
@@ -34,7 +39,10 @@ function deriveGovernance(
   const teamRows: GovernanceRow[] = (team ?? [])
     .slice(0, 4)
     .map((m, i) => ({
-      role: m.role ?? KIT_ROLES[i + 1] ?? 'Member',
+      /* A real team member with no recorded role is a "Member" — never
+         a role borrowed from the kit's example team, which would put a
+         fictional title against a real person's name. */
+      role: m.role ?? 'Member',
       name: m.name ?? 'Unassigned',
       sig:  'pending' as const,
     }));
@@ -130,6 +138,26 @@ function ReadinessRing({ value, size = 132, stroke = 12 }: { value: number; size
   );
 }
 
+/** One labelled chip row of the Program context card (pathways, markets). */
+function ContextTagRow({ label, values }: { label: string; values: string[] }) {
+  return (
+    <div className="ph-ctx-tags">
+      <span className="ph-gov-role">{label}</span>
+      {values.length === 0 ? (
+        <span className="ph-ctx-none">None set</span>
+      ) : (
+        <div className="ph-impact-aff">
+          {values.map((v) => (
+            <span key={v} className="ph-impact-tag">
+              {humanizeToken(v)}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SecBar({ label, n, total, tone }: { label: string; n: number; total: number; tone: string }) {
   const pct = Math.round((n / total) * 100);
   return (
@@ -171,30 +199,39 @@ export function ProjectHome({
   const detail = useProgramDetail(program.id);
   const allTasks = useWorkbenchTasks();
   const extras = useProgramExtras(program.id);
+  const qms = useQmsReadiness();
+  /* Resolved industry context (project → org → license default) for the
+     read-first "Program context" card. program.id is the
+     regulatory_programs uuid for live programs; fixture ids stay idle. */
+  const industryCtx = useEffectiveContext(program.id);
   const livePh = detail.detail
     ? deriveGovernance(detail.detail.leadUserName, detail.detail.teamMembers)
     : null;
-  const sourceGovernance = livePh ?? PH_GOVERNANCE;
+  const sourceGovernance = useSampleRows(livePh, PH_GOVERNANCE);
   const programCode = program.code.split(' ')[0];
   const liveProgramTasks = allTasks.tasks?.filter(
     (t) => t.prog === programCode || t.prog === program.id,
   ) ?? null;
-  const sourceTasks = liveProgramTasks ?? PH_TASKS.map((t) => ({
-    id: t.id,
-    title: t.title,
-    sect: t.section,
-    due: t.due,
-    tone: t.tone,
-    assignee: t.who,
-  }));
+  const sourceTasks = useSampleRows(
+    liveProgramTasks,
+    PH_TASKS.map((t) => ({
+      id: t.id,
+      title: t.title,
+      sect: t.section,
+      due: t.due,
+      tone: t.tone,
+      assignee: t.who,
+    })),
+  );
 
-  /* Live milestones / RIM recs / change-impact / activity. Each panel
-     falls back to kit content during load + on error so the surface
-     never renders blank — but live data wins as soon as it arrives. */
-  const sourceMilestones = extras.milestones ?? PH_MILESTONES;
-  const sourceRimRecs    = extras.rimRecs    ?? PH_RIM_RECS;
-  const sourceImpact     = extras.changeImpactFormatted ?? PH_CHANGE_IMPACT;
-  const sourceActivity   = extras.activityFormatted ?? PH_ACTIVITY;
+  /* Live milestones / RIM recs / change-impact / activity. Live data
+     wins whenever present; otherwise each panel renders empty, and the
+     kit content appears only in explicit sample mode. A programme with
+     no milestones must not display another product's. */
+  const sourceMilestones = useSampleRows(extras.milestones, PH_MILESTONES);
+  const sourceRimRecs    = useSampleRows(extras.rimRecs, PH_RIM_RECS);
+  const sourceImpact     = useSampleRows(extras.changeImpactFormatted, PH_CHANGE_IMPACT);
+  const sourceActivity   = useSampleRows(extras.activityFormatted, PH_ACTIVITY);
 
   return (
     <div className="ph-root" data-screen-label={`MDX · Project Home · ${program.title}`}>
@@ -332,6 +369,33 @@ export function ProjectHome({
         <aside className="ph-side">
           <section className="ph-card">
             <header className="ph-card-h">
+              <h2>Program context</h2>
+            </header>
+            <DataGate
+              state={industryCtx.context}
+              label="program context"
+              onRetry={industryCtx.refresh}
+              dense
+            >
+              {(ctx) => (
+                <div className="ph-ctx">
+                  <ul className="ph-gov">
+                    {contextSummaryRows(ctx).map((row) => (
+                      <li key={row.label} className="ph-gov-row ph-ctx-row">
+                        <span className="ph-gov-role">{row.label}</span>
+                        <span className="ph-gov-name">{row.value}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <ContextTagRow label="Pathways" values={ctx.pathways} />
+                  <ContextTagRow label="Markets" values={ctx.markets} />
+                </div>
+              )}
+            </DataGate>
+          </section>
+
+          <section className="ph-card">
+            <header className="ph-card-h">
               <h2>Change impact</h2>
             </header>
             <ul className="ph-impact">
@@ -356,6 +420,73 @@ export function ProjectHome({
                 </li>
               ))}
             </ul>
+          </section>
+
+          <section className="ph-card">
+            <header className="ph-card-h">
+              <h2>Quality system</h2>
+              {qms.readiness.status === 'ready' && (
+                <span className="ph-count" data-tone={qms.attentionCount > 0 ? 'warn' : 'ok'}>
+                  {qms.attentionCount === 0
+                    ? 'nothing needs attention'
+                    : `${qms.attentionCount} need${qms.attentionCount === 1 ? 's' : ''} attention`}
+                </span>
+              )}
+            </header>
+            {/* Organization-wide by nature — the QMS does not run per
+                submission, and saying so beats implying it does. */}
+            <DataGate
+              state={qms.readiness}
+              label="quality system readiness"
+              onRetry={qms.refresh}
+              dense
+              emptyHint="Quality records appear here once the QMS module is in use."
+            >
+              {(r) => (
+                <ul className="ph-qms">
+                  <QmsRow
+                    label="Controlled documents"
+                    available={r.documents.available}
+                    ok={`${r.documents.effective} effective · ${r.documents.draft} in draft`}
+                    attention={r.documents.reviewOverdue}
+                    attentionLabel="past periodic review"
+                  />
+                  <QmsRow
+                    label="Suppliers"
+                    available={r.suppliers.available}
+                    ok={`${r.suppliers.total} on file`}
+                    attention={r.suppliers.criticalUnapproved + r.suppliers.auditOverdue}
+                    attentionLabel={
+                      r.suppliers.criticalUnapproved > 0
+                        ? 'critical supplier not approved'
+                        : 'supplier audit overdue'
+                    }
+                  />
+                  <QmsRow
+                    label="Training"
+                    available={r.training.available}
+                    ok={`${r.training.acknowledged} acknowledgments`}
+                    attention={r.training.expired}
+                    attentionLabel="expired"
+                  />
+                  <QmsRow
+                    label="Internal audits"
+                    available={r.audits.available}
+                    ok={`${r.audits.open} open`}
+                    attention={r.audits.openMajorFindings}
+                    attentionLabel="open major findings"
+                  />
+                  <QmsRow
+                    label="Non-conforming product"
+                    available={r.nonconforming.available}
+                    ok="all dispositioned"
+                    attention={r.nonconforming.undispositioned}
+                    attentionLabel="undispositioned"
+                  />
+                </ul>
+              )}
+            </DataGate>
+            <div className="ph-qms-scope">Organization-wide · 21 CFR 820 / QMSR</div>
           </section>
 
           <section className="ph-card">
@@ -395,5 +526,41 @@ export function ProjectHome({
         </aside>
       </div>
     </div>
+  );
+}
+
+
+/**
+ * One quality-system line: the healthy summary when nothing is wrong,
+ * the attention count when something is, and an explicit "not tracked"
+ * when the underlying table is absent — a zero from a system that is
+ * not running must never read as an all-clear.
+ */
+function QmsRow({
+  label,
+  available,
+  ok,
+  attention,
+  attentionLabel,
+}: {
+  label: string;
+  available: boolean;
+  ok: string;
+  attention: number;
+  attentionLabel: string;
+}) {
+  return (
+    <li className="ph-qms-row" data-state={!available ? 'na' : attention > 0 ? 'warn' : 'ok'}>
+      <span className="ph-qms-label">{label}</span>
+      {!available ? (
+        <span className="ph-qms-val na">not tracked here yet</span>
+      ) : attention > 0 ? (
+        <span className="ph-qms-val warn">
+          {attention} {attentionLabel}
+        </span>
+      ) : (
+        <span className="ph-qms-val">{ok}</span>
+      )}
+    </li>
   );
 }

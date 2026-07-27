@@ -31,6 +31,15 @@ export const PART11_GOVERNED_COMMANDS: ReadonlySet<string> = new Set<string>([
   'sign_document',
   'submit_document',
   'create_submission_package',
+  // Applying AnA's onboarding proposals writes the organization profile on the
+  // client's behalf, so it is governed: a reason-for-change is required and the
+  // action is recorded. It is deliberately NOT in the e-sign set below — it
+  // matches the bar the equivalent PATCH /organizations/:id/profile already
+  // sets, and demanding re-authentication during first-run setup would land on
+  // a client least equipped to satisfy it. Adding it to PART11_ESIGN_COMMANDS
+  // escalates it centrally; the onboarding route consults that policy and fails
+  // closed rather than continuing on a weaker path.
+  'onboarding.apply_proposals',
 ]);
 
 /**

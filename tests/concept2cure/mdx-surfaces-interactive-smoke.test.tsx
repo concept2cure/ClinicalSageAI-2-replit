@@ -11,11 +11,18 @@
  * Plus a focused check on the FilesTreePane's five filesystem roots, the
  * specific regression that started the 2026-06-02 reconciliation round.
  *
- * Like the sibling suite, everything runs against in-memory fixture data;
- * fetch is mocked to 404 to force fixture-fallback mode.
+ * Like the sibling suite, everything runs against in-memory fixture data.
+ *
+ * Surfaces no longer fall back to fixtures when a fetch fails — a silent
+ * fixture is indistinguishable from real regulated data, so the fallback
+ * was removed. Example content is now reachable only through sample mode,
+ * which this suite enables explicitly in beforeEach. That is the supported
+ * way to ask for populated surfaces, and it keeps the test measuring what
+ * it was written to measure: that every handler survives a click on a rich
+ * surface, rather than that a 404 happens to render one.
  */
 
-import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { describe, expect, it, afterEach, beforeEach, vi } from 'vitest';
 import { render, cleanup, fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as React from 'react';
@@ -27,6 +34,8 @@ import { EngineeringSurface } from '../../client/src/concept2cure/mdx/surfaces/E
 import { UdiSurface }         from '../../client/src/concept2cure/mdx/surfaces/UdiSurface';
 import { AdminSurface }       from '../../client/src/concept2cure/mdx/surfaces/AdminSurface';
 import { PathwayPanes }       from '../../client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes';
+
+import { setSampleMode } from '../../client/src/concept2cure/mdx/lib/sampleMode';
 
 import type { Program } from '../../client/src/concept2cure/mdx/data/programs';
 
@@ -62,7 +71,15 @@ beforeEach(() => {
     json: async () => ({ data: null }),
   }) as unknown as typeof fetch;
   try { window.localStorage.clear(); } catch { /* ignore */ }
+  /* Opt in to the canonical example content. Must come *after* the
+     localStorage clear above, which would otherwise wipe the flag —
+     surfaces would then render their empty states with nothing to click. */
+  setSampleMode(true);
 });
+
+/* Sample mode is global state; leaving it on would silently populate any
+   suite that runs after this one in the same worker. */
+afterEach(() => setSampleMode(false));
 
 function wrap(node: React.ReactNode) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });

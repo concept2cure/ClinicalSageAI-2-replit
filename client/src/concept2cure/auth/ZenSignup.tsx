@@ -241,6 +241,33 @@ export const ZenSignup: React.FC = () => {
         other: 'medical_writing',
       };
 
+      // Derive a default market from the free-text country field so the org
+      // industry profile starts with a sensible market; falls back to US.
+      const countryMarketMap: Record<string, string> = {
+        'united states': 'US',
+        usa: 'US',
+        us: 'US',
+        'united kingdom': 'UK',
+        uk: 'UK',
+        canada: 'CA',
+        japan: 'JP',
+        china: 'CN',
+        australia: 'AU',
+        germany: 'EU',
+        france: 'EU',
+        italy: 'EU',
+        spain: 'EU',
+        netherlands: 'EU',
+        ireland: 'EU',
+        belgium: 'EU',
+        sweden: 'EU',
+        denmark: 'EU',
+        switzerland: 'EU',
+      };
+      const defaultMarkets = [
+        countryMarketMap[formData.country.trim().toLowerCase()] || 'US',
+      ];
+
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -251,6 +278,14 @@ export const ZenSignup: React.FC = () => {
           industryMode: industryModeMap[formData.organizationType] || 'biotech',
           firstName: formData.firstName,
           lastName: formData.lastName,
+          // Industry-context signals: seed the org's governed industry profile.
+          // The form has no specialization field yet, so device companies
+          // default to 'medical_device'; others send none.
+          ...(formData.organizationType === 'meddevice'
+            ? { mdxSpecialization: 'medical_device' }
+            : {}),
+          primaryUseCases: formData.useCase ? [formData.useCase] : [],
+          defaultMarkets,
         }),
       });
 

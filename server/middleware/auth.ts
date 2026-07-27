@@ -10,15 +10,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify';
 import { nonAccessTokenReason } from './tokenType';
-import {
-  checkOrgMembership,
-  invalidateOrgMembershipCache,
-  parseFiniteInt,
-  peekOrgMembership,
-} from './orgMembership';
-import { createScopedLogger } from '../utils/logger';
-
-const logger = createScopedLogger('auth-middleware');
+import { enforceOrgMembership, invalidateOrgMembershipCache } from './orgMembership';
 
 // SECURITY FIX: isDev variable removed — no more dev-mode auth bypasses.
 
@@ -61,89 +53,13 @@ interface JWTPayload {
 // that TypeScript and the test/runtime resolvers agree on the same file.
 export { nonAccessTokenReason };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Org-membership re-check (audit finding M1)
-//
-// The JWT carries an organizationId claim minted at login. Trusting it for
-// the whole token TTL (1d) meant a user removed from an organization kept
-// tenant access for up to 24h. authenticateToken re-checks the
-// organization_users row on every request.
-//
-// The cache and the lookup now live in ./orgMembership so the collaboration
-// WebSocket can re-check the same membership against the same cache, and so
-// the invalidateOrgMembershipCache calls in the invite / remove / role-change
-// routes reach both transports. Only the Express-shaped enforcement — what a
-// 'revoked' or 'indeterminate' result means for an HTTP request — stays here.
-//
-// HTTP policy: membership row gone → 403 (fail-closed); DB unavailable →
-// structured warning + fail-open on the JWT claims, because an infra blip must
-// not take the whole API down. The WebSocket makes a different call on
-// 'indeterminate'; see server/services/hocuspocus-server.ts.
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Re-exported so the existing importers (tenants, tenants-simple, tenant-users)
-// keep working against ../middleware/auth after the extraction.
+// Re-exported so the external importers (tenants.ts, tenants-simple.ts,
+// tenant-users.ts) and this module's default export keep working unchanged.
+// The org-membership re-check (audit finding M1) that authenticateToken relies
+// on now lives in ./orgMembership — a module with no `.js` twin — so a route
+// that composes canonical auth can import enforceOrgMembership without the Vite
+// resolver binding it to the stale auth.js twin (which lacks that control).
 export { invalidateOrgMembershipCache };
-
-function sendMembershipRevoked(res: Response): Response {
-  return res.status(403).json({
-    error: { code: 'AUTH_009', message: 'Organization membership revoked or not found' },
-  });
-}
-
-/**
- * Post-JWT membership enforcement. Sync fast path on cache hit (keeps the
- * middleware synchronous for repeat requests); one async DB lookup per
- * user:org per TTL window otherwise.
- */
-function enforceOrgMembership(req: Request, res: Response, next: NextFunction): void {
-  const userId = parseFiniteInt(req.user?.userId);
-  const organizationId = parseFiniteInt(req.user?.organizationId);
-  // Tokens without a numeric org claim carry no membership to re-check
-  // (e.g. platform-level tokens). Downstream tenant guards still apply.
-  if (userId === null || organizationId === null) {
-    next();
-    return;
-  }
-
-  const cached = peekOrgMembership(userId, organizationId);
-  if (cached !== null) {
-    if (cached) {
-      next();
-      return;
-    }
-    sendMembershipRevoked(res);
-    return;
-  }
-
-  void checkOrgMembership(userId, organizationId)
-    .then(result => {
-      if (result === 'indeterminate') {
-        // Warning already logged in the shared checker. Not cached — retry
-        // on the next request so a recovered DB restores enforcement fast.
-        next();
-        return;
-      }
-      if (result === 'member') {
-        next();
-        return;
-      }
-      logger.warn('Org membership revoked — rejecting authenticated request (fail-closed)', {
-        userId,
-        organizationId,
-      });
-      sendMembershipRevoked(res);
-    })
-    .catch(error => {
-      // Belt-and-braces: queryOrgMembership already fails open internally.
-      logger.warn('Org membership re-check crashed — allowing on JWT claims (fail-open)', {
-        userId,
-        organizationId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      next();
-    });
-}
 
 // Extend Request type to include user
 declare global {

@@ -84,6 +84,15 @@ const FILES = [
   // on to_regclass; likewise lands for real now that the subsystem is
   // provisioned ahead of this loop.
   'migrations/20260726_authoring_citation_source_usage.sql',
+  // Industry-context tailoring: organization_industry_profiles +
+  // project_industry_profiles. Fully idempotent (CREATE TABLE/INDEX IF NOT
+  // EXISTS, no data statements).
+  'db/migrations/20260727_industry_context_profiles.sql',
+  // MDx task metadata: additive nullable columns on unified_tasks
+  // (lifecycle_phase, market, filing_type, study_id, deliverable_id,
+  // client_visibility) + lifecycle_phase index. Fully idempotent
+  // (ADD COLUMN IF NOT EXISTS / CREATE INDEX IF NOT EXISTS, no data statements).
+  'db/migrations/20260727_unified_tasks_mdx_metadata.sql',
   // ── Collaboration state (added 2026-07-27) ────────────────────────────────
   // Durable Y.js CRDT state for the /collab socket. Fully self-contained: one
   // CREATE TABLE IF NOT EXISTS that references nothing, plus an ON DELETE

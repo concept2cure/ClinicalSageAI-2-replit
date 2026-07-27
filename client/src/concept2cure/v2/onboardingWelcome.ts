@@ -24,6 +24,12 @@ export interface WelcomeStarter {
   prompt: string;
   /** Optional icon key resolved by the rail; falls back to a neutral icon. */
   iconKey?: 'file' | 'flask' | 'search' | 'clip' | 'globe' | 'sparkles' | 'shieldCheck' | 'upload';
+  /**
+   * Surface id to open instead of sending `prompt` to AnA. Used by the upload
+   * starter, which needs the real ingest flow (a file picker + the review gate),
+   * not a conversation about it.
+   */
+  navTo?: string;
 }
 
 export interface OnboardingWelcome {
@@ -55,6 +61,8 @@ const UPLOAD_STARTER: WelcomeStarter = {
   prompt:
     'I have documents (a prior filing, protocol, company profile, or spec). What can you read from them to help set up my workspace? Walk me through it — I’ll review before anything is saved.',
   iconKey: 'upload',
+  // Opens the real upload → review → apply flow rather than talking about it.
+  navTo: 'onboarding-ingest',
 };
 
 /** Per-family greeting + the type-specific starters (upload starter appended). */
