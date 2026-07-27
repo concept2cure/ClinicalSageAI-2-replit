@@ -53,6 +53,15 @@ async function columnExists(db: PGlite): Promise<boolean> {
   return r.rows.length > 0;
 }
 
+/**
+ * Standing up a WASM Postgres and applying real migration DDL costs seconds, and
+ * the cost scales with how many other suites are running. vitest's 10s default is
+ * a load measurement, not a correctness one: these cases went red purely because
+ * a fifth pglite suite joined the directory. Give them room so a failure here
+ * means the migration is wrong.
+ */
+const PGLITE_TIMEOUT_MS = 60_000;
+
 describe('20260726_cre_source_program_scope (real Postgres)', () => {
   // Each case needs a DIFFERENT migration state, so they cannot share one
   // database — but they are deliberately consolidated to THREE PGlite
@@ -79,7 +88,7 @@ describe('20260726_cre_source_program_scope (real Postgres)', () => {
     } finally {
       await db.close();
     }
-  });
+  }, PGLITE_TIMEOUT_MS);
 
   it('adds the column and its index when the spine is present', async () => {
     const db = new PGlite();
@@ -95,7 +104,7 @@ describe('20260726_cre_source_program_scope (real Postgres)', () => {
     } finally {
       await db.close();
     }
-  });
+  }, PGLITE_TIMEOUT_MS);
 
   it('lets a program-less write through on a spine-only schema, but fails a scoped one loudly', async () => {
     // Regression: createSource named `client_program_id` unconditionally, so
@@ -133,5 +142,5 @@ describe('20260726_cre_source_program_scope (real Postgres)', () => {
       active = null;
       await db.close();
     }
-  });
+  }, PGLITE_TIMEOUT_MS);
 });

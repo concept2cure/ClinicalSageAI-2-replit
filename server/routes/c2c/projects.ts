@@ -738,6 +738,18 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
             .then(rows => rows.filter(r => !r.clientProgramId && !r.clientWorkspaceId))
         : [];
 
+    // Back-reference: which sections and documents each of these sources is
+    // actually used in, and how many of those citations are against content the
+    // source no longer has. Absence means "not cited yet" — a real state worth
+    // seeing, not a zero to hide. One query for the whole page, not one per row.
+    const { summarizeSourceUsage } = await import(
+      '../../services/clinical-regulatory-evidence/source-usage.service.js'
+    );
+    const usage = await summarizeSourceUsage(
+      orgId,
+      [...sources, ...unscoped].map((s) => s.id),
+    );
+
     const shape = (s: (typeof sources)[number]) => ({
       id: s.id,
       title: s.title,
@@ -746,6 +758,9 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       extractionStatus: s.extractionStatus,
       createdAt: s.createdAt,
       updatedAt: s.updatedAt,
+      // Reported from recorded citations only. Nothing here is inferred from
+      // titles or text similarity: a usage exists because someone recorded it.
+      usage: usage.get(s.id) ?? { sourceId: s.id, sections: 0, documents: 0, changedSections: 0 },
       // Surfaced so the Data Room can show what kind of file this is and how it
       // arrived, without a second round trip.
       mimeType: (s.metadata as Record<string, unknown> | null)?.mimeType ?? null,
@@ -763,6 +778,45 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     });
   } catch (err: unknown) {
     console.error('[c2c/projects] GET /:id/sources', err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// GET /:id/source-changes — what in this project was written against superseded
+// content
+//
+// Every citation in this project still carrying a checksum its source no longer
+// has. That is a fact recorded at cite time
+// (authoring_citations.payload_sha256), not a comparison invented per render, so
+// it survives the browser session and is the same answer for everyone.
+//
+// A REPORT, never a rewrite. A source moving does not tell us how the section
+// written from it should now read, and silently regenerating regulated text is
+// not something a platform should do. What was missing is that the affected
+// sections were not discoverable at all: a superseded protocol left no trace in
+// the documents drafted from it.
+// ════════════════════════════════════════════════════════════════════════════
+
+router.get('/:id/source-changes', async (req: Request, res: Response) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
+
+  try {
+    const check = await pool.query(
+      `SELECT 1 FROM regulatory_programs WHERE id = $1 AND organization_id = $2 LIMIT 1`,
+      [req.params.id, orgId],
+    );
+    if (check.rows.length === 0) return send404(res);
+
+    const { listChangedSourceUsages } = await import(
+      '../../services/clinical-regulatory-evidence/source-usage.service.js'
+    );
+    const changes = await listChangedSourceUsages(orgId, { programId: String(req.params.id) });
+
+    return res.json({ projectId: String(req.params.id), changes, count: changes.length });
+  } catch (err: unknown) {
+    console.error('[c2c/projects] GET /:id/source-changes', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });

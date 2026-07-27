@@ -54,19 +54,23 @@ CREATE TABLE lumen_data_atoms (
 );
 `;
 
+// Standing up a WASM Postgres and applying real migration DDL costs seconds, and
+// the cost scales with how many other pglite suites are running concurrently.
+// vitest's 10s default hook timeout is a load measurement, not a correctness one:
+// these hooks went red purely because another pglite suite joined the directory.
 beforeAll(async () => {
   pglite = new PGlite();
   const here = path.dirname(fileURLToPath(import.meta.url));
   const migration = path.resolve(here, '../../../../db/migrations/20260724_clinical_regulatory_evidence_spine.sql');
   await pglite.exec(fs.readFileSync(migration, 'utf8'));
   await pglite.exec(CORPUS_DDL);
-});
+}, 90_000);
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => {
   await pglite.exec(`DELETE FROM cre_evidence_relationships; DELETE FROM cre_clinical_studies;
                      DELETE FROM cre_evidence_sources; DELETE FROM csr_details; DELETE FROM csr_reports;
                      DELETE FROM lumen_data_atoms;`);
-});
+}, 30_000);
 
 async function seedCsr(over: Record<string, unknown> = {}) {
   const rep = await pglite.query(

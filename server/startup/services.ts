@@ -51,12 +51,14 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
 
   try {
     const result = await ensureCoreTables(process.env.DATABASE_URL);
-    if (result.success) {
-      setSchemaReadiness('ready');
-      console.log(
-        `✅ Database readiness verified (${result.existingSchemas.length} schemas, ${result.existingTables.length} tables)`
-      );
-    } else if (result.missingCritical.length > 0) {
+    // A regulated subsystem that is partially or wholly absent fails readiness
+    // even when the flat critical-table check passes — a database that cannot
+    // run the authoring loop is not ready, and /readyz must say so rather than
+    // report green while those routes throw. `result.success` intentionally does
+    // NOT fold in subsystems (validateCoreTables/diagnostics keep their meaning),
+    // so this is checked ahead of the success branch.
+    const failingSubsystem = result.subsystems.find((s) => s.readinessFailing);
+    if (result.missingCritical.length > 0) {
       setSchemaReadiness('missing', `missing tables: ${result.missingCritical.join(', ')}`);
       console.error('❌ CRITICAL: Missing tables:', result.missingCritical.join(', '));
       console.error('   Run: npm run db:push to sync schema');
@@ -68,6 +70,24 @@ export async function verifyDatabaseConnection(pool: Pool): Promise<void> {
       console.error(
         '❌ CRITICAL: Missing required database extensions:',
         result.missingExtensions.join(', ')
+      );
+    } else if (failingSubsystem) {
+      const detail = `${failingSubsystem.name} subsystem ${failingSubsystem.state} (missing: ${failingSubsystem.missing.join(', ')})`;
+      setSchemaReadiness('missing', detail);
+      console.error(`❌ CRITICAL: ${detail}`);
+      console.error(
+        '   Provision it as a unit: APPLY_C2C_MIGRATIONS=true npm run db:apply-c2c',
+      );
+      console.error(
+        '   (or scripts/db/install-fresh.mjs on a fresh database). To run without',
+      );
+      console.error(
+        '   authoring, set AUTHORING_SUBSYSTEM_OPTIONAL=true — never over a PARTIAL subsystem.',
+      );
+    } else if (result.success) {
+      setSchemaReadiness('ready');
+      console.log(
+        `✅ Database readiness verified (${result.existingSchemas.length} schemas, ${result.existingTables.length} tables, authoring subsystem present)`
       );
     } else if (result.errors.length > 0) {
       console.error('⚠️ Table verification errors:', result.errors);

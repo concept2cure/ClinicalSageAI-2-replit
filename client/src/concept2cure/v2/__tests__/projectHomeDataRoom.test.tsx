@@ -210,3 +210,85 @@ describe('ProjectHome — pinning sources as context', () => {
     expect(screen.queryByText(/Draft with .* pinned source/)).toBeNull();
   });
 });
+
+describe('ProjectHome — where a source is used', () => {
+  /** Route /sources and /source-changes independently. */
+  function mockUsageApi(sources: unknown[], changes: unknown[] = []) {
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === `/api/c2c/projects/${PID}/sources`) return ok({ projectId: PID, sources, unscoped: [] });
+      if (url === `/api/c2c/projects/${PID}/source-changes`) {
+        return ok({ projectId: PID, changes, count: changes.length });
+      }
+      if (url === `/api/c2c/projects/${PID}`) return ok({ id: PID, name: 'BX-301' });
+      return ok({});
+    });
+  }
+
+  it('reports the sections and documents a source is cited in', async () => {
+    mockUsageApi([
+      source({ id: 1, title: 'protocol.pdf', usage: { sections: 3, documents: 2, changedSections: 0 } }),
+    ]);
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('protocol.pdf');
+    expect(screen.getByText(/Used in 3 sections · 2 documents/)).toBeTruthy();
+  });
+
+  it('says plainly when nothing was written from a source', async () => {
+    // An uploaded document nothing cites is the state a reviewer most wants to
+    // notice, so it must not read the same as a cited one.
+    mockUsageApi([source({ id: 1, title: 'orphan.pdf', usage: { sections: 0, documents: 0, changedSections: 0 } })]);
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('orphan.pdf');
+    expect(screen.getByText('Not cited yet')).toBeTruthy();
+  });
+
+  it('flags the sections written against content the source no longer has', async () => {
+    mockUsageApi([
+      source({ id: 1, title: 'moved.pdf', usage: { sections: 4, documents: 1, changedSections: 2 } }),
+    ]);
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('moved.pdf');
+    expect(screen.getByText(/2 written against older content/)).toBeTruthy();
+  });
+
+  it('shows nothing rather than a zero when the server sends no usage field', async () => {
+    // An older server is not the same fact as "cited nowhere". Guessing either
+    // way would be the fabrication this surface exists to avoid.
+    mockUsageApi([source({ id: 1, title: 'unknown.pdf' })]);
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('unknown.pdf');
+    expect(screen.queryByText('Not cited yet')).toBeNull();
+    expect(screen.queryByText(/Used in/)).toBeNull();
+  });
+
+  it('names the affected sections when a source has changed under them', async () => {
+    mockUsageApi(
+      [source({ id: 7, title: 'protocol-v3.pdf', usage: { sections: 1, documents: 1, changedSections: 1 } })],
+      [
+        {
+          citationId: 'c-1',
+          sectionId: 's-1',
+          sectionCode: 'P.1',
+          sectionTitle: 'Composition',
+          documentTitle: 'CTD 3.2.P',
+          sourceId: 7,
+          sourceTitle: 'protocol-v3.pdf',
+          citedAt: '2026-07-01T00:00:00Z',
+        },
+      ],
+    );
+    render(<ProjectHome {...props()} />);
+    await screen.findByText(/1 section in this project was drafted from a source that has since changed/);
+    expect(screen.getByText(/CTD 3\.2\.P · P\.1/)).toBeTruthy();
+    // The platform reports; it does not silently regenerate regulated text.
+    expect(screen.getByText(/Nothing has been rewritten/)).toBeTruthy();
+  });
+
+  it('shows no change banner when nothing is stale', async () => {
+    mockUsageApi([source({ id: 1, usage: { sections: 1, documents: 1, changedSections: 0 } })]);
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('protocol-v2.pdf');
+    expect(screen.queryByText(/drafted from a source that has since changed/)).toBeNull();
+  });
+});

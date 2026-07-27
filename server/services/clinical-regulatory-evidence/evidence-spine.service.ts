@@ -25,8 +25,12 @@ import {
 export class EvidenceSpineError extends Error {}
 
 /** Reads see global-public rows (org NULL) plus the caller's own org. Returns a
- *  SQL fragment + the param; callers append it to their WHERE. */
-function visibleOrgClause(orgId: number, startIndex: number): { sql: string; param: number } {
+ *  SQL fragment + the param; callers append it to their WHERE.
+ *
+ *  Exported so sibling services in this directory reuse the one predicate rather
+ *  than re-typing it. A tenancy rule copied per call site is how the file_uploads
+ *  contract ended up with four different answers (see #1102). */
+export function visibleOrgClause(orgId: number, startIndex: number): { sql: string; param: number } {
   return { sql: `(organization_id IS NULL OR organization_id = $${startIndex})`, param: orgId };
 }
 

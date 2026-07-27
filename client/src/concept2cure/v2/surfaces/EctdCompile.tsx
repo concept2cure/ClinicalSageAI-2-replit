@@ -40,7 +40,11 @@ interface ModuleReadiness {
 interface StatusView {
   projectId: number;
   overallReadiness: number;
+  /** Every required section approved/locked/final. Not the same as submittable. */
+  contentComplete?: boolean;
   submissionReady: boolean;
+  /** Why the package cannot be transmitted. Empty exactly when submissionReady. */
+  submissionBlockers?: string[];
   modules: ModuleReadiness[];
   totalSections: number;
   totalRequired: number;
@@ -61,7 +65,10 @@ interface CompileResult {
   modules: Array<{ moduleCode: string; moduleName: string; status: string; requiredCompleted: number; requiredSections: number }>;
   xmlBackbone: string;
   validationResults: ValidationResult[];
+  contentValidationPassed?: boolean;
   submissionReady: boolean;
+  submissionBlockers?: string[];
+  leafFilesRendered?: number;
   errors: string[];
   warnings: string[];
 }
@@ -176,7 +183,11 @@ export function EctdCompile(_props: SurfaceViewProps) {
       setCompileResult(body);
       setFindings(body.validationResults ?? null);
       fireToast(body.status === 'completed'
-        ? `eCTD backbone compiled${body.submissionReady ? ' — submission-ready' : ' with warnings'}.`
+        // The backbone compiled; that is what the toast reports. It does not
+        // claim the package can be submitted — that is the blockers panel's job,
+        // and saying "submission-ready" in a toast over an unrendered package is
+        // the claim this surface got wrong.
+        ? `eCTD backbone compiled${body.submissionReady ? '.' : ' — see what is still needed below.'}`
         : `Compile blocked — ${body.errors.length} error(s) must be resolved.`);
       void loadStatus(); void loadHistory();
     } finally { setBusy(null); }
@@ -224,7 +235,14 @@ export function EctdCompile(_props: SurfaceViewProps) {
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Module readiness</span>
-          {status && <span className={'rd-chip tone-' + (status.submissionReady ? 'ok' : 'warn')}>{status.overallReadiness}% · {status.submissionReady ? 'submission-ready' : 'incomplete'}</span>}
+          {/* The chip reports CONTENT completeness, which is what this number
+              measures. It used to read "submission-ready" at 100%, over a package
+              with no leaf files — see the blockers panel below. */}
+          {status && (
+            <span className={'rd-chip tone-' + ((status.contentComplete ?? status.overallReadiness === 100) ? 'ok' : 'warn')}>
+              {status.overallReadiness}% · {(status.contentComplete ?? status.overallReadiness === 100) ? 'content complete' : 'incomplete'}
+            </span>
+          )}
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {statusState === 'loading' ? (
@@ -267,10 +285,31 @@ export function EctdCompile(_props: SurfaceViewProps) {
             {compileResult.errors.length > 0 && (
               <ul style={{ margin: '0 0 10px', paddingLeft: 18 }}>{compileResult.errors.map((e, i) => <li key={i} className="sp-tone-err" style={{ fontSize: 13 }}>{e}</li>)}</ul>
             )}
+            {/* Why it is not submittable, in the server's words. A bare
+                "Not submission-ready" left the user to guess, and the previous
+                behaviour — reporting READY over a package with no leaf files —
+                was worse than either. */}
+            {(compileResult.submissionBlockers?.length ?? 0) > 0 && (
+              <div className="sp-tone-warn" style={{ border: '1px solid var(--c2c-line,#e4e7ec)', borderRadius: 8, padding: '8px 10px', marginBottom: 10, fontSize: 12.5 }}>
+                <b>Not yet submittable:</b>
+                <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+                  {compileResult.submissionBlockers!.map((b, i) => <li key={i}>{b}</li>)}
+                </ul>
+              </div>
+            )}
             {compileResult.xmlBackbone && (
-              <button className="btn primary" style={{ height: 32 }} onClick={() => downloadXml(`ectd-backbone-project-${projectId}-${region.toLowerCase()}.xml`, compileResult.xmlBackbone)}>
-                {I.download} Download eCTD 4.0 backbone XML
-              </button>
+              <>
+                <button className="btn primary" style={{ height: 32 }} onClick={() => downloadXml(`ectd-backbone-project-${projectId}-${region.toLowerCase()}.xml`, compileResult.xmlBackbone)}>
+                  {I.download} Download eCTD 4.0 backbone XML
+                </button>
+                {!compileResult.submissionReady && (
+                  <div style={{ fontSize: 11.5, marginTop: 6, color: 'var(--c2c-dim,#667085)' }}>
+                    The backbone describes the authored section content and marks every leaf
+                    <span className="mono"> rendered=&quot;false&quot;</span>. It is a working document,
+                    not a sequence to transmit.
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

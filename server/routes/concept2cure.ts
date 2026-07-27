@@ -5135,52 +5135,22 @@ router.post('/ai/edit-section', async (req: Request, res: Response) => {
       }
     }
 
-    // ── STEP 6: AUTO-PERSIST source links for artifact (batch) ────────────
-    if (data.artifactId && sourceCitationResults.length > 0) {
-      try {
-        const artifactIdNum =
-          typeof data.artifactId === 'string' ? parseInt(data.artifactId, 10) : data.artifactId;
-        if (!isNaN(artifactIdNum)) {
-          const srcValues: any[] = [];
-          const srcPlaceholders: string[] = [];
-          let sp = 1;
-          for (const cit of sourceCitationResults) {
-            if (cit.sourceRefs.length > 0) {
-              const bestRef = cit.sourceRefs.reduce((a, b) => (a.score > b.score ? a : b));
-              srcPlaceholders.push(
-                `($${sp}, $${sp + 1}, $${sp + 2}, $${sp + 3}, $${sp + 4}, $${sp + 5}, $${
-                  sp + 6
-                }, $${sp + 7}, $${sp + 8})`
-              );
-              srcValues.push(
-                artifactIdNum,
-                organizationId,
-                cit.sentenceIndex,
-                cit.sentenceText.substring(0, 1000),
-                'internal_data',
-                bestRef.sourceId,
-                bestRef.title.substring(0, 500),
-                bestRef.score,
-                userId
-              );
-              sp += 9;
-            }
-          }
-          if (srcPlaceholders.length > 0) {
-            await pool.query(
-              `INSERT INTO source_citations
-                 (document_id, organization_id, sentence_index, sentence_text,
-                  source_type, source_id, source_title, confidence, created_by)
-               VALUES ${srcPlaceholders.join(', ')}
-               ON CONFLICT DO NOTHING`,
-              srcValues
-            );
-          }
-        }
-      } catch (e: any) {
-        if (e?.code !== '42P01') logger.warn('Source link persist failed', { error: e.message });
-      }
-    }
+    // ── STEP 6 (RETIRED): sentence-level source_citations persist ─────────
+    // This block batch-inserted model-inferred sentence→chunk matches into
+    // `source_citations` — a table with no DDL anywhere in the repo, so the
+    // insert was swallowed by the 42P01 guard on every deployed database and
+    // never persisted a row. It could not simply be given a schema: the ids
+    // written here were concept2cure_artifacts ids, while the table's only
+    // reader (the Source Tracer) joined them against documents.id — a different
+    // serial sequence — so provisioning the table would have rendered one
+    // document's sentences under another document's title.
+    //
+    // The claims themselves are not lost: STEP 5b above persists them (with
+    // their chunk linkages and scores) to the ai-trace-chain tables, where they
+    // are labelled as what they are — model-asserted support, not lineage. The
+    // Source Tracer now reads RECORDED citations (authoring_citations via
+    // source-usage.service), because inferred matches must never be presented
+    // as locked source lineage.
 
     // Audit log
     await logAuditEntry(req, 'AI_EDIT', 'document_section', `ai-edit-${Date.now()}`, null, {

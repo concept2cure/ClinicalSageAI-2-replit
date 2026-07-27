@@ -117,6 +117,8 @@
     "db:readiness": "node scripts/db/readiness-audit.mjs",
     "readiness:check": "node scripts/readiness-check.mjs",
     "readiness:check:strict": "node scripts/readiness-check.mjs --strict",
+    "pilot:go-no-go": "node scripts/ops/pilot-go-no-go.mjs",
+    "pilot:verify-otp": "node scripts/ops/verify-otp-delivery.mjs",
     "db:readiness:strict": "node scripts/db/readiness-audit.mjs --strict-warn",
     "db:sync-manifest": "node scripts/db/sync-migration-manifest.mjs",
     "db:sync-manifest:check": "node scripts/db/sync-migration-manifest.mjs --check",

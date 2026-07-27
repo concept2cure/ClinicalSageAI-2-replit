@@ -171,6 +171,18 @@ const upload = multer({
 const pool = getPool();
 
 // Section-level permission enforcement helper
+//
+// COLUMN FIX: both queries joined `authoring_sections s ON s.document_id = …`.
+// That column does not exist — the section's parent is `doc_id`
+// (db/migrations/20260725_authoring_document_loop_tables.sql). Because the whole
+// function short-circuits unless AUTH_ENFORCE_SECTION_PERMS=1, the broken SQL had
+// never run: switching the gate ON would have made every section POST/PATCH/DELETE
+// raise 42703 inside an async middleware, i.e. turning the control on took the
+// surface down. A security control that cannot be enabled is not a control.
+//
+// FAILS CLOSED. Any error now denies the edit instead of rejecting into the
+// middleware. Previously the throw escaped `router.use`, so the request neither
+// passed nor was refused — it simply never got an answer.
 async function canEditSection(
   req: Request,
   sectionId: string | string[] | undefined
@@ -179,35 +191,40 @@ async function canEditSection(
   const email = ((req.headers as any)['x-user-email'] || '').toString();
   if (!email) return false;
 
-  // Document status APPROVED blocks edits regardless
-  const d = (
-    await pool.query(
-      `
-    SELECT d.status FROM authoring_documents d
-    JOIN authoring_sections s ON s.document_id = d.id
-    WHERE s.id = $1`,
-      [sectionId]
-    )
-  ).rows[0];
-  if (d?.status === 'APPROVED') return false;
+  try {
+    // Document status APPROVED blocks edits regardless
+    const d = (
+      await pool.query(
+        `
+      SELECT d.status FROM authoring_documents d
+      JOIN authoring_sections s ON s.doc_id = d.id
+      WHERE s.id = $1`,
+        [sectionId]
+      )
+    ).rows[0];
+    if (d?.status === 'APPROVED') return false;
 
-  // Allow QA/RA_CMC override
-  const roles = ((req.headers as any)['x-roles'] || '').toString().toUpperCase();
-  if (roles.includes('QA') || roles.includes('RA_CMC')) return true;
+    // Allow QA/RA_CMC override
+    const roles = ((req.headers as any)['x-roles'] || '').toString().toUpperCase();
+    if (roles.includes('QA') || roles.includes('RA_CMC')) return true;
 
-  // Otherwise check doc_permissions (doc-level or section-level)
-  const row = (
-    await pool.query(
-      `
-    SELECT 1 FROM doc_permissions p
-    JOIN authoring_sections s ON s.document_id = p.doc_id
-    WHERE s.id = $1 AND p.email = $2 AND p.role IN ('AUTHOR','REVIEWER')
-       OR (p.section_id IS NULL AND p.doc_id = s.document_id AND p.email = $2 AND p.role IN ('AUTHOR','REVIEWER'))
-    LIMIT 1`,
-      [sectionId, email]
-    )
-  ).rows[0];
-  return !!row;
+    // Otherwise check doc_permissions (doc-level or section-level)
+    const row = (
+      await pool.query(
+        `
+      SELECT 1 FROM doc_permissions p
+      JOIN authoring_sections s ON s.doc_id = p.doc_id
+      WHERE s.id = $1 AND p.email = $2 AND p.role IN ('AUTHOR','REVIEWER')
+         OR (p.section_id IS NULL AND p.doc_id = s.doc_id AND p.email = $2 AND p.role IN ('AUTHOR','REVIEWER'))
+      LIMIT 1`,
+        [sectionId, email]
+      )
+    ).rows[0];
+    return !!row;
+  } catch (error) {
+    console.error('[authoring] canEditSection failed; denying the edit', error);
+    return false;
+  }
 }
 
 // Role-based access control helper
@@ -1663,6 +1680,89 @@ router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => 
       error: 'Failed to add citation',
       message: error instanceof Error ? error.message : 'Unknown error',
     });
+  }
+});
+
+// ── Canonical source citations ─────────────────────────────────────────────
+// The Data Room holds canonical source identities; these endpoints are how a
+// section records which of them it was drafted from, and how that record is read
+// back. They go through source-usage.service so the convention
+// (source = 'cre_evidence_source', reference_id = the source id,
+// payload_sha256 = the source's checksum at cite time) is enforced server-side
+// rather than trusted from the request body — POST /cite above takes `source` as
+// free text, which is why nothing could ever be read back by source id.
+
+// GET /api/authoring/sections/:sectionId/sources — what this section is written from
+router.get('/sections/:sectionId/sources', async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const { listSectionSources } = await import(
+      '../services/clinical-regulatory-evidence/source-usage.service.js'
+    );
+    const usages = await listSectionSources(tenantId, String(req.params.sectionId));
+    res.json({ success: true, sectionId: String(req.params.sectionId), sources: usages });
+  } catch (error) {
+    console.error('GET /sections/:sectionId/sources', error);
+    res.status(500).json({ success: false, error: 'Failed to load section sources' });
+  }
+});
+
+// POST /api/authoring/sections/:sectionId/cite-source — record a source citation
+router.post('/sections/:sectionId/cite-source', async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const createdBy = getActorId(req);
+    if (!createdBy) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const { citeSource, SourceUsageError } = await import(
+      '../services/clinical-regulatory-evidence/source-usage.service.js'
+    );
+    try {
+      const result = await citeSource(tenantId, {
+        sectionId: String(req.params.sectionId),
+        sourceId: req.body?.source_id,
+        citationText: req.body?.citation_text ?? null,
+        anchor: req.body?.anchor ?? null,
+        createdBy,
+      });
+      // 201 on a new citation, 200 on re-resolve — the caller can tell whether it
+      // added a source or refreshed one the section already had.
+      return res.status(result.created ? 201 : 200).json({ success: true, ...result });
+    } catch (e) {
+      if (e instanceof SourceUsageError) {
+        return res.status(400).json({ success: false, error: e.message });
+      }
+      throw e;
+    }
+  } catch (error) {
+    console.error('POST /sections/:sectionId/cite-source', error);
+    res.status(500).json({ success: false, error: 'Failed to record the source citation' });
+  }
+});
+
+// DELETE /api/authoring/sections/:sectionId/cite-source/:sourceId — stop citing it
+router.delete('/sections/:sectionId/cite-source/:sourceId', async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const { removeSourceCitation } = await import(
+      '../services/clinical-regulatory-evidence/source-usage.service.js'
+    );
+    const removed = await removeSourceCitation(
+      tenantId,
+      String(req.params.sectionId),
+      String(req.params.sourceId),
+    );
+    if (!removed) {
+      return res.status(404).json({
+        success: false,
+        error: 'No removable citation of that source on this section (a frozen citation is immutable)',
+      });
+    }
+    res.json({ success: true, removed: true });
+  } catch (error) {
+    console.error('DELETE /sections/:sectionId/cite-source/:sourceId', error);
+    res.status(500).json({ success: false, error: 'Failed to remove the source citation' });
   }
 });
 
@@ -3351,34 +3451,42 @@ router.post('/sections/:sectionId/refresh-token', async (req: Request, res: Resp
       });
     }
 
-    // For now, simulate a refresh by updating the timestamp
-    // In a real implementation, this would refresh the data from the source system
-    const result = await pool.query(
-      `UPDATE authoring_citations
-       SET created_at = NOW()
-       WHERE id = $1 AND section_id = $2 AND tenant_id = $3
-       RETURNING *`,
-      [cite_id, sectionId, tenantId]
+    // A REAL re-resolution. What was here before bumped `created_at` to NOW() and
+    // returned sha256(cite_id + Date.now()) as the refreshed content hash — a
+    // manufactured content identity on a regulated surface, and a created_at that
+    // then claimed the citation had just been made. Nothing was re-read.
+    //
+    // Now: the checksum comes from the cited source row, created_at is left alone,
+    // and the response says plainly whether the source's content moved. A citation
+    // kind with no source system behind it gets an honest 409 rather than a
+    // fabricated hash.
+    const { refreshSourceCitation } = await import(
+      '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
+    const outcome = await refreshSourceCitation(tenantId, String(cite_id));
 
-    if (((result.rowCount ?? 0) === 0)) {
-      return res.status(404).json({
-        success: false,
-        error: 'Citation not found',
-      });
+    if (!outcome.ok) {
+      const status = outcome.reason === 'not_found' ? 404 : 409;
+      const message =
+        outcome.reason === 'not_found'
+          ? 'Citation not found'
+          : outcome.reason === 'frozen'
+            ? 'This citation is frozen and cannot be re-resolved'
+            : outcome.reason === 'not_a_source_citation'
+              ? 'This citation does not reference a canonical source, so there is nothing to re-read. Nothing was changed.'
+              : 'The cited source no longer resolves in this organization. Nothing was changed.';
+      return res.status(status).json({ success: false, error: outcome.reason, message });
     }
-
-    // Generate a new SHA256 for the refresh simulation
-    const sha256 = require('crypto')
-      .createHash('sha256')
-      .update(cite_id + Date.now())
-      .digest('hex');
 
     res.json({
       success: true,
-      message: 'Token refreshed successfully',
-      sha256: sha256,
-      citation: result.rows[0],
+      message: outcome.changed
+        ? 'Source content has changed since this citation was made; the citation now records the current checksum.'
+        : 'Re-read the source: its content is unchanged since this citation was made.',
+      changed: outcome.changed,
+      source_id: outcome.sourceId,
+      previous_sha256: outcome.previousChecksum,
+      sha256: outcome.currentChecksum,
     });
   } catch (error) {
     console.error('Error refreshing token:', error);
@@ -3652,49 +3760,49 @@ router.get('/docs/:docId/diff-since-export', async (req: Request, res: Response)
   }
 });
 
-// Refresh ALL tokens in document (skips frozen)
+// Refresh ALL source citations in a document (skips frozen).
+//
+// This handler was broken three ways at once, which is part of why nothing ever
+// noticed the refresh it drove was simulated:
+//   1. `WHERE document_id = $1` — the column is `doc_id`, so every call raised
+//      42703 and returned 500. The endpoint had never once succeeded.
+//   2. Neither query filtered `tenant_id`, so had it worked it would have walked
+//      another tenant's sections and citations.
+//   3. It re-entered the API over HTTP against its own host with no Authorization
+//      header, so each inner call would have failed the JWT gate anyway.
+// Now: one tenant-scoped read, and a direct service call per citation.
 router.post('/docs/:docId/refresh-all', async (req: Request, res: Response) => {
   try {
-    const sectionsResult = await pool.query(
-      `
-      SELECT id FROM authoring_sections WHERE document_id = $1
-    `,
-      [req.params.docId]
+    const tenantId = getTenantId(req);
+    const { refreshSourceCitation } = await import(
+      '../services/clinical-regulatory-evidence/source-usage.service.js'
     );
 
-    let total = 0;
-    for (const section of sectionsResult.rows) {
-      const citesResult = await pool.query(
-        `
-        SELECT id as cite_id, frozen_at FROM authoring_citations
-        WHERE section_id = $1
-      `,
-        [section.id]
-      );
+    const cites = await pool.query<{ cite_id: string }>(
+      `SELECT c.id AS cite_id
+         FROM authoring_citations c
+         JOIN authoring_sections s ON s.id = c.section_id AND s.tenant_id = c.tenant_id
+        WHERE s.doc_id = $1 AND c.tenant_id = $2 AND c.frozen_at IS NULL
+        ORDER BY c.created_at ASC`,
+      [req.params.docId, tenantId]
+    );
 
-      for (const cite of citesResult.rows) {
-        if (cite.frozen_at) continue; // Skip frozen tokens
-
-        try {
-          const refreshResponse = await fetch(
-            `${req.protocol}://${req.get('host')}/api/authoring/sections/${
-              section.id
-            }/refresh-token`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ cite_id: cite.cite_id }),
-            }
-          );
-
-          if (refreshResponse.ok) total++;
-        } catch (refreshError) {
-          console.warn('Failed to refresh token:', cite.cite_id, refreshError);
-        }
+    let refreshed = 0;
+    let changed = 0;
+    const skipped: Array<{ cite_id: string; reason: string }> = [];
+    for (const cite of cites.rows) {
+      const outcome = await refreshSourceCitation(tenantId, cite.cite_id);
+      if (outcome.ok) {
+        refreshed++;
+        if (outcome.changed) changed++;
+      } else {
+        // Reported, not silently counted as refreshed. A citation with no source
+        // behind it is exactly what the caller needs to see.
+        skipped.push({ cite_id: cite.cite_id, reason: outcome.reason });
       }
     }
 
-    res.json({ ok: true, refreshed: total });
+    res.json({ ok: true, refreshed, changed, skipped });
   } catch (error) {
     console.error('POST /docs/:id/refresh-all', error);
     res.status(500).json({ error: 'Refresh-all failed' });
