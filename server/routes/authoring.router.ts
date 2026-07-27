@@ -1666,6 +1666,89 @@ router.post('/sections/:sectionId/cite', async (req: Request, res: Response) => 
   }
 });
 
+// ── Canonical source citations ─────────────────────────────────────────────
+// The Data Room holds canonical source identities; these endpoints are how a
+// section records which of them it was drafted from, and how that record is read
+// back. They go through source-usage.service so the convention
+// (source = 'cre_evidence_source', reference_id = the source id,
+// payload_sha256 = the source's checksum at cite time) is enforced server-side
+// rather than trusted from the request body — POST /cite above takes `source` as
+// free text, which is why nothing could ever be read back by source id.
+
+// GET /api/authoring/sections/:sectionId/sources — what this section is written from
+router.get('/sections/:sectionId/sources', async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const { listSectionSources } = await import(
+      '../services/clinical-regulatory-evidence/source-usage.service.js'
+    );
+    const usages = await listSectionSources(tenantId, String(req.params.sectionId));
+    res.json({ success: true, sectionId: String(req.params.sectionId), sources: usages });
+  } catch (error) {
+    console.error('GET /sections/:sectionId/sources', error);
+    res.status(500).json({ success: false, error: 'Failed to load section sources' });
+  }
+});
+
+// POST /api/authoring/sections/:sectionId/cite-source — record a source citation
+router.post('/sections/:sectionId/cite-source', async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const createdBy = getActorId(req);
+    if (!createdBy) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    const { citeSource, SourceUsageError } = await import(
+      '../services/clinical-regulatory-evidence/source-usage.service.js'
+    );
+    try {
+      const result = await citeSource(tenantId, {
+        sectionId: String(req.params.sectionId),
+        sourceId: req.body?.source_id,
+        citationText: req.body?.citation_text ?? null,
+        anchor: req.body?.anchor ?? null,
+        createdBy,
+      });
+      // 201 on a new citation, 200 on re-resolve — the caller can tell whether it
+      // added a source or refreshed one the section already had.
+      return res.status(result.created ? 201 : 200).json({ success: true, ...result });
+    } catch (e) {
+      if (e instanceof SourceUsageError) {
+        return res.status(400).json({ success: false, error: e.message });
+      }
+      throw e;
+    }
+  } catch (error) {
+    console.error('POST /sections/:sectionId/cite-source', error);
+    res.status(500).json({ success: false, error: 'Failed to record the source citation' });
+  }
+});
+
+// DELETE /api/authoring/sections/:sectionId/cite-source/:sourceId — stop citing it
+router.delete('/sections/:sectionId/cite-source/:sourceId', async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantId(req);
+    const { removeSourceCitation } = await import(
+      '../services/clinical-regulatory-evidence/source-usage.service.js'
+    );
+    const removed = await removeSourceCitation(
+      tenantId,
+      String(req.params.sectionId),
+      String(req.params.sourceId),
+    );
+    if (!removed) {
+      return res.status(404).json({
+        success: false,
+        error: 'No removable citation of that source on this section (a frozen citation is immutable)',
+      });
+    }
+    res.json({ success: true, removed: true });
+  } catch (error) {
+    console.error('DELETE /sections/:sectionId/cite-source/:sourceId', error);
+    res.status(500).json({ success: false, error: 'Failed to remove the source citation' });
+  }
+});
+
 // GET /api/authoring/sections/:sectionId/citations - Get all citations
 router.get('/sections/:sectionId/citations', async (req: Request, res: Response) => {
   try {

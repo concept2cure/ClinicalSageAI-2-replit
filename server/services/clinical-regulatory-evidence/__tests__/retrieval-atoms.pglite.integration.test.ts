@@ -97,20 +97,24 @@ async function seed(): Promise<void> {
   await reviewDesignLesson(ORG, lesson.id, 'approved');
 }
 
+// Standing up a WASM Postgres and applying real migration DDL costs seconds, and
+// the cost scales with how many other pglite suites are running concurrently.
+// vitest's 10s default hook timeout is a load measurement, not a correctness one:
+// these hooks went red purely because another pglite suite joined the directory.
 beforeAll(async () => {
   pglite = new PGlite();
   const here = path.dirname(fileURLToPath(import.meta.url));
   await pglite.exec(fs.readFileSync(path.resolve(here, '../../../../db/migrations/20260724_clinical_regulatory_evidence_spine.sql'), 'utf8'));
   await pglite.exec(LUMEN_DDL);
   await pglite.exec(`INSERT INTO organizations (id, name) VALUES (1,'system'), (3,'Tenant A'), (88,'Tenant B');`);
-});
+}, 90_000);
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => {
   await pglite.exec(`DELETE FROM lumen_data_atoms;
                      DELETE FROM cre_evidence_relationships; DELETE FROM cre_regulatory_findings;
                      DELETE FROM cre_regulatory_outcomes; DELETE FROM cre_design_lessons;
                      DELETE FROM cre_clinical_studies; DELETE FROM cre_evidence_sources;`);
-});
+}, 30_000);
 
 describe('generateAtomsForOrg', () => {
   it('materializes all CRE-native atom types for the owning org, invoking the embedder', async () => {

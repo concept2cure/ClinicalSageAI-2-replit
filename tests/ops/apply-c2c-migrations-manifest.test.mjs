@@ -59,6 +59,107 @@ test('the data-room migrations are listed, and the spine precedes its ALTER', ()
   );
 });
 
+test('the authoring loop tables are NOT listed — half a Part 11 subsystem is worse than none', () => {
+  // This assertion is the inverse of what this file first shipped. The original
+  // reasoning was that the authoring router writes to tables no durable path
+  // creates, so the loop tables belonged on this list. The gap is real; the fix
+  // was wrong, and #1131 caught it.
+  //
+  // 20260725_authoring_document_loop_tables.sql creates frozen_documents and
+  // user_pins. authoring_audit_trail and authoring_signatures are in SEPARATE
+  // files (20260725_authoring_audit_trail.sql,
+  // 20260725_authoring_signatures_and_workflow.sql). Apply the loop tables alone
+  // and the freeze handler succeeds while its audit INSERT
+  // (authoring.router.ts L387) hits a missing table, and e-sign (L3083) fails
+  // outright. A freeze that works and leaves no audit trail is a worse state on a
+  // Part 11 surface than a freeze that plainly cannot run.
+  //
+  // The subsystem is provisioned together, by the db/migrations lineage, or not
+  // by this supplementary applier at all.
+  const files = migrationList();
+  const loop = files.indexOf('db/migrations/20260725_authoring_document_loop_tables.sql');
+  assert.equal(
+    loop,
+    -1,
+    'the authoring loop tables must NOT be on this list: they carry frozen_documents and user_pins ' +
+      'without authoring_audit_trail or authoring_signatures, so applying them alone stands up an ' +
+      'unaudited freeze and a broken e-sign.',
+  );
+});
+
+test('the authoring entries on the list are guarded, additive ALTERs only', () => {
+  const files = migrationList();
+  const sourceUsage = files.indexOf('migrations/20260726_authoring_citation_source_usage.sql');
+  assert.ok(sourceUsage >= 0, 'the source-usage index migration must be listed');
+
+  // Both authoring entries must be self-guarding: they add a column or an index
+  // WHERE the subsystem is already provisioned, and no-op with a NOTICE where it
+  // is not. That is what makes them safe on this path when the loop tables are
+  // not.
+  for (const file of files.filter((f) => /authoring/.test(f))) {
+    const sql = readFileSync(file, 'utf8');
+    assert.match(
+      sql,
+      /to_regclass/,
+      `${file} is on the applier list but does not guard on to_regclass — it would fail the run, ` +
+        'or provision part of a subsystem, on a database without the authoring tables.',
+    );
+    assert.doesNotMatch(
+      sql,
+      /CREATE TABLE/i,
+      `${file} creates a table. Only guarded additive ALTERs belong on this path for the authoring ` +
+        'subsystem; table creation is owned by the db/migrations lineage.',
+    );
+  }
+});
+
+test('the source-usage migration yields its index where the subsystem IS provisioned', async () => {
+  // The loop tables are read from DISK, not from the applier list — they are
+  // deliberately not on it (see above). What is being proven here is the other
+  // half of that decision: where the authoring subsystem has been provisioned by
+  // its own lineage, this migration does land its index.
+  const files = [
+    'db/migrations/20260725_authoring_document_loop_tables.sql',
+    'migrations/20260726_authoring_citation_source_usage.sql',
+  ];
+  assert.ok(
+    migrationList().includes(files[1]),
+    'the source-usage migration must be on the applier list',
+  );
+
+  const db = new PGlite();
+  try {
+    for (const file of files) {
+      await db.exec(readFileSync(path.resolve(file), 'utf8'));
+    }
+    const idx = await db.query(
+      `SELECT indexname FROM pg_indexes
+        WHERE tablename = 'authoring_citations' AND indexname = 'authoring_citations_reference_idx'`,
+    );
+    assert.equal(
+      idx.rows.length,
+      1,
+      'the back-reference index must exist — without it "which sections cite this source" is a full scan per source',
+    );
+  } finally {
+    await db.close();
+  }
+});
+
+test('the source-usage migration no-ops when authoring_citations is absent', async () => {
+  // preview_db_test applies only the migrations a PR *adds*, so this file will run
+  // in databases where the loop tables do not exist. It must emit a NOTICE and
+  // continue rather than fail the run.
+  const db = new PGlite();
+  try {
+    await db.exec(
+      readFileSync(path.resolve('migrations/20260726_authoring_citation_source_usage.sql'), 'utf8'),
+    );
+  } finally {
+    await db.close();
+  }
+});
+
 test('the data-room migrations apply in listed order and yield the expected schema', async () => {
   const files = migrationList().filter((f) =>
     /20260724_clinical_regulatory_evidence_spine|20260726_file_uploads_tenancy|20260726_cre_source_program_scope/.test(
