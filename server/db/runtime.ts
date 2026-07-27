@@ -261,7 +261,11 @@ export async function runMigrations(): Promise<void> {
 
   try {
     logger.info('Running database migrations...');
-    const migrationsFolder = path.resolve(__dirname, '../../migrations');
+    // cwd-anchored, not __dirname: this file ships inside the esbuild bundle
+    // (dist/index.js), where __dirname is undefined under ESM. Both dev (cwd =
+    // repo root) and prod (WORKDIR /app, migrations/ copied into the image)
+    // put the migrations at <cwd>/migrations.
+    const migrationsFolder = path.resolve(process.cwd(), 'migrations');
     await migrate(db, { migrationsFolder });
     logger.info('Database migrations completed successfully');
   } catch (error: any) {

@@ -62,13 +62,45 @@ function send404(res: Response) {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Present a program_type as the portfolio workstream bucket. */
+/** Present a program_type as the portfolio workstream bucket.
+ *  Case-insensitive: the store holds mixed casing ('510K', 'BLA', 'nda'), so
+ *  match on lower() — otherwise every real row falls through to the ELSE branch
+ *  and none bucket into MDX / Biotech / Pharma (the surface's filter tabs). */
 const WS_CASE = `CASE
-         WHEN p.program_type IN ('510k','de_novo','pma','ivd','device') THEN 'MDX'
-         WHEN p.program_type IN ('ind','bla','biologic') THEN 'Biotech'
-         WHEN p.program_type IN ('nda','maa') THEN 'Pharma'
+         WHEN lower(p.program_type) IN ('510k','de_novo','pma','ivd','device','cer','ide') THEN 'MDX'
+         WHEN lower(p.program_type) IN ('ind','bla','biologic') THEN 'Biotech'
+         WHEN lower(p.program_type) IN ('nda','maa','jnda','anda') THEN 'Pharma'
          ELSE initcap(replace(p.program_type, '_', ' '))
        END`;
+
+/** Canonical program / product types accepted by the create endpoint. Program
+ *  types line up with WS_CASE above; product types match the store's CHECK-free
+ *  but conventional set (drug/biologic/device/ivd). */
+const VALID_PROGRAM_TYPES = new Set([
+  '510k', 'de_novo', 'pma', 'ivd', 'device', 'cer', 'ide',
+  'ind', 'bla', 'biologic', 'nda', 'maa', 'jnda', 'anda',
+]);
+const VALID_PRODUCT_TYPES = new Set(['drug', 'biologic', 'device', 'ivd']);
+
+/** Derive a product_type when the client omits it, from the program_type. */
+function productTypeForProgram(programType: string): string {
+  if (['510k', 'de_novo', 'pma', 'device', 'cer', 'ide'].includes(programType)) return 'device';
+  if (programType === 'ivd') return 'ivd';
+  if (['ind', 'bla', 'biologic'].includes(programType)) return 'biologic';
+  return 'drug';
+}
+
+/** A tester-friendly, org-unique program code derived from the product/name. */
+function baseCodeFrom(productName: string, name: string): string {
+  const src = (productName || name || 'PRJ').trim();
+  // Keep an existing "BX-204"-style code intact; else initials of the words.
+  const cleaned = src.replace(/[^A-Za-z0-9\- ]/g, '').trim();
+  if (/^[A-Za-z]{1,4}[- ]?\d{2,4}$/.test(cleaned)) {
+    return cleaned.replace(/\s+/g, '-').toUpperCase();
+  }
+  const initials = cleaned.split(/\s+/).map((w) => w[0] ?? '').join('').slice(0, 4).toUpperCase();
+  return initials || 'PRJ';
+}
 
 // ── GET /api/c2c/projects ─────────────────────────────────────────────────────
 //
@@ -108,6 +140,123 @@ router.get('/', async (req: Request, res: Response) => {
       return res.json({ data: [], meta: { count: 0, pendingStore: true } });
     }
     console.error('[c2c/projects] GET /', err);
+    return res.status(500).json({ error: 'INTERNAL_ERROR' });
+  }
+});
+
+// ── POST /api/c2c/projects ────────────────────────────────────────────────────
+//
+// Create a real regulatory program from the v2 New-Project wizard. Persists to
+// `regulatory_programs` — the SAME table the portfolio list reads — so a
+// tester's new project appears live immediately and survives reload, instead of
+// the old client-only `window.C2C_PROJECT` stub that vanished on refresh.
+//
+// Body (from the wizard): { name, productName?, programType, productType?,
+// primaryAgency?, submissionTypeId?, indication?, targetSubmissionDate?,
+// teamMembers?, code? }. Org-scoped; the creating user becomes the lead.
+// 400 on a missing/invalid required field; 503 PENDING_STORE on 42P01.
+
+router.post('/', async (req: Request, res: Response) => {
+  const userId = resolveUserId(req);
+  const orgId = resolveOrgId(req);
+  if (!orgId) return send403(res);
+
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
+
+  const name = str(body.name);
+  const productName = str(body.productName) || name;
+  const programType = str(body.programType).toLowerCase().replace(/[\s-]+/g, '_');
+  const primaryAgency = str(body.primaryAgency) || 'FDA';
+  const submissionTypeId = str(body.submissionTypeId) || null;
+  const indication = str(body.indication) || null;
+  const priority = ['low', 'medium', 'high', 'critical'].includes(str(body.priority))
+    ? str(body.priority) : 'medium';
+  // Accept 'YYYY-MM-DD' (wizard <input type=date>); '' → null.
+  const rawDate = str(body.targetSubmissionDate);
+  const targetSubmissionDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : null;
+  const teamMembers = Array.isArray(body.teamMembers)
+    ? (body.teamMembers as unknown[]).filter((m) => typeof m === 'string')
+    : [];
+
+  if (!name) return send400(res, 'name is required');
+  if (!programType) return send400(res, 'programType is required');
+  if (!VALID_PROGRAM_TYPES.has(programType)) {
+    return send400(res, `programType must be one of: ${[...VALID_PROGRAM_TYPES].join(', ')}`);
+  }
+  let productType = str(body.productType).toLowerCase();
+  if (!productType) productType = productTypeForProgram(programType);
+  if (!VALID_PRODUCT_TYPES.has(productType)) {
+    return send400(res, `productType must be one of: ${[...VALID_PRODUCT_TYPES].join(', ')}`);
+  }
+
+  const targetAgencies = JSON.stringify([primaryAgency]);
+  const metadata = JSON.stringify({
+    createdVia: 'v2-new-project-wizard',
+    ...(submissionTypeId ? { submissionTypeId } : {}),
+    ...(teamMembers.length ? { teamMemberNames: teamMembers } : {}),
+  });
+  const createdBy = userId != null ? String(userId) : 'system';
+
+  // Insert. `code` is unique per (organization_id, code); derive a readable base
+  // and disambiguate with a short suffix only if the base is already taken.
+  const base = baseCodeFrom(productName, name);
+  const insert = async (code: string) =>
+    pool.query(
+      `INSERT INTO regulatory_programs
+         (organization_id, name, code, program_type, product_type, primary_agency,
+          target_agencies, product_name, indication, status, phase, priority,
+          target_submission_date, progress_percent, lead_user_id, team_members,
+          metadata, created_by, updated_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::json, $8, $9, 'active', 'planning', $10,
+               $11::timestamp, 0, $12, $13::json, $14::json, $15, $15)
+       RETURNING id`,
+      [
+        orgId, name, code, programType, productType, primaryAgency,
+        targetAgencies, productName, indication, priority,
+        targetSubmissionDate, userId, JSON.stringify(teamMembers), metadata, createdBy,
+      ],
+    );
+
+  try {
+    let created;
+    try {
+      created = await insert(base);
+    } catch (e) {
+      // 23505 = unique_violation on (organization_id, code) → retry once with a suffix.
+      if ((e as { code?: string })?.code === '23505') {
+        created = await insert(`${base}-${Date.now().toString(36).slice(-4).toUpperCase()}`);
+      } else {
+        throw e;
+      }
+    }
+    const newId = (created.rows[0] as { id: string }).id;
+
+    // Re-read through the EXACT projection the list uses, so the client receives
+    // the new card in its display contract (id, title, ws, code, stage, …).
+    const { rows } = await pool.query(
+      `SELECT p.id::text                                            AS id,
+              p.name                                                AS title,
+              ${WS_CASE}                                            AS ws,
+              COALESCE(p.code, '—')                                 AS code,
+              initcap(replace(COALESCE(p.phase, 'planning'), '_', ' ')) AS stage,
+              COALESCE(p.progress_percent, 0)                       AS readiness,
+              p.status                                              AS status,
+              COALESCE(u.name, u.email, '—')                        AS lead,
+              NULL::text                                            AS blocker,
+              COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
+              'Updated ' || to_char(p.updated_at, 'Mon DD')         AS activity
+         FROM regulatory_programs p
+         LEFT JOIN users u ON u.id = p.lead_user_id
+        WHERE p.id = $1 AND p.organization_id = $2`,
+      [newId, orgId],
+    );
+    return res.status(201).json({ data: rows[0], meta: { created: true } });
+  } catch (err: unknown) {
+    if ((err as { code?: string })?.code === '42P01') {
+      return res.status(503).json({ error: 'PENDING_STORE' });
+    }
+    console.error('[c2c/projects] POST /', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
   }
 });
