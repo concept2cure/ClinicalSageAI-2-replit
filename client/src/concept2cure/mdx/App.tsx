@@ -18,6 +18,7 @@ import { K510Surface } from './surfaces/K510Surface';
 import { PmaSurface } from './surfaces/PmaSurface';
 import { CerSurface } from './surfaces/CerSurface';
 import { IvdSurface } from './surfaces/IvdSurface';
+import { ClinicalStudiesSurface } from './surfaces/ClinicalStudiesSurface';
 import { PrecedentSurface } from './surfaces/PrecedentSurface';
 import { EngineeringSurface } from './surfaces/EngineeringSurface';
 import { UdiSurface } from './surfaces/UdiSurface';
@@ -45,6 +46,7 @@ const HERE_LABEL: Record<string, string> = {
   pma:            'PMA Submissions',
   cer:            'CER Generator',
   'device-diagnostics-workbench': 'IVD diagnostics workbench',
+  'clinical-studies': 'Clinical studies',
   predicate:      'Precedent intelligence',
   engineering:    'Device engineering',
   udi:            'UDI and labeling',
@@ -253,6 +255,9 @@ export function App({ initialNav, projectName, onOpenAuthoring, projectId }: App
         break;
       case 'device-diagnostics-workbench':
         surface = <IvdSurface program={programForContext} onAskAna={askAna} onOpenEditor={() => openAuthoring('device-diagnostics-workbench')} />;
+        break;
+      case 'clinical-studies':
+        surface = <ClinicalStudiesSurface onAskAna={askAna} />;
         break;
       case 'predicate':
         surface = <PrecedentSurface onAskAna={askAna} />;
