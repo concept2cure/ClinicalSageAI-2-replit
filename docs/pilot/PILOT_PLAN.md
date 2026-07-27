@@ -193,14 +193,31 @@ re-run — but a reprovision is not a restore. Only the rehearsal above gets dat
 
 ### Revoking access fast
 
-| Need | Lever | Note |
-| --- | --- | --- |
-| **One tester, immediately** | Set that user's `locked_until` far in the future **and** rotate their password hash. | Login checks account lockout on every attempt. This is the proven lever. |
-| **Everyone, immediately** | Rotate `JWT_SECRET`. | Invalidates every issued session at once. Blunt and total — the correct response to a stop condition. |
-| **Block signing only** | Set `users.status` to `suspended`. | Part 11 signing refuses a non-active user. **This does not block login today** — do not use it alone to revoke access. |
+**Read this before you need it.** The obvious levers do not do what their names
+suggest. An access token lives **24h** and a refresh token **7d**, and
+`/api/auth/refresh` (`server/routes/auth.ts`) re-checks **organization
+membership only** — not account lockout, not password state. So locking an
+account or rotating its password blocks the *next password login* and nothing
+else: an already-signed-in tester keeps working, and keeps minting fresh tokens
+for up to seven days.
 
-Stop-condition response order: **rotate the JWT secret → snapshot the database
-before touching anything → then investigate.** Evidence first, fix second.
+| Need | Lever that actually works | Why |
+| --- | --- | --- |
+| **One tester, immediately** | **Delete their `organization_users` membership row.** Then also set `locked_until` and rotate the password hash to stop re-login. | `server/middleware/auth.ts` re-checks membership on every authenticated request and fails closed (`AUTH_009`), and `/api/auth/refresh` returns 403 without it — so this kills both the live session and the refresh path. Membership is cached for **60s**, so allow up to a minute. |
+| **Everyone, immediately** | Rotate **`JWT_SECRET` *and* `REFRESH_TOKEN_SECRET`**, and confirm **`JWT_SECRET_PREVIOUS` is unset**. | Rotating `JWT_SECRET` alone does **not** end every session: refresh tokens are signed with a separate secret in staging/production, so an old refresh token mints a brand-new access token under the rotated secret — and `JWT_SECRET_PREVIOUS`, if set for a rotation, keeps old access tokens valid by design. |
+| **One specific token** | `revokeToken()` — `server/services/token-revocation.ts` (Redis-backed, in-memory fallback). | Durable per-token revocation. Useful when you know the exact token; not a substitute for the membership lever. |
+| **Block signing only** | Set `users.status` to `suspended`. | Part 11 signing refuses a non-active user. **This does not block login today** — never use it alone to revoke access. |
+
+**Known gap, accepted for this pilot:** there is no one-command "revoke this
+user's sessions" primitive. Membership deletion is the working equivalent and is
+what this runbook uses. Rehearse it once, on a throwaway account, before the
+first tester is invited — a revocation lever you have never pulled is not a
+lever.
+
+Stop-condition response order: **snapshot the database first → then revoke
+(membership row, or both secrets for a global kill) → then investigate.**
+Evidence before remediation; a rotation you perform first can destroy the
+session state you needed to understand what happened.
 
 ---
 
